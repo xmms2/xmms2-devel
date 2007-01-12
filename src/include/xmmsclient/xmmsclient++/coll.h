@@ -54,6 +54,7 @@ namespace Xmms
 		const Type PARTYSHUFFLE = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
 
 		class OperandIterator;
+		class IdlistElement;
 		class Coll;
 
 		// FIXME: Hide classes?
@@ -99,7 +100,6 @@ namespace Xmms
 				AttributeElement( const Coll& coll, std::string index );
 		};
 
-		class IdlistElement;
 		class Coll
 		{
 			public:
@@ -220,33 +220,6 @@ namespace Xmms
 		};
 
 
-		class OperandIterator
-		{
-
-			public:
-				OperandIterator( const OperandIterator& src );
-				OperandIterator operator=( const OperandIterator& src ) const;
-				~OperandIterator();
-
-				void first();
-				bool valid() const;
-				void next();
-				void save();
-				void restore();
-
-				CollPtr operator *() const;
-				// FIXME: Operator -> ?
-
-			private:
-
-				friend class Nary;
-				OperandIterator( Coll& coll );
-				OperandIterator( const Coll& coll );
-
-				Coll& coll_;
-		};
-
-
 		class Reference : public Coll
 		{
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
@@ -265,6 +238,18 @@ namespace Xmms
 				~Reference();
 		};
 
+
+        /** A collection operator corresponding to all the media in
+		 *  the medialib.
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: none.
+		 *
+		 *  A Universe operator is used to refer to the "All Media"
+		 *  meta-collection that represents all the media in the
+		 *  medialib.  Useful as input for other operators.
+		 */
 		class Universe : public Reference
 		{
 			public:
@@ -272,11 +257,22 @@ namespace Xmms
 				~Universe();
 		};
 
+
+        /** A Union collection operator forms the union of multiple
+		 *  operators.
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: unbounded.
+		 *
+		 *  The collection produced by a Union operator is the union
+		 *  of all its operands, i.e. all the media matching
+		 *  <em>any</em> of the collection operands.
+		 */
 		class Union : public Nary
 		{
 			friend class ::Xmms::Collection;
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Union( xmmsc_coll_t* coll );
@@ -286,11 +282,22 @@ namespace Xmms
 				~Union();
 		};
 
+
+        /** An Intersection collection operator forms the intersection
+		 *  of multiple operators.
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: unbounded.
+		 *
+		 *  The collection produced by an Intersection operator is the
+		 *  intersection of all its operands, i.e. all the media
+		 *  matching <em>all</em> the collection operands.
+		 */
 		class Intersection : public Nary
 		{
 			friend class ::Xmms::Collection;
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Intersection( xmmsc_coll_t* coll );
@@ -300,11 +307,22 @@ namespace Xmms
 				~Intersection();
 		};
 
+
+        /** A Complement collection operator forms the complement of
+		 *  an operators.
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: 1.
+		 *
+		 *  The collection produced by an Intersection operator is the
+		 *  complement of its unique operand, i.e. all the media
+		 *  <em>not</em> matching the collection operand.
+		 */
 		class Complement : public Unary
 		{
 			friend class ::Xmms::Collection;
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Complement( xmmsc_coll_t* coll );
@@ -409,12 +427,26 @@ namespace Xmms
 				~Contains();
 		};
 
+
+        /** An Idlist collection operator.
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: none.
+		 *
+		 *  The Idlist operator stores a fixed list of media id.  The
+		 *  list is ordered, and that ordering is used if the operator
+		 *  is used as a playlist.
+		 *
+		 *  The Idlist operator also unmasks the methods related to
+		 *  managing the internal id-list, as well as the [] bracket
+		 *  operator with integer argument for direct access.
+		 */
 		class Idlist : public Coll
 		{
 			friend class Element;
 			friend class ::Xmms::Collection;
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Idlist( xmmsc_coll_t* coll );
@@ -437,19 +469,21 @@ namespace Xmms
 				const IdlistElement operator []( unsigned int index ) const;
 		};
 
-		class IdlistElement : public AbstractElement< unsigned int, unsigned int >
-		{
-			public:
-				~IdlistElement();
-				operator unsigned int() const;
-				unsigned int operator=( unsigned int value );
 
-			private:
-				friend class Idlist;
-				IdlistElement( Coll& coll, unsigned int index );
-				IdlistElement( const Coll& coll, unsigned int index );
-		};
-
+        /** A Queue collection operator.
+		 *
+		 *  Used attributes:
+		 *  - history: if used as a playlist, determines how many
+		 *             played items remain before they are popped
+		 *             off the queue.
+		 *
+		 *  Operand: none.
+		 *
+		 *  The Queue operator is similar to the Idlist operator,
+		 *  except if loaded as a playlist, only <em>history</em>
+		 *  played items will remain and the previous ones are
+		 *  removed.
+		 */
 		class Queue : public Idlist
 		{
 			friend class ::Xmms::Collection;
@@ -467,11 +501,30 @@ namespace Xmms
 				~Queue();
 		};
 
+
+        /** A PartyShuffle collection operator.
+		 *
+		 *  Used attributes:
+		 *  - history: if used as a playlist, determines how many
+		 *             played items remain before they are popped
+		 *             off the queue.
+		 *  - upcoming: if used as a playlist, determines the minimum
+		 *              number of incoming entries (if fewer, new entries
+		 *              are randomly fetched from the operand collection).
+		 * - jumplist: optionally, the name of a playlist to jump to
+         *             once the PartyShuffle is done playing.
+		 *
+		 *  Operand: 1, the input collection to randomly fetch media from.
+		 *
+		 *  The PartyShuffle operator is similar to the Queue operator
+		 *  (entries are popped if they exceed <em>history</em>), but
+		 *  when loaded, the playlist is automatically fed by random
+		 *  media taken from the input collection until its size reaches
+		 */
 		class PartyShuffle : public Queue
 		{
 			friend class ::Xmms::Collection;
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				PartyShuffle( xmmsc_coll_t* coll );
@@ -485,11 +538,57 @@ namespace Xmms
 
 
 
+		class OperandIterator
+		{
+
+			public:
+				OperandIterator( const OperandIterator& src );
+				OperandIterator operator=( const OperandIterator& src ) const;
+				~OperandIterator();
+
+				void first();
+				bool valid() const;
+				void next();
+				void save();
+				void restore();
+
+				CollPtr operator *() const;
+				// FIXME: Operator -> ?
+
+			private:
+
+				friend class Nary;
+				OperandIterator( Coll& coll );
+				OperandIterator( const Coll& coll );
+
+				Coll& coll_;
+		};
+
+
+		/** Helper class accessing one element of an Idlist operator
+		 *  for reading or writing.
+		 *
+		 *  This class should not be instanciated by users of the library.
+		 */
+		class IdlistElement : public AbstractElement< unsigned int, unsigned int >
+		{
+			public:
+				~IdlistElement();
+				operator unsigned int() const;
+				unsigned int operator=( unsigned int value );
+
+			private:
+				friend class Idlist;
+				IdlistElement( Coll& coll, unsigned int index );
+				IdlistElement( const Coll& coll, unsigned int index );
+		};
+
+
+
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::AbstractElement( Coll& coll, keyT index )
 			: coll_ (coll), index_( index )
 		{
-			//coll_.ref();
 			xmmsc_coll_ref( coll_.getColl() );
 		}
 
@@ -497,14 +596,12 @@ namespace Xmms
 		AbstractElement< keyT, valT >::AbstractElement( const Coll& coll, keyT index )
 			: coll_ (coll), index_( index )
 		{
-			//coll_.ref();
 			xmmsc_coll_ref( coll_.getColl() );
 		}
 
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::~AbstractElement()
 		{
-			//coll_.unref();
 			xmmsc_coll_unref( coll_.getColl() );
 		}
 
