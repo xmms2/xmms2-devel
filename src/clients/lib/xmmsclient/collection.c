@@ -245,7 +245,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
  * @param order  The list of properties to order by (NULL to disable).
  * @param limit_start  The offset at which to start retrieving results (0 to disable).
  * @param limit_len  The maximum number of entries to retrieve (0 to disable).
- * @param fetch  The list of properties to retrieve (NULL to only get the id).
+ * @param fetch  The list of properties to retrieve (at least one property).
  * @param group  The list of properties to group by (NULL to disable).
  */
 xmmsc_result_t*
@@ -259,6 +259,8 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
+	x_api_error_if (!fetch, "with a NULL fetch list", NULL);
+	x_api_error_if (!fetch[0], "with an empty fetch list", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_INFOS);
 	xmms_ipc_msg_put_collection (msg, coll);

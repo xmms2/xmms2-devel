@@ -60,6 +60,17 @@ namespace Xmms
 
 	};
 
+	/** @class argument_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if the arguments passed to a method are invalid.
+	 */
+	class argument_error : public std::runtime_error
+	{
+		public:
+			explicit argument_error( const std::string& what_arg );
+
+	};
+
 	/** @class not_dict_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
 	 *  @brief Thrown when trying to create a dict from non-dict resultset.
 	 *  @note Logic error, should <b>not</b> be caught, fix the code instead.
