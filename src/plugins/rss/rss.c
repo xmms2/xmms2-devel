@@ -30,7 +30,6 @@ typedef struct xmms_rss_data_St {
 static gboolean xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_rss_init (xmms_xform_t *xform);
 static gboolean xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
-static void xmms_rss_destroy (xmms_xform_t *xform);
 
 XMMS_XFORM_PLUGIN ("rss",
                    "reader for rss podcasts",
@@ -39,13 +38,13 @@ XMMS_XFORM_PLUGIN ("rss",
                    xmms_rss_plugin_setup);
 
 static gboolean
-xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
+xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+{
 	xmms_xform_methods_t methods;
 
 	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_rss_init;
 	methods.browse = xmms_rss_browse;
-	methods.destroy = xmms_rss_destroy;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -64,7 +63,8 @@ xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
 }
 
 static gboolean
-xmms_rss_init (xmms_xform_t *xform) {
+xmms_rss_init (xmms_xform_t *xform)
+{
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "application/x-xmms2-playlist-entries",
@@ -74,45 +74,53 @@ xmms_rss_init (xmms_xform_t *xform) {
 }
 
 static void
-xmms_rss_start_element (void *udata, const xmlChar *name, const xmlChar **attrs) {
+xmms_rss_start_element (xmms_rss_data_t *data, const xmlChar *name,
+                        const xmlChar **attrs)
+{
+	xmms_xform_t *xform = data->xform;
 	int i;
 
 	XMMS_DBG ("start elem %s", name);
 
-	if (xmlStrncmp (name, (xmlChar *)"enclosure", 9) != 0)
+	if (!attrs || !data)
 		return;
 
-	if (!attrs || !udata)
+	if (xmlStrncmp (name, (xmlChar *) "enclosure", 9))
 		return;
 
 	for (i = 0; attrs[i]; i += 2) {
-		if (xmlStrncmp (attrs[i], (xmlChar *)"url", 3) == 0) {
-			xmms_xform_t *xform = ((xmms_rss_data_t *)udata)->xform;
+		char *attr;
 
-			XMMS_DBG ("Found %s", attrs[i+1]);
-			xmms_xform_browse_add_entry (xform, (char *)attrs[i+1], 0);
-			xmms_xform_browse_add_entry_symlink (xform, (char *)attrs[i+1], 0, NULL);
+		if (xmlStrncmp (attrs[i], (xmlChar *) "url", 3))
+			continue;
 
-			break;
-		}
+		attr = (char *) attrs[i + 1];
+
+		XMMS_DBG ("Found %s", attr);
+		xmms_xform_browse_add_entry (xform, attr, 0);
+		xmms_xform_browse_add_entry_symlink (xform, attr, 0, NULL);
+
+		break;
 	}
 }
 
 static void
-xmms_rss_error (void *udata, const char *msg, ...) {
+xmms_rss_error (xmms_rss_data_t *data, const char *msg, ...)
+{
 	va_list ap;
 	char str[1000];
 
 	va_start (ap, msg);
-	vsnprintf (str, 1000, msg, ap);
+	vsnprintf (str, sizeof (str), msg, ap);
 	va_end (ap);
 
-	((xmms_rss_data_t *)udata)->parse_failure = TRUE;
-	xmms_error_set (((xmms_rss_data_t *)udata)->error, XMMS_ERROR_INVAL, str);
+	data->parse_failure = TRUE;
+	xmms_error_set (data->error, XMMS_ERROR_INVAL, str);
 }
 
 static gboolean
-xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
+xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
+{
 	int ret;
 	char buffer[1024];
 	xmlSAXHandler handler;
@@ -121,12 +129,12 @@ xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 
 	g_return_val_if_fail (xform, FALSE);
 
-	memset (&handler, '\0', sizeof (xmlSAXHandler));
-	memset (&data, '\0', sizeof (xmms_rss_data_t));
+	memset (&handler, 0, sizeof (handler));
+	memset (&data, 0, sizeof (data));
 
-	handler.startElement = xmms_rss_start_element;
-	handler.error = xmms_rss_error;
-	handler.fatalError = xmms_rss_error;
+	handler.startElement = (startElementSAXFunc) xmms_rss_start_element;
+	handler.error = (errorSAXFunc) xmms_rss_error;
+	handler.fatalError = (fatalErrorSAXFunc) xmms_rss_error;
 
 	data.xform = xform;
 	data.error = error;
@@ -134,12 +142,14 @@ xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 
 	xmms_error_reset (error);
 
-	if (!(ctx = xmlCreatePushParserCtxt (&handler, &data, buffer, 0, NULL))) {
-		xmms_error_set (error, XMMS_ERROR_OOM, "Could not allocate xml parser");
+	ctx = xmlCreatePushParserCtxt (&handler, &data, buffer, 0, NULL);
+	if (!ctx) {
+		xmms_error_set (error, XMMS_ERROR_OOM,
+		                "Could not allocate xml parser");
 		return FALSE;
 	}
 
-	while ((ret = xmms_xform_read (xform, buffer, 1024, error)) > 0) {
+	while ((ret = xmms_xform_read (xform, buffer, sizeof (buffer), error)) > 0) {
 		xmlParseChunk (ctx, buffer, ret, 0);
 	}
 
@@ -157,7 +167,4 @@ xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 	xmlFreeParserCtxt (ctx);
 
 	return TRUE;
-}
-
-static void xmms_rss_destroy (xmms_xform_t *xform) {
 }
