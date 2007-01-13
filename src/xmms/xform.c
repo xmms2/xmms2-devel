@@ -298,7 +298,8 @@ xmms_xform_destroy (xmms_object_t *object)
 
 	XMMS_DBG ("Freeing xform '%s'", xmms_xform_shortname (xform));
 
-	if (xform->plugin && xform->entry) {
+	/* The 'destroy' method is not mandatory */
+	if (xform->plugin && xform->plugin->methods.destroy && xform->entry) {
 		xform->plugin->methods.destroy (xform);
 	}
 
