@@ -40,6 +40,11 @@ namespace Xmms
 	{
 	}
 
+	argument_error::argument_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 	not_dict_error::not_dict_error( const string& what_arg ) :
 		logic_error( what_arg )
 	{

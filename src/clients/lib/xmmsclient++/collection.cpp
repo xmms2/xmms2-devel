@@ -218,12 +218,14 @@ namespace Xmms
 
 	List< Dict >
 	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& fetch,
 	                        const std::list< std::string >& order,
 	                        unsigned int limit_len,
 	                        unsigned int limit_start,
-	                        const std::list< std::string >& fetch,
 	                        const std::list< std::string >& group
 	                      ) const {
+
+		assertNonEmptyFetchList( fetch );
 
 		std::vector< const char* > corder, cfetch, cgroup;
 		fillCharArray( order, corder );
@@ -396,13 +398,15 @@ namespace Xmms
 
 	void
 	Collection::queryInfos( const Coll::Coll& coll,
-	                        const std::list< std::string >& order,
 	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& order,
 	                        unsigned int limit_len,
 	                        unsigned int limit_start,
 	                        const std::list< std::string >& group,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
+
+		assertNonEmptyFetchList( fetch );
 
 		std::vector< const char* > corder, cfetch, cgroup;
 		fillCharArray( order, corder );
@@ -419,12 +423,14 @@ namespace Xmms
 
 	void
 	Collection::queryInfos( const Coll::Coll& coll,
-	                        const std::list< std::string >& order,
 	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& order,
 	                        unsigned int limit_len,
 	                        unsigned int limit_start,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
+
+		assertNonEmptyFetchList( fetch );
 
 		queryInfos( coll, order, fetch, limit_len, limit_start,
 		            std::list<std::string>(), slot, error );
@@ -433,11 +439,13 @@ namespace Xmms
 
 	void
 	Collection::queryInfos( const Coll::Coll& coll,
-	                        const std::list< std::string >& order,
 	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& order,
 	                        const std::list< std::string >& group,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
+
+		assertNonEmptyFetchList( fetch );
 
 		queryInfos( coll, order, fetch, 0, 0, group, slot, error );
 
@@ -445,10 +453,12 @@ namespace Xmms
 
 	void
 	Collection::queryInfos( const Coll::Coll& coll,
-	                        const std::list< std::string >& order,
 	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& order,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
+
+		assertNonEmptyFetchList( fetch );
 
 		queryInfos( coll, order, fetch, 0, 0, std::list<std::string>(),
 		            slot, error );
@@ -457,22 +467,24 @@ namespace Xmms
 
 	void
 	Collection::queryInfos( const Coll::Coll& coll,
-	                        const std::list< std::string >& order,
+	                        const std::list< std::string >& fetch,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
 
-		queryInfos( coll, order, std::list<std::string>(), 0, 0,
-		            std::list<std::string>(), slot, error );
+		assertNonEmptyFetchList( fetch );
+
+		queryInfos( coll, std::list<std::string>(), fetch,
+		            0, 0, std::list<std::string>(), slot, error );
 
 	}
 
 	void
-	Collection::queryInfos( const Coll::Coll& coll,
-	                        const DictListSlot& slot,
-	                        const ErrorSlot& error ) const {
+	Collection::assertNonEmptyFetchList( const std::list< std::string >& l
+	                                   ) const {
 
-		queryInfos( coll, std::list<std::string>(), std::list<std::string>(),
-		            0, 0, std::list<std::string>(), slot, error );
+		if( l.size() == 0 ) {
+			throw argument_error( "fetch list cannot be empty!" );
+		}
 
 	}
 

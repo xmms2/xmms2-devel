@@ -127,9 +127,6 @@ init_query (coll_query_params_t *params)
 	query->conditions = g_string_new (NULL);
 	query->params = params;
 
-	/* Always fetch the media id */
-	query->params->fetch = g_list_prepend (query->params->fetch, "id");
-
 	/* Prepare aliases for the order/group/fetch fields */
 	for (n = query->params->order; n; n = n->next) {
 		gchar *field = canonical_field_name (n->data);

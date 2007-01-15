@@ -211,13 +211,13 @@ namespace Xmms
 			 *  Reference operator.
 			 *
 			 *  @param coll The collection to query.
+			 *  @param fetch The list of properties to retrieve.
 			 *  @param order The list of properties by which to order
 			 *               the matching media.
 			 *  @param limit_len Optional argument to limit the
 			 *                   maximum number of media to retrieve.
 			 *  @param limit_start Optional argument to set the offset
 			 *                     at which to start retrieving media.
-			 *  @param fetch The list of properties to retrieve.
 			 *  @param group The list of properties by which to group the results.
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -232,10 +232,10 @@ namespace Xmms
 			 */
 			List< Dict >
 			queryInfos( const Coll::Coll& coll,
+			            const std::list<std::string>& fetch,
 			            const std::list<std::string>& order = std::list<std::string>(),
 			            unsigned int limit_len = 0,
 			            unsigned int limit_start = 0,
-			            const std::list<std::string>& fetch = std::list<std::string>(),
 			            const std::list<std::string>& group = std::list<std::string>()
 			          ) const;
 
@@ -423,13 +423,13 @@ namespace Xmms
 			 *  Reference operator.
 			 *
 			 *  @param coll The collection to query.
+			 *  @param fetch The list of properties to retrieve.
 			 *  @param order The list of properties by which to order
 			 *               the matching media.
 			 *  @param limit_len Optional argument to limit the
 			 *                   maximum number of media to retrieve.
 			 *  @param limit_start Optional argument to set the offset
 			 *                     at which to start retrieving media.
-			 *  @param fetch The list of properties to retrieve.
 			 *  @param group The list of properties by which to group the results.
 			 *  @param slot Function pointer to a function taking a
 			 *              const DictList& and returning a bool.
@@ -440,8 +440,8 @@ namespace Xmms
 			 */
 			void
 			queryInfos( const Coll::Coll& coll,
-			            const std::list< std::string >& order,
 			            const std::list< std::string >& fetch,
+			            const std::list< std::string >& order,
 			            unsigned int limit_len,
 			            unsigned int limit_start,
 			            const std::list< std::string >& group,
@@ -454,8 +454,8 @@ namespace Xmms
 			 */
 			void
 			queryInfos( const Coll::Coll& coll,
-			            const std::list< std::string >& order,
 			            const std::list< std::string >& fetch,
+			            const std::list< std::string >& order,
 			            unsigned int limit_len,
 			            unsigned int limit_start,
 						const DictListSlot& slot,
@@ -467,8 +467,8 @@ namespace Xmms
 			 */
 			void
 			queryInfos( const Coll::Coll& coll,
-			            const std::list< std::string >& order,
 			            const std::list< std::string >& fetch,
+			            const std::list< std::string >& order,
 			            const std::list< std::string >& group,
 						const DictListSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
@@ -479,27 +479,18 @@ namespace Xmms
 			 */
 			void
 			queryInfos( const Coll::Coll& coll,
-			            const std::list< std::string >& order,
 			            const std::list< std::string >& fetch,
-						const DictListSlot& slot,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Without grouping, limit or list of fetched properties.
-			 */
-			void
-			queryInfos( const Coll::Coll& coll,
 			            const std::list< std::string >& order,
 						const DictListSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**
 			 * @overload
-			 * @note Without grouping, ordering, limit or list of fetched properties.
+			 * @note Without grouping, ordering or limit.
 			 */
 			void
 			queryInfos( const Coll::Coll& coll,
+			            const std::list< std::string >& fetch,
 						const DictListSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
@@ -540,6 +531,10 @@ namespace Xmms
 			xmmsc_connection_t*& conn_;
 			bool& connected_;
 			MainloopInterface*& ml_;
+
+			void assertNonEmptyFetchList( const std::list< std::string >& l
+			                            ) const;
+
 		/** @endcond */
 
 	};
