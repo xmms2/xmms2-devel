@@ -28,7 +28,8 @@ sub AUTOLOAD {
     (my $func = $AUTOLOAD) =~ s/.*:://;
 
     unless ($$self->can($func)) {
-        croak (qq{Can't locate object method "$func" via package Audio::XMMSClient::Sync});
+        require Carp;
+        Carp::croak (qq{Can't locate object method "$func" via package Audio::XMMSClient::Sync});
     }
 
     {
@@ -49,7 +50,8 @@ sub sync_request {
         $resp->wait;
 
         if ($resp->iserror) {
-            croak ($resp->get_error);
+            require Carp;
+            Carp::croak ($resp->get_error);
         }
 
         $resp = $resp->value;
