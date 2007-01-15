@@ -25,6 +25,7 @@
 
 #include <boost/bind.hpp>
 
+#include <iostream>
 #include <string>
 
 namespace Xmms
@@ -34,64 +35,74 @@ namespace Xmms
 	{
 	}
 
-	void Playback::tickle() const
+	VoidResult Playback::tickle() const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_tickle, conn_ ) );
+		xmmsc_result_t* res =
+			call( connected_, boost::bind( xmmsc_playback_tickle, conn_ ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::stop() const
+	VoidResult Playback::stop() const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_stop, conn_ ) );
+		xmmsc_result_t* res =
+			call( connected_, boost::bind( xmmsc_playback_stop, conn_ ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::pause() const
+	VoidResult Playback::pause() const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_pause, conn_ ) );
+		xmmsc_result_t* res =
+			call( connected_, boost::bind( xmmsc_playback_pause, conn_ ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::start() const
+	VoidResult Playback::start() const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_start, conn_ ) );
+		xmmsc_result_t* res =
+			call( connected_, boost::bind( xmmsc_playback_start, conn_ ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::seekMs(unsigned int milliseconds) const
+	VoidResult Playback::seekMs(unsigned int milliseconds) const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_seek_ms, conn_, milliseconds ) );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_playback_seek_ms, conn_, milliseconds ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::seekMsRel(int milliseconds) const
+	VoidResult Playback::seekMsRel(int milliseconds) const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_seek_ms_rel, conn_, milliseconds ) );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_playback_seek_ms_rel,
+			                   conn_, milliseconds ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::seekSamples(unsigned int samples) const
+	VoidResult Playback::seekSamples(unsigned int samples) const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_seek_samples, conn_, samples ) );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_playback_seek_samples, conn_, samples ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playback::seekSamplesRel(int samples) const
+	VoidResult Playback::seekSamplesRel(int samples) const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_seek_samples_rel, conn_, samples ) );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_playback_seek_samples_rel,
+			                   conn_, samples ) );
+		return VoidResult( res, ml_ );
 	}
 
-	unsigned int Playback::currentID() const
+	UintResult Playback::currentID() const
 	{
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
+		    call( connected_,
 		          boost::bind( xmmsc_playback_current_id, conn_ ) );
-		unsigned int id = 0;
-		xmmsc_result_get_uint( res, &id );
-		xmmsc_result_unref( res );
-
-		return id;
+		return UintResult( res, ml_ );
 	}
 
 	Playback::Status Playback::getStatus() const
@@ -107,37 +118,32 @@ namespace Xmms
 		return static_cast< Playback::Status >(status);
 	}
 
-	unsigned int Playback::getPlaytime() const
+	UintResult Playback::getPlaytime() const
 	{
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_playback_playtime, conn_ ) );
-		unsigned int playtime = 0;
-		xmmsc_result_get_uint( res, &playtime );
-		xmmsc_result_unref( res );
-
-		return playtime;
+		    call( connected_, boost::bind( xmmsc_playback_playtime, conn_ ) );
+		return UintResult( res, ml_ );
 	}
 
-	void Playback::volumeSet(const std::string& channel,
-	                         unsigned int volume) const
+	VoidResult Playback::volumeSet(const std::string& channel,
+	                               unsigned int volume) const
 	{
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playback_volume_set, conn_,
-		                    channel.c_str(), volume ) );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_playback_volume_set, conn_,
+			                   channel.c_str(), volume ) );
+		return VoidResult( res, ml_ );
 	}
 
-	Dict Playback::volumeGet() const
+	DictResult Playback::volumeGet() const
 	{
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
+		    call( connected_,
 		          boost::bind( xmmsc_playback_volume_get, conn_ ) );
-		Dict volume( res );
-		xmmsc_result_unref( res );
-
-		return volume;
+		return DictResult( res, ml_ );
 	}
 
+#if 0
 	void Playback::tickle( const VoidSlot& slot,
 	                       const ErrorSlot& error ) const
 	{
@@ -286,6 +292,7 @@ namespace Xmms
 		                                  conn_ ),
 		                     slot, error );
 	}
+#endif
 
 	Playback::Playback( xmmsc_connection_t*& conn, bool& connected,
 	                    MainloopInterface*& ml ) :

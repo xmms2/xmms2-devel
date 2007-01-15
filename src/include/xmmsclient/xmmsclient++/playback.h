@@ -19,10 +19,9 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
-#include <xmmsclient/xmmsclient++/signal.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <string>
 
@@ -61,7 +60,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void tickle() const;
+			VoidResult tickle() const;
 
 			/** Stops the current playback.
 			 * 
@@ -74,7 +73,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void stop() const;
+			VoidResult stop() const;
 
 			/** Pause the current playback,
 			 *  will tell the output to not read nor write.
@@ -86,7 +85,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void pause() const;
+			VoidResult pause() const;
 
 			/** Starts playback if server is idle.
 			 *
@@ -97,7 +96,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void start() const;
+			VoidResult start() const;
 
 			/** Seek to a absolute time in the current playback.
 			 *
@@ -111,7 +110,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void seekMs(unsigned int milliseconds) const;
+			VoidResult seekMs(unsigned int milliseconds) const;
 
 			/** Seek to a time relative to the current position 
 			 *  in the current playback.
@@ -126,7 +125,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void seekMsRel(int milliseconds) const;
+			VoidResult seekMsRel(int milliseconds) const;
 
 			/** Seek to a absolute number of samples in the current playback.
 			 *
@@ -140,7 +139,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void seekSamples(unsigned int samples) const;
+			VoidResult seekSamples(unsigned int samples) const;
 
 			/** Seek to a number of samples relative to the current
 			 *  position in the current playback.
@@ -155,7 +154,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void seekSamplesRel(int samples) const;
+			VoidResult seekSamplesRel(int samples) const;
 
 			/** Make server emit the current id.
 			 *
@@ -168,7 +167,7 @@ namespace Xmms
 			 *
 			 *  @return The currently playing ID.
 			 */
-			unsigned int currentID() const;
+			UintResult currentID() const;
 
 			/** Make server emit the playback status.
 			 *
@@ -195,7 +194,7 @@ namespace Xmms
 			 *
 			 *  @return The playtime in milliseconds.
 			 */
-			unsigned int getPlaytime() const;
+			UintResult getPlaytime() const;
 
 			/** Set the volume of a channel.
 			 *
@@ -209,8 +208,8 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void volumeSet(const std::string& channel,
-			               unsigned int volume) const;
+			VoidResult volumeSet(const std::string& channel,
+			                     unsigned int volume) const;
 
 			/** Get a channel<->volume list from the server.
 			 *
@@ -223,7 +222,9 @@ namespace Xmms
 			 *
 			 *  @return A Dict containing channel<->volume pairs.
 			 */
-			Dict volumeGet() const;
+			DictResult volumeGet() const;
+
+#if 0
 
 			/** Stop decoding of current song.
 			 *
@@ -464,6 +465,7 @@ namespace Xmms
 			void
 			signalPlaytime( const UintSlot& slot,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+#endif
 
 		/** @cond */
 		private:

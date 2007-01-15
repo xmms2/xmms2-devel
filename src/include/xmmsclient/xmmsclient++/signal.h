@@ -229,6 +229,10 @@ namespace Xmms
 	template< typename T >
 	inline void generic_callback( xmmsc_result_t* res, void* userdata )
 	{
+		if( !userdata ) {
+			xmmsc_result_unref( res );
+			return;
+		}
 
 		Signal< T >* data = static_cast< Signal< T >* >( userdata );
 

@@ -153,6 +153,16 @@ namespace Xmms
 
 	}
 
+	inline xmmsc_result_t*
+	call( bool connected, const boost::function< xmmsc_result_t*() >& func )
+	{
+
+		check( connected );
+		xmmsc_result_t* res = func();
+		return res;
+
+	}
+
 	/** Wrapper function for calling synchronous functions which
 	 *  don't return a meaningful value.
 	 *  Same as call but unrefs the result.
