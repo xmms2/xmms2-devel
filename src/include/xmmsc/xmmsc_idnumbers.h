@@ -209,6 +209,14 @@ typedef enum {
 	XMMS_COLLECTION_TYPE_PARTYSHUFFLE
 } xmmsc_coll_type_t;
 
+typedef enum {
+	XMMS_MEDIALIB_ENTRY_STATUS_NEW,
+	XMMS_MEDIALIB_ENTRY_STATUS_OK,
+	XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING,
+	XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE,
+	XMMS_MEDIALIB_ENTRY_STATUS_REHASH
+} xmmsc_medialib_entry_status_t;
+
 typedef const char* xmmsc_coll_namespace_t;
 #define	XMMS_COLLECTION_NS_ALL          "*"
 #define XMMS_COLLECTION_NS_COLLECTIONS  "Collections"

@@ -40,7 +40,6 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL "channel"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE "samplerate"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD "lmod"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED "resolved"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK "gain_track"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM "gain_album"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK "peak_track"
@@ -63,7 +62,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME "picture_front_mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STARTMS "startms"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STOPMS "stopms"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE "available"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS "status"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
@@ -85,5 +84,7 @@ gchar *xmms_medialib_url_encode (const gchar *path);
 
 xmms_medialib_session_t * _xmms_medialib_begin (gboolean write, const char *file, int line);
 void xmms_medialib_end (xmms_medialib_session_t *session);
+
+#define xmms_medialib_entry_status_set(session, e, st) xmms_medialib_entry_property_set_int_source(session, e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, 1) /** @todo: hardcoded server id might be bad? */
 
 #endif /* __XMMS_MEDIALIB_H__ */

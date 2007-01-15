@@ -176,12 +176,14 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 	while (mrt->running) {
 		xmms_medialib_session_t *session;
+		xmmsc_medialib_entry_status_t prev_status;
 		guint lmod = 0;
 		xmms_medialib_entry_t entry;
 		xmms_xform_t *xform;
 
-		session = xmms_medialib_begin ();
+		session = xmms_medialib_begin_write ();
 		entry = xmms_medialib_entry_not_resolved_get (session);
+		XMMS_DBG ("got %d as not resolved", entry);
 
 		if (!entry) {
 			xmms_medialib_end (session);
@@ -204,7 +206,11 @@ xmms_mediainfo_reader_thread (gpointer data)
 			continue;
 		}
 
+		prev_status = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
+		xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING);
+
 		lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+		xmms_medialib_end (session);
 
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
@@ -216,19 +222,17 @@ xmms_mediainfo_reader_thread (gpointer data)
 			num--;
 		}
 
-		xmms_medialib_end (session);
-
-
 		xform = xmms_xform_chain_setup (entry, goal_format);
 
 		if (!xform) {
 			session = xmms_medialib_begin_write ();
-			xmms_medialib_entry_property_set_int (session, entry,
-			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 0);
-			xmms_medialib_entry_property_set_int (session, entry,
-			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+			if (prev_status == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
+				xmms_medialib_entry_remove (session, entry);
+			} else {
+				xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
+				xmms_medialib_entry_send_update (entry);
+			}
 			xmms_medialib_end (session);
-			xmms_medialib_entry_send_update (entry);
 			continue;
 		}
 
@@ -236,10 +240,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		g_get_current_time (&timeval);
 
 		session = xmms_medialib_begin_write ();
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 1);
+		xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_OK);
 		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 		                                      timeval.tv_sec);

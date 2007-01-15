@@ -426,10 +426,14 @@ xmms_output_filler (void *arg)
 			chain = xmms_xform_chain_setup (entry, output->format_list);
 			if (!chain) {
 				session = xmms_medialib_begin_write ();
-				xmms_medialib_entry_property_set_int (session, entry,
-				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 0);
-				xmms_medialib_entry_send_update (entry);
+				if (xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
+					xmms_medialib_entry_remove (session, entry);
+				} else {
+					xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
+					xmms_medialib_entry_send_update (entry);
+				}
 				xmms_medialib_end (session);
+
 				if (!xmms_playlist_advance (output->playlist)) {
 					XMMS_DBG ("End of playlist");
 					output->filler_state = FILLER_STOP;
@@ -437,12 +441,6 @@ xmms_output_filler (void *arg)
 				g_mutex_lock (output->filler_mutex);
 				continue;
 			}
-
-			session = xmms_medialib_begin_write ();
-			xmms_medialib_entry_property_set_int (session, entry,
-			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 1);
-			xmms_medialib_end (session);
-			xmms_medialib_entry_send_update (entry);
 
 			arg = g_new0 (xmms_output_song_changed_arg_t, 1);
 			arg->output = output;

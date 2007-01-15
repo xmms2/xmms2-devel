@@ -692,7 +692,6 @@ xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmm
 	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_remove (session, entry);
 	xmms_medialib_end (session);
-	xmms_playlist_remove_by_entry (medialib->playlist, entry);
 }
 
 /**
@@ -708,7 +707,9 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 {
 	g_return_if_fail (session);
 	xmms_sqlite_exec (session->sql, "delete from Media where id=%d", entry);
-	/** @todo remove from playlists too? or should we do refcounting on this? */
+
+	/** @todo safe ? */
+	xmms_playlist_remove_by_entry (medialib->playlist, entry);
 }
 
 static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_session_t *session, guint32 id, const char *url, xmms_error_t *error);
@@ -836,7 +837,7 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 	                  XMMS_MEDIALIB_SOURCE_SERVER_ID,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
-	                  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+	                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
 
@@ -857,12 +858,14 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 	if (id) {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = 0 where key='%s' and id=%d",
-		                  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, id);
+		                  "update Media set value = %d where key='%s' and id=%d",
+		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
+		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, id);
 	} else {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = 0 where key='%s'",
-		                  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
+		                  "update Media set value = %d where key='%s'",
+		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
+		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
 	}
 
 	xmms_medialib_end (session);
@@ -937,9 +940,7 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
 		return 0;
 	}
 
-	xmms_medialib_entry_property_set_int_source (session, id,
-	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
-	                                             0, XMMS_MEDIALIB_SOURCE_SERVER_ID);
+	xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_NEW);
 
 	return 1;
 
@@ -1302,9 +1303,11 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
 	                         "select id from Media where key='%s' "
-	                         "and source=%d and value=0 limit 1",
-	                         XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
-	                         XMMS_MEDIALIB_SOURCE_SERVER_ID);
+	                         "and source=%d and value in (%d, %d) limit 1",
+	                         XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+	                         XMMS_MEDIALIB_SOURCE_SERVER_ID,
+	                         XMMS_MEDIALIB_ENTRY_STATUS_NEW,
+	                         XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
 
 	return ret;
 }
@@ -1317,8 +1320,10 @@ xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
 	                         "select count(id) as value from Media where "
-	                         "key='%s' and value=0 and source=%d",
-	                         XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+	                         "key='%s' and value in (%d, %d) and source=%d",
+	                         XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+	                         XMMS_MEDIALIB_ENTRY_STATUS_NEW,
+	                         XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 	                         XMMS_MEDIALIB_SOURCE_SERVER_ID);
 
 	return ret;
