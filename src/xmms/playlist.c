@@ -695,37 +695,50 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, gchar *plname,
 	return TRUE;
 }
 
+typedef struct {
+	xmms_playlist_t *pls;
+	xmms_medialib_entry_t entry;
+} playlist_remove_info_t;
+
+static void
+remove_from_playlist (gpointer key, gpointer value, gpointer udata)
+{
+	playlist_remove_info_t *rminfo = (playlist_remove_info_t *) udata;
+	guint32 i, val;
+	gint size;
+	xmmsc_coll_t *plcoll = (xmmsc_coll_t *) value;
+
+	size = xmms_playlist_coll_get_size (plcoll);
+	for (i = 0; i < size; i++) {
+		if (xmmsc_coll_idlist_get_index (plcoll, i, &val) && val == rminfo->entry) {
+			XMMS_DBG ("removing entry on pos %d in %s", i, (gchar *)key);
+			xmms_playlist_remove_unlocked (rminfo->pls, (gchar *)key, plcoll, i, NULL);
+			i--; /* reset it */
+		}
+	}
+}
+
+
+
 /**
  * Remove all additions of #entry in the playlist
  * @sa xmms_playlist_remove
  */
 gboolean
-xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, gchar *plname,
+xmms_playlist_remove_by_entry (xmms_playlist_t *playlist,
                                xmms_medialib_entry_t entry)
 {
-	guint32 i, val;
-	gint size;
-	xmmsc_coll_t *plcoll;
-
+	playlist_remove_info_t rminfo;
 	g_return_val_if_fail (playlist, FALSE);
 
 	g_mutex_lock (playlist->mutex);
 
-	plcoll = xmms_playlist_get_coll (playlist, plname, NULL);
-	if (plcoll == NULL) {
-		/* FIXME: happens ? */
-		g_mutex_unlock (playlist->mutex);
-		return FALSE;
-	}
+	rminfo.pls = playlist;
+	rminfo.entry = entry;
 
-	size = xmms_playlist_coll_get_size (plcoll);
-	for (i = 0; i < size; i++) {
-		if (xmmsc_coll_idlist_get_index (plcoll, i, &val) && val == entry) {
-			XMMS_DBG ("removing entry on pos %d", i);
-			xmms_playlist_remove_unlocked (playlist, plname, plcoll, i, NULL);
-			i--; /* reset it */
-		}
-	}
+	xmms_collection_foreach_in_namespace (playlist->colldag,
+	                                      XMMS_COLLECTION_NSID_PLAYLISTS,
+	                                      remove_from_playlist, &rminfo);
 
 	g_mutex_unlock (playlist->mutex);
 
