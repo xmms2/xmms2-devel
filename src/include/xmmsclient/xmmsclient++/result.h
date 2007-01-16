@@ -196,7 +196,7 @@ namespace Xmms
 			{
 			}
 
-			~SignalAdapter()
+			virtual ~SignalAdapter()
 			{
 			}
 
@@ -211,6 +211,23 @@ namespace Xmms
 				AdapterBase<T>::operator=( src );
 				return *this;
 			}
+
+	};
+
+	class QuitSignal : protected SignalAdapter< uint32_t >
+	{
+		public:
+
+			QuitSignal( xmmsc_result_t* res, MainloopInterface*& ml )
+				: SignalAdapter< uint32_t >( res, ml )
+			{
+				xmmsc_result_notifier_set( res, 
+			                               Xmms::generic_callback<uint32_t>,
+			                               static_cast< void* >( this->sig_ ) );
+			}
+
+			using SignalAdapter< uint32_t >::connect;
+			using SignalAdapter< uint32_t >::connectError;
 
 	};
 

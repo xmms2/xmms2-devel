@@ -124,35 +124,17 @@ namespace Xmms
 		}
 	}
 
-	/** Convenience function to call a synchronous function.
+	/** Convenience function to call a function.
 	 *  @note does not unref the result
 	 *
 	 *  @param connected Connection status.
-	 *  @param ml Currently running mainloop.
 	 *  @param func Function pointer to the function to be called.
 	 *
 	 *  @return xmmsc_result_t* from the function called.
 	 *
 	 *  @throw connection_error If not connected.
 	 *  @throw result_error If result returned was in error state.
-	 *  @throw mainloop_running_error If the mainloop is running.
 	 */
-	inline xmmsc_result_t*
-	call( bool connected, const MainloopInterface* const & ml, 
-	      const boost::function< xmmsc_result_t*() >& func )
-	{
-
-		check( connected );
-		check( ml );
-
-		xmmsc_result_t* res = func();
-		xmmsc_result_wait( res );
-
-		check( res );
-		return res;
-
-	}
-
 	inline xmmsc_result_t*
 	call( bool connected, const boost::function< xmmsc_result_t*() >& func )
 	{
@@ -160,51 +142,6 @@ namespace Xmms
 		check( connected );
 		xmmsc_result_t* res = func();
 		return res;
-
-	}
-
-	/** Wrapper function for calling synchronous functions which
-	 *  don't return a meaningful value.
-	 *  Same as call but unrefs the result.
-	 *  @see call
-	 */
-	inline void vCall( bool connected, const MainloopInterface* const & ml,
-                       const boost::function< xmmsc_result_t*() >& func )
-	{
-		xmmsc_result_unref( call( connected, ml, func ) );
-	}
-
-	static bool dummy_error( const std::string& )
-	{
-		return false;
-	}
-
-	/** Convenience function for calling async functions and setting a callback.
-	 *
-	 *  @param connected Connection state.
-	 *  @param func Function pointer to the function to be called.
-	 *  @param slot Callback function pointer.
-	 *  @param error Error callback function pointer.
-	 *
-	 *  @throw connection_error If not connected.
-	 */ 
-	template< typename T >
-	inline void aCall( bool connected, 
-	                   const boost::function< xmmsc_result_t*() >& func,
-	                   const typename Signal<T>::signal_t::slot_type& slot,
-	                   const error_sig::slot_type& error )
-	{
-
-		check( connected );
-
-		Xmms::Signal< T >* sig = new Xmms::Signal< T >;
-		sig->signal.connect( slot );
-		sig->error_signal.connect( error );
-		SignalHolder::getInstance().addSignal( sig );
-		xmmsc_result_t* res = func();
-		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,
-		                           static_cast< void* >( sig ) );
-		xmmsc_result_unref( res );
 
 	}
 

@@ -25,13 +25,12 @@
 #include <xmmsclient/xmmsclient++/stats.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <boost/bind.hpp>
 
-#include <list>
 #include <string>
 
 namespace Xmms 
@@ -97,21 +96,16 @@ namespace Xmms
 		}
 	}
 
-	void
-	Client::broadcastQuit( const UintSlot& slot, const ErrorSlot& error )
+	QuitSignal&
+	Client::broadcastQuit()
 	{
 
 		check( connected_ );
 		if( !quitSignal_ ) {
-			quitSignal_ = new Signal<unsigned int>;
 			xmmsc_result_t* res = xmmsc_broadcast_quit( conn_ );
-			xmmsc_result_notifier_set( res, 
-			                           Xmms::generic_callback<unsigned int>,
-			                           static_cast< void* >( quitSignal_ ) );
-			xmmsc_result_unref( res );
+			quitSignal_ = new QuitSignal( res, mainloop_ );
 		}
-		quitSignal_->signal.connect( slot );
-		quitSignal_->error_signal.connect( error );
+		return *quitSignal_;
 
 	}
 
@@ -121,7 +115,8 @@ namespace Xmms
 		if( !mainloop_ ) {
 			mainloop_ = new MainLoop( conn_ );
 			listener_ = new Listener( conn_ );
-			broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
+			broadcastQuit().connect( boost::bind( &Client::quitHandler,
+			                                      this, _1 ) );
 			setDisconnectCallback( boost::bind( &Client::dcHandler, this ) );
 			dynamic_cast<MainLoop*>(mainloop_)->addListener( listener_ );
 		}
@@ -136,7 +131,8 @@ namespace Xmms
 			delete mainloop_;
 		}
 		mainloop_ = ml;
-		broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
+		broadcastQuit().connect( boost::bind( &Client::quitHandler,
+		                                      this, _1 ) );
 		setDisconnectCallback( boost::bind( &Client::dcHandler, this ) );
 
 	}

@@ -19,7 +19,6 @@
 
 #include <xmmsclient/xmmsclient.h>
 
-#include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/xform.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
@@ -31,10 +30,9 @@
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/signal.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/collection.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
-#include <list>
 #include <string>
 
 namespace Xmms 
@@ -100,9 +98,8 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			void
-			broadcastQuit( const UintSlot& slot,
-			               const ErrorSlot& error = &Xmms::dummy_error );
+			QuitSignal&
+			broadcastQuit();
 
 			// Subsystems
 
@@ -170,7 +167,7 @@ namespace Xmms
 			MainloopInterface* mainloop_;
 			Listener* listener_;
 
-			Signal<unsigned int>* quitSignal_;
+			QuitSignal* quitSignal_;
 			DisconnectCallback* dc_;
 		/** @endcond */
 
