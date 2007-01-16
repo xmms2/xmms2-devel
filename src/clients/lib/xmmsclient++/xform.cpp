@@ -17,10 +17,8 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
-#include <xmmsclient/xmmsclient++/dict.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
-#include <xmmsclient/xmmsclient++/list.h>
+#include <xmmsclient/xmmsclient++/result.h>
 #include <xmmsclient/xmmsclient++/xform.h>
 
 #include <boost/function.hpp>
@@ -35,37 +33,26 @@ namespace Xmms
 	{
 	}
 
-	List< Dict >
+	DictListResult
 	Xform::browse( const std::string& url ) const
 	{
-
 		xmmsc_result_t* res =
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_xform_media_browse, conn_, url.c_str() )
-		        );
-
-		List< Dict > result( res );
-		xmmsc_result_unref( res );
-
-		return res;
+		    call( connected_, 
+		          boost::bind( xmmsc_xform_media_browse, conn_, url.c_str() ) );
+		return DictListResult( res, ml_ );
 	}
 
-	List< Dict >
+	DictListResult
 	Xform::browseEncoded( const std::string& url ) const
 	{
-
 		xmmsc_result_t* res =
-		    call( connected_, ml_,
+		    call( connected_,
 		          boost::bind( xmmsc_xform_media_browse_encoded,
-		                       conn_, url.c_str() )
-		        );
-
-		List< Dict > result( res );
-		xmmsc_result_unref( res );
-
-		return res;
+		                       conn_, url.c_str() ) );
+		return DictListResult( res, ml_ );
 	}
 
+#if 0
 	void
 	Xform::browse( const std::string& url, const DictListSlot& slot,
 	               const ErrorSlot& error ) const
@@ -89,6 +76,7 @@ namespace Xmms
 		                 slot, error );
 
 	}
+#endif
 
 	Xform::Xform( xmmsc_connection_t*& conn, bool& connected,
 				  MainloopInterface*& ml ) :

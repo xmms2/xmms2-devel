@@ -19,11 +19,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
-#include <xmmsclient/xmmsclient++/dict.h>
-#include <xmmsclient/xmmsclient++/list.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
-#include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <string>
 
@@ -57,7 +53,8 @@ namespace Xmms
 			 *
 			 *  @return a list of information dict for each path.
 			 */
-			List< Dict > browse( const std::string& url ) const;
+			DictListResult
+			browse( const std::string& url ) const;
 
 			/** Browse available media in a path.
 			 *  Same as #browse but takes an encoded path instead.
@@ -73,8 +70,10 @@ namespace Xmms
 			 *
 			 *  @return a list of information dict for each path.
 			 */
-			List< Dict > browseEncoded( const std::string& url ) const;
+			DictListResult
+			browseEncoded( const std::string& url ) const;
 
+#if 0
 
 			/** Browse available media in a path.
 			 *  A list of paths available (directly) under the
@@ -105,6 +104,7 @@ namespace Xmms
 			void browseEncoded( const std::string& url, const DictListSlot& slot,
 			                    const ErrorSlot& error = &Xmms::dummy_error
 			                  ) const;
+#endif
 
 		/** @cond */
 		private:
