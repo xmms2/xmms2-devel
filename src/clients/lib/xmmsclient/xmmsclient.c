@@ -14,11 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-/** @file 
- * XMMS client lib.
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -49,7 +44,6 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  */
 
 /**
- * @defgroup XMMSClient XMMSClient
  * @brief This functions are used to connect a client software
  * to the XMMS2 daemon.
  *
