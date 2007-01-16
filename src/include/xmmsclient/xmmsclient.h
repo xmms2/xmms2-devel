@@ -331,7 +331,7 @@ int xmmsc_result_list_next (xmmsc_result_t *res);
 int xmmsc_result_list_first (xmmsc_result_t *res);
 int xmmsc_result_list_valid (xmmsc_result_t *res);
 
-int xmmsc_result_get_type (xmmsc_result_t *res);
+xmmsc_result_value_type_t xmmsc_result_get_type (xmmsc_result_t *res);
 
 const char *xmmsc_result_decode_url (xmmsc_result_t *res, const char *string);
 

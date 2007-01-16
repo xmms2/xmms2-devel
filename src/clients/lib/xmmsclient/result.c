@@ -642,13 +642,15 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 
 /**
  * Get the type of the result.
- * @returns The #xmms_object_cmd_arg_type_t data type in the result or -1 on error.
+ * @returns The data type in the result.
  */
-int
+xmmsc_result_value_type_t
 xmmsc_result_get_type (xmmsc_result_t *res)
 {
-	if (!res) return -1;
-	if (!res->parsed) return -1;
+	x_api_error_if (!res, "NULL result",
+	                XMMSC_RESULT_VALUE_TYPE_NONE);
+	x_api_error_if (!res->parsed, "invalid result type",
+	                XMMSC_RESULT_VALUE_TYPE_NONE);
 	return res->datatype;
 }
 
