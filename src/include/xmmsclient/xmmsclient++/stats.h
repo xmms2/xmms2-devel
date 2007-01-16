@@ -78,7 +78,8 @@ namespace Xmms
 			 *  @return Dict containing @e version @c string and @e uptime as
 			 *          <code>unsigned int</code>.
 			 */
-			const Dict mainStats() const;
+			DictResult
+			mainStats() const;
 
 			/** Get a list of loaded plugins from the server.
 			 *
@@ -96,42 +97,8 @@ namespace Xmms
 			 *          @e version @c string, @e description @c string and
 			 *          @e type as <code>Plugins::Type</code>
 			 */
-			const DictList pluginList(Plugins::Type type = Plugins::ALL) const;
-
-			/** Get statistics from the server.
-			 *
-			 *  @param slot Function pointer to a function taking
-			 *              const Dict& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			mainStats(const DictSlot& slot,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/** Get a list of loaded plugins from the server.
-			 *
-			 *  @param type Type of plugins to get a list of.
-			 *  @param slot Function pointer to a function taking
-			 *              const std::list< Dict >& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			pluginList(Plugins::Type type,
-			           const DictListSlot& slot,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/** @overload
-			 *  @note This defaults the type to Plugins::ALL
-			 */
-			void
-			pluginList(const DictListSlot& slot,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
+			DictListResult
+			pluginList(Plugins::Type type = Plugins::ALL) const;
 
 			/** Request the visualisation data signal.
 			 *
@@ -142,10 +109,8 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			void
-			signalVisualisationData( const UintListSlot& slot,
-			                         const ErrorSlot& error = &Xmms::dummy_error
-			                       ) const;
+			UintListSignal
+			signalVisualisationData() const;
 
 			/** Request status for the mediainfo reader.
 			 *
@@ -159,10 +124,8 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			void
-			broadcastMediainfoReaderStatus( const ReaderStatusSlot& slot,
-			                                const ErrorSlot& error
-			                                      = &Xmms::dummy_error) const;
+			ReaderStatusSignal
+			broadcastMediainfoReaderStatus() const;
 
 			/** Request number of unindexed entries in medialib.
 			 *
@@ -173,10 +136,8 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			void
-			signalMediainfoReaderUnindexed( const UintSlot& slot,
-			                                const ErrorSlot& error
-			                                      = &Xmms::dummy_error) const;
+			UintSignal
+			signalMediainfoReaderUnindexed() const;
 
 		/** @cond */
 		private:

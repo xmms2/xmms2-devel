@@ -33,91 +33,48 @@ namespace Xmms
 	{
 	}
 
-	const Dict Stats::mainStats() const
+	DictResult
+	Stats::mainStats() const
 	{
-
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_main_stats, conn_ ) );
-
-		Dict resultMap( res );
-
-		xmmsc_result_unref( res );
-		return resultMap;
-
+		    call( connected_, boost::bind( xmmsc_main_stats, conn_ ) );
+		return DictResult( res, ml_ );
 	}
 
-	const DictList Stats::pluginList(Plugins::Type type) const
+	DictListResult Stats::pluginList(Plugins::Type type) const
 	{
-
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_plugin_list, conn_, type ) ); 	
-		
-		List< Dict > resultList( res );
-
-		xmmsc_result_unref( res );
-		return resultList;
-
+		    call( connected_, boost::bind( xmmsc_plugin_list, conn_, type ) );
+		return DictListResult( res, ml_ );
 	}
 
-	void
-	Stats::mainStats( const DictSlot& slot,
-	                  const ErrorSlot& error ) const
-	{
-
-		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ), 
-		             slot, error );
-	}
-
-	void
-	Stats::pluginList(Plugins::Type type,
-	                   const DictListSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		aCall<DictList>( connected_, 
-		                 boost::bind( xmmsc_plugin_list, conn_, type ),
-		                 slot, error );
-	}
-
-	void 
-	Stats::pluginList( const DictListSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		pluginList( Plugins::ALL, slot, error );
-	}
-
-	void
-	Stats::signalVisualisationData(const UintListSlot& slot,
-	                               const ErrorSlot& error ) const
+	UintListSignal
+	Stats::signalVisualisationData() const
 	{
 		using boost::bind;
-		aCall<List<unsigned int> >( connected_,
-		                            bind( xmmsc_signal_visualisation_data,
-		                                  conn_ ), 
-		                            slot, error );
+		xmmsc_result_t* res =
+		    call( connected_, bind( xmmsc_signal_visualisation_data, conn_ ) );
+		return UintListSignal( res, ml_ );
 	}
 
-	void
-	Stats::broadcastMediainfoReaderStatus(const ReaderStatusSlot& slot,
-	                                      const ErrorSlot& error ) const
+	ReaderStatusSignal
+	Stats::broadcastMediainfoReaderStatus() const
 	{
 		using boost::bind;
-		aCall<ReaderStatus>( connected_,
-		                     bind( xmmsc_broadcast_mediainfo_reader_status,
-		                           conn_),
-		                     slot, error );
+		xmmsc_result_t* res =
+		    call( connected_,
+		          bind( xmmsc_broadcast_mediainfo_reader_status, conn_) );
+		return ReaderStatusSignal( res, ml_ );
 	}
 
-	void
-	Stats::signalMediainfoReaderUnindexed(const UintSlot& slot,
-	                                      const ErrorSlot& error ) const
+	UintSignal
+	Stats::signalMediainfoReaderUnindexed() const
 	{
 		using boost::bind;
-		aCall<unsigned int>( connected_,
-		                     bind( xmmsc_signal_mediainfo_reader_unindexed,
-		                           conn_),
-		                     slot, error );
+		xmmsc_result_t* res =
+		    call( connected_,
+		          bind( xmmsc_signal_mediainfo_reader_unindexed, conn_) );
+		return UintSignal( res, ml_ );
 	}
 
 	Stats::Stats( xmmsc_connection_t*& conn, bool& connected,
