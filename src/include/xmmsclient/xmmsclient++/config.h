@@ -20,8 +20,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/signal.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <list>
 #include <string>
@@ -56,8 +55,9 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void valueRegister( const std::string& name,
-			                    const std::string& defval ) const;
+			VoidResult
+			valueRegister( const std::string& name,
+			               const std::string& defval ) const;
 
 			/** Sets a config value in the server.
 			 *
@@ -71,8 +71,9 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void valueSet( const std::string& key,
-			               const std::string& value ) const;
+			VoidResult
+			valueSet( const std::string& key,
+			          const std::string& value ) const;
 
 			/** Gets the value of a config key.
 			 *  
@@ -87,7 +88,8 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			const std::string valueGet( const std::string& key ) const;
+			StringResult
+			valueGet( const std::string& key ) const;
 
 			/** Gets a key<->value list of config values from the server.
 			 *
@@ -100,70 +102,8 @@ namespace Xmms
 			 *  
 			 *  @return Dict containing all configuration keys and their values.
 			 */
-			Dict valueList() const;
-
-			/** Registers a config value in the server.
-			 *  
-			 *  @param name should be @<clientname@>.myval
-			 *              like cli.path or something like that.
-			 *  @param defval The default value for this config value.
-			 *  @param slot Function pointer to a function returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			valueRegister( const std::string& name, const std::string& defval,
-			               const VoidSlot& slot,
-			               const ErrorSlot& error = &Xmms::dummy_error
-			             ) const;
-
-			/** Sets a config value in the server.
-			 *
-			 *  @param key Key of the config value to set.
-			 *  @param value Value for the config key.
-			 *  @param slot Function pointer to a function returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			valueSet( const std::string& key, const std::string& value,
-			          const VoidSlot& slot,
-			          const ErrorSlot& error = &Xmms::dummy_error
-			        ) const;
-
-			/** Gets the value of a config key.
-			 *  
-			 *  @param key Key of the config value to get.
-			 *  @param slot Function pointer to a function taking
-			 *              const std::string& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			valueGet( const std::string& key,
-			          const StringSlot& slot,
-			          const ErrorSlot& error = &Xmms::dummy_error
-			        ) const;
-
-			/** Gets a key<->value list of config values from the server.
-			 *  
-			 *  @param slot Function pointer to a function taking
-			 *              const Dict& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void
-			valueList( const DictSlot& slot,
-			           const ErrorSlot& error = &Xmms::dummy_error
-			         ) const;
+			DictResult
+			valueList() const;
 
 			/** Requests the <i>config value changed</i> broadcast.
 			 *
@@ -174,10 +114,8 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			void
-			broadcastValueChanged( const DictSlot& slot,
-			                       const ErrorSlot& error = &Xmms::dummy_error
-			                     ) const;
+			DictSignal
+			broadcastValueChanged() const;
 
 		/** @cond */
 		private:
