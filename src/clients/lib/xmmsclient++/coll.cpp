@@ -17,7 +17,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/coll.h>
-#include <xmmsclient/xmmsclient++/collection.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <string>
 using std::string;
@@ -278,7 +278,7 @@ namespace Xmms
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
-		return Collection::createColl( op );
+		return CollResult::createColl( op );
 	}
 
 	Filter::Filter( xmmsc_coll_t* coll )
@@ -684,7 +684,7 @@ namespace Xmms
 			throw out_of_range( "Access out of the operand list!" );
 		}
 
-		return Collection::createColl( op );
+		return CollResult::createColl( op );
 	}
 
 
