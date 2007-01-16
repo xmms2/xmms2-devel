@@ -37,814 +37,275 @@ namespace Xmms
 	{
 	}
 
-	List< std::string > Playlist::list() const
+	StringListResult Playlist::list() const
 	{
-
 		xmmsc_result_t* res =
-		    call( connected_, ml_,
+		    call( connected_,
 		          boost::bind( xmmsc_playlist_list, conn_ ) );
-
-		List< std::string > result( res );
-
-		xmmsc_result_unref( res );
-
-		return result;
-
+		return StringListResult( res, ml_ );
 	}
 
-	void Playlist::load( const std::string& playlist ) const
+	VoidResult Playlist::load( const std::string& playlist ) const
 	{
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_load, conn_, playlist.c_str() ) );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_load, conn_, playlist.c_str() ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playlist::addRecursive( const std::string& url,
+	VoidResult Playlist::addRecursive( const std::string& url,
+	                                   const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_radd, conn_,
+		                       playlist.c_str(), url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::addRecursiveEncoded( const std::string& url,
+	                                          const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_radd_encoded, conn_,
+		                       playlist.c_str(), url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::addUrl( const std::string& url,
 	                             const std::string& playlist ) const
 	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_radd, conn_,
-		                    playlist.c_str(), url.c_str() ) );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_url, conn_,
+		                       playlist.c_str(), url.c_str() ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playlist::addRecursiveEncoded( const std::string& url,
-	                                    const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_radd_encoded, conn_,
-		                    playlist.c_str(), url.c_str() ) );
-
-	}
-
-	void Playlist::addUrl( const std::string& url,
-	                       const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_add_url, conn_,
-		                    playlist.c_str(), url.c_str() ) );
-
-	}
-
-	void Playlist::addUrl( const std::string& url,
-	                       const std::list< std::string >& args,
-	                       const std::string& playlist ) const
+	VoidResult Playlist::addUrl( const std::string& url,
+	                             const std::list< std::string >& args,
+	                             const std::string& playlist ) const
 	{
 		std::vector< const char* > cargs;
 		fillCharArray( args, cargs );
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_add_args, conn_,
-		                    playlist.c_str(), url.c_str(),
-		                    args.size(), &cargs[0] ) );
-
-	}
-
-	void Playlist::addUrlEncoded( const std::string& url,
-	                              const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_add_encoded, conn_,
-		                    playlist.c_str(), url.c_str() ) );
-
-	}
-
-	void Playlist::addId( unsigned int id,
-	                      const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_add_id, conn_,
-		                    playlist.c_str(), id ) );
-
-	}
-
-	void Playlist::addCollection( const Coll::Coll& collection,
-	                              const std::list< std::string >& order,
-	                              const std::string& playlist ) const
-	{
-
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_add_collection, conn_,
-		                    playlist.c_str(), collection.getColl(),
-		                    &corder[0] ) );
-
-	}
-
-	void Playlist::clear( const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		      boost::bind( xmmsc_playlist_clear, conn_, playlist.c_str() ) );
-
-	}
-
-	unsigned int Playlist::currentPos( const std::string& playlist ) const
-	{
-
-		xmmsc_result_t* res = 
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_playlist_current_pos, conn_,
-		                       playlist.c_str() ) );
-
-		unsigned int pos = 0;
-		xmmsc_result_get_uint( res, &pos );
-
-		xmmsc_result_unref( res );
-
-		return pos;
-
-	}
-
-	std::string Playlist::currentActive() const
-	{
 
 		xmmsc_result_t* res =
-		    call( connected_, ml_,
-		          boost::bind( xmmsc_playlist_current_active, conn_ ) );
-
-		char* cname;
-
-		xmmsc_result_get_string( res, &cname );
-		std::string retname( cname );
-
-		xmmsc_result_unref( res );
-
-		return retname;
-
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_args, conn_,
+		                       playlist.c_str(), url.c_str(),
+		                       args.size(), &cargs[0] ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playlist::insertUrl( int pos, const std::string& url,
-	                          const std::string& playlist ) const
+	VoidResult Playlist::addUrlEncoded( const std::string& url,
+	                                    const std::string& playlist ) const
 	{
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_insert_url, conn_,
-		                    playlist.c_str(), pos, url.c_str() ) );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_encoded, conn_,
+		                       playlist.c_str(), url.c_str() ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playlist::insertUrl( int pos, const std::string& url,
-	                          const std::list< std::string >& args,
-	                          const std::string& playlist ) const
-	{
-
-		std::vector< const char* > cargs;
-		fillCharArray( args, cargs );
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_insert_args, conn_,
-		                    playlist.c_str(), pos, url.c_str(),
-		                    args.size(), &cargs[0] ) );
-
-	}
-
-	void Playlist::insertUrlEncoded( int pos, const std::string& url,
-	                                 const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_insert_encoded, conn_,
-		                    playlist.c_str(), pos, url.c_str() ) );
-
-	}
-
-
-	void Playlist::insertId( int pos, unsigned int id,
-	                         const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_insert_id, conn_,
-		                    playlist.c_str(), pos, id ) );
-
-	}
-
-	void Playlist::insertCollection( int pos, const Coll::Coll& collection,
-	                                 const std::list< std::string >& order,
-	                                 const std::string& playlist ) const
-	{
-
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
-
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_insert_collection, conn_,
-		                    playlist.c_str(), pos, collection.getColl(),
-		                    &corder[0] ) );
-
-	}
-
-	List< unsigned int > Playlist::listEntries( const std::string& playlist
-	                                          ) const
-	{
-
-		xmmsc_result_t* res = 
-		    call( connected_, ml_, 
-		          boost::bind( xmmsc_playlist_list_entries, conn_,
-		                       playlist.c_str() ) );
-
-		List< unsigned int > result( res );
-
-		xmmsc_result_unref( res );
-
-		return result;
-
-	}
-
-	void Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
-	                          const std::string& playlist ) const
-	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_move_entry, conn_,
-		                    playlist.c_str(), curpos, newpos ) );
-
-	}
-
-	void Playlist::removeEntry( unsigned int pos,
+	VoidResult Playlist::addId( unsigned int id,
 	                            const std::string& playlist ) const
 	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_remove_entry, conn_,
-		                    playlist.c_str(), pos ) );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_id, conn_,
+		                       playlist.c_str(), id ) );
+		return VoidResult( res, ml_ );
 	}
 
-	unsigned int Playlist::setNext( unsigned int pos ) const
+	VoidResult Playlist::addCollection( const Coll::Coll& collection,
+	                                    const std::list< std::string >& order,
+	                                    const std::string& playlist ) const
 	{
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
 
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_collection, conn_,
+		                       playlist.c_str(), collection.getColl(),
+		                       &corder[0] ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::clear( const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_clear, conn_, playlist.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+	UintResult Playlist::currentPos( const std::string& playlist ) const
+	{
 		xmmsc_result_t* res = 
-		    call( connected_, ml_,
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_current_pos, conn_,
+		                       playlist.c_str() ) );
+		return UintResult( res, ml_ );
+	}
+
+	StringResult Playlist::currentActive() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_current_active, conn_ ) );
+		return StringResult( res, ml_ );
+	}
+
+	VoidResult Playlist::insertUrl( int pos, const std::string& url,
+	                                const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_insert_url, conn_,
+		                       playlist.c_str(), pos, url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::insertUrl( int pos, const std::string& url,
+	                                const std::list< std::string >& args,
+	                                const std::string& playlist ) const
+	{
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
+
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_insert_args, conn_,
+		                       playlist.c_str(), pos, url.c_str(),
+		                       args.size(), &cargs[0] ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::insertUrlEncoded( int pos, const std::string& url,
+	                                       const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_insert_encoded, conn_,
+		                       playlist.c_str(), pos, url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+
+	VoidResult Playlist::insertId( int pos, unsigned int id,
+	                               const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_insert_id, conn_,
+		                       playlist.c_str(), pos, id ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::insertCollection( int pos, const Coll::Coll& collection,
+	                                       const std::list< std::string >& order,
+	                                       const std::string& playlist ) const
+	{
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_insert_collection, conn_,
+		                       playlist.c_str(), pos, collection.getColl(),
+		                       &corder[0] ) );
+		return VoidResult( res, ml_ );
+	}
+
+	UintListResult Playlist::listEntries( const std::string& playlist ) const
+	{
+		xmmsc_result_t* res = 
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_list_entries, conn_,
+		                       playlist.c_str() ) );
+		return UintListResult( res, ml_ );
+	}
+
+	VoidResult Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
+	                                const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_move_entry, conn_,
+		                       playlist.c_str(), curpos, newpos ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::removeEntry( unsigned int pos,
+	                                  const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_remove_entry, conn_,
+		                       playlist.c_str(), pos ) );
+		return VoidResult( res, ml_ );
+	}
+
+	UintResult Playlist::setNext( unsigned int pos ) const
+	{
+		xmmsc_result_t* res = 
+		    call( connected_,
 		          boost::bind( xmmsc_playlist_set_next, conn_, pos ) );
-
-		unsigned int result = 0;
-		xmmsc_result_get_uint( res, &result );
-
-		xmmsc_result_unref( res );
-
-		return result;
-
+		return UintResult( res, ml_ );
 	}
 
-	unsigned int Playlist::setNextRel( signed int pos ) const
+	UintResult Playlist::setNextRel( signed int pos ) const
 	{
-
 		xmmsc_result_t* res = 
-		    call( connected_, ml_, 
+		    call( connected_,
 		          boost::bind( xmmsc_playlist_set_next_rel, conn_, pos ) );
-
-		unsigned int result = 0;
-		xmmsc_result_get_uint( res, &result );
-
-		xmmsc_result_unref( res );
-
-		return result;
-
+		return UintResult( res, ml_ );
 	}
 
-	void Playlist::shuffle( const std::string& playlist ) const
+	VoidResult Playlist::shuffle( const std::string& playlist ) const
 	{
-
-		vCall( connected_, ml_, 
-		       boost::bind( xmmsc_playlist_shuffle, conn_, playlist.c_str() ) );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_shuffle, conn_, playlist.c_str() ) );
+		return VoidResult( res, ml_ );
 	}
 
-	void Playlist::sort( const std::list<std::string>& properties,
-	                     const std::string& playlist ) const
+	VoidResult Playlist::sort( const std::list<std::string>& properties,
+	                           const std::string& playlist ) const
 	{
-
 		const char** props = c_stringList( properties );
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_sort, conn_,
-		                    playlist.c_str(), props ) );
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_sort, conn_,
+		                       playlist.c_str(), props ) );
 		delete [] props;
-
+		return VoidResult( res, ml_ );
 	}
 
-	void
-	Playlist::list( const StringListSlot& slot,
-	                const ErrorSlot& error ) const
+	DictSignal Playlist::broadcastChanged() const
 	{
-
-		aCall<List<std::string> >( connected_,
-		                           boost::bind( xmmsc_playlist_list, conn_ ),
-		                           slot, error );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playlist_changed, conn_ ) );
+		return DictSignal( res, ml_ );
 	}
 
-	void
-	Playlist::load( const std::string& playlist,
-	                const VoidSlot& slot,
-	                const ErrorSlot& error ) const
+	UintSignal Playlist::broadcastCurrentPos() const
 	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_load, conn_, playlist.c_str() ),
-		             slot, error );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playlist_current_pos, conn_ ) );
+		return UintSignal( res, ml_ );
 	}
 
-	void
-	Playlist::addRecursive( const std::string& url,
-	                        const std::string& playlist,
-	                        const VoidSlot& slot,
-	                        const ErrorSlot& error ) const
+	StringSignal Playlist::broadcastLoaded() const
 	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_radd, conn_, playlist.c_str(), url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addRecursive( const std::string& url,
-	                        const VoidSlot& slot,
-	                        const ErrorSlot& error ) const
-	{
-		addRecursive( url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addRecursiveEncoded( const std::string& url,
-	                               const std::string& playlist,
-	                               const VoidSlot& slot,
-	                               const ErrorSlot& error ) const
-	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_radd_encoded, conn_, playlist.c_str(), url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addRecursiveEncoded( const std::string& url,
-	                               const VoidSlot& slot,
-	                               const ErrorSlot& error ) const
-	{
-		addRecursiveEncoded(url, DEFAULT_PLAYLIST, slot, error);
-	}
-
-	void
-	Playlist::addUrl( const std::string& url,
-	                  const std::string& playlist,
-	                  const VoidSlot& slot,
-	                  const ErrorSlot& error ) const
-	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_add_url, conn_, playlist.c_str(), url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addUrl( const std::string& url,
-	                  const VoidSlot& slot,
-	                  const ErrorSlot& error ) const
-	{
-		addUrl( url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addUrl( const std::string& url,
-	                  const std::list< std::string >& args,
-	                  const std::string& playlist,
-	                  const VoidSlot& slot,
-	                  const ErrorSlot& error ) const
-	{
-
-		std::vector< const char* > cargs;
-		fillCharArray( args, cargs );
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_args, conn_,
-		                          playlist.c_str(), url.c_str(),
-		                          args.size(), &cargs[0] ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addUrl( const std::string& url,
-	                  const std::list< std::string >& args,
-	                  const VoidSlot& slot,
-	                  const ErrorSlot& error ) const
-	{
-		addUrl( url, args, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addUrlEncoded( const std::string& url,
-	                         const std::string& playlist,
-	                         const VoidSlot& slot,
-	                         const ErrorSlot& error ) const
-	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_add_encoded, conn_, playlist.c_str(), url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addUrlEncoded( const std::string& url,
-	                         const VoidSlot& slot,
-	                         const ErrorSlot& error ) const
-	{
-		addUrlEncoded( url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addId( const unsigned int id,
-	                 const std::string& playlist,
-	                 const VoidSlot& slot,
-	                 const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_id, conn_, playlist.c_str(), id ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addId( const unsigned int id,
-	                 const VoidSlot& slot,
-	                 const ErrorSlot& error ) const
-	{
-		addId( id, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addCollection( const Coll::Coll& collection,
-			                 const std::list< std::string >& order,
-			                 const std::string& playlist,
-			                 const VoidSlot& slot,
-			                 const ErrorSlot& error ) const
-	{
-
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_collection, conn_,
-		                          playlist.c_str(), collection.getColl(),
-		                          &corder[0] ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::addCollection( const Coll::Coll& collection,
-			                 const std::list< std::string >& order,
-			                 const VoidSlot& slot,
-			                 const ErrorSlot& error ) const
-	{
-		addCollection( collection, order, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::clear( const std::string& playlist,
-	                 const VoidSlot& slot,
-	                 const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, boost::bind( xmmsc_playlist_clear, conn_, playlist.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::clear( const VoidSlot& slot,
-	                 const ErrorSlot& error ) const
-	{
-		clear( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::currentPos( const std::string& playlist,
-					      const UintSlot& slot,
-	                      const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_, 
-		                     boost::bind( xmmsc_playlist_current_pos, conn_, playlist.c_str() ),
-		                     slot, error );
-
-	}
-
-	void
-	Playlist::currentPos( const UintSlot& slot,
-	                      const ErrorSlot& error ) const
-	{
-		currentPos( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::currentActive( const StringSlot& slot,
-	                         const ErrorSlot& error ) const
-	{
-
-		aCall<std::string>( connected_,
-		                    boost::bind( xmmsc_playlist_current_active, conn_ ),
-		                    slot, error );
-
-	}
-
-	void
-	Playlist::insertUrl( int pos, const std::string& url,
-	                     const std::string& playlist,
-					     const VoidSlot& slot,
-					     const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_url, conn_, playlist.c_str(), 
-		                          pos, url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::insertUrl( int pos, const std::string& url,
-					     const VoidSlot& slot,
-					     const ErrorSlot& error ) const
-	{
-		insertUrl( pos, url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::insertUrl( int pos, const std::string& url,
-					     const std::list< std::string >& args,
-	                     const std::string& playlist,
-					     const VoidSlot& slot,
-					     const ErrorSlot& error ) const
-	{
-
-		std::vector< const char* > cargs;
-		fillCharArray( args, cargs );
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_args, conn_,
-		                          playlist.c_str(), pos, url.c_str(),
-		                          args.size(), &cargs[0] ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::insertUrl( int pos, const std::string& url,
-					     const std::list< std::string >& args,
-					     const VoidSlot& slot,
-					     const ErrorSlot& error ) const
-	{
-		insertUrl( pos, url, args, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::insertUrlEncoded( int pos, const std::string& url,
-	                            const std::string& playlist,
-					            const VoidSlot& slot,
-					            const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_encoded, conn_, playlist.c_str(), 
-		                          pos, url.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::insertUrlEncoded( int pos, const std::string& url,
-					            const VoidSlot& slot,
-					            const ErrorSlot& error ) const
-	{
-		insertUrlEncoded( pos, url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::insertId( int pos, unsigned int id,
-	                    const std::string& playlist,
-	                    const VoidSlot& slot,
-	                    const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_id, conn_, playlist.c_str(), pos, id ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::insertId( int pos, unsigned int id,
-	                    const VoidSlot& slot,
-	                    const ErrorSlot& error ) const
-	{
-		insertId( pos, id, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::insertCollection( int pos, const Coll::Coll& collection,
-			                    const std::list< std::string >& order,
-			                    const std::string& playlist,
-	                            const VoidSlot& slot,
-	                            const ErrorSlot& error ) const
-	{
-
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_collection, conn_,
-		                          playlist.c_str(), pos, collection.getColl(),
-		                          &corder[0] ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::insertCollection( int pos, const Coll::Coll& collection,
-			                    const std::list< std::string >& order,
-			                    const VoidSlot& slot,
-	                            const ErrorSlot& error ) const
-	{
-		insertCollection( pos, collection, order, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::listEntries( const std::string& playlist,
-					       const UintListSlot& slot,
-	                       const ErrorSlot& error ) const
-	{
-
-		aCall<List<unsigned int> >( connected_, 
-		                            boost::bind( xmmsc_playlist_list_entries, conn_, playlist.c_str() ),
-		                            slot, error );
-
-	}
-
-	void
-	Playlist::listEntries( const UintListSlot& slot,
-	                       const ErrorSlot& error ) const
-	{
-		listEntries( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
-	                     const std::string& playlist,
-	                     const VoidSlot& slot,
-	                     const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_move_entry, conn_, playlist.c_str(), curpos, newpos ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
-	                     const VoidSlot& slot,
-	                     const ErrorSlot& error ) const
-	{
-		moveEntry( curpos, newpos, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::removeEntry( unsigned int pos,
-	                       const std::string& playlist,
-	                       const VoidSlot& slot,
-	                       const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_remove_entry, conn_, playlist.c_str(), pos ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::removeEntry( unsigned int pos,
-	                       const VoidSlot& slot,
-	                       const ErrorSlot& error ) const
-	{
-		removeEntry( pos, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::setNext( unsigned int pos,
-	                   const UintSlot& slot,
-					   const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playlist_set_next, conn_, pos ),
-		                     slot, error );
-
-	}
-
-	void
-	Playlist::setNextRel( signed int pos,
-	                      const UintSlot& slot,
-	                      const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playlist_set_next_rel,
-		                                  conn_, pos ),
-		                     slot, error );
-
-	}
-
-	void
-	Playlist::shuffle( const std::string& playlist,
-	                   const VoidSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, boost::bind( xmmsc_playlist_shuffle, conn_, playlist.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Playlist::shuffle( const VoidSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		shuffle( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::sort( const std::list<std::string>& properties,
-	                const std::string& playlist,
-	                const VoidSlot& slot,
-	                const ErrorSlot& error ) const
-	{
-
-		const char** props = c_stringList( properties );
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_sort, conn_, playlist.c_str(), 
-		                          props ),
-		             slot, error );
-		delete [] props;
-
-	}
-
-	void
-	Playlist::sort( const std::list<std::string>& properties,
-	                const VoidSlot& slot,
-	                const ErrorSlot& error ) const
-	{
-		sort( properties, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::broadcastChanged( const DictSlot& slot,
-	                            const ErrorSlot& error ) const
-	{
-
-		aCall<Dict>( connected_,
-		             boost::bind( xmmsc_broadcast_playlist_changed, conn_ ),
-					 slot, error );
-
-	}
-
-	void
-	Playlist::broadcastCurrentPos( const UintSlot& slot,
-	                               const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_broadcast_playlist_current_pos,
-		                                  conn_ ),
-		                     slot, error );
-
-	}
-
-	void
-	Playlist::broadcastLoaded( const StringSlot& slot,
-	                           const ErrorSlot& error ) const
-	{
-
-		aCall<std::string>( connected_,
-		                    boost::bind( xmmsc_broadcast_playlist_loaded, conn_ ),
-					        slot, error );
-
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playlist_loaded, conn_ ) );
+		return StringSignal( res, ml_ );
 	}
 
 	Playlist::Playlist( xmmsc_connection_t*& conn, bool& connected,
