@@ -240,12 +240,16 @@ namespace Xmms
 		if( xmmsc_result_iserror( res ) ) {
 
 			std::string error( xmmsc_result_get_error( res ) );
-			ret = data->error_signal( error );
+			if( !data->error_signal.empty() ) {
+				ret = data->error_signal( error );
+			}
 
 		}
 		else {
 
-			ret = callSignal( data, res );
+			if( !data->signal.empty() ) {
+				ret = callSignal( data, res );
+			}
 
 		}
 
