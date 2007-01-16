@@ -185,6 +185,33 @@ namespace Xmms
 
 	};
 
+	template< typename T >
+	class SignalAdapter : public AdapterBase< T >
+	{
+		
+		public:
+			SignalAdapter( xmmsc_result_t* res, MainloopInterface*& ml )
+				: AdapterBase<T>( res, ml )
+			{
+			}
+
+			~SignalAdapter()
+			{
+			}
+
+			SignalAdapter( const SignalAdapter& src )
+				: AdapterBase<T>( src )
+			{
+			}
+
+			SignalAdapter&
+			operator=( const SignalAdapter& src )
+			{
+				AdapterBase<T>::operator=( src );
+				return *this;
+			}
+
+	};
 
 	typedef Adapter< int32_t, int32_t, xmmsc_result_get_int > IntResult;
 	typedef Adapter< uint32_t, uint32_t, xmmsc_result_get_uint > UintResult;
@@ -198,6 +225,10 @@ namespace Xmms
 	typedef ClassAdapter< List< unsigned int > > UintListResult;
 	typedef ClassAdapter< List< std::string > > StringListResult;
 	typedef ClassAdapter< List< Dict > > DictListResult;
+
+	typedef SignalAdapter< Dict > DictSignal;
+	typedef SignalAdapter< unsigned int > UintSignal;
+	typedef SignalAdapter< std::string > StringSignal;
 
 	class VoidResult : public AdapterBase< void >
 	{
