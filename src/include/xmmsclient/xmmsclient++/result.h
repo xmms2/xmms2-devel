@@ -229,6 +229,7 @@ namespace Xmms
 	typedef SignalAdapter< Dict > DictSignal;
 	typedef SignalAdapter< unsigned int > UintSignal;
 	typedef SignalAdapter< std::string > StringSignal;
+	typedef SignalAdapter< xmms_playback_status_t > StatusSignal;
 
 	class VoidResult : public AdapterBase< void >
 	{

@@ -139,6 +139,38 @@ namespace Xmms
 		return DictResult( res, ml_ );
 	}
 
+	UintSignal Playback::broadcastCurrentID() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playback_current_id, conn_ ) );
+		return UintSignal( res, ml_ );
+	}
+
+	StatusSignal Playback::broadcastStatus() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playback_status, conn_ ) );
+		return StatusSignal( res, ml_ );
+	}
+
+	DictSignal Playback::broadcastVolumeChanged() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_broadcast_playback_volume_changed, conn_ ) );
+		return DictSignal( res, ml_ );
+	}
+
+	UintSignal Playback::signalPlaytime() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_signal_playback_playtime, conn_ ) );
+		return UintSignal( res, ml_ );
+	}
+
 	Playback::Playback( xmmsc_connection_t*& conn, bool& connected,
 	                    MainloopInterface*& ml ) :
 		conn_( conn ), connected_( connected ), ml_( ml )

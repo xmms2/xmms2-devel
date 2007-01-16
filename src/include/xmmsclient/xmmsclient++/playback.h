@@ -224,6 +224,11 @@ namespace Xmms
 			 */
 			DictResult volumeGet() const;
 
+			UintSignal broadcastCurrentID() const;
+			StatusSignal broadcastStatus() const;
+			DictSignal broadcastVolumeChanged() const;
+			UintSignal signalPlaytime() const;
+
 		/** @cond */
 		private:
 
