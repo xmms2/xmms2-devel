@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/list.h>
+#include <xmmsclient/xmmsclient++/coll.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
 #include <string>
@@ -230,6 +231,8 @@ namespace Xmms
 	typedef SignalAdapter< unsigned int > UintSignal;
 	typedef SignalAdapter< std::string > StringSignal;
 	typedef SignalAdapter< xmms_playback_status_t > StatusSignal;
+	typedef SignalAdapter< List< unsigned int > > UintListSignal;
+	typedef SignalAdapter< xmms_mediainfo_reader_status_t > ReaderStatusSignal;
 
 	class VoidResult : public AdapterBase< void >
 	{
@@ -301,6 +304,113 @@ namespace Xmms
 					// FIXME: Handle failure
 				}
 				return Xmms::bin( temp, len );
+			}
+
+	};
+
+	class CollResult : public AdapterBase< Coll::Coll >
+	{
+
+		public:
+			CollResult( xmmsc_result_t* res, MainloopInterface*& ml )
+				: AdapterBase< Coll::Coll >( res, ml )
+			{
+			}
+
+			~CollResult()
+			{
+			}
+
+			CollResult( const CollResult& src )
+				: AdapterBase<Coll::Coll>( src )
+			{
+			}
+
+			CollResult&
+			operator=( const CollResult& src )
+			{
+				AdapterBase<Coll::Coll>::operator=( src );
+				return *this;
+			}
+
+			operator CollPtr()
+			{
+				check( this->ml_ );
+				xmmsc_result_wait( this->res_ );
+				check( this->res_ );
+
+				xmmsc_coll_t* coll = 0;
+				if( !xmmsc_result_get_collection( this->res_, &coll ) ) {
+					throw result_error( "Invalid collection in result" );
+				}
+				return createColl( coll );
+			}
+
+			static CollPtr
+			createColl( xmmsc_coll_t* coll )
+			{
+
+				CollPtr collptr;
+
+				switch( xmmsc_coll_get_type( coll ) ) {
+
+					case XMMS_COLLECTION_TYPE_REFERENCE: {
+						collptr.reset( new Coll::Reference( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_UNION: {
+						collptr.reset( new Coll::Union( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_INTERSECTION: {
+						collptr.reset( new Coll::Intersection( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_COMPLEMENT: {
+						collptr.reset( new Coll::Complement( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_HAS: {
+						collptr.reset( new Coll::Has( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_SMALLER: {
+						collptr.reset( new Coll::Smaller( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_GREATER: {
+						collptr.reset( new Coll::Greater( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_MATCH: {
+						collptr.reset( new Coll::Match( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_CONTAINS: {
+						collptr.reset( new Coll::Contains( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_IDLIST: {
+						collptr.reset( new Coll::Idlist( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_QUEUE: {
+						collptr.reset( new Coll::Queue( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_PARTYSHUFFLE: {
+						collptr.reset( new Coll::PartyShuffle( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_ERROR: {
+						throw result_error( "invalid collection in result" );
+						break;
+					}
+
+				}
+
+				return collptr;
+
 			}
 
 	};
