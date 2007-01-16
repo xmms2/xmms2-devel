@@ -19,8 +19,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
+#include <xmmsclient/xmmsclient++/result.h>
 
 #include <string>
 
@@ -53,7 +52,7 @@ namespace Xmms
 			 *
 			 *  @return hash of the data which was added.
 			 */
-			std::string add( const Xmms::bin& data ) const;
+			StringResult add( const Xmms::bin& data ) const;
 
 			/** Retrieve binary data from the servers bindata directory,
 			 *  based on the hash.
@@ -69,7 +68,7 @@ namespace Xmms
 			 *
 			 *  @return Binary data which matches the given hash.
 			 */
-			Xmms::bin retrieve( const std::string& hash ) const;
+			BinResult retrieve( const std::string& hash ) const;
 
 			/** Remove the binary data associated with the hash.
 			 *  
@@ -82,46 +81,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void remove( const std::string& hash ) const;
-
-			/** Add binary data to the servers bindata directory.
-			 *  
-			 *  @param data Binary data to be added.
-			 *  @param slot Function pointer to a function taking
-			 *              const std::string& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void add( const Xmms::bin& data, const StringSlot& slot,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/** Retrieve binary data from the servers bindata directory,
-			 *  based on the hash.
-			 *
-			 *  @param hash Hash of the binary data to fetch.
-			 *  @param slot Function pointer to a function taking
-			 *              const Xmms::bin& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void retrieve( const std::string& hash, const BinSlot& slot, 
-			               const ErrorSlot& error = &Xmms::dummy_error ) const;
-			
-			/** Remove the binary data associated with the hash.
-			 *  
-			 *  @param hash Hash of the binary data to remove.
-			 *  @param slot Function pointer to a function returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void remove( const std::string& hash, const VoidSlot& slot,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
+			VoidResult remove( const std::string& hash ) const;
 
 		/** @cond */
 		private:

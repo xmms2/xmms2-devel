@@ -1,5 +1,5 @@
-#ifndef XMMSCLIENTPP_FOO_H
-#define XMMSCLIENTPP_FOO_H
+#ifndef XMMSCLIENTPP_RESULT_H
+#define XMMSCLIENTPP_RESULT_H
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
