@@ -191,7 +191,7 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v29_to_v30 (sql);
 		case 30:
 			upgrade_v30_to_v31 (sql);
-			break;
+			break; /* remember to remove this! We want fallthrough */
 		default:
 			can_upgrade = FALSE;
 			break;
