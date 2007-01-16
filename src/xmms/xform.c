@@ -637,6 +637,11 @@ xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key, xmms_object_cmd_val
 }
 
 void
+xmms_xform_privdata_set_none (xmms_xform_t *xform) {
+	xmms_xform_privdata_set_val (xform, NULL, xmms_object_cmd_value_none_new ());
+}
+
+void
 xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
 	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_int_new (val));
@@ -676,7 +681,7 @@ xmms_xform_privdata_get_val (xmms_xform_t *xform, const gchar *key)
 	for (i=0; (hs = g_queue_peek_nth (xform->hotspots, i)) != NULL; i++) {
 		if (hs->pos != 0) {
 			break;
-		} else if (!strcmp (key, hs->key)) {
+		} else if (hs->key && !strcmp (key, hs->key)) {
 			val = hs->obj;
 		}
 	}
@@ -800,7 +805,9 @@ xmms_xform_hotspots_update (xmms_xform_t *xform) {
 	hs = g_queue_peek_head (xform->hotspots);
 	while (hs != NULL && hs->pos == 0) {
 		g_queue_pop_head (xform->hotspots);
-		g_hash_table_insert (xform->privdata, hs->key, hs->obj);
+		if (hs->key) {
+			g_hash_table_insert (xform->privdata, hs->key, hs->obj);
+		}
 		hs = g_queue_peek_head (xform->hotspots);
 	}
 
