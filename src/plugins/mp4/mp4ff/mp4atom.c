@@ -194,6 +194,8 @@ uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_USER;
     else if (mp4ff_atom_compare(a,b,c,d, 'k','e','y',' '))
         return ATOM_KEY;
+    else if (mp4ff_atom_compare(a,b,c,d, 'a','l','a','c'))
+        return ATOM_ALAC;
     else
         return ATOM_UNKNOWN;
 }
@@ -342,6 +344,46 @@ int32_t mp4ff_read_mp4a(mp4ff_t *f)
         mp4ff_read_esds(f);
     }
 
+    return 0;
+}
+
+int32_t mp4ff_read_alac(mp4ff_t *f)
+{
+    mp4ff_track_t *current_track = f->track[f->total_tracks - 1];
+
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+    mp4ff_read_int32(f);
+
+    current_track->decoderConfigLen = 36;
+    if (current_track->decoderConfig)
+        free(current_track->decoderConfig);
+    current_track->decoderConfig = calloc(1, current_track->decoderConfigLen);
+    
+    if (current_track->decoderConfig)
+    {
+        mp4ff_read_data(f, current_track->decoderConfig,
+                        current_track->decoderConfigLen);
+    } else {
+        current_track->decoderConfigLen = 0;
+    }
+
+    current_track->channelCount = current_track->decoderConfig[21];
+    current_track->avgBitrate = (current_track->decoderConfig[28] << 24) |
+                                (current_track->decoderConfig[29] << 16) |
+                                (current_track->decoderConfig[30] << 8) |
+                                current_track->decoderConfig[31];
+    current_track->sampleRate = (current_track->decoderConfig[32] << 24) |
+                                (current_track->decoderConfig[33] << 16) |
+                                (current_track->decoderConfig[34] << 8) |
+                                current_track->decoderConfig[35];
+    current_track->audioType = 0xff;
+
+    /* will skip the remainder of the atom */
     return 0;
 }
 
@@ -593,6 +635,9 @@ int32_t mp4ff_read_stsd(mp4ff_t *f)
         {
             f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
             mp4ff_read_mp4a(f);
+        } else if (atom_type == ATOM_ALAC) {
+            f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
+            mp4ff_read_alac(f);
         } else if (atom_type == ATOM_MP4V) {
             f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
         } else if (atom_type == ATOM_MP4S) {

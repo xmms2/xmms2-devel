@@ -12,3 +12,4 @@ Changes:
  * Make mp4ff_read_data always read the buffer full if possible
  * Add value_length variable to tag type and use it when adding new item-value pairs,
    necessary for cover art since itss binary data and can't be handled as a string
+ * Add support for Apple Lossless audio files

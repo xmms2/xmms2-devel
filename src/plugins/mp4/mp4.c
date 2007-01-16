@@ -56,7 +56,7 @@ static void xmms_mp4_get_mediainfo (xmms_xform_t *xform);
 
 uint32_t xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length);
 uint32_t xmms_mp4_seek_callback (void *user_data, uint64_t position);
-int xmms_mp4_get_aac_track (mp4ff_t *infile);
+int xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile);
 
 /*
  * Plugin header
@@ -97,7 +97,7 @@ xmms_mp4_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                ">8 string mp42",
 	                NULL);
 
-	xmms_magic_add ("iTunes mpeg-4 header", "audio/mp4",
+	xmms_magic_add ("iTunes header", "audio/mp4",
 	                "4 string ftyp", ">8 string M4A ", NULL);
 
 	return TRUE;
@@ -141,7 +141,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	data->sampleid = 0;
+	data->sampleid = 1;
 	data->numsamples = 0;
 
 	bytes_read = xmms_xform_read (xform,
@@ -176,7 +176,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 		goto err;;
 	}
 
-	data->track = xmms_mp4_get_aac_track (data->mp4ff);
+	data->track = xmms_mp4_get_track (xform, data->mp4ff);
 	if (data->track < 0) {
 		XMMS_DBG ("Can't find AAC audio track from MP4 file\n");
 		goto err;
@@ -189,11 +189,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 	g_free (tmpbuf);
 
 	xmms_mp4_get_mediainfo (xform);
-
-	xmms_xform_outdata_type_add (xform,
-	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "audio/aac",
-	                             XMMS_STREAM_TYPE_END);
 
 	XMMS_DBG ("MP4 demuxer inited successfully!");
 
@@ -285,14 +280,22 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             temp);
-	if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0) {
+	if ((temp = mp4ff_get_channel_count (data->mp4ff, data->track)) >= 0) {
 		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             temp * 1000);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNELS,
+		                             temp);
+	}
+	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) >= 0) {
+		xmms_xform_metadata_set_int (xform,
+					     XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+					     temp);
+
+		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) /
+		            temp) >= 0) {
+			xmms_xform_metadata_set_int (xform,
+						     XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+						     temp * 1000);
+		}
 	}
 	if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0) {
 		xmms_xform_metadata_set_int (xform,
@@ -474,8 +477,9 @@ xmms_mp4_seek_callback (void *user_data, uint64_t position)
 }
 
 int
-xmms_mp4_get_aac_track (mp4ff_t *infile)
+xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile)
 {
+	glong chans, rate;
 	int i;
 	int numTracks = mp4ff_total_tracks (infile);
 
@@ -489,12 +493,30 @@ xmms_mp4_get_aac_track (mp4ff_t *infile)
 		case 0x66: /* MPEG-2 AAC */
 		case 0x67: /* MPEG-2 AAC LC */
 		case 0x68: /* MPEG-2 AAC SSR */
+			xmms_xform_outdata_type_add (xform,
+						     XMMS_STREAM_TYPE_MIMETYPE,
+						     "audio/aac",
+						     XMMS_STREAM_TYPE_END);
 			return i;
 		case 0x69: /* MPEG-2 audio */
 		case 0x6B: /* MPEG-1 audio */
 			continue;
-		case 0x00: /* ALAC audio, 0x00 sounds quite fishy... */
-			continue;
+		case 0xff:
+			chans = mp4ff_get_channel_count (infile, i);
+			rate = mp4ff_get_sample_rate (infile, i);
+			if (chans <= 0 || rate <= 0) {
+				XMMS_DBG("Bad ALAC audio track %d", i);
+				continue;
+			}
+			xmms_xform_outdata_type_add (xform,
+			                             XMMS_STREAM_TYPE_MIMETYPE,
+			                             "audio/x-ffmpeg-alac",
+			                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+			                             (int)rate,
+			                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+			                             (int)chans,
+			                             XMMS_STREAM_TYPE_END);
+			return i;
 		default:
 			continue;
 		}

@@ -118,6 +118,8 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_USER 155
 #define ATOM_KEY  156
 
+#define ATOM_ALAC 192
+
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
 #define ATOM_SKIP ATOM_UNKNOWN
@@ -294,6 +296,7 @@ uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_
 int32_t mp4ff_read_stsz(mp4ff_t *f);
 int32_t mp4ff_read_esds(mp4ff_t *f);
 int32_t mp4ff_read_mp4a(mp4ff_t *f);
+int32_t mp4ff_read_alac(mp4ff_t *f);
 int32_t mp4ff_read_stsd(mp4ff_t *f);
 int32_t mp4ff_read_stsc(mp4ff_t *f);
 int32_t mp4ff_read_stco(mp4ff_t *f);
