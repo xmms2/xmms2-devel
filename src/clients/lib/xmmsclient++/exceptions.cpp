@@ -17,8 +17,6 @@
 #include <xmmsclient/xmmsclient++/exceptions.h>
 
 #include <stdexcept>
-using std::string;
-
 #include <string>
 using std::string;
 
