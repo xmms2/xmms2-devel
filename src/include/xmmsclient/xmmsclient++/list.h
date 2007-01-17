@@ -169,9 +169,9 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_INT32 &&
+				    XMMSC_RESULT_VALUE_TYPE_INT32 &&
 				    xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_NONE ) {
+				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
 
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
@@ -235,9 +235,9 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_UINT32 &&
+				    XMMSC_RESULT_VALUE_TYPE_UINT32 &&
 				    xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_NONE ) {
+				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
 
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
@@ -300,9 +300,9 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_STRING &&
+				    XMMSC_RESULT_VALUE_TYPE_STRING &&
 				    xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_NONE ) {
+				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
 					throw wrong_type_error( "Expected list of strings" );
@@ -369,7 +369,7 @@ namespace Xmms
 			catch( Xmms::not_dict_error& e )
 			{
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_NONE ) {
+				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
 
 					xmmsc_result_unref( result );
 					throw;
