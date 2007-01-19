@@ -52,6 +52,8 @@ static gboolean xmms_avcodec_init (xmms_xform_t *xform);
 static void xmms_avcodec_destroy (xmms_xform_t *xform);
 static gint xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                                xmms_error_t *error);
+static gint64 xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples,
+                                 xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -71,6 +73,7 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_avcodec_init;
 	methods.destroy = xmms_avcodec_destroy;
 	methods.read = xmms_avcodec_read;
+	methods.seek = xmms_avcodec_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -234,3 +237,23 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	return size;
 }
 
+static gint64
+xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	xmms_avcodec_data_t *data;
+	gint64 ret;
+
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, FALSE);
+
+	ret = xmms_xform_seek (xform, samples, whence, err);
+	avcodec_flush_buffers (data->codecctx);
+
+	data->buffer_length = 0;
+	g_string_erase (data->outbuf, 0, -1);
+
+	return ret;
+}
