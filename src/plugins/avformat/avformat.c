@@ -101,8 +101,16 @@ xmms_avformat_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "video/x-ms-asf",
 	                              NULL);
 
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/3gpp",
+	                              NULL);
+
 	xmms_magic_add ("asf header", "video/x-ms-asf",
 	                "0 belong 0x3026b275", NULL);
+
+	xmms_magic_add ("amr header", "audio/3gpp",
+	                "0 string #!AMR", NULL);
 
 	return TRUE;
 }
@@ -150,7 +158,13 @@ xmms_avformat_init (xmms_xform_t *xform)
 
 		format = av_find_input_format ("asf");
 		if (!format) {
-			XMMS_DBG ("ASF format not registered to library, this is strange");
+			XMMS_DBG ("ASF format not registered to library");
+			goto err;
+		}
+	} else if (!strcmp (mimetype, "audio/3gpp")) {
+		format = av_find_input_format ("amr");
+		if (!format) {
+			XMMS_DBG ("AMR format not registered to library");
 			goto err;
 		}
 	} else {
@@ -179,10 +193,14 @@ xmms_avformat_init (xmms_xform_t *xform)
 	data->codecctx = data->fmtctx->streams[data->track]->codec;
 	codec = avcodec_find_decoder (data->codecctx->codec_id);
 
-	if (!strcmp(codec->name, "wmav1")) {
+	if (!strcmp (codec->name, "wmav1")) {
 		mimetype = "audio/x-ffmpeg-wmav1";
-	} else if (!strcmp(codec->name, "wmav2")) {
+	} else if (!strcmp (codec->name, "wmav2")) {
 		mimetype = "audio/x-ffmpeg-wmav2";
+	} else if (!strcmp (codec->name, "amr_nb")) {
+		mimetype = "audio/x-ffmpeg-amr_nb";
+	} else if (!strcmp (codec->name, "amr_wb")) {
+		mimetype = "audio/x-ffmpeg-amr_wb";
 	} else {
 		xmms_log_error ("Unknown codec %s inside asf stream",
 		                codec->name);
