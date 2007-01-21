@@ -39,7 +39,7 @@ static gboolean fetching_songname = FALSE;
 static guint current_id = 0;
 static guint last_dur = 0;
 static gint curr_dur = 0;
-static gchar songname[60];
+static gchar songname[256];
 static guint curr_status = 0;
 
 static gchar *status_messages[] = {
@@ -190,11 +190,30 @@ static void update_display ()
 	GError *err = NULL;
 
 	if (has_songname) {
-		conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
-		printf ("\r%7s: %s: %02d:%02d of %02d:%02d",
-		        status_messages[curr_status], conv,
-		        last_dur / 60000, (last_dur / 1000) % 60, curr_dur / 60000,
-		        (curr_dur / 1000) % 60);
+		gchar buf_status[32];
+		gchar buf_time[32];
+		gint room, len, columns;
+
+		columns = find_terminal_width ();
+
+		g_snprintf (buf_status, sizeof (buf_status), "%7s: ",
+		            status_messages[curr_status]);
+		g_snprintf (buf_time, sizeof (buf_time), ": %02d:%02d of %02d:%02d",
+		            last_dur / 60000, (last_dur / 1000) % 60, curr_dur / 60000,
+		            (curr_dur / 1000) % 60);
+
+		room = columns - strlen (buf_status) - strlen (buf_time);
+
+		len = g_utf8_strlen (songname, -1);
+		if (room >= len || room <= 4) { /* don't even try.. */
+			conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
+			printf ("\r%s%s%s", buf_status, conv, buf_time);
+		} else {
+			gint t = g_utf8_offset_to_pointer (songname, room - 3) - songname;
+
+			conv =  g_locale_from_utf8 (songname, t, &r, &w, &err);
+			printf ("\r%s%s...%s", buf_status, conv, buf_time);
+		}
 		g_free (conv);
 
 		fflush (stdout);
