@@ -620,8 +620,8 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *e
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
 	if (plcoll == NULL) {
-		/* FIXME: happens? */
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such playlist");
+		g_mutex_unlock (playlist->mutex);
 		return;
 	}
 
@@ -669,7 +669,6 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, gchar *plname,
 
 	if (pos >= size) {
 		if (err) xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
-		g_mutex_unlock (playlist->mutex);
 		return FALSE;
 	}
 
@@ -875,7 +874,11 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	gint len;
 	xmmsc_coll_t *plcoll;
 
-	g_return_val_if_fail (file, FALSE);
+	if (!xmms_medialib_check_id (file)) {
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+		                "That is not a valid medialib id!");
+		return FALSE;
+	}
 
 	g_mutex_lock (playlist->mutex);
 
@@ -883,12 +886,6 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	if (plcoll == NULL) {
 		/* FIXME: happens ? */
 		g_mutex_unlock (playlist->mutex);
-		return FALSE;
-	}
-
-	if (!xmms_medialib_check_id (file)) {
-		xmms_error_set (err, XMMS_ERROR_NOENT,
-		                "That is not a valid medialib id!");
 		return FALSE;
 	}
 
@@ -998,8 +995,6 @@ gboolean
 xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname,
                       xmms_medialib_entry_t file, xmms_error_t *err)
 {
-	g_return_val_if_fail (file, FALSE);
-
 	if (!xmms_medialib_check_id (file)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "That is not a valid medialib id!");
