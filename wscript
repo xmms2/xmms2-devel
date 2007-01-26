@@ -70,6 +70,10 @@ def build(bld):
     if bld.env_of_name("default")["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
 
+    newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
+    if bld.env_of_name('default')['NEWEST_WSCRIPT_SUBDIR'] and newest > bld.env_of_name('default')['NEWEST_WSCRIPT_SUBDIR']:
+        Params.fatal("You need to run waf configure")
+
     # Process subfolders
     bld.add_subdirs(subdirs)
 
@@ -247,6 +251,9 @@ def configure(conf):
 
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
+
+    newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
+    conf.env['NEWEST_WSCRIPT_SUBDIR'] = newest
 
     [conf.sub_config(s) for s in subdirs]
     
