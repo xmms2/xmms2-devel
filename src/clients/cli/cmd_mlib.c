@@ -39,6 +39,8 @@ static void cmd_mlib_rehash (xmmsc_connection_t *conn,
                              gint argc, gchar **argv);
 static void cmd_mlib_remove (xmmsc_connection_t *conn,
                              gint argc, gchar **argv);
+static void cmd_mlib_addcover (xmmsc_connection_t *conn,
+                               gint argc, gchar **arv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", cmd_mlib_add },
@@ -50,6 +52,7 @@ cmds mlib_commands[] = {
 	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
 	{ "setstr", "[id, key, value, (source)] Set a string property together with a medialib entry.", cmd_mlib_set_str },
 	{ "setint", "[id, key, value, (source)] Set a int property together with a medialib entry.", cmd_mlib_set_int },
+	{ "addcover", "[file] [id] ... - Add a cover image on id(s).", cmd_mlib_addcover },
 	{ NULL, NULL, NULL },
 };
 
@@ -424,4 +427,63 @@ cmd_mlib_rehash (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
+}
+
+static void
+cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	const gchar *file;
+	GMappedFile *map;
+
+	if (argc < 5) {
+		print_error ("Filename and at least one id needed!");
+	}
+
+	file = argv[3];
+	map = g_mapped_file_new (file, FALSE, 0);
+	if (map) {
+		gchar *contents = g_mapped_file_get_contents (map);
+		gsize filesize = g_mapped_file_get_length (map);
+		gchar *hash;
+		gchar **id_arg;
+
+		res = xmmsc_bindata_add (conn, (guchar*)contents, filesize);
+		xmmsc_result_wait (res);
+
+		g_mapped_file_free (map);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		if (!xmmsc_result_get_string (res, &hash)) {
+			print_error ("Could not extract hash from result!");
+		}
+
+		for (id_arg = argv + 4; id_arg < argv + argc; ++id_arg) {
+			xmmsc_result_t *res2;
+			uint32_t id;
+			gchar *end;
+
+			id = strtoul (*id_arg, &end, 10);
+			if (*id_arg == end) {
+				print_info ("Could not convert '%s' to an unsigned integer", *id_arg);
+				continue;
+			}
+
+			res2 = xmmsc_medialib_entry_property_set_str (conn, id, "picture_front", hash);
+			xmmsc_result_wait (res2);
+			
+			if (xmmsc_result_iserror (res2)) {
+				print_info ("%s", xmmsc_result_get_error (res2));
+			}
+			xmmsc_result_unref (res2);
+		}
+
+		xmmsc_result_unref (res);
+
+	} else {
+		print_error ("Could not open file!");
+	}
 }
