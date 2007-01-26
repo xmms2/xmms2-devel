@@ -19,6 +19,7 @@ def build(bld):
     Common.install_files('LIBDIR_python', '', 'xmmsclient/consts.py')
     Common.install_files('LIBDIR_python', '', 'xmmsclient/collections.py')
     Common.install_files('LIBDIR_python', '', 'xmmsclient/glib.py')
+    Common.install_files('LIBDIR_python', '', 'xmmsclient/qt3.py')
 
 def configure(conf):
     try:
