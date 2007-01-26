@@ -1,12 +1,12 @@
-####
-#
-# A GLib connector for PyGTK - 
-#	to use with your cool PyGTK xmms2 client.
-# Tobias Rundstrom <tru@xmms.org)
-#
-# Just create the GLibConnector() class with a xmmsclient as argument
-#
-###
+"""
+
+ A GLib connector for PyGTK - 
+	to use with your cool PyGTK xmms2 client.
+ Tobias Rundstrom <tru@xmms.org)
+
+ Just create the GLibConnector() class with a xmmsclient as argument
+
+"""
 
 import gobject
 
