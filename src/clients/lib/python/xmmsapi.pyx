@@ -345,22 +345,22 @@ cdef class _ListConverter:
 			i = i + 1
 		free(self.lst) 
 
-cdef foreach_source_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
-	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
+cdef foreach_source_hash(signed char *key, xmmsc_result_value_type_t typ, void *value, char *source, udata):
+	if typ == XMMSC_RESULT_VALUE_TYPE_STRING:
 		v = to_unicode(<char *>value)
-	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
+	elif typ == XMMSC_RESULT_VALUE_TYPE_UINT32:
 		v = <unsigned int>value
-	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
+	elif typ == XMMSC_RESULT_VALUE_TYPE_INT32:
 		v = <int>value
 
 	udata[(source,key)]=v
 
-cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, udata):
-	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
+cdef foreach_hash(signed char *key, xmmsc_result_value_type_t typ, void *value, udata):
+	if typ == XMMSC_RESULT_VALUE_TYPE_STRING:
 		v = to_unicode(<char *>value)
-	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
+	elif typ == XMMSC_RESULT_VALUE_TYPE_UINT32:
 		v = <unsigned int>value
-	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
+	elif typ == XMMSC_RESULT_VALUE_TYPE_INT32:
 		v = <int>value
 
 	udata[key]=v
@@ -585,7 +585,7 @@ class BaseCollection(Collection):
 		if setup == DontSetup:
 			return
 
-		self.coll = xmmsc_coll_new(typ)
+		self.coll = xmmsc_coll_new(<xmmsc_coll_type_t> typ)
 		if self.coll == NULL:
 			raise RuntimeError("Bad coll")
 
@@ -802,21 +802,22 @@ cdef class XMMSResult:
 		return xmmsc_result_get_type(self.res)
 
 	def _value(self):
-		type = xmmsc_result_get_type(self.res)
+		cdef xmmsc_result_value_type_t typ
+		typ = xmmsc_result_get_type(self.res)
 
-		if type == XMMS_OBJECT_CMD_ARG_UINT32:
+		if typ == XMMS_OBJECT_CMD_ARG_UINT32:
 			return self.get_uint()
-		elif type == XMMS_OBJECT_CMD_ARG_DICT:
+		elif typ == XMMS_OBJECT_CMD_ARG_DICT:
 			return self.get_dict()
-		elif type == XMMS_OBJECT_CMD_ARG_PROPDICT:
+		elif typ == XMMS_OBJECT_CMD_ARG_PROPDICT:
 			return self.get_propdict()
-		elif type == XMMS_OBJECT_CMD_ARG_INT32:
+		elif typ == XMMS_OBJECT_CMD_ARG_INT32:
 			return self.get_int()
-		elif type == XMMS_OBJECT_CMD_ARG_STRING:
+		elif typ == XMMS_OBJECT_CMD_ARG_STRING:
 			return self.get_string()
-		elif type == XMMS_OBJECT_CMD_ARG_BIN:
+		elif typ == XMMS_OBJECT_CMD_ARG_BIN:
 			return self.get_bin()
-		elif type == XMMS_OBJECT_CMD_ARG_COLL:
+		elif typ == XMMS_OBJECT_CMD_ARG_COLL:
 			return self.get_coll()
 
 	def value(self):
@@ -1162,7 +1163,7 @@ cdef class XMMS:
 
 		return ret
 
-	def plugin_list(self, type, cb = None):
+	def plugin_list(self, typ, cb = None):
 		"""
 		Get a list of loaded plugins from the server
 		@rtype: L{XMMSResult}
@@ -1173,7 +1174,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_plugin_list(self.conn, type)
+		ret.res = xmmsc_plugin_list(self.conn, typ)
 		ret.more_init()
 		return ret
 
