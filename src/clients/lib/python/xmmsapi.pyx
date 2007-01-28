@@ -723,7 +723,7 @@ cdef create_coll(xmmsc_coll_t *coll):
 		c.__class__ = IDList
 	elif typ == XMMS_COLLECTION_TYPE_QUEUE:
 		c.__class__ = Queue
-	elif type == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+	elif typ == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
 		c.__class__ = PShuffle
 	else:
 		raise RuntimeError("Unknown collection typ")
