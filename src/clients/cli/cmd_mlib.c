@@ -433,25 +433,40 @@ static void
 cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	const gchar *file;
-	GMappedFile *map;
+	const gchar *filename;
+	GIOChannel* io = NULL;
+	GError *error = NULL;
 
 	if (argc < 5) {
 		print_error ("Filename and at least one id needed!");
 	}
 
-	file = argv[3];
-	map = g_mapped_file_new (file, FALSE, 0);
-	if (map) {
-		gchar *contents = g_mapped_file_get_contents (map);
-		gsize filesize = g_mapped_file_get_length (map);
+	filename = argv[3];
+	if (g_strcasecmp (filename, "-")) {
+		io = g_io_channel_new_file (filename, "r", &error);
+	} else {
+		io = g_io_channel_unix_new (STDIN_FILENO);
+	}
+
+	if (io) {
+		gchar *contents = NULL;
+		gsize filesize = 0;
 		gchar *hash;
 		gchar **id_arg;
+		error = NULL;
+
+		g_io_channel_set_encoding (io, NULL, &error);
+
+		if (g_io_channel_read_to_end (io, &contents, &filesize, &error) == G_IO_STATUS_ERROR) {
+			print_error ("Error reading file: %s", error->message);
+		}
+
+		g_io_channel_close (io);
 
 		res = xmmsc_bindata_add (conn, (guchar*)contents, filesize);
 		xmmsc_result_wait (res);
 
-		g_mapped_file_free (map);
+		g_free (contents);
 
 		if (xmmsc_result_iserror (res)) {
 			print_error ("%s", xmmsc_result_get_error (res));
@@ -484,6 +499,6 @@ cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_unref (res);
 
 	} else {
-		print_error ("Could not open file!");
+		print_error ("Could not open file! (%s)", error->message);
 	}
 }
