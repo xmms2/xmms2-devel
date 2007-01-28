@@ -121,7 +121,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsc_result_wait(xmmsc_result_t *res)
 	signed int xmmsc_result_iserror(xmmsc_result_t *res)
 	signed char *xmmsc_result_get_error(xmmsc_result_t *res)
-	int xmmsc_result_get_type(xmmsc_result_t *res)
+	xmmsc_result_value_type_t xmmsc_result_get_type(xmmsc_result_t *res)
 
 	signed int xmmsc_result_get_int(xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint(xmmsc_result_t *res, unsigned int *r)
