@@ -533,9 +533,9 @@ namespace Xmms
 		}
 	}
 
-	void Idlist::insert( unsigned int id, unsigned int index )
+	void Idlist::insert( unsigned int index, unsigned int id )
 	{
-		if( !xmmsc_coll_idlist_insert( coll_, id, index ) ) {
+		if( !xmmsc_coll_idlist_insert( coll_, index, id ) ) {
 			std::stringstream err;
 			err << "Failed to insert " << id << " in idlist at index " << index;
 			throw collection_operation_error( err.str() );

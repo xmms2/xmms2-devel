@@ -272,7 +272,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	unsigned int* xmmsc_coll_get_idlist (xmmsc_coll_t *coll)
 	int xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
-	int xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int index)
+	int xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int index, unsigned int id)
 	int xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int newindex)
 	int xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
 	int xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
@@ -471,9 +471,9 @@ cdef class CollectionIDList:
 			self.append(a)
 		return self
 
-	def insert(self, int i, int v):
+	def insert(self, int v, int i):
 		"""Inserts an id at specified position"""
-		if not xmmsc_coll_idlist_insert(self.coll, i, v):
+		if not xmmsc_coll_idlist_insert(self.coll, v, i):
 			raise IndexError("Index out of range")
 
 	def remove(self, int i):

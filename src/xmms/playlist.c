@@ -914,7 +914,7 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 		g_mutex_unlock (playlist->mutex);
 		return FALSE;
 	}
-	xmmsc_coll_idlist_insert (plcoll, file, pos);
+	xmmsc_coll_idlist_insert (plcoll, pos, file);
 	xmms_collection_set_int_attr (plcoll, "size", len + 1);
 
 	/** propagate the MID ! */

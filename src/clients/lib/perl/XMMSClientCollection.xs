@@ -91,10 +91,10 @@ xmmsc_coll_idlist_append (coll, id)
 		unsigned int id
 
 int
-xmmsc_coll_idlist_insert (coll, id, index)
+xmmsc_coll_idlist_insert (coll, index, id)
 		xmmsc_coll_t *coll
-		unsigned int id
 		unsigned int index
+		unsigned int id
 
 int
 xmmsc_coll_idlist_move (coll, from, to)

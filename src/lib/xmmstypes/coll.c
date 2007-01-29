@@ -267,7 +267,7 @@ xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return xmmsc_coll_idlist_insert (coll, id, coll->idlist_size - 1);
+	return xmmsc_coll_idlist_insert (coll, coll->idlist_size - 1, id);
 }
 
 /**
@@ -278,7 +278,7 @@ xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int index)
+xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int index, unsigned int id)
 {
 	int i;
 	x_return_val_if_fail (coll, 0);
