@@ -87,12 +87,12 @@ namespace Xmms
 				temp = new Coll::Greater( coll );
 				break;
 			}
-			case XMMS_COLLECTION_TYPE_MATCH: {
-				temp = new Coll::Match( coll );
+			case XMMS_COLLECTION_TYPE_EQUALS: {
+				temp = new Coll::Equals( coll );
 				break;
 			}
-			case XMMS_COLLECTION_TYPE_CONTAINS: {
-				temp = new Coll::Contains( coll );
+			case XMMS_COLLECTION_TYPE_MATCH: {
+				temp = new Coll::Match( coll );
 				break;
 			}
 			case XMMS_COLLECTION_TYPE_IDLIST: {

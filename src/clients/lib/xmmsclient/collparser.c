@@ -118,9 +118,9 @@ static char *string_intadd (char *number, int delta);
  * OROP      := EXPR TOKEN_OPSET_OR OROP | EXPR
  * FILTER    := UNAFILTER | BINFILTER | STRVAL
  * UNAFILTER := TOKEN_OPFIL_HAS PROP
- * BINFILTER := PROP TOKEN_OPFIL_MATCH STRING | PROP TOKEN_OPFIL_CONTAINS STRVAL |
+ * BINFILTER := PROP TOKEN_OPFIL_EQUALS STRING | PROP TOKEN_OPFIL_MATCH STRVAL |
  *              PROP TOKEN_OPFIL_SMALLER INTEGER | PROP TOKEN_OPFIL_GREATER INTEGER |
- *              TOKEN_OPFIL_MATCH STRING | TOKEN_OPFIL_CONTAINS STRVAL
+ *              TOKEN_OPFIL_EQUALS STRING | TOKEN_OPFIL_MATCH STRVAL
  * </pre>
  *
  * @{
@@ -229,8 +229,8 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 	TOKEN_MATCH_CHAR (')', XMMS_COLLECTION_TOKEN_GROUP_CLOSE);
 	TOKEN_MATCH_CHAR ('#', XMMS_COLLECTION_TOKEN_SYMBOL_ID);
 	TOKEN_MATCH_CHAR ('+', XMMS_COLLECTION_TOKEN_OPFIL_HAS);
-	TOKEN_MATCH_CHAR (':', XMMS_COLLECTION_TOKEN_OPFIL_MATCH);
-	TOKEN_MATCH_CHAR ('~', XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS);
+	TOKEN_MATCH_CHAR (':', XMMS_COLLECTION_TOKEN_OPFIL_EQUALS);
+	TOKEN_MATCH_CHAR ('~', XMMS_COLLECTION_TOKEN_OPFIL_MATCH);
 	TOKEN_MATCH_STRING ("<=", XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ);
 	TOKEN_MATCH_STRING (">=", XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ);
 	TOKEN_MATCH_CHAR ('<', XMMS_COLLECTION_TOKEN_OPFIL_SMALLER);
@@ -414,9 +414,9 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 			}
 			break;
 
-		/* Warning: must be placed _before_ the MATCH->CONTAINS converter! */
-		case XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS:
-			/* Fuzzy match the operand to CONTAINS, i.e. surround with '%' */
+		/* Warning: must be placed _before_ the EQUALS->MATCH converter! */
+		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
+			/* Fuzzy match the operand to MATCH, i.e. surround with '%' */
 			if (curr->type == XMMS_COLLECTION_TOKEN_STRING ||
 			    curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
 				int i, o;
@@ -440,10 +440,10 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 			}
 			break;
 
-		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
+		case XMMS_COLLECTION_TOKEN_OPFIL_EQUALS:
 			/* If MATCHing a pattern, use CONTAINS instead */
 			if (curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
-				prev->type = XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS;
+				prev->type = XMMS_COLLECTION_TOKEN_OPFIL_MATCH;
 			}
 			break;
 
@@ -591,7 +591,7 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 		/* Just an integer, match it */
 		} else {
 			num = string_substr (start, end);
-			coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+			coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 			xmmsc_coll_attribute_set (coll, "field", field);
 			xmmsc_coll_attribute_set (coll, "value", num);
 			coll_append_universe (coll);
@@ -893,15 +893,15 @@ coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 		strval = NULL;
 
 		switch (tk->type) {
-		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
-			colltype = XMMS_COLLECTION_TYPE_MATCH;
+		case XMMS_COLLECTION_TOKEN_OPFIL_EQUALS:
+			colltype = XMMS_COLLECTION_TYPE_EQUALS;
 			if (operand->type == XMMS_COLLECTION_TOKEN_STRING) {
 				strval = operand->string;
 			}
 			break;
 
-		case XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS:
-			colltype = XMMS_COLLECTION_TYPE_CONTAINS;
+		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
+			colltype = XMMS_COLLECTION_TYPE_MATCH;
 			strval = coll_parse_strval (operand);
 			break;
 
@@ -945,11 +945,11 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 	xmmsc_coll_t *coll, *operand;
 	int i;
 
-	if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_MATCH) {
-		colltype = XMMS_COLLECTION_TYPE_MATCH;
+	if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_EQUALS) {
+		colltype = XMMS_COLLECTION_TYPE_EQUALS;
 		token = coll_next_token (token);
-	} else if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS) {
-		colltype = XMMS_COLLECTION_TYPE_CONTAINS;
+	} else if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_MATCH) {
+		colltype = XMMS_COLLECTION_TYPE_MATCH;
 		token = coll_next_token (token);
 	} else {
 		colltype = XMMS_COLLECTION_TYPE_ERROR;
@@ -964,9 +964,9 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 	/* No operator at all, guess from argument type */
 	if (colltype == XMMS_COLLECTION_TYPE_ERROR) {
 		if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
-			colltype = XMMS_COLLECTION_TYPE_CONTAINS;
-		else
 			colltype = XMMS_COLLECTION_TYPE_MATCH;
+		else
+			colltype = XMMS_COLLECTION_TYPE_EQUALS;
 	}
 
 	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);

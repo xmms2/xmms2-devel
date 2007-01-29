@@ -84,11 +84,11 @@ XMMSC_COLL_TYPE_T
 		else if ($var == XMMS_COLLECTION_TYPE_HAS) {
 			sv_setpv ($arg, \"has\");
 		}
+		else if ($var == XMMS_COLLECTION_TYPE_EQUALS) {
+			sv_setpv ($arg, \"equals\");
+		}
 		else if ($var == XMMS_COLLECTION_TYPE_MATCH) {
 			sv_setpv ($arg, \"match\");
-		}
-		else if ($var == XMMS_COLLECTION_TYPE_CONTAINS) {
-			sv_setpv ($arg, \"contains\");
 		}
 		else if ($var == XMMS_COLLECTION_TYPE_SMALLER) {
 			sv_setpv ($arg, \"smaller\");
@@ -173,11 +173,11 @@ XMMSC_COLL_TYPE_T
 		else if (strcmp (coll_type, \"has\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_HAS;
 		}
+		else if (strcmp (coll_type, \"equals\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_EQUALS;
+		}
 		else if (strcmp (coll_type, \"match\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_MATCH;
-		}
-		else if (strcmp (coll_type, \"contains\") == 0) {
-			$var = XMMS_COLLECTION_TYPE_CONTAINS;
 		}
 		else if (strcmp (coll_type, \"smaller\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_SMALLER;

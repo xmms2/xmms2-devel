@@ -116,8 +116,8 @@ static gboolean xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *m
 static gboolean xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table, gchar *refname, gchar *refns);
 static gboolean xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_filter_equals (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
-static gboolean xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static xmmsc_coll_t *xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *mediainfo, xmms_error_t *err);
@@ -1090,8 +1090,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		}
 		break;
 
+	case XMMS_COLLECTION_TYPE_EQUALS:
 	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_CONTAINS:
 	case XMMS_COLLECTION_TYPE_SMALLER:
 	case XMMS_COLLECTION_TYPE_GREATER:
 		/* one operand */
@@ -1681,13 +1681,13 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		                                          nsid, match_table);
 		break;
 
-	case XMMS_COLLECTION_TYPE_MATCH:
-		match = xmms_collection_media_filter_match (dag, mediainfo, coll,
+	case XMMS_COLLECTION_TYPE_EQUALS:
+		match = xmms_collection_media_filter_equals (dag, mediainfo, coll,
 		                                            nsid, match_table);
 		break;
 
-	case XMMS_COLLECTION_TYPE_CONTAINS:
-		match = xmms_collection_media_filter_contains (dag, mediainfo, coll,
+	case XMMS_COLLECTION_TYPE_MATCH:
+		match = xmms_collection_media_filter_match (dag, mediainfo, coll,
 		                                               nsid, match_table);
 		break;
 
@@ -1992,7 +1992,7 @@ xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 /* Check whether the MATCH filter operator matches the mediainfo. */
 static gboolean
-xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+xmms_collection_media_filter_equals (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                     xmmsc_coll_t *coll, guint nsid,
                                     GHashTable *match_table)
 {
@@ -2025,9 +2025,9 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	return match;
 }
 
-/* Check whether the CONTAINS filter operator matches the mediainfo. */
+/* Check whether the MATCH filter operator matches the mediainfo. */
 static gboolean
-xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                        xmmsc_coll_t *coll, guint nsid,
                                        GHashTable *match_table)
 {

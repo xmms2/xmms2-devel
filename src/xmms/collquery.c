@@ -257,8 +257,8 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
+	case XMMS_COLLECTION_TYPE_EQUALS:
 	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_CONTAINS:
 	case XMMS_COLLECTION_TYPE_SMALLER:
 	case XMMS_COLLECTION_TYPE_GREATER:
 		xmmsc_coll_attribute_get (coll, "field", &attr1);
@@ -453,8 +453,8 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 
 	switch (type) {
 	/* escape strings */
+	case XMMS_COLLECTION_TYPE_EQUALS:
 	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_CONTAINS:
 		if (case_sens) {
 			query_string_append_alias (query->conditions, alias);
 		} else {
@@ -463,7 +463,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 			query_append_string (query, ")");
 		}
 
-		if (type == XMMS_COLLECTION_TYPE_MATCH) {
+		if (type == XMMS_COLLECTION_TYPE_EQUALS) {
 			query_append_string (query, "=");
 		} else {
 			query_append_string (query, " LIKE ");

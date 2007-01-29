@@ -33,8 +33,8 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_COLLECTION_TYPE_INTERSECTION
 		XMMS_COLLECTION_TYPE_COMPLEMENT
 		XMMS_COLLECTION_TYPE_HAS
+		XMMS_COLLECTION_TYPE_EQUALS
 		XMMS_COLLECTION_TYPE_MATCH
-		XMMS_COLLECTION_TYPE_CONTAINS
 		XMMS_COLLECTION_TYPE_SMALLER
 		XMMS_COLLECTION_TYPE_GREATER
 		XMMS_COLLECTION_TYPE_IDLIST
@@ -620,18 +620,18 @@ class Universe(Reference):
 		# but this is easier. And coll_universe is just this
 		Reference.__init__(self, "All Media")
 
-class Match(BaseCollection):
+class Equals(BaseCollection):
 	def __init__(Collection self, parent=None, **kv):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS)
 		if parent is None:
 			parent = Universe()
 		self.operands.append(parent)
 		for k,v in kv.items():
 			xmmsc_coll_attribute_set (self.coll, k, v);
 
-class Contains(BaseCollection):
+class Match(BaseCollection):
 	def __init__(Collection self, parent=None, **kv):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_CONTAINS)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH)
 		if parent is None:
 			parent = Universe()
 		self.operands.append(parent)
@@ -711,10 +711,10 @@ cdef create_coll(xmmsc_coll_t *coll):
 		c.__class__ = Complement
 	elif typ == XMMS_COLLECTION_TYPE_HAS:
 		c.__class__ = Has
+	elif typ == XMMS_COLLECTION_TYPE_EQUALS:
+		c.__class__ = Equals
 	elif typ == XMMS_COLLECTION_TYPE_MATCH:
 		c.__class__ = Match
-	elif typ == XMMS_COLLECTION_TYPE_CONTAINS:
-		c.__class__ = Contains
 	elif typ == XMMS_COLLECTION_TYPE_SMALLER:
 		c.__class__ = Smaller
 	elif typ == XMMS_COLLECTION_TYPE_GREATER:

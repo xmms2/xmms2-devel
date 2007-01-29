@@ -399,12 +399,12 @@ namespace Xmms
 						collptr.reset( new Coll::Greater( coll ) );
 						break;
 					}
-					case XMMS_COLLECTION_TYPE_MATCH: {
-						collptr.reset( new Coll::Match( coll ) );
+					case XMMS_COLLECTION_TYPE_EQUALS: {
+						collptr.reset( new Coll::Equals( coll ) );
 						break;
 					}
-					case XMMS_COLLECTION_TYPE_CONTAINS: {
-						collptr.reset( new Coll::Contains( coll ) );
+					case XMMS_COLLECTION_TYPE_MATCH: {
+						collptr.reset( new Coll::Match( coll ) );
 						break;
 					}
 					case XMMS_COLLECTION_TYPE_IDLIST: {

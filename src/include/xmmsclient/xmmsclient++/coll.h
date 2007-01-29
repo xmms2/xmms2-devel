@@ -46,8 +46,8 @@ namespace Xmms
 		const Type INTERSECTION = XMMS_COLLECTION_TYPE_INTERSECTION;
 		const Type COMPLEMENT   = XMMS_COLLECTION_TYPE_COMPLEMENT;
 		const Type HAS          = XMMS_COLLECTION_TYPE_HAS;
+		const Type EQUALS       = XMMS_COLLECTION_TYPE_EQUALS;
 		const Type MATCH        = XMMS_COLLECTION_TYPE_MATCH;
-		const Type CONTAINS     = XMMS_COLLECTION_TYPE_CONTAINS;
 		const Type SMALLER      = XMMS_COLLECTION_TYPE_SMALLER;
 		const Type GREATER      = XMMS_COLLECTION_TYPE_GREATER;
 		const Type IDLIST       = XMMS_COLLECTION_TYPE_IDLIST;
@@ -396,6 +396,27 @@ namespace Xmms
 				~Greater();
 		};
 
+		class Equals : public Filter
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+
+			protected:
+				Equals( xmmsc_coll_t* coll );
+
+			public:
+				Equals();
+				Equals(Coll& operand);
+				Equals(Coll& operand, const std::string& field);
+				Equals(Coll& operand,
+				      const std::string& field,
+				      const std::string& value,
+				      bool case_sensitive = false);
+				~Equals();
+		};
+
 		class Match : public Filter
 		{
 			friend class ::Xmms::Collection;
@@ -411,31 +432,10 @@ namespace Xmms
 				Match(Coll& operand);
 				Match(Coll& operand, const std::string& field);
 				Match(Coll& operand,
-				      const std::string& field,
-				      const std::string& value,
-				      bool case_sensitive = false);
-				~Match();
-		};
-
-		class Contains : public Filter
-		{
-			friend class ::Xmms::Collection;
-			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
-			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
-
-			protected:
-				Contains( xmmsc_coll_t* coll );
-
-			public:
-				Contains();
-				Contains(Coll& operand);
-				Contains(Coll& operand, const std::string& field);
-				Contains(Coll& operand,
 				         const std::string& field,
 				         const std::string& value,
 				         bool case_sensitive = false);
-				~Contains();
+				~Match();
 		};
 
 

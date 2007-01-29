@@ -414,6 +414,22 @@ namespace Xmms
 		: Filter( GREATER, operand, field, value ) {}
 	Greater::~Greater() {}
 
+	Equals::Equals()
+		: Filter( EQUALS ) {}
+	Equals::Equals( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
+	Equals::Equals( Coll& operand )
+		: Filter( EQUALS, operand ) {}
+	Equals::Equals( Coll& operand, const string& field )
+		: Filter( EQUALS, operand, field ) {}
+	Equals::Equals( Coll& operand,
+	              const string& field,
+	              const string& value,
+	              bool case_sensitive )
+		: Filter( EQUALS,
+	              operand, field, value, case_sensitive ) {}
+	Equals::~Equals() {}
+
 	Match::Match()
 		: Filter( MATCH ) {}
 	Match::Match( xmmsc_coll_t* coll )
@@ -423,28 +439,12 @@ namespace Xmms
 	Match::Match( Coll& operand, const string& field )
 		: Filter( MATCH, operand, field ) {}
 	Match::Match( Coll& operand,
-	              const string& field,
-	              const string& value,
-	              bool case_sensitive )
-		: Filter( MATCH,
-	              operand, field, value, case_sensitive ) {}
-	Match::~Match() {}
-
-	Contains::Contains()
-		: Filter( CONTAINS ) {}
-	Contains::Contains( xmmsc_coll_t* coll )
-		: Filter( coll ) {}
-	Contains::Contains( Coll& operand )
-		: Filter( CONTAINS, operand ) {}
-	Contains::Contains( Coll& operand, const string& field )
-		: Filter( CONTAINS, operand, field ) {}
-	Contains::Contains( Coll& operand,
 	                    const string& field,
 	                    const string& value,
 	                    bool case_sensitive )
-		: Filter( CONTAINS,
+		: Filter( MATCH,
 	              operand, field, value, case_sensitive ) {}
-	Contains::~Contains() {}
+	Match::~Match() {}
 
 
 	Idlist::Idlist( xmmsc_coll_t* coll )
