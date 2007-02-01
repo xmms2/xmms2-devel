@@ -31,8 +31,8 @@ namespace Xmms
 		if( xmmsc_result_iserror( res ) ) {
 			throw result_error( xmmsc_result_get_error( res ) );
 		}
-		else if( xmmsc_result_get_type( res ) != XMMS_OBJECT_CMD_ARG_DICT &&
-		         xmmsc_result_get_type( res ) != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+		else if( xmmsc_result_get_type( res ) != XMMSC_RESULT_VALUE_TYPE_DICT &&
+		         xmmsc_result_get_type( res ) != XMMSC_RESULT_VALUE_TYPE_PROPDICT ) {
 			throw not_dict_error( "Result is not a dict" );
 		}
 		result_ = res;
