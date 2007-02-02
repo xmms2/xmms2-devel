@@ -201,11 +201,6 @@ namespace Xmms
 				return constructContents();
 			}
 
-			const int operator->() const
-			{
-				return constructContents();
-			}
-
 		private:
 
 			virtual int constructContents() const
@@ -266,11 +261,6 @@ namespace Xmms
 				return constructContents();
 			}
 
-			const unsigned int operator->()
-			{
-				return constructContents();
-			}
-
 		private:
 
 			virtual unsigned int constructContents() const
@@ -325,19 +315,23 @@ namespace Xmms
 			{
 			}
 
-			const std::string operator*() const
+			const std::string& operator*() const
 			{
-				return constructContents();
+				constructContents();
+				return value_;
 			}
 
-			const std::string operator->() const
+			const std::string* const operator->() const
 			{
-				return constructContents();
+				constructContents();
+				return &value_;
 			}
 
 		private:
 
-			virtual std::string constructContents() const
+			mutable std::string value_;
+
+			virtual void constructContents() const
 			{
 
 				if( !isValid() ) {
@@ -348,7 +342,7 @@ namespace Xmms
 				if( !xmmsc_result_get_string( result_, &temp ) ) {
 					// throw something
 				}
-				return std::string( temp );
+				value_ = std::string( temp );
 				
 			}
 
@@ -360,7 +354,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) try :
-				SuperList( result )
+				SuperList( result ), value_( result )
 			{
 				// checking the type here is a bit useless since
 				// Dict constructor checks it but we must catch it and
@@ -378,7 +372,7 @@ namespace Xmms
 			}
 
 			List( const List<Dict>& list ) :
-				SuperList( list )
+				SuperList( list ), value_( list.value_ )
 			{
 			}
 
@@ -392,26 +386,30 @@ namespace Xmms
 			{
 			}
 
-			const Dict operator*() const
+			const Dict& operator*() const
 			{
-				return constructContents();
+				constructContents();
+				return value_;
 			}
 
-			const Dict operator->()
+			const Dict* const operator->() const
 			{
-				return constructContents();
+				constructContents();
+				return &value_;
 			}
 
 		private:
 
-			virtual Dict constructContents() const
+			mutable Dict value_;
+
+			virtual void constructContents() const
 			{
 
 				if( !isValid() ) {
 					throw out_of_range( "List out of range or empty list" );
 				}
 
-				return Dict( result_ );
+				value_ = Dict( result_ );
 
 			}
 
