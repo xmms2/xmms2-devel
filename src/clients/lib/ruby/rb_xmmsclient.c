@@ -1159,5 +1159,5 @@ Init_Client (VALUE mXmms)
 	                                            eClientError);
 
 	Init_Result (mXmms);
-	Init_Playlist (c);
+	Init_Playlist (mXmms);
 }

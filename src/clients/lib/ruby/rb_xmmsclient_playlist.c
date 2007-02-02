@@ -313,9 +313,9 @@ c_remove (VALUE self)
 }
 
 void
-Init_Playlist (VALUE cClient)
+Init_Playlist (VALUE mXmms)
 {
-	cPlaylist = rb_define_class_under (cClient, "Playlist", rb_cObject);
+	cPlaylist = rb_define_class_under (mXmms, "Playlist", rb_cObject);
 
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
