@@ -121,7 +121,7 @@ playlist_new (VALUE xmms, VALUE name)
  * be used if it is not specified. Raises PlaylistError if the playlist name is
  * invalid.
  */
-VALUE
+static VALUE
 c_playlist_new (int argc, VALUE *argv)
 {
 	VALUE name = Qnil;
@@ -137,7 +137,7 @@ c_playlist_new (int argc, VALUE *argv)
  *  pl.name -> string
  * Returns the name of the playlist in the medialib as a String.
  */
-VALUE
+static VALUE
 c_name (VALUE self)
 {
 	RbPlaylist *pl = NULL;
