@@ -114,10 +114,12 @@ playlist_new (VALUE xmms, VALUE name)
 
 /*
  * call-seq:
- *  pl = Xmms::Playlist.new(xc, name)
+ *  pl = Xmms::Playlist.new(xc, [name])
  * Initializes a new Xmms::Playlist using the playlist named _name_ and the
  * Xmms::Client instance _xc_. Xmms::Client#playlist(name) is a useful
- * shortcut.
+ * shortcut. _name_ is is the name of the playlist and the active playlist will
+ * be used if it is not specified. Raises PlaylistError if the playlist name is
+ * invalid.
  */
 VALUE
 c_playlist_new (int argc, VALUE *argv)
