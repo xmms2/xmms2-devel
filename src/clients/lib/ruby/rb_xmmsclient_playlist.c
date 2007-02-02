@@ -114,6 +114,24 @@ playlist_new (VALUE xmms, VALUE name)
 
 /*
  * call-seq:
+ *  pl = Xmms::Playlist.new(xc, name)
+ * Initializes a new Xmms::Playlist using the playlist named _name_ and the
+ * Xmms::Client instance _xc_. Xmms::Client#playlist(name) is a useful
+ * shortcut.
+ */
+VALUE
+c_playlist_new (int argc, VALUE *argv)
+{
+	VALUE name = Qnil;
+	RbXmmsClient *xmms = NULL;
+
+	rb_scan_args (argc, argv, "11", &xmms, &name);
+
+	return playlist_new (xmms, name);
+}
+
+/*
+ * call-seq:
  *  pl.name -> string
  * Returns the name of the playlist in the medialib as a String.
  */
@@ -317,11 +335,7 @@ Init_Playlist (VALUE mXmms)
 {
 	cPlaylist = rb_define_class_under (mXmms, "Playlist", rb_cObject);
 
-	/* ugh, we have to define the "new" method,
-	 * so we can remove it again :(
-	 */
-	rb_define_singleton_method (cPlaylist, "new", NULL, 0);
-	rb_undef_method (rb_singleton_class (cPlaylist), "new");
+	rb_define_singleton_method (cPlaylist, "new", c_playlist_new, -1);
 
 	rb_define_method (cPlaylist, "name", c_name, 0);
 	rb_define_method (cPlaylist, "current_pos", c_current_pos, 0);
