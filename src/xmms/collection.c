@@ -290,7 +290,7 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 	}
 
 	lst = xmms_xform_browse_method (xform, "/", err);
-	if (!lst) {
+	if (xmms_error_iserror (err)) {
 		xmms_object_unref (xform);
 		return NULL;
 	}
