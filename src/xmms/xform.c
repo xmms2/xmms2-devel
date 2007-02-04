@@ -310,6 +310,7 @@ xmms_xform_destroy (xmms_object_t *object)
 	g_free (xform->buffer);
 
 	xmms_object_unref (xform->out_type);
+	xmms_object_unref (xform->plugin);
 
 	if (xform->prev) {
 		xmms_object_unref (xform->prev);
@@ -324,6 +325,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 
 	xform = xmms_object_new (xmms_xform_t, xmms_xform_destroy);
 
+	xmms_object_ref (plugin);
 	xform->plugin = plugin;
 	xform->entry = entry;
 	xform->goal_hints = goal_hints;
