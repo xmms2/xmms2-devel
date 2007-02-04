@@ -1303,7 +1303,9 @@ xmms_playlist_sorted_free (gpointer data, gpointer userdata)
 	sortdata_t *sorted = (sortdata_t *) data;
 
 	for (n = sorted->val; n; n = n->next) {
-		xmms_object_cmd_value_free (n->data);
+		if (n->data) {
+			xmms_object_cmd_value_free (n->data);
+		}
 	}
 	g_list_free (sorted->val);
 	g_free (sorted);
