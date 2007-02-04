@@ -35,11 +35,6 @@ typedef enum {
 	XMMSC_RESULT_CLASS_BROADCAST
 } xmmsc_result_type_t;
 
-typedef struct xmmsc_query_attribute_St {
-	char *key;
-	char *value;
-} xmmsc_query_attribute_t;
-
 typedef void (*xmmsc_user_data_free_func_t) (void *user_data);
 
 xmmsc_connection_t *xmmsc_init (const char *clientname);
