@@ -23,7 +23,7 @@
 #include <libxml/xpathInternals.h>
 
 typedef struct xmms_xspf_track_attr_St {
-	gchar *key;
+	const gchar *key;
 	xmms_object_cmd_value_t *value;
 } xmms_xspf_track_attr_t;
 
@@ -116,15 +116,14 @@ xmms_xspf_track_attr_from_node (xmms_xspf_track_prop_t *prop, xmlNodePtr node)
 
 	switch (prop->attr_type) {
 		case XMMS_XSPF_TRACK_ATTR_TYPE_STRING:
-				value = xmms_object_cmd_value_str_new (node->children->content);
+			value = xmms_object_cmd_value_str_new ((char *)node->children->content);
 			break;
-		case XMMS_XSPF_TRACK_ATTR_TYPE_INT32:
-			{
-				/* TODO: check for errors */
-				gint32 val = strtol (node->children->content, (char **)NULL, 10);
-				value = xmms_object_cmd_value_int_new (val);
-				break;
-			}
+		case XMMS_XSPF_TRACK_ATTR_TYPE_INT32: {
+			/* TODO: check for errors */
+			gint32 val = strtol ((char *)node->children->content, (char **)NULL, 10);
+			value = xmms_object_cmd_value_int_new (val);
+			break;
+		}
 	}
 
 	if (!value) {
@@ -132,7 +131,7 @@ xmms_xspf_track_attr_from_node (xmms_xspf_track_prop_t *prop, xmlNodePtr node)
 	}
 
 	attr = g_new0 (xmms_xspf_track_attr_t, 1);
-	attr->key = node->name;
+	attr->key = prop->name;
 	attr->value = value;
 
 	return attr;
@@ -154,19 +153,18 @@ xmms_xspf_parse_track_node (xmms_xform_t *xform, xmlNodePtr node, xmms_error_t *
 			if (!xmlStrncmp (cur->name, BAD_CAST prop->name, strlen (prop->name))) {
 				switch (prop->type) {
 					case XMMS_XSPF_ATTR_LOCATION:
-						track->location = cur->children->content;
+						track->location = (char *)cur->children->content;
 						break;
-					case XMMS_XSPF_ATTR_PROP:
-						{
-							xmms_xspf_track_attr_t *attr;
-							attr = xmms_xspf_track_attr_from_node (prop, cur);
+					case XMMS_XSPF_ATTR_PROP: {
+						xmms_xspf_track_attr_t *attr;
+						attr = xmms_xspf_track_attr_from_node (prop, cur);
 
-							if (attr) {
-								track->attrs = g_list_prepend (track->attrs, attr);
-							}
-
-							break;
+						if (attr) {
+							track->attrs = g_list_prepend (track->attrs, attr);
 						}
+
+						break;
+					}
 				}
 			}
 		}
@@ -280,7 +278,7 @@ xmms_xspf_browse_add_entries (xmms_xform_t *xform, xmlDocPtr doc,
 		xmms_xform_browse_add_entry_symlink (xform, track->location, 0, NULL);
 
 		if (playlist_image) {
-			xmms_xform_browse_add_entry_property_str (xform, "image", playlist_image);
+			xmms_xform_browse_add_entry_property_str (xform, "image", (char *)playlist_image);
 		}
 
 		for (attr = track->attrs; attr; attr = g_list_next (attr)) {
