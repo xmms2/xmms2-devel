@@ -1016,9 +1016,12 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 		/* check if referenced collection exists */
 		xmmsc_coll_attribute_get (coll, "reference", &attr);
-		xmmsc_coll_attribute_get (coll, "namespace", &attr2);
-		if (strcmp (attr, "All Media") != 0) {
-			if (attr == NULL || attr2 == NULL) {
+		if (attr == NULL) {
+			return FALSE;
+		} else if (strcmp (attr, "All Media") != 0) {
+			xmmsc_coll_attribute_get (coll, "namespace", &attr2);
+
+			if (attr2 == NULL) {
 				return FALSE;
 			}
 
@@ -1041,6 +1044,9 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 				return FALSE;
 			}
 			g_mutex_unlock (dag->mutex);
+		} else {
+			/* "All Media" reference, so no referenced coll pointer */
+			ref = NULL;
 		}
 
 		/* ensure that the operand is consistent with the reference infos */
