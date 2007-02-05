@@ -146,8 +146,10 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 
 	g_return_if_fail (filename);
 
-	url = xmms_xform_get_url (xform);
+	t = strchr (filename, '/');
+	g_return_if_fail (!t); /* filenames can't contain '/', can they? */
 
+	url = xmms_xform_get_url (xform);
 	g_return_if_fail (url);
 
 	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
