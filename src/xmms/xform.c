@@ -166,8 +166,8 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 		t = g_strdup_printf ("%s/%s", eurl, efile);
 	}
 
-	xmms_xform_browse_add_entry_property (xform, "path", xmms_object_cmd_value_str_new (t));
-	xmms_xform_browse_add_entry_property (xform, "isdir", xmms_object_cmd_value_int_new (!!(flags & XMMS_XFORM_BROWSE_FLAG_DIR)));
+	xmms_xform_browse_add_entry_property_str (xform, "path", t);
+	xmms_xform_browse_add_entry_property_int (xform, "isdir", !!(flags & XMMS_XFORM_BROWSE_FLAG_DIR));
 
 	xform->browse_list = g_list_prepend (xform->browse_list, xmms_object_cmd_value_dict_new (xform->browse_hash));
 
