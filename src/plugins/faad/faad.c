@@ -338,10 +338,12 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	/* Seeking only supported on MP4 AAC right now */
 	if (data->filetype == FAAD_TYPE_MP4) {
 		ret = xmms_xform_seek (xform, samples, whence, err);
-		faacDecPostSeekReset(data->decoder, -1);
+		if (ret >= 0) {
+			faacDecPostSeekReset(data->decoder, -1);
 
-		data->buffer_length = 0;
-		g_string_erase (data->outbuf, 0, -1);
+			data->buffer_length = 0;
+			g_string_erase (data->outbuf, 0, -1);
+		}
 	}
 
 	return ret;

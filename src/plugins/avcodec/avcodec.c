@@ -250,10 +250,13 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	g_return_val_if_fail (data, FALSE);
 
 	ret = xmms_xform_seek (xform, samples, whence, err);
-	avcodec_flush_buffers (data->codecctx);
 
-	data->buffer_length = 0;
-	g_string_erase (data->outbuf, 0, -1);
+	if (ret >= 0) {
+		avcodec_flush_buffers (data->codecctx);
+
+		data->buffer_length = 0;
+		g_string_erase (data->outbuf, 0, -1);
+	}
 
 	return ret;
 }
