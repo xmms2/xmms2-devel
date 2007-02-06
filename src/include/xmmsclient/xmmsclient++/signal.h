@@ -23,6 +23,8 @@
 #include <list>
 #include <iostream>
 
+#include <boost/scoped_ptr.hpp>
+
 namespace Xmms
 {
 
@@ -207,9 +209,8 @@ namespace Xmms
 	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
 	{
 
-		T* value = extract_value< T >( res );
+		boost::scoped_ptr< T > value( extract_value< T >( res ) );
 		bool ret = sig->signal( *value );
-		delete value;
 		return ret;
 
 	}
@@ -248,7 +249,17 @@ namespace Xmms
 		else {
 
 			if( !data->signal.empty() ) {
-				ret = callSignal( data, res );
+				try {
+					ret = callSignal( data, res );
+				}
+				catch( std::exception& e ) {
+
+					if( !data->error_signal.empty() ) {
+						ret = data->error_signal( e.what() );
+					}
+
+				}
+
 			}
 
 		}
