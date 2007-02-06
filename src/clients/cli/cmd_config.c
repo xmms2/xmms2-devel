@@ -17,6 +17,11 @@
 #include "cmd_config.h"
 #include "common.h"
 
+typedef struct volume_channel_St {
+	const gchar *name;
+	guint volume;
+} volume_channel_t;
+
 void
 cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -73,9 +78,37 @@ void
 get_keys (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data)
 {
 	GList **l = user_data;
+	volume_channel_t *chan;
+
 	g_return_if_fail (l);
 
-	*l = g_list_prepend (*l, g_strdup ((gchar *)key));
+	chan = g_new (volume_channel_t, 1);
+	chan->name = g_strdup ((const gchar *)key);
+	chan->volume = (guint)value;
+
+	*l = g_list_prepend (*l, chan);
+}
+
+guint
+volume_get (xmmsc_connection_t *conn, const gchar *name)
+{
+	xmmsc_result_t *res;
+	guint ret;
+
+	res = xmmsc_playback_volume_get (conn);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Failed to get volume.");
+	}
+
+	if (!xmmsc_result_get_dict_entry_uint (res, name, &ret)) {
+		ret = 0;
+	}
+
+	xmmsc_result_unref (res);
+
+	return ret;
 }
 
 void
@@ -85,20 +118,28 @@ cmd_volume (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	int i;
 	GList *channels, *cur;
 	gchar *end = NULL;
-	guint vol;
+	gint vol;
+	gboolean vol_rel = FALSE;
 
 	if (argc < 3) {
 		print_error ("You must specify a volume level.");
 	}
 
-	channels = NULL;
-	for (i = 2; i < argc - 1; i++) {
-		channels = g_list_prepend (channels, argv[i]);
-	}
-
-	vol = strtoul (argv[argc - 1], &end, 0);
+	vol = strtol (argv[argc - 1], &end, 10);
 	if (end == argv[argc - 1]) {
 		print_error ("Please specify a number from 0-100.");
+	}
+
+	if (*argv[argc - 1] == '+' || *argv[argc - 1] == '-') {
+		vol_rel = TRUE;
+	}
+
+	channels = NULL;
+	for (i = 2; i < argc - 1; i++) {
+		volume_channel_t *chan = g_new (volume_channel_t, 1);
+		chan->name = argv[i];
+		chan->volume = volume_get (conn, argv[i]);
+		channels = g_list_prepend (channels, chan);
 	}
 
 	if (!channels) {
@@ -115,12 +156,21 @@ cmd_volume (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	for (cur = channels; cur; cur = g_list_next (cur)) {
-		res = xmmsc_playback_volume_set (conn, cur->data, vol);
+		volume_channel_t *chan = cur->data;
+
+		if (vol_rel) {
+			chan->volume += vol;
+		} else {
+			chan->volume = vol;
+		}
+
+		res = xmmsc_playback_volume_set (conn, chan->name, chan->volume);
 		xmmsc_result_wait (res);
 
 		if (xmmsc_result_iserror (res)) {
 			print_error ("Failed to set volume.");
 		}
+
 		xmmsc_result_unref (res);
 	}
 
