@@ -69,30 +69,62 @@ cmd_config_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
+void
+get_keys (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data)
+{
+	GList **l = user_data;
+	g_return_if_fail (l);
+
+	*l = g_list_prepend (*l, g_strdup ((gchar *)key));
+}
 
 void
 cmd_volume (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	int i;
+	GList *channels, *cur;
 	gchar *end = NULL;
 	guint vol;
 
-	if (argc < 4) {
-		print_error ("You must specify a channel and a volume level.");
+	if (argc < 3) {
+		print_error ("You must specify a volume level.");
 	}
 
-	vol = strtoul (argv[3], &end, 0);
-	if (end == argv[3]) {
-		print_error ("Please specify a channel and a number from 0-100.");
+	channels = NULL;
+	for (i = 2; i < argc - 1; i++) {
+		channels = g_list_prepend (channels, argv[i]);
 	}
 
-	res = xmmsc_playback_volume_set (conn, argv[2], vol);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("Failed to set volume.");
+	vol = strtoul (argv[argc - 1], &end, 0);
+	if (end == argv[argc - 1]) {
+		print_error ("Please specify a number from 0-100.");
 	}
-	xmmsc_result_unref (res);
+
+	if (!channels) {
+		res = xmmsc_playback_volume_get (conn);
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("Failed to get channel information");
+		}
+
+		xmmsc_result_dict_foreach (res, get_keys, &channels);
+
+		xmmsc_result_unref (res);
+	}
+
+	for (cur = channels; cur; cur = g_list_next (cur)) {
+		res = xmmsc_playback_volume_set (conn, cur->data, vol);
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("Failed to set volume.");
+		}
+		xmmsc_result_unref (res);
+	}
+
+	g_list_free (channels);
 }
 
 
