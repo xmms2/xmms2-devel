@@ -19,10 +19,10 @@
 #ifdef PERL_IMPLICIT_CONTEXT
 
 #define dPERL_XMMS_CLIENT_CALLBACK_MARSHAL_SP \
-	SV** sp;
+	SV **sp;
 
 #define PERL_XMMS_CLIENT_MARSHAL_INIT(cb) \
-	PERL_SET_CONTEXT(cb->priv); \
+	PERL_SET_CONTEXT (cb->priv); \
 	SPAGAIN;
 
 #else
@@ -44,32 +44,31 @@ typedef enum {
 
 typedef struct _PerlXMMSClientCallback PerlXMMSClientCallback;
 struct _PerlXMMSClientCallback {
-	SV* func;
-	SV* data;
-	SV* wrapper;
+	SV *func;
+	SV *data;
+	SV *wrapper;
 	int n_params;
-	PerlXMMSClientCallbackParamType* param_types;
+	PerlXMMSClientCallbackParamType *param_types;
 #ifdef PERL_IMPLICIT_CONTEXT
-	void* priv;
+	void *priv;
 #endif
 };
 
-void _perl_xmmsclient_call_xs(pTHX_ void (*subaddr) (pTHX_ CV* cv), CV* cv, SV** mark);
+void _perl_xmmsclient_call_xs (pTHX_ void (*subaddr) (pTHX_ CV *cv), CV *cv, SV **mark);
 
-SV* perl_xmmsclient_new_sv_from_ptr(void* con, const char* class);
+SV *perl_xmmsclient_new_sv_from_ptr (void *con, const char *class);
 
-MAGIC*
-perl_xmmsclient_get_magic_from_sv(SV* sv, const char* class);
+MAGIC *perl_xmmsclient_get_magic_from_sv (SV *sv, const char *class);
 
-void* perl_xmmsclient_get_ptr_from_sv(SV* sv, const char* class);
+void *perl_xmmsclient_get_ptr_from_sv (SV *sv, const char *class);
 
-PerlXMMSClientCallback* perl_xmmsclient_callback_new(SV* func, SV* data, SV* wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[]);
+PerlXMMSClientCallback *perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[]);
 
-void perl_xmmsclient_callback_destroy(PerlXMMSClientCallback* cb);
+void perl_xmmsclient_callback_destroy (PerlXMMSClientCallback *cb);
 
-void perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...);
+void perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...);
 
-SV* perl_xmmsclient_xmms_result_cast_value(xmmsc_result_value_type_t type, const void* value);
+SV *perl_xmmsclient_xmms_result_cast_value (xmmsc_result_value_type_t type, const void *value);
 
 char **perl_xmmsclient_unpack_char_ptr_ptr (SV *sv);
 

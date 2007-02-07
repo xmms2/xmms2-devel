@@ -18,48 +18,48 @@ XMMSC_CONNECTION_T
 	if ($var == NULL) {
 		$arg = &PL_sv_undef;
 	} else {
-		$arg = perl_xmmsclient_new_sv_from_ptr($var, \"Audio::XMMSClient\");
+		$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient\");
 	}
 
 XMMSC_COLL_T
 	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
-	$arg = perl_xmmsclient_new_sv_from_ptr($var, \"Audio::XMMSClient::Result\");
+	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Result\");
 
 XMMS_RESULT_TYPE_T
 	{
-		$arg = newSVpv(\"unknown\", 0);
+		$arg = newSVpv (\"unknown\", 0);
 		if ($var == XMMSC_RESULT_CLASS_DEFAULT) {
-			sv_setpv($arg, \"default\");
+			sv_setpv ($arg, \"default\");
 		} else if ($var == XMMSC_RESULT_CLASS_SIGNAL) {
-			sv_setpv($arg, \"signal\");
+			sv_setpv ($arg, \"signal\");
 		} else if ($var == XMMSC_RESULT_CLASS_BROADCAST) {
-			sv_setpv($arg, \"broadcast\");
+			sv_setpv ($arg, \"broadcast\");
 		}
 	}
 
 XMMS_OBJECT_CMD_ARG_TYPE_T
 	{
-		$arg = newSVpv("unknown", 0);
+		$arg = newSVpv ("unknown", 0);
 		if ($var == XMMS_OBJECT_CMD_ARG_NONE) {
-			sv_setpv($arg, \"none\");
+			sv_setpv ($arg, \"none\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_UINT32) {
-			sv_setpv($arg, \"uint\");
+			sv_setpv ($arg, \"uint\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_INT32) {
-			sv_setpv($arg, \"int\");
+			sv_setpv ($arg, \"int\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_STRING) {
-			sv_setpv($arg, \"string\");
+			sv_setpv ($arg, \"string\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_DICT) {
-			sv_setpv($arg, \"dict\");
+			sv_setpv ($arg, \"dict\");
 		} else if ($var == XMMSC_RESULT_VALUE_TYPE_BIN) {
-			sv_setpv($arg, \"bin\");
+			sv_setpv ($arg, \"bin\");
 		} else if ($var == XMMSC_RESULT_VALUE_TYPE_COLL) {
-			sv_setpv($arg, \"coll\");
+			sv_setpv ($arg, \"coll\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_LIST) {
-			sv_setpv($arg, \"list\");
+			sv_setpv ($arg, \"list\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_PROPDICT) {
-			sv_setpv($arg, \"propdict\");
+			sv_setpv ($arg, \"propdict\");
 		}
 	}
 
@@ -113,38 +113,38 @@ XMMSC_COLL_TYPE_T
 INPUT
 
 XMMSC_CONNECTION_T
-	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient\");
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient\");
 
 XMMSC_COLL_T
-	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Collection\");
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
-	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Result\");
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Result\");
 
 XMMSC_RESULT_PROPDICT_T
-	$var = (xmmsc_result_t*)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Result::PropDict::Tie\");
+	$var = (xmmsc_result_t *)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Result::PropDict::Tie\");
 
 XMMS_PLUGIN_TYPE_T
 	{
-		char* plugin_type = NULL;
+		char *plugin_type = NULL;
 		if ($arg == NULL) {
 			plugin_type = \"\";
 		} else {
-			plugin_type = SvPV_nolen($arg);
+			plugin_type = SvPV_nolen ($arg);
 		}
 
-		if (strcmp(plugin_type, \"output\") == 0) {
+		if (strcmp (plugin_type, \"output\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_OUTPUT;
-		} else if (strcmp(plugin_type, \"playlist\") == 0) {
+		} else if (strcmp (plugin_type, \"playlist\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_PLAYLIST;
-		} else if (strcmp(plugin_type, \"effect\") == 0) {
+		} else if (strcmp (plugin_type, \"effect\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_EFFECT;
-		} else if (strcmp(plugin_type, \"xform\") == 0) {
+		} else if (strcmp (plugin_type, \"xform\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_XFORM;
-		} else if (strcmp(plugin_type, \"all\") == 0) {
+		} else if (strcmp (plugin_type, \"all\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_ALL;
 		} else {
-			croak(\"unknown XMMS_PLUGIN_TYPE_T: %s\", plugin_type);
+			croak (\"unknown XMMS_PLUGIN_TYPE_T: %s\", plugin_type);
 		}
 	}
 
@@ -153,7 +153,7 @@ PERL_XMMSCLIENT_COLLECTION_ORDER_T
 
 XMMSC_COLL_TYPE_T
 	{
-		char *coll_type = SvPV_nolen($arg);
+		char *coll_type = SvPV_nolen ($arg);
 
 		if (strcmp (coll_type, \"error\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_ERROR;

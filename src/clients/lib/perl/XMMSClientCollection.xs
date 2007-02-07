@@ -14,10 +14,10 @@ xmmsc_coll_new (class, type, ...)
 
 		nargs = items - 2;
 		if (nargs == 1) {
-			if (!SvOK (ST(2)) || !SvROK (ST(2)) || !(SvTYPE (SvRV (ST(2))) == SVt_PVHV))
+			if (!SvOK (ST (2)) || !SvROK (ST (2)) || !(SvTYPE (SvRV (ST (2))) == SVt_PVHV))
 				croak ("expected hash reference or hash");
 
-			args = (HV *)SvRV (ST(2));
+			args = (HV *)SvRV (ST (2));
 
 			hv_iterinit (args);
 			while ((iter = hv_iternext (args))) {
@@ -29,7 +29,7 @@ xmmsc_coll_new (class, type, ...)
 				croak ("expected even number of attributes/values");
 
 			for (i = 2; i <= nargs; i += 2) {
-				xmmsc_coll_attribute_set (RETVAL, SvPV_nolen (ST(i)), SvPV_nolen (ST(i+1)));
+				xmmsc_coll_attribute_set (RETVAL, SvPV_nolen (ST (i)), SvPV_nolen (ST (i+1)));
 			}
 		}
 	OUTPUT:
@@ -38,7 +38,7 @@ xmmsc_coll_new (class, type, ...)
 NO_OUTPUT int
 xmmsc_coll_parse (class, const char *pattern, OUTLIST xmmsc_coll_t *coll)
 	INIT:
-		PERL_UNUSED_VAR(targ);
+		PERL_UNUSED_VAR (targ);
 	C_ARGS:
 		pattern, &coll
 	POSTCALL:
@@ -63,10 +63,10 @@ xmmsc_coll_set_idlist (coll, ...)
 		int i;
 		unsigned int *ids;
 	INIT:
-		ids = (unsigned int *)malloc (sizeof(unsigned int) * items);
+		ids = (unsigned int *)malloc (sizeof (unsigned int) * items);
 
 		for (i = 0; i < items - 1; i++) {
-			ids[i] = SvUV(ST(i + 1));
+			ids[i] = SvUV (ST (i + 1));
 		}
 
 		ids[items - 1] = 0;
@@ -109,7 +109,7 @@ xmmsc_coll_idlist_clear (coll)
 NO_OUTPUT int
 xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, OUTLIST uint32_t val)
 	INIT:
-		PERL_UNUSED_VAR(targ);
+		PERL_UNUSED_VAR (targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -157,7 +157,7 @@ operands (coll)
 	PREINIT:
 		xmmsc_coll_t *op;
 	PPCODE:
-		PERL_UNUSED_VAR(ix);
+		PERL_UNUSED_VAR (ix);
 
 		for (xmmsc_coll_operand_list_first (coll);
 				xmmsc_coll_operand_list_entry (coll, &op);
@@ -176,7 +176,7 @@ xmmsc_coll_operand_list_valid (coll)
 NO_OUTPUT int
 xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, OUTLIST xmmsc_coll_t *op)
 	INIT:
-		PERL_UNUSED_VAR(targ);
+		PERL_UNUSED_VAR (targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -207,7 +207,7 @@ xmmsc_coll_attribute_remove (coll, key)
 NO_OUTPUT int
 xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, OUTLIST char *val)
 	INIT:
-		PERL_UNUSED_VAR(targ);
+		PERL_UNUSED_VAR (targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
