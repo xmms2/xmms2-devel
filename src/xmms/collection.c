@@ -75,6 +75,12 @@ typedef enum {
 	XMMS_COLLECTION_FIND_STATE_NOMATCH,
 } coll_find_state_t;
 
+typedef struct add_metadata_from_hash_user_data_St {
+	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t entry;
+	guint src;
+} add_metadata_from_hash_user_data_t;
+
 static GList *global_stream_type;
 
 /* Functions */
@@ -267,6 +273,18 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	return ret;
 }
 
+static void
+add_metadata_from_hash (gpointer key, gpointer value, gpointer user_data)
+{
+	add_metadata_from_hash_user_data_t *ud = user_data;
+	xmms_object_cmd_value_t *b = value;
+
+	xmms_medialib_entry_property_set_str_source (ud->session, ud->entry,
+	                                             (const gchar *)key,
+	                                             b->value.string,
+	                                             ud->src);
+}
+
 /** Create a idlist from a playlist file
  * @param dag  The collection DAG.
  * @param path  URL to the playlist file
@@ -310,25 +328,16 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 		entry = xmms_medialib_entry_new_encoded (session,
 		                                         b->value.string,
 		                                         err);
+		g_hash_table_remove (a->value.dict, "realpath");
+
 		if (entry) {
-			b = g_hash_table_lookup (a->value.dict, "artist");
-			if (b) {
-				xmms_medialib_entry_property_set_str_source (session, entry,
-				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-				                                             b->value.string, src);
-			}
-			b = g_hash_table_lookup (a->value.dict, "album");
-			if (b) {
-				xmms_medialib_entry_property_set_str_source (session, entry,
-				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-				                                             b->value.string, src);
-			}
-			b = g_hash_table_lookup (a->value.dict, "title");
-			if (b) {
-				xmms_medialib_entry_property_set_str_source (session, entry,
-				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-				                                             b->value.string, src);
-			}
+			add_metadata_from_hash_user_data_t udata;
+			udata.session = session;
+			udata.entry = entry;
+			udata.src = src;
+
+			g_hash_table_foreach (a->value.dict, add_metadata_from_hash, &udata);
+
 			xmmsc_coll_idlist_append (coll, entry);
 		} else {
 			xmms_log_error ("couldn't add %s to collection!", b->value.string);
