@@ -99,7 +99,8 @@ volume_get (xmmsc_connection_t *conn, const gchar *name)
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
-		print_error ("Failed to get volume.");
+		print_error ("Failed to get volume: %s",
+		             xmmsc_result_get_error (res));
 	}
 
 	if (!xmmsc_result_get_dict_entry_uint (res, name, &ret)) {
@@ -147,7 +148,8 @@ cmd_volume (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_wait (res);
 
 		if (xmmsc_result_iserror (res)) {
-			print_error ("Failed to get channel information");
+			print_error ("Failed to get channel information: %s",
+			             xmmsc_result_get_error (res));
 		}
 
 		xmmsc_result_dict_foreach (res, get_keys, &channels);
@@ -168,7 +170,8 @@ cmd_volume (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_wait (res);
 
 		if (xmmsc_result_iserror (res)) {
-			print_error ("Failed to set volume.");
+			print_error ("Failed to set volume: %s",
+			             xmmsc_result_get_error (res));
 		}
 
 		xmmsc_result_unref (res);
@@ -187,7 +190,8 @@ cmd_volume_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
-		print_error ("Failed to get volume.");
+		print_error ("Failed to get volume: %s",
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_dict_foreach (res, print_hash, NULL);
 
