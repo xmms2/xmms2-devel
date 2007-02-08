@@ -53,7 +53,7 @@ is the official command-line interface client for
 .B XMMS2
 and acts as a reference implementation for the development of new clients. 
 .I xmms2
-is able to issue commands to control the current playlist and playback as well as commands to control the media library. 
+is able to issue commands to control the active playlist and playback as well as commands to control the media library. 
 .PP
 The following commands effect the current
 .B XMMS2
@@ -77,6 +77,12 @@ Adds a song to the playlist using its Media Library ID.
 Adds a .m3u or .pls playlist to the 
 .B XMMS2
 playlist.
+.TP
+.I insert pos url
+Adds a URL to the playlist at a specific position.
+.TP
+.I insertid pos medialib_id
+Adds a song to the playlist at a specific position using its Media Library ID.
 .TP
 .I radd
 Adds a directory of songs recursively to the playlist.
