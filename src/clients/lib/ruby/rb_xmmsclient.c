@@ -22,6 +22,7 @@
 
 #include "rb_xmmsclient.h"
 #include "rb_xmmsclient_playlist.h"
+#include "rb_collection.h"
 #include "rb_result.h"
 
 #define METHOD_HANDLER_HEADER \
@@ -1038,6 +1039,232 @@ c_bindata_retrieve (VALUE self, VALUE hash)
 	METHOD_ADD_HANDLER_STR (bindata_retrieve, hash);
 }
 
+/* call-seq:
+ * xc.coll_get(name, [ns])
+ *
+ * Returns a result containing an Xmms::Collection object referencing the
+ * collection named _name_. The namespace _ns_ is searched or all namespaces if
+ * unspecified.
+ */
+static VALUE
+c_coll_get (int argc, VALUE *argv, VALUE self)
+{
+	VALUE name, ns = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "11", &name, &ns);
+
+	if (NIL_P (ns))
+		res = xmmsc_coll_get (xmms->real, StringValuePtr (name),
+		                      XMMS_COLLECTION_NS_ALL);
+	else
+		res = xmmsc_coll_get (xmms->real, StringValuePtr (name),
+		                      StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_list([ns]) -> result
+ *
+ * Retrieves an array of the names of all the collections stored in the
+ * medialib under the namespace _ns_. If _ns_ is not specified, it defaults to
+ * ALL.
+ */
+static VALUE
+c_coll_list (int argc, VALUE *argv, VALUE self)
+{
+	VALUE ns = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "01", &ns);
+
+	if (NIL_P (ns))
+		ns = rb_str_new2 (XMMS_COLLECTION_NS_ALL);
+
+	res = xmmsc_coll_list (xmms->real, StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_save(coll, name, ns) -> result
+ *
+ * Save the collection _coll_ named _name_ under the namespace _ns_ to the
+ * media library.
+ */
+static VALUE
+c_coll_save (VALUE self, VALUE coll, VALUE name, VALUE ns)
+{
+	METHOD_HANDLER_HEADER
+
+	/* FIXME: Check that we actually have a Collection object */
+
+	res = xmmsc_coll_save (xmms->real,
+	                       FROM_XMMS_CLIENT_COLLECTION (coll),
+	                       StringValuePtr (name),
+	                       StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_remove(name, [ns]) -> result
+ *
+ * Remove the collection named _name_ from the media library. The collection is
+ * removed from the namespace _ns_ or all namespaces if unspecified.
+ */
+static VALUE
+c_coll_remove (int argc, VALUE *argv, VALUE self)
+{
+	VALUE name, ns = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "11", &name, &ns);
+
+	if (NIL_P (ns))
+		res = xmmsc_coll_remove (xmms->real, StringValuePtr (name),
+		                         XMMS_COLLECTION_NS_ALL);
+	else
+		res = xmmsc_coll_remove (xmms->real, StringValuePtr (name),
+		                         StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_find(id, ns) -> result
+ *
+ * Find all collections in the given namespace _ns_ which contain _id_.
+ */
+static VALUE
+c_coll_find (VALUE self, VALUE id, VALUE ns)
+{
+	METHOD_HANDLER_HEADER
+
+	Check_Type (id, T_FIXNUM);
+
+	res = xmmsc_coll_find (xmms->real, NUM2UINT (id), StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_rename(old, new, [ns]) -> result
+ *
+ * Rename the saved collection from _old_ to _new_ within the namespace _ns_ or
+ * all namespaces.
+ */
+static VALUE
+c_coll_rename (int argc, VALUE *argv, VALUE self)
+{
+	VALUE old, new, ns = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "21", &old, &new, &ns);
+
+	if (NIL_P (ns))
+		res = xmmsc_coll_rename (xmms->real,
+		                         StringValuePtr (old),
+		                         StringValuePtr (new),
+		                         XMMS_COLLECTION_NS_ALL);
+	else
+		res = xmmsc_coll_rename (xmms->real,
+		                         StringValuePtr (old),
+		                         StringValuePtr (new),
+		                         StringValuePtr (ns));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_query_ids(coll, [order], [start], [len]) -> result
+ *
+ * Retrieves a list of all the ids of media matched by the collection. _order_
+ * specifies a list of properties to order by or no order if omitted. _start_
+ * and _len_ determine the offset at which to start retrieving ids and the
+ * maximum number of ids to retrieve, respectively.
+ */
+static VALUE
+c_coll_query_ids (int argc, VALUE *argv, VALUE self)
+{
+	VALUE coll, order, start, len = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "13", &coll, &order, &start, &len);
+
+	/* FIXME: Too lazy right now to implement this whole thing. */
+	res = xmmsc_coll_query_ids (xmms->real,
+	                            FROM_XMMS_CLIENT_COLLECTION (coll),
+	                            NULL,
+	                            NIL_P (start) ? 0 : NUM2UINT (start),
+	                            NIL_P (start) ? 0 : NUM2UINT (len));
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_query_info(coll, [order], [start], [len]) -> result
+ *
+ * Retrieves a list of all the ids of media matched by the collection. _order_
+ * specifies a list of properties to order by or no order if omitted. _start_
+ * and _len_ determine the offset at which to start retrieving ids and the
+ * maximum number of ids to retrieve, respectively.
+ */
+static VALUE
+c_coll_query_info (int argc, VALUE *argv, VALUE self)
+{
+	VALUE coll, order, start, len, fetch, group = Qnil;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "15", &coll, &order, &start, &len, &fetch,
+	              &group);
+
+	/* FIXME: Too lazy right now to implement this whole thing. */
+	res = xmmsc_coll_query_infos (xmms->real,
+	                            FROM_XMMS_CLIENT_COLLECTION (coll),
+	                            NULL,
+	                            NIL_P (start) ? 0 : NUM2UINT (start),
+	                            NIL_P (start) ? 0 : NUM2UINT (len),
+	                            NULL,
+	                            NULL);
+
+	METHOD_HANDLER_FOOTER
+}
+
+/*
+ * call-seq:
+ * xc.coll_idlist_from_playlist_file(path) -> result
+ *
+ * Returns a collection of the idlist type from the playlist file at _path_.
+ * _path_ must be an unencoded string.
+ */
+static VALUE
+c_coll_idlist_from_playlist_file (VALUE self, VALUE path)
+{
+	METHOD_ADD_HANDLER_STR (coll_idlist_from_playlist_file, path)
+}
+
+/*
+ * call-seq:
+ * xc.broadcast_coll_changed -> result
+ *
+ * The collection_changed broadcast, if requested, is called anytime a
+ * collection is altered.
+ */
+static VALUE
+c_broadcast_coll_changed (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_collection_changed)
+}
+
 void
 Init_Client (VALUE mXmms)
 {
@@ -1103,6 +1330,18 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "playlist_set_next", c_playlist_set_next, 1);
 	rb_define_method (c, "playlist_set_next_rel", c_playlist_set_next_rel, 1);
 
+	rb_define_method (c, "coll_list", c_coll_list, -1);
+	rb_define_method (c, "coll_get", c_coll_get, -1);
+	rb_define_method (c, "coll_save", c_coll_save, 3);
+	rb_define_method (c, "coll_remove", c_coll_remove, -1);
+	rb_define_method (c, "coll_find", c_coll_find, 2);
+	rb_define_method (c, "coll_rename", c_coll_rename, -1);
+	rb_define_method (c, "coll_query_ids", c_coll_query_ids, -1);
+	rb_define_method (c, "coll_query_info", c_coll_query_info, -1);
+	rb_define_method (c, "coll_idlist_from_playlist_file",
+	                  c_coll_idlist_from_playlist_file, 1);
+	rb_define_method (c, "broadcast_coll_changed", c_broadcast_coll_changed, 0);
+
 	rb_define_method (c, "medialib_select", c_medialib_select, 1);
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
@@ -1160,4 +1399,5 @@ Init_Client (VALUE mXmms)
 
 	Init_Result (mXmms);
 	Init_Playlist (mXmms);
+	Init_Collection (mXmms);
 }

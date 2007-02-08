@@ -21,6 +21,7 @@
 #include <xmmsc/xmmsc_stdbool.h>
 
 #include "rb_xmmsclient.h"
+#include "rb_collection.h"
 #include "rb_result.h"
 
 typedef struct {
@@ -303,6 +304,17 @@ bin_get (VALUE self, RbResult *res)
 }
 
 static VALUE
+coll_get (VALUE self, RbResult *res)
+{
+	xmmsc_coll_t *coll = NULL;
+
+	if (!xmmsc_result_get_collection (res->real, &coll))
+		rb_raise (eValueError, "cannot retrieve value");
+
+	return TO_XMMS_CLIENT_COLLECTION (coll);
+}
+
+static VALUE
 value_get (VALUE self, RbResult *res)
 {
 	VALUE ret;
@@ -325,6 +337,9 @@ value_get (VALUE self, RbResult *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_BIN:
 			ret = bin_get (self, res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			ret = coll_get (self, res);
 			break;
 		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:
