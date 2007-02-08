@@ -286,12 +286,12 @@ c_coll_idlist_set (VALUE self, VALUE ids)
 	COLL_METHOD_HANDLER_HEADER
 
 	rb_ary = RARRAY (ids);
-	ary = malloc (sizeof (char *) * (rb_ary->len + 1));
+	ary = malloc (sizeof (unsigned int *) * (rb_ary->len + 1));
 
 	for (i = 0; i < rb_ary->len; i++)
 		ary[i] = NUM2UINT (rb_ary->ptr[i]);
 
-	ary[i] = NULL;
+	ary[i] = 0;
 
 	xmmsc_coll_set_idlist (coll->real, ary);
 
