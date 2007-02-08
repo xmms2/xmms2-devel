@@ -719,7 +719,7 @@ c_playlist_set_next_rel (VALUE self, VALUE pos)
 /* call-seq:
  * xc.playlist([name]) -> p
  *
- * Shortcut for Xmms::Playlist#new(xc, name). Creates a new Xmms::Playlist
+ * Shortcut for Xmms::Playlist#new(xc, [name]). Creates a new Xmms::Playlist
  * object tied to the current Xmms::Client instance. _name_ is is the name of
  * the playlist and the active playlist will be used if it is not specified.
  * Raises PlaylistError if the playlist name is invalid.
