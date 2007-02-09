@@ -300,6 +300,8 @@ xmmsc_result_decode_url (class, string)
 		const char *string
 	C_ARGS:
 		NULL, string
+	CLEANUP:
+		free ((void *)RETVAL);
 
 void
 DESTROY (res)
