@@ -5,6 +5,7 @@ use warnings;
 use Carp;
 use IO::Handle;
 use IO::Select;
+use Audio::XMMSClient::Collection;
 
 our $VERSION = 0.03;
 our @ISA;

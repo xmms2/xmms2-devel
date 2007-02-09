@@ -23,6 +23,7 @@ def build(bld):
     Common.install_files('INST_LIBDIR_perl', '', 'pm/XMMSClient.pm')
     Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
     Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
+    Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Collection.pm')
 
 def configure(conf):
     if Params.g_options.perlbinary:
