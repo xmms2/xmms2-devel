@@ -124,8 +124,7 @@ playlist_new (VALUE xmms, VALUE name)
 static VALUE
 c_playlist_new (int argc, VALUE *argv)
 {
-	VALUE name = Qnil;
-	RbXmmsClient *xmms = NULL;
+	VALUE name, xmms = Qnil;
 
 	rb_scan_args (argc, argv, "11", &xmms, &name);
 
