@@ -129,8 +129,8 @@ xmmsc_medialib_add_entry_args (c, url, ...)
 		nargs = items - 2;
 		args = (const char **)malloc (sizeof (char *) * nargs);
 
-		for (i = 0; i < nargs; i++) {
-			args[i] = SvPV_nolen (ST (i+2));
+		for (i = 2; i < items; i++) {
+			args[i] = SvPV_nolen (ST (i));
 		}
 	C_ARGS:
 		c, url, nargs, args
@@ -560,8 +560,8 @@ xmmsc_playlist_insert_args (c, playlist, pos, url, ...)
 		nargs = items - 3;
 		args = (const char **)malloc (sizeof (char*) * nargs);
 
-		for (i = 0; i < nargs; i++) {
-			args[i] = SvPV_nolen (ST (i+3));
+		for (i = 3; i < items; i++) {
+			args[i] = SvPV_nolen (ST (i));
 		}
 	C_ARGS:
 		c, playlist, pos, url, nargs, args

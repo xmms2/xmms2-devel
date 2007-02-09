@@ -255,10 +255,10 @@ xmmsc_result_source_preference_set (res, ...)
 		const char **preference = NULL;
 		int i;
 	INIT:
-		preference = (const char **)malloc (sizeof (char *) * items - 1); /* FIXME */
+		preference = (const char **)malloc (sizeof (char *) * items);
 
-		for (i = 0; i < items - 1; i++) {
-			preference[i] = SvPV_nolen (ST (i+1));
+		for (i = 1; i < items; i++) {
+			preference[i] = SvPV_nolen (ST (i));
 		}
 
 		preference[items - 1] = NULL;
