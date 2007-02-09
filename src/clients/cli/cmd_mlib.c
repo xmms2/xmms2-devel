@@ -25,6 +25,8 @@ static void cmd_mlib_set_str (xmmsc_connection_t *conn,
                               gint argc, gchar **argv);
 static void cmd_mlib_set_int (xmmsc_connection_t *conn,
                               gint argc, gchar **argv);
+static void cmd_mlib_rmprop  (xmmsc_connection_t *conn,
+                              gint argc, gchar **argv);
 static void cmd_mlib_add (xmmsc_connection_t *conn,
                           gint argc, gchar **argv);
 static void cmd_mlib_loadall (xmmsc_connection_t *conn,
@@ -52,6 +54,7 @@ cmds mlib_commands[] = {
 	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
 	{ "setstr", "[id, key, value, (source)] Set a string property together with a medialib entry.", cmd_mlib_set_str },
 	{ "setint", "[id, key, value, (source)] Set a int property together with a medialib entry.", cmd_mlib_set_int },
+	{ "rmprop", "[id, key, (source)] Remove a property from a medialib entry", cmd_mlib_rmprop },
 	{ "addcover", "[file] [id] ... - Add a cover image on id(s).", cmd_mlib_addcover },
 	{ NULL, NULL, NULL },
 };
@@ -191,6 +194,38 @@ cmd_mlib_set_int (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		res = xmmsc_medialib_entry_property_set_int (conn, id, argv[4],
 		                                             atoi (argv[5]));
 	}
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+}
+
+static void
+cmd_mlib_rmprop (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gint id;
+
+	if (argc < 5) {
+		print_error ("usage: rmprop [id] [key] ([source])");
+	}
+
+	id = strtol (argv[3], NULL, 10);
+
+	if (argc == 6) {
+		res = xmmsc_medialib_entry_property_remove_with_source (conn,
+		                                                        id,
+		                                                        argv[5],
+		                                                        argv[4]);
+	} else {
+		res = xmmsc_medialib_entry_property_remove (conn,
+		                                            id,
+		                                            argv[4]);
+	}
+
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
