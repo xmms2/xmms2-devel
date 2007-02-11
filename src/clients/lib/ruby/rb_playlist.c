@@ -19,7 +19,7 @@
 
 #include <ruby.h>
 
-#include "rb_xmmsclient_playlist.h"
+#include "rb_playlist.h"
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
@@ -98,6 +98,7 @@ playlist_new (VALUE xmms, VALUE name)
 
 	self = Data_Make_Struct (cPlaylist, RbPlaylist, c_mark, NULL, pl);
 
+	/* FIXME: Check type! */
 	pl->xmms = xmms;
 
 	if (NIL_P (name))

@@ -6,7 +6,7 @@ def build(bld):
     obj = bld.create_obj('cc', 'plugin')
     obj.target = 'xmmsclient'
     obj.includes = '../../../include ../../../includepriv'
-    obj.source = "rb_xmmsclient_main.c rb_xmmsclient.c rb_xmmsclient_playlist.c rb_collection.c rb_result.c".split()
+    obj.source = "rb_xmmsclient_main.c rb_xmmsclient.c rb_playlist.c rb_collection.c rb_result.c".split()
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'ruby'
     obj.install_in = "ARCHDIR_ruby"

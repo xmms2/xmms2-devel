@@ -21,7 +21,7 @@
 #include <xmmsc/xmmsc_stdbool.h>
 
 #include "rb_xmmsclient.h"
-#include "rb_xmmsclient_playlist.h"
+#include "rb_playlist.h"
 #include "rb_collection.h"
 #include "rb_result.h"
 
