@@ -80,6 +80,24 @@
 	                    RSTRING (arg1)->len); \
 	METHOD_HANDLER_FOOTER
 
+/* Use for converting arrays of strings in ruby to c
+ * Remember to free cary.
+ * i must be defined as well as ary,rary,cary.
+ */
+#define ARRAY_STRING_PARSE(ary, rary, cary) \
+	if (!NIL_P (rb_check_array_type (ary))) { \
+		rary = RARRAY (ary); \
+		cary = malloc (sizeof (char *) * (rary->len + 1)); \
+		for (i = 0; i < rary->len; i++) \
+			cary[i] = StringValuePtr (rary->ptr[i]); \
+		cary[i] = NULL; \
+	} else if (!NIL_P (rb_check_string_type (ary))) { \
+		cary = malloc (sizeof (char *) * 2); \
+		cary[0] = StringValuePtr (ary); \
+		cary[1] = NULL; \
+	} else \
+		rb_raise (eClientError, "unsupported argument");
+
 static VALUE eClientError, eDisconnectedError;
 
 static void
@@ -1195,46 +1213,72 @@ static VALUE
 c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 {
 	VALUE coll, order, start, len = Qnil;
+	struct RArray *rorder;
+	const char **corder;
+	int i;
 	METHOD_HANDLER_HEADER
 
 	rb_scan_args (argc, argv, "13", &coll, &order, &start, &len);
 
-	/* FIXME: Too lazy right now to implement this whole thing. */
+	if (!NIL_P (order)) {
+		ARRAY_STRING_PARSE (order, rorder, corder);
+	} else {
+		corder = NULL;
+	}
+
 	res = xmmsc_coll_query_ids (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
-	                            NULL,
+	                            corder,
 	                            NIL_P (start) ? 0 : NUM2UINT (start),
 	                            NIL_P (start) ? 0 : NUM2UINT (len));
-
+	free (corder);
 	METHOD_HANDLER_FOOTER
 }
 
 /*
  * call-seq:
- * xc.coll_query_info(coll, [order], [start], [len]) -> result
+ * xc.coll_query_info(coll, fetch, [order], [start], [len]) -> result
  *
- * Retrieves a list of all the ids of media matched by the collection. _order_
+ * Retrieves media info of media matched by the collection. _fetch_ should
+ * contain an array of properties to retrieve from the collection. _order_
  * specifies a list of properties to order by or no order if omitted. _start_
- * and _len_ determine the offset at which to start retrieving ids and the
+ * and _len_ determine the offset at which to start retrieving info and the
  * maximum number of ids to retrieve, respectively.
  */
 static VALUE
 c_coll_query_info (int argc, VALUE *argv, VALUE self)
 {
 	VALUE coll, order, start, len, fetch, group = Qnil;
+	struct RArray *rfetch, *rorder, *rgroup;
+	const char **cfetch, **corder, **cgroup;
+	int i;
 	METHOD_HANDLER_HEADER
 
-	rb_scan_args (argc, argv, "15", &coll, &order, &start, &len, &fetch,
+	rb_scan_args (argc, argv, "24", &coll, &fetch, &order, &start, &len,
 	              &group);
 
-	/* FIXME: Too lazy right now to implement this whole thing. */
+	ARRAY_STRING_PARSE (fetch, rfetch, cfetch)
+	if (!NIL_P (order)) {
+		ARRAY_STRING_PARSE (order, rorder, corder);
+	} else {
+		corder = NULL;
+	}
+	if (!NIL_P (group)) {
+		ARRAY_STRING_PARSE (group, rgroup, cgroup)
+	} else {
+		cgroup = NULL;
+	}
+
 	res = xmmsc_coll_query_infos (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
-	                            NULL,
+	                            corder,
 	                            NIL_P (start) ? 0 : NUM2UINT (start),
 	                            NIL_P (start) ? 0 : NUM2UINT (len),
-	                            NULL,
-	                            NULL);
+	                            cfetch,
+	                            cgroup);
+	free (cfetch);
+	free (corder);
+	free (cgroup);
 
 	METHOD_HANDLER_FOOTER
 }
