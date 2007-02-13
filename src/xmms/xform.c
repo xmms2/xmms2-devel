@@ -974,35 +974,11 @@ has_goalformat (xmms_xform_t *xform, GList *goal_formats)
 	return FALSE;
 }
 
-
 xmms_xform_t *
-xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
-{
-	xmms_xform_t *xform;
-	xmms_medialib_session_t *session;
-	gchar *url;
-
-	session = xmms_medialib_begin ();
-	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	xmms_medialib_end (session);
-
-	if (!url) {
-		xmms_log_error ("Couldn't get url for entry (%d)", entry);
-		return NULL;
-	}
-
-	xform = xmms_xform_chain_setup_url (entry, url, goal_formats);
-	g_free (url);
-
-	return xform;
-}
-
-xmms_xform_t *
-xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 {
 	xmms_xform_t *xform, *last;
 	gchar *durl, *args;
-	GString *namestr;
 
 	if (!entry) {
 		entry = 1; /* FIXME: this is soooo ugly, don't do this */
@@ -1061,15 +1037,118 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList
 		last = xform;
 	} while (!has_goalformat (xform, goal_formats));
 
-	last = add_effects (last, entry, goal_formats);
+	return last;
+}
+
+void
+chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry, const gchar *url)
+{
+	GString *namestr;
 
 	namestr = g_string_new ("");
-	xmms_xform_metadata_collect (last, namestr);
+	xmms_xform_metadata_collect (xform, namestr);
 	xmms_log_info ("Successfully setup chain for '%s' (%d) containing %s",
 	               url, entry, namestr->str);
 
 	g_string_free (namestr, TRUE);
+}
 
+gchar *
+get_url_for_entry (xmms_medialib_entry_t entry)
+{
+	xmms_medialib_session_t *session;
+	gchar *url = NULL;
+
+	session = xmms_medialib_begin ();
+	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	xmms_medialib_end (session);
+
+	if (!url) {
+		xmms_log_error ("Couldn't get url for entry (%d)", entry);
+	}
+
+	return url;
+}
+
+xmms_xform_t *
+xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
+{
+	gchar *url;
+	xmms_xform_t *last;
+
+	if (!(url = get_url_for_entry (entry))) {
+		return NULL;
+	}
+
+	last = chain_setup (entry, url, goal_formats);
+	if (!last) {
+		g_free (url);
+		return NULL;
+	}
+
+	last = add_effects (last, entry, goal_formats);
+	if (!last) {
+		g_free (url);
+		return NULL;
+	}
+
+	chain_finalize (last, entry, url);
+	g_free (url);
+
+	return last;
+}
+
+xmms_xform_t *
+xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry, GList *goal_formats)
+{
+	gchar *url;
+	xmms_xform_t *xform;
+
+	if (!(url = get_url_for_entry (entry))) {
+		return NULL;
+	}
+
+	xform = chain_setup (entry, url, goal_formats);
+	if (!xform) {
+		g_free (url);
+		return NULL;
+	}
+
+	chain_finalize (xform, entry, url);
+	g_free (url);
+	return xform;
+}
+
+xmms_xform_t *
+xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+{
+	xmms_xform_t *last;
+
+	last = chain_setup (entry, url, goal_formats);
+	if (!last) {
+		return NULL;
+	}
+
+	last = add_effects (last, entry, goal_formats);
+	if (!last) {
+		return NULL;
+	}
+
+	chain_finalize (last, entry, url);
+	return last;
+}
+
+xmms_xform_t *
+xmms_xform_chain_setup_url_without_effects (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+{
+	xmms_xform_t *last;
+
+	last = chain_setup (entry, url, goal_formats);
+	if (!last) {
+		return NULL;
+	}
+
+	chain_finalize (last, entry, url);
 	return last;
 }
 
