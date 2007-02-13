@@ -215,9 +215,6 @@ xmms_cdda_init (xmms_xform_t *xform)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             141120);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             44100);
 	xmms_xform_metadata_set_str (xform, "disc_id", url_data[0]);
 	xmms_xform_metadata_set_str (xform, "cddb_id", cddb_id);
 	xmms_xform_metadata_set_int (xform,

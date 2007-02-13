@@ -253,11 +253,7 @@ xmms_mad_init (xmms_xform_t *xform)
 	}
 
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
-
 	data->samplerate = frame.header.samplerate;
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->samplerate);
 
 
 	if (frame.header.flags & MAD_FLAG_PROTECTION) {

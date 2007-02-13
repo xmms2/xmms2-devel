@@ -485,10 +485,6 @@ xmms_flac_init (xmms_xform_t *xform)
 		                             / data->sample_rate * 1000);
 	}
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->sample_rate);
-
 	if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {
 		goto err;
 	}

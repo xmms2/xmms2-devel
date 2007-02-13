@@ -349,12 +349,6 @@ xmms_vorbis_init (xmms_xform_t *xform)
 		                             (gint) vi->bitrate_nominal);
 	}
 
-	if (vi && vi->rate) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                             (gint) vi->rate);
-	}
-
 	xmms_vorbis_read_metadata (xform, data);
 
 	xmms_xform_outdata_type_add (xform,
