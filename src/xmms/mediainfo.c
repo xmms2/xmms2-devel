@@ -222,7 +222,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			num--;
 		}
 
-		xform = xmms_xform_chain_setup (entry, goal_format);
+		xform = xmms_xform_chain_setup_without_effects (entry, goal_format);
 
 		if (!xform) {
 			session = xmms_medialib_begin_write ();
