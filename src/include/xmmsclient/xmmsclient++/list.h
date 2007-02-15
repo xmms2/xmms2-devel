@@ -19,6 +19,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <boost/any.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
@@ -354,7 +355,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) try :
-				SuperList( result ), value_( result )
+				SuperList( result )
 			{
 				// checking the type here is a bit useless since
 				// Dict constructor checks it but we must catch it and
@@ -389,18 +390,18 @@ namespace Xmms
 			const Dict& operator*() const
 			{
 				constructContents();
-				return value_;
+				return *value_;
 			}
 
 			const Dict* const operator->() const
 			{
 				constructContents();
-				return &value_;
+				return value_.get();
 			}
 
 		private:
 
-			mutable Dict value_;
+			mutable boost::shared_ptr< Dict > value_;
 
 			virtual void constructContents() const
 			{
@@ -409,7 +410,7 @@ namespace Xmms
 					throw out_of_range( "List out of range or empty list" );
 				}
 
-				value_ = Dict( result_ );
+				value_ = boost::shared_ptr< Dict >( new Dict( result_ ) );
 
 			}
 
