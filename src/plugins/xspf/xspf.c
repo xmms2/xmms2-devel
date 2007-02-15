@@ -85,14 +85,10 @@ xmms_xspf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
-	                              "application/xspf+xml",
+	                              "application/x-xmms2-xml+playlist",
 	                              XMMS_STREAM_TYPE_END);
 
-	xmms_magic_add ("xml header", "application/xspf+xml",
-	                "0 string <?xml", NULL);
-
-	xmms_magic_extension_add ("application/xspf+xml", "*.xspf");
-	xmms_magic_extension_add ("application/xspf+xml", "*.xml");
+	xmms_magic_extension_add ("application/x-xmms2-xml+playlist", "*.xspf");
 
 	return TRUE;
 }
