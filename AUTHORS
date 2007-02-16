@@ -175,6 +175,10 @@ N: Georg Schild
 E: dangertools@gmail.com
 D: Java bindings
 
+N: Ben Slote
+E: bslote@gmail.com
+D: Pythonbindings fix
+
 N: Daniel Svensson
 E: daniel@nittionio.nu
 D: Musepack. CoreFoundation. Alsa. Gnomevfs. Samba. Sun. Various fixes.

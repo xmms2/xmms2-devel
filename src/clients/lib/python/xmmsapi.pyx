@@ -1465,7 +1465,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_load(self, playlist = None):
+	def playlist_load(self, playlist = None, cb = None):
 		"""
 		Load the playlist as current playlist
 		@rtype: L{XMMSResult}
@@ -1487,7 +1487,7 @@ cdef class XMMS:
 		return ret
 
 
-	def playlist_list(self):
+	def playlist_list(self, cb = None):
 		"""
 		Lists the playlists
 		@rtype: L{XMMSResult}
