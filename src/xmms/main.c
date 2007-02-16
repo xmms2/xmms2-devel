@@ -378,6 +378,7 @@ main (int argc, char **argv)
 	gboolean quiet = FALSE;
 	gboolean version = FALSE;
 	gboolean nologging = FALSE;
+	gboolean runasroot = FALSE;
 	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
 	gchar *ppath = NULL;
@@ -398,9 +399,10 @@ main (int argc, char **argv)
 		{"plugindir", 'p', 0, G_OPTION_ARG_FILENAME, &ppath, "Search for plugins in directory 'foo'", "<foo>"},
 		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &conffile, "Specify alternate configuration file", "<file>"},
 		{"status-fd", 's', 0, G_OPTION_ARG_INT, &status_fd, "Specify a filedescriptor to write to when started", "fd"},
+		{"yes-run-as-root", 0, 0, G_OPTION_ARG_NONE, &runasroot, "Give me enough rope to shoot myself in the foot", NULL},
 		{NULL}
 	};
-
+	
 	/** Check that we are running against the correct glib version */
 	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
 	if (vererr) {
@@ -422,6 +424,17 @@ main (int argc, char **argv)
 	if (argc != 1) {
 		g_print ("There was unknown options, aborting!\n");
 		exit (EXIT_FAILURE);
+	}
+	
+	if (getuid () == 0 || geteuid () == 0) {
+		if (runasroot) {
+			g_print ("***************************************\n");
+			g_print ("Warning! You are running XMMS2D as root, this is a bad idea!\nBut I'll allow it since you asked nicely.\n");
+			g_print ("***************************************\n\n");
+		} else {
+			g_print ("PLEASE DON'T RUN XMMS2D AS ROOT!\n\n(if you really must, read the help)\n");
+			exit (EXIT_FAILURE);
+		}
 	}
 
 	if (verbose) {
