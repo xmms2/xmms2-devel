@@ -31,6 +31,7 @@
 #include <errno.h>
 
 #include "xmms/xmms_defs.h"
+#include "xmmsc/xmmsc_util.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -43,7 +44,7 @@ main (int argc, char **argv)
 	pid_t pid;
 	int i, fd, max_fd;
 	int pipefd[2];
-	const gchar *logfile = "/tmp/xmms2.log";
+	const gchar *logfile = NULL;
 	const gchar *pidfile = NULL;
 	GError *error = NULL;
 	GOptionContext* context = NULL;
@@ -66,6 +67,16 @@ main (int argc, char **argv)
 		perror ("pipe");
 		exit (1);
 	}
+	
+	if (!logfile) {
+		char cache[PATH_MAX];
+		xmms_usercachedir_get (cache, PATH_MAX);
+		logfile = g_build_filename (cache, "xmms2d.log", NULL);
+		if (!g_file_test (cache, G_FILE_TEST_IS_DIR)) {
+			g_mkdir_with_parents (cache, 0755);
+		}
+	}
+	g_print ("Log output will be stored in %s\n", logfile);
 
 	pid = fork ();
 	if (pid) {
@@ -108,7 +119,7 @@ main (int argc, char **argv)
 	setsid ();
 
 	/* fork again to reparent to init */
-    pid = fork();
+	pid = fork();
 	if (pid && pidfile) {
 		FILE *pfile = NULL;
 		pfile = g_fopen (pidfile, "w");

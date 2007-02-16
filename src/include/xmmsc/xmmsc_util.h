@@ -32,6 +32,7 @@
 #define XMMS_DEFAULT_TCP_PORT 9667
 
 const char *xmms_userconfdir_get (char *buf, int len);
+const char *xmms_usercachedir_get (char *buf, int len);
 const char *xmms_default_ipcpath_get (char *buf, int len);
 
 #endif /* __XMMS_UTILS_H__ */

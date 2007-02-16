@@ -26,6 +26,48 @@
 #include "xmms/xmms_defs.h"
 
 /**
+ * internal function used for the function below.
+ * @internal
+**/
+static const char *
+xdg_dir_get (const char *env, const char *default_dir, char *buf, int len)
+{
+	struct passwd *pw;
+	char *home;
+
+	if (!buf || len <= 0)
+		return NULL;
+
+	home = getenv (env);
+
+	if (home && *home) {
+		snprintf (buf, len, "%s/xmms2", home);
+
+		return buf;
+	}
+
+	pw = getpwuid (getuid ());
+	if (!pw)
+		return NULL;
+
+	snprintf (buf, len, "%s/%s", pw->pw_dir, default_dir);
+
+	return buf;
+}
+
+/**
+ * Get the absolute path to the user cache dir.
+ * @param buf a char buffer
+ * @param len the lenght of buf (PATH_MAX is a good choice)
+ * @return A pointer to buf, or NULL if an error occurred.
+**/
+const char *
+xmms_usercachedir_get (char *buf, int len)
+{
+    return xdg_dir_get ("XDG_CACHE_HOME", USERCACHEDIR, buf, len);
+}
+
+/**
  * Get the absolute path to the user config dir.
  *
  * @param buf A char buffer
@@ -35,29 +77,8 @@
 const char *
 xmms_userconfdir_get (char *buf, int len)
 {
-	struct passwd *pw;
-	char *config_home;
-
-	if (!buf || len <= 0)
-		return NULL;
-
-	config_home = getenv ("XDG_CONFIG_HOME");
-
-	if (config_home && *config_home) {
-		snprintf (buf, len, "%s/xmms2", config_home);
-
-		return buf;
-	}
-
-	pw = getpwuid (getuid ());
-	if (!pw)
-		return NULL;
-
-	snprintf (buf, len, "%s/%s", pw->pw_dir, USERCONFDIR);
-
-	return buf;
+    return xdg_dir_get ("XDG_CONFIG_HOME", USERCONFDIR, buf, len);
 }
-
 
 /**
  * Get the default connection path.
