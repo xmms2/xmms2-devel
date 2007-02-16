@@ -209,13 +209,6 @@ xmms_avformat_init (xmms_xform_t *xform)
 
 	XMMS_DBG ("mimetype set to '%s'", mimetype);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->codecctx->sample_rate);
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             data->codecctx->bit_rate);
-
 	xmms_xform_privdata_set_bin (xform,
 	                             "decoder_config",
 	                             data->codecctx->extradata,
@@ -473,11 +466,6 @@ xmms_avformat_get_mediainfo (xmms_xform_t *xform)
 	fmtctx = data->fmtctx;
 	codecctx = data->codecctx;
 
-	if (codecctx->sample_rate > 0) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                             codecctx->sample_rate);
-	}
 	if (codecctx->bit_rate > 0) {
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,

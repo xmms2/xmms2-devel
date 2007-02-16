@@ -293,10 +293,6 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 	entry = xmms_medialib_entry_new (NULL);
 
 	xmms_medialib_entry_property_set_int (entry,
-	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                                      data->speexheader->rate);
-
-	xmms_medialib_entry_property_set_int (entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                      data->speexheader->bitrate);
 

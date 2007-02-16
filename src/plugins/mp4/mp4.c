@@ -281,10 +281,6 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) >= 0) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                             temp);
-
 		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) /
 		            temp) >= 0) {
 			xmms_xform_metadata_set_int (xform,
