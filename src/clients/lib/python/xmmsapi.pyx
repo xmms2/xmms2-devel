@@ -2436,7 +2436,7 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
-	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, cb=None):
+	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
 		Retrive a list of mediainfo of the media matching the collection
 		@rtype: L{XMMSResult}
@@ -2446,18 +2446,23 @@ cdef class XMMS:
 		cdef Collection c
 		cdef _ListConverter flds
 		cdef _ListConverter orderflds
+		cdef _ListConverter grpby
 
 		if order is None:
 			order = []
 
+		if groupby is None:
+			groupby = []
+
 		flds = _ListConverter(fields)
 		orderflds = _ListConverter(order)
+		grpby = _ListConverter(groupby)
 		
 		c = <Collection> coll
 		ret = XMMSResult(self)
 		ret.callback = cb
 
-		ret.res = xmmsc_coll_query_infos(self.conn, c.coll, orderflds.lst, start, leng, flds.lst, NULL)
+		ret.res = xmmsc_coll_query_infos(self.conn, c.coll, orderflds.lst, start, leng, flds.lst, grpby.lst)
 
 		ret.more_init()
 		return ret
