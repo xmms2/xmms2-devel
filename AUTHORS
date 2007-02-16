@@ -115,6 +115,10 @@ N: Michael Lindgren
 E: lindgren@debian.as
 D: Curl. HTML pls plugin. Various fixes.
 
+N: Erik Massop
+E: e.massop@hccnet.nl
+D: "jumplist", cli coll queryadd, bugfixes
+
 N: Mind.In.A.Box / Stefan Poiss and Markus Hadwiger
 W: http://www.mindinabox.com/
 D: Supplied us with a great "intro" clip.
