@@ -106,26 +106,39 @@ def _configure_optionals(conf):
     conf.env['XMMS_OPTIONAL_BUILD'] = []
 
     if Params.g_options.enable_optionals:
-        selected_optionals = _check_exists(sets.Set(Params.g_options.enable_optionals),
+        selected_optionals = _check_exist(sets.Set(Params.g_options.enable_optionals),
                                            "The following optional(s) were requested, "
                                            "but don't exist: %(unknown_optionals)s")
+        optionals_must_work = True
     elif Params.g_options.disable_optionals:
         disabled_optionals = _check_exist(sets.Set(Params.g_options.disable_optionals),
                                           "The following optional(s) were disabled, "
                                           "but don't exist: %(unknown_optionals)s")
         selected_optionals = all_optionals.difference(disabled_optionals)
+        optionals_must_work = False
     else:
         selected_optionals = all_optionals
+        optionals_must_work = False
+
+    failed_optionals = sets.Set()
+    succeeded_optionals = sets.Set()
 
     for o in selected_optionals:
         x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
         if conf.sub_config(x):
             conf.env['XMMS_OPTIONAL_BUILD'].append(x)
+            succeeded_optionals.add(o)
+        else:
+            failed_optionals.add(o)
 
-    disabled_optionals = sets.Set(optional_subdirs)
-    disabled_optionals.difference_update(conf.env['XMMS_OPTIONAL_BUILD'])
+    if optionals_must_work and failed_optionals:
+        Params.fatal("The following required optional(s) failed to configure: "
+                     "%s" % ', '.join(failed_optionals))
 
-    return conf.env['XMMS_OPTIONAL_BUILD'], disabled_optionals
+    disabled_optionals = sets.Set(all_optionals)
+    disabled_optionals.difference_update(succeeded_optionals)
+
+    return succeeded_optionals, disabled_optionals
 
 def _configure_plugins(conf):
     """Process all xmms2d plugins"""
