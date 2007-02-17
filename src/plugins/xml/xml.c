@@ -51,6 +51,8 @@ xmms_xml_plugin_setup(xmms_xform_plugin_t *xform_plugin)
 
 	xmms_magic_add ("xml header", "application/xml",
 	                "0 string <?xml", NULL);
+	xmms_magic_add ("xml header", "application/xml",
+	                "0 string \xef\xbb\xbf<?xml", NULL);
 
 	return TRUE;
 }
