@@ -298,15 +298,15 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			gint32 temp, toskip = 0;
 			
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
-				toskip = temp * frameInfo.channels *
-				         xmms_sample_size_get (data->sampleformat);	
+				toskip = (temp * frameInfo.channels *
+				          xmms_sample_size_get (data->sampleformat));
 			}
 
 			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
-				bytes_read = temp * frameInfo.channels *
-				             xmms_sample_size_get (data->sampleformat);
+				bytes_read = (temp * frameInfo.channels *
+				              xmms_sample_size_get (data->sampleformat));
 			}
-			
+
 			g_string_append_len (data->outbuf, sample_buffer + toskip,
 			                     bytes_read - toskip);
 		} else if (frameInfo.error > 0) {
@@ -339,7 +339,7 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	if (data->filetype == FAAD_TYPE_MP4) {
 		ret = xmms_xform_seek (xform, samples, whence, err);
 		if (ret >= 0) {
-			faacDecPostSeekReset(data->decoder, -1);
+			faacDecPostSeekReset (data->decoder, -1);
 
 			data->buffer_length = 0;
 			g_string_erase (data->outbuf, 0, -1);

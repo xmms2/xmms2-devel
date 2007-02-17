@@ -195,9 +195,9 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	while (size == 0) {
 		if (data->buffer_length == 0) {
 			bytes_read = xmms_xform_read (xform,
-						      (gchar *) data->buffer,
-						      data->buffer_size,
-						      error);
+			                              (gchar *) data->buffer,
+			                              data->buffer_size,
+			                              error);
 
 			if (bytes_read < 0) {
 				XMMS_DBG ("Error while reading data");
