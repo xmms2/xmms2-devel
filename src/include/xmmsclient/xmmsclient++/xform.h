@@ -73,39 +73,6 @@ namespace Xmms
 			DictListResult
 			browseEncoded( const std::string& url ) const;
 
-#if 0
-
-			/** Browse available media in a path.
-			 *  A list of paths available (directly) under the
-			 *  specified path is returned.
-			 *
-			 *  @param url Path to browse.
-			 *  @param slot Function pointer to a function taking a
-			 *              const List< Dict >& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void browse( const std::string& url, const DictListSlot& slot,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/** Browse available media in a path.
-			 *  Same as #browse but takes an encoded path instead.
-			 *
-			 *  @param url Encoded path to browse.
-			 *  @param slot Function pointer to a function taking a
-			 *              const List< Dict >& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			void browseEncoded( const std::string& url, const DictListSlot& slot,
-			                    const ErrorSlot& error = &Xmms::dummy_error
-			                  ) const;
-#endif
-
 		/** @cond */
 		private:
 			friend class Client;
