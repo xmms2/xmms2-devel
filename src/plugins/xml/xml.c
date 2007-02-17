@@ -63,10 +63,13 @@ get_root_node_name (xmms_xform_t *xform)
 	guint8 buf[BUFFER_SIZE];
 	gint read, i, start, len;
 	gchar *ret = NULL;
+	xmms_error_t error;
 
-	read = xmms_xform_peek (xform, buf, BUFFER_SIZE, NULL);
+	xmms_error_reset (&error);
+
+	read = xmms_xform_peek (xform, buf, BUFFER_SIZE, &error);
 	if (read < 1) {
-		XMMS_DBG ("unable to peek from previous xform");
+		xmms_log_error ("Couldn't get data: %s", xmms_error_message_get (&error));
 		return NULL;
 	}
 
