@@ -93,7 +93,6 @@ xmms_m3u_browse (xmms_xform_t *xform,
                  xmms_error_t *error)
 {
 	gchar line[XMMS_XFORM_MAX_LINE_SIZE];
-	gchar entry[XMMS_PATH_MAX];
 	xmms_error_t err;
 	gboolean extm3u = FALSE;
 	gchar *tmp;
@@ -125,9 +124,7 @@ xmms_m3u_browse (xmms_xform_t *xform,
 		}
 
 		tmp = xmms_build_playlist_url (d, line);
-
-		xmms_xform_browse_add_entry (xform, entry, 0);
-		xmms_xform_browse_add_entry_symlink (xform, tmp, 0, NULL);
+		xmms_xform_browse_add_symlink (xform, NULL, tmp);
 
 		g_free (tmp);
 

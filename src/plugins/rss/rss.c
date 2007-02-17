@@ -93,8 +93,7 @@ xmms_rss_start_element (xmms_rss_data_t *data, const xmlChar *name,
 		attr = (char *) attrs[i + 1];
 
 		XMMS_DBG ("Found %s", attr);
-		xmms_xform_browse_add_entry (xform, attr, 0);
-		xmms_xform_browse_add_entry_symlink (xform, attr, 0, NULL);
+		xmms_xform_browse_add_symlink (xform, NULL, attr);
 
 		break;
 	}

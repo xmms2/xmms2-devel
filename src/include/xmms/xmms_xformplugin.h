@@ -324,7 +324,8 @@ void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
 void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
                                                const gchar *key,
                                                gint value);
-void xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform, const gchar *link, gint numargs, gchar **args);
+void xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename, const gchar *url);
+void xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename, const gchar *url, gint nargs, char **args);
 
 #define XMMS_XFORM_MAX_LINE_SIZE 1024
 

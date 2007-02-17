@@ -270,8 +270,7 @@ xmms_xspf_browse_add_entries (xmms_xform_t *xform, xmlDocPtr doc,
 			continue;
 		}
 
-		xmms_xform_browse_add_entry (xform, track->location, 0);
-		xmms_xform_browse_add_entry_symlink (xform, track->location, 0, NULL);
+		xmms_xform_browse_add_symlink (xform, NULL, track->location);
 
 		if (playlist_image) {
 			xmms_xform_browse_add_entry_property_str (xform, "image", (char *)playlist_image);

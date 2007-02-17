@@ -325,10 +325,18 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 		xmms_object_cmd_value_t *b;
 		b = g_hash_table_lookup (a->value.dict, "realpath");
 
+		if (!b) {
+			xmms_log_error ("Playlist plugin did not set realpath; probably a bug in plugin");
+			xmms_object_cmd_value_free (a);
+			n = g_list_delete_link (n, n);
+			continue;
+		}
+
 		entry = xmms_medialib_entry_new_encoded (session,
 		                                         b->value.string,
 		                                         err);
 		g_hash_table_remove (a->value.dict, "realpath");
+		g_hash_table_remove (a->value.dict, "path");
 
 		if (entry) {
 			add_metadata_from_hash_user_data_t udata;

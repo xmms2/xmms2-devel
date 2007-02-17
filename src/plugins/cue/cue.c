@@ -163,7 +163,7 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 	file = xmms_build_playlist_url (xmms_xform_get_url (xform), tr->file);
 
 	while (n) {
-		gchar *arg[] = { NULL, NULL };
+		gchar *arg[2];
 		gint numargs = 1;
 		cue_track *t = n->data;
 		if (!t) {
@@ -178,8 +178,7 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 			numargs = 2;
 		}
 
-		xmms_xform_browse_add_entry (xform, tr->file, 0);
-		xmms_xform_browse_add_entry_symlink (xform, file, numargs, arg);
+		xmms_xform_browse_add_symlink_args (xform, NULL, file, numargs, arg);
 		xmms_xform_browse_add_entry_property_int (xform, "intsort", t->index);
 		xmms_xform_browse_add_entry_property_str (xform, "title", t->title);
 		xmms_xform_browse_add_entry_property_str (xform, "artist", t->artist);

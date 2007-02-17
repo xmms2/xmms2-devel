@@ -111,8 +111,8 @@ xmms_pls_add_entry (xmms_xform_t *xform,
 		if (e->title)
 			title = e->title;
 
-		xmms_xform_browse_add_entry (xform, title, 0);
-		xmms_xform_browse_add_entry_symlink (xform, path, 0, NULL);
+		xmms_xform_browse_add_symlink (xform, NULL, path);
+		xmms_xform_browse_add_entry_property_str (xform, "title", e->title);
 
 		g_free (path);
 		g_free (e->file);

@@ -63,6 +63,7 @@ struct xmms_xform_St {
 
 	GList *browse_list;
 	GHashTable *browse_hash;
+	gint browse_index;
 
 	/** used for line reading */
 	struct {
@@ -114,25 +115,34 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
 }
 
 void
-xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform,
-                                     const gchar *link,
-                                     gint numargs,
-                                     gchar **args)
+xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename, const gchar *url, gint nargs, char **args)
 {
-	gint i;
-	gchar *eurl = xmms_medialib_url_encode (link);
-	GString *s = g_string_new (eurl);
+	GString *s;
+	gchar *eurl;
+	gchar bname[32];
+	int i;
 
+	if (!basename) {
+		snprintf (bname, sizeof (bname), "%d", xform->browse_index++);
+		basename = bname;
+	}
 
-	for (i = 0; i < numargs; i++) {
+	xmms_xform_browse_add_entry (xform, basename, 0);
+	eurl = xmms_medialib_url_encode (url);
+	s = g_string_new (eurl);
+	for (i = 0; i < nargs; i++) {
 		g_string_append (s, i == 0 ? "?" : "&");
 		g_string_append (s, args[i]);
 	}
-
-	xmms_xform_browse_add_entry_property (xform, "realpath",
-	                                      xmms_object_cmd_value_str_new (s->str));
+	xmms_xform_browse_add_entry_property_str (xform, "realpath", s->str);
 	g_free (eurl);
 	g_string_free (s, TRUE);
+}
+
+void
+xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename, const gchar *url)
+{
+	xmms_xform_browse_add_symlink_args (xform, basename, url, 0, NULL);
 }
 
 void

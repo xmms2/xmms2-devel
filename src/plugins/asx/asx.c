@@ -100,8 +100,7 @@ xmms_asx_handle_ref (GMarkupParseContext *context, const gchar *elem_name,
 
 	for (i = 0; attr_names[i] && attr_vals[i]; i++) {
 		if (g_ascii_strncasecmp (attr_names[i], "href", 4) == 0) {
-			xmms_xform_browse_add_entry (xform, attr_vals[i], 0);
-			xmms_xform_browse_add_entry_symlink (xform, attr_vals[i], 0, NULL);
+			xmms_xform_browse_add_symlink (xform, NULL, attr_vals[i]);
 		}
 	}
 }

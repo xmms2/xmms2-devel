@@ -271,18 +271,14 @@ xmms_cdda_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 	}
 
 	for (t = 1; t <= track_count; t++) {
-		gchar *file;
+		gchar trackno[3];
 
 		g_snprintf (cdda_url, XMMS_PATH_MAX, "cdda://%s/%d", disc_id, t);
 		XMMS_DBG ("Adding '%s'.", cdda_url);
 
-		file = xmms_build_playlist_url (xmms_xform_get_url (xform), cdda_url);
-
-		xmms_xform_browse_add_entry (xform, cdda_url, 0);
-		xmms_xform_browse_add_entry_symlink (xform, file, 0, 0);
+		g_snprintf (trackno, sizeof (trackno), "%d", t);
+		xmms_xform_browse_add_symlink (xform, trackno, cdda_url);
 		xmms_xform_browse_add_entry_property_int (xform, "intsort", t);
-
-		g_free (file);
 	}
 	g_free (disc_id);
 
