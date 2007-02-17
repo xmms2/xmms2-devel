@@ -6,7 +6,7 @@ def plugin_configure(conf):
     cfg.uselib = 'avformat'
     cfg.tests = {'--cflags': 'CCFLAGS',
                  '--plugin-libs avformat': 'LINKFLAGS'}
-    return (cfg.run() or conf.check_pkg('libavformat', destvar='asf'))
+    return (cfg.run() or conf.check_pkg('libavformat', destvar='avformat'))
 
 configure, build = plugin('avformat', configure=plugin_configure,
                           source="avformat.c",
