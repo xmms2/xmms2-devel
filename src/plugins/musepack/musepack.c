@@ -228,10 +228,6 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             bitrate);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->info.sample_freq);
-
 	if (data->info.gain_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, (gdouble) data->info.gain_album / 2000.0));

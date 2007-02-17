@@ -282,16 +282,6 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 	name = "Flags";
 	xmms_xform_metadata_set_int (xform, name, data->p_decompress->GetInfo (APE_INFO_FORMAT_FLAGS));
 
-	/* Sample Rate */
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->p_decompress->GetInfo (APE_INFO_SAMPLE_RATE));
-
-	/* Channels */
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
-	                             data->p_decompress->GetInfo (APE_INFO_CHANNELS));
-
 	/* Average Bitrate */
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,

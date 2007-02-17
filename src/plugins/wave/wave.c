@@ -154,9 +154,6 @@ xmms_wave_get_media_info (xmms_xform_t *xform)
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             bitrate);
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                             data->samplerate);
 }
 
 static gboolean

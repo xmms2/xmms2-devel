@@ -280,11 +280,6 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	if ((temp = mp4ff_get_channel_count (data->mp4ff, data->track)) >= 0) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNELS,
-		                             temp);
-	}
 	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) >= 0) {
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
