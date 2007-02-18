@@ -428,7 +428,7 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 	g_return_val_if_fail ((data->bufferlen + len) <= CURL_MAX_WRITE_SIZE, 0);
 
 	memcpy (data->buffer + data->bufferlen, ptr, len);
-	data->bufferlen = len;
+	data->bufferlen = data->bufferlen + len;
 
 	return len;
 }
