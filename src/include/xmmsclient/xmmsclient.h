@@ -68,6 +68,7 @@ const char *xmmsc_userconfdir_get (char *buf, int len);
 
 /* commands */
 xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_create (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char *, int, const char **);
 xmmsc_result_t *xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *playlist, const char *url);

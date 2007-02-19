@@ -649,17 +649,13 @@ cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	gchar *playlist_name;
-	xmmsc_coll_t *playlist_coll;
 
 	if (argc < 4) {
 		print_error ("Supply a playlist name");
 	}
 
 	playlist_name = argv[3];
-	playlist_coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-
-	res = xmmsc_coll_save (conn, playlist_coll, playlist_name,
-	                       XMMS_COLLECTION_NS_PLAYLISTS);
+	res = xmmsc_playlist_create (conn, playlist_name);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {

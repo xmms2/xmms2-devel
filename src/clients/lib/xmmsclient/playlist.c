@@ -76,6 +76,26 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 }
 
 /**
+ * Create a new empty playlist.
+ */
+xmmsc_result_t *
+xmmsc_playlist_create (xmmsc_connection_t *c, const char *playlist)
+{
+	xmmsc_result_t *res;
+	xmmsc_coll_t *plcoll;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!playlist, "playlist name cannot be NULL", NULL);
+
+	plcoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	res = xmmsc_coll_save (c, plcoll, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+
+	xmmsc_coll_unref (plcoll);
+
+	return res;
+}
+
+/**
  * Shuffles the current playlist.
  */
 xmmsc_result_t *
