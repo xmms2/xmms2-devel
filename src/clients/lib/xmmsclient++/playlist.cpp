@@ -45,6 +45,14 @@ namespace Xmms
 		return StringListResult( res, ml_ );
 	}
 
+	VoidResult Playlist::create( const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_create, conn_, playlist.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
 	VoidResult Playlist::load( const std::string& playlist ) const
 	{
 		xmmsc_result_t* res =

@@ -56,6 +56,19 @@ namespace Xmms
 			 */
 			StringListResult list() const;
 
+			/** Create a new empty playlist.
+			 *
+			 *  @param playlist the name of the playlist to create.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			VoidResult create( const std::string& playlist ) const;
+
 			/** Load a saved playlist and make it the active playlist.
 			 *
 			 *  @param playlist the playlist to load.
