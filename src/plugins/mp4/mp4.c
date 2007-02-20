@@ -496,7 +496,7 @@ xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile)
 			chans = mp4ff_get_channel_count (infile, i);
 			rate = mp4ff_get_sample_rate (infile, i);
 			if (chans <= 0 || rate <= 0) {
-				XMMS_DBG("Bad ALAC audio track %d", i);
+				XMMS_DBG ("Bad ALAC audio track %d", i);
 				continue;
 			}
 			xmms_xform_outdata_type_add (xform,

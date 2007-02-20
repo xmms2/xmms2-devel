@@ -935,7 +935,6 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 			g_free (hs->key);
 			xmms_object_cmd_value_free (hs->obj);
 			g_free (hs);
-			
 		}
 	}
 

@@ -402,7 +402,7 @@ main (int argc, char **argv)
 		{"yes-run-as-root", 0, 0, G_OPTION_ARG_NONE, &runasroot, "Give me enough rope to shoot myself in the foot", NULL},
 		{NULL}
 	};
-	
+
 	/** Check that we are running against the correct glib version */
 	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
 	if (vererr) {
@@ -425,7 +425,7 @@ main (int argc, char **argv)
 		g_print ("There was unknown options, aborting!\n");
 		exit (EXIT_FAILURE);
 	}
-	
+
 	if (getuid () == 0 || geteuid () == 0) {
 		if (runasroot) {
 			g_print ("***************************************\n");

@@ -121,7 +121,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	mimetype = xmms_xform_indata_get_str (xform,
 	                                      XMMS_STREAM_TYPE_MIMETYPE);
-	codec_id = mimetype + strlen("audio/x-ffmpeg-");
+	codec_id = mimetype + strlen ("audio/x-ffmpeg-");
 
 	codec = avcodec_find_decoder_by_name (codec_id);
 	if (!codec) {

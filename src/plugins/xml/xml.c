@@ -32,7 +32,7 @@ XMMS_XFORM_PLUGIN ("xml",
                    "XML plugin", xmms_xml_plugin_setup);
 
 static gboolean
-xmms_xml_plugin_setup(xmms_xform_plugin_t *xform_plugin)
+xmms_xml_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 

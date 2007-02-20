@@ -296,7 +296,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
 			gint32 temp, toskip = 0;
-			
+
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
 				toskip = (temp * frameInfo.channels *
 				          xmms_sample_size_get (data->sampleformat));
