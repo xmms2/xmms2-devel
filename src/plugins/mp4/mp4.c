@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <faad.h>
 #include <glib.h>
 
 #include "mp4ff/mp4ff.h"
