@@ -513,6 +513,11 @@ xmmsc_broadcast_playback_volume_changed (c)
 ## Playlist
 
 xmmsc_result_t *
+xmmsc_playlist_create (c, playlist)
+		xmmsc_connection_t *c
+		const char *playlist
+
+xmmsc_result_t *
 xmmsc_playlist_current_pos (c, playlist)
 		xmmsc_connection_t *c
 		const char *playlist
