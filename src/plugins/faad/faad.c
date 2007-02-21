@@ -159,20 +159,20 @@ xmms_faad_init (xmms_xform_t *xform)
 		break;
 	}
 
-	bytes_read = xmms_xform_read (xform,
-	                              (gchar *) data->buffer + data->buffer_length,
-	                              data->buffer_size - data->buffer_length,
-	                              &error);
-	data->buffer_length += bytes_read;
+	while (data->buffer_length < 8) {
+		bytes_read = xmms_xform_read (xform,
+					      (gchar *) data->buffer + data->buffer_length,
+					      data->buffer_size - data->buffer_length,
+					      &error);
+		data->buffer_length += bytes_read;
 
-	if (bytes_read < 0) {
-		xmms_log_error ("Error while trying to read data on init");
-		goto err;
-	}
-
-	if (bytes_read < 8) {
-		XMMS_DBG ("Not enough bytes to check the AAC header");
-		goto err;
+		if (bytes_read < 0) {
+			xmms_log_error ("Error while trying to read data on init");
+			goto err;
+		} else if (bytes_read == 0) {
+			XMMS_DBG ("Not enough bytes to check the AAC header");
+			goto err;
+		}
 	}
 
 	/* which type of file are we dealing with? */
