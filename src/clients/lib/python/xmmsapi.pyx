@@ -106,6 +106,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 		XMMSC_RESULT_VALUE_TYPE_UINT32,
 		XMMSC_RESULT_VALUE_TYPE_INT32,
 		XMMSC_RESULT_VALUE_TYPE_STRING,
+		XMMSC_RESULT_VALUE_TYPE_DICT
+		XMMSC_RESULT_VALUE_TYPE_PROPDICT
 		XMMSC_RESULT_VALUE_TYPE_BIN
 		XMMSC_RESULT_VALUE_TYPE_COLL
 
@@ -806,19 +808,19 @@ cdef class XMMSResult:
 		cdef xmmsc_result_value_type_t typ
 		typ = xmmsc_result_get_type(self.res)
 
-		if typ == XMMS_RESULT_VALUE_TYPE_UINT32:
+		if typ == XMMSC_RESULT_VALUE_TYPE_UINT32:
 			return self.get_uint()
-		elif typ == XMMS_RESULT_VALUE_TYPE_DICT:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_DICT:
 			return self.get_dict()
-		elif typ == XMMS_RESULT_VALUE_TYPE_PROPDICT:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_PROPDICT:
 			return self.get_propdict()
-		elif typ == XMMS_RESULT_VALUE_TYPE_INT32:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_INT32:
 			return self.get_int()
-		elif typ == XMMS_RESULT_VALUE_TYPE_STRING:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_STRING:
 			return self.get_string()
-		elif typ == XMMS_RESULT_VALUE_TYPE_BIN:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_BIN:
 			return self.get_bin()
-		elif typ == XMMS_RESULT_VALUE_TYPE_COLL:
+		elif typ == XMMSC_RESULT_VALUE_TYPE_COLL:
 			return self.get_coll()
 
 	def value(self):
