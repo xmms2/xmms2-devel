@@ -1,8 +1,8 @@
 
 from xmmsapi import Reference
 from xmmsapi import Universe
+from xmmsapi import Equals
 from xmmsapi import Match
-from xmmsapi import Contains
 from xmmsapi import Smaller
 from xmmsapi import Greater
 from xmmsapi import IDList
