@@ -177,7 +177,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	data->track = xmms_mp4_get_track (xform, data->mp4ff);
 	if (data->track < 0) {
-		XMMS_DBG ("Can't find AAC audio track from MP4 file\n");
+		XMMS_DBG ("Can't find suitable audio track from MP4 file\n");
 		goto err;
 	}
 	data->numsamples = mp4ff_num_samples (data->mp4ff, data->track);
@@ -477,7 +477,7 @@ xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile)
 	int i;
 	int numTracks = mp4ff_total_tracks (infile);
 
-	/* find first AAC audio track */
+	/* find first suitable audio track */
 	for (i = 0; i < numTracks; i++) {
 		gint object_type = mp4ff_get_audio_type (infile, i);
 
