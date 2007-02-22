@@ -96,7 +96,7 @@ uint64_t mp4ff_read_int64(mp4ff_t *f)
 {
     uint8_t data[8];
     uint64_t result = 0;
-    int8_t i;
+    int i;
 
     mp4ff_read_data(f, data, 8);
 
