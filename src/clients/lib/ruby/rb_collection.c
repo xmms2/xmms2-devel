@@ -399,7 +399,7 @@ Init_Collection (VALUE mXmms)
 	rb_define_alias (cColl, "not", "complement");
 	rb_define_alias (cColl, "|", "union");
 	rb_define_alias (cColl, "&", "intersect");
-	rb_define_alias (cColl, "~", "complement");
+	rb_define_alias (cColl, "~@", "complement");
 
 	rb_define_const (cColl, "NS_ALL", rb_str_new2 (XMMS_COLLECTION_NS_ALL));
 	rb_define_const (cColl, "NS_COLLECTIONS",
