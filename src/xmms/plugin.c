@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_defs.h"
+#include "xmms_configuration.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmms/xmms_config.h"
 #include "xmmspriv/xmms_config.h"

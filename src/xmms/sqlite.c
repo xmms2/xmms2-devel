@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_sqlite.h"

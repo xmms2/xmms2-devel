@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmmspriv/xmms_mediainfo.h"

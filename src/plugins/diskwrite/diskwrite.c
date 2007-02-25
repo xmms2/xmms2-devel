@@ -17,7 +17,6 @@
 
 
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 

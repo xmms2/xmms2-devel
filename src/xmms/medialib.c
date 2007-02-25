@@ -14,10 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
+#include "xmms_configuration.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_utils.h"
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"

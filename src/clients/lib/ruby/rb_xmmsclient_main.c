@@ -14,7 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmms_defs.h>
 #include <xmmsclient/xmmsclient.h>
 
 #include <ruby.h>

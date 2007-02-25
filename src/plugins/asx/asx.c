@@ -15,7 +15,6 @@
  */
 
 #include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_defs.h"
 
 /*
  * Function prototypes

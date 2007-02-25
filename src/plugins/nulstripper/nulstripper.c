@@ -4,7 +4,6 @@
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 

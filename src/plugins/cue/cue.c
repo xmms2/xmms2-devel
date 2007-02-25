@@ -17,7 +17,6 @@
 
 
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmms/xmms_log.h"

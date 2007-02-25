@@ -12,7 +12,6 @@
  */
 
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 #include "id3.h"

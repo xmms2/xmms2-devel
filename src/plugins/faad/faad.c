@@ -14,7 +14,6 @@
  *  GNU General Public License for more details.
  */
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_bindata.h"
 #include "xmms/xmms_sample.h"

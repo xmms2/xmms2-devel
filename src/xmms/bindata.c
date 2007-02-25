@@ -27,7 +27,6 @@
 #include "xmmsc/xmmsc_ipc_msg.h"
 
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_defs.h"
 
 #include "xmmspriv/xmms_ringbuf.h"
 #include "xmmspriv/xmms_ipc.h"

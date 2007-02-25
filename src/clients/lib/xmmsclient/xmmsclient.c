@@ -33,7 +33,6 @@
 #include "xmmsc/xmmsc_stringport.h"
 #include "xmmsc/xmmsc_util.h"
 
-#include "xmms/xmms_defs.h"
 
 #define XMMS_MAX_URI_LEN 1024
 

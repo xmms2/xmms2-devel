@@ -20,7 +20,6 @@
  */
 #define _FILE_OFFSET_BITS 64
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 

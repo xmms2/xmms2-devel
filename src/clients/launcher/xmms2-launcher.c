@@ -30,7 +30,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "xmms/xmms_defs.h"
+#include "xmms_configuration.h"
 #include "xmmsc/xmmsc_util.h"
 
 #include <glib.h>

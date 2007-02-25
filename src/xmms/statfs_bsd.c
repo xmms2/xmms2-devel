@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#include "xmms/xmms_defs.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>

@@ -18,7 +18,7 @@ def configure(conf):
         if sys.platform.startswith(platform):
             defs["XMMS_OS_%s" % platform.upper()] = 1
             break
-    defs['XMMS_VERSION'] = conf.env["VERSION"]
+
     defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
                                      'lib', 'xmms2')
     defs['BINDIR'] = os.path.join(conf.env['PREFIX'],

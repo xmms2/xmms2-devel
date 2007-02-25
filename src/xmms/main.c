@@ -26,6 +26,7 @@
 # error You need atleast glib 2.6.0
 #endif
 
+#include "xmms_configuration.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
@@ -40,7 +41,6 @@
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_bindata.h"
 #include "xmmspriv/xmms_utils.h"
-#include "xmms/xmms_defs.h"
 
 #include <stdio.h>
 #include <stdlib.h>

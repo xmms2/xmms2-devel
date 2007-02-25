@@ -23,7 +23,6 @@
   */
 
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"

@@ -22,7 +22,6 @@
  * ICES2 based effect
  */
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
