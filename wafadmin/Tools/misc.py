@@ -60,19 +60,14 @@ class copyobj(Object.genobj):
 		lst = self.to_list(self.source)
 
 		for filename in lst:
-			node = self.m_current_path.find_node( 
-				Utils.split_path(filename) )
+			node = self.path.find_source(filename)
 			if not node: fatal('cannot find input file %s for processing' % filename)
 
 			target = self.target
 			if not target or len(lst)>1: target = node.m_name
 
 			# TODO the file path may be incorrect
-			newnode = self.m_current_path.search_existing_node( 
-				Utils.split_path(target) )
-			if not newnode:
-				newnode = Node.Node(target, self.m_current_path)
-				self.m_current_path.append_build(newnode)
+			newnode = self.path.find_build(target)
 
 			task = self.create_task('copy', self.env, 8)
 			task.set_inputs(node)
@@ -125,7 +120,7 @@ class substobj(Object.genobj):
 		lst = self.to_list(self.source)
 
 		for filename in lst:
-			node = self.m_current_path.find_node(Utils.split_path(filename))
+			node = self.path.find_source(filename)
 			if not node: fatal('cannot find input file %s for processing' % filename)
 
 			newnode = node.change_ext('')

@@ -21,64 +21,48 @@ hooks
   - cf bison.py and flex.py for more details on this scheme
 """
 
-import types
+import os, types, time
 import Params, Task, Common, Node, Utils
 from Params import debug, error, fatal
 
 g_allobjs=[]
-
-def find_launch_node(node, lst):
-	#if node.m_parent: print node, lst
-	#else: print '/', lst
-	if not lst: return node
-	name=lst[0]
-	if not name:     return find_launch_node(node, lst[1:])
-	if name == '.':  return find_launch_node(node, lst[1:])
-	if name == '..': return find_launch_node(node.m_parent, lst[1:])
-
-	res = node.get_dir(name)
-	if not res:
-		res = node.get_file(name)
-	if res: return find_launch_node(res, lst[1:])
-
-	return None
+"contains all objects, provided they are created (not in distclean or in dist)"
 
 def flush():
-	"force all objects to post their tasks"
+	"object instances under the launch directory create the tasks now"
 
-	bld = Params.g_build
+	tree = Params.g_build
 	debug("delayed operation Object.flush() called", 'object')
 
-	dir_lst = Utils.split_path(Params.g_launchdir)
-	root    = bld.m_root
-	launch_dir_node = find_launch_node(root, dir_lst)
+	dir_lst = Utils.split_path(Params.g_cwd_launch)
+	launch_dir_node = tree.m_root.find_dir(Params.g_cwd_launch)
+
+	if launch_dir_node.is_child_of(tree.m_bldnode):
+		launch_dir_node=tree.m_srcnode
+
 	if Params.g_options.compile_targets:
 		compile_targets = Params.g_options.compile_targets.split(',')
 	else:
 		compile_targets = None
 
-	for obj in bld.m_outstanding_objs:
+	for obj in tree.m_outstanding_objs:
 		debug("posting object", 'object')
 
 		if obj.m_posted: continue
 
-		# compile only targets under the launch directory
 		if launch_dir_node:
-			objnode = obj.m_current_path
-			if not (objnode is launch_dir_node or objnode.is_child_of(launch_dir_node)):
+			objnode = obj.path
+			if not objnode.is_child_of(launch_dir_node):
 				continue
 		if compile_targets:
 			if obj.name and not (obj.name in compile_targets):
-				debug("skipping because of name", 'object')
+				debug('skipping because of name', 'object')
 				continue
 			if not obj.target in compile_targets:
-				debug("skipping because of target", 'object')
+				debug('skipping because of target', 'object')
 				continue
-		# post the object
 		obj.post()
-
 		if Params.g_options.verbose == 3:
-			import time
 			print "flushed at ", time.asctime(time.localtime())
 
 def hook(objname, var, func):
@@ -86,23 +70,20 @@ def hook(objname, var, func):
 	klass = g_allclasses[objname]
 	klass.__dict__[var] = func
 	try: klass.__dict__['all_hooks'].append(var)
-	except: klass.__dict__['all_hooks'] = [var]
+	except KeyError: klass.__dict__['all_hooks'] = [var]
 
 class genobj:
 	def __init__(self, type):
 		self.m_type  = type
 		self.m_posted = 0
-		self.m_current_path = Params.g_build.m_curdirnode # emulate chdir when reading scripts
+		self.path = Params.g_build.m_curdirnode # emulate chdir when reading scripts
 		self.name = '' # give a name to the target (static+shlib with the same targetname ambiguity)
-
-		# TODO if we are building something, we need to make sure the folder is scanned
-		#if not Params.g_build.m_curdirnode in Params...
 
 		# targets / sources
 		self.source = ''
 		self.target = ''
 
-		# we use a simple list for the tasks TODO not used ?
+		# collect all tasks in a list - a few subclasses need it
 		self.m_tasks = []
 
 		# no default environment - in case if
@@ -111,13 +92,9 @@ class genobj:
 		# register ourselves - used at install time
 		g_allobjs.append(self)
 
-		# nodes that this object produces
-		self.out_nodes = []
-
 		# allow delayed operations on objects created (declarative style)
 		# an object is then posted when another one is added
-		# of course, you may want to post the object yourself first :)
-		#flush()
+		# Objects can be posted manually, but this can break a few things, use with care
 		Params.g_build.m_outstanding_objs.append(self)
 
 		if not type in self.get_valid_types():
@@ -127,11 +104,12 @@ class genobj:
 		return ['program', 'shlib', 'staticlib', 'other']
 
 	def get_hook(self, ext):
+		env=self.env
 		try:
 			for i in self.__class__.__dict__['all_hooks']:
-				if ext in self.env[i]:
+				if ext in env[i]:
 					return self.__class__.__dict__[i]
-		except:
+		except KeyError:
 			return None
 
 	def post(self):
@@ -152,8 +130,7 @@ class genobj:
 
 	def create_task(self, type, env=None, nice=10):
 		"""the lower the nice is, the higher priority tasks will run at
-		groups are sorted like this [2, 4, 5, 100, 200]
-		the tasks with lower nice will run first
+		groups are sorted in ascending order [2, 3, 4], the tasks with lower nice will run first
 		if tasks have an odd priority number, they will be run only sequentially
 		if tasks have an even priority number, they will be allowed to be run in parallel
 		"""
@@ -163,44 +140,21 @@ class genobj:
 		return task
 
 	def apply(self):
-		"subclass me"
+		"Subclass me"
 		fatal("subclass me!")
 
-	def find(self, filename):
-		node = self.m_current_path
-		for name in Utils.split_path(filename):
-			res = node.get_file(name)
-			if not res:
-				res = node.get_build(name)
-			if not res:
-				res = node.get_dir(name)
-
-			if not res:
-				# bld node does not exist, create it
-				node2 = Node.Node(name, node)
-				node.append_build(node2)
-				node = node2
-			else:
-				node = res
-		return node
-
-	# an object is to be posted, even if only for install
-	# the install function is called for uninstalling too
 	def install(self):
-		# subclass me
+		"subclass me"
 		pass
 
 	def cleanup(self):
-		# subclass me if necessary
+		"subclass me if necessary"
 		pass
 
 	def install_results(self, var, subdir, task, chmod=0644):
 		debug('install results called', 'object')
 		current = Params.g_build.m_curdirnode
-		# TODO what is the pythonic replacement for these three lines ?
-		lst = []
-		for node in task.m_outputs:
-			lst.append( node.relpath_gen(current) )
+		lst=map(lambda a: a.relpath_gen(current), task.m_outputs)
 		Common.install_files(var, subdir, lst, chmod=chmod)
 
 	def clone(self, env):
@@ -221,17 +175,39 @@ class genobj:
 		if type(value) is types.StringType: return value.split()
 		else: return value
 
-def flatten(env, var):
-	try:
-		v = env[var]
-		if not v: debug("variable %s does not exist in env !" % var, 'object')
+	def find_sources_in_dirs(self, dirnames, excludes=[]):
+		"subclass if necessary"
+		lst=[]
+		excludes = self.to_list(excludes)
+		#make sure dirnames is a list helps with dirnames with spaces
+		dirnames = self.to_list(dirnames)
 
-		if type(v) is types.ListType:
-			return " ".join(v)
-		else:
-			return v
-	except:
-		fatal("variable %s does not exist in env !" % var)
+		ext_lst = []
+		ext_lst += self.s_default_ext
+		try:
+			for var in self.__class__.__dict__['all_hooks']:
+				ext_lst += self.env[var]
+		except KeyError:
+			pass
+
+		for name in dirnames:
+			#print "name is ", name
+			anode = self.path.ensure_node_from_lst(Utils.split_path(name))
+			#print "anode ", anode.m_name, " ", anode.files()
+			Params.g_build.rescan(anode)
+			#print "anode ", anode.m_name, " ", anode.files()
+
+			for file in anode.files():
+				#print "file found ->", file
+				(base, ext) = os.path.splitext(file.m_name)
+				if ext in ext_lst:
+					s = file.relpath(self.path)
+					if not s in lst:
+						if s in excludes: continue
+						lst.append(s)
+
+		lst.sort()
+		self.source = self.source+' '+(" ".join(lst))
 
 g_cache_max={}
 def sign_env_vars(env, vars_list):
@@ -243,14 +219,10 @@ def sign_env_vars(env, vars_list):
 	try: return g_cache_max[s]
 	except KeyError: pass
 
-	def get_env_value(var):
-		v = env[var]
-		if type(v) is types.ListType: return " ".join(v)
-		else: return v
-
-	lst = map(get_env_value, vars_list)
+	lst = map(lambda a: env.get_flat(a), vars_list)
 	ret = Params.h_list(lst)
 	if Params.g_zones: debug("%s %s" % (Params.vsig(ret), str(lst)), 'envhash')
+
 	# next time
 	g_cache_max[s] = ret
 	return ret

@@ -4,7 +4,7 @@
 
 "Actions are used to build the nodes of most tasks"
 
-import Object, Runner
+import Object, Runner, Params
 from Params import debug, fatal
 
 g_actions={}
@@ -35,9 +35,14 @@ class Action:
 	def get_str(self, task):
 		"string to display to the user"
 		try:
-			src_str = " ".join(map(lambda a:a.bldpath(task.m_env), task.m_inputs))
-			tgt_str = " ".join(map(lambda a:a.bldpath(task.m_env), task.m_outputs))
-			return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
+			if Params.g_verbose:
+				src_str = " ".join(map(lambda a:a.abspath(task.m_env), task.m_inputs))
+				tgt_str = " ".join(map(lambda a:a.abspath(task.m_env), task.m_outputs))
+				return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
+			else:
+				src_str = " ".join(map(lambda a:a.nice_path(task.m_env), task.m_inputs))
+				tgt_str = " ".join(map(lambda a:a.nice_path(task.m_env), task.m_outputs))
+				return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
 		except:
 			print "exception"
 			task.debug(level=1)
@@ -117,7 +122,7 @@ class alex:
 						name.append(c)
 			cur += 1
 	def res(self):
-		lst = ['def f(task):\n\tenv=task.m_env\n\tp=Object.flatten\n\t']
+		lst = ['def f(task):\n\tenv=task.m_env\n\tp=env.get_flat\n\t']
 
 		#lst.append('print task.m_inputs\n\t')
 		#lst.append('print task.m_outputs\n\t')
@@ -136,13 +141,12 @@ class alex:
 				else: alst.append('" ".join(map(lambda a:a.bldpath(env), task.m_outputs))')
 			else:
 				self.m_vars.append(name)
-				alst.append("p(env, '%s')" % name)
+				alst.append("p('%s')" % name)
 		if alst:
 			lst.append(' % (\\\n\t\t')
 			lst += ", \\\n\t\t".join(alst)
 			lst.append(')\n')
 
-		#lst.append('\texcept: task.debug()\n')
 		lst.append('\texcept:\n')
 		lst.append('\t\ttask.debug()\n')
 		lst.append('\t\traise\n')

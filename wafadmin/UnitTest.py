@@ -59,10 +59,7 @@ class unit_test:
 		self.unit_test_erroneous = {}
 
 		# If waf is not building, don't run anything
-		try:
-			if not Params.g_commands['build']: return
-		except:
-			pass
+		if not Params.g_commands['build']: return
 
 		# Gather unit tests to call
 		for obj in Object.g_allobjs:
@@ -99,10 +96,7 @@ class unit_test:
 		"Pretty-prints a summary of all unit tests, along with some statistics"
 
 		# If waf is not building, don't output anything
-		try:
-			if not Params.g_commands['build']: return
-		except:
-			pass
+		if not Params.g_commands['build']: return
 
 		p = Params.pprint
 		# Early quit if no tests were performed
@@ -117,10 +111,10 @@ class unit_test:
 			result = 0
 
 			try: err = self.unit_test_erroneous[label]
-			except: pass
+			except KeyError: pass
 
 			try: result = self.unit_test_results[label]
-			except: pass
+			except KeyError: pass
 
 			n = self.max_label_length - len(label)
 			if err: n += 4

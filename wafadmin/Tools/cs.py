@@ -47,17 +47,17 @@ class csobj(Object.genobj):
 		# additional flags
 		self.env['_FLAGS'] += self.to_list(self.flags) + self.env['FLAGS']
 
-		curnode = self.m_current_path
+		curnode = self.path
 
 		# process the sources
 		nodes = []
 		for i in self.to_list(self.source):
-			nodes.append(curnode.find_node(Utils.split_path(i)))
+			nodes.append(curnode.find_source(i))
 
 		# create the task
 		task = self.create_task('mcs', self.env, 101)
 		task.m_inputs  = nodes
-		task.set_outputs(self.find(self.target))
+		task.set_outputs(self.path.find_build(self.target))
 
 	def apply_uselib(self):
 		if not self.uselib:
@@ -67,7 +67,7 @@ class csobj(Object.genobj):
 				val=''
 				try:    val = self.env[v+'_'+var]
 				except: pass
-				if val: self.env.appendValue(v, val)
+				if val: self.env.append_value(v, val)
 
 def setup(env):
 	Object.register('cs', csobj)

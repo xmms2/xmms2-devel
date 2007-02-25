@@ -38,7 +38,7 @@ class libtool_la_file:
 		self.libdir = '/usr/lib'
 		if not self.__parse():
 			raise "file %s not found!!" %(la_filename)
-	
+
 	def __parse(self):
 		"Retrieve the variables from a file"
 		if not os.path.isfile(self.__la_filename): return 0
@@ -53,7 +53,7 @@ class libtool_la_file:
 			if value == "yes": value = True
 			line = 'self.%s = %s'%(key.strip(), value)
 			exec line
-		la_file.close()	
+		la_file.close()
 		return 1
 
 	def get_libs(self):
@@ -67,22 +67,22 @@ class libtool_la_file:
 		libs.insert(0, "-l%s" % self.linkname.strip())
 		libs.insert(0,"-L%s" % self.libdir.strip())
 		return libs
-	
+
 	def __str__(self):
-		return_str = ""
-		return_str += "dlname = \"%s\"\n" % self.dlname
-		return_str += "library_names = \"%s\"\n" % self.library_names
-		return_str += "old_library = \"%s\"\n" % self.old_library
-		return_str += "dependency_libs = \"%s\"\n" % self.dependency_libs
-		return_str += "version = %s.%s.%s\n" %(self.current, self.age, self.revision)
-		return_str += "installed = \"%s\"\n" % self.installed
-		return_str += "shouldnotlink = \"%s\"\n" % self.shouldnotlink
-		return_str += "dlopen = \"%s\"\n" % self.dlopen
-		return_str += "dlpreopen = \"%s\"\n" % self.dlpreopen
-		return_str += "libdir = \"%s\"\n" % self.libdir
-		return return_str
-	
-	
+		r = [
+		"dlname = \"%s\"" % self.dlname,
+		"library_names = \"%s\"" % self.library_names,
+		"old_library = \"%s\"" % self.old_library,
+		"dependency_libs = \"%s\"" % self.dependency_libs,
+		"version = %s.%s.%s" %(self.current, self.age, self.revision),
+		"installed = \"%s\"" % self.installed,
+		"shouldnotlink = \"%s\"" % self.shouldnotlink,
+		"dlopen = \"%s\"" % self.dlopen,
+		"dlpreopen = \"%s\"" % self.dlpreopen,
+		"libdir = \"%s\"" % self.libdir,
+		]
+		return "\n".join(r)
+
 class libtool_config:
 	def __init__ (self, la_filename):
 		self.__libtool_la_file = libtool_la_file(la_filename)
@@ -91,9 +91,9 @@ class libtool_config:
 		self.__sub_la_files = []
 		self.__sub_la_files.append(la_filename)
 		self.__libs = None
-		
+
 	def __cmp__(self, other):
-		"""make it compareable with X.Y.Z versions 
+		"""make it compareable with X.Y.Z versions
 		(Y and Z are optional)"""
 		othervers = str(other).strip().split(".")
 		if not othervers:
@@ -107,14 +107,14 @@ class libtool_config:
 		while add_zero:
 			add_zero -= 1
 			othervers.append("0")
-		
+
 		for num in othervers:
 			othernum = othernum + int(num)
 			othernum *= 1000
 		for num in str(self.__version).split("."):
 			selfnum = selfnum + int(num)
 			selfnum *= 1000
-		
+
 		if selfnum == othernum:
 			return 0
 		if selfnum > othernum:
@@ -122,19 +122,19 @@ class libtool_config:
 		if selfnum < othernum:
 			return -1
 		return 0
-		
+
 	def __str__(self):
 		tmp = str(self.__libtool_la_file)
 		tmp += str(" ").join(self.__libtool_la_file.get_libs())
 		tmp += "\nNew getlibs:\n"
 		tmp += str(" ").join(self.get_libs())
 		return tmp
-	
+
 	def __get_la_libs(self, la_filename):
 		return libtool_la_file(la_filename).get_libs()
-	
+
 	def get_libs(self):
-		"""return the complete uniqe linkflags that do not 
+		"""return the complete uniqe linkflags that do not
 		contain .la files anymore"""
 		libs_list = list(self.__libtool_la_file.get_libs())
 		libs_map = {}
@@ -157,69 +157,68 @@ class libtool_config:
 		libs = self.__libs
 		libs = filter(lambda s: str(s).startswith('-L'), libs)
 		return libs
-	
+
 	def get_libs_only_l(self):
 		if not self.__libs:
 			self.get_libs()
 		libs = self.__libs
 		libs = filter(lambda s: str(s).startswith('-l'), libs)
 		return libs
-		
+
 	def get_libs_only_other(self):
 		if not self.__libs:
 			self.get_libs()
 		libs = self.__libs
 		libs = filter(lambda s: not (str(s).startswith('-L') or str(s).startswith('-l')), libs)
 		return libs
-		
-
 
 def useCmdLine():
 	"""parse cmdline args and control build"""
 	usage = "Usage: %prog [options] PathToFile.la \
 	\nexample: %prog --atleast-version=2.0.0 /usr/lib/libIlmImf.la \
 	\nor: %prog --libs /usr/lib/libamarok.la"
-	parser = OptionParser( usage )
-	parser.add_option( "--version", dest = "versionNumber", 
-					action = "store_true", default = False,
-					help = "output version of libtool-config"
-				)
-	parser.add_option( "--debug", dest = "debug", 
-					action = "store_true", default = False,
-					help = "enable debug"
-				)
-	parser.add_option( "--libs", dest = "libs", 
-					action = "store_true", default = False,
-					help = "output all linker flags"
-				)
-	parser.add_option( "--libs-only-l", dest = "libs_only_l",
-					action = "store_true", default = False,
-					help = "output -l flags"
-					)
-	parser.add_option( "--libs-only-L", dest = "libs_only_L",
-					action = "store_true", default = False,
-					help = "output -L flags"
-					)
-	parser.add_option( "--libs-only-other", dest = "libs_only_other",
-					action = "store_true", default = False,
-					help = "output other libs (e.g. -pthread)"
-					)
-	parser.add_option( "--atleast-version", dest = "atleast_version", 
-					default=None, 
-					help = "return 0 if the module is at least version ATLEAST_VERSION"
-				)
-	parser.add_option( "--exact-version", dest = "exact_version", 
-					default=None, 
-					help = "return 0 if the module is exactly version EXACT_VERSION"
-				)
-	parser.add_option( "--max-version", dest = "max_version", 
-					default=None, 
-					help = "return 0 if the module is at no newer than version MAX_VERSION"
-				)
+	parser = OptionParser(usage)
+	a = parser.add_option
+	a("--version", dest = "versionNumber",
+		action = "store_true", default = False,
+		help = "output version of libtool-config"
+		)
+	a("--debug", dest = "debug",
+		action = "store_true", default = False,
+		help = "enable debug"
+		)
+	a("--libs", dest = "libs",
+		action = "store_true", default = False,
+		help = "output all linker flags"
+		)
+	a("--libs-only-l", dest = "libs_only_l",
+		action = "store_true", default = False,
+		help = "output -l flags"
+		)
+	a("--libs-only-L", dest = "libs_only_L",
+		action = "store_true", default = False,
+		help = "output -L flags"
+		)
+	a("--libs-only-other", dest = "libs_only_other",
+		action = "store_true", default = False,
+		help = "output other libs (e.g. -pthread)"
+		)
+	a("--atleast-version", dest = "atleast_version",
+		default=None,
+		help = "return 0 if the module is at least version ATLEAST_VERSION"
+		)
+	a("--exact-version", dest = "exact_version",
+		default=None,
+		help = "return 0 if the module is exactly version EXACT_VERSION"
+		)
+	a("--max-version", dest = "max_version",
+		default=None,
+		help = "return 0 if the module is at no newer than version MAX_VERSION"
+		)
 
-	( options, args ) = parser.parse_args()
-	if len( args ) != 1 and not options.versionNumber:
-		parser.error( "incorrect number of arguments" )
+	(options, args) = parser.parse_args()
+	if len(args) != 1 and not options.versionNumber:
+		parser.error("incorrect number of arguments")
 	if options.versionNumber:
 		print "libtool-config version %s" % REVISION
 		return 0
@@ -259,3 +258,4 @@ def useCmdLine():
 
 if __name__ == "__main__":
 	useCmdLine()
+

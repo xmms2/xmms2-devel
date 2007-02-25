@@ -41,6 +41,8 @@ def do_install(src, tgt, chmod=0644):
 			except:
 				pass
 			print "* installing %s as %s" % (srclbl, tgt)
+			try: os.remove(tgt) # <- stuff for shared libs and stale inodes
+			except OSError: pass
 			try:
 				shutil.copy2(src, tgt)
 				os.chmod(tgt, chmod)
@@ -98,7 +100,7 @@ def install_files(var, subdir, files, env=None, chmod=0644):
 	for filename in lst:
 		if not os.path.isabs(filename):
 			alst = Utils.split_path(filename)
-			filenode = node.find_node(alst)
+			filenode = node.find_build_lst(alst, create=1)
 
 			file     = filenode.abspath(env)
 			destfile = os.path.join(destpath, filenode.m_name)
@@ -127,7 +129,7 @@ def install_as(var, destfile, srcfile, env=None, chmod=0644):
 	# the source path
 	if not os.path.isabs(srcfile):
 		alst = Utils.split_path(srcfile)
-		filenode = node.find_node(alst)
+		filenode = node.find_build_lst(alst, create=1)
 		src = filenode.abspath(env)
 	else:
 		src = srcfile

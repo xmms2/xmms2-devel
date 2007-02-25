@@ -12,7 +12,7 @@ This module also demonstrates how to add tasks dynamically (when the build has s
 
 import os, sys
 import ccroot, cpp
-import Action, Params, Object, Task, Utils
+import Action, Params, Object, Task, Utils, Runner
 from Params import error, fatal
 from Params import set_globals, globals
 
@@ -93,13 +93,24 @@ class MTask(Task.Task):
 		self.moc_done = 1
 		return Task.Task.may_start(self)
 
+def translation_update(task):
+	outs=map(lambda a: a.abspath(task.env), task.m_outputs)
+	outs=" ".join(outs)
+	lupdate = task.env['QT_LUPDATE']
+
+	for x in task.m_inputs:
+		file = x.abspath(task.env)
+		cmd = "%s %s -ts %s" % (lupdate, file, outs)
+		Params.pprint('BLUE', cmd)
+		Runner.exec_command(cmd)
+
 def create_rcc_task(self, node):
 	"hook for rcc files"
 	# run rcctask with one of the highest priority
 	# TODO add the dependency on the files listed in .qrc
 	rcnode = node.change_ext('_rc.cpp')
 
-	rcctask = self.create_task('rcc', self.env, 6)
+	rcctask = self.create_task('rcc', self.env, 60)
 	rcctask.m_inputs = [node]
 	rcctask.m_outputs = [rcnode]
 
@@ -107,9 +118,11 @@ def create_rcc_task(self, node):
 	cpptask.m_inputs  = [rcnode]
 	cpptask.m_outputs = [rcnode.change_ext('.o')]
 
+	return cpptask
+
 def create_uic_task(self, node):
 	"hook for uic tasks"
-	uictask = self.create_task('uic4', self.env, 6)
+	uictask = self.create_task('ui4', self.env, 60)
 	uictask.m_inputs    = [node]
 	uictask.m_outputs   = [node.change_ext('.h')]
 
@@ -118,11 +131,14 @@ class qt4obj(cpp.cppobj):
 		cpp.cppobj.__init__(self, type)
 		self.m_linktask = None
 		self.m_latask = None
+		self.lang=''
+		self.langname=''
+		self.update=0
 
 	def get_valid_types(self):
 		return ['program', 'shlib', 'staticlib']
 
-	def create_task(self, type, env=None, nice=10):
+	def create_task(self, type, env=None, nice=100):
 		"overrides Object.create_task to catch the creation of cpp tasks"
 
 		if env is None: env=self.env
@@ -145,6 +161,32 @@ class qt4obj(cpp.cppobj):
 
         def apply(self):
 		cpp.cppobj.apply(self)
+
+		if self.lang:
+			lst=[]
+			trans=[]
+			for l in self.to_list(self.lang):
+				t = Task.Task('ts2qm', self.env, 4)
+				t.set_inputs(self.path.find_build(l+'.ts'))
+				t.set_outputs(t.m_inputs[0].change_ext('.qm'))
+				lst.append(t.m_outputs[0])
+
+				if self.update:
+					trans.append(t.m_inputs[0])
+
+			if self.update and Params.g_options.trans_qt4:
+				u = Task.TaskCmd(translation_update, self.env, 2)
+				u.m_inputs = map(lambda a: a.m_inputs[0], self.p_compiletasks)
+				u.m_outputs=trans
+
+			if self.langname:
+				t = Task.Task('qm2rcc', self.env, 40)
+				t.set_inputs(lst)
+				t.set_outputs(self.path.find_build(self.langname+'.qrc'))
+				t.path = self.path
+				k = create_rcc_task(self, t.m_outputs[0])
+				self.m_linktask.m_inputs.append(k.m_outputs[0])
+
 		lst = []
 		for flag in self.to_list(self.env['CXXFLAGS']):
 			if len(flag) < 2: continue
@@ -152,10 +194,62 @@ class qt4obj(cpp.cppobj):
 				lst.append(flag)
 		self.env['MOC_FLAGS'] = lst
 
+	def find_sources_in_dirs(self, dirnames, excludes=[]):
+		"the .ts files are added to self.lang"
+		lst=[]
+		excludes = self.to_list(excludes)
+		#make sure dirnames is a list helps with dirnames with spaces
+		dirnames = self.to_list(dirnames)
+
+		ext_lst = []
+		ext_lst += self.s_default_ext
+		try:
+			for var in self.__class__.__dict__['all_hooks']:
+				ext_lst += self.env[var]
+		except KeyError:
+			pass
+
+		for name in dirnames:
+			#print "name is ", name
+			anode = self.path.ensure_node_from_lst(Utils.split_path(name))
+			#print "anode ", anode.m_name, " ", anode.files()
+			Params.g_build.rescan(anode)
+			#print "anode ", anode.m_name, " ", anode.files()
+
+			for file in anode.files():
+				#print "file found ->", file
+				(base, ext) = os.path.splitext(file.m_name)
+				if ext in ext_lst:
+					s = file.relpath(self.path)
+					if not s in lst:
+						if s in excludes: continue
+						lst.append(s)
+				elif ext == '.ts':
+					self.lang += ' '+base
+
+		lst.sort()
+		self.source = self.source+' '+(" ".join(lst))
+
+def process_qm2rcc(task):
+	outfile = task.m_outputs[0].abspath(task.m_env)
+	f = open(outfile, 'w')
+	f.write('<!DOCTYPE RCC><RCC version="1.0">\n<qresource>\n')
+	for k in task.m_inputs:
+		f.write(' <file>')
+		#f.write(k.m_name)
+		f.write(k.relpath(task.path))
+		f.write('</file>\n')
+	f.write('</qresource>\n</RCC>')
+	f.close()
+
 def setup(env):
 	Action.simple_action('moc', '${QT_MOC} ${MOC_FLAGS} ${SRC} ${MOC_ST} ${TGT}', color='BLUE', vars=['QT_MOC', 'MOC_FLAGS'])
 	Action.simple_action('rcc', '${QT_RCC} -name ${SRC[0].m_name} ${SRC} ${RCC_ST} -o ${TGT}', color='BLUE')
-	Action.simple_action('uic4', '${QT_UIC} ${SRC} -o ${TGT}', color='BLUE')
+	Action.simple_action('ui4', '${QT_UIC} ${SRC} -o ${TGT}', color='BLUE')
+	Action.simple_action('ts2qm', '${QT_LRELEASE} ${SRC} -qm ${TGT}', color='BLUE')
+
+	Action.Action('qm2rcc', vars=[], func=process_qm2rcc, color='BLUE')
+
 	Object.register('qt4', qt4obj)
 
 	try: env.hook('qt4', 'UI_EXT', create_uic_task)
@@ -247,6 +341,8 @@ def detect_qt4(conf):
 
 	find_bin(['moc-qt4', 'moc'], 'QT_MOC')
 	find_bin(['rcc'], 'QT_RCC')
+	find_bin(['lrelease'], 'QT_LRELEASE')
+	find_bin(['lupdate'], 'QT_LUPDATE')
 
 	env['UIC3_ST']= '%s -o %s'
 	env['UIC_ST'] = '%s -o %s'
@@ -273,7 +369,7 @@ def detect_qt4(conf):
 					if r.startswith('-F'):
 						env['CCFLAGS_' + i.upper()].remove(r)
 						break
-		
+
 			incflag = '-I%s' % os.path.join(qtincludes, i)
 			if not incflag in env["CCFLAGS_" + i.upper ()]:
 				env['CCFLAGS_' + i.upper ()] += [incflag]
@@ -363,3 +459,6 @@ def set_options(opt):
 
 	if sys.platform == "darwin":
 		opt.add_option('--no-qt4-framework', action="store_false", help='do not use the framework version of Qt4 in OS X', dest='use_qt4_osxframework',default=True)
+
+	opt.add_option('--translate', action="store_true", help="collect translation strings", dest="trans_qt4", default=False)
+

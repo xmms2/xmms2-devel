@@ -3,7 +3,7 @@
 
 "Configuration system"
 
-import os, types, imp, cPickle, md5, sys, re
+import os, types, imp, cPickle, md5, sys, re, inspect
 import Params, Environment, Runner, Build, Utils, libtool_config
 from Params import error, fatal, warning
 
@@ -76,7 +76,6 @@ def find_program_impl(lenv, filename, path_list=None, var=None):
 			return os.environ[var]
 
 	if lenv['WINDOWS']: filename += '.exe'
-	#TODO: we really need to add cross-platform functions for such things!
 	if not path_list: path_list = os.environ['PATH'].split(os.pathsep)
 	for directory in path_list:
 		if os.path.exists( os.path.join(directory, filename) ):
@@ -206,7 +205,7 @@ class function_enumerator(enumerator_base):
 			self.define = self.function.upper()
 
 	def run_cache(self, retval):
-		self.conf.check_message('function %s (cached)' % self.function, '', 1, option='')
+		self.conf.check_message('function %s (cached)' % self.function, '', retval, option='')
 		self.conf.add_define(self.define, retval)
 
 	def run_test(self):
@@ -263,7 +262,7 @@ class library_enumerator(enumerator_base):
 
 	def run_cache(self, retval):
 		if self.want_message:
-			self.conf.check_message('library %s (cached)' % self.name, '', 1, option=retval)
+			self.conf.check_message('library %s (cached)' % self.name, '', retval, option=retval)
 		self.update_env(retval)
 
 	def validate(self):
@@ -316,7 +315,7 @@ class header_enumerator(enumerator_base):
 
 	def run_cache(self, retval):
 		if self.want_message:
-			self.conf.check_message('header %s (cached)' % self.name, '', 1, option=retval)
+			self.conf.check_message('header %s (cached)' % self.name, '', retval, option=retval)
 		if self.define: self.env[self.define] = retval
 
 	def run_test(self):
@@ -584,7 +583,7 @@ class library_configurator(configurator_base):
 		fatal(errmsg)
 
 	def run_cache(self, retval):
-		self.conf.check_message('library %s (cached)' % self.name, '', 1)
+		self.conf.check_message('library %s (cached)' % self.name, '', retval)
 		if retval:
 			self.update_env(retval)
 			self.conf.add_define(self.define, 1)
@@ -679,7 +678,7 @@ class framework_configurator(configurator_base):
 			self.uselib = self.name.upper()
 
 	def run_cache(self, retval):
-		self.conf.check_message('framework %s (cached)' % self.name, '', 1)
+		self.conf.check_message('framework %s (cached)' % self.name, '', retval)
 		self.update_env(retval)
 		if retval:
 			self.conf.add_define(self.define, 1)
@@ -772,7 +771,7 @@ class header_configurator(configurator_base):
 			fatal('no define given')
 
 	def run_cache(self, retvalue):
-		self.conf.check_message('header %s (cached)' % self.name, '', 1)
+		self.conf.check_message('header %s (cached)' % self.name, '', retvalue)
 		if retvalue:
 			self.update_env(retvalue)
 			self.conf.add_define(self.define, 1)
@@ -888,6 +887,9 @@ class Configure:
 		self._c=0
 		self._quiet=0
 
+		self.hash=0
+		self.files=[]
+
 	def set_env_name(self, name, env):
 		"add a new environment called name"
 		self.m_allenvs[name] = env
@@ -917,7 +919,7 @@ class Configure:
 				return 0
 			module = imp.load_module(i,file,name,desc)
 			ret = ret and int(module.detect(self))
-			self.env.appendValue('tools', {'tool':i, 'tooldir':tooldir})
+			self.env.append_value('tools', {'tool':i, 'tooldir':tooldir})
 		return ret
 
 	def setenv(self, name):
@@ -971,7 +973,11 @@ class Configure:
 		# TODO check
 		#if not 'configure' in mod:
 		#	fatal('the module has no configure function')
+
 		ret = mod.configure(self)
+		if Params.g_autoconfig:
+			self.hash = Params.hash_sig_weak(self.hash, inspect.getsource(mod.configure).__hash__())
+			self.files.append(os.path.abspath(cur))
 		self.cwd = current
 		return ret
 
@@ -992,7 +998,7 @@ class Configure:
 			pass
 
 
-	def add_define(self, define, value, quote=-1):
+	def add_define(self, define, value, quote=-1, comment=''):
 		"""store a single define and its state into an internal list
 		   for later writing to a config header file"""
 
@@ -1039,6 +1045,9 @@ class Configure:
 		except: pass
 
 		dir = Utils.join_path(dir, lst[-1])
+
+		# remember config files - do not remove them on "waf clean"
+		self.env.append_value('waf_config_files', os.path.abspath(dir))
 
 		dest = open(dir, 'w')
 		dest.write('/* configuration created by waf */\n')
@@ -1238,12 +1247,8 @@ class Configure:
 
 		# compile the program
 		self.mute_logging()
-		try:
-			ret = bld.compile()
-			self.restore_logging()
-		except:
-			ret = 1
-			self.restore_logging()
+		ret = bld.compile()
+		self.restore_logging()
 
 		# keep the name of the program to execute
 		if obj.execute:
@@ -1271,8 +1276,4 @@ class Configure:
 		m.update(sys.platform)
 		return m.hexdigest()
 
-	# TODO deprecated
-	def checkTool(self, input, tooldir=None):
-		warning('use conf.check_tool instead of checkTool')
-		return self.check_tool(input, tooldir)
 

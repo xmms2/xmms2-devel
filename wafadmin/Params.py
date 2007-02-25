@@ -10,8 +10,7 @@ import Utils
 # =================================== #
 # Fixed constants, change with care
 
-g_version="1.0.2"
-REVISION="1026"
+g_version="1.1.0"
 g_rootname = ''
 if sys.path=='win32':
 	# get the first two letters (c:)
@@ -32,6 +31,9 @@ g_strong_hash = 1
 g_timestamp = 0
 "if 1: do not look at the file contents for dependencies"
 
+g_autoconfig = 0
+"reconfigure the project automatically"
+
 if g_strong_hash: sig_nil = 'iluvcuteoverload'
 else: sig_nil = 17
 
@@ -44,11 +46,10 @@ g_globals = {}
 def set_globals(name, value):
 	g_globals[name] = value
 def globals(name):
-	try: return g_globals[name]
-	except KeyError: return []
+	return g_globals.get(name, [])
 
-g_launchdir = None
-"set by waf"
+g_cwd_launch = None
+"directory from which waf was called"
 
 g_tooldir=''
 "Tools directory (used in particular by Environment.py)"
@@ -89,19 +90,31 @@ except: g_lockfile = '.lock-wscript'
 # =================================== #
 # HELPERS
 
-g_col_names = ['BOLD', 'RED', 'REDP', 'GREEN', 'YELLOW', 'BLUE', 'CYAN', 'NORMAL']
-"color names"
+#g_col_names = ['BOLD', 'RED', 'REDP', 'GREEN', 'YELLOW', 'BLUE', 'CYAN', 'NORMAL']
+#"color names"
 
 g_col_scheme = [1, 91, 33, 92, 93, 94, 96, 0]
 "yellow not readable on white backgrounds? -> bug in *YOUR* terminal"
 
-g_colors = {}
+g_colors = {
+'BOLD'  :'\033[01;1m',
+'RED'   :'\033[01;91m',
+'REDP'  :'\033[01;33m',
+'GREEN' :'\033[01;92m',
+'YELLOW':'\033[01;93m',
+'BLUE'  :'\033[01;94m',
+'CYAN'  :'\033[01;96m',
+'NORMAL':'\033[0m'
+}
 "colors used for printing messages"
 
+def reset_colors():
+	global g_colors
+	for k in g_colors.keys():
+		g_colors[k]=''
+
 if sys.platform=='win32' or 'NOCOLOR' in os.environ:
-	for i in g_col_names: g_colors[i]=''
-else:
-	for (i,j) in zip(g_col_names, g_col_scheme): g_colors[i]="\033[%dm"%j
+	reset_colors()
 
 def pprint(col, str, label=''):
 	try: mycol=g_colors[col]
@@ -152,10 +165,11 @@ def __get_module():
 	except: return "unknown"
 
 def debug(msg, zone=None):
+	global g_zones, g_verbose
 	if g_zones:
-		if not zone in g_zones:
+		if (not zone in g_zones) and (not '*' in g_zones):
 			return
-	elif not Utils.g_debug:
+	elif not g_verbose>2:
 		return
 	module = __get_module()
 	niceprint(msg, 'DEBUG', module)

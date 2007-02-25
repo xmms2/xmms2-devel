@@ -13,15 +13,14 @@ from Params import debug, fatal, warning, error
 # Such a command-line should work:  PREFIX=/opt/ DESTDIR=/tmp/ahoj/ waf configure
 try:
 	default_prefix = os.environ['PREFIX']
-except:
+except KeyError:
 	if sys.platform == 'win32': default_prefix='c:\\temp\\'
 	else: default_prefix = '/usr/local/'
 
 try:
 	default_destdir = os.environ['DESTDIR']
-except:
+except KeyError:
 	default_destdir = ''
-
 
 def create_parser():
 	debug("create_parser is called", 'options')
@@ -112,12 +111,13 @@ def create_parser():
 
 	return parser
 
-def parse_args_impl(parser):
-	(Params.g_options, args) = parser.parse_args()
+def parse_args_impl(parser, _args=None):
+	(Params.g_options, args) = parser.parse_args(args=_args)
 	#print Params.g_options, " ", args
 
 	# By default, 'waf' is equivalent to 'waf build'
 	lst='dist configure clean distclean build install uninstall'.split()
+	Params.g_commands={}
 	for var in lst:    Params.g_commands[var]    = 0
 	if len(args) == 0: Params.g_commands['build'] = 1
 
@@ -144,6 +144,8 @@ class Handler:
 	def __init__(self):
 		self.parser = create_parser()
 		self.cwd = os.getcwd()
+		global g_parser
+		g_parser = self
 	def add_option(self, *kw, **kwargs):
 		self.parser.add_option(*kw, **kwargs)
 	def sub_options(self, dir):
@@ -176,16 +178,19 @@ class Handler:
 		tooldir = Utils.to_list(tooldir)
 		try:
 			file,name,desc = imp.find_module(tool, tooldir)
-		except:
+		except ImportError:
 			error("no tool named '%s' found" % tool)
 			return
 		module = imp.load_module(tool,file,name,desc)
 		try:
 			module.set_options(self)
-		except:
+		except AttributeError:
 			warning("tool %s has no function set_options or set_options failed" % tool)
 			pass
 
-	def parse_args(self):
-		parse_args_impl(self.parser)
+	def parse_args(self, args=None):
+		parse_args_impl(self.parser, args)
+
+g_parser = None
+"Last Handler instance in use"
 

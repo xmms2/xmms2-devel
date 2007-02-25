@@ -31,13 +31,13 @@ class CompilationError(Exception):
 
 exetor = None
 "subprocess"
-try:
-	import subprocess
-	exetor = subprocess
-except:
-	# this is provided for python < 2.4, will be removed in the future
-	import pproc
-	exetor = pproc
+#try:
+#	import subprocess
+#	exetor = subprocess
+#except ImportError:
+# Python < 2.5 is way buggy
+import pproc
+exetor = pproc
 
 def write_progress(s):
 	if Params.g_options.progress_bar == 1:
@@ -55,31 +55,31 @@ def progress_line(s, t, col1, task, col2):
 	disp = task.get_display()
 	if not disp: return ''
 	global g_initial
+
+	n=0; k=t
+	while k>=10: k=k/10; n+=1
+	n+=1
+
 	if Params.g_options.progress_bar == 1:
 		pc = (100.*s)/t
 		eta = time.strftime('%H:%M:%S', time.gmtime(time.time() - g_initial))
-
-		left = "[%d/%d] %s%d%%%s |" % (s, t, col1, pc, col2)
+		fs = "[%%%dd/%%%dd] %%s%%2d%%%%%%s |" % (n, n)
+		left = fs % (s, t, col1, pc, col2)
 		right = '| %s%s%s' % (col1, eta, col2)
-
 		cols = Utils.get_term_cols() - len(left) - len(right) + 15
 		if cols < 7: cols = 7
-
 		bar = ('='*int(((cols+1.)*s)/t-1)+'>').ljust(cols)
-
 		disp = '%s%s%s' % (left, bar, right)
 		return disp
 
-		return '[%d/%d] %s%d%%%s |%s| %s%s%s' % (s, t, col1, pc, col2, bar, col1, eta, col2)
 	elif Params.g_options.progress_bar == 2:
 		eta = time.strftime('%H:%M:%S', time.gmtime(time.time() - g_initial))
-
 		ins  = ','.join(map(lambda n: n.m_name, task.m_inputs))
 		outs = ','.join(map(lambda n: n.m_name, task.m_outputs))
-
 		return '|Total %s|Current %s|Inputs %s|Outputs %s|Time %s|' % (t, s, ins, outs, eta)
 
-	return '[%d/%d] %s%s%s' % (s, t, col1, disp, col2)
+	fs = "[%%%dd/%%%dd] %%s%%s%%s" % (n, n)
+	return fs % (s, t, col1, disp, col2)
 
 def process_cmd_output(cmd_stdout, cmd_stderr):
 	stdout_eof = stderr_eof = 0
@@ -99,7 +99,7 @@ def process_cmd_output(cmd_stdout, cmd_stderr):
 def exec_command_normal(str):
 	"run commands in a portable way the subprocess module backported from python 2.4 and should work on python >= 2.2"
 	debug("system command -> "+ str, 'runner')
-	if Params.g_verbose==1: print str
+	if Params.g_verbose>=1: print str
 	proc = exetor.Popen(str, shell=1, stdout=exetor.PIPE, stderr=exetor.PIPE)
 	process_cmd_output(proc.stdout, proc.stderr)
 	stat = proc.wait()
@@ -109,7 +109,7 @@ def exec_command_normal(str):
 def exec_command_interact(str):
 	"this one is for the latex output, where we cannot capture the output while the process waits for stdin"
 	debug("system command (interact) -> "+ str, 'runner')
-	if Params.g_verbose==1: print str
+	if Params.g_verbose>=1: print str
 	proc = exetor.Popen(str, shell=1)
 	stat = proc.wait()
 	if stat & 0xff: return stat | 0x80

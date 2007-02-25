@@ -19,7 +19,7 @@ class TaskManager:
 	The manager holds a list of TaskGroup
 	Each TaskGroup contains a map(priority, list of tasks)"""
 	def __init__(self):
-		self.groups = None
+		self.groups = []
 		self.idx    = 0
 	def add_group(self, name=''):
 		if not name:

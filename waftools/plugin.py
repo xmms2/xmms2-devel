@@ -14,9 +14,9 @@ def plugin(name, source=None, configure=False, build=False,
 			return
 		if configure and not configure(conf):
 			return
-		conf.env['XMMS_PLUGINS_ENABLED'].append(name)
+		conf.env.append_value('XMMS_PLUGINS_ENABLED', name)
 		if output_prio:
-			conf.env['XMMS_OUTPUT_PLUGINS'].append((output_prio, name))
+			conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
 
 	def stock_build(bld):
 		obj = bld.create_obj(tool, 'plugin')

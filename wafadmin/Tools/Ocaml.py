@@ -47,6 +47,8 @@ class ocamlobj(Object.genobj):
 		self.includes     = ''
 		self.uselib       = ''
 
+		self.out_nodes    = []
+
 		self._are_deps_set = 0
 
 		if not self.env: self.env = Params.g_build.m_allenvs['default']
@@ -82,8 +84,7 @@ class ocamlobj(Object.genobj):
 		lst = self._incpaths_lst
 		tree = Params.g_build
 		for dir in inc_lst:
-			node = self.m_current_path.find_node( 
-				Utils.split_path(dir) )
+			node = self.path.find_source(dir)
 			if not node:
 				error("node not found dammit")
 				continue
@@ -97,20 +98,20 @@ class ocamlobj(Object.genobj):
 
 		for i in self._incpaths_lst:
 			if self.bytecode_env:
-				self.bytecode_env.appendValue('OCAMLPATH', '-I %s' % i.srcpath(self.env))
-				self.bytecode_env.appendValue('OCAMLPATH', '-I %s' % i.bldpath(self.env))
+				self.bytecode_env.append_value('OCAMLPATH', '-I %s' % i.srcpath(self.env))
+				self.bytecode_env.append_value('OCAMLPATH', '-I %s' % i.bldpath(self.env))
 
 			if self.native_env:
-				self.native_env.appendValue('OCAMLPATH', '-I %s' % i.bldpath(self.env))
-				self.native_env.appendValue('OCAMLPATH', '-I %s' % i.srcpath(self.env))
+				self.native_env.append_value('OCAMLPATH', '-I %s' % i.bldpath(self.env))
+				self.native_env.append_value('OCAMLPATH', '-I %s' % i.srcpath(self.env))
 
 		varnames = ['INCLUDES', 'OCALINKFLAGS', 'OCALINKFLAGS_OPT']
 		for name in self.uselib.split():
 			for vname in varnames:
 				cnt = self.env[vname+'_'+name]
 				if cnt:
-					if self.bytecode_env: self.bytecode_env.appendValue(vname, cnt)
-					if self.native_env: self.native_env.appendValue(vname, cnt)
+					if self.bytecode_env: self.bytecode_env.append_value(vname, cnt)
+					if self.native_env: self.native_env.append_value(vname, cnt)
 
 		source_lst = self.source.split()
 		nodes_lst = []
@@ -118,7 +119,7 @@ class ocamlobj(Object.genobj):
 		# first create the nodes corresponding to the sources
 		for filename in source_lst:
 			base, ext = os.path.splitext(filename)
-			node = self.find(filename)
+			node = self.path.find_build(filename)
 			if not ext in self.s_default_ext:
 				print "??? ", filename
 
@@ -175,14 +176,14 @@ class ocamlobj(Object.genobj):
 			objfiles = []
 			for t in self._bytecode_tasks: objfiles.append(t.m_outputs[0])
 			linktask.m_inputs  = objfiles
-			linktask.set_outputs(self.find(self.get_target_name(bytecode=1)))
+			linktask.set_outputs(self.path.find_build(self.get_target_name(bytecode=1)))
 			self._linktasks.append(linktask)
 		if self.native_env:
 			linktask = self.create_task('ocalinkopt', self.native_env, 101)
 			objfiles = []
 			for t in self._native_tasks: objfiles.append(t.m_outputs[0])
 			linktask.m_inputs  = objfiles
-			linktask.set_outputs(self.find(self.get_target_name(bytecode=0)))
+			linktask.set_outputs(self.path.find_build(self.get_target_name(bytecode=0)))
 			self._linktasks.append(linktask)
 
 			self.out_nodes += linktask.m_outputs
@@ -201,31 +202,6 @@ class ocamlobj(Object.genobj):
 			else:
 				return self.target
 
-	def find_sources_in_dirs(self, dirnames, excludes=[]):
-		lst=[]
-		try:    exc_lst = excludes.split()
-		except: exc_lst = excludes
-
-		for name in dirnames.split():
-			#print "name is ", name
-			anode = Params.g_build.ensure_node_from_lst(self.m_current_path, 
-				Utils.split_path(name))
-			#print "anode ", anode.m_name, " ", anode.files()
-			Params.g_build.rescan(anode)
-			#print "anode ", anode.m_name, " ", anode.files()
-
-			#node = self.m_current_path.find_node( name.split(os.sep) )
-			for file in anode.files():
-				#print "file found ->", file
-				(base, ext) = os.path.splitext(file.m_name)
-				if ext in self.s_default_ext:
-					s = file.relpath(self.m_current_path)
-					if not s in lst:
-						if s in exc_lst: continue
-						lst.append(s)
-
-		self.source = self.source+' '+(" ".join(lst))
-
 	def comptask(self):
 		"""
 		use ocamldep to set the dependencies
@@ -240,7 +216,7 @@ class ocamlobj(Object.genobj):
 
 		#print "comptask called!"
 
-		curdir = self.m_current_path
+		curdir = self.path
 		file2task = {}
 
 		dirs  = []

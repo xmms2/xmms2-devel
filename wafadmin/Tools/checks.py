@@ -43,7 +43,7 @@ class compile_configurator(Configure.configurator_base):
 
 	def run_cache(self, retval):
 		if self.want_message:
-			self.conf.check_message('compile code (cached)', '', 1, option=self.msg)
+			self.conf.check_message('compile code (cached)', '', retval, option=self.msg)
 
 	def validate(self):
 		if not self.code:
@@ -153,15 +153,24 @@ def checkFeatures(self, lst=[], pathlst=[]):
 
 	return is_big
 
-def check_header(self, header, define=''):
-
+def find_header(self, header, define='', paths=''):
 	if not define:
-		upstr = header.upper().replace('/', '_').replace('.', '_')
-		define = 'HAVE_' + upstr
+		define = 'HAVE_' + header.upper().replace('/', '_').replace('.', '_')
+	test = self.create_header_enumerator()
+	test.mandatory = 1
+	test.name = header
+	test.path = paths
+	test.define = define
+	return test.run()
+
+def check_header(self, header, define='', mandatory=0):
+	if not define:
+		define = 'HAVE_' + header.upper().replace('/', '_').replace('.', '_')
 
 	test = self.create_header_configurator()
 	test.name = header
 	test.define = define
+	test.mandatory = mandatory
 	return test.run()
 
 def try_build_and_exec(self, code, uselib=''):
@@ -236,6 +245,7 @@ def check_cfg2(self, name, mandatory=1, define='', uselib=''):
 def detect(conf):
 	"attach the checks to the conf object"
 
+	conf.hook(find_header)
 	conf.hook(check_header)
 	conf.hook(create_compile_configurator)
 	conf.hook(try_build)

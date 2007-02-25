@@ -49,8 +49,7 @@ class tex_scanner(Scan.scanner):
 						pass
 
 			if ok:
-				node = curdirnode.find_node(
-					Utils.split_path(path))
+				node = curdirnode.find_source(path)
 				nodes.append(node)
 			else:
 				print 'could not find', filepath
@@ -68,14 +67,14 @@ def tex_build(task, command='LATEX'):
 
 	if env['PROMPT_LATEX']:
 		exec_cmd = Runner.exec_command_interact
-		com = '%s %s' % (env[command], env[command+'FLAGS'])
+		com = '%s %s' % (env[command], env.get_flat(command+'FLAGS'))
 	else:
 		exec_cmd = Runner.exec_command
-		com = '%s %s %s' % (env[command], env[command+'FLAGS'], '-interaction=batchmode')
+		com = '%s %s %s' % (env[command], env.get_flat(command+'FLAGS'), '-interaction=batchmode')
 
 
 	node = task.m_inputs[0]
-	reldir  = node.cd_to(env)
+	reldir  = node.bld_dir(env)
 
 
 	srcfile = node.srcpath(env)
@@ -205,16 +204,14 @@ class texobj(Object.genobj):
 		if self.deps:
 			deps = self.to_list(self.deps)
 			for filename in deps:
-				n = self.m_current_path.find_node( 
-					Utils.split_path(filename) )
+				n = self.path.find_source(filename)
 				if not n in deps_lst: deps_lst.append(n)
 
 		for filename in self.source.split():
 			base, ext = os.path.splitext(filename)
 			if not ext in self.s_default_ext: continue
 
-			node = self.m_current_path.find_node( 
-				Utils.split_path(filename) )
+			node = self.path.find_source(filename)
 			if not node: fatal('cannot find %s' % filename)
 
 			if self.m_type == 'latex':
@@ -230,7 +227,7 @@ class texobj(Object.genobj):
 
 			task.m_scanner = g_tex_scanner
 			task.m_env     = self.env
-			task.m_scanner_params = {'curdirnode':self.m_current_path}
+			task.m_scanner_params = {'curdirnode':self.path}
 
 			# add the manual dependencies
 			if deps_lst:

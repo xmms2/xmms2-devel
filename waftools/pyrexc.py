@@ -5,25 +5,13 @@ from Params import error
 pyrex_str = '${PYREX} ${SRC} -o ${TGT}'
 
 def pyrex_file(self, node):
-	basefile = node.m_name[:-4]
-
-	gen_script = node.m_parent.get_file(node.m_name)
-
-	gen_name = "%s.c" % basefile
-	gen_src = node.m_parent.get_file(gen_name)
-	if not gen_src:
-		gen_src = node.m_parent.get_build(gen_name)
-	if not gen_src:
-		gen_src = Node.Node(gen_name, node.m_parent)
-		node.m_parent.append_build(gen_src)
-
 	gentask = self.create_task('pyrexc', nice=1)
-	gentask.set_inputs(gen_script)
-	gentask.set_outputs(gen_src)
+	gentask.set_inputs(node)
+	gentask.set_outputs(node.change_ext('.c'))
 
 	cctask = self.create_task('cc')
-	cctask.set_inputs(gen_src)
-	cctask.set_outputs(gen_src.change_ext('.o'))
+	cctask.set_inputs(gentask.m_outputs)
+	cctask.set_outputs(node.change_ext('.o'))
 
 def setup(env):
 	Action.simple_action('pyrexc', pyrex_str, color='BLUE')

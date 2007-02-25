@@ -9,7 +9,7 @@
 
 import sys, os, string
 import Params
-from Params import debug, error
+from Params import debug, error, warning
 
 
 strict_quotes = 0
@@ -502,7 +502,7 @@ class filter:
 				self.buf.append(c)
 
 class cparse:
-	def __init__(self, nodepaths=[], strpaths=[], defines=[]):
+	def __init__(self, nodepaths=[], strpaths=[], defines={}):
 		#self.lines = txt.split('\n')
 		self.lines = []
 		self.i     = 0
@@ -510,23 +510,10 @@ class cparse:
 		self.max   = 0
 		self.buf   = []
 
-		self.defs  = {}
+		self.defs  = defines
 		self.state = []
 
-		# mind the defines:
-		if defines:
-			for tdef in defines:
-				i = 0
-				for c in tdef:
-					if c == '=': break
-					i += 1
-
-				if i == len(tdef):
-					# empty define
-					self.defs[tdef] = ""
-				else:
-					# mydef=value
-					self.defs[tdef[:i]] = tdef[i+1:]
+		self.env   = None # needed for the variant when searching for files
 
 		# include paths
 		self.strpaths = strpaths
@@ -543,12 +530,11 @@ class cparse:
 	def tryfind(self, filename):
 		if self.m_nodepaths:
 			found = 0
-			lst = filename.split('/')
 			for n in self.m_nodepaths:
-				found = n.search_existing_node(lst)
+				found = n.find_source(filename, create=0)
 				if found:
 					self.m_nodes.append(found)
-					self.addlines(found.abspath())
+					self.addlines(found.abspath(self.env))
 					break
 			if not found:
 				if not filename in self.m_names:
@@ -583,15 +569,18 @@ class cparse:
 		except IOError:
 			raise
 		except:
-			if Params.g_verbose > 0: print "warning: parsing %s failed" % filepath
+			if Params.g_verbose > 0: warning("parsing %s failed" % filepath)
 			raise
 
 	def start2(self, node, env):
-
 		debug("scanning %s (in %s)" % (node.m_name, node.m_parent.m_name), 'preproc')
 
+		self.env = env
 		variant = node.variant(env)
+
 		self.addlines(node.abspath(env))
+		if env['DEFLINES']:
+			self.lines = env['DEFLINES'] + self.lines
 
 		while self.lines:
 			line = self.lines.pop(0)
@@ -603,7 +592,7 @@ class cparse:
 				self.process_line()
 			except:
 				debug("line parsing failed >%s<" % line, 'preproc')
-				#raise
+				if Params.g_verbose: warning("line parsing failed >%s<" % line)
 
 	# debug only
 	def start(self, filename):

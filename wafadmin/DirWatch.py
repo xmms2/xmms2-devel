@@ -42,9 +42,8 @@ class WatchObject:
 
 	def unwatch( self ):
 		"""stop watching"""
-		if self.__fr == None:
-			raise "fam not init"
-		self.__fr = self.__adaptor.stop_watch( self.__name )
+		if self.__fr:
+			self.__fr = self.__adaptor.stop_watch( self.__name )
 
 	def get_events( self ):
 		"""returns all events to care"""

@@ -35,7 +35,9 @@ class c_scanner(Scan.scanner):
 			error("BUG rescanning a null node")
 			return
 		(nodes, names) = self.scan(node, env, **hashparams)
-		if Params.g_zones: debug('scanner for %s returned %s %s' % (node.m_name, str(nodes), str(names)), 'deps')
+		if Params.g_verbose:
+			if Params.g_zones:
+				debug('scanner for %s returned %s %s' % (node.m_name, str(nodes), str(names)), 'deps')
 
 		tree = Params.g_build
 		tree.m_depends_on[variant][node] = nodes
@@ -45,10 +47,12 @@ class c_scanner(Scan.scanner):
 		if Params.g_preprocess:
 			for n in nodes:
 				try:
-					tree.m_deps_tstamp[variant][n] = tree.m_tstamp_variants[variant][n]
-				except:
+					# FIXME some tools do not behave properly and this part fails
+					# it should not be allowed to scan ahead of time
+					vv = n.variant(env)
+					tree.m_deps_tstamp[vv][n] = tree.m_tstamp_variants[vv][n]
+				except KeyError:
 					pass
-
 
 	def get_signature(self, task):
 		debug("get_signature(self, task)", 'ccroot')
@@ -63,7 +67,7 @@ class c_scanner(Scan.scanner):
 			else:
 				return self._get_signature_regexp_weak(task)
 
-	def scan(self, node, env, path_lst, defines=[]):
+	def scan(self, node, env, path_lst, defines={}):
 		debug("scan", 'ccroot')
 		if Params.g_preprocess:
 			return self._scan_preprocessor(node, env, path_lst, defines)
@@ -97,7 +101,7 @@ class c_scanner(Scan.scanner):
 		#print "-S ", nodes, names
 		return (nodes, names)
 
-	def _scan_preprocessor(self, node, env, path_lst, defines=[]):
+	def _scan_preprocessor(self, node, env, path_lst, defines={}):
 		debug("_scan_preprocessor(self, node, env, path_lst)", 'croot')
 		import preproc
 		gruik = preproc.cparse(nodepaths = path_lst, defines=defines)
@@ -318,7 +322,7 @@ class ccroot(Object.genobj):
 
 		# includes, seen from the current directory
 		self.includes=''
-
+		self.defines=''
 		self.rpaths=''
 
 		self.uselib=''
@@ -337,10 +341,6 @@ class ccroot(Object.genobj):
 		self.want_libtool=0 # -1: fake; 1: real
 		self.vnum=''
 
-		self._incpaths_lst=[]
-		self.defines_lst = []
-		self._bld_incpaths_lst=[]
-
 		self.p_compiletasks=[]
 
 		# do not forget to set the following variables in a subclass
@@ -352,6 +352,11 @@ class ccroot(Object.genobj):
 
 		self.chmod = 0755
 
+		# these are kind of private, do not touch
+		self._incpaths_lst=[]
+		self.scanner_defines = {}
+		self._bld_incpaths_lst=[]
+
 	def create_task(self, type, env=None, nice=10):
 		"overrides Object.create_task to catch the creation of cpp tasks"
 		task = Object.genobj.create_task(self, type, env, nice)
@@ -362,41 +367,6 @@ class ccroot(Object.genobj):
 	def get_valid_types(self):
 		"subclass me"
 		fatal('subclass method get_valid_types of ccroot')
-
-	def find_sources_in_dirs(self, dirnames, excludes=[]):
-		"subclass if necessary"
-		lst=[]
-		excludes = Utils.to_list(excludes)
-		#make sure dirnames is a list helps with dirnames with spaces
-		dirnames = Utils.to_list(dirnames)
-
-		ext_lst = []
-		ext_lst += self.s_default_ext
-		try:
-			for var in self.__class__.__dict__['all_hooks']:
-				ext_lst += self.env[var]
-		except:
-			pass
-
-		for name in dirnames:
-			#print "name is ", name
-			anode = Params.g_build.ensure_node_from_lst(self.m_current_path, 
-				Utils.split_path(name))
-			#print "anode ", anode.m_name, " ", anode.files()
-			Params.g_build.rescan(anode)
-			#print "anode ", anode.m_name, " ", anode.files()
-
-			#node = self.m_current_path.find_node( name.split(os.sep) )
-			for file in anode.files():
-				#print "file found ->", file
-				(base, ext) = os.path.splitext(file.m_name)
-				if ext in ext_lst:
-					s = file.relpath(self.m_current_path)
-					if not s in lst:
-						if s in excludes: continue
-						lst.append(s)
-
-		self.source = self.source+' '+(" ".join(lst))
 
 	def apply(self):
 		"adding some kind of genericity is tricky subclass this method if it does not suit your needs"
@@ -429,14 +399,13 @@ class ccroot(Object.genobj):
 		# get the list of folders to use by the scanners
 		# all our objects share the same include paths anyway
 		tree = Params.g_build
-		dir_lst = { 'path_lst' : self._incpaths_lst, 'defines' : self.defines_lst }
+		dir_lst = { 'path_lst' : self._incpaths_lst, 'defines' : self.scanner_defines }
 
 		lst = self.to_list(self.source)
-		find_node = self.m_current_path.find_node
+		find_source_lst = self.path.find_source_lst
 		for filename in lst:
-			#node = self.find(filename)
-			node = self.m_current_path.find_node(Utils.split_path(filename))
-			if not node: fatal("source not found: %s in %s" % (filename, str(self.m_current_path)))
+			node = find_source_lst(Utils.split_path(filename))
+			if not node: fatal("source not found: %s in %s" % (filename, str(self.path)))
 
 			# Extract the extension and look for a handler hook.
 			k = max(0, filename.rfind('.'))
@@ -474,7 +443,7 @@ class ccroot(Object.genobj):
 		app = outputs.append
 		for t in self.p_compiletasks: app(t.m_outputs[0])
 		linktask.set_inputs(outputs)
-		linktask.set_outputs(self.find(self.get_target_name()))
+		linktask.set_outputs(self.path.find_build(self.get_target_name()))
 
 		self.m_linktask = linktask
 
@@ -516,10 +485,10 @@ class ccroot(Object.genobj):
 		tree = Params.g_build
 		for dir in inc_lst:
 			if os.path.isabs(dir[0]) or (len(dir) > 1 and dir[1] == ':'):
-				self.env.appendValue('CPPPATH', dir)
+				self.env.append_value('CPPPATH', dir)
 				continue
 
-			node = self.m_current_path.find_node(Utils.split_path(dir))
+			node = self.path.find_dir_lst(Utils.split_path(dir))
 			if not node:
 				debug("node not found in ccroot:apply_incpaths "+str(dir), 'ccroot')
 				continue
@@ -536,7 +505,7 @@ class ccroot(Object.genobj):
 			compvar = '_'.join([self.m_type, var])
 			#print compvar
 			value = self.env[compvar]
-			if value: self.env.appendValue(var, value)
+			if value: self.env.append_value(var, value)
 
 	def apply_obj_vars(self):
 		debug('apply_obj_vars called for cppobj', 'ccroot')
@@ -549,7 +518,7 @@ class ccroot(Object.genobj):
 		self.addflags('CXXFLAGS', self.cxxflags)
 		self.addflags('CPPFLAGS', self.cppflags)
 
-		app = self.env.appendValue
+		app = self.env.append_unique
 
 		# local flags come first
 		# set the user-defined includes paths
@@ -627,7 +596,6 @@ class ccroot(Object.genobj):
 				name1 = libname
 
 				filename = self.m_linktask.m_outputs[0].relpath_gen(Params.g_build.m_curdirnode)
-
 				Common.install_as(dest_var, dest_subdir+'/'+name3, filename)
 
 				#print 'lib/'+name2, '->', name3
@@ -663,7 +631,7 @@ class ccroot(Object.genobj):
 							libtool_files.append(v)
 							libtool_vars.append(v)
 							continue
-						self.env.appendUnique('LINKFLAGS', v)
+						self.env.append_unique('LINKFLAGS', v)
 					break
 				except:
 					pass
@@ -677,7 +645,7 @@ class ccroot(Object.genobj):
 				if v[-3:] == '.la':
 					libtool_files.append(v)
 					continue
-				self.env.appendUnique('LINKFLAGS', v)
+				self.env.append_unique('LINKFLAGS', v)
 
 	def apply_lib_vars(self):
 		debug('apply_lib_vars called', 'ccroot')
@@ -696,20 +664,20 @@ class ccroot(Object.genobj):
 				if not obj.m_posted: obj.post()
 
 				if obj.m_type == 'shlib':
-					env.appendValue('LIB', obj.target)
+					env.append_value('LIB', obj.target)
 				elif obj.m_type == 'plugin':
 					if platform == 'darwin':
-						env.appendValue('PLUGIN', obj.target)
+						env.append_value('PLUGIN', obj.target)
 					else:
-						env.appendValue('LIB', obj.target)
+						env.append_value('LIB', obj.target)
 				elif obj.m_type == 'staticlib':
-					env.appendValue('STATICLIB', obj.target)
+					env.append_value('STATICLIB', obj.target)
 				else:
 					error('unknown object type %s in apply_lib_vars' % obj.name)
 
 				# add the path too
-				tmp_path = obj.m_current_path.bldpath(self.env)
-				if not tmp_path in env['LIBPATH']: env.prependValue('LIBPATH', tmp_path)
+				tmp_path = obj.path.bldpath(self.env)
+				if not tmp_path in env['LIBPATH']: env.prepend_value('LIBPATH', tmp_path)
 
 				# set the dependency over the link task
 				self.m_linktask.m_run_after.append(obj.m_linktask)
@@ -731,14 +699,14 @@ class ccroot(Object.genobj):
 		for l in libs:
 			for v in self.p_flag_vars:
 				val=self.env[v+'_'+l]
-				if val: self.env.appendValue(v, val)
+				if val: self.env.append_value(v, val)
 	def process_vnum(self):
 		if self.vnum and sys.platform != 'darwin' and sys.platform != 'win32':
 			nums=self.vnum.split('.')
 			# this is very unix-specific
 			try: name3 = self.soname
 			except: name3 = self.m_linktask.m_outputs[0].m_name+'.'+self.vnum.split('.')[0]
-			self.env.appendValue('LINKFLAGS', '-Wl,-soname,'+name3)
+			self.env.append_value('LINKFLAGS', '-Wl,-soname,'+name3)
 
 	def apply_objdeps(self):
 		"add the .o files produced by some other object files in the same manner as uselib_local"
@@ -753,7 +721,7 @@ class ccroot(Object.genobj):
 		"utility function for cc.py and ccroot.py: add self.cxxflags to CXXFLAGS"
 		if type(var) is types.StringType:
 			for i in value.split():
-				self.env.appendValue(var, i)
+				self.env.append_value(var, i)
 		else:
 			# TODO: double-check
 			self.env[var] += value

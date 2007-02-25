@@ -11,7 +11,7 @@ from Params import debug, fatal
 # first, we define an action to build something
 fop_vardeps = ['FOP']
 def fop_build(task):
-	bdir = task.m_inputs[0].cd_to()
+	bdir = task.m_inputs[0].bld_dir()
 	src = task.m_inputs[0].bldpath()
 	tgt = src[:-3]+'.pdf'
 	cmd = '%s %s %s' % (task.m_env['FOP'], src, tgt)
@@ -21,7 +21,7 @@ xslt_vardeps = ['XSLTPROC', 'XSLTPROC_ST']
 
 # Create .fo or .html from xml file
 def xslt_build(task):
-	bdir = task.m_inputs[0].cd_to()
+	bdir = task.m_inputs[0].bld_dir()
 	src = task.m_inputs[0].bldpath()
 	srcdir = os.path.dirname(task.m_inputs[0].bldpath())
 	tgt = task.m_outputs[0].m_name
@@ -31,7 +31,7 @@ def xslt_build(task):
 # Create various file formats from a docbook or sgml file.
 db2_vardeps = ['DB2','DB2HTML', 'DB2PDF', 'DB2TXT', 'DB2PS']
 def db2_build(task):
-	bdir = task.m_inputs[0].cd_to()
+	bdir = task.m_inputs[0].bld_dir()
 	src = task.m_inputs[0].bldpath()
 	cmd = task.m_compiler % (bdir, src)
 	return Runner.exec_command(cmd)
@@ -117,16 +117,15 @@ class docbookobj(Object.genobj):
 		# for each source argument, create a task
 		lst = self.source.split()
 		for filename in lst:
-			node = self.m_current_path.find_node( 
-				Utils.split_path(filename) )
+			node = self.path.find_source(filename)
 			if not node:
-				fatal("source not found: "+filename+" in "+str(self.m_current_path))
+				fatal("source not found: "+filename+" in "+str(self.path))
 
 			# create a task to process the source file.
 			docb_file(self, node)
 
 	def install(self):
-		if not (Params.g_commands['install'] or Params.g_commands['uninstall']): 
+		if not (Params.g_commands['install'] or Params.g_commands['uninstall']):
 			return
 
 		current = Params.g_build.m_curdirnode

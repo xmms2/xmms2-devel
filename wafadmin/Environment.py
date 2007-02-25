@@ -4,9 +4,9 @@
 
 "Environment representation"
 
-import os,sys,string, types, imp
+import os, sys, string, types, imp
 import Params, Utils
-from Params import debug, error
+from Params import debug, error, fatal, warning
 
 g_idx = 0
 class Environment:
@@ -54,41 +54,46 @@ class Environment:
 		module = imp.load_module(tool,file,name,desc)
 		try:
 			module.setup(self)
-		except:
-			error("setup function missing in tool: %s " % str(tool))
-			raise
+		except AttributeError:
+			fatal("setup function missing in tool: %s " % str(tool))
 		if file: file.close()
 
 	def __str__(self):
 		return "environment table\n"+str(self.m_table)
 
 	def __getitem__(self, key):
-		try: return self.m_table[key]
-		except KeyError:
-			try: return Params.globals(key)
-			except KeyError: return []
+		r = self.m_table.get(key, None)
+		if r: return r
+		return Params.g_globals.get(key, [])
+
 	def __setitem__(self, key, value):
 		self.m_table[key] = value
 
-	def appendValue(self, var, value):
+	def get_flat(self, key):
+		s = self.m_table.get(key, '')
+		if not s: return ''
+		if type(s) is types.ListType: return ' '.join(s)
+		else: return s
+
+	def append_value(self, var, value):
 		if type(value) is types.ListType: val = value
 		else: val = [value]
 		#print var, self[var]
 		try: self.m_table[var] = self[var] + val
 		except TypeError: self.m_table[var] = [self[var]] + val
 
-	def prependValue(self, var, value):
+	def prepend_value(self, var, value):
 		if type(value) is types.ListType: val = value
 		else: val = [value]
 		#print var, self[var]
 		try: self.m_table[var] = val + self[var]
 		except TypeError: self.m_table[var] = val + [self[var]]
 
-	def appendUnique(self, var, value):
+	def append_unique(self, var, value):
 		if not self[var]:
 			self[var]=value
 		if value in self[var]: return
-		self.appendValue(var, value)
+		self.append_value(var, value)
 
 	def store(self, filename):
 		"Write the variables into a file"
@@ -108,7 +113,7 @@ class Environment:
 			ln = line.strip()
 			if not ln: continue
 			if ln[:9]=='#VERSION=':
-				if ln[9:] != Params.g_version: error('waf version mismatch, you should perhaps reconfigure')
+				if ln[9:] != Params.g_version: warning('waf upgrade? you should perhaps reconfigure')
 			if ln[0]=='#': continue
 			(key,value) = string.split(ln, '=', 1)
 			line = 'self.m_table["%s"] = %s'%(key.strip(), value.strip())

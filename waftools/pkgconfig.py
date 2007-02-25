@@ -27,11 +27,12 @@ class pkgcobj(copyobj):
 			val["NAME"] = name
 			val["LIB"] = lib
 
-			node = self.m_current_path.find_node(Utils.split_path('xmms2.pc.in'))
-			newnode = self.m_current_path.search_existing_node(Utils.split_path(name+'.pc'))
+			node = self.path.find_source('xmms2.pc.in')
+			newnode = self.path.find_build(name+'.pc')
+
 			if not newnode:
 				newnode = Node.Node(name+'.pc', self.m_current_path)
-				self.m_current_path.append_build(newnode)
+				self.path.append_build(newnode)
 
 			task = self.create_task('copy', self.env, 8)
 			task.set_inputs(node)

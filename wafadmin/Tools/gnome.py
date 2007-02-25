@@ -50,11 +50,9 @@ class gnome_intltool(Object.genobj):
 		tree = Params.g_build
 		current = tree.m_curdirnode
 		for i in self.to_list(self.source):
-			node = self.m_current_path.find_node(
-				Utils.split_path(i))
+			node = self.path.find_source(i)
 
-			podirnode = self.m_current_path.find_node(
-				Utils.split_path(self.podir) )
+			podirnode = self.path.find_source(self.podir)
 
 			self.env['INTLCACHE'] = Utils.join_path(Params.g_build.m_curdirnode.bldpath(self.env),".intlcache")
 			self.env['INTLPODIR'] = podirnode.bldpath(self.env)
@@ -78,7 +76,7 @@ class gnome_sgml2man(Object.genobj):
 		self.m_appname = appname
 	def apply(self):
 		tree = Params.g_build
-		for node in self.m_current_path.files():
+		for node in self.path.files():
 			try:
 				base, ext = os.path.splitext(node.m_name)
 				if ext != '.sgml': continue
@@ -94,7 +92,7 @@ class gnome_sgml2man(Object.genobj):
 
 				task = self.create_task('sgml2man', self.env, 2)
 				task.set_inputs(node)
-				task.set_outputs(self.find(name))
+				task.set_outputs(self.path.find_build(name))
 			except:
 				raise
 				pass
@@ -118,7 +116,7 @@ class gnome_translations(Object.genobj):
 		self.m_tasks=[]
 		self.m_appname = appname
 	def apply(self):
-		for file in self.m_current_path.files():
+		for file in self.path.files():
 			try:
 				base, ext = os.path.splitext(file.m_name)
 				if ext != '.po': continue
@@ -131,12 +129,11 @@ class gnome_translations(Object.genobj):
 		destfilename = self.m_appname+'.mo'
 
 		current = Params.g_build.m_curdirnode
-		for file in self.m_current_path.files():
+		for file in self.path.files():
 			lang, ext = os.path.splitext(file.m_name)
 			if ext != '.po': continue
 
-			node = self.m_current_path.find_node( 
-				Utils.split_path(lang+'.gmo') )
+			node = self.path.find_source(lang+'.gmo')
 			orig = node.relpath_gen(current)
 
 			destfile = Utils.join_path(lang, 'LC_MESSAGES', destfilename)
@@ -161,8 +158,7 @@ class gnomeobj(cc.ccobj):
 
 	def apply_core(self):
 		for i in self._marshal_lst:
-			node = self.m_current_path.find_node(
-				Utils.split_path(i[0]))
+			node = self.path.find_source(i[0])
 
 			if not node:
 				fatal('file not found on gnome obj '+i[0])
@@ -196,8 +192,7 @@ class gnomeobj(cc.ccobj):
 
 
 		for i in self._dbus_lst:
-			node = self.m_current_path.find_node(
-				Utils.split_path(i[0]))
+			node = self.path.find_source(i[0])
 
 			if not node:
 				fatal('file not found on gnome obj '+i[0])

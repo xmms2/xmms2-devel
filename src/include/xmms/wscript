@@ -30,8 +30,10 @@ def configure(conf):
 
     l = conf.env['XMMS_OUTPUT_PLUGINS']
     l.sort()
-    l.reverse()
-    defs['XMMS_OUTPUT_DEFAULT'] = l.pop(0)[1]
+    prio,name = l[-1]
+    if prio == -1:
+        Params.warning("No output plugin found, this is bad")
+    defs['XMMS_OUTPUT_DEFAULT'] = name
     if sys.platform == 'darwin':
         defs["USERCONFDIR"] = 'Library/xmms2'
         defs["USERCACHEDIR"] = 'Library/xmms2/logs'
@@ -46,7 +48,7 @@ def configure(conf):
 
     for i in defs:
         conf.add_define(i, defs[i])
-    conf.write_config_header('src/include/xmms/xmms_defs.h')
+    conf.write_config_header('xmms_configuration.h')
 
     print "\nDefault output plugin: ",
     Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])

@@ -4,53 +4,33 @@
 
 "Module called for configuring, compiling and installing targets"
 
-import os, sys
-import Params, Utils, Configure, Environment, Build, Runner
-from Params import error, fatal, g_lockfile
+import os, sys, cPickle
+import Params, Utils, Configure, Environment, Build, Runner, Options
+from Params import error, fatal, warning, g_lockfile
 
-g_inroot     = 1
 g_dirwatch   = None
 g_daemonlock = 0
 
 def add_subdir(dir, bld):
 	"each wscript calls bld.add_subdir"
-	global g_inroot
-	if g_inroot:
-		node = bld.ensure_node_from_lst(bld.m_curdirnode, 
-                Utils.split_path(dir))
-		bld.m_subdirs.append( [node, bld.m_curdirnode] )
-
-		if not node:
-			error("grave error in add_subdir, subdir not found for "+str(dir))
-			#print bld.m_curdirnode
-			bld.m_curdirnode.debug()
-			sys.exit(1)
-		return
-
-	newdirnode = bld.ensure_node_from_lst(bld.m_curdirnode, dir.split('/'))
-	if newdirnode is None:
+	node = bld.m_curdirnode.ensure_node_from_lst(Utils.split_path(dir))
+	if node is None:
 		fatal("subdir not found (%s), restore is %s" % (dir, bld.m_curdirnode))
+	bld.m_subdirs.append([node, bld.m_curdirnode])
 
-	bld.m_subdirs.append([newdirnode, bld.m_curdirnode])
-
-def callBack(idxName, pathName, event):
+def call_back(idxName, pathName, event):
 	#print "idxName=%s, Path=%s, Event=%s "%(idxName, pathName, event)
-
 	# check the daemon lock state
 	global g_daemonlock
 	if g_daemonlock: return
 	g_daemonlock = 1
 
-	# Utils.reset cleans up existing variables (at least, this is the intent)
+	# clean up existing variables, and start a new instance
 	Utils.reset()
-
-	# start another main function
 	Main()
-
-	# release the daemon lock
 	g_daemonlock = 0
 
-def startDaemon():
+def start_daemon():
 	"if it does not exist already:start a new directory watcher; else: return immediately"
 	global g_dirwatch
 	if not g_dirwatch:
@@ -61,51 +41,75 @@ def startDaemon():
 			tmpstr = "%s" %nodeDir
 			tmpstr = "%s" %(tmpstr[3:])[:-1]
 			m_dirs.append(tmpstr)
-		g_dirwatch.add_watch("tmp Test", callBack, m_dirs)
+		g_dirwatch.add_watch("tmp Test", call_back, m_dirs)
 		# infinite loop, no need to exit except on ctrl+c
 		g_dirwatch.loop()
+		g_dirwatch = None
+	else:
+		g_dirwatch.suspend_all_watch()
+		m_dirs=[]
+		for nodeDir in Params.g_build.m_srcnode.dirs():
+			tmpstr = "%s" %nodeDir
+			tmpstr = "%s" %(tmpstr[3:])[:-1]
+			m_dirs.append(tmpstr)
+		g_dirwatch.add_watch("tmp Test", call_back, m_dirs)
+
+def configure():
+	Runner.set_exec('normal')
+	bld = Build.Build()
+	try:
+		srcdir = ""
+		try: srcdir = Params.g_options.srcdir
+		except AttributeError: pass
+		if not srcdir: srcdir = Utils.g_module.srcdir
+
+		blddir = ""
+		try: blddir = Params.g_options.blddir
+		except AttributeError: pass
+		if not blddir: blddir = Utils.g_module.blddir
+
+		Params.g_cachedir = Utils.join_path(blddir,'_cache_')
+
+	except AttributeError:
+		msg = "The attributes srcdir or blddir are missing from wscript\n[%s]\n * make sure such a function is defined\n * run configure from the root of the project\n * use waf configure --srcdir=xxx --blddir=yyy"
+		fatal(msg % os.path.abspath('.'))
+	except OSError:
+		pass
+	except KeyError:
+		pass
+
+	bld.load_dirs(srcdir, blddir)
+
+	conf = Configure.Configure(srcdir=srcdir, blddir=blddir)
+	conf.sub_config('')
+	conf.store(bld)
+	conf.cleanup()
+
+	# this will write a configure lock so that subsequent run will
+	# consider the current path as the root directory, to remove: use 'waf distclean'
+	file = open(g_lockfile, 'w')
+	w = file.write
+
+	proj={}
+	proj['blddir']=blddir
+	proj['srcdir']=srcdir
+	proj['argv']=sys.argv[1:]
+	proj['hash']=conf.hash
+	proj['files']=conf.files
+	cPickle.dump(proj, file)
+	file.close()
+
+def read_cache_file(filename):
+	file = open(g_lockfile, 'r')
+	proj = cPickle.load(file)
+	file.close()
+	return proj
 
 def Main():
 	from Common import install_files, install_as, symlink_as # do not remove
+	import inspect
 	if Params.g_commands['configure']:
-		Runner.set_exec('normal')
-		bld = Build.Build()
-		try:
-			srcdir = ""
-			try: srcdir = Params.g_options.srcdir
-			except: pass
-			if not srcdir: srcdir = Utils.g_module.srcdir
-
-			blddir = ""
-			try: blddir = Params.g_options.blddir
-			except: pass
-			if not blddir: blddir = Utils.g_module.blddir
-
-			Params.g_cachedir = Utils.join_path(blddir,'_cache_')
-
-		except AttributeError:
-			msg = "The attributes srcdir or blddir are missing from wscript\n[%s]\n * make sure such a function is defined\n * run configure from the root of the project\n * use waf configure --srcdir=xxx --blddir=yyy"
-			fatal(msg % os.path.abspath('.'))
-		except OSError:
-			pass
-		except KeyError:
-			pass
-
-		bld.load_dirs(srcdir, blddir)
-
-		conf = Configure.Configure(srcdir=srcdir, blddir=blddir)
-		conf.sub_config('')
-		conf.store(bld)
-		conf.cleanup()
-
-		# this will write a configure lock so that subsequent run will
-		# consider the current path as the root directory, to remove: use 'waf distclean'
-		file = open(g_lockfile, 'w')
-		file.write(blddir)
-		file.write('\n')
-		file.write(srcdir)
-		file.close()
-
+		configure()
 		sys.exit(0)
 
 	Runner.set_exec('noredir')
@@ -113,37 +117,57 @@ def Main():
 	# compile the project and/or install the files
 	bld = Build.Build()
 	try:
-		file = open(g_lockfile, 'r')
-		blddir = file.readline().strip()
-		srcdir = file.readline().strip()
-		file.close()
+		proj = read_cache_file(g_lockfile)
 	except IOError:
 		if Params.g_commands['clean']:
 			fatal("Nothing to clean (project not configured)", ret=0)
 		else:
-			fatal("Configuration loading failed - re-run waf configure (lockfile cannot be read)")
+			warning("Run waf configure first...")
+			configure()
+			bld = Build.Build()
+			proj = read_cache_file(g_lockfile)
 
-	Params.g_cachedir = Utils.join_path(blddir,'_cache_')
+	if Params.g_autoconfig:
+		reconf = 0
 
-	# init the Build object.
-	try:
-		bld.load_dirs(srcdir, blddir)
-	except:
-		raise
+		try:
+			hash = 0
+			for file in proj['files']:
+				mod = Utils.load_module(file)
+				hash = Params.hash_sig_weak(hash, inspect.getsource(mod.configure).__hash__())
+			reconf = (hash != proj['hash'])
+		except:
+			warning("Reconfiguring the project as an exception occured")
+			reconf=1
 
-	try:
-		bld.load_envs()
-	except:
-		raise
-		fatal("Configuration loading failed\n" \
-			"-> This is due most of the time because the project is not configured \n" \
-			"-> Run 'waf configure' or run 'waf distclean' and configure once again")
+		if reconf:
+			warning("Reconfiguring the project as the configuration changed")
+
+
+			a1 = Params.g_commands
+			a2 = Params.g_options
+			a3 = Params.g_zones
+			a4 = Params.g_verbose
+
+			Options.g_parser.parse_args(args=proj['argv'])
+			configure()
+
+			Params.g_commands = a1
+			Params.g_options = a2
+			Params.g_zones = a3
+			Params.g_verbose = a4
+
+
+			bld = Build.Build()
+			proj = read_cache_file(g_lockfile)
+
+	Params.g_cachedir = Utils.join_path(proj['blddir'], '_cache_')
+
+	bld.load_dirs(proj['srcdir'], proj['blddir'])
+	bld.load_envs()
 
 	#bld.dump()
-	global g_inroot
-	g_inroot=1
 	Utils.g_module.build(bld)
-	g_inroot=0
 
 	# bld.m_subdirs can be modified *within* the loop, so do not touch this piece of code
 	while bld.m_subdirs:
@@ -158,8 +182,9 @@ def Main():
 
 		# take the new node position
 		bld.m_curdirnode=new
-		#print bld.m_curdirnode.abspath()
-		bld.rescan(bld.m_curdirnode)
+
+		try: bld.rescan(bld.m_curdirnode)
+		except OSError: fatal("No such directory "+bld.m_curdirnode.abspath())
 
 		# try to open 'wscript_build' for execution
 		# if unavailable, open the module wscript and call the build function from it
@@ -177,6 +202,8 @@ def Main():
 		bld.m_curdirnode=old
 
 	#bld.dump()
+
+	pre_build()
 
 	# compile
 	if Params.g_commands['build'] or Params.g_commands['install']:
@@ -213,7 +240,7 @@ def Main():
 
 	# daemon look here
 	if Params.g_options.daemon and Params.g_commands['build']:
-		startDaemon()
+		start_daemon()
 		return
 
 	# shutdown
@@ -222,6 +249,9 @@ def Main():
 	except AttributeError:
 		#raise
 		pass
+
+def pre_build():
+	pass
 
 def Dist(appname, version):
 	"dist target - should be portable"
@@ -236,12 +266,18 @@ def Dist(appname, version):
 	# Copy everything into the new folder
 	shutil.copytree('.', TMPFOLDER)
 
+	# Remove the Build dir
+	try:
+		if Utils.g_module.blddir: shutil.rmtree(os.path.join(TMPFOLDER, Utils.g_module.blddir))
+	except AttributeError:
+		pass
+
 	# Enter into it and remove unnecessary files
 	os.chdir(TMPFOLDER)
 	for (root, dirs, filenames) in os.walk('.'):
 		clean_dirs = []
 		for d in dirs:
-			if d in ['CVS', 'cache', '_build_', '{arch}']:
+			if d in ['CVS', '.svn', '{arch}']:
 				shutil.rmtree(os.path.join(root,d))
 			elif d.startswith('.'):
 				shutil.rmtree(os.path.join(root,d))
@@ -282,16 +318,10 @@ def DistClean():
 	import os, shutil, types
 	import Build
 
-	# remove the distclean folders (may not exist)
+	# execute the user-provided distclean function
 	try:
-		li=Utils.g_module.distclean
-		if not type(li) is types.ListType:
-			li = li.split()
-		for dir in li:
-			if not dir: continue
-			try: shutil.rmtree(os.path.abspath(dir))
-			except: pass
-	except:
+		if not Utils.g_module.distclean(): sys.exit(0)
+	except AttributeError:
 		pass
 
 	# remove the temporary files
@@ -303,11 +333,11 @@ def DistClean():
 			if f==g_lockfile:
 				# removes a lock, and the builddir indicated
 				to_remove = True
-				file = open(os.path.join(root, f), 'r')
-				dirname = file.readline().strip()
-				file.close()
-				try: shutil.rmtree(os.path.join(root, dirname))
-				except: pass
+				try:
+					proj = read_cache_file(os.path.join(root, f))
+					shutil.rmtree(os.path.join(root, proj['blddir']))
+				except OSError: pass
+				except IOError: pass
 			elif f.endswith('~'): to_remove = 1
 			elif f.endswith('.pyc'): to_remove = 1
 			elif f.startswith('.wafpickle'): to_remove = 1
@@ -315,5 +345,10 @@ def DistClean():
 			if to_remove:
 				#print "removing ",os.path.join(root, f)
 				os.remove(os.path.join(root, f))
+	lst = os.listdir('.')
+	for f in lst:
+		if f.startswith('.waf-'):
+			try: shutil.rmtree(f)
+			except: pass
 	sys.exit(0)
 

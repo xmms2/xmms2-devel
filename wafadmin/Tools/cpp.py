@@ -17,14 +17,12 @@ g_cpp_flag_vars = [
 cpptypes=['plugin', 'shlib', 'program', 'staticlib', 'objects']
 g_cpp_type_vars=['CXXFLAGS', 'LINKFLAGS', 'obj_ext']
 class cppobj(ccroot.ccroot):
-	s_default_ext = ['.c', '.cpp', '.cc']
+	s_default_ext = ['.c', '.cpp', '.cc', '.cxx']
 	def __init__(self, type='program'):
 		ccroot.ccroot.__init__(self, type)
 
 		self.cxxflags=''
 		self.cppflags=''
-		self.ccflags=''
-		self.defines=''
 
 		self._incpaths_lst=[]
 		self._bld_incpaths_lst=[]
@@ -45,25 +43,23 @@ class cppobj(ccroot.ccroot):
 		return cpptypes
 
 	def apply_defines(self):
-		lst = self.to_list(self.defines)
-		milst = self.defines_lst
+		tree = Params.g_build
+		lst = self.to_list(self.defines)+self.to_list(self.env['CXXDEFINES'])
+		milst = []
 
 		# now process the local defines
-		tree = Params.g_build
 		for defi in lst:
 			if not defi in milst:
 				milst.append(defi)
 
-		# CXXDEFINES_
+		# CXXDEFINES_USELIB
 		libs = self.to_list(self.uselib)
 		for l in libs:
-			val=''
-			try:    val = self.env['CXXDEFINES_'+l]
-			except: pass
-			if val: milst += val
-
+			val = self.env['CXXDEFINES_'+l]
+			if val: milst += self.to_list(val)
+		self.env['DEFLINES'] = map(lambda x: "define %s"%  ' '.join(x.split('=', 1)), milst)
 		y = self.env['CXXDEFINES_ST']
-		self.env['_CXXDEFFLAGS'] = map( lambda x: y%x, milst )
+		self.env['_CXXDEFFLAGS'] = map(lambda x: y%x, milst)
 
 def setup(env):
 	cpp_str = '${CXX} ${CXXFLAGS} ${CPPFLAGS} ${_CXXINCFLAGS} ${_CXXDEFFLAGS} ${CXX_SRC_F}${SRC} ${CXX_TGT_F}${TGT}'

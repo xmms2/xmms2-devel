@@ -63,9 +63,6 @@ class Build:
 		# two nodes - hashtable of hashtables - g_relpath_cache[child][parent])
 		self._relpath_cache = {}
 
-		# cache for height of the node (amount of folders from the root)
-		self.m_height_cache = {}
-
 		# list of folders that are already scanned
 		# so that we do not need to stat them one more time
 		self.m_scanned_folders  = []
@@ -122,10 +119,10 @@ class Build:
 			dto = cPickle.load(file)
 			dto.update_build(self)
 			file.close()
-		except:
+		except IOError:
 			debug("resetting the build object (dto failed)", 'build')
 			self._init_data()
-		#self.dump()
+		if Params.g_verbose>2: self.dump()
 
 	# store the data structures on disk, retrieve with self._load()
 	def _store(self):
@@ -142,21 +139,19 @@ class Build:
 
 	def clean(self):
 		debug("clean called", 'build')
-		Object.flush()
-		# if something special is needed
-		for obj in Object.g_allobjs: obj.cleanup()
-		# now for each task, make sure to remove the objects
-		# 4 for loops
-		#import Task
-		for group in Task.g_tasks.groups:
-			for p in group.prio:
-				for t in group.prio[p]:
-					try:
-						for node in t.m_outputs:
-							try: os.remove(node.abspath(t.m_env))
-							except: pass
-					except:
-						pass
+		def clean_rec(node):
+			for x in node.m_build_lookup:
+				nd = node.m_build_lookup[x]
+				for env in self.m_allenvs.values():
+					pt = nd.abspath(env)
+					# do not remove config files
+					if pt in env['waf_config_files']: continue
+					try: os.remove(pt)
+					except OSError: pass
+			for x in node.m_dirs_lookup:
+				nd = node.m_dirs_lookup[x]
+				clean_rec(nd)
+		clean_rec(self.m_srcnode)
 
 	def compile(self):
 		debug("compile called", 'build')
@@ -164,13 +159,9 @@ class Build:
 
 		os.chdir(self.m_bdir)
 
-		#import hotshot
-		#prof = hotshot.Profile("/tmp/proftest.txt")
-		#prof.runcall(Object.flush)
-		#prof.close()
 		Object.flush()
 
-		#self.dump()
+		if Params.g_verbose>2: self.dump()
 
 		if Params.g_options.jobs <=1:
 			generator = Runner.JobGenerator(self)
@@ -183,10 +174,6 @@ class Build:
 		debug("executor starting", 'build')
 		try:
 
-			#import hotshot
-			#prof = hotshot.Profile("/tmp/proftest.txt")
-			#prof.runcall(executor.start)
-			#prof.close()
 			ret = executor.start()
 			#ret = 0
 		except KeyboardInterrupt:
@@ -195,12 +182,10 @@ class Build:
 			raise
 		except Runner.CompilationError:
 			fatal("Compilation failed")
-		#finally:
-		#	os.chdir( self.m_srcnode.abspath() )
 
-		#self.dump()
+		if Params.g_verbose>2: self.dump()
 
-		os.chdir( self.m_srcnode.abspath() )
+		os.chdir(self.m_srcnode.abspath())
 		return ret
 
 	def install(self):
@@ -217,20 +202,16 @@ class Build:
 			Scripting.add_subdir(d, self)
 
 	def create_obj(self, objname, *k, **kw):
-		try:
-			return Object.g_allclasses[objname](*k, **kw)
-		except:
-			print "error in create_obj", objname
-			raise
+		return Object.g_allclasses[objname](*k, **kw)
 
 	def load_envs(self):
 		cachedir = Params.g_cachedir
 		try:
 			lst = os.listdir(cachedir)
-		except:
+		except OSError:
 			fatal('The project was not configured: run "waf configure" first!')
-
-		if not lst: raise "file not found"
+		if not lst:
+			fatal('The cache directory is empty: reconfigure the project')
 		for file in lst:
 			if len(file) < 3: continue
 			if file[-3:] != '.py': continue
@@ -240,14 +221,10 @@ class Build:
 			name = file.split('.')[0]
 
 			if not ret:
-				print "could not load env ", name
+				error("could not load env "+name)
 				continue
 			self.m_allenvs[name] = env
-			try:
-				for t in env['tools']: env.setup(**t)
-			except:
-				print "loading failed:", file
-				raise
+			for t in env['tools']: env.setup(**t)
 
 		debug("init variants", 'build')
 
@@ -267,20 +244,16 @@ class Build:
 
 		for env in self.m_allenvs.values():
 			for f in env['dep_files']:
-				lst = f.split('/')
-				topnode = self.m_srcnode.find_node(lst[:-1])
-				newnode = topnode.search_existing_node([lst[-1]])
-				if not newnode:
-					newnode = Node.Node(lst[-1], topnode)
-					topnode.append_build(newnode)
+				newnode = self.m_srcnode.find_build(f)
 				try:
-					hash = Params.h_file(topnode.abspath(env)+os.sep+lst[-1])
+					hash = Params.h_file(newnode.abspath(env))
 				except IOError:
+					error("cannot find "+f)
+					hash = Params.sig_nil
+				except AttributeError:
+					error("cannot find "+f)
 					hash = Params.sig_nil
 				self.m_tstamp_variants[env.variant()][newnode] = hash
-
-
-
 
 	# ======================================= #
 	# node and folder handling
@@ -291,9 +264,9 @@ class Build:
 
 		# there is no reason to bypass this check
 		try:
-			if srcdir == blddir or os.path.samefile(srcdir, blddir):
+			if srcdir == blddir or os.path.abspath(srcdir)==os.path.abspath(blddir):
 				fatal("build dir must be different from srcdir ->"+str(srcdir)+" ->"+str(blddir))
-		except:
+		except OSError:
 			pass
 
 		# set the source directory
@@ -313,57 +286,26 @@ class Build:
 				return
 
 
-		self.m_srcnode = self.ensure_node_from_path(srcdir)
+		self.m_srcnode = self.ensure_dir_node_from_path(srcdir)
 		debug("srcnode is %s and srcdir %s" % (str(self.m_srcnode), srcdir), 'build')
 
 		self.m_curdirnode = self.m_srcnode
 
-		self.m_bldnode = self.ensure_node_from_path(self.m_bdir)
+		self.m_bldnode = self.ensure_dir_node_from_path(self.m_bdir)
 
 		# create this build dir if necessary
 		try: os.makedirs(blddir)
-		except: pass
+		except OSError: pass
 
-	def ensure_node_from_path(self, abspath):
+	def ensure_dir_node_from_path(self, abspath):
 		"return a node corresponding to an absolute path, creates nodes if necessary"
-		debug('ensure_node_from_path %s' % (abspath), 'build')
+		debug('ensure_dir_node_from_path %s' % (abspath), 'build')
 		plst = Utils.split_path(abspath)
 		curnode = self.m_root # root of the tree
 		for dirname in plst:
 			if not dirname: continue
 			if dirname == '.': continue
-			#found=None
-			found = curnode.get_dir(dirname,None)
-			#for cand in curnode.m_dirs:
-			#	if cand.m_name == dirname:
-			#		found = cand
-			#		break
-			if not found:
-				found = Node.Node(dirname, curnode)
-				curnode.append_dir(found)
-			curnode = found
-
-		return curnode
-
-	def ensure_node_from_lst(self, node, plst):
-		"ensure a directory node from a list, given a node to start from"
-		if not node:
-			error('ensure_node_from_lst node is not defined')
-			raise "pass a valid node to ensure_node_from_lst"
-
-		curnode=node
-		for dirname in plst:
-			if not dirname: continue
-			if dirname == '.': continue
-			if dirname == '..':
-				curnode = curnode.m_parent
-				continue
-			#found=None
-			found=curnode.get_dir(dirname, None)
-			#for cand in curnode.m_dirs:
-			#	if cand.m_name == dirname:
-			#		found = cand
-			#		break
+			found = curnode.get_dir(dirname, None)
 			if not found:
 				found = Node.Node(dirname, curnode)
 				curnode.append_dir(found)
@@ -382,31 +324,49 @@ class Build:
 		# do not rescan over and over again
 		if src_dir_node in self.m_scanned_folders: return
 
+		# do not rescan the nodes above srcnode
+		#if src_dir_node.height() < self.m_srcnode.height(): return
+
 		#debug("rescanning "+str(src_dir_node), 'build')
 
 		# list the files in the src directory, adding the signatures
 		files = self.scan_src_path(src_dir_node, src_dir_node.abspath(), src_dir_node.files())
 		#debug("files found in folder are "+str(files), 'build')
-		src_dir_node.set_files(files)
+		src_dir_node.m_files_lookup={}
+		for i in files:	src_dir_node.m_files_lookup[i.m_name]=i
 
 		# list the files in the build dirs
 		# remove the existing timestamps if the build files are removed
-		lst = self.m_srcnode.difflst(src_dir_node)
+
+		# first obtain the differences between srcnode and src_dir_node
+		#lst = self.m_srcnode.difflst(src_dir_node)
+		h1 = self.m_srcnode.height()
+		h2 = src_dir_node.height()
+
+		lst=[]
+		child = src_dir_node
+		while h2 > h1:
+			lst.append(child.m_name)
+			child=child.m_parent
+			h2-=1
+		lst.reverse()
+
 		for variant in self._variants:
 			sub_path = Utils.join_path(self.m_bldnode.abspath(), variant , *lst)
 			try:
-				files = self.scan_path(src_dir_node, sub_path, src_dir_node.build(), variant)
-				src_dir_node.set_build(files)
+				files = self.scan_path(src_dir_node, sub_path, src_dir_node.m_build_lookup.values(), variant)
+				src_dir_node.m_build_lookup={}
+				for i in files: src_dir_node.m_build_lookup[i.m_name]=i
 			except OSError:
 				#debug("osError on " + sub_path, 'build')
 
 				# listdir failed, remove all sigs of nodes
 				dict = self.m_tstamp_variants[variant]
-				for node in src_dir_node.build():
+				for node in src_dir_node.m_build_lookup.values():
 					if node in dict:
 						dict.__delitem__(node)
 				os.makedirs(sub_path)
-				src_dir_node.set_build([])
+				src_dir_node.m_build_lookup={}
 		self.m_scanned_folders.append(src_dir_node)
 
 	def needs_rescan(self, node, env):
@@ -456,7 +416,7 @@ class Build:
 			try:
 				# update the time stamp
 				self.m_tstamp_variants[0][node] = Params.h_file(node.abspath())
-			except:
+			except IOError:
 				fatal("a file is readonly or has become a dir "+node.abspath())
 
 		debug("new files found "+str(l_names), 'build')
@@ -469,7 +429,7 @@ class Build:
 				# TODO is it possible to distinguish the cases ?
 				st = Params.h_file(l_path + name)
 				l_child = Node.Node(name, i_parent_node)
-			except:
+			except IOError:
 				continue
 			self.m_tstamp_variants[0][l_child] = st
 			l_kept.append(l_child)
@@ -538,7 +498,7 @@ class Build:
 				#accu+= ' '+str(child.m_tstamp)+'\n'
 				# TODO #if node.files()[file].m_newstamp != node.files()[file].m_oldstamp: accu += "\t\t\t(modified)"
 				#accu+= node.files()[file].m_newstamp + "< >" + node.files()[file].m_oldstamp + "\n"
-			for child in node.build():
+			for child in node.m_build_lookup.values():
 				accu+= printspaces(count)
 				accu+= '-> '+child.m_name+' (b) '
 
@@ -557,7 +517,7 @@ class Build:
 			return accu
 
 		Params.pprint('CYAN', recu(self.m_root, 0) )
-		Params.pprint('CYAN', 'size is '+str(self.m_root.size()))
+		Params.pprint('CYAN', 'size is '+str(self.m_root.size_subtree()))
 
 		#keys = self.m_name2nodes.keys()
 		#for k in keys:
@@ -565,7 +525,7 @@ class Build:
 
 
 	def pushdir(self, dir):
-		node = self.ensure_node_from_lst(self.m_curdirnode, Utils.split_path(dir))
+		node = self.m_curdirnode.ensure_node_from_lst(Utils.split_path(dir))
 		self.pushed = [self.m_curdirnode]+self.pushed
 		self.m_curdirnode = node
 
@@ -578,78 +538,11 @@ class Build:
 			return None
 		try:
 			return self.m_allenvs[name]
-		except:
+		except KeyError:
 			error('no such environment'+name)
 			return None
 
 	def add_group(self, name=''):
 		Object.flush()
 		Task.g_tasks.add_group(name)
-
-	def createObj(self, objname, *k, **kw):
-		"deprecated"
-		warning('use bld.create_obj instead of bld.createObj')
-		return self.create_obj(objname, *k, **kw)
-
-
-if 0: #sys.version_info[:2] < [2,3]:
-	def scan_src_path(self, i_parent_node, i_path, i_existing_nodes):
-		l_names_read = os.listdir(i_path)
-
-		l_names = set(l_names_read)
-		l_nodes = i_existing_nodes
-		l_kept  = []
-		l_kept_names = set()
-
-		for node in l_nodes:
-			if node.m_name in l_names:
-				l_kept.append(node)
-				l_kept_names.add(node.m_name)
-
-		l_new_files = l_names.difference(l_kept_names)
-
-		# Now:
-		# l_names contains the new nodes (or files)
-		# l_kept contains only nodes that actually exist on the filesystem
-		for node in l_kept:
-			try:
-			# update the time stamp
-				self.m_tstamp_variants[0][node] = Params.h_file(node.abspath())
-			except:
-				fatal("a file is readonly or has become a dir "+node.abspath())
-
-		debug("new files found "+str(l_names), 'build')
-
-		for name in l_new_files:#l_names:
-			try:
-				# will throw an exception if not a file or if not readable
-				# we assume that this is better than performing a stat() first
-				# TODO is it possible to distinguish the cases ?
-				st = Params.h_file(Utils.join_path(i_path,name))
-				l_child = Node.Node(name, i_parent_node)
-			except:
-				continue
-			self.m_tstamp_variants[0][l_child] = st
-			l_kept.append(l_child)
-		return l_kept
-
-	def scan_path(self, i_parent_node, i_path, i_existing_nodes, i_variant):
-		l_names_read = os.listdir(i_path)
-
-		l_names = set(l_names_read)
-		l_node_names = set()
-		l_nodes = i_existing_nodes
-		l_rm    = []
-
-		for node in l_nodes:
-			if not node.m_name in l_names:
-				l_rm.append(node)
-
-		for node in l_rm:
-			if node in self.m_tstamp_variants[i_variant]:
-				self.m_tstamp_variants[i_variant].__delitem__(node)
-		return l_nodes
-
-	Build.scan_src_path = scan_src_path
-	Build.scan_path = scan_path
 

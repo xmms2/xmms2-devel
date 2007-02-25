@@ -89,17 +89,17 @@ def configure(conf):
 
     if check_header('sys/vfs.h'):
         if sys.platform == 'sunos5':
-            conf.env.appendUnique('statfs_os', 'solaris')
+            conf.env['statfs_os'] = 'solaris'
         else:
-            conf.env.appendUnique('statfs_os', 'linux')
+            conf.env['statfs_os'] = 'linux'
     elif check_header('sys/param.h'):
-        conf.env.appendUnique('statfs_os', 'bsd')
+        conf.env['statfs_os'] = 'bsd'
     else:
-        conf.env.appendUnique('statfs_os', 'dummy')
+        conf.env['statfs_os'] = 'dummy'
 
     # Add Darwin stuff
     if sys.platform == 'darwin':
-        conf.env.appendUnique('LINKFLAGS', '-framework CoreFoundation')
+        conf.env['LINKFLAGS'] += '-framework CoreFoundation'
 
     conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-plugin', ''))
 

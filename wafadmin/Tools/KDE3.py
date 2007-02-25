@@ -97,7 +97,7 @@ class kde_translations(Object.genobj):
 		self.m_tasks=[]
 		self.m_appname = appname
 	def apply(self):
-		for file in self.m_current_path.files():
+		for file in self.path.files():
 			try:
 				base, ext = os.path.splitext(file.m_name)
 				if ext != '.po': continue
@@ -110,12 +110,11 @@ class kde_translations(Object.genobj):
 		destfilename = self.m_appname+'.mo'
 
 		current = Params.g_build.m_curdirnode
-		for file in self.m_current_path.files():
+		for file in self.path.files():
 			lang, ext = os.path.splitext(file.m_name)
 			if ext != '.po': continue
 
-			node = self.m_current_path.find_node( 
-				Utils.split_path(lang+'.gmo') )
+			node = self.path.find_source(lang+'.gmo')
 			orig = node.relpath_gen(current)
 
 			destfile = Utils.join_path(lang, 'LC_MESSAGES', destfilename)
@@ -135,7 +134,7 @@ class kde_documentation(Object.genobj):
 	def apply(self):
 		for filename in self.m_docs.split():
 			if not filename: continue
-			node = self.m_current_path.find_node(Utils.split_path(filename))
+			node = self.path.find_source(filename)
 
 			self.m_files.append(node)
 			(base, ext) = os.path.splitext(filename)
@@ -245,13 +244,16 @@ class kdeobj(cpp.cppobj):
 
 		lst = self.source.split()
 		lst.sort()
+
+		# attach a new method called "find" (i know, evil ;; ita)
+		self.find = self.path.find_build
 		for filename in lst:
 
-			node = self.find(filename)
+			node = self.path.find_build(filename)
 			if not node:
 				ext = filename[-4:]
 				if ext != 'skel' and ext != 'stub':
-					fatal("cannot find %s in %s" % (filename, str(self.m_current_path)))
+					fatal("cannot find %s in %s" % (filename, str(self.path)))
 			base, ext = os.path.splitext(filename)
 
 			fun = self.get_hook(ext)
@@ -332,14 +334,14 @@ class kdeobj(cpp.cppobj):
 		cppoutputs = []
 		for t in self.p_compiletasks: cppoutputs.append(t.m_outputs[0])
 		linktask.set_inputs(cppoutputs)
-		linktask.set_outputs(self.find(self.get_target_name()))
+		linktask.set_outputs(self.path.find_build(self.get_target_name()))
 
 		self.m_linktask = linktask
 
 		if self.m_type != 'program' and self.want_libtool:
 			latask           = self.create_task('fakelibtool', self.env, 200)
 			latask.set_inputs(linktask.m_outputs)
-			latask.set_outputs(self.find(self.get_target_name('.la')))
+			latask.set_outputs(self.path.find_build(self.get_target_name('.la')))
 			self.m_latask    = latask
 
 	def install(self):

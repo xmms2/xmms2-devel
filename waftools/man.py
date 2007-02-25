@@ -22,18 +22,19 @@ class manobj(copyobj):
         self.section = section
 
     def apply(self):
-        for file in self.files:
-            node = self.m_current_path.find_node(
-                Utils.split_path(file) )
+        lst = self.to_list(self.source)
+        for file in lst:
+            node = self.path.find_source(file)
             if not node: fatal('cannot find input file %s for processing' % file)
 
             target = self.target
             if not target or len(lst)>1: target = node.m_name
 
-            newnode = self.m_current_path.search_existing_node(Utils.split_path(file+'.gz'))
+            newnode = self.path.find_build(file+'.gz') #target?
+
             if not newnode:
-                newnode = Node.Node(file+'.gz', self.m_current_path)
-                self.m_current_path.append_build(newnode)
+                newnode = Node.Node(file+'.gz', self.path)
+                self.path.append_build(newnode)
 
             task = self.create_task('copy', self.env, 8)
             task.set_inputs(node)

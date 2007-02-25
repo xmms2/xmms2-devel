@@ -46,7 +46,7 @@ class ccobj(ccroot.ccroot):
 	def apply_obj_vars(self):
 		debug('apply_obj_vars called for ccobj', 'cc')
 		env = self.env
-		app = env.appendValue
+		app = env.append_unique
 
 		cpppath_st       = env['CPPPATH_ST']
 		lib_st           = env['LIB_ST']
@@ -95,11 +95,11 @@ class ccobj(ccroot.ccroot):
 		for i in env['LIB']: app('LINKFLAGS', lib_st % i)
 
 	def apply_defines(self):
-		lst = self.to_list(self.defines)
-		milst = self.defines_lst
+		tree = Params.g_build
+		lst = self.to_list(self.defines)+self.to_list(self.env['CCDEFINES'])
+		milst = []
 
 		# now process the local defines
-		tree = Params.g_build
 		for defi in lst:
 			if not defi in milst:
 				milst.append(defi)
@@ -107,11 +107,9 @@ class ccobj(ccroot.ccroot):
 		# CCDEFINES_
 		libs = self.to_list(self.uselib)
 		for l in libs:
-			val=''
-			try:    val = self.env['CCDEFINES_'+l]
-			except: pass
+			val = self.env['CCDEFINES_'+l]
 			if val: milst += val
-
+		self.env['DEFLINES'] = map(lambda x: "define %s"%  ' '.join(x.split('=', 1)), milst)
 		y = self.env['CCDEFINES_ST']
 		self.env['_CCDEFFLAGS'] = map(lambda x: y%x, milst)
 

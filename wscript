@@ -126,7 +126,7 @@ def _configure_optionals(conf):
     for o in selected_optionals:
         x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
         if conf.sub_config(x):
-            conf.env['XMMS_OPTIONAL_BUILD'].append(x)
+            conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
             succeeded_optionals.add(o)
         else:
             failed_optionals.add(o)
@@ -224,12 +224,12 @@ def configure(conf):
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
-    conf.env['XMMS_OUTPUT_PLUGINS'] = []
+    conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
     if Params.g_options.config_prefix:
         conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
         include = os.path.join(Params.g_options.config_prefix, "include")
-        conf.env.appendValue('CPPPATH', include)
+        conf.env['CPPPATH'] += include
 
     conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
@@ -249,14 +249,14 @@ def configure(conf):
     if sys.platform == 'sunos5':
         if not conf.check_library2("socket", uselib='socket'):
             Params.fatal("xmms2 requires libsocket on Solaris.")
-        conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
-        conf.env.appendUnique('CCFLAGS', '-D_REENTRANT')
+        conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
+        conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
 
     # Check win32 (winsock2) socket support
     if sys.platform == 'win32':
         if not conf.check_library2("wsock32", uselib='socket'):
             Params.fatal("xmms2 requires wsock32 on windows.")
-        conf.env.appendUnique('LIB_socket', 'ws2_32')
+        conf.env.append_unique('LIB_socket', 'ws2_32')
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.

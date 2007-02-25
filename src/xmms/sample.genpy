@@ -8,7 +8,7 @@ readwriters = """
  *                   ** DO NOT EDIT **
  */
 
-#include "sample.c"
+#include "sample.head.c"
 
 #define READu8(a)  ((a) << 8)
 #define READs8(a)  ((a+128) << 8)
