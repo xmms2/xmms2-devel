@@ -706,7 +706,7 @@ class ccroot(Object.genobj):
 			# this is very unix-specific
 			try: name3 = self.soname
 			except: name3 = self.m_linktask.m_outputs[0].m_name+'.'+self.vnum.split('.')[0]
-			self.env.append_value('LINKFLAGS', '-Wl,-soname,'+name3)
+			self.env.append_value('LINKFLAGS', '-Wl,-h,'+name3)
 
 	def apply_objdeps(self):
 		"add the .o files produced by some other object files in the same manner as uselib_local"
