@@ -28,6 +28,7 @@ def configure(conf):
     defs['SCRIPTDIR'] = os.path.join(conf.env['PREFIX'],
                                      'share', 'xmms2', 'scripts', 'startup.d')
 
+    defs['XMMS_PATH_MAX'] = 255
     l = conf.env['XMMS_OUTPUT_PLUGINS']
     l.sort()
     prio,name = l[-1]

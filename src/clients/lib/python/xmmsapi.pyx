@@ -76,7 +76,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_PLUGIN_TYPE_PLAYLIST,
 		XMMS_PLUGIN_TYPE_EFFECT
 
-cdef extern from "xmms/xmms_defs.h":
+cdef extern from "xmms_configuration.h":
 	cdef enum:
 		XMMS_PATH_MAX
 
