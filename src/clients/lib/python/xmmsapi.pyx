@@ -10,6 +10,8 @@ cdef extern from "Python.h":
 	object PyUnicode_DecodeUTF8(char *unicode, int size, char *errors)
 	object PyUnicode_AsUTF8String(object o)
 	object PyString_FromStringAndSize(char *, int)
+	void Py_INCREF(object)
+	void Py_DECREF(object)
 
 cdef extern from "string.h":
 	int strcmp(signed char *s1, signed char *s2)
@@ -111,20 +113,27 @@ cdef extern from "xmmsclient/xmmsclient.h":
 		XMMSC_RESULT_VALUE_TYPE_BIN
 		XMMSC_RESULT_VALUE_TYPE_COLL
 
+	ctypedef enum xmmsc_result_type_t:
+		XMMSC_RESULT_CLASS_DEFAULT,
+		XMMSC_RESULT_CLASS_SIGNAL,
+		XMMSC_RESULT_CLASS_BROADCAST
+
 	ctypedef struct xmmsc_connection_t:
 		pass
 	ctypedef struct xmmsc_result_t
 	ctypedef struct xmmsc_coll_t
-	ctypedef object(*xmmsc_result_notifier_t)(xmmsc_result_t *res, object user_data)
+	ctypedef void (*xmmsc_result_notifier_t)(xmmsc_result_t *res, void *user_data)
+	ctypedef void (*xmmsc_user_data_free_func_t) (void *user_data)
 
 	xmmsc_result_t *xmmsc_result_restart(xmmsc_result_t *res)
 	void xmmsc_result_ref(xmmsc_result_t *res)
 	void xmmsc_result_unref(xmmsc_result_t *res)
-	void xmmsc_result_notifier_set(xmmsc_result_t *res, xmmsc_result_notifier_t func, object user_data)
+	void xmmsc_result_notifier_set_full(xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data, xmmsc_user_data_free_func_t free_func)
 	void xmmsc_result_wait(xmmsc_result_t *res)
 	signed int xmmsc_result_iserror(xmmsc_result_t *res)
 	signed char *xmmsc_result_get_error(xmmsc_result_t *res)
 	xmmsc_result_value_type_t xmmsc_result_get_type(xmmsc_result_t *res)
+	xmmsc_result_type_t xmmsc_result_get_class(xmmsc_result_t *res)
 
 	signed int xmmsc_result_get_int(xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint(xmmsc_result_t *res, unsigned int *r)
@@ -368,15 +377,15 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t typ, void *value, 
 
 	udata[key]=v
 
+cdef void ResultNotifier(xmmsc_result_t *res, void *o):
+	cdef object obj
+	obj = <object> o
+	obj._cb()
 
-cdef ResultNotifier(xmmsc_result_t *res, obj):
-	if not obj.get_broadcast():
-		obj._del_ref()
-	try:
-		obj._cb()
-	finally:
-		if not obj.get_broadcast():
-			xmmsc_result_unref(res)
+cdef void ResultFreeer(void *o):
+	cdef object obj
+	obj = <object> o
+	Py_DECREF(obj)
 
 from propdict import PropDict
 
@@ -764,36 +773,40 @@ cdef class XMMSResult:
 	Class containing the results of some operation
 	"""
 	cdef xmmsc_result_t *res
-	cdef xmmsc_result_t *orig
 	cdef object notifier
-	cdef object user_data
 	cdef int broadcast
 	cdef object callback
 	cdef object c
 	cdef object exc
+	cdef int want_restart
 
 	def __new__(self, c):
 		self.c = c
 		self.exc = None
 
 	def more_init(self, broadcast = 0):
-		self.orig = self.res
 		self.broadcast = broadcast
-		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
-		self.c._add_ref(self)
-
-	def _del_ref(self):
-		self.c._del_ref(self)
+		Py_INCREF(self)
+		xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ResultFreeer)
 
 	def _cb(self):
+		cdef xmmsc_result_t *r
 		self._check()
 		if not self.callback:
 			return
+		self.want_restart = 0
 		try:
 			self.callback(self)
 		except:
 			exc = sys.exc_info()
 			traceback.print_exception (exc[0], exc[1], exc[2])
+		if self.want_restart:
+			r = self.res
+			self.res = xmmsc_result_restart(self.res)
+			xmmsc_result_unref(r)
+			xmmsc_result_unref(self.res)
+		elif not self.get_broadcast():
+			self._unref()
 
 	def get_type(self):
 		"""
@@ -854,7 +867,7 @@ cdef class XMMSResult:
 
 	def disconnect(self):
 		""" @todo: Fail if this result isn't a signal or a broadcast """
-		xmmsc_result_disconnect(self.orig)
+		xmmsc_result_disconnect(self.res)
 
 	def get_int(self):
 		"""
@@ -952,9 +965,9 @@ cdef class XMMSResult:
 		return ret
 
 	def restart(self):
-		self.res = xmmsc_result_restart(self.res)
-		self.c._add_ref(self)
-		xmmsc_result_unref(self.res)
+		self._check()
+		if xmmsc_result_get_class(self.res) == XMMSC_RESULT_CLASS_SIGNAL:
+			self.want_restart = 1
 
 	def iserror(self):
 		"""
@@ -972,14 +985,18 @@ cdef class XMMSResult:
 			return None
 		else:
 			return xmmsc_result_get_error(self.res)
-
+	def _unref(self):
+		cdef xmmsc_result_t *res
+		if self.res:
+			res = self.res
+			self.res = NULL
+			xmmsc_result_unref(res)
+			
 	def __dealloc__(self):
 		"""
 		Deallocate the result.
 		"""
-
-		if self.res:
-			xmmsc_result_unref(self.res)
+		self._unref()
 
 cdef python_need_out_fun(int i, obj):
 	obj._needout_cb(i)
@@ -1011,7 +1028,6 @@ cdef class XMMS:
 	cdef object wakeup
 	cdef object disconnect_fun
 	cdef object needout_fun
-	cdef object ObjectRef
 	cdef object sources
 
 	def __new__(self, clientname = None):
@@ -1023,19 +1039,12 @@ cdef class XMMS:
 			clientname = "UnnamedPythonClient"
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
-		self.ObjectRef = []
 		self.sources = ["client/" + clientname, "server", "plugins/*", "client/*", "*"]
 
 	def get_source_preference(self):
 		return self.sources
 	def set_source_preference(self, sources):
 		self.sources = sources
-
-	def _add_ref(self, res):
-		self.ObjectRef.append(res)
-	
-	def _del_ref(self, res):
-		self.ObjectRef.remove(res)
 
 	def __dealloc__(self):
 		""" destroys it all! """
