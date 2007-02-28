@@ -164,6 +164,11 @@ def _configure_plugins(conf):
                                         "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
         plugins_must_work = False
+    # If we don't have the daemon we don't build plugins.
+    elif Params.g_options.without_xmms2d:
+        disabled_plugins = all_plugins
+        selected_plugins = sets.Set()
+        plugins_must_work = False
     # Else, we try all plugins.
     else:
         selected_plugins = all_plugins
