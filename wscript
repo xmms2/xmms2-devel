@@ -227,6 +227,7 @@ def configure(conf):
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
     conf.env['CCDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
+    conf.env['CXXDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
 
     if Params.g_options.config_prefix:
         conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
