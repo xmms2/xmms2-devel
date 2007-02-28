@@ -40,6 +40,7 @@ typedef struct {
 	xmms_sample_format_t sampleformat;
 
 	gint bitrate;
+	const gchar *codec_id;
 	gpointer extradata;
 	gssize extradata_size;
 
@@ -108,7 +109,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 {
 	xmms_avcodec_data_t *data;
 	AVCodec *codec;
-	const gchar *mimetype, *codec_id;
+	const gchar *mimetype;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -123,16 +124,16 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	mimetype = xmms_xform_indata_get_str (xform,
 	                                      XMMS_STREAM_TYPE_MIMETYPE);
-	codec_id = mimetype + strlen ("audio/x-ffmpeg-");
+	data->codec_id = mimetype + strlen ("audio/x-ffmpeg-");
 
-	codec = avcodec_find_decoder_by_name (codec_id);
+	codec = avcodec_find_decoder_by_name (data->codec_id);
 	if (!codec) {
-		XMMS_DBG ("No supported decoder with name '%s' found", codec_id);
+		XMMS_DBG ("No supported decoder with name '%s' found", data->codec_id);
 		goto err;
 	}
 
 	if (codec->type != CODEC_TYPE_AUDIO) {
-		XMMS_DBG ("Codec '%s' found but its type is not audio", codec_id);
+		XMMS_DBG ("Codec '%s' found but its type is not audio", data->codec_id);
 		goto err;
 	}
 
@@ -165,7 +166,11 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		/* some codecs need to have something read before they set
 		 * the samplerate and channels correctly, unfortunately... */
 		if ((ret = xmms_avcodec_read (xform, buf, 42, &error)) > 0) {
-			g_string_insert_len (data->outbuf, 0, buf, 42);
+			g_string_insert_len (data->outbuf, 0, buf, ret);
+		} else {
+			XMMS_DBG ("First read failed, codec is not working...");
+			avcodec_close (data->codecctx);
+			goto err;
 		}
 	}
 
@@ -256,7 +261,7 @@ static gint64
 xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_avcodec_data_t *data;
-	gint64 ret;
+	gint64 ret = -1;
 
 	g_return_val_if_fail (xform, -1);
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
@@ -264,7 +269,9 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	ret = xmms_xform_seek (xform, samples, whence, err);
+	if (!strcmp (data->codec_id, "alac")) {
+		ret = xmms_xform_seek (xform, samples, whence, err);
+	}
 
 	if (ret >= 0) {
 		avcodec_flush_buffers (data->codecctx);
