@@ -415,10 +415,10 @@ xmms_output_filler (void *arg)
 					output->filler_seek = ret;
 				}
 
-				output->filler_state = FILLER_RUN;
 				xmms_ringbuf_clear (output->filler_buffer);
 				xmms_ringbuf_hotspot_set (output->filler_buffer, seek_done, NULL, output);
 			}
+			output->filler_state = FILLER_RUN;
 		}
 
 		if (!chain) {
