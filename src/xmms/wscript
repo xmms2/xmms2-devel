@@ -99,7 +99,7 @@ def configure(conf):
 
     # Add Darwin stuff
     if sys.platform == 'darwin':
-        conf.env['LINKFLAGS'] += '-framework CoreFoundation'
+        conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
 
     conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-plugin', ''))
 
