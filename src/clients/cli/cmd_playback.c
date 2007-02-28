@@ -108,8 +108,6 @@ void
 cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	guint id, ms, pt = 0;
-	gint dur = 0;
 	long arg;
 	gchar *endptr = NULL;
 
@@ -120,32 +118,8 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
                      "xmms2 seek -n - seek n seconds backwards");
 	}
 
-	res = xmmsc_playback_current_id (conn);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
-	}
-
-	if (!xmmsc_result_get_uint (res, &id)) {
-		print_error ("Broken resultset");
-	}
-	xmmsc_result_unref (res);
-	
-	res = xmmsc_medialib_get_info (conn, id);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
-	}
-
-	if (!xmmsc_result_get_dict_entry_int (res, "duration", &dur)) {
-		print_error ("Broken resultset");
-	}
-	xmmsc_result_unref (res);
-
 	/* parse the movement argument */
-	arg = strtol (argv[2], &endptr, 10);
+	arg = strtol (argv[2], &endptr, 10) * 1000;
 
 	if (endptr == argv[2]) {
 		print_error ("invalid argument");
@@ -156,35 +130,17 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		if (!arg) {
 			return;
 		}
-
-		res = xmmsc_playback_playtime (conn);
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-
-		if (!xmmsc_result_get_uint (res, &pt))
-			print_error ("Broken resultset");
-
-		xmmsc_result_unref (res);
-	}
-
-	ms = pt + 1000 * arg;
-
-	if (dur && ms > dur) {
-		print_info ("Skipping to next song");
-		do_reljump (conn, 1);
+		res = xmmsc_playback_seek_ms_rel (conn, arg);
 	} else {
-		res = xmmsc_playback_seek_ms (conn, ms);
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("Couldn't seek to %d ms: %s", ms,
-						 xmmsc_result_get_error (res));
-		}
-		xmmsc_result_unref (res);
+		res = xmmsc_playback_seek_ms (conn, arg);
 	}
+
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Couldn't seek to %d arg: %s", arg,
+					 xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 
