@@ -76,6 +76,9 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
+	xmms_magic_add ("DTS header", "audio/x-ffmpeg-dts",
+	                "0 belong 0x7ffe8001", NULL);
+
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-ffmpeg-*",
@@ -134,7 +137,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	}
 
 	data->samplerate = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	data->channels = xmms_xform_indata_get_int (xform,  XMMS_STREAM_TYPE_FMT_CHANNELS);
+	data->channels = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
 	data->bitrate = xmms_xform_metadata_get_int (xform,
 	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE);
@@ -154,7 +157,20 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	if (avcodec_open (data->codecctx, codec) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
 		goto err;
+	} else {
+		gchar buf[42];
+		xmms_error_t error;
+		gint ret;
+
+		/* some codecs need to have something read before they set
+		 * the samplerate and channels correctly, unfortunately... */
+		if ((ret = xmms_avcodec_read (xform, buf, 42, &error)) > 0) {
+			g_string_insert_len (data->outbuf, 0, buf, 42);
+		}
 	}
+
+	data->samplerate = data->codecctx->sample_rate;
+	data->channels = data->codecctx->channels;
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
