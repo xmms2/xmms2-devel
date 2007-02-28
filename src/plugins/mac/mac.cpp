@@ -24,7 +24,6 @@ extern "C" {
 
 #include "source_adapter.h"
 
-#include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_xformplugin.h"
 
