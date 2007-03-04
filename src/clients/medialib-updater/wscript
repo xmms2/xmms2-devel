@@ -7,7 +7,7 @@ def build(bld):
     obj.source = ['main.c', 'fam.c']
     obj.includes = '. ../../include'
     obj.uselib = 'glib2 gamin'
-    obj.uselib_local = 'xmmsclient xmmsclient-glib'
+    obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
     obj = bld.create_obj('subst')
     obj.source = 'xmms2-mlib-updater.sh.in'
