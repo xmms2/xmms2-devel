@@ -1,6 +1,7 @@
 import os
 from Params import pprint
 import Params
+import Common
 
 def build(bld):
     obj = bld.create_obj('cc', 'plugin')
@@ -11,6 +12,8 @@ def build(bld):
     obj.uselib = 'ruby'
     obj.install_in = "ARCHDIR_ruby"
     obj.env["plugin_PREFIX"] = ''
+
+    Common.install_files('ARCHDIR_ruby', 'xmmsclient', 'sync.rb')
 
     # glib
     obj = bld.create_obj('cc', 'plugin')
