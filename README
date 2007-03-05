@@ -1,120 +1,53 @@
-XMMS2 README
-http://wiki.xmms2.xmms.se
+XMMS2 is a music player.
 
-Note: More up to date information may be available at
-http://wiki.xmms2.xmms.se/index.php/Read_me_first%21
-
-== Why XMMS2? ==
-
-Why bother working on a next generation XMMS while there are various existing
-and more advanced projects already in progress, some ready for production use?
-Because XMMS is just too damn popular to be allowed to die, of course! But
-seriously, while the field of 'audio playback' in general is something of an
-old beaten path, there is still much room for improvement.
-
-Constant progress is happening in the field of digital audio playback,
-including: new compression/encoding schemes, better and more flexible
-encapsulation and container formats, more efficient encoders and decoders,
-better ways of managing collections of music files, new ways of letting users
-interact with their music and so on. XMMS2 jumps into the mix with the goal of
-trying to provide an improved music listening experience for users. 
-
-The XMMS2 project started in late 2002 as an idea to make a "kick-ass music
-player", and has eventually evolved into the next generation XMMS. The need for
-an XMMS replacement had been evident for years: the XMMS codebase and framework
-weren't exactly well-designed from the beginning. Lately, active development of
-XMMS has mostly stopped, this can be attributed to the lack of active
-developers, and a broken codebase. Adding new features to XMMS is difficult.
-Some of the most-wanted features would be nearly impossible to add. Some parts
-of XMMS are beyond patching, a re-design of the framework is needed.
-
-Developers of another fork of XMMS, BMP, the "Beep media player", comment on
-XMMS:
-"The XMMS code we inherited is old and messy. In more specific terms, it is
-poorly structured, poorly documented and littered with duplications. It is
-difficult to modify or extend one component of XMMS without breaking another.
-We spent most of our time fixing problems that were introduced after seemingly
-innocent modifications."
-
-The XMMS2 team is committed to producing a better music player, while diligently
-maintaining a robust and flexible design. The goal is to make the system easy
-for developers to maintain and integrate with. In terms of the listening
-experience, XMMS2 makes it possible for anyone to easily manage their music
-collection and to interact with it in a flexible manner.
-
-== What is XMMS2? How is it different? ==
-
-Being namely the descendant of XMMS and especially marked second generation,
-people will have all kinds of expectations what XMMS2 will and will not be.
-I'll first list the whats and whatnots shortly and explain the reasons more
-thoroughly afterwards.
-
-* XMMS2 is a music player, it plays audio.
-* XMMS2 is not a video player.
-* XMMS2 does have a GUI, but it is not integrated. Instead, we talk about
-clients, and there can be many clients connected to the daemon.
-* There will be one "official" GUI client and one "official" commandline client.
-
-So, XMMS2 is definitely an audio player. But it is ''not'' a multimedia player -
-it will not play videos. It has a modular framework and plugin architecture for
-audio processing, visualisation and output, but this framework has not been
-designed to support video. Also the daemon/client-type design of XMMS2 (and the
-daemon being independent of any graphics output) practically prevents video
-output being implemented. Reasons for this have been stated in the section
-above (Why XMMS2?)
+<insert one line sales pitch here>
 
 
-== General Questions ==
-Q: Why rewrite XMMS?
-A: XMMS is an old project (started in 1997) and was not expected to
-become as popular as it did. The internal design of XMMS is somewhat
-... troublesome, if not completely broken. Also, the frameworks around
-XMMS have changed a lot. The general opinion among the developers was
-that if ANYTHING should happen, it would be a complete rewrite.
+==VERSION==
 
-Q: Who is responsible for XMMS2?
-A: Peter Alm (original author of XMMS) did the first designs and the
-initial code. Most of the code is written by Tobias Rundströ and
-Anders Gustafsson. The project is being maintained by Tobias and
-Anders. A big thanks goes out to Thomas Nilsson too, he bitches well.
+This README file is for the "Developer Release" series of XMMS2.
 
-Q: Those are not the same developers who maintain XMMS?
-A: That's true. XMMS2 is a separate project. Rest assured, XMMS will
-live on for a long long time. XMMS2 will not be ready any time soon to
-take over from XMMS1.
+"Developer Release" means that the release is not aimed at your grandma, but
+rather at developers who wish to help improve XMMS2, by developing clients and
+plugins, fixing bugs, adding features, writing documentation or anything else
+that would bring XMMS2 closer to being the perfect music player. Of course,
+anyone is allowed to try it out, but don't expect everything to work flawlessly
+just yet. This is a good thing if you don't mind getting your hands dirty.
 
-Q: What are the design goals of XMMS2?
-A: XMMS2 is designed to be a kickass music-player. We wanted to
-rectify various problems with the XMMS APIs. For example, splitting
-the input-plugin into transport- and decoder-plugins. We also wanted
-the UI to be separate from the core engine, in order to allow for
-other interfaces than a Gtk+ GUI.
 
-Q: Why just a music player?
-A: A lot of people ask us about video. But video will not be included,
-nor will it be supported in XMMS2 - in fact video-support is even less
-possible than in XMMS1. This choice has numerous reasons. Music and
-video are very separate things, despite what many people like to
-think. The architecture of XMMS2 is designed such that it handles
-audio wonderfully well - handling video is simply not part of this
-project's scope and will '''not''' be added. And we believe that we
-can make the best music player out there, but not the best video
-player, so we stick to what we are best at. There are other choices,
-if you wish to play video and audio via the same application.
+==INSTALLING==
 
-Q: But XMMS stands for X MultiMedia System, that includes video!
-A: Wrong. In "XMMS2", XMMS stands for X(cross)platform Music
-Multiplexing System.
+See INSTALL file.
+(for the impatient people: ./waf configure && ./waf && sudo ./waf install)
 
-Q: What platforms will you support?
-A: Our aim is to be able to port XMMS basically everywhere, but
-development is mainly done on Linux/x86, Linux/PPC and Mac
-OSX. Support for other platforms is currently secondary, although it
-has been known to work on OpenBSD and Solaris.
 
-Q: What about Windows?
-A: In theory, our code should run on Windows without any problems,
-being ANSI-C. However, due to a general lack of interest (so far) from
-users and developers who primarily use Microsoft Windows, there hasn't
-been much effort towards making sure that XMMS2 runs on that platform.
+==COPYRIGHT==
+
+See COPYING for details.
+(for the ones who don't care about details: LGPL)
+
+==CREDITS==
+
+See the AUTHORS file.
+(for the people not in AUTHORS: like everyone but you - help and you will be included as well)
+
+
+==HELPING==
+
+Please send patches to the mailing list or bug tracker! A good starting point
+for further info might be: http://wiki.xmms2.xmms.se/index.php/Developer_Corner
+
+
+==CONTACT==
+
+Feel free to post any questions/patches/whatever to the mailing list:
+xmms2-devel@lists.xmms.se
+ (http://lists.xmms.se/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
+
+The IRC channel is usually fairly active as well,
+chat away at: #xmms2 on freenode (irc.freenode.net)
+
+Report bugs to the bug tracker at: http://bugs.xmms2.xmms.se/
+(account registration required - Linus, you can just post
+ the reports to the mailing list)
 
