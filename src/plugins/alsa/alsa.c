@@ -714,35 +714,20 @@ xmms_alsa_volume_get (xmms_output_t *output, const gchar **names,
 static guint
 xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 {
-	gint bytes_in_buffer;
 	xmms_alsa_data_t *data;
 	snd_pcm_sframes_t avail;
+	gint ret;
 
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
-	/* Get number of available frames in buffer */
-	avail = snd_pcm_avail_update (data->pcm);
-	if (avail == -EPIPE) {
-		/* Spank alsa and give it another try */
-		xmms_alsa_xrun_recover (data, avail);
-		avail = snd_pcm_avail_update (data->pcm);
-		if (avail == -EPIPE) {
-			xmms_log_error ("Unable to get available frames in buffer: %s",
-			                snd_strerror (avail));
-			return 0;
-		}
-	}
-
-	if (avail < 0) {
+	ret = snd_pcm_delay (data->pcm, &avail);
+	if (ret != 0 || avail < 0) {
 		return 0;
 	}
 
-	bytes_in_buffer = snd_pcm_frames_to_bytes (data->pcm, data->buffer_size) -
-	                  snd_pcm_frames_to_bytes (data->pcm, avail);
-
-	return bytes_in_buffer;
+	return snd_pcm_frames_to_bytes (data->pcm, avail);
 }
 
 
