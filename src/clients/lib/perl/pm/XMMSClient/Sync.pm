@@ -26,6 +26,7 @@ sub AUTOLOAD {
     my ($self) = @_;
 
     (my $func = $AUTOLOAD) =~ s/.*:://;
+    return if $func eq 'DESTROY';
 
     unless ($$self->can($func)) {
         require Carp;
