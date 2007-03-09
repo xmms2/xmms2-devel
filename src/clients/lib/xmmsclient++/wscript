@@ -44,7 +44,7 @@ def configure(conf):
 
     ret = (h.run() and l.run())
     if ret:
-        conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+        conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
 
     return ret
 

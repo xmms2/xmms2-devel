@@ -101,7 +101,7 @@ def configure(conf):
     if sys.platform == 'darwin':
         conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
 
-    conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-plugin', ''))
+    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 
 def set_options(opt):
     pass

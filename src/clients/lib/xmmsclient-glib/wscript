@@ -11,7 +11,8 @@ def build(bld):
     tool.add_install_flag(obj)
 
 def configure(conf):
-    conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-glib', '-lxmmsclient-glib'))
+    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-glib', '-lxmmsclient-glib'))
+    
     return True
 
 def set_options(opt):
