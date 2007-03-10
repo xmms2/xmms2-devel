@@ -869,6 +869,49 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
+ *  xc.medialib_entry_property_remove(id, key, *source) -> result
+ *
+ * Remove a custom field in the medialib associated with the entry _id_.
+ * _source_ is an optional argument that describes where to write the
+ * mediainfo. If _source_ is omitted, "client/<yourclient>" is used,
+ * where <yourclient> is the name you specified in
+ * _Xmms::Client.new(name)_.
+ */
+static VALUE
+c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
+{
+	VALUE id, key, src = Qnil;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+	const char *ckey;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	rb_scan_args (argc, argv, "21", &id, &key, &src);
+
+	Check_Type (id, T_FIXNUM);
+	Check_Type (key, T_SYMBOL);
+
+	ckey = rb_id2name (SYM2ID (key));
+
+	if (NIL_P (src))
+		res = xmmsc_medialib_entry_property_remove (xmms->real,
+		                                            FIX2INT (id),
+		                                            ckey);
+	else
+		res = xmmsc_medialib_entry_property_remove_with_source (
+			xmms->real,
+			FIX2INT (id),
+			StringValuePtr (src),
+			ckey);
+
+	return TO_XMMS_CLIENT_RESULT (self, res);
+}
+
+/*
+ * call-seq:
  *  xc.playlist_list -> result
  *
  * Retrieves a list of all saved playlists from the medialib.
@@ -1392,6 +1435,8 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
 	                  c_medialib_entry_property_set, -1);
+	rb_define_method (c, "medialib_entry_property_remove",
+	                  c_medialib_entry_property_remove, -1);
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
