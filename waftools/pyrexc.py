@@ -20,7 +20,6 @@ def setup(env):
 def detect(conf):
 		python = conf.find_program('pyrexc', var='PYREX')
 		if not python:
-			error("Could not find pyrexc. You loose?")
 			return 0
 		conf.env['PYREX_EXT'] = ['.pyx']
 		return 1
