@@ -244,7 +244,11 @@ xmms_ofa_thread (gpointer arg)
 	XMMS_DBG ("Calculating fingerprint... (will consume CPU)");
 
 	fp = ofa_create_print (data->buf,
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	                       OFA_BIG_ENDIAN,
+#else
+	                       OFA_LITTLE_ENDIAN,
+#endif
 	                       data->bytes_to_read/2,
 	                       44100,
 	                       1);
