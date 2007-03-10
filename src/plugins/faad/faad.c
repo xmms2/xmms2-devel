@@ -160,9 +160,9 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	while (data->buffer_length < 8) {
 		bytes_read = xmms_xform_read (xform,
-					      (gchar *) data->buffer + data->buffer_length,
-					      data->buffer_size - data->buffer_length,
-					      &error);
+		                              (gchar *) data->buffer + data->buffer_length,
+		                              data->buffer_size - data->buffer_length,
+		                              &error);
 		data->buffer_length += bytes_read;
 
 		if (bytes_read < 0) {
