@@ -1,0 +1,18 @@
+from waftools import tool
+
+def build(bld):
+    obj = bld.create_obj('cc', 'shlib')
+    obj.target = 'xmmsclient-ecore'
+    obj.includes = '../../../include'
+    obj.source = 'xmmsclient-ecore.c'
+    obj.uselib = 'ecore'
+    obj.uselib_local = 'xmmsclient'
+    obj.vnum = '1.0.0'
+    tool.add_install_flag(obj)
+
+def configure(conf):
+    conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-ecore', '-lxmmsclient-ecore'))
+    return conf.check_pkg('ecore', destvar='ecore')
+
+def set_options(opt):
+    pass
