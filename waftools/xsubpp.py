@@ -18,5 +18,5 @@ def setup(env):
     env.hook('cc', 'PERLXS_EXT', xsubpp_file)
 
 def detect(conf):
-        conf.env['PERLXS_EXT'] = ['.xs']
-        return 1
+    conf.env['PERLXS_EXT'] = ['.xs']
+    return True
