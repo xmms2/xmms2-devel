@@ -3,12 +3,14 @@
 require 'xmmsclient'
 
 class Xmms::Client::Sync
+	attr_reader(:real)
+
 	def initialize(name)
-		@x = Xmms::Client.new(name)
+		@real = Xmms::Client.new(name)
 	end
 
 	def method_missing(id, *args)
-		ret = @x.send(id, *args)
+		ret = @real.send(id, *args)
 		if(ret.is_a?(Xmms::Result) || ret.is_a?(Xmms::BroadcastResult) ||
 		   ret.is_a?(Xmms::SignalResult))
 			ret.wait.value
