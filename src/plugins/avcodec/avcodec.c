@@ -77,8 +77,10 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
+	/*
 	xmms_magic_add ("DTS header", "audio/x-ffmpeg-dts",
 	                "0 belong 0x7ffe8001", NULL);
+	*/
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
