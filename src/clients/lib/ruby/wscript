@@ -26,14 +26,15 @@ def build(bld):
     obj.env["plugin_PREFIX"] = ''
 
     # ecore
-    obj = bld.create_obj('cc', 'plugin')
-    obj.target = 'xmmsclient_ecore'
-    obj.includes = '../../../include ../../../includepriv'
-    obj.source = ['rb_xmmsclient_ecore.c']
-    obj.uselib_local = 'xmmsclient-ecore'
-    obj.uselib = 'ruby ecore'
-    obj.install_in = "ARCHDIR_ruby"
-    obj.env["plugin_PREFIX"] = ''
+    if 'src/clients/lib/xmmsclient-ecore' in bld.env_of_name('default')['XMMS_OPTIONAL_BUILD']:
+        obj = bld.create_obj('cc', 'plugin')
+        obj.target = 'xmmsclient_ecore'
+        obj.includes = '../../../include ../../../includepriv'
+        obj.source = ['rb_xmmsclient_ecore.c']
+        obj.uselib_local = 'xmmsclient-ecore'
+        obj.uselib = 'ruby ecore'
+        obj.install_in = "ARCHDIR_ruby"
+        obj.env["plugin_PREFIX"] = ''
 
 def configure(conf):
     if Params.g_options.rubybinary:
