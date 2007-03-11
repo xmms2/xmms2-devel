@@ -21,6 +21,12 @@ sub new_from {
     return $self;
 }
 
+sub can {
+    my $self = shift;
+
+    return $$self->can(@_);
+}
+
 our $AUTOLOAD;
 sub AUTOLOAD {
     my ($self) = @_;
