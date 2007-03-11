@@ -87,6 +87,10 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/med",
 	                              NULL);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/umx",
+	                              NULL);
 
 	xmms_magic_add ("Fasttracker II module", "audio/xm",
 	                "0 string Extended Module:", NULL);
@@ -96,6 +100,10 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string IMPM", NULL);
 	xmms_magic_add ("MED module", "audio/med",
 	                "0 string MMD", NULL);
+
+	/* http://www.unrealwiki.com/wiki/Package_File_Format */
+	xmms_magic_add ("Unreal Engine package", "audio/umx",
+	                "0 belong 0xc1832a9e", NULL);
 
 	/* these are for all (not all but should be most) various types of .mod files */
 	xmms_magic_add ("4-channel Protracker module", "audio/mod",
