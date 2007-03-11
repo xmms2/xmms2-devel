@@ -98,6 +98,7 @@
 	} else \
 		rb_raise (eClientError, "unsupported argument");
 
+static VALUE cPlaylist;
 static VALUE eClientError, eDisconnectedError;
 
 static void
@@ -746,13 +747,11 @@ c_playlist_set_next_rel (VALUE self, VALUE pos)
 static VALUE
 c_playlist (int argc, VALUE *argv, VALUE self)
 {
-	VALUE name = Qnil;
-	RbXmmsClient *xmms = NULL;
+	VALUE args[2] = {self, Qnil};
 
-	rb_scan_args (argc, argv, "01", &name);
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	rb_scan_args (argc, argv, "01", &args[1]);
 
-	return playlist_new (self, name);
+	return rb_class_new_instance (2, args, cPlaylist);
 }
 
 /*
@@ -1487,6 +1486,6 @@ Init_Client (VALUE mXmms)
 	                                            eClientError);
 
 	Init_Result (mXmms);
-	Init_Playlist (mXmms);
+	cPlaylist = Init_Playlist (mXmms);
 	Init_Collection (mXmms);
 }

@@ -17,7 +17,6 @@
 #ifndef __RB_PLAYLIST_H
 #define __RB_PLAYLIST_H
 
-VALUE playlist_new (VALUE xmms, VALUE name);
-void Init_Playlist (VALUE cClient);
+VALUE Init_Playlist (VALUE cClient);
 
 #endif /* __RB_PLAYLIST_H */

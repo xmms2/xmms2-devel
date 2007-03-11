@@ -81,7 +81,7 @@ typedef struct {
 	const char *name;
 } RbPlaylist;
 
-static VALUE cPlaylist, ePlaylistError, eDisconnectedError, eClientError;
+static VALUE ePlaylistError, eDisconnectedError, eClientError;
 
 static void
 c_mark (RbPlaylist *pl)
@@ -90,13 +90,32 @@ c_mark (RbPlaylist *pl)
 	rb_gc_mark (pl->name_value);
 }
 
-VALUE
-playlist_new (VALUE xmms, VALUE name)
+static VALUE
+c_alloc (VALUE klass)
 {
-	VALUE self;
-	RbPlaylist *pl = NULL;
+	RbPlaylist *pl;
 
-	self = Data_Make_Struct (cPlaylist, RbPlaylist, c_mark, NULL, pl);
+	return Data_Make_Struct (klass, RbPlaylist, c_mark, NULL, pl);
+}
+
+/*
+ * call-seq:
+ *  pl = Xmms::Playlist.new(xc, [name])
+ * Initializes a new Xmms::Playlist using the playlist named _name_ and the
+ * Xmms::Client instance _xc_. Xmms::Client#playlist(name) is a useful
+ * shortcut. _name_ is is the name of the playlist and the active playlist will
+ * be used if it is not specified. Raises PlaylistError if the playlist name is
+ * invalid.
+ */
+static VALUE
+c_init (int argc, VALUE *argv, VALUE self)
+{
+	RbPlaylist *pl = NULL;
+	VALUE name, xmms = Qnil;
+
+	Data_Get_Struct (self, RbPlaylist, pl);
+
+	rb_scan_args (argc, argv, "11", &xmms, &name);
 
 	/* FIXME: Check type! */
 	pl->xmms = xmms;
@@ -111,25 +130,6 @@ playlist_new (VALUE xmms, VALUE name)
 	pl->name = StringValuePtr (pl->name_value);
 
 	return self;
-}
-
-/*
- * call-seq:
- *  pl = Xmms::Playlist.new(xc, [name])
- * Initializes a new Xmms::Playlist using the playlist named _name_ and the
- * Xmms::Client instance _xc_. Xmms::Client#playlist(name) is a useful
- * shortcut. _name_ is is the name of the playlist and the active playlist will
- * be used if it is not specified. Raises PlaylistError if the playlist name is
- * invalid.
- */
-static VALUE
-c_playlist_new (int argc, VALUE *argv)
-{
-	VALUE name, xmms = Qnil;
-
-	rb_scan_args (argc, argv, "11", &xmms, &name);
-
-	return playlist_new (xmms, name);
 }
 
 /*
@@ -332,38 +332,42 @@ c_remove (VALUE self)
 	PLAYLIST_METHOD_ADD_HANDLER (remove);
 }
 
-void
+VALUE
 Init_Playlist (VALUE mXmms)
 {
-	cPlaylist = rb_define_class_under (mXmms, "Playlist", rb_cObject);
+	VALUE c;
 
-	rb_define_singleton_method (cPlaylist, "new", c_playlist_new, -1);
+	c = rb_define_class_under (mXmms, "Playlist", rb_cObject);
 
-	rb_define_method (cPlaylist, "name", c_name, 0);
-	rb_define_method (cPlaylist, "current_pos", c_current_pos, 0);
-	rb_define_method (cPlaylist, "sort", c_sort, 1);
-	rb_define_method (cPlaylist, "shuffle", c_shuffle, 0);
-	rb_define_method (cPlaylist, "clear", c_clear, 0);
-	rb_define_method (cPlaylist, "add_entry", c_add_entry, 1);
-	rb_define_method (cPlaylist, "insert_entry", c_insert_entry, 2);
-	rb_define_method (cPlaylist, "remove_entry", c_remove_entry, 1);
-	rb_define_method (cPlaylist, "move_entry", c_move_entry, 2);
-	rb_define_method (cPlaylist, "entries", c_list_entries, 0);
-	rb_define_method (cPlaylist, "load", c_load, 0);
-	rb_define_method (cPlaylist, "remove", c_remove, 0);
+	rb_define_alloc_func (c, c_alloc);
+	rb_define_method (c, "initialize", c_init, -1);
+	rb_define_method (c, "name", c_name, 0);
+	rb_define_method (c, "current_pos", c_current_pos, 0);
+	rb_define_method (c, "sort", c_sort, 1);
+	rb_define_method (c, "shuffle", c_shuffle, 0);
+	rb_define_method (c, "clear", c_clear, 0);
+	rb_define_method (c, "add_entry", c_add_entry, 1);
+	rb_define_method (c, "insert_entry", c_insert_entry, 2);
+	rb_define_method (c, "remove_entry", c_remove_entry, 1);
+	rb_define_method (c, "move_entry", c_move_entry, 2);
+	rb_define_method (c, "entries", c_list_entries, 0);
+	rb_define_method (c, "load", c_load, 0);
+	rb_define_method (c, "remove", c_remove, 0);
 
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, ADD);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, INSERT);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, SHUFFLE);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, REMOVE);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, CLEAR);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, MOVE);
-	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, SORT);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, ADD);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, INSERT);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SHUFFLE);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, REMOVE);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, CLEAR);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, MOVE);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SORT);
 
-	ePlaylistError = rb_define_class_under (cPlaylist, "PlaylistError",
+	ePlaylistError = rb_define_class_under (c, "PlaylistError",
 	                                        rb_eStandardError);
-	eClientError = rb_define_class_under (cPlaylist, "ClientError",
+	eClientError = rb_define_class_under (c, "ClientError",
 	                                      rb_eStandardError);
-	eDisconnectedError = rb_define_class_under (cPlaylist, "DisconnectedError",
+	eDisconnectedError = rb_define_class_under (c, "DisconnectedError",
 	                                            eClientError);
+
+	return c;
 }
