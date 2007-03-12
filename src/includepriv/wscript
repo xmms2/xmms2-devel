@@ -1,7 +1,7 @@
 def configure(conf):
-	pass
+    pass
 def set_options(conf):
-	pass
+    pass
 def build(bld):
-	bld.add_subdirs("xmmspriv")
-	bld.add_subdirs("xmmsclientpriv")
+    bld.add_subdirs("xmmspriv")
+    bld.add_subdirs("xmmsclientpriv")

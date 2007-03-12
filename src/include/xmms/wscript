@@ -2,10 +2,10 @@ import sys,os
 import Params
 
 def build(bld):
-	pass
+    pass
 
 def set_option(env):
-	pass
+    pass
 
 def configure(conf):
     """Set the values needed by xmms_defs.h.in in the environment."""

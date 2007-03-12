@@ -11,12 +11,12 @@ def build(bld):
     tool.add_install_flag(obj)
 
 def configure(conf):
-	cfg = conf.create(configurator='cfgtool')
-	cfg.binary = 'ecore-config'
-	cfg.uselib = 'ecore'
-	cfg.tests = {'--cflags': 'CCFLAGS', '--libs-core': 'LINKFLAGS'}
+    cfg = conf.create(configurator='cfgtool')
+    cfg.binary = 'ecore-config'
+    cfg.uselib = 'ecore'
+    cfg.tests = {'--cflags': 'CCFLAGS', '--libs-core': 'LINKFLAGS'}
 
-	return cfg.run()
+    return cfg.run()
 
 def set_options(opt):
     pass
