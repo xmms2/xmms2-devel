@@ -40,12 +40,14 @@ class Xmms::Client::Sync
 end
 
 class Xmms::Collection::Sync
+	attr_reader(:real)
+
 	def initialize(coll)
-		@c = coll
+		@real = coll
 	end
 
 	def method_missing(id, *args)
-		ret = @c.send(id, *args)
+		ret = @real.send(id, *args)
 		if(ret.is_a?(Xmms::Result))
 			ret.wait.value
 		elsif(ret.is_a?(Xmms::Collection))
@@ -57,12 +59,14 @@ class Xmms::Collection::Sync
 end
 
 class Xmms::Playlist::Sync
+	attr_reader(:real)
+
 	def initialize(plist)
-		@p = plist
+		@real = plist
 	end
 
 	def method_missing(id, *args)
-		ret = @p.send(id, *args)
+		ret = @real.send(id, *args)
 		if(ret.is_a?(Xmms::Result))
 			ret.wait.value
 		elsif(ret.is_a?(Xmms::Collection))
