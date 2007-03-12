@@ -31,12 +31,31 @@ m_userconfdir_get (VALUE self)
 	return p ? rb_str_new2 (p) : Qnil;
 }
 
+static VALUE
+m_decode_url (VALUE self, VALUE str)
+{
+	const char *cstr, *tmp;
+	VALUE url;
+
+	cstr = StringValuePtr (str);
+
+	tmp = xmmsc_result_decode_url (NULL, cstr);
+	if (!tmp)
+		return Qnil;
+
+	url = rb_str_new2 (tmp);
+	free (tmp);
+
+	return url;
+}
+
 void
 Init_xmmsclient (void)
 {
 	VALUE mXmms = rb_define_module ("Xmms");
 
 	rb_define_module_function (mXmms, "userconfdir", m_userconfdir_get, 0);
+	rb_define_module_function (mXmms, "decode_url", m_decode_url, 1);
 
 	rb_define_const (mXmms, "VERSION", rb_str_new2 (XMMS_VERSION));
 

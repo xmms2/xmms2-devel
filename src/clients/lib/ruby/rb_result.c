@@ -389,23 +389,6 @@ c_value_get (VALUE self)
 }
 
 static VALUE
-c_decode_url (VALUE self, VALUE str)
-{
-	RbResult *res;
-	const char *cstr, *tmp;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	cstr = StringValuePtr (str);
-
-	tmp = xmmsc_result_decode_url (res->real, cstr);
-	if (!tmp)
-		rb_raise (eResultError, "cannot decode URL - %s", cstr);
-
-	return rb_str_new2 (tmp);
-}
-
-static VALUE
 c_propdict_init (VALUE self, VALUE result)
 {
 	rb_iv_set (self, "result", result);
@@ -597,7 +580,6 @@ Init_Result (VALUE mXmms)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
-	rb_define_method (cResult, "decode_url", c_decode_url, 1);
 
 	cBroadcastResult = rb_define_class_under (mXmms,
 	                                          "BroadcastResult",
