@@ -14,6 +14,7 @@ def build(bld):
     obj.env["plugin_PREFIX"] = ''
 
     Common.install_files('LIBDIR_ruby', 'xmmsclient', 'sync.rb')
+    Common.install_files('LIBDIR_ruby', 'xmmsclient', 'async.rb')
 
     # glib
     obj = bld.create_obj('cc', 'plugin')
