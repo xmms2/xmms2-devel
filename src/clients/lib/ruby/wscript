@@ -13,7 +13,7 @@ def build(bld):
     obj.install_in = "ARCHDIR_ruby"
     obj.env["plugin_PREFIX"] = ''
 
-    Common.install_files('ARCHDIR_ruby', 'xmmsclient', 'sync.rb')
+    Common.install_files('LIBDIR_ruby', 'xmmsclient', 'sync.rb')
 
     # glib
     obj = bld.create_obj('cc', 'plugin')
@@ -66,8 +66,14 @@ def configure(conf):
     else:
         conf.env["ARCHDIR_ruby"] = Params.g_options.rubyarchdir
 
+    if not Params.g_options.rubylibdir:
+        conf.env["LIBDIR_ruby"] = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitelibdir\"]'").read().strip()
+    else:
+        conf.env["LIBDIR_ruby"] = Params.g_options.rubylibdir
+
     return True
 
 def set_options(opt):
     opt.add_option('--with-ruby-archdir', type="string", dest="rubyarchdir")
+    opt.add_option('--with-ruby-libdir', type="string", dest="rubylibdir")
     opt.add_option('--with-ruby-binary', type='string', dest='rubybinary')
