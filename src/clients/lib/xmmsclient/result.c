@@ -1203,7 +1203,13 @@ xmmsc_result_list_first (xmmsc_result_t *res)
  * local file (if it starts with "file://").
  *
  * The string returned string will be owned by the result and
- * freed when the result is freed.
+ * freed when the result is freed. Or, if the result passed is NULL,
+ * the user is responsible for freeing the returned string. However,
+ * the user has no way of knowing what allocation routine was used to
+ * create the string and thus no way to know which free routine to
+ * use. Passing a NULL result is generall frowned upon and we won't
+ * offer you tissues and a blanket if you come crying to us with
+ * broken code.
  *
  * @param res the #xmmsc_result_t that the string comes from
  * @param string the url encoded string
