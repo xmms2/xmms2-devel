@@ -209,7 +209,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 		xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING);
 
 		lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
-		xmms_medialib_end (session);
 
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
@@ -221,6 +220,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			num--;
 		}
 
+		xmms_medialib_end (session);
 		xform = xmms_xform_chain_setup_without_effects (entry, goal_format);
 
 		if (!xform) {
