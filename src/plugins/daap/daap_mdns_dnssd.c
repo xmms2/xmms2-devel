@@ -197,12 +197,13 @@ browse_reply (DNSServiceRef client,
 
 		g_mdns_poll_add (ud->mdns, ud2, ud2->client);
 	} else {
-		GSList* n;
+		GSList *n, *nxt;
 		g_mutex_lock (ud->mdns->mutex);
-		for (n = ud->mdns->service_list; n; n = g_slist_next (n)) {
+		for (n = ud->mdns->service_list; n; n = nxt) {
+			nxt = g_slist_next (n);
 			GMDNSServer *server = n->data;
 			if (strcmp (server->mdnsname, replyName) == 0) {
-				ud->mdns->service_list = g_slist_remove (ud->mdns->service_list, server);
+				n = ud->mdns->service_list = g_slist_remove (ud->mdns->service_list, server);
 				g_mutex_unlock (ud->mdns->mutex);
 				if (ud->mdns->callback)
 					ud->mdns->callback (ud->mdns, G_MDNS_SERVER_REMOVE, server, ud->mdns->user_data);
