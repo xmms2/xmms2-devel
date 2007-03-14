@@ -22,7 +22,7 @@ class manobj(copyobj):
         self.section = section
 
     def apply(self):
-        lst = self.to_list(self.source)
+        lst = self.to_list(self.files)
         for file in lst:
             node = self.path.find_source(file)
             if not node: fatal('cannot find input file %s for processing' % file)
