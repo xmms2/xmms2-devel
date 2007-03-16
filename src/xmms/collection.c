@@ -279,10 +279,17 @@ add_metadata_from_hash (gpointer key, gpointer value, gpointer user_data)
 	add_metadata_from_hash_user_data_t *ud = user_data;
 	xmms_object_cmd_value_t *b = value;
 
-	xmms_medialib_entry_property_set_str_source (ud->session, ud->entry,
-	                                             (const gchar *)key,
-	                                             b->value.string,
-	                                             ud->src);
+	if (b->type == XMMS_OBJECT_CMD_ARG_INT32) {
+		xmms_medialib_entry_property_set_int_source (ud->session, ud->entry,
+		                                             (const gchar *)key,
+		                                             b->value.int32,
+		                                             ud->src);
+	} else if (b->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		xmms_medialib_entry_property_set_str_source (ud->session, ud->entry,
+		                                             (const gchar *)key,
+		                                             b->value.string,
+		                                             ud->src);
+	}
 }
 
 /** Create a idlist from a playlist file
