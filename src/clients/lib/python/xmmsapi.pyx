@@ -188,8 +188,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *, char *path)
 	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
 
-	xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_load(xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
+	xmmsc_result_t *xmmsc_playlist_create(xmmsc_connection_t *c, char *playlist)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos(xmmsc_connection_t *c)
@@ -1894,6 +1895,24 @@ cdef class XMMS:
 
 		ret.more_init()
 		
+		return ret
+
+	def playlist_create(self, playlist, cb = None):
+		"""
+		Create a new playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		pl = from_unicode(playlist)
+		ret.res = xmmsc_playlist_create(self.conn, pl)
+
+		ret.more_init()
+
 		return ret
 
 	def playlist_current_pos(self, playlist = None, cb = None):
