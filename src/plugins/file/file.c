@@ -225,7 +225,10 @@ xmms_file_browse (xmms_xform_t *xform,
 		guint32 flags = 0;
 		gchar *t = g_build_filename (tmp, d, NULL);
 
-		if (stat (t, &st)) {
+		int ret = stat (t, &st);
+		g_free (t);
+
+		if (ret) {
 			continue;
 		}
 		if (S_ISDIR (st.st_mode)) {
@@ -233,8 +236,6 @@ xmms_file_browse (xmms_xform_t *xform,
 		}
 		xmms_xform_browse_add_entry (xform, d, flags);
 		xmms_xform_browse_add_entry_property_int (xform, "size", st.st_size);
-
-		g_free (t);
 	}
 
 	g_dir_close (dir);
