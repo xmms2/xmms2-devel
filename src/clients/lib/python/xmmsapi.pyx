@@ -1517,7 +1517,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_remove(self, playlist = None):
+	def playlist_remove(self, playlist = None, cb = None):
 		"""
 		Remove the playlist from the server
 		@rtype: L{XMMSResult}
