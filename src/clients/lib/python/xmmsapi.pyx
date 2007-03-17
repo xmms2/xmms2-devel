@@ -2188,7 +2188,7 @@ cdef class XMMS:
 			else:
 				ret.res = xmmsc_medialib_entry_property_set_str_with_source(self.conn,id,s,k,v)
 		else:
-			if isinstance(value, str):
+			if isinstance(value, basestring):
 				ret.res = xmmsc_medialib_entry_property_set_str(self.conn,id,k,v)
 			else:
 				ret.res = xmmsc_medialib_entry_property_set_int(self.conn,id,k,v)
