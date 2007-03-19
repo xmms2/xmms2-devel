@@ -42,8 +42,9 @@ class manobj(copyobj):
             task.m_env = self.env
             task.fun = self.fun
 
-            if Params.g_commands['install'] or Params.g_commands['uninstall']:
-                Common.install_files('MANDIR', 'man' + str(self.section), newnode.abspath(self.env))
+    def install(self):
+        for task in self.m_tasks:
+            self.install_results('MANDIR', 'man' + str(self.section), task)
 
 def setup(env):
     Object.register('man', manobj)

@@ -41,8 +41,9 @@ class pkgcobj(copyobj):
             task.fun = self.fun
             task.dict = val
 
-            if Params.g_commands['install'] or Params.g_commands['uninstall']:
-                Common.install_files('PKGCONFIGDIR', '', newnode.abspath(self.env))
+    def install(self):
+        for task in self.m_tasks:
+            self.install_results('PKGCONFIGDIR', '', task);
 
 def setup(env):
     Object.register('pkgc', pkgcobj)
