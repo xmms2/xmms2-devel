@@ -17,12 +17,10 @@
  */
 
 #ifdef HAVE_CONFIG_H
- #include <config.h>
+# include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <glib.h>
 
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
@@ -30,213 +28,156 @@
 
 #include "encode.h"
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_sample.h"
 
 #define MODULE "encode/"
 
-void encode_clear (encoder_state *s)
+struct encoder_state {
+	/* General encoder configuration. */
+	int min_br;
+	int nom_br;
+	int max_br;
+	int channels;
+	int rate;
+
+	gboolean encoder_inited;
+
+	/* Ogg state. Remains active for the lifetime of the encoder. */
+	ogg_stream_state os;
+	int serial;
+	gboolean in_header; /* TRUE if the stream is still within a vorbis
+						 * header. */
+	gboolean flushing; /* TRUE if the end of stream is reached and
+						* we're just flushing the ogg data. */
+
+	/* Used for ogg page size management. See xmms_ices_encoder_output
+	 * for details. */
+	int samples_in_current_page;
+	ogg_int64_t previous_granulepos;
+
+	/* Vorbis state. May be recreated if there is a change in
+	 * rate/channels. */
+	vorbis_info vi;
+	vorbis_block vb;
+	vorbis_dsp_state vd;
+};
+
+
+/* Create an ogg stream and vorbis encoder, with the configuration
+ * specified in the encoder_state.
+ */
+static gboolean
+xmms_ices_encoder_create (encoder_state *s, vorbis_comment *vc)
 {
-	if (s) {
+	ogg_packet header[3];
+
+	if (s->encoder_inited) {
+		XMMS_DBG ("OOPS: xmms_ices_encoder_create called "
+		          "with s->encoder_inited == TRUE !");
+	}
+
+	XMMS_DBG ("Creating encoder in ABR mode: min/avg/max bitrate %d/%d/%d",
+	          s->min_br, s->nom_br, s->max_br);
+
+	/* Create the Vorbis encoder. */
+	vorbis_info_init (&s->vi);
+	if (vorbis_encode_init (&s->vi, s->channels, s->rate,
+	                        s->max_br, s->nom_br, s->min_br) < 0)
+		return FALSE;
+	vorbis_analysis_init (&s->vd, &s->vi);
+	vorbis_block_init (&s->vd, &s->vb);
+
+	/* Initialize the ogg stream and input the vorbis header
+	 * packets. */
+	ogg_stream_init (&s->os, s->serial++);
+	vorbis_analysis_headerout (&s->vd, vc, &header[0], &header[1], &header[2]);
+	ogg_stream_packetin (&s->os, &header[0]);
+	ogg_stream_packetin (&s->os, &header[1]);
+	ogg_stream_packetin (&s->os, &header[2]);
+
+	s->in_header = TRUE;
+	s->flushing = FALSE;
+	s->samples_in_current_page = 0;
+	s->previous_granulepos = 0;
+	s->encoder_inited = TRUE;
+
+	return TRUE;
+}
+
+/* Free the ogg and vorbis encoder state associated with
+ * encoder_state, if the encoder is present.
+ */
+static void
+xmms_ices_encoder_free (encoder_state *s)
+{
+	if (s->encoder_inited) {
 		ogg_stream_clear (&s->os);
 		vorbis_block_clear (&s->vb);
 		vorbis_dsp_clear (&s->vd);
 		vorbis_info_clear (&s->vi);
-		free (s);
+		s->encoder_inited = FALSE;
 	}
 }
 
+
 encoder_state *
-encode_initialise (int channels, int rate, int managed,
-                   int min_br, int nom_br, int max_br, float quality,
-                   int serial, vorbis_comment *vc)
+xmms_ices_encoder_init (int min_br, int nom_br, int max_br)
 {
-	encoder_state *s = calloc (1, sizeof (encoder_state));
-	ogg_packet h1,h2,h3;
+	encoder_state *s = g_new0 (encoder_state, 1);
 
 	/* If none of these are set, it's obviously not supposed to be managed */
-	if (nom_br < 0 && min_br < 0 && max_br < 0) {
-		managed = 0;
-	}
+	if (nom_br <= 0)
+		return NULL;
 
-	if (managed) {
-		XMMS_DBG ("Encoder initialising with bitrate management: %d "
-		          "channels, %d Hz, minimum bitrate %d, nominal %d, "
-		          "maximum %d", channels, rate, min_br, nom_br, max_br);
-	} else {
-		if (min_br > 0 || max_br > 0) {
-			XMMS_DBG ("Encoder initialising in constrained VBR mode: %d "
-			          "channels, %d Hz, quality %f, minimum bitrate %d, "
-			          "maximum %d", channels, rate, quality, min_br, max_br);
-		} else {
-			XMMS_DBG ("Encoder initialising in VBR mode: %d channel(s), %d Hz, "
-			          "quality %f", channels, rate, quality);
-		}
-	}
-
-	/* Have vorbisenc choose a mode for us */
-	vorbis_info_init (&s->vi);
-
-	if (managed) {
-		if (vorbis_encode_setup_managed (&s->vi, channels, rate,
-		                                 max_br>0?max_br:-1, nom_br,
-		                                 min_br>0?min_br:-1)) {
-			xmms_log_error ("Failed to configure managed encoding for "
-			                "%d channel(s), at %d Hz, with bitrates %d max %d "
-			                "nominal, %d min", channels, rate, max_br, nom_br, min_br);
-			vorbis_info_clear (&s->vi);
-			free (s);
-			return NULL;
-		}
-	} else {
-		if (vorbis_encode_setup_vbr (&s->vi, channels, rate, quality*0.1)) {
-			xmms_log_error ("Failed to configure VBR encoding for %d channel(s), "
-			                "at %d Hz, quality level %f", channels, rate, quality);
-			vorbis_info_clear (&s->vi);
-			free (s);
-			return NULL;
-		}
-
-		if (max_br > 0 || min_br > 0) {
-			struct ovectl_ratemanage_arg ai;
-			vorbis_encode_ctl (&s->vi, OV_ECTL_RATEMANAGE_GET, &ai);
-			ai.bitrate_hard_min = min_br;
-			ai.bitrate_hard_max = max_br;
-			ai.management_active = 1;
-			vorbis_encode_ctl (&s->vi, OV_ECTL_RATEMANAGE_SET, &ai);
-		}
-	}
-
-	if (managed && nom_br < 0) {
-		vorbis_encode_ctl (&s->vi, OV_ECTL_RATEMANAGE_AVG, NULL);
-	} else if (!managed) {
-		vorbis_encode_ctl (&s->vi, OV_ECTL_RATEMANAGE_SET, NULL);
-	}
-
-	vorbis_encode_setup_init (&s->vi);
-
-	vorbis_analysis_init (&s->vd, &s->vi);
-	vorbis_block_init (&s->vd, &s->vb);
-
-	ogg_stream_init (&s->os, serial);
-
-	vorbis_analysis_headerout (&s->vd, vc, &h1,&h2,&h3);
-	ogg_stream_packetin (&s->os, &h1);
-	ogg_stream_packetin (&s->os, &h2);
-	ogg_stream_packetin (&s->os, &h3);
-
-	s->in_header = 1;
-	s->samplerate = rate;
-	s->samples_in_current_page = 0;
-	s->prevgranulepos = 0;
+	s->min_br = min_br;
+	s->nom_br = nom_br;
+	s->max_br = max_br;
+	s->serial = 0;
+	s->in_header = FALSE;
+	s->encoder_inited = FALSE;
 
 	return s;
 }
 
-void encode_data_float (encoder_state *s, float **pcm, int samples)
-{
-	float **buf;
-	int i;
-
-	buf = vorbis_analysis_buffer (&s->vd, samples);
-
-	for (i=0; i < s->vi.channels; i++) {
-		memcpy (buf[i], pcm[i], samples*sizeof (float));
-	}
-
-	vorbis_analysis_wrote (&s->vd, samples);
-
-	s->samples_in_current_page += samples;
+void xmms_ices_encoder_fini (encoder_state *s) {
+	xmms_ices_encoder_free (s);
+	g_free (s);
 }
 
-/* Requires little endian data (currently) */
-void encode_data (encoder_state *s, signed char *buf, int bytes, int bigendian)
+/* Start a new logical ogg stream. */
+gboolean xmms_ices_encoder_stream_change (encoder_state *s, int rate,
+                                          int channels, vorbis_comment *vc)
+{
+	xmms_ices_encoder_free (s);
+	s->rate = rate;
+	s->channels = channels;
+	return xmms_ices_encoder_create (s, vc);
+}
+
+/* Encode the given data into Ogg Vorbis. */
+void xmms_ices_encoder_input (encoder_state *s, xmms_samplefloat_t *buf, int bytes)
 {
 	float **buffer;
 	int i,j;
 	int channels = s->vi.channels;
-	int samples = bytes/(2*channels);
+	int samples = bytes / (sizeof (xmms_samplefloat_t)*channels);
 
 	buffer = vorbis_analysis_buffer (&s->vd, samples);
 
-	if (bigendian) {
-		for (i=0; i < samples; i++) {
-			for (j=0; j < channels; j++) {
-				buffer[j][i]=((buf[2*(i*channels + j)]<<8) |
-				              (0x00ff&(int)buf[2*(i*channels + j)+1]))/32768.f;
-			}
-		}
-	} else {
-		for (i=0; i < samples; i++) {
-			for (j=0; j < channels; j++) {
-				buffer[j][i]=((buf[2*(i*channels + j) + 1]<<8) |
-				              (0x00ff&(int)buf[2*(i*channels + j)]))/32768.f;
-			}
-		}
-	}
+	for (i = 0; i < samples; i++)
+		for (j = 0; j < channels; j++)
+			buffer[j][i] = buf[i*channels + j];
 
 	vorbis_analysis_wrote (&s->vd, samples);
-
 	s->samples_in_current_page += samples;
 }
 
-
-/* Returns:
- *   0	 No output at this time
- *   >0	Page produced
- *
- * Caller should loop over this to ensure that we don't end up with
- * excessive buffering in libvorbis.
- */
-int encode_dataout (encoder_state *s, ogg_page *og)
+/* Mark the end of the vorbis encoding, flush the vorbis buffers, and
+ * mark the ogg stream as being in the flushing state. */
+void xmms_ices_encoder_finish (encoder_state *s)
 {
 	ogg_packet op;
-	int result;
 
-	if (s->in_header) {
-		result = ogg_stream_flush (&s->os, og);
-		if (result==0) {
-			s->in_header = 0;
-			return encode_dataout (s,og);
-		} else {
-			return 1;
-		}
-	} else {
-		while (vorbis_analysis_blockout (&s->vd, &s->vb)==1) {
-			vorbis_analysis (&s->vb, NULL);
-			vorbis_bitrate_addblock (&s->vb);
-
-			while (vorbis_bitrate_flushpacket (&s->vd, &op))
-				ogg_stream_packetin (&s->os, &op);
-		}
-
-		/** @todo
-		 *  Make this threshold configurable.
-		 *  We don't want to buffer too many samples in one page when doing
-		 *  live encoding - that's fine for non-live encoding, but breaks
-		 *  badly when doing things live.
-		 *  So, we flush the stream if we have too many samples buffered
-		 */
-		if (s->samples_in_current_page > s->samplerate * 2) {
-			/*LOG_DEBUG1("Forcing flush: Too many samples in current page (%d)",
-					s->samples_in_current_page); */
-			result = ogg_stream_flush (&s->os, og);
-		} else {
-			result = ogg_stream_pageout (&s->os, og);
-		}
-
-		if (result==0)
-			return 0;
-		else { /* Page found! */
-			s->samples_in_current_page -= ogg_page_granulepos (og) -
-			        s->prevgranulepos;
-			s->prevgranulepos = ogg_page_granulepos (og);
-			return 1;
-		}
-	}
-}
-
-void encode_finish (encoder_state *s)
-{
-	ogg_packet op;
 	vorbis_analysis_wrote (&s->vd, 0);
 
 	while (vorbis_analysis_blockout (&s->vd, &s->vb)==1) {
@@ -246,14 +187,61 @@ void encode_finish (encoder_state *s)
 			ogg_stream_packetin (&s->os, &op);
 	}
 
+	s->flushing = TRUE;
 }
 
-int encode_flush (encoder_state *s, ogg_page *og)
+/* Returns TRUE if an ogg page was output, FALSE if there is nothing
+ * left to do.
+ */
+gboolean xmms_ices_encoder_output (encoder_state *s, ogg_page *og)
 {
-	int result = ogg_stream_pageout (&s->os, og);
+	ogg_packet op;
 
-	if (result<=0)
-		return 0;
-	else
-		return 1;
+	/* As long as we're still in the header, we still have the header
+	 * packets to output. Loop over those before going to the actual
+	 * vorbis data. */
+	if (s->in_header) {
+		if (ogg_stream_flush (&s->os, og))
+			return TRUE;
+		else
+			s->in_header = FALSE;
+	}
+
+	/* If we're flushing the end of the stream, just output. */
+	if (s->flushing) {
+		if (ogg_stream_flush (&s->os, og))
+			return TRUE;
+		else
+			return FALSE;
+	}
+
+	/* Flush the vorbis analysis stream into ogg packets, and add
+	 * those to the ogg packet stream. */
+	while (vorbis_analysis_blockout (&s->vd, &s->vb) == 1) {
+		vorbis_analysis (&s->vb, NULL);
+		vorbis_bitrate_addblock (&s->vb);
+
+		while (vorbis_bitrate_flushpacket (&s->vd, &op))
+			ogg_stream_packetin (&s->os, &op);
+	}
+
+	/* For live encoding, we want to stream pages regularly, rather
+	 * than burst huge pages. Therefore, we periodically manually
+	 * flush the stream. */
+	if (s->samples_in_current_page > s->rate * 2) {
+		if (!ogg_stream_flush (&s->os, og))
+			return FALSE;
+	} else {
+		if (!ogg_stream_pageout (&s->os, og))
+			return FALSE;
+	}
+
+	/* At this point, we have an ogg page in og. Keep bookkeeping
+	 * accurate regarding the number of samples still in the page
+	 * buffer, and return. */
+	s->samples_in_current_page -= (ogg_page_granulepos (og)
+	                               - s->previous_granulepos);
+	s->previous_granulepos = ogg_page_granulepos (og);
+
+	return TRUE;
 }
