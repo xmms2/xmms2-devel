@@ -35,6 +35,109 @@ typedef struct xmms_ices_data_St {
 	encoder_state *encoder;
 } xmms_ices_data_t;
 
+/*
+ * Forward definitions.
+ */
+static gboolean xmms_ices_plugin_setup (xmms_output_plugin_t *plugin);
+static gboolean xmms_ices_new (xmms_output_t *output);
+static void xmms_ices_destroy (xmms_output_t *output);
+static gboolean xmms_ices_open (xmms_output_t *output);
+static void xmms_ices_close (xmms_output_t *output);
+static void xmms_ices_flush (xmms_output_t *output);
+static gboolean xmms_ices_format_set (xmms_output_t *output,
+                                      const xmms_stream_type_t *format);
+static void xmms_ices_write (xmms_output_t *output, gpointer buffer,
+                             gint len, xmms_error_t *err);
+
+/*
+ * Internal helper functions.
+ */
+static void
+xmms_ices_send_shout (xmms_ices_data_t *data, xmms_error_t *err)
+{
+	ogg_page og;
+
+	while (xmms_ices_encoder_output (data->encoder, &og) == TRUE) {
+		if (shout_send (data->shout, og.header, og.header_len) < 0) {
+			if (err)
+				xmms_error_set (err, XMMS_ERROR_GENERIC,
+				                "Disconnected or something.");
+			return;
+		} else if (shout_send (data->shout, og.body, og.body_len) < 0) {
+			if (err)
+				xmms_error_set (err, XMMS_ERROR_GENERIC,
+				                "Error when sending data to icecast server");
+			return;
+		}
+
+		shout_sync (data->shout);
+	}
+}
+
+static void
+xmms_ices_flush_internal (xmms_ices_data_t *data)
+{
+	xmms_ices_encoder_finish (data->encoder);
+
+	xmms_ices_send_shout (data, NULL);
+}
+
+/*
+ * Main plugin definition and handler functions.
+ */
+XMMS_OUTPUT_PLUGIN ("ices",
+                    "ICES Output",
+                    XMMS_VERSION,
+                    "Icecast source output plugin",
+                    xmms_ices_plugin_setup);
+
+
+/* Output plugin definition and setup. */
+static gboolean
+xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
+{
+	xmms_output_methods_t methods;
+	static const struct {
+		char *name;
+		char *val;
+	} *pptr, ices_properties[] = {
+		{ "encodingnombr", "96000" },
+		{ "encodingminbr", "-1" },
+		{ "encodingmaxbr", "-1" },
+		{ "host", "localhost" },
+		{ "port", "8000" },
+		{ "user", "source" },
+		{ "password", "hackme" },
+		{ "mount", "/stream.ogg" },
+		{ "public", "0" },
+		{ "streamname", "" },
+		{ "streamdescription", "" },
+		{ "streamgenre", "" },
+		{ "streamurl", "" },
+		{ NULL, NULL },
+	};
+
+	XMMS_OUTPUT_METHODS_INIT (methods);
+	methods.new = xmms_ices_new;
+	methods.destroy = xmms_ices_destroy;
+
+	methods.open = xmms_ices_open;
+	methods.close = xmms_ices_close;
+
+	methods.flush = xmms_ices_flush;
+	methods.format_set_always = xmms_ices_format_set;
+	methods.write = xmms_ices_write;
+
+	xmms_output_plugin_methods_set (plugin, &methods);
+
+	for (pptr = ices_properties; pptr->name != NULL; pptr++)
+		xmms_output_plugin_config_property_register (plugin, pptr->name,
+		                                             pptr->val,
+		                                             NULL, NULL);
+
+	return TRUE;
+}
+
 static gboolean
 xmms_ices_new (xmms_output_t *output)
 {
@@ -127,36 +230,6 @@ xmms_ices_open (xmms_output_t *output)
 	}
 
 	return TRUE;
-}
-
-static void
-xmms_ices_send_shout (xmms_ices_data_t *data, xmms_error_t *err)
-{
-	ogg_page og;
-
-	while (xmms_ices_encoder_output (data->encoder, &og) == TRUE) {
-		if (shout_send (data->shout, og.header, og.header_len) < 0) {
-			if (err)
-				xmms_error_set (err, XMMS_ERROR_GENERIC,
-				                "Disconnected or something.");
-			return;
-		} else if (shout_send (data->shout, og.body, og.body_len) < 0) {
-			if (err)
-				xmms_error_set (err, XMMS_ERROR_GENERIC,
-				                "Error when sending data to icecast server");
-			return;
-		}
-
-		shout_sync (data->shout);
-	}
-}
-
-static void
-xmms_ices_flush_internal (xmms_ices_data_t *data)
-{
-	xmms_ices_encoder_finish (data->encoder);
-
-	xmms_ices_send_shout (data, NULL);
 }
 
 static void
@@ -269,56 +342,3 @@ xmms_ices_write (xmms_output_t *output, gpointer buffer,
 
 	xmms_ices_send_shout (data, err);
 }
-
-
-/* Output plugin definition and setup. */
-static gboolean
-xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
-{
-	xmms_output_methods_t methods;
-	static const struct {
-		char *name;
-		char *val;
-	} *pptr, ices_properties[] = {
-		{ "encodingnombr", "96000" },
-		{ "encodingminbr", "-1" },
-		{ "encodingmaxbr", "-1" },
-		{ "host", "localhost" },
-		{ "port", "8000" },
-		{ "user", "source" },
-		{ "password", "hackme" },
-		{ "mount", "/stream.ogg" },
-		{ "public", "0" },
-		{ "streamname", "" },
-		{ "streamdescription", "" },
-		{ "streamgenre", "" },
-		{ "streamurl", "" },
-		{ NULL, NULL },
-	};
-
-	XMMS_OUTPUT_METHODS_INIT (methods);
-	methods.new = xmms_ices_new;
-	methods.destroy = xmms_ices_destroy;
-
-	methods.open = xmms_ices_open;
-	methods.close = xmms_ices_close;
-
-	methods.flush = xmms_ices_flush;
-	methods.format_set_always = xmms_ices_format_set;
-	methods.write = xmms_ices_write;
-
-	xmms_output_plugin_methods_set (plugin, &methods);
-
-	for (pptr = ices_properties; pptr->name != NULL; pptr++)
-		xmms_output_plugin_config_property_register (plugin, pptr->name,
-		                                             pptr->val,
-		                                             NULL, NULL);
-
-	return TRUE;
-}
-
-XMMS_OUTPUT_PLUGIN ("ices",
-                    "ICES Output",
-                    XMMS_VERSION,
-                    "Icecast source output plugin",
-                    xmms_ices_plugin_setup);
