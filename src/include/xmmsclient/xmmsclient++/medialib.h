@@ -235,6 +235,8 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 *
 			 *  @return List of @link Dict Dicts@endlink
+			 *  @deprecated This function is now deprecated, use the collection
+			 *              API instead! If it does not suffice, file a bug.
 			 */
 			DictListResult select( const std::string& query ) const;
 

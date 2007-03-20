@@ -724,7 +724,6 @@ remove_from_playlist (gpointer key, gpointer value, gpointer udata)
  * Remove all additions of entry in the playlist
  *
  * @param playlist the playlist to remove entries from
- * @param plname the name of the playlist
  * @param entry the playlist entry to remove
  *
  * @sa xmms_playlist_remove
