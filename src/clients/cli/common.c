@@ -287,24 +287,55 @@ coll_read_collname (gchar *str, gchar **name, gchar **namespace)
 	return TRUE;
 }
 
-/** Return an escaped version of the string, with \-protected chars. */
+/** Return an escaped version of the string, with \-protected chars.
+ *
+ *  A heuristic is used to pseudo-smartly escape the parentheses: an
+ *  opening parenthesis is escaped unless it's the first char of the
+ *  string; a closing parenthesis is escaped unless it's the last char
+ *  of the string or it has a corresponding opening parenthesis.
+ *
+ *  It is imperfect in the case that s ends with a parenthesis which
+ *  has not been opened.
+ */
 char *
 string_escape (const char *s)
 {
 	int i, w;
 	int esc_chars;
+	int end_index;
+	int paren_cnt;
 	char *res;
 
+	end_index = strlen (s) - 1;
+
+	paren_cnt = 0;
 	esc_chars = 0;
 	for (i = 0; s[i] != '\0'; i++) {
-		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'' ||
+		    (s[i] == '(' && i != 0) ||
+		    (s[i] == ')' && (i != end_index || paren_cnt > 0)) ) {
+
+			if (s[i] == '(') {
+				paren_cnt++;
+			} else if (s[i] == ')') {
+				paren_cnt--;
+			}
 			esc_chars++;
 		}
 	}
 
+	paren_cnt = 0;
 	res = g_new0 (char, strlen (s) + esc_chars + 1);
 	for (i = 0, w = 0; s[i] != '\0'; i++, w++) {
-		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'' ||
+		    (s[i] == '(' && i != 0) ||
+		    (s[i] == ')' && (i != end_index || paren_cnt > 0)) ) {
+
+			if (s[i] == '(') {
+				paren_cnt++;
+			} else if (s[i] == ')') {
+				paren_cnt--;
+			}
 			res[w] = '\\';
 			w++;
 		}
