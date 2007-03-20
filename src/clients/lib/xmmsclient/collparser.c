@@ -249,7 +249,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 		type = XMMS_COLLECTION_TOKEN_STRING;
 
 		tmp++;
-		strval = x_new0 (char, strlen (tmp));
+		strval = x_new0 (char, strlen (tmp) + 1);
 
 		while (escape || (*tmp != '\0' && *tmp != quote)) {
 			if (!escape && (*tmp == '\\')) {
@@ -281,7 +281,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 
 	i = 0;
 	type = XMMS_COLLECTION_TOKEN_INTEGER;
-	strval = x_new0 (char, strlen (tmp));
+	strval = x_new0 (char, strlen (tmp) + 1);
 	while (escape || (*tmp != '\0' && *tmp != ' ')) {
 
 		/* Control input chars, escape mechanism, etc */
