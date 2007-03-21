@@ -1,0 +1,8 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    return conf.check_pkg('libpulse', destvar='pulse')
+
+configure, build = plugin('pulse', configure=plugin_configure,
+                          source=['pulse.c', 'backend.c'],
+                          needs_lib=True, output_prio=5)
