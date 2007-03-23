@@ -51,8 +51,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include <pthread.h>
-
 /*
  * Forward declarations of the methods in the main object
  */
