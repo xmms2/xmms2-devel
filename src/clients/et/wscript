@@ -20,10 +20,12 @@ def build(bld):
     obj.files = ['xmms2-et.1']
 
 def configure(conf):
-   if Params.g_platform == 'sunos5':
+    if Params.g_platform == 'sunos5':
         if not conf.check_library2("resolv", uselib='resolv'):
             return False
-   return True
+    elif Params.g_platform == 'win32':
+        return False
+    return True
 
 def set_options(opt):
     pass
