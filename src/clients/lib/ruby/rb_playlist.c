@@ -195,6 +195,18 @@ c_add_entry (VALUE self, VALUE arg)
 
 /*
  * call-seq:
+ *  pl.radd(path) -> result
+ *
+ * Recursively imports all media files under _path_ to the playlist.
+ */
+static VALUE
+c_radd (VALUE self, VALUE path)
+{
+	PLAYLIST_METHOD_ADD_HANDLER_STR (radd, path);
+}
+
+/*
+ * call-seq:
  *  pl.insert_entry(pos, arg) -> result
  *
  * Inserts an entry to the current playlist at position _pos_ in the playlist.
@@ -347,6 +359,7 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "shuffle", c_shuffle, 0);
 	rb_define_method (c, "clear", c_clear, 0);
 	rb_define_method (c, "add_entry", c_add_entry, 1);
+	rb_define_method (c, "radd", c_radd, 1);
 	rb_define_method (c, "insert_entry", c_insert_entry, 2);
 	rb_define_method (c, "remove_entry", c_remove_entry, 1);
 	rb_define_method (c, "move_entry", c_move_entry, 2);
