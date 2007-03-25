@@ -16,8 +16,19 @@
 
 #include "common.h"
 
+#include <Windows.h>
+
 gint
 find_terminal_width ()
 {
-	return 80;
+	HANDLE h_stdout;
+	CONSOLE_SCREEN_BUFFER_INFO info;
+
+	h_stdout = GetStdHandle (STD_OUTPUT_HANDLE);
+
+	if (GetConsoleScreenBufferInfo (h_stdout, &info)) {
+		return info.dwMaximumWindowSize.X;
+	} else {
+		return 80;
+	}
 }
