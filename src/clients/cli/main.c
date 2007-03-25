@@ -64,6 +64,7 @@ cmds commands[] = {
 	/* Playback managment */
 	{ "play", "starts playback", cmd_play },
 	{ "stop", "stops playback", cmd_stop },
+	{ "toggleplay", "toggles playback status between play/pause", cmd_toggleplay },
 	{ "pause", "pause playback", cmd_pause },
 	{ "next", "play next song", cmd_next },
 	{ "prev", "play previous song", cmd_prev },

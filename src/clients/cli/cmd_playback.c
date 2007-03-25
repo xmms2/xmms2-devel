@@ -43,6 +43,34 @@ do_reljump (xmmsc_connection_t *conn, gint where)
 
 
 void
+cmd_toggleplay (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmms_playback_status_t status;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_status (conn);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Couldn't get playback status: %s",
+		             xmmsc_result_get_error (res));
+	}
+	
+	if (!xmmsc_result_get_uint (res, &status)) {
+		print_error ("Broken resultset");
+	}
+
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+		cmd_pause (conn, argc, argv);
+	} else {
+		cmd_play (conn, argc, argv);
+	}
+
+	xmmsc_result_unref (res);
+}
+
+
+void
 cmd_play (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
@@ -56,7 +84,6 @@ cmd_play (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 	xmmsc_result_unref (res);
 }
-
 
 void
 cmd_stop (xmmsc_connection_t *conn, gint argc, gchar **argv)

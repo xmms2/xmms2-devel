@@ -21,6 +21,7 @@
 
 #include <glib.h>
 
+void cmd_toggleplay (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_play (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_stop (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_pause (xmmsc_connection_t *conn, gint argc, gchar **argv);
