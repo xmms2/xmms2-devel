@@ -1,3 +1,5 @@
+import sys
+
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2-launcher'
@@ -10,6 +12,8 @@ def build(bld):
     obj.files = ['xmms2-launcher.1']
 
 def configure(conf):
+    if sys.platform == 'win32':
+        return False
     return True
 
 def set_options(opt):
