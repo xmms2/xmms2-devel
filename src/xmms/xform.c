@@ -888,7 +888,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 
 			if (!g_queue_is_empty (xform->hotspots)) {
 				if (xform->buffered + res > xform->buffersize) {
-					xform->buffersize *= 2;
+					xform->buffersize = MAX (xform->buffersize * 2, xform->buffersize + res);
 					xform->buffer = g_realloc (xform->buffer, xform->buffersize);
 				}
 
