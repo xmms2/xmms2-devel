@@ -416,6 +416,11 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 
 		/* Warning: must be placed _before_ the EQUALS->MATCH converter! */
 		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
+			/* Integers are interpreted as strings in this case */
+			if (curr->type == XMMS_COLLECTION_TOKEN_INTEGER) {
+				curr->type = XMMS_COLLECTION_TOKEN_STRING;
+			}
+
 			/* Fuzzy match the operand to MATCH, i.e. surround with '%' */
 			if (curr->type == XMMS_COLLECTION_TOKEN_STRING ||
 			    curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
@@ -444,6 +449,10 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 			/* If MATCHing a pattern, use CONTAINS instead */
 			if (curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
 				prev->type = XMMS_COLLECTION_TOKEN_OPFIL_MATCH;
+
+			/* Integers are interpreted as strings in this case */
+			} else if (curr->type == XMMS_COLLECTION_TOKEN_INTEGER) {
+				curr->type = XMMS_COLLECTION_TOKEN_STRING;
 			}
 			break;
 
