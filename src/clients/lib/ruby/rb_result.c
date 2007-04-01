@@ -212,7 +212,7 @@ int_get (RbResult *res)
 	if (!xmmsc_result_get_int (res->real, &id))
 		rb_raise (eValueError, "cannot retrieve value");
 
-	return INT2FIX (id);
+	return INT2NUM (id);
 }
 
 static VALUE

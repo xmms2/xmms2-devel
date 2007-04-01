@@ -40,9 +40,7 @@
 #define COLL_METHOD_ADD_HANDLER_UINT(action, arg1) \
 	COLL_METHOD_HANDLER_HEADER \
 \
-	Check_Type (arg1, T_FIXNUM); \
-\
-	xmmsc_coll_##action (coll->real, NUM2UINT (arg1)); \
+	xmmsc_coll_##action (coll->real, check_uint32 (arg1)); \
 
 #define COLL_METHOD_ADD_HANDLER_COLL(action, arg1) \
 	RbCollection *arg = NULL; \
@@ -131,8 +129,7 @@ c_coll_init (VALUE self, VALUE type)
 {
 	COLL_METHOD_HANDLER_HEADER
 
-	Check_Type (type, T_FIXNUM);
-	coll->real = xmmsc_coll_new (NUM2UINT (type));
+	coll->real = xmmsc_coll_new (check_uint32 (type));
 
 	return self;
 }
@@ -158,7 +155,7 @@ c_coll_universe (VALUE klass)
 /* call-seq:
  * c.type
  *
- * Returns the type of the collection as a Fixnum.
+ * Returns the type of the collection as an Integer.
  */
 static VALUE
 c_coll_type_get (VALUE self)
@@ -167,7 +164,7 @@ c_coll_type_get (VALUE self)
 
 	COLL_METHOD_ADD_HANDLER_RET (get_type)
 
-	return INT2FIX (ret);
+	return UINT2NUM (ret);
 }
 
 /* call-seq:
@@ -249,7 +246,7 @@ c_coll_idlist_get (VALUE self)
 	COLL_METHOD_ADD_HANDLER_RET (get_idlist)
 
 	for (i = 0; ret[i]; i++)
-		rb_ary_push (ary, INT2FIX (ret[i]));
+		rb_ary_push (ary, UINT2NUM (ret[i]));
 
 	return ary;
 }

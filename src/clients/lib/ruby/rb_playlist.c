@@ -56,21 +56,17 @@
 #define PLAYLIST_METHOD_ADD_HANDLER_UINT(action, arg) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
-	Check_Type (arg, T_FIXNUM); \
-\
 	res = xmmsc_playlist_##action (xmms->real, pl->name, \
-	                               NUM2UINT (arg)); \
+	                               check_uint32 (arg)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
 #define PLAYLIST_METHOD_ADD_HANDLER_UINT_UINT(action, arg1, arg2) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
-	Check_Type (arg1, T_FIXNUM); \
-	Check_Type (arg2, T_FIXNUM); \
-\
 	res = xmmsc_playlist_##action (xmms->real, pl->name, \
-	                               NUM2UINT (arg1), NUM2UINT (arg2)); \
+	                               check_uint32 (arg1), \
+	                               check_uint32 (arg2)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
@@ -182,16 +178,17 @@ c_list_entries (VALUE self)
 static VALUE
 c_add_entry (VALUE self, VALUE arg)
 {
+	uint32_t id;
+
 	PLAYLIST_METHOD_HANDLER_HEADER
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		res = xmmsc_playlist_add_url (xmms->real, pl->name,
 		                              StringValuePtr (arg));
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		res = xmmsc_playlist_add_id (xmms->real, pl->name,
-		                             NUM2UINT (arg));
-	else
-		rb_raise (eClientError, "unsupported argument");
+	else {
+		id = check_uint32 (arg);
+		res = xmmsc_playlist_add_id (xmms->real, pl->name, id);
+	}
 
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
@@ -206,18 +203,21 @@ c_add_entry (VALUE self, VALUE arg)
 static VALUE
 c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 {
+	uint32_t id;
+	int32_t ipos;
+
 	PLAYLIST_METHOD_HANDLER_HEADER
 
-	Check_Type (pos, T_FIXNUM);
+	ipos = check_int32 (pos);
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		res = xmmsc_playlist_insert_url (xmms->real, pl->name,
-		                                 NUM2UINT (pos), StringValuePtr (arg));
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
+		                                 ipos, StringValuePtr (arg));
+	else {
+		id = check_uint32 (arg);
 		res = xmmsc_playlist_insert_id (xmms->real, pl->name,
-		                                NUM2UINT (pos), NUM2UINT (arg));
-	else
-		rb_raise (ePlaylistError, "unsupported argument");
+		                                ipos, id);
+	}
 
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
