@@ -1,4 +1,5 @@
 from waftools.plugin import plugin
+from os.path import realpath
 
 def plugin_configure(conf):
     if not conf.env["HAVE_CXX"]:
@@ -16,7 +17,7 @@ def plugin_configure(conf):
         return False
 
     builders = conf.env['sidplay_BUILDERS']
-    if not builders in conf.env['LIBPATH_sidplay']:
+    if not realpath(builders) in [realpath(i) for i in conf.env['LIBPATH_sidplay']]:
         conf.env['LIBPATH_sidplay'].append("%s" % builders)
         conf.env['LINKFLAGS_sidplay'] = "-Wl,-rpath=%s" % builders
     return True
