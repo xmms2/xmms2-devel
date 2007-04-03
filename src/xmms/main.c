@@ -34,6 +34,7 @@
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_signal.h"
 #include "xmmspriv/xmms_symlink.h"
+#include "xmmspriv/xmms_checkroot.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
@@ -49,7 +50,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <fcntl.h>
 
 /*
@@ -412,7 +412,7 @@ main (int argc, char **argv)
 		exit (EXIT_FAILURE);
 	}
 
-	if (getuid () == 0 || geteuid () == 0) {
+	if (xmms_checkroot ()) {
 		if (runasroot) {
 			g_print ("***************************************\n");
 			g_print ("Warning! You are running XMMS2D as root, this is a bad idea!\nBut I'll allow it since you asked nicely.\n");
