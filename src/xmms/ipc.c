@@ -363,11 +363,7 @@ xmms_ipc_client_read_cb (GIOChannel *iochan,
 
 	g_return_val_if_fail (client, FALSE);
 
-	if (!(cond & G_IO_IN)) {
-		xmms_log_error ("Client got error/hup, maybe connection died?");
-		g_main_loop_quit (client->ml);
-		return FALSE;
-	} else {
+	if (cond & G_IO_IN) {
 		while (TRUE) {
 			if (!client->read_msg) {
 				client->read_msg = xmms_ipc_msg_alloc ();
@@ -384,12 +380,18 @@ xmms_ipc_client_read_cb (GIOChannel *iochan,
 		}
 	}
 
-	if (disconnect) {
+	if (disconnect || (cond & G_IO_HUP)) {
 		if (client->read_msg) {
 			xmms_ipc_msg_destroy (client->read_msg);
 			client->read_msg = NULL;
 		}
 		XMMS_DBG ("disconnect was true!");
+		g_main_loop_quit (client->ml);
+		return FALSE;
+	}
+
+	if (cond & G_IO_ERR) {
+		xmms_log_error ("Client got error, maybe connection died?");
 		g_main_loop_quit (client->ml);
 		return FALSE;
 	}
@@ -477,6 +479,10 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	fd = xmms_ipc_transport_fd_get (transport);
 	client->iochan = g_io_channel_unix_new (fd);
 	g_return_val_if_fail (client->iochan, NULL);
+
+	g_io_channel_set_close_on_unref (client->iochan, TRUE);
+	g_io_channel_set_encoding (client->iochan, NULL, NULL);
+	g_io_channel_set_buffered (client->iochan, FALSE);
 
 	client->transport = transport;
 	client->ipc = ipc;
@@ -606,6 +612,11 @@ xmms_ipc_setup_server_internaly (xmms_ipc_t *ipc)
 {
 	g_mutex_lock (ipc->mutex_lock);
 	ipc->chan = g_io_channel_unix_new (xmms_ipc_transport_fd_get (ipc->transport));
+
+	g_io_channel_set_close_on_unref (ipc->chan, TRUE);
+	g_io_channel_set_encoding (ipc->chan, NULL, NULL);
+	g_io_channel_set_buffered (ipc->chan, FALSE);
+
 	g_io_add_watch (ipc->chan, G_IO_IN | G_IO_HUP | G_IO_ERR,
 	                xmms_ipc_source_accept, ipc);
 	g_mutex_unlock (ipc->mutex_lock);
