@@ -54,8 +54,10 @@ def build(bld):
     prog.source = ["main.c"]
     if sys.platform == 'win32':
         prog.source.append("compat/signal_dummy.c")
+        prog.source.append("compat/symlink_dummy.c")
     else:
         prog.source.append("compat/signal_unix.c")
+        prog.source.append("compat/symlink_unix.c")
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 

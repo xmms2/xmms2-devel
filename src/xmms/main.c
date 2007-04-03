@@ -33,6 +33,7 @@
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_signal.h"
+#include "xmmspriv/xmms_symlink.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
@@ -285,19 +286,6 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	g_timeout_add (1, kill_server, object);
 }
 
-static gboolean
-symlink_file (gchar *source, gchar *dest)
-{
-	gint r;
-
-	g_return_val_if_fail (source, FALSE);
-	g_return_val_if_fail (dest, FALSE);
-
-	r = symlink (source, dest);
-
-	return r != -1;
-}
-
 static void
 install_scripts (const gchar *into_dir)
 {
@@ -324,7 +312,7 @@ install_scripts (const gchar *into_dir)
 	while ((f = g_dir_read_name (dir))) {
 		gchar *source = g_strdup_printf ("%s/%s", path, f);
 		gchar *dest = g_strdup_printf ("%s/%s", into_dir, f);
-		if (!symlink_file (source, dest)) {
+		if (!xmms_symlink_file (source, dest)) {
 			break;
 		}
 		g_free (source);
