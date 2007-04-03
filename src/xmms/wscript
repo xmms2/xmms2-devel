@@ -46,16 +46,16 @@ def build(bld):
     lib.source = source
 
     env = bld.env_of_name("default")
-    lib.source.append("statfs_%s.c" % env["statfs_os"])
+    lib.source.append("compat/statfs_%s.c" % env["statfs_os"])
 
     prog = bld.create_obj('cc', 'program')
     prog.target = 'xmms2d'
     prog.includes = '. ../include ../includepriv'
     prog.source = ["main.c"]
     if sys.platform == 'win32':
-        prog.source.append("signal_dummy.c")
+        prog.source.append("compat/signal_dummy.c")
     else:
-        prog.source.append("signal_unix.c")
+        prog.source.append("compat/signal_unix.c")
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
