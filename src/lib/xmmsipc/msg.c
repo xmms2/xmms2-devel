@@ -372,12 +372,8 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	xmmsc_coll_t *op;
 	void *ret;
 
-	if (!msg) {
+	if (!msg || !coll) {
 		return NULL;
-	}
-
-	if (!coll) {
-		return xmms_ipc_msg_put_uint32 (msg, XMMS_COLLECTION_TYPE_ERROR);
 	}
 
 	/* save internal status */
@@ -585,8 +581,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 	char *key, *val;
 
 	/* Get the type and create the collection */
-	if (!xmms_ipc_msg_get_uint32 (msg, &type) ||
-	    type == XMMS_COLLECTION_TYPE_ERROR) {
+	if (!xmms_ipc_msg_get_uint32 (msg, &type)) {
 		return false;
 	}
 

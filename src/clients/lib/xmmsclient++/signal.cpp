@@ -107,10 +107,6 @@ namespace Xmms
 				temp = new Coll::PartyShuffle( coll );
 				break;
 			}
-			case XMMS_COLLECTION_TYPE_ERROR: {
-				// ??
-				break;
-			}
 
 		}
 

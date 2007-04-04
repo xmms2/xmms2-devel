@@ -66,10 +66,7 @@ XMMS_OBJECT_CMD_ARG_TYPE_T
 XMMSC_COLL_TYPE_T
 	{
 		$arg = newSVpv ("", 0);
-		if ($var == XMMS_COLLECTION_TYPE_ERROR) {
-			sv_setpv ($arg, \"error\");
-		}
-		else if ($var == XMMS_COLLECTION_TYPE_REFERENCE) {
+		if ($var == XMMS_COLLECTION_TYPE_REFERENCE) {
 			sv_setpv ($arg, \"reference\");
 		}
 		else if ($var == XMMS_COLLECTION_TYPE_UNION) {
@@ -155,10 +152,7 @@ XMMSC_COLL_TYPE_T
 	{
 		char *coll_type = SvPV_nolen ($arg);
 
-		if (strcmp (coll_type, \"error\") == 0) {
-			$var = XMMS_COLLECTION_TYPE_ERROR;
-		}
-		else if (strcmp (coll_type, \"reference\") == 0) {
+		if (strcmp (coll_type, \"reference\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_REFERENCE;
 		}
 		else if (strcmp (coll_type, \"union\") == 0) {

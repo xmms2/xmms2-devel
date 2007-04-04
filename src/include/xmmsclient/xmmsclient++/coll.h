@@ -40,7 +40,6 @@ namespace Xmms
 
 		typedef xmmsc_coll_type_t Type;
 
-		const Type ERROR        = XMMS_COLLECTION_TYPE_ERROR;
 		const Type REFERENCE    = XMMS_COLLECTION_TYPE_REFERENCE;
 		const Type UNION        = XMMS_COLLECTION_TYPE_UNION;
 		const Type INTERSECTION = XMMS_COLLECTION_TYPE_INTERSECTION;

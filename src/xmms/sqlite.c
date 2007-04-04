@@ -34,7 +34,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 32
+#define DB_VERSION 33
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -184,6 +184,15 @@ upgrade_v31_to_v32 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v32_to_v33 (sqlite3 *sql)
+{
+	/* Decrement collection type id, as we removed ERROR from the enum. */
+	XMMS_DBG ("upgrade v32->v33");
+	sqlite3_exec (sql, "update CollectionOperators set type=type - 1", NULL, NULL, NULL);
+	XMMS_DBG ("done");
+}
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -202,6 +211,8 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v30_to_v31 (sql);
 		case 31:
 			upgrade_v31_to_v32 (sql);
+		case 32:
+			upgrade_v32_to_v33 (sql);
 			break; /* remember to (re)move this! We want fallthrough */
 		default:
 			can_upgrade = FALSE;

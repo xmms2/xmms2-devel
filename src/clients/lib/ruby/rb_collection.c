@@ -184,22 +184,6 @@ c_coll_type_set (VALUE self, VALUE type)
 }
 
 /* call-seq:
- * c.error?
- *
- * Returns true if _c_ is a collection of type Xmms::Collection::TYPE_ERROR or
- * false otherwise.
- */
-static VALUE
-c_coll_is_error (VALUE self)
-{
-	xmmsc_coll_type_t ret;
-
-	COLL_METHOD_ADD_HANDLER_RET (get_type)
-
-	return ret == XMMS_COLLECTION_TYPE_ERROR ? Qtrue : Qfalse;
-}
-
-/* call-seq:
  * c.operands
  *
  * Gets a list of the operands that make up the collection.
@@ -375,7 +359,6 @@ Init_Collection (VALUE mXmms)
 	/* type methods */
 	rb_define_method (cColl, "type", c_coll_type_get, 0);
 	rb_define_method (cColl, "type=", c_coll_type_set, 1);
-	rb_define_method (cColl, "error?", c_coll_is_error, 0);
 
 	/* idlist methods */
 	rb_define_method (cColl, "idlist", c_coll_idlist_get, 0);
@@ -406,7 +389,6 @@ Init_Collection (VALUE mXmms)
 	                 rb_str_new2 (XMMS_COLLECTION_NS_COLLECTIONS));
 	rb_define_const (cColl, "NS_PLAYLISTS",
 	                 rb_str_new2 (XMMS_COLLECTION_NS_PLAYLISTS));
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_ERROR)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_REFERENCE)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_UNION)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_INTERSECTION)

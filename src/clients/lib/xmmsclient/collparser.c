@@ -975,21 +975,17 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 		colltype = XMMS_COLLECTION_TYPE_MATCH;
 		token = coll_next_token (token);
 	} else {
-		colltype = XMMS_COLLECTION_TYPE_ERROR;
+		/* No operator at all, guess from argument type */
+		if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
+			colltype = XMMS_COLLECTION_TYPE_MATCH;
+		else
+			colltype = XMMS_COLLECTION_TYPE_EQUALS;
 	}
 
 	strval = coll_parse_strval (token);
 	if (!strval) {
 		*ret = NULL;
 		return token;
-	}
-
-	/* No operator at all, guess from argument type */
-	if (colltype == XMMS_COLLECTION_TYPE_ERROR) {
-		if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
-			colltype = XMMS_COLLECTION_TYPE_MATCH;
-		else
-			colltype = XMMS_COLLECTION_TYPE_EQUALS;
 	}
 
 	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);

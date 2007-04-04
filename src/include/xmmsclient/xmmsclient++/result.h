@@ -419,10 +419,6 @@ namespace Xmms
 						collptr.reset( new Coll::PartyShuffle( coll ) );
 						break;
 					}
-					case XMMS_COLLECTION_TYPE_ERROR: {
-						throw result_error( "invalid collection in result" );
-						break;
-					}
 
 				}
 
