@@ -21,7 +21,7 @@ def build(bld):
     obj.target = 'xmmsclient_glib'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = ['rb_xmmsclient_glib.c']
-    obj.uselib_local = 'xmmsclient-glib'
+    obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'ruby glib2'
     obj.install_in = "ARCHDIR_ruby"
     obj.env["plugin_PREFIX"] = ''
@@ -32,7 +32,7 @@ def build(bld):
         obj.target = 'xmmsclient_ecore'
         obj.includes = '../../../include ../../../includepriv'
         obj.source = ['rb_xmmsclient_ecore.c']
-        obj.uselib_local = 'xmmsclient-ecore'
+        obj.uselib_local = 'xmmsclient-ecore xmmsclient'
         obj.uselib = 'ruby ecore'
         obj.install_in = "ARCHDIR_ruby"
         obj.env["plugin_PREFIX"] = ''
