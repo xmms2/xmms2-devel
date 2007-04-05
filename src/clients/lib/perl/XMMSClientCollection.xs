@@ -213,6 +213,6 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, OUTLIST char *val
 			XSRETURN_UNDEF;
 
 xmmsc_coll_t *
-xmmsc_coll_universe (class)
+xmmsc_coll_universe (class="optional")
 	C_ARGS:
 		/* void */

@@ -30,9 +30,9 @@ for my $type (@functions) {
     }
 }
 
-our @EXPORT_OK = @functions;
+our @EXPORT_OK = (@functions, 'universe');
 our %EXPORT_TAGS = (
-        all => \@functions,
+        all => \@EXPORT_OK,
         %functions,
 );
 
