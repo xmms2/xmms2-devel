@@ -35,6 +35,11 @@
 
 #endif
 
+typedef struct perl_xmmsclient_playlist_St {
+	xmmsc_connection_t *conn;
+	char *name;
+} perl_xmmsclient_playlist_t;
+
 typedef enum {
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_UNKNOWN,
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION,
@@ -73,3 +78,7 @@ SV *perl_xmmsclient_xmms_result_cast_value (xmmsc_result_value_type_t type, cons
 char **perl_xmmsclient_unpack_char_ptr_ptr (SV *sv);
 
 SV *perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen);
+
+perl_xmmsclient_playlist_t *perl_xmmsclient_playlist_new (xmmsc_connection_t *c, const char *playlist);
+
+void perl_xmmsclient_playlist_destroy (perl_xmmsclient_playlist_t *p);

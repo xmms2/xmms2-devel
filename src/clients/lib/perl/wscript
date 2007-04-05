@@ -9,6 +9,7 @@ def build(bld):
     obj.source = """
                  perl_xmmsclient.c
                  XMMSClient.xs
+                 XMMSClientPlaylist.xs
                  XMMSClientCollection.xs
                  XMMSClientResult.xs
                  XMMSClientResultPropDict.xs

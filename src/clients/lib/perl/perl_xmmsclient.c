@@ -207,3 +207,35 @@ perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen) {
 
 	return *val;
 }
+
+perl_xmmsclient_playlist_t *
+perl_xmmsclient_playlist_new (xmmsc_connection_t *conn, const char *playlist) {
+	perl_xmmsclient_playlist_t *p;
+
+	p = (perl_xmmsclient_playlist_t *)malloc (sizeof (perl_xmmsclient_playlist_t));
+
+	if (!p) {
+		croak ("Failed to allocate playlist");
+	}
+
+	xmmsc_ref (conn);
+	p->conn = conn;
+
+	p->name = strdup (playlist);
+
+	return p;
+}
+
+void
+perl_xmmsclient_playlist_destroy (perl_xmmsclient_playlist_t *p) {
+	if (p->conn) {
+		xmmsc_unref (p->conn);
+		p->conn = NULL;
+	}
+
+	if (p->name) {
+		free (p->name);
+	}
+
+	free (p);
+}

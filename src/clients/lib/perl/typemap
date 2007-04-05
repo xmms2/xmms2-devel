@@ -11,6 +11,7 @@ xmms_object_cmd_arg_type_t	XMMS_OBJECT_CMD_ARG_TYPE_T
 uint32_t					T_UV
 int32_t						T_IV
 perl_xmmsclient_collection_order_t	PERL_XMMSCLIENT_COLLECTION_ORDER_T
+perl_xmmsclient_playlist_t *	PERL_XMMSCLIENT_PLAYLIST_T
 
 OUTPUT
 
@@ -107,6 +108,9 @@ XMMSC_COLL_TYPE_T
 		}
 	}
 
+PERL_XMMSCLIENT_PLAYLIST_T
+	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Playlist\");
+
 INPUT
 
 XMMSC_CONNECTION_T
@@ -147,6 +151,9 @@ XMMS_PLUGIN_TYPE_T
 
 PERL_XMMSCLIENT_COLLECTION_ORDER_T
 	$var = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
+
+PERL_XMMSCLIENT_PLAYLIST_T
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Playlist\");
 
 XMMSC_COLL_TYPE_T
 	{

@@ -142,10 +142,14 @@ xmmsc_medialib_add_entry_encoded (c, url)
 		xmmsc_connection_t *c
 		const char *url
 
-xmmsc_result_t *
-xmmsc_playlist_list_entries (c, playlist)
+perl_xmmsclient_playlist_t *
+playlist(c, playlist=XMMS_ACTIVE_PLAYLIST)
 		xmmsc_connection_t *c
 		const char *playlist
+	CODE:
+		RETVAL = perl_xmmsclient_playlist_new (c, playlist);
+	OUTPUT:
+		RETVAL
 
 xmmsc_result_t *
 xmmsc_medialib_path_import (c, path)
@@ -513,155 +517,8 @@ xmmsc_broadcast_playback_volume_changed (c)
 ## Playlist
 
 xmmsc_result_t *
-xmmsc_playlist_create (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
-
-xmmsc_result_t *
-xmmsc_playlist_current_pos (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
-
-xmmsc_result_t *
-xmmsc_playlist_shuffle (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
-
-xmmsc_result_t *
-xmmsc_playlist_sort (c, playlist, properties)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char **properties = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
-	CLEANUP:
-		free (properties);
-
-xmmsc_result_t *
-xmmsc_playlist_clear (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
-
-xmmsc_result_t *
 xmmsc_playlist_list (c)
 		xmmsc_connection_t *c
-
-xmmsc_result_t *
-xmmsc_playlist_insert_id (c, playlist, pos, id)
-		xmmsc_connection_t *c
-		const char *playlist
-		int pos
-		unsigned int id
-
-xmmsc_result_t *
-xmmsc_playlist_insert_args (c, playlist, pos, url, ...)
-		xmmsc_connection_t *c
-		const char *playlist
-		int pos
-		const char *url
-	PREINIT:
-		int i;
-		int nargs;
-		const char **args = NULL;
-	INIT:
-		nargs = items - 3;
-		args = (const char **)malloc (sizeof (char*) * nargs);
-
-		for (i = 3; i < items; i++) {
-			args[i] = SvPV_nolen (ST (i));
-		}
-	C_ARGS:
-		c, playlist, pos, url, nargs, args
-	CLEANUP:
-		free (args);
-
-xmmsc_result_t *
-xmmsc_playlist_insert_url (c, playlist, pos, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		int pos
-		const char *url
-
-xmmsc_result_t *
-xmmsc_playlist_insert_encoded (c, playlist, pos, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		int pos
-		const char *url
-
-xmmsc_result_t *
-xmmsc_playlist_insert_collection (c, playlist, pos, collection, order)
-		xmmsc_connection_t *c
-		const char *playlist
-		int pos
-		xmmsc_coll_t *collection
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
-	CLEANUP:
-		free (order);
-
-xmmsc_result_t *
-xmmsc_playlist_add_id (c, playlist, id)
-		xmmsc_connection_t *c
-		const char *playlist
-		unsigned int id
-
-xmmsc_result_t *
-xmmsc_playlist_add_args (c, playlist, url, ...)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char *url
-	PREINIT:
-		int i;
-		int nargs;
-		const char **args = NULL;
-	INIT:
-		nargs = items - 2;
-		args = (const char **)malloc (sizeof (char *) * nargs);
-
-		for (i = 0; i < nargs; i++) {
-			args[i] = SvPV_nolen (ST (i+2));
-		}
-	C_ARGS:
-		c, playlist, url, nargs, args
-	CLEANUP:
-		free (args);
-
-xmmsc_result_t *
-xmmsc_playlist_add_url (c, playlist, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char *url
-
-xmmsc_result_t *
-xmmsc_playlist_add_encoded (c, playlist, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char *url
-
-xmmsc_result_t *
-xmmsc_playlist_add_collection (c, playlist, collection, order)
-		xmmsc_connection_t *c
-		const char *playlist
-		xmmsc_coll_t *collection
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
-	CLEANUP:
-		free (order);
-
-xmmsc_result_t *
-xmmsc_playlist_move_entry (c, playlist, cur_pos, new_pos)
-		xmmsc_connection_t *c
-		const char *playlist
-		uint32_t cur_pos
-		uint32_t new_pos
-
-xmmsc_result_t *
-xmmsc_playlist_remove_entry (c, playlist, pos)
-		xmmsc_connection_t *c
-		const char *playlist
-		unsigned int pos
-
-xmmsc_result_t *
-xmmsc_playlist_remove (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
 
 xmmsc_result_t *
 xmmsc_broadcast_playlist_changed (c)
@@ -688,23 +545,6 @@ xmmsc_result_t *
 xmmsc_playlist_set_next_rel (c, pos)
 		xmmsc_connection_t *c
 		int32_t pos
-
-xmmsc_result_t *
-xmmsc_playlist_load (c, playlist)
-		xmmsc_connection_t *c
-		const char *playlist
-
-xmmsc_result_t *
-xmmsc_playlist_radd (c, playlist, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char *url
-
-xmmsc_result_t *
-xmmsc_playlist_radd_encoded (c, playlist, url)
-		xmmsc_connection_t *c
-		const char *playlist
-		const char *url
 
 xmmsc_result_t *
 xmmsc_coll_idlist_from_playlist_file (c, path)
@@ -758,6 +598,7 @@ DESTROY (c)
 		xmmsc_unref (c);
 
 BOOT:
+	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Playlist);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Collection);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result__PropDict);
