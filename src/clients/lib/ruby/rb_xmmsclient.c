@@ -902,6 +902,18 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
+ *  xc.medialib_entry_remove(id) -> result
+ *
+ * Removes the entry specified by _id_ from the medialib.
+ */
+static VALUE
+c_medialib_entry_remove (VALUE self, VALUE id)
+{
+	METHOD_ADD_HANDLER_UINT (medialib_remove_entry, id)
+}
+
+/*
+ * call-seq:
  *  xc.playlist_list -> result
  *
  * Retrieves a list of all saved playlists from the medialib.
@@ -1464,6 +1476,7 @@ Init_Client (VALUE mXmms)
 	                  c_medialib_entry_property_set, -1);
 	rb_define_method (c, "medialib_entry_property_remove",
 	                  c_medialib_entry_property_remove, -1);
+	rb_define_method (c, "medialib_entry_remove", c_medialib_entry_remove, 1);
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
