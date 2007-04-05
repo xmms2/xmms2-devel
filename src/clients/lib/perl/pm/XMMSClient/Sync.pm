@@ -53,7 +53,9 @@ sub sync_request {
 
     my $resp = $$self->$request(@_);
 
-    if (blessed $resp && $resp->isa('Audio::XMMSClient::Result')) {
+    return $resp unless blessed $resp;
+
+    if ($resp->isa('Audio::XMMSClient::Result')) {
         $resp->wait;
 
         if ($resp->iserror) {
@@ -61,10 +63,20 @@ sub sync_request {
             Carp::croak ($resp->get_error);
         }
 
-        $resp = $resp->value;
+        return $resp->value;
+    }
+
+    if ($resp->isa('Audio::XMMSClient::Playlist')) {
+        return Audio::XMMSClient::Playlist::Sync->new_from($resp);
     }
 
     return $resp;
 }
+
+package Audio::XMMSClient::Playlist::Sync;
+
+use strict;
+use warnings;
+use base qw/Audio::XMMSClient::Sync/;
 
 1;
