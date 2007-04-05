@@ -58,7 +58,6 @@ struct xmmsc_connection_St {
 };
 
 xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type, uint32_t cookie);
-void xmmsc_ref (xmmsc_connection_t *c);
 
 uint32_t xmmsc_result_cookie_get (xmmsc_result_t *result);
 
