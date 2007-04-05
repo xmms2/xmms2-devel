@@ -98,11 +98,6 @@ xmmsc_broadcast_quit (c)
 ## Medialib
 
 xmmsc_result_t *
-xmmsc_medialib_select (c, query)
-		xmmsc_connection_t *c
-		const char *query
-
-xmmsc_result_t *
 xmmsc_medialib_get_id (c, url)
 		xmmsc_connection_t *c
 		const char *url
