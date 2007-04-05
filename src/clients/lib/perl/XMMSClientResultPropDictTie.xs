@@ -119,3 +119,6 @@ FETCH (res, key)
 		}
 	OUTPUT:
 		RETVAL
+
+BOOT:
+	PERL_UNUSED_VAR (items);

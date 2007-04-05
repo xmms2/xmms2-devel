@@ -308,3 +308,6 @@ DESTROY (res)
 		xmmsc_result_t *res
 	CODE:
 		xmmsc_result_unref (res);
+
+BOOT:
+	PERL_UNUSED_VAR (items);

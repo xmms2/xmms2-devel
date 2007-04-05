@@ -192,3 +192,6 @@ DESTROY (p)
 		perl_xmmsclient_playlist_t *p
 	CODE:
 		perl_xmmsclient_playlist_destroy (p);
+
+BOOT:
+	PERL_UNUSED_VAR (items);

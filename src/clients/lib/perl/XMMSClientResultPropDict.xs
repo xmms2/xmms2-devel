@@ -78,3 +78,6 @@ source_hash (sv)
 		RETVAL = newRV_noinc ((SV *)val);
 	OUTPUT:
 		RETVAL
+
+BOOT:
+	PERL_UNUSED_VAR (items);

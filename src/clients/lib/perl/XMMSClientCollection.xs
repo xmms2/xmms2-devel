@@ -216,3 +216,6 @@ xmmsc_coll_t *
 xmmsc_coll_universe (class="optional")
 	C_ARGS:
 		/* void */
+
+BOOT:
+	PERL_UNUSED_VAR (items);

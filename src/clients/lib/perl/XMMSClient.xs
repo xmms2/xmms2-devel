@@ -597,6 +597,7 @@ DESTROY (c)
 		xmmsc_unref (c);
 
 BOOT:
+	PERL_UNUSED_VAR (items);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Playlist);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Collection);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result);
