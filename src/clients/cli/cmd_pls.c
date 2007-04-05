@@ -196,7 +196,7 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	gchar *playlist = NULL;
 	gchar *url;
-	const gchar *arg_start;
+	int arg_start = 3;
 
 	if (argc < 4) {
 		print_error ("Need a filename and args to add");
@@ -210,13 +210,13 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		} else {
 			/* FIXME: Fulhack to check for optional playlist argument */
 			playlist = argv[2];
-			arg_start = argv[4];
+			arg_start = 4;
 		}
-	} else {
-		arg_start = argv[3];
 	}
 
-	res = xmmsc_playlist_add_args (conn, playlist, url, argc - 3, &arg_start);
+	/* Relax, it was const before.. Could we fix const-ness nicely? */
+	res = xmmsc_playlist_add_args (conn, playlist, url, argc - arg_start,
+	                               (const gchar **)&argv[arg_start]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
