@@ -22,11 +22,15 @@ MODULE = Audio::XMMSClient	PACKAGE = Audio::XMMSClient	PREFIX = xmmsc_
 ## General
 
 SV *
-new (class, clientname)
+new (class, clientname=NULL)
 		const char *class
 		const char *clientname
 	PREINIT:
 		xmmsc_connection_t *con;
+	INIT:
+		if (!clientname) {
+			clientname = SvPV_nolen (get_sv ("0", 0));
+		}
 	CODE:
 		con = xmmsc_init (clientname);
 
