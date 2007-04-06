@@ -180,6 +180,14 @@ N: Georg Schild
 E: dangertools@gmail.com
 D: Java bindings
 
+N: Auke Schrijnen
+E: auke@schrijnen.nl
+D: Windows diskwrite and Win2k fixes
+
+N: Tim Schumacher
+E: tim@we-are-teh-b.org
+D: Windows CLI terminal width fix
+
 N: Ben Slote
 E: bslote@gmail.com
 D: Pythonbindings fix
