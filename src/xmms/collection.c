@@ -1061,12 +1061,22 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 				return FALSE;
 			}
 
-			/* check if the referenced coll references this one (loop!) */
-			if (save_name && save_namespace &&
-			    xmms_collection_has_reference_to (dag, ref, save_name, save_namespace)) {
-				g_mutex_unlock (dag->mutex);
-				return FALSE;
+			if (save_name && save_namespace) {
+				/* self-reference is of course forbidden */
+				if (strcmp (attr, save_name) == 0 &&
+				    strcmp (attr2, save_namespace) == 0) {
+
+					g_mutex_unlock (dag->mutex);
+					return FALSE;
+
+				/* check if the referenced coll references this one (loop!) */
+				} else if (xmms_collection_has_reference_to (dag, ref, save_name,
+				                                             save_namespace)) {
+					g_mutex_unlock (dag->mutex);
+					return FALSE;
+				}
 			}
+
 			g_mutex_unlock (dag->mutex);
 		} else {
 			/* "All Media" reference, so no referenced coll pointer */
