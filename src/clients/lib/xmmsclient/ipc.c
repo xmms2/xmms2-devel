@@ -381,7 +381,7 @@ static inline void
 xmmsc_ipc_unlock (xmmsc_ipc_t *ipc)
 {
 	if (ipc->lockdata)
-		ipc->lockfunc (ipc->lockdata);
+		ipc->unlockfunc (ipc->lockdata);
 }
 
 static void
