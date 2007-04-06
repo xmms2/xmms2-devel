@@ -52,11 +52,6 @@ DESTROY (coll)
 		xmmsc_coll_unref (coll);
 
 void
-xmmsc_coll_set_type (coll, type)
-		xmmsc_coll_t *coll
-		xmmsc_coll_type_t type
-
-void
 xmmsc_coll_set_idlist (coll, ...)
 		xmmsc_coll_t *coll
 	PREINIT:

@@ -168,19 +168,6 @@ c_coll_type_get (VALUE self)
 }
 
 /* call-seq:
- * c.type=(type)
- *
- * Sets the type of the collection according to _type_.
- */
-static VALUE
-c_coll_type_set (VALUE self, VALUE type)
-{
-	COLL_METHOD_ADD_HANDLER_UINT (set_type, type)
-
-	return self;
-}
-
-/* call-seq:
  * c.operands
  *
  * Gets a list of the operands that make up the collection.
@@ -355,7 +342,6 @@ Init_Collection (VALUE mXmms)
 
 	/* type methods */
 	rb_define_method (cColl, "type", c_coll_type_get, 0);
-	rb_define_method (cColl, "type=", c_coll_type_set, 1);
 
 	/* idlist methods */
 	rb_define_method (cColl, "idlist", c_coll_idlist_get, 0);

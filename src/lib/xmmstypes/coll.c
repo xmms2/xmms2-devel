@@ -159,22 +159,6 @@ xmmsc_coll_unref (xmmsc_coll_t *coll)
 
 
 /**
- * Change the type of the given collection.
- * Note that internal properties of the collections are not flushed
- * even if they are not relevant to the new type.
- *
- * @param coll the collection to modify.
- * @param type the new type for the collection.
- */
-void
-xmmsc_coll_set_type (xmmsc_coll_t *coll, xmmsc_coll_type_t type)
-{
-	x_return_if_fail (coll);
-
-	coll->type = type;
-}
-
-/**
  * Set the list of ids in the given collection.
  * The list must be 0-terminated.
  * Note that the idlist is only relevant for idlist collections.
