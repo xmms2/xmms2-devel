@@ -178,7 +178,7 @@ xmms_diskwrite_open (xmms_output_t *output)
 
 	/* create the destination directory if it doesn't exist yet */
 	if (!g_file_test (data->destdir, G_FILE_TEST_IS_DIR)) {
-		ret = mkdir (data->destdir, 0755);
+		ret = g_mkdir_with_parents (data->destdir, 0755);
 	} else {
 		ret = access (data->destdir, W_OK);
 	}
