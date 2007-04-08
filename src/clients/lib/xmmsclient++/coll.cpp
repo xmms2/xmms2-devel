@@ -509,14 +509,12 @@ namespace Xmms
 	{
 	}
 	PartyShuffle::PartyShuffle( unsigned int history )
-		: Queue( PARTYSHUFFLE )
+		: Queue( PARTYSHUFFLE, history )
 	{
-		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
 	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
-		: Queue( PARTYSHUFFLE )
+		: Queue( PARTYSHUFFLE, history )
 	{
-		setAttribute( "history", boost::lexical_cast<string>( history ) );
 		setAttribute( "upcoming", boost::lexical_cast<string>( upcoming ) );
 	}
 	PartyShuffle::~PartyShuffle()
