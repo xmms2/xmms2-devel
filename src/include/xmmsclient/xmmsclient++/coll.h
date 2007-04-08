@@ -547,6 +547,10 @@ namespace Xmms
 				PartyShuffle( unsigned int history );
 				PartyShuffle( unsigned int history, unsigned int upcoming );
 				~PartyShuffle();
+
+				void setOperand( Coll& operand );
+				void removeOperand();
+				CollPtr getOperand() const;
 		};
 
 
