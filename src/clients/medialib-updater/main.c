@@ -44,7 +44,7 @@ handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		guint32 id;
-		if (!xmmsc_result_get_dict_entry_uint (res, "id", &id)) {
+		if (!xmmsc_result_get_uint (res, &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
@@ -66,17 +66,24 @@ static void
 handle_file_del (xmonitor_t *mon, gchar *filename)
 {
 	xmmsc_result_t *res;
+	xmmsc_coll_t *univ, *coll;
 	gchar tmp[MON_FILENAME_MAX];
-	gchar *query;
 
-	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
+	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s%%", filename);
 
-	query = g_strdup_printf ("SELECT id FROM Media WHERE key='url' AND value LIKE '%s%%'", tmp);
-	DBG ("running %s", query);
-	res = xmmsc_medialib_select (mon->conn, query);
-	g_free (query);
+	univ = xmmsc_coll_universe ();
+	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsc_coll_add_operand (coll, univ);
+	xmmsc_coll_attribute_set (coll, "field", "url");
+	xmmsc_coll_attribute_set (coll, "value", tmp);
+
+	res = xmmsc_coll_query_ids (mon->conn, coll, NULL, 0, 0);
+
+	DBG ("remove '%s' from mlib", tmp);
 	xmmsc_result_notifier_set (res, handle_remove_from_mlib, mon);
 	xmmsc_result_unref (res);
+	xmmsc_coll_unref (coll);
+	xmmsc_coll_unref (univ);
 }
 
 static void
