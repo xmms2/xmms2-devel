@@ -405,7 +405,7 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 	g_mutex_unlock (dag->mutex);
 
 	if (retval == FALSE) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "No such collection!");
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Failed to remove this collection!");
 	}
 
 	return retval;
@@ -1200,11 +1200,15 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 static gboolean
 xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 {
-	xmmsc_coll_t *existing;
+	xmmsc_coll_t *existing, *active_pl;
 	gboolean retval = FALSE;
 
-	existing = g_hash_table_lookup (dag->collrefs[nsid], name);
-	if (existing != NULL) {
+	existing  = g_hash_table_lookup (dag->collrefs[nsid], name);
+	active_pl = g_hash_table_lookup (dag->collrefs[XMMS_COLLECTION_NSID_PLAYLISTS],
+	                                 XMMS_ACTIVE_PLAYLIST);
+
+	/* Unref if collection exists, and is not pointed at by _active playlist */
+	if (existing != NULL && existing != active_pl) {
 		gchar *matchkey;
 		char *nsname = xmms_collection_get_namespace_string (nsid);
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
