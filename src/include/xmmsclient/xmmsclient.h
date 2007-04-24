@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) && __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 1)
 #define XMMS_DEPRECATED __attribute__((deprecated))
 #else
 #define XMMS_DEPRECATED
