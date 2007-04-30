@@ -72,10 +72,12 @@
 	return TO_XMMS_CLIENT_COLLECTION (ucoll); \
 
 typedef struct {
+	VALUE attributes;
 	xmmsc_coll_t *real;
 } RbCollection;
 
-static VALUE cColl, eCollectionError, eDisconnectedError, eClientError;
+static VALUE cColl, cAttributes;
+static VALUE eCollectionError, eDisconnectedError, eClientError;
 
 static void
 c_free (RbCollection *coll)
@@ -85,12 +87,23 @@ c_free (RbCollection *coll)
 	free (coll);
 }
 
+static void
+c_mark (RbCollection *coll)
+{
+	rb_gc_mark (coll->attributes);
+}
+
 static VALUE
 c_alloc (VALUE klass)
 {
+	VALUE obj;
 	RbCollection *coll = NULL;
 
-	return Data_Make_Struct (klass, RbCollection, NULL, c_free, coll);
+	obj = Data_Make_Struct (klass, RbCollection, c_mark, c_free, coll);
+
+	coll->attributes = Qnil;
+
+	return obj;
 }
 
 VALUE
@@ -314,25 +327,198 @@ c_coll_complement (VALUE self)
 /* call-seq:
  * c.attributes
  *
- * Gets a hash of the attributes that make up the collection.
+ * Returns the attributes of the collection.
  */
 static VALUE
 c_coll_attributes (VALUE self)
 {
-	VALUE hash = rb_hash_new ();
-	const char *key, *value = NULL;
-	COLL_METHOD_HANDLER_HEADER
+	RbCollection *coll = NULL;
 
-	for (xmmsc_coll_attribute_list_first (coll->real);
-	     xmmsc_coll_attribute_list_valid (coll->real);
-	     xmmsc_coll_attribute_list_next (coll->real))
-	{
-		xmmsc_coll_attribute_list_entry (coll->real, &key, &value);
-		rb_hash_aset (hash, ID2SYM (rb_intern (key)),
-		              ID2SYM (rb_intern (value)));
+	Data_Get_Struct (self, RbCollection, coll);
+
+	if (NIL_P (coll->attributes))
+		coll->attributes = rb_class_new_instance (1, &self, cAttributes);
+
+	return coll->attributes;
+}
+
+static VALUE
+c_attrs_init (VALUE self, VALUE collection)
+{
+	rb_iv_set (self, "collection", collection);
+
+	return self;
+}
+
+static VALUE
+attrs_inspect_cb (VALUE args, VALUE s)
+{
+	VALUE key, value;
+
+	key = RARRAY (args)->ptr[0];
+	value = RARRAY (args)->ptr[1];
+
+	if (RSTRING (s)->len > 1)
+		rb_str_buf_cat2 (s, ", ");
+
+	rb_str_buf_append (s, rb_inspect (key));
+	rb_str_buf_cat2 (s, "=>");
+	rb_str_buf_append (s, rb_inspect (value));
+
+	return Qnil;
+}
+
+static VALUE
+attrs_inspect (VALUE self)
+{
+	VALUE ret;
+
+	ret = rb_str_new2 ("{");
+	rb_iterate (rb_each, self, attrs_inspect_cb, ret);
+	rb_str_buf_cat2 (ret, "}");
+
+	OBJ_INFECT (ret, self);
+
+	return ret;
+}
+
+static VALUE
+c_attrs_inspect (VALUE self)
+{
+	return rb_protect_inspect (attrs_inspect, self, 0);
+}
+
+static VALUE
+c_attrs_aref (VALUE self, VALUE key)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+	int s;
+	char *value;
+
+	StringValue (key);
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	s = xmmsc_coll_attribute_get (coll->real, StringValuePtr (key), &value);
+	if (!s)
+		return Qnil;
+
+	return rb_str_new2 (value);
+}
+
+static VALUE
+c_attrs_aset (VALUE self, VALUE key, VALUE value)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	StringValue (key);
+	StringValue (value);
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	xmmsc_coll_attribute_set (coll->real, StringValuePtr (key),
+	                          StringValuePtr (value));
+
+	return Qnil;
+}
+
+static VALUE
+c_attrs_has_key (VALUE self, VALUE key)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+	int s;
+	char *value;
+
+	StringValue (key);
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	s = xmmsc_coll_attribute_get (coll->real, StringValuePtr (key), &value);
+
+	return s ? Qtrue : Qfalse;
+}
+
+static VALUE
+c_attrs_delete (VALUE self, VALUE key)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	StringValue (key);
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	xmmsc_coll_attribute_remove (coll->real, StringValuePtr (key));
+
+	return Qnil;
+}
+
+static void
+attr_each (const char *key, const char *value, void *udata)
+{
+	switch (XPOINTER_TO_INT (udata)) {
+		case EACH_PAIR:
+			rb_yield_values (2, rb_str_new2 (key), rb_str_new2 (value));
+			break;
+		case EACH_KEY:
+			rb_yield_values (1, rb_str_new2 (key));
+			break;
+		case EACH_VALUE:
+			rb_yield_values (1, rb_str_new2 (value));
+			break;
 	}
+}
 
-	return hash;
+static VALUE
+c_attrs_each (VALUE self)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	xmmsc_coll_attribute_foreach (coll->real, attr_each,
+	                               XINT_TO_POINTER (EACH_PAIR));
+
+	return self;
+}
+
+static VALUE
+c_attrs_each_key (VALUE self)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	xmmsc_coll_attribute_foreach (coll->real, attr_each,
+	                               XINT_TO_POINTER (EACH_KEY));
+
+	return self;
+}
+
+static VALUE
+c_attrs_each_value (VALUE self)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	xmmsc_coll_attribute_foreach (coll->real, attr_each,
+	                               XINT_TO_POINTER (EACH_VALUE));
+
+	return self;
 }
 
 void
@@ -397,4 +583,24 @@ Init_Collection (VALUE mXmms)
 	                                      rb_eStandardError);
 	eDisconnectedError = rb_define_class_under (cColl, "DisconnectedError",
 	                                            eClientError);
+
+	cAttributes = rb_define_class_under (cColl, "Attributes", rb_cObject);
+
+	rb_define_method (cAttributes, "initialize", c_attrs_init, 1);
+	rb_define_method (cAttributes, "inspect", c_attrs_inspect, 0);
+
+	rb_define_method (cAttributes, "[]", c_attrs_aref, 1);
+	rb_define_method (cAttributes, "[]=", c_attrs_aset, 2);
+	rb_define_method (cAttributes, "has_key?", c_attrs_has_key, 1);
+	rb_define_method (cAttributes, "delete", c_attrs_delete, 1);
+	rb_define_method (cAttributes, "each", c_attrs_each, 0);
+	rb_define_method (cAttributes, "each_key", c_attrs_each_key, 0);
+	rb_define_method (cAttributes, "each_value", c_attrs_each_value, 0);
+
+	rb_define_alias (cAttributes, "include?", "has_key?");
+	rb_define_alias (cAttributes, "key?", "has_key?");
+	rb_define_alias (cAttributes, "member?", "has_key?");
+	rb_define_alias (cAttributes, "each_pair", "each");
+
+	rb_include_module (cAttributes, rb_mEnumerable);
 }

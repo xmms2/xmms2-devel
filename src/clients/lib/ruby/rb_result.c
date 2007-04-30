@@ -32,12 +32,6 @@ typedef struct {
 	VALUE propdict;
 } RbResult;
 
-enum {
-	EACH_PAIR,
-	EACH_KEY,
-	EACH_VALUE
-};
-
 static VALUE cResult, cPropDict, cBroadcastResult, cSignalResult,
              eResultError, eValueError;
 
