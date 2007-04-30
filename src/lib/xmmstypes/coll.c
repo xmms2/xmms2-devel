@@ -657,7 +657,10 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
 		const char *k = n->data;
 		if (strcasecmp (k, key) == 0 && n->next) {
 			/* found right key, return value */
-			*value = (char*) n->next->data;
+			if (value) {
+				*value = (char*) n->next->data;
+			}
+
 			return 1;
 		} else {
 			/* skip data part of this entry */
@@ -665,7 +668,10 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
 		}
 	}
 
-	*value = NULL;
+	if (value) {
+		*value = NULL;
+	}
+
 	return 0;
 }
 
