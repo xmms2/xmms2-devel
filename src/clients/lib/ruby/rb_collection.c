@@ -57,20 +57,6 @@
 \
 	xmmsc_coll_##action (coll->real, arg->real); \
 
-#define COLL_METHOD_ADD_HANDLER_OPERATOR(operand, operation) \
-	xmmsc_coll_t *ucoll = NULL; \
-	RbCollection *opcoll = NULL; \
-	COLL_METHOD_HANDLER_HEADER \
-\
-	CHECK_IS_COLL (operand); \
-	Data_Get_Struct (operand, RbCollection, opcoll); \
-\
-	ucoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_##operation); \
-	xmmsc_coll_add_operand (ucoll, coll->real); \
-	xmmsc_coll_add_operand (ucoll, opcoll->real); \
-\
-	return TO_XMMS_CLIENT_COLLECTION (ucoll); \
-
 typedef struct {
 	VALUE attributes;
 	xmmsc_coll_t *real;
@@ -283,45 +269,6 @@ c_coll_idlist_set (VALUE self, VALUE ids)
 	xmmsc_coll_set_idlist (coll->real, ary);
 
 	return self;
-}
-
-/* call-seq:
- * c |(v)
- *
- * Returns a new collection that is the logical OR of _c_ and _v_.
- */
-static VALUE
-c_coll_union (VALUE self, VALUE op)
-{
-	COLL_METHOD_ADD_HANDLER_OPERATOR (op, UNION)
-}
-
-/* call-seq:
- * c &(v)
- *
- * Returns a new collection that is the logical AND of _c_ and _v_.
- */
-static VALUE
-c_coll_intersect (VALUE self, VALUE op)
-{
-	COLL_METHOD_ADD_HANDLER_OPERATOR (op, INTERSECTION)
-}
-
-/* call-seq:
- * ~c
- *
- * Returns a new collection that is the logical complement of _c_.
- */
-static VALUE
-c_coll_complement (VALUE self)
-{
-	xmmsc_coll_t *ucoll = NULL;
-	COLL_METHOD_HANDLER_HEADER
-
-	ucoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsc_coll_add_operand (ucoll, coll->real);
-
-	return TO_XMMS_CLIENT_COLLECTION (ucoll);
 }
 
 /* call-seq:
@@ -545,18 +492,6 @@ Init_Collection (VALUE mXmms)
 
 	/* attribute methods */
 	rb_define_method (cColl, "attributes", c_coll_attributes, 0);
-
-	/* operator methods */
-	rb_define_method (cColl, "union", c_coll_union, 1);
-	rb_define_method (cColl, "intersect", c_coll_intersect, 1);
-	rb_define_method (cColl, "complement", c_coll_complement, 0);
-
-	rb_define_alias (cColl, "or", "union");
-	rb_define_alias (cColl, "and", "intersect");
-	rb_define_alias (cColl, "not", "complement");
-	rb_define_alias (cColl, "|", "union");
-	rb_define_alias (cColl, "&", "intersect");
-	rb_define_alias (cColl, "~@", "complement");
 
 	rb_define_const (cColl, "NS_ALL", rb_str_new2 (XMMS_COLLECTION_NS_ALL));
 	rb_define_const (cColl, "NS_COLLECTIONS",

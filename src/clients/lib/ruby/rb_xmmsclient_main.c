@@ -50,7 +50,7 @@ m_decode_url (VALUE self, VALUE str)
 }
 
 void
-Init_xmmsclient (void)
+Init_xmmsclient_ext (void)
 {
 	VALUE mXmms = rb_define_module ("Xmms");
 
