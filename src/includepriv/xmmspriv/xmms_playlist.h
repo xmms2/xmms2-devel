@@ -77,10 +77,10 @@ void xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname, xmms_med
 xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
 
 
-GHashTable * xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type, guint32 id, gchar *plname);
+GHashTable *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, guint32 id, gchar *plname);
 void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict);
 
-#define XMMS_PLAYLIST_COLLECTION_CHANGED_MSG(playlist, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_UPDATE, 0, name))
+#define XMMS_PLAYLIST_COLLECTION_CHANGED_MSG(playlist, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_UPDATE, 0, name))
 
 /*
  * Entry modifications
