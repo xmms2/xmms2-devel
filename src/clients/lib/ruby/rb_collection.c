@@ -48,21 +48,13 @@
 \
 	xmmsc_coll_##action (coll->real, check_uint32 (arg1)); \
 
-#define COLL_METHOD_ADD_HANDLER_COLL(action, arg1) \
-	RbCollection *arg = NULL; \
-	COLL_METHOD_HANDLER_HEADER \
-\
-	CHECK_IS_COLL (arg1); \
-	Data_Get_Struct (arg1, RbCollection, arg); \
-\
-	xmmsc_coll_##action (coll->real, arg->real); \
-
 typedef struct {
 	VALUE attributes;
+	VALUE operands;
 	xmmsc_coll_t *real;
 } RbCollection;
 
-static VALUE cColl, cAttributes;
+static VALUE cColl, cAttributes, cOperands;
 static VALUE eCollectionError, eDisconnectedError, eClientError;
 
 static void
@@ -77,6 +69,7 @@ static void
 c_mark (RbCollection *coll)
 {
 	rb_gc_mark (coll->attributes);
+	rb_gc_mark (coll->operands);
 }
 
 static VALUE
@@ -88,6 +81,7 @@ c_alloc (VALUE klass)
 	obj = Data_Make_Struct (klass, RbCollection, c_mark, c_free, coll);
 
 	coll->attributes = Qnil;
+	coll->operands = Qnil;
 
 	return obj;
 }
@@ -180,47 +174,14 @@ c_coll_type_get (VALUE self)
 static VALUE
 c_coll_operands (VALUE self)
 {
-	VALUE arr = rb_ary_new ();
-	xmmsc_coll_t *operand = NULL;
-	COLL_METHOD_HANDLER_HEADER
+	RbCollection *coll = NULL;
 
-	if (!xmmsc_coll_operand_list_first (coll->real))
-		return Qnil;
+	Data_Get_Struct (self, RbCollection, coll);
 
-	for (; xmmsc_coll_operand_list_valid (coll->real);
-	     xmmsc_coll_operand_list_next (coll->real))
-	{
-		xmmsc_coll_operand_list_entry (coll->real, &operand);
-		rb_ary_push (arr, TO_XMMS_CLIENT_COLLECTION (operand));
-	}
+	if (NIL_P (coll->operands))
+		coll->operands = rb_class_new_instance (1, &self, cOperands);
 
-	return arr;
-}
-
-/* call-seq:
- * c.operand_add(op)
- *
- * Adds an operand (another collection) _op_ to the current collection.
- */
-static VALUE
-c_coll_operand_add (VALUE self, VALUE op)
-{
-	COLL_METHOD_ADD_HANDLER_COLL (add_operand, op)
-
-	return self;
-}
-
-/* call-seq:
- * c.operand_remove(op)
- *
- * Removes an operand (another collection) _op_ from the current collection.
- */
-static VALUE
-c_coll_operand_remove (VALUE self, VALUE op)
-{
-	COLL_METHOD_ADD_HANDLER_COLL (remove_operand, op)
-
-	return self;
+	return coll->operands;
 }
 
 /* call-seq:
@@ -467,6 +428,72 @@ c_attrs_each_value (VALUE self)
 	return self;
 }
 
+static VALUE
+c_operands_init (VALUE self, VALUE collection)
+{
+	rb_iv_set (self, "collection", collection);
+
+	return self;
+}
+
+static VALUE
+c_operands_push (VALUE self, VALUE arg)
+{
+	RbCollection *coll = NULL, *coll2 = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	Data_Get_Struct (arg, RbCollection, coll2);
+
+	xmmsc_coll_add_operand (coll->real, coll2->real);
+
+	return self;
+}
+
+static VALUE
+c_operands_delete (VALUE self, VALUE arg)
+{
+	RbCollection *coll = NULL, *coll2 = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	Data_Get_Struct (arg, RbCollection, coll2);
+
+	xmmsc_coll_remove_operand (coll->real, coll2->real);
+
+	return Qnil;
+}
+
+static VALUE
+c_operands_each (VALUE self)
+{
+	RbCollection *coll = NULL;
+	VALUE tmp;
+
+	tmp = rb_iv_get (self, "collection");
+	Data_Get_Struct (tmp, RbCollection, coll);
+
+	if (!xmmsc_coll_operand_list_first (coll->real))
+		return self;
+
+	while (xmmsc_coll_operand_list_valid (coll->real)) {
+		xmmsc_coll_t *operand = NULL;
+
+		xmmsc_coll_operand_list_entry (coll->real, &operand);
+		xmmsc_coll_ref (operand);
+
+		rb_yield (TO_XMMS_CLIENT_COLLECTION (operand));
+
+		xmmsc_coll_operand_list_next (coll->real);
+	}
+
+	return self;
+}
+
 void
 Init_Collection (VALUE mXmms)
 {
@@ -487,8 +514,6 @@ Init_Collection (VALUE mXmms)
 
 	/* operand methods */
 	rb_define_method (cColl, "operands", c_coll_operands, 0);
-	rb_define_method (cColl, "operand_add", c_coll_operand_add, 1);
-	rb_define_method (cColl, "operand_remove", c_coll_operand_remove, 1);
 
 	/* attribute methods */
 	rb_define_method (cColl, "attributes", c_coll_attributes, 0);
@@ -537,4 +562,15 @@ Init_Collection (VALUE mXmms)
 	rb_define_alias (cAttributes, "each_pair", "each");
 
 	rb_include_module (cAttributes, rb_mEnumerable);
+
+	cOperands = rb_define_class_under (cColl, "Operands", rb_cObject);
+
+	rb_define_method (cOperands, "initialize", c_operands_init, 1);
+	rb_define_method (cOperands, "push", c_operands_push, 1);
+	rb_define_method (cOperands, "delete", c_operands_delete, 1);
+	rb_define_method (cOperands, "each", c_operands_each, 0);
+
+	rb_define_alias (cOperands, "<<", "push");
+
+	rb_include_module (cOperands, rb_mEnumerable);
 }

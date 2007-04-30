@@ -24,8 +24,9 @@ module Xmms
 		# _c_ and _other_.
 		def union(other)
 			c = Xmms::Collection.new(Xmms::Collection::TYPE_UNION)
-			c.operand_add(self)
-			c.operand_add(other)
+			c.operands << self
+			c.operands << other
+			c
 		end
 
 		# :call-seq:
@@ -35,8 +36,9 @@ module Xmms
 		# _c_ and _other_.
 		def intersect(other)
 			c = Xmms::Collection.new(Xmms::Collection::TYPE_INTERSECTION)
-			c.operand_add(self)
-			c.operand_add(other)
+			c.operands << self
+			c.operands << other
+			c
 		end
 
 		# :call-seq:
@@ -46,7 +48,8 @@ module Xmms
 		# _c_.
 		def complement
 			c = Xmms::Collection.new(Xmms::Collection::TYPE_COMPLEMENT)
-			c.operand_add(self)
+			c.operands << self
+			c
 		end
 
 		alias :or :union
