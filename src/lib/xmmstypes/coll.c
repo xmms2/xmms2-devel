@@ -641,13 +641,14 @@ xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
 
 /**
  * Retrieve the value of the attribute of the given collection.
- * The return value indicated whether the attribute was found (or NULL
- * if not found).  The value is owned by the collection.
+ * The return value is 1 if the attribute was found and 0 otherwise.
+ * The value of the attribute is owned by the collection and must not
+ * be freed by the caller.
  *
  * @param coll The collection to retrieve the attribute from.
  * @param key  The name of the attribute.
  * @param value The value of the attribute if found (owned by the collection).
- * @return 1 upon success, 0 otherwise
+ * @return 1 if the attribute was found, 0 otherwise
  */
 int
 xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
