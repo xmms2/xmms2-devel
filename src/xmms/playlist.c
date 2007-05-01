@@ -258,7 +258,7 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, gchar *plname,
 	xmmsc_coll_operand_list_restore (coll);
 
 	size = xmms_playlist_coll_get_size (coll);
-	while (size < upcoming) {
+	while (size < history + 1 + upcoming) {
 		xmms_medialib_entry_t randentry;
 		randentry = xmms_collection_get_random_media (playlist->colldag, src);
 		if (randentry == 0) {
