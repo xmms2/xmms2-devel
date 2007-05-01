@@ -1935,6 +1935,21 @@ cdef class XMMS:
 
 		return ret
 
+	def playlist_current_active(self, cb = None):
+		"""
+		Returns the name of the current active playlist
+		@rtype: L{XMMSResult}
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_playlist_current_active(self.conn)
+		ret.more_init()
+
+		return ret
+
 	def broadcast_playlist_current_pos(self, cb = None):
 		"""
 		Set a method to handle the playlist current position updates
