@@ -389,7 +389,7 @@ MusicBrainz ID numbers for the song
 .B XMMS2
 has support for playlists which is tightly coupled with
 .B XMMS2's
-Colllections system. Playlist manipulation is accessible with the
+Collections system. Playlist manipulation is accessible with the
 .I playlist
 command of
 .I xmms2.
@@ -441,7 +441,7 @@ The available playlist types are:
 A simple list of medialib ids.
 The
 .I list
-has one attributes:
+has one attribute:
 .P
 .I jumplist
 which is the name of a playlist to jump to when the list is finished.
@@ -459,10 +459,13 @@ which is the name of a playlist to jump to when the queue is finished
 which is the number of played entries to keep before beginning to remove them
 .TP
 .I pshuffle
-A playlist which picks a configurable number of songs from a collection at random
+A playlist which picks a configurable number of songs from a collection at random.
 The
 .I pshuffle
-has two attributes:
+has three attributes:
+.P
+.I jumplist
+which is the name of a playlist to jump to when the pshuffle is finished. A pshuffle playlist only finishes when the collection from which new songs are pulled dries up, for instance when filtering on timesplayed < 1
 .P
 .I history
 which is the number of played entries to keep before beginning to remove them
@@ -538,13 +541,14 @@ on Collection
 .I collname
 .PP
 .I xmms2
-requires that the namespace of a Collection be specified in
+sometimes requires that the namespace of a Collection be specified in
 .I collname.
 This is done by prepending either
 .I Playlists/
 or
 .I Collections/
-to the beginning of the Collection name.
+to the beginning of the Collection name. If not specified the namespace defaults to 
+.I Collections.
 .SH FILES
 .TP
 .I $XDG_CONFIG_HOME/xmms2/clients/cli.conf or $HOME/Library/xmms2/clients/cli.conf or $HOME/.config/xmms2/clients/cli.conf
