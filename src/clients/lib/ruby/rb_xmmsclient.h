@@ -34,6 +34,7 @@ typedef struct {
 
 VALUE check_uint32 (VALUE arg);
 VALUE check_int32 (VALUE arg);
+const char **parse_string_array (VALUE value);
 
 enum {
 	EACH_PAIR,

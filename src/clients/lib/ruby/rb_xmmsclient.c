@@ -77,24 +77,6 @@
 	                    RSTRING (arg1)->len); \
 	METHOD_HANDLER_FOOTER
 
-/* Use for converting arrays of strings in ruby to c
- * Remember to free cary.
- * i must be defined as well as ary,rary,cary.
- */
-#define ARRAY_STRING_PARSE(ary, rary, cary) \
-	if (!NIL_P (rb_check_array_type (ary))) { \
-		rary = RARRAY (ary); \
-		cary = malloc (sizeof (char *) * (rary->len + 1)); \
-		for (i = 0; i < rary->len; i++) \
-			cary[i] = StringValuePtr (rary->ptr[i]); \
-		cary[i] = NULL; \
-	} else if (!NIL_P (rb_check_string_type (ary))) { \
-		cary = malloc (sizeof (char *) * 2); \
-		cary[0] = StringValuePtr (ary); \
-		cary[1] = NULL; \
-	} else \
-		rb_raise (eClientError, "unsupported argument");
-
 static VALUE cPlaylist;
 static VALUE eClientError, eDisconnectedError;
 static ID id_lt, id_gt;
@@ -1256,19 +1238,14 @@ c_coll_rename (int argc, VALUE *argv, VALUE self)
 static VALUE
 c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 {
-	VALUE coll, order, start, len = Qnil;
-	struct RArray *rorder;
-	const char **corder;
-	int i;
+	VALUE coll, order = Qnil, start, len = Qnil;
+	const char **corder = NULL;
 	METHOD_HANDLER_HEADER
 
 	rb_scan_args (argc, argv, "13", &coll, &order, &start, &len);
 
-	if (!NIL_P (order)) {
-		ARRAY_STRING_PARSE (order, rorder, corder);
-	} else {
-		corder = NULL;
-	}
+	if (!NIL_P (order))
+		corder = parse_string_array (order);
 
 	res = xmmsc_coll_query_ids (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
@@ -1292,26 +1269,20 @@ c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 static VALUE
 c_coll_query_info (int argc, VALUE *argv, VALUE self)
 {
-	VALUE coll, order, start, len, fetch, group = Qnil;
-	struct RArray *rfetch, *rorder, *rgroup;
-	const char **cfetch, **corder, **cgroup;
-	int i;
+	VALUE coll, order = Qnil, start, len, fetch, group = Qnil;
+	const char **cfetch, **corder = NULL, **cgroup = NULL;
 	METHOD_HANDLER_HEADER
 
 	rb_scan_args (argc, argv, "24", &coll, &fetch, &order, &start, &len,
 	              &group);
 
-	ARRAY_STRING_PARSE (fetch, rfetch, cfetch)
-	if (!NIL_P (order)) {
-		ARRAY_STRING_PARSE (order, rorder, corder);
-	} else {
-		corder = NULL;
-	}
-	if (!NIL_P (group)) {
-		ARRAY_STRING_PARSE (group, rgroup, cgroup)
-	} else {
-		cgroup = NULL;
-	}
+	cfetch = parse_string_array (fetch);
+
+	if (!NIL_P (order))
+		corder = parse_string_array (order);
+
+	if (!NIL_P (group))
+		cgroup = parse_string_array (group);
 
 	res = xmmsc_coll_query_infos (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
@@ -1389,6 +1360,33 @@ check_int32 (VALUE arg)
 		          "wrong argument type (expected 32 bit signed int)");
 
 	return NUM2INT (arg);
+}
+
+const char **
+parse_string_array (VALUE value)
+{
+	const char **ret;
+	int i;
+
+	if (!NIL_P (rb_check_array_type (value))) {
+		struct RArray *ary = RARRAY (value);
+
+		ret = malloc (sizeof (char *) * (ary->len + 1));
+
+		for (i = 0; i < ary->len; i++)
+			ret[i] = StringValuePtr (ary->ptr[i]);
+
+		ret[i] = NULL;
+	} else {
+		/* if it's not an array, it must be a string */
+		StringValue (value);
+
+		ret = malloc (sizeof (char *) * 2);
+		ret[0] = StringValuePtr (value);
+		ret[1] = NULL;
+	}
+
+	return ret;
 }
 
 void
