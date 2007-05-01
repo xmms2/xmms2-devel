@@ -428,7 +428,7 @@ cdef class Collection:
 
 	def __repr__(self):
 		atr = []
-		for k,v in self.attributes:
+		for k,v in self.attributes.iteritems():
 			atr.append("%s=%s" % (k, repr(v)))
 		return "%s(%s)" % (self.__class__.__name__,",".join(atr))
 
@@ -519,6 +519,10 @@ cdef class CollectionOperands:
 		if self.coll != NULL:
 			xmmsc_coll_unref(self.coll)
 		self.coll = NULL
+	def __repr__(self):
+		return repr(self.pylist)
+	def __str__(self):
+		return str(self.pylist)
 	def __len__(self):
 		return len(self.pylist)
 	def __getitem__(self, i):
@@ -538,19 +542,35 @@ cdef class CollectionOperands:
 	
 cdef class CollectionAttributes:
 	cdef xmmsc_coll_t *coll
+	cdef object pydict
 
 	def __new__(self):
 		self.coll = NULL
+
 	def __dealloc__(self):
 		if self.coll != NULL:
 			xmmsc_coll_unref(self.coll)
 		self.coll = NULL
 
+	def _py_dict(self):
+		cdef char *x
+		cdef char *y
+		dct = {}
+		xmmsc_coll_attribute_list_first(self.coll)
+		while xmmsc_coll_attribute_list_valid(self.coll):
+			xmmsc_coll_attribute_list_entry(self.coll, &x, &y)
+			dct[x] = y
+			xmmsc_coll_attribute_list_next(self.coll)
+		return dct
+
+	def __repr__(self):
+		return repr(self._py_dict())
+
+	def __str__(self):
+		return str(self._py_dict())
+
 	def __getitem__(self, name):
-		cdef char *val
-		if not xmmsc_coll_attribute_get(self.coll, name, &val):
-			raise KeyError("No such attribute")
-		ret = val
+		ret = self._py_dict()[name]
 		return ret
 
 	def get(self, name, default=None):
@@ -563,20 +583,25 @@ cdef class CollectionAttributes:
 		xmmsc_coll_attribute_set(self.coll, name, val)
 
 	def items(self):
-		cdef char *x
-		cdef char *y
-		lst = []
-		xmmsc_coll_attribute_list_first(self.coll)
-		while xmmsc_coll_attribute_list_valid(self.coll):
-			xmmsc_coll_attribute_list_entry(self.coll, &x, &y)
-			lst.append((x,y))
-			xmmsc_coll_attribute_list_next(self.coll)
-		return lst
+		return self._py_dict().items()
 	
+	def iteritems(self):
+		return self._py_dict().iteritems()
+
+	def keys(self):
+		return self._py_dict().keys()
+
+	def iterkeys(self):
+		return self._py_dict().iterkeys()
+
+	def values(self):
+		return self._py_dict().values()
+
+	def itervalues(self):
+		return self._py_dict().itervalues()
+
 	def __iter__(self):
-		return iter(self.items())
-	def __repr__(self):
-		return repr(self.items())
+		return iter(self._py_dict())
 
 
 # Create a dummy object that can't be accessed
