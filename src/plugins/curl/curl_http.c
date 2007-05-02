@@ -51,6 +51,8 @@ typedef struct {
 	gint curl_code;
 
 	xmms_error_t status;
+
+	gboolean broken_version;
 } xmms_curl_data_t;
 
 typedef void (*handler_func_t) (xmms_xform_t *xform, gchar *header);
@@ -169,12 +171,14 @@ xmms_curl_init (xmms_xform_t *xform)
 	const gchar *proxyaddress, *proxyuser, *proxypass;
 	gchar proxyuserpass[90];
 	const gchar *url;
+	curl_version_info_data *version;
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 
 	g_return_val_if_fail (xform, FALSE);
 
 	data = g_new0 (xmms_curl_data_t, 1);
+	data->broken_version = FALSE;
 
 	val = xmms_xform_config_lookup (xform, "connecttimeout");
 	connecttimeout = xmms_config_property_get_int (val);
@@ -207,15 +211,22 @@ xmms_curl_init (xmms_xform_t *xform)
 	            proxypass);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
-
 	data->url = g_strdup (url);
 
-	data->http_200_aliases = curl_slist_append (data->http_200_aliases,
-	                                            "ICY 200 OK");
-	data->http_200_aliases = curl_slist_append (data->http_200_aliases,
-	                                            "ICY 402 Service Unavailabe");
+	/* check for broken version of curl here */
+	version = curl_version_info (CURLVERSION_NOW);
+	XMMS_DBG ("Using version %s of libcurl", version->version);
+	if (version->version_num == 0x071001 || version->version_num == 0x071002) {
+		xmms_log_info ("**********************************************");
+		xmms_log_info ("Your version of libcurl is incompatible with");
+		xmms_log_info ("XMMS2 and you will not be able to stream shout/ice-cast");
+		xmms_log_info ("radio stations. Please consider downgrade to 7.15 or");
+		xmms_log_info ("upgrade to a more recent version than 7.16.2");
+		xmms_log_info ("**********************************************");
+		data->broken_version = TRUE;
+	}
 
-	if (metaint == 1) {
+	if (!data->broken_version && metaint == 1) {
 		data->http_req_headers = curl_slist_append (data->http_req_headers,
 		                                            "Icy-MetaData: 1");
 	}
@@ -233,13 +244,20 @@ xmms_curl_init (xmms_xform_t *xform)
 	                  "XMMS2/" XMMS_VERSION);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEHEADER, xform);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEDATA, xform);
-	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES,
-	                  data->http_200_aliases);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION,
 	                  xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION,
 	                  xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+
+	if (!data->broken_version) {
+		data->http_200_aliases = curl_slist_append (data->http_200_aliases,
+		                                            "ICY 200 OK");
+		data->http_200_aliases = curl_slist_append (data->http_200_aliases,
+		                                            "ICY 402 Service Unavailabe");
+		curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES,
+		                  data->http_200_aliases);
+	}
 
 	if (useproxy == 1) {
 		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
