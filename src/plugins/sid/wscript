@@ -11,15 +11,24 @@ def plugin_configure(conf):
     if not cfg.run():
         return False
 
-    if not conf.check_header2('sidplay/builders/resid.h'):
-        return False
-    if not conf.check_library2('resid-builder', uselib='resid'):
+    builders = conf.env['sidplay_BUILDERS']
+
+    resid_cfg = conf.create(configurator='library')
+    resid_cfg.name = 'resid-builder'
+    resid_cfg.uselib = 'resid'
+    resid_cfg.path = [builders]
+    if not resid_cfg.run():
         return False
 
-    builders = conf.env['sidplay_BUILDERS']
+    if not conf.check_header("sidplay/builders/resid.h"):
+        return False
+
+    # It looks funny that this is LIBPATH_sidplay but it is correct
+    # since we explcitly set the path to builders for resid it will
+    # find resid in the list even though we still need to -rpath it.
     if not realpath(builders) in [realpath(i) for i in conf.env['LIBPATH_sidplay']]:
-        conf.env['LIBPATH_sidplay'].append("%s" % builders)
-        conf.env['LINKFLAGS_sidplay'] = "-Wl,-rpath=%s" % builders
+        conf.env['LINKFLAGS_resid'] = "-Wl,-rpath=%s" % builders
+
     return True
 
 def plugin_build(bld, obj):
@@ -29,7 +38,7 @@ def plugin_build(bld, obj):
     obj.target = 'xmms_sid_cpp'
     obj.includes = '../../include'
     obj.source = """sidplay_wrapper.cpp md5.cpp""".split()
-    obj.uselib = 'sidplay glib2'
+    obj.uselib = 'sidplay resid glib2'
 
 configure, build = plugin('sid', configure=plugin_configure,
                           build=plugin_build, extra_libs=['sidplay resid'])
