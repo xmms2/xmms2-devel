@@ -1,3 +1,12 @@
 from waftools.plugin import plugin
+import sys
 
-configure, build = plugin('sun', tool='cpp', broken=True)
+def plugin_configure(conf):
+    platform_names = ['netbsd', 'openbsd']
+
+    if not filter(lambda x: sys.platform.startswith(x), platform_names):
+        return False
+
+    return True
+
+configure, build = plugin('sun', configure=plugin_configure, output_prio=3)
