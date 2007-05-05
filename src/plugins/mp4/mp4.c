@@ -52,9 +52,9 @@ static gint xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xm
 static gint64 xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_mp4_get_mediainfo (xmms_xform_t *xform);
 
-uint32_t xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length);
-uint32_t xmms_mp4_seek_callback (void *user_data, uint64_t position);
-int xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile);
+static uint32_t xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length);
+static uint32_t xmms_mp4_seek_callback (void *user_data, uint64_t position);
+static int xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile);
 
 /*
  * Plugin header
@@ -409,7 +409,7 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	}
 }
 
-uint32_t
+static uint32_t
 xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length)
 {
 	xmms_xform_t *xform;
@@ -445,7 +445,7 @@ xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length)
 	return ret;
 }
 
-uint32_t
+static uint32_t
 xmms_mp4_seek_callback (void *user_data, uint64_t position)
 {
 	xmms_xform_t *xform;
@@ -469,7 +469,7 @@ xmms_mp4_seek_callback (void *user_data, uint64_t position)
 	return ret;
 }
 
-int
+static int
 xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile)
 {
 	glong chans, rate;
