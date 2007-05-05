@@ -70,7 +70,7 @@ xmms_config_property_t *xmms_plugin_config_property_register (xmms_plugin_t *plu
 
 
 #define XMMS_BUILTIN(type, api_ver, shname, name, ver, desc, setupfunc)	\
-	xmms_plugin_desc_t xmms_builtin_##shname = {			\
+	const xmms_plugin_desc_t xmms_builtin_##shname = {			\
 		type,							\
 		api_ver,						\
 		G_STRINGIFY(shname),					\

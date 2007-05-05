@@ -45,8 +45,8 @@ static GList *xmms_plugin_list;
 /*
  * Function prototypes
  */
-static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, xmms_plugin_desc_t *desc);
-static gboolean xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module);
+static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc);
+static gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module);
 
 /*
  * Public functions
@@ -258,9 +258,9 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 static void
 xmms_plugin_add_builtin_plugins (void)
 {
-	extern xmms_plugin_desc_t xmms_builtin_ringbuf;
-	extern xmms_plugin_desc_t xmms_builtin_magic;
-	extern xmms_plugin_desc_t xmms_builtin_converter;
+	extern const xmms_plugin_desc_t xmms_builtin_ringbuf;
+	extern const xmms_plugin_desc_t xmms_builtin_magic;
+	extern const xmms_plugin_desc_t xmms_builtin_converter;
 
 	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
 	xmms_plugin_load (&xmms_builtin_magic, NULL);
@@ -322,7 +322,7 @@ xmms_plugin_shutdown ()
 
 
 static gboolean
-xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module)
+xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 {
 	xmms_plugin_t *plugin;
 	xmms_plugin_t *(*allocer) ();
@@ -449,7 +449,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
-		if (!xmms_plugin_load ((xmms_plugin_desc_t *)sym, module)) {
+		if (!xmms_plugin_load ((const xmms_plugin_desc_t *) sym, module)) {
 			g_module_close (module);
 		}
 	}
@@ -580,7 +580,7 @@ xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 
 
 static gboolean
-xmms_plugin_setup (xmms_plugin_t *plugin, xmms_plugin_desc_t *desc)
+xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc)
 {
 	plugin->type = desc->type;
 	plugin->shortname = desc->shortname;
