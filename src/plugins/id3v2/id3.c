@@ -82,7 +82,7 @@
  * TXXX User defined text information frame
  */
 
-const gchar *id3_genres[] =
+static const gchar *id3_genres[] =
 {
         "Blues", "Classic Rock", "Country", "Dance",
         "Disco", "Funk", "Grunge", "Hip-Hop",
