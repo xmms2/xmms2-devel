@@ -23,7 +23,7 @@
 #include "xmms/xmms_log.h"
 #include "id3v1.h"
 
-static const gchar *id3_genres[] = {
+static const gchar * const id3_genres[] = {
         "Blues", "Classic Rock", "Country", "Dance",
         "Disco", "Funk", "Grunge", "Hip-Hop",
         "Jazz", "Metal", "New Age", "Oldies",
