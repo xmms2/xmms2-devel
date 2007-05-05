@@ -51,7 +51,7 @@ typedef struct {
 	ptype type;
 } props;
 
-static props properties[] = {
+static const props properties[] = {
 	{ "title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
 	{ "artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
 	{ "album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },

@@ -270,7 +270,7 @@ typedef struct {
 } props ;
 
 
-static props properties[] = {
+static const props properties[] = {
        { "title",  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,   STRING  },
        { "album",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,   STRING  },
        { "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,  STRING  },

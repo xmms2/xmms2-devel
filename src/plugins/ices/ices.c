@@ -257,7 +257,7 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
 
-	static struct {
+	static const struct {
 		gchar *prop;
 		gchar *key;
 	} *pptr, props[] = {

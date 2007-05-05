@@ -47,7 +47,7 @@ typedef struct xmms_xspf_track_prop_St {
 	xmms_xspf_track_attr_type_t attr_type;
 } xmms_xspf_track_prop_t;
 
-static xmms_xspf_track_prop_t xmms_xspf_track_props[] = {
+static const xmms_xspf_track_prop_t xmms_xspf_track_props[] = {
 	{ "location",   XMMS_XSPF_ATTR_LOCATION, XMMS_XSPF_TRACK_ATTR_TYPE_STRING },
 	{ "identifier", XMMS_XSPF_ATTR_PROP,     XMMS_XSPF_TRACK_ATTR_TYPE_STRING },
 	{ "title",      XMMS_XSPF_ATTR_PROP,     XMMS_XSPF_TRACK_ATTR_TYPE_STRING },
@@ -104,7 +104,7 @@ xmms_xspf_init (xmms_xform_t *xform)
 }
 
 static xmms_xspf_track_attr_t *
-xmms_xspf_track_attr_from_node (xmms_xspf_track_prop_t *prop, xmlNodePtr node)
+xmms_xspf_track_attr_from_node (const xmms_xspf_track_prop_t *prop, xmlNodePtr node)
 {
 	xmms_object_cmd_value_t *value;
 	xmms_xspf_track_attr_t *attr;
@@ -142,7 +142,7 @@ xmms_xspf_parse_track_node (xmms_xform_t *xform, xmlNodePtr node, xmms_error_t *
 
 	cur = node->children;
 	while (cur != NULL) {
-		xmms_xspf_track_prop_t *prop;
+		const xmms_xspf_track_prop_t *prop;
 
 		for (prop = xmms_xspf_track_props; prop->name != NULL; prop++) {
 			if (!xmlStrncmp (cur->name, BAD_CAST prop->name, strlen (prop->name))) {
