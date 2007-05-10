@@ -678,8 +678,8 @@ class Queue(BaseCollection):
 
 class PShuffle(BaseCollection):
 	def __init__(self, parent):
-		self.operands.append(parent)
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE)
+		self.operands.append(parent)
 
 class Union(BaseCollection):
 	def __init__(Collection self, *a):
