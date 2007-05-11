@@ -47,6 +47,9 @@ daap_open_connection (gchar *host, gint port)
 	}
 
 	sock_chan = g_io_channel_unix_new (sockfd);
+	if (!g_io_channel_get_close_on_unref (sock_chan)) {
+		g_io_channel_set_close_on_unref (sock_chan, TRUE);
+	}
 
 	g_io_channel_set_flags (sock_chan, G_IO_FLAG_NONBLOCK, &err);
 	if (NULL != err) {
@@ -119,16 +122,13 @@ daap_open_connection (gchar *host, gint port)
 
 		if (err != 0) {
 			xmms_log_error ("Connect call failed!");
+			g_io_channel_unref (sock_chan);
 			return NULL;
 		}
 
 		if (FD_ISSET (sockfd, &fds)) {
 			break;
 		}
-	}
-
-	if (!g_io_channel_get_close_on_unref (sock_chan)) {
-		g_io_channel_set_close_on_unref (sock_chan, TRUE);
 	}
 
 	g_io_channel_set_encoding (sock_chan, NULL, &err);
