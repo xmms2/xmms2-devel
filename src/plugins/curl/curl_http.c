@@ -249,7 +249,6 @@ xmms_curl_init (xmms_xform_t *xform)
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION,
 	                  xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
-	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
 
 	if (!data->broken_version) {
 		data->http_200_aliases = curl_slist_append (data->http_200_aliases,
