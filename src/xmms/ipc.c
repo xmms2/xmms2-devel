@@ -494,14 +494,14 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 
 	XMMS_DBG ("Destroying client!");
 
-	g_main_loop_unref (client->ml);
-	g_io_channel_unref (client->iochan);
-
 	if (client->ipc) {
 		g_mutex_lock (client->ipc->mutex_lock);
 		client->ipc->clients = g_list_remove (client->ipc->clients, client);
 		g_mutex_unlock (client->ipc->mutex_lock);
 	}
+
+	g_main_loop_unref (client->ml);
+	g_io_channel_unref (client->iochan);
 
 	xmms_ipc_transport_destroy (client->transport);
 
