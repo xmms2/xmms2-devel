@@ -688,10 +688,7 @@ xmms_medialib_entry_send_added (xmms_medialib_entry_t entry)
 static void
 xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error)
 {
-	xmms_medialib_session_t *session;
-	session = xmms_medialib_begin_write ();
-	xmms_medialib_entry_remove (session, entry);
-	xmms_medialib_end (session);
+	xmms_medialib_entry_remove (entry);
 }
 
 /**
@@ -702,11 +699,13 @@ xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmm
  */
 
 void
-xmms_medialib_entry_remove (xmms_medialib_session_t *session,
-                            xmms_medialib_entry_t entry)
+xmms_medialib_entry_remove (xmms_medialib_entry_t entry)
 {
-	g_return_if_fail (session);
+	xmms_medialib_session_t *session;
+
+	session = xmms_medialib_begin_write ();
 	xmms_sqlite_exec (session->sql, "delete from Media where id=%d", entry);
+	xmms_medialib_end (session);
 
 	/** @todo safe ? */
 	xmms_playlist_remove_by_entry (medialib->playlist, entry);

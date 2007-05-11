@@ -440,12 +440,13 @@ xmms_output_filler (void *arg)
 			if (!chain) {
 				session = xmms_medialib_begin_write ();
 				if (xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
-					xmms_medialib_entry_remove (session, entry);
+					xmms_medialib_end (session);
+					xmms_medialib_entry_remove (entry);
 				} else {
 					xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
 					xmms_medialib_entry_send_update (entry);
+					xmms_medialib_end (session);
 				}
-				xmms_medialib_end (session);
 
 				if (!xmms_playlist_advance (output->playlist)) {
 					XMMS_DBG ("End of playlist");

@@ -33,7 +33,7 @@ GList *xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *
 
 xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session);
 guint xmms_medialib_num_not_resolved (xmms_medialib_session_t *session);
-void xmms_medialib_entry_remove (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
+void xmms_medialib_entry_remove (xmms_medialib_entry_t entry);
 
 void xmms_medialib_playlist_save_autosaved ();
 void xmms_medialib_playlist_load_autosaved ();
