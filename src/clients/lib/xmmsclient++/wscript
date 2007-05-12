@@ -23,7 +23,7 @@ def build(bld):
                   stats.cpp
                   xform.cpp""".split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'boost socket'
+    obj.uselib = 'boosth boostl socket'
     obj.vnum = '1.0.0'
     tool.add_install_flag(obj)
 
@@ -32,11 +32,11 @@ def configure(conf):
         return False
     h = conf.create_header_configurator()
     h.name = 'boost/signal.hpp'
-    h.uselib = 'boost'
+    h.uselib = 'boosth'
 
     l = conf.create_library_configurator()
     l.name = 'boost_signals'
-    l.uselib = 'boost'
+    l.uselib = 'boostl'
 
     if Params.g_options.boostprefix:
         h.path = [os.path.join(Params.g_options.boostprefix, "include")]
