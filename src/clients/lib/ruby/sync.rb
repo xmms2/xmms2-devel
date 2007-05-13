@@ -23,6 +23,7 @@ class Xmms::Client::Sync
 	end
 
 	def method_missing(id, *args)
+		args.push(&block) if(id == 'on_disconnect')
 		ret = @real.send(id, *args)
 		if(ret.is_a?(Xmms::Result) || ret.is_a?(Xmms::BroadcastResult) ||
 		   ret.is_a?(Xmms::SignalResult))
