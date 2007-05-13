@@ -162,6 +162,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	void xmmsc_result_disconnect(xmmsc_result_t *res)
 
+	signed int xmmsc_coll_parse (char *pattern, xmmsc_coll_t **coll)
+
 	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_add_args(xmmsc_connection_t *, char *playlist, char *, int, char **)
@@ -792,6 +794,14 @@ cdef create_coll(xmmsc_coll_t *coll):
 	opr.coll = coll
 	
 	return c
+
+def coll_parse(pattern):
+	cdef xmmsc_coll_t *coll
+
+	ptrn = from_unicode(pattern)
+	if not xmmsc_coll_parse(ptrn, &coll):
+		raise ValueError('unable to parse pattern')
+	return create_coll(coll)
 
 cdef class XMMSResult:
 	"""

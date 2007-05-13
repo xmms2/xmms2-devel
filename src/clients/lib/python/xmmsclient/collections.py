@@ -12,3 +12,4 @@ from xmmsapi import Union
 from xmmsapi import Intersection
 from xmmsapi import Complement
 from xmmsapi import Has
+from xmmsapi import coll_parse
