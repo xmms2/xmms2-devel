@@ -788,6 +788,7 @@ cdef create_coll(xmmsc_coll_t *coll):
 	xmmsc_coll_operand_list_first(coll)
 	while xmmsc_coll_operand_list_valid(coll):
 		xmmsc_coll_operand_list_entry(coll, &ocoll)
+		xmmsc_coll_ref(ocoll)
 		opr.pylist.append(create_coll(ocoll))
 		xmmsc_coll_operand_list_next(coll)
 	xmmsc_coll_ref(coll)
