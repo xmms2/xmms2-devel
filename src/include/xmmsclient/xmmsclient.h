@@ -330,6 +330,7 @@ int xmmsc_result_get_dict_entry_collection (xmmsc_result_t *conn, const char *ke
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data);
 int xmmsc_result_propdict_foreach (xmmsc_result_t *res, xmmsc_propdict_foreach_func func, void *user_data);
 void xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference);
+char ** xmmsc_result_source_preference_get (xmmsc_result_t *res);
 
 int xmmsc_result_is_list (xmmsc_result_t *res);
 int xmmsc_result_list_next (xmmsc_result_t *res);

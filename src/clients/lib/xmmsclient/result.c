@@ -613,7 +613,10 @@ xmmsc_result_wait (xmmsc_result_t *res)
 }
 
 /**
- * Set source to used when fetching stuff from a DICT
+ * Set sources to be used when fetching stuff from a propdict.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param preference a list of sources from most to least preferrable.
+ * You may use a wildcard "*" character.
  */
 void
 xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference)
@@ -631,6 +634,42 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 	for (i = 0; preference[i]; i++) {
 		res->source_pref = x_list_append (res->source_pref, strdup (preference[i]));
 	}
+}
+
+/**
+ * Get sources to be used when fetching stuff from a propdict.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param preference a list of the current sources from most to least
+ * preferrable. This list is owned by the result and will be freed with the
+ * result.
+ */
+char **
+xmmsc_result_source_preference_get (xmmsc_result_t *res)
+{
+	int i = 0;
+	char **preference = NULL;
+	x_list_t *list;
+	x_return_val_if_fail (res, NULL);
+
+	list = res->source_pref;
+	preference = malloc (x_list_length (list) * sizeof (char *) + 1);
+	if (!preference) {
+		x_oom ();
+		return NULL;
+	}
+
+	for (i = 0; list; list = list->next) {
+		preference[i] = strdup (list->data);
+		if (!preference[i]) {
+			x_oom ();
+			return NULL;
+		}
+		x_list_append (res->extra_free, preference[i++]);
+	}
+	preference[i] = NULL;
+	x_list_append (res->extra_free, preference);
+
+	return preference;
 }
 
 /**
