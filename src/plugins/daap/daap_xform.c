@@ -85,7 +85,7 @@ XMMS_XFORM_PLUGIN ("daap",
  * daap://hostname:port/command
  */
 static gboolean
-get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
+get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd, xmms_error_t *err)
 {
 	const gchar *port_ptr, *cmd_ptr, *end_ptr, *stripped;
 
@@ -94,7 +94,7 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 	end_ptr = stripped + sizeof (gchar) * strlen (stripped);
 
 	if (stripped == end_ptr) {
-		/* empty url */
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Empty URL");
 		return FALSE;
 	}
 
@@ -113,6 +113,10 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 		*cmd = g_strdup (cmd_ptr);
 	} else if (cmd) {
 		/* cmd wanted but not found */
+		xmms_error_set (err, XMMS_ERROR_INVAL, "No file requested");
+	} else if (!cmd && cmd_ptr && (cmd_ptr + 1) != end_ptr) {
+		/* cmd not wanted but found */
+		xmms_error_set (err, XMMS_ERROR_NOENT, "No such directory");
 		return FALSE;
 	}
 
@@ -285,11 +289,11 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_daap_data_t, 1);
 
-	if (!get_data_from_url (url, &(data->host), &(data->port), &command)) {
+	xmms_error_reset (&err);
+
+	if (!get_data_from_url (url, &(data->host), &(data->port), &command, &err)) {
 		return FALSE;
 	}
-
-	xmms_error_reset (&err);
 
 	hash = g_strdup_printf ("%s:%u", data->host, data->port);
 
@@ -434,7 +438,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 		gchar *host;
 		guint port;
 
-		if (get_data_from_url (url, &host, &port, NULL)) {
+		if (get_data_from_url (url, &host, &port, NULL, error)) {
 			ret = daap_get_urls_from_server (xform, host, port, error);
 			g_free (host);
 		}
