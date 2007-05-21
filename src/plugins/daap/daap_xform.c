@@ -409,7 +409,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 
 			str = g_strdup_printf ("%s:%d", mdns_serv->address,
 			                       mdns_serv->port);
-			xmms_xform_browse_add_entry (xform, str, 0);
+			xmms_xform_browse_add_entry (xform, str, XMMS_XFORM_BROWSE_FLAG_DIR);
 			g_free (str);
 
 			xmms_xform_browse_add_entry_property_str (xform, "servername",
