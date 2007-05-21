@@ -30,23 +30,31 @@ def build(bld):
 def configure(conf):
     if not conf.env["HAVE_CXX"]:
         return False
+
     h = conf.create_header_configurator()
     h.name = 'boost/signal.hpp'
     h.uselib = 'boosth'
 
-    l = conf.create_library_configurator()
-    l.name = 'boost_signals'
-    l.uselib = 'boostl'
-
     if Params.g_options.boostprefix:
         h.path = [os.path.join(Params.g_options.boostprefix, "include")]
-        l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
 
-    ret = (h.run() and l.run())
-    if ret:
-        conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+    if not h.run():
+        # fail without the header
+        return False
 
-    return ret
+    for suffix in ["", "-st", "-mt"]:
+        l = conf.create_library_configurator()
+        l.name = "boost_signals"+suffix
+        l.uselib = 'boostl'
+
+        if Params.g_options.boostprefix:
+            l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
+
+        if l.run():
+            conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+            return True
+
+    return False
 
 def set_options(opt):
     opt.add_option('--with-boost', type="string", dest="boostprefix")
