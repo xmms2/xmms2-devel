@@ -371,7 +371,7 @@ xmms_cdda_seek (xmms_xform_t *xform, gint64 samples,
 
 	data->current_lsn = data->first_lsn + new_lsn;
 
-	return 0;
+	return samples;
 }
 
 /*
