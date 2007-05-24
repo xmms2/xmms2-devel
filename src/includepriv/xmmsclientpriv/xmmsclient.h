@@ -25,10 +25,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef XMMS_OS_DARWIN
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-
 #include "xmmsc/xmmsc_ipc_msg.h"
 
 #include "xmmspriv/xmms_list.h"
