@@ -154,7 +154,7 @@ xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
  */
 
 /* commands */
-xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type);
+xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type);
 xmmsc_result_t *xmmsc_main_stats (xmmsc_connection_t *c);
 
 /* broadcasts */
@@ -280,7 +280,7 @@ xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);
 	xmmsc_result_notifier_set_full (res, callback, udata, free_func);\
 	xmmsc_result_unref (res);\
 }
-	
+
 /*
  * RESULTS
  */
