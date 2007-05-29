@@ -207,6 +207,24 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, OUTLIST char *val
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
 
+void
+xmmsc_coll_attribute_list (xmmsc_coll_t *coll)
+	PREINIT:
+		const char *key;
+		const char *value;
+	PPCODE:
+		xmmsc_coll_attribute_list_first (coll);
+
+		while (xmmsc_coll_attribute_list_valid (coll)) {
+			xmmsc_coll_attribute_list_entry (coll, &key, &value);
+
+			EXTEND (sp, 2);
+			mPUSHp (key, strlen (key));
+			mPUSHp (value, strlen (value));
+
+			xmmsc_coll_attribute_list_next (coll);
+		}
+
 xmmsc_coll_t *
 xmmsc_coll_universe (class="optional")
 	C_ARGS:
