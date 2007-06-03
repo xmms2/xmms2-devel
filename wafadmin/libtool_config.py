@@ -3,16 +3,16 @@
 
 # Copyright (C) 2006  Matthias Jahn <jahn.matthias@freenet.de>
 
-import os
+import os, sys
 from optparse import OptionParser
 
-REVISION="0.1.2"
+REVISION="0.1.3"
 
 class libtool_la_file:
 	def __init__ (self, la_filename):
 		self.__la_filename = la_filename
-		self.linkname = str(os.path.split(la_filename)[-1])
-		self.linkname = str(str(self.linkname).split(".")[0])
+		#remove path and .la suffix
+		self.linkname = str(os.path.split(la_filename)[-1])[:-3]
 		if self.linkname.startswith("lib"):
 			self.linkname = self.linkname[3:]
 		# The name that we can dlopen(3).
@@ -47,7 +47,7 @@ class libtool_la_file:
 			ln = line.strip()
 			if not ln: continue
 			if ln[0]=='#': continue
-			(key,value) = str(ln).split('=')
+			(key,value) = str(ln).split('=', 1)
 			value = value.strip()
 			if value == "no": value = False
 			if value == "yes": value = True
@@ -87,7 +87,7 @@ class libtool_config:
 	def __init__ (self, la_filename):
 		self.__libtool_la_file = libtool_la_file(la_filename)
 		tmp = self.__libtool_la_file
-		self.__version = "%s.%s.%s\n" %(tmp.current, tmp.age, tmp.revision)
+		self.__version = [int(tmp.current), int(tmp.age), int(tmp.revision)]
 		self.__sub_la_files = []
 		self.__sub_la_files.append(la_filename)
 		self.__libs = None
@@ -95,31 +95,14 @@ class libtool_config:
 	def __cmp__(self, other):
 		"""make it compareable with X.Y.Z versions
 		(Y and Z are optional)"""
-		othervers = str(other).strip().split(".")
-		if not othervers:
+		if not other:
 			return 1
-		othernum = 0
-		selfnum = 0
-		# we need a version in this formal X.Y.Z
-		# add_zero would be 2 if we only had X
-		# this way we need to add X.0.0
-		add_zero = 3-len(othervers)
-		while add_zero:
-			add_zero -= 1
-			othervers.append("0")
-
-		for num in othervers:
-			othernum = othernum + int(num)
-			othernum *= 1000
-		for num in str(self.__version).split("."):
-			selfnum = selfnum + int(num)
-			selfnum *= 1000
-
-		if selfnum == othernum:
-			return 0
-		if selfnum > othernum:
+		othervers = [int(s) for s in str(other).split(".")]
+		selfvers = self.__version
+		
+		if selfvers > othervers:
 			return 1
-		if selfnum < othernum:
+		if selfvers < othervers:
 			return -1
 		return 0
 
@@ -226,20 +209,14 @@ def useCmdLine():
 	if options.debug:
 		print(ltf)
 	if options.atleast_version:
-		if ltf >= options.atleast_version:
-			return 0
-		else:
-			return 1
+		if ltf >= options.atleast_version:  return 0
+		sys.exit(1)
 	if options.exact_version:
-		if ltf == options.exact_version:
-			return 0
-		else:
-			return 1
+		if ltf == options.exact_version: return 0
+		sys.exit(1)
 	if options.max_version:
-		if ltf <= options.max_version:
-			return 0
-		else:
-			return 1
+		if ltf <= options.max_version: return 0
+		sys.exit(1)
 	if options.libs:
 		print str(" ").join(ltf.get_libs())
 		return 0

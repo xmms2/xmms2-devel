@@ -44,7 +44,8 @@ class Action:
 				tgt_str = " ".join(map(lambda a:a.nice_path(task.m_env), task.m_outputs))
 				return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
 		except:
-			print "exception"
+			import traceback
+			traceback.print_exc()
 			task.debug(level=1)
 			raise
 
@@ -121,6 +122,7 @@ class alex:
 					else:
 						name.append(c)
 			cur += 1
+
 	def res(self):
 		lst = ['def f(task):\n\tenv=task.m_env\n\tp=env.get_flat\n\t']
 
@@ -164,8 +166,8 @@ def simple_action(name, line, color='GREEN', vars=[]):
 	obj = alex(line)
 	obj.start()
 	f = obj.fun()
-	debug(obj.res(), 'action')
 	act = Action(name, color=color)
+	debug(obj.res(), 'action')
 	act.m_function_to_run = f
 	act.m_vars = obj.m_vars
 	if vars: act.m_vars = vars

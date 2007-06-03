@@ -12,6 +12,28 @@ from Params import fatal, error
 n1_regexp = re.compile('<refentrytitle>(.*)</refentrytitle>', re.M)
 n2_regexp = re.compile('<manvolnum>(.*)</manvolnum>', re.M)
 
+
+def postinstall():
+	if Params.g_commands['install']:
+		import Runner, Common
+
+		# add the gconf schema
+		dir = Common.path_install('PREFIX', 'etc/gconf/schemas/gnome_test.schemas')
+		command = 'gconftool-2 --install-schema-file=%s 1> /dev/null' % dir
+		ret = Runner.exec_command(command)
+
+		# update the pixmap cache directory
+		dir = Common.path_install('DATADIR', 'icons/hicolor')
+		command = 'gtk-update-icon-cache -q -f -t %s' % dir
+		ret = Runner.exec_command(command)
+
+		# now the scrollkeeper update if we can write to the log file
+		if os.path.iswriteable('/var/log/scrollkeeper.log'):
+			dir1 = Common.path_install('PREFIX', 'var/scrollkeeper')
+			dir2 = Common.path_install('DATADIR', 'omf/gnome-hello')
+			command = 'scrollkeeper-update -q -p %s -o %s' % (dir1, dir2)
+			ret = Runner.exec_command(command)
+
 class sgml_man_scanner(Scan.scanner):
 	def __init__(self):
 		Scan.scanner.__init__(self)

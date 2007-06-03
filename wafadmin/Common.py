@@ -54,6 +54,9 @@ def do_install(src, tgt, chmod=0644):
 				fatal('Could not install the file %s' % str(tgt))
 	elif Params.g_commands['uninstall']:
 		print "* uninstalling %s" % tgt
+
+		Params.g_build.m_uninstall.append(tgt)
+
 		try: os.remove(tgt)
 		except OSError: pass
 

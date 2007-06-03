@@ -181,7 +181,6 @@ class c_scanner(Scan.scanner):
 		node = task.m_inputs[0]
 
 		variant = node.variant(env)
-		if not variant == 0: fatal('variant is not 0')
 
 		if tree.needs_rescan(node, task.m_env): rescan = 1
 		if not rescan:
@@ -230,17 +229,17 @@ class c_scanner(Scan.scanner):
 		node = task.m_inputs[0]
 
 		variant = node.variant(env)
-		if not variant == 0: fatal('variant is not 0')
 
 		if tree.needs_rescan(node, task.m_env): rescan = 1
 		#if rescan: print "node has changed, a rescan is req ", node
 
 		if not rescan:
-			#print node, "depends on ", tree.m_depends_on[variant][node]
-			for anode in tree.m_depends_on[variant][node]:
-				if tree.needs_rescan(anode, task.m_env):
-					#print "rescanning because of ", anode
-					rescan = 1
+			if node in tree.m_depends_on[variant]:
+				#print node, "depends on ", tree.m_depends_on[variant][node]
+				for anode in tree.m_depends_on[variant][node]:
+					if tree.needs_rescan(anode, task.m_env):
+						#print "rescanning because of ", anode
+						rescan = 1
 
 		# rescan the cpp file if necessary
 		if rescan:
@@ -253,7 +252,8 @@ class c_scanner(Scan.scanner):
 
 		# we are certain that the files have been scanned - compute the signature
 		add_node_sig(node)
-		for n in tree.m_depends_on[variant][node]: add_node_sig(n)
+		if node in tree.m_depends_on[variant]:
+			for n in tree.m_depends_on[variant][node]: add_node_sig(n)
 
 		#for task in task.m_run_after: m.update(task.signature())
 		return m.digest()
@@ -311,14 +311,14 @@ Action.Action('fakelibtool', vars=fakelibtool_vardeps, func=fakelibtool_build, c
 class ccroot(Object.genobj):
 	"Parent class for programs and libraries in languages c, c++ and moc (Qt)"
 	s_default_ext = []
-	def __init__(self, type='program'):
+	def __init__(self, type='program', subtype=None):
 		Object.genobj.__init__(self, type)
 
 		self.env = Params.g_build.m_allenvs['default'].copy()
 		if not self.env['tools']: fatal('no tool selected')
 
-		# installation directory, to override PREFIX/bin or PREFIX/lib
-		self.install_in = ''
+		self.install_var = ''
+		self.install_subdir = ''
 
 		# includes, seen from the current directory
 		self.includes=''
@@ -357,22 +357,26 @@ class ccroot(Object.genobj):
 		self.scanner_defines = {}
 		self._bld_incpaths_lst=[]
 
-	def create_task(self, type, env=None, nice=10):
+		# the subtype, used for all sorts of things
+		self.subtype = subtype
+		if not self.subtype:
+			if self.m_type == 'program':
+				self.subtype = 'program'
+			elif self.m_type == 'staticlib':
+				self.subtype = 'staticlib'
+			else:
+				self.subtype = 'shlib'
+
+	def create_task(self, type, env=None, nice=100):
 		"overrides Object.create_task to catch the creation of cpp tasks"
 		task = Object.genobj.create_task(self, type, env, nice)
 		if type == self.m_type_initials:
 			self.p_compiletasks.append(task)
 		return task
 
-	def get_valid_types(self):
-		"subclass me"
-		fatal('subclass method get_valid_types of ccroot')
-
 	def apply(self):
 		"adding some kind of genericity is tricky subclass this method if it does not suit your needs"
 		debug("apply called for "+self.m_type_initials, 'ccroot')
-		if not self.m_type in self.get_valid_types():
-			fatal('Invalid type for object: '+self.m_type_initials)
 
 		self.apply_type_vars()
 		self.apply_incpaths()
@@ -454,11 +458,18 @@ class ccroot(Object.genobj):
 			self.m_latask = latask
 
 	def get_target_name(self, ext=None):
-		return self.get_library_name(self.target, self.m_type, ext)
+		return self.get_library_name(self.target, ext)
 
-	def get_library_name(self, name, type, ext=None):
-		prefix = self.env[type+'_PREFIX']
-		suffix = self.env[type+'_SUFFIX']
+	def get_library_name(self, name, ext=None):
+		v = self.env
+
+		prefix = v[self.m_type+'_PREFIX']
+		if self.subtype+'_PREFIX' in v.m_table:
+			prefix = v[self.subtype+'_PREFIX']
+
+		suffix = v[self.m_type+'_SUFFIX']
+		if self.subtype+'_SUFFIX' in v.m_table:
+			suffix = v[self.subtype+'_SUFFIX']
 
 		if ext: suffix = ext
 		if not prefix: prefix=''
@@ -484,7 +495,7 @@ class ccroot(Object.genobj):
 		# now process the include paths
 		tree = Params.g_build
 		for dir in inc_lst:
-			if os.path.isabs(dir[0]) or (len(dir) > 1 and dir[1] == ':'):
+			if Utils.is_absolute_path(dir):
 				self.env.append_value('CPPPATH', dir)
 				continue
 
@@ -499,9 +510,13 @@ class ccroot(Object.genobj):
 
 	def apply_type_vars(self):
 		debug('apply_type_vars called', 'ccroot')
+		# if the subtype defines uselib to add, add them
+		st = self.env[self.subtype+'_USELIB']
+		if st: self.uselib = self.uselib + ' ' + st
+
+		# each compiler defines variables like 'shlib_CXXFLAGS', 'shlib_LINKFLAGS', etc
+		# so when we make a cppobj of the type shlib, CXXFLAGS are modified accordingly
 		for var in self.p_type_vars:
-			# each compiler defines variables like 'shlib_CXXFLAGS', 'shlib_LINKFLAGS', etc
-			# so when we make a cppobj of the type shlib, CXXFLAGS are modified accordingly
 			compvar = '_'.join([self.m_type, var])
 			#print compvar
 			value = self.env[compvar]
@@ -565,20 +580,14 @@ class ccroot(Object.genobj):
 
 	def install(self):
 		if not (Params.g_commands['install'] or Params.g_commands['uninstall']): return
-		if self.install_in is 0: return
-		dest_var    = ''
-		dest_subdir = ''
 
-		if self.install_in:
-			dest_var    = self.install_in
-			dest_subdir = ''
-		else:
-			if self.m_type == 'program':
-				dest_var    = 'PREFIX'
-				dest_subdir = 'bin'
-			else:
-				dest_var    = 'PREFIX'
-				dest_subdir = 'lib'
+		dest_var    = self.install_var
+		dest_subdir = self.install_subdir
+		if dest_var == 0: return
+
+		if not dest_var:
+			dest_var = self.env[self.subtype+'_INST_VAR']
+			dest_subdir = self.env[self.subtype+'_INST_DIR']
 
 		if self.m_type == 'program':
 			self.install_results(dest_var, dest_subdir, self.m_linktask, chmod=self.chmod)
@@ -649,56 +658,75 @@ class ccroot(Object.genobj):
 
 	def apply_lib_vars(self):
 		debug('apply_lib_vars called', 'ccroot')
+		env=self.env
 
-		# 0. override if necessary
+		# 1. override if necessary
 		self.process_vnum()
 
-		# 1. the case of the libs defined in the project
-		names = self.uselib_local.split()
-		env=self.env
-		htbl = Params.g_build.m_depends_on
-		for name in names:
-			for obj in Object.g_allobjs:
-				if obj.name != name: continue
+		# 2. the case of the libs defined in the project (visit ancestors first)
+		# the ancestors external libraries (uselib) will be prepended
+		uselib = self.to_list(self.uselib)
+		seen = []
+		names = self.to_list(self.uselib_local) # consume the list of names
+		while names:
+			x = names[0]
 
-				if not obj.m_posted: obj.post()
+			# visit dependencies only once
+			if x in seen:
+				names = names[1:]
+				continue
 
-				if obj.m_type == 'shlib':
-					env.append_value('LIB', obj.target)
-				elif obj.m_type == 'plugin':
-					if platform == 'darwin':
-						env.append_value('PLUGIN', obj.target)
-					else:
-						env.append_value('LIB', obj.target)
-				elif obj.m_type == 'staticlib':
-					env.append_value('STATICLIB', obj.target)
-				else:
-					error('unknown object type %s in apply_lib_vars' % obj.name)
+			# object does not exist ?
+			y = Object.name_to_obj(x)
+			if not y:
+				error('object not found in uselib_local: obj %s uselib %s' % (self.name, x))
+				names = names[1:]
+				continue
 
-				# add the path too
-				tmp_path = obj.path.bldpath(self.env)
-				if not tmp_path in env['LIBPATH']: env.prepend_value('LIBPATH', tmp_path)
+			# object has ancestors to process first ? update the list of names
+			if y.uselib_local:
+				added = 0
+				lst = y.to_list(y.uselib_local)
+				lst.reverse()
+				for u in lst:
+					if u in seen: continue
+					added = 1
+					names = [u]+names
+				if added: continue # list of names modified, loop
 
-				# set the dependency over the link task
-				self.m_linktask.m_run_after.append(obj.m_linktask)
+			# safe to process the current object
+			if not y.m_posted: y.post()
+			seen.append(x)
 
-				# make sure to rebuild our link task if obj.m_linktask is re-run
-				try:
-					lst = htbl[self.m_linktask.m_outputs[0]]
-					for a in obj.m_linktask:
-						if not a in lst:
-							lst.append(a)
-				except:
-					htbl[self.m_linktask.m_outputs[0]] = obj.m_linktask.m_outputs
+			if y.m_type == 'shlib':
+				env.append_value('LIB', y.target)
+			elif y.m_type == 'plugin':
+				if platform == 'darwin': env.append_value('PLUGIN', y.target)
+				else: env.append_value('LIB', y.target)
+			elif y.m_type == 'staticlib':
+				env.append_value('STATICLIB', y.target)
+			else:
+				error('unknown object type %s in apply_lib_vars, uselib_local' % obj.name)
 
-				# do not continue on all objects, we have found the interesting one
-				break
+			# add the link path too
+			tmp_path = y.path.bldpath(self.env)
+			if not tmp_path in env['LIBPATH']: env.prepend_value('LIBPATH', tmp_path)
 
-		# 2. the case of the libs defined outside
-		libs = self.uselib.split()
-		for l in libs:
+			# set the dependency over the link task
+			self.m_linktask.m_run_after.append(y.m_linktask)
+
+			# add ancestors uselib too
+			# TODO potential problems with static libraries ?
+			morelibs = y.to_list(y.uselib)
+			for v in morelibs:
+				if v in uselib: continue
+				uselib = [v]+uselib
+			names = names[1:]
+
+		# 3. the case of the libs defined outside
+		for x in uselib:
 			for v in self.p_flag_vars:
-				val=self.env[v+'_'+l]
+				val = self.env[v+'_'+x]
 				if val: self.env.append_value(v, val)
 	def process_vnum(self):
 		if self.vnum and sys.platform != 'darwin' and sys.platform != 'win32':
@@ -713,16 +741,11 @@ class ccroot(Object.genobj):
 		lst = self.add_objects.split()
 		if not lst: return
 		for obj in Object.g_allobjs:
-			if obj.target in lst or obj.name in lst:
+			if (not obj.name and obj.target in lst) or obj.name in lst:
 				if not obj.m_posted: obj.post()
 				self.m_linktask.m_inputs += obj.out_nodes
 
 	def addflags(self, var, value):
 		"utility function for cc.py and ccroot.py: add self.cxxflags to CXXFLAGS"
-		if type(var) is types.StringType:
-			for i in value.split():
-				self.env.append_value(var, i)
-		else:
-			# TODO: double-check
-			self.env[var] += value
+		self.env.append_value(var, self.to_list(value))
 

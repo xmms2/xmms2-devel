@@ -25,7 +25,7 @@ def l_file(self, node):
 
 	obj_ext = self.env['EXT_FLEX_OUT']
 
-	ltask = self.create_task('flex', nice=4)
+	ltask = self.create_task('flex', nice=40)
 	ltask.set_inputs(node)
 	ltask.set_outputs(node.change_ext(ext))
 

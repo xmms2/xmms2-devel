@@ -38,7 +38,7 @@ def create_parser():
 		help    = 'specify the number of parallel jobs [Default: 1]',
 		dest    = 'jobs')
 
-	p('-e', '--evil',
+	p('', '--daemon',
 		action  = 'store_true',
 		default = False,
 		help    = 'run as a daemon     [Default: False]',
@@ -116,7 +116,7 @@ def parse_args_impl(parser, _args=None):
 	#print Params.g_options, " ", args
 
 	# By default, 'waf' is equivalent to 'waf build'
-	lst='dist configure clean distclean build install uninstall'.split()
+	lst='dist configure clean distclean build install uninstall check'.split()
 	Params.g_commands={}
 	for var in lst:    Params.g_commands[var]    = 0
 	if len(args) == 0: Params.g_commands['build'] = 1
@@ -130,6 +130,8 @@ def parse_args_impl(parser, _args=None):
 			print 'Error: Invalid command specified ',arg
 			print parser.print_help()
 			sys.exit(1)
+	if Params.g_commands['check']:
+		Params.g_commands['build'] = True
 
 	# TODO -k => -j0
 	if Params.g_options.keep: Params.g_options.jobs = 1
@@ -148,7 +150,12 @@ class Handler:
 		g_parser = self
 	def add_option(self, *kw, **kwargs):
 		self.parser.add_option(*kw, **kwargs)
-	def sub_options(self, dir):
+	def add_option_group(self, *args, **kwargs):
+		return self.parser.add_option_group(*args, **kwargs)
+	def get_option_group(self, opt_str):
+		return self.parser.get_option_group(opt_str)
+	
+	def sub_options(self, dir, option_group=None):
 		current = self.cwd
 
 		self.cwd = os.path.join(self.cwd, dir)
@@ -162,16 +169,19 @@ class Handler:
 			msg = "no module was found for wscript (sub_options)\n[%s]:\n * make sure such a function is defined \n * run configure from the root of the project"
 			fatal(msg % self.cwd)
 		try:
-			mod.set_options(self)
+			if option_group:
+				mod.set_options(option_group)
+			else:
+				mod.set_options(self)
 		except AttributeError:
 			msg = "no set_options function was found in wscript\n[%s]:\n * make sure such a function is defined \n * run configure from the root of the project"
 			fatal(msg % self.cwd)
 
 		self.cwd = current
 
-	def tool_options(self, tool, tooldir=None):
+	def tool_options(self, tool, tooldir=None, option_group=None):
 		if type(tool) is types.ListType:
-			for i in tool: self.tool_options(i, tooldir)
+			for i in tool: self.tool_options(i, tooldir, option_group)
 			return
 
 		if not tooldir: tooldir = Params.g_tooldir
@@ -183,7 +193,10 @@ class Handler:
 			return
 		module = imp.load_module(tool,file,name,desc)
 		try:
-			module.set_options(self)
+			if option_group:
+				module.set_options(option_group)
+			else:
+				module.set_options(self)
 		except AttributeError:
 			warning("tool %s has no function set_options or set_options failed" % tool)
 			pass

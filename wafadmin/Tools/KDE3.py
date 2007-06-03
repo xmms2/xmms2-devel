@@ -101,7 +101,7 @@ class kde_translations(Object.genobj):
 			try:
 				base, ext = os.path.splitext(file.m_name)
 				if ext != '.po': continue
-				task = self.create_task('po', self.env, 2)
+				task = self.create_task('po', self.env, 20)
 				task.set_inputs(file)
 				task.set_outputs(file.change_ext('.gmo'))
 				self.m_tasks.append(task)
@@ -139,7 +139,7 @@ class kde_documentation(Object.genobj):
 			self.m_files.append(node)
 			(base, ext) = os.path.splitext(filename)
 			if ext == '.docbook':
-				task = self.create_task('meinproc', self.env, 2)
+				task = self.create_task('meinproc', self.env, 20)
 				task.set_inputs(node)
 				task.set_outputs(node.change_ext('.cache.bz2'))
 				self.m_docbooks.append(task)
@@ -160,7 +160,7 @@ def handler_ui(self, node, base=''):
 	cppnode = node.change_ext('.cpp')
 	hnode   = node.change_ext('.h')
 
-	uictask = self.create_task('uic', self.env, 2)
+	uictask = self.create_task('uic', self.env, 20)
 	uictask.set_inputs(node)
 	uictask.set_outputs([hnode, cppnode])
 
@@ -194,7 +194,7 @@ def handler_kcfgc(self, node, base=''):
 
 def handler_skel_or_stub(obj, base, type):
 	if not base in obj.skel_or_stub:
-		kidltask = obj.create_task('kidl', obj.env, 2)
+		kidltask = obj.create_task('kidl', obj.env, 20)
 		kidltask.set_inputs(obj.find(base+'.h'))
 		kidltask.set_outputs(obj.find(base+'.kidl'))
 		obj.skel_or_stub[base] = kidltask
@@ -203,7 +203,7 @@ def handler_skel_or_stub(obj, base, type):
 	# instead of saying "task.run_after(othertask)" we only give priority numbers on tasks
 
 	# the skel or stub (dcopidl2cpp)
-	task = obj.create_task(type, obj.env, 4)
+	task = obj.create_task(type, obj.env, 40)
 	task.set_inputs(obj.skel_or_stub[base].m_outputs)
 	task.set_outputs(obj.find(''.join([base,'_',type,'.cpp'])))
 
@@ -228,8 +228,7 @@ class kdeobj(cpp.cppobj):
 		self.skel_or_stub = {}
 		self.want_libtool = -1 # fake libtool here
 
-	def get_valid_types(self):
-		return ['program', 'shlib', 'staticlib', 'module', 'convenience', 'other']
+		# valid types are ['program', 'shlib', 'staticlib', 'module', 'convenience', 'other']
 
 	def apply_core(self):
 

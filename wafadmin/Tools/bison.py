@@ -13,7 +13,7 @@ bison_str = 'cd ${SRC[0].bld_dir(env)} && ${BISON} ${BISONFLAGS} ${SRC[0].abspat
 set_globals('EXT_BISON_C', '.tab.c')
 
 def yc_file(self, node):
-	yctask = self.create_task('bison', nice=4)
+	yctask = self.create_task('bison', nice=40)
 	yctask.set_inputs(node)
 
 	c_ext = self.env['EXT_BISON_C']

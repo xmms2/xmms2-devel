@@ -103,7 +103,7 @@ class Node:
 	def find_build(self, path, create=0):
 		#print "find build", path
 		lst = Utils.split_path(path)
-		return self.find_build_lst(lst)
+		return self.find_build_lst(lst, create)
 
 	def find_build_lst(self, lst, create=0):
 		"search a source or a build node in the filesystem, rescan intermediate folders, create if necessary"

@@ -5,7 +5,7 @@
 
 import os, sys
 import optparse
-import Utils, Action, Params, checks, Configure
+import Utils, Action, Params
 
 def setup(env):
 	pass
@@ -21,7 +21,6 @@ def detect(conf):
 	if not cc:
 		return 0;
 
-	conf.check_tool('checks')
 	# load the cc builders
 	conf.check_tool('cc')
 
@@ -46,6 +45,13 @@ def detect(conf):
 	v['CC_SRC_F']             = ''
 	v['CC_TGT_F']             = '-c -o '
 	v['CPPPATH_ST']           = '-I%s' # template for adding include pathes
+
+	# compiler debug levels
+	v['CCFLAGS'] = ['-Wall']
+	v['CCFLAGS_OPTIMIZED']    = ['-O2']
+	v['CCFLAGS_RELEASE']      = ['-O2']
+	v['CCFLAGS_DEBUG']        = ['-g', '-DDEBUG']
+	v['CCFLAGS_ULTRADEBUG']   = ['-g3', '-O0', '-DDEBUG']
 
 	# linker
 	v['LINK_CC']              = v['CC']
@@ -78,7 +84,6 @@ def detect(conf):
 		v['shlib_obj_ext']       = ['.os']
 		v['shlib_PREFIX']        = 'lib'
 		v['shlib_SUFFIX']        = '.dll'
-		v['shlib_IMPLIB_SUFFIX'] = ['.dll.a']
 
 		# static library
 		v['staticlib_LINKFLAGS'] = ['']
@@ -103,7 +108,6 @@ def detect(conf):
 		v['shlib_obj_ext']     = ['.os']
 		v['shlib_PREFIX']      = 'lib'
 		v['shlib_SUFFIX']      = '.dll'
-		v['shlib_IMPLIB_SUFFIX'] = ['.a']
 
 		# static library
 		v['staticlib_LINKFLAGS'] = ['']
@@ -193,44 +197,6 @@ def detect(conf):
 		# program
 		v['program_obj_ext']     = ['.o']
 		v['program_SUFFIX']      = ''
-	#test if the compiler could build a prog
-	test = Configure.check_data()
-	test.code = 'int main() {return 0;}\n'
-	test.env = v
-	test.execute = 1
-	ret = conf.run_check(test, "program", "cc")
-	conf.check_message('compiler could create', 'pragramms', not (ret is False))
-	if not ret:
-		return 0
-	ret = 0
-	#test if the compiler could build a shlib
-	lib_obj = Configure.check_data()
-	lib_obj.code = "int k = 3;\n"
-	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "shlib", "cc")
-	conf.check_message('compiler could create', 'shared libs', not (ret is False))
-	if not ret:
-		return 0
-	ret = 0
-	#test if the compiler could build a staiclib
-	lib_obj = Configure.check_data()
-	lib_obj.code = "int k = 3;\n"
-	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "staticlib", "cc")
-	conf.check_message('compiler could create', 'static libs', not (ret is False))
-	if not ret:
-		return 0
-
-	# compiler debug levels
-	if conf.check_flags('-Wall'):
-		v['CCFLAGS'] = ['-Wall']
-	if conf.check_flags('-O2'):
-		v['CCFLAGS_OPTIMIZED'] = ['-O2']
-		v['CCFLAGS_RELEASE'] = ['-O2']
-	if conf.check_flags('-g -DDEBUG'):
-		v['CCFLAGS_DEBUG'] = ['-g', '-DDEBUG']
-	if conf.check_flags('-g3 -O0 -DDEBUG'):
-		v['CCFLAGS_ULTRADEBUG'] = ['-g3', '-O0', '-DDEBUG']
 
 	# see the option below
 	try:

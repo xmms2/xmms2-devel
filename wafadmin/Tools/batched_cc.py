@@ -87,7 +87,7 @@ class TaskSlave(Task.Task):
 	def can_retrieve_cache(self, sig):
 		return None
 
-def create_task_new(self, type, env=None, nice=10):
+def create_task_new(self, type, env=None, nice=100):
 	if type == "cc" or type == "cpp":
 
 		if env is None: env=self.env

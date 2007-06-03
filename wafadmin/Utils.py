@@ -4,7 +4,7 @@
 
 "Utility functions"
 
-import os, sys, imp, types
+import os, sys, imp, types, string, re
 import Params
 
 g_trace = 0
@@ -76,7 +76,11 @@ def load_module(file_path, name='wscript'):
 	d['install_files'] = Common.install_files
 	d['install_as'] = Common.install_as
 	d['symlink_as'] = Common.symlink_as
+
+	module_dir = os.path.dirname(file_path)
+	sys.path.insert(0, module_dir)
 	exec file in module.__dict__
+	sys.path.remove(module_dir)
 	if file: file.close()
 
 	g_loaded_modules[file_path] = module
@@ -142,3 +146,28 @@ def join_path(*path):
 
 def join_path_list(path_lst):
 	return join_path(*path_lst)
+
+def is_absolute_path(path):
+	""" more thorough absoluate path check """
+	isabs = os.path.isabs(path)
+	if not isabs and sys.platform == 'win32':
+		isabs = (len(path) > 1 and path.find(':') > 0)
+	elif not isabs and sys.platform != 'win32':
+		isabs = re.search(r'^[\"\']/', path.strip(), re.M) != None
+	return isabs
+
+_path_to_preprocessor_name_translation = None
+def path_to_preprocessor_name(path):
+	"""Converts a file path like foo/zbr-xpto.h to a C preprocessor
+	name like FOO_ZBR_XPTO_H"""
+	global _path_to_preprocessor_name_translation
+	if _path_to_preprocessor_name_translation is None:
+		## make a translation table mapping everything except
+		## alfanumeric chars to '_'
+		invalid_chars = [chr(x) for x in xrange(256)]
+		for valid in string.digits + string.uppercase:
+			invalid_chars.remove(valid)
+		_path_to_preprocessor_name_translation = string.maketrans(
+			''.join(invalid_chars), '_'*len(invalid_chars))
+
+	return string.translate(string.upper(path), _path_to_preprocessor_name_translation)

@@ -63,7 +63,8 @@ class Environment:
 
 	def __getitem__(self, key):
 		r = self.m_table.get(key, None)
-		if r: return r
+		if r is not None:
+			return r
 		return Params.g_globals.get(key, [])
 
 	def __setitem__(self, key, value):

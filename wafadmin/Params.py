@@ -10,9 +10,9 @@ import Utils
 # =================================== #
 # Fixed constants, change with care
 
-g_version="1.1.0"
+g_version="1.1.1"
 g_rootname = ''
-if sys.path=='win32':
+if sys.platform=='win32':
 	# get the first two letters (c:)
 	g_rootname = os.getcwd()[:2]
 
@@ -113,7 +113,8 @@ def reset_colors():
 	for k in g_colors.keys():
 		g_colors[k]=''
 
-if sys.platform=='win32' or 'NOCOLOR' in os.environ:
+if (sys.platform=='win32' or 'NOCOLOR' in os.environ
+	or os.environ.get('TERM', 'dumb') == 'dumb'):
 	reset_colors()
 
 def pprint(col, str, label=''):

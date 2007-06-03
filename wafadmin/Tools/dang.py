@@ -16,7 +16,7 @@ def coin_file(self, node):
 	 - lower number means high priority
 	 - odd means the task can be run in parallel with others of the same priority number
 	"""
-	cointask = self.create_task('dang', nice=4)
+	cointask = self.create_task('dang', nice=40)
 	cointask.set_inputs(node)
 	cointask.set_outputs(node.change_ext('.cpp'))
 

@@ -127,16 +127,15 @@ def create_uic_task(self, node):
 	uictask.m_outputs   = [node.change_ext('.h')]
 
 class qt4obj(cpp.cppobj):
-	def __init__(self, type='program'):
-		cpp.cppobj.__init__(self, type)
+	def __init__(self, type='program', subtype=None):
+		cpp.cppobj.__init__(self, type, subtype)
 		self.m_linktask = None
 		self.m_latask = None
 		self.lang=''
 		self.langname=''
 		self.update=0
 
-	def get_valid_types(self):
-		return ['program', 'shlib', 'staticlib']
+		# valid types are ['program', 'shlib', 'staticlib']
 
 	def create_task(self, type, env=None, nice=100):
 		"overrides Object.create_task to catch the creation of cpp tasks"

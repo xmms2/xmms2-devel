@@ -8,7 +8,9 @@ import os, cPickle
 import Params, Runner, Object, Node, Task, Scripting, Utils, Environment
 from Params import debug, error, fatal, warning
 
-g_saved_attrs = 'm_root m_srcnode m_bldnode m_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps'.split()
+
+
+SAVED_ATTRS = 'm_root m_srcnode m_bldnode m_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps'.split()
 "Build class members to save"
 
 class BuildDTO:
@@ -16,12 +18,12 @@ class BuildDTO:
 	def __init__(self):
 		pass
 	def init(self, bdobj):
-		global g_saved_attrs
-		for a in g_saved_attrs:
+		global SAVED_ATTRS
+		for a in SAVED_ATTRS:
 			setattr(self, a, getattr(bdobj, a))
 	def update_build(self, bdobj):
-		global g_saved_attrs
-		for a in g_saved_attrs:
+		global SAVED_ATTRS
+		for a in SAVED_ATTRS:
 			setattr(bdobj, a, getattr(self, a))
 
 class Build:
@@ -70,12 +72,11 @@ class Build:
 		# file contents
 		self._cache_node_content = {}
 
+		# list of targets to uninstall for removing the empty folders after uninstalling
+		self.m_uninstall = []
+
 		# ======================================= #
 		# tasks and objects
-
-		# objects that are not posted and objects already posted
-		# -> delay task creation
-		self.m_outstanding_objs = []
 
 		# build dir variants (release, debug, ..)
 		for name in ['default', 0]:
@@ -191,9 +192,32 @@ class Build:
 	def install(self):
 		"this function is called for both install and uninstall"
 		debug("install called", 'build')
+
 		Object.flush()
 		for obj in Object.g_allobjs:
 			if obj.m_posted: obj.install()
+
+		# remove empty folders after uninstalling
+		if Params.g_commands['uninstall']:
+			lst = []
+			for x in self.m_uninstall:
+				dir = os.path.dirname(x)
+				if not dir in lst: lst.append(dir)
+			lst.sort()
+			lst.reverse()
+
+			nlst = []
+			for y in lst:
+				x = y
+				while len(x) > 4:
+					if not x in nlst: nlst.append(x)
+					x = os.path.dirname(x)
+
+			nlst.sort()
+			nlst.reverse()
+			for x in nlst:
+				try: os.rmdir(x)
+				except OSError: pass
 
 	def add_subdirs(self, dirs):
 		lst = Utils.to_list(dirs)
@@ -226,6 +250,23 @@ class Build:
 			self.m_allenvs[name] = env
 			for t in env['tools']: env.setup(**t)
 
+		self._initialize_variants()
+
+		for env in self.m_allenvs.values():
+			for f in env['dep_files']:
+				newnode = self.m_srcnode.find_build(f, create=1)
+				try:
+					hash = Params.h_file(newnode.abspath(env))
+				except IOError:
+					error("cannot find "+f)
+					hash = Params.sig_nil
+				except AttributeError:
+					error("cannot find "+f)
+					hash = Params.sig_nil
+				self.m_tstamp_variants[env.variant()][newnode] = hash
+
+
+	def _initialize_variants(self):
 		debug("init variants", 'build')
 
 		lstvariants = []
@@ -241,19 +282,6 @@ class Build:
 				var = getattr(self, v)
 				if not name in var:
 					var[name] = {}
-
-		for env in self.m_allenvs.values():
-			for f in env['dep_files']:
-				newnode = self.m_srcnode.find_build(f)
-				try:
-					hash = Params.h_file(newnode.abspath(env))
-				except IOError:
-					error("cannot find "+f)
-					hash = Params.sig_nil
-				except AttributeError:
-					error("cannot find "+f)
-					hash = Params.sig_nil
-				self.m_tstamp_variants[env.variant()][newnode] = hash
 
 	# ======================================= #
 	# node and folder handling
@@ -296,6 +324,9 @@ class Build:
 		# create this build dir if necessary
 		try: os.makedirs(blddir)
 		except OSError: pass
+
+		self._initialize_variants()
+
 
 	def ensure_dir_node_from_path(self, abspath):
 		"return a node corresponding to an absolute path, creates nodes if necessary"

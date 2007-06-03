@@ -17,7 +17,6 @@ def build(bld):
                            "url.c", platform_sources])
     obj.includes='. ../../include'
     obj.target='xmmsipc'
-    obj.uselib_local='xmmssocket'
     obj.install_in = 0
 
 def configure(conf):

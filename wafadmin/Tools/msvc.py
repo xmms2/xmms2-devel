@@ -4,6 +4,7 @@
 # Visual C support - beta, needs more testing
 
 import os, sys
+import optparse
 import Utils, Action, Params
 
 def setup(env):
@@ -33,11 +34,11 @@ def detect(conf):
 
 	v = conf.env
 
-	# c/c++ compiler - needs to be in parenthesis because the default path includes whitespaces
-	v['CC']                 = '\"%s\"' % comp
-	v['CXX']                 = '\"%s\"' % comp
+	# c/c++ compiler - check for whitespace, and if so, add quotes
+	v['CC']                 = (comp.strip().find(' ') > 0 and '"%s"' % comp or comp).replace('""', '"')
+	v['CXX']                 = v['CC']
 
-	v['CPPFLAGS']            = ['/Wall', '/nologo', '/c', '/ZI', '/EHsc', '/errorReport:prompt']
+	v['CPPFLAGS']            = ['/W3', '/nologo', '/c', '/EHsc', '/errorReport:prompt']
 	v['CCDEFINES']          = ['WIN32'] # command-line defines
 	v['CXXDEFINES']          = ['WIN32'] # command-line defines
 
@@ -70,31 +71,34 @@ def detect(conf):
 
 	v['CPPFLAGS_CRT_MULTITHREADED_DBG'] =				['/MTd']
 	v['CPPFLAGS_CRT_MULTITHREADED_DLL_DBG'] =		['/MDd']
-	v['CPPDEFINES_CRT_MULTITHREADED'] =					['_DEBUG', '_MT']
-	v['CPPDEFINES_CRT_MULTITHREADED_DLL'] =			['_DEBUG', '_MT', '_DLL']
+	v['CPPDEFINES_CRT_MULTITHREADED_DBG'] =					['_DEBUG', '_MT']
+	v['CPPDEFINES_CRT_MULTITHREADED_DLL_DBG'] =			['_DEBUG', '_MT', '_DLL']
 
 
 	# compiler debug levels
 	v['CCFLAGS']            = ['/TC']
 	v['CCFLAGS_OPTIMIZED']  = ['/O2', '/DNDEBUG']
 	v['CCFLAGS_RELEASE']    = ['/O2', '/DNDEBUG']
-	v['CCFLAGS_DEBUG']      = ['/Od', '/RTC1', '/D_DEBUG']
-	v['CCFLAGS_ULTRADEBUG'] = ['/Od', '/RTC1', '/D_DEBUG']
+	v['CCFLAGS_DEBUG']      = ['/Od', '/RTC1', '/D_DEBUG', '/ZI']
+	v['CCFLAGS_ULTRADEBUG'] = ['/Od', '/RTC1', '/D_DEBUG', '/ZI']
 
 	v['CXXFLAGS']            = ['/TP']
 	v['CXXFLAGS_OPTIMIZED']  = ['/O2', '/DNDEBUG']
 	v['CXXFLAGS_RELEASE']    = ['/O2', '/DNDEBUG']
-	v['CXXFLAGS_DEBUG']      = ['/Od', '/RTC1', '/D_DEBUG']
-	v['CXXFLAGS_ULTRADEBUG'] = ['/Od', '/RTC1', '/D_DEBUG']
+	v['CXXFLAGS_DEBUG']      = ['/Od', '/RTC1', '/D_DEBUG', '/ZI']
+	v['CXXFLAGS_ULTRADEBUG'] = ['/Od', '/RTC1', '/D_DEBUG', '/ZI']
 
 
 	# linker
 	v['STLIBLINK_CXX']       = '\"%s\"' % stliblink
 	v['LINK_CXX']            = '\"%s\"' % link
+	v['LINK_CC']             = v['LINK_CXX']
 	v['LIB']                 = []
 
 	v['CPPLNK_TGT_F']        = '/OUT:'
+	v['CCLNK_TGT_F']         = v['CPPLNK_TGT_F']
 	v['CPPLNK_SRC_F']        = ' '
+	v['CCLNK_SRC_F']         = v['CCLNK_SRC_F']
 
 	v['LIB_ST']              = '%s.lib'	# template for adding libs
 	v['LIBPATH_ST']          = '/LIBPATH:%s' # template for adding libpathes
@@ -116,12 +120,14 @@ def detect(conf):
 	v['LINKFLAGS_DEBUG']     = ['/DEBUG', '/INCREMENTAL']
 	v['LINKFLAGS_ULTRADEBUG'] = ['/DEBUG', '/INCREMENTAL']
 
-	debuglevel = 'DEBUG'
 	try:
-		debuglevel = Params.g_options.debug_level.uppercase()
-	except:
-		pass
+		debuglevel = Params.g_options.debug_level
+	except AttributeError:
+		debuglevel = 'DEBUG'
+	else:
+		debuglevel = debuglevel.upper()
 	v['CCFLAGS']   += v['CCFLAGS_'+debuglevel]
+	v['CXXFLAGS']  += v['CXXFLAGS_'+debuglevel]
 	v['LINKFLAGS'] += v['LINKFLAGS_'+debuglevel]
 
 	def addflags(var):
@@ -166,5 +172,5 @@ def set_options(opt):
 		default = 'debug',
 		help = 'Specify the debug level. [Allowed values: ultradebug, debug, release, optimized]',
 		dest = 'debug_level')
-	except:
+	except optparse.OptionConflictError:
 		pass

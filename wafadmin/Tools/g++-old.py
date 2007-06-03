@@ -5,7 +5,7 @@
 
 import os, sys
 import optparse
-import Utils, Action, Params, checks, Configure
+import Utils, Action, Params
 
 def setup(env):
 	pass
@@ -50,6 +50,12 @@ def detect(conf):
 
 	v['CPPPATH_ST']          = '-I%s' # template for adding include paths
 
+	# compiler debug levels
+	v['CXXFLAGS']            = ['-Wall']
+	v['CXXFLAGS_OPTIMIZED']  = ['-O2']
+	v['CXXFLAGS_RELEASE']    = ['-O2']
+	v['CXXFLAGS_DEBUG']      = ['-g', '-DDEBUG']
+	v['CXXFLAGS_ULTRADEBUG'] = ['-g3', '-O0', '-DDEBUG']
 
 	# linker
 	v['LINK_CXX']            = v['CXX']
@@ -76,172 +82,84 @@ def detect(conf):
 	v['LINKFLAGS_DEBUG']     = ['-g']
 	v['LINKFLAGS_ULTRADEBUG'] = ['-g3']
 
+
+
+	# program
+	v['program_obj_ext']   = ['.o']
+	v['program_SUFFIX']    = ''
+
+	# static lib
+	v['staticlib_CXXFLAGS'] = ['']
+	v['staticlib_LINKFLAGS'] = ['']
+	v['staticlib_obj_ext'] = ['_st.o']
+	v['staticlib_PREFIX']  = 'lib'
+	v['staticlib_SUFFIX']  = '.a'
+
+	# shared library
+	v['shlib_CXXFLAGS']    = ['-fPIC', '-DPIC']
+	v['shlib_LINKFLAGS']   = ['-shared']
+	v['shlib_obj_ext']     = ['.os']
+	v['shlib_PREFIX']      = 'lib'
+	v['shlib_SUFFIX']      = '.so'
+
+	# plugins, loadable modules.
+	v['plugin_CCFLAGS']    = v['shlib_CCFLAGS']
+	v['plugin_LINKFLAGS']  = v['shlib_LINKFLAGS']
+	v['plugin_obj_ext']    = v['shlib_obj_ext']
+	v['plugin_PREFIX']     = v['shlib_PREFIX']
+	v['plugin_SUFFIX']     = v['shlib_SUFFIX']
+
 	if sys.platform == "win32":
-		# shared library
-		v['shlib_CXXFLAGS']    = ['']
-		v['shlib_LINKFLAGS']   = ['-shared']
-		v['shlib_obj_ext']     = ['.os']
-		v['shlib_PREFIX']      = 'lib'
-		v['shlib_SUFFIX']      = '.dll'
-		v['shlib_IMPLIB_SUFFIX'] = ['.a']
-
-		# static library
-		v['staticlib_LINKFLAGS'] = ['']
-		v['staticlib_obj_ext'] = ['.o']
-		v['staticlib_PREFIX']  = 'lib'
-		v['staticlib_SUFFIX']  = '.a'
-
-		# program
-		v['program_obj_ext']   = ['.o']
 		v['program_SUFFIX']    = '.exe'
+		v['shlib_CXXFLAGS']    = ['']
+		v['shlib_SUFFIX']      = '.dll'
 
-		# plugins, loadable modules.
-		v['plugin_CCFLAGS']      = v['shlib_CCFLAGS']
-		v['plugin_LINKFLAGS']    = v['shlib_LINKFLAGS']
-		v['plugin_obj_ext']      = v['shlib_obj_ext']
-		v['plugin_PREFIX']       = v['shlib_PREFIX']
-		v['plugin_SUFFIX']       = v['shlib_SUFFIX']
 	elif sys.platform == 'cygwin':
-		# shared library
-		v['shlib_CXXFLAGS']    = ['']
-		v['shlib_LINKFLAGS']   = ['-shared']
-		v['shlib_obj_ext']     = ['.os']
-		v['shlib_PREFIX']      = 'lib'
-		v['shlib_SUFFIX']      = '.dll'
-		v['shlib_IMPLIB_SUFFIX'] = ['.a']
-
-		# static library
-		v['staticlib_LINKFLAGS'] = ['']
-		v['staticlib_obj_ext'] = ['.o']
-		v['staticlib_PREFIX']  = 'lib'
-		v['staticlib_SUFFIX']  = '.a'
-
-		# program
-		v['program_obj_ext']   = ['.o']
 		v['program_SUFFIX']    = '.exe'
-	elif sys.platform == 'darwin':
-		v['SHLIB_MARKER']      = ' '
-		v['STATICLIB_MARKER']  = ' '
+		v['shlib_CXXFLAGS']    = ['']
+		v['shlib_SUFFIX']      = '.dll'
 
-		# shared library
-		v['shlib_MARKER']      = ''
-		v['shlib_CXXFLAGS']    = ['-fPIC']
+	elif sys.platform == 'darwin':
 		v['shlib_LINKFLAGS']   = ['-dynamiclib']
-		v['shlib_obj_ext']     = ['.os']
-		v['shlib_PREFIX']      = 'lib'
 		v['shlib_SUFFIX']      = '.dylib'
 
-		# static lib
-		v['staticlib_MARKER']  = ''
-		v['staticlib_LINKFLAGS'] = ['']
-		v['staticlib_obj_ext'] = ['.o']
-		v['staticlib_PREFIX']  = 'lib'
-		v['staticlib_SUFFIX']  = '.a'
-
-		# bundles
 		v['plugin_LINKFLAGS']    = ['-bundle', '-undefined dynamic_lookup']
 		v['plugin_obj_ext']      = ['.os']
 		v['plugin_CCFLAGS']      = ['-fPIC']
 		v['plugin_PREFIX']       = ''
 		v['plugin_SUFFIX']       = '.bundle'
 
-		# program
-		v['program_obj_ext']   = ['.o']
-		v['program_SUFFIX']    = ''
-
 		v['SHLIB_MARKER']        = ''
 		v['STATICLIB_MARKER']    = ''
 
 	elif sys.platform == 'aix5':
-		# shared library
-		v['shlib_CXXFLAGS']    = ['-fPIC', '-DPIC']
 		v['shlib_LINKFLAGS']   = ['-shared','-Wl,-brtl,-bexpfull']
 		v['shlib_obj_ext']     = ['_sh.o']
-		v['shlib_PREFIX']      = 'lib'
 		v['shlib_SUFFIX']      = '.so'
 
-		# plugins, loadable modules.
 		v['plugin_CCFLAGS']    = v['shlib_CCFLAGS']
 		v['plugin_LINKFLAGS']  = v['shlib_LINKFLAGS']
 		v['plugin_obj_ext']    = v['shlib_obj_ext']
 		v['plugin_PREFIX']     = v['shlib_PREFIX']
 		v['plugin_SUFFIX']     = v['shlib_SUFFIX']
 
-		# static lib
-		#v['staticlib_LINKFLAGS'] = ['-Wl,-Bstatic']
-		v['staticlib_obj_ext'] = ['.o']
-		v['staticlib_PREFIX']  = 'lib'
-		v['staticlib_SUFFIX']  = '.a'
-
-		# program
 		v['program_LINKFLAGS'] = ['-Wl,-brtl']
-		v['program_obj_ext']   = ['.o']
-		v['program_SUFFIX']    = ''
 
 		v['SHLIB_MARKER']      = ''
-	else:
-		# shared library
-		v['shlib_CXXFLAGS']    = ['-fPIC', '-DPIC']
-		v['shlib_LINKFLAGS']   = ['-shared']
-		v['shlib_obj_ext']     = ['.os']
-		v['shlib_PREFIX']      = 'lib'
-		v['shlib_SUFFIX']      = '.so'
 
-		# plugins, loadable modules.
+	elif sys.platform == 'solaris':
+		v['shlib_CXXFLAGS']    = ['-KPIC']
+		v['shlib_LINKFLAGS']   = ['-G']
+
 		v['plugin_CCFLAGS']      = v['shlib_CCFLAGS']
 		v['plugin_LINKFLAGS']    = v['shlib_LINKFLAGS']
 		v['plugin_obj_ext']      = v['shlib_obj_ext']
 		v['plugin_PREFIX']       = v['shlib_PREFIX']
 		v['plugin_SUFFIX']       = v['shlib_SUFFIX']
 
-		# static lib
-		#v['staticlib_LINKFLAGS'] = ['-Wl,-Bstatic']
-		v['staticlib_obj_ext'] = ['.o']
-		v['staticlib_PREFIX']  = 'lib'
-		v['staticlib_SUFFIX']  = '.a'
+	else: # linux
+		v['staticlib_LINKFLAGS'] = ['-Wl,-Bstatic']
 
-		# program
-		v['program_obj_ext']   = ['.o']
-		v['program_SUFFIX']    = ''
-
-	conf.check_tool('checks')
-	#test if the compiler could build a prog
-	test = Configure.check_data()
-	test.code = 'int main() {return 0;}\n'
-	test.env = v
-	test.execute = 1
-	ret = conf.run_check(test, "program", "cpp")
-	conf.check_message('compiler could create', 'pragramms', not (ret is False))
-	if not ret:
-		return 0
-	#test if the compiler could build a shlib
-	lib_obj = Configure.check_data()
-	lib_obj.code = "int k = 3;\n"
-	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "shlib", "cpp")
-	conf.check_message('compiler could create', 'shared libs', not (ret is False))
-	if not ret:
-		return 0
-	#test if the compiler could build a staiclib
-	lib_obj = Configure.check_data()
-	lib_obj.code = "int k = 3;\n"
-	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "staticlib", "cpp")
-	conf.check_message('compiler could create', 'static libs', not (ret is False))
-	if not ret:
-		return 0
-
-	# compiler debug levels
-	if conf.check_flags('-Wall'):
-		v['CXXFLAGS'] = ['-Wall']
-	if conf.check_flags('-O2'):
-		v['CXXFLAGS_OPTIMIZED'] = ['-O2']
-		v['CXXFLAGS_RELEASE'] = ['-O2']
-	if conf.check_flags('-g -DDEBUG'):
-		v['CXXFLAGS_DEBUG'] = ['-g', '-DDEBUG']
-	if conf.check_flags('-g3 -O0 -DDEBUG'):
-		v['CXXFLAGS_ULTRADEBUG'] = ['-g3', '-O0', '-DDEBUG']
-	
 	# see the option below
 	try:
 		v['CXXFLAGS'] = v['CXXFLAGS_'+Params.g_options.debug_level.upper()]

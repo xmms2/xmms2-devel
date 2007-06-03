@@ -17,7 +17,7 @@ In the shutdown method, add the following code:
 
 Each object to use as a unit test must be a program and must have X{obj.unit_test=1}
 """
-
+import os
 import Params, Object, pproc
 
 class unit_test:
@@ -44,6 +44,10 @@ class unit_test:
 						# Key: the label, value: result (true = success false = failure)
 		self.unit_test_erroneous = {}	# Dictionary indicating erroneous unit tests.
 						# Key: the label, value: true = unit test has an error  false = unit test is ok
+		self.change_to_testfile_dir = False #True if the test file needs to be executed from the same dir
+		self.want_to_see_test_output = False #True to see the stdout from the testfile (for example check suites)
+		self.want_to_see_test_error = False #True to see the stderr from the testfile (for example check suites)
+		self.run_if_waf_does = 'check' #build was the old default
 
 	def run(self):
 		"Run the unit tests and gather results (note: no output here)"
@@ -59,7 +63,7 @@ class unit_test:
 		self.unit_test_erroneous = {}
 
 		# If waf is not building, don't run anything
-		if not Params.g_commands['build']: return
+		if not Params.g_commands[self.run_if_waf_does]: return
 
 		# Gather unit tests to call
 		for obj in Object.g_allobjs:
@@ -76,19 +80,33 @@ class unit_test:
 				pass
 		self.total_num_tests = len(self.unit_tests)
 		# Now run the unit tests
+		curdir = os.getcwd() # store the current dir (only if self.change_to_testfile_dir)
 		for label, filename in self.unit_tests.iteritems():
 			try:
-				pp = pproc.Popen(filename, stdout = pproc.PIPE, stderr = pproc.PIPE) # PIPE for ignoring output
+				if self.change_to_testfile_dir:
+					os.chdir(os.path.dirname(filename))
+
+				kwargs = dict()
+				if not self.want_to_see_test_output:
+					kwargs['stdout'] = pproc.PIPE  # PIPE for ignoring output
+				if not self.want_to_see_test_error:
+					kwargs['stderr'] = pproc.PIPE  # PIPE for ignoring output
+				pp = pproc.Popen(filename, **kwargs)
 				pp.wait()
+				
+				if self.change_to_testfile_dir:
+					os.chdir(curdir)
 
 				result = int(pp.returncode == self.returncode_ok)
 
-				if result: self.num_tests_ok += 1
-				else: self.num_tests_failed += 1
+				if result:
+					self.num_tests_ok += 1
+				else:
+					self.num_tests_failed += 1
 
 				self.unit_test_results[label] = result
 				self.unit_test_erroneous[label] = 0
-			except:
+			except OSError:
 				self.unit_test_erroneous[label] = 1
 				self.num_tests_err += 1
 
@@ -96,7 +114,7 @@ class unit_test:
 		"Pretty-prints a summary of all unit tests, along with some statistics"
 
 		# If waf is not building, don't output anything
-		if not Params.g_commands['build']: return
+		if not Params.g_commands[self.run_if_waf_does]: return
 
 		p = Params.pprint
 		# Early quit if no tests were performed

@@ -10,7 +10,7 @@ if 'PSYCOWAF' in os.environ:
 	except:
 		pass
 
-VERSION="1.1.0"
+VERSION="1.1.1"
 REVISION="x"
 INSTALL="x"
 cwd = os.getcwd()
@@ -63,14 +63,15 @@ def uncompress_wafdir(newdir):
 			print "Or use the full waf version available freely at http://freehackers.org/~tnagy/bksys.html"
 			print "\033[91mNo wafadmin: cannot execute anything (error)\033[0m"
 			sys.exit(1)
-		if line=='# ===>BEGIN WOOF<===\n':
+		line=line.rstrip()
+		if line=='# ===>BEGIN WOOF<===':
 			cnt = file.readline()
 			if not cnt:
 				print "Corrupted waf (1)"
 				sys.exit(1)
 
-			line = file.readline()
-			if line!='# ===>END WOOF<===\n':
+			line = file.readline().rstrip()
+			if line!='# ===>END WOOF<===':
 				print "Corrupted waf (2)"
 				sys.exit(1)
 			break
@@ -154,11 +155,16 @@ def find_wafadmin():
 
 	if wafdir: return
 
-	# uncompress waf-local to the directory containing waf
+	# look in the directory containing waf
 	if sys.platform == 'win32': s='waf-%s-%s'
 	else: s='.waf-%s-%s'
-	wafdir = os.path.join(os.path.dirname(os.path.abspath(name)), s % (VERSION, REVISION))
-	uncompress_wafdir(wafdir)
+	dir = os.path.join(os.path.dirname(os.path.abspath(name)), s % (VERSION, REVISION))
+	try_wafdir(dir)
+	if wafdir: return
+
+	# not found, uncompress
+	wafdir = dir
+	uncompress_wafdir(dir)
 
 # run the test
 find_wafadmin()

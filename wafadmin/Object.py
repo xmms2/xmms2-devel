@@ -27,43 +27,53 @@ from Params import debug, error, fatal
 
 g_allobjs=[]
 "contains all objects, provided they are created (not in distclean or in dist)"
+#TODO part of the refactoring to eliminate the static stuff (Utils.reset)
+
+g_name_to_obj = {}
+
+def name_to_obj(name):
+	global g_name_to_obj
+	if not g_name_to_obj:
+		for x in g_allobjs:
+			if x.name:
+				g_name_to_obj[x.name] = x
+			elif not x.target in g_name_to_obj.keys():
+				g_name_to_obj[x.target] = x
+	return g_name_to_obj.get(name, None)
 
 def flush():
 	"object instances under the launch directory create the tasks now"
+	global g_allobjs
+	global g_name_to_obj
+
+	# force the initialization of the mapping name->object in flush
+	# name_to_obj can be used in userland scripts, in that case beware of incomplete mapping
+	g_name_to_obj = {}
+	name_to_obj(None)
 
 	tree = Params.g_build
 	debug("delayed operation Object.flush() called", 'object')
 
-	dir_lst = Utils.split_path(Params.g_cwd_launch)
+	# post only objects below a particular folder (recursive make behaviour)
 	launch_dir_node = tree.m_root.find_dir(Params.g_cwd_launch)
-
 	if launch_dir_node.is_child_of(tree.m_bldnode):
 		launch_dir_node=tree.m_srcnode
 
-	if Params.g_options.compile_targets:
-		compile_targets = Params.g_options.compile_targets.split(',')
+	if Params.g_options.compile_targets: # well this feature is not used too much
+		debug('posting objects listed in compile_targets', 'object')
+		for x in Params.g_options.compile_targets.split(','):
+			y = name_to_obj(x)
+			if not y: continue
+			if y.m_posted: continue
+			y.post()
+			if Params.g_options.verbose == 3: print "flushed at ", time.asctime(time.localtime())
 	else:
-		compile_targets = None
-
-	for obj in tree.m_outstanding_objs:
-		debug("posting object", 'object')
-
-		if obj.m_posted: continue
-
-		if launch_dir_node:
-			objnode = obj.path
-			if not objnode.is_child_of(launch_dir_node):
-				continue
-		if compile_targets:
-			if obj.name and not (obj.name in compile_targets):
-				debug('skipping because of name', 'object')
-				continue
-			if not obj.target in compile_targets:
-				debug('skipping because of target', 'object')
-				continue
-		obj.post()
-		if Params.g_options.verbose == 3:
-			print "flushed at ", time.asctime(time.localtime())
+		debug('posting objects (normal)', 'object')
+		for obj in g_allobjs:
+			if obj.m_posted: continue
+			if launch_dir_node and not obj.path.is_child_of(launch_dir_node): continue
+			obj.post()
+			if Params.g_options.verbose == 3: print "flushed at ", time.asctime(time.localtime())
 
 def hook(objname, var, func):
 	"Attach a new method to an object class (objname is the name of the class)"
@@ -89,16 +99,11 @@ class genobj:
 		# no default environment - in case if
 		self.env = None
 
-		# register ourselves - used at install time
-		g_allobjs.append(self)
-
 		# allow delayed operations on objects created (declarative style)
 		# an object is then posted when another one is added
 		# Objects can be posted manually, but this can break a few things, use with care
-		Params.g_build.m_outstanding_objs.append(self)
-
-		if not type in self.get_valid_types():
-			error("BUG genobj::init : invalid type given")
+		# used at install time too
+		g_allobjs.append(self)
 
 	def get_valid_types(self):
 		return ['program', 'shlib', 'staticlib', 'other']
@@ -166,7 +171,6 @@ class genobj:
 			newobj.env = env
 
 		g_allobjs.append(newobj)
-		Params.g_build.m_outstanding_objs.append(newobj)
 
 		return newobj
 
@@ -207,7 +211,9 @@ class genobj:
 						lst.append(s)
 
 		lst.sort()
-		self.source = self.source+' '+(" ".join(lst))
+		self.source = self.to_list(self.source)
+		if not self.source: self.source = lst
+		else: self.source += lst
 
 g_cache_max={}
 def sign_env_vars(env, vars_list):

@@ -14,12 +14,11 @@ g_cc_flag_vars = [
 'INCLUDE',
 'CCFLAGS', 'CPPPATH', 'CPPLAGS', 'CCDEFINES']
 
-cctypes=['plugin', 'shlib', 'program', 'staticlib', 'objects']
 g_cc_type_vars=['CCFLAGS', 'LINKFLAGS', 'obj_ext']
 class ccobj(ccroot.ccroot):
 	s_default_ext = ['.c', '.cc', '.C']
-	def __init__(self, type='program'):
-		ccroot.ccroot.__init__(self, type)
+	def __init__(self, type='program', subtype=None):
+		ccroot.ccroot.__init__(self, type, subtype)
 
 		self.ccflags=''
 		self.cppflags=''
@@ -38,10 +37,6 @@ class ccobj(ccroot.ccroot):
 
 		global g_cc_type_vars
 		self.p_type_vars = g_cc_type_vars
-
-	def get_valid_types(self):
-		global cctypes
-		return cctypes
 
 	def apply_obj_vars(self):
 		debug('apply_obj_vars called for ccobj', 'cc')

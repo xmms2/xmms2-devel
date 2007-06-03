@@ -37,13 +37,14 @@ class compile_configurator(Configure.configurator_base):
 		self.uselib = ''
 		self.want_message = 0
 		self.msg = ''
+		self.force_compiler = None
 
 	def error(self):
 		fatal('test program would not run')
 
 	def run_cache(self, retval):
 		if self.want_message:
-			self.conf.check_message('compile code (cached)', '', retval, option=self.msg)
+			self.conf.check_message('compile code (cached)', '', not (retval is False), option=self.msg)
 
 	def validate(self):
 		if not self.code:
@@ -55,10 +56,13 @@ class compile_configurator(Configure.configurator_base):
 		obj.env  = self.env
 		obj.uselib = self.uselib
 		obj.flags = self.flags
-		ret = self.conf.run_check(obj)
+		if self.force_compiler:
+			ret = self.conf.run_check(obj, force_compiler = self.force_compiler)
+		else:
+			ret = self.conf.run_check(obj)
 
 		if self.want_message:
-			self.conf.check_message('compile code', '', ret, option=self.msg)
+			self.conf.check_message('compile code', '', not (ret is False), option=self.msg)
 
 		return ret
 
@@ -153,6 +157,33 @@ def checkFeatures(self, lst=[], pathlst=[]):
 
 	return is_big
 
+def detect_platform(self):
+	"""adapted from scons"""
+	import os, sys
+	osname = os.name
+	if osname == 'java':
+		osname = os._osType
+	if osname == 'posix':
+		if sys.platform == 'cygwin':
+			return 'cygwin'
+		if str.find(sys.platform, 'linux') != -1:
+			return 'linux'
+		if str.find(sys.platform, 'irix') != -1:
+			return 'irix'
+		if str.find(sys.platform, 'sunos') != -1:
+			return 'sunos'
+		if str.find(sys.platform, 'hp-ux') != -1:
+			return 'hpux'
+		if str.find(sys.platform, 'aix') != -1:
+			return 'aix'
+		if str.find(sys.platform, 'darwin') != -1:
+			return 'darwin'
+		return 'posix'
+	elif os.name == 'os2':
+		return 'os2'
+	else:
+		return sys.platform
+
 def find_header(self, header, define='', paths=''):
 	if not define:
 		define = 'HAVE_' + header.upper().replace('/', '_').replace('.', '_')
@@ -181,10 +212,12 @@ def try_build_and_exec(self, code, uselib=''):
 	if ret: return ret['result']
 	return None
 
-def try_build(self, code, uselib='', msg=''):
+def try_build(self, code, uselib='', msg='', force_compiler = ''):
 	test = self.create_compile_configurator()
 	test.uselib = uselib
 	test.code = code
+	if force_compiler:
+		test.force_compiler = force_compiler
 	if msg:
 		test.want_message = 1
 		test.msg = msg
@@ -198,7 +231,7 @@ def check_flags(self, flags, uselib='', options='', msg=1):
 	test.flags = flags
 	ret = test.run()
 
-	if msg: self.check_message('flags', flags, not (ret is None))
+	if msg: self.check_message('flags', flags, not (ret is False))
 
 	if ret: return 1
 	return None
@@ -238,7 +271,7 @@ def check_cfg2(self, name, mandatory=1, define='', uselib=''):
 	if uselib: ck_cfg.uselib = uselib
 	# cfgtool provides no fallback for uselib:
 	else: ck_cfg.uselib = name.upper()
- 	ck_cfg.mandatory = mandatory
+	ck_cfg.mandatory = mandatory
 	ck_cfg.binary = name + '-config'
 	return ck_cfg.run()
 
@@ -262,6 +295,7 @@ def detect(conf):
 	# if sys.byteorder == "little":
 	conf.hook(checkEndian)
 	conf.hook(checkFeatures)
+	conf.hook(detect_platform)
 
 	return 1
 

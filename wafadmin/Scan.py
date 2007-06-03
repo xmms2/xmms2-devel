@@ -94,7 +94,12 @@ class scanner:
 			for dep in lst:
 				if not dep.m_name in seen:
 					add_node_sig(dep)
-			m.update(tree.m_tstamp_variants[variant][node])
+			try:
+				tstamp = tree.m_tstamp_variants[variant][node]
+			except KeyError:
+				## fallback to the timestamp in the source tree
+				tstamp = tree.m_tstamp_variants[0][node]
+			m.update(tstamp)
 
 		# add the signatures of the input nodes
 		for node in task.m_inputs: add_node_sig(node)

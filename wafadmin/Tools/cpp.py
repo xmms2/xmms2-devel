@@ -14,12 +14,11 @@ g_cpp_flag_vars = [
 'CXXFLAGS', 'CCFLAGS', 'CPPPATH', 'CPPLAGS', 'CXXDEFINES']
 "main cpp variables"
 
-cpptypes=['plugin', 'shlib', 'program', 'staticlib', 'objects']
 g_cpp_type_vars=['CXXFLAGS', 'LINKFLAGS', 'obj_ext']
 class cppobj(ccroot.ccroot):
 	s_default_ext = ['.c', '.cpp', '.cc', '.cxx']
-	def __init__(self, type='program'):
-		ccroot.ccroot.__init__(self, type)
+	def __init__(self, type='program', subtype=None):
+		ccroot.ccroot.__init__(self, type, subtype)
 
 		self.cxxflags=''
 		self.cppflags=''
@@ -37,10 +36,6 @@ class cppobj(ccroot.ccroot):
 
 		global g_cpp_type_vars
 		self.p_type_vars = g_cpp_type_vars
-
-	def get_valid_types(self):
-		global cpptypes
-		return cpptypes
 
 	def apply_defines(self):
 		tree = Params.g_build
