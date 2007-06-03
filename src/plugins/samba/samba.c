@@ -32,6 +32,11 @@
 extern int errno;
 
 /*
+ * libsmbclient is not threadsafe.
+ */
+static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+
+/*
  * Type definitions
  */
 
@@ -160,7 +165,10 @@ xmms_samba_destroy (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	if (data->fd != -1) {
+		g_static_mutex_lock (&mutex);
 		err = smbc_close (data->fd);
+		g_static_mutex_unlock (&mutex);
+
 		if (err < 0) {
 			xmms_log_error ("%s", strerror (errno));
 		}
@@ -184,7 +192,9 @@ xmms_samba_read (xmms_xform_t *xform, void *buffer, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
+	g_static_mutex_lock (&mutex);
 	ret = smbc_read (data->fd, buffer, len);
+	g_static_mutex_unlock (&mutex);
 
 	if (ret == 0) {
 		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
@@ -220,7 +230,10 @@ xmms_samba_seek (xmms_xform_t *xform, gint64 offset,
 			break;
 	}
 
+	g_static_mutex_lock (&mutex);
 	res = smbc_lseek (data->fd, offset, w);
+	g_static_mutex_unlock (&mutex);
+
 	if (res == -1) {
 		xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
 	}
@@ -235,15 +248,21 @@ xmms_samba_browse (xmms_xform_t *xform,
 	struct smbc_dirent *dir;
 	int handle;
 
+	g_static_mutex_lock (&mutex);
 	handle = smbc_opendir (url);
+
 	if (handle < 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't browse URL");
 		xmms_log_error ("Couldn't open directory %s!", url);
+
+		g_static_mutex_unlock (&mutex);
 		return FALSE;
 	}
 
 	while ((dir = smbc_readdir (handle))) {
 		guint32 flags = 0;
+
+		g_static_mutex_unlock (&mutex);
 
 		if (dir->name[0] == '.')
 			continue;
@@ -255,9 +274,12 @@ xmms_samba_browse (xmms_xform_t *xform,
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
 
 		xmms_xform_browse_add_entry (xform, dir->name, flags);
+
+		g_static_mutex_lock (&mutex);
 	}
 
 	smbc_closedir (handle);
+	g_static_mutex_unlock (&mutex);
 
 	return TRUE;
 }
