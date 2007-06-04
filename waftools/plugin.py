@@ -5,40 +5,39 @@
 import sys
 
 def plugin(name, source=None, configure=False, build=False,
-		   build_replace=False, needs_lib=False, extra_libs=[],
-		   tool='cc', broken=False, output_prio=None):
-	def stock_configure(conf):
-		if broken:
-			conf.check_message_custom('%s plugin' % name, '',
-									  'disabled (broken)')
-			return
-		if configure and not configure(conf):
-			return
-		conf.env.append_value('XMMS_PLUGINS_ENABLED', name)
-		if output_prio:
-			conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
+           build_replace=False, needs_lib=False, extra_libs=[],
+           tool='cc', broken=False, output_prio=None):
+    def stock_configure(conf):
+        if broken:
+            conf.check_message_custom('%s plugin' % name, '',
+                                      'disabled (broken)')
+            return
+        if configure and not configure(conf):
+            return
+        conf.env.append_value('XMMS_PLUGINS_ENABLED', name)
+        if output_prio:
+            conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
 
-	def stock_build(bld):
-		obj = bld.create_obj(tool, 'plugin')
-		obj.target = 'xmms_%s' % name
-		obj.includes = '../../include'
-		if source:
-			obj.source = source
-		else:
-			obj.source = '%s.c' % name
+    def stock_build(bld):
+        obj = bld.create_obj(tool, 'plugin')
+        obj.target = 'xmms_%s' % name
+        obj.includes = '../../include'
+        if source:
+            obj.source = source
+        else:
+            obj.source = '%s.c' % name
 
-		libs = ['glib2']
-		if needs_lib:
-			libs.append(name)
-		libs += extra_libs
-		obj.uselib = ' '.join(libs)
-		if sys.platform == 'win32':
-			obj.uselib_local = 'xmms2core'
+        libs = ['glib2']
+        if needs_lib:
+            libs.append(name)
+        libs += extra_libs
+        obj.uselib = ' '.join(libs)
+        if sys.platform == 'win32':
+            obj.uselib_local = 'xmms2core'
 
+        obj.install_var = 'PLUGINDIR'
 
-		obj.install_var = 'PLUGINDIR'
+        if build:
+            build(bld, obj)
 
-		if build:
-			build(bld, obj)
-
-	return stock_configure, stock_build
+    return stock_configure, stock_build
