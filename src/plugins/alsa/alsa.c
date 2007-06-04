@@ -34,8 +34,6 @@ typedef struct xmms_alsa_data_St {
 	snd_pcm_t *pcm;
 	snd_mixer_t *mixer;
 	snd_mixer_elem_t *mixer_elem;
-	snd_pcm_hw_params_t *hwparams;
-	snd_pcm_uframes_t  buffer_size;
 } xmms_alsa_data_t;
 
 static const struct {
@@ -175,15 +173,7 @@ xmms_alsa_new (xmms_output_t *output)
 	data = g_new0 (xmms_alsa_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	snd_pcm_hw_params_malloc (&data->hwparams);
-	if (!data->hwparams) {
-		g_free (data);
-	}
-
-	g_return_val_if_fail (data->hwparams, FALSE);
-
 	if (!xmms_alsa_probe_modes (output, data)) {
-		g_free (data->hwparams);
 		g_free (data);
 		return FALSE;
 	}
@@ -312,7 +302,6 @@ xmms_alsa_destroy (xmms_output_t *output)
 		}
 	}
 
-	snd_pcm_hw_params_free (data->hwparams);
 	g_free (data);
 }
 
@@ -396,8 +385,11 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
 	gint err, tmp, i, fmt;
 	guint requested_buffer_time = BUFFER_TIME;
+	snd_pcm_hw_params_t *hwparams;
 
 	g_return_val_if_fail (data, FALSE);
+
+	snd_pcm_hw_params_alloca (&hwparams);	
 
 	/* what alsa format does this format correspond to? */
 	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
@@ -411,7 +403,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	g_return_val_if_fail (alsa_format != SND_PCM_FORMAT_UNKNOWN, FALSE);
 
 	/* Setup all parameters to configuration space */
-	err = snd_pcm_hw_params_any (data->pcm, data->hwparams);
+	err = snd_pcm_hw_params_any (data->pcm, hwparams);
 	if (err < 0) {
 		xmms_log_error ("Broken configuration for playback: no configurations "
 		                "available: %s", snd_strerror (err));
@@ -419,7 +411,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	}
 
 	/* Set the interleaved read/write format */
-	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams,
+	err = snd_pcm_hw_params_set_access (data->pcm, hwparams,
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
 		xmms_log_error ("Access type not available for playback: %s",
@@ -428,7 +420,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	}
 
 	/* Set the sample format */
-	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams, alsa_format);
+	err = snd_pcm_hw_params_set_format (data->pcm, hwparams, alsa_format);
 	if (err < 0) {
 		xmms_log_error ("Sample format not available for playback: %s",
 		                snd_strerror (err));
@@ -437,7 +429,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 
 	/* Set the count of channels */
 	tmp = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, tmp);
+	err = snd_pcm_hw_params_set_channels (data->pcm, hwparams, tmp);
 	if (err < 0) {
 		xmms_log_error ("Channels count (%i) not available for playbacks: %s",
 		                tmp, snd_strerror (err));
@@ -449,7 +441,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	 *       if the core passed an unsupported samplerate to us!
 	 */
 	tmp = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams, tmp, 0);
+	err = snd_pcm_hw_params_set_rate (data->pcm, hwparams, tmp, 0);
 	if (err < 0) {
 		xmms_log_error ("Rate %iHz not available for playback: %s",
 		                tmp, snd_strerror (err));
@@ -457,7 +449,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	}
 
 	tmp = requested_buffer_time;
-	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
+	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, hwparams,
 	                                              &requested_buffer_time, NULL);
 	if (err < 0) {
 		xmms_log_error ("Unable to set buffer time %i for playback: %s", tmp,
@@ -468,16 +460,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	XMMS_DBG ("Buffer time requested: %dms, got: %dms",
 	          tmp / 1000, requested_buffer_time / 1000);
 
-	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
-	                                         &data->buffer_size);
-	if (err != 0) {
-		xmms_log_error ("Unable to get buffer size for playback: %s",
-		                snd_strerror (err));
-		return FALSE;
-	}
-
 	/* Put the hardware parameters into good use */
-	err = snd_pcm_hw_params (data->pcm, data->hwparams);
+	err = snd_pcm_hw_params (data->pcm, hwparams);
 	if (err < 0) {
 		xmms_log_error ("Unable to set hw params for playback: %s",
 		                snd_strerror (err));
