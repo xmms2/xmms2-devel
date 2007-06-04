@@ -11,7 +11,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'ruby'
     obj.install_var = "ARCHDIR_ruby"
-    obj.env["plugin_PREFIX"] = ''
+    obj.env["shlib_PREFIX"] = ''
 
     Common.install_files('LIBDIR_ruby', '.', 'xmmsclient.rb')
     Common.install_files('LIBDIR_ruby', 'xmmsclient', 'sync.rb')
@@ -25,7 +25,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'ruby glib2'
     obj.install_var = "ARCHDIR_ruby"
-    obj.env["plugin_PREFIX"] = ''
+    obj.env["shlib_PREFIX"] = ''
 
     # ecore
     if 'src/clients/lib/xmmsclient-ecore' in bld.env_of_name('default')['XMMS_OPTIONAL_BUILD']:
@@ -36,7 +36,7 @@ def build(bld):
         obj.uselib_local = 'xmmsclient-ecore xmmsclient'
         obj.uselib = 'ruby ecore'
         obj.install_var = "ARCHDIR_ruby"
-        obj.env["plugin_PREFIX"] = ''
+        obj.env["shlib_PREFIX"] = ''
 
 def configure(conf):
     if Params.g_options.rubybinary:

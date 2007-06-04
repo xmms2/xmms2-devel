@@ -9,8 +9,8 @@ def build(bld):
     obj.source = ['xmmsapi.pyx']
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'python'
-    obj.env["plugin_SUFFIX"] = '.so'
-    obj.env["plugin_PREFIX"] = ''
+    obj.env["shlib_SUFFIX"] = '.so'
+    obj.env["shlib_PREFIX"] = ''
     obj.install_var = "LIBDIR_python"
 
     Common.install_files('LIBDIR_python', '', 'xmmsclient/__init__.py')

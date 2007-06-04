@@ -19,7 +19,7 @@ def build(bld):
     obj.uselib = 'perl'
     obj.install_var = "INST_AUTODIR_perl"
 
-    obj.env["plugin_PREFIX"] = ''
+    obj.env["shlib_PREFIX"] = ''
 
     Common.install_files('INST_LIBDIR_perl', '', 'pm/XMMSClient.pm')
     Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
