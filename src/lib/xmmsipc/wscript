@@ -17,7 +17,7 @@ def build(bld):
                            "url.c", platform_sources])
     obj.includes='. ../../include'
     obj.target='xmmsipc'
-    obj.install_in = 0
+    obj.install_var = 0
 
 def configure(conf):
     pass

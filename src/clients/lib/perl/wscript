@@ -17,7 +17,7 @@ def build(bld):
                  """.split()
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'perl'
-    obj.install_in = "INST_AUTODIR_perl"
+    obj.install_var = "INST_AUTODIR_perl"
 
     obj.env["plugin_PREFIX"] = ''
 

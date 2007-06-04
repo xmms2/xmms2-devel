@@ -11,7 +11,7 @@ def build(bld):
     obj.uselib = 'python'
     obj.env["plugin_SUFFIX"] = '.so'
     obj.env["plugin_PREFIX"] = ''
-    obj.install_in = "LIBDIR_python"
+    obj.install_var = "LIBDIR_python"
 
     Common.install_files('LIBDIR_python', '', 'xmmsclient/__init__.py')
     Common.install_files('LIBDIR_python', '', 'xmmsclient/sync.py')

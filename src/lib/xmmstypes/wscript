@@ -11,7 +11,7 @@ def build(bld):
     obj.source = "coll.c xlist.c".split()
     obj.includes='. ../../include ../../includepriv'
     obj.target='xmmstypes'
-    obj.install_in = 0
+    obj.install_var = 0
 
 def configure(conf):
     pass

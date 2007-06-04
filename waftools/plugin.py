@@ -35,7 +35,8 @@ def plugin(name, source=None, configure=False, build=False,
 		if sys.platform == 'win32':
 			obj.uselib_local = 'xmms2core'
 
-		obj.install_in = 'PLUGINDIR'
+
+		obj.install_var = 'PLUGINDIR'
 
 		if build:
 			build(bld, obj)
