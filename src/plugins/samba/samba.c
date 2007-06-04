@@ -93,7 +93,10 @@ xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "application/x-url", XMMS_STREAM_TYPE_URL,
 	                              "smb://*", XMMS_STREAM_TYPE_END);
 
+	g_static_mutex_lock (&mutex);
 	err = smbc_init (xmms_samba_auth_fn, 0);
+	g_static_mutex_unlock (&mutex);
+
 	if (err < 0) {
 		xmms_log_error ("%s", strerror (errno));
 		return FALSE;
@@ -119,7 +122,10 @@ xmms_samba_init (xmms_xform_t *xform)
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 	g_return_val_if_fail (url, FALSE);
 
+	g_static_mutex_lock (&mutex);
 	err = smbc_stat (url, &st);
+	g_static_mutex_unlock (&mutex);
+
 	if (err < 0) {
 		xmms_log_error ("%s", strerror (errno));
 		return FALSE;
@@ -130,7 +136,10 @@ xmms_samba_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
+	g_static_mutex_lock (&mutex);
 	fd = smbc_open (url, O_RDONLY | O_NONBLOCK, 0);
+	g_static_mutex_unlock (&mutex);
+
 	if (fd == -1) {
 		xmms_log_error ("%s", strerror (errno));
 		return FALSE;
@@ -250,22 +259,28 @@ xmms_samba_browse (xmms_xform_t *xform,
 
 	g_static_mutex_lock (&mutex);
 	handle = smbc_opendir (url);
+	g_static_mutex_unlock (&mutex);
 
 	if (handle < 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't browse URL");
 		xmms_log_error ("Couldn't open directory %s!", url);
-
-		g_static_mutex_unlock (&mutex);
 		return FALSE;
 	}
 
-	while ((dir = smbc_readdir (handle))) {
+	while (42) {
 		guint32 flags = 0;
 
-		g_static_mutex_unlock (&mutex);
+		g_static_mutex_lock (&mutex);
+		dir = smbc_readdir (handle);
+		if (!dir) {
+			g_static_mutex_unlock (&mutex);
+			break;
+		}
 
-		if (dir->name[0] == '.')
+		if (dir->name[0] == '.') {
+			g_static_mutex_unlock (&mutex);
 			continue;
+		}
 
 		if (dir->smbc_type == SMBC_DIR ||
 		    dir->smbc_type == SMBC_WORKGROUP ||
@@ -274,10 +289,10 @@ xmms_samba_browse (xmms_xform_t *xform,
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
 
 		xmms_xform_browse_add_entry (xform, dir->name, flags);
-
-		g_static_mutex_lock (&mutex);
+		g_static_mutex_unlock (&mutex);
 	}
 
+	g_static_mutex_lock (&mutex);
 	smbc_closedir (handle);
 	g_static_mutex_unlock (&mutex);
 
