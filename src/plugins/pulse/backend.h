@@ -1,18 +1,7 @@
 #ifndef __PULSE_BACKEND_H__
 #define __PULSE_BACKEND_H__
 
-#include <pulse/pulseaudio.h>
-
 typedef struct xmms_pulse xmms_pulse;
-
-static struct {
-	xmms_sample_format_t xmms_fmt;
-	pa_sample_format_t pulse_fmt;
-} xmms_pulse_formats[] = {
-	{XMMS_SAMPLE_FORMAT_U8, PA_SAMPLE_U8},
-	{XMMS_SAMPLE_FORMAT_S16, PA_SAMPLE_S16NE},
-	{XMMS_SAMPLE_FORMAT_FLOAT, PA_SAMPLE_FLOAT32NE},
-};
 
 xmms_pulse* xmms_pulse_backend_new(const char *server, const char *name,
                                    int *rerror);

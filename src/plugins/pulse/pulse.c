@@ -17,15 +17,16 @@
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 
-#include "backend.h"
 
 #include <glib.h>
+
+#include "backend.h"
 
 /*
  * Type definitions
  */
 typedef struct {
-  xmms_pulse *pulse;
+	xmms_pulse *pulse;
 } xmms_pulse_data_t;
 
 #define XMMS_PULSE_DEFAULT_NAME "XMMS2"
@@ -37,12 +38,12 @@ static gboolean xmms_pulse_plugin_setup (xmms_output_plugin_t *plugin);
 static void xmms_pulse_flush (xmms_output_t *output);
 static void xmms_pulse_close (xmms_output_t *output);
 static void xmms_pulse_write (xmms_output_t *output, gpointer buffer, gint len,
-                             xmms_error_t *err);
+			      xmms_error_t *err);
 static gboolean xmms_pulse_open (xmms_output_t *output);
 static gboolean xmms_pulse_new (xmms_output_t *output);
 static void xmms_pulse_destroy (xmms_output_t *output);
 static gboolean xmms_pulse_format_set (xmms_output_t *output,
-                                      const xmms_stream_type_t *format);
+				       const xmms_stream_type_t *format);
 
 
 /*
@@ -93,10 +94,13 @@ xmms_pulse_new (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	xmms_output_private_data_set (output, data);
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
+#if 0
 	for (i = 0; i < sizeof (xmms_pulse_formats); i++)
 		/* TODO: make channels/samplerate flexible. */
 		xmms_output_format_add (output, xmms_pulse_formats[i].xmms_fmt,
-								2, 44100);
+					2, 44100);
+#endif
 
 	return TRUE;
 }
@@ -217,7 +221,7 @@ xmms_pulse_flush (xmms_output_t *output)
 
 static void
 xmms_pulse_write (xmms_output_t *output, gpointer buffer, gint len,
-				  xmms_error_t *err)
+		  xmms_error_t *err)
 {
 	xmms_pulse_data_t *data;
 
