@@ -12,13 +12,6 @@ def configure(conf):
 
     defs = {}
 
-    platform_names = ['linux', 'freebsd', 'openbsd',
-                      'netbsd', 'dragonfly', 'darwin']
-    for platform in platform_names:
-        if sys.platform.startswith(platform):
-            defs["XMMS_OS_%s" % platform.upper()] = 1
-            break
-
     defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
                                      'lib', 'xmms2')
     defs['BINDIR'] = os.path.join(conf.env['PREFIX'],
@@ -53,3 +46,4 @@ def configure(conf):
 
     print "\nDefault output plugin: ",
     Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
+

@@ -402,13 +402,9 @@ xmms_plugin_scan_directory (const gchar *dir)
 	GModule *module;
 	gpointer sym;
 
-#ifndef XMMS_OS_DARWIN
 	/* this is all great, except that it returns .so for
 	 * osx, which is wrong and it makes my inner apple cry. */
 	temp = g_module_build_path (dir, "*");
-#else
-	temp = g_build_filename (dir, "*.bundle", NULL);
-#endif
 
 	XMMS_DBG ("Scanning directory for plugins (%s)", temp);
 
