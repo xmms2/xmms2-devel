@@ -404,6 +404,17 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *ur
 	return res;
 }
 
+static xmmsc_result_t *
+_xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const char *url)
+{
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_URL);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string (msg, url);
+	return xmmsc_send_msg (c, msg);
+}
+
 /**
  * Adds a directory recursivly to the playlist.
  *
@@ -468,7 +479,7 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	res = xmmsc_playlist_add_encoded (c, playlist, enc_url);
+	res = _xmmsc_playlist_add_encoded (c, playlist, enc_url);
 	free (enc_url);
 
 	return res;
@@ -487,18 +498,13 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
 xmmsc_result_t *
 xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const char *url)
 {
-	xmms_ipc_msg_t *msg;
-
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_URL);
-	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string (msg, url);
-	return xmmsc_send_msg (c, msg);
+	return _xmmsc_playlist_add_encoded (c, playlist, url);
 }
 
 /**
