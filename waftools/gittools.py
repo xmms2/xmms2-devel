@@ -3,7 +3,7 @@ import sha
 
 def gitsha(path):
     h = sha.sha()
-    data = file(path).read()
+    data = file(path, 'rb').read()
     h.update("blob %d\0" % len(data))
     h.update(data)
     return h.hexdigest()
