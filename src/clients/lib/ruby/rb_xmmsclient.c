@@ -96,7 +96,7 @@ c_mark (RbXmmsClient *xmms)
 static void
 c_free (RbXmmsClient *xmms)
 {
-	if (!xmms->deleted)
+	if (xmms->real && !xmms->deleted)
 		xmmsc_unref (xmms->real);
 
 	free (xmms);
