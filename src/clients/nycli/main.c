@@ -55,7 +55,11 @@ static command_t commands[] =
 };
 
 
-// dunno what's coming in there really
+// FIXME:
+// - type (command, subgroup, etc)
+// - callback function
+// - completion function
+// - connection needed?
 typedef struct {
 	const gchar *foo;
 } command_action_t;
@@ -65,6 +69,23 @@ typedef struct {
 	GList* next;
 	command_action_t* action;
 } command_trie_t;
+
+
+
+#define CLI_CLIENTNAME "xmms2-nycli"
+
+typedef enum {
+	CLI_EXECUTION_MODE_INLINE,
+	CLI_EXECUTION_MODE_SHELL
+} execution_mode_t;
+
+typedef struct {
+	xmmsc_connection_t *conn;
+	execution_mode_t mode;
+	command_trie_t *commands;
+	GKeyFile *config;
+} cli_infos_t;
+
 
 
 command_trie_t*
@@ -77,6 +98,12 @@ command_trie_new (char c) {
 	command_trie_t* trie = g_new0 (command_trie_t, 1);
 	trie->c = c;
 	return trie;
+}
+
+void
+command_trie_free (command_trie_t *trie)
+{
+	// FIXME: Free the stuff recursively here, kthxbye!
 }
 
 gboolean
@@ -200,28 +227,81 @@ command_trie_find (command_trie_t *trie, char *input, char **args)
 	return command_trie_find ((command_trie_t *)l->data, input + 1, args);
 }
 
+
+cli_infos_t*
+cli_infos_init (gint argc, gchar **argv)
+{
+	cli_infos_t *infos;
+	gint ret;
+	gchar *path;
+
+	infos = g_new0 (cli_infos_t, 1);
+
+	infos->commands = command_trie_alloc ();
+	command_trie_fill (infos->commands, commands);
+
+	if (argc > 1) {
+		infos->mode = CLI_EXECUTION_MODE_SHELL;
+	} else {
+		infos->mode = CLI_EXECUTION_MODE_INLINE;
+	}
+
+	infos->conn = xmmsc_init (CLI_CLIENTNAME);
+	if (!infos->conn) {
+		// FIXME: nicer way to die?
+		printf ("Could not init connection!");
+		exit (1);
+	}
+
+	char *after;
+	command_action_t *action;
+	action = command_trie_find (infos->commands, argv[1], &after);
+	if (action) {
+		printf ("action: %s / after: %s\n", action->foo, after);
+	} else {
+		printf ("Unknown command: %s\n", argv[1]);
+	}
+
+	path = getenv ("XMMS_PATH");
+	ret = xmmsc_connect (infos->conn, path);
+	if (!ret) {
+		// FIXME: first, let's detect whether we need a connection before
+		// FIXME: showing an error if we're not connected / unref infos
+
+		// If no connection needed, nothing happens
+		// Else
+		//   If autostart enabled
+		//      Try to start
+		//      If success, show message
+		//      Else, show error (conn status BAD)
+		//   Else
+		//      show error (conn status BAD)
+	}
+
+	return infos;
+}
+
+void
+cli_infos_free (cli_infos_t *infos)
+{
+	xmmsc_unref (infos->conn);
+	command_trie_free (infos->commands);
+	g_key_file_free (infos->config);
+}
+
 gint
 main (gint argc, gchar **argv)
 {
-	int i;
-	char *after;
+	gint i;
 	GError *error = NULL;
 	GOptionContext *context;
-	command_trie_t *trie;
-	command_action_t *action;
+	cli_infos_t *cli_infos;
 
-	trie = command_trie_alloc ();
-	command_trie_fill (trie, commands);
+	cli_infos = cli_infos_init (argc, argv);
 
-	if (argc > 1) {
-		// shell mode
-	} else {
-		// inline mode
-	}
+	// Execute command, if connection status is ok
+	if (cli_infos) {
 
-	action = command_trie_find (trie, argv[1], &after);
-	if (action) {
-		printf ("action: %s / after: %s\n", action->foo, after);
 	}
 
 /*
