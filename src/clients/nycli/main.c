@@ -40,6 +40,7 @@ typedef struct {
  	const argument_t args[MAX_CMD_ARGS + 1];
 } command_t;
 
+// FIXME: Store actions
 static command_t commands[] =
 {
 	{ "play", NULL },
@@ -66,67 +67,151 @@ typedef struct {
 } command_trie_t;
 
 
+command_trie_t*
+command_trie_alloc () {
+	return g_new0 (command_trie_t, 1);
+}
+
+command_trie_t*
+command_trie_new (char c) {
+	command_trie_t* trie = g_new0 (command_trie_t, 1);
+	trie->c = c;
+	return trie;
+}
+
+gboolean
+command_trie_action_set (command_trie_t* node, command_action_t *action)
+{
+	/* There is already an action registered for that node! */
+	if (node->action != NULL) {
+		return FALSE;
+	} else {
+		node->action = action;
+		return TRUE;
+	}
+}
+
 // FIXME: This code sucks
 command_trie_t*
-command_trie_insert (command_trie_t* node, char c)
+command_trie_elem_insert (command_trie_t* node, char c)
 {
+	GList *prev, *curr;
 	command_trie_t *t;
-	command_trie_t *curr, *next = NULL;
 
-	curr = (command_trie_t *)node->next;
-	while (curr && (next = curr->next) && next->c <= c) {
-		curr = (command_trie_t *)curr->next;
+	prev = NULL;
+	curr = (GList *)node->next;
+	while (curr && ((command_trie_t *)curr->data)->c <= c) {
+		prev = curr;
+		curr = curr->next;
 	}
 
-	if (curr->c == c) {
-		t = curr;
+	if (prev && ((command_trie_t *)prev->data)->c == c) {
+		t = (command_trie_t *)prev->data;
 	} else {
-		GList *l = g_list_alloc ();
-		t = g_new0 (command_trie_t, 1);
-		t->c = c;
-		l->data = t;
-		if (curr) {
-			curr->next = l;
+		t = command_trie_new (c);
+
+		if (prev == NULL) {
+			/* List empty so far, bootstrap it */
+			node->next = g_list_prepend (curr, t);
 		} else {
-			node->next = g_list_prepend (node->next, l);
+			/* Insert at the correct position (assign to suppress warning) */
+			prev = g_list_insert_before (prev, curr, t);
 		}
-		l->next = next;
 	}
 
 	return t;
 }
 
+gboolean
+command_trie_insert (command_trie_t* trie, char *string, command_action_t *action)
+{
+	const char *c;
+	command_trie_t *curr = trie;
+
+	for (c = string; c != NULL; ++c) {
+		curr = command_trie_elem_insert (curr, *c);
+	}
+
+	return command_trie_action_set (curr, action);
+}
+
 void
-command_trie_fill ()
+command_trie_fill (command_trie_t* trie, command_t commands[])
 {
 	int i;
 	const char *c;
-	command_trie_t trie;
 	command_t *cmd;
+	command_trie_t *curr;
 
-	trie.c = 0;
-	trie.next = NULL;
-	trie.action = NULL;
+	for (i = 0; commands[i].name != NULL; ++i) {
 
-	for (i = 0; commands[i].name; ++i) {
-
-		command_trie_t *curr = &trie;
-		for (c = commands[i].name; c != NULL; ++c) {
-			curr = command_trie_insert (curr, *c);
+		curr = trie;
+		for (c = commands[i].name; *c != 0; ++c) {
+			curr = command_trie_elem_insert (curr, *c);
 		}
 
-		curr->action = 00;
+		// FIXME: Register real action instead!
+		command_action_t *action;
+		action = g_new (command_action_t, 1);
+		action->foo = commands[i].name;
+
+		if (!command_trie_action_set (curr, action)) {
+			// FIXME: How to handle error?
+			printf ("Error: cannot register action for '%s', already defined!",
+			        commands[i].name);
+		}
 	}
+}
+
+gint
+command_trie_elem_cmp (gconstpointer elem, gconstpointer udata)
+{
+	command_trie_t *t;
+	const char *c;
+
+	t = (command_trie_t *) elem;
+	c = (const char *) udata;
+
+	if (t->c < *c)
+		return -1;
+	else if (t->c > *c)
+		return 1;
+	else
+		return 0;
+}
+
+command_action_t*
+command_trie_find (command_trie_t *trie, char *input, char **args)
+{
+	command_action_t *action;
+	GList *l;
+
+	// FIXME: Check for EOS *or* token delimitors, cleanly
+	if (*input == 0 || *input == ' ' || *input == '\t') {
+		*args = input;
+		return trie->action;
+	}
+
+	l = g_list_find_custom (trie->next, input, command_trie_elem_cmp);
+	if (l == NULL) {
+		return NULL;
+	}
+
+	return command_trie_find ((command_trie_t *)l->data, input + 1, args);
 }
 
 gint
 main (gint argc, gchar **argv)
 {
 	int i;
+	char *after;
 	GError *error = NULL;
 	GOptionContext *context;
+	command_trie_t *trie;
+	command_action_t *action;
 
-	command_trie_fill ();
+	trie = command_trie_alloc ();
+	command_trie_fill (trie, commands);
 
 	if (argc > 1) {
 		// shell mode
@@ -134,6 +219,12 @@ main (gint argc, gchar **argv)
 		// inline mode
 	}
 
+	action = command_trie_find (trie, argv[1], &after);
+	if (action) {
+		printf ("action: %s / after: %s\n", action->foo, after);
+	}
+
+/*
 	context = g_option_context_new ("- test args");
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_parse (context, &argc, &argv, &error);
@@ -145,6 +236,6 @@ main (gint argc, gchar **argv)
 	}
 
 	g_option_context_free (context);
-
+*/
 	return 0;
 }
