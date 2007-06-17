@@ -16,6 +16,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/variant.hpp>
 #include <string>
@@ -206,9 +207,6 @@ namespace Xmms
 		sources.push_back( src );
 		setSource( sources );
 	}
-
-	void fillCharArray( const std::list< std::string >&,
-	                    std::vector< const char* >& array );
 
 	void PropDict::setSource( const std::list< std::string >& src ) const
 	{
