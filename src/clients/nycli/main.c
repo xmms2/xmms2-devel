@@ -55,13 +55,37 @@ static command_t commands[] =
 };
 
 
+typedef GOptionArg command_argument_type_t;
+
+typedef struct {
+	command_argument_type_t type;
+	union {
+		gchar *vstring;
+		gint vint;
+	} value;
+} command_argument_t;
+
+typedef struct {
+	gint argc;
+	gchar **argv;
+	GHashTable *flags;
+} command_context_t;
+
+typedef struct cli_infos_St cli_infos_t;
+
+// FIXME: ideally, put all the stuff in a context struct
+typedef gboolean (*command_action_callback_f)(cli_infos_t *infos, command_context_t *ctx);
+
 // FIXME:
 // - type (command, subgroup, etc)
+// OR
 // - callback function
 // - completion function
-// - connection needed?
 typedef struct {
-	const gchar *foo;
+	const argument_t *argdefs;
+	command_action_callback_f callback;
+	command_action_callback_f complete;
+	gboolean req_connection;
 } command_action_t;
 
 typedef struct {
@@ -79,12 +103,12 @@ typedef enum {
 	CLI_EXECUTION_MODE_SHELL
 } execution_mode_t;
 
-typedef struct {
+struct cli_infos_St {
 	xmmsc_connection_t *conn;
 	execution_mode_t mode;
 	command_trie_t *commands;
 	GKeyFile *config;
-} cli_infos_t;
+};
 
 
 
@@ -162,6 +186,13 @@ command_trie_insert (command_trie_t* trie, char *string, command_action_t *actio
 	return command_trie_action_set (curr, action);
 }
 
+
+gboolean
+sugoi(cli_infos_t *infos, command_context_t *ctx)
+{
+	printf ("korv\n");
+}
+
 void
 command_trie_fill (command_trie_t* trie, command_t commands[])
 {
@@ -179,8 +210,11 @@ command_trie_fill (command_trie_t* trie, command_t commands[])
 
 		// FIXME: Register real action instead!
 		command_action_t *action;
-		action = g_new (command_action_t, 1);
-		action->foo = commands[i].name;
+		action = g_new0 (command_action_t, 1);
+
+		// FIXME: Fake!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		action->argdefs = commands[i].args;
+		action->callback = &sugoi;
 
 		if (!command_trie_action_set (curr, action)) {
 			// FIXME: How to handle error?
@@ -213,8 +247,10 @@ command_trie_find (command_trie_t *trie, char *input, char **args)
 	command_action_t *action;
 	GList *l;
 
-	// FIXME: Check for EOS *or* token delimitors, cleanly
-	if (*input == 0 || *input == ' ' || *input == '\t') {
+	// FIXME: toggable auto-complete, i.e. if only one matching action, return it
+
+	// End of token
+	if (*input == 0) {
 		*args = input;
 		return trie->action;
 	}
@@ -228,12 +264,36 @@ command_trie_find (command_trie_t *trie, char *input, char **args)
 }
 
 
+gboolean
+cli_infos_connection (cli_infos_t *infos)
+{
+	gchar *path;
+	gint ret;
+
+	infos->conn = xmmsc_init (CLI_CLIENTNAME);
+	if (!infos->conn) {
+		printf ("Could not init connection!");
+		return FALSE;
+	}
+
+	path = getenv ("XMMS_PATH");
+	ret = xmmsc_connect (infos->conn, path);
+	if (!ret) {
+		if (path) {
+			printf ("Could not connect to server at '%s'!", path);
+		} else {
+			printf ("Could not connect to server at default path!");
+		}
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 cli_infos_t*
 cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;
-	gint ret;
-	gchar *path;
 
 	infos = g_new0 (cli_infos_t, 1);
 
@@ -246,37 +306,52 @@ cli_infos_init (gint argc, gchar **argv)
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
 	}
 
-	infos->conn = xmmsc_init (CLI_CLIENTNAME);
-	if (!infos->conn) {
-		// FIXME: nicer way to die?
-		printf ("Could not init connection!");
-		exit (1);
-	}
+	// FIXME: if shell mode, tokenize with g_shell_parse_argv ?
 
-	char *after;
+	gchar *after;
 	command_action_t *action;
 	action = command_trie_find (infos->commands, argv[1], &after);
 	if (action) {
-		printf ("action: %s / after: %s\n", action->foo, after);
+		// FIXME: Call the action later on
+
+		command_context_t *ctx;
+		ctx = g_new0 (command_context_t, 1);
+		ctx->argc = 0; // FIXME: ???
+		ctx->argv = NULL; // FIXME: ???
+		ctx->flags = NULL; // FIXME: below
+
+		GError *error = NULL;
+		GOptionContext *context;
+		gint i;
+
+		context = g_option_context_new ("- test args");
+		g_option_context_add_main_entries (context, action->argdefs, NULL);
+		g_option_context_parse (context, &argc, &argv, &error);
+
+		printf("refresh: %d, format: %s\n", vrefresh, vformat);
+
+		for (i = 0; i < argc; ++i) {
+			printf("argv[%d]: %s\n", i, argv[i]);
+		}
+
+		g_option_context_free (context);
+
+		action->callback (infos, ctx);
 	} else {
 		printf ("Unknown command: %s\n", argv[1]);
 	}
 
-	path = getenv ("XMMS_PATH");
-	ret = xmmsc_connect (infos->conn, path);
-	if (!ret) {
-		// FIXME: first, let's detect whether we need a connection before
-		// FIXME: showing an error if we're not connected / unref infos
+	// FIXME: first, let's detect whether we need a connection before
+	// FIXME: showing an error if we're not connected / unref infos
 
-		// If no connection needed, nothing happens
-		// Else
-		//   If autostart enabled
-		//      Try to start
-		//      If success, show message
-		//      Else, show error (conn status BAD)
-		//   Else
-		//      show error (conn status BAD)
-	}
+	// If no connection needed, nothing happens
+	// Else
+	//   If autostart enabled
+	//      Try to start
+	//      If success, show message
+	//      Else, show error (conn status BAD)
+	//   Else
+	//      show error (conn status BAD)
 
 	return infos;
 }
