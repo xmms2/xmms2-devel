@@ -55,14 +55,19 @@ static command_t commands[] =
 };
 
 
-typedef GOptionArg command_argument_type_t;
+typedef enum {
+	COMMAND_ARGUMENT_TYPE_INT = G_OPTION_ARG_INT,
+	COMMAND_ARGUMENT_TYPE_STRING = G_OPTION_ARG_STRING
+} command_argument_type_t;
+
+typedef union {
+	gchar *vstring;
+	gint vint;
+} command_argument_value_t;
 
 typedef struct {
 	command_argument_type_t type;
-	union {
-		gchar *vstring;
-		gint vint;
-	} value;
+	command_argument_value_t value;
 } command_argument_t;
 
 typedef struct {
@@ -111,6 +116,37 @@ struct cli_infos_St {
 };
 
 
+gboolean
+command_argument_cmp (gconstpointer a, gconstpointer b)
+{
+	command_argument_t *v1;
+	command_argument_t *v2;
+	gboolean retval = FALSE;
+
+	v1 = (command_argument_t*) a;
+	v2 = (command_argument_t*) b;
+
+	if (v1->type == v2->type) {
+		switch (v1->type) {
+		case COMMAND_ARGUMENT_TYPE_INT:
+			if (v1->value.vint == v2->value.vint) {
+				retval = TRUE;
+			}
+			break;
+
+		case COMMAND_ARGUMENT_TYPE_STRING:
+			if (strcmp (v1->value.vstring, v2->value.vstring) == 0) {
+				retval = TRUE;
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return retval;
+}
 
 command_trie_t*
 command_trie_alloc () {
@@ -242,7 +278,7 @@ command_trie_elem_cmp (gconstpointer elem, gconstpointer udata)
 }
 
 command_action_t*
-command_trie_find (command_trie_t *trie, char *input, char **args)
+command_trie_find (command_trie_t *trie, char *input)
 {
 	command_action_t *action;
 	GList *l;
@@ -251,7 +287,6 @@ command_trie_find (command_trie_t *trie, char *input, char **args)
 
 	// End of token
 	if (*input == 0) {
-		*args = input;
 		return trie->action;
 	}
 
@@ -260,7 +295,7 @@ command_trie_find (command_trie_t *trie, char *input, char **args)
 		return NULL;
 	}
 
-	return command_trie_find ((command_trie_t *)l->data, input + 1, args);
+	return command_trie_find ((command_trie_t *)l->data, input + 1);
 }
 
 
@@ -310,48 +345,60 @@ cli_infos_init (gint argc, gchar **argv)
 
 	gchar *after;
 	command_action_t *action;
-	action = command_trie_find (infos->commands, argv[1], &after);
+	action = command_trie_find (infos->commands, argv[1]);
 	if (action) {
 		// FIXME: Call the action later on
+		gint newargc = argc - 1;
+		gchar **newargv = argv + 1;
 
 		command_context_t *ctx;
 		ctx = g_new0 (command_context_t, 1);
-		ctx->argc = 0; // FIXME: ???
-		ctx->argv = NULL; // FIXME: ???
-		ctx->flags = NULL; // FIXME: below
 
+		// FIXME: look at the error!
 		GError *error = NULL;
 		GOptionContext *context;
 		gint i;
 
 		context = g_option_context_new ("- test args");
 		g_option_context_add_main_entries (context, action->argdefs, NULL);
-		g_option_context_parse (context, &argc, &argv, &error);
+		g_option_context_parse (context, &newargc, &newargv, &error);
 
+		// FIXME: Find a way to put the arguments into a struct, and save it in flags
+
+		ctx->argc = newargc;
+		ctx->argv = newargv;
+		ctx->flags = g_hash_table_new (g_str_hash, command_argument_cmp);
+
+		// FIXME: it's a bit shitty, couldn't we have a custom arg struct for each callback?
+		//   Uglier to use a hashtable, autogen struct, or autogen the function prototype?
+		//   In the latter case, what are the default arguments? explicitely specified?
+		//   Can we really also autogen the call of the callback... ?
+		//   Or.. doh.. vargs?
 		printf("refresh: %d, format: %s\n", vrefresh, vformat);
 
-		for (i = 0; i < argc; ++i) {
-			printf("argv[%d]: %s\n", i, argv[i]);
+		for (i = 0; i < newargc; ++i) {
+			printf("argv[%d]: %s\n", i, newargv[i]);
 		}
 
 		g_option_context_free (context);
+
+		// FIXME: first, let's detect whether we need a connection before
+		// FIXME: showing an error if we're not connected / unref infos
+
+		// If no connection needed, nothing happens
+		// Else
+		//   If autostart enabled
+		//      Try to start
+		//      If success, show message
+		//      Else, show error (conn status BAD)
+		//   Else
+		//      show error (conn status BAD)
 
 		action->callback (infos, ctx);
 	} else {
 		printf ("Unknown command: %s\n", argv[1]);
 	}
 
-	// FIXME: first, let's detect whether we need a connection before
-	// FIXME: showing an error if we're not connected / unref infos
-
-	// If no connection needed, nothing happens
-	// Else
-	//   If autostart enabled
-	//      Try to start
-	//      If success, show message
-	//      Else, show error (conn status BAD)
-	//   Else
-	//      show error (conn status BAD)
 
 	return infos;
 }
