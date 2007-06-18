@@ -374,7 +374,35 @@ cli_infos_init (gint argc, gchar **argv)
 		//   In the latter case, what are the default arguments? explicitely specified?
 		//   Can we really also autogen the call of the callback... ?
 		//   Or.. doh.. vargs?
+		//   Or define arg_{int,string,bool}_get(name) applicable on some data structure?
+		//   All this assumes we recreated the context parser everytime (until optims arrive)
 		printf("refresh: %d, format: %s\n", vrefresh, vformat);
+
+		// FIXME:
+		// For all options in array
+		//   create a new arg struct
+		//   register its memory location in the array
+		//   add it to the hash
+		// Register argdefs in the option_context
+		// -note- this could be done the first time for all commands, maybe using groups?
+		for (i = 0; action->argdefs[i]; ++i) {
+			command_argument_t *arg = g_new (command_argument_t, 1);
+
+			switch (action->argdefs[i]) {
+			case G_OPTION_ARG_INT:
+				arg->type = COMMAND_ARGUMENT_TYPE_INT;
+				break;
+
+			case G_OPTION_ARG_STRING:
+				arg->type = COMMAND_ARGUMENT_TYPE_STRING;
+				break;
+
+			default:
+				// FIXME: Other possible types?
+				break;
+			}
+
+		}
 
 		for (i = 0; i < newargc; ++i) {
 			printf("argv[%d]: %s\n", i, newargv[i]);
@@ -404,6 +432,12 @@ cli_infos_init (gint argc, gchar **argv)
 }
 
 void
+command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
+{
+
+}
+
+void
 cli_infos_free (cli_infos_t *infos)
 {
 	xmmsc_unref (infos->conn);
@@ -423,7 +457,11 @@ main (gint argc, gchar **argv)
 
 	// Execute command, if connection status is ok
 	if (cli_infos) {
-
+		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
+			command_dispatch (cli_infos, argc, argv);
+		} else {
+			// FIXME: start a loop, init readline and stuff
+		}
 	}
 
 /*
