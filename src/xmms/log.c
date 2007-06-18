@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <glib.h>
 #include "xmmspriv/xmms_log.h"
 
@@ -29,7 +30,7 @@ static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 void
 xmms_log_init (gint verbosity)
 {
-	g_log_set_handler (NULL, G_LOG_LEVEL_MASK, xmms_log_handler,
+	g_log_set_handler (NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL, xmms_log_handler,
 	                   GINT_TO_POINTER (verbosity));
 
 	xmms_log_info ("Initialized logging system :)");
@@ -66,4 +67,8 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 
 	printf ("%s: %s\n", level, message);
 	fflush (stdout);
+
+	if (log_level & G_LOG_LEVEL_ERROR) {
+		exit (EXIT_FAILURE);
+	}
 }
