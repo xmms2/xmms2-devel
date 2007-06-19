@@ -24,6 +24,9 @@
 #define MAX_CMD_ARGS 10
 #define CLI_CLIENTNAME "xmms2-nycli"
 
+// FIXME: shall be loaded from config when config exists
+#define DEBUG_AUTOSTART TRUE
+
 typedef struct command_St command_t;
 typedef struct command_action_St command_action_t;
 typedef struct command_trie_St command_trie_t;
@@ -94,18 +97,6 @@ struct cli_infos_St {
 };
 
 
-
-gint vrefresh = 0;
-gchar *vformat = NULL;
-
-static GOptionEntry entries[] = 
-{
-  { "refresh", 'r', 0, G_OPTION_ARG_INT, &vrefresh, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
-  { "format",  'f', 0, G_OPTION_ARG_STRING, &vformat, "Format string used to display status.", "format" },
-  { NULL }
-};
-
-// FIXME: Store actions
 static command_t commands[] =
 {
 	{ "play", &cli_play, TRUE, NULL },
@@ -120,12 +111,57 @@ static command_t commands[] =
 };
 
 
+// FIXME: Can we differentiate between unset, set and default value? :-/
+gboolean
+command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
+{
+	command_argument_t *arg;
+	gboolean retval = FALSE;
+
+	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_INT) {
+		*v = arg->value.vint;
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
+gboolean
+command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
+{
+	command_argument_t *arg;
+	gboolean retval = FALSE;
+
+	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING) {
+		*v = arg->value.vstring;
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
+void
+DEBUG_dump_flags (gpointer key, gpointer value, gpointer user_data)
+{
+	gchar *name = (gchar*) key;
+	command_argument_t *arg = (command_argument_t*) value;
+
+	if (arg->type == COMMAND_ARGUMENT_TYPE_INT)
+		printf ("DEBUG: flag['%s']=%d\n", name, arg->value.vint);
+	else
+		printf ("DEBUG: flag['%s']='%s'\n", name, arg->value.vstring);
+}
+
+
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->conn);
 	xmmsc_result_wait (res);
-	printf ("You don't hear it, but the music just started playing. I promise.\n");
+
+	return TRUE;
 }
 
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
@@ -133,50 +169,36 @@ gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->conn);
 	xmmsc_result_wait (res);
-	printf ("You don't hear it, but the music just started paused. I promise.\n");
+
+	return TRUE;
 }
 
 gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
+	command_argument_t *arg;
+	gchar *f;
+	gint r;
+
+	if (command_flag_int_get (ctx, "refresh", &r)) {
+		printf ("refresh=%d\n", r);
+	}
+
+	if (command_flag_string_get (ctx, "format", &f)) {
+		printf ("format='%s'\n", f);
+	}
+
+	return TRUE;
 }
 
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_result_t *res;
+	res = xmmsc_quit (infos->conn);
+	xmmsc_result_wait (res);
+
+	return TRUE;
 }
 
-
-
-gboolean
-command_argument_cmp (gconstpointer a, gconstpointer b)
-{
-	command_argument_t *v1;
-	command_argument_t *v2;
-	gboolean retval = FALSE;
-
-	v1 = (command_argument_t*) a;
-	v2 = (command_argument_t*) b;
-
-	if (v1->type == v2->type) {
-		switch (v1->type) {
-		case COMMAND_ARGUMENT_TYPE_INT:
-			if (v1->value.vint == v2->value.vint) {
-				retval = TRUE;
-			}
-			break;
-
-		case COMMAND_ARGUMENT_TYPE_STRING:
-			if (strcmp (v1->value.vstring, v2->value.vstring) == 0) {
-				retval = TRUE;
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	return retval;
-}
 
 command_trie_t*
 command_trie_alloc () {
@@ -252,12 +274,6 @@ command_trie_insert (command_trie_t* trie, char *string, command_action_t *actio
 }
 
 
-gboolean
-sugoi(cli_infos_t *infos, command_context_t *ctx)
-{
-	printf ("korv\n");
-}
-
 void
 command_trie_fill (command_trie_t* trie, command_t commands[])
 {
@@ -329,6 +345,12 @@ command_trie_find (command_trie_t *trie, char *input)
 
 
 gboolean
+cli_infos_autostart (cli_infos_t *infos)
+{
+	return (DEBUG_AUTOSTART && !system ("xmms2-launcher"));
+}
+
+gboolean
 cli_infos_connect (cli_infos_t *infos)
 {
 	gchar *path;
@@ -336,28 +358,20 @@ cli_infos_connect (cli_infos_t *infos)
 
 	infos->conn = xmmsc_init (CLI_CLIENTNAME);
 	if (!infos->conn) {
-		printf ("Could not init connection!");
+		printf ("Could not init connection!\n");
 		return FALSE;
 	}
 
 	path = getenv ("XMMS_PATH");
 	ret = xmmsc_connect (infos->conn, path);
-	if (!ret) {
+	if (!ret && !cli_infos_autostart (infos)) {
 		if (path) {
-			printf ("Could not connect to server at '%s'!", path);
+			printf ("Could not connect to server at '%s'!\n", path);
 		} else {
-			printf ("Could not connect to server at default path!");
+			printf ("Could not connect to server at default path!\n");
 		}
 		return FALSE;
 	}
-
-	// If fails to connect
-	//   If autostart enabled
-	//      Try to start
-	//      If success, show message ("started")
-	//      Else, show error, return FALSE
-	//   Else
-	//      show error, return FALSE
 
 	return TRUE;
 }
@@ -385,18 +399,6 @@ cli_infos_init (gint argc, gchar **argv)
 
 
 void
-DEBUG_dump_flags (gpointer key, gpointer value, gpointer user_data)
-{
-	gchar *name = (gchar*) key;
-	command_argument_t *arg = (command_argument_t*) value;
-
-	if (arg->type == COMMAND_ARGUMENT_TYPE_INT)
-		printf ("DEBUG: flag['%s']=%d\n", name, arg->value.vint);
-	else
-		printf ("DEBUG: flag['%s']='%s'\n", name, arg->value.vstring);
-}
-
-void
 command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	gchar *after;
@@ -412,18 +414,12 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		command_context_t *ctx;
 		ctx = g_new0 (command_context_t, 1);
 
+		// Register a hashtable to receive flag values and pass them on
 		ctx->argc = argc;
 		ctx->argv = argv;
-		ctx->flags = g_hash_table_new_full (g_str_hash, command_argument_cmp,
+		ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
 		                                    g_free, g_free); // FIXME: probably need custom free
 
-		// FIXME:
-		// For all options in array
-		//   create a new arg struct
-		//   register its memory location in the array
-		//   add it to the hash
-		// Register argdefs in the option_context
-		// -note- this could be done the first time for all commands
 		for (i = 0; action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
 
@@ -452,24 +448,9 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 			                     g_strdup (action->argdefs[i].long_name), arg);
 		}
 
-		context = g_option_context_new ("- test args");
+		context = g_option_context_new (NULL);
 		g_option_context_add_main_entries (context, action->argdefs, NULL);
 		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
-
-		// FIXME: it's a bit shitty, couldn't we have a custom arg struct for each callback?
-		//   Uglier to use a hashtable, autogen struct, or autogen the function prototype?
-		//   In the latter case, what are the default arguments? explicitely specified?
-		//   Can we really also autogen the call of the callback... ?
-		//   Or.. doh.. vargs?
-		//   Or define arg_{int,string,bool}_get(name) applicable on some data structure?
-		//   All this assumes we recreated the context parser everytime (until optims arrive)
-
-		// FIXME: DEBUG output
-		g_hash_table_foreach (ctx->flags, DEBUG_dump_flags, NULL);
-		for (i = 0; i < ctx->argc; ++i) {
-			printf("DEBUG: argv[%d]: %s\n", i, ctx->argv[i]);
-		}
-
 		g_option_context_free (context);
 
 		// Run action if connection status ok
@@ -513,18 +494,6 @@ main (gint argc, gchar **argv)
 	}
 
 	cli_infos_free (cli_infos);
-/*
-	context = g_option_context_new ("- test args");
-	g_option_context_add_main_entries (context, entries, NULL);
-	g_option_context_parse (context, &argc, &argv, &error);
 
-	printf("refresh: %d, format: %s\n", vrefresh, vformat);
-
-	for (i = 0; i < argc; ++i) {
-		printf("argv[%d]: %s\n", i, argv[i]);
-	}
-
-	g_option_context_free (context);
-*/
 	return 0;
 }
