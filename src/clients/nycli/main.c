@@ -33,12 +33,18 @@ typedef struct cli_infos_St cli_infos_t;
 
 typedef GOptionEntry argument_t;
 
-typedef gboolean (*command_action_callback_f)(cli_infos_t *infos, command_context_t *ctx);
+typedef gboolean (*command_callback_f)(cli_infos_t *infos, command_context_t *ctx);
 
+gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_status (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 
 struct command_St {
 	const gchar *name;
- 	const argument_t args[MAX_CMD_ARGS + 1];
+	command_callback_f callback;
+	gboolean req_connection;
+	argument_t args[MAX_CMD_ARGS + 1];
 };
 
 typedef enum {
@@ -64,9 +70,8 @@ struct command_context_St {
 
 
 struct command_action_St {
-	const argument_t *argdefs;
-	command_action_callback_f callback;
-	command_action_callback_f complete;
+	argument_t *argdefs;
+	command_callback_f callback;
 	gboolean req_connection;
 };
 
@@ -103,16 +108,42 @@ static GOptionEntry entries[] =
 // FIXME: Store actions
 static command_t commands[] =
 {
-	{ "play", NULL },
-	{ "pause", NULL },
-	{ "status", {
-		{ "refresh", 'r', 0, G_OPTION_ARG_INT, &vrefresh, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
-		{ "format",  'f', 0, G_OPTION_ARG_STRING, &vformat, "Format string used to display status.", "format" },
+	{ "play", &cli_play, TRUE, NULL },
+	{ "pause", &cli_pause, TRUE, NULL },
+	{ "status", &cli_status, TRUE, {
+		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
+		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
 		{ NULL }
 	} },
-	{ "quit", NULL },
+	{ "quit", &cli_quit, FALSE, NULL },
 	{ NULL }
 };
+
+
+gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playback_start (infos->conn);
+	xmmsc_result_wait (res);
+	printf ("You don't hear it, but the music just started playing. I promise.\n");
+}
+
+gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playback_pause (infos->conn);
+	xmmsc_result_wait (res);
+	printf ("You don't hear it, but the music just started paused. I promise.\n");
+}
+
+gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
+{
+}
+
+gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
+{
+}
+
 
 
 gboolean
@@ -242,13 +273,13 @@ command_trie_fill (command_trie_t* trie, command_t commands[])
 			curr = command_trie_elem_insert (curr, *c);
 		}
 
-		// FIXME: Register real action instead!
 		command_action_t *action;
 		action = g_new0 (command_action_t, 1);
 
-		// FIXME: Fake!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		action->argdefs = commands[i].args;
-		action->callback = &sugoi;
+		action->argdefs  = commands[i].args;
+		action->callback = commands[i].callback;
+		action->req_connection = commands[i].req_connection;
+		// FIXME: when we're done with cb: action->complete = commands[i].complete;
 
 		if (!command_trie_action_set (curr, action)) {
 			// FIXME: How to handle error?
@@ -338,7 +369,7 @@ cli_infos_init (gint argc, gchar **argv)
 
 	infos = g_new0 (cli_infos_t, 1);
 
-	if (argc > 1) {
+	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;
 	} else {
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
@@ -352,29 +383,39 @@ cli_infos_init (gint argc, gchar **argv)
 	return infos;
 }
 
+
+void
+DEBUG_dump_flags (gpointer key, gpointer value, gpointer user_data)
+{
+	gchar *name = (gchar*) key;
+	command_argument_t *arg = (command_argument_t*) value;
+
+	if (arg->type == COMMAND_ARGUMENT_TYPE_INT)
+		printf ("DEBUG: flag['%s']=%d\n", name, arg->value.vint);
+	else
+		printf ("DEBUG: flag['%s']='%s'\n", name, arg->value.vstring);
+}
+
 void
 command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 {
-
 	gchar *after;
 	command_action_t *action;
-	action = command_trie_find (infos->commands, argv[1]);
+	action = command_trie_find (infos->commands, *argv);
 	if (action) {
-		// FIXME: Call the action later on
-		gint newargc = argc - 1;
-		gchar **newargv = argv + 1;
 
 		// FIXME: look at the error!
-		GError *error = NULL;
 		GOptionContext *context;
+		GError *error = NULL;
 		gint i;
 
 		command_context_t *ctx;
 		ctx = g_new0 (command_context_t, 1);
 
-		ctx->argc = argc - 1;
-		ctx->argv = argv + 1;
-		ctx->flags = g_hash_table_new (g_str_hash, command_argument_cmp);
+		ctx->argc = argc;
+		ctx->argv = argv;
+		ctx->flags = g_hash_table_new_full (g_str_hash, command_argument_cmp,
+		                                    g_free, g_free); // FIXME: probably need custom free
 
 		// FIXME:
 		// For all options in array
@@ -383,33 +424,37 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		//   add it to the hash
 		// Register argdefs in the option_context
 		// -note- this could be done the first time for all commands
-		for (i = 0; action->argdefs[i]; ++i) {
+		for (i = 0; action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
 
-			switch (action->argdefs[i]) {
+			// FIXME: customizable default values?
+			switch (action->argdefs[i].arg) {
 			case G_OPTION_ARG_INT:
 				arg->type = COMMAND_ARGUMENT_TYPE_INT;
-				action->argdefs[i]->arg_data = &arg->value.vint;
+				arg->value.vint = 0;
+				action->argdefs[i].arg_data = &arg->value.vint;
 				break;
 
 			case G_OPTION_ARG_STRING:
 				arg->type = COMMAND_ARGUMENT_TYPE_STRING;
-				action->argdefs[i]->arg_data = &arg->value.vstring;
+				arg->value.vstring = NULL;
+				action->argdefs[i].arg_data = &arg->value.vstring;
 				break;
 
 			default:
 				printf ("Trying to register a flag '%s' of invalid type!",
-				        action->argdefs[i]->long_name);
+				        action->argdefs[i].long_name);
 				break;
 			}
 
 			// FIXME: check for duplicates
-			g_hash_table_insert (ctx->flags, action->argdefs[i]->long_name, arg);
+			g_hash_table_insert (ctx->flags,
+			                     g_strdup (action->argdefs[i].long_name), arg);
 		}
 
 		context = g_option_context_new ("- test args");
 		g_option_context_add_main_entries (context, action->argdefs, NULL);
-		g_option_context_parse (context, &ctx->argc, &ctx->argc, &error);
+		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 
 		// FIXME: it's a bit shitty, couldn't we have a custom arg struct for each callback?
 		//   Uglier to use a hashtable, autogen struct, or autogen the function prototype?
@@ -418,11 +463,11 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		//   Or.. doh.. vargs?
 		//   Or define arg_{int,string,bool}_get(name) applicable on some data structure?
 		//   All this assumes we recreated the context parser everytime (until optims arrive)
-		// FIXME: Dump ctx->flags instead of:
-		// printf("refresh: %d, format: %s\n", vrefresh, vformat);
 
+		// FIXME: DEBUG output
+		g_hash_table_foreach (ctx->flags, DEBUG_dump_flags, NULL);
 		for (i = 0; i < ctx->argc; ++i) {
-			printf("argv[%d]: %s\n", i, ctx->argv[i]);
+			printf("DEBUG: argv[%d]: %s\n", i, ctx->argv[i]);
 		}
 
 		g_option_context_free (context);
@@ -432,7 +477,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 			action->callback (infos, ctx);
 		}
 	} else {
-		printf ("Unknown command: %s\n", argv[1]);
+		printf ("Unknown command: %s\n", *argv);
 	}
 
 }
@@ -440,7 +485,9 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 void
 cli_infos_free (cli_infos_t *infos)
 {
-	xmmsc_unref (infos->conn);
+	if (infos->conn) {
+		xmmsc_unref (infos->conn);
+	}
 	command_trie_free (infos->commands);
 	g_key_file_free (infos->config);
 }
@@ -453,12 +500,12 @@ main (gint argc, gchar **argv)
 	GOptionContext *context;
 	cli_infos_t *cli_infos;
 
-	cli_infos = cli_infos_init (argc, argv);
+	cli_infos = cli_infos_init (argc - 1, argv + 1);
 
 	// Execute command, if connection status is ok
 	if (cli_infos) {
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
-			command_dispatch (cli_infos, argc, argv);
+			command_dispatch (cli_infos, argc - 1, argv + 1);
 		} else {
 			// FIXME: start a loop, init readline and stuff
 			// FIXME: if shell mode, tokenize with g_shell_parse_argv ?
