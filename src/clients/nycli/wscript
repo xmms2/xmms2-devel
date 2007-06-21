@@ -1,7 +1,11 @@
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'nyxmms2'
-    obj.source = """main.c""".split()
+    obj.source = """main.c
+                    cli_infos.c
+                    command_trie.c
+                    commands.c
+                    readline.c""".split()
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline'
