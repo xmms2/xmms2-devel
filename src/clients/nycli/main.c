@@ -15,17 +15,19 @@
  */
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient-glib.h>
 
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
+#include <readline/readline.h>
 
 #define MAX_CMD_ARGS 10
 #define CLI_CLIENTNAME "xmms2-nycli"
 
 // FIXME: shall be loaded from config when config exists
 #define DEBUG_AUTOSTART TRUE
+#define STDINFD 0
+#define PROMPT "nycli> "
 
 typedef struct command_St command_t;
 typedef struct command_action_St command_action_t;
@@ -42,6 +44,9 @@ gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_status (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
+
+void cli_infos_loop_stop (cli_infos_t *infos);
 
 struct command_St {
 	const gchar *name;
@@ -92,6 +97,7 @@ typedef enum {
 struct cli_infos_St {
 	xmmsc_connection_t *conn;
 	execution_mode_t mode;
+	gboolean running;
 	command_trie_t *commands;
 	GKeyFile *config;
 };
@@ -107,6 +113,7 @@ static command_t commands[] =
 		{ NULL }
 	} },
 	{ "quit", &cli_quit, FALSE, NULL },
+	{ "exit", &cli_exit, FALSE, NULL },
 	{ NULL }
 };
 
@@ -157,19 +164,13 @@ DEBUG_dump_flags (gpointer key, gpointer value, gpointer user_data)
 
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_playback_start (infos->conn);
-	xmmsc_result_wait (res);
-
+	xmmsc_playback_start (infos->conn);
 	return TRUE;
 }
 
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_playback_pause (infos->conn);
-	xmmsc_result_wait (res);
-
+	xmmsc_playback_pause (infos->conn);
 	return TRUE;
 }
 
@@ -192,10 +193,13 @@ gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_quit (infos->conn);
-	xmmsc_result_wait (res);
+	xmmsc_quit (infos->conn);
+	return TRUE;
+}
 
+gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx)
+{
+	cli_infos_loop_stop (infos);
 	return TRUE;
 }
 
@@ -350,6 +354,22 @@ cli_infos_autostart (cli_infos_t *infos)
 	return (DEBUG_AUTOSTART && !system ("xmms2-launcher"));
 }
 
+void
+cli_infos_loop_stop (cli_infos_t *infos)
+{
+	rl_set_prompt (NULL);
+	infos->running = FALSE;
+}
+
+/* Called on server disconnection. We can keep the loop running. */
+void
+cli_infos_disconnect_callback (int flag, void *userdata)
+{
+	cli_infos_t *infos = (cli_infos_t *) userdata;
+	printf ("Server disconnected!\n");
+	infos->conn = NULL;
+}
+
 gboolean
 cli_infos_connect (cli_infos_t *infos)
 {
@@ -373,6 +393,8 @@ cli_infos_connect (cli_infos_t *infos)
 		return FALSE;
 	}
 
+	xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos);
+
 	return TRUE;
 }
 
@@ -389,6 +411,7 @@ cli_infos_init (gint argc, gchar **argv)
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
 	}
 
+	infos->running = FALSE;
 	infos->commands = command_trie_alloc ();
 	command_trie_fill (infos->commands, commands);
 
@@ -449,6 +472,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		}
 
 		context = g_option_context_new (NULL);
+		g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
 		g_option_context_add_main_entries (context, action->argdefs, NULL);
 		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 		g_option_context_free (context);
@@ -458,7 +482,8 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 			action->callback (infos, ctx);
 		}
 	} else {
-		printf ("Unknown command: %s\n", *argv);
+		printf ("Unknown command: '%s'\n", *argv);
+		printf ("Type 'help' for usage.\n");
 	}
 
 }
@@ -471,6 +496,115 @@ cli_infos_free (cli_infos_t *infos)
 	}
 	command_trie_free (infos->commands);
 	g_key_file_free (infos->config);
+}
+
+void
+loop_select (cli_infos_t *infos)
+{
+	fd_set rfds, wfds;
+	gint modfds;
+	gint xmms2fd;
+	gint maxfds = 0;
+
+	FD_ZERO(&rfds);
+	FD_ZERO(&wfds);
+
+	/* Listen to xmms2 if connected */
+	if (infos->conn) {
+		xmms2fd = xmmsc_io_fd_get (infos->conn);
+		if (xmms2fd == -1) {
+			/* FIXME: Handle error */
+		}
+
+		FD_SET(xmms2fd, &rfds);
+		if (xmmsc_io_want_out (infos->conn)) {
+			FD_SET(xmms2fd, &wfds);
+		}
+
+		if (maxfds < xmms2fd) {
+			maxfds = xmms2fd;
+		}
+	}
+
+	/* Listen to readline in shell mode */
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+		FD_SET(STDINFD, &rfds);
+		if (maxfds < STDINFD) {
+			maxfds = STDINFD;
+		}
+	}
+
+	modfds = select (maxfds + 1, &rfds, &wfds, NULL, NULL);
+
+	if(modfds < 0) {
+		/* FIXME: Handle error */
+	}
+	else if(modfds != 0) {
+		/* Get/send data to xmms2 */
+		if (infos->conn) {
+			if(FD_ISSET(xmms2fd, &rfds)) {
+				xmmsc_io_in_handle (infos->conn);
+			}
+			if(FD_ISSET(xmms2fd, &wfds)) {
+				xmmsc_io_out_handle (infos->conn);
+			}
+		}
+
+		/* User input found, read it */
+		if (infos->mode == CLI_EXECUTION_MODE_SHELL
+		    && FD_ISSET(STDINFD, &rfds)) {
+			rl_callback_read_char ();
+		}
+	}
+}
+
+void
+loop_run (cli_infos_t *infos)
+{
+	infos->running = TRUE;
+	while (infos->running) {
+		loop_select (infos);
+	}
+}
+
+
+cli_infos_t *readline_cli_infos;
+
+void
+readline_callback (gchar *input)
+{
+	while (input && *input == ' ') ++input;
+
+	if (input == NULL) {
+		/* End of stream, quit */
+		cli_infos_loop_stop (readline_cli_infos);
+		printf ("\n");
+	} else if (*input != 0) {
+		gint argc;
+		gchar **argv;
+		GError *error;
+
+		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
+			add_history (input);
+			command_dispatch (readline_cli_infos, argc, argv);
+		} else {
+			/* FIXME: Handle errors */
+		}
+	}
+
+}
+
+void
+readline_init (cli_infos_t *infos)
+{
+	readline_cli_infos = infos;
+	rl_callback_handler_install (PROMPT, &readline_callback);
+}
+
+void
+readline_free ()
+{
+	rl_callback_handler_remove ();
 }
 
 gint
@@ -486,13 +620,17 @@ main (gint argc, gchar **argv)
 	// Execute command, if connection status is ok
 	if (cli_infos) {
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
+			/* FIXME: Oops, how to "loop once" ? */
 			command_dispatch (cli_infos, argc - 1, argv + 1);
 		} else {
+			readline_init (cli_infos);
+			loop_run (cli_infos);
 			// FIXME: start a loop, init readline and stuff
 			// FIXME: if shell mode, tokenize with g_shell_parse_argv ?
 		}
 	}
 
+	readline_free ();
 	cli_infos_free (cli_infos);
 
 	return 0;

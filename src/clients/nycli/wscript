@@ -3,13 +3,17 @@ def build(bld):
     obj.target = 'nyxmms2'
     obj.source = """main.c""".split()
     obj.includes = '. ../../include'
-    obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'glib2'
+    obj.uselib_local = 'xmmsclient'
+    obj.uselib = 'glib2 readline'
 
 #    obj = bld.create_obj('man')
 #    obj.files = ['xmms2.1']
 
 def configure(conf):
+    if not conf.check_library2("readline", uselib='xmms2'):
+        Params.fatal("nyxmms2 requires readline.")
+    conf.env.append_unique('LIB_readline', 'readline')
+
     return True
 
 def set_options(opt):
