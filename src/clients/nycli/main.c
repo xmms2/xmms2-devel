@@ -24,7 +24,7 @@
 #define MAX_CMD_ARGS 10
 #define CLI_CLIENTNAME "xmms2-nycli"
 
-// FIXME: shall be loaded from config when config exists
+/* FIXME: shall be loaded from config when config exists */
 #define DEBUG_AUTOSTART TRUE
 #define STDINFD 0
 #define PROMPT "nycli> "
@@ -118,7 +118,7 @@ static command_t commands[] =
 };
 
 
-// FIXME: Can we differentiate between unset, set and default value? :-/
+/* FIXME: Can we differentiate between unset, set and default value? :-/ */
 gboolean
 command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
 {
@@ -219,7 +219,7 @@ command_trie_new (char c) {
 void
 command_trie_free (command_trie_t *trie)
 {
-	// FIXME: Free the stuff recursively here, kthxbye!
+	/* FIXME: Free the stuff recursively here, kthxbye! */
 }
 
 gboolean
@@ -299,10 +299,10 @@ command_trie_fill (command_trie_t* trie, command_t commands[])
 		action->argdefs  = commands[i].args;
 		action->callback = commands[i].callback;
 		action->req_connection = commands[i].req_connection;
-		// FIXME: when we're done with cb: action->complete = commands[i].complete;
+		/* FIXME: when we're done with cb: action->complete = commands[i].complete; */
 
 		if (!command_trie_action_set (curr, action)) {
-			// FIXME: How to handle error?
+			/* FIXME: How to handle error? */
 			printf ("Error: cannot register action for '%s', already defined!",
 			        commands[i].name);
 		}
@@ -332,9 +332,9 @@ command_trie_find (command_trie_t *trie, char *input)
 	command_action_t *action;
 	GList *l;
 
-	// FIXME: toggable auto-complete, i.e. if only one matching action, return it
+	/* FIXME: toggable auto-complete, i.e. if only one matching action, return it */
 
-	// End of token
+	/* End of token */
 	if (*input == 0) {
 		return trie->action;
 	}
@@ -429,7 +429,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 	action = command_trie_find (infos->commands, *argv);
 	if (action) {
 
-		// FIXME: look at the error!
+		/* FIXME: look at the error! */
 		GOptionContext *context;
 		GError *error = NULL;
 		gint i;
@@ -437,16 +437,16 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		command_context_t *ctx;
 		ctx = g_new0 (command_context_t, 1);
 
-		// Register a hashtable to receive flag values and pass them on
+		/* Register a hashtable to receive flag values and pass them on */
 		ctx->argc = argc;
 		ctx->argv = argv;
 		ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                    g_free, g_free); // FIXME: probably need custom free
+		                                    g_free, g_free); /* FIXME: probably need custom free */
 
 		for (i = 0; action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
 
-			// FIXME: customizable default values?
+			/* FIXME: customizable default values? */
 			switch (action->argdefs[i].arg) {
 			case G_OPTION_ARG_INT:
 				arg->type = COMMAND_ARGUMENT_TYPE_INT;
@@ -466,7 +466,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 				break;
 			}
 
-			// FIXME: check for duplicates
+			/* FIXME: check for duplicates */
 			g_hash_table_insert (ctx->flags,
 			                     g_strdup (action->argdefs[i].long_name), arg);
 		}
@@ -477,7 +477,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 		g_option_context_free (context);
 
-		// Run action if connection status ok
+		/* Run action if connection status ok */
 		if (!action->req_connection || cli_infos_connect (infos)) {
 			action->callback (infos, ctx);
 		}
@@ -617,7 +617,7 @@ main (gint argc, gchar **argv)
 
 	cli_infos = cli_infos_init (argc - 1, argv + 1);
 
-	// Execute command, if connection status is ok
+	/* Execute command, if connection status is ok */
 	if (cli_infos) {
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
 			/* FIXME: Oops, how to "loop once" ? */
@@ -625,8 +625,6 @@ main (gint argc, gchar **argv)
 		} else {
 			readline_init (cli_infos);
 			loop_run (cli_infos);
-			// FIXME: start a loop, init readline and stuff
-			// FIXME: if shell mode, tokenize with g_shell_parse_argv ?
 		}
 	}
 
