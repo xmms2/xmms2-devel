@@ -28,6 +28,7 @@
 #define DEBUG_AUTOSTART TRUE
 #define STDINFD 0
 #define PROMPT "nycli> "
+#define AUTO_UNIQUE_COMPLETE TRUE
 
 typedef struct command_St command_t;
 typedef struct command_action_St command_action_t;
@@ -193,6 +194,8 @@ gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
+	/* FIXME: Actually we need a connection. We just don't want to
+	 * start it for nothing. */
 	xmmsc_quit (infos->conn);
 	return TRUE;
 }
@@ -326,32 +329,65 @@ command_trie_elem_cmp (gconstpointer elem, gconstpointer udata)
 		return 0;
 }
 
+/* Given a trie node, try to find a unique leaf action, else return NULL. */
+command_action_t*
+command_trie_find_leaf_action (command_trie_t *trie)
+{
+	GList *succ;
+	command_action_t *action = NULL;
+
+	if (trie) {
+		succ = g_list_first (trie->next);
+		if (succ && succ->next == NULL && !trie->action) {
+			/* No action, a single successor: recurse */
+			action = command_trie_find_leaf_action ((command_trie_t *) succ->data);
+		} else if (!succ && trie->action) {
+			/* No successor, a single action: we found it! */
+			action = trie->action;
+		}
+	}
+
+	return action;
+}
+
 command_action_t*
 command_trie_find (command_trie_t *trie, char *input)
 {
-	command_action_t *action;
+	command_action_t *action = NULL;
 	GList *l;
 
 	/* FIXME: toggable auto-complete, i.e. if only one matching action, return it */
 
-	/* End of token */
 	if (*input == 0) {
-		return trie->action;
+		/* End of token, return current action, or unique completion */
+		if (trie->action) {
+			action = trie->action;
+		} else if (AUTO_UNIQUE_COMPLETE) {
+			action = command_trie_find_leaf_action (trie);
+		}
+	} else {
+		/* Recurse in next trie node */
+		l = g_list_find_custom (trie->next, input, command_trie_elem_cmp);
+		if (l != NULL) {
+			action = command_trie_find ((command_trie_t *)l->data, input + 1);
+		}
 	}
 
-	l = g_list_find_custom (trie->next, input, command_trie_elem_cmp);
-	if (l == NULL) {
-		return NULL;
-	}
-
-	return command_trie_find ((command_trie_t *)l->data, input + 1);
+	return action;
 }
 
 
 gboolean
-cli_infos_autostart (cli_infos_t *infos)
+cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
-	return (DEBUG_AUTOSTART && !system ("xmms2-launcher"));
+	gint ret = 0;
+
+	/* FIXME: Should we wait or something? seems like the conn isn't good right after that */
+	if (DEBUG_AUTOSTART && !system ("xmms2-launcher")) {
+		ret = xmmsc_connect (infos->conn, path);
+	}
+
+	return !!ret;
 }
 
 void
@@ -368,6 +404,7 @@ cli_infos_disconnect_callback (int flag, void *userdata)
 	cli_infos_t *infos = (cli_infos_t *) userdata;
 	printf ("Server disconnected!\n");
 	infos->conn = NULL;
+	/* FIXME: issueing "quit" seems to start endless crap instead. */
 }
 
 gboolean
@@ -384,7 +421,7 @@ cli_infos_connect (cli_infos_t *infos)
 
 	path = getenv ("XMMS_PATH");
 	ret = xmmsc_connect (infos->conn, path);
-	if (!ret && !cli_infos_autostart (infos)) {
+	if (!ret && !cli_infos_autostart (infos, path)) {
 		if (path) {
 			printf ("Could not connect to server at '%s'!\n", path);
 		} else {
@@ -420,6 +457,12 @@ cli_infos_init (gint argc, gchar **argv)
 	return infos;
 }
 
+void
+command_argument_free (void *x)
+{
+	/* FIXME: free value? */
+	g_free (x);
+}
 
 void
 command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
@@ -441,7 +484,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		ctx->argc = argc;
 		ctx->argv = argv;
 		ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                    g_free, g_free); /* FIXME: probably need custom free */
+		                                    g_free, command_argument_free);
 
 		for (i = 0; action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
