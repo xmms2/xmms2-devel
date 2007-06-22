@@ -55,7 +55,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
 		                                    g_free, command_argument_free);
 
-		for (i = 0; action->argdefs[i].long_name; ++i) {
+		for (i = 0; action->argdefs && action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
 
 			/* FIXME: customizable default values? */

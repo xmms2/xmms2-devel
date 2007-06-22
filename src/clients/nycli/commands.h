@@ -23,7 +23,6 @@
 
 #include "main.h"
 
-
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);
@@ -36,26 +35,35 @@ gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 
 
-static command_t commands[] =
+/* FIXME: omgfulhack. Later on, implement commands as "plugins", cf xforms -- tru */
+static argument_t flags_none[] = {
+	{ NULL }
+};
+
+static argument_t flags_stop[] = {
+	{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
+	{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
+	{ NULL }
+};
+
+static argument_t flags_status[] = {
+	{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
+	{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
+	{ NULL }
+};
+
+static command_action_t commands[] =
 {
-	{ "play", &cli_play, TRUE, NULL },
-	{ "pause", &cli_pause, TRUE, NULL },
-	{ "stop", &cli_stop, TRUE, {
-		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
-		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
-		{ NULL }
-	} },
-	{ "status", &cli_status, TRUE, {
-		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
-		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
-		{ NULL }
-	} },
-	{ "prev", &cli_prev, TRUE, NULL },
-	{ "next", &cli_next, TRUE, NULL },
-	{ "info", &cli_info, TRUE, NULL },
-	{ "quit", &cli_quit, FALSE, NULL },
-	{ "exit", &cli_exit, FALSE, NULL },
-	{ "help", &cli_help, FALSE, NULL },
+	{ "play", &cli_play,   TRUE, flags_none },
+	{ "pause", &cli_pause, TRUE, flags_none },
+	{ "stop", &cli_stop,   TRUE, flags_stop },
+	{ "status", &cli_status, TRUE, flags_status },
+	{ "prev", &cli_prev,   TRUE, flags_none },
+	{ "next", &cli_next,   TRUE, flags_none },
+	{ "info", &cli_info,   TRUE, flags_none },
+	{ "quit", &cli_quit,   FALSE, flags_none },
+	{ "exit", &cli_exit,   FALSE, flags_none },
+	{ "help", &cli_help,   FALSE, flags_none },
 	{ NULL }
 };
 

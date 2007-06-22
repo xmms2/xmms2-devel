@@ -17,9 +17,6 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-/* FIXME: Can't it be automatic? */
-#define MAX_CMD_ARGS 10
-
 #define CLI_CLIENTNAME "xmms2-nycli"
 
 /* FIXME: shall be loaded from config when config exists */
@@ -32,7 +29,6 @@
 typedef struct cli_infos_St cli_infos_t;
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
-typedef struct command_St command_t;
 typedef struct command_context_St command_context_t;
 typedef struct command_argument_St command_argument_t;
 
@@ -47,16 +43,10 @@ struct command_context_St {
 };
 
 struct command_action_St {
-	argument_t *argdefs;
-	command_callback_f callback;
-	gboolean req_connection;
-};
-
-struct command_St {
 	const gchar *name;
 	command_callback_f callback;
 	gboolean req_connection;
-	argument_t args[MAX_CMD_ARGS + 1];
+	argument_t *argdefs;
 };
 
 typedef enum {

@@ -26,7 +26,7 @@
 command_trie_t* command_trie_alloc ();
 command_trie_t* command_trie_new (gchar c);
 void command_trie_free (command_trie_t *trie);
-void command_trie_fill (command_trie_t* trie, command_t commands[]);
+void command_trie_fill (command_trie_t* trie, command_action_t commands[]);
 gboolean command_trie_insert (command_trie_t* trie, gchar *string, command_action_t *action);
 command_action_t* command_trie_find_leaf_action (command_trie_t *trie);
 command_action_t* command_trie_find (command_trie_t *trie, gchar *input);

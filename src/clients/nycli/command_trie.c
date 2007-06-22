@@ -79,11 +79,10 @@ command_trie_action_set (command_trie_t* node, command_action_t *action)
 
 
 void
-command_trie_fill (command_trie_t* trie, command_t commands[])
+command_trie_fill (command_trie_t* trie, command_action_t commands[])
 {
 	int i;
 	const gchar *c;
-	command_t *cmd;
 	command_trie_t *curr;
 
 	for (i = 0; commands[i].name != NULL; ++i) {
@@ -96,9 +95,10 @@ command_trie_fill (command_trie_t* trie, command_t commands[])
 		command_action_t *action;
 		action = g_new0 (command_action_t, 1);
 
-		action->argdefs  = commands[i].args;
+		action->name  = commands[i].name;
 		action->callback = commands[i].callback;
 		action->req_connection = commands[i].req_connection;
+		action->argdefs  = commands[i].argdefs;
 		/* FIXME: when we're done with cb: action->complete = commands[i].complete; */
 
 		if (!command_trie_action_set (curr, action)) {
