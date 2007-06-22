@@ -91,6 +91,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 
 		/* Run action if connection status ok */
 		if (!action->req_connection || cli_infos_connect (infos)) {
+			cli_infos_loop_suspend (infos);
 			action->callback (infos, ctx);
 		}
 	} else {
@@ -161,10 +162,20 @@ loop_select (cli_infos_t *infos)
 }
 
 void
+loop_once (cli_infos_t *infos, gint argc, gchar **argv)
+{
+	/* FIXME: need to dispatch after the loop is started */
+	command_dispatch (infos, argc, argv);
+
+	do {
+		loop_select (infos);
+	} while (infos->status == CLI_ACTION_STATUS_BUSY);
+}
+
+void
 loop_run (cli_infos_t *infos)
 {
-	infos->running = TRUE;
-	while (infos->running) {
+	while (infos->status != CLI_ACTION_STATUS_FINISH) {
 		loop_select (infos);
 	}
 }
@@ -184,15 +195,12 @@ main (gint argc, gchar **argv)
 	/* Execute command, if connection status is ok */
 	if (cli_infos) {
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
-			/* FIXME: Oops, how to "loop once" ? */
-			command_dispatch (cli_infos, argc - 1, argv + 1);
+			loop_once (cli_infos, argc - 1, argv + 1);
 		} else {
-			readline_init (cli_infos);
 			loop_run (cli_infos);
 		}
 	}
 
-	readline_free ();
 	cli_infos_free (cli_infos);
 
 	return 0;

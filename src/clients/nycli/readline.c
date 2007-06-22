@@ -18,7 +18,7 @@
 
 static cli_infos_t *readline_cli_infos;
 
-void
+static void
 readline_callback (gchar *input)
 {
 	while (input && *input == ' ') ++input;
@@ -46,6 +46,19 @@ void
 readline_init (cli_infos_t *infos)
 {
 	readline_cli_infos = infos;
+	rl_callback_handler_install (PROMPT, &readline_callback);
+}
+
+/* FIXME: There /must/ be a nicer way to suspend/resume readline */
+void
+readline_suspend (cli_infos_t *infos)
+{
+	rl_callback_handler_remove ();
+}
+
+void
+readline_resume (cli_infos_t *infos)
+{
 	rl_callback_handler_install (PROMPT, &readline_callback);
 }
 

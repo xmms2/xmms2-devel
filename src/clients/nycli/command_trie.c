@@ -179,8 +179,6 @@ command_trie_find (command_trie_t *trie, gchar *input)
 	command_action_t *action = NULL;
 	GList *l;
 
-	/* FIXME: toggable auto-complete, i.e. if only one matching action, return it */
-
 	if (*input == 0) {
 		/* End of token, return current action, or unique completion */
 		if (trie->action) {

@@ -26,22 +26,36 @@
 
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_status (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_next (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_info (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 
 
 static command_t commands[] =
 {
 	{ "play", &cli_play, TRUE, NULL },
 	{ "pause", &cli_pause, TRUE, NULL },
+	{ "stop", &cli_stop, TRUE, {
+		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
+		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
+		{ NULL }
+	} },
 	{ "status", &cli_status, TRUE, {
 		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
 		{ NULL }
 	} },
+	{ "prev", &cli_prev, TRUE, NULL },
+	{ "next", &cli_next, TRUE, NULL },
+	{ "info", &cli_info, TRUE, NULL },
 	{ "quit", &cli_quit, FALSE, NULL },
 	{ "exit", &cli_exit, FALSE, NULL },
+	{ "help", &cli_help, FALSE, NULL },
 	{ NULL }
 };
 

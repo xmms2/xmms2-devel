@@ -30,16 +30,24 @@ typedef enum {
 	CLI_EXECUTION_MODE_SHELL
 } execution_mode_t;
 
+typedef enum {
+	CLI_ACTION_STATUS_READY,
+	CLI_ACTION_STATUS_BUSY,
+	CLI_ACTION_STATUS_FINISH
+} action_status_t;
+
 struct cli_infos_St {
 	xmmsc_connection_t *conn;
 	execution_mode_t mode;
-	gboolean running;
+	action_status_t status;
 	command_trie_t *commands;
 	GKeyFile *config;
 };
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
 gboolean cli_infos_connect (cli_infos_t *infos);
+void cli_infos_loop_suspend (cli_infos_t *infos);
+void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);
 void cli_infos_free (cli_infos_t *infos);
 

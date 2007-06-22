@@ -38,11 +38,30 @@ cli_infos_autostart (cli_infos_t *infos, gchar *path)
 	return !!ret;
 }
 
+void cli_infos_loop_suspend (cli_infos_t *infos)
+{
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+		readline_suspend (infos);
+	}
+	infos->status = CLI_ACTION_STATUS_BUSY;
+}
+
+void
+cli_infos_loop_resume (cli_infos_t *infos)
+{
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+		readline_resume (infos);
+	}
+	infos->status = CLI_ACTION_STATUS_READY;
+}
+
 void
 cli_infos_loop_stop (cli_infos_t *infos)
 {
-	rl_set_prompt (NULL);
-	infos->running = FALSE;
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+		rl_set_prompt (NULL);
+	}
+	infos->status = CLI_ACTION_STATUS_FINISH;
 }
 
 /* Called on server disconnection. We can keep the loop running. */
@@ -92,11 +111,12 @@ cli_infos_init (gint argc, gchar **argv)
 
 	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;
+		readline_init (infos);
 	} else {
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
 	}
 
-	infos->running = FALSE;
+	infos->status = CLI_ACTION_STATUS_READY;
 	infos->commands = command_trie_alloc ();
 	command_trie_fill (infos->commands, commands);
 
@@ -111,6 +131,12 @@ cli_infos_free (cli_infos_t *infos)
 	if (infos->conn) {
 		xmmsc_unref (infos->conn);
 	}
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+		readline_free ();
+	}
+
 	command_trie_free (infos->commands);
 	g_key_file_free (infos->config);
+
+	g_free (infos);
 }

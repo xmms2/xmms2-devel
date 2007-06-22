@@ -23,5 +23,6 @@
 
 
 void readline_init (cli_infos_t *infos);
-void readline_callback (gchar *input);
+void readline_suspend (cli_infos_t *infos);
+void readline_resume (cli_infos_t *infos);
 void readline_free ();
