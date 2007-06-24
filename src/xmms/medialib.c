@@ -33,7 +33,7 @@
 #include <sqlite3.h>
 
 /**
- * @fil
+ * @file
  * Medialib is a metainfo cache that is searchable.
  */
 
