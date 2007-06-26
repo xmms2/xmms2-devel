@@ -134,29 +134,6 @@ print_entry (const void *key, xmmsc_result_value_type_t type,
 	}
 }
 
-gint
-find_terminal_width() {
-	gint columns = 0;
-	struct winsize ws;
-	char *colstr, *endptr;
-
-	if (!ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)) {
-		columns = ws.ws_col;
-	} else {
-		colstr = getenv("COLUMNS");
-		if(colstr != NULL) {
-			columns = strtol(colstr, &endptr, 10);
-		}
-	}
-
-	/* Default to 80 columns */
-	if(columns <= 0) {
-		columns = 80;
-	}
-
-	return columns;
-}
-
 void
 print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar *fmt, ...)
 {

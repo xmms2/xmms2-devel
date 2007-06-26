@@ -1,3 +1,5 @@
+import sys
+
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2'
@@ -10,6 +12,11 @@ def build(bld):
                     cmd_coll.c
                     common.c
                     main.c""".split()
+    if sys.platform == 'win32':
+        obj.source.append('common_win32.c')
+    else:
+        obj.source.append('common_unix.c')
+
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2'
