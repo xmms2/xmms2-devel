@@ -45,7 +45,7 @@ do_reljump (xmmsc_connection_t *conn, gint where)
 void
 cmd_toggleplay (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	xmms_playback_status_t status;
+	uint32_t status;
 	xmmsc_result_t *res;
 
 	res = xmmsc_playback_status (conn);
