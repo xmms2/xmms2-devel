@@ -112,6 +112,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	xmms_avcodec_data_t *data;
 	AVCodec *codec;
 	const gchar *mimetype;
+	gint ret;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -145,7 +146,15 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->bitrate = xmms_xform_metadata_get_int (xform,
 	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE);
 
-	xmms_xform_privdata_get_bin (xform, "decoder_config", &data->extradata, &data->extradata_size);
+	ret = xmms_xform_privdata_get_bin (xform,
+	                                   "decoder_config",
+	                                   &data->extradata,
+	                                   &data->extradata_size);
+
+	if (!ret) {
+		xmms_log_error ("Decoder config data not found!");
+		return FALSE;
+	}
 
 	data->codecctx = g_new0 (AVCodecContext, 1);
 	data->codecctx->sample_rate = data->samplerate;
