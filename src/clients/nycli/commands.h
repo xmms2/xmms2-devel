@@ -34,37 +34,30 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 
+gboolean cli_play_setup (command_trie_t *infos);
+gboolean cli_pause_setup (command_trie_t *infos);
+gboolean cli_stop_setup (command_trie_t *infos);
+gboolean cli_status_setup (command_trie_t *infos);
+gboolean cli_prev_setup (command_trie_t *infos);
+gboolean cli_next_setup (command_trie_t *infos);
+gboolean cli_info_setup (command_trie_t *infos);
+gboolean cli_quit_setup (command_trie_t *infos);
+gboolean cli_exit_setup (command_trie_t *infos);
+gboolean cli_help_setup (command_trie_t *infos);
 
-/* FIXME: omgfulhack. Later on, implement commands as "plugins", cf xforms -- tru */
-static argument_t flags_none[] = {
-	{ NULL }
-};
-
-static argument_t flags_stop[] = {
-	{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
-	{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
-	{ NULL }
-};
-
-static argument_t flags_status[] = {
-	{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
-	{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
-	{ NULL }
-};
-
-static command_action_t commands[] =
+static command_setup_func commandlist[] =
 {
-	{ "play", &cli_play,   TRUE, flags_none },
-	{ "pause", &cli_pause, TRUE, flags_none },
-	{ "stop", &cli_stop,   TRUE, flags_stop },
-	{ "status", &cli_status, TRUE, flags_status },
-	{ "prev", &cli_prev,   TRUE, flags_none },
-	{ "next", &cli_next,   TRUE, flags_none },
-	{ "info", &cli_info,   TRUE, flags_none },
-	{ "quit", &cli_quit,   FALSE, flags_none },
-	{ "exit", &cli_exit,   FALSE, flags_none },
-	{ "help", &cli_help,   FALSE, flags_none },
-	{ NULL }
+	cli_play_setup,
+	cli_pause_setup,
+	cli_stop_setup,
+	cli_status_setup,
+	cli_prev_setup,
+	cli_next_setup,
+	cli_info_setup,
+	cli_quit_setup,
+	cli_exit_setup,
+	cli_help_setup,
+	NULL
 };
 
 #endif /* __COMMANDS_H__ */

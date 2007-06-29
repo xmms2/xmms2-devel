@@ -118,7 +118,7 @@ cli_infos_init (gint argc, gchar **argv)
 
 	infos->status = CLI_ACTION_STATUS_READY;
 	infos->commands = command_trie_alloc ();
-	command_trie_fill (infos->commands, commands);
+	command_trie_fill (infos->commands, commandlist);
 
 	infos->config = g_key_file_new ();
 

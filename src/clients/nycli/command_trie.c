@@ -79,47 +79,74 @@ command_trie_action_set (command_trie_t* node, command_action_t *action)
 
 
 void
-command_trie_fill (command_trie_t* trie, command_action_t commands[])
+command_trie_fill (command_trie_t* trie, command_setup_func commandlist[])
 {
 	int i;
 	const gchar *c;
 	command_trie_t *curr;
 
-	for (i = 0; commands[i].name != NULL; ++i) {
-
-		curr = trie;
-		for (c = commands[i].name; *c != 0; ++c) {
-			curr = command_trie_elem_insert (curr, *c);
-		}
-
-		command_action_t *action;
-		action = g_new0 (command_action_t, 1);
-
-		action->name  = commands[i].name;
-		action->callback = commands[i].callback;
-		action->req_connection = commands[i].req_connection;
-		action->argdefs  = commands[i].argdefs;
-		/* FIXME: when we're done with cb: action->complete = commands[i].complete; */
-
-		if (!command_trie_action_set (curr, action)) {
-			/* FIXME: How to handle error? */
-			printf ("Error: cannot register action for '%s', already defined!",
-			        commands[i].name);
-		}
+	for (i = 0; commandlist[i] != NULL; ++i) {
+		commandlist[i] (trie);
 	}
 }
 
-gboolean
-command_trie_insert (command_trie_t* trie, gchar *string, command_action_t *action)
+static
+gboolean argument_copy (const argument_t src[], argument_t **dest)
 {
-	const gchar *c;
-	command_trie_t *curr = trie;
+	argument_t *arg;
+	int i;
 
-	for (c = string; c != NULL; ++c) {
-		curr = command_trie_elem_insert (curr, *c);
+	/* Count elements and allocate size + 1 */
+	for (i = 0; src && src[i].long_name; ++i);
+
+	*dest = g_new0 (argument_t, i + 1);
+
+	/* Copy array, last element is all NULL */
+	for (i = 0, arg = *dest; src && src[i].long_name; ++i, ++arg) {
+		arg->long_name = src[i].long_name;
+		arg->short_name = src[i].short_name;
+		arg->flags = src[i].flags;
+		arg->arg = src[i].arg;
+		arg->arg_data = src[i].arg_data;
+		arg->description = src[i].description;
+		arg->arg_description = src[i].arg_description;
 	}
 
-	return command_trie_action_set (curr, action);
+	return TRUE;
+}
+
+gboolean
+command_trie_insert (command_trie_t* trie, const gchar *name,
+                     command_exec_func cmd, gboolean needconn,
+                     const argument_t flags[])
+{
+	const gchar *c;
+	command_action_t *action;
+	command_trie_t *curr;
+	gboolean retval = FALSE;
+
+	action = g_new0 (command_action_t, 1);
+	action->name = g_strdup (name);
+	action->callback = cmd;
+	action->req_connection = needconn;
+	if (argument_copy (flags, &action->argdefs)) {
+		/* Insert the string in the trie */
+		curr = trie;
+		for (c = name; *c != 0; ++c) {
+			curr = command_trie_elem_insert (curr, *c);
+		}
+
+		/* Record the action in the trie node */
+	    if (command_trie_action_set (curr, action)) {
+			retval = TRUE;
+		}
+	}
+
+	if (!retval) {
+		g_free (action);
+	}
+
+	return retval;
 }
 
 command_trie_t*

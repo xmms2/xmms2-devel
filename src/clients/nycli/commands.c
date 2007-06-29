@@ -18,97 +18,50 @@
 
 #include "cli_infos.h"
 #include "command_trie.h"
+#include "command_utils.h"
+#include "callbacks.h"
 
 
-static gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
-static gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v);
+/* Setup commands */
 
+#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, needconn) \
+	gboolean \
+	setupcmd (command_trie_t *trie) \
+	{ command_trie_insert (trie, name, cmd, needconn, NULL); }
 
-/* FIXME: Can we differentiate between unset, set and default value? :-/ */
-gboolean
-command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
-{
-	command_argument_t *arg;
-	gboolean retval = FALSE;
-
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
-	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_INT) {
-		*v = arg->value.vint;
-		retval = TRUE;
-	}
-
-	return retval;
-}
+CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE)
+CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE)
+CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE)
+CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE)
+CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE)
+CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE)
+CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE)
+CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE)
 
 gboolean
-command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
+cli_stop_setup (command_trie_t *trie)
 {
-	command_argument_t *arg;
-	gboolean retval = FALSE;
-
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
-	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING) {
-		*v = arg->value.vstring;
-		retval = TRUE;
-	}
-
-	return retval;
-}
-
-gint
-command_arg_count (command_context_t *ctx)
-{
-	return ctx->argc - 1;
+	const argument_t flags[] = {
+		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
+		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
+		{ NULL }
+	};
+	command_trie_insert (trie, "stop", &cli_stop, TRUE, flags);
 }
 
 gboolean
-command_arg_int_get (command_context_t *ctx, gint at, gint *v)
+cli_status_setup (command_trie_t *trie)
 {
-	gboolean retval = FALSE;
-
-	if (at < command_arg_count (ctx)) {
-		*v = strtol (ctx->argv[at + 1], NULL, 10);
-		retval = TRUE;
-	}
-
-	return retval;
+	const argument_t flags[] = {
+		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
+		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
+		{ NULL }
+	};
+	command_trie_insert (trie, "status", &cli_status, TRUE, flags);
 }
 
-gboolean
-command_arg_string_get (command_context_t *ctx, gint at, gchar **v)
-{
-	gboolean retval = FALSE;
 
-	if (at < command_arg_count (ctx)) {
-		*v = ctx->argv[at + 1];
-		retval = TRUE;
-	}
-
-	return retval;
-}
-
-/* Dummy callback that resets the action status as finished. */
-void
-cb_done (xmmsc_result_t *res, void *udata)
-{
-	cli_infos_t *infos = (cli_infos_t *) udata;
-	cli_infos_loop_resume (infos);
-}
-
-void
-cb_tickle (xmmsc_result_t *res, void *udata)
-{
-	cli_infos_t *infos = (cli_infos_t *) udata;
-
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_playback_tickle (infos->conn);
-	} else {
-		printf ("Server error: %s\n", xmmsc_result_get_error (res));
-	}
-
-	cli_infos_loop_resume (infos);
-}
-
+/* Define commands */
 
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -198,6 +151,23 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
+	gchar *pattern;
+	xmmsc_coll_t *query;
+	xmmsc_result_t *res;
+
+	/* FIXME: more abstract way to get argv */
+	pattern = g_strjoinv (" ", ctx->argv);
+
+	if (!xmmsc_coll_parse (pattern, &query)) {
+		printf ("Error: failed to parse the pattern!\n");
+		cli_infos_loop_resume (infos);
+	} else {
+		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+		xmmsc_result_notifier_set (res, cb_list_print_info, infos);
+		xmmsc_coll_unref (query);
+	}
+
+	g_free (pattern);
 
 	return TRUE;
 }
@@ -223,14 +193,16 @@ gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx)
 
 
 void
-help_all_commands ()
+help_all_commands (cli_infos_t *infos)
 {
 	gint i;
 
 	printf ("usage: nyxmms2 COMMAND [ARGS]\n\n");
+	/* FIXME: we need the list of commands, 'd be easier
 	for (i = 0; commands[i].name; ++i) {
 		printf ("   %s\n", commands[i].name);
 	}
+	*/
 	printf ("\nType 'help COMMAND' for detailed help about a command.\n");
 }
 
@@ -269,7 +241,7 @@ gboolean cli_help (cli_infos_t *infos, command_context_t *ctx)
 
 	/* No argument, display the list of commands */
 	if (command_arg_count (ctx) == 0) {
-		help_all_commands ();
+		help_all_commands (infos);
 	} else if (command_arg_count (ctx) == 1) {
 		/* FIXME: find command, if found display help, else show error */
 		gchar *cmd;

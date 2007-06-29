@@ -34,7 +34,8 @@ typedef struct command_argument_St command_argument_t;
 
 typedef GOptionEntry argument_t;
 
-typedef gboolean (*command_callback_f)(cli_infos_t *infos, command_context_t *ctx);
+typedef gboolean (*command_setup_func)(command_trie_t *infos);
+typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
 
 struct command_context_St {
 	gint argc;
@@ -44,7 +45,7 @@ struct command_context_St {
 
 struct command_action_St {
 	const gchar *name;
-	command_callback_f callback;
+	command_exec_func callback;
 	gboolean req_connection;
 	argument_t *argdefs;
 };

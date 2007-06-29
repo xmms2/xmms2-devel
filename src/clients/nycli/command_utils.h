@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __COMMAND_TRIE_H__
-#define __COMMAND_TRIE_H__
+#ifndef __COMMAND_UTILS_H__
+#define __COMMAND_UTILS_H__
 
 #include <xmmsclient/xmmsclient.h>
 
@@ -23,12 +23,10 @@
 
 #include "main.h"
 
-command_trie_t* command_trie_alloc ();
-command_trie_t* command_trie_new (gchar c);
-void command_trie_free (command_trie_t *trie);
-void command_trie_fill (command_trie_t* trie, command_setup_func commandlist[]);
-gboolean command_trie_insert (command_trie_t* trie, const gchar *string, command_exec_func cmd, gboolean needconn, const argument_t flags[]);
-command_action_t* command_trie_find_leaf_action (command_trie_t *trie);
-command_action_t* command_trie_find (command_trie_t *trie, gchar *input);
+gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
+gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v);
+gint command_arg_count (command_context_t *ctx);
+gboolean command_arg_int_get (command_context_t *ctx, gint at, gint *v);
+gboolean command_arg_string_get (command_context_t *ctx, gint at, gchar **v);
 
-#endif /* __COMMAND_TRIE_H__ */
+#endif /* __COMMAND_UTILS_H__ */

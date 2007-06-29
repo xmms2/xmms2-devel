@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __COMMAND_TRIE_H__
-#define __COMMAND_TRIE_H__
+#ifndef __CALLBACKS_H__
+#define __CALLBACKS_H__
 
 #include <xmmsclient/xmmsclient.h>
 
@@ -23,12 +23,10 @@
 
 #include "main.h"
 
-command_trie_t* command_trie_alloc ();
-command_trie_t* command_trie_new (gchar c);
-void command_trie_free (command_trie_t *trie);
-void command_trie_fill (command_trie_t* trie, command_setup_func commandlist[]);
-gboolean command_trie_insert (command_trie_t* trie, const gchar *string, command_exec_func cmd, gboolean needconn, const argument_t flags[]);
-command_action_t* command_trie_find_leaf_action (command_trie_t *trie);
-command_action_t* command_trie_find (command_trie_t *trie, gchar *input);
+void cb_done (xmmsc_result_t *res, void *udata);
+void cb_tickle (xmmsc_result_t *res, void *udata);
+void cb_id_print_info (xmmsc_result_t *res, void *udata);
+void cb_list_print_info (xmmsc_result_t *res, void *udata);
 
-#endif /* __COMMAND_TRIE_H__ */
+
+#endif /* __CALLBACKS_H__ */

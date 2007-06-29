@@ -5,6 +5,8 @@ def build(bld):
                     cli_infos.c
                     command_trie.c
                     commands.c
+                    command_utils.c
+                    callbacks.c
                     readline.c""".split()
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
