@@ -28,5 +28,6 @@ gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gch
 gint command_arg_count (command_context_t *ctx);
 gboolean command_arg_int_get (command_context_t *ctx, gint at, gint *v);
 gboolean command_arg_string_get (command_context_t *ctx, gint at, gchar **v);
+gboolean command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v);
 
 #endif /* __COMMAND_UTILS_H__ */

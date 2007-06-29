@@ -29,6 +29,6 @@ void command_trie_free (command_trie_t *trie);
 void command_trie_fill (command_trie_t* trie, command_setup_func commandlist[]);
 gboolean command_trie_insert (command_trie_t* trie, const gchar *string, command_exec_func cmd, gboolean needconn, const argument_t flags[]);
 command_action_t* command_trie_find_leaf_action (command_trie_t *trie);
-command_action_t* command_trie_find (command_trie_t *trie, gchar *input);
+command_action_t* command_trie_find (command_trie_t *trie, const gchar *input);
 
 #endif /* __COMMAND_TRIE_H__ */

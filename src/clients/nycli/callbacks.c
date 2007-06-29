@@ -76,23 +76,16 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_id_print_info_notdone (xmmsc_result_t *res, void *udata)
+cb_id_print_info (xmmsc_result_t *res, void *udata)
 {
+	guint id = GPOINTER_TO_UINT(udata);
+
 	if (!xmmsc_result_iserror (res)) {
+		printf ("<mid=%u>\n", id);
 		xmmsc_result_propdict_foreach (res, propdict_dump, NULL);
-		printf ("\n");
 	} else {
 		printf ("Server error: %s\n", xmmsc_result_get_error (res));
 	}
-}
-
-void
-cb_id_print_info (xmmsc_result_t *res, void *udata)
-{
-	cli_infos_t *infos = (cli_infos_t *) udata;
-
-	cb_id_print_info_notdone (res, udata);
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -100,20 +93,20 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *infores = NULL;
-	gint id;
+	guint id;
 
 	if (!xmmsc_result_iserror (res)) {
 		while (xmmsc_result_list_valid (res)) {
 			if (xmmsc_result_get_uint (res, &id)) {
 				infores = xmmsc_medialib_get_info (infos->conn, id);
-				xmmsc_result_notifier_set (infores, cb_id_print_info_notdone, infos);
+				xmmsc_result_notifier_set (infores, cb_id_print_info,
+				                           GUINT_TO_POINTER(id));
 			}
 			xmmsc_result_list_next (res);
 		}
 
-		/* Override the last callback to resume action when done */
 		if (infores) {
-			xmmsc_result_notifier_set (infores, cb_id_print_info, infos);
+			xmmsc_result_notifier_set (infores, cb_done, infos);
 		}
 
 	} else {

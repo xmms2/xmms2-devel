@@ -79,3 +79,19 @@ command_arg_string_get (command_context_t *ctx, gint at, gchar **v)
 
 	return retval;
 }
+
+/* Grab all the arguments after the index as a single string.
+ * Warning: the string must be freed manually afterwards!
+ */
+gboolean
+command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
+{
+	gboolean retval = FALSE;
+
+	if (at < command_arg_count (ctx)) {
+		*v = g_strjoinv (" ", &ctx->argv[at + 1]);
+		retval = TRUE;
+	}
+
+	return retval;
+}

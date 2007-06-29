@@ -201,7 +201,7 @@ command_trie_find_leaf_action (command_trie_t *trie)
 }
 
 command_action_t*
-command_trie_find (command_trie_t *trie, gchar *input)
+command_trie_find (command_trie_t *trie, const gchar *input)
 {
 	command_action_t *action = NULL;
 	GList *l;

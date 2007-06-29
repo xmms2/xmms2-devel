@@ -151,14 +151,15 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern;
+	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 
-	/* FIXME: more abstract way to get argv */
-	pattern = g_strjoinv (" ", ctx->argv);
-
-	if (!xmmsc_coll_parse (pattern, &query)) {
+	command_arg_longstring_get (ctx, 0, &pattern);
+	if (!pattern) {
+		printf ("Error: you must provide a pattern!\n");
+		cli_infos_loop_resume (infos);
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
 		printf ("Error: failed to parse the pattern!\n");
 		cli_infos_loop_resume (infos);
 	} else {
@@ -167,7 +168,9 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_coll_unref (query);
 	}
 
-	g_free (pattern);
+	if (pattern) {
+		g_free (pattern);
+	}
 
 	return TRUE;
 }

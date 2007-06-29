@@ -70,8 +70,8 @@ cli_infos_disconnect_callback (int flag, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
 	printf ("Server disconnected!\n");
+	/* FIXME: Make sure this does what one expects.. */
 	infos->conn = NULL;
-	/* FIXME: issueing "quit" seems to start endless crap instead. */
 }
 
 gboolean
@@ -97,7 +97,8 @@ cli_infos_connect (cli_infos_t *infos)
 		return FALSE;
 	}
 
-	xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos);
+	/* FIXME: Looks buggy, causes double-free crap. investigate please. */
+	/* xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos); */
 
 	return TRUE;
 }

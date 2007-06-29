@@ -167,9 +167,9 @@ loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 	/* FIXME: need to dispatch after the loop is started */
 	command_dispatch (infos, argc, argv);
 
-	do {
+	while (infos->status == CLI_ACTION_STATUS_BUSY) {
 		loop_select (infos);
-	} while (infos->status == CLI_ACTION_STATUS_BUSY);
+	}
 }
 
 void
