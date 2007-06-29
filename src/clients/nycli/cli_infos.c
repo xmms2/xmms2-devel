@@ -69,7 +69,7 @@ void
 cli_infos_disconnect_callback (int flag, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
-	printf ("Server disconnected!\n");
+	g_printf (_("Server disconnected!\n"));
 	/* FIXME: Make sure this does what one expects.. */
 	infos->conn = NULL;
 }
@@ -82,7 +82,7 @@ cli_infos_connect (cli_infos_t *infos)
 
 	infos->conn = xmmsc_init (CLI_CLIENTNAME);
 	if (!infos->conn) {
-		printf ("Could not init connection!\n");
+		g_printf (_("Could not init connection!\n"));
 		return FALSE;
 	}
 
@@ -90,9 +90,9 @@ cli_infos_connect (cli_infos_t *infos)
 	ret = xmmsc_connect (infos->conn, path);
 	if (!ret && !cli_infos_autostart (infos, path)) {
 		if (path) {
-			printf ("Could not connect to server at '%s'!\n", path);
+			g_printf (_("Could not connect to server at '%s'!\n"), path);
 		} else {
-			printf ("Could not connect to server at default path!\n");
+			g_printf (_("Could not connect to server at default path!\n"));
 		}
 		return FALSE;
 	}

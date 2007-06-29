@@ -73,8 +73,8 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 				break;
 
 			default:
-				printf ("Trying to register a flag '%s' of invalid type!",
-				        action->argdefs[i].long_name);
+				g_printf (_("Trying to register a flag '%s' of invalid type!"),
+				          action->argdefs[i].long_name);
 				break;
 			}
 
@@ -95,8 +95,8 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 			action->callback (infos, ctx);
 		}
 	} else {
-		printf ("Unknown command: '%s'\n", *argv);
-		printf ("Type 'help' for usage.\n");
+		g_printf (_("Unknown command: '%s'\n"), *argv);
+		g_printf (_("Type 'help' for usage.\n"));
 	}
 
 }

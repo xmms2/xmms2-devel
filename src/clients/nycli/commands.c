@@ -42,8 +42,8 @@ gboolean
 cli_stop_setup (command_trie_t *trie)
 {
 	const argument_t flags[] = {
-		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, "Number of tracks after which to stop playback.", "num" },
-		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, "Duration after which to stop playback.", "time" },
+		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, _("Number of tracks after which to stop playback."), "num" },
+		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, _("Duration after which to stop playback."), "time" },
 		{ NULL }
 	};
 	command_trie_insert (trie, "stop", &cli_stop, TRUE, flags);
@@ -53,8 +53,8 @@ gboolean
 cli_status_setup (command_trie_t *trie)
 {
 	const argument_t flags[] = {
-		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, "Delay between each refresh of the status. If 0, the status is only printed once (default).", "time" },
-		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, "Format string used to display status.", "format" },
+		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, _("Delay between each refresh of the status. If 0, the status is only printed once (default)."), "time" },
+		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
 	};
 	command_trie_insert (trie, "status", &cli_status, TRUE, flags);
@@ -86,10 +86,10 @@ gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx)
 
 	/* FIXME: Support those flags */
 	if (command_flag_int_get (ctx, "tracks", &n) && n != 0) {
-		printf ("--tracks flag not supported yet!\n");
+		g_printf (_("--tracks flag not supported yet!\n"));
 	}
 	if (command_flag_int_get (ctx, "time", &n) && n != 0) {
-		printf ("--time flag not supported yet!\n");
+		g_printf (_("--time flag not supported yet!\n"));
 	}
 
 	res = xmmsc_playback_stop (infos->conn);
@@ -105,11 +105,11 @@ gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 	gint r;
 
 	if (command_flag_int_get (ctx, "refresh", &r)) {
-		printf ("refresh=%d\n", r);
+		g_printf ("refresh=%d\n", r);
 	}
 
 	if (command_flag_string_get (ctx, "format", &f)) {
-		printf ("format='%s'\n", f);
+		g_printf ("format='%s'\n", f);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -157,10 +157,10 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 
 	command_arg_longstring_get (ctx, 0, &pattern);
 	if (!pattern) {
-		printf ("Error: you must provide a pattern!\n");
+		g_printf (_("Error: you must provide a pattern!\n"));
 		cli_infos_loop_resume (infos);
 	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		printf ("Error: failed to parse the pattern!\n");
+		g_printf (_("Error: failed to parse the pattern!\n"));
 		cli_infos_loop_resume (infos);
 	} else {
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
@@ -200,13 +200,13 @@ help_all_commands (cli_infos_t *infos)
 {
 	gint i;
 
-	printf ("usage: nyxmms2 COMMAND [ARGS]\n\n");
+	g_printf (_("usage: nyxmms2 COMMAND [ARGS]\n\n"));
 	/* FIXME: we need the list of commands, 'd be easier
 	for (i = 0; commands[i].name; ++i) {
-		printf ("   %s\n", commands[i].name);
+		g_printf ("   %s\n", commands[i].name);
 	}
 	*/
-	printf ("\nType 'help COMMAND' for detailed help about a command.\n");
+	g_printf (_("\nType 'help COMMAND' for detailed help about a command.\n"));
 }
 
 void
@@ -218,23 +218,23 @@ help_command (cli_infos_t *infos, gchar *cmd)
 	action = command_trie_find (infos->commands, cmd);
 	if (action) {
 		/* FIXME: show REAL name (get it somewhere), usage, description */
-		printf ("%s\n\n", cmd);
+		g_printf ("%s\n\n", cmd);
 		if (action->argdefs && action->argdefs[0].long_name) {
-			printf ("Valid options:\n");
+			g_printf (_("Valid options:\n"));
 			for (i = 0; action->argdefs[i].long_name; ++i) {
 				if (action->argdefs[i].short_name) {
-					printf ("  -%c, ", action->argdefs[i].short_name);
+					g_printf ("  -%c, ", action->argdefs[i].short_name);
 				} else {
-					printf ("      ");
+					g_printf ("      ");
 				}
-				printf ("--%s", action->argdefs[i].long_name);
-				printf ("  %s\n", action->argdefs[i].description);
+				g_printf ("--%s", action->argdefs[i].long_name);
+				g_printf ("  %s\n", action->argdefs[i].description);
 				/* FIXME: align, show arg_description, etc */
 			}
 		}
 	} else {
-		printf ("Unknown command: '%s'\n", cmd);
-		printf ("Type 'help' for the list of commands.\n");
+		g_printf (_("Unknown command: '%s'\n"), cmd);
+		g_printf (_("Type 'help' for the list of commands.\n"));
 	}
 }
 
@@ -252,10 +252,10 @@ gboolean cli_help (cli_infos_t *infos, command_context_t *ctx)
 		if (command_arg_string_get (ctx, 0, &cmd)) {
 			help_command (infos, cmd);
 		} else {
-			printf ("Error while parsing the argument!\n");
+			g_printf (_("Error while parsing the argument!\n"));
 		}
 	} else {
-		printf ("To get help for a command, type 'help COMMAND'.\n");
+		g_printf (_("To get help for a command, type 'help COMMAND'.\n"));
 	}
 
 	cli_infos_loop_resume (infos);

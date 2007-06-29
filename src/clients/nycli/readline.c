@@ -26,7 +26,7 @@ readline_callback (gchar *input)
 	if (input == NULL) {
 		/* End of stream, quit */
 		cli_infos_loop_stop (readline_cli_infos);
-		printf ("\n");
+		g_printf ("\n");
 	} else if (*input != 0) {
 		gint argc;
 		gchar **argv;

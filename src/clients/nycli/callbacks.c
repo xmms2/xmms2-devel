@@ -26,28 +26,28 @@ propdict_dump (const void *key, xmmsc_result_value_type_t type,
 {
 	switch (type) {
 	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-		printf ("[%s] %s = %u\n", source, key, (uint32_t*) value);
+		g_printf (_("[%s] %s = %u\n"), source, key, (uint32_t*) value);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		printf ("[%s] %s = %d\n", source, key, (int32_t*) value);
+		g_printf (_("[%s] %s = %d\n"), source, key, (int32_t*) value);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		printf ("[%s] %s = %s\n", source, key, (gchar*) value);
+		g_printf (_("[%s] %s = %s\n"), source, key, (gchar*) value);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_DICT:
-		printf ("[%s] %s = <dict>\n", source, key);
+		g_printf (_("[%s] %s = <dict>\n"), source, key);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_PROPDICT:
-		printf ("[%s] %s = <propdict>\n", source, key);
+		g_printf (_("[%s] %s = <propdict>\n"), source, key);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_COLL:
-		printf ("[%s] %s = <coll>\n", source, key);
+		g_printf (_("[%s] %s = <coll>\n"), source, key);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_BIN:
-		printf ("[%s] %s = <bin>\n", source, key);
+		g_printf (_("[%s] %s = <bin>\n"), source, key);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_NONE:
-		printf ("[%s] %s = <unknown>\n", source, key);
+		g_printf (_("[%s] %s = <unknown>\n"), source, key);
 		break;
 	}
 }
@@ -69,7 +69,7 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 	if (!xmmsc_result_iserror (res)) {
 		xmmsc_playback_tickle (infos->conn);
 	} else {
-		printf ("Server error: %s\n", xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
 	cli_infos_loop_resume (infos);
@@ -81,10 +81,10 @@ cb_id_print_info (xmmsc_result_t *res, void *udata)
 	guint id = GPOINTER_TO_UINT(udata);
 
 	if (!xmmsc_result_iserror (res)) {
-		printf ("<mid=%u>\n", id);
+		g_printf (_("<mid=%u>\n"), id);
 		xmmsc_result_propdict_foreach (res, propdict_dump, NULL);
 	} else {
-		printf ("Server error: %s\n", xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 }
 
@@ -110,7 +110,7 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 		}
 
 	} else {
-		printf ("Server error: %s\n", xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
 	/* No resume-callback pending, we're done */

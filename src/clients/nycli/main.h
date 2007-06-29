@@ -25,6 +25,11 @@
 #define PROMPT "nycli> "
 #define AUTO_UNIQUE_COMPLETE TRUE
 
+/* FIXME: Change this to use gettext later on */
+#define _(String) (String)
+#define N_(String) String
+#define textdomain(Domain)
+#define bindtextdomain(Package, Directory)
 
 typedef struct cli_infos_St cli_infos_t;
 typedef struct command_trie_St command_trie_t;
