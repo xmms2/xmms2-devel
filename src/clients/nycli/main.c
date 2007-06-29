@@ -29,9 +29,31 @@
 void
 command_argument_free (void *x)
 {
-	/* FIXME: free value? */
 	g_free (x);
 }
+
+command_context_t *
+command_context_init (gint argc, gchar **argv)
+{
+	command_context_t *ctx;
+	ctx = g_new0 (command_context_t, 1);
+
+	/* Register a hashtable to receive flag values and pass them on */
+	ctx->argc = argc;
+	ctx->argv = argv;
+	ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                    g_free, command_argument_free);
+
+	return ctx;
+}
+
+void
+command_context_free (command_context_t *ctx)
+{
+	g_hash_table_destroy (ctx->flags);
+	g_free (ctx);
+}
+
 
 void
 command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
@@ -47,13 +69,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		gint i;
 
 		command_context_t *ctx;
-		ctx = g_new0 (command_context_t, 1);
-
-		/* Register a hashtable to receive flag values and pass them on */
-		ctx->argc = argc;
-		ctx->argv = argv;
-		ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                    g_free, command_argument_free);
+		ctx = command_context_init (argc, argv);
 
 		for (i = 0; action->argdefs && action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
@@ -94,6 +110,8 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 			cli_infos_loop_suspend (infos);
 			action->callback (infos, ctx);
 		}
+
+		command_context_free (ctx);
 	} else {
 		g_printf (_("Unknown command: '%s'\n"), *argv);
 		g_printf (_("Type 'help' for usage.\n"));
@@ -164,7 +182,6 @@ loop_select (cli_infos_t *infos)
 void
 loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 {
-	/* FIXME: need to dispatch after the loop is started */
 	command_dispatch (infos, argc, argv);
 
 	while (infos->status == CLI_ACTION_STATUS_BUSY) {

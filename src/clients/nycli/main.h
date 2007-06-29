@@ -49,7 +49,7 @@ struct command_context_St {
 };
 
 struct command_action_St {
-	const gchar *name;
+	gchar *name;
 	command_exec_func callback;
 	gboolean req_connection;
 	argument_t *argdefs;

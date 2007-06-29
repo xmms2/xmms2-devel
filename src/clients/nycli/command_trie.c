@@ -19,8 +19,8 @@
 
 struct command_trie_St {
 	gchar c;
-	GList* next;
-	command_action_t* action;
+	GList *next;
+	command_action_t *action;
 };
 
 static command_trie_t* command_trie_elem_insert (command_trie_t* node, gchar c);
@@ -28,7 +28,7 @@ static gboolean command_trie_action_set (command_trie_t* node, command_action_t 
 static gint command_trie_elem_cmp (gconstpointer elem, gconstpointer udata);
 
 
-gint
+static gint
 command_trie_elem_cmp (gconstpointer elem, gconstpointer udata)
 {
 	command_trie_t *t;
@@ -45,6 +45,23 @@ command_trie_elem_cmp (gconstpointer elem, gconstpointer udata)
 		return 0;
 }
 
+static void
+command_action_free (command_action_t *action)
+{
+	g_free (action->name);
+	g_free (action->argdefs);
+	g_free (action);
+}
+
+static void
+command_trie_free_with_udata (gpointer elem, gpointer userdata)
+{
+	command_trie_t *trie = (command_trie_t *) elem;
+
+	command_trie_free (trie);
+}
+
+
 command_trie_t*
 command_trie_alloc ()
 {
@@ -54,7 +71,7 @@ command_trie_alloc ()
 command_trie_t*
 command_trie_new (gchar c)
 {
-	command_trie_t* trie = g_new0 (command_trie_t, 1);
+	command_trie_t* trie = command_trie_alloc ();
 	trie->c = c;
 	return trie;
 }
@@ -62,7 +79,13 @@ command_trie_new (gchar c)
 void
 command_trie_free (command_trie_t *trie)
 {
-	/* FIXME: Free the stuff recursively here, kthxbye! */
+	/* Free the trie recursively */
+	if (trie->action) {
+		command_action_free (trie->action);
+	}
+	g_list_foreach (trie->next, command_trie_free_with_udata, NULL);
+	g_list_free (trie->next);
+	g_free (trie);
 }
 
 gboolean
