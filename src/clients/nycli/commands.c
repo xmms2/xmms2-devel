@@ -31,6 +31,7 @@
 
 CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE)
 CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE)
+CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE)
 CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE)
 CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE)
 CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE)
@@ -94,6 +95,27 @@ gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playback_stop (infos->conn);
 	xmmsc_result_notifier_set (res, cb_done, infos);
+
+	return TRUE;
+}
+
+gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	command_arg_time_t t;
+
+	if (command_arg_time_get (ctx, 0, &t)) {
+		if (t.type == COMMAND_ARG_TIME_OFFSET) {
+			res = xmmsc_playback_seek_ms_rel (infos->conn, t.value.offset * 1000);
+		} else {
+			res = xmmsc_playback_seek_ms (infos->conn, t.value.pos * 1000);
+		}
+
+		xmmsc_result_notifier_set (res, cb_done, infos);
+	} else {
+		g_printf (_("Error: failed to parse the time argument!\n"));
+		cli_infos_loop_resume (infos);
+	}
 
 	return TRUE;
 }

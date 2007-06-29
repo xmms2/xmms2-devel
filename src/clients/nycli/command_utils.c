@@ -95,3 +95,29 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 
 	return retval;
 }
+
+/* Parse a time value, either an absolute position or an offset. */
+gboolean
+command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
+{
+	gboolean retval = FALSE;
+	gchar *s, *endptr;
+
+	if (at < command_arg_count (ctx) && command_arg_string_get (ctx, at, &s)) {
+		if (*s == '+' || *s == '-') {
+			v->type = COMMAND_ARG_TIME_OFFSET;
+			v->value.offset = strtol (s, &endptr, 10);
+		} else {
+			/* FIXME: always signed long int anyway? */
+			v->type = COMMAND_ARG_TIME_POSITION;
+			v->value.pos = strtol (s, &endptr, 10);
+		}
+
+		/* FIXME: We can have cleverer parsing for '2:17' or '3min' etc */
+		if (*endptr == '\0') {
+			retval = TRUE;
+		}
+	}
+
+	return retval;
+}

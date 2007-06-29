@@ -23,11 +23,27 @@
 
 #include "main.h"
 
+typedef struct command_arg_time_St command_arg_time_t;
+
+typedef enum {
+	COMMAND_ARG_TIME_POSITION,
+	COMMAND_ARG_TIME_OFFSET
+} command_arg_time_type_t;
+
+struct command_arg_time_St {
+	union {
+		guint pos;
+		gint offset;
+	} value;
+	command_arg_time_type_t type;
+};
+
 gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
 gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v);
 gint command_arg_count (command_context_t *ctx);
 gboolean command_arg_int_get (command_context_t *ctx, gint at, gint *v);
 gboolean command_arg_string_get (command_context_t *ctx, gint at, gchar **v);
 gboolean command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v);
+gboolean command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v);
 
 #endif /* __COMMAND_UTILS_H__ */

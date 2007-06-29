@@ -26,6 +26,7 @@
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_status (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_next (cli_infos_t *infos, command_context_t *ctx);
@@ -37,6 +38,7 @@ gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_play_setup (command_trie_t *infos);
 gboolean cli_pause_setup (command_trie_t *infos);
 gboolean cli_stop_setup (command_trie_t *infos);
+gboolean cli_seek_setup (command_trie_t *infos);
 gboolean cli_status_setup (command_trie_t *infos);
 gboolean cli_prev_setup (command_trie_t *infos);
 gboolean cli_next_setup (command_trie_t *infos);
@@ -50,6 +52,7 @@ static command_setup_func commandlist[] =
 	cli_play_setup,
 	cli_pause_setup,
 	cli_stop_setup,
+	cli_seek_setup,
 	cli_status_setup,
 	cli_prev_setup,
 	cli_next_setup,
