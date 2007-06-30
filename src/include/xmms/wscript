@@ -1,5 +1,6 @@
 import sys,os
 import Params
+from Params import g_platform
 
 def build(bld):
     pass
@@ -28,7 +29,7 @@ def configure(conf):
     if prio == -1:
         Params.warning("No output plugin found, this is bad")
     defs['XMMS_OUTPUT_DEFAULT'] = name
-    if sys.platform == 'darwin':
+    if g_platform == 'darwin':
         defs["USERCONFDIR"] = 'Library/xmms2'
         defs["USERCACHEDIR"] = 'Library/xmms2/logs'
     else:

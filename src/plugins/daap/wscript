@@ -1,5 +1,6 @@
 import sys
 from waftools.plugin import plugin
+from Params import g_platform
 
 def plugin_configure(conf):
     # Set the default fallthrough, if no "intelligent" backend is found.
@@ -13,7 +14,7 @@ def plugin_configure(conf):
     elif conf.check_header('dns_sd.h'):
         # We might have dnssd support. If we're not on OSX, check for the
         # presence of the lib.
-        if sys.platform == 'darwin':
+        if g_platform == 'darwin':
             conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
         elif conf.check_library2('dns_sd', uselib='dnssd', mandatory=0):
             conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
@@ -26,7 +27,7 @@ def plugin_build(bld, obj):
         obj.uselib += ' avahiglib avahiclient'
     elif daap_backend == 'dnssd':
         obj.uselib += ' dnssd'
-    if sys.platform == 'win32':
+    if g_platform == 'win32':
         obj.uselib += ' socket'
 
 configure, build = plugin('daap', configure=plugin_configure,

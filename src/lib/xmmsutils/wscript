@@ -5,12 +5,15 @@
 #
 
 import os
+from Params import g_platform
 
 def build(bld):
-    platform_src = {'nt':'win32', 'posix':'unix'}
-
     obj = bld.create_obj('cc', 'staticlib')
-    obj.source = "strlist.c utils_%s.c" % platform_src[os.name]
+    obj.source = ["strlist.c"]
+    if g_platform == 'win32':
+        obj.source.append("utils_win32.c")
+    else:
+        obj.source.append("utils_unix.c")
     obj.includes='. ../../include'
     obj.target='xmmsutils'
     obj.install_var = 0

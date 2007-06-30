@@ -1,6 +1,7 @@
 import sys
 import os
 import Common
+from Params import g_platform
 
 def build(bld):
   obj = bld.create_obj('cc', 'program')
@@ -8,7 +9,7 @@ def build(bld):
   obj.source = ['mdns-dnssd.c']
   obj.includes = '. ../../../include'
   obj.uselib = 'glib2'
-  if sys.platform != 'darwin':
+  if g_platform != 'darwin':
     obj.uselib += ' dnssd'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
@@ -20,7 +21,7 @@ def build(bld):
 def configure(conf):
   if not conf.check_header('dns_sd.h'):
     return False
-  if sys.platform == 'darwin':
+  if g_platform == 'darwin':
     return True
   else:
     return conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)

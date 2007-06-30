@@ -5,11 +5,12 @@
 #
 
 import os
+from Params import g_platform
 
 def build(bld):
-    if os.name == 'nt':
+    if g_platform == 'win32':
         platform_sources = "transport_win.c"
-    elif os.name == 'posix':
+    else:
         platform_sources = "socket_unix.c transport_unix.c"
 
     obj = bld.create_obj('cc', 'staticlib')

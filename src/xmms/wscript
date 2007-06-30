@@ -6,6 +6,7 @@
 
 import sys,os
 import Common
+from Params import g_platform
 
 source = """config.c
             mediainfo.c
@@ -34,7 +35,7 @@ source = """config.c
             utils.c""".split()
 
 def build(bld):
-    if sys.platform == 'win32':
+    if g_platform == 'win32':
         lib = bld.create_obj('cc', 'shlib')
         lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     else:
@@ -52,7 +53,7 @@ def build(bld):
     prog.target = 'xmms2d'
     prog.includes = '. ../include ../includepriv'
     prog.source = ["main.c"]
-    if sys.platform == 'win32':
+    if g_platform == 'win32':
         prog.source.append("compat/signal_dummy.c")
         prog.source.append("compat/symlink_dummy.c")
         prog.source.append("compat/checkroot_dummy.c")
@@ -92,7 +93,7 @@ def configure(conf):
         return test.run()
 
     if check_header('sys/vfs.h'):
-        if sys.platform == 'sunos5':
+        if g_platform == 'sunos5':
             conf.env['statfs_os'] = 'solaris'
         else:
             conf.env['statfs_os'] = 'linux'
@@ -102,7 +103,7 @@ def configure(conf):
         conf.env['statfs_os'] = 'dummy'
 
     # Add Darwin stuff
-    if sys.platform == 'darwin':
+    if g_platform == 'darwin':
         conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
