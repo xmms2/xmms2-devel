@@ -20,6 +20,12 @@
 
 void Init_Client ();
 
+/*
+ * call-seq:
+ *  Xmms.userconfdir -> String
+ *
+ * Returns the xmms2 configuration directory for the current user.
+ */
 static VALUE
 m_userconfdir_get (VALUE self)
 {
@@ -31,6 +37,13 @@ m_userconfdir_get (VALUE self)
 	return p ? rb_str_new2 (p) : Qnil;
 }
 
+/*
+ * call-seq:
+ *  Xmms.decode_url(url) -> String
+ *
+ * Decodes a url-encoded string _url_ and returns it in UNKNOWN ENCODING.
+ * Use with caution.
+ */
 static VALUE
 m_decode_url (VALUE self, VALUE str)
 {
