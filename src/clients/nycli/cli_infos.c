@@ -107,6 +107,7 @@ cli_infos_t*
 cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;
+	gint i;
 
 	infos = g_new0 (cli_infos_t, 1);
 
@@ -119,7 +120,18 @@ cli_infos_init (gint argc, gchar **argv)
 
 	infos->status = CLI_ACTION_STATUS_READY;
 	infos->commands = command_trie_alloc ();
-	command_trie_fill (infos->commands, commandlist);
+
+	/* Register commands and command names */
+	for (i = 0; commandlist[i]; ++i) {
+		command_action_t *action = command_action_alloc ();
+		commandlist[i] (action);
+		if (command_trie_insert (infos->commands, action)) {
+			infos->cmdnames = g_list_prepend (infos->cmdnames, action->name);
+		} else {
+			command_action_free (action);
+		}
+	}
+	infos->cmdnames = g_list_reverse (infos->cmdnames);
 
 	infos->config = g_key_file_new ();
 

@@ -41,6 +41,7 @@ struct cli_infos_St {
 	execution_mode_t mode;
 	action_status_t status;
 	command_trie_t *commands;
+	GList *cmdnames;  /* List of command names, faster help. */
 	GKeyFile *config;
 };
 

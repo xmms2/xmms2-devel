@@ -24,41 +24,48 @@
 
 /* Setup commands */
 
-#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, needconn) \
-	gboolean \
-	setupcmd (command_trie_t *trie) \
-	{ command_trie_insert (trie, name, cmd, needconn, NULL); }
+#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, needconn, usage, desc) \
+	void \
+	setupcmd (command_action_t *action) \
+	{ command_action_fill (action, name, cmd, needconn, NULL, usage, desc); }
 
-CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE)
-CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE)
-CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE)
-CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE)
-CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE)
-CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE)
-CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE)
-CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE)
-CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE)
+CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE, NULL, "Start playback.")
+CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE, NULL, "Pause playback.")
+CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE, "<time|offset>",
+                 "Seek to a relative or absolute position.")
+CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, NULL, "Jump to previous song.")
+CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, NULL, "Jump to next song.")
+CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE, "<pattern>",
+                 "Display all the properties for all media matching the pattern.")
+CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE, NULL, "Terminate the server.")
+CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE, NULL, "Exit the shell-like interface.")
+CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE, "[command]",
+                 "List all commands, or help on one command.")
 
-gboolean
-cli_stop_setup (command_trie_t *trie)
+void
+cli_stop_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, _("Number of tracks after which to stop playback."), "num" },
+		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, _("Number of tracks after which to stop playback."), "tracks" },
 		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, _("Duration after which to stop playback."), "time" },
 		{ NULL }
 	};
-	command_trie_insert (trie, "stop", &cli_stop, TRUE, flags);
+	command_action_fill (action, "stop", &cli_stop, TRUE, flags,
+	                     "[-n <tracks> | -t <time>]",
+	                     "Stop playback.");
 }
 
-gboolean
-cli_status_setup (command_trie_t *trie)
+void
+cli_status_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
 		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, _("Delay between each refresh of the status. If 0, the status is only printed once (default)."), "time" },
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
 	};
-	command_trie_insert (trie, "status", &cli_status, TRUE, flags);
+	command_action_fill (action, "status", &cli_status, TRUE, flags,
+	                     "[-r <time>] [-f <format>]",
+	                     "Display playback status, either continuously or once.");
 }
 
 
@@ -217,21 +224,23 @@ gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx)
 }
 
 
-void
-help_all_commands (cli_infos_t *infos)
+static void
+help_short_command (gpointer elem, gpointer udata)
 {
-	gint i;
-
-	g_printf (_("usage: nyxmms2 COMMAND [ARGS]\n\n"));
-	/* FIXME: we need the list of commands, 'd be easier
-	for (i = 0; commands[i].name; ++i) {
-		g_printf ("   %s\n", commands[i].name);
-	}
-	*/
-	g_printf (_("\nType 'help COMMAND' for detailed help about a command.\n"));
+	gchar *cmdname = (gchar *)elem;
+	g_printf ("   %s\n", cmdname);
 }
 
-void
+static void
+help_all_commands (cli_infos_t *infos)
+{
+	g_printf (_("usage: nyxmms2 <command> [args]\n\n"));
+	g_printf (_("Available commands:\n"));
+	g_list_foreach (infos->cmdnames, help_short_command, NULL);
+	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
+}
+
+static void
 help_command (cli_infos_t *infos, gchar *cmd)
 {
 	command_action_t *action;
@@ -239,8 +248,11 @@ help_command (cli_infos_t *infos, gchar *cmd)
 
 	action = command_trie_find (infos->commands, cmd);
 	if (action) {
-		/* FIXME: show REAL name (get it somewhere), usage, description */
-		g_printf ("%s\n\n", cmd);
+		g_printf (_("usage: %s"), action->name);
+		if (action->usage) {
+			g_printf (" %s", action->usage);
+		}
+		g_printf ("\n\n  %s\n\n", action->description);
 		if (action->argdefs && action->argdefs[0].long_name) {
 			g_printf (_("Valid options:\n"));
 			for (i = 0; action->argdefs[i].long_name; ++i) {
@@ -268,7 +280,6 @@ gboolean cli_help (cli_infos_t *infos, command_context_t *ctx)
 	if (command_arg_count (ctx) == 0) {
 		help_all_commands (infos);
 	} else if (command_arg_count (ctx) == 1) {
-		/* FIXME: find command, if found display help, else show error */
 		gchar *cmd;
 
 		if (command_arg_string_get (ctx, 0, &cmd)) {
@@ -277,7 +288,7 @@ gboolean cli_help (cli_infos_t *infos, command_context_t *ctx)
 			g_printf (_("Error while parsing the argument!\n"));
 		}
 	} else {
-		g_printf (_("To get help for a command, type 'help COMMAND'.\n"));
+		g_printf (_("To get help for a command, type 'help <command>'.\n"));
 	}
 
 	cli_infos_loop_resume (infos);

@@ -35,17 +35,17 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 
-gboolean cli_play_setup (command_trie_t *infos);
-gboolean cli_pause_setup (command_trie_t *infos);
-gboolean cli_stop_setup (command_trie_t *infos);
-gboolean cli_seek_setup (command_trie_t *infos);
-gboolean cli_status_setup (command_trie_t *infos);
-gboolean cli_prev_setup (command_trie_t *infos);
-gboolean cli_next_setup (command_trie_t *infos);
-gboolean cli_info_setup (command_trie_t *infos);
-gboolean cli_quit_setup (command_trie_t *infos);
-gboolean cli_exit_setup (command_trie_t *infos);
-gboolean cli_help_setup (command_trie_t *infos);
+void cli_play_setup (command_action_t *action);
+void cli_pause_setup (command_action_t *action);
+void cli_stop_setup (command_action_t *action);
+void cli_seek_setup (command_action_t *action);
+void cli_status_setup (command_action_t *action);
+void cli_prev_setup (command_action_t *action);
+void cli_next_setup (command_action_t *action);
+void cli_info_setup (command_action_t *action);
+void cli_quit_setup (command_action_t *action);
+void cli_exit_setup (command_action_t *action);
+void cli_help_setup (command_action_t *action);
 
 static command_setup_func commandlist[] =
 {
