@@ -4,7 +4,6 @@
 # Copyright (C) 2006-2007 XMMS2 Team
 #
 
-import os
 from Params import g_platform
 
 def build(bld):

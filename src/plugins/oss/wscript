@@ -1,5 +1,4 @@
 from waftools.plugin import plugin
-import sys 
  
 def plugin_configure(conf):
     if not conf.check_header2('sys/soundcard.h', mandatory=0):

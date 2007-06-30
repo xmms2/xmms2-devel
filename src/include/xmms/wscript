@@ -1,4 +1,4 @@
-import sys,os
+import os
 import Params
 from Params import g_platform
 

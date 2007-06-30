@@ -1,5 +1,4 @@
 from waftools.plugin import plugin
-import sys
 from Params import g_platform
 
 def plugin_configure(conf):
