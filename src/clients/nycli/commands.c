@@ -33,8 +33,10 @@ CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE, NULL, "Start playback."
 CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE, NULL, "Pause playback.")
 CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE, "<time|offset>",
                  "Seek to a relative or absolute position.")
-CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, NULL, "Jump to previous song.")
-CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, NULL, "Jump to next song.")
+CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, "[offset]",
+                 "Jump to previous song.")
+CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, "[offset]",
+                 "Jump to next song.")
 CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE, "<pattern>",
                  "Display all the properties for all media matching the pattern.")
 CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE, NULL, "Terminate the server.")
