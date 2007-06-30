@@ -164,7 +164,7 @@ class Node:
 			else:
 				current = prev.m_files_lookup.get(name, None)
 				# try hard to find something
-				if not current and lst: current = prev.m_dirs_lookup.get(name, None)
+				if not current: current = prev.m_dirs_lookup.get(name, None)
 				if not current: current = prev.m_build_lookup.get(name, None)
 			if not current: return None
 		return current

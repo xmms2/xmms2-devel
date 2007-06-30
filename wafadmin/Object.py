@@ -21,6 +21,7 @@ hooks
   - cf bison.py and flex.py for more details on this scheme
 """
 
+import copy
 import os, types, time
 import Params, Task, Common, Node, Utils
 from Params import debug, error, fatal
@@ -163,7 +164,7 @@ class genobj:
 		Common.install_files(var, subdir, lst, chmod=chmod)
 
 	def clone(self, env):
-		newobj = Utils.copyobj(self)
+		newobj = copy.deepcopy(self)
 
 		if type(env) is types.StringType:
 			newobj.env = Params.g_build.m_allenvs[env]

@@ -65,7 +65,7 @@ class alex:
 
 	A class with the necessary functions is created (so the string is parsed only once)
 	All variables (CXX, ..) can be strings or lists of strings (only)
-	The keywords TGT and SRC cannot be overridden (they represent the task input and output nodes)
+	The keywords TGT and SRC are reserved (they represent the task input and output nodes)
 
 	Example:
 	    - str = '${CXX} -o ${TGT[0]} ${SRC[0]} -I ${SRC[0].m_parent.bldpath()}'

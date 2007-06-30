@@ -17,6 +17,7 @@ class pyobj(Object.genobj):
 
 		self.inst_var = 'PYTHONDIR'
 		self.inst_dir = ''
+		self.prio = 50
 
 		self.env = env
 		if not self.env: self.env = Params.g_build.m_allenvs['default']
@@ -39,11 +40,11 @@ class pyobj(Object.genobj):
 				fatal("unknown file "+filename)
 
 			if self.pyc:
-				task = self.create_task('pyc', self.env, 50)
+				task = self.create_task('pyc', self.env, self.prio)
 				task.set_inputs(node)
 				task.set_outputs(node.change_ext('.pyc'))
 			if self.pyo:
-				task = self.create_task('pyo', self.env, 50)
+				task = self.create_task('pyo', self.env, self.prio)
 				task.set_inputs(node)
 				task.set_outputs(node.change_ext('.pyo'))
 

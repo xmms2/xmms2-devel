@@ -66,6 +66,9 @@ g_verbose = 0
 g_build = None
 "only one build object is active at a time"
 
+g_platform = sys.platform
+"current platform"
+
 g_cachedir = ''
 "config cache directory"
 
@@ -190,6 +193,9 @@ def fatal(msg, ret=1):
 		pprint('RED', '%s \n (error raised in module %s)' % (msg, module))
 	else:
 		pprint('RED', '%s' % msg)
+	if g_verbose > 1:
+		import traceback
+		traceback.print_stack()
 	sys.exit(ret)
 
 def vsig(s):

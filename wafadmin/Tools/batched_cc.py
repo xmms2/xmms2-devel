@@ -116,7 +116,7 @@ def detect(conf):
 
 def setup(env):
 	cc_str = '${CC} ${CCFLAGS} ${CPPFLAGS} ${_CCINCFLAGS} ${_CCDEFFLAGS} -c ${SRC}'
-        Action.simple_action('all_cc', cc_str, 'GREEN')
+	Action.simple_action('all_cc', cc_str, 'GREEN')
 
 	cpp_str = '${CXX} ${CXXFLAGS} ${CPPFLAGS} ${_CXXINCFLAGS} ${_CXXDEFFLAGS} -c ${SRC}'
 	Action.simple_action('all_cpp', cpp_str, color='GREEN')

@@ -105,8 +105,9 @@ def detect(conf):
 	test.code = 'int main() {return 0;}\n'
 	test.env = v
 	test.execute = 1
-	ret = conf.run_check(test, "program", "cc")
-	conf.check_message('compiler could create', 'pragramms', not (ret is False))
+	test.force_compiler="cc"
+	ret = conf.run_check(test, "program")
+	conf.check_message('compiler could create', 'programms', not (ret is False))
 	if not ret:
 		return 0
 	ret = 0
@@ -114,7 +115,9 @@ def detect(conf):
 	lib_obj = Configure.check_data()
 	lib_obj.code = "int k = 3;\n"
 	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "shlib", "cc")
+	lib_obj.build_type = "shlib" 
+	lib_obj.force_compiler="cc"
+	ret = conf.run_check(lib_obj)
 	conf.check_message('compiler could create', 'shared libs', not (ret is False))
 	if not ret:
 		return 0
@@ -123,7 +126,9 @@ def detect(conf):
 	lib_obj = Configure.check_data()
 	lib_obj.code = "int k = 3;\n"
 	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "staticlib", "cc")
+	lib_obj.build_type = "staticlib"
+	lib_obj.force_compiler="cc"
+	ret = conf.run_check(lib_obj)
 	conf.check_message('compiler could create', 'static libs', not (ret is False))
 	if not ret:
 		return 0

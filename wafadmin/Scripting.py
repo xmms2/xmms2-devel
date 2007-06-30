@@ -16,7 +16,7 @@ def add_subdir(dir, bld):
 	node = bld.m_curdirnode.ensure_node_from_lst(Utils.split_path(dir))
 	if node is None:
 		fatal("subdir not found (%s), restore is %s" % (dir, bld.m_curdirnode))
-	bld.m_subdirs.append([node, bld.m_curdirnode])
+	bld.m_subdirs = [[node, bld.m_curdirnode]] + bld.m_subdirs
 
 def call_back(idxName, pathName, event):
 	#print "idxName=%s, Path=%s, Event=%s "%(idxName, pathName, event)
@@ -301,6 +301,15 @@ def Dist(appname, version):
 			if to_remove:
 				os.remove(os.path.join(root, f))
 				to_remove = False
+
+	try:
+		dist_hook = Utils.g_module.dist_hook
+	except AttributeError:
+		pass
+	else:
+		blddir = os.path.join("..", Utils.g_module.blddir)
+		srcdir = os.path.join("..", Utils.g_module.srcdir)
+		dist_hook(srcdir, blddir)
 
 	# go back to the root directory
 	os.chdir('..')

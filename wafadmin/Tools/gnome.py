@@ -340,7 +340,7 @@ def detect(conf):
 	#Define to 1 if you have the <string.h> header file.
 	conf.check_header('string.h', 'HAVE_STRING_H')
 
-        #Define to 1 if you have the <sys/stat.h> header file.
+	#Define to 1 if you have the <sys/stat.h> header file.
 	conf.check_header('sys/stat.h', 'HAVE_SYS_STAT_H')
 
 	#Define to 1 if you have the <sys/types.h> header file.

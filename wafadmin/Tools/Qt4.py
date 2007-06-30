@@ -158,7 +158,7 @@ class qt4obj(cpp.cppobj):
 		if type == 'cpp': self.p_compiletasks.append(task)
 		return task
 
-        def apply(self):
+	def apply(self):
 		cpp.cppobj.apply(self)
 
 		if self.lang:
@@ -309,11 +309,11 @@ def detect_qt4(conf):
 	env['QTINCLUDEPATH']=qtincludes
 
 	lst = [qtincludes, '/usr/share/qt4/include/', '/opt/qt4/include']
-        test = conf.create_header_enumerator()
-        test.name = 'QtGui/QFont'
+	test = conf.create_header_enumerator()
+	test.name = 'QtGui/QFont'
 	test.path = lst
 	test.mandatory = 1
-        ret = test.run()
+	ret = test.run()
 
 
 	# check for the qtbinaries

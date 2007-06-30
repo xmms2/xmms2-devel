@@ -56,10 +56,8 @@ class compile_configurator(Configure.configurator_base):
 		obj.env  = self.env
 		obj.uselib = self.uselib
 		obj.flags = self.flags
-		if self.force_compiler:
-			ret = self.conf.run_check(obj, force_compiler = self.force_compiler)
-		else:
-			ret = self.conf.run_check(obj)
+		if self.force_compiler: obj.force_compiler = self.force_compiler
+		ret = self.conf.run_check(obj)
 
 		if self.want_message:
 			self.conf.check_message('compile code', '', not (ret is False), option=self.msg)

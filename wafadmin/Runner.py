@@ -42,13 +42,11 @@ exetor = pproc
 def write_progress(s):
 	if Params.g_options.progress_bar == 1:
 		sys.stderr.write(s + '\r')
-	elif Params.g_options.progress_bar == 2:
+	else: #if Params.g_options.progress_bar == 2:
 		# do not display anything if there is nothing to display
 		if s:
 			print s
 			sys.stdout.flush()
-	else:
-		if s: print s
 
 def progress_line(s, t, col1, task, col2):
 	"do not print anything if there is nothing to display"
@@ -87,7 +85,9 @@ def process_cmd_output(cmd_stdout, cmd_stderr):
 		if not stdout_eof:
 			str = cmd_stdout.read()
 			if not str: stdout_eof = 1
-			elif not g_quiet: sys.stdout.write(str)
+			elif not g_quiet:
+				sys.stdout.write(str)
+				sys.stdout.flush()
 		if not stderr_eof:
 			str = cmd_stderr.read()
 			if not str: stderr_eof = 1

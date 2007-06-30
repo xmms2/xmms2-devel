@@ -32,8 +32,10 @@ def detect(conf):
 	for c_compiler in test_for_compiler.split():
 		if conf.check_tool(c_compiler):
 			conf.check_message("%s" %c_compiler, '', True)
+			conf.env["COMPILER_CC"] = "%s" %c_compiler #store the choosed c compiler
 			return (1)
 		conf.check_message("%s" %c_compiler, '', False)
+	conf.env["COMPILER_CC"] = None
 	return (0)
 
 def set_options(opt):
@@ -43,7 +45,7 @@ def set_options(opt):
 	cc_compiler_opts = opt.add_option_group("C Compiler Options")
 	try:
 		cc_compiler_opts.add_option('--check-c-compiler', default="%s" % test_for_compiler,
-			help='On this Plattform (%s) following C-Compiler will be checked default: "%s"' % 
+			help='On this platform (%s) following C-Compiler will be checked default: "%s"' % 
 								(detected_plattform, test_for_compiler),
 			dest="check_c_compiler")
 	except optparse.OptionConflictError:

@@ -77,7 +77,7 @@ def find_program_impl(lenv, filename, path_list=None, var=None):
 			lenv[var] = os.environ[var]
 			return os.environ[var]
 
-	if lenv['WINDOWS']: filename += '.exe'
+	if Params.g_platform=='win32': filename += '.exe'
 	if not path_list: path_list = os.environ['PATH'].split(os.pathsep)
 	for directory in path_list:
 		if os.path.exists( os.path.join(directory, filename) ):
@@ -868,6 +868,9 @@ class check_data:
 		self.execute       = 0  # execute the program produced and return its output
 		self.options       = '' # command-line options
 
+		self.force_compiler= None
+		self.build_type    = 'program'
+
 class Configure:
 	def __init__(self, env=None, blddir='', srcdir=''):
 
@@ -1049,7 +1052,7 @@ class Configure:
 
 	def get_define(self, define):
 		"get the value of a previously stored define"
-		try: return self.env['define']
+		try: return self.env['defines'][define]
 		except: return 0
 
 	def write_config_header(self, configfile='config.h', env=''):
@@ -1066,7 +1069,7 @@ class Configure:
 			os.makedirs(dir)
 		except OSError:
 			pass
-		
+
 		dir = Utils.join_path(dir, lst[-1])
 
 		# remember config files - do not remove them on "waf clean"
@@ -1212,12 +1215,10 @@ class Configure:
 		return os.popen('%s --variable=%s %s' % (pkgcom, variable, pkgname)).read().strip()
 
 
-	def run_check(self, obj, build_type = 'program', force_compiler = None):
+	def run_check(self, obj):
 		"""compile, link and run if necessary
 @param obj: data of type check_data
-@param build_type: could be program (default), shlib or staticlib
-@param force_compiler: could be None (default), cc or cpp
-@return: (False if a error during build happens) or ( (True if build ok) or 
+@return: (False if a error during build happens) or ( (True if build ok) or
 (a {'result': ''} if execute was set))
 """
 		# first make sure the code to execute is defined
@@ -1269,12 +1270,12 @@ class Configure:
 		# not sure yet when to call this:
 		#bld.rescan(bld.m_srcnode)
 
-		if (not force_compiler and env['CXX']) or force_compiler == "cpp":
+		if (not obj.force_compiler and env['CXX']) or obj.force_compiler == "cpp":
 			import cpp
-			o=cpp.cppobj(build_type)
+			o=cpp.cppobj(obj.build_type)
 		else:
 			import cc
-			o=cc.ccobj(build_type)
+			o=cc.ccobj(obj.build_type)
 		o.source   = 'test.c'
 		o.target   = 'testprog'
 		o.uselib   = obj.uselib
@@ -1306,12 +1307,12 @@ class Configure:
 			except:
 				raise
 				pass
-		
+
 		return not ret
 
 	def _cache_platform(self):
 		m = md5.new()
-		m.update(sys.platform)
+		m.update(Params.g_platform)
 		return m.hexdigest()
 
 

@@ -221,6 +221,7 @@ class Build:
 
 	def add_subdirs(self, dirs):
 		lst = Utils.to_list(dirs)
+		lst.reverse()
 		for d in lst:
 			if not d: continue
 			Scripting.add_subdir(d, self)
@@ -415,8 +416,12 @@ class Build:
 	# ======================================= #
 	def scan_src_path(self, i_parent_node, i_path, i_existing_nodes):
 
-		# read the dir contents, ignore the folders in it
-		l_names_read = os.listdir(i_path)
+		try:
+			# read the dir contents, ignore the folders in it
+			l_names_read = os.listdir(i_path)
+		except OSError:
+			warning("OSError exception in scan_src_path()  i_path=%s" % str(i_path) )
+			return None
 
 		debug("folder contents "+str(l_names_read), 'build')
 
@@ -572,6 +577,9 @@ class Build:
 		except KeyError:
 			error('no such environment'+name)
 			return None
+
+	def env(self, name='default'):
+		return self.env_of_name(name)
 
 	def add_group(self, name=''):
 		Object.flush()

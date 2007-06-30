@@ -5,11 +5,14 @@
 
 "ar and ranlib"
 
-import Action
+import Action, sys
 
 ar_str = '${AR} ${ARFLAGS} ${TGT} ${SRC} && ${RANLIB} ${RANLIBFLAGS} ${TGT}'
 
 def setup(env):
+	global ar_str
+	if sys.platform == "win32":
+		ar_str = '${AR} s${ARFLAGS} ${TGT} ${SRC}'
 	Action.simple_action('cpp_link_static', ar_str, color='YELLOW')
 	Action.simple_action('cc_link_static', ar_str, color='YELLOW')
 

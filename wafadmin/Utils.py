@@ -105,12 +105,6 @@ def to_hashtable(s):
 		tbl[mems[0]] = mems[1]
 	return tbl
 
-def copyobj(obj):
-	cp = obj.__class__()
-	for at in obj.__dict__.keys():
-		setattr(cp, at, getattr(obj, at))
-	return cp
-
 def get_term_cols():
 	return 55
 
@@ -148,7 +142,7 @@ def join_path_list(path_lst):
 	return join_path(*path_lst)
 
 def is_absolute_path(path):
-	""" more thorough absoluate path check """
+	""" more thorough absoluate path check <- how am i supposed to understand what this does exactly ????? what does the re do ?  and why is this needed ? (ita)"""
 	isabs = os.path.isabs(path)
 	if not isabs and sys.platform == 'win32':
 		isabs = (len(path) > 1 and path.find(':') > 0)

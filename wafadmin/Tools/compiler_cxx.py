@@ -32,8 +32,10 @@ def detect(conf):
 	for cxx_compiler in test_for_compiler.split():
 		if conf.check_tool(cxx_compiler):
 			conf.check_message("%s" %cxx_compiler, '', True)
+			conf.env["COMPILER_CXX"] = "%s" %cxx_compiler #store the choosed c++ compiler
 			return (1)
 		conf.check_message("%s" %cxx_compiler, '', False)
+	conf.env["COMPILER_CXX"] = None
 	return (0)
 
 def set_options(opt):
@@ -43,7 +45,7 @@ def set_options(opt):
 	cxx_compiler_opts = opt.add_option_group("C++ Compiler Options")
 	try:
 		cxx_compiler_opts.add_option('--check-cxx-compiler', default="%s" % test_for_compiler,
-			help='On this Plattform (%s) following C++ Compiler will be checked default: "%s"' % 
+			help='On this platform (%s) following C++ Compiler will be checked default: "%s"' % 
 								(detected_plattform, test_for_compiler),
 			dest="check_cxx_compiler")
 	except optparse.OptionConflictError:

@@ -102,7 +102,7 @@ class c_scanner(Scan.scanner):
 		return (nodes, names)
 
 	def _scan_preprocessor(self, node, env, path_lst, defines={}):
-		debug("_scan_preprocessor(self, node, env, path_lst)", 'croot')
+		debug("_scan_preprocessor(self, node, env, path_lst)", 'ccroot')
 		import preproc
 		gruik = preproc.cparse(nodepaths = path_lst, defines=defines)
 		gruik.start2(node, env)

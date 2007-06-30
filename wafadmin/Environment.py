@@ -19,8 +19,6 @@ class Environment:
 		g_idx += 1
 		self.m_table={}
 		self.m_var_cache={}
-		# may be there is a better place for this
-		if sys.platform == "win32": self.m_table['WINDOWS']=1
 
 		# set the prefix once and for everybody on creation (configuration)
 		self.m_table['PREFIX'] = Params.g_options.prefix

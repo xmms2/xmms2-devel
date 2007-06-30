@@ -210,7 +210,7 @@ def detect(conf):
 	test.code = 'int main() {return 0;}\n'
 	test.env = v
 	test.execute = 1
-	ret = conf.run_check(test, "program", "cpp")
+	ret = conf.run_check(test)
 	conf.check_message('compiler could create', 'pragramms', not (ret is False))
 	if not ret:
 		return 0
@@ -218,7 +218,8 @@ def detect(conf):
 	lib_obj = Configure.check_data()
 	lib_obj.code = "int k = 3;\n"
 	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "shlib", "cpp")
+	lib_obj.build_type = "shlib"
+	ret = conf.run_check(lib_obj)
 	conf.check_message('compiler could create', 'shared libs', not (ret is False))
 	if not ret:
 		return 0
@@ -226,7 +227,8 @@ def detect(conf):
 	lib_obj = Configure.check_data()
 	lib_obj.code = "int k = 3;\n"
 	lib_obj.env = v
-	ret = conf.run_check(lib_obj, "staticlib", "cpp")
+	lib_obj.build_type = "staticlib"
+	ret = conf.run_check(lib_obj)
 	conf.check_message('compiler could create', 'static libs', not (ret is False))
 	if not ret:
 		return 0
@@ -241,10 +243,10 @@ def detect(conf):
 		v['CXXFLAGS_DEBUG'] = ['-g', '-DDEBUG']
 	if conf.check_flags('-g3 -O0 -DDEBUG'):
 		v['CXXFLAGS_ULTRADEBUG'] = ['-g3', '-O0', '-DDEBUG']
-	
+
 	# see the option below
 	try:
-		v['CXXFLAGS'] = v['CXXFLAGS_'+Params.g_options.debug_level.upper()]
+		v.append_value('CXXFLAGS', v['CXXFLAGS_'+Params.g_options.debug_level.upper()])
 	except AttributeError:
 		pass
 
