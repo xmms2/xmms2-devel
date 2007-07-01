@@ -174,6 +174,7 @@ gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_set_next_rel (infos->conn, - offset);
 	xmmsc_result_notifier_set (res, cb_tickle, infos);
+	xmmsc_result_unref (res);
 
 	return TRUE;
 }
@@ -190,6 +191,7 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_set_next_rel (infos->conn, offset);
 	xmmsc_result_notifier_set (res, cb_tickle, infos);
+	xmmsc_result_unref (res);
 
 	return TRUE;
 }
@@ -224,6 +226,7 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
+		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
 
@@ -250,6 +253,7 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 	} else {
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_info, infos);
+		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
 
@@ -265,7 +269,9 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
 	/* FIXME: Actually we need a connection. We just don't want to
 	 * start it for nothing. */
-	xmmsc_quit (infos->conn);
+	xmmsc_result_t *res;
+	res = xmmsc_quit (infos->conn);
+	xmmsc_result_unref (res);
 
 	cli_infos_loop_resume (infos);
 
