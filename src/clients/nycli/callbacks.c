@@ -62,6 +62,10 @@ cb_done (xmmsc_result_t *res, void *udata)
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_infos_loop_resume (infos);
 
+	if (xmmsc_result_iserror (res)) {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
 	xmmsc_result_unref (res);
 }
 
@@ -81,12 +85,12 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 
 	if (!xmmsc_result_iserror (res)) {
 		res2 = xmmsc_playback_tickle (infos->conn);
+		xmmsc_result_notifier_set (res2, cb_done, infos);
 		xmmsc_result_unref (res2);
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -258,6 +262,7 @@ cb_list_jump (xmmsc_result_t *res, void *udata)
 
 	/* No matching media found, don't jump */
 	if (!jumpres) {
+		g_printf (_("No media matching the pattern in the playlist!\n"));
 		cli_infos_loop_resume (infos);
 	}
 

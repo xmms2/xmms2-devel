@@ -105,6 +105,8 @@ gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->conn);
 	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
 	return TRUE;
 }
 
@@ -113,6 +115,8 @@ gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->conn);
 	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
 	return TRUE;
 }
 
@@ -131,6 +135,7 @@ gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playback_stop (infos->conn);
 	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
 
 	return TRUE;
 }
@@ -148,6 +153,7 @@ gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		}
 
 		xmmsc_result_notifier_set (res, cb_done, infos);
+		xmmsc_result_unref (res);
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
 		cli_infos_loop_resume (infos);
@@ -320,9 +326,8 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 	 * start it for nothing. */
 	xmmsc_result_t *res;
 	res = xmmsc_quit (infos->conn);
+	xmmsc_result_notifier_set (res, cb_done, infos);
 	xmmsc_result_unref (res);
-
-	cli_infos_loop_resume (infos);
 
 	return TRUE;
 }
