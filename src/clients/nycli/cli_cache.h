@@ -14,21 +14,25 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __CALLBACKS_H__
-#define __CALLBACKS_H__
+#ifndef __CLI_CACHE_H__
+#define __CLI_CACHE_H__
 
 #include <xmmsclient/xmmsclient.h>
 
 #include <glib.h>
+#include <stdlib.h>
 
 #include "main.h"
 
 
-void cb_done (xmmsc_result_t *res, void *udata);
-void cb_tickle (xmmsc_result_t *res, void *udata);
-void cb_entry_print_status (xmmsc_result_t *res, void *udata);
-void cb_list_print_info (xmmsc_result_t *res, void *udata);
-void cb_list_print_row (xmmsc_result_t *res, void *udata);
-void cb_list_jump (xmmsc_result_t *res, void *udata);
+struct cli_cache_St {
+	guint currpos;
+	guint active_playlist_size;
+	GArray *active_playlist;
+};
 
-#endif /* __CALLBACKS_H__ */
+cli_cache_t *cli_cache_init ();
+void cli_cache_start (cli_infos_t *infos);
+void cli_cache_free (cli_cache_t *cache);
+
+#endif /* __CLI_INFOS_H__ */

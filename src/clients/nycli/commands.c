@@ -17,6 +17,7 @@
 #include "commands.h"
 
 #include "cli_infos.h"
+#include "cli_cache.h"
 #include "command_trie.h"
 #include "command_utils.h"
 #include "callbacks.h"
@@ -157,10 +158,12 @@ gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
-	command_argument_t *arg;
+	xmmsc_result_t *res;
+	guint currid;
 	gchar *f;
 	gint r;
 
+	/* FIXME: Support advanced flags */
 	if (command_flag_int_get (ctx, "refresh", &r)) {
 		g_printf ("refresh=%d\n", r);
 	}
@@ -169,7 +172,12 @@ gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 		g_printf ("format='%s'\n", f);
 	}
 
-	cli_infos_loop_resume (infos);
+	currid = g_array_index (infos->cache->active_playlist, guint,
+	                        infos->cache->currpos);
+	res = xmmsc_medialib_get_info (infos->conn, currid);
+	xmmsc_result_notifier_set (res, cb_entry_print_status, infos);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
 
 	return TRUE;
 }
@@ -215,7 +223,7 @@ gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_coll_t *query;
 	gboolean backward;
 
-	if (!command_flag_boolean_get (ctx, 0, &backward)) {
+	if (!command_flag_boolean_get (ctx, "backward", &backward)) {
 		backward = FALSE;
 	}
 

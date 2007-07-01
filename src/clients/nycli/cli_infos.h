@@ -43,6 +43,7 @@ struct cli_infos_St {
 	command_trie_t *commands;
 	GList *cmdnames;  /* List of command names, faster help. */
 	GKeyFile *config;
+	cli_cache_t *cache;
 };
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);

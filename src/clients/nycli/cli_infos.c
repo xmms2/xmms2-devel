@@ -17,6 +17,7 @@
 #include "readline.h"
 
 #include "cli_infos.h"
+#include "cli_cache.h"
 #include "commands.h"
 #include "command_trie.h"
 
@@ -100,6 +101,8 @@ cli_infos_connect (cli_infos_t *infos)
 	/* FIXME: Looks buggy, causes double-free crap. investigate please. */
 	/* xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos); */
 
+	cli_cache_start (infos);
+
 	return TRUE;
 }
 
@@ -134,6 +137,7 @@ cli_infos_init (gint argc, gchar **argv)
 	infos->cmdnames = g_list_reverse (infos->cmdnames);
 
 	infos->config = g_key_file_new ();
+	infos->cache = cli_cache_init ();
 
 	return infos;
 }
@@ -150,6 +154,7 @@ cli_infos_free (cli_infos_t *infos)
 
 	command_trie_free (infos->commands);
 	g_key_file_free (infos->config);
+	cli_cache_free (infos->cache);
 
 	g_free (infos);
 }

@@ -3,6 +3,7 @@ def build(bld):
     obj.target = 'nyxmms2'
     obj.source = """main.c
                     cli_infos.c
+                    cli_cache.c
                     command_trie.c
                     commands.c
                     command_utils.c

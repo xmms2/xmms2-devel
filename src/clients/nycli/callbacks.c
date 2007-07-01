@@ -17,6 +17,7 @@
 #include "callbacks.h"
 
 #include "cli_infos.h"
+#include "cli_cache.h"
 #include "column_display.h"
 
 
@@ -86,6 +87,28 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 	}
 
 	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
+}
+
+void
+cb_entry_print_status (xmmsc_result_t *res, void *udata)
+{
+	cli_infos_t *infos = (cli_infos_t *) udata;
+	gchar *artist;
+	gchar *title;
+
+	/* FIXME: ad-hoc display, use richer parser */
+	if (!xmmsc_result_iserror (res)) {
+		if (xmmsc_result_get_dict_entry_string (res, "artist", &artist)
+		    && xmmsc_result_get_dict_entry_string (res, "title", &title)) {
+			g_printf ("Playing: %s - %s\n", artist, title);
+		} else {
+			g_printf ("Error getting metadata!\n", artist, title);
+		}
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
 	xmmsc_result_unref (res);
 }
 
@@ -195,5 +218,48 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 void
 cb_list_jump (xmmsc_result_t *res, void *udata)
 {
-	/* FIXME: Jump to first matching result in playlist */
+	guint i, j;
+	guint id;
+	cli_infos_t *infos = (cli_infos_t *) udata;
+	xmmsc_result_t *jumpres = NULL;
+
+	/* FIXME: support backward jump */
+
+	gint currpos;
+	gint plsize;
+	GArray *playlist;
+
+	currpos = infos->cache->currpos;
+	plsize = infos->cache->active_playlist_size;
+	playlist = infos->cache->active_playlist;
+
+	if (!xmmsc_result_iserror (res) && xmmsc_result_list_valid (res)) {
+		/* Loop on the playlist */
+		for (i = (currpos + 1) % plsize; i != currpos; i = (i + 1) % plsize) {
+
+			/* Loop on the matched media */
+			for (xmmsc_result_list_first (res);
+				 xmmsc_result_list_valid (res);
+				 xmmsc_result_list_next (res)) {
+
+				/* If both match, jump! */
+				if (xmmsc_result_get_uint (res, &id)
+				    && g_array_index(playlist, guint, i) == id) {
+					jumpres = xmmsc_playlist_set_next (infos->conn, i);
+					xmmsc_result_notifier_set (jumpres, cb_tickle, infos);
+					xmmsc_result_unref (jumpres);
+					goto finish;
+				}
+			}
+		}
+	}
+
+	finish:
+
+	/* No matching media found, don't jump */
+	if (!jumpres) {
+		cli_infos_loop_resume (infos);
+	}
+
+	xmmsc_result_unref (res);
 }

@@ -55,7 +55,7 @@ command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
 	gboolean retval = FALSE;
 
 	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
-	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING) {
+	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING && arg->value.vstring) {
 		*v = arg->value.vstring;
 		retval = TRUE;
 	}
