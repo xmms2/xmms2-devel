@@ -40,6 +40,7 @@ struct command_arg_time_St {
 	command_arg_time_type_t type;
 };
 
+gboolean command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v);
 gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
 gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v);
 gboolean command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v);

@@ -17,15 +17,30 @@
 #include "command_utils.h"
 
 
-/* FIXME: Can we differentiate between unset, set and default value? :-/ */
+gboolean
+command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v)
+{
+	command_argument_t *arg;
+	gboolean retval = FALSE;
+
+	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_BOOLEAN) {
+		*v = arg->value.vbool;
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
 gboolean
 command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
 
+	/* A negative value means the value was not set. */
 	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
-	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_INT) {
+	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_INT && arg->value.vint >= 0) {
 		*v = arg->value.vint;
 		retval = TRUE;
 	}
@@ -57,6 +72,7 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 	gboolean retval = FALSE;
 
 	if (command_flag_string_get (ctx, name, &full) && full) {
+		/* FIXME: How to suppress the warning here? */
 		*v = g_strsplit (full, ",", MAX_STRINGLIST_TOKENS);
 		retval = TRUE;
 	}

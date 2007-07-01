@@ -59,6 +59,18 @@ cli_stop_setup (command_action_t *action)
 }
 
 void
+cli_jump_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first track matching the pattern backwards"), NULL },
+		{ NULL }
+	};
+	command_action_fill (action, "jump", &cli_jump, TRUE, flags,
+	                     "[-b] <pattern>",
+	                     "Jump to the first media maching the pattern.");
+}
+
+void
 cli_search_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
@@ -192,6 +204,35 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_playlist_set_next_rel (infos->conn, offset);
 	xmmsc_result_notifier_set (res, cb_tickle, infos);
 	xmmsc_result_unref (res);
+
+	return TRUE;
+}
+
+gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *pattern = NULL;
+	xmmsc_coll_t *query;
+	gboolean backward;
+
+	if (!command_flag_boolean_get (ctx, 0, &backward)) {
+		backward = FALSE;
+	}
+
+	command_arg_longstring_get (ctx, 0, &pattern);
+	if (!pattern) {
+		g_printf (_("Error: you must provide a pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else {
+		/* FIXME: benchmark if efficient to reduce query to Active playlist */
+		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+		xmmsc_result_notifier_set (res, cb_list_jump, infos);
+		xmmsc_result_unref (res);
+		xmmsc_coll_unref (query);
+	}
 
 	return TRUE;
 }

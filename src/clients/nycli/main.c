@@ -74,11 +74,16 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		for (i = 0; action->argdefs && action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
 
-			/* FIXME: customizable default values? */
 			switch (action->argdefs[i].arg) {
+			case G_OPTION_ARG_NONE:
+				arg->type = COMMAND_ARGUMENT_TYPE_BOOLEAN;
+				arg->value.vbool = FALSE;
+				action->argdefs[i].arg_data = &arg->value.vbool;
+				break;
+
 			case G_OPTION_ARG_INT:
 				arg->type = COMMAND_ARGUMENT_TYPE_INT;
-				arg->value.vint = 0;
+				arg->value.vint = -1;
 				action->argdefs[i].arg_data = &arg->value.vint;
 				break;
 

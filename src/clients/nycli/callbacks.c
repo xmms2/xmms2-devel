@@ -191,3 +191,9 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 
 	xmmsc_result_unref (res);
 }
+
+void
+cb_list_jump (xmmsc_result_t *res, void *udata)
+{
+	/* FIXME: Jump to first matching result in playlist */
+}
