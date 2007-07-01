@@ -30,20 +30,20 @@
 	setupcmd (command_action_t *action) \
 	{ command_action_fill (action, name, cmd, needconn, NULL, usage, desc); }
 
-CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE, NULL, "Start playback.")
-CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE, NULL, "Pause playback.")
-CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE, "<time|offset>",
-                 "Seek to a relative or absolute position.")
-CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, "[offset]",
-                 "Jump to previous song.")
-CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, "[offset]",
-                 "Jump to next song.")
-CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE, "<pattern>",
-                 "Display all the properties for all media matching the pattern.")
-CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE, NULL, "Terminate the server.")
-CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE, NULL, "Exit the shell-like interface.")
-CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE, "[command]",
-                 "List all commands, or help on one command.")
+CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE, NULL, _("Start playback."))
+CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE, NULL, _("Pause playback."))
+CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE, _("<time|offset>"),
+                 _("Seek to a relative or absolute position."))
+CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, _("[offset]"),
+                 _("Jump to previous song."))
+CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, _("[offset]"),
+                 _("Jump to next song."))
+CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE, _("<pattern>"),
+                 _("Display all the properties for all media matching the pattern."))
+CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE, NULL, _("Terminate the server."))
+CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE, NULL, _("Exit the shell-like interface."))
+CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE, _("[command]"),
+                 _("List all commands, or help on one command."))
 
 void
 cli_stop_setup (command_action_t *action)
@@ -54,7 +54,7 @@ cli_stop_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "stop", &cli_stop, TRUE, flags,
-	                     "[-n <tracks> | -t <time>]",
+	                     _("[-n <tracks> | -t <time>]"),
 	                     "Stop playback.");
 }
 
@@ -66,8 +66,8 @@ cli_jump_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "jump", &cli_jump, TRUE, flags,
-	                     "[-b] <pattern>",
-	                     "Jump to the first media maching the pattern.");
+	                     _("[-b] <pattern>"),
+	                     _("Jump to the first media maching the pattern."));
 }
 
 void
@@ -79,8 +79,8 @@ cli_search_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "search", &cli_search, TRUE, flags,
-	                     "[-o <prop1[,prop2...]> | -l <prop1[,prop2...]>] <pattern>",
-	                     "Search and print all media matching the pattern.");
+	                     _("[-o <prop1[,prop2...]> | -l <prop1[,prop2...]>] <pattern>"),
+	                     _("Search and print all media matching the pattern."));
 }
 
 void
@@ -92,8 +92,8 @@ cli_status_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "status", &cli_status, TRUE, flags,
-	                     "[-r <time>] [-f <format>]",
-	                     "Display playback status, either continuously or once.");
+	                     _("[-r <time>] [-f <format>]"),
+	                     _("Display playback status, either continuously or once."));
 }
 
 
