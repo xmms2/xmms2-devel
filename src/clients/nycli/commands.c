@@ -20,6 +20,7 @@
 #include "command_trie.h"
 #include "command_utils.h"
 #include "callbacks.h"
+#include "column_display.h"
 
 
 /* Setup commands */
@@ -55,6 +56,19 @@ cli_stop_setup (command_action_t *action)
 	command_action_fill (action, "stop", &cli_stop, TRUE, flags,
 	                     "[-n <tracks> | -t <time>]",
 	                     "Stop playback.");
+}
+
+void
+cli_search_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop1[,prop2...]" },
+		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop1[,prop2...]" },
+		{ NULL }
+	};
+	command_action_fill (action, "search", &cli_search, TRUE, flags,
+	                     "[-o <prop1[,prop2...]> | -l <prop1[,prop2...]>] <pattern>",
+	                     "Search and print all media matching the pattern.");
 }
 
 void
@@ -176,6 +190,46 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_set_next_rel (infos->conn, offset);
 	xmmsc_result_notifier_set (res, cb_tickle, infos);
+
+	return TRUE;
+}
+
+gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
+{
+	gchar *pattern = NULL;
+	xmmsc_coll_t *query;
+	xmmsc_result_t *res;
+	const gchar **order = NULL;
+	const gchar **columns = NULL;
+
+	command_arg_longstring_get (ctx, 0, &pattern);
+	if (!pattern) {
+		g_printf (_("Error: you must provide a pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else {
+		column_display_t *coldisp;
+		coldisp = column_display_init (infos);
+		command_flag_stringlist_get (ctx, "order", &order);
+		command_flag_stringlist_get (ctx, "columns", &columns);
+		if (columns) {
+			column_display_fill (coldisp, columns);
+		} else {
+			column_display_fill_default (coldisp);
+		}
+
+		/* FIXME: woops, cannot prefix order by '-' as this is a flag! */
+
+		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
+		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
+		xmmsc_coll_unref (query);
+	}
+
+	if (pattern) {
+		g_free (pattern);
+	}
 
 	return TRUE;
 }

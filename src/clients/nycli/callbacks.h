@@ -23,10 +23,11 @@
 
 #include "main.h"
 
+
 void cb_done (xmmsc_result_t *res, void *udata);
 void cb_tickle (xmmsc_result_t *res, void *udata);
 void cb_id_print_info (xmmsc_result_t *res, void *udata);
 void cb_list_print_info (xmmsc_result_t *res, void *udata);
-
+void cb_list_print_row (xmmsc_result_t *res, void *udata);
 
 #endif /* __CALLBACKS_H__ */

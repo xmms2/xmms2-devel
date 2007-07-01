@@ -17,6 +17,7 @@
 #include "callbacks.h"
 
 #include "cli_infos.h"
+#include "column_display.h"
 
 
 /* Dumps a propdict on stdout */
@@ -59,6 +60,16 @@ cb_done (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_infos_loop_resume (infos);
+
+	/* FIXME: Arg, we need unref res everywhere!!! */
+}
+
+void
+cb_coldisp_finalize (xmmsc_result_t *res, void *udata)
+{
+	column_display_t *coldisp = (column_display_t *) udata;
+	column_display_print_footer (coldisp);
+	column_display_free (coldisp);
 }
 
 void
@@ -115,6 +126,52 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 
 	/* No resume-callback pending, we're done */
 	if (!infores) {
+		cli_infos_loop_resume (infos);
+	}
+}
+
+void
+cb_id_print_row (xmmsc_result_t *res, void *udata)
+{
+	column_display_t *coldisp = (column_display_t *) udata;
+	column_display_print (coldisp, res);
+}
+
+void
+cb_list_print_row (xmmsc_result_t *res, void *udata)
+{
+	/* FIXME: w00t at code copy-paste, please modularize */
+	column_display_t *coldisp = (column_display_t *) udata;
+	cli_infos_t *infos = column_display_infos_get (coldisp);
+	xmmsc_result_t *infores = NULL;
+	guint id;
+	gint i = 0;
+
+	if (!xmmsc_result_iserror (res)) {
+		column_display_prepare (coldisp);
+		column_display_print_header (coldisp);
+		while (xmmsc_result_list_valid (res)) {
+			if (xmmsc_result_get_uint (res, &id)) {
+				infores = xmmsc_medialib_get_info (infos->conn, id);
+				xmmsc_result_notifier_set (infores, cb_id_print_row, coldisp);
+			}
+			xmmsc_result_list_next (res);
+			i++;
+		}
+
+		if (infores) {
+			xmmsc_result_notifier_set (infores, cb_coldisp_finalize, coldisp);
+			xmmsc_result_notifier_set (infores, cb_done, infos);
+		}
+
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	/* No resume-callback pending, we're done */
+	if (!infores) {
+		column_display_print_footer (coldisp);
+		column_display_free (coldisp);
 		cli_infos_loop_resume (infos);
 	}
 }

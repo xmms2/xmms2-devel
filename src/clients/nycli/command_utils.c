@@ -48,6 +48,22 @@ command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
 	return retval;
 }
 
+/* Extract the flag value as a list of string items.
+ * Warning: the resulting string must be freed using g_strfreev() !*/
+gboolean
+command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v)
+{
+	gchar *full;
+	gboolean retval = FALSE;
+
+	if (command_flag_string_get (ctx, name, &full) && full) {
+		*v = g_strsplit (full, ",", MAX_STRINGLIST_TOKENS);
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
 gint
 command_arg_count (command_context_t *ctx)
 {

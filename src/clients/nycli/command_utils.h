@@ -23,6 +23,8 @@
 
 #include "main.h"
 
+#define MAX_STRINGLIST_TOKENS 10
+
 typedef struct command_arg_time_St command_arg_time_t;
 
 typedef enum {
@@ -40,6 +42,7 @@ struct command_arg_time_St {
 
 gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
 gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v);
+gboolean command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v);
 gint command_arg_count (command_context_t *ctx);
 gboolean command_arg_int_get (command_context_t *ctx, gint at, gint *v);
 gboolean command_arg_string_get (command_context_t *ctx, gint at, gchar **v);
