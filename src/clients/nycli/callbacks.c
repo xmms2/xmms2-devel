@@ -105,9 +105,9 @@ cb_entry_print_status (xmmsc_result_t *res, void *udata)
 	if (!xmmsc_result_iserror (res)) {
 		if (xmmsc_result_get_dict_entry_string (res, "artist", &artist)
 		    && xmmsc_result_get_dict_entry_string (res, "title", &title)) {
-			g_printf ("Playing: %s - %s\n", artist, title);
+			g_printf (_("Playing: %s - %s\n"), artist, title);
 		} else {
-			g_printf ("Error getting metadata!\n", artist, title);
+			g_printf (_("Error getting metadata!\n"), artist, title);
 		}
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
