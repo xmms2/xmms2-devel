@@ -219,15 +219,14 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 	xmmsc_result_unref (res);
 }
 
-void
-cb_list_jump (xmmsc_result_t *res, void *udata)
+/* Abstract jump, use inc to choose the direction. */
+static void
+cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 {
 	guint i, j;
 	guint id;
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *jumpres = NULL;
-
-	/* FIXME: support backward jump */
 
 	gint currpos;
 	gint plsize;
@@ -238,8 +237,11 @@ cb_list_jump (xmmsc_result_t *res, void *udata)
 	playlist = infos->cache->active_playlist;
 
 	if (!xmmsc_result_iserror (res) && xmmsc_result_list_valid (res)) {
+
+		inc += plsize; /* magic trick so we can loop in either direction */
+
 		/* Loop on the playlist */
-		for (i = (currpos + 1) % plsize; i != currpos; i = (i + 1) % plsize) {
+		for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
 
 			/* Loop on the matched media */
 			for (xmmsc_result_list_first (res);
@@ -267,4 +269,16 @@ cb_list_jump (xmmsc_result_t *res, void *udata)
 	}
 
 	xmmsc_result_unref (res);
+}
+
+void
+cb_list_jump_back (xmmsc_result_t *res, void *udata)
+{
+	cb_list_jump_rel (res, udata, -1);
+}
+
+void
+cb_list_jump (xmmsc_result_t *res, void *udata)
+{
+	cb_list_jump_rel (res, udata, 1);
 }

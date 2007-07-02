@@ -243,7 +243,11 @@ gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx)
 	} else {
 		/* FIXME: benchmark if efficient to reduce query to Active playlist */
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
-		xmmsc_result_notifier_set (res, cb_list_jump, infos);
+		if (backward) {
+			xmmsc_result_notifier_set (res, cb_list_jump_back, infos);
+		} else {
+			xmmsc_result_notifier_set (res, cb_list_jump, infos);
+		}
 		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
