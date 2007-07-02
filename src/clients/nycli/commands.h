@@ -51,6 +51,8 @@ void cli_quit_setup (command_action_t *action);
 void cli_exit_setup (command_action_t *action);
 void cli_help_setup (command_action_t *action);
 
+void help_command (cli_infos_t *infos, gchar *cmd);
+
 static command_setup_func commandlist[] =
 {
 	cli_play_setup,

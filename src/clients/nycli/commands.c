@@ -80,7 +80,7 @@ cli_search_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "search", &cli_search, TRUE, flags,
-	                     _("[-o <prop1[,prop2...]> | -l <prop1[,prop2...]>] <pattern>"),
+	                     _("[-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
 	                     _("Search and print all media matching the pattern."));
 }
 
@@ -360,7 +360,7 @@ help_all_commands (cli_infos_t *infos)
 	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
 }
 
-static void
+void
 help_command (cli_infos_t *infos, gchar *cmd)
 {
 	command_action_t *action;

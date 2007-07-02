@@ -116,11 +116,12 @@ argument_copy (const argument_t src[], argument_t **dest)
 	argument_t *arg;
 	int i;
 
-	/* Count elements and allocate size + 1 */
+	/* Count elements and allocate size + 2 (incl. help, NULL) */
 	for (i = 0; src && src[i].long_name; ++i);
 
-	*dest = g_new0 (argument_t, i + 1);
+	*dest = g_new0 (argument_t, i + 2);
 
+	/* FIXME: Shouldn't we copy the data here? */
 	/* Copy array, last element is all NULL */
 	for (i = 0, arg = *dest; src && src[i].long_name; ++i, ++arg) {
 		arg->long_name = src[i].long_name;
@@ -131,6 +132,15 @@ argument_copy (const argument_t src[], argument_t **dest)
 		arg->description = src[i].description;
 		arg->arg_description = src[i].arg_description;
 	}
+
+	/* Add help flag to all commands */
+	arg->long_name = "help";
+	arg->short_name = 'h';
+	arg->flags = 0;
+	arg->arg = G_OPTION_ARG_NONE;
+	arg->arg_data = NULL;
+	arg->description = _("Display command help.");
+	arg->arg_description = NULL;
 }
 
 static command_trie_t*

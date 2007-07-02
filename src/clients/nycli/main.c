@@ -67,6 +67,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		GOptionContext *context;
 		GError *error = NULL;
 		gint i;
+		gboolean help;
 
 		command_context_t *ctx;
 		ctx = command_context_init (argc, argv);
@@ -110,8 +111,12 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 		g_option_context_free (context);
 
+		/* Help flag passed, bypass action and show help */
+		if (command_flag_boolean_get (ctx, "help", &help) && help) {
+			help_command (infos, *argv);
+
 		/* Run action if connection status ok */
-		if (!action->req_connection || infos->conn || cli_infos_connect (infos)) {
+		} else if (!action->req_connection || infos->conn || cli_infos_connect (infos)) {
 			cli_infos_loop_suspend (infos);
 			action->callback (infos, ctx);
 		}
