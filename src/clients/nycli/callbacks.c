@@ -155,7 +155,7 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
-	if (!infores) {
+	if (infores) {
 		/* Done after the last callback */
 		xmmsc_result_notifier_set (infores, cb_done, infos);
 		xmmsc_result_unref (infores);
