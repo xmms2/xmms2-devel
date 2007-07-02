@@ -29,6 +29,7 @@ struct cli_cache_St {
 	guint currpos;
 	guint active_playlist_size;
 	GArray *active_playlist;
+	gchar *active_playlist_name;
 };
 
 cli_cache_t *cli_cache_init ();

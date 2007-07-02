@@ -111,7 +111,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		g_option_context_free (context);
 
 		/* Run action if connection status ok */
-		if (!action->req_connection || cli_infos_connect (infos)) {
+		if (!action->req_connection || infos->conn || cli_infos_connect (infos)) {
 			cli_infos_loop_suspend (infos);
 			action->callback (infos, ctx);
 		}

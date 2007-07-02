@@ -98,8 +98,7 @@ cli_infos_connect (cli_infos_t *infos)
 		return FALSE;
 	}
 
-	/* FIXME: Looks buggy, causes double-free crap. investigate please. */
-	/* xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos); */
+	xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos);
 
 	cli_cache_start (infos);
 
