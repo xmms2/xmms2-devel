@@ -166,6 +166,38 @@ xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c);
 /* signals */
 xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
 
+
+/*
+ * VISUALIZATION **************************************************
+ */
+
+/* commands */
+xmmsc_result_t *xmmsc_visualization_version (xmmsc_connection_t *c);
+int xmmsc_visualization_init (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_visualization_start (xmmsc_connection_t *c, int v);
+xmmsc_result_t *xmmsc_visualization_property_set (xmmsc_connection_t *c, int v, const char* key, const char* value);
+xmmsc_result_t *xmmsc_visualization_properties_set (xmmsc_connection_t *c, int v, const char** prop);
+
+/*
+ * drawtime in milliseconds:
+    if >= 0, the data is returned as soon as currenttime >= (playtime - drawtime),
+	         data is thrown away if playtime < currenttime, but not if playtime < currenttime - drawtime
+    if  < 0, the data is returned as soon as available, and no old data is thrown away
+ * blocking: 1 to wait for incoming data,
+             0 to not wait for data (but if data is found, wait until it is current, see drawtime)
+ * returns size read on success, -1 on failure (server killed!) and 0 if no data is available yet (retry later)
+ * Note: the size read can be less than expected (for example, on song end). Check it!
+ */
+int xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int drawtime, int blocking);
+
+xmmsc_result_t *xmmsc_visualization_shutdown (xmmsc_connection_t *c, int v);
+
+
+/* broadcasts */
+
+/* signals */
+
+
 /*
  * MEDIALIB ***********************************************
  */

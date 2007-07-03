@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
@@ -62,4 +63,20 @@ xmms_ipc_server_accept (xmms_ipc_transport_t *ipct)
 	return ipct->accept_func (ipct);
 }
 
+char *
+xmms_ipc_hostname (const char *path)
+{
+	xmms_url_t *url;
+	char* ret = NULL;
+
+	url = parse_url (path);
+	if (!strcasecmp (url->protocol, "tcp")) {
+		if (strlen (url->host)) {
+			ret = strdup (url->host);
+		}
+	}
+	free_url (url);
+
+	return ret;
+}
 

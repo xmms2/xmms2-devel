@@ -31,6 +31,10 @@
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_stdint.h"
 
+/* needed by connection_St */
+
+typedef struct xmmsc_visualization_St xmmsc_visualization_t;
+
 /**
  * @typedef xmmsc_connection_t
  *
@@ -40,7 +44,7 @@
 
 struct xmmsc_connection_St {
 	int ref;
-	
+
 	xmmsc_ipc_t *ipc;
 
 	x_list_t *callbacks;
@@ -51,6 +55,13 @@ struct xmmsc_connection_St {
 	uint32_t cookie;
 
 	char *clientname;
+
+	/** data array for visualization connections */
+	int visc;
+	xmmsc_visualization_t **visv;
+
+	/* we need to hold the connection path to get the hostname */
+	char path[PATH_MAX];
 };
 
 xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type, uint32_t cookie);

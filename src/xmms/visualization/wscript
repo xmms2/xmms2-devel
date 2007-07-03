@@ -1,0 +1,29 @@
+# encoding: utf-8
+#
+# WAF build scripts for XMMS2
+# Copyright (C) 2006-2007 XMMS2 Team
+#
+
+from Params import g_platform
+
+def build(bld):
+    obj = bld.create_obj('cc', 'staticlib')
+    obj.source = """
+                 object.c
+                 xform.c
+                 udp.c""".split()
+    if g_platform == 'win32':
+        obj.source.append("dummy.c")
+    else:
+        obj.source.append("unixshm.c")
+    obj.includes = '. ../../include ../../includepriv'
+    obj.uselib = 'glib2 socket'
+    obj.uselib_local = 'xmmsvisualization'
+    obj.target = 'visualization'
+    obj.install_var = 0
+
+def configure(conf):
+	pass
+
+def set_options(opt):
+    pass

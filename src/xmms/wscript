@@ -60,7 +60,7 @@ def build(bld):
     else:
         prog.source += source
 
-    prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes'
+    prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes visualization'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
     if env['xmms_icon']:

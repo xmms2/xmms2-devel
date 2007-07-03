@@ -41,7 +41,9 @@ subdirs = """
           src/lib/xmmssocket
           src/lib/xmmsipc
           src/lib/xmmsutils
+          src/lib/xmmsvisualization
           src/clients/lib/xmmsclient
+          src/clients/lib/xmmsclient/visualization
           src/clients/lib/xmmsclient-glib
           src/include
           src/includepriv
@@ -53,6 +55,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/mdns/dns_sd",
                     "src/clients/mdns/avahi",
                     "src/clients/medialib-updater",
+					"src/clients/vistest",
                     "src/clients/lib/xmmsclient-ecore",
                     "src/clients/lib/xmmsclient++",
                     "src/clients/lib/xmmsclient++-glib",

@@ -1,0 +1,24 @@
+# encoding: utf-8
+#
+# WAF build scripts for XMMS2
+# Copyright (C) 2006-2007 XMMS2 Team
+#
+
+def build(bld):
+    obj = bld.create_obj('cc', 'staticlib')
+    obj.source = ["timestamp.c"]
+    obj.includes='. ../../include'
+    obj.target='xmmsvisualization'
+    obj.install_var = 0
+
+def configure(conf):
+    # Check for the modf function in the math lib
+    test = conf.create(enumerator='function')
+    test.function = 'modf'
+    test.headers = ['math.h']
+    test.libs = ['m']
+    test.mandatory = 1
+    test.run()
+
+def set_options(opt):
+    pass

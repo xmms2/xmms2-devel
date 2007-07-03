@@ -47,6 +47,7 @@
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_bindata.h"
 #include "xmmspriv/xmms_utils.h"
+#include "xmmspriv/xmms_visualization.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -240,6 +241,8 @@ xmms_main_destroy (xmms_object_t *object)
 	                      XMMS_IPC_CMD_STOP, &arg);
 
 	g_usleep (G_USEC_PER_SEC); /* wait for the output thread to end */
+
+	xmms_visualization_destroy ();
 	xmms_object_unref (mainobj->output);
 
 	xmms_object_unref (xform_obj);
@@ -247,6 +250,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_save ();
 
 	xmms_config_shutdown ();
+
 	xmms_plugin_shutdown ();
 
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MAIN);
@@ -515,6 +519,7 @@ main (int argc, char **argv)
 	if (!mainobj->output) {
 		xmms_log_fatal ("Failed to create output object!");
 	}
+	xmms_visualization_init (mainobj->output);
 
 	if (status_fd != -1) {
 		write (status_fd, "+", 1);

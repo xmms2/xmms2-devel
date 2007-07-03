@@ -111,6 +111,10 @@ N: Thomas Jollans
 E: thomas@jollans.com
 D: Python bindings improvements
 
+N: Johannes Jordan
+E: ypnos@lanrules.de
+D: Visualization
+
 N: Daniel Kamiński
 E: maniel.rulez@gmail.com
 D: mlib remove command in cli, Ruby fixes.
