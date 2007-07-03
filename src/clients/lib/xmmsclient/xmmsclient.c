@@ -48,6 +48,7 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  */
 
 /**
+ * @defgroup XMMSClient
  * @brief This functions are used to connect a client software
  * to the XMMS2 daemon.
  *
