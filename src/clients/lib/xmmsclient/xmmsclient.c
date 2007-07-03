@@ -43,6 +43,11 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  */
 
 /**
+ * @mainpage
+ * @image html pixmaps/xmms2-128.png
+ */
+
+/**
  * @brief This functions are used to connect a client software
  * to the XMMS2 daemon.
  *

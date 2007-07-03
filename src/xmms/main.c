@@ -14,6 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
+/**
+ * @mainpage
+ * @image html pixmaps/xmms2-128.png
+ */
 
 /** @file
  * This file controls the XMMS2 main loop.
