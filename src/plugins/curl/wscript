@@ -7,4 +7,4 @@ def plugin_configure(conf):
     return (cfg.run() and conf.env['HAVE_curl'])
 
 configure, build = plugin('curl', configure=plugin_configure,
-                          source=['curl_http.c'], extra_libs=['curl'])
+                          source=['curl_http.c'], extra_libs=['curl', 'socket'])
