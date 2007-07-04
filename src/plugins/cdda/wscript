@@ -1,8 +1,14 @@
 from waftools.plugin import plugin
+from Params import g_platform
 
 def plugin_configure(conf):
+    ret = True
+
+    if g_platform == 'win32':
+        ret = conf.check_library2('winmm', uselib='winmm', mandatory=0)
+
     return (conf.check_pkg('libcdio_cdda', destvar='cdda') and
-            conf.check_pkg('libdiscid', destvar='discid'))
+            conf.check_pkg('libdiscid', destvar='discid') and ret)
 
 configure, build = plugin('cdda', configure=plugin_configure,
-                          extra_libs=['discid'], needs_lib=True)
+                          extra_libs=['discid', 'winmm'], needs_lib=True)
