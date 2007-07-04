@@ -15,4 +15,5 @@ def plugin_configure(conf):
 
     return conf.check_library2('FLAC', uselib='flac flac_ogg', mandatory=0)
 
-configure, build = plugin('flac', configure=plugin_configure, needs_lib=True)
+configure, build = plugin('flac', configure=plugin_configure, needs_lib=True,
+                          extra_libs=['socket'])
