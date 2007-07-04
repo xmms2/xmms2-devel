@@ -243,7 +243,8 @@ def configure(conf):
     conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
     # Our static libraries may link to dynamic libraries
-    conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
+    if sys.platform != 'win32':
+        conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
 
     # Check for support for the generic platform
     has_platform_support = os.name in ('nt', 'posix')
