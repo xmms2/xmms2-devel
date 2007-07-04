@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <sys/utsname.h>
 
 #include <glib.h>
 
@@ -106,9 +105,8 @@ register_service (int port)
 	GSource *source;
 
 	if (DNSServiceRegister (&g_sdref, 0, 0, NULL, "_xmms2._tcp", NULL, NULL,
-							htons (port), 0, NULL, dns_callback, NULL) 
-		!= kDNSServiceErr_NoError) {
-
+	                        g_htons (port), 0, NULL, dns_callback, NULL)
+	    != kDNSServiceErr_NoError) {
 		printf ("failed to register!\n");
 		exit (1);
 	}
