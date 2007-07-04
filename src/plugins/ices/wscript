@@ -7,4 +7,4 @@ def plugin_configure(conf):
 
 configure, build = plugin('ices', configure=plugin_configure,
                           source=['ices.c', 'encode.c'],
-                          extra_libs=['shout', 'vorbisenc', 'ogg'])
+                          extra_libs=['shout', 'vorbisenc', 'ogg', 'socket'])
