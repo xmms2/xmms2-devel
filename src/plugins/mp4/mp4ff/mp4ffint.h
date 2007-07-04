@@ -32,8 +32,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "mp4ff_int_types.h"
 #include <stdlib.h>
+#include "mp4ff_int_types.h"
 
 #ifdef ITUNES_DRM
 static __inline uint32_t GetDWLE( void const * _p )
