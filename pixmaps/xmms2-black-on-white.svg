@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2007 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+-->
+<!-- Generator: Adobe Illustrator 12.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 51448)  -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="400"
+   height="400"
+   viewBox="0 0 343.75 416.25"
+   overflow="visible"
+   enable-background="new 0 0 343.75 416.25"
+   xml:space="preserve"
+   id="svg3471"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docname="bluenote-bw-1.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="C:\Users\Arnaud\Documents\XMMS-Submissions\bluenote\bluenote"
+   inkscape:export-filename="C:\Users\Arnaud\Documents\XMMS-Submissions\bluenote\bluenote-400.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"><defs
+   id="defs3500" /><sodipodi:namedview
+   inkscape:window-height="750"
+   inkscape:window-width="1280"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   guidetolerance="10.0"
+   gridtolerance="10.0"
+   objecttolerance="10.0"
+   borderopacity="1.0"
+   bordercolor="#666666"
+   pagecolor="#ffffff"
+   id="base"
+   inkscape:zoom="0.93783606"
+   inkscape:cx="220.47441"
+   inkscape:cy="217.29928"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:current-layer="svg3471"
+   width="400px"
+   height="400px"
+   borderlayer="false"
+   showborder="true"
+   inkscape:showpageshadow="false" /><g
+   id="g3158"
+   transform="translate(-0.266886,8.857373)"><path
+     inkscape:label="#path3485"
+     d="M 324.31798,139.39878 C 357.38432,172.46338 357.38432,226.08065 324.31798,259.14525 L 232.016,351.44721 C 198.94437,384.51181 145.3429,384.51181 112.26952,351.44721 L 19.96053,259.14525 C -13.104065,226.0789 -13.09705,172.46338 19.967546,139.39878 L 112.26952,47.096806 C 145.3429,14.032209 198.94437,14.032209 232.016,47.096806 L 324.31798,139.39878 z "
+     id="bg"
+     style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:evenodd" /><path
+     d="M 332.41135,136.21159 L 326.91578,130.7248 L 317.98221,121.79122 L 235.19441,39.010452 C 217.7833,21.599352 194.96259,12.893804 172.14188,12.893804 C 149.32993,12.893804 126.50045,21.599352 109.08936,39.010452 L 11.881191,136.21159 C -5.522889,153.63147 -14.237208,176.45044 -14.237208,199.26412 C -14.237208,222.09186 -5.5316603,244.90554 11.881191,262.32542 L 88.87522,339.31243 L 109.08936,359.52481 C 116.06011,366.50432 123.91142,372.05602 132.27843,376.23778 C 144.7921,382.49462 158.467,385.64145 172.14188,385.64145 C 194.96259,385.64145 217.7833,376.94467 235.19441,359.53182 L 332.40257,262.32366 C 349.81543,244.91081 358.52098,222.0901 358.52098,199.27114 C 358.52098,176.45219 349.82244,153.63147 332.41135,136.21159 z M 26.269991,247.93486 C 13.277446,234.93529 6.127776,217.64875 6.127776,199.26412 C 6.127776,180.8953 13.279201,163.60873 26.269991,150.60917 L 123.48693,53.401006 C 136.48649,40.404953 153.76428,33.25002 172.14188,33.25002 C 190.5265,33.25002 207.81305,40.404953 220.81261,53.401006 C 220.8056,53.401006 220.8056,53.401006 220.8056,53.401006 L 296.70684,129.30399 C 270.01661,134.35928 241.69332,124.72757 217.2711,106.15351 C 175.415,74.329054 129.60871,81.708511 89.58738,130.7862 L 168.92137,268.34545 C 157.86886,263.49364 145.15169,261.90093 132.30825,264.67064 C 109.02446,269.69434 91.943123,287.49836 87.1299,308.78775 L 26.269991,247.93486 z M 318.01378,247.93486 L 220.8056,345.136 C 209.76009,356.18152 195.62213,362.98738 180.35277,364.79234 C 197.40253,351.62087 206.43083,329.87542 201.69654,307.92649 C 201.42115,306.66179 201.04403,305.44621 200.69145,304.22185 L 200.75459,304.24466 L 200.58094,303.81315 C 199.64777,300.68912 198.45324,297.70541 197.04118,294.86378 L 145.16748,163.88412 C 154.91847,149.77772 181.29472,136.39226 220.35654,144.26638 C 258.23439,151.90369 286.20511,152.64216 309.31349,141.91063 L 318.01202,150.60741 C 331.01158,163.60697 338.17177,180.89354 338.17177,199.26237 C 338.17353,217.6505 331.01334,234.93529 318.01378,247.93486 z "
+     id="note"
+     style="opacity:1;fill:#000000;fill-opacity:1;stroke:none" /></g>
+
+</svg>
