@@ -143,11 +143,9 @@ flac_callback_write (const FLAC__StreamDecoder *flacdecoder,
 {
 	xmms_xform_t *xform = (xmms_xform_t *)client_data;
 	xmms_flac_data_t *data;
-	guint length = frame->header.blocksize * frame->header.channels
-	               * frame->header.bits_per_sample / 8;
-	guint sample, channel, pos = 0;
-	guint8 packed[length];
-	guint16 *packed16 = (guint16 *) packed;
+	guint sample, channel;
+	guint8 packed;
+	guint16 packed16;
 
 	data = xmms_xform_private_data_get (xform);
 
@@ -155,18 +153,17 @@ flac_callback_write (const FLAC__StreamDecoder *flacdecoder,
 		for (channel = 0; channel < frame->header.channels; channel++) {
 			switch (data->bits_per_sample) {
 				case 8:
-					packed[pos] = (guint8)buffer[channel][sample];
+					packed = (guint8)buffer[channel][sample];
+					g_string_append_len (data->buffer, (gchar *) &packed, 1);
 					break;
 				case 16:
-					packed16[pos] = (guint16)buffer[channel][sample];
+					packed16 = (guint16)buffer[channel][sample];
+					g_string_append_len (data->buffer, (gchar *) &packed16, 2);
 					break;
 			}
-
-			pos++;
 		}
 	}
 
-	g_string_append_len (data->buffer, (gchar *) packed, length);
 
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
