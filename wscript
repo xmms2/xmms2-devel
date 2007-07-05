@@ -18,6 +18,7 @@ sys.path.insert(0,os.getcwd())
 from waftools import gittools
 
 import sets
+from Params import g_platform
 import Params
 import Object
 import Utils
@@ -243,7 +244,7 @@ def configure(conf):
     conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
     # Our static libraries may link to dynamic libraries
-    if sys.platform != 'win32':
+    if g_platform != 'win32':
         conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
 
     # Check for support for the generic platform
@@ -256,14 +257,14 @@ def configure(conf):
     conf.check_tool('checks')
 
     # Check sunOS socket support
-    if sys.platform == 'sunos5':
+    if g_platform == 'sunos5':
         if not conf.check_library2("socket", uselib='socket'):
             Params.fatal("xmms2 requires libsocket on Solaris.")
         conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
 
     # Check win32 (winsock2) socket support
-    if sys.platform == 'win32':
+    if g_platform == 'win32':
         if not conf.check_library2("wsock32", uselib='socket'):
             Params.fatal("xmms2 requires wsock32 on windows.")
         conf.env.append_unique('LIB_socket', 'ws2_32')
@@ -279,7 +280,7 @@ def configure(conf):
     conf.env['NEWEST_WSCRIPT_SUBDIR'] = newest
 
     [conf.sub_config(s) for s in subdirs]
-    
+
     _output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
 
 
