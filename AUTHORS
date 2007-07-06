@@ -221,6 +221,11 @@ W: http://juho.vaha-herttua.fi/
 P: 1024D/CB130DCE 1C70 BF1D AEF7 619C C0A6  60E7 563D FCA3 CB13 0DCE
 D: Faad, wma, equalizer, vocoder, ao. Various fixes.
 
+N: Georg Wacker
+E: gpsw@gmx.de
+P: 1024D/22C30FF7 2BEE 0628 1C78 385F 3979  3E91 29C4 A4F1 22C3 0FF7
+D: Ruby documentation fix
+
 N: Anders Waldenborg
 E: andersg@xmms.org
 P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966

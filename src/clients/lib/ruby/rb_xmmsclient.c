@@ -1258,13 +1258,14 @@ c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
- * xc.coll_query_info(coll, fetch, [order], [start], [len]) -> result
+ * xc.coll_query_info(coll, fetch, [order], [start], [len], [group]) -> result
  *
  * Retrieves media info of media matched by the collection. _fetch_ should
  * contain an array of properties to retrieve from the collection. _order_
  * specifies a list of properties to order by or no order if omitted. _start_
  * and _len_ determine the offset at which to start retrieving info and the
- * maximum number of ids to retrieve, respectively.
+ * maximum number of ids to retrieve, respectively. _group_ defines a list
+ * of properties to group by or no grouping if omitted.
  */
 static VALUE
 c_coll_query_info (int argc, VALUE *argv, VALUE self)
