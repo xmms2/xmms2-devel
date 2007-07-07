@@ -75,13 +75,16 @@ void
 cli_search_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
+		{ "playlist",   'p', 0, G_OPTION_ARG_STRING, NULL, _("Search in the given playlist."), "name" },
+		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Search in the given collection."), "name" },
 		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop1[,prop2...]" },
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop1[,prop2...]" },
 		{ NULL }
 	};
 	command_action_fill (action, "search", &cli_search, TRUE, flags,
-	                     _("[-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
-	                     _("Search and print all media matching the pattern."));
+	                     _("[-p <name> | -c <name>] [-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
+	                     _("Search and print all media matching the pattern. Search can be restricted\n"
+	                       "to a collection or a playlist by using the corresponding flag.""));
 }
 
 void
@@ -262,6 +265,8 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	const gchar **order = NULL;
 	const gchar **columns = NULL;
+
+	/* FIXME: Support arguments -p and -c */
 
 	command_arg_longstring_get (ctx, 0, &pattern);
 	if (!pattern) {
