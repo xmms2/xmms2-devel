@@ -244,7 +244,11 @@ def configure(conf):
     # Our static libraries may link to dynamic libraries
     if g_platform != 'win32':
         conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
-
+    
+    # Add som specific OSX things
+    if g_platform == 'darwin':
+        conf.env["LINKFLAGS"] += ['-multiply_defined suppress']
+    
     # Check for support for the generic platform
     has_platform_support = os.name in ('nt', 'posix')
     conf.check_message("platform code for", os.name, has_platform_support)
