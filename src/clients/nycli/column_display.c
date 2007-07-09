@@ -17,10 +17,11 @@
 #include "column_display.h"
 
 struct column_display_St {
-	size_t num_cols;
+	guint num_cols;
 	column_def_t *cols;
 	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
+	gchar *buffer;       /* Used to render strings. */
 };
 
 struct column_def_St {
@@ -148,6 +149,7 @@ column_display_init (cli_infos_t *infos)
 	disp->num_cols = 0;
 	disp->cols = NULL;
 	disp->counter = 0;
+	disp->buffer = NULL;
 
 	return disp;
 }
@@ -199,6 +201,10 @@ column_display_free (column_display_t *disp)
 		g_free (disp->cols);
 	}
 
+	if (disp->buffer) {
+		g_free (disp->buffer);
+	}
+
 	g_free (disp);
 }
 
@@ -214,7 +220,6 @@ column_display_print_header (column_display_t *disp)
 	gint i, d;
 	gint termwidth;
 	gint realsize;
-	gchar value[40]; /* FIXME: warning overflow? */
 
 	termwidth = find_terminal_width ();
 
@@ -231,8 +236,9 @@ column_display_print_header (column_display_t *disp)
 			g_printf ("|");
 		}
 
-		realsize = g_snprintf (value, disp->cols[i].adapted_size + 1, disp->cols[i].name);
-		print_fixed_width_value (value, disp->cols[i].adapted_size, realsize);
+		realsize = g_snprintf (disp->buffer, disp->cols[i].adapted_size + 1,
+		                       disp->cols[i].name);
+		print_fixed_width_value (disp->buffer, disp->cols[i].adapted_size, realsize);
 	}
 	g_printf ("\n");
 
@@ -285,6 +291,9 @@ column_display_prepare (column_display_t *disp)
 			availchars -= disp->cols[i].adapted_size;
 		}
 	}
+
+	/* FIXME: Could be smaller, but who cares */
+	disp->buffer = g_new0 (gchar, termwidth);
 }
 
 void
@@ -295,15 +304,15 @@ column_display_print (column_display_t *disp, xmmsc_result_t *res)
 
 		for (i = 0; i < disp->num_cols; ++i) {
 			gint realsize, printsize;
-			gchar value[40]; /* FIXME: warning overflow? */
 
 			/* Display separator and fixed-size value */
 			if (i > 0) {
 				g_printf ("|");
 			}
 
-			realsize = result_to_string (res, &disp->cols[i], value);
-			print_fixed_width_value (value, disp->cols[i].adapted_size, realsize);
+			realsize = result_to_string (res, &disp->cols[i], disp->buffer);
+			print_fixed_width_value (disp->buffer, disp->cols[i].adapted_size,
+			                         realsize);
 		}
 
 		g_printf ("\n");
