@@ -488,8 +488,9 @@ xmmsc_coll_operand_list_valid (xmmsc_coll_t *coll)
 }
 
 /**
- * Retrieve the current operand in the list
- * by changing the operand parameter to point to it.
+ * Provide a reference to the current operand in the list by changing
+ * the operand parameter to point to it. Note that the refcount of the
+ * operand is not modified by this operation.
  * The function returns 1 if the entry was valid, 0 otherwise.
  *
  * @param coll  The collection to consider.
