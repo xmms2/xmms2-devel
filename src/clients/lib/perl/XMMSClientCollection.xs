@@ -35,15 +35,17 @@ xmmsc_coll_new (class, type, ...)
 	OUTPUT:
 		RETVAL
 
-NO_OUTPUT int
-xmmsc_coll_parse (class, const char *pattern, OUTLIST xmmsc_coll_t *coll)
-	INIT:
-		PERL_UNUSED_VAR (targ);
-	C_ARGS:
-		pattern, &coll
+xmmsc_coll_t *
+xmmsc_coll_parse (class, const char *pattern)
+	PREINIT:
+		int ret;
+	CODE:
+		ret = xmmsc_coll_parse (pattern, &RETVAL);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
+	OUTPUT:
+		RETVAL
 
 void
 DESTROY (coll)
@@ -157,7 +159,8 @@ operands (coll)
 		for (xmmsc_coll_operand_list_first (coll);
 				xmmsc_coll_operand_list_entry (coll, &op);
 				xmmsc_coll_operand_list_next (coll)) {
-			XPUSHs (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection"));
+			xmmsc_coll_ref (op);
+			XPUSHs (sv_2mortal (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection")));
 		}
 
 int
