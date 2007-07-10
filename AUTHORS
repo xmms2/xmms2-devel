@@ -205,6 +205,11 @@ N: Tim Schumacher
 E: tim@we-are-teh-b.org
 D: Windows CLI terminal width fix
 
+N: Javeed Shaikh
+E: syscrash2k@gmail.com
+W: http://syscrash.ca
+D: Volume normalization plugin
+
 N: Ben Slote
 E: bslote@gmail.com
 D: Pythonbindings fix
