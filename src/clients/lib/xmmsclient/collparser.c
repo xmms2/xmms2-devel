@@ -360,9 +360,18 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 xmmsc_coll_t *
 xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens)
 {
+	xmmsc_coll_token_t *tk;
 	xmmsc_coll_t *coll;
+
 	coll_parse_prepare (tokens);
-	coll_parse_operation (tokens, &coll);
+	tk = coll_parse_operation (tokens, &coll);
+
+	/* Failed to parse the whole string! */
+	if (tk && coll) {
+		xmmsc_coll_unref (coll);
+		coll = NULL;
+	}
+
 	return coll;
 }
 
@@ -722,7 +731,6 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 		tk = coll_next_token (tk);
 	}
 
-
 	if (!operator) {
 		operator = xmmsc_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
 		xmmsc_coll_add_operand (operator, first);
@@ -732,13 +740,6 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 		if (tmp == NULL) {
 			xmmsc_coll_remove_operand (operator, first);
 			xmmsc_coll_unref (operator);
-
-			/* oops, the rest misparsed, let's give up!  */
-			if (tk != NULL) {
-				xmmsc_coll_unref (first);
-				first = NULL;
-			}
-
 			*ret = first;
 		}
 		else {
@@ -748,14 +749,7 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	else {
 		xmmsc_coll_add_operand (operator, first);
 		tk = coll_parse_andop_append (tk, operator, &tmp);
-
-		/* oops, the rest misparsed, let's give up!  */
-		if (tmp == NULL && tk != NULL) {
-			xmmsc_coll_unref (first);
-			*ret = NULL;
-		} else {
-			*ret = operator;
-		}
+		*ret = operator;
 	}
 
 	/* tk = coll_parse_andop_append (tk, operator, ret); */
