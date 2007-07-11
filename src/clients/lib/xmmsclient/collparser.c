@@ -1084,7 +1084,7 @@ string_substr (char *start, char *end)
 static char *
 string_intadd (char *number, int delta)
 {
-	int n, len, size;
+	int n, len;
 	char *endptr;
 	char *buf;
 
@@ -1097,7 +1097,7 @@ string_intadd (char *number, int delta)
 
 	n += delta;
 	len = strlen (number) + 1;
-	buf = x_new0 (char, size + 1);
+	buf = x_new0 (char, len + 1);
 	snprintf (buf, len, "%d", n);
 
 	return buf;
