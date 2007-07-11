@@ -674,8 +674,8 @@ coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	PARSER_TRY (coll_parse_notop);
 	PARSER_TRY (coll_parse_reference);
 
-	*ret = coll;
-	return pos;
+	*ret = NULL;
+	return tokens;
 }
 
 static xmmsc_coll_token_t *
