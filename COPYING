@@ -62,6 +62,9 @@ src/plugins/vocoder/pvocoder*:
         Copyright (C) 2006 Juho Vähä-Herttua <juhovh@iki.fi>
         Licensed under GPL license.
 
+src/plugins/asf/libasf/*:
+        Copyright (C) 2006-2007 Juho Vähä-Herttua <juhovh@iki.fi>
+
 src/plugins/ices/encode.*:
         Copyright (c) 2001 Michael Smith <msmith@labyrinth.net.au>
         Licensed under GPL license.

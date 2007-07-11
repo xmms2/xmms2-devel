@@ -41,25 +41,6 @@ typedef struct {
 	GString *outbuf;
 } xmms_avformat_data_t;
 
-typedef struct {
-	guint32 v1;
-	guint16 v2;
-	guint16 v3;
-	guint8 v4[8];
-} xmms_asf_GUID_t;
-
-xmms_asf_GUID_t xmms_asf_GUIDs[] = {
-	/* header */
-	{ 0x75B22630, 0x668E, 0x11CF,
-	  { 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C } },
-	/* content description */
-	{ 0x75b22633, 0x668e, 0x11cf,
-	  { 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c } },
-	/* extended content description */
-	{ 0xD2D0A440, 0xE307, 0x11D2,
-	  { 0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50 } },
-};
-
 static gboolean xmms_avformat_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_avformat_init (xmms_xform_t *xform);
 static void xmms_avformat_destroy (xmms_xform_t *xform);
@@ -67,8 +48,6 @@ static gint xmms_avformat_read (xmms_xform_t *xform, xmms_sample_t *buf, gint le
                                 xmms_error_t *err);
 static void xmms_avformat_get_mediainfo (xmms_xform_t *xform);
 int xmms_avformat_get_track (AVFormatContext *fmtctx);
-
-static void xmms_asf_metahack (xmms_xform_t *xform);
 
 int xmms_avformat_read_callback (void *user_data, uint8_t *buffer,
                                  int length);
@@ -97,16 +76,8 @@ xmms_avformat_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
-	                              "video/x-ms-asf",
-	                              NULL);
-
-	xmms_xform_plugin_indata_add (xform_plugin,
-	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/3gpp",
 	                              NULL);
-
-	xmms_magic_add ("asf header", "video/x-ms-asf",
-	                "0 belong 0x3026b275", NULL);
 
 	xmms_magic_add ("amr header", "audio/3gpp",
 	                "0 string #!AMR", NULL);
@@ -152,15 +123,7 @@ xmms_avformat_init (xmms_xform_t *xform)
 	av_register_all ();
 
 	mimetype = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_MIMETYPE);
-	if (!strcmp (mimetype, "video/x-ms-asf")) {
-		xmms_asf_metahack (xform);
-
-		format = av_find_input_format ("asf");
-		if (!format) {
-			XMMS_DBG ("ASF format not registered to library");
-			goto err;
-		}
-	} else if (!strcmp (mimetype, "audio/3gpp")) {
+	if (!strcmp (mimetype, "audio/3gpp")) {
 		format = av_find_input_format ("amr");
 		if (!format) {
 			XMMS_DBG ("AMR format not registered to library");
@@ -272,183 +235,6 @@ xmms_avformat_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	return size;
 }
-
-static void
-xmms_asf_read_GUID (guchar *buffer, xmms_asf_GUID_t *guid)
-{
-	guid->v1 = GUINT32_FROM_LE (*((guint32 *) buffer));
-	buffer += 4;
-	guid->v2 = GUINT16_FROM_LE (*((guint16 *) buffer));
-	buffer += 2;
-	guid->v3 = GUINT16_FROM_LE (*((guint16 *) buffer));
-	buffer += 2;
-	memcpy (guid->v4, buffer, sizeof (guid->v4));
-}
-
-static gboolean
-xmms_asf_check_GUID (const xmms_asf_GUID_t *guid1,
-                     const xmms_asf_GUID_t *guid2)
-{
-	return !memcmp (guid1, guid2, sizeof (xmms_asf_GUID_t));
-}
-
-/* This is a hack for reading ASF metadata since libavformat
- * totally breaks UTF-16 characters in them. */
-static void
-xmms_asf_metahack (xmms_xform_t *xform)
-{
-	gint i;
-	guint objects;
-	gulong read, bufsize;
-	guchar *buffer, *current;
-	xmms_error_t error;
-	xmms_asf_GUID_t guid;
-
-	g_return_if_fail (xform);
-
-	bufsize = sizeof (xmms_asf_GUID_t) + 8+4+2;
-	buffer = g_malloc (bufsize * sizeof (guchar));
-	current = buffer;
-
-	read = xmms_xform_peek (xform, buffer, bufsize, &error);
-	g_return_if_fail (read == bufsize);
-
-	xmms_asf_read_GUID (buffer, &guid);
-	g_return_if_fail (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[0]));
-	current += sizeof (xmms_asf_GUID_t);;
-
-	current += 8;
-	objects = GUINT32_FROM_LE (*((guint32 *) current));
-
-	for (i = 0; i < objects; i++) {
-		gulong objectsize;
-		gint headersize = sizeof (xmms_asf_GUID_t) + 8;
-
-		bufsize += headersize;
-		buffer = g_realloc (buffer, bufsize);
-		current = buffer + bufsize - headersize;
-
-		read = xmms_xform_peek (xform, buffer, bufsize, &error);
-		g_return_if_fail (read == bufsize);
-
-		xmms_asf_read_GUID (current, &guid);
-		current += sizeof (xmms_asf_GUID_t);
-		objectsize = GULONG_FROM_LE (*((gulong *) current));
-
-		bufsize += objectsize - headersize;
-		buffer = g_realloc (buffer, bufsize);
-		current = buffer + bufsize - objectsize + headersize;
-
-		read = xmms_xform_peek (xform, buffer, bufsize, &error);
-		g_return_if_fail (read == bufsize);
-
-		if (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[1])) {
-			guint16 titlel, artistl, copyl, commentl, ratingl;
-			guint16 *tmpbuf = (guint16 *) current;
-			gchar *utfstr, *tmpstr;
-
-			titlel = GUINT16_FROM_LE (tmpbuf[0]);
-			artistl = GUINT16_FROM_LE (tmpbuf[1]);
-			copyl = GUINT16_FROM_LE (tmpbuf[2]);
-			commentl = GUINT16_FROM_LE (tmpbuf[3]);
-			ratingl = GUINT16_FROM_LE (tmpbuf[4]);
-
-			tmpbuf+=5;
-
-			utfstr = (gchar *) tmpbuf;
-			if (titlel > 0) {
-				tmpstr = g_convert (utfstr, titlel, "UTF-8", "UTF-16LE", NULL,
-				                    NULL, NULL);
-				if (tmpstr && strlen (tmpstr)) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-					                             tmpstr);
-				}
-				g_free (tmpstr);
-				utfstr += titlel;
-			}
-			if (artistl > 0) {
-				tmpstr = g_convert (utfstr, artistl, "UTF-8", "UTF-16LE", NULL,
-				                    NULL, NULL);
-				if (tmpstr && strlen (tmpstr)) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-					                             tmpstr);
-				}
-				g_free (tmpstr);
-				utfstr += artistl;
-			}
-			utfstr += copyl;
-			if (commentl > 0) {
-				tmpstr = g_convert (utfstr, commentl, "UTF-8", "UTF-16LE",
-				                    NULL, NULL, NULL);
-				if (tmpstr && strlen (tmpstr)) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
-					                             tmpstr);
-				}
-				g_free (tmpstr);
-				utfstr += commentl;
-			}
-		} else if (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[2])) {
-			guint16 i, descriptors;
-
-			descriptors = GUINT16_FROM_LE (*((guint16 *) current));
-			current += 2;
-			for (i=0; i < descriptors; i++) {
-				guint16 namelen, datatype, datalen;
-				gchar *name, *value = NULL;
-
-				namelen = GUINT16_FROM_LE (*((guint16 *) current));
-				current += 2;
-				name = g_convert ((gchar *) current, namelen,
-				                  "UTF-8", "UTF-16LE", NULL,
-				                  NULL, NULL);
-				current += namelen;
-				datatype = GUINT16_FROM_LE (*((guint16 *) current));
-				current += 2;
-				datalen = GUINT16_FROM_LE (*((guint16 *) current));
-				current += 2;
-				if (datatype == 0x0000) {
-					value = g_convert ((gchar *) current, datalen, "UTF-8",
-					                   "UTF-16LE", NULL, NULL, NULL);
-				}
-				current += datalen;
-
-				if (name == NULL || value == NULL || !strlen (value)) {
-				} else if (!strcmp (name, "WM/AlbumTitle")) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-					                             value);
-				} else if (!strcmp (name, "WM/Year")) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
-					                             value);
-				} else if (!strcmp (name, "WM/Genre")) {
-					xmms_xform_metadata_set_str (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-					                             value);
-				} else if (!strcmp (name, "WM/Track")) {
-					gint tracknr;
-					gchar *end;
-
-					tracknr = strtol (value, &end, 10);
-					if (end && *end == '\0') {
-						xmms_xform_metadata_set_int (xform,
-						                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-						                             tracknr);
-					}
-				}
-
-				g_free (name);
-				g_free (value);
-			}
-		}
-	}
-
-	g_free (buffer);
-}
-
 
 static void
 xmms_avformat_get_mediainfo (xmms_xform_t *xform)

@@ -1,0 +1,36 @@
+This library is provided under the LGPL license. It is based mainly on the
+documentation provided by VLC and ffmpeg ASF parsers but it is however
+rewritten and doesn't share any code with them except the necessary identifiers
+and variable names that are file format specific.
+
+Right now the status of this library is almost unusable but working. It is
+written in ANSI C, compiled with '-Wall -ansi -pedantic' flags, doesn't use any
+libraries and only very few libc functions. Therefore it should be highly
+portable. The goal is to make the library usable with all major open source
+music and video players. Already now it handles many errors better than its
+predecessors.
+
+
+
+License issues related to possible VLC derived code
+---------------------------------------------------
+
+Since libasf has used VLC as documentation and therefore could under some
+circumstances be considered as a derived product, both marked copyright holders
+of VLC's ASF parser code (Gildas Bazin and Laurent Aimar) have been contacted
+and they have given approval for this project. To quote from the email
+conversation:
+
+On Wed, Apr 11, 2007, Gildas Bazin wrote:
+Personnaly I don't mind at all and I don't think it violates any copyright if
+as you say you basically rewrote everything. However fenrir wrote most of this
+code in VLC so his opinion has probably more weight than mine.
+
+On Thu, Apr 12, 2007, Laurent Aimar wrote:
+Your implementation is fine with me, and if there is any doubt I accept the
+re-licensing of the code I wrote for the VLC asf demuxer under LGPL (as at the
+first look, the code seems to have the same workflow and structure).
+
+Therefore there should be no copyright problems with libasf and LGPL license.
+
+
