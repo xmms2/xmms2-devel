@@ -264,57 +264,43 @@ coll_read_collname (gchar *str, gchar **name, gchar **namespace)
 	return TRUE;
 }
 
-/** Return an escaped version of the string, with \-protected chars.
+/** Return an escaped version of the string, with \-protected spaces
+ *  outside of quotes.
  *
- *  A heuristic is used to pseudo-smartly escape the parentheses: an
- *  opening parenthesis is escaped unless it's the first char of the
- *  string; a closing parenthesis is escaped unless it's the last char
- *  of the string or it has a corresponding opening parenthesis.
- *
- *  It is imperfect in the case that s ends with a parenthesis which
- *  has not been opened.
+ *  The returned string must be freed manually afterwards.
  */
 char *
 string_escape (const char *s)
 {
-	int i, w;
-	int esc_chars;
-	int end_index;
-	int paren_cnt;
+	gboolean escaped, quoted;
+	gchar quote_char;
+	gint i, w, len;
 	char *res;
 
-	end_index = strlen (s) - 1;
-
-	paren_cnt = 0;
-	esc_chars = 0;
-	for (i = 0; s[i] != '\0'; i++) {
-		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'' ||
-		    (s[i] == '(' && i != 0) ||
-		    (s[i] == ')' && (i != end_index || paren_cnt > 0)) ) {
-
-			if (s[i] == '(') {
-				paren_cnt++;
-			} else if (s[i] == ')') {
-				paren_cnt--;
-			}
-			esc_chars++;
+	/* Conservative length estimation */
+	for (i = 0, len = 0; s[i] != '\0'; i++, len++) {
+		if (s[i] == ' ' || s[i] == '\\') {
+			len++;
 		}
 	}
 
-	paren_cnt = 0;
-	res = g_new0 (char, strlen (s) + esc_chars + 1);
-	for (i = 0, w = 0; s[i] != '\0'; i++, w++) {
-		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'' ||
-		    (s[i] == '(' && i != 0) ||
-		    (s[i] == ')' && (i != end_index || paren_cnt > 0)) ) {
+	res = g_new0 (char, len + 1);
 
-			if (s[i] == '(') {
-				paren_cnt++;
-			} else if (s[i] == ')') {
-				paren_cnt--;
-			}
+	/* Copy string, escape spaces outside of quotes */
+	escaped = FALSE;
+	quoted = FALSE;
+	quote_char = 0;
+	for (i = 0, w = 0; s[i] != '\0'; i++, w++) {
+		if ((s[i] == ' ') && !quoted) {
 			res[w] = '\\';
 			w++;
+		}
+
+		if (!quoted && (s[i] == '"' || s[i] == '\'')) {
+			quoted = TRUE;
+			quote_char = s[i];
+		} else if (quoted && s[i] == quote_char) {
+			quoted = FALSE;
 		}
 
 		res[w] = s[i];

@@ -305,7 +305,7 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 0; i < argc - 4; i++) {
 		g_free (args[i]);
 	}
-
+	g_free (args);
 	g_free (pattern);
 
 	res = xmmsc_coll_save (conn, coll, name, namespace);

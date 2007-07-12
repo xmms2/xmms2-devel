@@ -315,7 +315,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 0; i < argc - 3; i++) {
 		g_free (args[i]);
 	}
-
+	g_free (args);
 	g_free (pattern);
 	
 	/* FIXME: Always add to active playlist: allow loading in other playlist! */
@@ -358,7 +358,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 0; i < argc - 3; i++) {
 		g_free (args[i]);
 	}
-
+	g_free (args);
 	g_free (pattern);
 
 	res = xmmsc_coll_query_ids (conn, query, NULL, 0, 0);
