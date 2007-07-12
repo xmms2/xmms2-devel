@@ -24,16 +24,34 @@
 
 #include "main.h"
 
+typedef struct freshness_St freshness_t;
+typedef enum cli_cache_status_St cli_cache_status_t;
+
+enum cli_cache_status_St {
+	CLI_CACHE_NOT_INIT,
+	CLI_CACHE_PENDING,
+	CLI_CACHE_FRESH
+};
+
+struct freshness_St {
+	cli_cache_status_t status;
+	gint pending_queries;
+};
 
 struct cli_cache_St {
 	guint currpos;
-	guint active_playlist_size;
 	GArray *active_playlist;
 	gchar *active_playlist_name;
+
+	/* Freshness of each attribute */
+	freshness_t freshness_currpos;
+	freshness_t freshness_active_playlist;
+	freshness_t freshness_active_playlist_name;
 };
 
 cli_cache_t *cli_cache_init ();
 void cli_cache_start (cli_infos_t *infos);
+gboolean cli_cache_is_fresh (cli_cache_t *cache);
 void cli_cache_free (cli_cache_t *cache);
 
 #endif /* __CLI_INFOS_H__ */

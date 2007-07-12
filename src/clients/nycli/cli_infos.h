@@ -47,7 +47,7 @@ struct cli_infos_St {
 };
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
-gboolean cli_infos_connect (cli_infos_t *infos);
+gboolean cli_infos_connect (cli_infos_t *infos, gboolean autostart);
 void cli_infos_loop_suspend (cli_infos_t *infos);
 void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);

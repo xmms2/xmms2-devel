@@ -26,24 +26,28 @@
 
 /* Setup commands */
 
-#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, needconn, usage, desc) \
+#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, req, usage, desc) \
 	void \
 	setupcmd (command_action_t *action) \
-	{ command_action_fill (action, name, cmd, needconn, NULL, usage, desc); }
+	{ command_action_fill (action, name, cmd, req, NULL, usage, desc); }
 
-CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, TRUE, NULL, _("Start playback."))
-CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, TRUE, NULL, _("Pause playback."))
-CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, TRUE, _("<time|offset>"),
+CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, COMMAND_REQ_CONNECTION, NULL,
+                 _("Start playback."))
+CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, COMMAND_REQ_CONNECTION, NULL,
+                 _("Pause playback."))
+CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, COMMAND_REQ_CONNECTION, _("<time|offset>"),
                  _("Seek to a relative or absolute position."))
-CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, TRUE, _("[offset]"),
+CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, COMMAND_REQ_CONNECTION, _("[offset]"),
                  _("Jump to previous song."))
-CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, TRUE, _("[offset]"),
+CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, COMMAND_REQ_CONNECTION, _("[offset]"),
                  _("Jump to next song."))
-CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, TRUE, _("<pattern>"),
+CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, COMMAND_REQ_CONNECTION, _("<pattern>"),
                  _("Display all the properties for all media matching the pattern."))
-CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit, FALSE, NULL, _("Terminate the server."))
-CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, FALSE, NULL, _("Exit the shell-like interface."))
-CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, FALSE, _("[command]"),
+CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_NO_AUTOSTART, NULL,
+                 _("Terminate the server."))
+CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, COMMAND_REQ_NONE, NULL, _("Exit the shell-like interface."))
+CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, COMMAND_REQ_NONE, _("[command]"),
                  _("List all commands, or help on one command."))
 
 void
@@ -54,7 +58,7 @@ cli_stop_setup (command_action_t *action)
 		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, _("Duration after which to stop playback."), "time" },
 		{ NULL }
 	};
-	command_action_fill (action, "stop", &cli_stop, TRUE, flags,
+	command_action_fill (action, "stop", &cli_stop, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-n <tracks> | -t <time>]"),
 	                     "Stop playback.");
 }
@@ -66,7 +70,7 @@ cli_jump_setup (command_action_t *action)
 		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first track matching the pattern backwards"), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "jump", &cli_jump, TRUE, flags,
+	command_action_fill (action, "jump", &cli_jump, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-b] <pattern>"),
 	                     _("Jump to the first media maching the pattern."));
 }
@@ -81,10 +85,24 @@ cli_search_setup (command_action_t *action)
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop1[,prop2...]" },
 		{ NULL }
 	};
-	command_action_fill (action, "search", &cli_search, TRUE, flags,
+	command_action_fill (action, "search", &cli_search, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-p <name> | -c <name>] [-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
 	                     _("Search and print all media matching the pattern. Search can be restricted\n"
-	                       "to a collection or a playlist by using the corresponding flag.""));
+	                       "to a collection or a playlist by using the corresponding flag."));
+}
+
+void
+cli_list_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist",   'p', 0, G_OPTION_ARG_STRING, NULL, _("List the given playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "list", &cli_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <name>] [pattern]"),
+	                     _("List the contents of a playlist (the active playlist by default). If a\n"
+	                       "pattern is provided, contents are further filtered and only the matching\n"
+	                       "media are displayed."));
 }
 
 void
@@ -95,9 +113,30 @@ cli_status_setup (command_action_t *action)
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
 	};
-	command_action_fill (action, "status", &cli_status, TRUE, flags,
+	command_action_fill (action, "status", &cli_status, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-r <time>] [-f <format>]"),
 	                     _("Display playback status, either continuously or once."));
+}
+
+
+
+column_display_t *
+create_column_display (cli_infos_t *infos, command_context_t *ctx)
+{
+	const gchar **columns = NULL;
+	column_display_t *coldisp;
+
+	coldisp = column_display_init (infos);
+	command_flag_stringlist_get (ctx, "columns", &columns);
+	if (columns) {
+		column_display_fill (coldisp, columns);
+	} else {
+		column_display_fill_default (coldisp);
+	}
+
+	/* FIXME: woops, cannot prefix order by '-' as this is a flag! user another? '!' ? */
+
+	return coldisp;
 }
 
 
@@ -263,8 +302,8 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	column_display_t *coldisp;
 	const gchar **order = NULL;
-	const gchar **columns = NULL;
 
 	/* FIXME: Support arguments -p and -c */
 
@@ -276,23 +315,54 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 		g_printf (_("Error: failed to parse the pattern!\n"));
 		cli_infos_loop_resume (infos);
 	} else {
-		column_display_t *coldisp;
-		coldisp = column_display_init (infos);
+		coldisp = create_column_display (infos, ctx);
 		command_flag_stringlist_get (ctx, "order", &order);
-		command_flag_stringlist_get (ctx, "columns", &columns);
-		if (columns) {
-			column_display_fill (coldisp, columns);
-		} else {
-			column_display_fill_default (coldisp);
-		}
-
-		/* FIXME: woops, cannot prefix order by '-' as this is a flag! */
 
 		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
 		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
+
+	if (pattern) {
+		g_free (pattern);
+	}
+
+	return TRUE;
+}
+
+gboolean cli_list (cli_infos_t *infos, command_context_t *ctx)
+{
+	gchar *pattern = NULL;
+	xmmsc_coll_t *query = NULL;
+	xmmsc_result_t *res;
+	column_display_t *coldisp;
+	gchar *playlist = NULL;
+
+	command_arg_longstring_get (ctx, 0, &pattern);
+	if (pattern) {
+		if (!xmmsc_coll_parse (pattern, &query)) {
+			g_printf (_("Error: failed to parse the pattern!\n"));
+			cli_infos_loop_resume (infos);
+			return;
+		}
+		/* FIXME: support filtering */
+	}
+
+	/* Default to active playlist (from cache) */
+	command_flag_string_get (ctx, "playlist", &playlist);
+	if (!playlist
+	    || strcmp (playlist, infos->cache->active_playlist_name) == 0) {
+		/* FIXME: Optim by reading data from cache */
+		playlist = XMMS_ACTIVE_PLAYLIST;
+	}
+
+	coldisp = create_column_display (infos, ctx);
+
+	res = xmmsc_playlist_list_entries (infos->conn, playlist);
+	xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
+	xmmsc_result_unref (res);
+	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
 	if (pattern) {
 		g_free (pattern);
@@ -331,12 +401,15 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
-	/* FIXME: Actually we need a connection. We just don't want to
-	 * start it for nothing. */
 	xmmsc_result_t *res;
-	res = xmmsc_quit (infos->conn);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+
+	if (infos->conn) {
+		res = xmmsc_quit (infos->conn);
+		xmmsc_result_notifier_set (res, cb_done, infos);
+		xmmsc_result_unref (res);
+	} else {
+		cli_infos_loop_resume (infos);
+	}
 
 	return TRUE;
 }

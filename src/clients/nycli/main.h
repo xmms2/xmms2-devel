@@ -24,12 +24,15 @@
 #define STDINFD 0
 #define PROMPT "nycli> "
 #define AUTO_UNIQUE_COMPLETE TRUE
+#define MAX_CACHE_REFRESH_LOOP 200
 
 /* FIXME: Change this to use gettext later on */
 #define _(String) (String)
 #define N_(String) String
 #define textdomain(Domain)
 #define bindtextdomain(Package, Directory)
+
+#define COMMAND_REQ_CHECK(action, reqmask) (((reqmask) & (action)->req) == (reqmask))
 
 typedef struct cli_infos_St cli_infos_t;
 typedef struct cli_cache_St cli_cache_t;
@@ -43,6 +46,13 @@ typedef GOptionEntry argument_t;
 typedef void (*command_setup_func)(command_action_t *action);
 typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
 
+typedef enum {
+	COMMAND_REQ_NONE         = 0,
+	COMMAND_REQ_CONNECTION   = 1,  /* need server connection */
+	COMMAND_REQ_NO_AUTOSTART = 2,  /* don't start server if not running */
+	COMMAND_REQ_CACHE        = 4   /* need cache */
+} command_req_t;
+
 struct command_context_St {
 	gint argc;
 	gchar **argv;
@@ -54,7 +64,7 @@ struct command_action_St {
 	gchar *usage;
 	gchar *description;
 	command_exec_func callback;
-	gboolean req_connection;
+	command_req_t req;
 	argument_t *argdefs;
 };
 

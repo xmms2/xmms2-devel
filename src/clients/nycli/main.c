@@ -26,6 +26,9 @@
 #include "readline.h"
 
 
+void loop_select (cli_infos_t *infos);
+
+
 void
 command_argument_free (void *x)
 {
@@ -54,6 +57,36 @@ command_context_free (command_context_t *ctx)
 	g_free (ctx);
 }
 
+
+gboolean
+command_runnable (cli_infos_t *infos, command_action_t *action)
+{
+	gint n = 0;
+
+	/* Require connection, abort on failure */
+	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CONNECTION) && !infos->conn) {
+		gboolean autostart;
+		autostart = !COMMAND_REQ_CHECK(action, COMMAND_REQ_NO_AUTOSTART);
+		if (!cli_infos_connect (infos, autostart) && autostart) {
+			return FALSE;
+		}
+	}
+
+	/* Get the cache ready if needed */
+	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CACHE)) {
+		while (!cli_cache_is_fresh (infos->cache)) {
+			/* Obviously, there is a problem with updating the cache, abort */
+			if (n == MAX_CACHE_REFRESH_LOOP) {
+				g_printf (_("Failed to update the cache!"));
+				return FALSE;
+			}
+			loop_select (infos);
+			n++;
+		}
+	}
+
+	return TRUE;
+}
 
 void
 command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
@@ -111,12 +144,11 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 		g_option_context_free (context);
 
-		/* Help flag passed, bypass action and show help */
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
+			/* Help flag passed, bypass action and show help */
 			help_command (infos, *argv);
-
-		/* Run action if connection status ok */
-		} else if (!action->req_connection || infos->conn || cli_infos_connect (infos)) {
+		} else if (command_runnable (infos, action)) {
+			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);
 			action->callback (infos, ctx);
 		}
@@ -126,7 +158,6 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		g_printf (_("Unknown command: '%s'\n"), *argv);
 		g_printf (_("Type 'help' for usage.\n"));
 	}
-
 }
 
 void

@@ -233,7 +233,7 @@ cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 	GArray *playlist;
 
 	currpos = infos->cache->currpos;
-	plsize = infos->cache->active_playlist_size;
+	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
 	if (!xmmsc_result_iserror (res) && xmmsc_result_list_valid (res)) {

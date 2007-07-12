@@ -19,55 +19,93 @@
 #include "cli_infos.h"
 
 
-static
-void unref_transient_result (xmmsc_result_t *res)
+
+static void
+freshness_init (freshness_t *fresh)
+{
+	fresh->status = CLI_CACHE_NOT_INIT;
+	fresh->pending_queries = 0;
+}
+
+static gboolean
+freshness_is_fresh (freshness_t *fresh)
+{
+	return fresh->status == CLI_CACHE_FRESH;
+}
+
+static void
+freshness_requested (freshness_t *fresh)
+{
+	fresh->status = CLI_CACHE_PENDING;
+	fresh->pending_queries++;
+}
+
+static void
+freshness_received (freshness_t *fresh)
+{
+	if (fresh->status == CLI_CACHE_NOT_INIT) {
+		fresh->status = CLI_CACHE_FRESH;
+		fresh->pending_queries = 0;
+	} else if (fresh->status == CLI_CACHE_PENDING) {
+		if (fresh->pending_queries > 0) {
+			fresh->pending_queries--;
+		}
+		if (fresh->pending_queries == 0) {
+			fresh->status = CLI_CACHE_FRESH;
+		}
+	}
+}
+
+static void
+unref_transient_result (xmmsc_result_t *res)
 {
 	if (xmmsc_result_get_class (res) != XMMSC_RESULT_CLASS_BROADCAST) {
 		xmmsc_result_unref (res);
 	}
 }
 
-static
-void refresh_uint (xmmsc_result_t *res, void *udata)
+static void
+refresh_currpos (xmmsc_result_t *res, void *udata)
 {
-	guint *v = (guint *) udata;
+	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_uint (res, v);
+		xmmsc_result_get_uint (res, &cache->currpos);
 	}
 
+	freshness_received (&cache->freshness_currpos);
 	unref_transient_result (res);
 }
 
-static
-void refresh_string (xmmsc_result_t *res, void *udata)
+static void
+refresh_active_playlist_name (xmmsc_result_t *res, void *udata)
 {
-	gchar **v = (gchar **) udata;
+	cli_cache_t *cache = (cli_cache_t *) udata;
 	gchar *buf;
 
 	if (!xmmsc_result_iserror (res) && xmmsc_result_get_string (res, &buf)) {
-		if (*v) {
-			g_free (*v);
+		if (cache->active_playlist_name) {
+			g_free (cache->active_playlist_name);
 		}
-		*v = g_strdup (buf);
+		cache->active_playlist_name = g_strdup (buf);
 	}
 
+	freshness_received (&cache->freshness_active_playlist_name);
 	unref_transient_result (res);
 }
 
-static
-void refresh_active_playlist (xmmsc_result_t *res, void *udata)
+static void
+refresh_active_playlist (xmmsc_result_t *res, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
 	guint id;
 
 	if (!xmmsc_result_iserror (res)) {
 		/* Reset array */
-		if (cache->active_playlist_size > 0) {
-			gint end_index = cache->active_playlist_size - 1;
+		if (cache->active_playlist->len > 0) {
+			gint end_index = cache->active_playlist->len - 1;
 			cache->active_playlist = g_array_remove_range (cache->active_playlist,
 			                                               0, end_index);
-			cache->active_playlist_size = 0;
 		}
 
 		/* .. and refill it */
@@ -79,15 +117,15 @@ void refresh_active_playlist (xmmsc_result_t *res, void *udata)
 			g_array_append_val (cache->active_playlist, id);
 
 			xmmsc_result_list_next (res);
-			cache->active_playlist_size++;
 		}
 	}
 
+	freshness_received (&cache->freshness_active_playlist);
 	unref_transient_result (res);
 }
 
-static
-void update_active_playlist (xmmsc_result_t *res, void *udata)
+static void
+update_active_playlist (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_cache_t *cache = infos->cache;
@@ -110,12 +148,10 @@ void update_active_playlist (xmmsc_result_t *res, void *udata)
 	switch (type) {
 	case XMMS_PLAYLIST_CHANGED_ADD:
 		g_array_append_val (cache->active_playlist, id);
-		cache->active_playlist_size++;
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_INSERT:
 		g_array_insert_val (cache->active_playlist, pos, id);
-		cache->active_playlist_size++;
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_MOVE:
@@ -126,25 +162,24 @@ void update_active_playlist (xmmsc_result_t *res, void *udata)
 
 	case XMMS_PLAYLIST_CHANGED_REMOVE:
 		g_array_remove_index (cache->active_playlist, pos);
-		cache->active_playlist_size--;
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_SHUFFLE:
 	case XMMS_PLAYLIST_CHANGED_SORT:
 	case XMMS_PLAYLIST_CHANGED_CLEAR:
 		/* Oops, reload the whole playlist */
-		/* FIXME: the cache is dirty until it's refreshed.. ! */
 		refres = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
 		xmmsc_result_notifier_set (refres, &refresh_active_playlist, infos->cache);
 		xmmsc_result_unref (refres);
+		freshness_requested (&cache->freshness_active_playlist);
 		break;
 	}
 
 	unref_transient_result (res);
 }
 
-static
-void reload_active_playlist (xmmsc_result_t *res, void *udata)
+static void
+reload_active_playlist (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *refres;
@@ -159,13 +194,14 @@ void reload_active_playlist (xmmsc_result_t *res, void *udata)
 	}
 
 	/* Get all the entries again */
-	/* FIXME: the cache is dirty until it's refreshed.. ! */
 	refres = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
 	xmmsc_result_notifier_set (refres, &refresh_active_playlist, infos->cache);
 	xmmsc_result_unref (refres);
+	freshness_requested (&infos->cache->freshness_active_playlist);
 
 	unref_transient_result (res);
 }
+
 
 cli_cache_t *
 cli_cache_init ()
@@ -173,7 +209,14 @@ cli_cache_init ()
 	cli_cache_t *cache;
 
 	cache = g_new0 (cli_cache_t, 1);
+	cache->currpos = 0;
 	cache->active_playlist = g_array_new (FALSE, TRUE, sizeof (guint));
+	cache->active_playlist_name = NULL;
+
+	/* Init the freshness state */
+	freshness_init (&cache->freshness_currpos);
+	freshness_init (&cache->freshness_active_playlist);
+	freshness_init (&cache->freshness_active_playlist_name);
 
 	return cache;
 }
@@ -183,13 +226,9 @@ cli_cache_start (cli_infos_t *infos)
 {
 	xmmsc_result_t *res;
 
-	/* FIXME: Possible race condition if cache accessed before value
-	 *        has arrived? workaround: set a flag until the cache is
-	 *        filled. */
-
 	/* Setup one-time value fetchers, for init */
 	res = xmmsc_playlist_current_pos (infos->conn, XMMS_ACTIVE_PLAYLIST);
-	xmmsc_result_notifier_set (res, &refresh_uint, &infos->cache->currpos);
+	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
 	xmmsc_result_unref (res);
 
 	res = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
@@ -197,13 +236,13 @@ cli_cache_start (cli_infos_t *infos)
 	xmmsc_result_unref (res);
 
 	res = xmmsc_playlist_current_active (infos->conn);
-	xmmsc_result_notifier_set (res, &refresh_string,
-	                           &infos->cache->active_playlist_name);
+	xmmsc_result_notifier_set (res, &refresh_active_playlist_name,
+	                           infos->cache);
 	xmmsc_result_unref (res);
 
 	/* Setup async listeners */
 	res = xmmsc_broadcast_playlist_current_pos (infos->conn);
-	xmmsc_result_notifier_set (res, &refresh_uint, &infos->cache->currpos);
+	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
 	xmmsc_result_unref (res);
 
 	res = xmmsc_broadcast_playlist_changed (infos->conn);
@@ -213,6 +252,15 @@ cli_cache_start (cli_infos_t *infos)
 	res = xmmsc_broadcast_playlist_loaded (infos->conn);
 	xmmsc_result_notifier_set (res, &reload_active_playlist, infos);
 	xmmsc_result_unref (res);
+}
+
+gboolean
+cli_cache_is_fresh (cli_cache_t *cache)
+{
+	/* Check if all items are fresh */
+ 	return freshness_is_fresh (&cache->freshness_currpos) &&
+	       freshness_is_fresh (&cache->freshness_active_playlist) &&
+	       freshness_is_fresh (&cache->freshness_active_playlist_name);
 }
 
 void

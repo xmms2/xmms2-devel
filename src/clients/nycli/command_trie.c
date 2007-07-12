@@ -121,7 +121,6 @@ argument_copy (const argument_t src[], argument_t **dest)
 
 	*dest = g_new0 (argument_t, i + 2);
 
-	/* FIXME: Shouldn't we copy the data here? */
 	/* Copy array, last element is all NULL */
 	for (i = 0, arg = *dest; src && src[i].long_name; ++i, ++arg) {
 		arg->long_name = src[i].long_name;
@@ -169,7 +168,7 @@ command_trie_insert (command_trie_t* trie, command_action_t *action)
 
 command_action_t*
 command_action_fill (command_action_t *action, const gchar *name,
-                     command_exec_func cmd, gboolean needconn,
+                     command_exec_func cmd, command_req_t req,
                      const argument_t flags[], const gchar *usage,
                      const gchar *description)
 {
@@ -177,7 +176,7 @@ command_action_fill (command_action_t *action, const gchar *name,
 	action->usage = g_strdup (usage);
 	action->description = g_strdup (description);
 	action->callback = cmd;
-	action->req_connection = needconn;
+	action->req = req;
 	argument_copy (flags, &action->argdefs);
 }
 

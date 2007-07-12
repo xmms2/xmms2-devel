@@ -76,10 +76,9 @@ cli_infos_disconnect_callback (int flag, void *userdata)
 }
 
 gboolean
-cli_infos_connect (cli_infos_t *infos)
+cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 {
 	gchar *path;
-	gint ret;
 
 	infos->conn = xmmsc_init (CLI_CLIENTNAME);
 	if (!infos->conn) {
@@ -88,14 +87,23 @@ cli_infos_connect (cli_infos_t *infos)
 	}
 
 	path = getenv ("XMMS_PATH");
-	ret = xmmsc_connect (infos->conn, path);
-	if (!ret && !cli_infos_autostart (infos, path)) {
-		if (path) {
-			g_printf (_("Could not connect to server at '%s'!\n"), path);
-		} else {
-			g_printf (_("Could not connect to server at default path!\n"));
+	if (!xmmsc_connect (infos->conn, path)) {
+		if (!autostart) {
+			/* Failed to connect, but don't autostart */
+			xmmsc_unref (infos->conn);
+			infos->conn = NULL;
+			return FALSE;
+		} else if (!cli_infos_autostart (infos, path)) {
+			/* Autostart failed, abort now */
+			if (path) {
+				g_printf (_("Could not connect to server at '%s'!\n"), path);
+			} else {
+				g_printf (_("Could not connect to server at default path!\n"));
+			}
+			xmmsc_unref (infos->conn);
+			infos->conn = NULL;
+			return FALSE;
 		}
-		return FALSE;
 	}
 
 	xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos);
