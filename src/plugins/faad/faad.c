@@ -159,6 +159,7 @@ xmms_faad_init (xmms_xform_t *xform)
 	}
 
 	while (data->buffer_length < 8) {
+		xmms_error_reset (&error);
 		bytes_read = xmms_xform_read (xform,
 		                              (gchar *) data->buffer + data->buffer_length,
 		                              data->buffer_size - data->buffer_length,
@@ -225,6 +226,22 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	data->samplerate = samplerate;
 	data->channels = channels;
+
+	/* Because for HE AAC files some versions of libfaad return the wrong
+	 * samplerate in init, we have to do one read and let it decide the
+	 * real parameters. After changing sample parameters and format is
+	 * supported, this hack should be removed and handled in read instead. */
+	{
+		gchar tmpbuf[1024];
+
+		xmms_error_reset (&error);
+		bytes_read = xmms_faad_read (xform, tmpbuf, 1024, &error);
+		if (bytes_read <= 0) {
+			XMMS_DBG ("First read from faad decoder failed!");
+			return FALSE;
+		}
+		g_string_prepend_len (data->outbuf, tmpbuf, bytes_read);
+	}
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -295,6 +312,14 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
 			gint32 temp, toskip = 0;
+
+			if (data->samplerate != frameInfo.samplerate ||
+			    data->channels != frameInfo.channels) {
+				/* We should inform output to change parameters somehow */
+				XMMS_DBG ("Output format changed in the middle of a read!");
+				data->samplerate = frameInfo.samplerate;
+				data->channels = frameInfo.channels;
+			}
 
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
 				toskip = (temp * frameInfo.channels *
