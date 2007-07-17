@@ -24,7 +24,12 @@ sub new_from {
 sub can {
     my $self = shift;
 
-    return $$self->can(@_);
+    if (blessed $self) {
+        my $code = $$self->can(@_);
+        return $code if $code;
+    }
+
+    return $self->UNIVERSAL::can(@_);
 }
 
 our $AUTOLOAD;
