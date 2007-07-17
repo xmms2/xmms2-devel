@@ -109,7 +109,7 @@ void
 perl_xmmsclient_xmmsc_result_dict_foreach_cb (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data)
 {
 	HV *hash = (HV *)user_data;
-	
+
 	hv_store(hash, (const char *)key, strlen((const char *)key), perl_xmmsclient_xmms_result_cast_value (type, value), 0);
 }
 
@@ -133,7 +133,7 @@ perl_xmmsclient_xmmsc_result_get_propdict (xmmsc_result_t *res)
 {
 	SV *hash;
 	SV *tie;
-	
+
 	xmmsc_result_ref (res);
 
 	tie = perl_xmmsclient_new_sv_from_ptr (res, "Audio::XMMSClient::Result::PropDict::Tie");
@@ -236,7 +236,7 @@ xmmsc_result_notifier_set (res, func, data=NULL)
 	CODE:
 		c_res = (xmmsc_result_t *)perl_xmmsclient_get_ptr_from_sv (res, "Audio::XMMSClient::Result");
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT;
-		
+
 		cb = perl_xmmsclient_callback_new (func, data, res, 1, param_types);
 
 		xmmsc_result_notifier_set_full (c_res, perl_xmmsclient_xmmsc_result_notifyer_cb,
