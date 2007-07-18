@@ -64,6 +64,10 @@ xmmsc_coll_set_idlist (coll, ...)
 
 		for (i = 0; i < items - 1; i++) {
 			ids[i] = SvUV (ST (i + 1));
+			if (ids[i] == 0) {
+				free (ids);
+				croak("0 is an invalid mlib id");
+			}
 		}
 
 		ids[items - 1] = 0;
@@ -86,18 +90,42 @@ int
 xmmsc_coll_idlist_append (coll, id)
 		xmmsc_coll_t *coll
 		unsigned int id
+	INIT:
+		if (id == 0) {
+			croak ("0 is an invalid mlib id");
+		}
 
 int
 xmmsc_coll_idlist_insert (coll, index, id)
 		xmmsc_coll_t *coll
 		unsigned int index
 		unsigned int id
+	INIT:
+		if (index > xmmsc_coll_idlist_get_size (coll)) {
+			croak ("inserting id after end of idlist");
+		}
+
+		if (id == 0) {
+			croak ("0 is an invalid mlib id");
+		}
 
 int
 xmmsc_coll_idlist_move (coll, from, to)
 		xmmsc_coll_t *coll
 		unsigned int from
 		unsigned int to
+	PREINIT:
+		size_t idlist_len;
+	INIT:
+		idlist_len = xmmsc_coll_idlist_get_size (coll);
+
+		if (from > idlist_len) {
+			croak ("trying to move id from after the idlists end");
+		}
+
+		if (to >= idlist_len) {
+			croak ("trying to move id to after the idlists end");
+		}
 
 int
 xmmsc_coll_idlist_clear (coll)
@@ -107,6 +135,10 @@ NO_OUTPUT int
 xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, OUTLIST uint32_t val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
+
+		if (index > xmmsc_coll_idlist_get_size (coll)) {
+			croak ("trying to get an id from behind the idlists end");
+		}
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -116,6 +148,13 @@ xmmsc_coll_idlist_set_index (coll, index, val)
 		xmmsc_coll_t *coll
 		unsigned int index
 		uint32_t val
+	PREINIT:
+		size_t idlist_len;
+	INIT:
+		idlist_len = xmmsc_coll_idlist_get_size (coll);
+		if (idlist_len == 0 || index > idlist_len - 1) {
+			croak ("trying to set an id after the end of the idlist");
+		}
 
 size_t
 xmmsc_coll_idlist_get_size (coll)
@@ -157,8 +196,8 @@ operands (coll)
 		PERL_UNUSED_VAR (ix);
 
 		for (xmmsc_coll_operand_list_first (coll);
-				xmmsc_coll_operand_list_entry (coll, &op);
-				xmmsc_coll_operand_list_next (coll)) {
+		     xmmsc_coll_operand_list_entry (coll, &op);
+		     xmmsc_coll_operand_list_next (coll)) {
 			xmmsc_coll_ref (op);
 			XPUSHs (sv_2mortal (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection")));
 		}
@@ -176,6 +215,8 @@ xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, OUTLIST xmmsc_coll_t *op)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 	POSTCALL:
+		xmmsc_coll_ref (op);
+
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
 
