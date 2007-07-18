@@ -199,20 +199,29 @@ xmmsc_result_get_class (res)
 void
 xmmsc_result_disconnect (res)
 		xmmsc_result_t *res
+	PREINIT:
+		xmmsc_result_type_t type;
+	INIT:
+		type = xmmsc_result_get_class (res);
+		if (type != XMMSC_RESULT_CLASS_SIGNAL && type != XMMSC_RESULT_CLASS_BROADCAST) {
+			croak ("calling disconnect on a result that's neither a signal nor a broadcast");
+		}
 
 void
-xmmsc_result_restart (sv)
-		SV *sv
+xmmsc_result_restart (res)
+		xmmsc_result_t *res
 	PREINIT:
 		MAGIC *mg;
-		xmmsc_result_t *res, *res2;
+		xmmsc_result_t *res2;
+	INIT:
+		if (xmmsc_result_get_class (res) != XMMSC_RESULT_CLASS_SIGNAL) {
+			croak ("trying to restart a result that's not a signal");
+		}
 	CODE:
-		res = perl_xmmsclient_get_ptr_from_sv (sv, "Audio::XMMSClient::Result");
-
 		res2 = xmmsc_result_restart (res);
 		xmmsc_result_unref (res);
 
-		mg = perl_xmmsclient_get_magic_from_sv (sv, "Audio::XMMSClient::Result");
+		mg = perl_xmmsclient_get_magic_from_sv (ST(0), "Audio::XMMSClient::Result");
 		mg->mg_ptr = (char *)res2;
 
 void
