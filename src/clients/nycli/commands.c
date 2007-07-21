@@ -398,14 +398,13 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-
+/* The loop is resumed in the disconnect callback */
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
 	if (infos->conn) {
 		res = xmmsc_quit (infos->conn);
-		xmmsc_result_notifier_set (res, cb_done, infos);
 		xmmsc_result_unref (res);
 	} else {
 		cli_infos_loop_resume (infos);

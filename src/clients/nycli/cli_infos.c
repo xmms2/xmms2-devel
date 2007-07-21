@@ -22,10 +22,6 @@
 #include "command_trie.h"
 
 
-static gboolean cli_infos_autostart (cli_infos_t *infos, gchar *path);
-static void cli_infos_disconnect_callback (int flag, void *userdata);
-
-
 gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
@@ -67,18 +63,19 @@ cli_infos_loop_stop (cli_infos_t *infos)
 
 /* Called on server disconnection. We can keep the loop running. */
 void
-cli_infos_disconnect_callback (int flag, void *userdata)
+cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
-	g_printf (_("Server disconnected!\n"));
-	/* FIXME: Make sure this does what one expects.. */
 	infos->conn = NULL;
+	xmmsc_result_unref (res);
+	cli_infos_loop_resume (infos);
 }
 
 gboolean
 cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 {
 	gchar *path;
+	xmmsc_result_t *res;
 
 	infos->conn = xmmsc_init (CLI_CLIENTNAME);
 	if (!infos->conn) {
@@ -106,7 +103,10 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 		}
 	}
 
-	xmmsc_ipc_disconnect_set (infos->conn, &cli_infos_disconnect_callback, infos);
+	/* Reset the connection state on server quit */
+	res = xmmsc_broadcast_quit (infos->conn);
+	xmmsc_result_notifier_set (res, &cli_infos_disconnect_callback, infos);
+	xmmsc_result_unref (res);
 
 	cli_cache_start (infos);
 
