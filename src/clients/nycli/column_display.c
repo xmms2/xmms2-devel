@@ -18,20 +18,25 @@
 
 struct column_display_St {
 	guint num_cols;
-	column_def_t *cols;
+	GArray *cols;
 	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
 	gchar *buffer;       /* Used to render strings. */
 };
 
 struct column_def_St {
-	gchar *name;
-	gchar *property;
+	const gchar *name;
+	union {
+		const gchar *string;
+		gpointer udata;
+	} arg;
 	guint size;
-	guint adapted_size;
 	gboolean fixed;
-};
+	column_def_align_t align;
+	column_display_rendering_f render;
 
+	guint requested_size;
+};
 
 /* FIXME: not portable? */
 static gint
@@ -65,22 +70,22 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 	gint ival;
 	gchar *sval;
 
-	switch (xmmsc_result_get_dict_entry_type (res, coldef->property)) {
+	switch (xmmsc_result_get_dict_entry_type (res, coldef->arg.string)) {
 	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-		xmmsc_result_get_dict_entry_uint (res, coldef->property, &uval);
-		realsize = g_snprintf (buffer, coldef->adapted_size + 1, "%u", uval);
+		xmmsc_result_get_dict_entry_uint (res, coldef->arg.string, &uval);
+		realsize = g_snprintf (buffer, coldef->size + 1, "%u", uval);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		xmmsc_result_get_dict_entry_int (res, coldef->property, &ival);
-		realsize = g_snprintf (buffer, coldef->adapted_size + 1, "%d", ival);
+		xmmsc_result_get_dict_entry_int (res, coldef->arg.string, &ival);
+		realsize = g_snprintf (buffer, coldef->size + 1, "%d", ival);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		xmmsc_result_get_dict_entry_string (res, coldef->property, &sval);
-		realsize = g_snprintf (buffer, coldef->adapted_size + 1, "%s", sval);
+		xmmsc_result_get_dict_entry_string (res, coldef->arg.string, &sval);
+		realsize = g_snprintf (buffer, coldef->size + 1, "%s", sval);
 		break;
 	default:
 		/* No valid data, display empty value */
-		realsize = g_snprintf (buffer, coldef->adapted_size + 1, "");
+		realsize = g_snprintf (buffer, coldef->size + 1, "");
 		break;
 	}
 
@@ -88,7 +93,17 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 }
 
 static void
-print_fixed_width_value (gchar *value, gint width, gint realsize)
+print_padding (gint length)
+{
+	gint i;
+	for (i = 0; i < length; ++i) {
+		g_printf (" ");
+	}
+}
+
+static void
+print_fixed_width_string (gchar *value, gint width, gint realsize,
+                          column_def_align_t align)
 {
 	/* Value was cut, show an ellispsis */
 	if (realsize > width) {
@@ -96,47 +111,63 @@ print_fixed_width_value (gchar *value, gint width, gint realsize)
 		value[ width - 2 ] = '.';
 	}
 
-	g_printf (value);
-
-	/* Pad with spaces */
-	if (width > realsize) {
-		gint k;
-		for (k = realsize; k < width; ++k) {
-			g_printf (" ");
-		}
+	if (align == COLUMN_DEF_ALIGN_LEFT) {
+		g_printf (value);
+		print_padding (width - realsize);
+	} else {
+		print_padding (width - realsize);
+		g_printf (value);
 	}
 }
 
-
-void
-column_def_elem_init (column_def_t *coldef, const gchar *name,
-                      const gchar *property, guint size, gboolean fixed)
-{
-	coldef->name = g_strdup (name);
-	coldef->property = g_strdup (property);
-	coldef->size = size;
-	coldef->adapted_size = size;
-	coldef->fixed = fixed;
-}
-
-column_def_t *
-column_def_init (const gchar *name, const gchar *property, guint size,
-                 gboolean fixed)
+static column_def_t *
+column_def_init (const gchar *name, guint size, gboolean fixed,
+                 column_def_align_t align, column_display_rendering_f render)
 {
 	column_def_t *coldef;
 
 	coldef = g_new0 (column_def_t, 1);
-	column_def_elem_init (coldef, name, property, size, fixed);
+	coldef->name = name;
+	coldef->size = size;
+	coldef->requested_size = size;
+	coldef->fixed = fixed;
+	coldef->align = align;
+	coldef->render = render;
+
+	return coldef;
+}
+
+static column_def_t *
+column_def_init_with_prop (const gchar *name, const gchar *property, guint size,
+                           gboolean fixed, column_def_align_t align,
+                           column_display_rendering_f render)
+{
+	column_def_t *coldef;
+
+	coldef = column_def_init (name, size, fixed, align, render);
+	coldef->arg.string = property;
+
+	return coldef;
+}
+
+static column_def_t *
+column_def_init_with_udata (const gchar *name, gpointer udata, guint size,
+                            gboolean fixed, column_def_align_t align,
+                            column_display_rendering_f render)
+{
+	column_def_t *coldef;
+
+	coldef = column_def_init (name, size, fixed, align, render);
+	coldef->arg.udata = udata;
 
 	return coldef;
 }
 
 /* Free the contents of the column_def (NOT the column_def itself) */
 void
-column_def_elem_free (column_def_t *coldef)
+column_def_free (column_def_t *coldef)
 {
-	g_free (coldef->name);
-	g_free (coldef->property);
+	g_free (coldef);
 }
 
 column_display_t *
@@ -146,8 +177,7 @@ column_display_init (cli_infos_t *infos)
 
 	disp = g_new0 (column_display_t, 1);
 	disp->infos = infos;
-	disp->num_cols = 0;
-	disp->cols = NULL;
+	disp->cols = g_array_new (TRUE, TRUE, sizeof (column_def_t *));
 	disp->counter = 0;
 	disp->buffer = NULL;
 
@@ -155,51 +185,48 @@ column_display_init (cli_infos_t *infos)
 }
 
 void
-column_display_fill (column_display_t *disp, const gchar **props)
+column_display_add_separator (column_display_t *disp, const gchar *sep)
 {
-	gint i;
-
-	/* Free previous coldefs */
-	if (disp->num_cols > 0) {
-		for (i = 0; i < disp->num_cols; ++i) {
-			column_def_elem_free (&disp->cols[i]);
-		}
-		g_free (disp->cols);
-	}
-
-	/* Count columns */
-	for (i = 0; props[i]; ++i);
-
-	disp->num_cols = i;
-	disp->cols = g_new0 (column_def_t, i);
-	for (i = 0; props[i]; ++i) {
-		/* FIXME: clever this up */
-		if (strcmp (props[i], "id") == 0) {
-			column_def_elem_init (&disp->cols[i], props[i], props[i], 5, TRUE);
-		} else {
-			column_def_elem_init (&disp->cols[i], props[i], props[i], 20, FALSE);
-		}
-	}
+	column_def_t *coldef;
+	coldef = column_def_init (sep, strlen (sep), TRUE, COLUMN_DEF_ALIGN_LEFT,
+	                          column_display_render_text);
+	disp->cols = g_array_append_val (disp->cols, coldef);
 }
 
 void
-column_display_fill_default (column_display_t *disp)
+column_display_add_property (column_display_t *disp, const gchar *label,
+                             const gchar *prop, guint size, gboolean fixed,
+                             column_def_align_t align)
 {
-	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
-	column_display_fill (disp, default_columns);
+	column_def_t *coldef;
+	coldef = column_def_init_with_prop (label, prop, size, fixed, align,
+	                                    column_display_render_property);
+	disp->cols = g_array_append_val (disp->cols, coldef);
+}
+
+/* FIXME: custom selector string */
+void
+column_display_add_special (column_display_t *disp, const gchar *label,
+                            gpointer userdata, guint size,
+                            column_def_align_t align,
+                            column_display_rendering_f render)
+{
+	column_def_t *coldef;
+	coldef = column_def_init_with_udata (label, userdata, size, TRUE, align, render);
+	disp->cols = g_array_append_val (disp->cols, coldef);
 }
 
 void
 column_display_free (column_display_t *disp)
 {
 	gint i;
+	column_def_t *coldef;
 
-	if (disp->cols) {
-		for (i = 0; i < disp->num_cols; ++i) {
-			column_def_elem_free (&disp->cols[i]);
-		}
-		g_free (disp->cols);
+	for (i = 0; i < disp->cols->len; ++i) {
+		coldef = g_array_index (disp->cols, column_def_t *, i);
+		column_def_free (coldef);
 	}
+	g_array_free (disp->cols, FALSE);
 
 	if (disp->buffer) {
 		g_free (disp->buffer);
@@ -220,6 +247,7 @@ column_display_print_header (column_display_t *disp)
 	gint i, d;
 	gint termwidth;
 	gint realsize;
+	column_def_t *coldef;
 
 	termwidth = find_terminal_width ();
 
@@ -231,14 +259,11 @@ column_display_print_header (column_display_t *disp)
 	g_printf ("\n");
 
 	/* Display column headers */
-	for (i = 0; i < disp->num_cols; ++i) {
-		if (i > 0) {
-			g_printf ("|");
-		}
-
-		realsize = g_snprintf (disp->buffer, disp->cols[i].adapted_size + 1,
-		                       disp->cols[i].name);
-		print_fixed_width_value (disp->buffer, disp->cols[i].adapted_size, realsize);
+	for (i = 0; i < disp->cols->len; ++i) {
+		coldef = g_array_index (disp->cols, column_def_t *, i);
+		realsize = g_snprintf (disp->buffer, coldef->size + 1, coldef->name);
+		print_fixed_width_string (disp->buffer, coldef->size, realsize,
+		                          coldef->align);
 	}
 	g_printf ("\n");
 
@@ -249,6 +274,7 @@ column_display_print_footer (column_display_t *disp)
 {
 	gint i, d;
 	gint termwidth;
+	/* FIXME: put elsewhere */
 	const gint maxbufsize = 30;
 	gchar buf[maxbufsize];
 
@@ -268,51 +294,45 @@ column_display_prepare (column_display_t *disp)
 	gint termwidth, availchars, totalchars;
 	gint i;
 	double ratio;
+	column_def_t *coldef;
 
 	termwidth = find_terminal_width ();
 	availchars = termwidth;
 	totalchars = 0;
 
 	/* Exclude fixed-size columns */
-	for (i = 0; i < disp->num_cols; ++i) {
-		if (disp->cols[i].fixed) {
-			availchars -= disp->cols[i].size;
+	for (i = 0; i < disp->cols->len; ++i) {
+		coldef = g_array_index (disp->cols, column_def_t *, i);
+		if (coldef->fixed) {
+			availchars -= coldef->requested_size;
 		} else {
-			totalchars += disp->cols[i].size;
+			totalchars += coldef->requested_size;
 		}
 	}
-	availchars -= disp->num_cols - 1; /* exclude separators */
 
 	/* Adapt the size of non-fixed columns */
 	ratio = ((double) availchars / totalchars);
-	for (i = 0; i < disp->num_cols; ++i) {
-		if (!disp->cols[i].fixed) {
-			disp->cols[i].adapted_size = disp->cols[i].size * ratio;
-			availchars -= disp->cols[i].adapted_size;
+	for (i = 0; i < disp->cols->len; ++i) {
+		coldef = g_array_index (disp->cols, column_def_t *, i);
+		if (!coldef->fixed) {
+			coldef->size = coldef->requested_size * ratio;
+			availchars -= coldef->requested_size;
 		}
 	}
 
-	/* FIXME: Could be smaller, but who cares */
 	disp->buffer = g_new0 (gchar, termwidth);
 }
 
 void
 column_display_print (column_display_t *disp, xmmsc_result_t *res)
 {
+	gint i;
+	column_def_t *coldef;
+
 	if (!xmmsc_result_iserror (res)) {
-		gint i;
-
-		for (i = 0; i < disp->num_cols; ++i) {
-			gint realsize, printsize;
-
-			/* Display separator and fixed-size value */
-			if (i > 0) {
-				g_printf ("|");
-			}
-
-			realsize = result_to_string (res, &disp->cols[i], disp->buffer);
-			print_fixed_width_value (disp->buffer, disp->cols[i].adapted_size,
-			                         realsize);
+		for (i = 0; i < disp->cols->len; ++i) {
+			coldef = g_array_index (disp->cols, column_def_t *, i);
+			coldef->render (disp, coldef, res);
 		}
 
 		g_printf ("\n");
@@ -321,4 +341,57 @@ column_display_print (column_display_t *disp, xmmsc_result_t *res)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
+}
+
+/** Display a row counter */
+void
+column_display_render_position (column_display_t *disp, column_def_t *coldef,
+                                xmmsc_result_t *res)
+{
+	gint realsize;
+
+	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%d",
+	                       disp->counter + 1);
+	print_fixed_width_string (disp->buffer, coldef->size, realsize,
+	                          coldef->align);
+}
+
+/**
+ * Highlight if the position of the row matches the userdata integer
+ * value.
+ */
+void
+column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
+                                 xmmsc_result_t *res)
+{
+	gint highlight = GPOINTER_TO_INT(coldef->arg.udata);
+
+	/* FIXME: Make these customizable */
+	if (disp->counter == highlight) {
+		g_printf ("->");
+	} else {
+		g_printf ("  ");
+	}
+}
+
+/** Always render the label text. */
+void
+column_display_render_text (column_display_t *disp, column_def_t *coldef,
+                            xmmsc_result_t *res)
+{
+	const gchar *sep = coldef->name;
+	g_printf (sep);
+}
+
+
+/** Render the selected property, possibly shortened. */
+void
+column_display_render_property (column_display_t *disp, column_def_t *coldef,
+                                xmmsc_result_t *res)
+{
+	gint realsize;
+
+	realsize = result_to_string (res, coldef, disp->buffer);
+	print_fixed_width_string (disp->buffer, coldef->size, realsize,
+	                          coldef->align);
 }

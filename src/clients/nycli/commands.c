@@ -119,9 +119,46 @@ cli_status_setup (command_action_t *action)
 }
 
 
+void
+fill_column_display (cli_infos_t *infos, column_display_t *disp,
+                     const gchar **columns)
+{
+	gint i;
+	gchar *nextsep = NULL;
+
+	for (i = 0; columns[i]; ++i) {
+		/* Separator between columns */
+		if (nextsep) {
+			column_display_add_separator (disp, nextsep);
+		}
+		nextsep = "| ";
+
+		/* FIXME: Allow flags to change alignment */
+
+		if (strcmp (columns[i], "id") == 0) {
+			column_display_add_property (disp, columns[i], columns[i], 5, TRUE,
+			                             COLUMN_DEF_ALIGN_LEFT);
+		} else if (strcmp (columns[i], "pos") == 0) {
+			column_display_add_special (disp, "pos", NULL, 5,
+			                            COLUMN_DEF_ALIGN_RIGHT,
+			                            column_display_render_position);
+			nextsep = "/";
+		} else if (strcmp (columns[i], "curr") == 0) {
+			column_display_add_special (disp, "",
+			                            GINT_TO_POINTER(infos->cache->currpos),
+			                            2, COLUMN_DEF_ALIGN_LEFT,
+			                            column_display_render_highlight);
+			nextsep = FALSE;
+		} else {
+			column_display_add_property (disp, columns[i], columns[i], 20,
+			                             FALSE, COLUMN_DEF_ALIGN_LEFT);
+		}
+	}
+}
 
 column_display_t *
-create_column_display (cli_infos_t *infos, command_context_t *ctx)
+create_column_display (cli_infos_t *infos, command_context_t *ctx,
+                       const gchar **default_columns)
 {
 	const gchar **columns = NULL;
 	column_display_t *coldisp;
@@ -129,12 +166,10 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx)
 	coldisp = column_display_init (infos);
 	command_flag_stringlist_get (ctx, "columns", &columns);
 	if (columns) {
-		column_display_fill (coldisp, columns);
+		fill_column_display (infos, coldisp, columns);
 	} else {
-		column_display_fill_default (coldisp);
+		fill_column_display (infos, coldisp, default_columns);
 	}
-
-	/* FIXME: woops, cannot prefix order by '-' as this is a flag! user another? '!' ? */
 
 	return coldisp;
 }
@@ -304,6 +339,7 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
+	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
 
 	/* FIXME: Support arguments -p and -c */
 
@@ -315,8 +351,10 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 		g_printf (_("Error: failed to parse the pattern!\n"));
 		cli_infos_loop_resume (infos);
 	} else {
-		coldisp = create_column_display (infos, ctx);
+		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
+
+		/* FIXME: woops, cannot prefix order by '-' as this is a flag! user another? '!' ? */
 
 		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
@@ -338,6 +376,8 @@ gboolean cli_list (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
+	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
+	                                   "title", NULL };
 
 	command_arg_longstring_get (ctx, 0, &pattern);
 	if (pattern) {
@@ -357,7 +397,7 @@ gboolean cli_list (cli_infos_t *infos, command_context_t *ctx)
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	coldisp = create_column_display (infos, ctx);
+	coldisp = create_column_display (infos, ctx, default_columns);
 
 	res = xmmsc_playlist_list_entries (infos->conn, playlist);
 	xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
