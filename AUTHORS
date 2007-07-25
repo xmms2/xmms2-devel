@@ -87,9 +87,9 @@ N: Thomas Jollans
 E: thomas@jollans.com
 D: Python bindings improvements
 
-N: Daniel Kamiñski
+N: Daniel Kamiński
 E: maniel.rulez@gmail.com
-D: mlib remove command in cli.
+D: mlib remove command in cli, Ruby fixes.
 
 N: Karsten Krispin
 E: karsten@krispin.de

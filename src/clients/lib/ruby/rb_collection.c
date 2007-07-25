@@ -55,7 +55,7 @@ typedef struct {
 } RbCollection;
 
 static VALUE cColl, cAttributes, cOperands;
-static VALUE eCollectionError, eDisconnectedError, eClientError;
+static VALUE eCollectionError, eDisconnectedError, eClientError, ePatternError;
 
 static void
 c_free (RbCollection *coll)
@@ -147,6 +147,27 @@ c_coll_universe (VALUE klass)
 	Data_Get_Struct (obj, RbCollection, coll);
 
 	coll->real = xmmsc_coll_universe ();
+
+	return obj;
+}
+
+/* call-seq:
+ * c = Xmms::Collection.parse(pattern)
+ *
+ * Returns a collection matching a String _pattern_. See the wiki for details
+ * on how to construct a pattern string.
+ */
+static VALUE
+c_coll_parse (VALUE klass, VALUE pattern)
+{
+	VALUE obj = rb_obj_alloc (klass);
+	RbCollection *coll = NULL;
+
+	Data_Get_Struct (obj, RbCollection, coll);
+
+	if (!xmmsc_coll_parse (StringValuePtr (pattern), &coll->real)) {
+		rb_raise (ePatternError, "invalid pattern");
+	}
 
 	return obj;
 }
@@ -502,6 +523,7 @@ Init_Collection (VALUE mXmms)
 	rb_define_alloc_func (cColl, c_alloc);
 
 	rb_define_singleton_method (cColl, "universe", c_coll_universe, 0);
+	rb_define_singleton_method (cColl, "parse", c_coll_parse, 1);
 
 	rb_define_method (cColl, "initialize", c_coll_init, 1);
 
@@ -536,8 +558,10 @@ Init_Collection (VALUE mXmms)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_QUEUE)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_PARTYSHUFFLE)
 
+	ePatternError = rb_define_class_under (cColl, "PatternError",
+	                                       rb_eStandardError);
 	eCollectionError = rb_define_class_under (cColl, "CollectionError",
-	                                        rb_eStandardError);
+	                                          rb_eStandardError);
 	eClientError = rb_define_class_under (cColl, "ClientError",
 	                                      rb_eStandardError);
 	eDisconnectedError = rb_define_class_under (cColl, "DisconnectedError",
