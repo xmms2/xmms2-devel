@@ -377,6 +377,7 @@ static void
 xmms_faad_get_mediainfo (xmms_xform_t *xform)
 {
 	xmms_faad_data_t *data;
+	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
@@ -392,21 +393,22 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		          ((guint) data->buffer[5 + skip_size] << 11) |
 		          ((guint) data->buffer[6 + skip_size] << 3) |
 		          ((guint) data->buffer[7 + skip_size] & 0xE0);
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-		                             bitrate);
 
-		duration = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);;
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+		xmms_xform_metadata_set_int (xform, metakey, bitrate);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+		duration = xmms_xform_metadata_get_int (xform, metakey);
 		if (duration != 0) {
 			duration = ((float) duration * 8000.f) / ((float) bitrate) + 0.5f;
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                             duration);
+
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+			xmms_xform_metadata_set_int (xform, metakey, duration);
 		}
 	} else if (data->filetype == FAAD_TYPE_ADTS) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                             faad_mpeg_samplerates[(data->buffer[2]&0x3c)>>2]);
+		gint32 val = faad_mpeg_samplerates[(data->buffer[2] & 0x3c) >> 2];
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE;
+		xmms_xform_metadata_set_int (xform, metakey, val);
 	}
 }
 

@@ -212,25 +212,23 @@ xmms_lastfmeta_now_playing_callback (void *ptr, size_t size,
 
 	split = g_strsplit (ptr, "\n", 0);
 	for (i = 0; split && split[i]; i++) {
+		const gchar *metakey;
+
 		if (g_str_has_prefix (split[i], "error=")) {
 			ret = 0;
 			break;
 		} else if (g_str_has_prefix (split[i], "artist=")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-			                             split[i] + 7);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
+			xmms_xform_metadata_set_str (xform, metakey, split[i] + 7);
 		} else if (g_str_has_prefix (split[i], "track=")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-			                             split[i] + 6);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
+			xmms_xform_metadata_set_str (xform, metakey, split[i] + 6);
 		} else if (g_str_has_prefix (split[i], "album=")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-			                             split[i] + 6);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM;
+			xmms_xform_metadata_set_str (xform, metakey, split[i] + 6);
 		} else if (g_str_has_prefix (split[i], "station=")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
-			                             split[i] + 8);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL;
+			xmms_xform_metadata_set_str (xform, metakey, split[i] + 8);
 		}
 	}
 	g_strfreev (split);

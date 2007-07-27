@@ -241,14 +241,14 @@ handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
 		if (g_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
+			const gchar *metakey;
 			gchar *raw;
 
 			raw = tags[i] + 13;
 			raw[strlen (raw) - 1] = '\0';
 
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-			                             raw);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
+			xmms_xform_metadata_set_str (xform, metakey, raw);
 		}
 
 		i++;

@@ -221,6 +221,7 @@ xmms_mad_init (xmms_xform_t *xform)
 	guchar buf[40960];
 	xmms_mad_data_t *data;
 	int len;
+	const gchar *metakey;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -269,7 +270,8 @@ xmms_mad_init (xmms_xform_t *xform)
 		xmms_xing_lame_t *lame;
 		XMMS_DBG ("File with Xing header!");
 
-		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR, 1);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR;
+		xmms_xform_metadata_set_int (xform, metakey, 1);
 
 		if (xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES)) {
 			guint duration;
@@ -281,18 +283,16 @@ xmms_mad_init (xmms_xform_t *xform)
 
 			XMMS_DBG ("XING duration %d", duration);
 
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                             duration);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+			xmms_xform_metadata_set_int (xform, metakey, duration);
 
 			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES) && duration) {
 				guint tmp;
 
 				tmp = xmms_xing_get_bytes (data->xing) * ((guint64)8000) / duration;
 				XMMS_DBG ("XING bitrate %d", tmp);
-				xmms_xform_metadata_set_int (xform,
-				                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-				                             tmp);
+				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+				xmms_xform_metadata_set_int (xform, metakey, tmp);
 			}
 		}
 
@@ -303,31 +303,33 @@ xmms_mad_init (xmms_xform_t *xform)
 			data->samples_to_play = ((guint64)xmms_xing_get_frames (data->xing) * 1152ULL) - lame->start_delay - lame->end_padding;
 			XMMS_DBG ("Samples to skip in the beginning: %d, total: %lld", data->samples_to_skip, data->samples_to_play);
 			/*
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-			                             lame->audiophile_gain);
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-			                             lame->peak_amplitude);
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-			                             lame->radio_gain);
-										 */
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
+			xmms_xform_metadata_set_int (xform, metakey, lame->audiophile_gain);
+
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
+			xmms_xform_metadata_set_int (xform, metakey, lame->peak_amplitude);
+
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
+			xmms_xform_metadata_set_int (xform, metakey, lame->radio_gain);
+			*/
 		}
 
 	} else {
 		gint filesize;
 
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-		                             frame.header.bitrate);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+		xmms_xform_metadata_set_int (xform, metakey, frame.header.bitrate);
 
 
-		filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+		filesize = xmms_xform_metadata_get_int (xform, metakey);
 		if (filesize != -1) {
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                             (gint) (filesize*(gdouble)8000.0/frame.header.bitrate));
+			gint32 val;
+
+			val = (gint32) (filesize * (gdouble) 8000.0 / frame.header.bitrate);
+
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+			xmms_xform_metadata_set_int (xform, metakey, val);
 		}
 	}
 

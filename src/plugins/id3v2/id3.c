@@ -222,6 +222,7 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	guint genre_id;
 	gchar *val;
 	const gchar *tmp;
+	const gchar *metakey;
 
 	/* XXX - we should handle it differently v4 separates them with NUL instead of using () */
 	/*
@@ -237,13 +238,12 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	res = sscanf (val, "(%u)", &genre_id);
 
 	if (res > 0 && genre_id < G_N_ELEMENTS (id3_genres)) {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-		                             (gchar *)id3_genres[genre_id]);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
+		xmms_xform_metadata_set_str (xform, metakey,
+		                             (gchar *) id3_genres[genre_id]);
 	} else {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-		                             val);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	}
 
 	g_free (val);
@@ -256,6 +256,7 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	const gchar *enc;
 	gchar *cbuf;
 	const gchar *key, *val;
+	const gchar *metakey;
 	gsize clen;
 
 	enc = binary_to_enc (buf[0]);
@@ -271,17 +272,15 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	}
 
 	if (g_strcasecmp (key, "MusicBrainz Album Id") == 0) {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
-		                             val);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	} else if (g_strcasecmp (key, "MusicBrainz Artist Id") == 0) {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
-		                             val);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	} else if ((g_strcasecmp (key, "MusicBrainz Album Artist Id") == 0) &&
 	           (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
+		xmms_xform_metadata_set_int (xform, metakey, 1);
 	}
 
 	g_free (cbuf);
@@ -317,12 +316,13 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 
 	if (g_strcasecmp (buf, "http://musicbrainz.org") == 0) {
+		const gchar *metakey;
 		gchar *val0;
 		/* make sure it is NUL terminated */
 		val0 = g_strndup (val, len);
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
-		                             val0);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+		xmms_xform_metadata_set_str (xform, metakey, val0);
 
 		g_free (val0);
 	}
@@ -353,8 +353,13 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	data = find_nul (desc, &len);
 
 	if (data && xmms_bindata_plugin_add ((const guchar *)data, len, hash)) {
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
+		const gchar *metakey;
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
+		xmms_xform_metadata_set_str (xform, metakey, hash);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
+		xmms_xform_metadata_set_str (xform, metakey, mime);
 	}
 }
 
@@ -388,12 +393,16 @@ handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	comm = find_nul (cbuf, &clen);
 
 	if (comm && comm[0]) {
+		const gchar *metakey;
+
 		if (desc && desc[0]) {
-			key = g_strdup_printf ("%s_%s", XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, desc);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
+			key = g_strdup_printf ("%s_%s", metakey, desc);
 			xmms_xform_metadata_set_str (xform, key, comm);
 			g_free (key);
 		} else {
-			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, comm);
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
+			xmms_xform_metadata_set_str (xform, metakey, comm);
 		}
 	}
 

@@ -85,6 +85,7 @@ xmms_gnomevfs_init (xmms_xform_t *xform)
 	GnomeVFSHandle *handle;
 	GnomeVFSResult result;
 	const gchar *url;
+	const gchar *metakey;
 	gboolean ret = FALSE;
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
@@ -118,10 +119,11 @@ xmms_gnomevfs_init (xmms_xform_t *xform)
 	data->handle = handle;
 
 	xmms_xform_private_data_set (xform, data);
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
-	                             info->size);
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,
-	                             info->mtime);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	xmms_xform_metadata_set_int (xform, metakey, info->size);
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD;
+	xmms_xform_metadata_set_int (xform, metakey, info->mtime);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,

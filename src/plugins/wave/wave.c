@@ -132,6 +132,7 @@ xmms_wave_get_media_info (xmms_xform_t *xform)
 	gdouble playtime;
 	guint samples_total, bitrate;
 	gint filesize;
+	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
@@ -141,18 +142,17 @@ xmms_wave_get_media_info (xmms_xform_t *xform)
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
 	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	filesize = xmms_xform_metadata_get_int (xform, metakey);
 
 	if (filesize != -1) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             playtime * 1000);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey, playtime * 1000);
 	}
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             bitrate);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+	xmms_xform_metadata_set_int (xform, metakey, bitrate);
 }
 
 static gboolean

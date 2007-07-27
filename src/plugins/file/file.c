@@ -91,6 +91,7 @@ xmms_file_init (xmms_xform_t *xform)
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *url;
+	const gchar *metakey;
 	struct stat st;
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
@@ -125,8 +126,11 @@ xmms_file_init (xmms_xform_t *xform)
 	                             "application/octet-stream",
 	                             XMMS_STREAM_TYPE_END);
 
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, st.st_size);
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, st.st_mtime);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	xmms_xform_metadata_set_int (xform, metakey, st.st_size);
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD;
+	xmms_xform_metadata_set_int (xform, metakey, st.st_mtime);
 
 	return TRUE;
 }

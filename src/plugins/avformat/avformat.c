@@ -242,6 +242,7 @@ xmms_avformat_get_mediainfo (xmms_xform_t *xform)
 	xmms_avformat_data_t *data;
 	AVFormatContext *fmtctx;
 	AVCodecContext *codecctx;
+	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
@@ -252,13 +253,12 @@ xmms_avformat_get_mediainfo (xmms_xform_t *xform)
 	codecctx = data->codecctx;
 
 	if (codecctx->bit_rate > 0) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-		                             codecctx->bit_rate);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+		xmms_xform_metadata_set_int (xform, metakey, codecctx->bit_rate);
 	}
 	if (fmtctx->streams[data->track]->duration > 0) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey,
 		                             fmtctx->streams[data->track]->duration);
 	}
 }

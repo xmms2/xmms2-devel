@@ -206,57 +206,53 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	xmms_mpc_data_t *data;
 	gint bitrate, duration, filesize;
 	gchar buf[8];
+	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	filesize = xmms_xform_metadata_get_int (xform, metakey);
 	if (filesize != -1) {
 		duration = mpc_streaminfo_get_length (&data->info) * 1000;
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             duration);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey, duration);
 	}
 
 	bitrate = (data->info.bitrate) ? data->info.bitrate :
 	                                 data->info.average_bitrate;
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             bitrate);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+	xmms_xform_metadata_set_int (xform, metakey, bitrate);
 
 	if (data->info.gain_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, (gdouble) data->info.gain_album / 2000.0));
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-		                             buf);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
+		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.gain_title) {
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, (gdouble) data->info.gain_title / 2000.0));
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-		                             buf);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
+		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.peak_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
 		            (gdouble) data->info.peak_album / 32768.0);
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-		                             buf);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
+		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.peak_title) {
 		g_snprintf (buf, sizeof (buf), "%f",
 		            (gdouble) data->info.peak_title / 32768.0);
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-		                             buf);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
+		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 }

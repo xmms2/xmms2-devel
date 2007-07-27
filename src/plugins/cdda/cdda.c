@@ -127,6 +127,7 @@ xmms_cdda_init (xmms_xform_t *xform)
 	gchar *cddb_id = NULL;
 	xmms_config_property_t *val;
 	const gchar *device;
+	const gchar *metakey;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -206,19 +207,18 @@ xmms_cdda_init (xmms_xform_t *xform)
 
 	playtime = (data->last_lsn - data->first_lsn) *
 	           1000.0 / CDIO_CD_FRAMES_PER_SEC;
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                             playtime);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             141120);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+	xmms_xform_metadata_set_int (xform, metakey, playtime);
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+	xmms_xform_metadata_set_int (xform, metakey, 141120);
 
 	xmms_xform_metadata_set_str (xform, "disc_id", url_data[0]);
 	xmms_xform_metadata_set_str (xform, "cddb_id", cddb_id);
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-	                             track);
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
+	xmms_xform_metadata_set_int (xform, metakey, track);
 
 	xmms_xform_private_data_set (xform, data);
 

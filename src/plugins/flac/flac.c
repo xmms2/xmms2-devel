@@ -207,10 +207,12 @@ flac_callback_length (const FLAC__StreamDecoder *flacdecoder,
                       FLAC__uint64 *stream_length, void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
+	const gchar *metakey;
 	gint retval;
 
-	retval = xmms_xform_metadata_get_int (xform,
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	retval = xmms_xform_metadata_get_int (xform, metakey);
+
 	*stream_length = retval;
 
 	return (retval == -1) ? FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR
@@ -225,11 +227,12 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 	xmms_flac_data_t *data;
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	guint64 filesize;
+	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
-	filesize = xmms_xform_metadata_get_int (xform,
-	                                        XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	filesize = xmms_xform_metadata_get_int (xform, metakey);
 
 	data = xmms_xform_private_data_get (xform);
 
@@ -331,9 +334,8 @@ handle_comment (xmms_xform_t *xform,
 	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
 		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
-			                             1);
+			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
+			xmms_xform_metadata_set_int (xform, metakey, 1);
 		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
 			if (properties[i].type == INTEGER) {
 				gint tmp = strtol (value, NULL, 10);
@@ -397,6 +399,7 @@ xmms_flac_init (xmms_xform_t *xform)
 	FLAC__StreamDecoderInitStatus init_status;
 #endif
 	gint filesize;
+	const gchar *metakey;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -469,16 +472,16 @@ xmms_flac_init (xmms_xform_t *xform)
 		handle_comments (xform, data);
 	}
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             (gint) data->bit_rate);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
+	xmms_xform_metadata_set_int (xform, metakey, (gint) data->bit_rate);
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	filesize = xmms_xform_metadata_get_int (xform, metakey);
 	if (filesize != -1) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             (gint) data->total_samples
-		                             / data->sample_rate * 1000);
+		gint32 val = (gint32) data->total_samples / data->sample_rate * 1000;
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey, val);
 	}
 
 	if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {

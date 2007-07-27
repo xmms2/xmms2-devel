@@ -172,6 +172,7 @@ static gboolean
 xmms_modplug_init (xmms_xform_t *xform)
 {
 	xmms_modplug_data_t *data;
+	const gchar *metakey;
 	gint filesize;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -222,16 +223,17 @@ xmms_modplug_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	filesize = xmms_xform_metadata_get_int (xform, metakey);
 
 	if (filesize != -1) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey,
 		                             ModPlug_GetLength (data->mod));
 	}
-	xmms_xform_metadata_set_str (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-	                             ModPlug_GetName (data->mod));
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
+	xmms_xform_metadata_set_str (xform, metakey, ModPlug_GetName (data->mod));
 
 	return TRUE;
 }

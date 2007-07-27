@@ -278,6 +278,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	xmms_daap_login_data_t *login_data;
 	xmms_error_t err;
 	const gchar *url;
+	const gchar *metakey;
 	gchar *command, *hash;
 	guint filesize;
 
@@ -339,8 +340,8 @@ xmms_daap_init (xmms_xform_t *xform)
 	}
 	login_data->request_id++;
 
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
-	                             filesize);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	xmms_xform_metadata_set_int (xform, metakey, filesize);
 
 	xmms_xform_private_data_set (xform, data);
 

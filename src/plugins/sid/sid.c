@@ -184,6 +184,7 @@ static void
 xmms_sid_get_media_info (xmms_xform_t *xform)
 {
 	xmms_sid_data_t *data;
+	const gchar *metakey;
 	char artist[32];
 	char title[32];
 	gint err;
@@ -193,15 +194,15 @@ xmms_sid_get_media_info (xmms_xform_t *xform)
 
 	err = sidplay_wrapper_songinfo (data->wrapper, artist, title);
 	if (err > 0) {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-		                             artist);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
+		xmms_xform_metadata_set_str (xform, metakey, title);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST;
+		xmms_xform_metadata_set_str (xform, metakey, artist);
 	}
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES,
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES;
+	xmms_xform_metadata_set_int (xform, metakey,
 	                             sidplay_wrapper_subtunes (data->wrapper));
 
 	xmms_xform_metadata_set_str (xform,

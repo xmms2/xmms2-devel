@@ -514,12 +514,14 @@ header_handler_contentlength (xmms_xform_t *xform,
 {
 	xmms_curl_data_t *data;
 	int length;
+	const gchar *metakey;
 
 	data = xmms_xform_private_data_get (xform);
 
 	length = strtoul (header, NULL, 10);
 
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, length);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+	xmms_xform_metadata_set_int (xform, metakey, length);
 }
 
 static void
@@ -537,18 +539,16 @@ static void
 header_handler_icy_name (xmms_xform_t *xform,
                          gchar *header)
 {
-	xmms_xform_metadata_set_str (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
-	                             header);
+	const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL;
+	xmms_xform_metadata_set_str (xform, metakey, header);
 }
 
 static void
 header_handler_icy_genre (xmms_xform_t *xform,
                           gchar *header)
 {
-	xmms_xform_metadata_set_str (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-	                             header);
+	const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
+	xmms_xform_metadata_set_str (xform, metakey, header);
 }
 
 /*
