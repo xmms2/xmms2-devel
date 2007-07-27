@@ -88,9 +88,11 @@ struct xmms_xform_plugin_St {
 	GList *in_types;
 };
 
-xmms_xform_t *xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hints);
+xmms_xform_t *xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
+                               GList *goal_hints);
 const char *xmms_xform_shortname (xmms_xform_t *xform);
-static xmms_xform_t *add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
+static xmms_xform_t *add_effects (xmms_xform_t *last,
+                                  xmms_medialib_entry_t entry,
                                   GList *goal_formats);
 static void xmms_xform_destroy (xmms_object_t *object);
 
@@ -115,38 +117,44 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
 }
 
 void
-xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename, const gchar *url, gint nargs, char **args)
+xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename,
+                                    const gchar *url, gint nargs, gchar **args)
 {
 	GString *s;
 	gchar *eurl;
 	gchar bname[32];
-	int i;
+	gint i;
 
 	if (!basename) {
-		snprintf (bname, sizeof (bname), "%d", xform->browse_index++);
+		g_snprintf (bname, sizeof (bname), "%d", xform->browse_index++);
 		basename = bname;
 	}
 
 	xmms_xform_browse_add_entry (xform, basename, 0);
 	eurl = xmms_medialib_url_encode (url);
 	s = g_string_new (eurl);
+
 	for (i = 0; i < nargs; i++) {
 		g_string_append (s, i == 0 ? "?" : "&");
 		g_string_append (s, args[i]);
 	}
+
 	xmms_xform_browse_add_entry_property_str (xform, "realpath", s->str);
+
 	g_free (eurl);
 	g_string_free (s, TRUE);
 }
 
 void
-xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename, const gchar *url)
+xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename,
+                               const gchar *url)
 {
 	xmms_xform_browse_add_symlink_args (xform, basename, url, 0, NULL);
 }
 
 void
-xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val)
+xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key,
+                                      xmms_object_cmd_value_t *val)
 {
 	g_return_if_fail (xform);
 	g_return_if_fail (xform->browse_hash);
@@ -157,11 +165,13 @@ xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmm
 }
 
 void
-xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32 flags)
+xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
+                             guint32 flags)
 {
+	xmms_object_cmd_value_t *val;
 	const gchar *url;
 	gchar *efile, *eurl, *t;
-	int l;
+	gint l, isdir;
 
 	g_return_if_fail (filename);
 
@@ -172,10 +182,12 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 	g_return_if_fail (url);
 
 	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                            g_free, xmms_object_cmd_value_free);
+	                                            g_free,
+	                                            xmms_object_cmd_value_free);
 
 	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
+
 	/* can't use g_build_filename as we need to preserve
 	   slashes stuff like file:/// */
 	l = strlen (url);
@@ -185,10 +197,12 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 		t = g_strdup_printf ("%s/%s", eurl, efile);
 	}
 
+	isdir = !!(flags & XMMS_XFORM_BROWSE_FLAG_DIR);
 	xmms_xform_browse_add_entry_property_str (xform, "path", t);
-	xmms_xform_browse_add_entry_property_int (xform, "isdir", !!(flags & XMMS_XFORM_BROWSE_FLAG_DIR));
+	xmms_xform_browse_add_entry_property_int (xform, "isdir", isdir);
 
-	xform->browse_list = g_list_prepend (xform->browse_list, xmms_object_cmd_value_dict_new (xform->browse_hash));
+	val = xmms_object_cmd_value_dict_new (xform->browse_hash);
+	xform->browse_list = g_list_prepend (xform->browse_list, val);
 
 	g_free (t);
 	g_free (efile);
@@ -228,7 +242,8 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 }
 
 GList *
-xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
+xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
+                          xmms_error_t *error)
 {
 	GList *list = NULL;
 
@@ -247,8 +262,7 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *e
 }
 
 GList *
-xmms_xform_browse (xmms_xform_object_t *obj,
-                   const gchar *url,
+xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url,
                    xmms_error_t *error)
 {
 	GList *list = NULL;
@@ -283,12 +297,14 @@ xmms_xform_browse (xmms_xform_object_t *obj,
 
 	xmms_object_unref (xform);
 	xmms_object_unref (xform2);
+
 	g_free (durl);
 
 	return list;
 }
 
-XMMS_CMD_DEFINE (browse, xmms_xform_browse, xmms_xform_object_t *, LIST, STRING, NONE);
+XMMS_CMD_DEFINE (browse, xmms_xform_browse, xmms_xform_object_t *,
+                 LIST, STRING, NONE);
 
 static void
 xmms_xform_object_destroy (xmms_object_t *obj)
@@ -305,8 +321,7 @@ xmms_xform_object_init (void)
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_XFORM, XMMS_OBJECT (obj));
 
-	xmms_object_cmd_add (XMMS_OBJECT (obj),
-	                     XMMS_IPC_CMD_BROWSE,
+	xmms_object_cmd_add (XMMS_OBJECT (obj), XMMS_IPC_CMD_BROWSE,
 	                     XMMS_CMD_FUNC (browse));
 
 	return obj;
@@ -341,7 +356,8 @@ xmms_xform_destroy (xmms_object_t *object)
 }
 
 xmms_xform_t *
-xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hints)
+xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
+                xmms_medialib_entry_t entry, GList *goal_hints)
 {
 	xmms_xform_t *xform;
 
@@ -359,10 +375,12 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 	}
 
 	xform->metadata = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                         g_free, xmms_object_cmd_value_free);
+	                                         g_free,
+	                                         xmms_object_cmd_value_free);
 
 	xform->privdata = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                         g_free, xmms_object_cmd_value_free);
+	                                         g_free,
+	                                         xmms_object_cmd_value_free);
 	xform->hotspots = g_queue_new ();
 
 	if (plugin && entry) {
@@ -377,7 +395,6 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 
 	xform->buffer = g_malloc (READ_CHUNK);
 	xform->buffersize = READ_CHUNK;
-
 
 	return xform;
 }
@@ -479,35 +496,42 @@ void
 xmms_xform_metadata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
 	XMMS_DBG ("Setting '%s' to %d", key, val);
-	g_hash_table_insert (xform->metadata, g_strdup (key), xmms_object_cmd_value_int_new (val));
+	g_hash_table_insert (xform->metadata, g_strdup (key),
+	                     xmms_object_cmd_value_int_new (val));
 	xform->metadata_changed = TRUE;
 }
 
 void
-xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key, const char *val)
+xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
+                             const char *val)
 {
 	const char *old;
 
 	old = xmms_xform_metadata_get_str (xform, key);
 
-	if (old && strcmp (old, val) == 0)
+	if (old && strcmp (old, val) == 0) {
 		return;
+	}
 
-	g_hash_table_insert (xform->metadata, g_strdup (key), xmms_object_cmd_value_str_new (val));
+	g_hash_table_insert (xform->metadata, g_strdup (key),
+	                     xmms_object_cmd_value_str_new (val));
+
 	xform->metadata_changed = TRUE;
 }
 
 static const xmms_object_cmd_value_t *
 xmms_xform_metadata_get_val (xmms_xform_t *xform, const char *key)
 {
-	xmms_object_cmd_value_t *val;
+	xmms_object_cmd_value_t *val = NULL;
 
 	for (; xform; xform = xform->prev) {
 		val = g_hash_table_lookup (xform->metadata, key);
-		if (val)
-			return val;
+		if (val) {
+			break;
+		}
 	}
-	return NULL;
+
+	return val;
 }
 
 gboolean
@@ -520,26 +544,28 @@ gint32
 xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key)
 {
 	const xmms_object_cmd_value_t *val;
+	gint32 ret = -1;
 
 	val = xmms_xform_metadata_get_val (xform, key);
 	if (val && val->type == XMMS_OBJECT_CMD_ARG_INT32) {
-		return val->value.int32;
-	} else {
-		return -1;
+		ret = val->value.int32;
 	}
+
+	return ret;
 }
 
 const gchar *
 xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key)
 {
 	const xmms_object_cmd_value_t *val;
+	const gchar *ret = NULL;
 
 	val = xmms_xform_metadata_get_val (xform, key);
 	if (val && val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		return val->value.string;
-	} else {
-		return NULL;
+		ret = val->value.string;
 	}
+
+	return ret;
 }
 
 typedef struct {
@@ -551,14 +577,22 @@ typedef struct {
 static void
 add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 {
-	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *)_value;
-	gchar *key = (gchar *)_key;
-	metadata_festate_t *st = (metadata_festate_t *)user_data;
+	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *) _value;
+	gchar *key = (gchar *) _key;
+	metadata_festate_t *st = (metadata_festate_t *) user_data;
 
 	if (value->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		xmms_medialib_entry_property_set_str_source (st->session, st->entry, key, value->value.string, st->source);
+		xmms_medialib_entry_property_set_str_source (st->session,
+		                                             st->entry,
+		                                             key,
+		                                             value->value.string,
+		                                             st->source);
 	} else if (value->type == XMMS_OBJECT_CMD_ARG_INT32) {
-		xmms_medialib_entry_property_set_int_source (st->session, st->entry, key, value->value.int32, st->source);
+		xmms_medialib_entry_property_set_int_source (st->session,
+		                                             st->entry,
+		                                             key,
+		                                             value->value.int32,
+		                                             st->source);
 	} else {
 		XMMS_DBG ("Unknown type?!?");
 	}
@@ -570,26 +604,35 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 	gchar *src;
 
 	XMMS_DBG ("Collecting metadata from %s", xmms_xform_shortname (xform));
+
 	src = g_strdup_printf ("plugin/%s", xmms_xform_shortname (xform));
+
 	info->source = xmms_medialib_source_to_id (info->session, src);
 	g_hash_table_foreach (xform->metadata, add_metadatum, info);
+
 	g_free (src);
 	xform->metadata_changed = FALSE;
 }
 
 static void
-xmms_xform_metadata_collect_r (xmms_xform_t *xform, metadata_festate_t *info, GString *namestr)
+xmms_xform_metadata_collect_r (xmms_xform_t *xform, metadata_festate_t *info,
+                               GString *namestr)
 {
-	if (xform->prev)
+	if (xform->prev) {
 		xmms_xform_metadata_collect_r (xform->prev, info, namestr);
+	}
 
 	if (xform->plugin) {
-		if (namestr->len)
+		if (namestr->len) {
 			g_string_append (namestr, ":");
+		}
 		g_string_append (namestr, xmms_xform_shortname (xform));
 	}
-	if (xform->metadata_changed)
+
+	if (xform->metadata_changed) {
 		xmms_xform_metadata_collect_one (xform, info);
+	}
+
 	xform->metadata_collected = TRUE;
 }
 
@@ -602,22 +645,31 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 	info.entry = start->entry;
 	info.session = xmms_medialib_begin_write ();
 
-	times_played = xmms_medialib_entry_property_get_int (info.session, info.entry,
+	times_played = xmms_medialib_entry_property_get_int (info.session,
+	                                                     info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
 
 	xmms_medialib_entry_cleanup (info.session, info.entry);
 
 	xmms_xform_metadata_collect_r (start, &info, namestr);
 
-	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
+	xmms_medialib_entry_property_set_str (info.session, info.entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN,
+	                                      namestr->str);
 
-	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED, times_played + 1);
-	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED, time (NULL));
+	xmms_medialib_entry_property_set_int (info.session, info.entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED,
+	                                      times_played + 1);
 
-	xmms_medialib_entry_status_set (info.session, info.entry, XMMS_MEDIALIB_ENTRY_STATUS_OK);
+	xmms_medialib_entry_property_set_int (info.session, info.entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED,
+	                                      time (NULL));
+
+	xmms_medialib_entry_status_set (info.session, info.entry,
+	                                XMMS_MEDIALIB_ENTRY_STATUS_OK);
+
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
-
 }
 
 static void
@@ -635,7 +687,8 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 }
 
 static void
-xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key, xmms_object_cmd_value_t *val)
+xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key,
+                             xmms_object_cmd_value_t *val)
 {
 	xmms_xform_hotspot_t *hs;
 
@@ -643,38 +696,51 @@ xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key, xmms_object_cmd_val
 	hs->pos = xform->buffered;
 	hs->key = key;
 	hs->obj = val;
+
 	g_queue_push_tail (xform->hotspots, hs);
 }
 
 void
-xmms_xform_privdata_set_none (xmms_xform_t *xform) {
-	xmms_xform_privdata_set_val (xform, NULL, xmms_object_cmd_value_none_new ());
+xmms_xform_privdata_set_none (xmms_xform_t *xform)
+{
+	xmms_object_cmd_value_t *val = xmms_object_cmd_value_none_new ();
+	xmms_xform_privdata_set_val (xform, NULL, val);
 }
 
 void
-xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int val)
+xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int intval)
 {
-	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_int_new (val));
+	xmms_object_cmd_value_t *val = xmms_object_cmd_value_int_new (intval);
+	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
 }
 
 void
-xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val)
+xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key,
+                             const gchar *strval)
 {
+	xmms_object_cmd_value_t *val;
 	const char *old;
 
-	if (xmms_xform_privdata_get_str (xform, key, &old) && strcmp (old, val) == 0)
-		return;
+	if (xmms_xform_privdata_get_str (xform, key, &old)) {
+		if (strcmp (old, strval) == 0) {
+			return;
+		}
+	}
 
-	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_str_new (val));
+	val = xmms_object_cmd_value_str_new (strval);
+	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
 }
 
 void
-xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len)
+xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key,
+                             gpointer data, gssize len)
 {
+	xmms_object_cmd_value_t *val;
 	GString *bin;
 
 	bin = g_string_new_len (data, len);
-	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_bin_new (bin));
+	val = xmms_object_cmd_value_bin_new (bin);
+	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
 }
 
 static const xmms_object_cmd_value_t *
@@ -724,7 +790,8 @@ xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
 }
 
 gboolean
-xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val)
+xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key,
+                             const gchar **val)
 {
 	const xmms_object_cmd_value_t *obj;
 
@@ -738,7 +805,9 @@ xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar 
 }
 
 gboolean
-xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen) {
+xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key,
+                             gpointer *data, gssize *datalen)
+{
 	const xmms_object_cmd_value_t *obj;
 
 	obj = xmms_xform_privdata_get_val (xform, key);
@@ -763,9 +832,9 @@ xmms_xform_shortname (xmms_xform_t *xform)
 }
 
 gint
-xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
+xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz,
+                      xmms_error_t *err)
 {
-
 	while (xform->buffered < siz) {
 		gint res;
 
@@ -774,10 +843,13 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 			xform->buffer = g_realloc (xform->buffer, xform->buffersize);
 		}
 
-		res = xform->plugin->methods.read (xform, &xform->buffer[xform->buffered], READ_CHUNK, err);
+		res = xform->plugin->methods.read (xform,
+		                                   &xform->buffer[xform->buffered],
+		                                   READ_CHUNK, err);
 
 		if (res < -1) {
-			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN",
+			          xmms_xform_shortname (xform), res);
 			res = -1;
 		}
 
@@ -829,7 +901,8 @@ xmms_xform_hotspots_update (xmms_xform_t *xform) {
 }
 
 gint
-xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
+xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
+                      xmms_error_t *err)
 {
 	gint read = 0;
 	gint nexths;
@@ -888,8 +961,10 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 
 			if (!g_queue_is_empty (xform->hotspots)) {
 				if (xform->buffered + res > xform->buffersize) {
-					xform->buffersize = MAX (xform->buffersize * 2, xform->buffersize + res);
-					xform->buffer = g_realloc (xform->buffer, xform->buffersize);
+					xform->buffersize = MAX (xform->buffersize * 2,
+					                         xform->buffersize + res);
+					xform->buffer = g_realloc (xform->buffer,
+					                           xform->buffersize);
 				}
 
 				g_memmove (xform->buffer + xform->buffered, buf + read, res);
@@ -904,7 +979,8 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 }
 
 gint64
-xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset,
+                      xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	gint64 res;
 
@@ -942,7 +1018,8 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 }
 
 gint
-xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
+xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz,
+                 xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_peek (xform->prev, buf, siz, err);
@@ -1001,7 +1078,8 @@ xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 }
 
 gint64
-xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_xform_seek (xmms_xform_t *xform, gint64 offset,
+                 xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_seek (xform->prev, offset, whence, err);
@@ -1048,13 +1126,15 @@ xmms_xform_plugin_new (void)
 }
 
 void
-xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t *methods)
+xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin,
+                               xmms_xform_methods_t *methods)
 {
 
 	g_return_if_fail (plugin);
 	g_return_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_XFORM);
 
-	XMMS_DBG ("Registering xform '%s'", xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
+	XMMS_DBG ("Registering xform '%s'",
+	          xmms_plugin_shortname_get ((xmms_plugin_t *) plugin));
 
 	memcpy (&plugin->methods, methods, sizeof (xmms_xform_methods_t));
 }
@@ -1062,7 +1142,7 @@ xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t
 gboolean
 xmms_xform_plugin_verify (xmms_plugin_t *_plugin)
 {
-	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *)_plugin;
+	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *) _plugin;
 
 	g_return_val_if_fail (plugin, FALSE);
 	g_return_val_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_XFORM, FALSE);
@@ -1127,7 +1207,8 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 }
 
 xmms_xform_t *
-xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hints)
+xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
+                 GList *goal_hints)
 {
 	match_state_t state;
 	xmms_xform_t *xform = NULL;
@@ -1149,9 +1230,13 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hi
 gboolean
 xmms_xform_iseos (xmms_xform_t *xform)
 {
-	if (!xform->prev)
-		return TRUE;
-	return xform->prev->eos;
+	gboolean ret = TRUE;
+
+	if (xform->prev) {
+		ret = xform->prev->eos;
+	}
+
+	return ret;
 }
 
 const xmms_stream_type_t *
@@ -1170,17 +1255,26 @@ xmms_xform_goal_hints_get (xmms_xform_t *xform)
 static gboolean
 has_goalformat (xmms_xform_t *xform, GList *goal_formats)
 {
+	const xmms_stream_type_t *current;
+	gboolean ret = FALSE;
 	GList *n;
+
+	current = xmms_xform_get_out_stream_type (xform);
 
 	for (n = goal_formats; n; n = g_list_next (n)) {
 		xmms_stream_type_t *goal_type = n->data;
-		if (xmms_stream_type_match (goal_type, xmms_xform_get_out_stream_type (xform))) {
-			return TRUE;
+		if (xmms_stream_type_match (goal_type, current)) {
+			ret = TRUE;
+			break;
 		}
 
 	}
-	XMMS_DBG ("Not in one of %d goal-types", g_list_length (goal_formats));
-	return FALSE;
+
+	if (!ret) {
+		XMMS_DBG ("Not in one of %d goal-types", g_list_length (goal_formats));
+	}
+
+	return ret;
 }
 
 static void
@@ -1198,21 +1292,24 @@ outdata_type_metadata_collect (xmms_xform_t *xform)
 
 	val = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_FORMAT);
 	if (val != -1) {
+		const gchar *name = xmms_sample_name_get ((xmms_sample_format_t) val);
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLE_FMT,
-		                             xmms_sample_name_get ((xmms_sample_format_t)val));
+		                             name);
 	}
 
 	val = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 	if (val != -1) {
 		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, val);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+		                             val);
 	}
 
 	val = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_CHANNELS);
 	if (val != -1) {
 		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNELS, val);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNELS,
+		                             val);
 	}
 }
 
@@ -1233,7 +1330,7 @@ chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 	args = strchr (durl, '?');
 	if (args) {
 		gchar **params;
-		int i;
+		gint i;
 		*args = 0;
 		args++;
 		xmms_medialib_decode_url (args);
@@ -1255,12 +1352,9 @@ chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 	}
 	xmms_medialib_decode_url (durl);
 
-	xmms_xform_outdata_type_add (xform,
-	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "application/x-url",
-	                             XMMS_STREAM_TYPE_URL,
-	                             durl,
-	                             XMMS_STREAM_TYPE_END);
+	xmms_xform_outdata_type_add (xform, XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/x-url", XMMS_STREAM_TYPE_URL,
+	                             durl, XMMS_STREAM_TYPE_END);
 
 	g_free (durl);
 
@@ -1285,7 +1379,8 @@ chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 }
 
 void
-chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry, const gchar *url)
+chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry,
+                const gchar *url)
 {
 	GString *namestr;
 
@@ -1304,7 +1399,8 @@ get_url_for_entry (xmms_medialib_entry_t entry)
 	gchar *url = NULL;
 
 	session = xmms_medialib_begin ();
-	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	url = xmms_medialib_entry_property_get_str (session, entry,
+	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	xmms_medialib_end (session);
 
 	if (!url) {
@@ -1343,7 +1439,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 }
 
 xmms_xform_t *
-xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry, GList *goal_formats)
+xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry,
+                                        GList *goal_formats)
 {
 	gchar *url;
 	xmms_xform_t *xform;
@@ -1364,7 +1461,8 @@ xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry, GList *goal
 }
 
 xmms_xform_t *
-xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url,
+                            GList *goal_formats)
 {
 	xmms_xform_t *last;
 
@@ -1383,7 +1481,9 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList
 }
 
 xmms_xform_t *
-xmms_xform_chain_setup_url_without_effects (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+xmms_xform_chain_setup_url_without_effects (xmms_medialib_entry_t entry,
+                                            const gchar *url,
+                                            GList *goal_formats)
 {
 	xmms_xform_t *last;
 
@@ -1403,8 +1503,11 @@ xmms_xform_plugin_config_property_register (xmms_xform_plugin_t *xform_plugin,
                                             xmms_object_handler_t cb,
                                             gpointer userdata)
 {
-	return xmms_plugin_config_property_register ((xmms_plugin_t *) xform_plugin,
-	                                             name, default_value, cb, userdata);
+	xmms_plugin_t *plugin = (xmms_plugin_t *) xform_plugin;
+
+	return xmms_plugin_config_property_register (plugin, name,
+	                                             default_value,
+	                                             cb, userdata);
 }
 
 xmms_config_property_t *
@@ -1416,14 +1519,16 @@ xmms_xform_config_lookup (xmms_xform_t *xform, const gchar *path)
 }
 
 static xmms_xform_t *
-add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry, GList *goal_formats)
+add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
+             GList *goal_formats)
 {
 	xmms_xform_t *xform;
 	gint effect_no = 0;
 
 	while (42) {
 		xmms_config_property_t *cfg;
-		xmms_xform_plugin_t *plugin;
+		xmms_xform_plugin_t *xform_plugin;
+		xmms_plugin_t *plugin;
 		gchar key[64];
 		const gchar *name;
 
@@ -1442,27 +1547,30 @@ add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry, GList *goal_format
 		if (!name[0])
 			break;
 
-		plugin = (xmms_xform_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+
 		if (!plugin) {
 			xmms_log_error ("Couldn't find any effect named '%s'",
 			                name);
 			continue;
 		}
 
-		if (!xmms_xform_plugin_supports (plugin, last->out_type)) {
-			xmms_log_info ("Skipping effect '%s' that doesn't support format", xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
+		xform_plugin = (xmms_xform_plugin_t *) plugin;
+		if (!xmms_xform_plugin_supports (xform_plugin, last->out_type)) {
+			xmms_log_info ("Skipping effect '%s' that doesn't support format",
+			               xmms_plugin_shortname_get (plugin));
 			xmms_object_unref (plugin);
 			continue;
 		}
 
-		xform = xmms_xform_new (plugin,
-		                        last, entry, goal_formats);
+		xform = xmms_xform_new (xform_plugin, last, entry, goal_formats);
 
 		if (xform) {
 			xmms_object_unref (last);
 			last = xform;
 		}
-		xmms_xform_plugin_config_property_register (plugin, "enabled", "0",
+		xmms_xform_plugin_config_property_register (xform_plugin,
+		                                            "enabled", "0",
 		                                            NULL, NULL);
 		xmms_object_unref (plugin);
 	}
