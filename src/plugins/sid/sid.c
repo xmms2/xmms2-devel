@@ -133,8 +133,7 @@ xmms_sid_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	subtune = xmms_xform_metadata_get_str (xform, "subtune");
-	if (subtune) {
+	if (xmms_xform_metadata_get_str (xform, "subtune", &subtune)) {
 		int num;
 		num = atoi (subtune);
 		if (num < 1 || num > sidplay_wrapper_subtunes (data->wrapper)) {

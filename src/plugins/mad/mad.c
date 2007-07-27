@@ -322,8 +322,7 @@ xmms_mad_init (xmms_xform_t *xform)
 
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-		filesize = xmms_xform_metadata_get_int (xform, metakey);
-		if (filesize != -1) {
+		if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 			gint32 val;
 
 			val = (gint32) (filesize * (gdouble) 8000.0 / frame.header.bitrate);

@@ -208,15 +208,15 @@ flac_callback_length (const FLAC__StreamDecoder *flacdecoder,
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	const gchar *metakey;
-	gint retval;
+	gint val;
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-	retval = xmms_xform_metadata_get_int (xform, metakey);
+	if (xmms_xform_metadata_get_int (xform, metakey, &val)) {
+		*stream_length = val;
+		return FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
+	}
 
-	*stream_length = retval;
-
-	return (retval == -1) ? FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR
-	                      : FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
+	return FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR;
 }
 
 static void
@@ -226,13 +226,15 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 {
 	xmms_flac_data_t *data;
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
-	guint64 filesize;
+	gint32 filesize;
 	const gchar *metakey;
 
 	g_return_if_fail (xform);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-	filesize = xmms_xform_metadata_get_int (xform, metakey);
+	if (!xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
+		filesize = -1;
+	}
 
 	data = xmms_xform_private_data_get (xform);
 
@@ -476,8 +478,7 @@ xmms_flac_init (xmms_xform_t *xform)
 	xmms_xform_metadata_set_int (xform, metakey, (gint) data->bit_rate);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-	filesize = xmms_xform_metadata_get_int (xform, metakey);
-	if (filesize != -1) {
+	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 		gint32 val = (gint32) data->total_samples / data->sample_rate * 1000;
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;

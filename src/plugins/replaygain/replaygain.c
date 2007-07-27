@@ -287,11 +287,17 @@ compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data)
 	}
 
 	/** @todo should this be ints instead? */
-	tmp = xmms_xform_metadata_get_str (xform, key_s);
-	s = tmp ? atof (tmp) : 1.0;
+	if (xmms_xform_metadata_get_str (xform, key_s, &tmp)) {
+		s = atof (tmp);
+	} else {
+		s = 1.0;
+	}
 
-	tmp = xmms_xform_metadata_get_str (xform, key_p);
-	p = tmp ? atof (tmp) : 1.0;
+	if (xmms_xform_metadata_get_str (xform, key_p, &tmp)) {
+		p = atof (tmp);
+	} else {
+		p = 1.0;
+	}
 
 	s *= 2; /* 6db pre-amp */
 

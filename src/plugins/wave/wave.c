@@ -143,9 +143,7 @@ xmms_wave_get_media_info (xmms_xform_t *xform)
 	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-	filesize = xmms_xform_metadata_get_int (xform, metakey);
-
-	if (filesize != -1) {
+	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		xmms_xform_metadata_set_int (xform, metakey, playtime * 1000);
 	}

@@ -82,6 +82,11 @@ CSourceAdapter::GetPosition ()
 int
 CSourceAdapter::GetSize ()
 {
-	return xmms_xform_metadata_get_int (xform,
-	                                    XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	const gchar *metakey;
+	gint32 size = -1;
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	xmms_xform_metadata_get_int (xform, metakey, &size);
+
+	return size;
 }

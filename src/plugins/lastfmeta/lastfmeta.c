@@ -100,12 +100,18 @@ xmms_lastfmeta_init (xmms_xform_t *xform)
 	data = g_new (xmms_lastfmeta_data_t, 1);
 	data->handles = 0;
 
-	xmms_xform_private_data_set (xform, data);
 
 	/* seek over the first 4 bytes (SYNC) */
 	xmms_xform_read (xform, buf, 4, &err);
 
-	session = xmms_xform_metadata_get_str (xform, "session");
+	if (!xmms_xform_metadata_get_str (xform, "session", &session)) {
+		xmms_log_error ("No session for lastfmeta to use!");
+		g_free (data);
+		return FALSE;
+	}
+
+	xmms_xform_private_data_set (xform, data);
+
 	g_snprintf (data->url, sizeof (data->url), np_fmt, session);
 
 	data->curl_easy = curl_easy_init ();
@@ -134,6 +140,7 @@ xmms_lastfmeta_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "application/octet-stream",
 	                             XMMS_STREAM_TYPE_END);
+
 
 	return TRUE;
 }
@@ -254,7 +261,10 @@ xmms_lastfm_control (xmms_xform_t *xform, const gchar *cmd)
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
 
-	session = xmms_xform_metadata_get_str (xform, "session");
+	if (!xmms_xform_metadata_get_str (xform, "session", &session)) {
+		xmms_log_error ("No session for lastfmeta to use!");
+		return FALSE;
+	}
 
 	buffer = g_string_new (NULL);
 

@@ -217,9 +217,10 @@ void xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val
 void xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val);
 
 gboolean xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key);
-gint xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key);
-const gchar *xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key);
-
+gboolean xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key,
+                                      gint *val);
+gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key,
+                                      const gchar **val);
 void xmms_xform_privdata_set_none (xmms_xform_t *xform);
 void xmms_xform_privdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
 void xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);

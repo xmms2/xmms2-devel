@@ -331,9 +331,10 @@ xmms_vorbis_init (xmms_xform_t *xform)
 
 	playtime = ov_time_total (&data->vorbisfile, -1);
 	if (playtime != OV_EINVAL) {
+		gint filesize;
+
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-		gint filesize = xmms_xform_metadata_get_int (xform, metakey);
-		if (filesize != -1) {
+		if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 			xmms_xform_metadata_set_int (xform, metakey, playtime * 1000);
 		}

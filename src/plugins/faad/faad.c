@@ -386,7 +386,7 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 
 	if (data->filetype == FAAD_TYPE_ADIF) {
 		guint skip_size, bitrate;
-		guint64 duration;
+		gint32 duration;
 
 		skip_size = (data->buffer[4] & 0x80) ? 9 : 0;
 		bitrate = ((guint) (data->buffer[4 + skip_size] & 0x0F) << 19) |
@@ -398,8 +398,7 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		xmms_xform_metadata_set_int (xform, metakey, bitrate);
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-		duration = xmms_xform_metadata_get_int (xform, metakey);
-		if (duration != 0) {
+		if (xmms_xform_metadata_get_int (xform, metakey, &duration)) {
 			duration = ((float) duration * 8000.f) / ((float) bitrate) + 0.5f;
 
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;

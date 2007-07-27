@@ -238,14 +238,14 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 		}
 	}
 
-	gchar *name, *value;
+	gchar *name, *value, *metakey;
+	gint filesize;
 
-	gint filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
-	if (filesize != -1) {	
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 		gint duration = data->p_decompress->GetInfo (APE_DECOMPRESS_LENGTH_MS);
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             duration);
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		xmms_xform_metadata_set_int (xform, metakey, duration);
 	}
 
 	/* Technical Information */

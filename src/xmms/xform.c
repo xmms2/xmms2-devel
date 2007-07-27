@@ -507,10 +507,10 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
 {
 	const char *old;
 
-	old = xmms_xform_metadata_get_str (xform, key);
-
-	if (old && strcmp (old, val) == 0) {
-		return;
+	if (xmms_xform_metadata_get_str (xform, key, &old)) {
+		if (strcmp (old, val) == 0) {
+			return;
+		}
 	}
 
 	g_hash_table_insert (xform->metadata, g_strdup (key),
@@ -540,29 +540,33 @@ xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key)
 	return !!xmms_xform_metadata_get_val (xform, key);
 }
 
-gint32
-xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key)
+gboolean
+xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key,
+                             gint32 *val)
 {
-	const xmms_object_cmd_value_t *val;
-	gint32 ret = -1;
+	const xmms_object_cmd_value_t *obj;
+	gboolean ret = FALSE;
 
-	val = xmms_xform_metadata_get_val (xform, key);
-	if (val && val->type == XMMS_OBJECT_CMD_ARG_INT32) {
-		ret = val->value.int32;
+	obj = xmms_xform_metadata_get_val (xform, key);
+	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_INT32) {
+		*val = obj->value.int32;
+		ret = TRUE;
 	}
 
 	return ret;
 }
 
-const gchar *
-xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key)
+gboolean
+xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key,
+                             const gchar **val)
 {
-	const xmms_object_cmd_value_t *val;
-	const gchar *ret = NULL;
+	const xmms_object_cmd_value_t *obj;
+	gboolean ret = FALSE;
 
-	val = xmms_xform_metadata_get_val (xform, key);
-	if (val && val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		ret = val->value.string;
+	obj = xmms_xform_metadata_get_val (xform, key);
+	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		*val = obj->value.string;
+		ret = TRUE;
 	}
 
 	return ret;

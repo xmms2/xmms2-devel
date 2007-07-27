@@ -142,10 +142,17 @@ static mpc_int32_t
 xmms_mpc_callback_get_size (void *data)
 {
 	xmms_xform_t *xform = data;
+	const gchar *metakey;
+	gint ret;
+
 	g_return_val_if_fail (xform, -1);
 
-	return xmms_xform_metadata_get_int (xform,
-	                                    XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
+	if (xmms_xform_metadata_get_int (xform, metakey, &ret)) {
+		return ret;
+	}
+
+	return -1;
 }
 
 
@@ -214,8 +221,7 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-	filesize = xmms_xform_metadata_get_int (xform, metakey);
-	if (filesize != -1) {
+	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
 		duration = mpc_streaminfo_get_length (&data->info) * 1000;
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		xmms_xform_metadata_set_int (xform, metakey, duration);

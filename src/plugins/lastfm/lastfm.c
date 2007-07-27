@@ -200,7 +200,9 @@ xmms_lastfm_adjust (xmms_xform_t *xform, CURL *curl, GString *buffer)
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 
-	session = xmms_xform_metadata_get_str (xform, "session");
+	if (!xmms_xform_metadata_get_str (xform, "session", &session)) {
+		return FALSE;
+	}
 
 	tmp = g_strdup_printf (request_fmt, session, url);
 	curl_easy_setopt (curl, CURLOPT_URL, tmp);
