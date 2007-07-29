@@ -166,16 +166,6 @@ struct xmms_output_St {
  * Public functions
  */
 
-/**
- * @defgroup OutputPlugin OutputPlugin
- * @ingroup XMMSPlugin
- * @{
- */
-
-/**
- * Retrieve the private data for the plugin that was set with
- * #xmms_output_private_data_set.
- */
 gpointer
 xmms_output_private_data_get (xmms_output_t *output)
 {
@@ -185,10 +175,6 @@ xmms_output_private_data_get (xmms_output_t *output)
 	return output->plugin_data;
 }
 
-/**
- * Set the private data for the plugin that can be retrived
- * with #xmms_output_private_data_get later.
- */
 void
 xmms_output_private_data_set (xmms_output_t *output, gpointer data)
 {
@@ -198,14 +184,6 @@ xmms_output_private_data_set (xmms_output_t *output, gpointer data)
 	output->plugin_data = data;
 }
 
-/**
- * Add format to list of supported formats.
- * Should be called from initialisation function for every supported
- * format. Any call to the format_set method will be with one of these
- * formats.
- *
- *
- */
 void
 xmms_output_stream_type_add (xmms_output_t *output, ...)
 {
@@ -559,8 +537,6 @@ xmms_output_config_lookup (xmms_output_t *output, const gchar *path)
 	g_return_val_if_fail (output->plugin, NULL);
 	return xmms_plugin_config_lookup ((xmms_plugin_t *)output->plugin, path);
 }
-
-/** @} */
 
 
 /** @addtogroup Output

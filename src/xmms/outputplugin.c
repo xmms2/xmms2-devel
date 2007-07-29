@@ -41,10 +41,6 @@ static gboolean xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin,
 static gpointer xmms_output_plugin_writer (gpointer data);
 
 
-/**
- * Output plugin object destructor.
- * @param obj an output plugin object
- */
 static void
 xmms_output_plugin_destroy (xmms_object_t *obj)
 {
@@ -58,10 +54,6 @@ xmms_output_plugin_destroy (xmms_object_t *obj)
 }
 
 
-/**
- * Output plugin object constructor.
- * @return a new output plugin object.
- */
 xmms_plugin_t *
 xmms_output_plugin_new (void)
 {
@@ -76,11 +68,6 @@ xmms_output_plugin_new (void)
 }
 
 
-/**
- * Register the output plugin methods.
- * @param plugin an output plugin object
- * @param methods a struct pointing to the plugin specific methods
- */
 void
 xmms_output_plugin_methods_set (xmms_output_plugin_t *plugin,
                                 xmms_output_methods_t *methods)
@@ -95,16 +82,6 @@ xmms_output_plugin_methods_set (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Verify output plugin methods.
- * Each output plugin must implement at least _new, _destroy and _flush.
- * Depending on what kind of mechanism the output plugin uses it will
- * implement _write, _open, _close, or in the case of event driven
- * plugins, _status. An event driven plugin is not allowed to not
- * implement _open, _close.
- * @param _plugin an output plugin object.
- * @return TRUE if the plugin has the required methods, else FALSE
- */
 gboolean
 xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 {
@@ -150,18 +127,6 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 }
 
 
-/**
- * Register a configuration directive.
- * As an optional, but recomended functionality the plugin can decide to
- * subscribe on the configuration value and will thus be notified when it
- * changes by passing a callback, and if needed, userdata.
- * @param plugin an output plugin object
- * @param name the name of the configuration directive
- * @param default_value the default value of the configuration directive
- * @param cb the method to call on configuration value changes
- * @param userdata a user specified variable to be passed to the callback
- * @return a configuration structure based on the given input.
- */
 xmms_config_property_t *
 xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin,
                                              const gchar *name,
@@ -176,16 +141,6 @@ xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Initiate the output plugin.
- * This calls the xmms_foo_new method in the output plugin which should
- * setup all the basics needed before opening the device. If the plugin
- * fails to initiate itself its destructor will automatically be called.
- * If the plugin is not event driven a writer thread will be started.
- * @param plugin an output plugin object
- * @param output an output object
- * @return TRUE on success, FALSE on failure
- */
 gboolean
 xmms_output_plugin_method_new (xmms_output_plugin_t *plugin,
                                xmms_output_t *output)
@@ -210,13 +165,6 @@ xmms_output_plugin_method_new (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Destroy the output plugin.
- * Call the output plugin destructor. If the output plugin is not event
- * driven, the running writer thread will be stopped.
- * @param plugin an output plugin object
- * @param output an output object
- */
 void
 xmms_output_plugin_method_destroy (xmms_output_plugin_t *plugin,
                                    xmms_output_t *output)
@@ -239,13 +187,6 @@ xmms_output_plugin_method_destroy (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Flush the output plugin.
- * When the flush method in the output plugin is run the audio buffer on the
- * soundcard is cleared.
- * @param plugin an output plugin object
- * @param output an output object
- */
 void
 xmms_output_plugin_method_flush (xmms_output_plugin_t *plugin,
                                  xmms_output_t *output)
@@ -261,15 +202,6 @@ xmms_output_plugin_method_flush (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Check if the output plugin always needs notified of track changes.
- * Some output plugins may want to do crazy stuff like embedding metadata
- * into the output stream. These plugins will use the format_set_always
- * instead of format_set, and are thus guaranteed to be notified even if the
- * format of two songs are equal.
- * @param plugin an output plugin object
- * @return TRUE if the output plugin always needs to set format, else FALSE
- */
 gboolean
 xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin)
 {
@@ -282,16 +214,6 @@ xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin)
 }
 
 
-/**
- * Set the output format.
- * This method may be called on either track change, or on format changes
- * depending on how the output plugin rolls. The regular plugins that use
- * format_set should let the soundcard drain the buffer before changing the
- * format to avoid chopped off songs.
- * @param plugin an output plugin object
- * @param output an output object
- * @return TRUE if the format was successfully set.
- */
 gboolean
 xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin,
                                       xmms_output_t *output,
@@ -316,13 +238,6 @@ xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Update the output plugin with the current playback status.
- * This is interesting for event driven output plugins.
- * @param plugin an output plugin object
- * @param output an output object
- * @param st the new playback status
- */
 gboolean
 xmms_output_plugin_method_status (xmms_output_plugin_t *plugin,
                                   xmms_output_t *output, gint st)
@@ -342,14 +257,6 @@ xmms_output_plugin_method_status (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Get the number of bytes in the soundcard buffer.
- * This is needed for the visualization to perform correct synchronization
- * between audio and graphics for example.
- * @param plugin an output plugin object
- * @param output an output object
- * @return the current number of bytes in the soundcard buffer or 0 on failure
- */
 guint
 xmms_output_plugin_method_latency_get (xmms_output_plugin_t *plugin,
                                        xmms_output_t *output)
@@ -367,11 +274,6 @@ xmms_output_plugin_method_latency_get (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Check if an output plugin can change the volume.
- * @param plugin an output plugin object.
- * @return TRUE if the volume has a volume_set method, else FALSE
- */
 gboolean
 xmms_output_plugin_method_volume_set_available (xmms_output_plugin_t *plugin)
 {
@@ -381,14 +283,6 @@ xmms_output_plugin_method_volume_set_available (xmms_output_plugin_t *plugin)
 }
 
 
-/**
- * Set volume.
- * @param plugin an output plugin object
- * @param output an output object
- * @param chan the name of the channel to set volume on
- * @param val the volume level to set
- * @return TRUE if the update was successful, else FALSE
- */
 gboolean
 xmms_output_plugin_methods_volume_set (xmms_output_plugin_t *plugin,
                                        xmms_output_t *output,
@@ -407,11 +301,6 @@ xmms_output_plugin_methods_volume_set (xmms_output_plugin_t *plugin,
 }
 
 
-/**
- * Check if an output plugin can get the volume level.
- * @param plugin an output plugin object
- * @return TRUE if the output plugin can get the volume level, else FALSE
- */
 gboolean
 xmms_output_plugin_method_volume_get_available (xmms_output_plugin_t *plugin)
 {
@@ -421,21 +310,6 @@ xmms_output_plugin_method_volume_get_available (xmms_output_plugin_t *plugin)
 }
 
 
-/**
- * Get volume.
- * This method is typically called twice. The first run NULL will be passed
- * to param n and x, and the output plugin will then set the number of
- * available channels to y and return TRUE. When the channels are known
- * memory will be allocated for the channel names and volume level lists
- * and the method will be called again, and this time the volume levels
- * are extracted for real.
- * @param plugin an output plugin object
- * @param output an output object
- * @param n a pointer to a list that is to be filled with channel names
- * @param x a pointer to a list that is to be filled with volume levels
- * @param y a pointer to a list that is to be filled with the number of channels
- * @return TRUE if the volume/channel count successfully retrieved, else FALSE
- */
 gboolean
 xmms_output_plugin_method_volume_get (xmms_output_plugin_t *plugin,
                                       xmms_output_t *output,
