@@ -275,10 +275,12 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 		has_songname = TRUE;
 	}
 
-	xmmsc_result_get_dict_entry_int (res, "duration", &curr_dur);
-
-	/* rounding */
-	curr_dur += 500;
+	if (xmmsc_result_get_dict_entry_int (res, "duration", &curr_dur)) {
+		/* rounding */
+		curr_dur += 500;
+	} else {
+		curr_dur = 0;
+	}
 
 	xmmsc_result_unref (res);
 
