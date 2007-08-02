@@ -14,24 +14,18 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __CALLBACKS_H__
-#define __CALLBACKS_H__
-
-#include <xmmsclient/xmmsclient.h>
+#ifndef __UDATA_PACKS_H__
+#define __UDATA_PACKS_H__
 
 #include <glib.h>
 
-#include "main.h"
+#include "cli_infos.h"
+
+typedef struct pack_infos_playlist_St pack_infos_playlist_t;
+
+pack_infos_playlist_t *pack_infos_playlist (cli_infos_t *infos, gchar *playlist);
+void unpack_infos_playlist (pack_infos_playlist_t *pack, cli_infos_t **infos, gchar **playlist);
+void free_infos_playlist (pack_infos_playlist_t *pack);
 
 
-void cb_done (xmmsc_result_t *res, void *udata);
-void cb_tickle (xmmsc_result_t *res, void *udata);
-void cb_entry_print_status (xmmsc_result_t *res, void *udata);
-void cb_list_print_info (xmmsc_result_t *res, void *udata);
-void cb_list_print_row (xmmsc_result_t *res, void *udata);
-void cb_list_jump (xmmsc_result_t *res, void *udata);
-void cb_list_jump_back (xmmsc_result_t *res, void *udata);
-void cb_remove_cached_list (xmmsc_result_t *matching, void *udata);
-void cb_remove_list (xmmsc_result_t *matching, xmmsc_result_t *playlist, void *udata);
-
-#endif /* __CALLBACKS_H__ */
+#endif /* __UDATA_PACKS__ */

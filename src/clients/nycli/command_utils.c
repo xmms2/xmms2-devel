@@ -17,6 +17,13 @@
 #include "command_utils.h"
 
 
+struct double_callback_infos_St {
+	double_notifier_f callback;
+	xmmsc_result_t *first_res;
+	void *udata;
+};
+
+
 gboolean
 command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v)
 {
@@ -72,8 +79,8 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 	gboolean retval = FALSE;
 
 	if (command_flag_string_get (ctx, name, &full) && full) {
-		/* FIXME: How to suppress the warning here? */
-		*v = g_strsplit (full, ",", MAX_STRINGLIST_TOKENS);
+		/* Force cast to suppress warning, Don't panic! */
+		*v = (const gchar **) g_strsplit (full, ",", MAX_STRINGLIST_TOKENS);
 		retval = TRUE;
 	}
 
@@ -152,4 +159,48 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 	}
 
 	return retval;
+}
+
+
+
+static void
+call_double_callback (xmmsc_result_t *res2, void *infos_udata)
+{
+	double_callback_infos_t *infos;
+	double_notifier_f callback;
+	xmmsc_result_t *res1;
+	void *udata;
+
+	infos = (double_callback_infos_t *) infos_udata;
+	callback = infos->callback;
+	res1 = infos->first_res;
+	udata = infos->udata;
+	g_free (infos);
+
+	callback (res1, res2, udata);
+}
+
+static void
+call_dummy (xmmsc_result_t *res1, void *udata)
+{
+}
+
+/**
+ * Register a single callback for two xmmsc_result_t. The commands
+ * must have been issued in the order of the arguments to this
+ * function.
+ */
+void
+register_double_callback (xmmsc_result_t *res1, xmmsc_result_t *res2,
+                          double_notifier_f cb, void *udata)
+{
+	double_callback_infos_t *infos;
+
+	infos = g_new0 (double_callback_infos_t, 1);
+	infos->callback = cb;
+	infos->first_res = res1;
+	infos->udata = udata;
+
+	xmmsc_result_notifier_set (res1, call_dummy, NULL); /* needed to keep the ref alive */
+	xmmsc_result_notifier_set (res2, call_double_callback, infos);
 }

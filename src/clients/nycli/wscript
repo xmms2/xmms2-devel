@@ -9,7 +9,8 @@ def build(bld):
                     command_utils.c
                     callbacks.c
                     column_display.c
-                    readline.c""".split()
+                    readline.c
+                    udata_packs.c""".split()
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline'

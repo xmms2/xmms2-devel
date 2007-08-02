@@ -22,6 +22,7 @@
 #include "command_utils.h"
 #include "callbacks.h"
 #include "column_display.h"
+#include "udata_packs.h"
 
 
 /* Setup commands */
@@ -106,6 +107,19 @@ cli_list_setup (command_action_t *action)
 }
 
 void
+cli_remove_setup (command_action_t *action)
+{
+	/* FIXME: support collection ? */
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Remove from the given playlist, instead of the active playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "remove", &cli_remove, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>] <pattern>"),
+	                     _("Remove the matching media from a playlist."));
+}
+
+void
 cli_status_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
@@ -170,6 +184,8 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 	} else {
 		fill_column_display (infos, coldisp, default_columns);
 	}
+
+	g_free (columns);
 
 	return coldisp;
 }
@@ -437,6 +453,49 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 
 	return TRUE;
 }
+
+gboolean cli_remove (cli_infos_t *infos, command_context_t *ctx)
+{
+	gchar *pattern = NULL;
+	gchar *playlist = NULL;
+	xmmsc_coll_t *query;
+	xmmsc_result_t *res, *plres;
+
+	command_flag_string_get (ctx, "playlist", &playlist);
+	if (!playlist
+	    || strcmp (playlist, infos->cache->active_playlist_name) == 0) {
+		playlist = NULL;
+	}
+
+	command_arg_longstring_get (ctx, 0, &pattern);
+	if (!pattern) {
+		g_printf (_("Error: you must provide a pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+		cli_infos_loop_resume (infos);
+	} else {
+		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+		if (!playlist) {
+			/* Optimize by reading active playlist from cache */
+			xmmsc_result_notifier_set (res, cb_remove_cached_list, infos);
+		} else {
+			plres = xmmsc_playlist_list_entries (infos->conn, playlist);
+			register_double_callback (res, plres, cb_remove_list,
+			                          pack_infos_playlist (infos, playlist));
+			xmmsc_result_unref (plres);
+		}
+		xmmsc_result_unref (res);
+		xmmsc_coll_unref (query);
+	}
+
+	if (pattern) {
+		g_free (pattern);
+	}
+
+	return TRUE;
+}
+
 
 /* The loop is resumed in the disconnect callback */
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
