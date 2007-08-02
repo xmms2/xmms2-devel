@@ -669,6 +669,18 @@ c_broadcast_playlist_current_pos (VALUE self)
 
 /*
  * call-seq:
+ *  xc.broadcast_playlist_loaded -> result
+ *
+ * Will be called when a playlist has been loaded.
+ */
+static VALUE
+c_broadcast_playlist_loaded (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_playlist_loaded);
+}
+
+/*
+ * call-seq:
  *  xc.broadcast_medialib_entry_changed -> result
  *
  * Retrieves the id of a changed medialib entry as a broadcast.
@@ -1445,6 +1457,8 @@ Init_Client (VALUE mXmms)
 	                  c_broadcast_playlist_changed, 0);
 	rb_define_method (c, "broadcast_playlist_current_pos",
 	                  c_broadcast_playlist_current_pos, 0);
+	rb_define_method (c, "broadcast_playlist_loaded",
+	                  c_broadcast_playlist_loaded, 0);
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
