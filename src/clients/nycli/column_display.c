@@ -228,10 +228,7 @@ column_display_free (column_display_t *disp)
 	}
 	g_array_free (disp->cols, FALSE);
 
-	if (disp->buffer) {
-		g_free (disp->buffer);
-	}
-
+	g_free (disp->buffer);
 	g_free (disp);
 }
 

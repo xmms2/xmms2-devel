@@ -113,7 +113,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 	return TRUE;
 }
 
-cli_infos_t*
+cli_infos_t *
 cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;

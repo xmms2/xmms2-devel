@@ -84,9 +84,7 @@ refresh_active_playlist_name (xmmsc_result_t *res, void *udata)
 	gchar *buf;
 
 	if (!xmmsc_result_iserror (res) && xmmsc_result_get_string (res, &buf)) {
-		if (cache->active_playlist_name) {
-			g_free (cache->active_playlist_name);
-		}
+		g_free (cache->active_playlist_name);
 		cache->active_playlist_name = g_strdup (buf);
 	}
 
@@ -187,9 +185,7 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 
 	/* Refresh playlist name */
 	if (xmmsc_result_get_string (res, &buf)) {
-		if (infos->cache->active_playlist_name) {
-			g_free (infos->cache->active_playlist_name);
-		}
+		g_free (infos->cache->active_playlist_name);
 		infos->cache->active_playlist_name = g_strdup (buf);
 	}
 
@@ -202,7 +198,7 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 	unref_transient_result (res);
 }
 
-
+/** Initialize the cache, must still be started to be filled. */
 cli_cache_t *
 cli_cache_init ()
 {
@@ -221,6 +217,7 @@ cli_cache_init ()
 	return cache;
 }
 
+/** Fill the cache with initial (current) data, setup listeners. */
 void
 cli_cache_start (cli_infos_t *infos)
 {
@@ -254,6 +251,7 @@ cli_cache_start (cli_infos_t *infos)
 	xmmsc_result_unref (res);
 }
 
+/** Check whether the cache is currently fresh (up-to-date). */
 gboolean
 cli_cache_is_fresh (cli_cache_t *cache)
 {
@@ -263,12 +261,11 @@ cli_cache_is_fresh (cli_cache_t *cache)
 	       freshness_is_fresh (&cache->freshness_active_playlist_name);
 }
 
+/** Free all memory owned by the cache. */
 void
 cli_cache_free (cli_cache_t *cache)
 {
-	if (cache->active_playlist_name) {
-		g_free (cache->active_playlist_name);
-	}
+	g_free (cache->active_playlist_name);
 	g_array_free (cache->active_playlist, FALSE);
 	g_free (cache);
 }

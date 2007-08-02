@@ -23,6 +23,7 @@ struct pack_infos_playlist_St {
 };
 
 
+/** Pack cli_infos_t and playlist name in a struct, to be used as udata. */
 pack_infos_playlist_t *
 pack_infos_playlist (cli_infos_t *infos, gchar *playlist)
 {
@@ -32,6 +33,7 @@ pack_infos_playlist (cli_infos_t *infos, gchar *playlist)
 	return pack;
 }
 
+/** Extract infos and playlist from the pack. The pack must still be freed. */
 void
 unpack_infos_playlist (pack_infos_playlist_t *pack, cli_infos_t **infos,
                        gchar **playlist)
@@ -40,6 +42,7 @@ unpack_infos_playlist (pack_infos_playlist_t *pack, cli_infos_t **infos,
 	*playlist = pack->playlist;
 }
 
+/** Free the pack memory. */
 void
 free_infos_playlist (pack_infos_playlist_t *pack)
 {

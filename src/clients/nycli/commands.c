@@ -193,7 +193,8 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 
 /* Define commands */
 
-gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->conn);
@@ -203,7 +204,8 @@ gboolean cli_play (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->conn);
@@ -213,7 +215,8 @@ gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_stop (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gint n;
@@ -233,7 +236,8 @@ gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_seek (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	command_arg_time_t t;
@@ -255,7 +259,8 @@ gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	guint currid;
@@ -281,7 +286,8 @@ gboolean cli_status (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_prev (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gint n;
@@ -298,7 +304,8 @@ gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_next (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gint n;
@@ -315,7 +322,8 @@ gboolean cli_next (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gchar *pattern = NULL;
@@ -348,7 +356,8 @@ gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
@@ -378,14 +387,14 @@ gboolean cli_search (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_coll_unref (query);
 	}
 
-	if (pattern) {
-		g_free (pattern);
-	}
+	g_free (pattern);
+	g_free (order);
 
 	return TRUE;
 }
 
-gboolean cli_list (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query = NULL;
@@ -420,14 +429,13 @@ gboolean cli_list (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_unref (res);
 	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
-	if (pattern) {
-		g_free (pattern);
-	}
+	g_free (pattern);
 
 	return TRUE;
 }
 
-gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
@@ -447,14 +455,13 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_coll_unref (query);
 	}
 
-	if (pattern) {
-		g_free (pattern);
-	}
+	g_free (pattern);
 
 	return TRUE;
 }
 
-gboolean cli_remove (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
 	gchar *playlist = NULL;
@@ -489,16 +496,15 @@ gboolean cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_coll_unref (query);
 	}
 
-	if (pattern) {
-		g_free (pattern);
-	}
+	g_free (pattern);
 
 	return TRUE;
 }
 
 
 /* The loop is resumed in the disconnect callback */
-gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_quit (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
@@ -512,7 +518,8 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_exit (cli_infos_t *infos, command_context_t *ctx)
 {
 	cli_infos_loop_stop (infos);
 
@@ -568,7 +575,8 @@ help_command (cli_infos_t *infos, gchar *cmd)
 	}
 }
 
-gboolean cli_help (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_help (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint i;
 

@@ -55,10 +55,8 @@ void
 command_action_free (command_action_t *action)
 {
 	g_free (action->name);
-	if (action->usage)
-		g_free (action->usage);
-	if (action->description)
-		g_free (action->description);
+	g_free (action->usage);
+	g_free (action->description);
 	g_free (action->argdefs);
 	g_free (action);
 }
