@@ -200,8 +200,9 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	gchar buf[8];
 
 	/* track gain */
-	if (!(tmp = vorbis_comment_query (vc, "replaygain_track_gain", 0))) {
-		tmp = vorbis_comment_query (vc, "rg_radio", 0);
+	tmp = vorbis_comment_query (vc, (char *) "replaygain_track_gain", 0);
+	if (!tmp) {
+		tmp = vorbis_comment_query (vc, (char *) "rg_radio", 0);
 	}
 
 	if (tmp) {
@@ -213,8 +214,9 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 
 	/* album gain */
-	if (!(tmp = vorbis_comment_query (vc, "replaygain_album_gain", 0))) {
-		tmp = vorbis_comment_query (vc, "rg_audiophile", 0);
+	tmp = vorbis_comment_query (vc, (char *) "replaygain_album_gain", 0);
+	if (!tmp) {
+		tmp = vorbis_comment_query (vc, (char *) "rg_audiophile", 0);
 	}
 
 	if (tmp) {
@@ -226,8 +228,9 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 
 	/* track peak */
-	if (!(tmp = vorbis_comment_query (vc, "replaygain_track_peak", 0))) {
-		tmp = vorbis_comment_query (vc, "rg_peak", 0);
+	tmp = vorbis_comment_query (vc, (char *) "replaygain_track_peak", 0);
+	if (!tmp) {
+		tmp = vorbis_comment_query (vc, (char *) "rg_peak", 0);
 	}
 
 	if (tmp) {
@@ -236,7 +239,8 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 
 	/* album peak */
-	if ((tmp = vorbis_comment_query (vc, "replaygain_album_peak", 0))) {
+	tmp = vorbis_comment_query (vc, (char *) "replaygain_album_peak", 0);
+	if (tmp) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 		xmms_xform_metadata_set_str (xform, metakey, (gchar *) tmp);
 	}

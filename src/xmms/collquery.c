@@ -75,7 +75,7 @@ static void query_string_append_alias (GString *qstring, coll_query_alias_t *ali
 
 static gchar *canonical_field_name (gchar *field);
 static gboolean operator_is_allmedia (xmmsc_coll_t *op);
-static coll_query_alias_t *query_make_alias (coll_query_t *query, gchar *field, gboolean optional);
+static coll_query_alias_t *query_make_alias (coll_query_t *query, const gchar *field, gboolean optional);
 
 
 
@@ -306,7 +306,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
  * @return  The alias pointer.
  */
 static coll_query_alias_t *
-query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
+query_make_alias (coll_query_t *query, const gchar *field, gboolean optional)
 {
 	coll_query_alias_t *alias;
 	alias = g_hash_table_lookup (query->aliases, field);

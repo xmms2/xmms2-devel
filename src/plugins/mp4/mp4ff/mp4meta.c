@@ -173,7 +173,7 @@ int32_t TrackToString(char** str, const uint16_t track, const uint16_t totalTrac
 
 int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name)
 {
-    static char *tag_names[] = {
+    static const char *tag_names[] = {
         "unknown", "title", "artist", "writer", "album",
         "date", "tool", "comment", "genre", "track",
         "disc", "compilation", "genre", "tempo", "cover"

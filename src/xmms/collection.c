@@ -40,8 +40,8 @@
 /* Internal helper structures */
 
 typedef struct {
-	gchar* name;
-	gchar* namespace;
+	const gchar *name;
+	const gchar *namespace;
 	xmmsc_coll_t *oldtarget;
 	xmmsc_coll_t *newtarget;
 } coll_rebind_infos_t;
@@ -65,7 +65,7 @@ typedef struct {
 } coll_refcheck_t;
 
 typedef struct {
-	gchar *key;
+	const gchar *key;
 	xmmsc_coll_t *value;
 } coll_table_pair_t;
 
@@ -143,18 +143,18 @@ XMMS_CMD_DEFINE6 (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, L
 
 GHashTable *
 xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
-                                 gchar *plname, gchar *namespace)
+                                 const gchar *plname, const gchar *namespace)
 {
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                              NULL, xmms_object_cmd_value_free);
 	val = xmms_object_cmd_value_int_new (type);
-	g_hash_table_insert (dict, "type", val);
+	g_hash_table_insert (dict, (gpointer) "type", val);
 	val = xmms_object_cmd_value_str_new (plname);
-	g_hash_table_insert (dict, "name", val);
+	g_hash_table_insert (dict, (gpointer) "name", val);
 	val = xmms_object_cmd_value_str_new (namespace);
-	g_hash_table_insert (dict, "namespace", val);
+	g_hash_table_insert (dict, (gpointer) "namespace", val);
 
 	return dict;
 }
@@ -426,7 +426,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 {
 	xmmsc_coll_t *existing;
 	guint nsid;
-	gchar *alias;
+	const gchar *alias;
 	gchar *newkey = NULL;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
@@ -683,7 +683,7 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 		/* Send _RENAME signal */
 		dict = xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_RENAME,
 		                                        from_name, namespace);
-		g_hash_table_insert (dict, "newname",
+		g_hash_table_insert (dict, (gpointer) "newname",
 		                     xmms_object_cmd_value_str_new (to_name));
 		xmms_collection_changed_msg_send (dag, dict);
 
@@ -713,7 +713,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 {
 	GList *res = NULL;
 	GList *ids = NULL;
-	GList *fetch = g_list_prepend (NULL, "id");
+	GList *fetch = g_list_prepend (NULL, (gpointer) "id");
 	GList *n = NULL;
 
 	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, fetch, NULL, err);
@@ -789,8 +789,8 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
  * @param newtarget The new collection pointed to by the reference.
  */
 void
-xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid,
-                                xmmsc_coll_t *newtarget)
+xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name,
+                                guint nsid, xmmsc_coll_t *newtarget)
 {
 	xmms_collection_dag_replace (dag, nsid, g_strdup (name), newtarget);
 	xmmsc_coll_ref (newtarget);
@@ -813,7 +813,8 @@ xmms_collection_dag_replace (xmms_coll_dag_t *dag,
  * @returns  The collection structure if found, NULL otherwise.
  */
 xmmsc_coll_t *
-xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
+xmms_collection_get_pointer (xmms_coll_dag_t *dag, const gchar *collname,
+                             guint nsid)
 {
 	gint i;
 	xmmsc_coll_t *coll = NULL;
@@ -896,11 +897,11 @@ xmms_collection_set_int_attr (xmmsc_coll_t *coll, const gchar *attrname,
  * @param key  If not NULL, ignore any pair with that key.
  * @return The key of the found pair.
  */
-gchar *
+const gchar *
 xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
-                            xmmsc_coll_t *value, gchar *key)
+                            xmmsc_coll_t *value, const gchar *key)
 {
-	gchar *otherkey = NULL;
+	const gchar *otherkey = NULL;
 	coll_table_pair_t search_pair = { key, value };
 
 	if (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
@@ -927,7 +928,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsc_coll_t *source)
 	xmms_medialib_entry_t mid = 0;
 
 	/* FIXME: Temporary hack to allow custom ordering functions */
-	rorder = g_list_prepend (rorder, "~RANDOM()");
+	rorder = g_list_prepend (rorder, (gpointer) "~RANDOM()");
 
 	res = xmms_collection_query_ids (dag, source, 0, 1, rorder, NULL);
 
@@ -1209,8 +1210,8 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 
 	/* Unref if collection exists, and is not pointed at by _active playlist */
 	if (existing != NULL && existing != active_pl) {
-		gchar *matchkey;
-		char *nsname = xmms_collection_get_namespace_string (nsid);
+		const gchar *matchkey;
+		const gchar *nsname = xmms_collection_get_namespace_string (nsid);
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
 
 		/* FIXME: if reference pointed to by a label, we should update
@@ -1264,10 +1265,10 @@ xmms_collection_get_namespace_id (gchar *namespace)
  * @param nsid  The namespace id.
  * @returns  The namespace name (string).
  */
-gchar*
+const gchar *
 xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid)
 {
-	gchar *name;
+	const gchar *name;
 
 	switch (nsid) {
 	case XMMS_COLLECTION_NSID_ALL:

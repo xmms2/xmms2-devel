@@ -356,7 +356,7 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 		asf_stream_properties_t *sprop = asf_get_stream_properties (file, i);
 		if (sprop->type == ASF_STREAM_TYPE_AUDIO) {
 			asf_waveformatex_t *wfx = sprop->properties;
-			gchar *mimetype;
+			const gchar *mimetype;
 
 			if (wfx->codec_id == 0x160)
 				mimetype = "audio/x-ffmpeg-wmav1";

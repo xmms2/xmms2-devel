@@ -87,7 +87,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	xmmsc_coll_t *coll = NULL;
 	xmms_medialib_session_t *session;
 	xmms_object_cmd_value_t *cmdval;
-	gchar *query;
+	const gchar *query;
 	GList *res;
 	GList *n;
 	gint previd;

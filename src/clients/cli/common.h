@@ -26,8 +26,8 @@
 #define CMD_COLL_DEFAULT_NAMESPACE  "Collections"
 
 typedef struct {
-	char *name;
-	char *help;
+	const char *name;
+	const char *help;
 	void (*func) (xmmsc_connection_t *conn, int argc, char **argv);
 } cmds;
 

@@ -927,7 +927,7 @@ xmms_config_save (const gchar *file)
 		return FALSE;
 	}
 
-	tree = g_node_new ("xmms");
+	tree = g_node_new ((gpointer) "xmms");
 	g_hash_table_foreach (global_config->properties, add_to_tree_foreach, tree);
 
 	dump_node (tree, fp);

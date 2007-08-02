@@ -234,7 +234,8 @@ add_to_source (void *hash, int columns, char **vals, char **cols)
 }
 
 guint32
-xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
+xmms_medialib_source_to_id (xmms_medialib_session_t *session,
+                            const gchar *source)
 {
 	guint32 ret = 0;
 	g_return_val_if_fail (source, 0);
@@ -742,7 +743,7 @@ process_file (xmms_medialib_session_t *session,
 }
 
 static gchar *
-lookup_string (xmms_object_cmd_value_t *tbl, gchar *key)
+lookup_string (xmms_object_cmd_value_t *tbl, const gchar *key)
 {
 	xmms_object_cmd_value_t *val;
 
@@ -761,7 +762,7 @@ lookup_string (xmms_object_cmd_value_t *tbl, gchar *key)
 }
 
 static gint32
-lookup_int (xmms_object_cmd_value_t *tbl, gchar *key)
+lookup_int (xmms_object_cmd_value_t *tbl, const gchar *key)
 {
 	xmms_object_cmd_value_t *val;
 

@@ -196,7 +196,7 @@ find_nul (const gchar *buf, gsize *len)
 static void
 add_to_entry (xmms_xform_t *xform,
               xmms_id3v2_header_t *head,
-              gchar *key,
+              const gchar *key,
               gchar *val,
               gint len)
 {
@@ -216,7 +216,7 @@ add_to_entry (xmms_xform_t *xform,
 
 static void
 handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, gchar *buf, gsize len)
+                   const gchar *key, gchar *buf, gsize len)
 {
 	gint res;
 	guint genre_id;
@@ -251,7 +251,7 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *_key, gchar *buf, gsize len)
+                   const gchar *_key, gchar *buf, gsize len)
 {
 	const gchar *enc;
 	gchar *cbuf;
@@ -288,7 +288,7 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                  gchar *key, gchar *buf, gsize len)
+                  const gchar *key, gchar *buf, gsize len)
 {
 
 	gchar *nval;
@@ -307,7 +307,7 @@ handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, gchar *buf, gsize len)
+                   const gchar *key, gchar *buf, gsize len)
 {
 	const gchar *val;
 
@@ -330,7 +330,7 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, gchar *buf, gsize len)
+                   const gchar *key, gchar *buf, gsize len)
 {
 	const gchar *enc, *typ, *desc, *data, *mime;
 	gchar hash[33];
@@ -365,7 +365,7 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, gchar *buf, gsize len)
+                   const gchar *key, gchar *buf, gsize len)
 {
 	/* COMM is weird but it's like this:
 	 * $xx enc
@@ -394,12 +394,13 @@ handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 	if (comm && comm[0]) {
 		const gchar *metakey;
+		gchar *tmp;
 
 		if (desc && desc[0]) {
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
-			key = g_strdup_printf ("%s_%s", metakey, desc);
-			xmms_xform_metadata_set_str (xform, key, comm);
-			g_free (key);
+			tmp = g_strdup_printf ("%s_%s", metakey, desc);
+			xmms_xform_metadata_set_str (xform, tmp, comm);
+			g_free (tmp);
 		} else {
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
 			xmms_xform_metadata_set_str (xform, metakey, comm);
@@ -412,8 +413,8 @@ handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 struct id3tags_t {
 	guint32 type;
-	gchar *prop;
-	void (*fun)(xmms_xform_t *, xmms_id3v2_header_t *, gchar *, gchar *, gsize); /* Instead of add_to_entry */
+	const gchar *prop;
+	void (*fun)(xmms_xform_t *, xmms_id3v2_header_t *, const gchar *, gchar *, gsize); /* Instead of add_to_entry */
 };
 
 static struct id3tags_t tags[] = {
