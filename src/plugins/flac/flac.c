@@ -297,8 +297,8 @@ flac_callback_error (const FLAC__StreamDecoder *flacdecoder,
 
 typedef enum { STRING, INTEGER, RPGAIN } ptype;
 typedef struct {
-	gchar *vname;
-	gchar *xname;
+	const gchar *vname;
+	const gchar *xname;
 	ptype type;
 } props;
 

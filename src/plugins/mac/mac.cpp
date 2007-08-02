@@ -46,8 +46,8 @@ typedef struct {
 
 typedef enum { STRING, INTEGER } ptype;
 typedef struct {
-	gchar *vname;
-	gchar *xname;
+	const gchar *vname;
+	const gchar *xname;
 	ptype type;
 } props;
 

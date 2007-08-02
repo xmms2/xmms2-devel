@@ -63,7 +63,7 @@ static GString* xmms_collection_gen_query (coll_query_t *query);
 static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
 
 static void query_append_uint (coll_query_t *query, guint i);
-static void query_append_string (coll_query_t *query, gchar *s);
+static void query_append_string (coll_query_t *query, const gchar *s);
 static void query_append_protect_string (coll_query_t *query, gchar *s);
 static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
 static void query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
@@ -372,7 +372,7 @@ query_append_uint (coll_query_t *query, guint i)
 }
 
 static void
-query_append_string (coll_query_t *query, gchar *s)
+query_append_string (coll_query_t *query, const gchar *s)
 {
 	g_string_append (query->conditions, s);
 }

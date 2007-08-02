@@ -1248,7 +1248,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
  */
 GList *
 xmms_medialib_select (xmms_medialib_session_t *session,
-                      gchar *query, xmms_error_t *error)
+                      const gchar *query, xmms_error_t *error)
 {
 	GList *res = NULL;
 	gint ret;

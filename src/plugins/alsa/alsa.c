@@ -62,7 +62,7 @@ static const int rates[] = {
 
 static const struct {
 	snd_mixer_selem_channel_id_t id;
-	gchar *name;
+	const gchar *name;
 } channel_map[] = {
 	{SND_MIXER_SCHN_FRONT_LEFT, "left"},
 	{SND_MIXER_SCHN_FRONT_RIGHT, "right"}

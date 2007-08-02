@@ -34,9 +34,9 @@
  * @return A newly allocated list of strings.
  */
 char **
-xmms_valist_to_strlist (char *first, va_list ap)
+xmms_valist_to_strlist (const char *first, va_list ap)
 {
-	char *cur = first;
+	const char *cur = first;
 	char **ret = NULL;
 	int i, size = sizeof (char *);
 
@@ -62,7 +62,7 @@ xmms_valist_to_strlist (char *first, va_list ap)
  * @return A newly allocated list of strings.
  */
 char **
-xmms_vargs_to_strlist (char *first, ...)
+xmms_vargs_to_strlist (const char *first, ...)
 {
 	va_list ap;
 	char **ret = NULL;

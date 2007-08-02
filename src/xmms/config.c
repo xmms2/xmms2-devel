@@ -369,7 +369,7 @@ static xmms_configparser_state_t
 get_current_state (const gchar *name)
 {
 	static struct {
-		gchar *name;
+		const gchar *name;
 		xmms_configparser_state_t state;
 	} *ptr, lookup[] = {
 		{"xmms", XMMS_CONFIG_STATE_START},
@@ -564,7 +564,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * @param err To be filled in if an error occurs
  */
 void
-xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value,
+xmms_config_setvalue (xmms_config_t *conf, const gchar *key, const gchar *value,
                       xmms_error_t *err)
 {
 	xmms_config_property_t *prop;

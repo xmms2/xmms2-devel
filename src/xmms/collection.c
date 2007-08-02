@@ -837,7 +837,7 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
  * @return TRUE if attribute correctly read, FALSE otherwise
  */
 gboolean
-xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint *val)
+xmms_collection_get_int_attr (xmmsc_coll_t *coll, const gchar *attrname, gint *val)
 {
 	gboolean retval = FALSE;
 	gint buf;
@@ -865,7 +865,7 @@ xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint *val)
  * @return TRUE if attribute successfully saved, FALSE otherwise.
  */
 gboolean
-xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname,
+xmms_collection_set_int_attr (xmmsc_coll_t *coll, const gchar *attrname,
                               gint newval)
 {
 	gboolean retval = FALSE;

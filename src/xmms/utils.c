@@ -35,7 +35,7 @@
  * @return Absolute path to a file or directory.
  */
 char *
-xmms_build_path (char *first, ...)
+xmms_build_path (const char *first, ...)
 {
 	va_list ap;
 	gchar confdir[PATH_MAX];

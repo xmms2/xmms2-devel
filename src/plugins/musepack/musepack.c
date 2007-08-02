@@ -266,8 +266,8 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 
 typedef enum { STRING, INTEGER } ptype;
 typedef struct {
-       gchar *vname;
-       gchar *xname;
+       const gchar *vname;
+       const gchar *xname;
        ptype type;
 } props ;
 
