@@ -171,6 +171,7 @@ D: Stuff all over the map. Release manager.
 
 N: Tilman Sauerbeck
 E: tilman@code-monkey.de
+E: tilman@xmms.org
 W: http://www.code-monkey.de/
 P: 1024D/CAD6DB0F 8606 96BC ABE4 FD1B 8A7A  959B DBBB 8B8A CAD6 DB0F
 D: Ruby bindings. Many other things all over the place.
@@ -192,6 +193,7 @@ E: bslote@gmail.com
 D: Pythonbindings fix
 
 N: Daniel Svensson
+E: dsvensson@gmail.com
 E: daniel@nittionio.nu
 D: Musepack. CoreFoundation. Alsa. Gnomevfs. Samba. Sun. Various fixes.
 
