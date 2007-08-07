@@ -26,7 +26,6 @@ struct xmms_output_plugin_St {
 	/* make sure we only do one call at a time */
 	GMutex *api_mutex;
 
-
 	/* */
 	xmms_playback_status_t write_status;
 	gboolean write_running;
@@ -36,7 +35,9 @@ struct xmms_output_plugin_St {
 	xmms_output_t *write_output;
 };
 
-static gboolean xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin, xmms_output_t *output, xmms_playback_status_t status);
+static gboolean xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin,
+                                                  xmms_output_t *output,
+                                                  xmms_playback_status_t s);
 static gpointer xmms_output_plugin_writer (gpointer data);
 
 static void
@@ -65,12 +66,14 @@ xmms_output_plugin_new (void)
 }
 
 void
-xmms_output_plugin_methods_set (xmms_output_plugin_t *plugin, xmms_output_methods_t *methods)
+xmms_output_plugin_methods_set (xmms_output_plugin_t *plugin,
+                                xmms_output_methods_t *methods)
 {
 	g_return_if_fail (plugin);
 	g_return_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_OUTPUT);
 
-	XMMS_DBG ("Registering output '%s'", xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
+	XMMS_DBG ("Registering output '%s'",
+	          xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
 
 	memcpy (&plugin->methods, methods, sizeof (xmms_output_methods_t));
 }
@@ -120,14 +123,21 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 }
 
 xmms_config_property_t *
-xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata)
+xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin,
+                                             const gchar *name,
+                                             const gchar *default_value,
+                                             xmms_object_handler_t cb,
+                                             gpointer userdata)
 {
-	return xmms_plugin_config_property_register ((xmms_plugin_t *)plugin, name, default_value, cb, userdata);
+	xmms_plugin_t *p = (xmms_plugin_t *) plugin;
 
+	return xmms_plugin_config_property_register (p, name, default_value,
+	                                             cb, userdata);
 }
 
 gboolean
-xmms_output_plugin_method_new (xmms_output_plugin_t *plugin, xmms_output_t *output)
+xmms_output_plugin_method_new (xmms_output_plugin_t *plugin,
+                               xmms_output_t *output)
 {
 	gboolean ret = TRUE;
 
@@ -140,7 +150,8 @@ xmms_output_plugin_method_new (xmms_output_plugin_t *plugin, xmms_output_t *outp
 
 	if (ret && !plugin->methods.status) {
 		plugin->write_running = TRUE;
-		plugin->write_thread = g_thread_create (xmms_output_plugin_writer, plugin, TRUE, NULL);
+		plugin->write_thread = g_thread_create (xmms_output_plugin_writer,
+		                                        plugin, TRUE, NULL);
 		plugin->write_status = XMMS_PLAYBACK_STATUS_STOP;
 	}
 
@@ -148,7 +159,8 @@ xmms_output_plugin_method_new (xmms_output_plugin_t *plugin, xmms_output_t *outp
 }
 
 void
-xmms_output_plugin_method_destroy (xmms_output_plugin_t *plugin, xmms_output_t *output)
+xmms_output_plugin_method_destroy (xmms_output_plugin_t *plugin,
+                                   xmms_output_t *output)
 {
 	g_return_if_fail (output);
 	g_return_if_fail (plugin);
@@ -168,7 +180,8 @@ xmms_output_plugin_method_destroy (xmms_output_plugin_t *plugin, xmms_output_t *
 }
 
 void
-xmms_output_plugin_method_flush (xmms_output_plugin_t *plugin, xmms_output_t *output)
+xmms_output_plugin_method_flush (xmms_output_plugin_t *plugin,
+                                 xmms_output_t *output)
 {
 	g_return_if_fail (output);
 	g_return_if_fail (plugin);
@@ -184,6 +197,7 @@ gboolean
 xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin)
 {
 	g_return_val_if_fail (plugin, FALSE);
+
 	if (plugin->methods.format_set_always) {
 		return TRUE;
 	}
@@ -191,9 +205,12 @@ xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin)
 }
 
 gboolean
-xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin, xmms_output_t *output, xmms_stream_type_t *st)
+xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin,
+                                      xmms_output_t *output,
+                                      xmms_stream_type_t *st)
 {
 	gboolean res = TRUE;
+
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (plugin, FALSE);
 
@@ -211,9 +228,11 @@ xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin, xmms_output_
 }
 
 gboolean
-xmms_output_plugin_method_status (xmms_output_plugin_t *plugin, xmms_output_t *output, int st)
+xmms_output_plugin_method_status (xmms_output_plugin_t *plugin,
+                                  xmms_output_t *output, gint st)
 {
 	gboolean res = TRUE;
+
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (plugin, FALSE);
 
@@ -229,9 +248,11 @@ xmms_output_plugin_method_status (xmms_output_plugin_t *plugin, xmms_output_t *o
 
 
 guint
-xmms_output_plugin_method_latency_get (xmms_output_plugin_t *plugin, xmms_output_t *output)
+xmms_output_plugin_method_latency_get (xmms_output_plugin_t *plugin,
+                                       xmms_output_t *output)
 {
 	guint ret = 0;
+
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (plugin, FALSE);
 
@@ -251,17 +272,20 @@ xmms_output_plugin_method_volume_set_available (xmms_output_plugin_t *plugin)
 }
 
 gboolean
-xmms_output_plugin_methods_volume_set (xmms_output_plugin_t *plugin, xmms_output_t *output, const gchar *chan, guint val)
+xmms_output_plugin_methods_volume_set (xmms_output_plugin_t *plugin,
+                                       xmms_output_t *output,
+                                       const gchar *chan, guint val)
 {
 	gboolean res = FALSE;
+
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (plugin, FALSE);
 
 	if (plugin->methods.volume_set) {
 		res = plugin->methods.volume_set (output, chan, val);
 	}
-	return res;
 
+	return res;
 }
 
 gboolean
@@ -273,9 +297,12 @@ xmms_output_plugin_method_volume_get_available (xmms_output_plugin_t *plugin)
 }
 
 gboolean
-xmms_output_plugin_method_volume_get (xmms_output_plugin_t *plugin, xmms_output_t *output, const gchar **n, guint *x, guint *y)
+xmms_output_plugin_method_volume_get (xmms_output_plugin_t *plugin,
+                                      xmms_output_t *output,
+                                      const gchar **n, guint *x, guint *y)
 {
 	gboolean res = FALSE;
+
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (plugin, FALSE);
 
@@ -290,7 +317,9 @@ xmms_output_plugin_method_volume_get (xmms_output_plugin_t *plugin, xmms_output_
 /* Used when we have to drive the output... */
 
 static gboolean
-xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin, xmms_output_t *output, xmms_playback_status_t status)
+xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin,
+                                  xmms_output_t *output,
+                                  xmms_playback_status_t status)
 {
 	g_mutex_lock (plugin->write_mutex);
 	plugin->write_status = status;
@@ -304,7 +333,7 @@ xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin, xmms_output_t *o
 static gpointer
 xmms_output_plugin_writer (gpointer data)
 {
-	xmms_output_plugin_t *plugin = (xmms_output_plugin_t *)data;
+	xmms_output_plugin_t *plugin = (xmms_output_plugin_t *) data;
 	xmms_output_t *output = NULL;
 	gchar buffer[4096];
 	gint ret;
