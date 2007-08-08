@@ -241,8 +241,6 @@ def configure(conf):
         include = [os.path.join(Params.g_options.config_prefix, "include")]
         conf.env['CPPPATH'] += include
 
-    conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
-
     # Our static libraries may link to dynamic libraries
     if g_platform != 'win32':
         conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
