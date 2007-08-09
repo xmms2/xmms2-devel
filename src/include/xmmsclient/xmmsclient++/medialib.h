@@ -223,23 +223,6 @@ namespace Xmms
 			 */
 			VoidResult removeEntry( unsigned int id ) const;
 
-			/** Make a SQL query to the server medialib.
-			 *  
-			 *  @param query SQL query.
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 *  @throw mainloop_running_error If a mainloop is running -
-			 *  sync functions can't be called when mainloop is running. This
-			 *  is only thrown if the programmer is careless or doesn't know
-			 *  what he/she's doing. (logic_error)
-			 *  @throw result_error If the operation failed.
-			 *
-			 *  @return List of @link Dict Dicts@endlink
-			 *  @deprecated This function is now deprecated, use the collection
-			 *              API instead! If it does not suffice, file a bug.
-			 */
-			DictListResult select( const std::string& query ) const;
-
 			/** Request the medialib entry added broadcast.
 			 *
 			 *  This will be called if a new entry is added to

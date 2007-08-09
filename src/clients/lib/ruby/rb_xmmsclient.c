@@ -748,18 +748,6 @@ c_playlist (int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
- *  xc.medialib_select(query) -> result
- *
- * Runs an SQL query on the medialib.
- */
-static VALUE
-c_medialib_select (VALUE self, VALUE query)
-{
-	METHOD_ADD_HANDLER_STR (medialib_select, query);
-}
-
-/*
- * call-seq:
  *  xc.medialib_add_entry(url) -> result
  *
  * Adds _url_ to the medialib.
@@ -1481,7 +1469,6 @@ Init_Client (VALUE mXmms)
 	                  c_coll_idlist_from_playlist_file, 1);
 	rb_define_method (c, "broadcast_coll_changed", c_broadcast_coll_changed, 0);
 
-	rb_define_method (c, "medialib_select", c_medialib_select, 1);
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);

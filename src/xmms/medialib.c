@@ -38,7 +38,6 @@
  */
 
 
-static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
 gchar *xmms_medialib_url_encode (const gchar *path);
@@ -52,7 +51,6 @@ static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, gui
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
 
 
-XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, PROPDICT, UINT32, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, UINT32, NONE);
@@ -304,9 +302,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_SELECT,
-	                     XMMS_CMD_FUNC (select));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_INFO,
 	                     XMMS_CMD_FUNC (info));
@@ -1226,16 +1221,6 @@ xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
 	}
 
 	return xmms_medialib_property_remove (medialib, entry, source, key, error);
-}
-
-static GList *
-xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
-{
-	GList *ret;
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
-	ret = xmms_medialib_select (session, query, error);
-	xmms_medialib_end (session);
-	return ret;
 }
 
 /**

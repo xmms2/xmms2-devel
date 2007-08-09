@@ -179,14 +179,6 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	DictListResult Medialib::select( const std::string& query ) const
-	{
-		xmmsc_result_t* res =
-		    call( connected_,
-		          boost::bind( xmmsc_medialib_select, conn_, query.c_str() ) );
-		return DictListResult( res, ml_ );
-	}
-
 	UintSignal Medialib::broadcastEntryAdded() const
 	{
 		xmmsc_result_t* res =

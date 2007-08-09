@@ -160,24 +160,6 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 }
 
 /**
- * Make a SQL query to the server medialib. The result will contain
- * a list of dicts.
- * @deprecated This function is now deprecated, use the collection
- * API instead! If it does not suffice, file a bug.
- * @param conn The #xmmsc_connection_t
- * @param query The SQL query.
- */
-xmmsc_result_t *
-xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
-{
-	x_check_conn (conn, NULL);
-
-	x_api_warning ("but it has been deprecated in favor of collections!");
-
-	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
-}
-
-/**
  * Search for a entry (URL) in the medialib db and return its ID number
  * @param conn The #xmmsc_connection_t
  * @param url The URL to search for
