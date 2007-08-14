@@ -179,6 +179,7 @@ xmmsc_result_t *xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn, co
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, uint32_t id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry);
+xmmsc_result_t *xmmsc_medialib_move_entry (xmmsc_connection_t *conn, uint32_t entry, const char *url);
 
 xmmsc_result_t *xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id, const char *key, int32_t value);
 xmmsc_result_t *xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key, int32_t value);

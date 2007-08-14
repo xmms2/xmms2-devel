@@ -173,6 +173,31 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 }
 
 /**
+ * Change the url property of an entry in the media library.  Note
+ * that you need to handle the actual file move yourself.
+ *
+ * @param conn The #xmmsc_connection_t
+ * @param entry The entry id you want to move
+ * @param url The url to move it to
+ */
+xmmsc_result_t *
+xmmsc_medialib_move_entry (xmmsc_connection_t *conn, uint32_t entry, const char *url)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_MOVE_URL);
+	xmms_ipc_msg_put_uint32 (msg, entry);
+	xmms_ipc_msg_put_string (msg, url);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+/**
  * Remove a entry from the medialib
  * @param conn The #xmmsc_connection_t
  * @param entry The entry id you want to remove

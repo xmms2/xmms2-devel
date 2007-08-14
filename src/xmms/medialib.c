@@ -43,6 +43,7 @@ static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer ud
 gchar *xmms_medialib_url_encode (const gchar *path);
 
 static void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
+static void xmms_medialib_move_entry (xmms_medialib_t *, guint32 entry, gchar *, xmms_error_t *);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
 static void xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
@@ -54,6 +55,7 @@ static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, PROPDICT, UINT32, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (mlib_move, xmms_medialib_move_entry, xmms_medialib_t *, NONE, UINT32, STRING);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
@@ -329,6 +331,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
 	                     XMMS_CMD_FUNC (remove_property));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_MOVE_URL,
+	                     XMMS_CMD_FUNC (mlib_move));
 
 	path = XMMS_BUILD_PATH ("medialib.db");
 
@@ -1144,6 +1149,35 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	xmms_mediainfo_reader_wakeup (mr);
 }
 
+/**
+ * Changes the URL of an entry in the medialib.
+ *
+ * @param medialib Medialib pointer
+ * @param entry entry to modify
+ * @param url URL to change to
+ * @param error In case of error this will be filled.
+ */
+static void
+xmms_medialib_move_entry (xmms_medialib_t *medialib, guint32 entry,
+                          gchar *url, xmms_error_t *error)
+{
+	const gchar *key = XMMS_MEDIALIB_ENTRY_PROPERTY_URL;
+	guint32 sourceid = XMMS_MEDIALIB_SOURCE_SERVER_ID;
+	gchar *enc_url;
+
+	xmms_medialib_session_t *session;
+
+	enc_url = xmms_medialib_url_encode (url);
+
+	session = xmms_medialib_begin_write ();
+	xmms_medialib_entry_property_set_str_source (session, entry, key, enc_url,
+	                                             sourceid);
+	xmms_medialib_end (session);
+
+	g_free (enc_url);
+
+	xmms_medialib_entry_send_update (entry);
+}
 
 static void
 xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
