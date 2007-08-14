@@ -557,6 +557,10 @@ Init_Collection (VALUE mXmms)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_IDLIST)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_QUEUE)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_PARTYSHUFFLE)
+	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, ADD)
+	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, UPDATE)
+	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, RENAME)
+	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, REMOVE)
 
 	ePatternError = rb_define_class_under (cColl, "PatternError",
 	                                       rb_eStandardError);
