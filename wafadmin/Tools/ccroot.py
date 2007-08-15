@@ -364,6 +364,8 @@ class ccroot(Object.genobj):
 				self.subtype = 'program'
 			elif self.m_type == 'staticlib':
 				self.subtype = 'staticlib'
+   			elif self.m_type == 'plugin':
+				self.subtype = 'plugin'
 			else:
 				self.subtype = 'shlib'
 
