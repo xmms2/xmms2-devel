@@ -32,6 +32,13 @@
 # include <memcheck.h>
 #endif
 
+/* OSX uses the .bundle extension, but g_module_build_path returns .so. */
+#ifdef USE_BUNDLES
+#define get_module_ext(dir) g_build_filename (dir, "*.bundle", NULL)
+#else
+#define get_module_ext(dir) g_module_build_path (dir, "*")
+#endif
+
 typedef struct {
 	gchar *key;
 	gchar *value;
@@ -70,7 +77,7 @@ static gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *modul
  * xmms_plugin_t *
  * xmms_plugin_get (void) {
  * 	xmms_plugin_t *plugin;
- *	
+ *
  *	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EXAMPLE, "test",
  *	                          "Test Plugin",
  *	                          XMMS_VERSION,
@@ -402,9 +409,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 	GModule *module;
 	gpointer sym;
 
-	/* this is all great, except that it returns .so for
-	 * osx, which is wrong and it makes my inner apple cry. */
-	temp = g_module_build_path (dir, "*");
+	temp = get_module_ext (dir);
 
 	XMMS_DBG ("Scanning directory for plugins (%s)", temp);
 

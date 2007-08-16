@@ -61,6 +61,7 @@ def build(bld):
         prog.source.append("compat/signal_unix.c")
         prog.source.append("compat/symlink_unix.c")
         prog.source.append("compat/checkroot_unix.c")
+
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
@@ -105,6 +106,7 @@ def configure(conf):
     # Add Darwin stuff
     if g_platform == 'darwin':
         conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
+        conf.env['CCDEFINES'] += ['USE_BUNDLES']
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 
