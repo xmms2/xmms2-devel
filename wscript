@@ -212,7 +212,7 @@ def configure(conf):
     if not Params.g_options.without_xmms2d == True:
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
-
+    
     if Params.g_options.manualdir:
         conf.env["MANDIR"] = Params.g_options.manualdir
     else:
@@ -235,6 +235,11 @@ def configure(conf):
 
     conf.env['CCDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
     conf.env['CXXDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
+
+    if Params.g_options.libdir:
+        conf.env["LIBDIR"] = Params.g_options.libdir
+        conf.env["shlib_INST_DIR"] = ""
+        conf.env["shlib_INST_VAR"] = "LIBDIR"
 
     if Params.g_options.config_prefix:
         conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
@@ -309,6 +314,7 @@ def set_options(opt):
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
     opt.add_option('--with-mandir', type='string', dest='manualdir')
+    opt.add_option('--with-libdir', type='string', dest='libdir')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
