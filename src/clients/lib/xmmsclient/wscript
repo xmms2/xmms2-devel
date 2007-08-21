@@ -1,5 +1,7 @@
 from waftools import tool
 
+from Params import g_platform
+
 def build(bld):
     obj = bld.create_obj('cc', 'shlib')
     obj.target = 'xmmsclient'
@@ -17,8 +19,15 @@ def build(bld):
                  stats.c
                  xmmsclient.c
                  xform.c
-                 xqueue.c""".split()
-    obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization visualizationclient'
+                 xqueue.c
+                 visualization/client.c
+                 visualization/udp.c
+                 """.split()
+    if g_platform == 'win32':
+        obj.source.append("visualization/dummy.c")
+    else:
+        obj.source.append("visualization/unixshm.c")
+    obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
     obj.uselib = 'socket'
     obj.vnum = '4.0.0'
     tool.add_install_flag(bld, obj)

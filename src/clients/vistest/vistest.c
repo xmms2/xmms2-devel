@@ -48,7 +48,6 @@ void draw () {
 	int i, w;
 
 	w = (int)(((double)data[0] / (double)SHRT_MAX) * 36.0);
-
 	for (i = 0; i < 36 - w; ++i) {
 		switch (buf[i]) {
 			case '#':
@@ -87,9 +86,9 @@ void draw () {
 				buf[i] = ' ';
 		}
 	}
-	fputs(buf, stdout);
-	putchar('\r');
-	fflush(stdout);
+	fputs (buf, stdout);
+	putchar ('\r');
+	fflush (stdout);
 }
 
 gboolean draw_gtk (gpointer stuff)
@@ -115,9 +114,9 @@ main (int argc, char **argv)
 	connection = xmmsc_init ("XMMS2-VISTEST");
 
 	if (!connection || !xmmsc_connect (connection, path)){
-		printf ("couldn't connect to xmms2d: %s\n",
-			xmmsc_get_last_error(connection));
-		return 1;
+		printf ("Couldn't connect to xmms2d: %s\n",
+		        xmmsc_get_last_error (connection));
+		exit (EXIT_FAILURE);
 	}
 
 	res = xmmsc_visualization_version (connection);
@@ -146,13 +145,11 @@ main (int argc, char **argv)
 	}
 	xmmsc_result_unref (res);
 
-	res = xmmsc_visualization_start (connection, vis);
-	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		puts (xmmsc_result_get_error (res));
+	if (!xmmsc_visualization_start (connection, vis)) {
+		printf ("Couldn't start visualization transfer: %s\n",
+		        xmmsc_get_last_error (connection));
 		exit (EXIT_FAILURE);
 	}
-	xmmsc_result_unref (res);
 
 	/* using GTK mainloop */
 	mainloop = g_main_loop_new (NULL, FALSE);
@@ -161,7 +158,7 @@ main (int argc, char **argv)
 	g_main_loop_run (mainloop);
 
 	/* not using GTK mainloop */
-	while (xmmsc_visualization_chunk_get (connection, vis, data, 0, 1) == 2) {
+	while (xmmsc_visualization_chunk_get (connection, vis, data, 0, 1000) != -1) {
 		draw ();
 	}
 

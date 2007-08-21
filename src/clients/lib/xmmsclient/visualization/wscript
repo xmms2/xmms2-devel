@@ -16,8 +16,7 @@ def build(bld):
     else:
         obj.source.append("unixshm.c")
     obj.includes = '. ../../../../include ../../../../includepriv'
-    obj.uselib = 'socket'
-    obj.uselib_local = 'xmmsvisualization'
+    obj.uselib_local = 'xmmsvisualization xmmssocket'
     obj.target = 'visualizationclient'
     obj.install_var = 0
 

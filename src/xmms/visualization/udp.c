@@ -44,7 +44,7 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			/* save client address according to id */
 			memcpy (&c->transport.udp.addr, &from, sizeof (from));
 			c->transport.udp.socket[0] = 1;
-			c->transport.udp.grace = 500;
+			c->transport.udp.grace = 2000;
 			g_mutex_unlock (vis->clientlock);
 		} else if (buf.type == 'T') {
 			struct timeval time;
@@ -58,7 +58,7 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 				g_mutex_unlock (vis->clientlock);
 				return TRUE;
 			}
-			c->transport.udp.grace = 500;
+			c->transport.udp.grace = 2000;
 			g_mutex_unlock (vis->clientlock);
 
 			/* give pong */

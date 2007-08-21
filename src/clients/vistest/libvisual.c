@@ -63,12 +63,10 @@ void xmms2_init ()
 	}
 	xmmsc_result_unref (res);
 
-	res = xmmsc_visualization_start (x_connection, x_vis);
-	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		x_exit (xmmsc_result_get_error (res));
+	if (!xmmsc_visualization_start (x_connection, x_vis)) {
+		printf ("%s\n", xmmsc_get_last_error (x_connection));
+		x_exit ("Couldn't setup visualization transfer!");
 	}
-	xmmsc_result_unref (res);
 
 	atexit (xmms2_quit);
 }
@@ -147,7 +145,7 @@ main (int argc, char** argv)
 	int samples = 0;
 
     while (samples > -1 && sdl_event_handler()) {
-		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, render_time, 1);
+		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, render_time, 250);
 		if (samples == 1024) {
 			render_time = v_render();
 		}

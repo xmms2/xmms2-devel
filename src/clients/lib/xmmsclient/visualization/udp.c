@@ -34,7 +34,7 @@ udp_timediff (int32_t id, int socket) {
 	return diff / (double)diffc;
 }
 
-static int
+static bool
 setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t port) {
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
@@ -56,15 +56,18 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	if (getaddrinfo (host, portstr, &hints, &result) != 0)
 	{
 		c->error = strdup("Couldn't setup socket!");
-		return 0;
+		return false;
 	}
 	free (host);
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		if ((t->socket[0] = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) == -1) {
+		if ((t->socket[0] = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) == XMMS_INVALID_SOCKET) {
 			continue;
 		}
 		if (connect (t->socket[0], rp->ai_addr, rp->ai_addrlen) != -1) {
+			/* Windows doesn't support MSG_DONTWAIT.
+			   Why should it? Ripping off BSD, but without mutilating it? No! */
+			xmms_socket_set_nonblock (t->socket[0]);
 			/* init fallback socket for timing stuff */
 			t->socket[1] = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 			connect (t->socket[1], rp->ai_addr, rp->ai_addrlen);
@@ -75,7 +78,7 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	}
 	if (rp == NULL) {
 		c->error = strdup("Could not connect!");
-		return 0;
+		return false;
 	}
 	freeaddrinfo (result);
 	/* TODO: do this properly! */
@@ -85,14 +88,15 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	send (t->socket[0], &content, sizeof (xmmsc_vis_udp_timing_t), 0);
 	t->timediff = udp_timediff (id, t->socket[1]);
 //	printf ("diff: %f\n", t->timediff);
-	return 1;
+	return true;
 }
 
-xmmsc_result_t *
+bool
 setup_udp (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
+	bool ret;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_INIT_UDP);
 	xmms_ipc_msg_put_int32 (msg, id);
@@ -101,15 +105,13 @@ setup_udp (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id)
 	if (!xmmsc_result_iserror (res)) {
 		int port;
 		xmmsc_result_get_int (res, &port);
-
-		if (!setup_socket (c, t, id, port)) {
-			/* we got a local error */
-			xmmsc_result_unref (res);
-			res = NULL;
-		}
+		ret = setup_socket (c, t, id, port);
+	} else {
+		ret = false;
 	}
+	xmmsc_result_unref (res);
 
-	return res;
+	return ret;
 }
 
 void
@@ -120,21 +122,26 @@ cleanup_udp (xmmsc_vis_udp_t *t)
 }
 
 int
-read_start_udp (xmmsc_vis_udp_t *t, int blocking, xmmsc_vischunk_t **dest, int32_t id)
+read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **dest, int32_t id)
 {
-	int cnt;
+	int ret;
 	xmmsc_vis_udp_data_t *packet = malloc (sizeof (xmmsc_vis_udp_data_t));
 	*dest = &packet->data;
 
 	if (blocking) {
-		blocking = MSG_DONTWAIT;
+		fd_set rfds;
+		struct timeval time;
+		FD_ZERO (&rfds);
+		FD_SET (t->socket[0], &rfds);
+		time.tv_sec = blocking / 1000;
+		time.tv_usec = (blocking % 1000) * 1000;
+		ret = select (t->socket[0] + 1, &rfds, NULL, NULL, &time);
+		if (ret == -1) {
+			return -1;
+		}
 	}
-	cnt = recv (t->socket[0], packet, sizeof (xmmsc_vis_udp_data_t), blocking);
-	if (cnt == -1 && (errno == EAGAIN || errno == EINTR)) {
-		free (packet);
-		return 0;
-	}
-	if (cnt > 0 && packet->type == 'V') {
+	ret = recv (t->socket[0], packet, sizeof (xmmsc_vis_udp_data_t), MSG_DONTWAIT);
+	if (ret > 0 && packet->type == 'V') {
 		if (packet->grace < 100) {
 			if (t->grace != 0) {
 				puts ("resync");
@@ -145,16 +152,18 @@ read_start_udp (xmmsc_vis_udp_t *t, int blocking, xmmsc_vischunk_t **dest, int32
 		} else {
 			t->grace = packet->grace;
 		}
-		/* this is nasty */
+		/* include the measured time difference */
 		double interim = net2ts (packet->data.timestamp);
 		interim -= t->timediff;
 		ts2net (packet->data.timestamp, interim);
 		return 1;
-	} else if (cnt > -1) {
-		free (packet);
-		return 0;
 	} else {
-		return -1;
+		free (packet);
+		if (ret > -1 || xmms_socket_error_recoverable ()) {
+			return 0;
+		} else {
+			return -1;
+		}
 	}
 }
 

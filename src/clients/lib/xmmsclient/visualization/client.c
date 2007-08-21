@@ -105,29 +105,29 @@ xmmsc_visualization_init (xmmsc_connection_t *c) {
  * Initializes a new visualization connection
  */
 
-xmmsc_result_t *
+int
 xmmsc_visualization_start (xmmsc_connection_t *c, int vv) {
 	xmms_ipc_msg_t *msg;
-	xmmsc_result_t *res;
 	xmmsc_visualization_t *v;
+	bool ret;
 
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered/unconnected visualization dataset", NULL);
+	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered/unconnected visualization dataset", 0);
 
-	x_api_error_if (!(v->type == VIS_NONE), "with already transmitting visualization dataset", NULL);
+	x_api_error_if (!(v->type == VIS_NONE), "with already transmitting visualization dataset", 0);
 
-	x_check_conn (c, NULL);
+	x_check_conn (c, 0);
 
 	/* first try unixshm */
 	v->type = VIS_UNIXSHM;
-	res = setup_shm (c, &v->transport.shm, v->id);
+	ret = setup_shm (c, &v->transport.shm, v->id);
 
-	if (!res) {
+	if (!ret) {
 		/* next try udp */
 		v->type = VIS_UDP;
-		res = setup_udp (c, &v->transport.udp, v->id);
+		ret = setup_udp (c, &v->transport.udp, v->id);
 	}
 
-	if (!res) {
+	if (!ret) {
 		/* finally give up */
 		v->type = VIS_NONE;
 		msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
@@ -136,7 +136,7 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv) {
 	}
 
 	/* c->error is written by setup_*(...) */
-	return res;
+	return (ret ? 1 : 0);
 }
 
 /**
@@ -181,19 +181,18 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, const char** 
  * Says goodbye and cleans up
  */
 
-xmmsc_result_t *
+void
 xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 {
 	xmms_ipc_msg_t *msg;
-	xmmsc_result_t *res;
 	xmmsc_visualization_t *v;
 
-	x_check_conn (c, NULL);
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset", NULL);
+	x_check_conn (c,);
+	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset",);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
 	xmms_ipc_msg_put_int32 (msg, v->id);
-	res = xmmsc_send_msg (c, msg);
+	xmmsc_send_msg (c, msg);
 
 	/* detach from shm, close socket.. */
 	if (v->type == VIS_UNIXSHM) {
@@ -205,11 +204,10 @@ xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 
 	free (v);
 	c->visv[vv] = NULL;
-	return res;
 }
 
 static int
-package_read_start (xmmsc_visualization_t *v, int blocking, xmmsc_vischunk_t **dest)
+package_read_start (xmmsc_visualization_t *v, unsigned int blocking, xmmsc_vischunk_t **dest)
 {
 	if (v->type == VIS_UNIXSHM) {
 		return read_start_shm (&v->transport.shm, blocking, dest);
@@ -234,7 +232,7 @@ package_read_finish (xmmsc_visualization_t *v, xmmsc_vischunk_t *dest)
  */
 
 int
-xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int drawtime, int blocking)
+xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int drawtime, unsigned int blocking)
 {
 	xmmsc_visualization_t *v;
 	xmmsc_vischunk_t *src;
@@ -262,6 +260,9 @@ xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int
 				/* nanosleep has a garantueed granularity of 10 ms.
 				   to not sleep too long, we sleep 10 ms less than intended */
 				diff -= (drawtime + 10) * 0.001;
+				if (diff < 0) {
+					diff = 0;
+				}
 				sleeptime.tv_sec = diff;
 				sleeptime.tv_nsec = modf (diff, &dontcare) * 1000000000;
 				while (nanosleep (&sleeptime, &sleeptime) == -1) {
