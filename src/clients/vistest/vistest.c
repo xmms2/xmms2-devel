@@ -111,7 +111,7 @@ main (int argc, char **argv)
 	uint32_t version;
 	xmmsc_result_t *res;
 	gchar *path = getenv ("XMMS_PATH");
-	connection = xmmsc_init ("XMMS2-VISTEST");
+	connection = xmmsc_init ("xmms2-vistest");
 
 	if (!connection || !xmmsc_connect (connection, path)){
 		printf ("Couldn't connect to xmms2d: %s\n",

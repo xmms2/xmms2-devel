@@ -5,32 +5,35 @@ udp_timediff (int32_t id, int socket) {
 	int i;
 	double lag;
 	struct timeval time;
-	xmmsc_vis_udp_data_t buf;
-	xmmsc_vis_udp_timing_t *content = (xmmsc_vis_udp_timing_t*)&buf;
 	double diff = 0.0;
 	int diffc = 0;
+	xmmsc_vis_udp_timing_t packet_d;
+	char* packet = packet_init_timing (&packet_d);
 
 	gettimeofday (&time, NULL);
-	content->type = 'T';
-	content->id = htonl (id);
-	tv2net (content->clientstamp, &time);
+	*packet_d.id = htonl (id);
+	tv2net (packet_d.clientstamp, &time);
 	/* TODO: handle lost packages! */
 	for (i = 0; i < 10; ++i) {
-		send (socket, content, sizeof (xmmsc_vis_udp_timing_t), 0);
+		send (socket, packet, packet_d.size, 0);
 	}
+	printf ("Syncing ");
 	do {
-		if (recv (socket, &buf, sizeof (buf), 0) > 0 && buf.type == 'T') {
+		if ((recv (socket, packet, packet_d.size, 0) == packet_d.size) && (*packet_d.type == 'T')) {
 			gettimeofday (&time, NULL);
-			lag = (tv2ts (&time) - net2ts (content->clientstamp)) / 2.0;
+			lag = (tv2ts (&time) - net2ts (packet_d.clientstamp)) / 2.0;
 			diffc++;
-			diff += net2ts (content->serverstamp) - lag;
+			diff += net2ts (packet_d.serverstamp) - lag;
 			/* debug output
 			printf("server diff: %f \t old timestamp: %f, new timestamp %f\n",
-			       net2ts (content->serverstamp), net2ts (content->clientstamp), tv2ts (&time));
+			       net2ts (packet_d.serverstamp), net2ts (packet_d.clientstamp), tv2ts (&time));
 			 end of debug */
+			putchar('.');
 		}
 	} while (diffc < 10);
+	free (packet);
 
+	puts (" done.");
 	return diff / (double)diffc;
 }
 
@@ -40,6 +43,8 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	struct addrinfo *result, *rp;
 	char *host;
 	char portstr[10];
+	char packet[1 + sizeof(int32_t)];
+	int32_t* packet_id = (int32_t*)&packet[1];
 	sprintf (portstr, "%d", port);
 
 	memset (&hints, 0, sizeof (hints));
@@ -81,13 +86,13 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 		return false;
 	}
 	freeaddrinfo (result);
-	/* TODO: do this properly! */
-	xmmsc_vis_udp_timing_t content;
-	content.type = 'H';
-	content.id = htonl (id);
-	send (t->socket[0], &content, sizeof (xmmsc_vis_udp_timing_t), 0);
+
+	packet[0] = 'H';
+	*packet_id = htonl (id);
+	send (t->socket[0], &packet, sizeof (packet), 0);
+
 	t->timediff = udp_timediff (id, t->socket[1]);
-//	printf ("diff: %f\n", t->timediff);
+/*	printf ("diff: %f\n", t->timediff); */
 	return true;
 }
 
@@ -125,8 +130,8 @@ int
 read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **dest, int32_t id)
 {
 	int ret;
-	xmmsc_vis_udp_data_t *packet = malloc (sizeof (xmmsc_vis_udp_data_t));
-	*dest = &packet->data;
+	xmmsc_vis_udp_data_t packet_d;
+	char* packet = packet_init_data (&packet_d);
 
 	if (blocking) {
 		fd_set rfds;
@@ -140,37 +145,39 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 			return -1;
 		}
 	}
-	ret = recv (t->socket[0], packet, sizeof (xmmsc_vis_udp_data_t), MSG_DONTWAIT);
-	if (ret > 0 && packet->type == 'V') {
-		if (packet->grace < 100) {
+	ret = recv (t->socket[0], packet, packet_d.size, MSG_DONTWAIT);
+	if ((ret > 0) && (*packet_d.type == 'V')) {
+		*dest = packet_d.data;
+		/* resync connection */
+		if (ntohs (*packet_d.grace) < 1000) {
 			if (t->grace != 0) {
-				puts ("resync");
 				t->grace = 0;
 				/* use second socket here, so vis packets don't get lost */
 				t->timediff = udp_timediff (id, t->socket[1]);
 			}
 		} else {
-			t->grace = packet->grace;
+			t->grace = ntohs (*packet_d.grace);
 		}
 		/* include the measured time difference */
-		double interim = net2ts (packet->data.timestamp);
+		double interim = net2ts (packet_d.data->timestamp);
 		interim -= t->timediff;
-		ts2net (packet->data.timestamp, interim);
+		ts2net (packet_d.data->timestamp, interim);
 		return 1;
 	} else {
-		free (packet);
-		if (ret > -1 || xmms_socket_error_recoverable ()) {
-			return 0;
+		if (ret == 1 && *packet_d.type == 'K') {
+			ret = -1;
+		} else if (ret > -1 || xmms_socket_error_recoverable ()) {
+			ret = 0;
 		} else {
-			return -1;
+			ret = -1;
 		}
+		free (packet);
+		return ret;
 	}
 }
 
 void
 read_finish_udp (xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest) {
-	xmmsc_vis_udp_data_t *packet = 0;
-	int offset = ((int)&packet->data - (int)packet);
-	packet = (xmmsc_vis_udp_data_t*)((char*)dest - offset);
+	char *packet = (char*)dest - XMMS_VISPACKET_UDP_OFFSET;
 	free (packet);
 }

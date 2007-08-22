@@ -63,26 +63,32 @@ typedef struct {
 } xmmsc_vischunk_t;
 
 /**
- * UDP package format to deliver a vis chunk
+ * UDP package _descriptor_ to deliver a vis chunk
  */
 
 typedef struct {
-	char type; /* = 'V' */;
-	uint16_t grace;
-	xmmsc_vischunk_t data;
-	/* DON'T put anything after data */
+	char* type; /* = 'V' */;
+	uint16_t* grace;
+	xmmsc_vischunk_t* data;
+	int size;
 } xmmsc_vis_udp_data_t;
 
+#define XMMS_VISPACKET_UDP_OFFSET (1 + sizeof (uint16_t))
+
 /**
- * UDP package format to synchronize time
+ * UDP package _descriptor_ to synchronize time
  */
 
 typedef struct {
-	char type; /* = 'T' */
-	int32_t id;
-	int32_t clientstamp[2];
-	int32_t serverstamp[2];
+	char* type; /* = 'T' */
+	int32_t* id;
+	int32_t* clientstamp;
+	int32_t* serverstamp;
+	int size;
 } xmmsc_vis_udp_timing_t;
+
+char* packet_init_data (xmmsc_vis_udp_data_t *p);
+char* packet_init_timing (xmmsc_vis_udp_timing_t *p);
 
 /**
  * Possible data modes

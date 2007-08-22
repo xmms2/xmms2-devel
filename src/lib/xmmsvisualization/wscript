@@ -6,7 +6,9 @@
 
 def build(bld):
     obj = bld.create_obj('cc', 'staticlib')
-    obj.source = ["timestamp.c"]
+    obj.source = """
+                 timestamp.c
+                 udp.c""".split()
     obj.includes='. ../../include'
     obj.target='xmmsvisualization'
     obj.install_var = 0

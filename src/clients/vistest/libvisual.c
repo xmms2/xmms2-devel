@@ -48,7 +48,7 @@ void xmms2_init ()
 {
 	xmmsc_result_t *res;
 	char *path = getenv ("XMMS_PATH");
-	x_connection = xmmsc_init ("XMMS2-LIBVISUAL");
+	x_connection = xmmsc_init ("xmms2-libvisual");
 
 	if (!x_connection || !xmmsc_connect (x_connection, path)){
 		printf ("%s\n", xmmsc_get_last_error (x_connection));

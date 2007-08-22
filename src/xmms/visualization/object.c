@@ -94,7 +94,7 @@ delete_client (int32_t id)
 	if (c->type == VIS_UNIXSHM) {
 		cleanup_shm (&c->transport.shm);
 	} else if (c->type == VIS_UDP) {
-		cleanup_udp (&c->transport.udp);
+		cleanup_udp (&c->transport.udp, vis->socket);
 	}
 
 	g_free (c);
@@ -164,22 +164,25 @@ xmms_visualization_destroy ()
 }
 
 uint32_t
-xmms_visualization_version (xmms_visualization_t *vis, xmms_error_t *err) {
+xmms_visualization_version (xmms_visualization_t *vis, xmms_error_t *err)
+{
 	/* if there is a way to disable visualization support on the server side,
 	   we could return 0 here, or we could return an error? */
 
 	return XMMS_VISPACKET_VERSION;
 }
 
-void
-properties_init (xmmsc_vis_properties_t *p) {
+static void
+properties_init (xmmsc_vis_properties_t *p)
+{
 	p->type = VIS_PCM;
 	p->stereo = 1;
 	p->pcm_hardwire = 0;
 }
 
-gboolean
-property_set (xmmsc_vis_properties_t *p, gchar* key, gchar* data) {
+static gboolean
+property_set (xmmsc_vis_properties_t *p, gchar* key, gchar* data)
+{
 
 	if (!g_strcasecmp (key, "type")) {
 		if (!g_strcasecmp (data, "pcm")) {
@@ -288,7 +291,7 @@ xmms_visualization_shutdown_client (xmms_visualization_t *vis, int32_t id, xmms_
 	g_mutex_unlock (vis->clientlock);
 }
 
-gboolean
+static gboolean
 package_write_start (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t **dest) {
 	if (c->type == VIS_UNIXSHM) {
 		return write_start_shm (id, &c->transport.shm, dest);
@@ -298,7 +301,7 @@ package_write_start (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t **dest) 
 	return FALSE;
 }
 
-void
+static void
 package_write_finish (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t *dest) {
 	if (c->type == VIS_UNIXSHM) {
 		write_finish_shm (id, &c->transport.shm, dest);
@@ -370,7 +373,8 @@ fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, int size
 
 
 void
-send_data (int channels, int size, short *buf) {
+send_data (int channels, int size, short *buf)
+{
 	int i;
 	xmmsc_vischunk_t *dest;
 	struct timeval time;

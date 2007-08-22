@@ -14,20 +14,20 @@
  *  Lesser General Public License for more details.
  */
 
+#include <stdlib.h>
 #include "common.h"
 
-gboolean
+static gboolean
 udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 {
 	struct sockaddr_storage from;
 	socklen_t sl = sizeof (from);
-	xmmsc_vis_udp_data_t buf;
-
-	if (recvfrom (vis->socket, &buf, sizeof (buf), 0, (struct sockaddr *)&from, &sl) > 0) {
-		if (buf.type == 'H') {
+	xmmsc_vis_udp_timing_t packet_d;
+	char* packet = packet_init_timing (&packet_d);
+	if ((recvfrom (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, &sl)) > 0) {
+		if (*packet_d.type == 'H') {
 			xmms_vis_client_t *c;
-			xmmsc_vis_udp_timing_t *content = (xmmsc_vis_udp_timing_t*)&buf;
-			int32_t id = ntohl (content->id);
+			int32_t id = ntohl (*packet_d.id);
 
 			/* debug code starts
 			char adrb[INET6_ADDRSTRLEN];
@@ -46,16 +46,16 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			c->transport.udp.socket[0] = 1;
 			c->transport.udp.grace = 2000;
 			g_mutex_unlock (vis->clientlock);
-		} else if (buf.type == 'T') {
+		} else if (*packet_d.type == 'T') {
 			struct timeval time;
 			xmms_vis_client_t *c;
-			xmmsc_vis_udp_timing_t *content = (xmmsc_vis_udp_timing_t*)&buf;
-			int32_t id = ntohl (content->id);
+			int32_t id = ntohl (*packet_d.id);
 
 			g_mutex_lock (vis->clientlock);
 			c = get_client (id);
 			if (!c || c->type != VIS_UDP) {
 				g_mutex_unlock (vis->clientlock);
+				free (packet);
 				return TRUE;
 			}
 			c->transport.udp.grace = 2000;
@@ -63,16 +63,17 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 
 			/* give pong */
 			gettimeofday (&time, NULL);
-			ts2net (content->serverstamp, tv2ts (&time) - net2ts (content->clientstamp));
-			sendto (vis->socket, content, sizeof (xmmsc_vis_udp_timing_t), 0, (struct sockaddr *)&from, sl);
+			ts2net (packet_d.serverstamp, tv2ts (&time) - net2ts (packet_d.clientstamp));
+			sendto (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, sl);
 
 			/* new debug:
-			printf ("Timings: local %f, remote %f, diff %f\n", ts2tv (&time), net2tv (&buf[1]), net2tv (&buf[1]) - ts2tv (&time));
+			printf ("Timings: local %f, remote %f, diff %f\n", tv2ts (&time), net2ts (packet_d.clientstamp), net2ts (packet_d.clientstamp) - tv2ts (&time));
 			 ends */
 		} else {
 			xmms_log_error ("Received invalid UDP package!");
 		}
 	}
+	free (packet);
 	return TRUE;
 }
 
@@ -140,19 +141,23 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 	x_release_client ();
 
 	xmms_log_info ("Visualization client %d initialised using UDP", id);
-	// return socketport
 	return port;
 }
 
 void
-cleanup_udp (xmmsc_vis_udp_t *t)
+cleanup_udp (xmmsc_vis_udp_t *t, xmms_socket_t socket)
 {
-	// TODO: issue killer packet
+	socklen_t sl = sizeof (t->addr);
+	char packet = 'K';
+	sendto (socket, &packet, 1, 0, (struct sockaddr *)&t->addr, sl);
 }
 
 gboolean
 write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest)
 {
+	xmmsc_vis_udp_data_t packet_d;
+	char* packet;
+
 	/* first check if the client is still there */
 	if (t->grace == 0) {
 		delete_client (id);
@@ -161,15 +166,15 @@ write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest)
 	if (t->socket == 0) {
 		return FALSE;
 	}
-	xmmsc_vis_udp_data_t *packet = g_new (xmmsc_vis_udp_data_t, 1);
-	packet->type = 'V';
-	packet->grace = --t->grace;
-	*dest = &packet->data;
+
+	packet = packet_init_data (&packet_d);
+	*packet_d.grace = htons (--t->grace);
+	*dest = packet_d.data;
 	return TRUE;
 }
 
 void
-write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, int socket)
+write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, xmms_socket_t socket)
 {
 	socklen_t sl = sizeof (t->addr);
 	/* debug code starts
@@ -179,11 +184,9 @@ write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, int so
 			adrb, INET6_ADDRSTRLEN), a->sin6_port, id);
 	 debug code ends */
 	/* nasty trick that won't get through code review */
-	int offset[2];
-	xmmsc_vis_udp_data_t *packet = 0;
-	offset[0] = ((int)&packet->data - (int)packet);
-	packet = (xmmsc_vis_udp_data_t*)((char*)dest - offset[0]);
-	offset[1] = ((int)&packet->data.data - (int)&packet->data);
-	sendto (socket, packet, offset[0] + offset[1] + ntohs (dest->size) * sizeof(int16_t), 0, (struct sockaddr *)&t->addr, sl);
-	g_free (packet);
+	int offset = ((char*)&dest->data - (char*)dest);
+	char *packet = (char*)dest - XMMS_VISPACKET_UDP_OFFSET;
+
+	sendto (socket, packet, XMMS_VISPACKET_UDP_OFFSET + offset + ntohs (dest->size) * sizeof(int16_t), 0, (struct sockaddr *)&t->addr, sl);
+	free (packet);
 }
