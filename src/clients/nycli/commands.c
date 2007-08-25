@@ -107,6 +107,25 @@ cli_list_setup (command_action_t *action)
 }
 
 void
+cli_add_setup (command_action_t *action)
+{
+	/* FIXME: support collection ? */
+	/* FIXME: need to support G_OPTION_ARG_STRING_ARRAY for --file */
+	/* FIXME: allow ordering ? */
+	const argument_t flags[] = {
+		{ "file", 'f', 0, G_OPTION_ARG_STRING, NULL, _("Add a path from the local filesystem."), "path" },
+		{ "non-recursive", 'N', 0, G_OPTION_ARG_NONE, NULL, _("Do not add directories recursively."), NULL },
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
+		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
+		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
+		{ NULL }
+	};
+	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-f <path>] [-N] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern]"),
+	                     _("Add the matching media or files to a playlist."));
+}
+
+void
 cli_remove_setup (command_action_t *action)
 {
 	/* FIXME: support collection ? */
@@ -379,8 +398,6 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
-		/* FIXME: woops, cannot prefix order by '-' as this is a flag! user another? '!' ? */
-
 		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
 		xmmsc_result_unref (res);
@@ -459,6 +476,133 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 
 	return TRUE;
 }
+
+
+gboolean
+cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
+	gboolean next;
+	gint at;
+	gboolean at_isset;
+
+	command_flag_boolean_get (ctx, "next", &next);
+	at_isset = command_flag_int_get (ctx, "at", &at);
+
+	if (next && at_isset) {
+		g_printf (_("Error: --next and --at are mutually exclusive!\n"));
+		return FALSE;
+	} else if (next) {
+		*pos = infos->cache->currpos + 1;
+	} else if (at_isset) {
+		/* FIXME: handle relative values ? */
+		if (at > 0 && at > infos->cache->active_playlist->len) { /* int vs uint */
+			g_printf (_("Error: specified position is outside the playlist!\n"));
+			return FALSE;
+		} else {
+			*pos = at - 1;  /* playlist ids start at 0 */
+		}
+	} else {
+		/* No flag given, just enqueue */
+		*pos = infos->cache->active_playlist->len;
+	}
+
+	return TRUE;
+}
+
+gboolean
+cli_add (cli_infos_t *infos, command_context_t *ctx)
+{
+	gchar *pattern = NULL;
+	gchar *playlist = NULL;
+	xmmsc_coll_t *query;
+	xmmsc_result_t *res, *plres;
+	gint pos;
+	gchar *path, *fullpath;
+	gboolean norecurs;
+	pack_infos_playlist_pos_t *pack;
+
+/*
+--file  Add a path from the local filesystem
+--non-recursive  Do not add directories recursively.
+--playlist  Add to the given playlist.
+--next  Add after the current track.
+--at  Add media at a given position in the playlist, or at a given offset from the current track.
+*/
+
+	command_flag_string_get (ctx, "playlist", &playlist);
+	if (!playlist) {
+		playlist = NULL;
+	}
+
+	/* FIXME: pos is wrong in non-active playlists! and no offsets :-( */
+	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+		cli_infos_loop_resume (infos);
+		goto finish;
+	}
+
+	if (!command_flag_string_get (ctx, "file", &path)) {
+		path = NULL;
+	}
+	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
+		norecurs = FALSE;
+	}
+
+	command_arg_longstring_get (ctx, 0, &pattern);
+
+	if (path && pattern) {
+		g_printf (_("Error: --file and the pattern argument are mutually exclusive!\n"));
+		cli_infos_loop_resume (infos);
+		goto finish;
+	} else if (path) {
+		if (norecurs) {
+			/* FIXME: only if no protocol found, i.e. no [a-z]+:// */
+			fullpath = g_strconcat ("file://", path, NULL);
+			res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
+			xmmsc_result_notifier_set (res, cb_done, infos);
+			xmmsc_result_unref (res);
+			g_free (fullpath);
+		} else {
+			/* FIXME: oops, there is no rinsert */
+			g_printf (_("Error: no playlist_rinsert, implement it!\n"));
+			cli_infos_loop_resume (infos);
+			goto finish;
+		}
+	} else if (pattern) {
+		/* Irrelevant flag, trigger error */
+		if (norecurs) {
+			/* FIXME: Not really true, we can pass files in the pattern? */
+			g_printf (_("Error: --non-recursive only applies when passing --file!\n"));
+			cli_infos_loop_resume (infos);
+			goto finish;
+		}
+
+		if (!xmmsc_coll_parse (pattern, &query)) {
+			g_printf (_("Error: failed to parse the pattern!\n"));
+			cli_infos_loop_resume (infos);
+			goto finish;
+		} else {
+			pack = pack_infos_playlist_pos (infos, playlist, pos);
+			res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+			xmmsc_result_notifier_set (res, cb_add_list, pack);
+			xmmsc_result_unref (res);
+			xmmsc_coll_unref (query);
+		}
+
+	} else {
+		/* We need either a file or a pattern! */
+		g_printf (_("Error: you must provide something to add!\n"));
+		cli_infos_loop_resume (infos);
+		goto finish;
+	}
+
+
+	finish:
+
+	g_free (pattern);
+
+	return TRUE;
+}
+
+
 
 gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)

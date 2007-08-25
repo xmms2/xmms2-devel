@@ -286,6 +286,42 @@ cb_list_jump (xmmsc_result_t *res, void *udata)
 
 
 void
+cb_add_list (xmmsc_result_t *matching, void *udata)
+{
+	/* FIXME: w00t at code copy-paste, please modularize */
+	pack_infos_playlist_pos_t *pack = (pack_infos_playlist_pos_t *) udata;
+	cli_infos_t *infos;
+	xmmsc_result_t *insres;
+	guint id;
+	gint pos, offset;
+	gchar *playlist;
+
+	unpack_infos_playlist_pos (pack, &infos, &playlist, &pos);
+	offset = 0;
+
+	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
+		g_printf (_("Error retrieving the media matching the pattern!\n"));
+	} else {
+		/* Loop on the matched media */
+		for (xmmsc_result_list_first (matching);
+		     xmmsc_result_list_valid (matching);
+		     xmmsc_result_list_next (matching)) {
+
+			if (xmmsc_result_get_uint (matching, &id)) {
+				insres = xmmsc_playlist_insert_id (infos->conn, playlist,
+				                                   pos + offset, id);
+				xmmsc_result_unref (insres);
+				offset++;
+			}
+		}
+	}
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (matching);
+}
+
+
+void
 cb_remove_cached_list (xmmsc_result_t *matching, void *udata)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
@@ -313,7 +349,6 @@ cb_remove_cached_list (xmmsc_result_t *matching, void *udata)
 
 				/* If both match, remove! */
 				if (xmmsc_result_get_uint (matching, &id) && plid == id) {
-					/* FIXME: use XMMS_PLAYLIST_ACTIVE instead */
 					rmres = xmmsc_playlist_remove_entry (infos->conn, NULL, i);
 					xmmsc_result_unref (rmres);
 					break;
@@ -376,10 +411,6 @@ cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, void *udata)
 			i++;
 		}
 	}
-
-	/* FIXME: For each item in plistres */
-	/* FIXME:     For each item in matchres */
-	/* FIXME:         If equal, remove from playlist */
 
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matchres);

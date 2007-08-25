@@ -22,10 +22,14 @@
 #include "cli_infos.h"
 
 typedef struct pack_infos_playlist_St pack_infos_playlist_t;
-
 pack_infos_playlist_t *pack_infos_playlist (cli_infos_t *infos, gchar *playlist);
 void unpack_infos_playlist (pack_infos_playlist_t *pack, cli_infos_t **infos, gchar **playlist);
 void free_infos_playlist (pack_infos_playlist_t *pack);
+
+typedef struct pack_infos_playlist_pos_St pack_infos_playlist_pos_t;
+pack_infos_playlist_pos_t *pack_infos_playlist_pos (cli_infos_t *infos, gchar *playlist, gint pos);
+void unpack_infos_playlist_pos (pack_infos_playlist_pos_t *pack, cli_infos_t **infos, gchar **playlist, gint *pos);
+void free_infos_playlist_pos (pack_infos_playlist_pos_t *pack);
 
 
 #endif /* __UDATA_PACKS__ */

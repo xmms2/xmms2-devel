@@ -49,3 +49,39 @@ free_infos_playlist (pack_infos_playlist_t *pack)
 	g_free (pack->playlist);
 	g_free (pack);
 }
+
+
+struct pack_infos_playlist_pos_St {
+	cli_infos_t *infos;
+	gchar *playlist;     /* owned by this struct */
+	gint pos;
+};
+
+/** Pack cli_infos_t, playlist name and pos in a struct, to be used as udata. */
+pack_infos_playlist_pos_t *
+pack_infos_playlist_pos (cli_infos_t *infos, gchar *playlist, gint pos)
+{
+	pack_infos_playlist_pos_t *pack = g_new0 (pack_infos_playlist_pos_t, 1);
+	pack->infos = infos;
+	pack->playlist = g_strdup (playlist);
+	pack->pos = pos;
+	return pack;
+}
+
+/** Extract infos, playlist and pos from the pack. The pack must still be freed. */
+void
+unpack_infos_playlist_pos (pack_infos_playlist_pos_t *pack, cli_infos_t **infos,
+                           gchar **playlist, gint *pos)
+{
+	*infos = pack->infos;
+	*playlist = pack->playlist;
+	*pos = pack->pos;
+}
+
+/** Free the pack memory. */
+void
+free_infos_playlist_pos (pack_infos_playlist_pos_t *pack)
+{
+	g_free (pack->playlist);
+	g_free (pack);
+}
