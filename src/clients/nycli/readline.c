@@ -49,7 +49,6 @@ readline_init (cli_infos_t *infos)
 	rl_callback_handler_install (PROMPT, &readline_callback);
 }
 
-/* FIXME: There /must/ be a nicer way to suspend/resume readline */
 void
 readline_suspend (cli_infos_t *infos)
 {

@@ -26,7 +26,7 @@
 #include "readline.h"
 
 
-void loop_select (cli_infos_t *infos);
+static void loop_select (cli_infos_t *infos);
 
 
 void
@@ -160,7 +160,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 	}
 }
 
-void
+static void
 loop_select (cli_infos_t *infos)
 {
 	fd_set rfds, wfds;
@@ -175,7 +175,8 @@ loop_select (cli_infos_t *infos)
 	if (infos->conn) {
 		xmms2fd = xmmsc_io_fd_get (infos->conn);
 		if (xmms2fd == -1) {
-			/* FIXME: Handle error */
+			g_printf (_("Error: failed to retrieve XMMS2 file descriptor!"));
+			return;
 		}
 
 		FD_SET(xmms2fd, &rfds);
@@ -189,7 +190,8 @@ loop_select (cli_infos_t *infos)
 	}
 
 	/* Listen to readline in shell mode */
-	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
+	if (infos->mode == CLI_EXECUTION_MODE_SHELL &&
+	    infos->status == CLI_ACTION_STATUS_READY) {
 		FD_SET(STDINFD, &rfds);
 		if (maxfds < STDINFD) {
 			maxfds = STDINFD;
@@ -199,7 +201,8 @@ loop_select (cli_infos_t *infos)
 	modfds = select (maxfds + 1, &rfds, &wfds, NULL, NULL);
 
 	if(modfds < 0) {
-		/* FIXME: Handle error */
+		g_printf (_("Error: invalid I/O result!"));
+		return;
 	}
 	else if(modfds != 0) {
 		/* Get/send data to xmms2 */

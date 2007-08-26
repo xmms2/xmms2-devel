@@ -569,9 +569,8 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 	command_arg_longstring_get (ctx, 0, &pattern);
 
-	/* FIXME: error if no arg at all */
+	/* We need either a file or a pattern! */
 	if (!pattern) {
-		/* We need either a file or a pattern! */
 		g_printf (_("Error: you must provide a pattern or files to add!\n"));
 		cli_infos_loop_resume (infos);
 		goto finish;

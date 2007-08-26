@@ -108,10 +108,7 @@ refresh_active_playlist (xmmsc_result_t *res, void *udata)
 
 		/* .. and refill it */
 		while (xmmsc_result_list_valid (res)) {
-			if (!xmmsc_result_get_uint (res, &id)) {
-				/* FIXME: what happens on error? */
-				continue;
-			}
+			xmmsc_result_get_uint (res, &id);
 			g_array_append_val (cache->active_playlist, id);
 
 			xmmsc_result_list_next (res);

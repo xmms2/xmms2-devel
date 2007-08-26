@@ -27,7 +27,7 @@ cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
 	gint ret = 0;
 
-	/* FIXME: Should we wait or something? seems like the conn isn't good right after that */
+	/* Start the server if autostart enabled! */
 	if (DEBUG_AUTOSTART && !system ("xmms2-launcher")) {
 		ret = xmmsc_connect (infos->conn, path);
 	}
