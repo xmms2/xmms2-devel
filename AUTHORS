@@ -169,6 +169,10 @@ W: http://tobi.nu/
 P: 1024D/EA0C5340 E203 6001 264C 71CE DBFD  7A95 102A 11D0 EA0C 5340
 D: Stuff all over the map. Release manager.
 
+N: Martin Salzer
+E: stoky@gmx.net
+D: sorting fix
+
 N: Tilman Sauerbeck
 E: tilman@code-monkey.de
 E: tilman@xmms.org

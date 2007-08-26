@@ -1254,7 +1254,10 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 		val2 = n2->data;
 
 		if (!val1) {
-			return -(val2 != NULL);
+			if (!val2)
+				continue;
+			else
+				return -1;
 		}
 
 		if (!val2) {
