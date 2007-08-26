@@ -110,10 +110,9 @@ void
 cli_add_setup (command_action_t *action)
 {
 	/* FIXME: support collection ? */
-	/* FIXME: need to support G_OPTION_ARG_STRING_ARRAY for --file */
 	/* FIXME: allow ordering ? */
 	const argument_t flags[] = {
-		{ "file", 'f', 0, G_OPTION_ARG_STRING, NULL, _("Add a path from the local filesystem."), "path" },
+		{ "file", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Treat the arguments as file paths instead of a pattern."), "path" },
 		{ "non-recursive", 'N', 0, G_OPTION_ARG_NONE, NULL, _("Do not add directories recursively."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
@@ -121,7 +120,7 @@ cli_add_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-f <path>] [-N] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern]"),
+	                     _("[-f [-N]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -508,6 +507,30 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
 	return TRUE;
 }
 
+gchar *
+make_valid_url (gchar *path)
+{
+	gchar *p;
+	gchar *url;
+	gchar *pwd;
+
+	/* Check if path matches "^[a-z]+://" */
+	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
+	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
+		url = g_strdup (path);
+	} else if (*path == '/') {
+		/* Absolute url, just prepend file:// protocol */
+		url = g_strconcat ("file://", path, NULL);
+	} else {
+		/* Relative url, prepend file:// protocol and PWD */
+		pwd = getenv ("PWD");
+		url = g_strconcat ("file://", pwd, "/", path, NULL);
+	}
+
+	return url;
+}
+
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -517,8 +540,10 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res, *plres;
 	gint pos;
 	gchar *path, *fullpath;
+	gboolean fileargs;
 	gboolean norecurs;
 	pack_infos_playlist_pos_t *pack;
+	gint i, count;
 
 /*
 --file  Add a path from the local filesystem
@@ -533,40 +558,49 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		playlist = NULL;
 	}
 
-	/* FIXME: pos is wrong in non-active playlists! and no offsets :-( */
+	/* FIXME: pos is wrong in non-active playlists (next/offsets are invalid)! */
+	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
 	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
 		cli_infos_loop_resume (infos);
 		goto finish;
 	}
 
-	if (!command_flag_string_get (ctx, "file", &path)) {
-		path = NULL;
-	}
-	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
-		norecurs = FALSE;
-	}
-
+	command_flag_boolean_get (ctx, "file", &fileargs);
+	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 	command_arg_longstring_get (ctx, 0, &pattern);
 
-	if (path && pattern) {
-		g_printf (_("Error: --file and the pattern argument are mutually exclusive!\n"));
+	/* FIXME: error if no arg at all */
+	if (!pattern) {
+		/* We need either a file or a pattern! */
+		g_printf (_("Error: you must provide a pattern or files to add!\n"));
 		cli_infos_loop_resume (infos);
 		goto finish;
-	} else if (path) {
-		if (norecurs) {
-			/* FIXME: only if no protocol found, i.e. no [a-z]+:// */
-			fullpath = g_strconcat ("file://", path, NULL);
-			res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
-			xmmsc_result_notifier_set (res, cb_done, infos);
-			xmmsc_result_unref (res);
+	}
+
+	if (fileargs) {
+		/* FIXME: expend / glob? */
+		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
+			command_arg_string_get (ctx, i, &path);
+			fullpath = make_valid_url (path);
+
+			if (norecurs) {
+				res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
+				if (i == count - 1) {
+					/* Finish after last add */
+					xmmsc_result_notifier_set (res, cb_done, infos);
+				}
+				xmmsc_result_unref (res);
+			} else {
+				/* FIXME: oops, there is no rinsert */
+				g_printf (_("Error: no playlist_rinsert, implement it! doing non-recursive..\n"));
+				res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
+				xmmsc_result_notifier_set (res, cb_done, infos);
+				xmmsc_result_unref (res);
+			}
+
 			g_free (fullpath);
-		} else {
-			/* FIXME: oops, there is no rinsert */
-			g_printf (_("Error: no playlist_rinsert, implement it!\n"));
-			cli_infos_loop_resume (infos);
-			goto finish;
 		}
-	} else if (pattern) {
+	} else {
 		if (norecurs) {
 			g_printf (_("Error: --non-recursive only applies when passing --file!\n"));
 			cli_infos_loop_resume (infos);
@@ -584,14 +618,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			xmmsc_result_unref (res);
 			xmmsc_coll_unref (query);
 		}
-
-	} else {
-		/* We need either a file or a pattern! */
-		g_printf (_("Error: you must provide something to add!\n"));
-		cli_infos_loop_resume (infos);
-		goto finish;
 	}
-
 
 	finish:
 
