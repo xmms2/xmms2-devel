@@ -567,9 +567,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			goto finish;
 		}
 	} else if (pattern) {
-		/* Irrelevant flag, trigger error */
 		if (norecurs) {
-			/* FIXME: Not really true, we can pass files in the pattern? */
 			g_printf (_("Error: --non-recursive only applies when passing --file!\n"));
 			cli_infos_loop_resume (infos);
 			goto finish;
@@ -691,7 +689,8 @@ void
 help_command (cli_infos_t *infos, gchar *cmd)
 {
 	command_action_t *action;
-	gint i;
+	gint i, k;
+	gint padding, max_flag_len = 0;
 
 	action = command_trie_find (infos->commands, cmd);
 	if (action) {
@@ -701,16 +700,30 @@ help_command (cli_infos_t *infos, gchar *cmd)
 		}
 		g_printf ("\n\n  %s\n\n", action->description);
 		if (action->argdefs && action->argdefs[0].long_name) {
+			/* Find length of longest option */
+			for (i = 0; action->argdefs[i].long_name; ++i) {
+				if (max_flag_len < strlen (action->argdefs[i].long_name)) {
+					max_flag_len = strlen (action->argdefs[i].long_name);
+				}
+			}
+
 			g_printf (_("Valid options:\n"));
 			for (i = 0; action->argdefs[i].long_name; ++i) {
+				padding = max_flag_len - strlen (action->argdefs[i].long_name) + 2;
+
 				if (action->argdefs[i].short_name) {
 					g_printf ("  -%c, ", action->argdefs[i].short_name);
 				} else {
 					g_printf ("      ");
 				}
+
 				g_printf ("--%s", action->argdefs[i].long_name);
-				g_printf ("  %s\n", action->argdefs[i].description);
-				/* FIXME: align, show arg_description, etc */
+
+				for (k = 0; k < padding; ++k) {
+					g_printf (" ");
+				}
+				g_printf ("%s\n", action->argdefs[i].description);
+				/* FIXME: align multi-line */
 			}
 		}
 	} else {
