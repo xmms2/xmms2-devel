@@ -405,6 +405,7 @@ Init_Playlist (VALUE mXmms)
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, CLEAR);
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, MOVE);
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SORT);
+	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, UPDATE);
 
 	ePlaylistError = rb_define_class_under (c, "PlaylistError",
 	                                        rb_eStandardError);
