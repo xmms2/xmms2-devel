@@ -95,15 +95,16 @@ xmms_vis_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	g_return_val_if_fail (xform, -1);
 
+	chan = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
+
 	/* perhaps rework this later */
-	if (len > 2048) {
-		len = 2048;
+	if (len > XMMSC_VISUALIZATION_WINDOW_SIZE * chan * sizeof (short)) {
+		len = XMMSC_VISUALIZATION_WINDOW_SIZE * chan * sizeof (short);
 	}
 
 	read = xmms_xform_read (xform, buf, len, error);
-	chan = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
 	if (read > 0) {
-		send_data (chan, read / sizeof(short), buf);
+		send_data (chan, read / sizeof (short), buf);
 	}
 
 	return read;

@@ -187,8 +187,8 @@ property_set (xmmsc_vis_properties_t *p, gchar* key, gchar* data)
 	if (!g_strcasecmp (key, "type")) {
 		if (!g_strcasecmp (data, "pcm")) {
 			p->type = VIS_PCM;
-		} else if (!g_strcasecmp (data, "fft")) {
-			p->type = VIS_FFT;
+		} else if (!g_strcasecmp (data, "spectrum")) {
+			p->type = VIS_SPECTRUM;
 		} else if (!g_strcasecmp (data, "peak")) {
 			p->type = VIS_PEAK;
 		} else {
@@ -198,12 +198,12 @@ property_set (xmmsc_vis_properties_t *p, gchar* key, gchar* data)
 		p->stereo = (atoi (data) > 0);
 	} else if (!g_strcasecmp (key, "pcm.hardwire")) {
 		p->pcm_hardwire = (atoi (data) > 0);
+	/* TODO: all the stuff following */
 	} else if (!g_strcasecmp (key, "timeframe")) {
 		p->timeframe = g_strtod (data, NULL);
 		if (p->timeframe == 0.0) {
 			return FALSE;
 		}
-		/* TODO: all the stuff here, eh */
 	} else {
 		return FALSE;
 	}
@@ -310,68 +310,6 @@ package_write_finish (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t *dest) 
 	}
 }
 
-/* you know ... */
-short
-fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, int size, short *src) {
-	int i, j;
-	if (prop->type == VIS_PEAK) {
-		short l = 0, r = 0;
-		for (i = 0; i < size; i += channels) {
-			if (src[i] > 0 && src[i] > l) {
-				l = src[i];
-			}
-			if (src[i] < 0 && -src[i] > l) {
-				l = -src[i];
-			}
-			if (channels > 1) {
-				if (src[i+1] > 0 && src[i+1] > r) {
-					r = src[i+1];
-				}
-				if (src[i+1] < 0 && -src[i+1] > r) {
-					r = -src[i+1];
-				}
-			}
-		}
-		if (channels == 1) {
-			r = l;
-		}
-		if (prop->stereo) {
-			dest[0] = htons (l);
-			dest[1] = htons (r);
-			size = 2;
-		} else {
-			dest[0] = htons ((l + r) / 2);
-			size = 1;
-		}
-	}
-	if (prop->type == VIS_PCM) {
-		for (i = 0, j = 0; i < size; i += channels, j++) {
-			short *l, *r;
-			if (prop->pcm_hardwire) {
-				l = &dest[j*2];
-				r = &dest[j*2 + 1];
-			} else {
-				l = &dest[j];
-				r = &dest[size/channels + j];
-			}
-			*l = htons (src[i]);
-			if (prop->stereo) {
-				if (channels > 1) {
-					*r = htons (src[i+1]);
-				} else {
-					*r = htons (src[i]);
-				}
-			}
-		}
-		size /= channels;
-		if (prop->stereo) {
-			size *= 2;
-		}
-	}
-	return size;
-}
-
-
 void
 send_data (int channels, int size, short *buf)
 {
@@ -383,6 +321,8 @@ send_data (int channels, int size, short *buf)
 	if (!vis) {
 		return;
 	}
+
+	fft_init ();
 
 	gettimeofday (&time, NULL);
 	g_mutex_lock (vis->clientlock);

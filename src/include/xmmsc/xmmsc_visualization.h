@@ -22,6 +22,10 @@
 #ifndef __XMMS_VIS_COMMON_H__
 #define __XMMS_VIS_COMMON_H__
 
+/* 512 is what libvisual wants for pcm data.
+   we won't deliver more than 512 samples at once. */
+#define XMMSC_VISUALIZATION_WINDOW_SIZE 512
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,9 +61,7 @@ typedef struct {
 	int32_t timestamp[2];
 	uint16_t format;
 	uint16_t size;
-	/* 512 is what libvisual wants for pcm data.
-	   we won't deliver more than 512 samples at once. */
-	int16_t data[512*2];
+	int16_t data[2 * XMMSC_VISUALIZATION_WINDOW_SIZE];
 } xmmsc_vischunk_t;
 
 /**
@@ -96,7 +98,7 @@ char* packet_init_timing (xmmsc_vis_udp_timing_t *p);
 
 typedef enum {
 	VIS_PCM,
-	VIS_FFT,
+	VIS_SPECTRUM,
 	VIS_PEAK
 } xmmsc_vis_data_t;
 

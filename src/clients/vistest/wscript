@@ -7,6 +7,13 @@ def build(bld):
     obj.uselib = 'glib2'
 
     obj = bld.create_obj('cc', 'program')
+    obj.target = 'vistest-fft'
+    obj.source = """vistest_fft.c""".split()
+    obj.includes = '. ../../include'
+    obj.uselib_local = 'xmmsclient-glib xmmsclient'
+    obj.uselib = 'glib2 m'
+
+    obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2-ripper'
     obj.source = """ripper.c""".split()
     obj.includes = '. ../../include'
@@ -20,6 +27,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'sdl visual'
 def configure(conf):
+    conf.env['LIB_m'] = ['m']
     return (conf.check_pkg('libvisual-0.4', destvar='visual') and
       conf.check_pkg('sdl', destvar='sdl') and conf.check_pkg('vorbisenc', destvar='vorbisenc'))
 

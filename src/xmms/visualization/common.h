@@ -54,6 +54,10 @@ void cleanup_udp (xmmsc_vis_udp_t *t, xmms_socket_t socket);
 gboolean write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest);
 void write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, xmms_socket_t socket);
 
+/* provided by format.c */
+void fft_init ();
+short fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, int size, short *src);
+
 /* never call a fetch without a guaranteed release following! */
 #define x_fetch_client(id) \
 	g_mutex_lock (vis->clientlock); \

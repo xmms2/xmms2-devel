@@ -11,19 +11,20 @@ def build(bld):
     obj.source = """
                  object.c
                  xform.c
+                 format.c
                  udp.c""".split()
     if g_platform == 'win32':
         obj.source.append("dummy.c")
     else:
         obj.source.append("unixshm.c")
     obj.includes = '. ../../include ../../includepriv'
-    obj.uselib = 'glib2'
+    obj.uselib = 'glib2 m'
     obj.uselib_local = 'xmmsvisualization xmmssocket'
     obj.target = 'visualization'
     obj.install_var = 0
 
 def configure(conf):
-	pass
+    conf.env['LIB_m'] = ['m']
 
 def set_options(opt):
     pass
