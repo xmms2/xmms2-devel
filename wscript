@@ -242,9 +242,12 @@ def configure(conf):
         conf.env["shlib_INST_VAR"] = "LIBDIR"
 
     if Params.g_options.config_prefix:
-        conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
-        include = [os.path.join(Params.g_options.config_prefix, "include")]
-        conf.env['CPPPATH'] += include
+        for dir in Params.g_options.config_prefix:
+            if not os.path.isabs(dir):
+                dir = os.path.abspath(dir)
+            conf.env["LIBPATH"] += [os.path.join(dir, "lib")]
+            conf.env['CPPPATH'] += [os.path.join(dir, "include")]
+
 
     # Our static libraries may link to dynamic libraries
     if g_platform != 'win32':
@@ -311,7 +314,8 @@ def set_options(opt):
                    type="string", dest="enable_optionals")
     opt.add_option('--without-optionals', action="callback", callback=_list_cb,
                    type="string", dest="disable_optionals")
-    opt.add_option('--conf-prefix', type='string', dest='config_prefix')
+    opt.add_option('--conf-prefix', action="callback", callback=_list_cb,
+                   type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
     opt.add_option('--with-mandir', type='string', dest='manualdir')
     opt.add_option('--with-libdir', type='string', dest='libdir')
