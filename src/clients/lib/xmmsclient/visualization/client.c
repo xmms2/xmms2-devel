@@ -143,7 +143,7 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv) {
  * Deliver one property
  */
 xmmsc_result_t *
-xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char* key, const char* value)
+xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key, const char *value)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_visualization_t *v;
@@ -163,7 +163,7 @@ xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char* key
  * Deliver some properties
  */
 xmmsc_result_t *
-xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, const char** prop)
+xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsc_visualization_properties_t prop)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_visualization_t *v;

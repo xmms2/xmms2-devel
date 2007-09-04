@@ -36,7 +36,7 @@ static xmmsc_connection_t *connection;
 static int vis;
 static int height;
 
-static char* config[] = {
+xmmsc_visualization_properties_t config = {
 	"type", "spectrum",
 	"stereo", "0",
 	NULL

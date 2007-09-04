@@ -29,7 +29,7 @@
 xmmsc_connection_t *x_connection;
 int x_vis;
 
-char* x_config[] = {
+xmmsc_visualization_properties_t x_config = {
 	"type", "pcm",
 	"stereo", "1",
 	NULL

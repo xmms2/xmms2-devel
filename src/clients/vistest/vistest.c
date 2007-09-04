@@ -35,7 +35,7 @@ GMainLoop *mainloop;
 xmmsc_connection_t *connection;
 int vis;
 
-char* config[] = {
+xmmsc_visualization_properties_t config = {
 	"type", "peak",
 	"stereo", "1",
 	NULL

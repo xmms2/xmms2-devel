@@ -73,7 +73,7 @@ quit (int signum)
 	intr = 1;
 }
 
-char* x_config[] = {
+xmmsc_visualization_properties_t x_config = {
 	"type", "pcm",
 	"stereo", "1",
 	"pcm.hardwire", "1",
