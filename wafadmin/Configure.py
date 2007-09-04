@@ -399,7 +399,7 @@ class pkgconfig_configurator(configurator_base):
 	- uselib: name that could be used in tasks with obj.uselib if not set uselib = upper(name)
 	- define: name that will be used in config.h if not set define = HAVE_+uselib
 	- variables: list of addional variables to be checked for, for example variables='prefix libdir'
-"""
+	"""
 	def __init__(self, conf):
 		configurator_base.__init__(self,conf)
 
@@ -417,6 +417,7 @@ class pkgconfig_configurator(configurator_base):
 		# - list of values to check (define name will be upper(uselib"_"value_name))
 		# - a list of [value_name, override define_name]
 		self.variables   = []
+		self.defines = {}
 
 	def error(self):
 		if self.version:
@@ -460,6 +461,16 @@ class pkgconfig_configurator(configurator_base):
 		if pkgpath:
 			pkgpath = 'PKG_CONFIG_PATH=$PKG_CONFIG_PATH:' + pkgpath
 		pkgcom = '%s %s' % (pkgpath, pkgbin)
+
+		for key, val in self.defines.items():
+			pkgcom += ' --define-variable=%s=%s' % (key, val)
+
+		g_defines = self.env['PKG_CONFIG_DEFINES']
+		if type(g_defines) is types.DictType:
+			for key, val in g_defines.items():
+				if self.defines and self.defines.has_key(key):
+					continue
+				pkgcom += ' --define-variable=%s=%s' % (key, val)
 
 		retval = {}
 
@@ -962,7 +973,8 @@ class Configure:
 			tmpenv = self.m_allenvs[key]
 			tmpenv.store(os.path.join(Params.g_cachedir, key+'.cache.py'))
 
-	def check_pkg(self, modname, destvar='', vnum='', pkgpath='', pkgbin=''):
+	def check_pkg(self, modname, destvar='', vnum='', pkgpath='', pkgbin='',
+	              pkgvars=[], pkgdefs={}):
 		"wrapper provided for convenience"
 		pkgconf = self.create_pkgconfig_configurator()
 
@@ -973,6 +985,8 @@ class Configure:
 		pkgconf.version = vnum
 		pkgconf.path = pkgpath
 		pkgconf.binary = pkgbin
+		pkgconf.variables = pkgvars
+		pkgconf.defines = pkgdefs
 		return pkgconf.run()
 
 	def sub_config(self, dir):
