@@ -259,6 +259,19 @@ def configure(conf):
     # Our static libraries may link to dynamic libraries
     if Params.g_platform != 'win32':
         conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
+    else:
+        # As we have to change target platform after the tools
+        # have been loaded there are a few variables that needs
+        # to be initiated if building for win32.
+
+        # Make sure we don't have -fPIC and/or -DPIC in our CCFLAGS
+        conf.env["shlib_CCFLAGS"] = []
+        conf.env['plugin_CCFLAGS'] = []
+
+        # Setup various prefixes
+        conf.env["shlib_SUFFIX"] = '.dll'
+        conf.env['plugin_SUFFIX'] = '.dll'
+        conf.env['program_SUFFIX'] = '.exe'
 
     # Add some specific OSX things
     if Params.g_platform == 'darwin':
