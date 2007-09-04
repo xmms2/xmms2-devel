@@ -207,6 +207,12 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Params.pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
+    if os.environ.has_key('PKG_CONFIG_PREFIX'):
+        prefix = os.environ['PKG_CONFIG_PREFIX']
+        if not os.path.isabs(prefix):
+            prefix = os.path.abspath(prefix)
+        conf.env['PKG_CONFIG_DEFINES'] = {'prefix':prefix}
+
     conf.env["BUILD_XMMS2D"] = False
     if not Params.g_options.without_xmms2d == True:
         conf.env["BUILD_XMMS2D"] = True
