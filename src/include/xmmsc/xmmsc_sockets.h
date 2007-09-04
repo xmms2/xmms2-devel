@@ -8,8 +8,8 @@
 #ifdef __WIN32__
 /* Only support Windows XP and newer */
 #define _WIN32_WINNT 0x0501
-#include <Winsock2.h>
-#include <Ws2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 typedef SOCKET xmms_socket_t;
 typedef int socklen_t;
 #define XMMS_EINTR WSAEINTR
