@@ -1,4 +1,4 @@
-from Params import g_platform
+import Params
 
 def build(bld):
     obj = bld.create_obj('cc', 'program')
@@ -12,7 +12,7 @@ def build(bld):
                     cmd_coll.c
                     common.c
                     main.c""".split()
-    if g_platform == 'win32':
+    if Params.g_platform == 'win32':
         obj.source.append('common_win32.c')
     else:
         obj.source.append('common_unix.c')

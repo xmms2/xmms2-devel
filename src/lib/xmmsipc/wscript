@@ -4,10 +4,10 @@
 # Copyright (C) 2006-2007 XMMS2 Team
 #
 
-from Params import g_platform
+import Params
 
 def build(bld):
-    if g_platform == 'win32':
+    if Params.g_platform == 'win32':
         platform_sources = "transport_win.c"
     else:
         platform_sources = "socket_unix.c transport_unix.c"

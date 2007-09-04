@@ -4,12 +4,12 @@
 # Copyright (C) 2006-2007 XMMS2 Team
 #
 
-from Params import g_platform
+import Params
 
 def build(bld):
     obj = bld.create_obj('cc', 'staticlib')
     obj.source = ["strlist.c"]
-    if g_platform == 'win32':
+    if Params.g_platform == 'win32':
         obj.source.append("utils_win32.c")
     else:
         obj.source.append("utils_unix.c")

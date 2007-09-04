@@ -1,10 +1,10 @@
 from waftools.plugin import plugin
-from Params import g_platform
+import Params
 
 def plugin_configure(conf):
     ret = True
 
-    if g_platform == 'win32':
+    if Params.g_platform == 'win32':
         ret = conf.check_library2('winmm', uselib='winmm', mandatory=0)
 
     return (conf.check_pkg('libcdio_cdda', destvar='cdda') and

@@ -1,4 +1,4 @@
-from Params import g_platform
+import Params
 
 def build(bld):
     obj = bld.create_obj('cc', 'program')
@@ -12,7 +12,7 @@ def build(bld):
     obj.files = ['xmms2-launcher.1']
 
 def configure(conf):
-    if g_platform == 'win32':
+    if Params.g_platform == 'win32':
         return False
     return True
 
