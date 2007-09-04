@@ -226,6 +226,9 @@ def configure(conf):
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
     conf.check_tool('man', tooldir=os.path.abspath('waftools'))
 
+    if Params.g_options.target_platform:
+        Params.g_platform = Params.g_options.target_platform
+
     conf.env["VERSION"] = VERSION
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
@@ -246,7 +249,6 @@ def configure(conf):
                 dir = os.path.abspath(dir)
             conf.env["LIBPATH"] += [os.path.join(dir, "lib")]
             conf.env['CPPPATH'] += [os.path.join(dir, "include")]
-
 
     # Our static libraries may link to dynamic libraries
     if Params.g_platform != 'win32':
@@ -322,6 +324,8 @@ def set_options(opt):
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
     opt.add_option('--with-mandir', type='string', dest='manualdir')
     opt.add_option('--with-libdir', type='string', dest='libdir')
+    opt.add_option('--with-target-platform', type='string',
+	               dest='target_platform')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
