@@ -211,7 +211,7 @@ def configure(conf):
     if not Params.g_options.without_xmms2d == True:
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
-    
+
     if Params.g_options.manualdir:
         conf.env["MANDIR"] = Params.g_options.manualdir
     else:
@@ -271,12 +271,16 @@ def configure(conf):
             Params.fatal("xmms2 requires libsocket on Solaris.")
         conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
-
+        conf.env['socket_impl'] = 'socket'
     # Check win32 (winsock2) socket support
-    if Params.g_platform == 'win32':
+    elif Params.g_platform == 'win32':
         if not conf.check_library2("wsock32", uselib='socket'):
             Params.fatal("xmms2 requires wsock32 on windows.")
         conf.env.append_unique('LIB_socket', 'ws2_32')
+        conf.env['socket_impl'] = 'wsock32'
+    # Default POSIX sockets
+    else:
+        conf.env['socket_impl'] = 'posix'
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.

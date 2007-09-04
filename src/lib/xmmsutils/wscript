@@ -7,18 +7,18 @@
 import Params
 
 def build(bld):
+    env = bld.env_of_name('default')
     obj = bld.create_obj('cc', 'staticlib')
-    obj.source = ["strlist.c"]
-    if Params.g_platform == 'win32':
-        obj.source.append("utils_win32.c")
-    else:
-        obj.source.append("utils_unix.c")
+    obj.source = ["strlist.c", "utils_%s.c" % env['util_impl']]
     obj.includes='. ../../include'
     obj.target='xmmsutils'
     obj.install_var = 0
 
 def configure(conf):
-    pass
+    if Params.g_platform == 'win32':
+        conf.env['util_impl'] = 'win32'
+    else:
+        conf.env['util_impl'] = 'unix'
 
 def set_options(opt):
     pass

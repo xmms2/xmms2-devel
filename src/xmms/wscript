@@ -35,7 +35,9 @@ source = """config.c
             utils.c""".split()
 
 def build(bld):
-    if Params.g_platform == 'win32':
+    env = bld.env_of_name("default")
+
+    if env['xmms_shared_library']:
         lib = bld.create_obj('cc', 'shlib')
         lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     else:
@@ -46,21 +48,15 @@ def build(bld):
     lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
     lib.source = source
 
-    env = bld.env_of_name("default")
-    lib.source.append("compat/statfs_%s.c" % env["statfs_os"])
+    lib.source.append("compat/statfs_%s.c" % env["statfs_impl"])
 
     prog = bld.create_obj('cc', 'program')
     prog.target = 'xmms2d'
     prog.includes = '. ../include ../includepriv'
     prog.source = ["main.c"]
-    if Params.g_platform == 'win32':
-        prog.source.append("compat/signal_dummy.c")
-        prog.source.append("compat/symlink_dummy.c")
-        prog.source.append("compat/checkroot_dummy.c")
-    else:
-        prog.source.append("compat/signal_unix.c")
-        prog.source.append("compat/symlink_unix.c")
-        prog.source.append("compat/checkroot_unix.c")
+    prog.source.append("compat/signal_%s.c" % env['compat_impl'])
+    prog.source.append("compat/symlink_%s.c" % env['compat_impl'])
+    prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
 
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
@@ -93,20 +89,32 @@ def configure(conf):
         test.mandatory = mandatory
         return test.run()
 
-    if check_header('sys/vfs.h'):
+    if Params.g_platform == 'win32':
+        conf.env['statfs_impl'] = 'dummy'
+    elif check_header('sys/vfs.h'):
         if Params.g_platform == 'sunos5':
-            conf.env['statfs_os'] = 'solaris'
+            conf.env['statfs_impl'] = 'solaris'
         else:
-            conf.env['statfs_os'] = 'linux'
+            conf.env['statfs_impl'] = 'linux'
     elif check_header('sys/param.h'):
-        conf.env['statfs_os'] = 'bsd'
+        conf.env['statfs_impl'] = 'bsd'
     else:
-        conf.env['statfs_os'] = 'dummy'
+        conf.env['statfs_impl'] = 'dummy'
 
     # Add Darwin stuff
     if Params.g_platform == 'darwin':
         conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
         conf.env['CCDEFINES'] += ['USE_BUNDLES']
+
+    if Params.g_platform == 'win32':
+        conf.env['xmms_shared_library'] = True
+    else:
+        conf.env['xmms_shared_library'] = False
+
+    if Params.g_platform == 'win32':
+        conf.env['compat_impl'] = 'dummy'
+    else:
+        conf.env['compat_impl'] = 'unix'
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 

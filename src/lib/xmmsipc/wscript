@@ -4,10 +4,10 @@
 # Copyright (C) 2006-2007 XMMS2 Team
 #
 
-import Params
-
 def build(bld):
-    if Params.g_platform == 'win32':
+    env = bld.env_of_name('default')
+
+    if env['socket_impl'] == 'wsock32':
         platform_sources = "transport_win.c"
     else:
         platform_sources = "socket_unix.c transport_unix.c"

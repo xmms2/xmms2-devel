@@ -2,8 +2,6 @@
 # common tasks carried out by plugins in order to configure and build
 # themselves.
 
-import sys
-
 def plugin(name, source=None, configure=False, build=False,
            build_replace=False, needs_lib=False, extra_libs=[],
            tool='cc', broken=False, output_prio=None):
@@ -19,6 +17,8 @@ def plugin(name, source=None, configure=False, build=False,
             conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
 
     def stock_build(bld):
+        env = bld.env_of_name("default")
+
         obj = bld.create_obj(tool, 'plugin')
         obj.target = 'xmms_%s' % name
         obj.includes = '../../include'
@@ -32,7 +32,8 @@ def plugin(name, source=None, configure=False, build=False,
             libs.append(name)
         libs += extra_libs
         obj.uselib = ' '.join(libs)
-        if sys.platform == 'win32':
+
+        if env['xmms_shared_library']:
             obj.uselib_local = 'xmms2core'
 
         obj.install_var = 'PLUGINDIR'

@@ -4,12 +4,12 @@
 # Copyright (C) 2006-2007 XMMS2 Team
 #
 
-import Params
-
 def build(bld):
+    env = bld.env_of_name('default')
+
     obj = bld.create_obj('cc', 'staticlib')
     obj.source = ["socket_common.c"]
-    if Params.g_platform == 'win32':
+    if env['socket_impl'] == 'wsock32':
         obj.source.append("socket_win32.c")
     else:
         obj.source.append("socket_unix.c")
