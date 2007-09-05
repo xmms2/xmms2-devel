@@ -50,6 +50,8 @@ typedef struct {
 
 	gint curl_code;
 
+	gboolean done;
+
 	xmms_error_t status;
 
 	gboolean broken_version;
@@ -357,6 +359,7 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 
 		/* done */
 		if (handles == 0) {
+			data->done = TRUE;
 			return 0;
 		}
 
@@ -379,6 +382,9 @@ xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len,
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
+
+	if (data->done)
+		return 0;
 
 	while (TRUE) {
 
