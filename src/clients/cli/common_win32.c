@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 gint
 find_terminal_width ()
