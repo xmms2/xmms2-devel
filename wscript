@@ -232,6 +232,12 @@ def configure(conf):
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
     conf.check_tool('man', tooldir=os.path.abspath('waftools'))
 
+    if conf.check_tool('winres'):
+        conf.env['WINRCFLAGS'] = '-I' + os.path.abspath('pixmaps')
+        conf.env['xmms_icon'] = True
+    else:
+        conf.env['xmms_icon'] = False
+
     if Params.g_options.target_platform:
         Params.g_platform = Params.g_options.target_platform
 
