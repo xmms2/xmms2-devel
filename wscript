@@ -323,6 +323,8 @@ def configure(conf):
 
     _output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
 
+    return True
+
 
 ####
 ## Options

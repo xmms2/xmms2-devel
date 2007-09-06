@@ -20,5 +20,7 @@ def configure(conf):
     else:
         conf.env['util_impl'] = 'unix'
 
+    return True
+
 def set_options(opt):
     pass

@@ -20,7 +20,7 @@ def build(bld):
     obj.install_var = 0
 
 def configure(conf):
-    pass
+    return True
 
 def set_options(opt):
     pass

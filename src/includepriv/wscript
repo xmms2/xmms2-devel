@@ -1,5 +1,5 @@
 def configure(conf):
-    pass
+    return True
 def set_options(conf):
     pass
 def build(bld):

@@ -11,5 +11,7 @@ def build(bld):
 def configure(conf):
     conf.sub_config("xmms")
 
+    return True
+
 def set_options(env):
     pass

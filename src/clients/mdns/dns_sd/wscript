@@ -30,5 +30,7 @@ def configure(conf):
   else:
     return conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)
 
+  return True
+
 def set_options(opt):
   pass

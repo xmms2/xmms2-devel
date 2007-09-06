@@ -51,3 +51,5 @@ def configure(conf):
     print "\nDefault output plugin: ",
     Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
 
+    return True
+

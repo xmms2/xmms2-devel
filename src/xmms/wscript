@@ -121,5 +121,7 @@ def configure(conf):
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 
+    return True
+
 def set_options(opt):
     pass
