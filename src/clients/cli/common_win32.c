@@ -18,6 +18,18 @@
 
 #include <windows.h>
 
+gboolean
+x_realpath (const gchar *item, gchar *rpath)
+{
+	return (GetFullPathNameA (item, PATH_MAX, rpath, NULL) > PATH_MAX);
+}
+
+gchar *
+x_path2url (gchar *path)
+{
+	return g_strdelimit (path, "\\", '/');
+}
+
 gint
 find_terminal_width ()
 {

@@ -19,6 +19,18 @@
 
 #include "common.h"
 
+gboolean
+x_realpath (const gchar *item, gchar *rpath)
+{
+	return !!realpath (item, rpath);
+}
+
+gchar *
+x_path2url (gchar *path)
+{
+	return path;
+}
+
 gint
 find_terminal_width () {
 	gint columns = 0;

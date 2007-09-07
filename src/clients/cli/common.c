@@ -32,7 +32,7 @@ format_url (gchar *item, GFileTest test)
 	if (!(p && p[1] == '/' && p[2] == '/')) {
 		/* OK, so this is NOT an valid URL */
 
-		if (!realpath (item, rpath)) {
+		if (!x_realpath (item, rpath)) {
 			return NULL;
 		}
 
@@ -45,7 +45,7 @@ format_url (gchar *item, GFileTest test)
 		url = g_strdup_printf ("%s", item);
 	}
 
-	return url;
+	return x_path2url (url);
 }
 
 
@@ -54,7 +54,7 @@ print_info (const gchar *fmt, ...)
 {
 	gchar buf[8096];
 	va_list ap;
-	
+
 	va_start (ap, fmt);
 	g_vsnprintf (buf, 8096, fmt, ap);
 	va_end (ap);
@@ -68,7 +68,7 @@ print_error (const gchar *fmt, ...)
 {
 	gchar buf[1024];
 	va_list ap;
-	
+
 	va_start (ap, fmt);
 	g_vsnprintf (buf, 1024, fmt, ap);
 	va_end (ap);
@@ -80,7 +80,7 @@ print_error (const gchar *fmt, ...)
 
 
 void
-print_hash (const void *key, xmmsc_result_value_type_t type, 
+print_hash (const void *key, xmmsc_result_value_type_t type,
 			const void *value, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
@@ -92,7 +92,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type,
 
 
 void
-print_entry (const void *key, xmmsc_result_value_type_t type, 
+print_entry (const void *key, xmmsc_result_value_type_t type,
 			 const void *value, const gchar *source, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
@@ -141,7 +141,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 	gchar *padstring;
 
 	va_list ap;
-	
+
 	va_start (ap, fmt);
 	g_vsnprintf (buf, 1024, fmt, ap);
 	va_end (ap);
