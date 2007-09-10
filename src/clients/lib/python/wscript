@@ -3,45 +3,31 @@ import Params
 import Common
 
 def build(bld):
-    obj = bld.create_obj('cc', 'shlib')
+    obj = bld.create_obj('cc', 'shlib', 'pyext')
     obj.target = 'xmmsapi'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = ['xmmsapi.pyx']
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'python'
-    obj.env["shlib_SUFFIX"] = '.so'
-    obj.env["shlib_PREFIX"] = ''
-    obj.install_var = "LIBDIR_python"
+    obj.install_var = "xmmsclient_PYTHONDIR"
 
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/__init__.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/sync.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/propdict.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/consts.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/collections.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/glib.py')
-    Common.install_files('LIBDIR_python', '', 'xmmsclient/qt3.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/__init__.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/sync.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/propdict.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/consts.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/collections.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/glib.py')
+    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/qt3.py')
 
 def configure(conf):
-    try:
-        import distutils
-        import distutils.sysconfig
-    except:
-        return False
-    h = conf.create_header_configurator()
-    h.name = 'Python.h'
-    h.uselib = 'python'
-    h.path = [distutils.sysconfig.get_python_inc(plat_specific=True)]
-    if not h.run():
+    if not (conf.check_tool('python') and
+            conf.check_python_version() and
+            conf.check_python_headers()):
         return False
 
-    if Params.g_options.pythonarchdir:
-        archdir = Params.g_options.pythonarchdir
-    else:
-        archdir = distutils.sysconfig.get_python_lib(plat_specific=True)
-    conf.env["LIBDIR_python"] = os.path.join(archdir, "xmmsclient")
-    conf.env["CCFLAGS_python"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
+    conf.env['xmmsclient_PYTHONDIR'] = os.path.join(conf.env['PYTHONDIR'], 'xmmsclient')
 
     return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
 
 def set_options(opt):
-    opt.add_option('--with-python-archdir', type='string', dest='pythonarchdir')
+    pass
+
