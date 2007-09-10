@@ -7,24 +7,20 @@
 import Utils, Configure
 from Params import error, fatal
 
-endian_str = """
+endian_str = '''
 #include <stdio.h>
 int am_big_endian()
 {
-        long one = 1;
-        return !(*((char *)(&one)));
+	long one = 1;
+	return !(*((char *)(&one)));
 }
-
 int main()
 {
-  if (am_big_endian())
-     printf("bigendian=1\\n");
-  else
-     printf("bigendian=0\\n");
-
-  return 0;
+	if (am_big_endian()) printf("bigendian=1\\n");
+	else printf("bigendian=0\\n");
+	return 0;
 }
-"""
+'''
 
 class compile_configurator(Configure.configurator_base):
 	"inheritance demo"
@@ -95,29 +91,24 @@ def checkEndian(self, define='', pathlst=[]):
 	self.add_define(define, is_big)
 	return is_big
 
-features_str = """
+features_str = '''
 #include <stdio.h>
 int am_big_endian()
 {
-        long one = 1;
-        return !(*((char *)(&one)));
+	long one = 1;
+	return !(*((char *)(&one)));
 }
-
 int main()
 {
-  if (am_big_endian())
-     printf("bigendian=1\\n");
-  else
-     printf("bigendian=0\\n");
-
-  printf("int_size=%d\\n", sizeof(int));
-  printf("long_int_size=%d\\n", sizeof(long int));
-  printf("long_long_int_size=%d\\n", sizeof(long long int));
-  printf("double_size=%d\\n", sizeof(double));
-
-  return 0;
+	if (am_big_endian()) printf("bigendian=1\\n");
+	else printf("bigendian=0\\n");
+	printf("int_size=%d\\n", sizeof(int));
+	printf("long_int_size=%d\\n", sizeof(long int));
+	printf("long_long_int_size=%d\\n", sizeof(long long int));
+	printf("double_size=%d\\n", sizeof(double));
+	return 0;
 }
-"""
+'''
 
 def checkFeatures(self, lst=[], pathlst=[]):
 

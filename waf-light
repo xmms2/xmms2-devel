@@ -1,6 +1,34 @@
 #! /usr/bin/env python
 # encoding: utf-8
-# Thomas Nagy, 2005 (ita)
+# Thomas Nagy, 2005, 2006, 2007 (ita)
+
+"""
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. The name of the author may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+"""
 
 import os, sys
 if 'PSYCOWAF' in os.environ:
@@ -10,7 +38,7 @@ if 'PSYCOWAF' in os.environ:
 	except:
 		pass
 
-VERSION="1.1.1"
+VERSION="1.2.0"
 REVISION="x"
 INSTALL="x"
 cwd = os.getcwd()
@@ -229,6 +257,8 @@ try:
 			candidate = calldir
 			xml = 1
 			search_for_candidate = False
+	if "--make-waf" in sys.argv and candidate:
+		search_for_candidate = False
 
 	#check all directories above current dir for wscript or wscript_xml if still not found
 	while search_for_candidate:
@@ -254,7 +284,7 @@ if not candidate:
 	# check if the user only wanted to display the help
 	if '-h' in sys.argv or '--help' in sys.argv:
 		warning('No wscript file found: the help message may be incomplete')
-	        opt_obj = Options.Handler()
+		opt_obj = Options.Handler()
 		opt_obj.parse_args()
 		sys.exit(0)
 	else:
@@ -289,37 +319,43 @@ opt_obj.parse_args()
 # use the parser results
 if Params.g_commands['dist']:
 	# try to use the user-defined dist function first, fallback to the waf scheme
-	try:
-		Utils.g_module.dist()
-		sys.exit(0)
-	except AttributeError:
-		pass
-	try: appname = Utils.g_module.APPNAME
-	except: appname = 'noname'
+	try: fun = Utils.g_module.dist
+	except AttributeError: fun = None
+	if fun: fun(); sys.exit(0)
 
-	try: version = Utils.g_module.VERSION
-	except: version = '1.0'
+	try: appname = Utils.g_module.APPNAME
+	except AttributeError: appname = 'noname'
+
+	try:
+		get_version = Utils.g_module.get_version
+	except AttributeError:
+		try: version = Utils.g_module.VERSION
+		except AttributeError: version = '1.0'
+	else:
+		version = get_version()
 
 	from Scripting import Dist
 	Dist(appname, version)
 	sys.exit(0)
 elif Params.g_commands['distclean']:
 	# try to use the user-defined distclean first, fallback to the waf scheme
-	try:
-		Utils.g_module.distclean()
-		sys.exit(0)
-	except AttributeError:
-		pass
+	try: fun = Utils.g_module.distclean
+	except AttributeError: fun = None
+	if fun: fun(); sys.exit(0)
 	from Scripting import DistClean
 	DistClean()
 	sys.exit(0)
 
-try: Utils.g_module.init()
+fun=None
+try: fun=Utils.g_module.init
 except AttributeError: pass
+if fun: fun()
 
 import Scripting
-Scripting.Main()
+try: Scripting.Main()
+except KeyboardInterrupt: Params.fatal('build interrupted')
 #import hotshot
 #prof=hotshot.Profile("/tmp/proftest.txt")
 #prof.runcall(Scripting.Main)
 #prof.close()
+

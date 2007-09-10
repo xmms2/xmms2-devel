@@ -35,8 +35,11 @@ class MTask(Task.Task):
 		node = self.m_inputs[0]
 
 		# scan the .cpp files and find if there is a moc file to run
-		if tree.needs_rescan(node, parn.env):
-			ccroot.g_c_scanner.do_scan(node, parn.env, hashparams = self.m_scanner_params)
+		#if tree.needs_rescan(node, parn.env):
+		#	ccroot.g_c_scanner.do_scan(node, parn.env, hashparams = self.m_scanner_params)
+
+		# this will make sure the dependencies are computed
+		foo = self.signature()
 
 		moctasks=[]
 		mocfiles=[]
@@ -54,7 +57,7 @@ class MTask(Task.Task):
 			# process that base.moc only once
 			mocfiles.append(d)
 
-			# find the extension - this search is done only once
+			# find the extension - this search is done only once - TODO the parent was already scanned
 			ext = ''
 			if Params.g_options.qt_header_ext:
 				ext = Params.g_options.qt_header_ext
@@ -63,7 +66,7 @@ class MTask(Task.Task):
 				path = node.m_parent.srcpath(parn.env)
 				for i in globals('MOC_H'):
 					try:
-						os.stat(Utils.join_path(path,base2+i))
+						os.stat(os.path.join(path,base2+i))
 						ext = i
 						break
 					except:
@@ -71,8 +74,8 @@ class MTask(Task.Task):
 				if not ext: fatal("no header found for %s which is a moc file" % str(d))
 
 			# next time we will not search for the extension (look at the 'for' loop below)
-			h_node = node.change_ext(ext)
-			m_node = node.change_ext('.moc')
+			h_node = node.m_parent.find_source(base2+i)
+			m_node = h_node.change_ext('.moc')
 			tree.m_depends_on[variant][m_node] = h_node
 
 			# create the task
@@ -89,12 +92,13 @@ class MTask(Task.Task):
 				task.set_outputs(d)
 				moctasks.append(task)
 				break
+		# simple scheduler dependency: run the moc task before others
 		self.m_run_after = moctasks
 		self.moc_done = 1
 		return Task.Task.may_start(self)
 
 def translation_update(task):
-	outs=map(lambda a: a.abspath(task.env), task.m_outputs)
+	outs=[a.abspath(task.env) for a in task.m_outputs]
 	outs=" ".join(outs)
 	lupdate = task.env['QT_LUPDATE']
 
@@ -175,7 +179,7 @@ class qt4obj(cpp.cppobj):
 
 			if self.update and Params.g_options.trans_qt4:
 				u = Task.TaskCmd(translation_update, self.env, 2)
-				u.m_inputs = map(lambda a: a.m_inputs[0], self.p_compiletasks)
+				u.m_inputs = [a.m_inputs[0] for a in self.p_compiletasks]
 				u.m_outputs=trans
 
 			if self.langname:
@@ -340,8 +344,8 @@ def detect_qt4(conf):
 
 	find_bin(['moc-qt4', 'moc'], 'QT_MOC')
 	find_bin(['rcc'], 'QT_RCC')
-	find_bin(['lrelease'], 'QT_LRELEASE')
-	find_bin(['lupdate'], 'QT_LUPDATE')
+	find_bin(['lrelease-qt4', 'lrelease'], 'QT_LRELEASE')
+	find_bin(['lupdate-qt4', 'lupdate'], 'QT_LUPDATE')
 
 	env['UIC3_ST']= '%s -o %s'
 	env['UIC_ST'] = '%s -o %s'
@@ -389,13 +393,13 @@ def detect_qt4(conf):
 		framework_ok = True
 
 	if not framework_ok: # framework_ok is false either when the platform isn't OSX, Qt4 shall not be used as framework, or Qt4 could not be found as framework
-		vars_debug = map(lambda a: a+'_debug', vars)
+		vars_debug = [a+'_debug' for a in vars]
 
 		for i in vars_debug+vars:
 			#conf.check_pkg(i, pkgpath=qtlibs)
 			pkgconf = conf.create_pkgconfig_configurator()
 			pkgconf.name = i
-			pkgconf.path = qtlibs + ':/usr/lib/qt4/lib:/opt/qt4/lib'
+			pkgconf.path = '%s:%s/pkgconfig:/usr/lib/qt4/lib:/opt/qt4/lib' % (qtlibs, qtlibs)
 			pkgconf.run()
 
 

@@ -37,8 +37,8 @@ def error(msg):
 def reset():
 	import Params, Task, preproc, Scripting, Object
 	Params.g_build = None
+	Task.g_tasks_done = []
 	Task.g_tasks = Task.TaskManager()
-	preproc.parse_cache = {}
 	Scripting.g_inroot = 1
 	Object.g_allobjs = []
 
@@ -99,8 +99,7 @@ def to_hashtable(s):
 	tbl = {}
 	lst = s.split('\n')
 	for line in lst:
-		if not line:
-			continue
+		if not line: continue
 		mems = line.split('=')
 		tbl[mems[0]] = mems[1]
 	return tbl
@@ -134,13 +133,6 @@ def __split_dirs(path):
 	if not t: return __split_dirs(h)
 	else: return __split_dirs(h) + [t]
 
-
-def join_path(*path):
-	return os.path.join(*path)
-
-def join_path_list(path_lst):
-	return join_path(*path_lst)
-
 def is_absolute_path(path):
 	""" more thorough absoluate path check <- how am i supposed to understand what this does exactly ????? what does the re do ?  and why is this needed ? (ita)"""
 	isabs = os.path.isabs(path)
@@ -150,18 +142,19 @@ def is_absolute_path(path):
 		isabs = re.search(r'^[\"\']/', path.strip(), re.M) != None
 	return isabs
 
-_path_to_preprocessor_name_translation = None
-def path_to_preprocessor_name(path):
+"why this complexity ? (ita)"
+_path_to_define_name_translation = None
+def path_to_define_name(path):
 	"""Converts a file path like foo/zbr-xpto.h to a C preprocessor
 	name like FOO_ZBR_XPTO_H"""
-	global _path_to_preprocessor_name_translation
-	if _path_to_preprocessor_name_translation is None:
+	global _path_to_define_name_translation
+	if _path_to_define_name_translation is None:
 		## make a translation table mapping everything except
 		## alfanumeric chars to '_'
 		invalid_chars = [chr(x) for x in xrange(256)]
 		for valid in string.digits + string.uppercase:
 			invalid_chars.remove(valid)
-		_path_to_preprocessor_name_translation = string.maketrans(
-			''.join(invalid_chars), '_'*len(invalid_chars))
+		_path_to_define_name_translation = string.maketrans(''.join(invalid_chars), '_'*len(invalid_chars))
 
-	return string.translate(string.upper(path), _path_to_preprocessor_name_translation)
+	return string.translate(string.upper(path), _path_to_define_name_translation)
+

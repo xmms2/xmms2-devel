@@ -33,6 +33,8 @@ class pyobj(Object.genobj):
 		# first create the nodes corresponding to the sources
 		for filename in self.to_list(self.source):
 			node = find_source_lst(Utils.split_path(filename))
+			if node is None:
+				Params.fatal("Python source '%s' not found" % filename)
 
 			base, ext = os.path.splitext(filename)
 			#node = self.path.find_build(filename)
@@ -51,9 +53,9 @@ class pyobj(Object.genobj):
 	def install(self):
 		for i in self.m_tasks:
 			current = Params.g_build.m_curdirnode
-			lst=map(lambda a: a.relpath_gen(current), i.m_outputs)
+			lst=[a.relpath_gen(current) for a in i.m_outputs]
 			Common.install_files(self.inst_var, self.inst_dir, lst)
-			lst=map(lambda a: a.relpath_gen(current), i.m_inputs)
+			lst=[a.relpath_gen(current) for a in i.m_inputs]
 			Common.install_files(self.inst_var, self.inst_dir, lst)
 			#self.install_results(self.inst_var, self.inst_dir, i)
 
@@ -66,15 +68,14 @@ def _get_python_variables(python_exe, variables, imports=['import sys']):
 	"""Run a python interpreter and print some variables"""
 	program = list(imports)
 	program.append('')
-	for variable in variables:
-		program.append("print repr(%s)" % variable)
+	for v in variables:
+		program.append("print repr(%s)" % v)
 	output = Popen([python_exe, "-c", '\n'.join(program)], stdout=PIPE).communicate()[0].split("\n")
 	return_values = []
 	for s in output:
-		if s:
-			return_values.append(eval(s.rstrip()))
-		else:
-			break
+		# FIXME eval ????
+		if s: return_values.append(eval(s.rstrip()))
+		else: break
 	return return_values
 
 def check_python_headers(conf):
@@ -91,18 +92,10 @@ def check_python_headers(conf):
 	python = conf.env['PYTHON']
 	assert python, ("python is %r !" % (python,))
 
+	v = 'prefix CC SYSLIBS SHLIBS LIBDIR LIBPL INCLUDEPY Py_ENABLE_SHARED'.split()
 	(python_prefix, python_CC, python_SYSLIBS, python_SHLIBS,
 	 python_LIBDIR, python_LIBPL, INCLUDEPY, Py_ENABLE_SHARED) = \
-			_get_python_variables(python, [
-		"get_config_var('prefix')",
-		"get_config_var('CC')",
-		"get_config_var('SYSLIBS')",
-		"get_config_var('SHLIBS')",
-		"get_config_var('LIBDIR')",
-		"get_config_var('LIBPL')",
-		"get_config_var('INCLUDEPY')",
-		"get_config_var('Py_ENABLE_SHARED')",
-		], ['from distutils.sysconfig import get_config_var'])
+		_get_python_variables(python, ["get_config_var('%s')" % x for x in v], ['from distutils.sysconfig import get_config_var'])
 	python_includes = [INCLUDEPY]
 
 	## Check for python libraries for embedding
@@ -117,26 +110,17 @@ def check_python_headers(conf):
 	lib = conf.create_library_configurator()
 	lib.name = 'python' + conf.env['PYTHON_VERSION']
 	lib.uselib = 'PYTHON'
-	lib.code = """
+	lib.code = '''
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void Py_Initialize(void);
-void Py_Finalize(void);
-
+ void Py_Initialize(void);
+ void Py_Finalize(void);
 #ifdef __cplusplus
 }
 #endif
-
-int
-main(int argc, char *argv[])
-{
-	Py_Initialize();
-	Py_Finalize();
-	return 0;
-}
-"""
+int main(int argc, char *argv[]) { Py_Initialize(); Py_Finalize(); return 0; }
+'''
 	if python_LIBDIR is not None:
 		lib.path = [python_LIBDIR]
 		result = lib.run()
@@ -172,25 +156,12 @@ main(int argc, char *argv[])
 	header.name = 'Python.h'
 	header.define = 'HAVE_PYTHON_H'
 	header.uselib = 'PYEXT'
-	header.code = """
-#include <Python.h>
-
-int
-main(int argc, char *argv[])
-{
-	Py_Initialize();
-	Py_Finalize();
-	return 0;
-}
-"""
-	
+	header.code = "#include <Python.h>\nint main(int argc, char *argv[]) { Py_Initialize(); Py_Finalize(); return 0; }"
 	result = header.run()
-	if not result:
-		return result
+	if not result: return result
 
 	conf.env['CPPPATH_PYEXT'] = python_includes
 	conf.env['CPPPATH_PYEMBED'] = python_includes
-
 
 	return result
 
@@ -229,9 +200,8 @@ def check_python_version(conf, minver=None):
 		else:
 			if sys.platform == 'win32':
 				(python_LIBDEST,) = \
-						_get_python_variables(python, [
-				"get_config_var('LIBDEST')",
-				], ['from distutils.sysconfig import get_config_var'])
+						_get_python_variables(python, ["get_config_var('LIBDEST')"],
+						['from distutils.sysconfig import get_config_var'])
 			else:
 				python_LIBDEST = None
 			if python_LIBDEST is None:
@@ -251,12 +221,9 @@ def check_python_version(conf, minver=None):
 
 	return result
 
-
-
 def detect(conf):
 	python = conf.find_program('python', var='PYTHON')
-	if not python:
-		return 0
+	if not python: return 0
 
 	v = conf.env
 
@@ -281,7 +248,6 @@ def detect(conf):
 	# now a small difference
 	v['pyext_USELIB'] = 'PYTHON PYEXT'
 	v['pyembed_USELIB'] = 'PYTHON PYEMBED'
-
 
 	conf.hook(check_python_version)
 	conf.hook(check_python_headers)

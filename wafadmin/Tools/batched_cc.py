@@ -31,7 +31,7 @@ class TaskMaster(Task.Task):
 
 	def add_slave(self, slave):
 		self.slaves.append(slave)
-		self.m_run_after.append(slave)
+		self.set_run_after(slave)
 
 	def may_start(self):
 		for t in self.m_run_after:

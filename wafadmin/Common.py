@@ -41,7 +41,9 @@ def do_install(src, tgt, chmod=0644):
 			except:
 				pass
 			print "* installing %s as %s" % (srclbl, tgt)
-			try: os.remove(tgt) # <- stuff for shared libs and stale inodes
+
+			# followig is for shared libs and stale inodes
+			try: os.remove(tgt)
 			except OSError: pass
 			try:
 				shutil.copy2(src, tgt)

@@ -3,8 +3,10 @@
 
 "Configuration system"
 
-import os, types, imp, cPickle, md5, sys, re, inspect
-import shlex
+import os, types, imp, cPickle, sys, re, inspect, shlex
+try: from hashlib import md5
+except ImportError: from md5 import md5
+
 import Params, Environment, Runner, Build, Utils, libtool_config
 from Params import error, fatal, warning
 
@@ -123,7 +125,7 @@ class enumerator_base:
 		except: pass
 
 	def hash(self):
-		m = md5.new()
+		m = md5()
 		self.update_hash(m)
 		return m.digest()
 
@@ -211,7 +213,8 @@ class function_enumerator(enumerator_base):
 		self.conf.add_define(self.define, retval)
 
 	def run_test(self):
-		ret = 0 # not found
+		# not found
+		ret = 0
 
 		oldlibpath = self.env['LIBPATH']
 		oldlib = self.env['LIB']
@@ -279,6 +282,12 @@ class library_enumerator(enumerator_base):
 
 		name = self.env['shlib_PREFIX']+self.name+self.env['shlib_SUFFIX']
 		ret  = find_file(name, self.path)
+
+		if not ret:
+			for implib_suffix in self.env['shlib_IMPLIB_SUFFIX']:
+				name = self.env['shlib_PREFIX'] + self.name + implib_suffix
+				ret  = find_file(name, self.path)
+				if ret: break
 
 		if not ret:
 			name = self.env['staticlib_PREFIX']+self.name+self.env['staticlib_SUFFIX']
@@ -903,7 +912,7 @@ class Configure:
 		self.lastprog = ''
 
 		try:
-			file = open(Utils.join_path(Params.g_homedir, '.wafcache', 'runs-%s.txt' % self._cache_platform()), 'rb')
+			file = open(os.path.join(Params.g_homedir, '.wafcache', 'runs-%s.txt' % self._cache_platform()), 'rb')
 			self.m_cache_table = cPickle.load(file)
 			file.close()
 		except:
@@ -941,8 +950,8 @@ class Configure:
 		for i in lst:
 			try:
 				file,name,desc = imp.find_module(i, tooldir)
-			except:
-				error("no tool named '%s' found" % i)
+			except Exception, ex:
+				error("no tool named '%s' found (%s)" % (i, str(ex)))
 				return 0
 			module = imp.load_module(i,file,name,desc)
 			ret = ret and int(module.detect(self))
@@ -998,17 +1007,16 @@ class Configure:
 
 		try:
 			mod = Utils.load_module(cur)
-		except:
-			msg = "no module or function configure was found in wscript\n[%s]:\n * make sure such a function is defined \n * run configure from the root of the project"
-			fatal(msg % self.cwd)
+		except IOError:
+			fatal("the wscript file %s was not found." % cur)
 
-		# TODO check
-		#if not 'configure' in mod:
-		#	fatal('the module has no configure function')
+		if not hasattr(mod, 'configure'):
+			fatal('the module %s has no configure function; '
+			      'make sure such a function is defined' % cur)
 
 		ret = mod.configure(self)
 		if Params.g_autoconfig:
-			self.hash = Params.hash_sig_weak(self.hash, inspect.getsource(mod.configure).__hash__())
+			self.hash = Params.hash_function_with_globals(self.hash, mod.configure)
 			self.files.append(os.path.abspath(cur))
 		self.cwd = current
 		return ret
@@ -1016,13 +1024,13 @@ class Configure:
 	def cleanup(self):
 		"called on shutdown"
 		try:
-			dir = Utils.join_path(Params.g_homedir, '.wafcache')
+			dir = os.path.join(Params.g_homedir, '.wafcache')
 			try:
 				os.makedirs(dir)
 			except:
 				pass
 
-			file = open(Utils.join_path(Params.g_homedir, '.wafcache', 'runs-%s.txt' % self._cache_platform()), 'wb')
+			file = open(os.path.join(Params.g_homedir, '.wafcache', 'runs-%s.txt' % self._cache_platform()), 'wb')
 			cPickle.dump(self.m_cache_table, file)
 			file.close()
 		except:
@@ -1078,18 +1086,18 @@ class Configure:
 
 		if not env: env = self.env
 		base = [self.m_blddir, env.variant()]+base
-		dir = Utils.join_path(*base)
+		dir = os.path.join(*base)
 		try:
 			os.makedirs(dir)
 		except OSError:
 			pass
 
-		dir = Utils.join_path(dir, lst[-1])
+		dir = os.path.join(dir, lst[-1])
 
 		# remember config files - do not remove them on "waf clean"
 		self.env.append_value('waf_config_files', os.path.abspath(dir))
 
-		inclusion_guard_name = '_%s_WAF' % (Utils.path_to_preprocessor_name(configfile),)
+		inclusion_guard_name = '_%s_WAF' % (Utils.path_to_define_name(configfile),)
 
 		dest = open(dir, 'w')
 		dest.write('/* configuration created by waf */\n')
@@ -1098,6 +1106,7 @@ class Configure:
 		# yes, this is special
 		if not configfile in self.env['dep_files']:
 			self.env['dep_files'] += [configfile]
+		if not env['defines']: env['defines']={'missing':'"code"'}
 		for key, value in env['defines'].iteritems():
 			if value is None:
 				dest.write('#define %s\n' % key)
@@ -1325,7 +1334,7 @@ class Configure:
 		return not ret
 
 	def _cache_platform(self):
-		m = md5.new()
+		m = md5()
 		m.update(Params.g_platform)
 		return m.hexdigest()
 

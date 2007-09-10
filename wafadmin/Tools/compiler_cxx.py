@@ -8,22 +8,21 @@ import Utils, Action, Params, checks, Configure
 
 def __list_possible_compiler(plattform):
 	c_compiler = {
-		"win32": ['msvc', 'g++'],
-		"cygwin": ['g++'],
-		"darwin": ['g++'],
-		"aix5": ['g++'],
-		"linux": ['g++', 'sunc++'],
-		"sunos": ['sunc++', 'g++'],
-		"irix": ['g++'],
-		"hpux":['g++'],
-		"default": ['g++']
+'win32':  ['msvc', 'g++'],
+'cygwin': ['g++'],
+'darwin': ['g++'],
+'aix5':   ['g++'],
+'linux':  ['g++', 'sunc++'],
+'sunos':  ['sunc++', 'g++'],
+'irix':   ['g++'],
+'hpux':   ['g++'],
+'default': ['g++']
 	}
 	try:
 		return(c_compiler[plattform])
 	except KeyError:
 		return(c_compiler["default"])
-		
-	
+
 def setup(env):
 	pass
 

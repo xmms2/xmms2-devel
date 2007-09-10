@@ -12,7 +12,7 @@ g_cc_flag_vars = [
 'FRAMEWORK', 'FRAMEWORKPATH',
 'STATICLIB', 'LIB', 'LIBPATH', 'LINKFLAGS', 'RPATH',
 'INCLUDE',
-'CCFLAGS', 'CPPPATH', 'CPPLAGS', 'CCDEFINES']
+'CCFLAGS', 'CPPPATH', 'CPPFLAGS', 'CCDEFINES']
 
 g_cc_type_vars=['CCFLAGS', 'LINKFLAGS', 'obj_ext']
 class ccobj(ccroot.ccroot):
@@ -104,9 +104,9 @@ class ccobj(ccroot.ccroot):
 		for l in libs:
 			val = self.env['CCDEFINES_'+l]
 			if val: milst += val
-		self.env['DEFLINES'] = map(lambda x: "define %s"%  ' '.join(x.split('=', 1)), milst)
+		self.env['DEFLINES'] = ["define %s"%  ' '.join(x.split('=', 1)) for x in milst]
 		y = self.env['CCDEFINES_ST']
-		self.env['_CCDEFFLAGS'] = map(lambda x: y%x, milst)
+		self.env['_CCDEFFLAGS'] = [y%x for x in milst]
 
 def setup(env):
 	cc_str = '${CC} ${CCFLAGS} ${CPPFLAGS} ${_CCINCFLAGS} ${_CCDEFFLAGS} ${CC_SRC_F}${SRC} ${CC_TGT_F}${TGT}'

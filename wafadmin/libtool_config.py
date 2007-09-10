@@ -70,16 +70,16 @@ class libtool_la_file:
 
 	def __str__(self):
 		r = [
-		"dlname = \"%s\"" % self.dlname,
-		"library_names = \"%s\"" % self.library_names,
-		"old_library = \"%s\"" % self.old_library,
-		"dependency_libs = \"%s\"" % self.dependency_libs,
-		"version = %s.%s.%s" %(self.current, self.age, self.revision),
-		"installed = \"%s\"" % self.installed,
-		"shouldnotlink = \"%s\"" % self.shouldnotlink,
-		"dlopen = \"%s\"" % self.dlopen,
-		"dlpreopen = \"%s\"" % self.dlpreopen,
-		"libdir = \"%s\"" % self.libdir,
+		'dlname = "%s"' % self.dlname,
+		'library_names = "%s"' % self.library_names,
+		'old_library = "%s"' % self.old_library,
+		'dependency_libs = "%s"' % self.dependency_libs,
+		'version = %s.%s.%s' %(self.current, self.age, self.revision),
+		'installed = "%s"' % self.installed,
+		'shouldnotlink = "%s"' % self.shouldnotlink,
+		'dlopen = "%s"' % self.dlopen,
+		'dlpreopen = "%s"' % self.dlpreopen,
+		'libdir = "%s"' % self.libdir,
 		]
 		return "\n".join(r)
 
@@ -99,7 +99,7 @@ class libtool_config:
 			return 1
 		othervers = [int(s) for s in str(other).split(".")]
 		selfvers = self.__version
-		
+
 		if selfvers > othervers:
 			return 1
 		if selfvers < othervers:

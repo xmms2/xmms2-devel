@@ -4,13 +4,13 @@
 
 "Dependency tree holder"
 
-import os, cPickle
+import os, cPickle, sys
 import Params, Runner, Object, Node, Task, Scripting, Utils, Environment
 from Params import debug, error, fatal, warning
 
 
 
-SAVED_ATTRS = 'm_root m_srcnode m_bldnode m_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps'.split()
+SAVED_ATTRS = 'm_root m_srcnode m_bldnode m_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_sig_cache'.split()
 "Build class members to save"
 
 class BuildDTO:
@@ -80,7 +80,7 @@ class Build:
 
 		# build dir variants (release, debug, ..)
 		for name in ['default', 0]:
-			for v in 'm_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_abspath_cache'.split():
+			for v in 'm_tstamp_variants m_depends_on m_sig_cache m_deps_tstamp m_raw_deps m_abspath_cache'.split():
 				var = getattr(self, v)
 				if not name in var: var[name] = {}
 
@@ -112,6 +112,8 @@ class Build:
 		# results of a scan: self.m_raw_deps[variant][node] = [filename1, filename2, filename3]
 		# for example, find headers in c files
 		self.m_raw_deps        = {}
+
+		self.m_sig_cache       = {}
 
 	# load existing data structures from the disk (stored using self._store())
 	def _load(self):
@@ -172,18 +174,24 @@ class Build:
 
 		self.m_generator = executor.m_generator
 
+		def dw():
+			if Params.g_options.progress_bar: sys.stdout.write(Params.g_cursor_on)
+
 		debug("executor starting", 'build')
 		try:
-
+			if Params.g_options.progress_bar: sys.stdout.write(Params.g_cursor_off)
 			ret = executor.start()
 			#ret = 0
 		except KeyboardInterrupt:
+			dw()
 			os.chdir(self.m_srcnode.abspath())
 			self._store()
 			raise
 		except Runner.CompilationError:
+			dw()
 			fatal("Compilation failed")
 
+		dw()
 		if Params.g_verbose>2: self.dump()
 
 		os.chdir(self.m_srcnode.abspath())
@@ -300,7 +308,7 @@ class Build:
 
 		# set the source directory
 		if not os.path.isabs(srcdir):
-			srcdir = Utils.join_path(os.path.abspath('.'),srcdir)
+			srcdir = os.path.join(os.path.abspath('.'),srcdir)
 
 		# set the build directory it is a path, not a node (either absolute or relative)
 		if not os.path.isabs(blddir):
@@ -384,7 +392,7 @@ class Build:
 		lst.reverse()
 
 		for variant in self._variants:
-			sub_path = Utils.join_path(self.m_bldnode.abspath(), variant , *lst)
+			sub_path = os.path.join(self.m_bldnode.abspath(), variant , *lst)
 			try:
 				files = self.scan_path(src_dir_node, sub_path, src_dir_node.m_build_lookup.values(), variant)
 				src_dir_node.m_build_lookup={}
@@ -584,4 +592,15 @@ class Build:
 	def add_group(self, name=''):
 		Object.flush()
 		Task.g_tasks.add_group(name)
+
+
+	def set_sig_cache(self, key, val):
+		self.m_sig_cache[key] = val
+
+	def get_sig_cache(self, key):
+		try:
+			return self.m_sig_cache[key]
+		except KeyError:
+			s = Params.sig_nil
+			return [s, s, s, s, s]
 

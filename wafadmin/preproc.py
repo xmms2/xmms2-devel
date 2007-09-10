@@ -7,15 +7,31 @@
   - interpret the preprocessing lines, jumping on the headers during the process
 """
 
-import sys, os, string
+import re, sys, os, string
 import Params
 from Params import debug, error, warning
 
+reg_define = re.compile('^\s*(#|%:)')
+reg_nl = re.compile('\\\\\r*\n', re.MULTILINE)
+reg_cpp = re.compile(r"""/\*[^*]*\*+([^/*][^*]*\*+)*/|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)""", re.MULTILINE)
+def repl(m):
+	s = m.group(2)
+	if s is None: return ''
+	return s
+
+def filter_comments(filename):
+	f = open(filename, "r")
+	code = f.read()
+	f.close()
+
+	code = reg_nl.sub('', code)
+	code = reg_cpp.sub(repl, code)
+	code = code.split('\n')
+
+	return [reg_define.sub("", line).replace('\r', '') for line in code if reg_define.search(line)]
 
 strict_quotes = 0
 "Keep <> for system includes (do not search for those includes)"
-
-parse_cache = {}
 
 alpha = string.letters + '_' + string.digits
 
@@ -105,63 +121,69 @@ punctuators_table = [
 ]
 
 preproc_table = [
-{'e': 16, 'd': 26, 'i': 1, 'p': 37, 'u': 32, 'w': 46},
-{'f': 8, 'n': 2},
+{'e': 21, 'd': 31, 'i': 1, 'p': 42, 'u': 37, 'w': 51},
+{'f': 13, 'm': 8, 'n': 2},
 {'c': 3},
 {'l': 4},
 {'u': 5},
 {'d': 6},
 {'e': 7},
 {'$$': 'include'},
-{'$$': 'if', 'd': 9, 'n': 12},
-{'e': 10},
-{'f': 11},
+{'p': 9},
+{'o': 10},
+{'r': 11},
+{'t': 12},
+{'$$': 'import'},
+{'$$': 'if', 'd': 14, 'n': 17},
+{'e': 15},
+{'f': 16},
 {'$$': 'ifdef'},
-{'d': 13},
-{'e': 14},
-{'f': 15},
-{'$$': 'ifndef'},
-{'r': 53, 'l': 17, 'n': 22},
-{'i': 20, 's': 18},
+{'d': 18},
 {'e': 19},
+{'f': 20},
+{'$$': 'ifndef'},
+{'r': 58, 'l': 22, 'n': 27},
+{'i': 25, 's': 23},
+{'e': 24},
 {'$$': 'else'},
-{'f': 21},
+{'f': 26},
 {'$$': 'elif'},
-{'d': 23},
-{'i': 24},
-{'f': 25},
-{'$$': 'endif'},
-{'e': 27},
-{'b': 43, 'f': 28},
+{'d': 28},
 {'i': 29},
-{'n': 30},
-{'e': 31},
+{'f': 30},
+{'$$': 'endif'},
+{'e': 32},
+{'b': 48, 'f': 33},
+{'i': 34},
+{'n': 35},
+{'e': 36},
 {'$$': 'define'},
-{'n': 33},
-{'d': 34},
-{'e': 35},
-{'f': 36},
+{'n': 38},
+{'d': 39},
+{'e': 40},
+{'f': 41},
 {'$$': 'undef'},
-{'r': 38},
-{'a': 39},
-{'g': 40},
-{'m': 41},
-{'a': 42},
-{'$$': 'pragma'},
-{'u': 44},
+{'r': 43},
+{'a': 44},
 {'g': 45},
-{'$$': 'debug'},
+{'m': 46},
 {'a': 47},
-{'r': 48},
-{'n': 49},
-{'i': 50},
-{'n': 51},
-{'g': 52},
+{'$$': 'pragma'},
+{'u': 49},
+{'g': 50},
+{'$$': 'debug'},
+{'a': 52},
+{'r': 53},
+{'n': 54},
+{'i': 55},
+{'n': 56},
+{'g': 57},
 {'$$': 'warning'},
-{'r': 54},
-{'o': 55},
-{'r': 56},
-{'$$': 'error'}]
+{'r': 59},
+{'o': 60},
+{'r': 61},
+{'$$': 'error'}
+]
 
 def parse_token(stuff, table):
 	c = stuff.next()
@@ -177,7 +199,7 @@ def parse_token(stuff, table):
 		else:
 			stuff.back(1)
 			try: return table[pos]['$$']
-			except: return 0
+			except KeyError: return 0
 			# lexer error
 	return table[pos]['$$']
 
@@ -318,191 +340,8 @@ def comp(lst):
 	raise ValueError, "could not parse the macro %s " % str(lst)
 
 
-class filter:
-	def __init__(self):
-		self.fn     = ''
-		self.i      = 0
-		self.max    = 0
-		self.txt    = ""
-		self.buf    = []
-		self.lines  = []
-		#self.debug = []
-
-	def next(self):
-		ret = self.txt[self.i]
-		# trigraphs can be filtered straight away
-		if ret == '?':
-			if self.txt[self.i+1] == '?':
-				try:
-					car = trigs[self.txt[self.i+2]]
-					self.i += 3
-					#self.debug.append(car)
-					return car
-				except:
-					pass
-		# unterminated lines can be eliminated too
-		elif ret == '\\':
-			try:
-				if self.txt[self.i+1] == '\n':
-					self.i += 2
-					return self.next()
-				elif self.txt[self.i+1] == '\r':
-					if self.txt[self.i+2] == '\n':
-						self.i += 3
-						return self.next()
-				else:
-					pass
-			except:
-				pass
-		elif ret == '\r':
-			if self.txt[self.i+1] == '\n':
-				self.i += 2
-				#self.debug.append('\n')
-				return '\n'
-		self.i += 1
-		#self.debug.append(ret)
-		return ret
-
-	def good(self):
-		return self.i < self.max
-
-	def initialize(self, filename):
-		self.fn = filename
-		f=open(filename, "r")
-		self.txt = f.read()
-		f.close()
-
-		self.i = 0
-		self.max = len(self.txt)
-
-	def start(self, filename):
-		self.initialize(filename)
-		while self.good():
-			c = self.next()
-			#print self.buf.append(c)
-			#continue
-			if c == ' ' or c == '\t' or c == '\n':
-				continue
-			elif c == '#':
-				self.preprocess()
-			elif c == '%':
-				d = self.next()
-				if d == ':':
-					self.preprocess()
-				else:
-					self.eat_line()
-			elif c == '/':
-				c = self.next()
-				if c == '*': self.get_c_comment()
-				elif c == '/': self.get_cc_comment()
-				# else: let the 2 cars read go
-			elif c == '"':
-				self.skip_string()
-				self.eat_line()
-			elif c == '\'':
-				self.skip_char()
-				self.eat_line()
-
-	def get_cc_comment(self):
-		c = self.next()
-		while c != '\n': c = self.next()
-
-	def get_c_comment(self):
-		c = self.next()
-		prev = 0
-		while self.good():
-			if c == '*':
-				prev = 1
-			elif c == '/':
-				if prev: break
-			else:
-				prev = 0
-			c = self.next()
-
-	def skip_char(self, store=0):
-		c = self.next()
-		if store: self.buf.append(c)
-		# skip one more character if there is a backslash '\''
-		if c == '\\':
-			c = self.next()
-			if store: self.buf.append(c)
-			# skip a hex char (e.g. '\x50')
-			if c == 'x':
-				c = self.next()
-				if store: self.buf.append(c)
-				c = self.next()
-				if store: self.buf.append(c)
-		c = self.next()
-		if store: self.buf.append(c)
-		if c != '\'': print "uh-oh, invalid character"
-
-	def skip_string(self, store=0):
-		c=''
-		while self.good():
-			p = c
-			c = self.next()
-			if store: self.buf.append(c)
-			if c == '"':
-				cnt = 0
-				while 1:
-					#print "cntcnt = ", str(cnt), self.txt[self.i-2-cnt]
-					if self.txt[self.i-2-cnt] == '\\': cnt+=1
-					else: break
-				#print "cnt is ", str(cnt)
-				if (cnt%2)==0: break
-
-			#if c == '\n':
-			#	print 'uh-oh, invalid line >'+c+'< '+self.fn
-			#	raise "".join(self.debug)
-			#	break
-
-	def eat_line(self):
-		while self.good():
-			c = self.next()
-			if c == '\n':
-				break
-			elif c == '"':
-				self.skip_string()
-			elif c == '\'':
-				self.skip_char()
-			elif c == '/':
-				c = self.next()
-				if c == '*': self.get_c_comment()
-				elif c == '/': self.get_cc_comment()
-				# else: let the two cars read go
-
-	def preprocess(self):
-		#self.buf.append('#')
-		# skip whitespaces like "#  define"
-		while self.good():
-			car = self.txt[self.i]
-			if car == ' ' or car == '\t': self.i+=1
-			else: break
-
-		while self.good():
-			c = self.next()
-			if c == '\n':
-				#self.buf.append(c)
-
-				self.lines.append( "".join(self.buf) )
-				self.buf = []
-				break
-			elif c == '"':
-				self.buf.append(c)
-				self.skip_string(store=1)
-			elif c == '\'':
-				self.buf.append(c)
-				self.skip_char(store=1)
-			elif c == '/':
-				c = self.next()
-				if c == '*': self.get_c_comment()
-				elif c == '/': self.get_cc_comment()
-				else: self.buf.append('/'+c) # simple punctuator '/'
-			else:
-				self.buf.append(c)
-
 class cparse:
-	def __init__(self, nodepaths=[], strpaths=[], defines={}):
+	def __init__(self, nodepaths=None, strpaths=None, defines=None):
 		#self.lines = txt.split('\n')
 		self.lines = []
 		self.i     = 0
@@ -510,22 +349,38 @@ class cparse:
 		self.max   = 0
 		self.buf   = []
 
-		self.defs  = defines
+		if defines is None:
+			self.defs  = {}
+		else:
+			self.defs  = dict(defines) # make a copy
 		self.state = []
 
 		self.env   = None # needed for the variant when searching for files
 
 		# include paths
-		self.strpaths = strpaths
+		if strpaths is None:
+			self.strpaths = []
+		else:
+			self.strpaths = strpaths
 		self.pathcontents = {}
 
 		self.deps  = []
 		self.deps_paths = []
 
 		# waf uses
-		self.m_nodepaths = nodepaths
+		if nodepaths is None:
+			self.m_nodepaths = []
+		else:
+			self.m_nodepaths = nodepaths
 		self.m_nodes = []
 		self.m_names = []
+
+		# dynamic cache
+		try:
+			self.parse_cache = Params.g_build.parse_cache
+		except AttributeError:
+			Params.g_build.parse_cache = {}
+			self.parse_cache = Params.g_build.parse_cache
 
 	def tryfind(self, filename):
 		if self.m_nodepaths:
@@ -534,7 +389,8 @@ class cparse:
 				found = n.find_source(filename, create=0)
 				if found:
 					self.m_nodes.append(found)
-					self.addlines(found.abspath(self.env))
+					# screw Qt
+					if filename[-4:] != '.moc': self.addlines(found.abspath(self.env))
 					break
 			if not found:
 				if not filename in self.m_names:
@@ -547,7 +403,8 @@ class cparse:
 				if filename in self.pathcontents[p]:
 					#print "file %s found in path %s" % (filename, p)
 					np = os.path.join(p, filename)
-					self.addlines(np)
+					# screw Qt two times
+					if filename[-4:] != '.moc': self.addlines(np)
 					self.deps_paths.append(np)
 					found = 1
 			if not found:
@@ -555,17 +412,15 @@ class cparse:
 				#error("could not find %s " % filename)
 
 	def addlines(self, filepath):
-		global parse_cache
-		if filepath in parse_cache.keys():
-			self.lines = parse_cache[filepath] + self.lines
+		pc = self.parse_cache
+		if filepath in pc.keys():
+			self.lines = pc[filepath] + self.lines
 			return
 
 		try:
-			stuff = filter()
-			stuff.start(filepath)
-			if stuff.buf: stuff.lines.append( "".join(stuff.buf) )
-			parse_cache[filepath] = stuff.lines # memorize the lines filtered
-			self.lines = stuff.lines + self.lines
+			lines = filter_comments(filepath)
+			pc[filepath] = lines # memorize the lines filtered
+			self.lines = lines + self.lines
 		except IOError:
 			raise
 		except:
@@ -590,9 +445,9 @@ class cparse:
 			self.max = len(line)
 			try:
 				self.process_line()
-			except:
-				debug("line parsing failed >%s<" % line, 'preproc')
-				if Params.g_verbose: warning("line parsing failed >%s<" % line)
+			except Exception, ex:
+				if Params.g_verbose:
+					warning("line parsing failed (%s): %s" % (str(ex), line))
 
 	# debug only
 	def start(self, filename):
@@ -606,8 +461,9 @@ class cparse:
 			self.max = len(line)
 			try:
 				self.process_line()
-			except:
-				print "warning: line parsing failed >%s<" % line
+			except Exception, ex:
+				if Params.g_verbose:
+					warning("line parsing failed (%s): %s" % (str(ex), line))
 				raise
 	def back(self, c):
 		self.i -= c
@@ -639,7 +495,9 @@ class cparse:
 		type = ''
 		l = len(self.txt)
 		token = get_preprocessor_token(self)
-		if not token: return
+		if not token:
+			debug("line %s has no preprocessor token" % self.txt, 'preproc')
+			return
 
 		if token == 'endif':
 			self.state.pop(0)
@@ -651,7 +509,8 @@ class cparse:
 		# skip lines when in a dead block
 		# wait for the endif
 		if not token in ['else', 'elif']:
-			if not self.isok(): return
+			if not self.isok():
+				return
 
 		#print "token is ", token
 
@@ -667,9 +526,10 @@ class cparse:
 			else: self.state[0] = ignored
 		elif token == 'ifndef':
 			ident = self.get_name()
-			if ident in self.defs.keys(): self.state[0] = ignored
+			if ident in self.defs.keys():
+				self.state[0] = ignored
 			else: self.state[0] = accepted
-		elif token == 'include':
+		elif token == 'include' or token == 'import':
 			(type, body) = self.get_include()
 			if self.isok():
 				debug("include found %s    (%s) " % (body, type), 'preproc')
@@ -887,7 +747,15 @@ class cparse:
 			return res[1]
 		return 0
 
+# quick test #
 if __name__ == "__main__":
+	Params.g_verbose = 2
+	Params.g_zones = ['preproc']
+	class dum:
+		def __init__(self):
+			self.parse_cache = {}
+	Params.g_build = dum()
+
 	try: arg = sys.argv[1]
 	except: arg = "file.c"
 

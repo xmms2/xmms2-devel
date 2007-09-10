@@ -25,6 +25,9 @@ g_initial = time.time()
 g_quiet = 0
 "do not output anything"
 
+g_ind_idx = 0
+g_ind = ['\\', '|', '/', '-']
+"the rotation thing"
 
 class CompilationError(Exception):
 	pass
@@ -41,7 +44,8 @@ exetor = pproc
 
 def write_progress(s):
 	if Params.g_options.progress_bar == 1:
-		sys.stderr.write(s + '\r')
+		sys.stdout.write(s + '\r')
+		sys.stdout.flush()
 	else: #if Params.g_options.progress_bar == 2:
 		# do not display anything if there is nothing to display
 		if s:
@@ -59,21 +63,30 @@ def progress_line(s, t, col1, task, col2):
 	n+=1
 
 	if Params.g_options.progress_bar == 1:
+		global g_ind, g_ind_idx
+		g_ind_idx += 1
+		ind = g_ind[g_ind_idx % 4]
+
 		pc = (100.*s)/t
 		eta = time.strftime('%H:%M:%S', time.gmtime(time.time() - g_initial))
-		fs = "[%%%dd/%%%dd] %%s%%2d%%%%%%s |" % (n, n)
+		fs = "[%%%dd/%%%dd][%%s%%2d%%%%%%s][%s][" % (n, n, ind)
 		left = fs % (s, t, col1, pc, col2)
-		right = '| %s%s%s' % (col1, eta, col2)
-		cols = Utils.get_term_cols() - len(left) - len(right) + 15
+		right = '][%s%s%s]' % (col1, eta, col2)
+
+		cols = Utils.get_term_cols() - len(left) - len(right) + 2*len(col1) + 2*len(col2)
 		if cols < 7: cols = 7
-		bar = ('='*int(((cols+1.)*s)/t-1)+'>').ljust(cols)
+
+		ratio = int((cols*s)/t) - 1
+
+		bar = ('='*ratio+'>').ljust(cols)
 		disp = '%s%s%s' % (left, bar, right)
+
 		return disp
 
 	elif Params.g_options.progress_bar == 2:
 		eta = time.strftime('%H:%M:%S', time.gmtime(time.time() - g_initial))
-		ins  = ','.join(map(lambda n: n.m_name, task.m_inputs))
-		outs = ','.join(map(lambda n: n.m_name, task.m_outputs))
+		ins  = ','.join([n.m_name for n in task.m_inputs])
+		outs = ','.join([n.m_name for n in task.m_outputs])
 		return '|Total %s|Current %s|Inputs %s|Outputs %s|Time %s|' % (t, s, ins, outs, eta)
 
 	fs = "[%%%dd/%%%dd] %%s%%s%%s" % (n, n)

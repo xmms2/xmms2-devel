@@ -82,8 +82,8 @@ def tex_build(task, command='LATEX'):
 	lst = []
 	for c in Utils.split_path(reldir):
 		if c: lst.append('..')
-	sr = Utils.join_path_list(lst + [srcfile])
-	sr2 = Utils.join_path_list(lst + [node.m_parent.srcpath(env)])
+	sr = os.path.join(lst + [srcfile])
+	sr2 = os.path.join(lst + [node.m_parent.srcpath(env)])
 
 	aux_node = node.change_ext('.aux')
 	idx_node = node.change_ext('.idx')

@@ -18,8 +18,7 @@ def detect(conf):
 		cc = os.environ['CC']
 	if not cc: cc = conf.find_program('gcc', var='CC')
 	if not cc: cc = conf.find_program('cc', var='CC')
-	if not cc:
-		return 0;
+	if not cc: return 0
 
 	conf.check_tool('checks')
 	# load the cc builders
@@ -45,7 +44,7 @@ def detect(conf):
 
 	v['CC_SRC_F']             = ''
 	v['CC_TGT_F']             = '-c -o '
-	v['CPPPATH_ST']           = '-I%s' # template for adding include pathes
+	v['CPPPATH_ST']           = '-I%s' # template for adding include paths
 
 	# linker
 	v['LINK_CC']              = v['CC']
@@ -53,8 +52,8 @@ def detect(conf):
 	v['CCLNK_SRC_F']          = ''
 	v['CCLNK_TGT_F']          = '-o '
 
-	v['LIB_ST']               = '-l%s'	# template for adding libs
-	v['LIBPATH_ST']           = '-L%s' # template for adding libpathes
+	v['LIB_ST']               = '-l%s' # template for adding libs
+	v['LIBPATH_ST']           = '-L%s' # template for adding libpaths
 	v['STATICLIB_ST']         = '-l%s'
 	v['STATICLIBPATH_ST']     = '-L%s'
 	v['_LIBDIRFLAGS']         = ''
@@ -103,7 +102,7 @@ def detect(conf):
 		v['shlib_obj_ext']     = ['.os']
 		v['shlib_PREFIX']      = 'lib'
 		v['shlib_SUFFIX']      = '.dll'
-		v['shlib_IMPLIB_SUFFIX'] = ['.a']
+		v['shlib_IMPLIB_SUFFIX'] = ['.dll.a']
 
 		# static library
 		v['staticlib_LINKFLAGS'] = ['']
@@ -200,7 +199,7 @@ def detect(conf):
 	test.execute = 1
 	test.force_compiler="cc"
 	ret = conf.run_check(test)
-	conf.check_message('compiler could create', 'pragramms', not (ret is False))
+	conf.check_message('compiler could create', 'programs', not (ret is False))
 	if not ret:
 		return 0
 	ret = 0

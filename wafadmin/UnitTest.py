@@ -93,7 +93,7 @@ class unit_test:
 					kwargs['stderr'] = pproc.PIPE  # PIPE for ignoring output
 				pp = pproc.Popen(filename, **kwargs)
 				pp.wait()
-				
+
 				if self.change_to_testfile_dir:
 					os.chdir(curdir)
 

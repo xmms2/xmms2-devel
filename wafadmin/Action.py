@@ -18,7 +18,8 @@ class Action:
 		for when this is used - a parameter is given, it is the task. Each action must name"""
 
 		self.m_name = name
-		self.m_vars = vars # variables that should trigger a rebuild
+		# variables for triggering a rebuild
+		self.m_vars = vars
 		self.m_function_to_run = func
 		self._add_action()
 		self.m_color = color
@@ -34,29 +35,13 @@ class Action:
 
 	def get_str(self, task):
 		"string to display to the user"
-		try:
-			if Params.g_verbose:
-				src_str = " ".join(map(lambda a:a.abspath(task.m_env), task.m_inputs))
-				tgt_str = " ".join(map(lambda a:a.abspath(task.m_env), task.m_outputs))
-				return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
-			else:
-				src_str = " ".join(map(lambda a:a.nice_path(task.m_env), task.m_inputs))
-				tgt_str = " ".join(map(lambda a:a.nice_path(task.m_env), task.m_outputs))
-				return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
-		except:
-			import traceback
-			traceback.print_exc()
-			task.debug(level=1)
-			raise
-
-	def prepare(self, task):
-		"prepare the compilation"
-		task.m_sig = Object.sign_env_vars(task.m_env, self.m_vars)
+		src_str = " ".join([a.nice_path(task.m_env) for a in task.m_inputs])
+		tgt_str = " ".join([a.nice_path(task.m_env) for a in task.m_outputs])
+		return "* %s : %s -> %s" % (self.m_name, src_str, tgt_str)
 
 	def run(self, task):
 		"run the compilation"
-		if not self.m_function_to_run:
-			fatal(self.m_name+" action has no function !")
+		if not self.m_function_to_run: fatal(self.m_name+" action has no function !")
 		return self.m_function_to_run(task)
 
 class alex:
@@ -80,7 +65,7 @@ class alex:
 		self.i = 0
 		self.size = len(self.str)
 
-	def start(self):
+	def compile(self):
 		while self.i < self.size:
 			# quoted '$'
 			c = self.str[self.i]
@@ -123,52 +108,52 @@ class alex:
 						name.append(c)
 			cur += 1
 
-	def res(self):
+	def code(self):
 		lst = ['def f(task):\n\tenv=task.m_env\n\tp=env.get_flat\n\t']
+		ap = lst.append
+		#ap('print task.m_inputs\n\t')
+		#ap('print task.m_outputs\n\t')
 
-		#lst.append('print task.m_inputs\n\t')
-		#lst.append('print task.m_outputs\n\t')
-
-		lst.append('try: cmd = "')
+		ap('try: cmd = "')
 		lst += self.out
-		lst.append('"')
+		ap('"')
 
 		alst=[]
 		for (name, meth) in self.params:
 			if name == 'SRC':
 				if meth: alst.append('task.m_inputs%s' % meth)
-				else: alst.append('" ".join(map(lambda a:a.srcpath(env), task.m_inputs))')
+				else: alst.append('" ".join([a.srcpath(env) for a in task.m_inputs])')
 			elif name == 'TGT':
 				if meth: alst.append('task.m_outputs%s' % meth)
-				else: alst.append('" ".join(map(lambda a:a.bldpath(env), task.m_outputs))')
+				else: alst.append('" ".join([a.bldpath(env) for a in task.m_outputs])')
 			else:
 				self.m_vars.append(name)
 				alst.append("p('%s')" % name)
 		if alst:
-			lst.append(' % (\\\n\t\t')
-			lst += ", \\\n\t\t".join(alst)
-			lst.append(')\n')
+			ap(' % (\\\n\t\t')
+			ap(' \\\n\t\t, '.join(alst))
+			ap(')\n')
 
-		lst.append('\texcept:\n')
-		lst.append('\t\ttask.debug()\n')
-		lst.append('\t\traise\n')
+		ap('\texcept:\n')
+		ap('\t\ttask.debug()\n')
+		ap('\t\traise\n')
 
-		lst.append('\treturn Runner.exec_command(cmd)\n')
+		ap('\treturn Runner.exec_command(cmd)\n')
 
 		return "".join(lst)
 
-	def fun(self):
-		exec(self.res())
+	def get_fun(self):
+		c = self.code()
+		debug(c, 'action')
+		exec(c)
 		return eval('f')
 
 def simple_action(name, line, color='GREEN', vars=[]):
 	"helper provided for convenience"
 	obj = alex(line)
-	obj.start()
-	f = obj.fun()
+	obj.compile()
 	act = Action(name, color=color)
-	debug(obj.res(), 'action')
-	act.m_function_to_run = f
+	act.m_function_to_run = obj.get_fun()
 	act.m_vars = obj.m_vars
 	if vars: act.m_vars = vars
 

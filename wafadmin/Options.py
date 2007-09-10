@@ -154,7 +154,7 @@ class Handler:
 		return self.parser.add_option_group(*args, **kwargs)
 	def get_option_group(self, opt_str):
 		return self.parser.get_option_group(opt_str)
-	
+
 	def sub_options(self, dir, option_group=None):
 		current = self.cwd
 

@@ -117,7 +117,7 @@ class kde_translations(Object.genobj):
 			node = self.path.find_source(lang+'.gmo')
 			orig = node.relpath_gen(current)
 
-			destfile = Utils.join_path(lang, 'LC_MESSAGES', destfilename)
+			destfile = os.path.join(lang, 'LC_MESSAGES', destfilename)
 			Common.install_as('KDE_LOCALE', destfile, orig, self.env)
 
 # documentation
@@ -144,7 +144,7 @@ class kde_documentation(Object.genobj):
 				task.set_outputs(node.change_ext('.cache.bz2'))
 				self.m_docbooks.append(task)
 	def install(self):
-		destpath = Utils.join_path(self.m_lang, self.m_appname)
+		destpath = os.path.join(self.m_lang, self.m_appname)
 
 		current = Params.g_build.m_curdirnode
 		lst = []
@@ -226,6 +226,7 @@ class kdeobj(cpp.cppobj):
 		self.m_linktask = None
 		self.m_latask   = None
 		self.skel_or_stub = {}
+		self.defines_lst = {}
 		self.want_libtool = -1 # fake libtool here
 
 		# valid types are ['program', 'shlib', 'staticlib', 'module', 'convenience', 'other']
@@ -289,7 +290,7 @@ class kdeobj(cpp.cppobj):
 					path = node.m_parent.srcpath(self.env)
 					for i in globals('MOC_H'):
 						try:
-							os.stat(Utils.join_path(path,base2+i))
+							os.stat(os.path.join(path,base2+i))
 							ext = i
 							break
 						except:
@@ -328,7 +329,7 @@ class kdeobj(cpp.cppobj):
 			cpptask.m_run_after = moctasks
 
 		# and after the cpp objects, the remaining is the link step - in a lower priority so it runs alone
-		if self.m_type=='staticlib': linktask = self.create_task('cpp_link_static', self.env, ccroot.g_prio_link)
+		if self.m_type=='staticlib': linktask = self.create_task('ar_link_static', self.env, ccroot.g_prio_link)
 		else:                        linktask = self.create_task('cpp_link', self.env, ccroot.g_prio_link)
 		cppoutputs = []
 		for t in self.p_compiletasks: cppoutputs.append(t.m_outputs[0])

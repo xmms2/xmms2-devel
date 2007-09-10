@@ -2,7 +2,9 @@
 # encoding: utf-8
 # Thomas Nagy, 2006 (ita)
 
-import md5
+try: from hashlib import md5
+except ImportError: from md5 import md5
+
 import Utils, Configure, Action, Task, Params
 from Params import error, fatal
 
@@ -24,7 +26,7 @@ class Builder_class:
 			a = a.replace('$TARGET', '${TGT[0].abspath(env)}')
 			a = a.replace('$SOURCE', '${SRC[0].abspath(env)}')
 
-			m = md5.new()
+			m = md5()
 			m.update(a)
 			key = m.hexdigest()
 

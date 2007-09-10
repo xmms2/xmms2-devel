@@ -10,6 +10,8 @@ from Params import error, fatal, warning, g_lockfile
 
 g_dirwatch   = None
 g_daemonlock = 0
+g_dist_exts  = '.rej .orig ~ .pyc .pyo .bak config.log .tar.bz2 .zip Makefile'.split()
+g_distclean_exts = '~ .pyc .wafpickle'.split()
 
 def add_subdir(dir, bld):
 	"each wscript calls bld.add_subdir"
@@ -68,7 +70,7 @@ def configure():
 		except AttributeError: pass
 		if not blddir: blddir = Utils.g_module.blddir
 
-		Params.g_cachedir = Utils.join_path(blddir,'_cache_')
+		Params.g_cachedir = os.path.join(blddir, '_cache_')
 
 	except AttributeError:
 		msg = "The attributes srcdir or blddir are missing from wscript\n[%s]\n * make sure such a function is defined\n * run configure from the root of the project\n * use waf configure --srcdir=xxx --blddir=yyy"
@@ -110,6 +112,7 @@ def Main():
 	import inspect
 	if Params.g_commands['configure']:
 		configure()
+		Params.pprint('GREEN', 'Configuration finished successfully; project is now ready to build.')
 		sys.exit(0)
 
 	Runner.set_exec('noredir')
@@ -134,10 +137,10 @@ def Main():
 			hash = 0
 			for file in proj['files']:
 				mod = Utils.load_module(file)
-				hash = Params.hash_sig_weak(hash, inspect.getsource(mod.configure).__hash__())
+				hash = Params.hash_function_with_globals(hash, mod.configure)
 			reconf = (hash != proj['hash'])
-		except:
-			warning("Reconfiguring the project as an exception occured")
+		except Exception, ex:
+			warning("Reconfiguring the project as an exception occured: %s" % (str(ex),))
 			reconf=1
 
 		if reconf:
@@ -161,7 +164,7 @@ def Main():
 			bld = Build.Build()
 			proj = read_cache_file(g_lockfile)
 
-	Params.g_cachedir = Utils.join_path(proj['blddir'], '_cache_')
+	Params.g_cachedir = os.path.join(proj['blddir'], '_cache_')
 
 	bld.load_dirs(proj['srcdir'], proj['blddir'])
 	bld.load_envs()
@@ -268,7 +271,8 @@ def Dist(appname, version):
 
 	# Remove the Build dir
 	try:
-		if Utils.g_module.blddir: shutil.rmtree(os.path.join(TMPFOLDER, Utils.g_module.blddir))
+		if Utils.g_module.blddir:
+			shutil.rmtree(os.path.join(TMPFOLDER, Utils.g_module.blddir), True)
 	except AttributeError:
 		pass
 
@@ -279,28 +283,25 @@ def Dist(appname, version):
 		for d in dirs:
 			if d in ['CVS', '.svn', '{arch}']:
 				shutil.rmtree(os.path.join(root,d))
-			elif d.startswith('.'):
+			elif d.startswith('.') or d.startswith(',,') or d.startswith('++'):
 				shutil.rmtree(os.path.join(root,d))
 			else:
 				clean_dirs += d
 		dirs = clean_dirs
 
-		to_remove = False
+		global g_dist_exts # you may add additional forbidden files
 		for f in list(filenames):
-			if f.startswith('.'): to_remove = True
-			elif f.endswith('~'): to_remove = True
-			elif f.endswith('.pyc'): to_remove = True
-			elif f.endswith('.pyo'): to_remove = True
-			elif f.endswith('.bak'): to_remove = True
-			elif f.endswith('.orig'): to_remove = True
-			elif f in ['config.log']: to_remove = True
-			elif f.endswith('.tar.bz2'): to_remove = True
-			elif f.endswith('.zip'): to_remove = True
-			elif f.endswith('Makefile'): to_remove = True
-
+			to_remove = 0
+			ends = f.endswith
+			if f.startswith('.') or f.startswith('++'):
+				to_remove = 1
+			else:
+				for x in g_dist_exts:
+					if ends(x):
+						to_remove = True
+						break
 			if to_remove:
 				os.remove(os.path.join(root, f))
-				to_remove = False
 
 	try:
 		dist_hook = Utils.g_module.dist_hook
@@ -328,12 +329,6 @@ def DistClean():
 	import os, shutil, types
 	import Build
 
-	# execute the user-provided distclean function
-	try:
-		if not Utils.g_module.distclean(): sys.exit(0)
-	except AttributeError:
-		pass
-
 	# remove the temporary files
 	# the builddir is given by lock-wscript only
 	# we do no try to remove it if there is no lock file (rmtree)
@@ -348,10 +343,12 @@ def DistClean():
 					shutil.rmtree(os.path.join(root, proj['blddir']))
 				except OSError: pass
 				except IOError: pass
-			elif f.endswith('~'): to_remove = 1
-			elif f.endswith('.pyc'): to_remove = 1
-			elif f.startswith('.wafpickle'): to_remove = 1
-
+			else:
+				ends = f.endswith
+				for x in g_distclean_exts:
+					if ends(x):
+						to_remove = 1
+						break
 			if to_remove:
 				#print "removing ",os.path.join(root, f)
 				os.remove(os.path.join(root, f))

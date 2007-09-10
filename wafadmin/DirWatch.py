@@ -170,7 +170,7 @@ class DirectoryWatcher:
 		except KeyboardInterrupt:
 			self.request_end_loop()
 
-
+# quick test #
 class Test:
 	def __init__( self ):
 		self.fam_test = DirectoryWatcher()

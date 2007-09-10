@@ -58,8 +58,8 @@ def detect(conf):
 	v['CPPLNK_TGT_F']        = '-o '
 	v['CPPLNK_SRC_F']        = ''
 
-	v['LIB_ST']              = '-l%s'	# template for adding libs
-	v['LIBPATH_ST']          = '-L%s' # template for adding libpathes
+	v['LIB_ST']              = '-l%s' # template for adding libs
+	v['LIBPATH_ST']          = '-L%s' # template for adding libpaths
 	v['STATICLIB_ST']        = '-l%s'
 	v['STATICLIBPATH_ST']    = '-L%s'
 	v['CXXDEFINES_ST']       = '-D%s'
@@ -211,7 +211,7 @@ def detect(conf):
 	test.env = v
 	test.execute = 1
 	ret = conf.run_check(test)
-	conf.check_message('compiler could create', 'pragramms', not (ret is False))
+	conf.check_message('compiler could create', 'programs', not (ret is False))
 	if not ret:
 		return 0
 	#test if the compiler could build a shlib

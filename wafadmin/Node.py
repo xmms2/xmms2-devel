@@ -30,6 +30,8 @@ class Node:
 		self.m_parent = parent
 		self.m_cached_path = ""
 
+		self.__hash_value=None #value should chache the hash value
+
 		# Lookup dictionaries for O(1) access
 		self.m_dirs_lookup = {}
 		self.m_files_lookup = {}
@@ -58,6 +60,34 @@ class Node:
 		if self.m_name in self.m_parent.m_files_lookup: isbld = ""
 		else: isbld = "b:"
 		return "<%s%s>" % (isbld, self.abspath())
+
+	def __eq__(self, other):
+		try:
+			if self.equals(other): return True
+		except: pass #evil bare except
+		return False
+
+	def __ne__(self, other):
+		try:
+			if not self.equals(other): return True
+		except: pass #evil bare except
+		return False
+
+	def __hash__(self):
+		'return hash value based on the abs path'
+		if not self.__hash_value:
+			cur=self
+			lst=[]
+			while cur:
+				lst.append(cur.m_name)
+				cur=cur.m_parent
+			if lst[-1] =='' : lst = lst[:-1]
+			if lst[0] == '/': lst = lst[1:]
+			lst.reverse()
+			val=os.path.join(*lst)
+			debug("[%s]" %val, 'node')
+			self.__hash_value = hash(val)
+		return self.__hash_value
 
 	def dirs(self):
 		return self.m_dirs_lookup.values()
@@ -244,7 +274,7 @@ class Node:
 	# same as pathlist3, but do not append './' at the beginning
 	def pathlist4(self, node):
 		#print "pathlist4 called"
-		if self.m_parent is node: return [self.m_name]
+		if self.m_parent.equals(node): return [self.m_name]
 		return [self.m_name, os.sep]+self.m_parent.pathlist4(node)
 
 	def relpath(self, parent):
@@ -273,18 +303,18 @@ class Node:
 		while dist>0:
 			cand=cand.m_parent
 			dist=dist-1
-		if cand is node: return cand
+		if cand.equals(node): return cand
 		cursor=node
 		while cand.m_parent:
 			cand   = cand.m_parent
 			cursor = cursor.m_parent
-			if cand is cursor: return cand
+			if cand.equals(cursor): return cand
 
 	# prints the amount of "../" between two nodes
 	def invrelpath(self, parent):
 		lst=[]
 		cand=self
-		while cand is not parent:
+		while not cand.equals(parent):
 			cand=cand.m_parent
 			lst+=['..',os.sep] #TODO: fix this
 		return lst
@@ -292,8 +322,8 @@ class Node:
 	# TODO: do this in a single function (this one uses invrelpath, find_ancestor and pathlist4)
 	# string representing a relative path between two nodes, we are at relative_to
 	def relpath_gen(self, going_to):
-		if self is going_to: return '.'
-		if going_to.m_parent is self: return '..'
+		if self.equals(going_to): return '.'
+		if going_to.m_parent.equals(self): return '..'
 
 		# up_path is '../../../' and down_path is 'dir/subdir/subdir/file'
 		ancestor  = self.find_ancestor(going_to)
@@ -466,13 +496,15 @@ class Node:
 			l -= 1
 			if n[l]=='.': break
 		s = n[:l]
-		return Utils.join_path(self.bld_dir(env),s)
+		return os.path.join(self.bld_dir(env),s)
 
 	def bldpath(self, env=None):
 		"path seen from the build dir default/src/foo.cpp"
 		x = self.m_parent.get_file(self.m_name)
 		if x: return self.relpath_gen(Params.g_build.m_bldnode)
-		return Utils.join_path(env.variant(), self.relpath(Params.g_build.m_srcnode))
+		if self.relpath(Params.g_build.m_srcnode) is not '':
+			return os.path.join(env.variant(), self.relpath(Params.g_build.m_srcnode))
+		return env.variant()
 
 	def srcpath(self, env):
 		"path in the srcdir from the build dir ../src/foo.cpp"

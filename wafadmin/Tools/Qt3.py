@@ -63,7 +63,7 @@ class MTask(Task.Task):
 				ext = None
 				for i in globals('QT3_MOC_H'):
 					try:
-						os.stat(Utils.join_path(path,base2+i))
+						os.stat(os.path.join(path,base2+i))
 						ext = i
 						break
 					except:

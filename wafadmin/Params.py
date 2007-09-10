@@ -4,13 +4,16 @@
 
 "Main parameters"
 
-import os, sys, types, inspect, md5, base64, stat
+import os, sys, types, inspect, base64, stat
+try: from hashlib import md5
+except ImportError: from md5 import md5
+
 import Utils
 
 # =================================== #
 # Fixed constants, change with care
 
-g_version="1.1.1"
+g_version="1.2.0"
 g_rootname = ''
 if sys.platform=='win32':
 	# get the first two letters (c:)
@@ -19,23 +22,13 @@ if sys.platform=='win32':
 g_dbfile='.wafpickle'
 "name of the db file"
 
-g_preprocess = 1
-"use the c/c++ preprocessor"
-
 g_excludes = ['.svn', 'CVS', 'wafadmin', '.arch-ids']
 "exclude from dist"
-
-g_strong_hash = 1
-"hash method: md5 (1:default) or integers"
-
-g_timestamp = 0
-"if 1: do not look at the file contents for dependencies"
 
 g_autoconfig = 0
 "reconfigure the project automatically"
 
-if g_strong_hash: sig_nil = 'iluvcuteoverload'
-else: sig_nil = 17
+sig_nil = 'iluvcuteoverload'
 
 # =================================== #
 # Constants set on runtime
@@ -97,27 +90,32 @@ except: g_lockfile = '.lock-wscript'
 #"color names"
 
 g_col_scheme = [1, 91, 33, 92, 93, 94, 96, 0]
-"yellow not readable on white backgrounds? -> bug in *YOUR* terminal"
 
 g_colors = {
 'BOLD'  :'\033[01;1m',
 'RED'   :'\033[01;91m',
 'REDP'  :'\033[01;33m',
 'GREEN' :'\033[01;92m',
-'YELLOW':'\033[01;93m',
+'YELLOW':'\033[00;33m',
 'BLUE'  :'\033[01;94m',
 'CYAN'  :'\033[01;96m',
 'NORMAL':'\033[0m'
 }
 "colors used for printing messages"
 
+g_cursor_on ='\x1b[?25h'
+g_cursor_off='\x1b[?25l'
+
 def reset_colors():
 	global g_colors
 	for k in g_colors.keys():
 		g_colors[k]=''
+	g_cursor_on=''
+	g_cursor_off=''
 
-if (sys.platform=='win32' or 'NOCOLOR' in os.environ
-	or os.environ.get('TERM', 'dumb') == 'dumb'):
+if (sys.platform=='win32') or ('NOCOLOR' in os.environ) \
+	or (os.environ.get('TERM', 'dumb') == 'dumb') \
+	or (not sys.stdout.isatty()):
 	reset_colors()
 
 def pprint(col, str, label=''):
@@ -198,6 +196,7 @@ def fatal(msg, ret=1):
 		traceback.print_stack()
 	sys.exit(ret)
 
+# TODO rename vsig in view_sig
 def vsig(s):
 	"used for displaying signatures"
 	if type(s) is types.StringType:
@@ -206,21 +205,16 @@ def vsig(s):
 	else:
 		return str(s)
 
-##
-# functions to use
 def hash_sig(o1, o2):
-	return None
-def h_file():
-	return None
-def h_string(s):
-	return None
-def h_list(lst):
-	return None
-##
-# hash files
-def h_md5_file(filename):
+	"hash two signatures"
+	m = md5()
+	m.update(o1)
+	m.update(o2)
+	return m.digest()
+
+def h_file(filename):
 	f = file(filename,'rb')
-	m = md5.new()
+	m = md5()
 	readBytes = 1024 # read 1024 bytes per time
 	while (readBytes):
 		readString = f.read(readBytes)
@@ -228,60 +222,34 @@ def h_md5_file(filename):
 		readBytes = len(readString)
 	f.close()
 	return m.digest()
-def h_md5_file_tstamp(filename):
-	st = os.stat(filename)
-	if stat.S_ISDIR(st.st_mode): raise OSError
-	tt = st.st_mtime
-	m = md5.new()
-	m.update(str(tt)+filename)
+
+def h_string(str):
+	m = md5()
+	m.update(str)
 	return m.digest()
-def h_simple_file(filename):
-	f = file(filename,'rb')
-	s = f.read().__hash__()
-	f.close()
-	return s
-def h_simple_file_tstamp(filename):
-	st = os.stat(filename)
-	if stat.S_ISDIR(st.st_mode): raise OSError
-	m = md5.new()
-	return hash( (st.st_mtime, filename) )
-##
-# hash signatures
-def hash_sig_weak(o1, o2):
-	return hash( (o1, o2) )
-def hash_sig_strong(o1, o2):
-	m = md5.new()
-	m.update(o1)
-	m.update(o2)
-	return m.digest()
-##
-# hash string
-def h_md5_str(str):
-	m = md5.new()
-	m.update( str )
-	return m.digest()
-def h_simple_str(str):
-	return str.__hash__()
-##
-# hash lists
-def h_md5_lst(lst):
-	m = md5.new()
+
+def h_list(lst):
+	m = md5()
 	m.update(str(lst))
 	return m.digest()
-def h_simple_lst(lst):
-	return hash(str(lst))
-##
-#def set_hash(hash, tstamp):
-if g_strong_hash:
-	hash_sig = hash_sig_strong
-	h_string = h_md5_str
-	h_list = h_md5_lst
-	if g_timestamp: h_file = h_md5_file_tstamp
-	else: h_file = h_md5_file
-else:
-	hash_sig = hash_sig_weak
-	h_string = h_simple_str
-	h_list = h_simple_lst
-	if g_timestamp: h_file = h_simple_file_tstamp
-	else: h_file = h_simple_file
+
+def hash_function_with_globals(prevhash, func):
+	"""
+	hash a function (object) and the global vars needed from outside
+	ignore unhashable global variables (lists)
+
+	prevhash -- previous hash value to be combined with this one;
+	if there is no previous value, zero should be used here
+
+	func -- a Python function object.
+	"""
+	assert type(func) is types.FunctionType
+	for name, value in func.func_globals.iteritems():
+		if type(value) in (types.BuiltinFunctionType, types.ModuleType, types.FunctionType, types.ClassType, types.TypeType):
+			continue
+		try:
+			prevhash = hash( (prevhash, name, value) )
+		except TypeError: # raised for unhashable elements
+			pass
+	return hash( (prevhash, inspect.getsource(func)) )
 

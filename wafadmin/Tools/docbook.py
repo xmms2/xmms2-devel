@@ -94,7 +94,7 @@ def docb_file(obj, node):
 	if ext == '.xml':
 		if obj.get_type() == 'txt' or obj.get_type() == 'ps':
 			fatal("docbook: while processing '%s':\n"
-			      "txt and ps output are currently not supported when input format is XML." % node.m_name )
+			      'txt and ps output are currently not supported when input format is XML.' % node.m_name )
 
 # docbook objects
 class docbookobj(Object.genobj):
@@ -126,7 +126,7 @@ class docbookobj(Object.genobj):
 
 		current = Params.g_build.m_curdirnode
 		lst = []
-		docpath = Utils.join_path('share',Utils.g_module.APPNAME, 'doc')
+		docpath = os.path.join('share',Utils.g_module.APPNAME, 'doc')
 
 		# Install all generated docs
 		for task in self.m_tasks:

@@ -76,7 +76,7 @@ class gnome_intltool(Object.genobj):
 
 			podirnode = self.path.find_source(self.podir)
 
-			self.env['INTLCACHE'] = Utils.join_path(Params.g_build.m_curdirnode.bldpath(self.env),".intlcache")
+			self.env['INTLCACHE'] = os.path.join(Params.g_build.m_curdirnode.bldpath(self.env),".intlcache")
 			self.env['INTLPODIR'] = podirnode.bldpath(self.env)
 			self.env['INTLFLAGS'] = self.flags
 
@@ -158,7 +158,7 @@ class gnome_translations(Object.genobj):
 			node = self.path.find_source(lang+'.gmo')
 			orig = node.relpath_gen(current)
 
-			destfile = Utils.join_path(lang, 'LC_MESSAGES', destfilename)
+			destfile = os.path.join(lang, 'LC_MESSAGES', destfilename)
 			Common.install_as('GNOMELOCALEDIR', destfile, orig, self.env)
 
 

@@ -25,7 +25,7 @@ def detect(conf):
 		conf.check_message('suncc', '', not ret)
 		return 0 #at least gcc exit with error
 	conf.check_tool('checks')
-	
+
 	# load the cc builders
 	conf.check_tool('cc')
 
@@ -48,17 +48,17 @@ def detect(conf):
 
 	v['CC_SRC_F']             = ''
 	v['CC_TGT_F']             = '-c -o '
-	v['CPPPATH_ST']           = '-I%s' # template for adding include pathes
+	v['CPPPATH_ST']           = '-I%s' # template for adding include paths
 
 	# linker
 	v['LINK_CC']              = v['CC']
 	v['LIB']                  = []
-	
+
 	v['CCLNK_SRC_F']          = ''
 	v['CCLNK_TGT_F']          = '-o '
 
-	v['LIB_ST']               = '-l%s'	# template for adding libs
-	v['LIBPATH_ST']           = '-L%s' # template for adding libpathes
+	v['LIB_ST']               = '-l%s' # template for adding libs
+	v['LIBPATH_ST']           = '-L%s' # template for adding libpaths
 	v['STATICLIB_ST']         = '-l%s'
 	v['STATICLIBPATH_ST']     = '-L%s'
 	v['_LIBDIRFLAGS']         = ''
@@ -74,7 +74,7 @@ def detect(conf):
 
 	v['SHLIB_MARKER']        = '-Bdynamic'
 	v['STATICLIB_MARKER']    = '-Bstatic'
-	
+
 	# shared library
 	v['shlib_CCFLAGS']       = ['-Kpic', '-DPIC']
 	v['shlib_LINKFLAGS']     = ['-G']
@@ -99,7 +99,7 @@ def detect(conf):
 	# program
 	v['program_obj_ext']     = ['.o']
 	v['program_SUFFIX']      = ''
-	
+
 	#test if the compiler could build a prog
 	test = Configure.check_data()
 	test.code = 'int main() {return 0;}\n'
@@ -107,7 +107,7 @@ def detect(conf):
 	test.execute = 1
 	test.force_compiler="cc"
 	ret = conf.run_check(test, "program")
-	conf.check_message('compiler could create', 'programms', not (ret is False))
+	conf.check_message('compiler could create', 'programs', not (ret is False))
 	if not ret:
 		return 0
 	ret = 0
@@ -115,7 +115,7 @@ def detect(conf):
 	lib_obj = Configure.check_data()
 	lib_obj.code = "int k = 3;\n"
 	lib_obj.env = v
-	lib_obj.build_type = "shlib" 
+	lib_obj.build_type = "shlib"
 	lib_obj.force_compiler="cc"
 	ret = conf.run_check(lib_obj)
 	conf.check_message('compiler could create', 'shared libs', not (ret is False))
@@ -179,3 +179,4 @@ def set_options(opt):
 	except optparse.OptionConflictError:
 		# the g++ tool might have added that option already
 		pass
+

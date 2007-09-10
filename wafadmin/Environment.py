@@ -125,11 +125,21 @@ class Environment:
 		"return the destdir, useful for installing"
 		if self.m_table.has_key('NOINSTALL'): return ''
 		dst = Params.g_options.destdir
-		try: dst = Utils.join_path(dst,os.sep,self.m_table['SUBDEST'])
+		try: dst = os.path.join(dst, os.sep, self.m_table['SUBDEST'])
 		except: pass
 		return dst
 
 	def hook(self, classname, ext, func):
+		"silly wrapper"
 		import Object
 		Object.hook(classname, ext, func)
+
+	def set_dependency(self, infile, outfile):
+		"TODO: future: set manual dependencies"
+		pass
+
+	def set_var_dependency(self, infile, text):
+		"TODO: future: add manual dependencies on env variables"
+		pass
+
 
