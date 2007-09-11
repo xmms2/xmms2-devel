@@ -1,6 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
+    if conf.check_pkg('mad', destvar='mad'):
+        return True
     if not conf.check_header("mad.h"):
         return False
     return conf.check_library2("mad", uselib='mad', mandatory=0)
