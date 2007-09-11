@@ -20,12 +20,12 @@ def build(bld):
   Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh', chmod=0755)
 
 def configure(conf):
-  conf.env['explicit_dnssd'] = False
+  conf.env['explicit_dnssd'] = True
 
   if not conf.check_header('dns_sd.h'):
     return False
   if Params.g_platform == 'darwin':
-    conf.env['explicit_dnssd'] = True
+    conf.env['explicit_dnssd'] = False
     return True
   else:
     return conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)
