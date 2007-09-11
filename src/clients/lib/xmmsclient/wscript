@@ -22,7 +22,7 @@ def build(bld):
     obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     obj.uselib = 'socket'
     obj.vnum = '2.0.0'
-    tool.add_install_flag(obj)
+    tool.add_install_flag(bld, obj)
 
 def configure(conf):
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client', '-lxmmsclient'))

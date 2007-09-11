@@ -25,7 +25,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'boosth boostl socket'
     obj.vnum = '1.0.0'
-    tool.add_install_flag(obj)
+    tool.add_install_flag(bld, obj)
 
 def configure(conf):
     if not conf.env["HAVE_CXX"]:

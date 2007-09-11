@@ -282,6 +282,9 @@ def configure(conf):
     # Add some specific OSX things
     if Params.g_platform == 'darwin':
         conf.env["LINKFLAGS"] += ['-multiply_defined suppress']
+        conf.env["explicit_install_name"] = True
+    else:
+        conf.env["explicit_install_name"] = False
 
     # Check for support for the generic platform
     has_platform_support = os.name in ('nt', 'posix')

@@ -8,7 +8,7 @@ def build(bld):
     obj.uselib = 'glib2'
     obj.uselib_local = 'xmmsclient'
     obj.vnum = '1.0.0'
-    tool.add_install_flag(obj)
+    tool.add_install_flag(bld, obj)
 
 def configure(conf):
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-glib', '-lxmmsclient-glib'))

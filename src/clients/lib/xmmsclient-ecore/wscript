@@ -8,7 +8,7 @@ def build(bld):
     obj.uselib = 'ecore'
     obj.uselib_local = 'xmmsclient'
     obj.vnum = '1.0.0'
-    tool.add_install_flag(obj)
+    tool.add_install_flag(bld, obj)
 
 def configure(conf):
     return conf.check_pkg('ecore', destvar='ecore')
