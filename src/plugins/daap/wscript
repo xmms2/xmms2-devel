@@ -26,8 +26,7 @@ def plugin_build(bld, obj):
         obj.uselib += ' avahiglib avahiclient'
     elif daap_backend == 'dnssd':
         obj.uselib += ' dnssd'
-    if Params.g_platform == 'win32':
-        obj.uselib += ' socket'
+    obj.uselib += ' socket'
 
 configure, build = plugin('daap', configure=plugin_configure,
                           extra_libs=['curl'], build=plugin_build,
