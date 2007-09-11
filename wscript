@@ -259,8 +259,8 @@ def configure(conf):
         for dir in Params.g_options.config_prefix:
             if not os.path.isabs(dir):
                 dir = os.path.abspath(dir)
-            conf.env["LIBPATH"] += [os.path.join(dir, "lib")]
-            conf.env['CPPPATH'] += [os.path.join(dir, "include")]
+            conf.env.prepend_value("LIBPATH", os.path.join(dir, "lib"))
+            conf.env.prepend_value("CPPPATH", os.path.join(dir, "include"))
 
     # Our static libraries may link to dynamic libraries
     if Params.g_platform != 'win32':
