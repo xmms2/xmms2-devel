@@ -1669,6 +1669,37 @@ cdef class XMMS:
 		
 		return ret
 
+
+	def playlist_insert_collection(self, pos, coll, order = None, playlist = None, cb = None):
+		"""
+		Insert the content of a collection to the playlist.
+		Requires an int 'pos' and an int 'id' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		cdef Collection c
+		cdef _ListConverter orderflds
+
+		if order is None:
+			order = []
+
+		orderflds = _ListConverter(order)
+
+		c = <Collection> coll
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_insert_collection(self.conn, pl, pos, c.coll, orderflds.lst)
+		else:
+			ret.res = xmmsc_playlist_insert_collection(self.conn, NULL, pos, c.coll, orderflds.lst)
+
+		ret.more_init()
+
+		return ret
+
 	def playlist_radd(self, url, playlist = None, cb = None):
 		"""
 		Add a directory to the playlist.
@@ -1785,6 +1816,36 @@ cdef class XMMS:
 
 		ret.more_init()
 		
+		return ret
+
+
+	def playlist_add_collection(self, coll, order = None, playlist = None, cb = None):
+		"""
+		Add the content of a collection to the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		cdef Collection c
+		cdef _ListConverter orderflds
+
+		if order is None:
+			order = []
+
+		orderflds = _ListConverter(order)
+
+		c = <Collection> coll
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_add_collection(self.conn, pl, c.coll, orderflds.lst)
+		else:
+			ret.res = xmmsc_playlist_add_collection(self.conn, NULL, c.coll, orderflds.lst)
+
+		ret.more_init()
+
 		return ret
 
 
