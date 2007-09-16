@@ -291,7 +291,7 @@ on_io_need_out (int flag, void *data)
 
 /*
  * call-seq:
- *  xc.io_need_out { |flag| }
+ *  xc.io_on_need_out { |flag| }
  *
  * Sets the block that's called when the output socket state changes.
  */
