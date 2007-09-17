@@ -28,6 +28,7 @@ cmds coll_commands[] = {
 	{ "get", "[collname] - Display the structure of a collection", cmd_coll_get },
 	{ "remove", "[collname] - Remove a saved collection", cmd_coll_remove },
 	{ "attr", "[collname] [attr] [val] - Get/set an attribute for a saved collection", cmd_coll_attr },
+	{ "sync", "- Synchronize the collections into the medialib", cmd_coll_sync },
 	{ NULL, NULL, NULL },
 };
 
@@ -616,4 +617,17 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	xmmsc_result_unref (res);
+}
+
+void
+cmd_coll_sync (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_coll_sync (conn);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
 }

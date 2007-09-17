@@ -33,6 +33,7 @@ void cmd_coll_find (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_remove (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_coll_sync (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 
 #endif
