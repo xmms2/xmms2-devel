@@ -61,6 +61,7 @@ gboolean xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespa
 gboolean xmms_collection_remove (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xmms_error_t *error);
 GList * xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_error_t *error);
 gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name, gchar *to_name, gchar *namespace, xmms_error_t *error);
+void xmms_collection_sync (xmms_coll_dag_t *dag, xmms_error_t *error);
 
 GList * xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, xmms_error_t *err);
 GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, GList *fetch, GList *group, xmms_error_t *err);

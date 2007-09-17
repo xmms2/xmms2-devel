@@ -136,6 +136,8 @@ XMMS_CMD_DEFINE  (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, 
 XMMS_CMD_DEFINE  (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, UINT32, STRING);
 XMMS_CMD_DEFINE3 (collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
 XMMS_CMD_DEFINE  (collection_from_pls, xmms_collection_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
+XMMS_CMD_DEFINE  (collection_sync, xmms_collection_sync, xmms_coll_dag_t *, NONE, NONE, NONE);
+
 
 XMMS_CMD_DEFINE4 (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST);
 XMMS_CMD_DEFINE6 (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST, STRINGLIST, STRINGLIST);
@@ -261,6 +263,10 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_IDLIST_FROM_PLS,
 	                     XMMS_CMD_FUNC (collection_from_pls));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_SYNC,
+	                     XMMS_CMD_FUNC (collection_sync));
 
 	xmms_collection_dag_restore (ret);
 
@@ -532,6 +538,24 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 	g_mutex_unlock (dag->mutex);
 
 	return coll;
+}
+
+
+/** Synchronize collection data to the database (i.e. to disk).
+ *
+ * @param dag  The collection DAG.
+ * @param err  If an error occurs, a message is stored in it.
+ */
+void
+xmms_collection_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
+{
+	g_return_if_fail (dag);
+
+	g_mutex_lock (dag->mutex);
+
+	xmms_collection_dag_save (dag);
+
+	g_mutex_unlock (dag->mutex);
 }
 
 
