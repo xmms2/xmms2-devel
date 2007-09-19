@@ -2045,6 +2045,52 @@ DESTROY (c)
 	CODE:
 		xmmsc_unref (c);
 
+=head1 AUTHOR
+
+Florian Ragwitz <rafl@debian.org>
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+  perldoc Audio::XMMSClient
+
+You can also look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Audio-XMMSClient>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/Audio-XMMSClient>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Audio-XMMSClient>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Audio-XMMSClient>
+
+=back
+
+=head1 SEE ALSO
+
+L<Audio::XMMSClient::Result>, L<Audio::XMMSClient::Playlist>, L<Audio::XMMSClient::Collection>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2006-2007, Florian Ragwitz
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself, either Perl version 5.8.8 or, at your option,
+any later version of Perl 5 you may have available.
+
+=cut
+
 BOOT:
 	PERL_UNUSED_VAR (items);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Playlist);
