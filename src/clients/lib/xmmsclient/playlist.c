@@ -236,7 +236,7 @@ xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos,
 }
 
 /**
- * Insert entry at given position in playlist wit args.
+ * Insert entry at given position in playlist with args.
  *
  * @param c The connection structure.
  * @param playlist The playlist in which to insert the media.
