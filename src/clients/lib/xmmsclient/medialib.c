@@ -233,7 +233,7 @@ xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 /**
  * Add a URL with arguments to the medialib.
  *
- * xmmsc_medialib-add_antry_args (conn, "file:///data/HVSC/C64Music/Hubbard_Rob/Commando.sid", 1, "subtune=2");
+ * xmmsc_medialib_add_entry_args (conn, "file:///data/HVSC/C64Music/Hubbard_Rob/Commando.sid", 1, "subtune=2");
  *
  * @param conn The #xmmsc_connection_t
  * @param url URL to add to the medialib.
