@@ -213,10 +213,10 @@ def check_python_version(conf, minver=None):
 
 	## Feedback
 	pyver_full = '.'.join(map(str, pyver_tuple[:3]))
-	minver_str = '.'.join(map(str, minver))
 	if minver is None:
 		conf.check_message_custom('Python version', '', pyver_full)
 	else:
+		minver_str = '.'.join(map(str, minver))
 		conf.check_message('Python version', ">= %s" % (minver_str,), result, option=pyver_full)
 
 	return result
