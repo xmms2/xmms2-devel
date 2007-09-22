@@ -321,6 +321,29 @@ xmmsc_medialib_get_id (c, url)
 		xmmsc_connection_t *c
 		const char *url
 
+=head2 medialib_move_entry
+
+=over 4
+
+=item Arguments: $id, $url
+
+=item Return Value: $result
+
+  my $result = $conn->medialib_move_entry(42, 'file:///new/path/to/file.flac');
+
+Change the url property of an entry in the media library. Note that you need to
+handle the actual file move yourself.
+
+=back
+
+xmmsc_result_t *
+xmmsc_medialib_move_entry (c, id, url)
+		xmmsc_connection_t *c
+		uint32_t entry
+		const char *url
+
+=cut
+
 =head2 medialib_remove_entry
 
 =over 4
