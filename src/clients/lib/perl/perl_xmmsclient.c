@@ -30,7 +30,15 @@ MAGIC *
 perl_xmmsclient_get_magic_from_sv (SV *sv, const char *class) {
 	MAGIC *mg;
 
-	if (!sv || !SvOK (sv) || !SvROK (sv) || !sv_derived_from (sv, class) || !(mg = mg_find (SvRV (sv), PERL_MAGIC_ext))) {
+	if (!sv || !SvOK (sv) || !SvROK (sv)) {
+		return NULL;
+	}
+
+	if (!sv_derived_from (sv, class)) {
+		croak ("object isn't a %s", class);
+	}
+
+	if (!(mg = mg_find (SvRV (sv), PERL_MAGIC_ext))) {
 		return NULL;
 	}
 
