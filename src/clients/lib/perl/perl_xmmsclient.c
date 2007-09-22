@@ -17,12 +17,7 @@ perl_xmmsclient_new_sv_from_ptr (void *ptr, const char *class) {
 
 void *
 perl_xmmsclient_get_ptr_from_sv (SV *sv, const char *class) {
-	MAGIC *mg;
-
-	if (!(mg = perl_xmmsclient_get_magic_from_sv (sv, class))) {
-		return NULL;
-	}
-
+	MAGIC *mg = perl_xmmsclient_get_magic_from_sv (sv, class);
 	return (void *)mg->mg_ptr;
 }
 
@@ -31,7 +26,7 @@ perl_xmmsclient_get_magic_from_sv (SV *sv, const char *class) {
 	MAGIC *mg;
 
 	if (!sv || !SvOK (sv) || !SvROK (sv)) {
-		return NULL;
+		croak ("scalar isn't a reference");
 	}
 
 	if (!sv_derived_from (sv, class)) {
@@ -39,7 +34,7 @@ perl_xmmsclient_get_magic_from_sv (SV *sv, const char *class) {
 	}
 
 	if (!(mg = mg_find (SvRV (sv), PERL_MAGIC_ext))) {
-		return NULL;
+		croak ("failed to find c structure attached to scalar");
 	}
 
 	return mg;
