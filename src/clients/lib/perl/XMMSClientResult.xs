@@ -338,7 +338,7 @@ optional userdata if C<$data> is passed.
 
 void
 xmmsc_result_notifier_set (res, func, data=NULL)
-		SV *res
+		xmmsc_result_t *res
 		SV *func
 		SV *data
 	PREINIT:
@@ -346,12 +346,11 @@ xmmsc_result_notifier_set (res, func, data=NULL)
 		PerlXMMSClientCallbackParamType param_types[1];
 		xmmsc_result_t *c_res;
 	CODE:
-		c_res = (xmmsc_result_t *)perl_xmmsclient_get_ptr_from_sv (res, "Audio::XMMSClient::Result");
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT;
 
-		cb = perl_xmmsclient_callback_new (func, data, res, 1, param_types);
+		cb = perl_xmmsclient_callback_new (func, data, ST(0), 1, param_types);
 
-		xmmsc_result_notifier_set_full (c_res, perl_xmmsclient_xmmsc_result_notifyer_cb,
+		xmmsc_result_notifier_set_full (res, perl_xmmsclient_xmmsc_result_notifyer_cb,
 		                                cb, (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
 =head2 wait
@@ -382,7 +381,7 @@ xmmsc_result_wait (res)
 
 		xmmsc_result_wait (c_res);
 
-		SvREFCNT_inc (res); /* TODO: Only do so in non-void context? */
+		SvREFCNT_inc (res);
 		RETVAL = res;
 	OUTPUT:
 		RETVAL

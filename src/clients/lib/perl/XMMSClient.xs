@@ -2063,22 +2063,19 @@ false if not.
 
 void
 xmmsc_io_need_out_callback_set (c, func, data=NULL)
-		SV *c
+		xmmsc_connection_t *c
 		SV *func
 		SV *data
 	PREINIT:
 		PerlXMMSClientCallback *cb = NULL;
 		PerlXMMSClientCallbackParamType param_types[2];
-		xmmsc_connection_t *c_con;
 	CODE:
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION;
 		param_types[1] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_FLAG;
 
-		c_con = (xmmsc_connection_t *)perl_xmmsclient_get_ptr_from_sv (c, "Audio::XMMSClient");
+		cb = perl_xmmsclient_callback_new (func, data, ST(0), 2, param_types);
 
-		cb = perl_xmmsclient_callback_new (func, data, c, 2, param_types);
-
-		xmmsc_io_need_out_callback_set_full (c_con,
+		xmmsc_io_need_out_callback_set_full (c,
 		                                     perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb,
 		                                     (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
