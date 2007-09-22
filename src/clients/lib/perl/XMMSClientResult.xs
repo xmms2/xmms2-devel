@@ -422,6 +422,32 @@ xmmsc_result_source_preference_set (res, ...)
 	CLEANUP:
 		free (preference);
 
+=head2 source_preference_get
+
+=item Arguments: none
+
+=item Return Value: @source_preferences
+
+=back
+
+  my @prefs = $result->source_preference_get;
+
+Get sources to be used when fetching stuff from a propdict.
+
+=cut
+
+void
+xmmsc_result_source_preference_get (res)
+		xmmsc_result_t *res
+	PREINIT:
+		char **preference = NULL, **i = NULL;
+	PPCODE:
+		preference = xmmsc_result_source_preference_get (res);
+
+		for (i = preference; *i; i++) {
+			XPUSHs (newSVpv (*i, 0));
+		}
+
 =head2 get_type
 
 =over 4
