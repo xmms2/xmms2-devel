@@ -2039,6 +2039,37 @@ xmmsc_io_need_out_callback_set (c, func, data=NULL)
 		                                     perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb,
 		                                     (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
+=head2 loop
+
+=over 4
+
+=item Arguments: none
+
+=item Return Value: none
+
+=back
+
+  $conn->loop;
+
+Starts a select-based mainloop which may be terminated by calling
+C</quit_loop>.
+
+=head2 quit_loop
+
+=over 4
+
+=item Arguments: none
+
+=item Return Value: none
+
+=back
+
+  $conn->quit_loop;
+
+Terminates the mainloop started with C</loop>.
+
+=cut
+
 void
 DESTROY (c)
 		xmmsc_connection_t *c
