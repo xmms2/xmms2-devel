@@ -145,7 +145,7 @@ xmms_xspf_parse_track_node (xmms_xform_t *xform, xmlNodePtr node, xmms_error_t *
 		const xmms_xspf_track_prop_t *prop;
 
 		for (prop = xmms_xspf_track_props; prop->name != NULL; prop++) {
-			if (!xmlStrncmp (cur->name, BAD_CAST prop->name, strlen (prop->name))) {
+			if (xmlStrEqual (cur->name, BAD_CAST prop->name)) {
 				switch (prop->type) {
 					case XMMS_XSPF_ATTR_LOCATION:
 						track->location = (char *)cur->children->content;
