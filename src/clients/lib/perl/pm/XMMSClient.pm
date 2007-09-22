@@ -70,7 +70,6 @@ sub request {
     my $self = shift;
     my $func = shift;
 
-    my $user_data = pop;
     my $callback  = pop;
 
     if (!$self->can($func)) {
@@ -78,7 +77,7 @@ sub request {
     }
 
     my $result = $self->$func( @_ );
-    $result->notifier_set($callback, $user_data);
+    $result->notifier_set($callback);
 
     return $result;
 }
