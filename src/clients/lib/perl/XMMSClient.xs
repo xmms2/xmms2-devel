@@ -778,6 +778,26 @@ xmmsc_coll_get (c, collname, namespace)
 		const char *collname
 		xmmsc_coll_namespace_t namespace
 
+=head2 coll_sync
+
+=over 4
+
+=item Arguments: none
+
+=item Return Value: $result
+
+=back
+
+  my $result = $conn->coll_sync;
+
+Synchronize collection data to the database.
+
+=cut
+
+xmmsc_result_t *
+xmmsc_coll_sync (c)
+		xmmsc_connection_t *c
+
 =head2 coll_list
 
 =over 4
