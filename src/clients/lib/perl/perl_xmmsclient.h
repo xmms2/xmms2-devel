@@ -5,6 +5,7 @@
 
 #define NEED_sv_2pvbyte
 #define NEED_sv_2pv_nolen_GLOBAL
+#define NEED_sv_2pv_flags_GLOBAL
 #define NEED_newRV_noinc_GLOBAL
 #include "ppport.h"
 
