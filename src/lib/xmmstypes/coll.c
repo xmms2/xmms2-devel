@@ -747,9 +747,11 @@ xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
 
 /**
  * Return a collection referencing the whole media library,
- * i.e. the "All Media" collection.
+ * that is a reference to the "All Media" collection.
+ * The returned structure must be unref'd using #xmmsc_coll_unref
+ * after usage.
  *
- * @return a collection refering the "All Media" collection.
+ * @return a collection referring to the "All Media" collection.
  */
 xmmsc_coll_t*
 xmmsc_coll_universe ()
