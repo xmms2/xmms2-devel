@@ -641,6 +641,9 @@ class library_configurator(configurator_base):
 		oldlibpath = self.env['LIBPATH']
 		oldlib = self.env['LIB']
 
+		olduselibpath = self.env['LIBPATH_'+self.uselib]
+		olduselib = self.env['LIB_'+self.uselib]
+
 		# try the enumerator to find the correct libpath
 		test = self.conf.create_library_enumerator()
 		test.name = self.name
@@ -654,7 +657,6 @@ class library_configurator(configurator_base):
 
 		self.env['LIB_'+self.uselib] = self.name
 
-		val = {}
 
 		#self.env['LIB'] = self.name
 		#self.env['LIBPATH'] = self.lib_paths
@@ -670,15 +672,18 @@ class library_configurator(configurator_base):
 
 		self.conf.add_define(self.define, ret)
 
+		val = {}
 		if ret:
 			val['LIBPATH_'+self.uselib] = self.env['LIBPATH_'+self.uselib]
 			val['LIB_'+self.uselib] = self.env['LIB_'+self.uselib]
 			val[self.define] = ret
-
+		else:
+			self.env['LIBPATH_'+self.uselib] = olduselibpath
+			self.env['LIB_'+self.uselib] = olduselib
+			
 		self.env['LIB'] = oldlib
 		self.env['LIBPATH'] = oldlibpath
 
-		if not ret: return {}
 		return val
 
 class framework_configurator(configurator_base):
