@@ -18,6 +18,7 @@ from xmmsapi import PLAYLIST_CHANGED_REMOVE
 from xmmsapi import PLAYLIST_CHANGED_CLEAR
 from xmmsapi import PLAYLIST_CHANGED_MOVE
 from xmmsapi import PLAYLIST_CHANGED_SORT
+from xmmsapi import PLAYLIST_CHANGED_UPDATE
 
 from xmmsapi import PLUGIN_TYPE_ALL
 from xmmsapi import PLUGIN_TYPE_XFORM
