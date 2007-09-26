@@ -290,6 +290,10 @@ xmms_sqlite_create ()
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 			create = TRUE;
 		}
+
+		xmms_log_info ("Analyzing db, please wait a few seconds");
+		sqlite3_exec (sql, "ANALYZE", NULL, NULL, NULL);
+		xmms_log_info ("Done with analyze");
 	}
 
 	if (create) {
