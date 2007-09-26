@@ -55,7 +55,10 @@ const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '
                           "INSERT INTO sqlite_stat1 VALUES('Media', 'prop_idx', '199568 6653 3');"
                           "INSERT INTO sqlite_stat1 VALUES('PlaylistEntries', 'playlistentries_idx', '12784 12784 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'playlist_idx', '2 1');"
-                          "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');";
+                          "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');"
+                          "INSERT INTO sqlite_stat1 VALUES('CollectionLabels', 'collectionlabels_idx', '2 2');"
+                          "INSERT INTO sqlite_stat1 VALUES('CollectionIdlists', 'collectionidlists_idx', '15 15 1');"
+                          "INSERT INTO sqlite_stat1 VALUES('CollectionAttributes', 'collectionattributes_idx', '2 2 1');";
 
 const char fill_init_playlist_stm[] = "INSERT INTO CollectionOperators VALUES(1, %d);"
                                       "INSERT INTO CollectionLabels VALUES(1, %d, 'Default');"
