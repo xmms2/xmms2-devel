@@ -227,33 +227,9 @@ try_upgrade (sqlite3 *sql, gint version)
 	return can_upgrade;
 }
 
-/**
- * Open a database or create a new one
- */
-sqlite3 *
-xmms_sqlite_open (gboolean *create)
+static void
+xmms_sqlite_set_common_properties (sqlite3 *sql)
 {
-	sqlite3 *sql;
-	const gchar *dbpath;
-	gint version = 0;
-	xmms_config_property_t *cv;
-	gchar *tmp;
-
-	cv = xmms_config_lookup ("medialib.path");
-	dbpath = xmms_config_property_get_string (cv);
-
-	*create = FALSE;
-	if (!g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
-		*create = TRUE;
-	}
-
-	if (sqlite3_open (dbpath, &sql)) {
-		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg (sql));
-		return NULL;
-	}
-
-	g_return_val_if_fail (sql, NULL);
-
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 	sqlite3_exec (sql, "PRAGMA auto_vacuum = 1", NULL, NULL, NULL);
 	sqlite3_exec (sql, "PRAGMA cache_size = 8000", NULL, NULL, NULL);
@@ -262,10 +238,34 @@ xmms_sqlite_open (gboolean *create)
 	/* One minute */
 	sqlite3_busy_timeout (sql, 60000);
 
-	/* if the database already exists, check whether there have been
-	 * any incompatible changes. if so, we need to recreate the db.
-	 */
-	if (!*create) {
+	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
+}
+
+gboolean
+xmms_sqlite_create ()
+{
+	xmms_config_property_t *cv;
+	gchar *tmp;
+	gboolean create = FALSE;
+	const gchar *dbpath;
+	gint version = 0;
+	sqlite3 *sql;
+
+	cv = xmms_config_lookup ("medialib.path");
+	dbpath = xmms_config_property_get_string (cv);
+
+	if (!g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
+		create = TRUE;
+	}
+
+	if (sqlite3_open (dbpath, &sql)) {
+		xmms_log_fatal ("Error opening sqlite db: %s", sqlite3_errmsg (sql));
+		return FALSE;
+	}
+
+	xmms_sqlite_set_common_properties (sql);
+
+	if (!create) {
 		sqlite3_exec (sql, "PRAGMA user_version",
 		              xmms_sqlite_version_cb, &version, NULL);
 
@@ -279,16 +279,17 @@ xmms_sqlite_open (gboolean *create)
 			if (sqlite3_open (dbpath, &sql)) {
 				xmms_log_fatal ("Error creating sqlite db: %s",
 				                sqlite3_errmsg (sql));
-				return NULL;
+				g_free (old);
+				return FALSE;
 			}
 			g_free (old);
 
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-			*create = TRUE;
+			create = TRUE;
 		}
 	}
 
-	if (*create) {
+	if (create) {
 		/* Check if we are about to put the medialib on a
 		 * remote filesystem. They are known to work less
 		 * well with sqlite and therefore we should refuse
@@ -350,7 +351,33 @@ xmms_sqlite_open (gboolean *create)
 		                                               XMMS_COLLECTION_NSID_PLAYLISTS);
 	}
 
-	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
+	sqlite3_close (sql);
+
+	XMMS_DBG ("xmms_sqlite_create done!");
+	return TRUE;
+}
+
+/**
+ * Open a database or create a new one
+ */
+sqlite3 *
+xmms_sqlite_open ()
+{
+	sqlite3 *sql;
+	const gchar *dbpath;
+	xmms_config_property_t *cv;
+
+	cv = xmms_config_lookup ("medialib.path");
+	dbpath = xmms_config_property_get_string (cv);
+
+	if (sqlite3_open (dbpath, &sql)) {
+		xmms_log_fatal ("Error opening sqlite db: %s", sqlite3_errmsg (sql));
+		return NULL;
+	}
+
+	g_return_val_if_fail (sql, NULL);
+
+	xmms_sqlite_set_common_properties (sql);
 
 	return sql;
 }

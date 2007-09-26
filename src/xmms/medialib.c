@@ -268,7 +268,7 @@ xmms_medialib_session_new (const char *file, int line)
 	session->medialib = medialib;
 	session->file = file;
 	session->line = line;
-	session->sql = xmms_sqlite_open (&create);
+	session->sql = xmms_sqlite_open ();
 	session->source_pref = g_strdup ("server:client/*:plugin/id3v2:plugin/*");
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
@@ -349,6 +349,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_medialib_debug_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	xmms_medialib_debug_mutex = g_mutex_new ();
 	global_medialib_session = NULL;
+
+	/* init the database */
+	xmms_sqlite_create ();
 
 	if (sqlite3_libversion_number () < 3002004) {
 		xmms_log_info ("**************************************************************");
