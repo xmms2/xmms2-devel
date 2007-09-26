@@ -824,8 +824,10 @@ cdef class XMMSResult:
 
 	def more_init(self, broadcast = 0):
 		self.broadcast = broadcast
-		Py_INCREF(self)
-		xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ResultFreeer)
+		if self.callback:
+			Py_INCREF(self)
+			xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ResultFreeer)
+			xmmsc_result_unref(self.res)
 
 	def _cb(self):
 		cdef xmmsc_result_t *r
