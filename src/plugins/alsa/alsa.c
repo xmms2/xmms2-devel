@@ -389,7 +389,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 
 	g_return_val_if_fail (data, FALSE);
 
-	snd_pcm_hw_params_alloca (&hwparams);	
+	snd_pcm_hw_params_alloca (&hwparams);
 
 	/* what alsa format does this format correspond to? */
 	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
