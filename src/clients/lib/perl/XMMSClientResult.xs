@@ -344,7 +344,6 @@ xmmsc_result_notifier_set (res, func, data=NULL)
 	PREINIT:
 		PerlXMMSClientCallback *cb = NULL;
 		PerlXMMSClientCallbackParamType param_types[1];
-		xmmsc_result_t *c_res;
 	CODE:
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT;
 
