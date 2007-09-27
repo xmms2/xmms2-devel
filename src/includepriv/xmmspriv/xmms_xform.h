@@ -38,6 +38,7 @@ xmms_xform_t *xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_f
 xmms_xform_t *xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats);
 xmms_xform_t *xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry, GList *goal_formats);
 xmms_xform_t *xmms_xform_chain_setup_url_without_effects (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats);
+xmms_xform_t *xmms_xform_chain_setup_rehash (xmms_medialib_entry_t entry, GList *goal_formats);
 
 gint64 xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 int xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err);
