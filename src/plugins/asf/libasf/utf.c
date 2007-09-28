@@ -87,7 +87,7 @@ asf_utf8_from_utf16le(uint8_t *buf, uint16_t buflen)
 			ret[pos++] = 0x80 | ((codepoint >> 6) & 0x3F);
 			ret[pos++] = 0x80 |  (codepoint & 0x3F);
 		} else if (codepoint > 0x7F) {
-			ret[pos++] = 0xB0 |  (codepoint >> 6);
+			ret[pos++] = 0xC0 |  (codepoint >> 6);
 			ret[pos++] = 0x80 |  (codepoint & 0x3F);
 		} else {
 			ret[pos++] = codepoint;
