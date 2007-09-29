@@ -826,6 +826,7 @@ xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 	if (!ipc) return;
 
 	g_mutex_lock (ipc->mutex_lock);
+	g_source_remove_by_user_data (ipc);
 	g_io_channel_unref (ipc->chan);
 	xmms_ipc_transport_destroy (ipc->transport);
 
