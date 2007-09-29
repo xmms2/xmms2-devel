@@ -1238,20 +1238,27 @@ typedef struct {
  * We compare each pair of values in the list of prop values.
  */
 static gint
-xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
+xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer user_data)
 {
-	GList *n1, *n2;
+	GList *n1, *n2, *properties;
 	xmms_object_cmd_value_t *val1, *val2;
 	sortdata_t *data1 = (sortdata_t *) a;
 	sortdata_t *data2 = (sortdata_t *) b;
 	int s1, s2, res;
+	gchar *str;
 
-	for (n1 = data1->val, n2 = data2->val;
-	     n1 && n2;
-	     n1 = n1->next, n2 = n2->next) {
+	for (n1 = data1->val, n2 = data2->val, properties = (GList *) user_data;
+	     n1 && n2 && properties;
+	     n1 = n1->next, n2 = n2->next, properties = properties->next) {
 
-		val1 = n1->data;
-		val2 = n2->data;
+		str = properties->data;
+		if (str[0] == '-') {
+			val2 = n1->data;
+			val1 = n2->data;
+		} else {
+			val1 = n1->data;
+			val2 = n2->data;
+		}
 
 		if (!val1) {
 			if (!val2)
@@ -1399,9 +1406,14 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 		/* save the list of values corresponding to the list of sort props */
 		data->val = NULL;
 		for (n = properties; n; n = n->next) {
+			str = n->data;
+			if (str[0] == '-')
+				str++;
+
 			val = xmms_medialib_entry_property_get_cmd_value (session,
 			                                                  data->id,
-			                                                  (char*)n->data);
+			                                                  str);
+
 			if (val && val->type == XMMS_OBJECT_CMD_ARG_STRING) {
 				str = val->value.string;
 				val->value.string = g_utf8_casefold (str, strlen (str));
@@ -1420,7 +1432,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 	xmms_medialib_end (session);
 
 	tmp = g_list_reverse (tmp);
-	tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
+	tmp = g_list_sort_with_data (tmp, xmms_playlist_entry_compare, properties);
 
 	/* check whether there was any change */
 	for (i = 0, n = tmp; n; i++, n = g_list_next (n)) {
