@@ -105,15 +105,6 @@ int
 xmmsc_connect (c, ipcpath=NULL)
 		xmmsc_connection_t *c
 		const char *ipcpath
-	PREINIT:
-		char *xmms_path_env = NULL;
-	INIT:
-		if (ipcpath == NULL) {
-			xmms_path_env = getenv ("XMMS_PATH");
-
-			if (xmms_path_env != NULL)
-				ipcpath = xmms_path_env;
-		}
 	OUTPUT:
 		RETVAL
 
