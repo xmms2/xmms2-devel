@@ -27,8 +27,8 @@ class XMMSSync:
     def __getattr__(self, name):
         attr = getattr(self.__xmms, name)
         if callable(attr):
-            def _(*args):
-                ret = attr(*args)
+            def _(*args, **kwargs):
+                ret = attr(*args, **kwargs)
                 if isinstance(ret, xmmsapi.XMMSResult):
                     ret.wait()
                     if ret.iserror():
