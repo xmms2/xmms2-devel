@@ -229,7 +229,7 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 }
 
 static void
-process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
+process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 {
 	xmms_object_t *object;
 	xmms_object_cmd_desc_t *cmd;
@@ -238,7 +238,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	uint32_t objid, cmdid;
 	gint i;
 
-	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
 
 	objid = xmms_ipc_msg_get_object (msg);
@@ -372,7 +371,7 @@ xmms_ipc_client_read_cb (GIOChannel *iochan,
 			if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
 				xmms_ipc_msg_t *msg = client->read_msg;
 				client->read_msg = NULL;
-				process_msg (client, client->ipc, msg);
+				process_msg (client, msg);
 				xmms_ipc_msg_destroy (msg);
 			} else {
 				break;
