@@ -241,7 +241,8 @@ xmms_output_set_error (xmms_output_t *output, xmms_error_t *error)
 	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
 
 	if (error) {
-		xmms_log_error ("plugin reported error, '%s'",
+		xmms_log_error ("Output plugin %s reported error, '%s'",
+		                xmms_plugin_shortname_get ((xmms_plugin_t *)output->plugin),
 		                xmms_error_message_get (error));
 	}
 }
