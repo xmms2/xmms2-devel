@@ -35,6 +35,11 @@ class XMMSSync:
                         raise XMMSError(ret.get_error())
                     return ret.value()
                 return ret
+            try:
+                _.__doc__ = attr.__doc__
+                _.func_name = '<sync version of %s>' % name
+            except:
+                pass
             return _
         else:
             return attr
