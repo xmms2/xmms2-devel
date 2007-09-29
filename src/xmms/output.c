@@ -463,10 +463,12 @@ xmms_output_filler (void *arg)
 			gint skip = MIN (ret, output->toskip);
 
 			output->toskip -= skip;
-			xmms_ringbuf_write_wait (output->filler_buffer,
-			                         buf + skip,
-			                         ret - skip,
-			                         output->filler_mutex);
+			if (ret > skip) {
+				xmms_ringbuf_write_wait (output->filler_buffer,
+				                         buf + skip,
+				                         ret - skip,
+				                         output->filler_mutex);
+			}
 		} else {
 			if (ret == -1) {
 				/* print error */
