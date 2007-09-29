@@ -2461,10 +2461,12 @@ cdef class XMMS:
 			n = XMMS_COLLECTION_NS_PLAYLISTS
 		else:
 			raise ValueError("Bad namespace")
+
+		nam = from_unicode(name)
 		
 		ret = XMMSResult(self)
 		ret.callback = cb
-		ret.res = xmmsc_coll_get(self.conn, name, n)
+		ret.res = xmmsc_coll_get(self.conn, nam, n)
 
 		ret.more_init()
 		return ret
@@ -2507,9 +2509,11 @@ cdef class XMMS:
 		else:
 			raise ValueError("Bad namespace")
 
+		nam = from_unicode(name)
+		
 		ret = XMMSResult(self)
 		ret.callback = cb
-		ret.res = xmmsc_coll_save(self.conn, coll.coll, name, n)
+		ret.res = xmmsc_coll_save(self.conn, coll.coll, nam, n)
 		ret.more_init()
 		return ret
 
@@ -2528,9 +2532,11 @@ cdef class XMMS:
 		else:
 			raise ValueError("Bad namespace")
 		
+		nam = from_unicode(name)
+		
 		ret = XMMSResult(self)
 		ret.callback = cb
-		ret.res = xmmsc_coll_remove(self.conn, name, n)
+		ret.res = xmmsc_coll_remove(self.conn, nam, n)
 
 		ret.more_init()
 		return ret
@@ -2551,9 +2557,12 @@ cdef class XMMS:
 		else:
 			raise ValueError("Bad namespace")
 		
+		oldnam = from_unicode(oldname)
+		newnam = from_unicode(newname)
+		
 		ret = XMMSResult(self)
 		ret.callback = cb
-		ret.res = xmmsc_coll_rename(self.conn, oldname, newname, n)
+		ret.res = xmmsc_coll_rename(self.conn, oldnam, newnam, n)
 
 		ret.more_init()
 		return ret
