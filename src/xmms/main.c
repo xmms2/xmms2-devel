@@ -446,7 +446,7 @@ main (int argc, char **argv)
 
 	load_config ();
 
-	xmms_default_ipcpath_get (default_path, sizeof (default_path));
+	xmms_fallback_ipcpath_get (default_path, sizeof (default_path));
 
 	cv = xmms_config_property_register ("core.ipcsocket",
 	                                    default_path,
