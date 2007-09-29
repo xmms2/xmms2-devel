@@ -19,47 +19,29 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
+#include "xmms_configuration.h"
 #include "xmmsc/xmmsc_util.h"
 
 /**
- * Get the absolute path to the user config dir.
- *
- * @param buf A char buffer
- * @param len The length of buf (PATH_MAX is a good choice)
- * @return A pointer to buf, or NULL if an error occurred.
- */
-const char *
-xmms_userconfdir_get (char *buf, int len)
-{
-	char *config_home;
-
-	if (!buf || len <= 0)
-		return NULL;
-
-	config_home = getenv ("APPDATA");
-
-	if (config_home && *config_home) {
-		snprintf (buf, len, "%s\\xmms2", config_home);
-
-		return buf;
-	}
-
-	return NULL;
-}
-
-
-/**
- * Get the fallback connection path (if XMMS_PATH is not accessible)
+ * Get the default connection path.
  *
  * @param buf A char buffer
  * @param len The length of buf (PATH_MAX is a good choice)
  * @return A pointer to buf, or NULL if an error occured.
  */
 const char *
-xmms_fallback_ipcpath_get (char *buf, int len)
+xmms_default_ipcpath_get (char *buf, int len)
 {
-	snprintf (buf, len, "tcp://127.0.0.1:" XMMS_STRINGIFY (XMMS_DEFAULT_TCP_PORT));
+	const char *xmmspath;
+
+	xmmspath = getenv ("XMMS_PATH");
+	if (xmmspath && strlen (xmmspath) < len) {
+		strcpy (buf, xmmspath);
+	} else {
+		return xmms_fallback_ipcpath_get (buf, len);
+	}
 
 	return buf;
 }

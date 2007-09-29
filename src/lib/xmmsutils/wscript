@@ -9,7 +9,7 @@ import Params
 def build(bld):
     env = bld.env_of_name('default')
     obj = bld.create_obj('cc', 'staticlib')
-    obj.source = ["strlist.c", "utils_%s.c" % env['util_impl']]
+    obj.source = ["strlist.c", "utils.c", "utils_%s.c" % env['util_impl']]
     obj.includes='. ../../include'
     obj.target='xmmsutils'
     obj.install_var = 0
