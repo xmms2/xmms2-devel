@@ -179,6 +179,16 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
+	VoidResult Medialib::moveEntry( unsigned int id,
+	                                const std::string& path ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_medialib_move_entry, conn_,
+		                       id, path.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
 	UintSignal Medialib::broadcastEntryAdded() const
 	{
 		xmmsc_result_t* res =
