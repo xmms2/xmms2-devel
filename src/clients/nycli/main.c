@@ -101,6 +101,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		GError *error = NULL;
 		gint i;
 		gboolean help;
+		gboolean need_io;
 
 		command_context_t *ctx;
 		ctx = command_context_init (argc, argv);
@@ -150,7 +151,10 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		} else if (command_runnable (infos, action)) {
 			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);
-			action->callback (infos, ctx);
+			need_io = action->callback (infos, ctx);
+			if (!need_io) {
+				cli_infos_loop_resume (infos);
+			}
 		}
 
 		command_context_free (ctx);

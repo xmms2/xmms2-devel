@@ -271,7 +271,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_unref (res);
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
-		cli_infos_loop_resume (infos);
+		return FALSE;
 	}
 
 	return TRUE;
@@ -287,11 +287,11 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 	/* FIXME: Support advanced flags */
 	if (command_flag_int_get (ctx, "refresh", &r)) {
-		g_printf ("refresh=%d\n", r);
+		g_printf (_("--refresh flag not supported yet!\n"));
 	}
 
 	if (command_flag_string_get (ctx, "format", &f)) {
-		g_printf ("format='%s'\n", f);
+		g_printf (_("--format flag not supported yet!\n"));
 	}
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
@@ -344,7 +344,6 @@ gboolean
 cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
 	gboolean backward;
 
@@ -352,14 +351,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 		backward = FALSE;
 	}
 
-	command_arg_longstring_get (ctx, 0, &pattern);
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		g_printf (_("Error: failed to parse the pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else {
+	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		/* FIXME: benchmark if efficient to reduce query to Active playlist */
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
 		if (backward) {
@@ -377,7 +369,6 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 	column_display_t *coldisp;
@@ -386,14 +377,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 	/* FIXME: Support arguments -p and -c */
 
-	command_arg_longstring_get (ctx, 0, &pattern);
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		g_printf (_("Error: failed to parse the pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else {
+	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
@@ -403,7 +387,6 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_coll_unref (query);
 	}
 
-	g_free (pattern);
 	g_free (order);
 
 	return TRUE;
@@ -424,8 +407,8 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	if (pattern) {
 		if (!xmmsc_coll_parse (pattern, &query)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
-			cli_infos_loop_resume (infos);
-			return;
+			g_free (pattern);
+			return FALSE;
 		}
 		/* FIXME: support filtering */
 	}
@@ -453,31 +436,21 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern = NULL;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 
-	command_arg_longstring_get (ctx, 0, &pattern);
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		g_printf (_("Error: failed to parse the pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else {
+	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
 		xmmsc_result_notifier_set (res, cb_list_print_info, infos);
 		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
 
-	g_free (pattern);
-
 	return TRUE;
 }
 
 
-gboolean
+static gboolean
 cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
 	gboolean next;
 	gint at;
@@ -507,7 +480,11 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
 	return TRUE;
 }
 
-gchar *
+/* Transform a path (possibly absolute or relative) into a valid XMMS2
+ * path with protocol prefix. The resulting string must be freed
+ * manually.
+ */
+static gchar *
 make_valid_url (gchar *path)
 {
 	gchar *p;
@@ -544,6 +521,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gboolean norecurs;
 	pack_infos_playlist_pos_t *pack;
 	gint i, count;
+	gboolean success = TRUE;
 
 /*
 --file  Add a path from the local filesystem
@@ -561,7 +539,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	/* FIXME: pos is wrong in non-active playlists (next/offsets are invalid)! */
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
 	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
-		cli_infos_loop_resume (infos);
+		success = FALSE;
 		goto finish;
 	}
 
@@ -572,7 +550,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	/* We need either a file or a pattern! */
 	if (!pattern) {
 		g_printf (_("Error: you must provide a pattern or files to add!\n"));
-		cli_infos_loop_resume (infos);
+		success = FALSE;
 		goto finish;
 	}
 
@@ -602,13 +580,13 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	} else {
 		if (norecurs) {
 			g_printf (_("Error: --non-recursive only applies when passing --file!\n"));
-			cli_infos_loop_resume (infos);
+			success = FALSE;
 			goto finish;
 		}
 
 		if (!xmmsc_coll_parse (pattern, &query)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
-			cli_infos_loop_resume (infos);
+			success = FALSE;
 			goto finish;
 		} else {
 			pack = pack_infos_playlist_pos (infos, playlist, pos);
@@ -623,7 +601,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (pattern);
 
-	return TRUE;
+	return success;
 }
 
 
@@ -631,7 +609,6 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern = NULL;
 	gchar *playlist = NULL;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
@@ -642,14 +619,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		playlist = NULL;
 	}
 
-	command_arg_longstring_get (ctx, 0, &pattern);
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		g_printf (_("Error: failed to parse the pattern!\n"));
-		cli_infos_loop_resume (infos);
-	} else {
+	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
 		if (!playlist) {
 			/* Optimize by reading active playlist from cache */
@@ -663,8 +633,6 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
-
-	g_free (pattern);
 
 	return TRUE;
 }
@@ -680,7 +648,7 @@ cli_quit (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_quit (infos->conn);
 		xmmsc_result_unref (res);
 	} else {
-		cli_infos_loop_resume (infos);
+		return FALSE;
 	}
 
 	return TRUE;
@@ -778,7 +746,6 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 		g_printf (_("To get help for a command, type 'help <command>'.\n"));
 	}
 
-	cli_infos_loop_resume (infos);
-
-	return TRUE;
+	/* No data pending */
+	return FALSE;
 }

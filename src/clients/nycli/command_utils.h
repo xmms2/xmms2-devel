@@ -49,6 +49,7 @@ gboolean command_arg_int_get (command_context_t *ctx, gint at, gint *v);
 gboolean command_arg_string_get (command_context_t *ctx, gint at, gchar **v);
 gboolean command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v);
 gboolean command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v);
+gboolean command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v, gboolean warn);
 
 
 typedef void (*double_notifier_f)(xmmsc_result_t *res1, xmmsc_result_t *res2, void *user_data);

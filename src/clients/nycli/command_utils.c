@@ -161,6 +161,33 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 	return retval;
 }
 
+/** Try to parse a collection pattern from the arguments and return
+ *  success status. The resulting coll structure is saved to the v
+ *  argument. In case of error, the error message is printed on
+ *  stdout.
+ */
+gboolean
+command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
+                         gboolean warn)
+{
+	gchar *pattern = NULL;
+	gboolean success = TRUE;
+
+	/* FIXME: Need a more elegant error system. */
+
+	command_arg_longstring_get (ctx, at, &pattern);
+	if (!pattern) {
+		if (warn) g_printf (_("Error: you must provide a pattern!\n"));
+		success = FALSE;
+	} else if (!xmmsc_coll_parse (pattern, v)) {
+		if (warn) g_printf (_("Error: failed to parse the pattern!\n"));
+		success = FALSE;
+	}
+
+	g_free (pattern);
+
+	return success;
+}
 
 
 static void
