@@ -302,7 +302,7 @@ command_trie_find_node (command_trie_t *trie, gchar *input,
 }
 
 command_action_t*
-command_trie_find (command_trie_t *trie, gchar **input, gint num,
+command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
                    gboolean auto_complete)
 {
 	command_trie_t *node;
@@ -313,11 +313,13 @@ command_trie_find (command_trie_t *trie, gchar **input, gint num,
 		return NULL;
 	}
 
-	if (node = command_trie_find_node (trie, *input, auto_complete)) {
+	if (node = command_trie_find_node (trie, **input, auto_complete)) {
+		(*input) ++;
+		(*num) --;
 		if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {
 			action = node->match.action;
 		} else if (node->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
-			action = command_trie_find (node->match.subtrie, input + 1, num - 1,
+			action = command_trie_find (node->match.subtrie, input, num,
 			                            auto_complete);
 		}
 	}

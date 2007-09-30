@@ -90,13 +90,13 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 gint
 command_arg_count (command_context_t *ctx)
 {
-	return ctx->argc - 1;
+	return ctx->argc;
 }
 
 gchar **
 command_argv_get (command_context_t *ctx)
 {
-	return ctx->argv + 1;
+	return ctx->argv;
 }
 
 gboolean
@@ -105,7 +105,7 @@ command_arg_int_get (command_context_t *ctx, gint at, gint *v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = strtol (ctx->argv[at + 1], NULL, 10);
+		*v = strtol (ctx->argv[at], NULL, 10);
 		retval = TRUE;
 	}
 
@@ -118,7 +118,7 @@ command_arg_string_get (command_context_t *ctx, gint at, gchar **v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = ctx->argv[at + 1];
+		*v = ctx->argv[at];
 		retval = TRUE;
 	}
 
@@ -134,7 +134,7 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = g_strjoinv (" ", &ctx->argv[at + 1]);
+		*v = g_strjoinv (" ", &ctx->argv[at]);
 		retval = TRUE;
 	}
 

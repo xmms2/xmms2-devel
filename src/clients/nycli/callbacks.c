@@ -220,6 +220,33 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 	xmmsc_result_unref (res);
 }
 
+void
+cb_list_print_playlists (xmmsc_result_t *res, void *udata)
+{
+	cli_infos_t *infos = (cli_infos_t *) udata;
+	gchar *s;
+
+	if (!xmmsc_result_iserror (res)) {
+		while (xmmsc_result_list_valid (res)) {
+			/* Skip hidden playlists */
+			if (xmmsc_result_get_string (res, &s) && (*s != '_')) {
+				/* Highlight active playlist */
+				if (strcmp (s, infos->cache->active_playlist_name) == 0) {
+					g_printf ("* %s\n", s);
+				} else {
+					g_printf ("  %s\n", s);
+				}
+			}
+			xmmsc_result_list_next (res);
+		}
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
+}
+
 /* Abstract jump, use inc to choose the direction. */
 static void
 cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)

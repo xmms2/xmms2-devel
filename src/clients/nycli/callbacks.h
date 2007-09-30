@@ -29,6 +29,7 @@ void cb_tickle (xmmsc_result_t *res, void *udata);
 void cb_entry_print_status (xmmsc_result_t *res, void *udata);
 void cb_list_print_info (xmmsc_result_t *res, void *udata);
 void cb_list_print_row (xmmsc_result_t *res, void *udata);
+void cb_list_print_playlists (xmmsc_result_t *res, void *udata);
 void cb_list_jump (xmmsc_result_t *res, void *udata);
 void cb_list_jump_back (xmmsc_result_t *res, void *udata);
 void cb_add_list (xmmsc_result_t *matching, void *udata);

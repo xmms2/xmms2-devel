@@ -40,6 +40,9 @@ gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pl_list (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_switch (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_create (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_rename (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pl_remove (cli_infos_t *infos, command_context_t *ctx);
 
 void cli_play_setup (command_action_t *action);
@@ -59,6 +62,9 @@ void cli_quit_setup (command_action_t *action);
 void cli_exit_setup (command_action_t *action);
 void cli_help_setup (command_action_t *action);
 void cli_pl_list_setup (command_action_t *action);
+void cli_pl_switch_setup (command_action_t *action);
+void cli_pl_create_setup (command_action_t *action);
+void cli_pl_rename_setup (command_action_t *action);
 void cli_pl_remove_setup (command_action_t *action);
 
 void help_command (cli_infos_t *infos, gchar **cmd, gint num_args);
@@ -82,6 +88,9 @@ static command_setup_func commandlist[] =
 	cli_exit_setup,
 	cli_help_setup,
 	cli_pl_list_setup,
+	cli_pl_switch_setup,
+	cli_pl_create_setup,
+	cli_pl_rename_setup,
 	cli_pl_remove_setup,
 	NULL
 };

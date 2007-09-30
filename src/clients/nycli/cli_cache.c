@@ -180,6 +180,8 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 	xmmsc_result_t *refres;
 	gchar *buf;
 
+	/* FIXME: Also listen to playlist renames, in case the active PL is renamed! */
+
 	/* Refresh playlist name */
 	if (xmmsc_result_get_string (res, &buf)) {
 		g_free (infos->cache->active_playlist_name);

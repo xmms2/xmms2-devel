@@ -51,10 +51,12 @@ CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, COMMAND_REQ_NONE, NULL, _("Ex
 CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, COMMAND_REQ_NONE, _("[command]"),
                  _("List all commands, or help on one command."))
 
-CLI_SIMPLE_SETUP(cli_pl_list_setup, "playlist list", cli_pl_list, COMMAND_REQ_CONNECTION, NULL,
+CLI_SIMPLE_SETUP(cli_pl_list_setup, "playlist list", cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, _("[pattern]"),
                  _("List all playlist."))
-CLI_SIMPLE_SETUP(cli_pl_remove_setup, "playlist remove", cli_pl_remove, COMMAND_REQ_CONNECTION, NULL,
-                 _("Remove a playlist."))
+CLI_SIMPLE_SETUP(cli_pl_switch_setup, "playlist switch", cli_pl_switch, COMMAND_REQ_CONNECTION, _("<playlist>"),
+                 _("Change the active playlist."))
+CLI_SIMPLE_SETUP(cli_pl_remove_setup, "playlist remove", cli_pl_remove, COMMAND_REQ_CONNECTION, _("<playlist>"),
+                 _("Remove the given playlist."))
 
 void
 cli_stop_setup (command_action_t *action)
@@ -153,6 +155,30 @@ cli_status_setup (command_action_t *action)
 	command_action_fill (action, "status", &cli_status, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-r <time>] [-f <format>]"),
 	                     _("Display playback status, either continuously or once."));
+}
+
+void
+cli_pl_create_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Copy the content of the playlist into the new playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist create", &cli_pl_create, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-p <playlist>] <name>"),
+	                     _("Change the active playlist."));
+}
+
+void
+cli_pl_rename_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist rename", &cli_pl_rename, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>] <newname>"),
+	                     _("Rename a playlist.  By default, rename the active playlist."));
 }
 
 
@@ -646,11 +672,89 @@ gboolean
 cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
+
+	/* FIXME: support pattern argument (only display playlist containing matching media) */
+	/* FIXME: --all flag to show hidden playlists */
+
 	res = xmmsc_playlist_list (infos->conn);
+	xmmsc_result_notifier_set (res, cb_list_print_playlists, infos);
+	xmmsc_result_unref (res);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist;
+
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+		g_printf (_("Error: failed to read new playlist name!\n"));
+		return FALSE;
+	}
+
+	res = xmmsc_playlist_load (infos->conn, playlist);
 	xmmsc_result_notifier_set (res, cb_done, infos);
 	xmmsc_result_unref (res);
 
-	g_printf ("- here be the list of playlists -\n");
+	g_free (playlist);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist, *copy;
+
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+		g_printf (_("Error: failed to read new playlist name!\n"));
+		return FALSE;
+	}
+
+	if (command_flag_string_get (ctx, "playlist", &copy)) {
+		/* Copy the given playlist */
+		g_printf ("Copy not implemented yet!");
+		/* FIXME: implement this
+		res = xmmsc_coll_get (infos->conn, copy, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_notifier_set (res, cb_copy_playlist, infos);
+		xmmsc_result_unref (res);
+		*/
+	} else {
+		/* Simply create a new empty playlist */
+		res = xmmsc_playlist_create (infos->conn, playlist);
+		xmmsc_result_notifier_set (res, cb_done, infos);
+		xmmsc_result_unref (res);
+	}
+
+	g_free (playlist);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *oldname, *newname;
+
+	if (!command_arg_longstring_get (ctx, 0, &newname)) {
+		g_printf (_("Error: failed to read new playlist name!\n"));
+		return FALSE;
+	}
+
+	if (!command_flag_string_get (ctx, "playlist", &oldname)) {
+		oldname = infos->cache->active_playlist_name;
+	}
+
+	res = xmmsc_coll_rename (infos->conn, oldname, newname,
+	                         XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_free (newname);
 
 	return TRUE;
 }
@@ -659,11 +763,25 @@ gboolean
 cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	res = xmmsc_playlist_list (infos->conn);
+	gchar *playlist;
+
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+		g_printf (_("Error: failed to read the playlist name!\n"));
+		return FALSE;
+	}
+
+	/* Do not remove active playlist! */
+	if (strcmp (playlist, infos->cache->active_playlist_name) == 0) {
+		g_printf (_("Error: you cannot remove the active playlist!\n"));
+		g_free (playlist);
+		return FALSE;
+	}
+
+	res = xmmsc_playlist_remove (infos->conn, playlist);
 	xmmsc_result_notifier_set (res, cb_done, infos);
 	xmmsc_result_unref (res);
 
-	g_printf ("- hello from inside playlist remove -\n");
+	g_free (playlist);
 
 	return TRUE;
 }
@@ -717,7 +835,11 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 	gint i, k;
 	gint padding, max_flag_len = 0;
 
-	action = command_trie_find (infos->commands, cmd, num_args, AUTO_UNIQUE_COMPLETE);
+	gchar **argv = cmd;
+	gint argc = num_args;
+
+	action = command_trie_find (infos->commands, &argv, &argc,
+	                            AUTO_UNIQUE_COMPLETE);
 	if (action) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {

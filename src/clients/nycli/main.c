@@ -93,8 +93,10 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	gchar *after;
 	command_action_t *action;
-	action = command_trie_find (infos->commands, argv, argc, AUTO_UNIQUE_COMPLETE);
+	action = command_trie_find (infos->commands, &argv, &argc, AUTO_UNIQUE_COMPLETE);
 	if (action) {
+
+		/* FIXME: problem if flag is the first element!  */
 
 		/* FIXME: look at the error! */
 		GOptionContext *context;
