@@ -39,7 +39,7 @@ static command_trie_t* command_trie_elem_insert (command_trie_t* node, gchar c);
 static command_trie_t* command_trie_subtrie_insert (command_trie_t* node, gchar c);
 static gboolean command_trie_action_set (command_trie_t* node, command_action_t *action);
 static gint command_trie_elem_cmp (gconstpointer elem, gconstpointer udata);
-static command_action_t* command_trie_find_leaf_action (command_trie_t *trie);
+static command_trie_t* command_trie_find_leaf (command_trie_t *trie);
 
 
 static gint
@@ -255,60 +255,70 @@ command_trie_subtrie_insert (command_trie_t* node, gchar c)
 	return command_trie_elem_insert (node->match.subtrie, c);
 }
 
-/* Given a trie node, try to find a unique leaf action, else return NULL. */
-static command_action_t*
-command_trie_find_leaf_action (command_trie_t *trie)
+/* Given a trie node, try to find a unique leaf, else return NULL. */
+static command_trie_t*
+command_trie_find_leaf (command_trie_t *trie)
 {
 	GList *succ;
-	command_action_t *action = NULL;
+	command_trie_t *leaf = NULL;
 
 	if (trie) {
 		succ = g_list_first (trie->next);
 		if (succ && succ->next == NULL && !command_trie_valid_match (trie)) {
 			/* Not a matching node, a single successor: recurse */
-			action = command_trie_find_leaf_action ((command_trie_t *) succ->data);
+			leaf = command_trie_find_leaf ((command_trie_t *) succ->data);
 		} else if (!succ && command_trie_valid_match (trie)) {
-			/* No successor, matching node: we found it! */
-			if (trie->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
-				action = command_trie_find_leaf_action (trie->match.subtrie);
-			} else if (trie->match.type == COMMAND_TRIE_MATCH_ACTION) {
-				action = trie->match.action;
-			}
+			leaf = trie;
 		}
 	}
 
-	return action;
+	return leaf;
 }
 
-command_action_t*
-command_trie_find (command_trie_t *trie, const gchar *input,
-                   gboolean auto_complete)
+static command_trie_t *
+command_trie_find_node (command_trie_t *trie, gchar *input,
+                        gboolean auto_complete)
 {
-	command_action_t *action = NULL;
+	command_trie_t *node = NULL;
 	GList *l;
 
-	/* FIXME: support the subtrie */
-	if (*input == ' ') {
+	if (*input == 0) {
 		/* End of token, return current action, or unique completion */
-		if (trie->match.type == COMMAND_TRIE_MATCH_ACTION) {
-			action = trie->match.action;
-		} else if (trie->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
-			action = command_trie_find (trie->match.subtrie, input + 1, auto_complete);
-		}
-		/* FIXME: do something with auto-complete here */
-	} else if (*input == 0) {
-		/* End of token, return current action, or unique completion */
-		if (trie->match.type == COMMAND_TRIE_MATCH_ACTION) {
-			action = trie->match.action;
+		if (command_trie_valid_match (trie)) {
+			node = trie;
 		} else if (auto_complete) {
-			action = command_trie_find_leaf_action (trie);
+			node = command_trie_find_leaf (trie);
 		}
 	} else {
 		/* Recurse in next trie node */
 		l = g_list_find_custom (trie->next, input, command_trie_elem_cmp);
 		if (l != NULL) {
-			action = command_trie_find ((command_trie_t *) l->data, input + 1,
-			                             auto_complete);
+			node = command_trie_find_node ((command_trie_t *) l->data, input + 1,
+			                               auto_complete);
+		}
+	}
+
+	return node;
+}
+
+command_action_t*
+command_trie_find (command_trie_t *trie, gchar **input, gint num,
+                   gboolean auto_complete)
+{
+	command_trie_t *node;
+	command_action_t *action = NULL;
+
+	/* End recursion if no argument */
+	if (num == 0) {
+		return NULL;
+	}
+
+	if (node = command_trie_find_node (trie, *input, auto_complete)) {
+		if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {
+			action = node->match.action;
+		} else if (node->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
+			action = command_trie_find (node->match.subtrie, input + 1, num - 1,
+			                            auto_complete);
 		}
 	}
 

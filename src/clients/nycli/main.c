@@ -93,7 +93,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	gchar *after;
 	command_action_t *action;
-	action = command_trie_find (infos->commands, *argv);
+	action = command_trie_find (infos->commands, argv, argc, AUTO_UNIQUE_COMPLETE);
 	if (action) {
 
 		/* FIXME: look at the error! */
@@ -147,7 +147,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
 			/* Help flag passed, bypass action and show help */
-			help_command (infos, *argv);
+			help_command (infos, argv, argc);
 		} else if (command_runnable (infos, action)) {
 			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);

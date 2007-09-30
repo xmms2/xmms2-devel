@@ -93,6 +93,12 @@ command_arg_count (command_context_t *ctx)
 	return ctx->argc - 1;
 }
 
+gchar **
+command_argv_get (command_context_t *ctx)
+{
+	return ctx->argv + 1;
+}
+
 gboolean
 command_arg_int_get (command_context_t *ctx, gint at, gint *v)
 {

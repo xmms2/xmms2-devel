@@ -51,6 +51,11 @@ CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, COMMAND_REQ_NONE, NULL, _("Ex
 CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, COMMAND_REQ_NONE, _("[command]"),
                  _("List all commands, or help on one command."))
 
+CLI_SIMPLE_SETUP(cli_pl_list_setup, "playlist list", cli_pl_list, COMMAND_REQ_CONNECTION, NULL,
+                 _("List all playlist."))
+CLI_SIMPLE_SETUP(cli_pl_remove_setup, "playlist remove", cli_pl_remove, COMMAND_REQ_CONNECTION, NULL,
+                 _("Remove a playlist."))
+
 void
 cli_stop_setup (command_action_t *action)
 {
@@ -637,6 +642,32 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
+gboolean
+cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playlist_list (infos->conn);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_printf ("- here be the list of playlists -\n");
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playlist_list (infos->conn);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_printf ("- hello from inside playlist remove -\n");
+
+	return TRUE;
+}
+
 
 /* The loop is resumed in the disconnect callback */
 gboolean
@@ -680,13 +711,13 @@ help_all_commands (cli_infos_t *infos)
 }
 
 void
-help_command (cli_infos_t *infos, gchar *cmd)
+help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 {
 	command_action_t *action;
 	gint i, k;
 	gint padding, max_flag_len = 0;
 
-	action = command_trie_find (infos->commands, cmd);
+	action = command_trie_find (infos->commands, cmd, num_args, AUTO_UNIQUE_COMPLETE);
 	if (action) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {
@@ -721,7 +752,13 @@ help_command (cli_infos_t *infos, gchar *cmd)
 			}
 		}
 	} else {
-		g_printf (_("Unknown command: '%s'\n"), cmd);
+		/* FIXME: Better handle help for subcommands! */
+		g_printf (_("Unknown command: '"));
+		for (i = 0; i < num_args; ++i) {
+			if (i > 0) g_printf (" ");
+			g_printf ("%s", cmd[i]);
+		}
+		g_printf (_("'\n"));
 		g_printf (_("Type 'help' for the list of commands.\n"));
 	}
 }
@@ -730,20 +767,15 @@ gboolean
 cli_help (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint i;
+	gint num_args;
+
+	num_args = command_arg_count (ctx);
 
 	/* No argument, display the list of commands */
-	if (command_arg_count (ctx) == 0) {
+	if (num_args == 0) {
 		help_all_commands (infos);
-	} else if (command_arg_count (ctx) == 1) {
-		gchar *cmd;
-
-		if (command_arg_string_get (ctx, 0, &cmd)) {
-			help_command (infos, cmd);
-		} else {
-			g_printf (_("Error while parsing the argument!\n"));
-		}
 	} else {
-		g_printf (_("To get help for a command, type 'help <command>'.\n"));
+		help_command (infos, command_argv_get (ctx), num_args);
 	}
 
 	/* No data pending */
