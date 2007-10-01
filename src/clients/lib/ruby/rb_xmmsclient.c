@@ -651,7 +651,7 @@ c_broadcast_playback_volume_changed (VALUE self)
 static VALUE
 c_broadcast_playlist_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_playlist_changed);
+	METHOD_ADD_HANDLER (broadcast_playlist_changed);
 }
 
 /*
@@ -664,7 +664,7 @@ c_broadcast_playlist_changed (VALUE self)
 static VALUE
 c_broadcast_playlist_current_pos (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_playlist_current_pos);
+	METHOD_ADD_HANDLER (broadcast_playlist_current_pos);
 }
 
 /*
@@ -688,7 +688,7 @@ c_broadcast_playlist_loaded (VALUE self)
 static VALUE
 c_broadcast_medialib_entry_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_medialib_entry_changed);
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_changed);
 }
 
 /*
@@ -880,6 +880,23 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 			ckey);
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
+}
+
+/*
+ * call-seq:
+ *  xc.medialib_entry_move(id, url) -> result
+ *
+ * Moves the entry specified by _id_ to a new URL without changing mediainfo.
+ */
+static VALUE
+c_medialib_entry_move (VALUE self, VALUE id, VALUE url)
+{
+	METHOD_HANDLER_HEADER
+
+	res = xmmsc_medialib_move_entry (xmms->real, check_uint32 (id),
+	                                 StringValuePtr (url));
+
+	METHOD_HANDLER_FOOTER
 }
 
 /*
@@ -1477,6 +1494,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "medialib_entry_property_remove",
 	                  c_medialib_entry_property_remove, -1);
 	rb_define_method (c, "medialib_entry_remove", c_medialib_entry_remove, 1);
+	rb_define_method (c, "medialib_entry_move", c_medialib_entry_move, 2);
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
