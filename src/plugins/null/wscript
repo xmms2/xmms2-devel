@@ -1,2 +1,2 @@
 from waftools.plugin import plugin
-configure, build = plugin('null', output_prio=1)
+configure, build = plugin('null', output_prio=10)

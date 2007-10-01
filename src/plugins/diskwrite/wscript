@@ -3,4 +3,5 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     return True
 
-configure, build = plugin('diskwrite', configure=plugin_configure)
+configure, build = plugin('diskwrite', configure=plugin_configure,
+                          output_prio=13)

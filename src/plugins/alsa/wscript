@@ -4,4 +4,4 @@ def plugin_configure(conf):
     return conf.check_pkg('alsa', destvar='alsa')
 
 configure, build = plugin('alsa', configure=plugin_configure, needs_lib=True,
-                          output_prio=4)
+                          output_prio=40)

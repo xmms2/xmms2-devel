@@ -9,4 +9,4 @@ def plugin_configure(conf):
 
     return True
 
-configure, build = plugin('sun', configure=plugin_configure, output_prio=3)
+configure, build = plugin('sun', configure=plugin_configure, output_prio=33)

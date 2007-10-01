@@ -1,5 +1,5 @@
 from waftools.plugin import plugin
- 
+
 def plugin_configure(conf):
     if not conf.check_header2('sys/soundcard.h', mandatory=0):
         return False
@@ -8,6 +8,6 @@ def plugin_configure(conf):
     else:
         conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
     return True
- 
+
 configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss'],
-                          output_prio=3)
+                          output_prio=30)

@@ -4,5 +4,5 @@ def plugin_configure(conf):
     return (conf.check_header2('windows.h', mandatory=0) and
             conf.check_library2('winmm', uselib='waveout', mandatory=0))
 
-configure, build = plugin('waveout', configure=plugin_configure, output_prio=3,
+configure, build = plugin('waveout', configure=plugin_configure, output_prio=30,
                           needs_lib=True)
