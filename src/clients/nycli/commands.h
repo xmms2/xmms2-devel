@@ -44,6 +44,9 @@ gboolean cli_pl_switch (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pl_create (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pl_rename (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pl_remove (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_clear (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_pl_sort (cli_infos_t *infos, command_context_t *ctx);
 
 void cli_play_setup (command_action_t *action);
 void cli_pause_setup (command_action_t *action);
@@ -66,6 +69,9 @@ void cli_pl_switch_setup (command_action_t *action);
 void cli_pl_create_setup (command_action_t *action);
 void cli_pl_rename_setup (command_action_t *action);
 void cli_pl_remove_setup (command_action_t *action);
+void cli_pl_clear_setup (command_action_t *action);
+void cli_pl_shuffle_setup (command_action_t *action);
+void cli_pl_sort_setup (command_action_t *action);
 
 void help_command (cli_infos_t *infos, gchar **cmd, gint num_args);
 
@@ -92,6 +98,9 @@ static command_setup_func commandlist[] =
 	cli_pl_create_setup,
 	cli_pl_rename_setup,
 	cli_pl_remove_setup,
+	cli_pl_clear_setup,
+	cli_pl_shuffle_setup,
+	cli_pl_sort_setup,
 	NULL
 };
 

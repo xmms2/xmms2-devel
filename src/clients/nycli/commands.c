@@ -27,36 +27,63 @@
 
 /* Setup commands */
 
-#define CLI_SIMPLE_SETUP(setupcmd, name, cmd, req, usage, desc) \
+#define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
 	void \
-	setupcmd (command_action_t *action) \
+	cmd##_setup (command_action_t *action) \
 	{ command_action_fill (action, name, cmd, req, NULL, usage, desc); }
 
-CLI_SIMPLE_SETUP(cli_play_setup, "play", cli_play, COMMAND_REQ_CONNECTION, NULL,
+CLI_SIMPLE_SETUP("play", cli_play,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
                  _("Start playback."))
-CLI_SIMPLE_SETUP(cli_pause_setup, "pause", cli_pause, COMMAND_REQ_CONNECTION, NULL,
+CLI_SIMPLE_SETUP("pause", cli_pause,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
                  _("Pause playback."))
-CLI_SIMPLE_SETUP(cli_seek_setup, "seek", cli_seek, COMMAND_REQ_CONNECTION, _("<time|offset>"),
+CLI_SIMPLE_SETUP("seek", cli_seek,
+                 COMMAND_REQ_CONNECTION,
+                 _("<time|offset>"),
                  _("Seek to a relative or absolute position."))
-CLI_SIMPLE_SETUP(cli_prev_setup, "prev", cli_prev, COMMAND_REQ_CONNECTION, _("[offset]"),
+CLI_SIMPLE_SETUP("prev", cli_prev,
+                 COMMAND_REQ_CONNECTION,
+                 _("[offset]"),
                  _("Jump to previous song."))
-CLI_SIMPLE_SETUP(cli_next_setup, "next", cli_next, COMMAND_REQ_CONNECTION, _("[offset]"),
+CLI_SIMPLE_SETUP("next", cli_next,
+                 COMMAND_REQ_CONNECTION,
+                 _("[offset]"),
                  _("Jump to next song."))
-CLI_SIMPLE_SETUP(cli_info_setup, "info", cli_info, COMMAND_REQ_CONNECTION, _("<pattern>"),
+CLI_SIMPLE_SETUP("info", cli_info,
+                 COMMAND_REQ_CONNECTION,
+                 _("<pattern>"),
                  _("Display all the properties for all media matching the pattern."))
-CLI_SIMPLE_SETUP(cli_quit_setup, "quit", cli_quit,
-                 COMMAND_REQ_CONNECTION | COMMAND_REQ_NO_AUTOSTART, NULL,
+CLI_SIMPLE_SETUP("quit", cli_quit,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_NO_AUTOSTART,
+                 NULL,
                  _("Terminate the server."))
-CLI_SIMPLE_SETUP(cli_exit_setup, "exit", cli_exit, COMMAND_REQ_NONE, NULL, _("Exit the shell-like interface."))
-CLI_SIMPLE_SETUP(cli_help_setup, "help", cli_help, COMMAND_REQ_NONE, _("[command]"),
+CLI_SIMPLE_SETUP("exit", cli_exit,
+                 COMMAND_REQ_NONE,
+                 NULL,
+                 _("Exit the shell-like interface."))
+CLI_SIMPLE_SETUP("help", cli_help,
+                 COMMAND_REQ_NONE,
+                 _("[command]"),
                  _("List all commands, or help on one command."))
 
-CLI_SIMPLE_SETUP(cli_pl_list_setup, "playlist list", cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, _("[pattern]"),
+CLI_SIMPLE_SETUP("playlist list", cli_pl_list,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
+                 _("[pattern]"),
                  _("List all playlist."))
-CLI_SIMPLE_SETUP(cli_pl_switch_setup, "playlist switch", cli_pl_switch, COMMAND_REQ_CONNECTION, _("<playlist>"),
+CLI_SIMPLE_SETUP("playlist switch", cli_pl_switch,
+                 COMMAND_REQ_CONNECTION,
+                 _("<playlist>"),
                  _("Change the active playlist."))
-CLI_SIMPLE_SETUP(cli_pl_remove_setup, "playlist remove", cli_pl_remove, COMMAND_REQ_CONNECTION, _("<playlist>"),
+CLI_SIMPLE_SETUP("playlist remove", cli_pl_remove,
+                 COMMAND_REQ_CONNECTION,
+                 _("<playlist>"),
                  _("Remove the given playlist."))
+
+/* FIXME: Add all playlist commands */
+/* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
 
 void
 cli_stop_setup (command_action_t *action)
@@ -179,6 +206,43 @@ cli_pl_rename_setup (command_action_t *action)
 	command_action_fill (action, "playlist rename", &cli_pl_rename, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <playlist>] <newname>"),
 	                     _("Rename a playlist.  By default, rename the active playlist."));
+}
+
+void
+cli_pl_clear_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Clear the given playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist clear", &cli_pl_clear, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>]"),
+	                     _("Clear a playlist.  By default, clear the active playlist."));
+}
+
+void
+cli_pl_shuffle_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Shuffle the given playlist."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist shuffle", &cli_pl_shuffle, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>]"),
+	                     _("Shuffle a playlist.  By default, shuffle the active playlist."));
+}
+
+void
+cli_pl_sort_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Sort the given playlist."), "name" },
+		{ "order",    'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to sort by (prefix by '-' for reverse sorting)."), "prop1[,prop2...]" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>] <fields ...>"),
+	                     _("Sort a playlist.  By default, sort the active playlist."));
 }
 
 
@@ -782,6 +846,70 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_unref (res);
 
 	g_free (playlist);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist;
+
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+		playlist = infos->cache->active_playlist_name;
+	}
+
+	res = xmmsc_playlist_clear (infos->conn, playlist);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_free (playlist);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist;
+
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+		playlist = infos->cache->active_playlist_name;
+	}
+
+	res = xmmsc_playlist_shuffle (infos->conn, playlist);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_free (playlist);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist;
+	const gchar **order = NULL;
+
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+		playlist = infos->cache->active_playlist_name;
+	}
+
+	if (!command_flag_stringlist_get (ctx, "order", &order)) {
+		/* FIXME: Default ordering */
+	}
+
+	/* FIXME: Should the playlist name be an argument rather than a flag? */
+	res = xmmsc_playlist_sort (infos->conn, playlist, order);
+	xmmsc_result_notifier_set (res, cb_done, infos);
+	xmmsc_result_unref (res);
+
+	g_free (playlist);
+	g_free (order);
 
 	return TRUE;
 }
