@@ -435,7 +435,7 @@ class ccroot(Object.genobj):
 
 				Common.symlink_as(dest_var, name3, dest_subdir+'/'+name2)
 				Common.symlink_as(dest_var, name2, dest_subdir+'/'+name1)
-		elif self.m_type == 'staticlib':
+		else:
 			self.install_results(dest_var, dest_subdir, self.m_linktask, chmod=0644)
 
 	# This piece of code must suck, no one uses it
