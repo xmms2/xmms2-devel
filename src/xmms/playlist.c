@@ -51,6 +51,7 @@ gboolean xmms_playlist_remove (xmms_playlist_t *playlist, gchar *plname, guint p
 static gboolean xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname, xmmsc_coll_t *plcoll, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos, guint newpos, xmms_error_t *err);
 static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
+static guint xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *err);
 
 static gboolean xmms_playlist_insert_url (xmms_playlist_t *playlist, gchar *plname, guint32 pos, gchar *url, xmms_error_t *error);
 static gboolean xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
@@ -892,6 +893,7 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
                          xmms_medialib_entry_t file, xmms_error_t *err)
 {
 	GHashTable *dict;
+	gint currpos;
 	gint len;
 	xmmsc_coll_t *plcoll;
 
@@ -919,6 +921,11 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	}
 	xmmsc_coll_idlist_insert (plcoll, pos, file);
 	xmms_collection_set_int_attr (plcoll, "size", len + 1);
+
+	currpos = xmms_playlist_coll_get_currpos (plcoll);
+	if (pos <= currpos) {
+		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
+	}
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
