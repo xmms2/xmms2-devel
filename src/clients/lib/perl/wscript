@@ -3,9 +3,9 @@ import Params
 import Common
 
 def build(bld):
-    obj = bld.create_obj("cc", "plugin")
+    obj = bld.create_obj('cc', 'perlext', 'perlext')
     obj.target = 'XMMSClient'
-    obj.includes = '. ../../../include ../../../includepriv ' + bld.env_of_name('default')["PERL_CORE_INC"]
+    obj.includes = '. ../../../include ../../../includepriv'
     obj.source = """
                  perl_xmmsclient.c
                  XMMSClient.xs
@@ -16,59 +16,25 @@ def build(bld):
                  XMMSClientResultPropDictTie.xs
                  """.split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'perl'
-    obj.install_var = "INST_AUTODIR_perl"
+    obj.install_var = "INSTALLDIR_PERL_AUTO"
 
-    obj.env["shlib_PREFIX"] = ''
-
-    Common.install_files('INST_LIBDIR_perl', '', 'pm/XMMSClient.pm')
-    Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
-    Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
-    Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Collection.pm')
+    Common.install_files('INSTALLDIR_PERL_LIB', '', 'pm/XMMSClient.pm')
+    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
+    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
+    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Collection.pm')
 
 def configure(conf):
-    if Params.g_options.perlbinary:
-        perl = Params.g_options.perlbinary
-        conf.env["PERL"] = perl
-    else:
-        perl = conf.find_program("perl", var="PERL")
+    conf.check_tool('perl')
 
-    if not perl:
+    if not conf.check_perl_version((5,7,3)):
         return False
 
-    version = os.popen(perl + " -e'printf \"%vd\", $^V'").read()
-    if not version or [int(a) for a in version.split(".")] < [5, 7, 3]:
-        conf.check_message("perl version", "> 5.7.3", False, version)
-        return False
-    conf.check_message("perl version", "> 5.7.3", True, version)
+    conf.check_perl_ext_devel()
 
-    conf.env["LDFLAGS_perl"] = os.popen(perl + " -MConfig -e'print $Config{ldflags}'").read()
-    conf.env["XSUBPP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/xsubpp$Config{exe_ext}\"'").read()
-    conf.env["EXTUTILS_TYPEMAP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/typemap\"'").read()
-    conf.env["PERL_CORE_INC"] = os.popen(perl + " -MConfig -e'print \"$Config{archlib}/CORE\"'").read()
-    conf.env["CCFLAGS_perl"] = os.popen(perl + " -MConfig -e'print $Config{ccflags}'").read()
-    conf.env["CCFLAGS_perl"] += ' -DVERSION="0.03"'
-
-    if not Params.g_options.perlarchdir:
-        conf.env["ARCHDIR_perl"] = os.popen(perl + " -MConfig -e'print $Config{sitearch}'").read()
-    else:
-        conf.env["ARCHDIR_perl"] = Params.g_options.perlarchdir
-
-    conf.env["INST_AUTODIR_perl"] = conf.env["ARCHDIR_perl"] + '/auto/Audio/XMMSClient'
-    conf.env["INST_LIBDIR_perl"] = conf.env["ARCHDIR_perl"] + '/Audio'
-
-    if not conf.check_tool('xsubpp', tooldir=os.path.abspath('waftools')):
-        return False
-
-    dir = os.path.join(conf.m_blddir, 'default', 'src', 'clients', 'lib', 'perl')
-    try:
-        os.makedirs(dir)
-    except:
-        pass
-    os.popen(perl + " -MDevel::PPPort -e'Devel::PPPort::WriteFile($ARGV[0])' " + os.path.join(dir, 'ppport.h')).read()
+    conf.env['INSTALLDIR_PERL_AUTO'] = os.path.join(conf.env['ARCHDIR_PERL'], "auto")
+    conf.env['INSTALLDIR_PERL_LIB'] = conf.env['ARCHDIR_PERL']
 
     return True
 
 def set_options(opt):
-    opt.add_option("--with-perl-binary", type="string", dest="perlbinary")
-    opt.add_option("--with-perl-archdir", type="string", dest="perlarchdir")
+    opt.tool_options('perl')
