@@ -150,6 +150,7 @@ static void
 xmms_lastfmeta_destroy (xmms_xform_t *xform)
 {
 	xmms_lastfmeta_data_t *data;
+	xmms_config_property_t *val;
 
 	g_return_if_fail (xform);
 
@@ -159,6 +160,9 @@ xmms_lastfmeta_destroy (xmms_xform_t *xform)
 	curl_multi_remove_handle (data->curl_multi, data->curl_easy);
 	curl_easy_cleanup (data->curl_easy);
 	curl_multi_cleanup (data->curl_multi);
+
+	val = xmms_xform_config_lookup (xform, "recordtoprofile");
+	xmms_config_property_callback_remove (val, xmms_lastfm_config_changed, xform);
 
 	g_free (data);
 }
