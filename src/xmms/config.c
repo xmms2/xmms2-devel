@@ -299,7 +299,8 @@ xmms_config_property_callback_set (xmms_config_property_t *prop,
  */
 void
 xmms_config_property_callback_remove (xmms_config_property_t *prop,
-                                      xmms_object_handler_t cb)
+                                      xmms_object_handler_t cb,
+                                      gpointer userdata)
 {
 	g_return_if_fail (prop);
 
@@ -307,7 +308,7 @@ xmms_config_property_callback_remove (xmms_config_property_t *prop,
 		return;
 
 	xmms_object_disconnect (XMMS_OBJECT (prop),
-	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb);
+	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb, userdata);
 }
 
 /**

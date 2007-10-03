@@ -228,39 +228,42 @@ static void
 xmms_eq_destroy (xmms_xform_t *xform)
 {
 	xmms_config_property_t *config;
+	gpointer priv;
 	gchar buf[16];
 	gint i;
 
 	g_return_if_fail (xform);
 
-	g_free (xmms_xform_private_data_get (xform));
+	priv = xmms_xform_private_data_get (xform);
 
 	config = xmms_xform_config_lookup (xform, "enabled");
-	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_config_changed, priv);
 
 	config = xmms_xform_config_lookup (xform, "bands");
-	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_config_changed, priv);
 
 	config = xmms_xform_config_lookup (xform, "extra_filtering");
-	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_config_changed, priv);
 
 	config = xmms_xform_config_lookup (xform, "use_legacy");
-	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_config_changed, priv);
 
 	config = xmms_xform_config_lookup (xform, "preamp");
-	xmms_config_property_callback_remove (config, xmms_eq_gain_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_gain_changed, priv);
 
 	for (i=0; i<EQ_BANDS_LEGACY; i++) {
 		g_snprintf (buf, sizeof (buf), "legacy%d", i);
 		config = xmms_xform_config_lookup (xform, buf);
-		xmms_config_property_callback_remove (config, xmms_eq_gain_changed);
+		xmms_config_property_callback_remove (config, xmms_eq_gain_changed, priv);
 	}
 
 	for (i=0; i<EQ_MAX_BANDS; i++) {
 		g_snprintf (buf, sizeof (buf), "gain%02d", i);
 		config = xmms_xform_config_lookup (xform, buf);
-		xmms_config_property_callback_remove (config, xmms_eq_gain_changed);
+		xmms_config_property_callback_remove (config, xmms_eq_gain_changed, priv);
 	}
+
+	g_free (priv);
 }
 
 static gint

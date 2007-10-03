@@ -743,7 +743,7 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 	g_mutex_lock (ipc_object_pool_lock);
 	obj = ipc_object_pool->broadcasts[signalid];
 	if (obj) {
-		xmms_object_disconnect (obj, signalid, xmms_ipc_broadcast_cb);
+		xmms_object_disconnect (obj, signalid, xmms_ipc_broadcast_cb, GUINT_TO_POINTER (signalid));
 		ipc_object_pool->broadcasts[signalid] = NULL;
 	}
 	g_mutex_unlock (ipc_object_pool_lock);
@@ -774,7 +774,7 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 	g_mutex_lock (ipc_object_pool_lock);
 	obj = ipc_object_pool->signals[signalid];
 	if (obj) {
-		xmms_object_disconnect (obj, signalid, xmms_ipc_signal_cb);
+		xmms_object_disconnect (obj, signalid, xmms_ipc_signal_cb, GUINT_TO_POINTER (signalid));
 		ipc_object_pool->signals[signalid] = NULL;
 	}
 	g_mutex_unlock (ipc_object_pool_lock);

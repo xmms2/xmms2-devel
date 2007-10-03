@@ -34,6 +34,6 @@ xmms_config_property_t *xmms_config_property_register (const gchar *path, const 
 void xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data);
 
 void xmms_config_property_callback_set (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
-void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb);
+void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
 
 #endif

@@ -1531,9 +1531,9 @@ xmms_playlist_destroy (xmms_object_t *object)
 	g_mutex_free (playlist->mutex);
 
 	val = xmms_config_lookup ("playlist.repeat_one");
-	xmms_config_property_callback_remove (val, on_playlist_r_one_changed);
+	xmms_config_property_callback_remove (val, on_playlist_r_one_changed, playlist);
 	val = xmms_config_lookup ("playlist.repeat_all");
-	xmms_config_property_callback_remove (val, on_playlist_r_all_changed);
+	xmms_config_property_callback_remove (val, on_playlist_r_all_changed, playlist);
 
 	xmms_object_unref (playlist->colldag);
 	xmms_object_unref (playlist->mediainfordr);

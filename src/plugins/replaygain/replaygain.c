@@ -197,15 +197,15 @@ xmms_replaygain_destroy (xmms_xform_t *xform)
 
 	cfgv = xmms_xform_config_lookup (xform, "mode");
 	xmms_config_property_callback_remove (cfgv,
-	                                      xmms_replaygain_config_changed);
+	                                      xmms_replaygain_config_changed, xform);
 
 	cfgv = xmms_xform_config_lookup (xform, "use_anticlip");
 	xmms_config_property_callback_remove (cfgv,
-	                                      xmms_replaygain_config_changed);
+	                                      xmms_replaygain_config_changed, xform);
 
 	cfgv = xmms_xform_config_lookup (xform, "enabled");
 	xmms_config_property_callback_remove (cfgv,
-	                                      xmms_replaygain_config_changed);
+	                                      xmms_replaygain_config_changed, xform);
 }
 
 static gint

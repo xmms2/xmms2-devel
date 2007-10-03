@@ -112,7 +112,7 @@ xmms_object_connect (xmms_object_t *object, guint32 signalid,
 
 void
 xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
-                        xmms_object_handler_t handler)
+                        xmms_object_handler_t handler, gpointer userdata)
 {
 	GList *list = NULL, *node;
 	xmms_object_handler_entry_t *entry;
@@ -123,25 +123,23 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 
 	g_mutex_lock (object->mutex);
 
-	if (!object->signals[signalid])
-		goto unlock;
-
 	list = object->signals[signalid];
 
 	for (node = list; node; node = g_list_next (node)) {
 		entry = node->data;
 
-		if (entry->handler == handler)
+		if (entry->handler == handler && entry->userdata == userdata)
 			break;
 	}
 
-	if (!node)
-		goto unlock;
+	if (node)
+		object->signals[signalid] = g_list_remove_link (list, node);
+	g_mutex_unlock (object->mutex);
+
+	g_return_if_fail (node);
 
 	g_free (node->data);
-	object->signals[signalid] = g_list_delete_link (list, node);
-unlock:
-	g_mutex_unlock (object->mutex);
+	g_list_free_1 (node);
 }
 
 /**

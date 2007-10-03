@@ -173,16 +173,16 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	config = xmms_xform_config_lookup (xform, "enabled");
-	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed, data);
 
 	config = xmms_xform_config_lookup (xform, "speed");
-	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed, data);
 
 	config = xmms_xform_config_lookup (xform, "pitch");
-	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed, data);
 
 	config = xmms_xform_config_lookup (xform, "attack_detection");
-	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed, data);
 
 	pvocoder_close (data->pvoc);
 	src_delete (data->resampler);

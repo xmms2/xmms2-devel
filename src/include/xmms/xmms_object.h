@@ -105,7 +105,7 @@ void xmms_object_connect (xmms_object_t *object, guint32 signalid,
 			  xmms_object_handler_t handler, gpointer userdata);
 
 void xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
-			     xmms_object_handler_t handler);
+			     xmms_object_handler_t handler, gpointer userdata);
 
 void xmms_object_emit (xmms_object_t *object, guint32 signalid,
 		       gconstpointer data);
