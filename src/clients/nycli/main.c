@@ -89,11 +89,17 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 }
 
 void
-command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
+command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
-	gchar *after;
 	command_action_t *action;
+	gint argc;
+	gchar **argv;
+
+	/* The arguments will be updated by command_trie_find. */
+	argc = in_argc;
+	argv = in_argv;
 	action = command_trie_find (infos->commands, &argv, &argc, AUTO_UNIQUE_COMPLETE);
+
 	if (action) {
 
 		/* FIXME: problem if flag is the first element!  */
@@ -104,9 +110,13 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 		gint i;
 		gboolean help;
 		gboolean need_io;
-
 		command_context_t *ctx;
-		ctx = command_context_init (argc, argv);
+
+		/* Include one command token as a workaround for the bug that
+		 * the option parser does not parse commands starting with a
+		 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
+		 * command utils. */
+		ctx = command_context_init (argc + 1, argv - 1);
 
 		for (i = 0; action->argdefs && action->argdefs[i].long_name; ++i) {
 			command_argument_t *arg = g_new (command_argument_t, 1);
@@ -149,7 +159,7 @@ command_dispatch (cli_infos_t *infos, gint argc, gchar **argv)
 
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
 			/* Help flag passed, bypass action and show help */
-			help_command (infos, argv, argc);
+			help_command (infos, in_argv, in_argc);
 		} else if (command_runnable (infos, action)) {
 			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);

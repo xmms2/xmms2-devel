@@ -24,6 +24,9 @@ struct double_callback_infos_St {
 };
 
 
+#define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
+
+
 gboolean
 command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v)
 {
@@ -90,13 +93,13 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 gint
 command_arg_count (command_context_t *ctx)
 {
-	return ctx->argc;
+	return ctx->argc - 1;
 }
 
 gchar **
 command_argv_get (command_context_t *ctx)
 {
-	return ctx->argv;
+	return ctx->argv + 1;
 }
 
 gboolean
@@ -105,7 +108,7 @@ command_arg_int_get (command_context_t *ctx, gint at, gint *v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = strtol (ctx->argv[at], NULL, 10);
+		*v = strtol (command_arg_get (ctx, at), NULL, 10);
 		retval = TRUE;
 	}
 
@@ -118,7 +121,7 @@ command_arg_string_get (command_context_t *ctx, gint at, gchar **v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = ctx->argv[at];
+		*v = command_arg_get (ctx, at);
 		retval = TRUE;
 	}
 
@@ -134,7 +137,7 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	gboolean retval = FALSE;
 
 	if (at < command_arg_count (ctx)) {
-		*v = g_strjoinv (" ", &ctx->argv[at]);
+		*v = g_strjoinv (" ", &(command_arg_get (ctx, at)));
 		retval = TRUE;
 	}
 
