@@ -282,6 +282,11 @@ command_trie_find_node (command_trie_t *trie, gchar *input,
 	command_trie_t *node = NULL;
 	GList *l;
 
+	/* FIXME: If this happens when a parent command is given, make it nice! */
+	if (input == NULL) {
+		return NULL;
+	}
+
 	if (*input == 0) {
 		/* End of token, return current action, or unique completion */
 		if (command_trie_valid_match (trie)) {
