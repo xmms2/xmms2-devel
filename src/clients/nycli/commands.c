@@ -81,6 +81,14 @@ CLI_SIMPLE_SETUP("playlist remove", cli_pl_remove,
                  COMMAND_REQ_CONNECTION,
                  _("<playlist>"),
                  _("Remove the given playlist."))
+CLI_SIMPLE_SETUP("playlist clear", cli_pl_clear,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
+                 _("[playlist]"),
+                 _("Clear a playlist.  By default, clear the active playlist."))
+CLI_SIMPLE_SETUP("playlist shuffle", cli_pl_shuffle,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
+                 _("[playlist]"),
+                 _("Shuffle a playlist.  By default, shuffle the active playlist."))
 
 /* FIXME: Add all playlist commands */
 /* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
@@ -209,39 +217,14 @@ cli_pl_rename_setup (command_action_t *action)
 }
 
 void
-cli_pl_clear_setup (command_action_t *action)
-{
-	const argument_t flags[] = {
-		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Clear the given playlist."), "name" },
-		{ NULL }
-	};
-	command_action_fill (action, "playlist clear", &cli_pl_clear, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>]"),
-	                     _("Clear a playlist.  By default, clear the active playlist."));
-}
-
-void
-cli_pl_shuffle_setup (command_action_t *action)
-{
-	const argument_t flags[] = {
-		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Shuffle the given playlist."), "name" },
-		{ NULL }
-	};
-	command_action_fill (action, "playlist shuffle", &cli_pl_shuffle, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>]"),
-	                     _("Shuffle a playlist.  By default, shuffle the active playlist."));
-}
-
-void
 cli_pl_sort_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Sort the given playlist."), "name" },
 		{ "order",    'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to sort by (prefix by '-' for reverse sorting)."), "prop1[,prop2...]" },
 		{ NULL }
 	};
 	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>] <fields ...>"),
+	                     _("[-o <order>] [playlist]"),
 	                     _("Sort a playlist.  By default, sort the active playlist."));
 }
 
@@ -771,29 +754,29 @@ gboolean
 cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gchar *playlist, *copy;
+	gchar *newplaylist, *copy;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+	if (!command_arg_longstring_get (ctx, 0, &newplaylist)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
 		return FALSE;
 	}
 
+	/* FIXME: Prevent overwriting existing playlists! */
+
 	if (command_flag_string_get (ctx, "playlist", &copy)) {
-		/* Copy the given playlist */
-		g_printf ("Copy not implemented yet!");
-		/* FIXME: implement this
+		/* Copy the given playlist. */
 		res = xmmsc_coll_get (infos->conn, copy, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (res, cb_copy_playlist, infos);
+		xmmsc_result_notifier_set (res, cb_copy_playlist,
+		                           pack_infos_playlist (infos, newplaylist));
 		xmmsc_result_unref (res);
-		*/
 	} else {
 		/* Simply create a new empty playlist */
-		res = xmmsc_playlist_create (infos->conn, playlist);
+		res = xmmsc_playlist_create (infos->conn, newplaylist);
 		xmmsc_result_notifier_set (res, cb_done, infos);
 		xmmsc_result_unref (res);
 	}
 
-	g_free (playlist);
+	g_free (newplaylist);
 
 	return TRUE;
 }
@@ -856,7 +839,7 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	gchar *playlist;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = infos->cache->active_playlist_name;
 	}
 
@@ -875,7 +858,7 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	gchar *playlist;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = infos->cache->active_playlist_name;
 	}
 
@@ -895,15 +878,16 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 	gchar *playlist;
 	const gchar **order = NULL;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = infos->cache->active_playlist_name;
 	}
 
 	if (!command_flag_stringlist_get (ctx, "order", &order)) {
 		/* FIXME: Default ordering */
+		g_free (playlist);
+		return FALSE;
 	}
 
-	/* FIXME: Should the playlist name be an argument rather than a flag? */
 	res = xmmsc_playlist_sort (infos->conn, playlist, order);
 	xmmsc_result_notifier_set (res, cb_done, infos);
 	xmmsc_result_unref (res);
@@ -944,6 +928,7 @@ static void
 help_short_command (gpointer elem, gpointer udata)
 {
 	gchar *cmdname = (gchar *)elem;
+	/* FIXME: if contains space, change to <subcommand>, then allow 'help playlist' */
 	g_printf ("   %s\n", cmdname);
 }
 

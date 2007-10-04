@@ -35,5 +35,6 @@ void cb_list_jump_back (xmmsc_result_t *res, void *udata);
 void cb_add_list (xmmsc_result_t *matching, void *udata);
 void cb_remove_cached_list (xmmsc_result_t *matching, void *udata);
 void cb_remove_list (xmmsc_result_t *matching, xmmsc_result_t *playlist, void *udata);
+void cb_copy_playlist (xmmsc_result_t *res, void *udata);
 
 #endif /* __CALLBACKS_H__ */

@@ -444,3 +444,28 @@ cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, void *udata)
 	xmmsc_result_unref (plistres);
 	free_infos_playlist (pack);
 }
+
+void
+cb_copy_playlist (xmmsc_result_t *res, void *udata)
+{
+	pack_infos_playlist_t *pack = (pack_infos_playlist_t *) udata;
+	cli_infos_t *infos;
+	xmmsc_result_t *saveres;
+	gchar *playlist;
+	xmmsc_coll_t *coll;
+
+	unpack_infos_playlist (pack, &infos, &playlist);
+
+	if (xmmsc_result_get_collection (res, &coll)) {
+		saveres = xmmsc_coll_save (infos->conn, coll, playlist,
+		                           XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_notifier_set (saveres, cb_done, infos);
+		xmmsc_result_unref (saveres);
+	} else {
+		g_printf (_("Cannot find the playlist to copy!\n"));
+		cli_infos_loop_resume (infos);
+	}
+
+	free_infos_playlist (pack);
+	xmmsc_result_unref (res);
+}
