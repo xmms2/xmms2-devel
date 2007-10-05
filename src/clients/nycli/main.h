@@ -25,6 +25,7 @@
 #define PROMPT "nycli> "
 #define AUTO_UNIQUE_COMPLETE TRUE
 #define MAX_CACHE_REFRESH_LOOP 200
+#define MAX_INT_VALUE_BUFFER_SIZE 64
 
 /* FIXME: Change this to use gettext later on */
 #define _(String) (String)

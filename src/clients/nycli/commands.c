@@ -228,6 +228,21 @@ cli_pl_sort_setup (command_action_t *action)
 	                     _("Sort a playlist.  By default, sort the active playlist."));
 }
 
+void
+cli_pl_config_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "type",    't', 0, G_OPTION_ARG_STRING, NULL, _("Change the type of the playlist: list, queue, pshuffle."), "type" },
+		{ "history", 's', 0, G_OPTION_ARG_STRING, NULL, _("Size of the history of played tracks (for queue, pshuffle)."), "n" },
+		{ "upcoming",'u', 0, G_OPTION_ARG_STRING, NULL, _("Number of upcoming tracks to maintain (for pshuffle)."), "n" },
+		{ "input",   'i', 0, G_OPTION_ARG_STRING, NULL, _("Input collection for the playlist (for pshuffle). Default to 'All Media'."), "coll" },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist config", &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [playlist]"),
+	                     _("Configure a playlist by changing its type, attributes, etc.\nBy default, configure the active playlist."));
+}
+
 
 void
 fill_column_display (cli_infos_t *infos, column_display_t *disp,
@@ -894,6 +909,88 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (playlist);
 	g_free (order);
+
+	return TRUE;
+}
+
+gboolean
+cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *playlist;
+	gint history, upcoming;
+	xmmsc_coll_type_t type;
+	gchar *typestr, *input;
+	pack_infos_playlist_config_t *pack;
+	gboolean modif = FALSE;
+
+	history = -1;
+	upcoming = -1;
+	type = -1;
+	input = NULL;
+
+	/* Convert type string to type id */
+	if (command_flag_string_get (ctx, "type", &typestr)) {
+		if (strcmp (typestr, "list") == 0) {
+			type = XMMS_COLLECTION_TYPE_IDLIST;
+		} else if (strcmp (typestr, "queue") == 0) {
+			type = XMMS_COLLECTION_TYPE_QUEUE;
+		} else if (strcmp (typestr, "pshuffle") == 0) {
+			type = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
+		} else {
+			g_printf ("Invalid playlist type: '%s'!\n", typestr);
+			return FALSE;
+		}
+		modif = TRUE;
+	}
+
+	if (command_flag_int_get (ctx, "history", &history)) {
+		if (type != XMMS_COLLECTION_TYPE_QUEUE ||
+		    type != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+			g_printf ("--history flag only valid for "
+			          "queue and pshuffle playlists!\n");
+			return FALSE;
+		}
+		modif = TRUE;
+	}
+	if (command_flag_int_get (ctx, "upcoming", &upcoming)) {
+		if (type != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+			g_printf ("--upcoming flag only valid for pshuffle playlists!\n");
+			return FALSE;
+		}
+		modif = TRUE;
+	}
+	/* FIXME: if no flag set, check validity of flags in the callback ? */
+	/* FIXME: if pshuffle, need an input collection! */
+	/* FIXME: extract namespace too */
+	/* FIXME: default to "All Media" if pshuffle and omitted. */
+	if (command_flag_string_get (ctx, "input", &input)) {
+		if (type != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+			g_printf ("--input flag only valid for pshuffle playlists!\n");
+			return FALSE;
+		}
+		modif = TRUE;
+	}
+
+	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+		playlist = infos->cache->active_playlist_name;
+	}
+
+	if (modif) {
+		/* Send the previous coll_t for update. */
+		pack = pack_infos_playlist_config (infos, playlist, history, upcoming,
+		                                   type, input);
+		res = xmmsc_coll_get (infos->conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_notifier_set (res, cb_configure_playlist, pack);
+		xmmsc_result_unref (res);
+	} else {
+		/* Display current config of the playlist. */
+		res = xmmsc_coll_get (infos->conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_notifier_set (res, cb_playlist_print_config,
+		                           pack_infos_playlist (infos, playlist));
+		xmmsc_result_notifier_set (res, cb_done, infos);
+		xmmsc_result_unref (res);
+	}
 
 	return TRUE;
 }

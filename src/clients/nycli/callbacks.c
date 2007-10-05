@@ -21,6 +21,10 @@
 #include "column_display.h"
 #include "udata_packs.h"
 
+static void coll_print_config (xmmsc_coll_t *coll, const char *name);
+static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
+static xmmsc_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
+
 
 /* Dumps a propdict on stdout */
 static void
@@ -61,12 +65,12 @@ void
 cb_done (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
-	cli_infos_loop_resume (infos);
 
 	if (xmmsc_result_iserror (res)) {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
+	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -468,4 +472,167 @@ cb_copy_playlist (xmmsc_result_t *res, void *udata)
 
 	free_infos_playlist (pack);
 	xmmsc_result_unref (res);
+}
+
+void
+cb_configure_playlist (xmmsc_result_t *res, void *udata)
+{
+	pack_infos_playlist_config_t *pack = (pack_infos_playlist_config_t *) udata;
+	cli_infos_t *infos;
+	xmmsc_result_t *saveres;
+	gchar *playlist;
+	gint history, upcoming;
+	xmmsc_coll_type_t type;
+	gchar *input;
+	xmmsc_coll_t *coll;
+	xmmsc_coll_t *newcoll;
+
+	unpack_infos_playlist_config (pack, &infos, &playlist, &history, &upcoming,
+	                              &type, &input);
+
+	if (xmmsc_result_get_collection (res, &coll)) {
+		if (type >= 0 && xmmsc_coll_get_type (coll) != type) {
+			newcoll = coll_copy_retype (coll, type);
+			xmmsc_coll_unref (coll);
+			coll = newcoll;
+		}
+		if (history >= 0) {
+			/* FIXME: as string */
+			xmmsc_coll_attribute_set (coll, "history", history);
+		}
+		if (upcoming >= 0) {
+			/* FIXME: as string */
+			xmmsc_coll_attribute_set (coll, "upcoming", upcoming);
+		}
+		if (input) {
+			/* Replace previous operand. */
+			newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
+			xmmsc_coll_operand_list_clear (coll);
+			xmmsc_coll_add_operand (coll, newcoll);
+			xmmsc_coll_unref (newcoll);
+		}
+
+		saveres = xmmsc_coll_save (infos->conn, coll, playlist,
+		                           XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_notifier_set (saveres, cb_done, infos);
+		xmmsc_result_unref (saveres);
+	} else {
+		g_printf (_("Cannot find the playlist to configure!\n"));
+		cli_infos_loop_resume (infos);
+	}
+
+	free_infos_playlist_config (pack);
+	xmmsc_result_unref (res);
+}
+
+void
+cb_playlist_print_config (xmmsc_result_t *res, void *udata)
+{
+	pack_infos_playlist_t *pack = (pack_infos_playlist_t *) udata;
+	cli_infos_t *infos;
+	gchar *playlist;
+	xmmsc_coll_t *coll;
+
+	unpack_infos_playlist (pack, &infos, &playlist);
+
+	if (xmmsc_result_get_collection (res, &coll)) {
+		coll_print_config (coll, playlist);
+	} else {
+		g_printf (_("Invalid playlist!\n"));
+	}
+
+	free_infos_playlist (pack);
+	xmmsc_result_unref (res);
+}
+
+
+static void
+coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value)
+{
+	gchar buf[MAX_INT_VALUE_BUFFER_SIZE + 1];
+
+	g_snprintf (buf, MAX_INT_VALUE_BUFFER_SIZE, "%d", value);
+	xmmsc_coll_attribute_set (coll, key, buf);
+}
+
+static xmmsc_coll_t *
+coll_make_reference (const char *name, xmmsc_coll_namespace_t ns)
+{
+	xmmsc_coll_t *ref;
+
+	ref = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsc_coll_attribute_set (ref, "reference", name);
+	xmmsc_coll_attribute_set (ref, "namespace", ns);
+
+	return ref;
+}
+
+static void
+coll_copy_attributes (const char *key, const char *value, void *udata)
+{
+	xmmsc_coll_attribute_set ((xmmsc_coll_t *) udata, key, value);
+}
+
+static xmmsc_coll_t *
+coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type)
+{
+	xmmsc_coll_t *copy;
+	gint idlistsize;
+	gint i;
+	guint id;
+
+	copy = xmmsc_coll_new (type);
+
+	idlistsize = xmmsc_coll_idlist_get_size (coll);
+	for (i = 0; i < idlistsize; i++) {
+		xmmsc_coll_idlist_get_index (coll, i, &id);
+		xmmsc_coll_idlist_append (copy, id);
+	}
+
+	xmmsc_coll_attribute_foreach (coll, coll_copy_attributes, copy);
+
+	return copy;
+}
+
+static void
+coll_print_config (xmmsc_coll_t *coll, const char *name)
+{
+	xmmsc_coll_t *op;
+	xmmsc_coll_type_t type;
+	gchar *upcoming = NULL;
+	gchar *history = NULL;
+	gchar *input = NULL;
+	gchar *input_ns = NULL;
+
+	type = xmmsc_coll_get_type (coll);
+
+	xmmsc_coll_attribute_get (coll, "upcoming", &upcoming);
+	xmmsc_coll_attribute_get (coll, "history", &history);
+
+	g_printf (_("name: %s\n"), name);
+
+	switch (type) {
+	case XMMS_COLLECTION_TYPE_IDLIST:
+		g_printf (_("type: list\n"));
+		break;
+	case XMMS_COLLECTION_TYPE_QUEUE:
+		g_printf (_("type: queue\n"));
+		g_printf (_("history: %s\n"), history);
+		break;
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &op)) {
+			xmmsc_coll_attribute_get (op, "reference", &input);
+			xmmsc_coll_attribute_get (op, "namespace", &input_ns);
+		}
+
+		g_printf (_("type: pshuffle\n"));
+		g_printf (_("history: %s\n"), history);
+		g_printf (_("upcoming: %s\n"), upcoming);
+		g_printf (_("input: %s/%s\n"), input_ns, input);
+		break;
+	default:
+		g_printf (_("type: unknown!\n"));
+		break;
+	}
 }

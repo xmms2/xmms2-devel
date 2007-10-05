@@ -85,3 +85,52 @@ free_infos_playlist_pos (pack_infos_playlist_pos_t *pack)
 	g_free (pack->playlist);
 	g_free (pack);
 }
+
+
+struct pack_infos_playlist_config_St {
+	cli_infos_t *infos;
+	gchar *playlist;     /* owned by this struct */
+	gint history;
+	gint upcoming;
+	xmmsc_coll_type_t type;
+	gchar *input;        /* owned by this struct */
+};
+
+/** Pack cli_infos_t & the rest in a struct, to be used as udata. */
+pack_infos_playlist_config_t *
+pack_infos_playlist_config (cli_infos_t *infos, gchar *playlist, gint history,
+                            gint upcoming, xmmsc_coll_type_t type, gchar *input)
+{
+	pack_infos_playlist_config_t *pack = g_new0 (pack_infos_playlist_config_t, 1);
+	pack->infos = infos;
+	pack->playlist = g_strdup (playlist);
+	pack->history = history;
+	pack->upcoming = upcoming;
+	pack->type = type;
+	pack->input = g_strdup (input);
+	return pack;
+}
+
+/** Extract infos & the rest from the pack. The pack must still be freed. */
+void
+unpack_infos_playlist_config (pack_infos_playlist_config_t *pack,
+                              cli_infos_t **infos, gchar **playlist,
+                              gint *history, gint *upcoming,
+                              xmmsc_coll_type_t *type, gchar **input)
+{
+	*infos = pack->infos;
+	*playlist = pack->playlist;
+	*history = pack->history;
+	*upcoming = pack->upcoming;
+	*type = pack->type;
+	*input = pack->input;
+}
+
+/** Free the pack memory. */
+void
+free_infos_playlist_config (pack_infos_playlist_config_t *pack)
+{
+	g_free (pack->playlist);
+	g_free (pack->input);
+	g_free (pack);
+}
