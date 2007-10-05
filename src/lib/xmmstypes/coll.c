@@ -50,6 +50,7 @@ struct xmmsc_coll_St {
 
 
 static void xmmsc_coll_free (xmmsc_coll_t *coll);
+static int free_udata (void *ptr, void *userdata);
 
 static int xmmsc_coll_unref_udata (void *coll, void *userdata);
 static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
@@ -126,8 +127,9 @@ xmmsc_coll_free (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);
 
-	/* Unref all the operands */
+	/* Unref all the operands and attributes */
 	x_list_foreach (coll->operands, xmmsc_coll_unref_udata, NULL);
+	x_list_foreach (coll->attributes, free_udata, NULL);
 
 	x_list_free (coll->operands);
 	x_list_free (coll->attributes);
@@ -802,6 +804,17 @@ static int
 xmmsc_coll_unref_udata (void *coll, void *userdata)
 {
 	xmmsc_coll_unref ((xmmsc_coll_t *)coll);
+	return 1;
+}
+
+/**
+ * Alternate version of the free() C function with an extra userdata
+ * argument, to be used as a foreach function.
+ */
+static int
+free_udata (void *ptr, void *userdata)
+{
+	free (ptr);
 	return 1;
 }
 
