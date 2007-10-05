@@ -197,7 +197,7 @@ command_trie_insert (command_trie_t* trie, command_action_t *action)
 	return command_trie_action_set (curr, action);
 }
 
-command_action_t*
+void
 command_action_fill (command_action_t *action, const gchar *name,
                      command_exec_func cmd, command_req_t req,
                      const argument_t flags[], const gchar *usage,
@@ -318,7 +318,7 @@ command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
 		return NULL;
 	}
 
-	if (node = command_trie_find_node (trie, **input, auto_complete)) {
+	if ((node = command_trie_find_node (trie, **input, auto_complete))) {
 		(*input) ++;
 		(*num) --;
 		if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {

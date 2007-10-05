@@ -233,8 +233,8 @@ cli_pl_config_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
 		{ "type",    't', 0, G_OPTION_ARG_STRING, NULL, _("Change the type of the playlist: list, queue, pshuffle."), "type" },
-		{ "history", 's', 0, G_OPTION_ARG_STRING, NULL, _("Size of the history of played tracks (for queue, pshuffle)."), "n" },
-		{ "upcoming",'u', 0, G_OPTION_ARG_STRING, NULL, _("Number of upcoming tracks to maintain (for pshuffle)."), "n" },
+		{ "history", 's', 0, G_OPTION_ARG_INT, NULL, _("Size of the history of played tracks (for queue, pshuffle)."), "n" },
+		{ "upcoming",'u', 0, G_OPTION_ARG_INT, NULL, _("Number of upcoming tracks to maintain (for pshuffle)."), "n" },
 		{ "input",   'i', 0, G_OPTION_ARG_STRING, NULL, _("Input collection for the playlist (for pshuffle). Default to 'All Media'."), "coll" },
 		{ NULL }
 	};
@@ -607,7 +607,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gchar *pattern = NULL;
 	gchar *playlist = NULL;
 	xmmsc_coll_t *query;
-	xmmsc_result_t *res, *plres;
+	xmmsc_result_t *res;
 	gint pos;
 	gchar *path, *fullpath;
 	gboolean fileargs;
@@ -945,7 +945,7 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (command_flag_int_get (ctx, "history", &history)) {
-		if (type != XMMS_COLLECTION_TYPE_QUEUE ||
+		if (type != XMMS_COLLECTION_TYPE_QUEUE &&
 		    type != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
 			g_printf ("--history flag only valid for "
 			          "queue and pshuffle playlists!\n");
@@ -960,16 +960,18 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		}
 		modif = TRUE;
 	}
-	/* FIXME: if no flag set, check validity of flags in the callback ? */
-	/* FIXME: if pshuffle, need an input collection! */
+
 	/* FIXME: extract namespace too */
-	/* FIXME: default to "All Media" if pshuffle and omitted. */
 	if (command_flag_string_get (ctx, "input", &input)) {
 		if (type != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
 			g_printf ("--input flag only valid for pshuffle playlists!\n");
 			return FALSE;
 		}
 		modif = TRUE;
+	} else if (type == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+		/* Default to All Media if no input provided. */
+		/* FIXME: Don't overwrite with this if already a pshuffle! */
+		input = "All Media";
 	}
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
@@ -1098,7 +1100,6 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 gboolean
 cli_help (cli_infos_t *infos, command_context_t *ctx)
 {
-	gint i;
 	gint num_args;
 
 	num_args = command_arg_count (ctx);

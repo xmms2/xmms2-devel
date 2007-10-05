@@ -17,12 +17,15 @@
 #include <xmmsclient/xmmsclient.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "cli_infos.h"
+#include "cli_cache.h"
 #include "commands.h"
 #include "command_trie.h"
+#include "command_utils.h"
 #include "readline.h"
 
 
@@ -262,9 +265,6 @@ loop_run (cli_infos_t *infos)
 gint
 main (gint argc, gchar **argv)
 {
-	gint i;
-	GError *error = NULL;
-	GOptionContext *context;
 	cli_infos_t *cli_infos;
 
 	cli_infos = cli_infos_init (argc - 1, argv + 1);

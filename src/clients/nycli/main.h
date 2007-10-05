@@ -86,4 +86,8 @@ struct command_argument_St {
 	command_argument_value_t value;
 };
 
+
+void command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
+
+
 #endif /* __MAIN_H__ */

@@ -20,6 +20,7 @@
 #include <xmmsclient/xmmsclient.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #include "main.h"
 
@@ -77,7 +78,7 @@ void cli_pl_config_setup (command_action_t *action);
 
 void help_command (cli_infos_t *infos, gchar **cmd, gint num_args);
 
-static command_setup_func commandlist[] =
+static const command_setup_func commandlist[] =
 {
 	cli_play_setup,
 	cli_pause_setup,

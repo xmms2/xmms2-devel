@@ -20,6 +20,7 @@
 #include <xmmsclient/xmmsclient.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 #include <stdlib.h>
 
 #include "main.h"

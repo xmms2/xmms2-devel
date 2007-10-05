@@ -21,25 +21,29 @@
 #include "column_display.h"
 #include "udata_packs.h"
 
-static void coll_print_config (xmmsc_coll_t *coll, const char *name);
-static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
+static void coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value);
 static xmmsc_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
+static void coll_copy_attributes (const char *key, const char *value, void *udata);
+static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
+static void coll_print_config (xmmsc_coll_t *coll, const char *name);
 
 
 /* Dumps a propdict on stdout */
 static void
-propdict_dump (const void *key, xmmsc_result_value_type_t type,
-               const void *value, const char *source, void *udata)
+propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
+               const void *value, const char *vsource, void *udata)
 {
+	const gchar *source = (const char *) vsource;
+	const gchar *key = (const char *) vkey;
+
 	switch (type) {
 	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-		g_printf (_("[%s] %s = %u\n"), source, key, (uint32_t*) value);
-		break;
 	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		g_printf (_("[%s] %s = %d\n"), source, key, (int32_t*) value);
+		g_printf (_("[%s] %s = %u\n"), source, key, XPOINTER_TO_INT (value));
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		g_printf (_("[%s] %s = %s\n"), source, key, (gchar*) value);
+		/* FIXME: special handling for url, guess charset, see common.c:print_entry */
+		g_printf (_("[%s] %s = %s\n"), source, key, (gchar *) value);
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_DICT:
 		g_printf (_("[%s] %s = <dict>\n"), source, key);
@@ -102,7 +106,6 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 void
 cb_entry_print_status (xmmsc_result_t *res, void *udata)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
 	gchar *artist;
 	gchar *title;
 
@@ -112,7 +115,7 @@ cb_entry_print_status (xmmsc_result_t *res, void *udata)
 		    && xmmsc_result_get_dict_entry_string (res, "title", &title)) {
 			g_printf (_("Playing: %s - %s\n"), artist, title);
 		} else {
-			g_printf (_("Error getting metadata!\n"), artist, title);
+			g_printf (_("Error getting metadata!\n"));
 		}
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
@@ -255,7 +258,7 @@ cb_list_print_playlists (xmmsc_result_t *res, void *udata)
 static void
 cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 {
-	guint i, j;
+	guint i;
 	guint id;
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *jumpres = NULL;
@@ -497,12 +500,10 @@ cb_configure_playlist (xmmsc_result_t *res, void *udata)
 			coll = newcoll;
 		}
 		if (history >= 0) {
-			/* FIXME: as string */
-			xmmsc_coll_attribute_set (coll, "history", history);
+			coll_int_attribute_set (coll, "history", history);
 		}
 		if (upcoming >= 0) {
-			/* FIXME: as string */
-			xmmsc_coll_attribute_set (coll, "upcoming", upcoming);
+			coll_int_attribute_set (coll, "upcoming", upcoming);
 		}
 		if (input) {
 			/* Replace previous operand. */
@@ -544,7 +545,6 @@ cb_playlist_print_config (xmmsc_result_t *res, void *udata)
 	free_infos_playlist (pack);
 	xmmsc_result_unref (res);
 }
-
 
 static void
 coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value)

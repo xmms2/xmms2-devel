@@ -255,7 +255,7 @@ gboolean
 cli_cache_is_fresh (cli_cache_t *cache)
 {
 	/* Check if all items are fresh */
- 	return freshness_is_fresh (&cache->freshness_currpos) &&
+	return freshness_is_fresh (&cache->freshness_currpos) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist_name);
 }

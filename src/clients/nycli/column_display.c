@@ -85,7 +85,8 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 		break;
 	default:
 		/* No valid data, display empty value */
-		realsize = g_snprintf (buffer, coldef->size + 1, "");
+		*buffer = '\0';
+		realsize = 0;
 		break;
 	}
 

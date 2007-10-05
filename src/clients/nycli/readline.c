@@ -16,6 +16,8 @@
 
 #include "readline.h"
 
+#include "cli_infos.h"
+
 static cli_infos_t *readline_cli_infos;
 
 static void
