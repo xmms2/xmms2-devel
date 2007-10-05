@@ -577,6 +577,30 @@ xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll)
 
 
 /**
+ * Remove all the operands.
+ *
+ * @param coll  The collection to consider.
+ */
+void
+xmmsc_coll_operand_list_clear (xmmsc_coll_t *coll)
+{
+	xmmsc_coll_t *op;
+
+	x_return_if_fail (coll);
+
+	/* Unref all the operands sequentially. */
+	while (coll->operands != NULL) {
+		op = (xmmsc_coll_t *) coll->operands->data;
+		coll->operands = x_list_delete_link (coll->operands, coll->operands);
+		xmmsc_coll_unref (op);
+	}
+
+	coll->curr_op = NULL;
+	coll->curr_stack = NULL;
+}
+
+
+/**
  * Set an attribute in the given collection.
  *
  * @param coll The collection in which to set the attribute.
