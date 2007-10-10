@@ -39,6 +39,7 @@ def plugin_build(bld, obj):
     obj.includes = '../../include'
     obj.source = """sidplay_wrapper.cpp md5.cpp""".split()
     obj.uselib = 'sidplay resid glib2'
+    obj.install_var = 0
 
 configure, build = plugin('sid', configure=plugin_configure,
                           build=plugin_build, extra_libs=['sidplay resid'])
