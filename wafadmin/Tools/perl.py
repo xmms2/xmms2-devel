@@ -86,7 +86,7 @@ def check_perl_ext_devel(conf):
     
     conf.env["LINKFLAGS_PERLEXT"] = os.popen(perl + " -MConfig -e'print $Config{lddlflags}'").read()
     conf.env["CPPPATH_PERLEXT"] = os.popen(perl + " -MConfig -e'print \"$Config{archlib}/CORE\"'").read()
-    conf.env["CCFLAGS_PERLEXT"] = os.popen(perl + " -MConfig -e'print $Config{ccflags}'").read()
+    conf.env["CCFLAGS_PERLEXT"] = os.popen(perl + " -MConfig -e'print \"$Config{ccflags} $Config{cccdlflags}\"'").read()
 
     conf.env["XSUBPP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/xsubpp$Config{exe_ext}\"'").read()
     conf.env["EXTUTILS_TYPEMAP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/typemap\"'").read()
