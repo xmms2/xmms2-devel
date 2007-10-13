@@ -4,37 +4,35 @@ import Params
 import Common
 
 def build(bld):
-    obj = bld.create_obj('cc', 'shlib')
+    obj = bld.create_obj('cc', 'rubyext', 'rubyext')
     obj.target = 'xmmsclient_ext'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = "rb_xmmsclient_main.c rb_xmmsclient.c rb_playlist.c rb_collection.c rb_result.c".split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'ruby'
     obj.install_var = "ARCHDIR_ruby"
-    obj.env["shlib_PREFIX"] = ''
 
     Common.install_files('LIBDIR_ruby', '.', 'xmmsclient.rb')
     Common.install_files('LIBDIR_ruby', 'xmmsclient', 'sync.rb')
     Common.install_files('LIBDIR_ruby', 'xmmsclient', 'async.rb')
 
     # glib
-    obj = bld.create_obj('cc', 'shlib')
+    obj = bld.create_obj('cc', 'rubyext', 'rubyext')
     obj.target = 'xmmsclient_glib'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = ['rb_xmmsclient_glib.c']
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'ruby glib2'
+    obj.uselib = 'glib2'
     obj.install_var = "ARCHDIR_ruby"
     obj.env["shlib_PREFIX"] = ''
 
     # ecore
     if 'src/clients/lib/xmmsclient-ecore' in bld.env_of_name('default')['XMMS_OPTIONAL_BUILD']:
-        obj = bld.create_obj('cc', 'shlib')
+        obj = bld.create_obj('cc', 'rubyext', 'rubyext')
         obj.target = 'xmmsclient_ecore'
         obj.includes = '../../../include ../../../includepriv'
         obj.source = ['rb_xmmsclient_ecore.c']
         obj.uselib_local = 'xmmsclient-ecore xmmsclient'
-        obj.uselib = 'ruby ecore'
+        obj.uselib = 'ecore'
         obj.install_var = "ARCHDIR_ruby"
         obj.env["shlib_PREFIX"] = ''
 
@@ -60,8 +58,22 @@ def configure(conf):
     conf.check_message('ruby', 'header file', True)
 
     dir = os.popen(ruby + " -rrbconfig -e 'puts \"%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'").read().strip()
-    conf.env["CCFLAGS_ruby"] = '-I%s' % dir
+    conf.env["CPPPATH_ruby"] = dir
     conf.env["LINKFLAGS_ruby"] = '-L%s' % dir
+
+    ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LDSHARED\"]'").read().strip()
+    # ok this is really stupid, but the command and flags are combined..
+    for flag in ldflags.split():
+        if flag[0] == '-':
+            conf.env["LINKFLAGS_ruby"] += " "+flag
+
+    ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LIBS\"]'").read().strip()
+    conf.env["LINKFLAGS_ruby"] += " "+ldflags
+    ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LIBRUBYARG_SHARED\"]'").read().strip()
+    conf.env["LINKFLAGS_ruby"] += " "+ldflags
+
+    cflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"CCDLFLAGS\"]'").read().strip()
+    conf.env["CCFLAGS_ruby"] = cflags
 
     if not Params.g_options.rubyarchdir:
         conf.env["ARCHDIR_ruby"] = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'").read().strip()
@@ -72,6 +84,12 @@ def configure(conf):
         conf.env["LIBDIR_ruby"] = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitelibdir\"]'").read().strip()
     else:
         conf.env["LIBDIR_ruby"] = Params.g_options.rubylibdir
+
+    conf.env["rubyext_PREFIX"] = ''
+    conf.env["rubyext_SUFFIX"] = '.' + os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"DLEXT\"]'").read().strip()
+    conf.env["rubyext_USELIB"] = "ruby"
+    conf.env["rubyext_obj_ext"] = conf.env["shlib_obj_ext"]
+
 
     return True
 
