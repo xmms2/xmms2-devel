@@ -55,7 +55,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 	gint i;
 	xmms_medialib_session_t *session;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	/* Empty Collection* tables */
 	xmms_medialib_select (session, "DELETE FROM CollectionAttributes", NULL);

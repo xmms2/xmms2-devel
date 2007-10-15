@@ -977,12 +977,12 @@ xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xm
 	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 
 	entry = xmms_medialib_entry_new_encoded (session, nurl, err);
+	xmms_medialib_end (session);
 
 	if (entry) {
 		xmms_playlist_add_entry (playlist, plname, entry, err);
 	}
 
-	xmms_medialib_end (session);
 
 	return !!entry;
 }
