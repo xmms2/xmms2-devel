@@ -886,7 +886,6 @@ void
 xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
                              gchar *path, xmms_error_t *error)
 {
-	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
 	guint32 id;
 	GList *list = NULL, *n;
@@ -915,8 +914,6 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 
 	XMMS_DBG ("and we are done!");
 	xmms_medialib_end (session);
-	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
-	xmms_mediainfo_reader_wakeup (mr);
 }
 
 static void
@@ -931,6 +928,7 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
                                 const char *url,
                                 xmms_error_t *error)
 {
+	xmms_mediainfo_reader_t *mr;
 	guint source;
 
 	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
@@ -944,6 +942,8 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
 	}
 
 	xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
+	xmms_mediainfo_reader_wakeup (mr);
 
 	return 1;
 
@@ -1136,7 +1136,6 @@ static void
 xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
 {
 	xmms_medialib_entry_t entry;
-	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
 
 	g_return_if_fail (medialib);
@@ -1147,9 +1146,6 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	entry = xmms_medialib_entry_new_encoded (session, url, error);
 
 	xmms_medialib_end (session);
-
-	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
-	xmms_mediainfo_reader_wakeup (mr);
 }
 
 /**

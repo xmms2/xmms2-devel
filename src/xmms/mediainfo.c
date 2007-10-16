@@ -27,7 +27,6 @@
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmmspriv/xmms_mediainfo.h"
-#include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_xform.h"
 
@@ -52,12 +51,10 @@ struct xmms_mediainfo_reader_St {
 	GCond *cond;
 
 	gboolean running;
-	xmms_playlist_t *playlist;
 };
 
 static void xmms_mediainfo_reader_stop (xmms_object_t *o);
 static gpointer xmms_mediainfo_reader_thread (gpointer data);
-static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
 
 
 /**
@@ -65,11 +62,9 @@ static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpoi
   */
 
 xmms_mediainfo_reader_t *
-xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
+xmms_mediainfo_reader_start (void)
 {
 	xmms_mediainfo_reader_t *mrt;
-
-	g_return_val_if_fail (playlist, NULL);
 
 	mrt = xmms_object_new (xmms_mediainfo_reader_t,
 	                       xmms_mediainfo_reader_stop);
@@ -84,11 +79,8 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 
 	mrt->mutex = g_mutex_new ();
 	mrt->cond = g_cond_new ();
-	mrt->playlist = playlist;
 	mrt->running = TRUE;
 	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, TRUE, NULL);
-
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mrt);
 
 	return mrt;
 }
@@ -132,24 +124,6 @@ xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
 }
 
 /** @} */
-
-static void
-xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
-{
-	xmms_mediainfo_reader_t *mir = userdata;
-	const xmms_object_cmd_arg_t *oarg = arg;
-	GHashTable *chmsg = oarg->retval->value.dict;
-
-	xmms_object_cmd_value_t *val = g_hash_table_lookup (chmsg, "type");
-
-	if (!val)
-		return;
-
-	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD ||
-	    val->value.uint32 == XMMS_PLAYLIST_CHANGED_INSERT) {
-		xmms_mediainfo_reader_wakeup (mir);
-	}
-}
 
 static gpointer
 xmms_mediainfo_reader_thread (gpointer data)
