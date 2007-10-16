@@ -42,7 +42,7 @@ def build(bld):
         lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     else:
         lib = bld.create_obj('cc', 'staticlib')
-        lib.install_in = 0
+        lib.install_var = 0
     lib.target = 'xmms2core'
     lib.includes = '. ../include ../includepriv'
     lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
