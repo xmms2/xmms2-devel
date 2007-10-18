@@ -31,15 +31,6 @@ def plugin_configure(conf):
 
     return True
 
-def plugin_build(bld, obj):
-    obj.add_objects = 'xmms_sid_cpp'
-
-    obj = bld.create_obj('cpp', 'objects')
-    obj.target = 'xmms_sid_cpp'
-    obj.includes = '../../include'
-    obj.source = """sidplay_wrapper.cpp md5.cpp""".split()
-    obj.uselib = 'sidplay resid glib2'
-    obj.install_var = 0
-
 configure, build = plugin('sid', configure=plugin_configure,
-                          build=plugin_build, extra_libs=['sidplay resid'])
+                          source=["sid.c", "sidplay_wrapper.cpp", "md5.cpp"],
+                          extra_libs=['sidplay resid'])
