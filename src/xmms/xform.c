@@ -40,6 +40,8 @@ struct xmms_xform_St {
 	const xmms_xform_plugin_t *plugin;
 	xmms_medialib_entry_t entry;
 
+	gboolean inited;
+
 	void *priv;
 
 	xmms_stream_type_t *out_type;
@@ -335,7 +337,7 @@ xmms_xform_destroy (xmms_object_t *object)
 	XMMS_DBG ("Freeing xform '%s'", xmms_xform_shortname (xform));
 
 	/* The 'destroy' method is not mandatory */
-	if (xform->plugin && xform->plugin->methods.destroy && xform->entry) {
+	if (xform->plugin && xform->plugin->methods.destroy && xform->inited) {
 		xform->plugin->methods.destroy (xform);
 	}
 
@@ -385,11 +387,10 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 
 	if (plugin && entry) {
 		if (!plugin->methods.init (xform)) {
-			if (prev) {
-				xmms_object_unref (prev);
-			}
+			xmms_object_unref (xform);
 			return NULL;
 		}
+		xform->inited = TRUE;
 		g_return_val_if_fail (xform->out_type, NULL);
 	}
 
