@@ -53,12 +53,12 @@ compress_reconfigure (compress_t *compress, int anticlip, int target,
 
 	/* Allocate the peak structure */
 	compress->peaks = g_realloc (compress->peaks,
-	                             sizeof(int)*compress->prefs.buckets);
+	                             sizeof (int)*compress->prefs.buckets);
 
 	if (compress->prefs.buckets > compress->lastsize) {
 		/* i could have sworn there was a glib function for this... */
 		memset (compress->peaks + compress->lastsize, 0,
-		        sizeof(int)*(compress->prefs.buckets - compress->lastsize));
+		        sizeof (int)*(compress->prefs.buckets - compress->lastsize));
 	}
 	compress->lastsize = compress->prefs.buckets;
 }
@@ -180,7 +180,7 @@ compress_do (compress_t *compress, void *data, unsigned int length)
 #ifdef STATS
 	fprintf (stderr, "\r%d gain = %2.2f%+.2e ", compress->gain_current,
 	         compress->gain_current*1.0/(1 << GAINSHIFT),
-           (compress->gain_target - compress->gain_current)*1.0
+	         (compress->gain_target - compress->gain_current)*1.0
 	         /(1 << GAINSHIFT));
 #endif
 
