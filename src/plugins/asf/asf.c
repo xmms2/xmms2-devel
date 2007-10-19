@@ -132,7 +132,7 @@ xmms_asf_init (xmms_xform_t *xform)
 		XMMS_DBG ("ASF parser failed to init with error %d", ret);
 		asf_free_packet (data->packet);
 		asf_close (data->file);
-		
+
 		return FALSE;
 	}
 
@@ -223,7 +223,7 @@ xmms_asf_get_mediainfo (xmms_xform_t *xform)
 	gint i;
 
 	g_return_if_fail (xform);
-	
+
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
@@ -307,7 +307,7 @@ xmms_asf_read_callback (void *opaque, void *buffer, int32_t size)
 	g_return_val_if_fail (buffer, 0);
 	xform = opaque;
 
-	xmms_error_reset(&error);
+	xmms_error_reset (&error);
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
@@ -328,7 +328,7 @@ xmms_asf_seek_callback (void *opaque, int64_t position)
 	g_return_val_if_fail (opaque, -1);
 	xform = opaque;
 
-	xmms_error_reset(&error);
+	xmms_error_reset (&error);
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
@@ -350,7 +350,7 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	stream_count = asf_get_stream_count(file);
+	stream_count = asf_get_stream_count (file);
 
 	for (i=1; i <= stream_count; i++) {
 		asf_stream_properties_t *sprop = asf_get_stream_properties (file, i);
@@ -370,22 +370,22 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 			data->bitrate = wfx->bitrate;
 
 			xmms_xform_privdata_set_bin (xform,
-						     "decoder_config",
-						     wfx->data,
-						     wfx->datalen);
+			                             "decoder_config",
+			                             wfx->data,
+			                             wfx->datalen);
 
 			xmms_xform_privdata_set_int (xform,
 			                             "bitrate",
 			                             data->bitrate);
 
 			xmms_xform_outdata_type_add (xform,
-						     XMMS_STREAM_TYPE_MIMETYPE,
-						     mimetype,
-						     XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-						     data->samplerate,
-						     XMMS_STREAM_TYPE_FMT_CHANNELS,
-						     data->channels,
-						     XMMS_STREAM_TYPE_END);
+			                             XMMS_STREAM_TYPE_MIMETYPE,
+			                             mimetype,
+			                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+			                             data->samplerate,
+			                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+			                             data->channels,
+			                             XMMS_STREAM_TYPE_END);
 
 			return i;
 		}
