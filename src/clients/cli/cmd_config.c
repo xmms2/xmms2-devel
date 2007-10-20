@@ -101,7 +101,7 @@ get_keys (const void *key, xmmsc_result_value_type_t type, const void *value, vo
 
 	chan = g_new (volume_channel_t, 1);
 	chan->name = g_strdup ((const gchar *)key);
-	chan->volume = (guint)value;
+	chan->volume = XPOINTER_TO_UINT (value);
 
 	*l = g_list_prepend (*l, chan);
 }

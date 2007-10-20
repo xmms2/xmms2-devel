@@ -15,15 +15,22 @@
 #define x_malloc0(size) calloc (1, size)
 #define x_malloc(size) malloc (size)
 
-#define XPOINTER_TO_INT(p)      ((int)   (p))
-#define XPOINTER_TO_UINT(p)     ((unsigned int)  (p))
-
-#define XINT_TO_POINTER(i)      ((void *)  (i))
-#define XUINT_TO_POINTER(u)     ((void *)  (u))
+/* This is not nice but there's no very clean way around the ugly warnings,
+ * glibc does about the same but on compile time (this could be moved to waf?) */
+#if defined(__x86_64__)
+#  define XPOINTER_TO_INT(p)      ((int)  (long)  (p))
+#  define XPOINTER_TO_UINT(p)     ((unsigned int)  (unsigned long)  (p))
+#  define XINT_TO_POINTER(i)      ((void *)  (long)  (i))
+#  define XUINT_TO_POINTER(u)     ((void *)  (unsigned long)  (u))
+#else
+#  define XPOINTER_TO_INT(p)      ((int)  (p))
+#  define XPOINTER_TO_UINT(p)     ((unsigned int)  (p))
+#  define XINT_TO_POINTER(i)      ((void *)  (i))
+#  define XUINT_TO_POINTER(u)     ((void *)  (u))
+#endif
 
 #ifndef MIN
-#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
-
+#  define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #endif
 
 #define XMMS_PATH_MAX 255

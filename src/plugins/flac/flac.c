@@ -109,7 +109,7 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 static FLAC__StreamDecoderReadStatus
 flac_callback_read (const FLAC__StreamDecoder *flacdecoder,
                     FLAC__byte buffer[],
-                    guint *bytes,
+                    gsize *bytes,
                     void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
