@@ -793,8 +793,10 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_t *output = (xmms_output_t *)object;
 
 	output->monitor_volume_running = FALSE;
-	if (output->monitor_volume_thread)
+	if (output->monitor_volume_thread) {
 		g_thread_join (output->monitor_volume_thread);
+		output->monitor_volume_thread = NULL;
+	}
 
 	xmms_output_filler_state (output, FILLER_QUIT);
 	g_thread_join (output->filler_thread);
@@ -952,7 +954,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	if (plugin) {
 		if (!set_plugin (output, plugin)) {
-			xmms_log_error ("couldn't initialize output plugin");
+			xmms_log_error ("Could not initialize output plugin");
 		}
 	} else {
 		xmms_log_error ("initalized output without a plugin, please fix!");
@@ -1019,7 +1021,12 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 	g_assert (output);
 	g_assert (plugin);
 
-	/* first, shut down the current plugin if present */
+	output->monitor_volume_running = FALSE;
+	if (output->monitor_volume_thread) {
+		g_thread_join (output->monitor_volume_thread);
+		output->monitor_volume_thread = NULL;
+	}
+
 	if (output->plugin) {
 		xmms_output_plugin_method_destroy (output->plugin, output);
 		output->plugin = NULL;
@@ -1033,12 +1040,11 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 
 	if (!ret) {
 		output->plugin = NULL;
+	} else if (!output->monitor_volume_thread) {
+		output->monitor_volume_running = TRUE;
+		output->monitor_volume_thread = g_thread_create (xmms_output_monitor_volume_thread,
+		                                                 output, TRUE, NULL);
 	}
-
-	output->monitor_volume_running = TRUE;
-	output->monitor_volume_thread =
-		g_thread_create (xmms_output_monitor_volume_thread, output,
-		                 TRUE, NULL);
 
 	return ret;
 }
