@@ -111,9 +111,6 @@ xmms_pulse_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	if (data->pulse)
-		xmms_pulse_backend_free (data->pulse);
-
 	g_free (data);
 }
 
@@ -157,7 +154,7 @@ xmms_pulse_close (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	if (data->pulse)
-		xmms_pulse_backend_close_stream(data->pulse);
+		xmms_pulse_backend_free (data->pulse);
 }
 
 
