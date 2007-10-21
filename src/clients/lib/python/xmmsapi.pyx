@@ -1101,12 +1101,18 @@ cdef class XMMS:
 			self.disconnect_fun(self)
 
 	def exit_loop(self):
-		""" Exits from the L{loop} call """
+		"""
+		exit_loop()
+
+		Exits from the L{loop} call
+        """
 		self.do_loop = False
 		write(self.wakeup, "42")
 
 	def loop(self):
 		"""
+		loop()
+
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
 		until L{exit_loop} is called.
@@ -1136,6 +1142,8 @@ cdef class XMMS:
 
 	def ioin(self):
 		"""
+		ioin() -> bool
+
 		Read data from the daemon, when available. Note: This is a low
 		level function that should only be used in certain
 		circumstances. e.g. a custom event loop
@@ -1144,6 +1152,8 @@ cdef class XMMS:
 
 	def ioout(self):
 		"""
+		ioout() -> bool
+
 		Write data out to the daemon, when available. Note: This is a
 		low level function that should only be used in certain
 		circumstances. e.g. a custom event loop
@@ -1151,14 +1161,22 @@ cdef class XMMS:
 		return xmmsc_io_out_handle(self.conn)
 
 	def want_ioout(self):
+		"""
+		want_ioout() -> bool
+		"""
 		return xmmsc_io_want_out(self.conn)
 
 	def set_need_out_fun(self, fun):
+		"""
+		set_need_out_fun(fun)
+		"""
 		xmmsc_io_need_out_callback_set(self.conn, python_need_out_fun, self)
 		self.needout_fun = fun
 		
 	def get_fd(self):
 		"""
+		get_fd() -> int
+
 		Get the underlying file descriptor used for communication with
 		the XMMS2 daemon. You can use this in a client to ensure that
 		the IPC link is still active and safe to use.(e.g by calling
@@ -1170,6 +1188,8 @@ cdef class XMMS:
 
 	def connect(self, path = None, disconnect_func = None):
 		"""
+		connect([path], [disconnect_func])
+
 		Connect to the appropriate IPC path, for communication with the
 		XMMS2 daemon. This path defaults to /tmp/xmms-ipc-<username> if
 		not specified. Call this once you have instantiated the object:
@@ -1202,6 +1222,8 @@ cdef class XMMS:
 
 	def quit(self, cb = None):
 		"""
+		quit([cb]) -> XMMSResult
+
 		Tell the XMMS2 daemon to quit.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1218,6 +1240,8 @@ cdef class XMMS:
 
 	def plugin_list(self, typ, cb = None):
 		"""
+		plugin_list(typ, [cb]) -> XMMSResult
+
 		Get a list of loaded plugins from the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1233,6 +1257,8 @@ cdef class XMMS:
 
 	def playback_start(self, cb = None):
 		"""
+		playback_start([cb]) -> XMMSResult
+
 		Instruct the XMMS2 daemon to start playing the currently
 		selected file from the playlist.
 		@rtype: L{XMMSResult}
@@ -1249,6 +1275,8 @@ cdef class XMMS:
 
 	def playback_stop(self, cb = None):
 		"""
+		playback_stop([cb]) -> XMMSResult
+
 		Instruct the XMMS2 daemon to stop playing the file
 		currently being played.
 		@rtype: L{XMMSResult}
@@ -1265,6 +1293,8 @@ cdef class XMMS:
 
 	def playback_tickle(self, cb = None):
 		"""
+		playback_tickle([cb]) -> XMMSResult
+
 		Instruct the XMMS2 daemon to move on to the next playlist item.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1280,6 +1310,8 @@ cdef class XMMS:
 
 	def playback_pause(self, cb = None):
 		"""
+		playback_pause([cb]) -> XMMSResult
+
 		Instruct the XMMS2 daemon to pause playback.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1296,6 +1328,8 @@ cdef class XMMS:
 
 	def playback_current_id(self, cb = None):
 		"""
+		playback_current_id([cb]) -> XMMSResult
+
 		@rtype: L{XMMSResult}(UInt)
 		@return: The medialib id of the item currently selected.
 		"""
@@ -1311,6 +1345,8 @@ cdef class XMMS:
 
 	def playback_seek_ms(self, ms, cb = None):
 		"""
+		playback_seek_ms(ms, [cb]) -> XMMSResult
+
 		Seek to an absolute time position in the current file or
 		stream in playback.
 		@rtype: L{XMMSResult}
@@ -1328,6 +1364,8 @@ cdef class XMMS:
 
 	def playback_seek_ms_rel(self, ms, cb = None):
 		"""
+		playback_seek_ms_rel(ms, [cb]) -> XMMSResult
+
 		Seek to a time position by the given offset in the current file or
 		stream in playback.
 		@rtype: L{XMMSResult}
@@ -1345,6 +1383,8 @@ cdef class XMMS:
 
 	def playback_seek_samples(self, samples, cb = None):
 		"""
+		playback_seek_samples(samples, [cb]) -> XMMSResult
+
 		Seek to an absolute number of samples in the current file or
 		stream in playback.
 		@rtype: L{XMMSResult}
@@ -1362,6 +1402,8 @@ cdef class XMMS:
 
 	def playback_seek_samples_rel(self, samples, cb = None):
 		"""
+		playback_seek_samples_rel(samples, [cb]) -> XMMSResult
+
 		Seek to a number of samples by the given offset in the
 		current file or stream in playback.
                 @rtype: L{XMMSResult}
@@ -1378,7 +1420,10 @@ cdef class XMMS:
 		return ret
 
 	def playback_status(self, cb = None):
-		"""Get current playback status from XMMS2 daemon. This is
+		"""
+		playback_status([cb]) -> XMMSResult
+
+		Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
 		L{broadcast_playback_status}. Possible return values are:
 		L{PLAYBACK_STATUS_STOP}, L{PLAYBACK_STATUS_PLAY},
@@ -1395,6 +1440,8 @@ cdef class XMMS:
 
 	def broadcast_playback_status(self, cb = None):
 		"""
+		broadcast_playback_status([cb]) -> XMMSResult
+
 		Set a method to handle the playback status broadcast from the
 		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
@@ -1411,6 +1458,8 @@ cdef class XMMS:
 
 	def broadcast_playback_current_id(self, cb = None):
 		"""
+		broadcast_playback_current_id([cb]) -> XMMSResult
+
 		Set a method to handle the playback id broadcast from the
 		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
@@ -1427,6 +1476,8 @@ cdef class XMMS:
 
 	def playback_playtime(self, cb = None):
 		"""
+		playback_playtime([cb]) -> XMMSResult
+
 		Return playtime on current file/stream. This is essentially a
 		more direct version of L{signal_playback_playtime}
 		@rtype: L{XMMSResult}(UInt)
@@ -1444,6 +1495,8 @@ cdef class XMMS:
 
 	def signal_playback_playtime(self, cb = None):
 		"""
+		signal_playback_playtime([cb]) -> XMMSResult
+
 		Set a method to handle the playback playtime signal from the
 		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
@@ -1460,6 +1513,8 @@ cdef class XMMS:
 
 	def playback_volume_set(self, channel, volume, cb = None):
 		"""
+		playback_volume_set(channel, volume, [cb]) -> XMMSResult
+
 		Set the playback volume for specified channel
 		@rtype: L{XMMSResult}(UInt)
 		"""
@@ -1475,6 +1530,8 @@ cdef class XMMS:
 
 	def playback_volume_get(self, cb = None):
 		"""
+		playback_volume_get([cb]) -> XMMSResult
+
 		Get the playback for all channels
 		@rtype: L{XMMSResult}(UInt)
 		"""
@@ -1490,6 +1547,8 @@ cdef class XMMS:
 
 	def broadcast_playback_volume_changed(self, cb = None):
 		"""
+		broadcast_playback_volume_changed([cb]) -> XMMSResult
+
 		Set a broadcast callback for volume updates
 		@rtype: L{XMMSResult}(UInt)
 		"""
@@ -1505,6 +1564,8 @@ cdef class XMMS:
 
 	def broadcast_playlist_loaded(self, cb = None):
 		"""
+		broadcast_playlist_loaded([cb]) -> XMMSResult
+
 		Set a broadcast callback for loaded playlist event
 		@rtype: L{XMMSResult}(UInt)
 		"""
@@ -1520,6 +1581,8 @@ cdef class XMMS:
 
 	def playlist_load(self, playlist = None, cb = None):
 		"""
+		playlist_load([playlist], [cb]) -> XMMSResult
+
 		Load the playlist as current playlist
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1542,6 +1605,8 @@ cdef class XMMS:
 
 	def playlist_list(self, cb = None):
 		"""
+		playlist_list([cb]) -> XMMSResult
+
 		Lists the playlists
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1559,6 +1624,8 @@ cdef class XMMS:
 
 	def playlist_remove(self, playlist = None, cb = None):
 		"""
+		playlist_remove([playlist], [cb]) -> XMMSResult
+
 		Remove the playlist from the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1580,6 +1647,8 @@ cdef class XMMS:
 
 	def playlist_shuffle(self, playlist = None, cb = None):
 		"""
+		playlist_shuffle([playlist], [cb]) -> XMMSResult
+
 		Instruct the XMMS2 daemon to shuffle the playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1601,6 +1670,8 @@ cdef class XMMS:
 
 	def playlist_insert_url(self, pos, url, playlist = None, cb = None):
 		"""
+		playlist_insert_url(pos, url, [playlist], [cb]) -> XMMSResult
+
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		Requires an int 'pos' and a string 'url' as argument.
@@ -1626,6 +1697,8 @@ cdef class XMMS:
 
 	def playlist_insert_encoded(self, pos, url, playlist = None, cb = None):
 		"""
+		playlist_insert_encoded(pos, url, [playlist], [cb]) -> XMMSResult
+
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		Requires an int 'pos' and a string 'url' as argument.
@@ -1654,6 +1727,8 @@ cdef class XMMS:
 
 	def playlist_insert_id(self, pos, id, playlist = None, cb = None):
 		"""
+		playlist_insert_id(pos, id, [playlist], [cb]) -> XMMSResult
+
 		Insert a medialib to the playlist.
 		Requires an int 'pos' and an int 'id' as argument.
 		@rtype: L{XMMSResult}
@@ -1677,6 +1752,8 @@ cdef class XMMS:
 
 	def playlist_insert_collection(self, pos, coll, order = None, playlist = None, cb = None):
 		"""
+		playlist_insert_collection(pos, coll, [order], [playlist], [cb]) -> XMMSResult
+
 		Insert the content of a collection to the playlist.
 		Requires an int 'pos' and an int 'id' as argument.
 		@rtype: L{XMMSResult}
@@ -1707,6 +1784,8 @@ cdef class XMMS:
 
 	def playlist_radd(self, url, playlist = None, cb = None):
 		"""
+		playlist_radd(url, [playlist], [cb]) -> XMMSResult
+
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
 		@rtype: L{XMMSResult}
@@ -1730,6 +1809,8 @@ cdef class XMMS:
 
 	def playlist_radd_encoded(self, url, playlist = None, cb = None):
 		"""
+		playlist_radd_encoded(url, [playlist], [cb]) -> XMMSResult
+
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
 		'url' argument has to be medialib encoded.
@@ -1754,6 +1835,8 @@ cdef class XMMS:
 
 	def playlist_add_url(self, url, playlist = None, cb = None):
 		"""
+		playlist_add_url(url, [playlist], [cb]) -> XMMSResult
+
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		Requires a string 'url' as argument.
@@ -1778,6 +1861,8 @@ cdef class XMMS:
 
 	def playlist_add_encoded(self, url, playlist = None, cb = None):
 		"""
+		playlist_add_encoded(url, [playlist], [cb]) -> XMMSResult
+
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		The 'url' has to be medialib encoded.
@@ -1804,6 +1889,8 @@ cdef class XMMS:
 
 	def playlist_add_id(self, id, playlist = None, cb = None):
 		"""
+		playlist_add_id(id, [playlist], [cb]) -> XMMSResult
+
 		Add a medialib id to the playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1826,6 +1913,8 @@ cdef class XMMS:
 
 	def playlist_add_collection(self, coll, order = None, playlist = None, cb = None):
 		"""
+		playlist_add_collection(coll, [order], [playlist], [cb]) -> XMMSResult
+
 		Add the content of a collection to the playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1856,6 +1945,8 @@ cdef class XMMS:
 
 	def playlist_remove_entry(self, id, playlist = None, cb = None):
 		"""
+		playlist_remove_entry(id, [playlist], [cb]) -> XMMSResult
+
 		Remove a certain media item from the playlist.
 		Requires a number 'id' as argument.
 		@rtype: L{XMMSResult}
@@ -1878,6 +1969,8 @@ cdef class XMMS:
 
 	def playlist_clear(self, playlist = None, cb = None):
 		"""
+		playlist_clear([playlist], [cb]) -> XMMSResult
+
 		Clear the playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1898,6 +1991,8 @@ cdef class XMMS:
 
 	def playlist_list_entries(self, playlist = None, cb = None):
 		"""
+		playlist_list_entries([playlist], [cb]) -> XMMSResult
+
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
 		L{medialib_get_info} to retrieve more specific information.
@@ -1922,6 +2017,8 @@ cdef class XMMS:
 
 	def playlist_sort(self, props, playlist = None, cb = None):
 		"""
+		playlist_sort(props, [playlist], [cb]) -> XMMSResult
+
 		Sorts the playlist according to the properties specified.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -1945,6 +2042,8 @@ cdef class XMMS:
 
 	def playlist_set_next_rel(self, position, cb = None):
 		"""
+		playlist_set_next_rel(position, [cb]) -> XMMSResult
+
 		Sets the position in the playlist. Same as L{playlist_set_next}
 		but sets the next position relative to the current position.
 		You can do set_next_rel(-1) to move backwards for example.
@@ -1963,6 +2062,8 @@ cdef class XMMS:
 
 	def playlist_set_next(self, position, cb = None):
 		"""
+		playlist_set_next(position, [cb]) -> XMMSResult
+
 		Sets the position to move to, next, in the playlist. Calling
 		L{playback_tickle} will perform the jump to that position.
 		@rtype: L{XMMSResult}
@@ -1979,6 +2080,8 @@ cdef class XMMS:
 
 	def playlist_move(self, cur_pos, new_pos, playlist = None, cb = None):
 		"""
+		playlist_move(cur_pos, new_pos, [playlist], [cb]) -> XMMSResult
+
 		Moves a playlist entry to a new position.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2000,6 +2103,8 @@ cdef class XMMS:
 
 	def playlist_create(self, playlist, cb = None):
 		"""
+		playlist_create(playlist, [cb]) -> XMMSResult
+
 		Create a new playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2018,6 +2123,8 @@ cdef class XMMS:
 
 	def playlist_current_pos(self, playlist = None, cb = None):
 		"""
+		playlist_current_pos([playlist], [cb]) -> XMMSResult
+
 		Returns the current position in the playlist. This value will
 		always be equal to, or larger than 0. The first entry in the
 		list is 0.
@@ -2039,6 +2146,8 @@ cdef class XMMS:
 
 	def playlist_current_active(self, cb = None):
 		"""
+		playlist_current_active([cb]) -> XMMSResult
+
 		Returns the name of the current active playlist
 		@rtype: L{XMMSResult}
 		"""
@@ -2054,6 +2163,8 @@ cdef class XMMS:
 
 	def broadcast_playlist_current_pos(self, cb = None):
 		"""
+		broadcast_playlist_current_pos([cb]) -> XMMSResult
+
 		Set a method to handle the playlist current position updates
 		from the XMMS2 daemon. This is triggered whenever the daemon
 		jumps from one playlist position to another. (not when moving
@@ -2072,6 +2183,8 @@ cdef class XMMS:
 
 	def broadcast_playlist_changed(self, cb = None):
 		"""
+		broadcast_playlist_changed([cb]) -> XMMSResult
+
 		Set a method to handle the playlist changed broadcast from the
 		XMMS2 daemon. Updated data is sent whenever the daemon's
 		playlist changes.
@@ -2089,6 +2202,8 @@ cdef class XMMS:
 
 	def broadcast_configval_changed(self, cb = None):
 		"""
+		broadcast_configval_changed([cb]) -> XMMSResult
+
 		Set a method to handle the config value changed broadcast
 		from the XMMS2 daemon.(i.e. some configuration value has
 		been modified) Updated data is sent whenever a config
@@ -2107,6 +2222,8 @@ cdef class XMMS:
 
 	def configval_set(self, key, val, cb = None):
 		"""
+		configval_set(key, val, [cb]) -> XMMSResult
+
 		Set a configuration value on the daemon, given a key.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2125,6 +2242,8 @@ cdef class XMMS:
 
 	def configval_get(self, key, cb = None):
 		"""
+		configval_get(key, [cb]) -> XMMSResult
+
 		Get the configuration value of a given key, from the daemon.
 		@rtype: L{XMMSResult}(String)
 		@return: The result of the operation.
@@ -2142,6 +2261,8 @@ cdef class XMMS:
 
 	def configval_list(self, cb = None):
 		"""
+		configval_list([cb]) -> XMMSResult
+
 		Get list of configuration keys on the daemon. Use
 		L{configval_get} to retrieve the values corresponding to the
 		configuration keys.
@@ -2159,6 +2280,8 @@ cdef class XMMS:
 
 	def configval_register(self, valuename, defaultvalue, cb = None):
 		"""
+		configval_register(valuename, defaultvalue, [cb]) -> XMMSResult
+
 		Register a new configvalue.
 		This should be called in the initcode as XMMS2 won't allow
 		set/get on values that haven't been registered.
@@ -2179,6 +2302,8 @@ cdef class XMMS:
 
 	def medialib_add_entry(self, file, cb = None):
 		"""
+		medialib_add_entry(file, [cb]) -> XMMSResult
+
 		Add an entry to the MediaLib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2196,6 +2321,8 @@ cdef class XMMS:
 
 	def medialib_add_entry_encoded(self, file, cb = None):
 		"""
+		medialib_add_entry_encoded(file, [cb]) -> XMMSResult
+
 		Add an entry to the MediaLib.
 		Exactly the same as #medialib_add_entry but takes
 		a encoded url instead.
@@ -2215,6 +2342,8 @@ cdef class XMMS:
 
 	def medialib_remove_entry(self, id, cb=None):
 		"""
+		medialib_remove_entry(id, [cb]) -> XMMSResult
+
 		Remove an entry from the medialib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2230,6 +2359,8 @@ cdef class XMMS:
 
 	def medialib_get_info(self, id, cb = None):
 		"""
+		medialib_get_info(id, [cb]) -> XMMSResult
+
 		@rtype: L{XMMSResult}(HashTable)
 		@return: Information about the medialib entry position
 		specified.
@@ -2246,6 +2377,8 @@ cdef class XMMS:
 
 	def medialib_rehash(self, id = 0, cb = None):
 		"""
+		medialib_rehash([id], [cb]) -> XMMSResult
+
 		Force the medialib to check that metadata stored is up to
 		date.
 		@rtype: L{XMMSResult}
@@ -2263,6 +2396,8 @@ cdef class XMMS:
 
 	def medialib_get_id(self, url, cb = None):
 		"""
+		medialib_get_id(url, [cb]) -> XMMSResult
+
 		Search for an entry (URL) in the medialib and return its ID
 		number.
 		@rtype: L{XMMSResult}
@@ -2280,6 +2415,8 @@ cdef class XMMS:
 
 	def medialib_path_import(self, path, cb = None):
 		"""
+		medialib_path_import(path, [cb]) -> XMMSResult
+
 		Import metadata from all files recursively from the directory
 		passed as argument.
 		@rtype: L{XMMSResult}
@@ -2299,6 +2436,8 @@ cdef class XMMS:
 
 	def medialib_path_import_encoded(self, path, cb = None):
 		"""
+		medialib_path_import_encoded(path, [cb]) -> XMMSResult
+
 		Import metadata from all files recursively from the directory
 		passed as argument. The 'path' argument has to be medialib encoded.
 		@rtype: L{XMMSResult}
@@ -2319,6 +2458,8 @@ cdef class XMMS:
 
 	def medialib_property_set(self, id, key, value, source=None, cb=None):
 		"""
+		medialib_property_set(id, key, value, [source], [cb]) -> XMMSResult
+
 		Associate a value with a medialib entry. Source is optional.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2348,6 +2489,8 @@ cdef class XMMS:
 
 	def medialib_property_remove(self, id, key, source=None, cb=None):
 		"""
+		medialib_property_remove(id, key, [source], [cb]) -> XMMSResult
+
 		Remove a value from a medialib entry. Source is optional.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2370,6 +2513,8 @@ cdef class XMMS:
 
 	def broadcast_medialib_entry_added(self, cb = None):
 		"""
+		broadcast_medialib_entry_added([cb]) -> XMMSResult
+
 		Set a method to handle the medialib entry added broadcast
 		from the XMMS2 daemon. (i.e. a new entry has been added)
 		@rtype: L{XMMSResult}
@@ -2386,6 +2531,8 @@ cdef class XMMS:
 
 	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
+		broadcast_medialib_entry_changed([cb]) -> XMMSResult
+
 		Set a method to handle the medialib entry changed broadcast
 		from the XMMS2 daemon.
 		Updated data is sent when the metadata for a song is updated
@@ -2404,6 +2551,8 @@ cdef class XMMS:
 
 	def signal_visualisation_data(self, cb = None):
 		"""
+		signal_visualisation_data([cb]) -> XMMSResult
+
 		Tell daemon to send you visualisation data updates for drawing
 		peak analyzer.
 		@rtype: L{XMMSResult}
@@ -2419,6 +2568,8 @@ cdef class XMMS:
 
 	def signal_mediainfo_reader_unindexed(self, cb = None):
 		"""
+		signal_mediainfo_reader_unindexed([cb]) -> XMMSResult
+
 		Tell daemon to send you the number of unindexed files in the mlib
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2433,6 +2584,8 @@ cdef class XMMS:
 
 	def broadcast_mediainfo_reader_status(self, cb = None):
 		"""
+		broadcast_mediainfo_reader_status([cb]) -> XMMSResult
+
 		Tell daemon to send you the status of the mediainfo reader
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2447,6 +2600,8 @@ cdef class XMMS:
 
 	def xform_media_browse(self, url, cb=None):
 		"""
+		xform_media_browse(url, [cb]) -> XMMSResult
+
 		Browse files from xform plugins.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2465,6 +2620,8 @@ cdef class XMMS:
 
 	def coll_get(self, name, ns, cb=None):
 		"""
+		coll_get(name, ns, [cb]) -> XMMSResult
+
 		Retrieve a Collection
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2489,6 +2646,8 @@ cdef class XMMS:
 
 	def coll_list(self, ns="*", cb=None):
 		"""
+		coll_list(name, [ns], [cb]) -> XMMSResult
+
 		List collections
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2512,6 +2671,8 @@ cdef class XMMS:
 
 	def coll_save(self, Collection coll, name, ns, cb=None):
 		"""
+		coll_save(coll, name, ns, [cb]) -> XMMSResult
+
 		Save a collection on server.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2535,6 +2696,8 @@ cdef class XMMS:
 
 	def coll_remove(self, name, ns, cb=None):
 		"""
+		coll_remove(name, ns, [cb]) -> XMMSResult
+
 		Remove a collection on server.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2560,6 +2723,8 @@ cdef class XMMS:
 
 	def coll_rename(self, oldname, newname, ns, cb=None):
 		"""
+		coll_rename(oldname, newname, ns, [cb]) -> XMMSResult
+
 		Change the name of a Collection.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2585,6 +2750,8 @@ cdef class XMMS:
 
 	def coll_query_ids(self, coll, start=0, leng=0, order=None, cb=None):
 		"""
+		coll_query_ids(coll, [start], [leng], [order], [cb]) -> XMMSResult
+
 		Retrive a list of ids of the media matching the collection
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2609,6 +2776,8 @@ cdef class XMMS:
 
 	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
+		coll_query_infos(coll, fields, [start], [leng], [order], [groupby], [cb]) -> XMMSResult
+
 		Retrive a list of mediainfo of the media matching the collection
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2641,6 +2810,8 @@ cdef class XMMS:
 
 	def bindata_add(self, data, cb=None):
 		"""
+		bindata_add(data, [cb]) -> XMMSResult
+
 		Add a datafile to the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2657,6 +2828,8 @@ cdef class XMMS:
 
 	def bindata_retrieve(self, hash, cb=None):
 		"""
+		bindata_retrieve(hash, [cb]) -> XMMSResult
+
 		Retrieve a datafile from the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
@@ -2673,6 +2846,8 @@ cdef class XMMS:
 
 	def bindata_remove(self, hash, cb=None):
 		"""
+		bindata_remove(hash, [cb]) -> XMMSResult
+
 		Remove a datafile from the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
