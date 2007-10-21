@@ -436,7 +436,7 @@ xmms_output_plugin_writer (gpointer data)
 				g_mutex_unlock (plugin->api_mutex);
 
 				if (!ret) {
-					XMMS_DBG ("Couldn't open output");
+					xmms_log_error ("Could not open output");
 					plugin->wanted_status = XMMS_PLAYBACK_STATUS_STOP;
 					output = NULL;
 					continue;
