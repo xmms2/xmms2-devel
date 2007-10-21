@@ -99,6 +99,12 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	                                   tchannels, tformat,
 	                                   conv->resample);
 
+	if (!conv->func) {
+		xmms_object_unref(conv);
+		xmms_log_error ("Can not convert between requested formats");
+		return NULL;
+	}
+
 	if (conv->resample)
 		recalculate_resampler (conv, fsamplerate, tsamplerate);
 
