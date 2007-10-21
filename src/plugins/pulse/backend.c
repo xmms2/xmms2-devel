@@ -222,8 +222,7 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 			break;
 		}
 	}
-	if (pa_format == PA_SAMPLE_INVALID)
-		return FALSE;
+	g_return_val_if_fail (pa_format != PA_SAMPLE_INVALID, FALSE);
 
 	/* If there is an existing stream, check to see if it can do the
 	 * job. */
@@ -232,11 +231,12 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 	    p->sample_spec.channels == channels)
 		return TRUE;
 
-	pa_threaded_mainloop_lock(p->mainloop);
-
 	/* The existing stream needs to be shut down. */
 	if (p->stream)
 		xmms_pulse_backend_close_stream(p);
+
+	pa_threaded_mainloop_lock(p->mainloop);
+
 
 	/* Configure the new stream. */
 	p->sample_spec.format = pa_format;
@@ -266,9 +266,9 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 	}
 
 	/* Wait until the stream is ready */
-	pa_threaded_mainloop_wait(p->mainloop);
-
-	/* Wait until the stream is ready */
+	while (pa_stream_get_state(p->stream) == PA_STREAM_CREATING) {
+		pa_threaded_mainloop_wait(p->mainloop);
+	}		
 	if (pa_stream_get_state(p->stream) != PA_STREAM_READY) {
 		error = pa_context_errno(p->context);
 		goto unlock_and_fail;
@@ -292,10 +292,10 @@ void xmms_pulse_backend_close_stream(xmms_pulse *p)
 {
 	assert(p);
 
+	pa_threaded_mainloop_lock(p->mainloop);
+
 	/* We're killing it anyway, sod errors. */
 	xmms_pulse_backend_drain(p, NULL);
-
-	pa_threaded_mainloop_lock(p->mainloop);
 
 	pa_stream_disconnect(p->stream);
 	pa_stream_unref(p->stream);
@@ -361,7 +361,6 @@ gboolean xmms_pulse_backend_drain(xmms_pulse *p, int *rerror) {
 	pa_operation *o = NULL;
 	assert(p);
 
-	pa_threaded_mainloop_lock(p->mainloop);
 	if (!check_pulse_health(p, rerror))
 		goto unlock_and_fail;
 
@@ -386,7 +385,6 @@ gboolean xmms_pulse_backend_drain(xmms_pulse *p, int *rerror) {
 		goto unlock_and_fail;
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
 	return TRUE;
 
  unlock_and_fail:
@@ -395,7 +393,6 @@ gboolean xmms_pulse_backend_drain(xmms_pulse *p, int *rerror) {
 		pa_operation_unref(o);
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
 	return FALSE;
 }
 

@@ -87,20 +87,16 @@ xmms_pulse_new (xmms_output_t *output)
 	xmms_pulse_data_t *data;
 	gint i;
 
-	XMMS_DBG ("Bleh");
-
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_pulse_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
 	xmms_output_private_data_set (output, data);
-	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
-#if 0
-	for (i = 0; i < sizeof (xmms_pulse_formats); i++)
-		/* TODO: make channels/samplerate flexible. */
-		xmms_output_format_add (output, xmms_pulse_formats[i].xmms_fmt,
-					2, 44100);
-#endif
+	for (i = 1; i <= 2; i++) {
+		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_U8, i, 44100);
+		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, i, 44100);
+		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, i, 44100);
+	}
 
 	return TRUE;
 }
@@ -174,7 +170,6 @@ xmms_pulse_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	xmms_sample_format_t xmms_format;
 	gint channels;
 	gint samplerate;
-	gint i;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
