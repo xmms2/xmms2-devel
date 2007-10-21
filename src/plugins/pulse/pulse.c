@@ -93,9 +93,21 @@ xmms_pulse_new (xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data);
 	for (i = 1; i <= 2; i++) {
-		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_U8, i, 44100);
-		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, i, 44100);
-		xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, i, 44100);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_U8,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S16,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_FLOAT,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
 	}
 
 	return TRUE;

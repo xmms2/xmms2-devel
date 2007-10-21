@@ -87,6 +87,9 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	tsamplerate = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 	tchannels = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
+	if (tsamplerate == -1)
+		tsamplerate = fsamplerate;
+
 	conv->from = from;
 	conv->to = to;
 
@@ -192,7 +195,10 @@ xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types
 		gformat = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_FORMAT);
 		gsamplerate = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 		gchannels = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_CHANNELS);
-		if (gformat == -1 || gsamplerate == -1 || gchannels == -1) {
+		if (gsamplerate == -1) {
+			gsamplerate = samplerate;
+		}
+		if (gformat == -1 || gchannels == -1) {
 			continue;
 		}
 
