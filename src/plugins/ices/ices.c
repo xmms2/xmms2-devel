@@ -194,9 +194,9 @@ static void
 xmms_ices_destroy (xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
-        g_return_if_fail (output);
-        data = xmms_output_private_data_get (output);
-        g_return_if_fail (data);
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
 
 	if (data->encoder)
 		xmms_ices_encoder_fini (data->encoder);
@@ -215,9 +215,9 @@ static gboolean
 xmms_ices_open (xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
-        g_return_val_if_fail (output, FALSE);
-        data = xmms_output_private_data_get (output);
-        g_return_val_if_fail (data, FALSE);
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
 
 	if (shout_open (data->shout) == SHOUTERR_SUCCESS) {
 		XMMS_DBG ("Connected to http://%s:%d/%s",
@@ -236,9 +236,14 @@ static void
 xmms_ices_close (xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
-        g_return_if_fail (output);
-        data = xmms_output_private_data_get (output);
-        g_return_if_fail (data);
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	if (!data->encoder) {
+		shout_close (data->shout);
+		return;
+	}
 
 	xmms_ices_flush_internal (data);
 
