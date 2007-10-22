@@ -28,7 +28,7 @@ static gboolean xmms_lastfm_init (xmms_xform_t *xform);
 static void xmms_lastfm_destroy (xmms_xform_t *decoder);
 static gboolean xmms_lastfm_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gchar *xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl,
-                                     GString *buffer);
+                                     GString *buffer, GString *error);
 static gboolean xmms_lastfm_adjust (xmms_xform_t *xform, CURL *curl,
                                     GString *buffer);
 static size_t xmms_lastfm_feed_buffer (void *ptr, size_t size,
@@ -77,13 +77,14 @@ static gboolean
 xmms_lastfm_init (xmms_xform_t *xform)
 {
 	gboolean ret = FALSE;
-	GString *buffer;
+	GString *buffer, *error;
 	CURL *curl;
 	gchar *url;
 
 	g_return_val_if_fail (xform, FALSE);
 
 	buffer = g_string_new (NULL);
+	error = g_string_new (NULL);
 
 	curl = curl_easy_init ();
 
@@ -94,9 +95,9 @@ xmms_lastfm_init (xmms_xform_t *xform)
 	                  xmms_lastfm_feed_buffer);
 
 
-	url = xmms_lastfm_handshake (xform, curl, buffer);
+	url = xmms_lastfm_handshake (xform, curl, buffer, error);
 	if (!url) {
-		xmms_log_error ("Last.fm handshake failed");
+		xmms_log_error ("Last.fm handshake failed: %s", error->str);
 		goto cleanup;
 	}
 
@@ -119,6 +120,7 @@ cleanup:
 	}
 	curl_easy_cleanup (curl);
 	g_string_free (buffer, TRUE);
+	g_string_free (error, TRUE);
 
 	return ret;
 }
@@ -132,7 +134,7 @@ xmms_lastfm_destroy (xmms_xform_t *decoder)
 
 
 static gchar *
-xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl, GString *buffer)
+xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl, GString *buffer, GString *error)
 {
 	const gchar *handshake_fmt = "http://ws.audioscrobbler.com/radio/handshake.php"
 	                             "?version=0.1"
@@ -146,6 +148,8 @@ xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl, GString *buffer)
 	gchar *tmp;
 	gint i;
 	gchar hash[33];
+	gboolean failure = FALSE;
+	gchar curlerror[CURL_ERROR_SIZE] = "";
 
 	gchar *ret = NULL;
 
@@ -162,17 +166,26 @@ xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl, GString *buffer)
 
 	tmp = g_strdup_printf (handshake_fmt, username, hash);
 	curl_easy_setopt (curl, CURLOPT_URL, tmp);
+	curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, curlerror);
 
 	if (curl_easy_perform (curl) == CURLE_OK) {
 		split = g_strsplit (buffer->str, "\n", 0);
 		for (i = 0; split && split[i]; i++) {
 			if (g_str_has_prefix (split[i], "session=")) {
-				xmms_xform_metadata_set_str (xform, "session", split[i] + 8);
+				if (g_ascii_strcasecmp (split[i] + 8, "FAILED") == 0) {
+					failure = TRUE;
+				} else {
+					xmms_xform_metadata_set_str (xform, "session", split[i] + 8);
+				}
 			} else if (g_str_has_prefix (split[i], "stream_url=")) {
 				ret = g_strdup (split[i] + 11);
+			} else if (failure && g_str_has_prefix (split[i], "msg=")) {
+				g_string_printf (error, "%s", split[i] + 4);
 			}
 		}
 		g_strfreev (split);
+	} else {
+		g_string_printf(error, "%s", curlerror);
 	}
 
 
