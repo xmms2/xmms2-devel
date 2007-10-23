@@ -65,6 +65,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STARTMS "startms"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STOPMS "stopms"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS "status"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION "description"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
