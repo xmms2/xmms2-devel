@@ -26,8 +26,8 @@
 #include "compress.h"
 
 compress_t *
-compress_new (int anticlip, int target, int maxgain, int smooth,
-              int buckets)
+compress_new (gint anticlip, gint target, gint maxgain, gint smooth,
+              gint buckets)
 {
 	compress_t *compress = g_new0 (compress_t, 1);
 	/* start with no gain; this removes the not-so-wonderful volume fade-in
@@ -42,8 +42,8 @@ compress_new (int anticlip, int target, int maxgain, int smooth,
 }
 
 void
-compress_reconfigure (compress_t *compress, int anticlip, int target,
-                      int gainmax, int gainsmooth, int buckets)
+compress_reconfigure (compress_t *compress, gint anticlip, gint target,
+                      gint gainmax, gint gainsmooth, gint buckets)
 {
 	compress->prefs.anticlip = anticlip;
 	compress->prefs.target = target;
@@ -53,12 +53,12 @@ compress_reconfigure (compress_t *compress, int anticlip, int target,
 
 	/* Allocate the peak structure */
 	compress->peaks = g_realloc (compress->peaks,
-	                             sizeof (int)*compress->prefs.buckets);
+	                             sizeof (gint)*compress->prefs.buckets);
 
 	if (compress->prefs.buckets > compress->lastsize) {
 		/* i could have sworn there was a glib function for this... */
 		memset (compress->peaks + compress->lastsize, 0,
-		        sizeof (int)*(compress->prefs.buckets - compress->lastsize));
+		        sizeof (gint)*(compress->prefs.buckets - compress->lastsize));
 	}
 	compress->lastsize = compress->prefs.buckets;
 }
@@ -74,12 +74,12 @@ compress_free (compress_t *compress)
 }
 
 void
-compress_do (compress_t *compress, void *data, unsigned int length)
+compress_do (compress_t *compress, void *data, guint length)
 {
-	int16_t *audio = (int16_t *)data, *ap;
-	int peak, pos;
-	int i;
-	int gr, gf, gn;
+	gint16 *audio = (gint16 *)data, *ap;
+	gint peak, pos;
+	gint i;
+	gint gr, gf, gn;
 
 	if (!compress->peaks) {
 		return;
@@ -107,7 +107,7 @@ compress_do (compress_t *compress, void *data, unsigned int length)
 
 	ap = audio;
 	for (i = 0; i < length/2; i++) {
-		int val = *ap;
+		gint val = *ap;
 		if (val > peak) {
 			peak = val;
 			pos = i;
@@ -186,7 +186,7 @@ compress_do (compress_t *compress, void *data, unsigned int length)
 
 	ap = audio;
 	for (i = 0; i < length/2; i++) {
-		int sample;
+		gint sample;
 
 		/* Interpolate the gain */
 		compress->gain_current = gf >> 16;
