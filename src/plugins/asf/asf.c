@@ -221,6 +221,7 @@ xmms_asf_get_mediainfo (xmms_xform_t *xform)
 	xmms_asf_data_t *data;
 	asf_metadata_t *metadata;
 	uint64_t tmp;
+	gchar *track = NULL;
 	gint i;
 
 	g_return_if_fail (xform);
@@ -280,16 +281,22 @@ xmms_asf_get_mediainfo (xmms_xform_t *xform)
 			xmms_xform_metadata_set_str (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
 			                             value);
-		} else if (!strcmp (key, "WM/Track")) {
-			gint tracknr;
-			gchar *end;
+		} else if ((!track && !strcmp (key, "WM/Track")) || !strcmp (key, "WM/TrackNumber")) {
+			/* WM/TrackNumber overrides WM/Track value as specified in the Microsoft
+			 * documentation at http://msdn2.microsoft.com/en-us/library/aa392014.aspx */
+			track = value;
+		}
+	}
 
-			tracknr = strtol (value, &end, 10);
-			if (end && *end == '\0') {
-				xmms_xform_metadata_set_int (xform,
-				                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-				                             tracknr);
-			}
+	if (track) {
+		gint tracknr;
+		gchar *end;
+
+		tracknr = strtol (track, &end, 10);
+		if (end && *end == '\0') {
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
+			                             tracknr);
 		}
 	}
 
