@@ -137,6 +137,10 @@ N: Thomas Nilsson
 E: thomas@xmms.org
 D: Bugfixes. XMMS1 expertise.
 
+N: Sebastian Noack
+E: sebastian.noack@artaculous.com
+D: Better track number support in ASF.
+
 N: Vegard Nossum
 E: vegard@peltkore.net
 D: IPv6 support. Various fixes.
