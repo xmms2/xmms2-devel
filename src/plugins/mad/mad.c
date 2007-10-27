@@ -167,7 +167,7 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 		bytes = (guint)(((gdouble)samples) * data->bitrate / data->samplerate) / 8;
 	}
 
-	XMMS_DBG ("Try seek %lld samples -> %d bytes", samples, bytes);
+	XMMS_DBG ("Try seek %" G_GINT64_FORMAT " samples -> %d bytes", samples, bytes);
 
 	res = xmms_xform_seek (xform, bytes, XMMS_XFORM_SEEK_SET, err);
 	if (res == -1) {
@@ -300,8 +300,10 @@ xmms_mad_init (xmms_xform_t *xform)
 			/* FIXME: add a check for ignore_lame_headers from the medialib */
 			data->frames_to_skip = 1;
 			data->samples_to_skip = lame->start_delay;
-			data->samples_to_play = ((guint64)xmms_xing_get_frames (data->xing) * 1152ULL) - lame->start_delay - lame->end_padding;
-			XMMS_DBG ("Samples to skip in the beginning: %d, total: %lld", data->samples_to_skip, data->samples_to_play);
+			data->samples_to_play = ((guint64) xmms_xing_get_frames (data->xing) * 1152ULL) - 
+			                        lame->start_delay - lame->end_padding;
+			XMMS_DBG ("Samples to skip in the beginning: %d, total: %" G_GINT64_FORMAT,
+			          data->samples_to_skip, data->samples_to_play);
 			/*
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
 			xmms_xform_metadata_set_int (xform, metakey, lame->audiophile_gain);

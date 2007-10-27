@@ -290,7 +290,8 @@ xmms_wave_seek (xmms_xform_t *xform, gint64 samples,
 
 	if (ret != offset) {
 		XMMS_DBG ("xmms_xform_seek didn't return expected offset "
-		          "(%lld != %lld)\n", ret, offset);
+		          "(%" G_GINT64_FORMAT " != %" G_GINT64_FORMAT ")",
+		          ret, offset);
 	}
 
 	ret -= data->header_size;
