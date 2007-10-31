@@ -18,6 +18,7 @@
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
+#include "xmms/xmms_bindata.h"
 
 #include <string.h>
 #include <math.h>
@@ -261,6 +262,24 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 			data->vorbiscomment = FLAC__metadata_object_clone (metadata);
 			break;
+#if defined(FLAC_API_VERSION_CURRENT) && FLAC_API_VERSION_CURRENT > 7
+		case FLAC__METADATA_TYPE_PICTURE: {
+			gchar hash[33];
+			if (metadata->data.picture.type == FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER &&
+			    xmms_bindata_plugin_add (metadata->data.picture.data,
+			                             metadata->data.picture.data_length,
+			                             hash)) {
+				const gchar *metakey;
+				
+				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
+				xmms_xform_metadata_set_str (xform, metakey, hash);
+				
+				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
+				xmms_xform_metadata_set_str (xform, metakey, metadata->data.picture.mime_type);
+			}
+			break;
+		}
+#endif
 		/* if we want to support more metadata types here,
 		 * don't forget to add a call to
 		 * FLAC__stream_decoder_set_metadata_respond() below.
@@ -447,6 +466,8 @@ xmms_flac_init (xmms_xform_t *xform)
 #else
 	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
 	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
+	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
+	                                           FLAC__METADATA_TYPE_PICTURE);
 
 	init_status =
 		FLAC__stream_decoder_init_stream (data->flacdecoder,
