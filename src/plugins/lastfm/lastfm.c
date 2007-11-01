@@ -185,7 +185,7 @@ xmms_lastfm_handshake (xmms_xform_t *xform, CURL *curl, GString *buffer, GString
 		}
 		g_strfreev (split);
 	} else {
-		g_string_printf(error, "%s", curlerror);
+		g_string_printf (error, "%s", curlerror);
 	}
 
 

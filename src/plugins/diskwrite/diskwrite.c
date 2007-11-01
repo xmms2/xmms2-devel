@@ -159,12 +159,12 @@ xmms_diskwrite_destroy (xmms_output_t *output)
 
 	val = xmms_output_config_lookup (output, "destination_directory");
 	xmms_config_property_callback_remove (val,
-					      (xmms_object_handler_t) on_dest_directory_changed, data);
+	                                      (xmms_object_handler_t) on_dest_directory_changed, data);
 
 	xmms_object_disconnect (XMMS_OBJECT (output),
 	                        XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
 	                        (xmms_object_handler_t ) on_playlist_entry_changed,
-				data);
+	                        data);
 
 	g_free (data);
 }

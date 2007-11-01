@@ -208,7 +208,7 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 	pref = sqlite3_value_text (val[1]);
 
 	g_mutex_lock (mlib->source_lock);
-	source_name = g_hash_table_lookup (mlib->sources, GINT_TO_POINTER(source));
+	source_name = g_hash_table_lookup (mlib->sources, GINT_TO_POINTER (source));
 	g_mutex_unlock (mlib->source_lock);
 
 	split = g_strsplit ((gchar *)pref, ":", 0);
@@ -229,7 +229,7 @@ int
 add_to_source (void *hash, int columns, char **vals, char **cols)
 {
 	int source = strtol (vals[0], NULL, 10);
-	g_hash_table_insert ((GHashTable*)hash, GINT_TO_POINTER(source), g_strdup (vals[1]));
+	g_hash_table_insert ((GHashTable*)hash, GINT_TO_POINTER (source), g_strdup (vals[1]));
 	return 0;
 }
 
