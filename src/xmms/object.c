@@ -471,6 +471,7 @@ xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t 
 void
 __int_xmms_object_unref (xmms_object_t *object)
 {
+	g_return_if_fail (object->ref > 0);
 	object->ref--;
 	if (object->ref == 0) {
 		xmms_object_emit (object, XMMS_IPC_SIGNAL_OBJECT_DESTROYED, NULL);
