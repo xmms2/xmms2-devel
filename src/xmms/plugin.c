@@ -50,8 +50,6 @@ static GList *xmms_plugin_list;
  */
 static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc);
 static gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module);
-static GList *xmms_plugin_list_get (xmms_plugin_type_t type);
-static void xmms_plugin_list_destroy (GList *list);
 static gboolean xmms_plugin_scan_directory (const gchar *dir);
 
 /*
@@ -394,35 +392,34 @@ xmms_plugin_scan_directory (const gchar *dir)
 	return TRUE;
 }
 
+static gboolean
+xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
+{
+	GHashTable *hash;
+	GList **list = data;
+	
+	hash = g_hash_table_new (g_str_hash, g_str_equal);
+	g_hash_table_insert (hash, "name",
+	                     xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
+	g_hash_table_insert (hash, "shortname",
+	                     xmms_object_cmd_value_str_new (xmms_plugin_shortname_get (plugin)));
+	g_hash_table_insert (hash, "version",
+	                     xmms_object_cmd_value_str_new (xmms_plugin_version_get (plugin)));
+	g_hash_table_insert (hash, "description",
+	                     xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
+	g_hash_table_insert (hash, "type",
+	                     xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
+	
+	*list = g_list_prepend (*list, xmms_object_cmd_value_dict_new (hash));
+
+	return TRUE;
+}
+
 GList *
 xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 {
-	GList *list = NULL, *node, *l;
-
-	l = xmms_plugin_list_get (type);
-
-	for (node = l; node; node = g_list_next (node)) {
-		GHashTable *hash;
-		xmms_plugin_t *plugin = node->data;
-
-		hash = g_hash_table_new (g_str_hash, g_str_equal);
-		g_hash_table_insert (hash, "name",
-		                     xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
-		g_hash_table_insert (hash, "shortname",
-		                     xmms_object_cmd_value_str_new (xmms_plugin_shortname_get (plugin)));
-		g_hash_table_insert (hash, "version",
-		                     xmms_object_cmd_value_str_new (xmms_plugin_version_get (plugin)));
-		g_hash_table_insert (hash, "description",
-		                     xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
-		g_hash_table_insert (hash, "type",
-		                     xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
-
-		list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hash));
-
-	}
-
-	xmms_plugin_list_destroy (l);
-
+	GList *list = NULL;
+	xmms_plugin_foreach (type, xmms_plugin_client_list_foreach, &list);
 	return list;
 }
 
@@ -463,42 +460,6 @@ xmms_plugin_find_foreach (xmms_plugin_t *plugin, gpointer udata)
 		return FALSE;
 	}
 	return TRUE;
-}
-
-/**
- * @internal Look for loaded plugins matching a particular type
- * @param[in] type The plugin type to look for. (#xmms_plugin_type_t)
- * @return List of loaded plugins matching type
- */
-static GList *
-xmms_plugin_list_get (xmms_plugin_type_t type)
-{
-	GList *list = NULL, *node;
-
-	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
-		xmms_plugin_t *plugin = node->data;
-
-		if (plugin->type == type || type == XMMS_PLUGIN_TYPE_ALL) {
-			xmms_object_ref (plugin);
-			list = g_list_prepend (list, plugin);
-		}
-	}
-
-	return list;
-}
-
-/**
- * @internal Destroy a list of plugins. Note: this is not used to destroy the
- * global plugin list.
- * @param[in] list The plugin list to destroy
- */
-static void
-xmms_plugin_list_destroy (GList *list)
-{
-	while (list) {
-		xmms_object_unref (list->data);
-		list = g_list_delete_link (list, list);
-	}
 }
 
 /**
