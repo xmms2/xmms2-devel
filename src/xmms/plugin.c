@@ -426,6 +426,12 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 	return list;
 }
 
+/**
+ * @internal Apply a function to all plugins of specified type.
+ * @param[in] type The type of plugin to look for.
+ * @param[in] func function to apply.
+ * @param[in] user_data Userspecified data passed to function.
+ */
 void
 xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, gpointer user_data)
 {
