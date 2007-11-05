@@ -447,6 +447,24 @@ xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, g
 	}
 }
 
+typedef struct {
+	const gchar *name;
+	xmms_plugin_t *plugin;
+} xmms_plugin_find_foreach_data_t;
+
+static gboolean
+xmms_plugin_find_foreach (xmms_plugin_t *plugin, gpointer udata)
+{
+	xmms_plugin_find_foreach_data_t *data = udata;
+
+	if (!g_strcasecmp (plugin->shortname, data->name)) {
+		xmms_object_ref (plugin);
+		data->plugin = plugin;
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /**
  * @internal Look for loaded plugins matching a particular type
  * @param[in] type The plugin type to look for. (#xmms_plugin_type_t)
@@ -492,24 +510,9 @@ xmms_plugin_list_destroy (GList *list)
 xmms_plugin_t *
 xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 {
-	xmms_plugin_t *ret = NULL;
-	GList *l;
-
-	g_return_val_if_fail (name, NULL);
-
-	for (l = xmms_plugin_list; l; l = l->next) {
-		xmms_plugin_t *plugin = l->data;
-
-		if (plugin->type == type &&
-		    !g_strcasecmp (plugin->shortname, name)) {
-			ret = plugin;
-			xmms_object_ref (ret);
-
-			break;
-		}
-	}
-
-	return ret;
+	xmms_plugin_find_foreach_data_t data = {name, NULL};
+	xmms_plugin_foreach (type, xmms_plugin_find_foreach, &data);
+	return data.plugin;
 }
 
 
