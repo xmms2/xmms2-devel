@@ -32,8 +32,6 @@ namespace Xmms
 		typedef xmms_plugin_type_t Type;
 		static const Type ALL      = XMMS_PLUGIN_TYPE_ALL;
 		static const Type OUTPUT   = XMMS_PLUGIN_TYPE_OUTPUT;
-		static const Type PLAYLIST = XMMS_PLUGIN_TYPE_PLAYLIST;
-		static const Type EFFECT   = XMMS_PLUGIN_TYPE_EFFECT;
 		static const Type XFORM    = XMMS_PLUGIN_TYPE_XFORM;
 	}
 

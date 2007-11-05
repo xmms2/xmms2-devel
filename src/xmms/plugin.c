@@ -273,12 +273,6 @@ xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 		allocer = xmms_output_plugin_new;
 		verifier = xmms_output_plugin_verify;
 		break;
-/*
-	case XMMS_PLUGIN_TYPE_PLAYLIST:
-		expected_ver = XMMS_PLAYLIST_API_VERSION;
-		initer = xmms_playlist_plugin_init;
-		break;
-*/
 	case XMMS_PLUGIN_TYPE_XFORM:
 		expected_ver = XMMS_XFORM_API_VERSION;
 		allocer = xmms_xform_plugin_new;

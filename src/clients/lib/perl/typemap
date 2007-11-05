@@ -136,10 +136,6 @@ XMMS_PLUGIN_TYPE_T
 
 		if (strcmp (plugin_type, \"output\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_OUTPUT;
-		} else if (strcmp (plugin_type, \"playlist\") == 0) {
-			$var = XMMS_PLUGIN_TYPE_PLAYLIST;
-		} else if (strcmp (plugin_type, \"effect\") == 0) {
-			$var = XMMS_PLUGIN_TYPE_EFFECT;
 		} else if (strcmp (plugin_type, \"xform\") == 0) {
 			$var = XMMS_PLUGIN_TYPE_XFORM;
 		} else if (strcmp (plugin_type, \"all\") == 0) {

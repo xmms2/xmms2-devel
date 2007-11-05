@@ -1536,8 +1536,6 @@ Init_Client (VALUE mXmms)
 	rb_define_const (c, "ALL_PLUGINS", INT2FIX (XMMS_PLUGIN_TYPE_ALL));
 	rb_define_const (c, "XFORM", INT2FIX (XMMS_PLUGIN_TYPE_XFORM));
 	rb_define_const (c, "OUTPUT", INT2FIX (XMMS_PLUGIN_TYPE_OUTPUT));
-	rb_define_const (c, "PLAYLIST", INT2FIX (XMMS_PLUGIN_TYPE_PLAYLIST));
-	rb_define_const (c, "EFFECT", INT2FIX (XMMS_PLUGIN_TYPE_EFFECT));
 
 	rb_define_const (c, "ENTRY_STATUS_NEW", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_NEW));
 	rb_define_const (c, "ENTRY_STATUS_OK", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_OK));
