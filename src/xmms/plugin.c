@@ -530,5 +530,4 @@ xmms_plugin_destroy (xmms_plugin_t *plugin)
 {
 	if (plugin->module)
 		g_module_close (plugin->module);
-	xmms_object_unref (plugin);
 }
