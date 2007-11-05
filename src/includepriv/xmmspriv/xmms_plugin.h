@@ -29,7 +29,6 @@
 typedef struct xmms_plugin_St {
 	xmms_object_t object;
 	GModule *module;
-	GList *info_list;
 
 	xmms_plugin_type_t type;
 	const gchar *name;
@@ -44,14 +43,12 @@ typedef struct xmms_plugin_St {
 
 gboolean xmms_plugin_init (gchar *path);
 void xmms_plugin_shutdown ();
-gboolean xmms_plugin_scan_directory (const gchar *dir);
+void xmms_plugin_destroy (xmms_plugin_t *plugin);
 
 typedef gboolean (*xmms_plugin_foreach_func_t)(xmms_plugin_t *, gpointer);
 void xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, gpointer user_data);
 
-GList *xmms_plugin_list_get (xmms_plugin_type_t type);
 GList *xmms_plugin_client_list (xmms_object_t *, guint32 type, xmms_error_t *err);
-void xmms_plugin_list_destroy (GList *list);
 
 xmms_plugin_t *xmms_plugin_find (xmms_plugin_type_t type, const gchar *name);
 
@@ -60,10 +57,6 @@ const char *xmms_plugin_name_get (const xmms_plugin_t *plugin);
 const gchar *xmms_plugin_shortname_get (const xmms_plugin_t *plugin);
 const gchar *xmms_plugin_version_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
-
-const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
-
-void xmms_plugin_destroy (xmms_plugin_t *plugin);
 
 xmms_config_property_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *key);
 xmms_config_property_t *xmms_plugin_config_property_register (xmms_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);

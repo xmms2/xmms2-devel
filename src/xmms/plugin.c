@@ -39,10 +39,6 @@
 #define get_module_ext(dir) g_module_build_path (dir, "*")
 #endif
 
-typedef struct {
-	gchar *key;
-	gchar *value;
-} xmms_plugin_info_t;
 
 /*
  * Global variables
@@ -54,68 +50,24 @@ static GList *xmms_plugin_list;
  */
 static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc);
 static gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module);
+static GList *xmms_plugin_list_get (xmms_plugin_type_t type);
+static void xmms_plugin_list_destroy (GList *list);
+static gboolean xmms_plugin_scan_directory (const gchar *dir);
 
 /*
  * Public functions
  */
 
+
 /**
- * @defgroup XMMSPlugin XMMSPlugin
- * @brief Functions used when working with XMMS2 plugins in general.
- *
- * Every plugin has an init function that should be defined as follows:
- * @code
- * xmms_plugin_t *xmms_plugin_get (void)
- * @endcode
- *
- * This function must call #xmms_plugin_new with the appropiate arguments.
- * This function can also call #xmms_plugin_info_add, #xmms_plugin_method_add,
- * #xmms_plugin_properties_add
- *
- * A example plugin here is:
- * @code
- * xmms_plugin_t *
- * xmms_plugin_get (void) {
- * 	xmms_plugin_t *plugin;
- *
- *	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EXAMPLE, "test",
- *	                          "Test Plugin",
- *	                          XMMS_VERSION,
- *	                          "A very simple plugin");
- *	xmms_plugin_info_add (plugin, "Author", "Karsten Brinkmann");
- *	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_TEST, xmms_test);
- *	return plugin;
- * }
- * @endcode
- *
+ * @if internal
+ * -- internal documentation section --
+ * @addtogroup XMMSPlugin
+ * @{
  */
 
 /**
- * Add information to the plugin. This information can be
- * viewed in a client. The information can be for example
- * the name of the author or the webpage of the plugin.
- *
- * @param plugin The plugin to set the info in.
- * @param key This can be any given string.
- * @param value Value of this key.
- */
-void
-xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
-{
-	xmms_plugin_info_t *info;
-
-	g_return_if_fail (plugin);
-	g_return_if_fail (key);
-	g_return_if_fail (value);
-
-	info = g_new0 (xmms_plugin_info_t, 1);
-	info->key = g_strdup (key);
-	info->value = g_strdup (value);
-
-	plugin->info_list = g_list_append (plugin->info_list, info);
-}
-
-/**
+ * @internal 
  * Lookup the value of a plugin's config property, given the property key.
  * @param[in] plugin The plugin
  * @param[in] key The property key (config path)
@@ -140,6 +92,7 @@ xmms_plugin_config_lookup (xmms_plugin_t *plugin,
 }
 
 /**
+ * @internal 
  * Register a config property for a plugin.
  * @param[in] plugin The plugin
  * @param[in] name The property name
@@ -171,13 +124,6 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
 
 	return prop;
 }
-
-/**
- * @if internal
- * -- internal documentation section --
- * @addtogroup XMMSPlugin
- * @{
- */
 
 /**
  * @internal Get the type of this plugin
@@ -242,19 +188,6 @@ xmms_plugin_description_get (const xmms_plugin_t *plugin)
 	g_return_val_if_fail (plugin, NULL);
 
 	return plugin->description;
-}
-
-/**
- * @internal Get info from the plugin.
- * @param[in] plugin The plugin
- * @return a GList of info from the plugin
- */
-const GList*
-xmms_plugin_info_get (const xmms_plugin_t *plugin)
-{
-	g_return_val_if_fail (plugin, NULL);
-
-	return plugin->info_list;
 }
 
 /*
@@ -398,7 +331,7 @@ xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
  * @param[in] dir Absolute path to plugins directory
  * @return TRUE if directory successfully scanned for plugins
  */
-gboolean
+static gboolean
 xmms_plugin_scan_directory (const gchar *dir)
 {
 	GDir *d;
@@ -470,7 +403,6 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 
 	for (node = l; node; node = g_list_next (node)) {
 		GHashTable *hash;
-		const GList *p;
 		xmms_plugin_t *plugin = node->data;
 
 		hash = g_hash_table_new (g_str_hash, g_str_equal);
@@ -484,11 +416,6 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 		                     xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
 		g_hash_table_insert (hash, "type",
 		                     xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
-
-		for (p = xmms_plugin_info_get (plugin); p; p = g_list_next (p)) {
-			xmms_plugin_info_t *info = p->data;
-			g_hash_table_insert (hash, info->key, xmms_object_cmd_value_str_new (info->value));
-		}
 
 		list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hash));
 
@@ -519,7 +446,7 @@ xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, g
  * @param[in] type The plugin type to look for. (#xmms_plugin_type_t)
  * @return List of loaded plugins matching type
  */
-GList *
+static GList *
 xmms_plugin_list_get (xmms_plugin_type_t type)
 {
 	GList *list = NULL, *node;
@@ -541,7 +468,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
  * global plugin list.
  * @param[in] list The plugin list to destroy
  */
-void
+static void
 xmms_plugin_list_destroy (GList *list)
 {
 	while (list) {
@@ -595,7 +522,6 @@ xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc)
 void
 xmms_plugin_destroy (xmms_plugin_t *plugin)
 {
-	g_list_free (plugin->info_list);
 	if (plugin->module)
 		g_module_close (plugin->module);
 	xmms_object_unref (plugin);
