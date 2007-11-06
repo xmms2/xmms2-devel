@@ -62,10 +62,12 @@ def configure(conf):
     conf.env["LINKFLAGS_ruby"] = '-L%s' % dir
 
     ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LDSHARED\"]'").read().strip()
-    # ok this is really stupid, but the command and flags are combined..
-    for flag in ldflags.split():
-        if flag[0] == '-':
-            conf.env["LINKFLAGS_ruby"] += " "+flag
+    # ok this is really stupid, but the command and flags are combined.
+    # so we try to find the first argument...
+    flags = ldflags.split()
+    while flags and flags[0][0] != '-':
+        flags = flags[1:]
+    conf.env["LINKFLAGS_ruby"] += " "+" ".join(flags)
 
     ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LIBS\"]'").read().strip()
     conf.env["LINKFLAGS_ruby"] += " "+ldflags
