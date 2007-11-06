@@ -1,0 +1,21 @@
+from waftools import tool
+import Params
+
+def build(bld):
+    obj = bld.create_obj('cc', 'shlib')
+    obj.target = 'xmmsclient-cf'
+    obj.includes = '../../../include'
+    obj.source = 'xmmsclient-cf.c'
+    obj.uselib_local = 'xmmsclient'
+    obj.vnum = '1.0.0'
+    tool.add_install_flag(bld, obj)
+
+def configure(conf):
+    if Params.g_platform != 'darwin':
+        return False
+
+    conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
+    return True
+
+def set_options(opt):
+    pass
