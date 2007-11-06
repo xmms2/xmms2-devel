@@ -5,4 +5,4 @@ def plugin_configure(conf):
 
 configure, build = plugin('pulse', configure=plugin_configure,
                           source=['pulse.c', 'backend.c'],
-                          extra_libs=['libpulse'], output_prio=5)
+                          extra_libs=['libpulse'], output_prio=25)

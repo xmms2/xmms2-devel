@@ -10,4 +10,4 @@ def plugin_configure(conf):
     return True
 
 configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss', 'ossaudio'],
-                          output_prio=30)
+                          output_prio=35)

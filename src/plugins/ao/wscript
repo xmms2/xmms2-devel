@@ -3,4 +3,4 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     return conf.check_pkg('ao', destvar='ao')
 
-configure, build = plugin('ao', configure=plugin_configure, needs_lib=True, output_prio=2)
+configure, build = plugin('ao', configure=plugin_configure, needs_lib=True, output_prio=23)

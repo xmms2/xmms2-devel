@@ -4,4 +4,4 @@ def plugin_configure(conf):
     return conf.check_pkg('jack', destvar='jack')
 
 configure, build = plugin('jack', configure=plugin_configure, needs_lib=True,
-                          output_prio=15)
+                          output_prio=20)
