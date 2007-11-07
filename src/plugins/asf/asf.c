@@ -285,6 +285,18 @@ xmms_asf_get_mediainfo (xmms_xform_t *xform)
 			/* WM/TrackNumber overrides WM/Track value as specified in the Microsoft
 			 * documentation at http://msdn2.microsoft.com/en-us/library/aa392014.aspx */
 			track = value;
+		} else if (!strcmp (key, "MusicBrainz/Album Id")) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
+			                             value);
+		} else if (!strcmp (key, "MusicBrainz/Artist Id")) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
+			                             value);
+		} else if (!strcmp (key, "MusicBrainz/Track Id")) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+			                             value);
 		}
 	}
 
