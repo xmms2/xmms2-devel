@@ -61,13 +61,13 @@
  */
 static void quit (xmms_object_t *object, xmms_error_t *error);
 static GHashTable *stats (xmms_object_t *object, xmms_error_t *error);
-static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
+static void hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
 static xmms_bindata_t *bindata_obj;
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, NONE, UINT32, STRING);
 XMMS_CMD_DEFINE (stats, stats, xmms_object_t *, DICT, NONE, NONE);
 XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
 
@@ -256,11 +256,15 @@ xmms_main_destroy (xmms_object_t *object)
 /**
  * @internal Function to respond to the 'hello' sent from clients on connect
  */
-static guint
+static void
 hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error)
 {
-	XMMS_DBG ("Client %s with protocol version %d sent hello!", client, protocolver);
-	return 1;
+	if (protocolver != XMMS_IPC_PROTOCOL_VERSION) {
+		xmms_log_info ("Client '%s' with bad protocol version (%d, not %d) connected", client, protocolver, XMMS_IPC_PROTOCOL_VERSION);
+		xmms_error_set (error, XMMS_ERROR_INVAL, "Bad protocol version");
+		return;
+	}
+	XMMS_DBG ("Client '%s' connected", client);
 }
 
 static gboolean
