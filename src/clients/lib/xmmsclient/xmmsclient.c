@@ -127,7 +127,7 @@ xmmsc_send_hello (xmmsc_connection_t *c)
 	xmmsc_result_t *result;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO);
-	xmms_ipc_msg_put_int32 (msg, 1); /* PROTOCOL VERSION */
+	xmms_ipc_msg_put_int32 (msg, XMMS_IPC_PROTOCOL_VERSION);
 	xmms_ipc_msg_put_string (msg, c->clientname);
 
 	result = xmmsc_send_msg (c, msg);
@@ -183,13 +183,13 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	c->ipc = ipc;
 	result = xmmsc_send_hello (c);
 	xmmsc_result_wait (result);
-	ret = xmmsc_result_get_uint (result, &i);
-	xmmsc_result_unref (result);
-	if (!ret) {
-		c->error = strdup (xmmsc_ipc_error_get (ipc));
+	if (xmmsc_result_iserror (result)) {
+		c->error = strdup (xmmsc_result_get_error (result));
+		xmmsc_result_unref (result);
+		return false;
 	}
-
-	return ret;
+	xmmsc_result_unref (result);
+	return true;
 }
 
 /**

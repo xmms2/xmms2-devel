@@ -17,6 +17,9 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
+/* Don't forget to up this when protocol changes */
+#define XMMS_IPC_PROTOCOL_VERSION 10
+
 typedef enum {
 	XMMS_OBJECT_CMD_ARG_NONE,
 	XMMS_OBJECT_CMD_ARG_UINT32,
