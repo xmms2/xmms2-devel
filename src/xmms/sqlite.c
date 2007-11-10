@@ -250,6 +250,7 @@ xmms_sqlite_create ()
 	xmms_config_property_t *cv;
 	gchar *tmp;
 	gboolean create = FALSE;
+	gboolean analyze = FALSE;
 	const gchar *dbpath;
 	gint version = 0;
 	sqlite3 *sql;
@@ -291,9 +292,13 @@ xmms_sqlite_create ()
 			create = TRUE;
 		}
 
-		xmms_log_info ("Analyzing db, please wait a few seconds");
-		sqlite3_exec (sql, "ANALYZE", NULL, NULL, NULL);
-		xmms_log_info ("Done with analyze");
+		cv = xmms_config_lookup ("medialib.analyze_on_startup");
+		analyze = xmms_config_property_get_int (cv);
+		if (analyze) {
+			xmms_log_info ("Analyzing db, please wait a few seconds");
+			sqlite3_exec (sql, "ANALYZE", NULL, NULL, NULL);
+			xmms_log_info ("Done with analyze");
+		}
 	}
 
 	if (create) {

@@ -340,6 +340,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_config_property_register ("medialib.path",
 	                               path,
 	                               xmms_medialib_path_changed, medialib);
+	xmms_config_property_register ("medialib.analyze_on_startup", "0", NULL, NULL);
 	xmms_config_property_register ("medialib.allow_remote_fs",
 	                               "0", NULL, NULL);
 
