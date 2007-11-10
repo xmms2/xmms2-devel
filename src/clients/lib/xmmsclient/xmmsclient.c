@@ -158,8 +158,6 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
 	xmmsc_ipc_t *ipc;
 	xmmsc_result_t *result;
-	uint32_t i;
-	int ret;
 
 	char path[PATH_MAX];
 
