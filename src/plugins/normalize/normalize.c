@@ -170,17 +170,19 @@ xmms_normalize_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	read = xmms_xform_read (xform, buf, len, error);
 
-	if (data->dirty) {
-		compress_reconfigure (data->compress,
-		                      data->use_anticlip,
-		                      data->target,
-		                      data->max_gain,
-		                      data->smooth,
-		                      data->buckets);
-		data->dirty = FALSE;
+	if (read > 0) {
+		if (data->dirty) {
+			compress_reconfigure (data->compress,
+			                      data->use_anticlip,
+			                      data->target,
+			                      data->max_gain,
+			                      data->smooth,
+			                      data->buckets);
+			data->dirty = FALSE;
+		}
+		
+		compress_do (data->compress, buf, read);
 	}
-
-	compress_do (data->compress, buf, read);
 
 	return read;
 }
