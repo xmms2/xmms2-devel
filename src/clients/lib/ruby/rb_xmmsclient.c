@@ -1539,6 +1539,12 @@ Init_Client (VALUE mXmms)
 	rb_define_const (c, "PLAYLIST", INT2FIX (XMMS_PLUGIN_TYPE_PLAYLIST));
 	rb_define_const (c, "EFFECT", INT2FIX (XMMS_PLUGIN_TYPE_EFFECT));
 
+	rb_define_const (c, "ENTRY_STATUS_NEW", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_NEW));
+	rb_define_const (c, "ENTRY_STATUS_OK", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_OK));
+	rb_define_const (c, "ENTRY_STATUS_RESOLVING", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING));
+	rb_define_const (c, "ENTRY_STATUS_NOT_AVAILABLE", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE));
+	rb_define_const (c, "ENTRY_STATUS_REHASH", INT2FIX (XMMS_MEDIALIB_ENTRY_STATUS_REHASH));
+
 	eClientError = rb_define_class_under (c, "ClientError",
 	                                      rb_eStandardError);
 	eDisconnectedError = rb_define_class_under (c, "DisconnectedError",

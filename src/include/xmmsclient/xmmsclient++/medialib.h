@@ -37,6 +37,15 @@ namespace Xmms
 
 		public:
 
+			struct Entry {
+				typedef xmmsc_medialib_entry_status_t Status;
+				static const Status STATUS_OK            = XMMS_MEDIALIB_ENTRY_STATUS_OK;
+				static const Status STATUS_NEW           = XMMS_MEDIALIB_ENTRY_STATUS_NEW;
+				static const Status STATUS_RESOLVING     = XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING;
+				static const Status STATUS_NOT_AVAILABLE = XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE;
+				static const Status STATUS_REHASH        = XMMS_MEDIALIB_ENTRY_STATUS_REHASH;
+			};
+
 			/** Destructor. */
 			~Medialib();
 
