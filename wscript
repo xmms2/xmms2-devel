@@ -23,7 +23,7 @@ import Object
 import Utils
 import Common
 
-VERSION="0.2 DrJekyll+WIP+TEST1 (git commit: %s)" % gittools.get_info_str()
+VERSION="0.2 DrJekyll+WIP+TEST2 (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
 
 srcdir='.'
