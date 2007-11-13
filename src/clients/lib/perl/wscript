@@ -31,8 +31,8 @@ def configure(conf):
 
     conf.check_perl_ext_devel()
 
-    conf.env['INSTALLDIR_PERL_AUTO'] = os.path.join(conf.env['ARCHDIR_PERL'], "auto")
-    conf.env['INSTALLDIR_PERL_LIB'] = conf.env['ARCHDIR_PERL']
+    conf.env['INSTALLDIR_PERL_AUTO'] = os.path.join(conf.env['ARCHDIR_PERL'], "auto", "Audio", "XMMSClient")
+    conf.env['INSTALLDIR_PERL_LIB'] = os.path.join(conf.env['ARCHDIR_PERL'], "Audio")
 
     return True
 
