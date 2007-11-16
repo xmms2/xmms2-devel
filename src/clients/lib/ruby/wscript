@@ -4,6 +4,8 @@ import Params
 import Common
 
 def build(bld):
+    env = bld.env()
+
     obj = bld.create_obj('cc', 'rubyext', 'rubyext')
     obj.target = 'xmmsclient_ext'
     obj.includes = '../../../include ../../../includepriv'
@@ -26,7 +28,7 @@ def build(bld):
     obj.env["shlib_PREFIX"] = ''
 
     # ecore
-    if 'src/clients/lib/xmmsclient-ecore' in bld.env_of_name('default')['XMMS_OPTIONAL_BUILD']:
+    if 'src/clients/lib/xmmsclient-ecore' in env['XMMS_OPTIONAL_BUILD']:
         obj = bld.create_obj('cc', 'rubyext', 'rubyext')
         obj.target = 'xmmsclient_ecore'
         obj.includes = '../../../include ../../../includepriv'

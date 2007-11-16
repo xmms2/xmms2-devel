@@ -2,6 +2,8 @@ import os
 import Common
 
 def build(bld):
+  env = bld.env()
+
   obj = bld.create_obj('cc', 'program')
   obj.target = 'xmms2-mdns-avahi'
   obj.source = ['mdns-avahi.c']
@@ -11,7 +13,7 @@ def build(bld):
 
   obj = bld.create_obj('subst')
   obj.source = 'xmms2-mdns-launcher.sh.in'
-  obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')['PREFIX'], 'bin')}
+  obj.dict = {'PRG_PATH' : os.path.join(env['PREFIX'], 'bin')}
   Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh',chmod=0755)
 
   find = bld.create_obj('cc', 'program')

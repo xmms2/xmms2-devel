@@ -20,7 +20,8 @@ def plugin_configure(conf):
     return True
 
 def plugin_build(bld, obj):
-    daap_backend = bld.env_of_name('default')['XMMS_DAAP_BACKEND']
+    env = bld.env()
+    daap_backend = env['XMMS_DAAP_BACKEND']
     obj.source.append("daap_mdns_%s.c" % daap_backend)
     if daap_backend == 'avahi':
         obj.uselib += ' avahiglib avahiclient'

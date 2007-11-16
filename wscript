@@ -70,27 +70,29 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ## Build
 ####
 def build(bld):
-    if bld.env_of_name("default")["BUILD_XMMS2D"]:
+    env = bld.env()
+
+    if env["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
 
     newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
-    if bld.env_of_name('default')['NEWEST_WSCRIPT_SUBDIR'] and newest > bld.env_of_name('default')['NEWEST_WSCRIPT_SUBDIR']:
+    if env['NEWEST_WSCRIPT_SUBDIR'] and newest > env['NEWEST_WSCRIPT_SUBDIR']:
         Params.fatal("You need to run waf configure")
 
     # Process subfolders
     bld.add_subdirs(subdirs)
 
     # Build configured plugins
-    plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
+    plugins = env['XMMS_PLUGINS_ENABLED']
     bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
     # Build the clients
-    bld.add_subdirs(bld.env_of_name('default')['XMMS_OPTIONAL_BUILD'])
+    bld.add_subdirs(env['XMMS_OPTIONAL_BUILD'])
 
     # pkg-config
     o = bld.create_obj('pkgc')
     o.version = VERSION
-    o.libs = bld.env_of_name('default')['XMMS_PKGCONF_FILES']
+    o.libs = env['XMMS_PKGCONF_FILES']
 
     Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
 
