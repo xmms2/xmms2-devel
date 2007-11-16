@@ -15,6 +15,7 @@
  */
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmms_configuration.h>
 
 #include <ruby.h>
 

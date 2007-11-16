@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include <xmmsc/xmmsc_idnumbers.h>
+#include "xmms_configuration.h"
 
 typedef struct xmms_plugin_desc_St {
 	xmms_plugin_type_t type;

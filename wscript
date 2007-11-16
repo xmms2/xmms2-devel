@@ -251,9 +251,6 @@ def configure(conf):
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
-    conf.env['CCDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
-    conf.env['CXXDEFINES'] += ["XMMS_VERSION=\"\\\"%s\\\"\"" % VERSION]
-
     if Params.g_options.libdir:
         conf.env["LIBDIR"] = Params.g_options.libdir
         conf.env["shlib_INST_DIR"] = ""
