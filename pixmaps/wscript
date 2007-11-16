@@ -3,6 +3,13 @@ import Params
 import Common
 
 def build(bld):
+    env = bld.env()
+
+    if env['xmms_icon']:
+        obj = bld.create_obj('cc', 'objects')
+        obj.target = 'xmms_icon'
+        obj.source = 'xmms2.rc'
+
     images = """
     xmms2-16.png
     xmms2-32.png

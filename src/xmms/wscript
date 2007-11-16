@@ -59,7 +59,7 @@ def build(bld):
     prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
 
     if env['xmms_icon']:
-        prog.source.append('../../pixmaps/xmms2.rc')
+        prog.add_objects = 'xmms_icon'
 
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
