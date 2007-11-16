@@ -23,7 +23,7 @@ import Object
 import Utils
 import Common
 
-VERSION="0.4 DrKosmos (git commit: %s)" % gittools.get_info_str()
+VERSION="0.4 DrKosmos+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
 
 srcdir='.'
