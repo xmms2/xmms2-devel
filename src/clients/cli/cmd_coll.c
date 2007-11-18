@@ -144,7 +144,7 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 	xmmsc_coll_t *operand;
 	GString *idlist_str;
 
-	indent = (gchar*) malloc ((level * 2) + 1);
+	indent = g_malloc ((level * 2) + 1);
 	for (i = 0; i < level * 2; ++i) {
 		indent[i] = ' ';
 	}
