@@ -647,6 +647,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean reh
 	metadata_festate_t info;
 	guint times_played;
 	guint last_started;
+	GTimeVal now;
 
 	info.entry = start->entry;
 	info.session = xmms_medialib_begin_write ();
@@ -672,9 +673,11 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean reh
 	                                      times_played + (rehashing ? 0 : 1));
 
 	if (!rehashing || (rehashing && last_started)) {
+		g_get_current_time (&now);
+
 		xmms_medialib_entry_property_set_int (info.session, info.entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED,
-		                                      (rehashing ? last_started : time (NULL)));
+		                                      (rehashing ? last_started : now.tv_sec));
 	}
 
 	xmms_medialib_entry_status_set (info.session, info.entry,
