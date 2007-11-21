@@ -17,7 +17,7 @@ def git_info():
     else:
         print "NOT updating git cache, local changes might not be detected"
     changed = bool(os.popen('git-diff-index -r HEAD').read())
-    return commithash, changed
+    return commithash[:8], changed
 
 def snapshot_info():
     info = file('commithash').read().split('\n')

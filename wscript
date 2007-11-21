@@ -23,7 +23,7 @@ import Object
 import Utils
 import Common
 
-VERSION="0.4 DrKosmos+WIP (git commit: %s)" % gittools.get_info_str()
+BASEVERSION="0.4 DrKosmos+WIP"
 APPNAME='xmms2'
 
 srcdir='.'
@@ -91,7 +91,6 @@ def build(bld):
 
     # pkg-config
     o = bld.create_obj('pkgc')
-    o.version = VERSION
     o.libs = env['XMMS_PKGCONF_FILES']
 
     Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
@@ -245,7 +244,17 @@ def configure(conf):
     if Params.g_options.target_platform:
         Params.g_platform = Params.g_options.target_platform
 
-    conf.env["VERSION"] = VERSION
+    nam,changed = gittools.get_info()
+    conf.check_message("git commit id", "", True, nam)
+    if Params.g_options.customversion:
+        conf.env["VERSION"] = BASEVERSION + " (%s + %s)" % (nam, Params.g_options.customversion)
+    else:
+        dirty=""
+        if changed:
+            dirty="-dirty"
+        conf.check_message("uncommitted changes", "", bool(changed))
+        conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
+
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
@@ -342,6 +351,9 @@ def _list_cb(option, opt, value, parser):
 
 def set_options(opt):
     opt.tool_options('gcc')
+
+    opt.add_option('--with-custom-version', type='string',
+                   dest='customversion')
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
                    type="string", dest="enable_plugins")
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
