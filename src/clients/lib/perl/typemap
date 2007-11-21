@@ -13,6 +13,8 @@ int32_t						T_IV
 perl_xmmsclient_collection_order_t	PERL_XMMSCLIENT_COLLECTION_ORDER_T
 perl_xmmsclient_playlist_t *	PERL_XMMSCLIENT_PLAYLIST_T
 
+xmmsc_result_t_PlaybackStatus *	XMMSC_RESULT_T_OVERLOAD
+
 OUTPUT
 
 XMMSC_CONNECTION_T
@@ -27,6 +29,9 @@ XMMSC_COLL_T
 
 XMMSC_RESULT_T
 	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Result\");
+
+XMMSC_RESULT_T_OVERLOAD
+	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Result::${ ($type =~ /xmmsc_result_t_(\S+)/, \"$1") }\");
 
 XMMS_RESULT_TYPE_T
 	{

@@ -1603,7 +1603,7 @@ play, stop and pause is triggered.
 
 =cut
 
-xmmsc_result_t *
+xmmsc_result_t_PlaybackStatus *
 xmmsc_broadcast_playback_status (c)
 		xmmsc_connection_t *c
 
@@ -1623,7 +1623,7 @@ Request the playback status.
 
 =cut
 
-xmmsc_result_t *
+xmmsc_result_t_PlaybackStatus *
 xmmsc_playback_status (c)
 		xmmsc_connection_t *c
 
