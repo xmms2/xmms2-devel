@@ -822,7 +822,6 @@ cdef class XMMSResult:
 	"""
 	cdef xmmsc_result_t *res
 	cdef object notifier
-	cdef int broadcast
 	cdef object callback
 	cdef object c
 	cdef object exc
@@ -832,8 +831,7 @@ cdef class XMMSResult:
 		self.c = c
 		self.exc = None
 
-	def more_init(self, broadcast = 0):
-		self.broadcast = broadcast
+	def more_init(self):
 		if self.callback:
 			Py_INCREF(self)
 			xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ResultFreeer)
@@ -855,7 +853,7 @@ cdef class XMMSResult:
 			self.res = xmmsc_result_restart(self.res)
 			xmmsc_result_unref(r)
 			xmmsc_result_unref(self.res)
-		elif not self.get_broadcast():
+		elif xmmsc_result_get_class(self.res) != XMMSC_RESULT_CLASS_BROADCAST:
 			self._unref()
 
 	def get_type(self):
@@ -899,9 +897,6 @@ cdef class XMMSResult:
 			return self._value()
 	
 
-	def get_broadcast(self):
-		return self.broadcast
-
 	def _check(self):
 		if not self.res:
 			raise ValueError("The resultset did not contain a reply!")
@@ -916,7 +911,8 @@ cdef class XMMSResult:
 			raise self.exc[0], self.exc[1], self.exc[2]
 
 	def disconnect(self):
-		""" @todo: Fail if this result isn't a signal or a broadcast """
+		if xmmsc_result_get_class(self.res) == XMMSC_RESULT_CLASS_DEFAULT:
+			raise ValueError("Can only disconnect signals and broadcasts")
 		xmmsc_result_disconnect(self.res)
 
 	def get_int(self):
@@ -1461,7 +1457,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_status(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -1479,7 +1475,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_current_id(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -1567,7 +1563,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_volume_changed(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -1584,7 +1580,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playlist_loaded(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -2186,7 +2182,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playlist_current_pos(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -2205,7 +2201,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playlist_changed(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -2225,7 +2221,7 @@ cdef class XMMS:
 		ret.callback = cb
 
 		ret.res = xmmsc_broadcast_configval_changed(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 
 		return ret
 
@@ -2534,7 +2530,7 @@ cdef class XMMS:
 		ret.callback = cb
 
 		ret.res = xmmsc_broadcast_medialib_entry_added(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 	
 		return ret
 
@@ -2554,7 +2550,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_medialib_entry_changed(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		
 		return ret
 
@@ -2604,7 +2600,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_broadcast_mediainfo_reader_status(self.conn)
-		ret.more_init(1)
+		ret.more_init()
 		return ret
 
 	def xform_media_browse(self, url, cb=None):
