@@ -582,12 +582,14 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 					 * This should probably be done better in the future.
 					 * FIXME
 					 */
-					tmp = buf+10+size;
-					next_size = (tmp[4]<<21) | (tmp[5]<<14) | (tmp[6]<<7) | (tmp[7]);
+					if (size + 18 <= len) {
+						tmp = buf+10+size;
+						next_size = (tmp[4]<<21) | (tmp[5]<<14) | (tmp[6]<<7) | (tmp[7]);
 
-					if (next_size+10 > (len-size)) {
-						XMMS_DBG ("Uho, seems like someone isn't using synchsafe integers here...");
-						broken_version4_frame_size_hack = TRUE;
+						if (next_size+10 > (len-size)) {
+							XMMS_DBG ("Uho, seems like someone isn't using synchsafe integers here...");
+							broken_version4_frame_size_hack = TRUE;
+						}
 					}
 				}
 
