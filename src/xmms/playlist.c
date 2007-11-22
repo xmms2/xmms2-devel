@@ -675,7 +675,6 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 	}
 
 	xmmsc_coll_idlist_remove (plcoll, pos);
-	xmms_collection_set_int_attr (plcoll, "size", size - 1);
 
 	/* decrease currentpos if removed entry was before or if it's
 	 * the current entry, but only if currentpos is a valid entry.
@@ -920,7 +919,6 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 		return FALSE;
 	}
 	xmmsc_coll_idlist_insert (plcoll, pos, file);
-	xmms_collection_set_int_attr (plcoll, "size", len + 1);
 
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
 	if (pos <= currpos) {
@@ -1094,7 +1092,6 @@ xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist,
 
 	prev_size = xmms_playlist_coll_get_size (plcoll);
 	xmmsc_coll_idlist_append (plcoll, file);
-	xmms_collection_set_int_attr (plcoll, "size", prev_size + 1);
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_ADD, file, plname);
@@ -1120,7 +1117,6 @@ xmms_playlist_clear (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *err
 
 	xmmsc_coll_idlist_clear (plcoll);
 	xmms_collection_set_int_attr (plcoll, "position", -1);
-	xmms_collection_set_int_attr (plcoll, "size", 0);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, plname);
 	g_mutex_unlock (playlist->mutex);
@@ -1601,23 +1597,7 @@ xmms_playlist_coll_get_currpos (xmmsc_coll_t *plcoll)
 static gint
 xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll)
 {
-	gint size;
-
-	/* If absent, compute the size and save it */
-	if (!xmms_collection_get_int_attr (plcoll, "size", &size)) {
-		gint i;
-		guint *idlist;
-
-		size = 0;
-		idlist = xmmsc_coll_get_idlist (plcoll);
-		for (i = 0; idlist[i] != 0; i++) {
-			size++;
-		}
-
-		xmms_collection_set_int_attr (plcoll, "size", size);
-	}
-
-	return size;
+	return xmmsc_coll_idlist_get_size(plcoll);
 }
 
 
