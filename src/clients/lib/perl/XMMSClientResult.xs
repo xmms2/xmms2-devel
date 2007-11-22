@@ -2,62 +2,29 @@
 
 static struct {
 	const char *module;
+	const char *field;
 	uint32_t constant;
 	const char *perl_constant;
 } constants[] = {
-	{ "PlaybackStatus", XMMS_PLAYBACK_STATUS_STOP, "stop" },
-	{ "PlaybackStatus", XMMS_PLAYBACK_STATUS_PLAY, "play" },
-	{ "PlaybackStatus", XMMS_PLAYBACK_STATUS_PAUSE, "pause" },
+	{ "PlaybackStatus", NULL, XMMS_PLAYBACK_STATUS_STOP, "stop" },
+	{ "PlaybackStatus", NULL, XMMS_PLAYBACK_STATUS_PLAY, "play" },
+	{ "PlaybackStatus", NULL, XMMS_PLAYBACK_STATUS_PAUSE, "pause" },
+	{ "MediainfoReaderStatus", NULL, XMMS_MEDIAINFO_READER_STATUS_IDLE, "idle" },
+	{ "MediainfoReaderStatus", NULL, XMMS_MEDIAINFO_READER_STATUS_RUNNING, "running" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_ADD, "add" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_INSERT, "insert" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_SHUFFLE, "shuffle" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_REMOVE, "remove" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_CLEAR, "clear" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_MOVE, "move" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_SORT, "sort" },
+	{ "PlaylistChanged", "type", XMMS_PLAYLIST_CHANGED_UPDATE, "update" },
+	{ "MedialibEntryStatus", "status", XMMS_MEDIALIB_ENTRY_STATUS_NEW, "new" },
+	{ "MedialibEntryStatus", "status", XMMS_MEDIALIB_ENTRY_STATUS_OK, "ok", },
+	{ "MedialibEntryStatus", "status", XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING, "resolving" },
+	{ "MedialibEntryStatus", "status", XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE, "not-available" },
+	{ "MedialibEntryStatus", "status", XMMS_MEDIALIB_ENTRY_STATUS_REHASH, "rehash" }
 };
-
-#undef HASATTRIBUTE_UNUSED
-XS (overloaded_value);
-XS (overloaded_value)
-{
-	dXSARGS;
-	MAGIC *mg;
-	HV *perl_constants;
-	uint32_t value;
-	xmmsc_result_t *res;
-
-	if (items != 1) {
-		croak ("Usage: Audio::XMMSClient::Result::value(res)");
-	}
-
-	if (!(mg = mg_find ((SV *)cv, PERL_MAGIC_ext))) {
-		croak ("Failed to get magic from CV");
-	}
-
-	perl_constants = (HV *)mg->mg_ptr;
-
-	res = (xmmsc_result_t *)perl_xmmsclient_get_ptr_from_sv (ST(0), "Audio::XMMSClient::Result");
-
-	if (!xmmsc_result_get_uint (res, &value)) {
-		ST (0) = &PL_sv_undef;
-	}
-	else {
-		char *key;
-		SV *sv, **he;
-		STRLEN key_len;
-
-		sv = newSVuv (value);
-		key = SvPV (sv, key_len);
-
-		he = hv_fetch (perl_constants, key, key_len, 0);
-
-		if (!he || !*he) {
-			ST (0) = &PL_sv_undef;
-		}
-		else {
-			ST (0) = newSVsv (*he);
-		}
-	}
-
-	sv_2mortal (ST (0));
-
-	XSRETURN(1);
-}
-#define HASATTRIBUTE_UNUSED
 
 void
 perl_xmmsclient_xmmsc_result_notifyer_cb (xmmsc_result_t *res, void *user_data)
@@ -248,6 +215,116 @@ perl_xmmsclient_result_get_list (xmmsc_result_t *res)
 
 	return newRV_inc ((SV *)list);
 }
+
+#undef HASATTRIBUTE_UNUSED
+XS (overloaded_value);
+XS (overloaded_value)
+{
+	dXSARGS;
+	MAGIC *mg;
+	HV *perl_constants;
+	xmmsc_result_t *res;
+	char *key;
+	SV *sv, **he;
+	STRLEN key_len;
+	int ret = 0;
+	const char *field = NULL;
+
+	if (items != 1) {
+		croak ("Usage: Audio::XMMSClient::Result::value(res)");
+	}
+
+	if (!(mg = mg_find ((SV *)cv, PERL_MAGIC_ext))) {
+		croak ("Failed to get magic from CV");
+	}
+
+	perl_constants = (HV *)mg->mg_ptr;
+
+	if ((mg = mg_find ((SV *)perl_constants, PERL_MAGIC_ext))) {
+		field = mg->mg_ptr;
+	}
+
+	res = (xmmsc_result_t *)perl_xmmsclient_get_ptr_from_sv (ST(0), "Audio::XMMSClient::Result");
+
+	if (field) {
+		switch (xmmsc_result_get_type (res)) {
+			case XMMSC_RESULT_VALUE_TYPE_DICT:
+				sv = perl_xmmsclient_xmmsc_result_get_dict (res);
+				break;
+			case XMMSC_RESULT_VALUE_TYPE_PROPDICT:
+				sv = perl_xmmsclient_xmmsc_result_get_propdict (res);
+				break;
+			default:
+				warn ("unhandled constant type. this is a bug in the perl bindings.");
+				XSRETURN_UNDEF;
+		}
+	}
+	else {
+		switch (xmmsc_result_get_type (res)) {
+			case XMMSC_RESULT_VALUE_TYPE_UINT32:
+				{
+					uint32_t value;
+					ret = xmmsc_result_get_uint (res, &value);
+					sv = newSVuv (value);
+					break;
+				}
+			case XMMSC_RESULT_VALUE_TYPE_INT32:
+				{
+					int32_t value;
+					ret = xmmsc_result_get_int (res, &value);
+					sv = newSViv (value);
+					break;
+				}
+			default:
+				warn ("unhandled constant type. this is a bug in the perl bindings.");
+				XSRETURN_UNDEF;
+		}
+
+		if (ret == 0) {
+			XSRETURN_UNDEF;
+		}
+	}
+
+	if (field) {
+		SV **value;
+		SV *constant;
+
+		value = hv_fetch ((HV *)SvRV (sv), field, strlen (field), 0);
+
+		if (!value || !*value) {
+			XSRETURN_UNDEF;
+		}
+
+		key = SvPV (*value, key_len);
+
+		he = hv_fetch (perl_constants, key, key_len, 0);
+
+		if (!he || !*he) {
+			XSRETURN_UNDEF;
+		}
+
+		constant= newSVsv (*he);
+		hv_store ((HV *)SvRV (sv), field, strlen (field), constant, 0);
+		mg_set (constant);
+
+		ST (0) = sv;
+	}
+	else {
+		key = SvPV (sv, key_len);
+
+		he = hv_fetch (perl_constants, key, key_len, 0);
+
+		if (!he || !*he) {
+			XSRETURN_UNDEF;
+		}
+
+		ST (0) = newSVsv (*he);
+	}
+
+	sv_2mortal (ST (0));
+	XSRETURN(1);
+}
+#define HASATTRIBUTE_UNUSED
 
 MODULE = Audio::XMMSClient::Result	PACKAGE = Audio::XMMSClient::Result	PREFIX = xmmsc_result_
 
@@ -703,6 +780,10 @@ BOOT:
 
 			class_constants = newHV ();
 			hv_store (seen, module, module_len, newRV_inc ((SV *)class_constants), 0);
+
+			if (constants[i].field) {
+				sv_magic ((SV *)class_constants, 0, PERL_MAGIC_ext, constants[i].field, 0);
+			}
 
 			method = (char *)malloc (sizeof (char) * (strlen (class) + 8));
 			strcpy (method, class);

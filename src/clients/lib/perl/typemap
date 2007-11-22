@@ -14,6 +14,9 @@ perl_xmmsclient_collection_order_t	PERL_XMMSCLIENT_COLLECTION_ORDER_T
 perl_xmmsclient_playlist_t *	PERL_XMMSCLIENT_PLAYLIST_T
 
 xmmsc_result_t_PlaybackStatus *	XMMSC_RESULT_T_OVERLOAD
+xmmsc_result_t_MediainfoReaderStatus *	XMMSC_RESULT_T_OVERLOAD
+xmmsc_result_t_PlaylistChanged *	XMMSC_RESULT_T_OVERLOAD
+xmmsc_result_t_MedialibEntryStatus *	XMMSC_RESULT_T_OVERLOAD
 
 OUTPUT
 

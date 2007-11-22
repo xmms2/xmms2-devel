@@ -37,6 +37,9 @@
 #endif
 
 #define xmmsc_result_t_PlaybackStatus xmmsc_result_t
+#define xmmsc_result_t_MediainfoReaderStatus xmmsc_result_t
+#define xmmsc_result_t_PlaylistChanged xmmsc_result_t
+#define xmmsc_result_t_MedialibEntryStatus xmmsc_result_t
 
 typedef struct perl_xmmsclient_playlist_St {
 	xmmsc_connection_t *conn;
