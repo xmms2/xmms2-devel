@@ -23,5 +23,3 @@ from xmmsapi import PLAYLIST_CHANGED_UPDATE
 from xmmsapi import PLUGIN_TYPE_ALL
 from xmmsapi import PLUGIN_TYPE_XFORM
 from xmmsapi import PLUGIN_TYPE_OUTPUT
-from xmmsapi import PLUGIN_TYPE_PLAYLIST
-from xmmsapi import PLUGIN_TYPE_EFFECT
