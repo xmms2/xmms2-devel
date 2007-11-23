@@ -11,7 +11,11 @@ def build(bld):
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    return conf.check_pkg('ecore', destvar='ecore')
+    if conf.check_pkg('ecore', destvar='ecore'):
+        conf.env.append_value('XMMS_PKGCONF_FILES', 
+                              ('xmms2-client-ecore', '-lxmmsclient-ecore'))
+        return True
+    return False
 
 def set_options(opt):
     pass
