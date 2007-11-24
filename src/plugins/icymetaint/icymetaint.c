@@ -93,7 +93,7 @@ xmms_icymetaint_init (xmms_xform_t *xform)
 
 	g_return_val_if_fail (xform, FALSE);
 
-	res = xmms_xform_privdata_get_int (xform, "meta_offset", &meta_offset);
+	res = xmms_xform_auxdata_get_int (xform, "meta_offset", &meta_offset);
 	g_return_val_if_fail (res, FALSE);
 
 	XMMS_DBG ("meta_offset = %d", meta_offset);

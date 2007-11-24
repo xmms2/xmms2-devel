@@ -171,10 +171,10 @@ xmms_avformat_init (xmms_xform_t *xform)
 
 	XMMS_DBG ("mimetype set to '%s'", mimetype);
 
-	xmms_xform_privdata_set_bin (xform,
-	                             "decoder_config",
-	                             data->codecctx->extradata,
-	                             data->codecctx->extradata_size);
+	xmms_xform_auxdata_set_bin (xform,
+	                            "decoder_config",
+	                            data->codecctx->extradata,
+	                            data->codecctx->extradata_size);
 
 	xmms_avformat_get_mediainfo (xform);
 
@@ -219,7 +219,7 @@ xmms_avformat_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		if (pkt.size == 0)
 			return 0;
 
-		xmms_xform_privdata_set_none (xform);
+		xmms_xform_auxdata_barrier (xform);
 
 		g_string_append_len (data->outbuf, (gchar *) pkt.data, pkt.size);
 

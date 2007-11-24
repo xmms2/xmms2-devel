@@ -144,14 +144,14 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->channels = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
 	/* bitrate required for WMA files */
-	xmms_xform_privdata_get_int (xform,
-	                             "bitrate",
-	                             &data->bitrate);
+	xmms_xform_auxdata_get_int (xform,
+	                            "bitrate",
+	                            &data->bitrate);
 
-	ret = xmms_xform_privdata_get_bin (xform,
-	                                   "decoder_config",
-	                                   &data->extradata,
-	                                   &data->extradata_size);
+	ret = xmms_xform_auxdata_get_bin (xform,
+	                                  "decoder_config",
+	                                  &data->extradata,
+	                                  &data->extradata_size);
 
 	if (!ret) {
 		xmms_log_error ("Decoder config data not found!");

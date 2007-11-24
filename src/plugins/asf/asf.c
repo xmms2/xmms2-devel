@@ -181,7 +181,7 @@ xmms_asf_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 				continue;
 			}
 			g_string_append_len (data->outbuf, (gchar *) payload->data, payload->datalen);
-			xmms_xform_privdata_set_none (xform);
+			xmms_xform_auxdata_barrier (xform);
 		}
 
 		size = MIN (data->outbuf->len, len);
@@ -389,14 +389,14 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 			data->channels = wfx->channels;
 			data->bitrate = wfx->bitrate;
 
-			xmms_xform_privdata_set_bin (xform,
-			                             "decoder_config",
-			                             wfx->data,
-			                             wfx->datalen);
+			xmms_xform_auxdata_set_bin (xform,
+			                            "decoder_config",
+			                            wfx->data,
+			                            wfx->datalen);
 
-			xmms_xform_privdata_set_int (xform,
-			                             "bitrate",
-			                             data->bitrate);
+			xmms_xform_auxdata_set_int (xform,
+			                            "bitrate",
+			                            data->bitrate);
 
 			xmms_xform_outdata_type_add (xform,
 			                             XMMS_STREAM_TYPE_MIMETYPE,

@@ -221,14 +221,14 @@ gboolean xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key,
                                       gint *val);
 gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key,
                                       const gchar **val);
-void xmms_xform_privdata_set_none (xmms_xform_t *xform);
-void xmms_xform_privdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
-void xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);
-void xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len);
-gboolean xmms_xform_privdata_has_val (xmms_xform_t *xform, const gchar *key);
-gboolean xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val);
-gboolean xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val);
-gboolean xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen);
+void xmms_xform_auxdata_barrier (xmms_xform_t *xform);
+void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
+void xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);
+void xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len);
+gboolean xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key);
+gboolean xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val);
+gboolean xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val);
+gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen);
 
 const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);

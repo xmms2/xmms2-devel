@@ -702,8 +702,8 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 }
 
 static void
-xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key,
-                             xmms_object_cmd_value_t *val)
+xmms_xform_auxdata_set_val (xmms_xform_t *xform, char *key,
+                            xmms_object_cmd_value_t *val)
 {
 	xmms_xform_hotspot_t *hs;
 
@@ -716,50 +716,50 @@ xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key,
 }
 
 void
-xmms_xform_privdata_set_none (xmms_xform_t *xform)
+xmms_xform_auxdata_barrier (xmms_xform_t *xform)
 {
 	xmms_object_cmd_value_t *val = xmms_object_cmd_value_none_new ();
-	xmms_xform_privdata_set_val (xform, NULL, val);
+	xmms_xform_auxdata_set_val (xform, NULL, val);
 }
 
 void
-xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int intval)
+xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, int intval)
 {
 	xmms_object_cmd_value_t *val = xmms_object_cmd_value_int_new (intval);
-	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
+	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
 void
-xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key,
-                             const gchar *strval)
+xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key,
+                            const gchar *strval)
 {
 	xmms_object_cmd_value_t *val;
 	const char *old;
 
-	if (xmms_xform_privdata_get_str (xform, key, &old)) {
+	if (xmms_xform_auxdata_get_str (xform, key, &old)) {
 		if (strcmp (old, strval) == 0) {
 			return;
 		}
 	}
 
 	val = xmms_object_cmd_value_str_new (strval);
-	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
+	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
 void
-xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key,
-                             gpointer data, gssize len)
+xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key,
+                            gpointer data, gssize len)
 {
 	xmms_object_cmd_value_t *val;
 	GString *bin;
 
 	bin = g_string_new_len (data, len);
 	val = xmms_object_cmd_value_bin_new (bin);
-	xmms_xform_privdata_set_val (xform, g_strdup (key), val);
+	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
 static const xmms_object_cmd_value_t *
-xmms_xform_privdata_get_val (xmms_xform_t *xform, const gchar *key)
+xmms_xform_auxdata_get_val (xmms_xform_t *xform, const gchar *key)
 {
 	guint i;
 	xmms_xform_hotspot_t *hs;
@@ -785,17 +785,17 @@ xmms_xform_privdata_get_val (xmms_xform_t *xform, const gchar *key)
 }
 
 gboolean
-xmms_xform_privdata_has_val (xmms_xform_t *xform, const gchar *key)
+xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key)
 {
-	return !!xmms_xform_privdata_get_val (xform, key);
+	return !!xmms_xform_auxdata_get_val (xform, key);
 }
 
 gboolean
-xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
+xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
 {
 	const xmms_object_cmd_value_t *obj;
 
-	obj = xmms_xform_privdata_get_val (xform, key);
+	obj = xmms_xform_auxdata_get_val (xform, key);
 	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_INT32) {
 		*val = obj->value.int32;
 		return TRUE;
@@ -805,12 +805,12 @@ xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
 }
 
 gboolean
-xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key,
-                             const gchar **val)
+xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
+                            const gchar **val)
 {
 	const xmms_object_cmd_value_t *obj;
 
-	obj = xmms_xform_privdata_get_val (xform, key);
+	obj = xmms_xform_auxdata_get_val (xform, key);
 	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_STRING) {
 		*val = obj->value.string;
 		return TRUE;
@@ -820,12 +820,12 @@ xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key,
 }
 
 gboolean
-xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key,
-                             gpointer *data, gssize *datalen)
+xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
+                            gpointer *data, gssize *datalen)
 {
 	const xmms_object_cmd_value_t *obj;
 
-	obj = xmms_xform_privdata_get_val (xform, key);
+	obj = xmms_xform_auxdata_get_val (xform, key);
 	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_BIN) {
 		GString *bin = obj->value.bin;
 

@@ -177,7 +177,7 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	/* which type of file are we dealing with? */
 	data->filetype = FAAD_TYPE_UNKNOWN;
-	if (xmms_xform_privdata_has_val (xform, "decoder_config")) {
+	if (xmms_xform_auxdata_has_val (xform, "decoder_config")) {
 		data->filetype = FAAD_TYPE_MP4;
 	} else if (!strncmp ((char *) data->buffer, "ADIF", 4)) {
 		data->filetype = FAAD_TYPE_ADIF;
@@ -204,8 +204,8 @@ xmms_faad_init (xmms_xform_t *xform)
 		gpointer tmpbuf;
 		gssize tmpbuflen;
 
-		if (!xmms_xform_privdata_get_bin (xform, "decoder_config", &tmpbuf,
-		                                  &tmpbuflen)) {
+		if (!xmms_xform_auxdata_get_bin (xform, "decoder_config", &tmpbuf,
+		                                 &tmpbuflen)) {
 			XMMS_DBG ("AAC decoder config data found but it's wrong type! (something broken?)");
 			goto err;
 		}
@@ -321,12 +321,12 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 				data->channels = frameInfo.channels;
 			}
 
-			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
+			if (xmms_xform_auxdata_get_int (xform, "frame_offset", &temp)) {
 				toskip = (temp * frameInfo.channels *
 				          xmms_sample_size_get (data->sampleformat));
 			}
 
-			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
+			if (xmms_xform_auxdata_get_int (xform, "frame_duration", &temp)) {
 				bytes_read = (temp * frameInfo.channels *
 				              xmms_sample_size_get (data->sampleformat));
 			}
