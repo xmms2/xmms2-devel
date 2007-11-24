@@ -111,11 +111,11 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv) {
 	xmmsc_visualization_t *v;
 	bool ret;
 
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered/unconnected visualization dataset", 0);
+	x_check_conn (c, 0);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered/unconnected visualization dataset", 0);
 
 	x_api_error_if (!(v->type == VIS_NONE), "with already transmitting visualization dataset", 0);
-
-	x_check_conn (c, 0);
 
 	/* first try unixshm */
 	v->type = VIS_UNIXSHM;
@@ -149,8 +149,8 @@ xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, NULL);
-	v = get_dataset(c, vv);
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset", NULL);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered visualization dataset", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTY);
 	xmms_ipc_msg_put_int32 (msg, v->id);
@@ -169,7 +169,8 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsc_visuali
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, NULL);
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset", NULL);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered visualization dataset", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTIES);
 	xmms_ipc_msg_put_int32 (msg, v->id);
@@ -188,7 +189,8 @@ xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c,);
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset",);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered visualization dataset",);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
 	xmms_ipc_msg_put_int32 (msg, v->id);
@@ -243,7 +245,8 @@ xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int
 	int i, ret, size;
 
 	x_check_conn (c, 0);
-	x_api_error_if (!(v = get_dataset(c, vv)), "with unregistered visualization dataset", 0);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered visualization dataset", 0);
 
 	while (1) {
 		ret = package_read_start (v, blocking, &src);
