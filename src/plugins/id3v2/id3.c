@@ -43,7 +43,7 @@
  *
  *>TALB Album/Movie/Show title
  *>TBPM BPM (beats per minute)
- * TCOM Composer
+ *>TCOM Composer
  *>TCON Content type
  * TCOP Copyright message
  * TDAT Date
@@ -52,9 +52,9 @@
  * TEXT Lyricist/Text writer
  * TFLT File type
  * TIME Time
- * TIT1 Content group description
+ *>TIT1 Content group description
  *>TIT2 Title/songname/content description
- * TIT3 Subtitle/Description refinement
+ *>TIT3 Subtitle/Description refinement
  * TKEY Initial key
  * TLAN Language(s)
  * TLEN Length
@@ -62,15 +62,15 @@
  * TOAL Original album/movie/show title
  * TOFN Original filename
  * TOLY Original lyricist(s)/text writer(s)
- * TOPE Original artist(s)/performer(s)
+ *>TOPE Original artist(s)/performer(s)
  * TORY Original release year
  * TOWN File owner/licensee
  *>TPE1 Lead performer(s)/Soloist(s)
- * TPE2 Band/orchestra/accompaniment
- * TPE3 Conductor/performer refinement
- * TPE4 Interpreted, remixed, or otherwise modified by
+ *>TPE2 Band/orchestra/accompaniment
+ *>TPE3 Conductor/performer refinement
+ *>TPE4 Interpreted, remixed, or otherwise modified by
  * TPOS Part of a set
- * TPUB Publisher
+ *>TPUB Publisher
  *>TRCK Track number/Position in set
  * TRDA Recording dates
  * TRSN Internet radio station name
@@ -79,7 +79,17 @@
  * TSRC ISRC (international standard recording code)
  * TSSE Software/Hardware and settings used for encoding
  *>TYER Year
+ * WCOM Commercial information URL
+ *>WCOP Copyright/Legal information URL
+ *>WOAF Official audio file webpage
+ *>WOAR Official artist/performer webpage
+ * WOAS Official audio source webpage
+ * WORS Official Internet radio station homepage
+ * WPAY Payment URL
+ *>WPUB Publishers official webpage
  * TXXX User defined text information frame
+ *>TXXX:ASIN                        Amazon Identification Number
+ *>TXXX:QuodLibet::albumartist      Album Artist Name (more to come)
  */
 
 static const gchar * const id3_genres[] =
@@ -281,6 +291,19 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	           (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
 		xmms_xform_metadata_set_int (xform, metakey, 1);
+	} else if (g_strcasecmp (key, "ASIN") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN;
+		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_strcasecmp (key, "QuodLibet::albumartist") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
+		xmms_xform_metadata_set_str (xform, metakey, val);
+		// ArtistAlbumSort as last resort
+	} else if ((g_strcasecmp (key, "ALBUMARTISTSORT") == 0)) {
+		const gchar *tmp;
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
+		if (xmms_xform_metadata_get_str (xform, metakey, &tmp) && !strlen (tmp)) {
+			xmms_xform_metadata_set_str (xform, metakey, val);
+		}
 	}
 
 	g_free (cbuf);
@@ -436,6 +459,19 @@ static struct id3tags_t tags[] = {
 	{ quad2long ('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ quad2long ('A','P','I','C'), NULL, handle_id3v2_apic },
 	{ quad2long ('C','O','M','M'), NULL, handle_id3v2_comm },
+	{ quad2long ('T','I','T','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING, NULL },
+	{ quad2long ('T','I','T','3'), XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, NULL },
+	{ quad2long ('T','P','E','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_PERFORMER, NULL },
+	{ quad2long ('T','P','E','3'), XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR, NULL },
+	{ quad2long ('T','P','E','4'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER, NULL },
+	{ quad2long ('T','O','P','E'), XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINAL_ARTIST, NULL },
+	{ quad2long ('T','P','U','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER, NULL },
+	{ quad2long ('T','C','O','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER, NULL },
+	{ quad2long ('T','C','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT, NULL },
+	{ quad2long ('W','O','A','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_ARTIST, NULL },
+	{ quad2long ('W','O','A','F'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_FILE, NULL },
+	{ quad2long ('W','P','U','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_PUBLISHER, NULL },
+	{ quad2long ('W','C','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_COPYRIGHT, NULL },
 	{ 0, NULL, NULL }
 };
 
