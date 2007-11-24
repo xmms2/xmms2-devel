@@ -84,7 +84,7 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 	xmms_vis_client_t *c;
 
 	// setup socket if needed
-	if (vis->socket == XMMS_INVALID_SOCKET) {
+	if (!xmms_socket_valid (vis->socket)) {
 		struct addrinfo hints;
 		struct addrinfo *result, *rp;
 		int s;
@@ -104,7 +104,7 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 
 		for (rp = result; rp != NULL; rp = rp->ai_next) {
 			vis->socket = socket (rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-			if (vis->socket == XMMS_INVALID_SOCKET) {
+			if (!xmms_socket_valid (vis->socket)) {
 				continue;
 			}
 			if (bind (vis->socket, rp->ai_addr, rp->ai_addrlen) != -1) {

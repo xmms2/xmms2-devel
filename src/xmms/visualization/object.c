@@ -137,7 +137,7 @@ xmms_visualization_init (xmms_output_t *output)
 	                     XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN,
 	                     XMMS_CMD_FUNC (shutdown));
 
-	vis->socket = XMMS_INVALID_SOCKET;
+	vis->socket = -1; //XMMS_INVALID_SOCKET;
 }
 
 /**
@@ -155,7 +155,7 @@ xmms_visualization_destroy ()
 		delete_client (vis->clientc - 1);
 	}
 
-	if (vis->socket != XMMS_INVALID_SOCKET) {
+	if (xmms_socket_valid (vis->socket)) {
 		/* it seems there is no way to remove the watch */
 		g_io_channel_shutdown (vis->socketio, FALSE, NULL);
 		close (vis->socket);

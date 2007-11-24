@@ -61,7 +61,7 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	free (host);
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		if ((t->socket[0] = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) == XMMS_INVALID_SOCKET) {
+		if (!xmms_socket_valid (t->socket[0] = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol))) {
 			continue;
 		}
 		if (connect (t->socket[0], rp->ai_addr, rp->ai_addrlen) != -1) {
