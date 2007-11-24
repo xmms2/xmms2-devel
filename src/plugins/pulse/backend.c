@@ -48,8 +48,8 @@ struct xmms_pulse {
 	pa_stream *stream;
 	pa_sample_spec sample_spec;
 	pa_channel_map channel_map;
-	pa_cvolume volume;
 	int operation_success;
+	int volume;
 };
 
 static gboolean check_pulse_health(xmms_pulse *p, int *rerror) {
@@ -146,7 +146,9 @@ xmms_pulse_backend_new(const char *server, const char *name,
 	p = g_new0(xmms_pulse, 1);
 	if (!p)
 		return NULL;
-    
+
+	p->volume = 100;
+
 	p->mainloop = pa_threaded_mainloop_new();
 	if (!p->mainloop)
 		goto fail;
@@ -210,6 +212,7 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 				       int samplerate, int channels,
 				       int *rerror) {
 	pa_sample_format_t pa_format = PA_SAMPLE_INVALID;
+	pa_cvolume cvol;
 	int error = PA_ERR_INTERNAL;
 	int ret;
 	int i;
@@ -255,10 +258,13 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 	pa_stream_set_write_callback(p->stream, stream_request_cb, p);
 	pa_stream_set_latency_update_callback(p->stream, stream_latency_update_cb, p);
 
+	pa_cvolume_set(&cvol, p->sample_spec.channels,
+	               PA_VOLUME_NORM * p->volume / 100),
+
 	ret = pa_stream_connect_playback(
 		p->stream, sink, NULL,
 		PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
-		NULL, NULL);
+		&cvol, NULL);
 
 	if (ret < 0) {
 		error = pa_context_errno(p->context);
@@ -470,4 +476,96 @@ int xmms_pulse_backend_get_latency(xmms_pulse *p, int *rerror) {
  unlock_and_fail:
 	pa_threaded_mainloop_unlock(p->mainloop);
 	return -1;
+}
+
+
+void volume_set_cb(pa_context *c, int success, void *udata) {
+	int *res = (int *) udata;
+	*res = success;
+}
+
+
+int xmms_pulse_backend_volume_set(xmms_pulse *p, unsigned int vol) {
+	pa_operation *o;
+	pa_cvolume cvol;
+	int idx, res;
+
+	if (p == NULL) {
+		return FALSE;
+	}
+
+	pa_threaded_mainloop_lock(p->mainloop);
+
+	if (p->stream != NULL) {
+		pa_cvolume_set(&cvol, p->sample_spec.channels,
+		               PA_VOLUME_NORM * vol / 100);
+
+		idx = pa_stream_get_index(p->stream);
+
+		o = pa_context_set_sink_input_volume(p->context, idx, &cvol,
+		                                     volume_set_cb, &res);
+
+		/* wait for result to land */
+		while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
+			pa_threaded_mainloop_wait(p->mainloop);
+		}
+
+		pa_operation_unref(o);
+
+		/* The cb set the volume to 1 or 0 depending on success */
+		if (res) {
+			p->volume = vol;
+		}
+	}
+
+	pa_threaded_mainloop_unlock(p->mainloop);
+
+	return res;
+}
+
+
+void volume_get_cb(pa_context *c, const pa_sink_input_info *i,
+                   int eol, void *udata) {
+	unsigned int *vol = (unsigned int *) udata;
+	double total = 0;
+	int j;
+
+	if (i != NULL && i->volume.channels > 0 && *vol == -1) {
+		for (j = 0; j < i->volume.channels; j++) {
+			total += i->volume.values[j] * 100.0 / PA_VOLUME_NORM;
+		}
+
+		*vol = (unsigned int) ceil(total / i->volume.channels);
+	}
+}
+
+
+int xmms_pulse_backend_volume_get(xmms_pulse *p, unsigned int *vol) {
+	pa_operation *o;
+	int idx;
+
+	if (p == NULL) {
+		return FALSE;
+	}
+
+	pa_threaded_mainloop_lock(p->mainloop);
+
+	*vol = -1;
+
+	if (p->stream != NULL) {
+		idx = pa_stream_get_index(p->stream);
+
+		o = pa_context_get_sink_input_info(p->context, idx,
+		                                   volume_get_cb, vol);
+
+		while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
+			pa_threaded_mainloop_wait(p->mainloop);
+		}
+
+		pa_operation_unref(o);
+	}
+
+	pa_threaded_mainloop_unlock(p->mainloop);
+
+	return *vol != -1;
 }

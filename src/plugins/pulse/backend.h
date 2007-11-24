@@ -18,5 +18,7 @@ gboolean xmms_pulse_backend_write(xmms_pulse *p, const char *data,
 gboolean xmms_pulse_backend_drain(xmms_pulse *p, int *rerror);
 gboolean xmms_pulse_backend_flush(xmms_pulse *p, int *rerror);
 int xmms_pulse_backend_get_latency(xmms_pulse *s, int *rerror);
+int xmms_pulse_backend_volume_set(xmms_pulse *p, unsigned int vol);
+int xmms_pulse_backend_volume_get(xmms_pulse *p, unsigned int *vol);
 
 #endif
