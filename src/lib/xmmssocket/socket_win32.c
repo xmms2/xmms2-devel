@@ -32,6 +32,10 @@ int xmms_socket_valid (xmms_socket_t socket) {
 	return 1;
 }
 
+void xmms_socket_invalidate (xmms_socket_t *socket) {
+	*socket == INVALID_SOCKET;
+}
+
 void xmms_socket_close (xmms_socket_t socket) {
 	closesocket (socket);
 }
