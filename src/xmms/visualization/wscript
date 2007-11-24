@@ -19,7 +19,7 @@ def build(bld):
         obj.source.append("unixshm.c")
     obj.includes = '. ../../include ../../includepriv'
     obj.uselib = 'glib2 m'
-    obj.uselib_local = 'xmmsvisualization xmmssocket'
+    obj.uselib_local = 'xmmssocket'
     obj.target = 'visualization'
     obj.install_var = 0
 

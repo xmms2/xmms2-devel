@@ -82,6 +82,7 @@ def build(bld):
 
     if env["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
+        subdirs.append("src/xmms/visualization")
 
     newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
     if env['NEWEST_WSCRIPT_SUBDIR'] and newest > env['NEWEST_WSCRIPT_SUBDIR']:
