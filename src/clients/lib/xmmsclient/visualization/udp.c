@@ -78,7 +78,7 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 			connect (t->socket[1], rp->ai_addr, rp->ai_addrlen);
 			break;
 		} else {
-			close (t->socket[0]);
+			xmms_socket_close (t->socket[0]);
 		}
 	}
 	if (rp == NULL) {
@@ -122,8 +122,8 @@ setup_udp (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id)
 void
 cleanup_udp (xmmsc_vis_udp_t *t)
 {
-	close (t->socket[0]);
-	close (t->socket[1]);
+	xmms_socket_close (t->socket[0]);
+	xmms_socket_close (t->socket[1]);
 }
 
 int
