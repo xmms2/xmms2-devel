@@ -99,8 +99,8 @@ asf_data_read_payloads(asf_packet_t *packet,
 	asf_payload_t pl;
 	int i, tmp, skip;
 
-	skip = 0;
-	for (i=0; i<packet->payload_count; i++) {
+	skip = 0, i = 0;
+	while (i < packet->payload_count) {
 		uint8_t pts_delta = 0;
 		int compressed = 0;
 
@@ -167,17 +167,20 @@ asf_data_read_payloads(asf_packet_t *packet,
 		}
 
 		if (compressed) {
-			int i, used = 0;
+			int payloads, start = skip, used = 0;
 
-			for (i=0; used < pl.datalen; i++)
-				used += 1 + data[skip + used];
+			/* count how many compressed payloads this payload includes */
+			for (payloads=0; used < pl.datalen; payloads++) {
+				used += 1 + data[start + used];
+			}
 
 			if (used != pl.datalen) {
 				/* invalid compressed data size */
 				return ASF_ERROR_INVALID_LENGTH;
 			}
 
-			packet->payload_count += i;
+			/* add additional payloads excluding the already allocated one */
+			packet->payload_count += payloads - 1;
 			if (packet->payload_count > packet->payloads_size) {
 				void *tempptr;
 
@@ -190,7 +193,7 @@ asf_data_read_payloads(asf_packet_t *packet,
 				packet->payloads_size = packet->payload_count;
 			}
 
-			while (skip < datalen) {
+			while (skip < start + used) {
 				pl.datalen = data[skip];
 				skip++;
 
@@ -201,12 +204,14 @@ asf_data_read_payloads(asf_packet_t *packet,
 				memcpy(&packet->payloads[i], &pl, sizeof(asf_payload_t));
 				i++;
 			}
-			i--;
 		} else {
 			pl.data = data + skip;
 			memcpy(&packet->payloads[i], &pl, sizeof(asf_payload_t));
+
+			/* update the skipped data amount and payload index */
+			skip += pl.datalen;
+			i++;
 		}
-		skip += pl.datalen;
 
 		debug_printf("payload(%d/%d) stream: %d, object: %d, offset: %d, pts: %d, datalen: %d",
 		             i+1, packet->payload_count, pl.stream_number, pl.media_object_number,
