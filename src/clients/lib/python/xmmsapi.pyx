@@ -285,7 +285,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_collection_changed(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 
@@ -2100,17 +2099,6 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_collection_changed(self.conn))
-
-	def signal_visualisation_data(self, cb = None):
-		"""
-		signal_visualisation_data(cb=None) -> XMMSResult
-
-		Tell daemon to send you visualisation data updates for drawing
-		peak analyzer.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		return self.create_result(cb, xmmsc_signal_visualisation_data(self.conn))
 
 	def signal_mediainfo_reader_unindexed(self, cb = None):
 		"""

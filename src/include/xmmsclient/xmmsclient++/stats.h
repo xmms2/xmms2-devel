@@ -98,18 +98,6 @@ namespace Xmms
 			DictListResult
 			pluginList(Plugins::Type type = Plugins::ALL) const;
 
-			/** Request the visualisation data signal.
-			 *
-			 *  @param slot Function pointer to a function taking
-			 *              const List<unsigned int>& and returning a bool.
-			 *  @param error Function pointer to an error callback
-			 *               function. (<b>optional</b>)
-			 *
-			 *  @throw connection_error If the client isn't connected.
-			 */
-			UintListSignal
-			signalVisualisationData() const;
-
 			/** Request status for the mediainfo reader.
 			 *
 			 *  Compare result with Xmms::Stats::IDLE and Xmms::Stats::RUNNING.

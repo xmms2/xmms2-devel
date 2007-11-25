@@ -60,17 +60,6 @@ xmmsc_main_stats (xmmsc_connection_t *c)
 }
 
 /**
- * Request the visualisation data signal. This will be called with vis data
- */
-xmmsc_result_t *
-xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
-}
-
-/**
  * Request status for the mediainfo reader. It can be idle or working
  */
 xmmsc_result_t *

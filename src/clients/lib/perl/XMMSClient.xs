@@ -1350,26 +1350,6 @@ xmmsc_result_t *
 xmmsc_broadcast_configval_changed (c)
 		xmmsc_connection_t *c
 
-=head2 signal_visualisation_data
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $result
-
-=back
-
-  my $result = $conn->signal_visualisation_data;
-
-Request the visualisation data signal.
-
-=cut
-
-xmmsc_result_t *
-xmmsc_signal_visualisation_data (c)
-		xmmsc_connection_t *c
-
 =head2 broadcast_mediainfo_reader_status
 
 =over 4

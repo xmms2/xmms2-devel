@@ -164,7 +164,6 @@ xmmsc_result_t *xmmsc_main_stats (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c);
 
 /* signals */
-xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
 
 /*

@@ -48,15 +48,6 @@ namespace Xmms
 		return DictListResult( res, ml_ );
 	}
 
-	UintListSignal
-	Stats::signalVisualisationData() const
-	{
-		using boost::bind;
-		xmmsc_result_t* res =
-		    call( connected_, bind( xmmsc_signal_visualisation_data, conn_ ) );
-		return UintListSignal( res, ml_ );
-	}
-
 	ReaderStatusSignal
 	Stats::broadcastMediainfoReaderStatus() const
 	{
