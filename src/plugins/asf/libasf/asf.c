@@ -110,35 +110,38 @@ asf_init(asf_file_t *file)
 		file->index_position = file->data_position +
 		                       file->data->size;
 
-		while (!file->index && file->index_position < file->file_size) {
-			seek_position = file->stream.seek(file->stream.opaque,
-							  file->index_position);
-			if (seek_position != file->index_position) {
-				/* Error in seeking */
-				break;
-			}
-
-			tmp = asf_parse_index(file);
-			if (tmp < 0) {
-				debug_printf("Error finding index object! %d", tmp);
-				break;
-			}
-
-			/* The object read was something else than index */
-			if (!file->index)
-				file->index_position += tmp;
-		}
-
-		if (!file->index) {
-			debug_printf("Couldn't find an index object");
-			file->index_position = 0;
-		}
-
 		seek_position = file->stream.seek(file->stream.opaque,
-		                                  file->data->packets_position);
-		if (seek_position != file->data->packets_position) {
-			/* Couldn't seek back to packets position, this is fatal! */
-			return ASF_ERROR_SEEK;
+		                                  file->index_position);
+
+		/* if first seek fails, we can try to recover and just ignore seeking */
+		if (seek_position >= 0) {
+			while (seek_position == file->index_position &&
+			       file->index_position < file->file_size && !file->index) {
+				tmp = asf_parse_index(file);
+				if (tmp < 0) {
+					debug_printf("Error finding index object! %d", tmp);
+					break;
+				}
+
+				/* The object read was something else than index */
+				if (!file->index)
+					file->index_position += tmp;
+
+				seek_position = file->stream.seek(file->stream.opaque,
+								  file->index_position);
+			}
+
+			if (!file->index) {
+				debug_printf("Couldn't find an index object");
+				file->index_position = 0;
+			}
+
+			seek_position = file->stream.seek(file->stream.opaque,
+							  file->data->packets_position);
+			if (seek_position != file->data->packets_position) {
+				/* Couldn't seek back to packets position, this is fatal! */
+				return ASF_ERROR_SEEK;
+			}
 		}
 	}
 
@@ -320,6 +323,16 @@ asf_get_stream_count(asf_file_t *file)
 	}
 
 	return ret;
+}
+
+int
+asf_is_broadcast(asf_file_t *file) {
+	return (file->flags & ASF_FLAG_BROADCAST);
+}
+
+int
+asf_is_seekable(asf_file_t *file) {
+	return (file->flags & ASF_FLAG_SEEKABLE);
 }
 
 asf_stream_properties_t *

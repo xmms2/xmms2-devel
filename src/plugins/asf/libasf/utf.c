@@ -22,6 +22,14 @@
 #include "asf.h"
 #include "byteio.h"
 
+/**
+ * Decode UTF-16LE text from buffer of buflen size and
+ * allocate a new buffer containing the same string
+ * encoded as UTF-8. Supports characters outside of BMP
+ * encoded as an UTF-16 surrogate pair. Returns NULL in 
+ * case of allocation failure or invalid surrogate pair.
+ * Buflen is in bytes.
+ */
 char *
 asf_utf8_from_utf16le(uint8_t *buf, uint16_t buflen)
 {

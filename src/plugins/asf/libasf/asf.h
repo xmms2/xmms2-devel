@@ -21,7 +21,7 @@
 
 
 /* used int types for different platforms */
-#if defined (_WIN32) && !defined (__MINGW_H)
+#if !defined(__MINGW_H) && defined(_WIN32)
 typedef char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;
@@ -37,64 +37,106 @@ typedef unsigned __int64 uint64_t;
 
 
 struct asf_stream_s {
+	/* read function, returns -1 on error, 0 on EOF and read bytes otherwise */
 	int32_t (*read)(void *opaque, void *buffer, int32_t size);
+
+	/* write function, returns -1 on error, 0 on EOF and written bytes otherwise */
 	int32_t (*write)(void *opaque, void *buffer, int32_t size);
+
+	/* seek function, seeks to offset from beginning of the file, returns -1 on error, 0 on EOF */
 	int64_t (*seek)(void *opaque, int64_t offset);
+
+	/* opaque data pointer passed to each of the stream handling callbacks */
 	void *opaque;
 };
 typedef struct asf_stream_s asf_stream_t;
 
 struct asf_metadata_entry_s {
-	char *key;
-	char *value;
+	char *key;	/* key of extended metadata entry */
+	char *value;	/* value of extended metadata entry */
 };
 typedef struct asf_metadata_entry_s asf_metadata_entry_t;
 
+/* all metadata entries are presented in UTF-8 character encoding */
 struct asf_metadata_s {
-	char *title;
-	char *artist;
-	char *copyright;
-	char *description;
-	char *rating;
-	uint16_t extended_count;
-	asf_metadata_entry_t *extended;
+	char *title;		/* title of the stream */
+	char *artist;		/* artist of the stream */
+	char *copyright;	/* copyright holder */
+	char *description;	/* description of the stream */
+	char *rating;		/* rating of the stream */
+	uint16_t extended_count;	/* number of extended entries */
+	asf_metadata_entry_t *extended; /* array of extended entries */
 };
 typedef struct asf_metadata_s asf_metadata_t;
 
 struct asf_payload_s {
-	uint8_t stream_number;
-	uint32_t media_object_number;
-	uint32_t media_object_offset;
+	uint8_t stream_number;	/* the stream number this payload belongs to */
+	uint8_t key_frame;	/* a flag indicating if this payload contains a key frame or not */
 
-	uint32_t replicated_length;
-	uint8_t *replicated_data;
+	uint32_t media_object_number;	/* number of media object this payload is part of */
+	uint32_t media_object_offset;	/* byte offset from beginning of media object */
 
-	uint32_t datalen;
-	uint8_t *data;
+	uint32_t replicated_length;	/* length of some replicated data of a media object... */
+	uint8_t *replicated_data;	/* the replicated data mentioned */
 
-	uint32_t pts;
+	uint32_t datalen;	/* length of the actual payload data */
+	uint8_t *data;		/* the actual payload data to decode */
+
+	uint32_t pts;		/* presentation time of this payload */
 };
 typedef struct asf_payload_s asf_payload_t;
 
 struct asf_packet_s {
-	uint8_t ec_length;
-	uint8_t *ec_data;
-	uint8_t ec_data_size;
+	uint8_t ec_length;	/* error correction data length */
+	uint8_t *ec_data;	/* error correction data array */
+	uint8_t ec_data_size;	/* for internal library use, not to be modified by applications! */
 
-	uint32_t length;
-	uint32_t padding_length;
-	uint32_t send_time;
-	uint16_t duration;
+	uint32_t length;		/* length of this packet, usually constant per stream */
+	uint32_t padding_length;	/* length of the padding after the data in this packet */
+	uint32_t send_time;		/* send time of this packet in milliseconds */
+	uint16_t duration;		/* duration of this packet in milliseconds */
 
-	uint16_t payload_count;
-	asf_payload_t *payloads;
-	uint16_t payloads_size;
+	uint16_t payload_count;		/* number of payloads contained in this packet */
+	asf_payload_t *payloads;	/* an array of payloads in this packet */
+	uint16_t payloads_size;		/* for internal library use, not to be modified by applications! */
 
-	uint32_t datalen;
-	uint8_t *payload_data;
-	uint32_t payload_data_size;
+	uint32_t payload_data_len;	/* length of the raw payload data of this packet */
+	uint8_t *payload_data;		/* the raw payload data of this packet, usually not useful */
+	uint32_t payload_data_size;	/* for internal library use, not to be modified by applications! */
 };
 typedef struct asf_packet_s asf_packet_t;
+
+/* waveformatex fields specified in Microsoft documentation:
+   http://msdn2.microsoft.com/en-us/library/ms713497.aspx */
+struct asf_waveformatex_s {
+	uint16_t wFormatTag;
+	uint16_t nChannels;
+	uint32_t nSamplesPerSec;
+	uint32_t nAvgBytesPerSec;
+	uint16_t nBlockAlign;
+	uint16_t wBitsPerSample;
+	uint16_t cbSize;
+	uint8_t *data;
+};
+typedef struct asf_waveformatex_s asf_waveformatex_t;
+
+/* bitmapinfoheader fields specified in Microsoft documentation:
+   http://msdn2.microsoft.com/en-us/library/ms532290.aspx */
+struct asf_bitmapinfoheader_s {
+	uint32_t biSize;
+	uint32_t biWidth;
+	uint32_t biHeight;
+	uint16_t biPlanes;
+	uint16_t biBitCount;
+	uint32_t biCompression;
+	uint32_t biSizeImage;
+	uint32_t biXPelsPerMeter;
+	uint32_t biYPelsPerMeter;
+	uint32_t biClrUsed;
+	uint32_t biClrImportant;
+	uint8_t *data;
+};
+typedef struct asf_bitmapinfoheader_s asf_bitmapinfoheader_t;
 
 enum asf_stream_type_e {
 	ASF_STREAM_TYPE_NONE     = 0x00,
@@ -105,37 +147,9 @@ enum asf_stream_type_e {
 };
 typedef enum asf_stream_type_e asf_stream_type_t;
 
-struct asf_waveformatex_s {
-	uint16_t codec_id;
-	uint16_t channels;
-	uint32_t rate;
-	uint32_t bitrate;
-	uint16_t blockalign;
-	uint16_t bitspersample;
-	uint16_t datalen;
-	uint8_t *data;
-};
-typedef struct asf_waveformatex_s asf_waveformatex_t;
-
-struct asf_bitmapinfoheader_s {
-	uint32_t data_size;
-	uint32_t width;
-	uint32_t height;
-	uint16_t reserved;
-	uint16_t bpp;
-	uint32_t codec;
-	uint32_t image_size;
-	uint32_t hppm;
-	uint32_t vppm;
-	uint32_t colors;
-	uint32_t important_colors;
-	uint8_t *data;
-};
-typedef struct asf_bitmapinfoheader_s asf_bitmapinfoheader_t;
-
 struct asf_stream_properties_s {
-	asf_stream_type_t type;
-	void *properties;
+	asf_stream_type_t type;	/* type of this current stream */
+	void *properties;	/* pointer to type specific data (ie. waveformatex or bitmapinfoheader) */
 };
 typedef struct asf_stream_properties_s asf_stream_properties_t;
 
@@ -154,26 +168,70 @@ enum asf_error_e {
 	ASF_ERROR_SEEK           = -10  /* file is seekable but seeking failed */
 };
 
+
+/* initialize the library using file on a local filesystem */
 asf_file_t *asf_open_file(const char *filename);
+
+/* initialize the library using callbacks defined on a stream structure,
+   the stream structure can be freed after calling this function */
 asf_file_t *asf_open_cb(asf_stream_t *stream);
+
+/* close the library handle and free all allocated memory */
 void asf_close(asf_file_t *file);
 
+
+/* initialize the library and read all header information of the ASF file */
 int asf_init(asf_file_t *file);
+
+/* create a packet structure for reading data packets */
 asf_packet_t *asf_packet_create();
+
+/* get next packet from the stream to the specified packet structure */
 int asf_get_packet(asf_file_t *file, asf_packet_t *packet);
+
+/* seek to the closest (key frame) packet specified by milliseconds position */
 int64_t asf_seek_to_msec(asf_file_t *file, int64_t msec);
+
+/* free the packet structure allocated earlier, need to be called only once */
 void asf_free_packet(asf_packet_t *packet);
 
+
+/* get metadata information of the ASF file handle */
 asf_metadata_t *asf_get_metadata(asf_file_t *file);
+
+/* free metadata structure received from the library */
 void asf_free_metadata(asf_metadata_t *metadata);
 
+
+/* calculate how many streams are available in current ASF file */
 uint8_t asf_get_stream_count(asf_file_t *file);
+
+/* get properties of a stream, the resulting pointer and its contents should NOT be freed */
 asf_stream_properties_t *asf_get_stream_properties(asf_file_t *file, uint8_t track);
 
+
+/* return non-zero if the file is broadcasted, 0 otherwise */
+int asf_is_broadcast(asf_file_t *file);
+
+/* return non-zero if the file is seekable, 0 otherwise */
+int asf_is_seekable(asf_file_t *file);
+
+/* get size of the ASF file in bytes */
 uint64_t asf_get_file_size(asf_file_t *file);
+
+/* get creation date in 100-nanosecond units since Jan 1, 1601 GMT
+   this value should be ignored for broadcasts */
 uint64_t asf_get_creation_date(asf_file_t *file);
+
+/* get number of data packets available in this file
+   this value should be ignored for broadcasts */
 uint64_t asf_get_data_packets(asf_file_t *file);
+
+/* get play duration of the file in 100-nanosecond units,
+   this value should be ignored for broadcasts */
 uint64_t asf_get_duration(asf_file_t *file);
+
+/* maximum bitrate as bits per second in the entire file */
 uint32_t asf_get_max_bitrate(asf_file_t *file);
 
 #endif

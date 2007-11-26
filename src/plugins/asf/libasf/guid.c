@@ -94,6 +94,11 @@ static const guid_t asf_guid_stream_type_video =
 static const guid_t asf_guid_stream_type_command =
 {0x59DACFC0, 0x59E6, 0x11D0, {0xA3, 0xAC, 0x00, 0xA0, 0xC9, 0x03, 0x48, 0xF6}};
 
+static const guid_t asf_guid_stream_type_extended =
+{0x3AFB65E2, 0x47EF, 0x40F2, {0xAC, 0x2C, 0x70, 0xA9, 0x0D, 0x71, 0xD3, 0x43}};
+
+static const guid_t asf_guid_stream_type_extended_audio =
+{0x31178C9D, 0x03E1, 0x4528, {0xB5, 0x82, 0x3D, 0xF9, 0xDB, 0x22, 0xF5, 0x03}};
 
 
 
@@ -166,6 +171,10 @@ asf_guid_get_stream_type(const guid_t *guid)
 		ret = GUID_STREAM_TYPE_VIDEO;
 	else if (asf_guid_match(guid, &asf_guid_stream_type_command))
 		ret = GUID_STREAM_TYPE_COMMAND;
+	else if (asf_guid_match(guid, &asf_guid_stream_type_extended))
+		ret = GUID_STREAM_TYPE_EXTENDED;
+	else if (asf_guid_match(guid, &asf_guid_stream_type_extended_audio))
+		ret = GUID_STREAM_TYPE_EXTENDED_AUDIO;
 
 	return ret;
 }

@@ -378,21 +378,21 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 			asf_waveformatex_t *wfx = sprop->properties;
 			const gchar *mimetype;
 
-			if (wfx->codec_id == 0x160)
+			if (wfx->wFormatTag == 0x160)
 				mimetype = "audio/x-ffmpeg-wmav1";
-			else if (wfx->codec_id == 0x161)
+			else if (wfx->wFormatTag == 0x161)
 				mimetype = "audio/x-ffmpeg-wmav2";
 			else
 				continue;
 
-			data->samplerate = wfx->rate;
-			data->channels = wfx->channels;
-			data->bitrate = wfx->bitrate;
+			data->samplerate = wfx->nSamplesPerSec;
+			data->channels = wfx->nChannels;
+			data->bitrate = wfx->nAvgBytesPerSec * 8;
 
 			xmms_xform_auxdata_set_bin (xform,
 			                            "decoder_config",
 			                            wfx->data,
-			                            wfx->datalen);
+			                            wfx->cbSize);
 
 			xmms_xform_auxdata_set_int (xform,
 			                            "bitrate",

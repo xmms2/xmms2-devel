@@ -51,7 +51,7 @@ asf_data_read_packet_data(asf_packet_t *packet, uint8_t flags, asf_stream_t *str
 	datap = data;
 	packet->length = GETVALUE2b((flags >> 5) & 0x03, datap);
 	datap += GETLEN2b((flags >> 5) & 0x03);
-	/* sequence value is not used */
+	/* sequence value should be never used anywhere */
 	GETVALUE2b((flags >> 1) & 0x03, datap);
 	datap += GETLEN2b((flags >> 1) & 0x03);
 	packet->padding_length = GETVALUE2b((flags >> 3) & 0x03, datap);
@@ -104,8 +104,8 @@ asf_data_read_payloads(asf_packet_t *packet,
 		uint8_t pts_delta = 0;
 		int compressed = 0;
 
-		/* FIXME: mark keyframe? */
 		pl.stream_number = data[skip] & 0x7f;
+		pl.key_frame = !!(data[skip] & 0x80);
 		skip++;
 
 		tmp = asf_data_read_payload_data(&pl, flags, data + skip, datalen - skip);
@@ -237,7 +237,7 @@ asf_data_init_packet(asf_packet_t *packet)
 	packet->payloads = NULL;
 	packet->payloads_size = 0;
 
-	packet->datalen = 0;
+	packet->payload_data_len = 0;
 	packet->payload_data = NULL;
 	packet->payload_data_size = 0;
 }
@@ -341,7 +341,7 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 		payload_length_type = 0x02; /* not used */
 	}
 
-	packet->datalen = packet->length - read;
+	packet->payload_data_len = packet->length - read;
 
 	if (packet->payload_count > packet->payloads_size) {
 		tmpptr = realloc(packet->payloads,
@@ -352,9 +352,9 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 		packet->payloads = tmpptr;
 		packet->payloads_size = packet->payload_count;
 	}
-	if (packet->datalen > packet->payload_data_size) {
+	if (packet->payload_data_len > packet->payload_data_size) {
 		tmpptr = realloc(packet->payload_data,
-		                 packet->datalen);
+		                 packet->payload_data_len);
 		if (!tmpptr) {
 			return ASF_ERROR_OUTOFMEM;
 		}
@@ -362,14 +362,14 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 		packet->payload_data_size = packet->payload_count;
 	}
 
-	if ((tmp = asf_byteio_read(packet->payload_data, packet->datalen, stream)) < 0) {
+	if ((tmp = asf_byteio_read(packet->payload_data, packet->payload_data_len, stream)) < 0) {
 		return tmp;
 	}
 
 	tmp = asf_data_read_payloads(packet, file->preroll, packet_flags & 0x01,
 	                             payload_length_type, packet_property,
 	                             packet->payload_data,
-	                             packet->datalen - packet->padding_length);
+	                             packet->payload_data_len - packet->padding_length);
 	if (tmp < 0) {
 		return tmp;
 	}

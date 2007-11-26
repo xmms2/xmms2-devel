@@ -20,6 +20,12 @@
 
 #include "asf.h"
 
+/**
+ * Implement callback functions for basic file I/O operations,
+ * so that users wouldn't need to reimplement them.
+ */
+
+
 int
 asf_fileio_read_cb(FILE *stream, void *buffer, int size)
 {
