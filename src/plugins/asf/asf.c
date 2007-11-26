@@ -211,6 +211,7 @@ xmms_asf_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	if (position < 0) {
 		return -1;
 	}
+	g_string_erase (data->outbuf, 0, data->outbuf->len);
 
 	return position * data->samplerate / 1000;
 }

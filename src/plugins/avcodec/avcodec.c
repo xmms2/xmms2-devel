@@ -282,9 +282,7 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!strcmp (data->codec_id, "alac")) {
-		ret = xmms_xform_seek (xform, samples, whence, err);
-	}
+	ret = xmms_xform_seek (xform, samples, whence, err);
 
 	if (ret >= 0) {
 		avcodec_flush_buffers (data->codecctx);
