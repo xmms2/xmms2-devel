@@ -19,6 +19,7 @@
 
 cmds plist_commands[] = {
 	{ "list", "List all available playlists", cmd_playlists_list },
+	{ "active", "Displays the name of the active playlist", cmd_playlist_active },
 	{ "create", "[playlistname] - Create a playlist", cmd_playlist_create },
 	{ "type", "[playlistname] [type] - Set the type of the playlist (list, queue, pshuffle)", cmd_playlist_type },
 	{ "load", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
@@ -787,6 +788,23 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_list_next (res);
 	}
 	xmmsc_result_unref (res);
+	xmmsc_result_unref (active_res);
+}
+
+void
+cmd_playlist_active (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *active_name;
+	xmmsc_result_t *active_res;
+
+	active_res = xmmsc_playlist_current_active (conn);
+	xmmsc_result_wait (active_res);
+
+	if (!xmmsc_result_iserror (active_res) &&
+	    xmmsc_result_get_string (active_res, &active_name)) {
+		print_info("%s",active_name);
+	}
+
 	xmmsc_result_unref (active_res);
 }
 
