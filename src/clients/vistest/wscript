@@ -7,6 +7,13 @@ def build(bld):
     obj.uselib = 'glib2'
 
     obj = bld.create_obj('cc', 'program')
+    obj.target = 'xmms2-ripper'
+    obj.source = """ripper.c""".split()
+    obj.includes = '. ../../include'
+    obj.uselib_local = 'xmmsclient'
+    obj.uselib = 'vorbisenc'
+
+    obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2-libvisual'
     obj.source = """libvisual.c""".split()
     obj.includes = '. ../../include'
@@ -14,7 +21,7 @@ def build(bld):
     obj.uselib = 'sdl visual'
 def configure(conf):
     return (conf.check_pkg('libvisual-0.4', destvar='visual') and
-	  conf.check_pkg('sdl', destvar='sdl'))
+      conf.check_pkg('sdl', destvar='sdl') and conf.check_pkg('vorbisenc', destvar='vorbisenc'))
 
 def set_options(opt):
     pass
