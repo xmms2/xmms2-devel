@@ -1112,6 +1112,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *err
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
 	if (plcoll == NULL) {
+		g_mutex_unlock (playlist->mutex);
 		return;
 	}
 
