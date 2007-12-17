@@ -260,10 +260,19 @@ def configure(conf):
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
+    if Params.g_options.bindir:
+        conf.env["BINDIR"] = Params.g_options.bindir
+        conf.env["program_INST_VAR"] = "BINDIR"
+        conf.env["program_INST_DIR"] = ""
+    else:
+        conf.env["BINDIR"] = os.path.join(conf.env["PREFIX"], "bin")
+
     if Params.g_options.libdir:
         conf.env["LIBDIR"] = Params.g_options.libdir
-        conf.env["shlib_INST_DIR"] = ""
-        conf.env["shlib_INST_VAR"] = "LIBDIR"
+        conf.env["shlib_INST_VAR"]     = "LIBDIR"
+        conf.env["shlib_INST_DIR"]     = ""
+        conf.env["staticlib_INST_VAR"] = "LIBDIR"
+        conf.env["staticlib_INST_DIR"] = ""
 
     if Params.g_options.config_prefix:
         for dir in Params.g_options.config_prefix:
@@ -366,6 +375,7 @@ def set_options(opt):
                    type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
     opt.add_option('--with-mandir', type='string', dest='manualdir')
+    opt.add_option('--with-bindir', type='string', dest='bindir')
     opt.add_option('--with-libdir', type='string', dest='libdir')
     opt.add_option('--with-target-platform', type='string',
 	               dest='target_platform')

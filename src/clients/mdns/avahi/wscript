@@ -13,7 +13,7 @@ def build(bld):
 
   obj = bld.create_obj('subst')
   obj.source = 'xmms2-mdns-launcher.sh.in'
-  obj.dict = {'PRG_PATH' : os.path.join(env['PREFIX'], 'bin')}
+  obj.dict = {'PRG_PATH' : env['BINDIR']}
   Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh',chmod=0755)
 
   find = bld.create_obj('cc', 'program')

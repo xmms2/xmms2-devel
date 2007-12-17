@@ -13,7 +13,7 @@ def build(bld):
 
     obj = bld.create_obj('subst')
     obj.source = 'xmms2-et-launcher.sh.in'
-    obj.dict = {'PRG_PATH' : os.path.join(env['PREFIX'], 'bin')}
+    obj.dict = {'PRG_PATH' : env['BINDIR']}
     Common.install_files('SCRIPTDIR', None, 'xmms2-et-launcher.sh', chmod=0755)
 
     obj = bld.create_obj('man')
