@@ -39,7 +39,6 @@ def configure(conf):
 
     conf.env['XMMS_DEFS'] = defs
     conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
-    conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
 
     # The plugin path in Windows should be relative, not absolute
     if Params.g_platform == 'win32':

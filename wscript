@@ -274,6 +274,12 @@ def configure(conf):
         conf.env["staticlib_INST_VAR"] = "LIBDIR"
         conf.env["staticlib_INST_DIR"] = ""
 
+    if Params.g_options.pkgconfigdir:
+        conf.env['PKGCONFIGDIR'] = Params.g_options.pkgconfigdir
+        print conf.env['PKGCONFIGDIR']
+    else:
+        conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
+
     if Params.g_options.config_prefix:
         for dir in Params.g_options.config_prefix:
             if not os.path.isabs(dir):
@@ -377,6 +383,7 @@ def set_options(opt):
     opt.add_option('--with-mandir', type='string', dest='manualdir')
     opt.add_option('--with-bindir', type='string', dest='bindir')
     opt.add_option('--with-libdir', type='string', dest='libdir')
+    opt.add_option('--with-pkgconfigdir', type='string', dest='pkgconfigdir')
     opt.add_option('--with-target-platform', type='string',
 	               dest='target_platform')
 

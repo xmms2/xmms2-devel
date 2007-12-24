@@ -43,7 +43,7 @@ class pkgcobj(copyobj):
 
     def install(self):
         for task in self.m_tasks:
-            self.install_results('PKGCONFIGDIR', '', task);
+            self.install_results('PKGCONFIGDIR', '', task)
 
 def setup(env):
     Object.register('pkgc', pkgcobj)
