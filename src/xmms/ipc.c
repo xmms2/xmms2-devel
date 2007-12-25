@@ -58,8 +58,6 @@ struct xmms_ipc_St {
  * A IPC client representation.
  */
 typedef struct xmms_ipc_client_St {
-	GThread *thread;
-
 	GMainLoop *ml;
 	GIOChannel *iochan;
 
@@ -487,7 +485,8 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->ipc = ipc;
 	client->out_msg = g_queue_new ();
 	client->lock = g_mutex_new ();
-	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
+
+	g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
 
 	return client;
 }
