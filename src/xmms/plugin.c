@@ -212,7 +212,7 @@ xmms_plugin_add_builtin_plugins (void)
  * @return Whether the initialisation was successful or not.
  */
 gboolean
-xmms_plugin_init (gchar *path)
+xmms_plugin_init (const gchar *path)
 {
 	if (!path)
 		path = PKGLIBDIR;
