@@ -400,10 +400,12 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		char *errstr;
 		uint32_t len;
 
-		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
-			errstr = strdup ("No errormsg!");
-
-		xmmsc_result_seterror (res, errstr);
+		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len)) {
+			xmmsc_result_seterror (res, "No errormsg!");
+		} else {
+			xmmsc_result_seterror (res, errstr);
+			free (errstr);
+		}
 	}
 
 	xmmsc_result_run (res, msg);
