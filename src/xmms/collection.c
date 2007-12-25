@@ -1435,7 +1435,7 @@ prepend_key_string (gpointer key, gpointer value, gpointer udata)
 {
 	xmms_object_cmd_value_t *val;
 	GList **list = (GList**)udata;
-	val = xmms_object_cmd_value_str_new (g_strdup (key));
+	val = xmms_object_cmd_value_str_new (key);
 	*list = g_list_prepend (*list, val);
 }
 
