@@ -1039,16 +1039,16 @@ coll_parse_prop (xmmsc_coll_token_t *token)
 	}
 
 	switch (token->type) {
-	case XMMS_COLLECTION_TOKEN_PROP_LONG:
-		return strdup (token->string);
-
 	case XMMS_COLLECTION_TOKEN_PROP_SHORT:
+		/* try to find short prop, else fallback to long prop */
 		for (i = 0; xmmsc_coll_prop_short[i].longstr; i++) {
 			if (*token->string == xmmsc_coll_prop_short[i].shortstr) {
 				return strdup (xmmsc_coll_prop_short[i].longstr);
 			}
 		}
-		break;
+
+	case XMMS_COLLECTION_TOKEN_PROP_LONG:
+		return strdup (token->string);
 
 	default:
 		break;
