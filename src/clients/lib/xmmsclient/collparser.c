@@ -175,6 +175,7 @@ xmmsc_coll_parse_custom (const char *pattern,
 		k = parse_f (pattern, &next);
 		if (k == NULL || k->type == XMMS_COLLECTION_TOKEN_INVALID) {
 			/* FIXME: Check for invalid token */
+			break;
 		}
 
 		if (!last)
@@ -221,6 +222,9 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 	char quote;
 
 	while (*str == ' ') str++;
+	if (*str == '\0') {
+		return NULL;
+	}
 	tmp = str;
 
 	TOKEN_MATCH_CHAR ('(', XMMS_COLLECTION_TOKEN_GROUP_OPEN);
