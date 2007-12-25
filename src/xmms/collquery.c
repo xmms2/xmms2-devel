@@ -317,6 +317,7 @@ query_make_alias (coll_query_t *query, const gchar *field, gboolean optional)
 
 		alias = g_new (coll_query_alias_t, 1);
 		alias->optional = optional;
+		alias->id = 0;
 
 		if (strcmp (field, "id") == 0) {
 			alias->type = XMMS_QUERY_ALIAS_ID;
