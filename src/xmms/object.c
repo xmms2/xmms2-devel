@@ -51,14 +51,11 @@ xmms_object_cleanup (xmms_object_t *object)
 	for (i = 0; i < XMMS_IPC_SIGNAL_END; i++) {
 		if (object->signals[i]) {
 			GList *list = object->signals[i];
-			GList *node;
 
-			for (node = list; node; node = g_list_next (node)) {
-				if (node->data)
-					g_free (node->data);
+			while (list) {
+				g_free (list->data);
+				list = g_list_remove_link (list, list);
 			}
-			if (list)
-				g_list_free (list);
 		}
 	}
 
@@ -170,14 +167,14 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 
 	g_mutex_unlock (object->mutex);
 
-	for (node = list2; node; node = g_list_next (node)) {
-		entry = node->data;
+	while (list2) {
+		entry = list2->data;
 
 		if (entry && entry->handler)
 			entry->handler (object, data, entry->userdata);
-	}
-	g_list_free (list2);
 
+		list2 = g_list_remove_link (list2, list2);
+	}
 }
 
 xmms_object_cmd_value_t *
