@@ -743,11 +743,14 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 			*ret = first;
 		}
 		else {
+			xmmsc_coll_unref (first);
 			*ret = operator;
 		}
 	}
 	else {
 		xmmsc_coll_add_operand (operator, first);
+		xmmsc_coll_unref (first);
+
 		tk = coll_parse_andop_append (tk, operator, &tmp);
 		*ret = operator;
 	}
@@ -777,6 +780,7 @@ coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 
 	if (operator) {
 		xmmsc_coll_add_operand (operator, first);
+		xmmsc_coll_unref (first);
 
 		if (tk && tk->type == XMMS_COLLECTION_TOKEN_OPSET_UNION) {
 			tk = coll_parse_orop_append (coll_next_token (tk), operator, ret);
