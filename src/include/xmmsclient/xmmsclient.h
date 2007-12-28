@@ -289,7 +289,6 @@ xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);
 typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
-void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 xmmsc_result_type_t xmmsc_result_get_class (xmmsc_result_t *res);
 void xmmsc_result_disconnect (xmmsc_result_t *res);
 
