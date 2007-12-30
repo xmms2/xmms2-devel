@@ -58,7 +58,11 @@ m_decode_url (VALUE self, VALUE str)
 		return Qnil;
 
 	url = rb_str_new2 (tmp);
-	free (tmp);
+
+	/* We have to free tmp here ourselves because we didn't pass a
+	 * result to xmmsc_result_decode_url() above.
+	 */
+	free ((void *) tmp);
 
 	return url;
 }
