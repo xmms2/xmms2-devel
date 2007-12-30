@@ -486,7 +486,7 @@ cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (io) {
 		gchar *contents = NULL;
 		gsize filesize = 0;
-		gchar *hash;
+		const gchar *hash;
 		gchar **id_arg;
 		error = NULL;
 

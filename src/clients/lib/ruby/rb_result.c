@@ -223,7 +223,7 @@ uint_get (RbResult *res)
 static VALUE
 string_get (RbResult *res)
 {
-	char *s = NULL;
+	const char *s = NULL;
 
 	if (!xmmsc_result_get_string (res->real, &s))
 		rb_raise (eValueError, "cannot retrieve value");

@@ -745,7 +745,7 @@ xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsc_result_get_string (xmmsc_result_t *res, char **r)
+xmmsc_result_get_string (xmmsc_result_t *res, const char **r)
 {
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;

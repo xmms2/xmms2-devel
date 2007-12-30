@@ -179,7 +179,7 @@ handle_config (xmmsc_result_t *res, void *userdata)
 static void
 handle_config_val (xmmsc_result_t *res, void *userdata)
 {
-	char *value;
+	const gchar *value;
 
 	if (!xmmsc_result_get_string (res, &value))
 		return;

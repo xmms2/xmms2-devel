@@ -78,8 +78,9 @@ coll_list (xmmsc_connection_t *conn, const gchar *namespace)
 		print_error ("Couldn't list collections in namespace %s: %s",
 		             namespace, xmmsc_result_get_error (res));
 	} else {
-		gchar *name;
 		while (xmmsc_result_list_valid (res)) {
+			const gchar *name;
+
 			xmmsc_result_get_string (res, &name);
 			print_info ("%s", name);
 			xmmsc_result_list_next (res);
@@ -100,8 +101,9 @@ coll_find (xmmsc_connection_t *conn, const gchar *namespace, guint mid)
 		print_error ("Couldn't find collections containing media %d in namespace %s: %s",
 		             mid, namespace, xmmsc_result_get_error (res));
 	} else {
-		gchar *name;
 		while (xmmsc_result_list_valid (res)) {
+			const gchar *name;
+
 			xmmsc_result_get_string (res, &name);
 			print_info ("%s", name);
 			xmmsc_result_list_next (res);

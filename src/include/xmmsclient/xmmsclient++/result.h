@@ -233,7 +233,7 @@ namespace Xmms
 
 	typedef Adapter< int32_t, int32_t, xmmsc_result_get_int > IntResult;
 	typedef Adapter< uint32_t, uint32_t, xmmsc_result_get_uint > UintResult;
-	typedef Adapter< std::string, char*, xmmsc_result_get_string > StringResult;
+	typedef Adapter< std::string, const char*, xmmsc_result_get_string > StringResult;
 	typedef Adapter< xmms_playback_status_t, uint32_t,
 	                 xmmsc_result_get_uint > StatusResult;
 

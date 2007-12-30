@@ -752,7 +752,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 void
 cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	gchar *active_name;
+	const gchar *active_name;
 	xmmsc_result_t *res, *active_res;
 
 	active_res = xmmsc_playlist_current_active (conn);
@@ -771,7 +771,7 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	while (xmmsc_result_list_valid (res)) {
-		gchar *name;
+		const gchar *name;
 
 		if (!xmmsc_result_get_string (res, &name)) {
 			print_error ("Broken resultset");
@@ -794,7 +794,7 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 void
 cmd_playlist_active (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	gchar *active_name;
+	const gchar *active_name;
 	xmmsc_result_t *active_res;
 
 	active_res = xmmsc_playlist_current_active (conn);

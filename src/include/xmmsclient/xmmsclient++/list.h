@@ -339,7 +339,7 @@ namespace Xmms
 					throw out_of_range( "List out of range or empty list" );
 				}
 
-				char* temp = 0;
+				const char* temp = 0;
 				if( !xmmsc_result_get_string( result_, &temp ) ) {
 					// throw something
 				}
