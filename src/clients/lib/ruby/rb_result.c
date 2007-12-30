@@ -396,7 +396,7 @@ static VALUE
 c_get_error (VALUE self)
 {
 	RbResult *res;
-	char *error;
+	const char *error;
 
 	Data_Get_Struct (self, RbResult, res);
 

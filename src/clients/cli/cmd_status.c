@@ -42,7 +42,7 @@ static gint curr_dur = 0;
 static gchar songname[256];
 static guint curr_status = 0;
 
-static gchar *status_messages[] = {
+static const gchar *status_messages[] = {
 	"Stopped",
 	"Playing",
 	"Paused"

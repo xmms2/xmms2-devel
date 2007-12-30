@@ -67,7 +67,7 @@ cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 
 static void
-coll_list (xmmsc_connection_t *conn, gchar *namespace)
+coll_list (xmmsc_connection_t *conn, const gchar *namespace)
 {
 	xmmsc_result_t *res;
 
@@ -89,7 +89,7 @@ coll_list (xmmsc_connection_t *conn, gchar *namespace)
 }
 
 static void
-coll_find (xmmsc_connection_t *conn, gchar *namespace, guint mid)
+coll_find (xmmsc_connection_t *conn, const gchar *namespace, guint mid)
 {
 	xmmsc_result_t *res;
 

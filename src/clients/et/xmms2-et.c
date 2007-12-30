@@ -38,9 +38,9 @@
 #define DEST_PORT 24944
 
 static time_t start_time;
-static gchar *server_version = "unknown";
+static const gchar *server_version = "unknown";
 static gchar *output_plugin;
-static gchar *system_name = "unknown";
+static const gchar *system_name = "unknown";
 static gint mlib_resolves = 0;
 
 static int send_socket;
@@ -110,8 +110,7 @@ handle_mediainfo_reader (xmmsc_result_t *res, void *userdata)
 static void
 handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	static gchar *props[] = {"chain",
-				 NULL};
+	static const gchar *props[] = {"chain", NULL};
 	static const gchar *pref[] = {"server", NULL};
 	GString *str;
 	const gchar *tstr;

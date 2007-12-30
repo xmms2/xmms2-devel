@@ -55,7 +55,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *playlist, gchar *item)
 }
 
 
-static gchar *
+static const gchar *
 get_playlist_type_string (xmmsc_coll_type_t type)
 {
 	switch (type) {
