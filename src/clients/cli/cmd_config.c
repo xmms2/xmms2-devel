@@ -26,7 +26,8 @@ void
 cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	gchar *key, *value;
+	gchar *key;
+	const gchar *value;
 
 	if (argc < 3) {
 		print_error ("You need to specify at least a configkey");
