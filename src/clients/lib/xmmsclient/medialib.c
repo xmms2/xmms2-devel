@@ -75,7 +75,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 
 	pos = fmt;
 	while (strlen (target) + 1 < len) {
-		char *next_key, *key, *result = NULL, *end;
+		char *next_key, *key, *end;
 		int keylen;
 
 		next_key = strstr (pos, "${");
@@ -125,6 +125,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
+			const char *result = NULL;
 			char tmp[12];
 
 			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);

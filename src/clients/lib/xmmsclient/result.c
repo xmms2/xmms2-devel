@@ -947,7 +947,8 @@ xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t
  *
  */
 int
-xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char **r)
+xmmsc_result_get_dict_entry_string (xmmsc_result_t *res,
+                                    const char *key, const char **r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {

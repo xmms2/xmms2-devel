@@ -114,7 +114,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 				 NULL};
 	static const gchar *pref[] = {"server", NULL};
 	GString *str;
-	gchar *tstr;
+	const gchar *tstr;
 	gint tint, i;
 	guint tuint;
 
@@ -168,7 +168,7 @@ handle_current_id (xmmsc_result_t *res, void *userdata)
 static void
 handle_config (xmmsc_result_t *res, void *userdata)
 {
-	char *value;
+	const gchar *value;
 
 	if (!xmmsc_result_get_dict_entry_string (res, "output.plugin", &value))
 		return;
@@ -192,7 +192,7 @@ handle_config_val (xmmsc_result_t *res, void *userdata)
 static void
 handle_stats (xmmsc_result_t *res, void *userdata)
 {
-	gchar *tstr;
+	const gchar *tstr;
 
 	if (xmmsc_result_get_dict_entry_string (res, "version", &tstr)) {
 		server_version = g_strdup (tstr);

@@ -462,10 +462,9 @@ c_propdict_aref (VALUE self, VALUE key)
 	RbResult *res = NULL;
 	xmmsc_result_value_type_t type;
 	VALUE tmp;
-	const char *ckey;
+	const char *ckey, *vstr;
 	int32_t vint;
 	uint32_t vuint;
-	char *vstr;
 
 	Check_Type (key, T_SYMBOL);
 

@@ -546,14 +546,14 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 				                    "${channel}", info_res);
 			}
 		} else if (!res_has_key (info_res, "title")) {
-			gchar *url, *filename;
+			const gchar *url;
 		  	gchar dur[10];
 			
 			xmmsc_entry_format (dur, sizeof (dur),
 			                    "(${minutes}:${seconds})", info_res);
 			
 			if (xmmsc_result_get_dict_entry_string (info_res, "url", &url)) {
-				filename = g_path_get_basename (url);
+				gchar *filename = g_path_get_basename (url);
 				if (filename) {
 					g_snprintf (line, sizeof (line), "%s %s", filename, dur);
 					g_free (filename);

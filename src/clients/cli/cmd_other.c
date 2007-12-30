@@ -57,7 +57,7 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	while (xmmsc_result_list_valid (res)) {
-		gchar *shortname, *desc;
+		const gchar *shortname, *desc;
 
 		if (xmmsc_result_get_dict_entry_string (res, "shortname", &shortname) &&
 		    xmmsc_result_get_dict_entry_string (res, "description", &desc)) {
@@ -102,7 +102,7 @@ cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	for (;xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		xmmsc_result_value_type_t type;
-		gchar *r;
+		const gchar *r;
 		gint d;
 
 		type = xmmsc_result_get_dict_entry_type (res, "realpath");

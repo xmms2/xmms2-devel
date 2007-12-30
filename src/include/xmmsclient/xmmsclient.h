@@ -323,7 +323,7 @@ typedef void (*xmmsc_propdict_foreach_func) (const void *key, xmmsc_result_value
 typedef void (*xmmsc_dict_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
 
 xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
-int xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char **r);
+int xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, const char **r);
 int xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r);
 int xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_get_dict_entry_collection (xmmsc_result_t *conn, const char *key, xmmsc_coll_t **coll);

@@ -258,10 +258,10 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 		xmmsc_entry_format (songname, sizeof (songname), "${title}", res);
 		has_songname = TRUE;
 	} else if (!res_has_key (res, "title")) {
-		gchar *url, *filename;
+		const gchar *url;
 
 		if (xmmsc_result_get_dict_entry_string (res, "url", &url)) {
-			filename = g_path_get_basename (url);
+			gchar *filename = g_path_get_basename (url);
 
 			if (filename) {
 				g_snprintf (songname, sizeof (songname), "%s", filename);
