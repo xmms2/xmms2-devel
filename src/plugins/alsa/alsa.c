@@ -99,7 +99,9 @@ static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
                                   snd_pcm_format_t alsa_fmt,
                                   xmms_sample_format_t xmms_fmt,
                                   gint channels, gint rate);
-static snd_mixer_elem_t *xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name);
+static snd_mixer_elem_t *xmms_alsa_find_mixer_elem (snd_mixer_t *mixer,
+                                                    gint index,
+                                                    const char *name);
 
 static snd_mixer_selem_channel_id_t lookup_channel (const gchar *name);
 
@@ -143,6 +145,9 @@ xmms_alsa_plugin_setup (xmms_output_plugin_t *plugin)
 
 	xmms_output_plugin_config_property_register (plugin, "mixer_dev", "default",
 	                                             NULL,NULL);
+
+	xmms_output_plugin_config_property_register (plugin, "mixer_index", "0",
+	                                             NULL, NULL);
 
 	return TRUE;
 }
@@ -486,7 +491,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
 	const xmms_config_property_t *cv;
 	const gchar *dev, *name;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
-	gint err;
+	gint index, err;
 
 	cv = xmms_output_config_lookup (output, "mixer_dev");
 	dev = xmms_config_property_get_string (cv);
@@ -530,7 +535,15 @@ xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
 	cv = xmms_output_config_lookup (output, "mixer");
 	name = xmms_config_property_get_string (cv);
 
-	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
+	cv = xmms_output_config_lookup (output, "mixer_index");
+	index = xmms_config_property_get_int (cv);
+
+	if (index < 0) {
+		xmms_log_error ("mixer_index must not be negative; using 0.");
+		index = 0;
+	}
+
+	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, index, name);
 	if (!data->mixer_elem) {
 		xmms_log_error ("Failed to find mixer element");
 		snd_mixer_close (data->mixer);
@@ -819,13 +832,13 @@ xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
 }
 
 static snd_mixer_elem_t *
-xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name)
+xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, gint index, const char *name)
 {
 	snd_mixer_selem_id_t *selem_id = NULL;
 
 	snd_mixer_selem_id_alloca (&selem_id);
 
-	snd_mixer_selem_id_set_index (selem_id, 0);
+	snd_mixer_selem_id_set_index (selem_id, index);
 	snd_mixer_selem_id_set_name (selem_id, name);
 
 	return snd_mixer_find_selem (mixer, selem_id);
