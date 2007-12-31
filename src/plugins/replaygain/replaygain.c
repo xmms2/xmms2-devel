@@ -50,6 +50,17 @@ typedef struct xmms_replaygain_data_St {
 	xmms_replaygain_apply_func_t apply;
 } xmms_replaygain_data_t;
 
+static const xmms_sample_format_t formats[] = {
+	XMMS_SAMPLE_FORMAT_S8,
+	XMMS_SAMPLE_FORMAT_U8,
+	XMMS_SAMPLE_FORMAT_S16,
+	XMMS_SAMPLE_FORMAT_U16,
+	XMMS_SAMPLE_FORMAT_S32,
+	XMMS_SAMPLE_FORMAT_U32,
+	XMMS_SAMPLE_FORMAT_FLOAT,
+	XMMS_SAMPLE_FORMAT_DOUBLE,
+};
+
 static gboolean xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_replaygain_init (xmms_xform_t *xform);
 static void xmms_replaygain_destroy (xmms_xform_t *xform);
@@ -88,6 +99,7 @@ static gboolean
 xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
+	gint i;
 
 	XMMS_XFORM_METHODS_INIT (methods);
 
@@ -98,10 +110,15 @@ xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_xform_plugin_indata_add (xform_plugin,
-	                              XMMS_STREAM_TYPE_MIMETYPE,
-	                              "audio/pcm",
-	                              NULL);
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
+		xmms_xform_plugin_indata_add (xform_plugin,
+		                              XMMS_STREAM_TYPE_MIMETYPE,
+		                              "audio/pcm",
+		                              XMMS_STREAM_TYPE_FMT_FORMAT,
+		                              formats[i],
+		                              XMMS_STREAM_TYPE_END);
+	}
+
 
 	xmms_xform_plugin_config_property_register (xform_plugin,
 	                                            "mode", "track",
@@ -190,7 +207,10 @@ xmms_replaygain_init (xmms_xform_t *xform)
 			data->apply = apply_double;
 			break;
 		default:
-			xmms_log_info ("Unsupported sample format, disabling replay gain");
+			/* we shouldn't ever get here, since we told the daemon
+			 * earlier about this list of supported formats.
+			 */
+			g_assert_not_reached ();
 			break;
 	}
 
@@ -238,7 +258,7 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	read = xmms_xform_read (xform, buf, len, error);
 
-	if (!data->has_replaygain || !data->enabled || !data->apply) {
+	if (!data->has_replaygain || !data->enabled) {
 		return read;
 	}
 
