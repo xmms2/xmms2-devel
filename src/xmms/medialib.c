@@ -720,27 +720,15 @@ static void
 process_file (xmms_medialib_session_t *session,
               gchar *playlist,
               const gchar *path,
-              guint32 *id,
               xmms_error_t *error)
 {
-	guint32 ret = 0;
+	xmms_medialib_entry_t entry;
 
-	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-	                         "select id as value from Media where "
-	                         "key='%s' and value=%Q and source=%d",
-	                         XMMS_MEDIALIB_ENTRY_PROPERTY_URL, path,
-	                         XMMS_MEDIALIB_SOURCE_SERVER_ID);
+	entry = xmms_medialib_entry_new_encoded (session, path, error);
 
-	if (!ret) {
-		*id = *id + 1; /* increment id */
-		xmms_medialib_entry_new_insert (session, *id, path, error);
-		if (playlist != NULL) {
-			xmms_playlist_add_entry (session->medialib->playlist,
-			                         playlist, *id, error);
-		}
-	} else if (playlist != NULL) {
+	if (entry && playlist != NULL) {
 		xmms_playlist_add_entry (session->medialib->playlist,
-		                         playlist, ret, error);
+		                         playlist, entry, error);
 	}
 }
 
@@ -886,7 +874,6 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
                              gchar *path, xmms_error_t *error)
 {
 	xmms_medialib_session_t *session;
-	guint32 id;
 	GList *first, *list = NULL, *n;
 
 	g_return_if_fail (medialib);
@@ -902,11 +889,6 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 
 	XMMS_DBG ("taking the transaction!");
 	session = xmms_medialib_begin_write ();
-	if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
-	                              "select ifnull(MAX (id),0) from Media")) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
-		return;
-	}
 
 	/* We now want to iterate the list in the order in which the nodes
 	 * were added, ie in reverse order. Thankfully we stored a pointer
@@ -914,7 +896,7 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 	 * g_list_last() call now.
 	 */
 	for (n = first->prev; n; n = g_list_previous (n)) {
-		process_file (session, playlist, n->data, &id, error);
+		process_file (session, playlist, n->data, error);
 		g_free (n->data);
 	}
 
