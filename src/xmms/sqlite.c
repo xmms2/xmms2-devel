@@ -245,21 +245,22 @@ xmms_sqlite_set_common_properties (sqlite3 *sql)
 }
 
 gboolean
-xmms_sqlite_create ()
+xmms_sqlite_create (gboolean *create)
 {
 	xmms_config_property_t *cv;
 	gchar *tmp;
-	gboolean create = FALSE;
 	gboolean analyze = FALSE;
 	const gchar *dbpath;
 	gint version = 0;
 	sqlite3 *sql;
 
+	*create = FALSE;
+
 	cv = xmms_config_lookup ("medialib.path");
 	dbpath = xmms_config_property_get_string (cv);
 
 	if (!g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
-		create = TRUE;
+		*create = TRUE;
 	}
 
 	if (sqlite3_open (dbpath, &sql)) {
@@ -269,7 +270,7 @@ xmms_sqlite_create ()
 
 	xmms_sqlite_set_common_properties (sql);
 
-	if (!create) {
+	if (!*create) {
 		sqlite3_exec (sql, "PRAGMA user_version",
 		              xmms_sqlite_version_cb, &version, NULL);
 
@@ -289,7 +290,7 @@ xmms_sqlite_create ()
 			g_free (old);
 
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-			create = TRUE;
+			*create = TRUE;
 		}
 
 		cv = xmms_config_lookup ("medialib.analyze_on_startup");
@@ -301,7 +302,7 @@ xmms_sqlite_create ()
 		}
 	}
 
-	if (create) {
+	if (*create) {
 		/* Check if we are about to put the medialib on a
 		 * remote filesystem. They are known to work less
 		 * well with sqlite and therefore we should refuse

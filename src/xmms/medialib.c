@@ -262,7 +262,6 @@ static xmms_medialib_session_t *
 xmms_medialib_session_new (const char *file, int line)
 {
 	xmms_medialib_session_t *session;
-	gint create;
 
 	session = g_new0 (xmms_medialib_session_t, 1);
 	session->medialib = medialib;
@@ -273,12 +272,6 @@ xmms_medialib_session_new (const char *file, int line)
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
 
-	if (create) {
-		xmms_medialib_entry_t entry;
-		xmms_error_t error;
-		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
-		/* A default playlist containing that song has been created with the mlib */
-	}
 	return session;
 }
 
@@ -296,6 +289,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar *path;
 	xmms_medialib_session_t *session;
+	gboolean create;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->playlist = playlist;
@@ -352,7 +346,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	global_medialib_session = NULL;
 
 	/* init the database */
-	xmms_sqlite_create ();
+	xmms_sqlite_create (&create);
 
 	if (sqlite3_libversion_number () < 3002004) {
 		xmms_log_info ("**************************************************************");
@@ -375,6 +369,19 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	session = xmms_medialib_begin_write ();
 	sqlite3_exec (session->sql, "select id, source from Sources",
 	              add_to_source, medialib->sources, NULL);
+
+	if (create) {
+		xmms_error_t error;
+
+		xmms_medialib_entry_new (session,
+		                         "file://" SHAREDDIR
+		                         "/mind.in.a.box-lament_snipplet.ogg",
+		                         &error);
+		/* A default playlist containing that song has been created
+		 * with the mlib.
+		 */
+	}
+
 	xmms_medialib_end (session);
 
 	return medialib;
