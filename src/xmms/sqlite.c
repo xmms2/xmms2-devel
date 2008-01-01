@@ -532,7 +532,8 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 {
 	gchar *q;
 	va_list ap;
-	gint ret;
+	gint ret, num_cols;
+	xmms_object_cmd_value_t **row;
 	sqlite3_stmt *stm = NULL;
 
 	g_return_val_if_fail (query, FALSE);
@@ -555,30 +556,34 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		return FALSE;
 	}
 
+	num_cols = sqlite3_column_count (stm);
+
+	row = g_new (xmms_object_cmd_value_t *, num_cols + 1);
+	row[num_cols] = NULL;
+
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint i;
-		xmms_object_cmd_value_t **row;
-		gint num = sqlite3_data_count (stm);
 		gboolean b;
 
-		row = g_new0 (xmms_object_cmd_value_t*, num+1);
+		/* I'm a bit paranoid */
+		g_assert (num_cols == sqlite3_data_count(stm));
 
-		for (i = 0; i < num; i++) {
+		for (i = 0; i < num_cols; i++) {
 			row[i] = xmms_sqlite_column_to_val (stm, i);
 		}
 
 		b = method (row, udata);
 
-		for (i = 0; i < num; i++) {
+		for (i = 0; i < num_cols; i++) {
 			xmms_object_cmd_value_free (row[i]);
 		}
-
-		g_free (row);
 
 		if (!b) {
 			break;
 		}
 	}
+
+	g_free (row);
 
 	if (ret == SQLITE_ERROR) {
 		xmms_log_error ("SQLite Error code %d (%s) on query '%s'", ret, sqlite3_errmsg (sql), q);
