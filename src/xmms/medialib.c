@@ -132,9 +132,6 @@ static GMutex *global_medialib_session_mutex;
 static GMutex *xmms_medialib_debug_mutex;
 static GHashTable *xmms_medialib_debug_hash;
 
-#define destroy_array(a) { gint i = 0; while (a[i]) { xmms_object_cmd_value_free (a[i]); i++; }; g_free (a); }
-
-
 static void
 xmms_medialib_destroy (xmms_object_t *object)
 {
@@ -465,8 +462,6 @@ xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	else
 		XMMS_DBG ("Expected int32 but got something else!");
 
-	destroy_array (row);
-
 	return TRUE;
 }
 
@@ -480,8 +475,6 @@ xmms_medialib_string_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	else
 		XMMS_DBG ("Expected string but got something else!");
 
-	destroy_array (row);
-
 	return 0;
 }
 
@@ -491,8 +484,6 @@ xmms_medialib_cmd_value_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	xmms_object_cmd_value_t **ret = udata;
 
 	*ret = xmms_object_cmd_value_copy (row[0]);
-
-	destroy_array (row);
 
 	return 0;
 }
@@ -1066,8 +1057,6 @@ xmms_medialib_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 
 	/* Value */
 	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[2]));
-
-	destroy_array (row);
 
 	return TRUE;
 }

@@ -559,6 +559,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		gint i;
 		xmms_object_cmd_value_t **row;
 		gint num = sqlite3_data_count (stm);
+		gboolean b;
 
 		row = g_new0 (xmms_object_cmd_value_t*, num+1);
 
@@ -566,8 +567,17 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 			row[i] = xmms_sqlite_column_to_val (stm, i);
 		}
 
-		if (!method (row, udata))
+		b = method (row, udata);
+
+		for (i = 0; i < num; i++) {
+			xmms_object_cmd_value_free (row[i]);
+		}
+
+		g_free (row);
+
+		if (!b) {
 			break;
+		}
 	}
 
 	if (ret == SQLITE_ERROR) {
