@@ -746,7 +746,7 @@ process_file (xmms_medialib_session_t *session,
 	}
 }
 
-static gchar *
+static const gchar *
 lookup_string (xmms_object_cmd_value_t *tbl, const gchar *key)
 {
 	xmms_object_cmd_value_t *val;
@@ -762,7 +762,7 @@ lookup_string (xmms_object_cmd_value_t *tbl, const gchar *key)
 	if (val->type != XMMS_OBJECT_CMD_ARG_STRING)
 		return NULL;
 
-	return g_strdup (val->value.string);
+	return val->value.string;
 }
 
 static gint32
@@ -815,11 +815,12 @@ process_dir (const gchar *directory,
 
 	while (list) {
 		xmms_object_cmd_value_t *val = list->data;
+		const gchar *str = lookup_string (val, "path");
 
 		if (lookup_int (val, "isdir") == 1) {
-			process_dir (lookup_string (val, "path"), ret, error);
+			process_dir (str, ret, error);
 		} else {
-			*ret = g_list_prepend (*ret, lookup_string (val, "path"));
+			*ret = g_list_prepend (*ret, g_strdup (str));
 		}
 
 		xmms_object_cmd_value_free (val);
