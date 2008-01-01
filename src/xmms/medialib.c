@@ -804,7 +804,7 @@ process_dir (const gchar *directory,
              GList **ret,
              xmms_error_t *error)
 {
-	GList *list, *n;
+	GList *list;
 
 	list = xmms_xform_browse (NULL, directory, error);
 	if (!list) {
@@ -813,8 +813,8 @@ process_dir (const gchar *directory,
 
 	list = g_list_sort (list, cmp_val);
 
-	for (n = list; n; n = g_list_next (n)) {
-		xmms_object_cmd_value_t *val = n->data;
+	while (list) {
+		xmms_object_cmd_value_t *val = list->data;
 
 		if (lookup_int (val, "isdir") == 1) {
 			process_dir (lookup_string (val, "path"), ret, error);
@@ -823,9 +823,8 @@ process_dir (const gchar *directory,
 		}
 
 		xmms_object_cmd_value_free (val);
+		list = g_list_delete_link (list, list);
 	}
-
-	g_list_free (list);
 
 	return TRUE;
 }
