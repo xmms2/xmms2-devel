@@ -889,10 +889,16 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 {
 	xmms_medialib_session_t *session;
 	guint32 id;
-	GList *list = NULL, *n;
+	GList *first, *list = NULL, *n;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
+
+	/* Allocate our first list node manually here. The following call
+	 * to process_dir() will prepend all other nodes, so afterwards
+	 * "first" will point to the last node of the list... see below.
+	 */
+	first = list = g_list_alloc ();
 
 	process_dir (path, &list, error);
 
@@ -904,9 +910,12 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 		return;
 	}
 
-	list = g_list_reverse (list);
-
-	for (n = list; n; n = g_list_next (n)) {
+	/* We now want to iterate the list in the order in which the nodes
+	 * were added, ie in reverse order. Thankfully we stored a pointer
+	 * to the last node in the list before, which saves us an expensive
+	 * g_list_last() call now.
+	 */
+	for (n = first->prev; n; n = g_list_previous (n)) {
 		process_file (session, playlist, n->data, &id, error);
 		g_free (n->data);
 	}
