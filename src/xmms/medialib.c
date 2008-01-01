@@ -1059,11 +1059,13 @@ xmms_medialib_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	GList **list = (GList**)udata;
 
 	/* Source */
-	*list = g_list_append (*list, xmms_object_cmd_value_copy (row[0]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[0]));
+
 	/* Key */
-	*list = g_list_append (*list, xmms_object_cmd_value_copy (row[1]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[1]));
+
 	/* Value */
-	*list = g_list_append (*list, xmms_object_cmd_value_copy (row[2]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[2]));
 
 	destroy_array (row);
 
@@ -1101,11 +1103,16 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 		return NULL;
 	}
 
-	ret = g_list_append (ret, xmms_object_cmd_value_str_new ("server"));
-	ret = g_list_append (ret, xmms_object_cmd_value_str_new ("id"));
-	ret = g_list_append (ret, xmms_object_cmd_value_int_new (entry));
+	/* Source */
+	ret = g_list_prepend (ret, xmms_object_cmd_value_str_new ("server"));
 
-	return ret;
+	/* Key */
+	ret = g_list_prepend (ret, xmms_object_cmd_value_str_new ("id"));
+
+	/* Value */
+	ret = g_list_prepend (ret, xmms_object_cmd_value_int_new (entry));
+
+	return g_list_reverse (ret);
 }
 
 
