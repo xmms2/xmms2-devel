@@ -73,8 +73,8 @@
 	StringValue (arg1); \
 \
 	res = xmmsc_##name (xmms->real, \
-	                    (unsigned char *) RSTRING (arg1)->ptr, \
-	                    RSTRING (arg1)->len); \
+	                    (unsigned char *) RSTRING_PTR (arg1), \
+	                    RSTRING_LEN (arg1)); \
 	METHOD_HANDLER_FOOTER
 
 static VALUE cPlaylist;

@@ -287,7 +287,7 @@ attrs_inspect_cb (VALUE args, VALUE s)
 	key = RARRAY (args)->ptr[0];
 	value = RARRAY (args)->ptr[1];
 
-	if (RSTRING (s)->len > 1)
+	if (RSTRING_LEN (s) > 1)
 		rb_str_buf_cat2 (s, ", ");
 
 	rb_str_buf_append (s, rb_inspect (key));
