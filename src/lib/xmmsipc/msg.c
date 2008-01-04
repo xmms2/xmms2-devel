@@ -273,12 +273,12 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 	}
 }
 
-static void *
+static uint32_t
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 {
-	unsigned int total;
+	uint32_t total;
 
-	x_return_val_if_fail (msg, NULL);
+	x_return_val_if_fail (msg, -1);
 
 	total = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN + len;
 
@@ -294,13 +294,15 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 		msg->size += realloc_size;
 	}
 
-	memcpy (&msg->data->header.data[xmms_ipc_msg_get_length (msg)], data, len);
-	xmms_ipc_msg_set_length (msg, xmms_ipc_msg_get_length (msg) + len);
+	total = xmms_ipc_msg_get_length (msg);
+	memcpy (&msg->data->header.data[total], data, len);
+	xmms_ipc_msg_set_length (msg, total + len);
 
-	return &msg->data->rawdata[xmms_ipc_msg_get_length (msg) - len];
+	/* return the offset that which we placed this value */
+	return total;
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
                       const unsigned char *data,
                       unsigned int len)
@@ -309,7 +311,7 @@ xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
 	return xmms_ipc_msg_put_data (msg, data, len);
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
 {
 	v = htonl (v);
@@ -317,7 +319,7 @@ xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
 {
 	v = htonl (v);
@@ -325,18 +327,18 @@ xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v)
 {
 	/** @todo do we need to convert ? */
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 {
 	if (!msg) {
-		return NULL;
+		return -1;
 	}
 
 	if (!str) {
@@ -348,11 +350,11 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 {
+	uint32_t ret;
 	int n;
-	void *ret;
 
 	for (n = 0; strings && strings[n] != NULL; n++) { }
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
@@ -364,16 +366,15 @@ xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 	return ret;
 }
 
-void *
+uint32_t
 xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 {
 	int n;
-	uint32_t *idlist;
+	uint32_t ret, *idlist;
 	xmmsc_coll_t *op;
-	void *ret;
 
 	if (!msg || !coll) {
-		return NULL;
+		return -1;
 	}
 
 	/* save internal status */
