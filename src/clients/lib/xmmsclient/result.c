@@ -151,12 +151,17 @@ struct xmmsc_result_St {
 
 /**
  * References the #xmmsc_result_t
+ *
+ * @param result the result to reference.
+ * @return result
  */
-void
+xmmsc_result_t *
 xmmsc_result_ref (xmmsc_result_t *res)
 {
-	x_return_if_fail (res);
+	x_return_val_if_fail (res, NULL);
 	res->ref++;
+
+	return res;
 }
 
 /**

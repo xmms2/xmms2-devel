@@ -45,7 +45,7 @@ typedef void (*xmmsc_user_data_free_func_t) (void *user_data);
 
 xmmsc_connection_t *xmmsc_init (const char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
-void xmmsc_ref (xmmsc_connection_t *c);
+xmmsc_connection_t *xmmsc_ref (xmmsc_connection_t *c);
 void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);
@@ -292,7 +292,7 @@ xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 xmmsc_result_type_t xmmsc_result_get_class (xmmsc_result_t *res);
 void xmmsc_result_disconnect (xmmsc_result_t *res);
 
-void xmmsc_result_ref (xmmsc_result_t *res);
+xmmsc_result_t *xmmsc_result_ref (xmmsc_result_t *res);
 void xmmsc_result_unref (xmmsc_result_t *res);
 
 void xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data);

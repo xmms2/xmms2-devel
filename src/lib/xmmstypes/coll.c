@@ -68,12 +68,16 @@ static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
  * Increases the references for the #xmmsc_coll_t
  *
  * @param coll the collection to reference.
+ * @return coll
  */
-void
+xmmsc_coll_t *
 xmmsc_coll_ref (xmmsc_coll_t *coll)
 {
-	x_return_if_fail (coll);
+	x_return_val_if_fail (coll, NULL);
+
 	coll->ref++;
+
+	return coll;
 }
 
 /**

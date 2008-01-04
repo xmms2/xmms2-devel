@@ -235,14 +235,19 @@ xmmsc_unref (xmmsc_connection_t *c)
 }
 
 /**
- * @internal
+ * References the #xmmsc_connection_t
+ *
+ * @param c the connection to reference.
+ * @return c
  */
-void
+xmmsc_connection_t *
 xmmsc_ref (xmmsc_connection_t *c)
 {
-	x_api_error_if (!c, "with a NULL connection",);
+	x_api_error_if (!c, "with a NULL connection", NULL);
 
 	c->ref++;
+
+	return c;
 }
 
 /**
