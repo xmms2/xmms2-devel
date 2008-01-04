@@ -53,7 +53,6 @@ uint32_t xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
 uint32_t xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[]);
 uint32_t xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll);
 uint32_t xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
-void* xmms_ipc_msg_append (xmms_ipc_msg_t *dmsg, xmms_ipc_msg_t *smsg);
 
 typedef enum {
 	XMMS_IPC_MSG_ARG_TYPE_END,
