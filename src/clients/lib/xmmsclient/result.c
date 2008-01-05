@@ -1500,16 +1500,16 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 			goto err;
 		}
 
-		n = x_list_append (n, key);
-		n = x_list_append (n, val);
+		n = x_list_prepend (n, key);
+		n = x_list_prepend (n, val);
 	}
 
-	return n;
+	return x_list_reverse (n);
 
 err:
 	x_internal_error ("Message from server did not parse correctly!");
 
-	free_dict_list (n);
+	free_dict_list (x_list_reverse (n));
 
 	return NULL;
 }
