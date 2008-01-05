@@ -319,6 +319,15 @@ xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
+void
+xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg,
+                           uint32_t offset, uint32_t v)
+{
+	v = htonl (v);
+
+	memcpy (&msg->data->header.data[offset], &v, sizeof (v));
+}
+
 uint32_t
 xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
 {
