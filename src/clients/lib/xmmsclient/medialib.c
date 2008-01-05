@@ -541,7 +541,7 @@ _xmmsc_medialib_verify_url (const char *url)
 char *
 _xmmsc_medialib_encode_url (const char *url, int narg, const char **args)
 {
-	static char hex[16] = "0123456789abcdef";
+	static const char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0, extra = 0;
 	char *res;
 
