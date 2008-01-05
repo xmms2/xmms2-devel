@@ -26,9 +26,6 @@
 
 #define XMMS_COLLECTION_PARSER_DEFAULT_NAMESPACE "Collections"
 
-/* Properties to match by default. */
-char *coll_autofilter[] = { "artist", "album", "title", NULL };
-
 typedef struct {
 	char shortstr;
 
@@ -957,6 +954,8 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 	xmmsc_coll_type_t colltype;
 	xmmsc_coll_t *coll, *operand;
 	int i;
+	/* Properties to match by default. */
+	const char *coll_autofilter[] = { "artist", "album", "title", NULL };
 
 	if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_EQUALS) {
 		colltype = XMMS_COLLECTION_TYPE_EQUALS;
