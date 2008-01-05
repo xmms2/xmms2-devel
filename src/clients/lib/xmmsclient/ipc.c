@@ -251,7 +251,7 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 		xmmsc_result_t *tmp = n->data;
 
 		if (xmmsc_result_cookie_get (res) == xmmsc_result_cookie_get (tmp)) {
-			ipc->results_list = x_list_remove (ipc->results_list, tmp);
+			ipc->results_list = x_list_delete_link (ipc->results_list, n);
 			break;
 		}
 	}
