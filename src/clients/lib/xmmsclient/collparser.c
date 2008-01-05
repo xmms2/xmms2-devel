@@ -30,19 +30,22 @@
 char *coll_autofilter[] = { "artist", "album", "title", NULL };
 
 typedef struct {
-	char  shortstr;
-	char *longstr;
+	char shortstr;
+
+	/* this has to be large enough to hold all of the longstr's
+	 * below.
+	 */
+	char longstr[8];
 } xmmsc_coll_prop_t;
 
-xmmsc_coll_prop_t
+static const xmmsc_coll_prop_t
 xmmsc_coll_prop_short[] = { { 'a', "artist" },
                             { 'l', "album" },
                             { 't', "title" },
                             { 'n', "tracknr" },
                             { 'y', "year" },
                             { 'g', "genre" },
-                            { 'u', "url" },
-                            { '\0', NULL } };
+                            { 'u', "url" } };
 
 
 #define TOKEN_MATCH_CHAR(symbol, type) if (*tmp == (symbol)) { *newpos = tmp + 1; return coll_token_new (type, NULL); }
@@ -1041,7 +1044,7 @@ coll_parse_prop (xmmsc_coll_token_t *token)
 	switch (token->type) {
 	case XMMS_COLLECTION_TOKEN_PROP_SHORT:
 		/* try to find short prop, else fallback to long prop */
-		for (i = 0; xmmsc_coll_prop_short[i].longstr; i++) {
+		for (i = 0; i < X_N_ELEMENTS (xmmsc_coll_prop_short); i++) {
 			if (*token->string == xmmsc_coll_prop_short[i].shortstr) {
 				return strdup (xmmsc_coll_prop_short[i].longstr);
 			}

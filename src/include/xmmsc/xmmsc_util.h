@@ -33,6 +33,10 @@
 #  define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #endif
 
+#ifndef X_N_ELEMENTS
+#  define X_N_ELEMENTS(a)  (sizeof (a) / sizeof ((a)[0]))
+#endif
+
 #define XMMS_PATH_MAX 255
 
 /* 9667 is XMMS written on a phone */
