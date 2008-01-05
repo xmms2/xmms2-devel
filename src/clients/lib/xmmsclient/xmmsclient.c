@@ -115,24 +115,19 @@ xmmsc_init (const char *clientname)
 		return NULL;
 	}
 
-	xmmsc_ref (c);
-
-	return c;
+	return xmmsc_ref (c);
 }
 
 static xmmsc_result_t *
 xmmsc_send_hello (xmmsc_connection_t *c)
 {
 	xmms_ipc_msg_t *msg;
-	xmmsc_result_t *result;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO);
 	xmms_ipc_msg_put_int32 (msg, XMMS_IPC_PROTOCOL_VERSION);
 	xmms_ipc_msg_put_string (msg, c->clientname);
 
-	result = xmmsc_send_msg (c, msg);
-
-	return result;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**

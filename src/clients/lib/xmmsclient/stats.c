@@ -38,16 +38,14 @@
 xmmsc_result_t *
 xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
 	xmms_ipc_msg_put_uint32 (msg, type);
 
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**

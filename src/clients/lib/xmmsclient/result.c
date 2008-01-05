@@ -1391,8 +1391,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 		return NULL;
 	}
 
-	res->c = c;
-	xmmsc_ref (c);
+	res->c = xmmsc_ref (c);
 
 	res->type = type;
 	res->cookie = cookie;

@@ -50,7 +50,6 @@ xmmsc_result_t*
 xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
                 xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -60,9 +59,7 @@ xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
 	xmms_ipc_msg_put_string (msg, collname);
 	xmms_ipc_msg_put_string (msg, ns);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -73,16 +70,13 @@ xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
 xmmsc_result_t*
 xmmsc_coll_sync (xmmsc_connection_t *conn)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_SYNC);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -94,7 +88,6 @@ xmmsc_coll_sync (xmmsc_connection_t *conn)
 xmmsc_result_t*
 xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -102,9 +95,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_LIST);
 	xmms_ipc_msg_put_string (msg, ns);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -120,7 +111,6 @@ xmmsc_result_t*
 xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                  const char* name, xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -132,9 +122,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_put_string (msg, ns);
 	xmms_ipc_msg_put_collection (msg, coll);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -148,7 +136,6 @@ xmmsc_result_t*
 xmmsc_coll_remove (xmmsc_connection_t *conn,
                    const char* name, xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -158,9 +145,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 	xmms_ipc_msg_put_string (msg, name);
 	xmms_ipc_msg_put_string (msg, ns);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 
@@ -175,7 +160,6 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 xmmsc_result_t*
 xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -184,9 +168,7 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 	xmms_ipc_msg_put_uint32 (msg, mediaid);
 	xmms_ipc_msg_put_string (msg, ns);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -202,7 +184,6 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
                                    const char* to_name,
                                    xmmsc_coll_namespace_t ns)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -214,9 +195,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
 	xmms_ipc_msg_put_string (msg, to_name);
 	xmms_ipc_msg_put_string (msg, ns);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 
@@ -236,7 +215,6 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                       const char **order, unsigned int limit_start,
                       unsigned int limit_len)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -248,9 +226,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_put_uint32 (msg, limit_len);
 	xmms_ipc_msg_put_string_list (msg, order);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
@@ -274,7 +250,6 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                         unsigned int limit_len, const char **fetch,
                         const char **group)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
@@ -290,9 +265,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_put_string_list (msg, fetch);
 	xmms_ipc_msg_put_string_list (msg, group);
 
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
+	return xmmsc_send_msg (conn, msg);
 }
 
 /**
