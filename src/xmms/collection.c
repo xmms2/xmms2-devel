@@ -150,7 +150,7 @@ xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                              NULL, xmms_object_cmd_value_free);
+	                              NULL, xmms_object_cmd_value_unref);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, (gpointer) "type", val);
 	val = xmms_object_cmd_value_str_new (plname);
@@ -340,7 +340,7 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 
 		if (!b) {
 			xmms_log_error ("Playlist plugin did not set realpath; probably a bug in plugin");
-			xmms_object_cmd_value_free (a);
+			xmms_object_cmd_value_unref (a);
 			n = g_list_delete_link (n, n);
 			continue;
 		}
@@ -364,7 +364,7 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 			xmms_log_error ("couldn't add %s to collection!", b->value.string);
 		}
 
-		xmms_object_cmd_value_free (a);
+		xmms_object_cmd_value_unref (a);
 		n = g_list_delete_link (n, n);
 	}
 
@@ -748,7 +748,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)n->data;
 		buf = g_hash_table_lookup (cmdval->value.dict, "id");
 		ids = g_list_prepend (ids, xmms_object_cmd_value_uint_new (buf->value.int32));
-		xmms_object_cmd_value_free (n->data);
+		xmms_object_cmd_value_unref (n->data);
 	}
 
 	g_list_free (res);
@@ -961,7 +961,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsc_coll_t *source)
 	if (res != NULL) {
 		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)res->data;
 		mid = cmdval->value.int32;
-		xmms_object_cmd_value_free (res->data);
+		xmms_object_cmd_value_unref (res->data);
 		g_list_free (res);
 	}
 
@@ -1894,7 +1894,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 
 	/* Transform the list into a HashMap */
 	infos = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                               g_free, xmms_object_cmd_value_free);
+	                               g_free, xmms_object_cmd_value_unref);
 	for (state = 0, n = res; n; state = (state + 1) % 3, n = n->next) {
 		switch (state) {
 		case 0:  /* source */
@@ -1906,7 +1906,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 			break;
 
 		case 2:  /* prop value */
-			value = xmms_object_cmd_value_copy (n->data);
+			value = xmms_object_cmd_value_ref (n->data);
 
 			/* Only insert the first source */
 			if (g_hash_table_lookup (infos, name) == NULL) {
@@ -1915,7 +1915,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 			break;
 		}
 
-		xmms_object_cmd_value_free (n->data);
+		xmms_object_cmd_value_unref (n->data);
 	}
 
 	g_list_free (res);

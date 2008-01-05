@@ -341,7 +341,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	}
 
 	if (arg.retval)
-		xmms_object_cmd_value_free (arg.retval);
+		xmms_object_cmd_value_unref (arg.retval);
 
 err:
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {

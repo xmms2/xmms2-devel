@@ -1325,7 +1325,7 @@ xmms_playlist_sorted_free (gpointer data, gpointer userdata)
 
 	for (n = sorted->val; n; n = n->next) {
 		if (n->data) {
-			xmms_object_cmd_value_free (n->data);
+			xmms_object_cmd_value_unref (n->data);
 		}
 	}
 	g_list_free (sorted->val);
@@ -1614,7 +1614,7 @@ xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
 	dict = g_hash_table_new_full (g_str_hash,
 	                              g_str_equal,
 	                              NULL,
-	                              xmms_object_cmd_value_free);
+	                              xmms_object_cmd_value_unref);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, (gpointer) "type", val);
 	if (id) {

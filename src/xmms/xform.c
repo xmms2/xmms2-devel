@@ -185,7 +185,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 
 	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
-	                                            xmms_object_cmd_value_free);
+	                                            xmms_object_cmd_value_unref);
 
 	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
@@ -378,11 +378,11 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 
 	xform->metadata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free,
-	                                         xmms_object_cmd_value_free);
+	                                         xmms_object_cmd_value_unref);
 
 	xform->privdata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free,
-	                                         xmms_object_cmd_value_free);
+	                                         xmms_object_cmd_value_unref);
 	xform->hotspots = g_queue_new ();
 
 	if (plugin && entry) {
@@ -1024,7 +1024,7 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset,
 		/* flush the hotspot queue on seek */
 		while ((hs = g_queue_pop_head (xform->hotspots)) != NULL) {
 			g_free (hs->key);
-			xmms_object_cmd_value_free (hs->obj);
+			xmms_object_cmd_value_unref (hs->obj);
 			g_free (hs);
 		}
 	}

@@ -62,6 +62,7 @@ typedef struct {
 		GString *bin;
 	} value;
 	xmms_object_cmd_arg_type_t type;
+	gint refcount;
 } xmms_object_cmd_value_t;
 
 xmms_object_cmd_value_t *xmms_object_cmd_value_str_new (const gchar *string);
@@ -73,8 +74,8 @@ xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_propdict_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_coll_new (xmmsc_coll_t *coll);
 xmms_object_cmd_value_t *xmms_object_cmd_value_none_new (void);
-xmms_object_cmd_value_t *xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val);
-void xmms_object_cmd_value_free (gpointer val);
+xmms_object_cmd_value_t *xmms_object_cmd_value_ref (xmms_object_cmd_value_t *val);
+void xmms_object_cmd_value_unref (xmms_object_cmd_value_t *val);
 
 #define XMMS_OBJECT_CMD_MAX_ARGS 6
 typedef struct {

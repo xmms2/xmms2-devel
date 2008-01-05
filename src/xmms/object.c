@@ -184,6 +184,7 @@ xmms_object_cmd_value_bin_new (GString *bin)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.bin = bin;
 	val->type = XMMS_OBJECT_CMD_ARG_BIN;
+	val->refcount = 1;
 	return val;
 
 }
@@ -195,6 +196,7 @@ xmms_object_cmd_value_str_new (const gchar *string)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.string = g_strdup (string);
 	val->type = XMMS_OBJECT_CMD_ARG_STRING;
+	val->refcount = 1;
 	return val;
 }
 
@@ -205,6 +207,7 @@ xmms_object_cmd_value_uint_new (guint32 uint)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.uint32 = uint;
 	val->type = XMMS_OBJECT_CMD_ARG_UINT32;
+	val->refcount = 1;
 	return val;
 }
 
@@ -215,6 +218,7 @@ xmms_object_cmd_value_int_new (gint32 i)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.int32 = i;
 	val->type = XMMS_OBJECT_CMD_ARG_INT32;
+	val->refcount = 1;
 	return val;
 }
 
@@ -225,6 +229,7 @@ xmms_object_cmd_value_dict_new (GHashTable *dict)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.dict = dict;
 	val->type = XMMS_OBJECT_CMD_ARG_DICT;
+	val->refcount = 1;
 	return val;
 }
 
@@ -235,6 +240,7 @@ xmms_object_cmd_value_propdict_new (GList *list)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.list = list;
 	val->type = XMMS_OBJECT_CMD_ARG_PROPDICT;
+	val->refcount = 1;
 	return val;
 }
 
@@ -245,6 +251,7 @@ xmms_object_cmd_value_list_new (GList *list)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.list = list;
 	val->type = XMMS_OBJECT_CMD_ARG_LIST;
+	val->refcount = 1;
 	return val;
 }
 
@@ -255,6 +262,7 @@ xmms_object_cmd_value_coll_new (xmmsc_coll_t *coll)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.coll = coll;
 	val->type = XMMS_OBJECT_CMD_ARG_COLL;
+	val->refcount = 1;
 	return val;
 }
 
@@ -264,51 +272,13 @@ xmms_object_cmd_value_none_new (void)
 	xmms_object_cmd_value_t *val;
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->type = XMMS_OBJECT_CMD_ARG_NONE;
+	val->refcount = 1;
 	return val;
 }
 
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
+static void
+xmms_object_cmd_value_free (xmms_object_cmd_value_t *v)
 {
-	xmms_object_cmd_value_t *ret = NULL;
-
-	g_return_val_if_fail (val, NULL);
-
-	switch (val->type) {
-		case XMMS_OBJECT_CMD_ARG_BIN:
-			ret = xmms_object_cmd_value_bin_new (val->value.bin);
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRING:
-			ret = xmms_object_cmd_value_str_new (val->value.string);
-			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32:
-			ret = xmms_object_cmd_value_uint_new (val->value.uint32);
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32:
-			ret = xmms_object_cmd_value_int_new (val->value.int32);
-			break;
-		case XMMS_OBJECT_CMD_ARG_NONE:
-			ret = xmms_object_cmd_value_none_new ();
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICT:
-		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPDICT:
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
-		case XMMS_OBJECT_CMD_ARG_COLL:
-			/** Unsupported for now */
-			XMMS_DBG ("Unsupported value passed to value_copy()");
-			break;
-	}
-
-	return ret;
-}
-
-void
-xmms_object_cmd_value_free (gpointer val)
-{
-	xmms_object_cmd_value_t *v = val;
-	g_return_if_fail (v);
-
 	switch (v->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			if (v->value.string)
@@ -321,7 +291,7 @@ xmms_object_cmd_value_free (gpointer val)
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			while (v->value.list) {
-				xmms_object_cmd_value_free (v->value.list->data);
+				xmms_object_cmd_value_unref (v->value.list->data);
 				v->value.list = g_list_delete_link (v->value.list,
 				                                    v->value.list);
 			}
@@ -349,6 +319,28 @@ xmms_object_cmd_value_free (gpointer val)
 	}
 
 	g_free (v);
+}
+
+void
+xmms_object_cmd_value_unref (xmms_object_cmd_value_t *val)
+{
+	g_return_if_fail (val);
+
+	val->refcount--;
+
+	if (!val->refcount) {
+		xmms_object_cmd_value_free (val);
+	}
+}
+
+xmms_object_cmd_value_t *
+xmms_object_cmd_value_ref (xmms_object_cmd_value_t *val)
+{
+	g_return_val_if_fail (val, NULL);
+
+	val->refcount++;
+
+	return val;
 }
 
 /**

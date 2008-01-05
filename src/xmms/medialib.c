@@ -483,7 +483,7 @@ xmms_medialib_cmd_value_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	xmms_object_cmd_value_t **ret = udata;
 
-	*ret = xmms_object_cmd_value_copy (row[0]);
+	*ret = xmms_object_cmd_value_ref (row[0]);
 
 	return 0;
 }
@@ -821,7 +821,7 @@ process_dir (const gchar *directory,
 			*ret = g_list_prepend (*ret, g_strdup (str));
 		}
 
-		xmms_object_cmd_value_free (val);
+		xmms_object_cmd_value_unref (val);
 		list = g_list_delete_link (list, list);
 	}
 
@@ -1050,13 +1050,13 @@ xmms_medialib_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	GList **list = (GList**)udata;
 
 	/* Source */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[0]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[0]));
 
 	/* Key */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[1]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[1]));
 
 	/* Value */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_copy (row[2]));
+	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[2]));
 
 	return TRUE;
 }
