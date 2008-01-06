@@ -644,19 +644,21 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 /**
  * Get sources to be used when fetching stuff from a propdict.
  * @param res a #xmmsc_result_t that you got from a command dispatcher.
- * @param preference a list of the current sources from most to least
- * preferrable. This list is owned by the result and will be freed with the
- * result.
+ * @returns The current sources from most to least preferable, as a
+ * NULL-terminated array of immutable strings.
+ * This array is owned by the result and will be freed with it.
  */
-char **
+const char **
 xmmsc_result_source_preference_get (xmmsc_result_t *res)
 {
 	int i = 0;
-	char **preference = NULL;
+	const char **preference = NULL;
 	x_list_t *list;
+
 	x_return_val_if_fail (res, NULL);
 
 	list = res->source_pref;
+
 	preference = malloc (x_list_length (list) * sizeof (char *) + 1);
 	if (!preference) {
 		x_oom ();
@@ -664,14 +666,11 @@ xmmsc_result_source_preference_get (xmmsc_result_t *res)
 	}
 
 	for (i = 0; list; list = list->next) {
-		preference[i] = strdup (list->data);
-		if (!preference[i]) {
-			x_oom ();
-			return NULL;
-		}
-		x_list_append (res->extra_free, preference[i++]);
+		preference[i++] = list->data;
 	}
+
 	preference[i] = NULL;
+
 	x_list_append (res->extra_free, preference);
 
 	return preference;

@@ -574,7 +574,7 @@ void
 xmmsc_result_source_preference_get (res)
 		xmmsc_result_t *res
 	PREINIT:
-		char **preference = NULL, **i = NULL;
+		const char **preference = NULL, **i = NULL;
 	PPCODE:
 		preference = xmmsc_result_source_preference_get (res);
 

@@ -587,7 +587,7 @@ c_source_preference_get (VALUE self)
 {
 	RbResult *res = NULL;
 	VALUE ary = rb_ary_new ();
-	char **preferences = NULL;
+	const char **preferences = NULL;
 	unsigned int i;
 
 	Data_Get_Struct (self, RbResult, res);
