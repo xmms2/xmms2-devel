@@ -190,14 +190,18 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
  * be disconnected.
  */
 void
-xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
+xmmsc_disconnect_callback_set (xmmsc_connection_t *c,
+                               xmmsc_disconnect_func_t callback,
+                               void *userdata)
 {
 	xmmsc_disconnect_callback_set_full (c, callback, userdata, NULL);
 }
 
 void
-xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c, void (*callback) (void*),
-                                    void *userdata, xmmsc_user_data_free_func_t free_func)
+xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c,
+                                    xmmsc_disconnect_func_t callback,
+                                    void *userdata,
+                                    xmmsc_user_data_free_func_t free_func)
 {
 	x_check_conn (c,);
 	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata, free_func);
