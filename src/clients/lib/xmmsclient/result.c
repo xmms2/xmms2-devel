@@ -34,7 +34,7 @@
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
-static int source_match_pattern (char* source, char* pattern);
+static int source_match_pattern (const char *source, const char *pattern);
 
 typedef struct xmmsc_result_value_bin_St {
 	unsigned char *data;
@@ -96,10 +96,17 @@ struct xmmsc_result_St {
 	x_list_t *list;
 	x_list_t *current;
 
+	/* the list of sources from most to least prefered.
+	 * if this is NULL, then default_source_pref will be used instead.
+	 */
 	char **source_pref;
 
 	/* things we want to free when the result is freed*/
 	x_list_t *extra_free;
+};
+
+static const char *default_source_pref[] = {
+	"server", "client/*", "plugin/id3v2", "plugin/*", "*", NULL
 };
 
 /**
@@ -202,7 +209,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 	x_list_free (res->udata_list);
 	x_list_free (res->udata_free_func_list);
 
-	xmms_strlist_destroy (res->source_pref);
+	if (res->source_pref) {
+		xmms_strlist_destroy (res->source_pref);
+	}
 
 	while (res->extra_free) {
 		free (res->extra_free->data);
@@ -626,7 +635,10 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 	x_return_if_fail (res);
 	x_return_if_fail (preference);
 
-	xmms_strlist_destroy (res->source_pref);
+	if (res->source_pref) {
+		xmms_strlist_destroy (res->source_pref);
+	}
+
 	res->source_pref = xmms_strlist_copy ((char **) preference);
 }
 
@@ -642,7 +654,10 @@ xmmsc_result_source_preference_get (xmmsc_result_t *res)
 {
 	x_return_val_if_fail (res, NULL);
 
-	return (const char **) res->source_pref;
+	if (res->source_pref)
+		return (const char **) res->source_pref;
+	else
+		return default_source_pref;
 }
 
 /**
@@ -802,10 +817,13 @@ static xmmsc_result_value_t *
 propdict_lookup (xmmsc_result_t *res, const char *key)
 {
 	x_list_t *n;
-	char **ptr;
+	const char **sources, **ptr;
 
-	for (ptr = res->source_pref; *ptr; ptr++) {
-		char *source = *ptr;
+	sources = res->source_pref ?
+		(const char **) res->source_pref : default_source_pref;
+
+	for (ptr = sources; *ptr; ptr++) {
+		const char *source = *ptr;
 
 		for (n = res->list; n; n = x_list_next (n)) {
 			xmmsc_result_value_t *k = n->data;
@@ -1378,10 +1396,6 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 	res->type = type;
 	res->cookie = cookie;
 
-	res->source_pref = xmms_vargs_to_strlist ("server", "client/*",
-	                                          "plugin/id3v2", "plugin/*",
-	                                          "*", NULL);
-
 	/* user must give this back */
 	xmmsc_result_ref (res);
 
@@ -1512,7 +1526,7 @@ free_dict_list (x_list_t *list)
 }
 
 static int
-source_match_pattern (char* source, char* pattern)
+source_match_pattern (const char *source, const char *pattern)
 {
 	int match = 0;
 	int lpos = strlen (pattern) - 1;
