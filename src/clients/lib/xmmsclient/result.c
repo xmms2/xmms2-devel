@@ -811,53 +811,66 @@ xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen
 	return 1;
 }
 
-
-
 static xmmsc_result_value_t *
-xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
+plaindict_lookup (xmmsc_result_t *res, const char *key)
 {
 	x_list_t *n;
 
-	if (res->datatype == XMMS_OBJECT_CMD_ARG_DICT) {
-		for (n = res->data.dict; n; n = x_list_next (n)) {
-			const char *k = n->data;
-			if (strcasecmp (k, key) == 0 && n->next) {
-				/* found right key, return value */
-				return (xmmsc_result_value_t*) n->next->data;
-			} else {
-				/* skip data part of this entry */
-				n = x_list_next (n);
-			}
+	for (n = res->data.dict; n; n = x_list_next (n)) {
+		const char *k = n->data;
+		if (strcasecmp (k, key) == 0 && n->next) {
+			/* found right key, return value */
+			return (xmmsc_result_value_t*) n->next->data;
+		} else {
+			/* skip data part of this entry */
+			n = x_list_next (n);
 		}
-	} else if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPDICT) {
-		x_list_t *s;
+	}
 
-		for (s = res->source_pref; s; s = x_list_next (s)) {
-			char *source = s->data;
+	return NULL;
+}
 
-			for (n = res->list; n; n = x_list_next (n)) {
-				xmmsc_result_value_t *k = n->data;
+static xmmsc_result_value_t *
+propdict_lookup (xmmsc_result_t *res, const char *key)
+{
+	x_list_t *s, *n;
 
-				if (source_match_pattern (k->value.string, source) &&
-				    n->next && n->next->next) {
+	for (s = res->source_pref; s; s = x_list_next (s)) {
+		char *source = s->data;
 
-					n = x_list_next (n);
-					k = n->data;
+		for (n = res->list; n; n = x_list_next (n)) {
+			xmmsc_result_value_t *k = n->data;
 
-					if (strcasecmp (k->value.string, key) == 0) {
-						return (xmmsc_result_value_t*) n->next->data;
-					} else {
-						n = x_list_next (n);
-					}
+			if (source_match_pattern (k->value.string, source) &&
+			    n->next && n->next->next) {
 
+				n = x_list_next (n);
+				k = n->data;
+
+				if (strcasecmp (k->value.string, key) == 0) {
+					return (xmmsc_result_value_t*) n->next->data;
 				} else {
 					n = x_list_next (n);
-					n = x_list_next (n);
 				}
+
+			} else {
+				n = x_list_next (n);
+				n = x_list_next (n);
 			}
 		}
 	}
 
+	return NULL;
+}
+
+static xmmsc_result_value_t *
+xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
+{
+	if (res->datatype == XMMS_OBJECT_CMD_ARG_DICT) {
+		return plaindict_lookup (res, key);
+	} else if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPDICT) {
+		return propdict_lookup (res, key);
+	}
 
 	return NULL;
 }
