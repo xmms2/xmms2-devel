@@ -255,7 +255,7 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 		                    "[stream] ${title}", res);
 		has_songname = TRUE;
 	} else if (res_has_key (res, "channel")) {
-		xmmsc_entry_format (songname, sizeof (songname), "${title}", res);
+		xmmsc_entry_format (songname, sizeof (songname), "${channel}", res);
 		has_songname = TRUE;
 	} else if (!res_has_key (res, "title")) {
 		const gchar *url;
