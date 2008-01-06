@@ -318,6 +318,11 @@ xmms_cdda_read (xmms_xform_t *xform, void *buffer,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
+	if (cdio_get_media_changed (data->cdio)) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "CD ejected");
+		return -1;
+	}
+
 	if (data->current_lsn >= data->last_lsn) {
 		return 0;
 	}
