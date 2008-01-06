@@ -29,6 +29,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
 #include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_strlist.h"
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
@@ -95,7 +96,7 @@ struct xmmsc_result_St {
 	x_list_t *list;
 	x_list_t *current;
 
-	x_list_t *source_pref;
+	char **source_pref;
 
 	/* things we want to free when the result is freed*/
 	x_list_t *extra_free;
@@ -201,11 +202,7 @@ xmmsc_result_free (xmmsc_result_t *res)
 	x_list_free (res->udata_list);
 	x_list_free (res->udata_free_func_list);
 
-	while (res->source_pref) {
-		free (res->source_pref->data);
-		res->source_pref = x_list_delete_link (res->source_pref,
-		                                       res->source_pref);
-	}
+	xmms_strlist_destroy (res->source_pref);
 
 	while (res->extra_free) {
 		free (res->extra_free->data);
@@ -626,19 +623,11 @@ xmmsc_result_wait (xmmsc_result_t *res)
 void
 xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference)
 {
-	int i = 0;
 	x_return_if_fail (res);
 	x_return_if_fail (preference);
 
-	while (res->source_pref) {
-		free (res->source_pref->data);
-		res->source_pref = x_list_delete_link (res->source_pref,
-		                                       res->source_pref);
-	}
-
-	for (i = 0; preference[i]; i++) {
-		res->source_pref = x_list_append (res->source_pref, strdup (preference[i]));
-	}
+	xmms_strlist_destroy (res->source_pref);
+	res->source_pref = xmms_strlist_copy ((char **) preference);
 }
 
 /**
@@ -651,29 +640,9 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 const char **
 xmmsc_result_source_preference_get (xmmsc_result_t *res)
 {
-	int i = 0;
-	const char **preference = NULL;
-	x_list_t *list;
-
 	x_return_val_if_fail (res, NULL);
 
-	list = res->source_pref;
-
-	preference = malloc (x_list_length (list) * sizeof (char *) + 1);
-	if (!preference) {
-		x_oom ();
-		return NULL;
-	}
-
-	for (i = 0; list; list = list->next) {
-		preference[i++] = list->data;
-	}
-
-	preference[i] = NULL;
-
-	x_list_append (res->extra_free, preference);
-
-	return preference;
+	return (const char **) res->source_pref;
 }
 
 /**
@@ -832,10 +801,11 @@ plaindict_lookup (xmmsc_result_t *res, const char *key)
 static xmmsc_result_value_t *
 propdict_lookup (xmmsc_result_t *res, const char *key)
 {
-	x_list_t *s, *n;
+	x_list_t *n;
+	char **ptr;
 
-	for (s = res->source_pref; s; s = x_list_next (s)) {
-		char *source = s->data;
+	for (ptr = res->source_pref; *ptr; ptr++) {
+		char *source = *ptr;
 
 		for (n = res->list; n; n = x_list_next (n)) {
 			xmmsc_result_value_t *k = n->data;
@@ -1407,11 +1377,10 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 
 	res->type = type;
 	res->cookie = cookie;
-	res->source_pref = x_list_prepend (NULL, strdup ("*"));
-	res->source_pref = x_list_prepend (res->source_pref, strdup ("plugin/*"));
-	res->source_pref = x_list_prepend (res->source_pref, strdup ("plugin/id3v2"));
-	res->source_pref = x_list_prepend (res->source_pref, strdup ("client/*"));
-	res->source_pref = x_list_prepend (res->source_pref, strdup ("server"));
+
+	res->source_pref = xmms_vargs_to_strlist ("server", "client/*",
+	                                          "plugin/id3v2", "plugin/*",
+	                                          "*", NULL);
 
 	/* user must give this back */
 	xmmsc_result_ref (res);
