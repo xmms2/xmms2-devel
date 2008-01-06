@@ -29,7 +29,7 @@
 #endif
 
 INLINE void
-debug_printf(char *fmt, ...)
+debug_printf(const char *fmt, ...)
 {
 #ifdef DEBUG
 	va_list argp;

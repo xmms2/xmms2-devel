@@ -131,7 +131,7 @@ FETCH (sv, key)
 					}
 				case XMMS_OBJECT_CMD_ARG_STRING:
 					{
-						char *val;
+						const char *val;
 						ret = xmmsc_result_get_dict_entry_string (res, key, &val);
 						RETVAL = newSVpv (val, 0);
 						break;

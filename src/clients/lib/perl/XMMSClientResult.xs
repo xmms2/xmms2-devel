@@ -67,7 +67,7 @@ SV *
 perl_xmmsclient_xmmsc_result_get_string (xmmsc_result_t *res)
 {
 	int ret;
-	char *val = NULL;
+	const char *val = NULL;
 
 	ret = xmmsc_result_get_string (res, &val);
 

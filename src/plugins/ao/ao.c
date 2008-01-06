@@ -154,7 +154,7 @@ xmms_ao_new (xmms_output_t *output)
 		ao_device *device;
 
 		data->options = g_malloc (sizeof (ao_option));
-		data->options->key = "dev";
+		data->options->key = (gchar *) "dev";
 		data->options->value = (gchar *) value;
 		data->options->next = NULL;
 
