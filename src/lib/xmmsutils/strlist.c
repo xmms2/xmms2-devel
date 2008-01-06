@@ -129,3 +129,25 @@ xmms_strlist_prepend_copy (char **data, char *newstr) {
 
 	return ret;
 }
+
+/**
+ * Return a deep copy of a list.
+ * @param strlist The original list.
+ * @return A newly allocated list of strings.
+ */
+char **
+xmms_strlist_copy (char **strlist)
+{
+	char **ret;
+	int i;
+
+	ret = malloc ((xmms_strlist_len (strlist) + 1) * sizeof (char *));
+
+	for (i = 0; strlist[i] != NULL; i++) {
+		ret[i] = strdup (strlist[i]);
+	}
+
+	ret[i] = NULL;
+
+	return ret;
+}

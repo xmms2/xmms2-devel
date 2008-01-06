@@ -22,5 +22,6 @@ char **xmms_vargs_to_strlist (const char *first, ...);
 int xmms_strlist_len (char **data);
 void xmms_strlist_destroy (char **data);
 char **xmms_strlist_prepend_copy (char **data, char *newstr);
+char **xmms_strlist_copy (char **strlist);
 
 #endif /* __XMMS_STRLIST_H__ */
