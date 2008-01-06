@@ -17,6 +17,8 @@
 #ifndef __XMMS_STRLIST_H__
 #define __XMMS_STRLIST_H__
 
+#include <stdarg.h>
+
 char **xmms_valist_to_strlist (const char *first, va_list ap);
 char **xmms_vargs_to_strlist (const char *first, ...);
 int xmms_strlist_len (char **data);
