@@ -242,8 +242,7 @@ xmms_main_destroy (xmms_object_t *object)
 
 	xmms_object_unref (xform_obj);
 
-	g_assert (conffile != NULL);
-	xmms_config_save (conffile);
+	xmms_config_save ();
 
 	xmms_config_shutdown ();
 	xmms_plugin_shutdown ();

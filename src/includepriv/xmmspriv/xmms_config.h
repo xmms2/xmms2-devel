@@ -28,7 +28,7 @@
 void xmms_config_init (const gchar *filename);
 void xmms_config_shutdown (void);
 
-gboolean xmms_config_save (const gchar *file);
+gboolean xmms_config_save (void);
 void xmms_config_setvalue (xmms_config_t *conf, const gchar *key, const gchar *value, xmms_error_t *err); 
 
 #endif

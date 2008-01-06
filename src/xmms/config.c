@@ -76,6 +76,7 @@ XMMS_CMD_DEFINE (regvalue, xmms_config_property_client_register, xmms_config_t *
 struct xmms_config_St {
 	xmms_object_t obj;
 
+	const gchar *filename;
 	GHashTable *properties;
 
 	/* Lock on globals are great! */
@@ -193,7 +194,6 @@ void
 xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 {
 	GHashTable *dict;
-	gchar *file;
 
 	g_return_if_fail (prop);
 	g_return_if_fail (data);
@@ -223,9 +223,7 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	/* save the database to disk, so we don't lose any data
 	 * if the daemon crashes
 	 */
-	file = XMMS_BUILD_PATH ("xmms2.conf");
-	xmms_config_save (file);
-	g_free (file);
+	xmms_config_save ();
 }
 
 /**
@@ -685,6 +683,7 @@ xmms_config_init (const gchar *filename)
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
+	config->filename = filename;
 
 	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
@@ -911,20 +910,20 @@ dump_node (GNode *node, FILE *fp)
  * @return TRUE on success.
  */
 gboolean
-xmms_config_save (const gchar *file)
+xmms_config_save (void)
 {
 	GNode *tree = NULL;
 	FILE *fp = NULL;
 
 	g_return_val_if_fail (global_config, FALSE);
-	g_return_val_if_fail (file, FALSE);
 
 	/* don't try to save config while it's being read */
 	if (global_config->is_parsing)
 		return FALSE;
 
-	if (!(fp = fopen (file, "w"))) {
-		xmms_log_error ("Couldn't open %s for writing.", file);
+	if (!(fp = fopen (global_config->filename, "w"))) {
+		xmms_log_error ("Couldn't open %s for writing.",
+		                global_config->filename);
 		return FALSE;
 	}
 
