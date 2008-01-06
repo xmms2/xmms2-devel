@@ -1328,7 +1328,7 @@ outdata_type_metadata_collect (xmms_xform_t *xform)
 	}
 }
 
-xmms_xform_t *
+static xmms_xform_t *
 chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 {
 	xmms_xform_t *xform, *last;
