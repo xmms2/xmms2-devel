@@ -153,9 +153,11 @@ do_scriptdir (const gchar *scriptdir)
 	while ((f = g_dir_read_name (dir))) {
 		argv[0] = g_strdup_printf ("%s/%s", scriptdir, f);
 		if (g_file_test (argv[0], G_FILE_TEST_IS_EXECUTABLE)) {
-			g_spawn_async (g_get_home_dir (),
-			               argv, NULL, 0,
-			               NULL, NULL, NULL, &err);
+			if (!g_spawn_async (g_get_home_dir (),
+			                    argv, NULL, 0, NULL, NULL, NULL, &err)) {
+				xmms_log_error ("Could not run script '%s', error: %s",
+				                argv[0], err->message);
+			}
 		}
 		g_free (argv[0]);
 	}
