@@ -305,7 +305,7 @@ install_scripts (const gchar *into_dir)
 	const gchar *f;
 	gchar *s;
 
-	s = strrchr (into_dir, '/');
+	s = strrchr (into_dir, G_DIR_SEPARATOR);
 	if (!s)
 		return;
 

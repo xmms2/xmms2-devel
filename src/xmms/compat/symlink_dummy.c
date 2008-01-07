@@ -25,5 +25,14 @@
 gboolean
 xmms_symlink_file (gchar *source, gchar *dest)
 {
-	return FALSE;
+	gchar *buf;
+	gsize len;
+	gboolean ret = FALSE;
+
+	if (g_file_get_contents (source, &buf, &len, NULL)) {
+		ret = g_file_set_contents (dest, buf, len, NULL);
+		g_free (buf);
+	}
+
+	return ret;
 }
