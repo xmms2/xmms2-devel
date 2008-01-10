@@ -113,3 +113,8 @@ src/clients/lib/perl/:
 src/clients/lib/perl/ppport.h:
         2004-2007, Marcus Holland-Moritz
         Licensed under the same terms as Perl itself.
+
+src/plugins/gme/gme/*
+        Game_Music_Emu library copyright (C) 2003-2006 Shay Green <gblargg@gmail.com>.
+        SNES SPC DSP emulator based on OpenSPC, copyright (C) 2002 Brad Martin.
+        Sega Genesis YM2612 emulator copyright (C) 2002 Stephane Dallongeville.
