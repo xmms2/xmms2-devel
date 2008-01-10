@@ -54,7 +54,7 @@ xmms_object_cleanup (xmms_object_t *object)
 
 			while (list) {
 				g_free (list->data);
-				list = g_list_remove_link (list, list);
+				list = g_list_delete_link (list, list);
 			}
 		}
 	}
@@ -173,7 +173,7 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 		if (entry && entry->handler)
 			entry->handler (object, data, entry->userdata);
 
-		list2 = g_list_remove_link (list2, list2);
+		list2 = g_list_delete_link (list2, list2);
 	}
 }
 
