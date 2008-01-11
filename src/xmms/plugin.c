@@ -392,7 +392,8 @@ xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 	GHashTable *hash;
 	GList **list = data;
 	
-	hash = g_hash_table_new (g_str_hash, g_str_equal);
+	hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
+	                              xmms_object_cmd_value_unref);
 	g_hash_table_insert (hash, "name",
 	                     xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
 	g_hash_table_insert (hash, "shortname",
