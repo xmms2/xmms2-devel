@@ -22,7 +22,6 @@ def configure(conf):
 
     defs['XMMS_VERSION'] = conf.env['VERSION']
 
-    defs['XMMS_PATH_MAX'] = 255
     l = conf.env['XMMS_OUTPUT_PLUGINS']
     l.sort()
     prio,name = l[-1]
