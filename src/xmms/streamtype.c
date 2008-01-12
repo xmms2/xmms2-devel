@@ -75,13 +75,16 @@ xmms_stream_type_parse (va_list ap)
 
 	for (;;) {
 		xmms_stream_type_val_t *val;
+		xmms_stream_type_key_t key;
+
+		key = va_arg (ap, int);
+		if (key == XMMS_STREAM_TYPE_END)
+			return res;
+
 		val = g_new0 (xmms_stream_type_val_t, 1);
-		val->key = va_arg (ap, int);
+		val->key = key;
 
 		switch (val->key) {
-		case XMMS_STREAM_TYPE_END:
-			g_free (val);
-			return res;
 		case XMMS_STREAM_TYPE_MIMETYPE:
 		case XMMS_STREAM_TYPE_URL:
 			val->type = STRING;
