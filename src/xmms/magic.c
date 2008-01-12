@@ -426,22 +426,6 @@ tree_match (xmms_magic_checker_t *c, GNode *tree)
 	return FALSE;
 }
 
-guint
-tree_bytes_max_needed (xmms_magic_checker_t *c, GNode *tree)
-{
-	GNode *n;
-	guint ret = 0;
-
-	for (n = tree->children; n; n = n->next) {
-		xmms_magic_entry_t *entry = n->data;
-
-		ret = MAX (ret, c->offset + entry->offset + entry->len);
-		ret = MAX (ret, tree_bytes_max_needed (c, n));
-	}
-
-	return ret;
-}
-
 static gchar *
 xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 {
