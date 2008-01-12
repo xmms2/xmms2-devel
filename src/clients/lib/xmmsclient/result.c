@@ -1472,7 +1472,6 @@ static x_list_t *
 xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 {
 	unsigned int entries;
-	unsigned int i;
 	unsigned int len;
 	x_list_t *n = NULL;
 	char *key;
@@ -1481,7 +1480,7 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 		return NULL;
 	}
 
-	for (i = 1; i <= entries; i++) {
+	while (entries--) {
 		xmmsc_result_value_t *val;
 
 		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
