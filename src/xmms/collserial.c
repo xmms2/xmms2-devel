@@ -149,14 +149,16 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 	GList *res;
 	GList *n;
 	xmms_object_cmd_value_t *cmdval;
-	gchar *query;
+	gchar query[256];
 
 	coll = xmmsc_coll_new (type);
 
 	/* Retrieve the attributes */
-	query = g_strdup_printf ("SELECT attr.key AS key, attr.value AS value "
-	                         "FROM CollectionOperators AS op, CollectionAttributes AS attr "
-	                         "WHERE op.id=%d AND attr.collid=op.id", id);
+	g_snprintf (query, sizeof (query),
+	            "SELECT attr.key AS key, attr.value AS value "
+	            "FROM CollectionOperators AS op, CollectionAttributes AS attr "
+	            "WHERE op.id=%d AND attr.collid=op.id", id);
+
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 		const gchar *key, *value;
@@ -169,13 +171,14 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		xmms_object_cmd_value_unref (n->data);
 	}
 	g_list_free (res);
-	g_free (query);
 
 	/* Retrieve the idlist */
-	query = g_strdup_printf ("SELECT idl.mid AS mid "
-	                         "FROM CollectionOperators AS op, CollectionIdlists AS idl "
-	                         "WHERE op.id=%d AND idl.collid=op.id "
-	                         "ORDER BY idl.position", id);
+	g_snprintf (query, sizeof (query),
+	            "SELECT idl.mid AS mid "
+	            "FROM CollectionOperators AS op, CollectionIdlists AS idl "
+	            "WHERE op.id=%d AND idl.collid=op.id "
+	            "ORDER BY idl.position", id);
+
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 
@@ -185,12 +188,13 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		xmms_object_cmd_value_unref (n->data);
 	}
 	g_list_free (res);
-	g_free (query);
 
 	/* Retrieve the operands */
-	query = g_strdup_printf ("SELECT op.id AS id, op.type AS type "
-	                         "FROM CollectionOperators AS op, CollectionConnections AS conn "
-	                         "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
+	g_snprintf (query, sizeof (query),
+	            "SELECT op.id AS id, op.type AS type "
+	            "FROM CollectionOperators AS op, CollectionConnections AS conn "
+	            "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
+
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 		gint id;
@@ -207,7 +211,6 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		xmms_object_cmd_value_unref (n->data);
 	}
 	g_list_free (res);
-	g_free (query);
 
 	return coll;
 }
@@ -223,7 +226,7 @@ static guint
 xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
                                   guint collid, xmmsc_coll_t *coll)
 {
-	gchar *query;
+	gchar query[128];
 	guint *idlist;
 	gint i;
 	xmmsc_coll_t *op;
@@ -231,10 +234,11 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	coll_dbwrite_t dbwrite_infos = { session, collid, 0 };
 
 	/* Write operator */
-	query = g_strdup_printf ("INSERT INTO CollectionOperators VALUES(%d, %d)",
-	                         collid, xmmsc_coll_get_type (coll));
+	g_snprintf (query, sizeof (query),
+	            "INSERT INTO CollectionOperators VALUES(%d, %d)",
+	            collid, xmmsc_coll_get_type (coll));
+
 	xmms_medialib_select (session, query, NULL);
-	g_free (query);
 
 	/* Write attributes */
 	xmmsc_coll_attribute_foreach (coll, dbwrite_coll_attributes, &dbwrite_infos);
@@ -242,10 +246,11 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	/* Write idlist */
 	idlist = xmmsc_coll_get_idlist (coll);
 	for (i = 0; idlist[i] != 0; i++) {
-		query = g_strdup_printf ("INSERT INTO CollectionIdlists VALUES(%d, %d, %d)",
-		                         collid, i, idlist[i]);
+		g_snprintf (query, sizeof (query),
+		            "INSERT INTO CollectionIdlists VALUES(%d, %d, %d)",
+		            collid, i, idlist[i]);
+
 		xmms_medialib_select (session, query, NULL);
-		g_free (query);
 	}
 
 	/* Save operands and connections (don't recurse in ref operand) */
@@ -255,10 +260,10 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 		xmmsc_coll_operand_list_first (coll);
 		while (xmmsc_coll_operand_list_entry (coll, &op)) {
 			nextid = xmms_collection_dbwrite_operator (session, newid, op);
-			query = g_strdup_printf ("INSERT INTO CollectionConnections VALUES(%d, %d)",
-			                         newid, collid);
+			g_snprintf (query, sizeof (query),
+			            "INSERT INTO CollectionConnections VALUES(%d, %d)",
+			            newid, collid);
 			xmms_medialib_select (session, query, NULL);
-			g_free (query);
 			newid = nextid;
 			xmmsc_coll_operand_list_next (coll);
 		}
