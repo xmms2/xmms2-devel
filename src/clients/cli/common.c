@@ -42,7 +42,7 @@ format_url (gchar *item, GFileTest test)
 
 		url = g_strdup_printf ("file://%s", rpath);
 	} else {
-		url = g_strdup_printf ("%s", item);
+		url = g_strdup (item);
 	}
 
 	return x_path2url (url);
