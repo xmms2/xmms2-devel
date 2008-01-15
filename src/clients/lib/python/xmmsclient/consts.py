@@ -23,3 +23,8 @@ from xmmsapi import PLAYLIST_CHANGED_UPDATE
 from xmmsapi import PLUGIN_TYPE_ALL
 from xmmsapi import PLUGIN_TYPE_XFORM
 from xmmsapi import PLUGIN_TYPE_OUTPUT
+
+from xmmsapi import COLLECTION_CHANGED_ADD
+from xmmsapi import COLLECTION_CHANGED_UPDATE
+from xmmsapi import COLLECTION_CHANGED_RENAME
+from xmmsapi import COLLECTION_CHANGED_REMOVE

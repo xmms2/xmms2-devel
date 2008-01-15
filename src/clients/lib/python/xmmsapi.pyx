@@ -83,6 +83,12 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE,
 		XMMS_MEDIALIB_ENTRY_STATUS_REHASH
 
+	ctypedef enum xmmsc_collection_changed_actions_t:
+		XMMS_COLLECTION_CHANGED_ADD,
+		XMMS_COLLECTION_CHANGED_UPDATE,
+		XMMS_COLLECTION_CHANGED_RENAME,
+		XMMS_COLLECTION_CHANGED_REMOVE
+
 cdef extern from "xmms_configuration.h":
 	cdef enum:
 		XMMS_PATH_MAX
@@ -111,6 +117,11 @@ MEDIALIB_ENTRY_STATUS_OK = XMMS_MEDIALIB_ENTRY_STATUS_OK
 MEDIALIB_ENTRY_STATUS_RESOLVING = XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING
 MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE = XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE
 MEDIALIB_ENTRY_STATUS_REHASH = XMMS_MEDIALIB_ENTRY_STATUS_REHASH
+
+COLLECTION_CHANGED_ADD = XMMS_COLLECTION_CHANGED_ADD
+COLLECTION_CHANGED_UPDATE = XMMS_COLLECTION_CHANGED_UPDATE
+COLLECTION_CHANGED_RENAME = XMMS_COLLECTION_CHANGED_RENAME
+COLLECTION_CHANGED_REMOVE = XMMS_COLLECTION_CHANGED_REMOVE
 
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef enum xmmsc_result_value_type_t:
@@ -259,6 +270,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_collection_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
@@ -2065,6 +2077,16 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_changed(self.conn))
+
+	def broadcast_collection_changed(self, cb = None):
+		"""
+		broadcast_collection_changed(cb=None) -> XMMSResult
+
+		Set a method to handle the collection changed broadcast
+		from the XMMS2 daemon.
+		@rtype: L{XMMSResult}
+		"""
+		return self.create_result(cb, xmmsc_broadcast_collection_changed(self.conn))
 
 	def signal_visualisation_data(self, cb = None):
 		"""

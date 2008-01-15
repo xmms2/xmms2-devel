@@ -292,6 +292,10 @@ N: Rainer Wittmaack
 E: ningo@gmx.net
 D: sun audio fixes
 
+N: Sebastian Woetzel
+E: wose@zuendmasse.de
+D: Python bindings improvements
+
 N: Ma Xuan
 E: supermmx@gmail.com
 D: mac plugin.
