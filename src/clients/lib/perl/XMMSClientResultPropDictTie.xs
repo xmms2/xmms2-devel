@@ -11,7 +11,9 @@ perl_xmmsclient_extract_keys_from_propdict (const void *key,
 {
 	HV *keys = (HV *)user_data;
 
-	hv_store (keys, key, strlen (key), &PL_sv_undef, 0);
+	if (!hv_store (keys, key, strlen (key), &PL_sv_undef, 0)) {
+		croak ("Failed to extract propdict keys");
+	}
 }
 
 HV *

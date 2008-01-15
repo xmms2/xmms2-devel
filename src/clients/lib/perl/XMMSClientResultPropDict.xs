@@ -21,10 +21,14 @@ perl_xmmsclient_xmmsc_result_propdict_foreach_cb (const void *key,
 	} else {
 		subhash = newHV ();
 
-		hv_store (hash, source, strlen (source), newRV_inc ((SV *)subhash), 0);
+		if (!hv_store (hash, source, strlen (source), newRV_inc ((SV *)subhash), 0)) {
+			croak ("Failed to convert propdict to hash");
+		}
 	}
 
-	hv_store (subhash, (const char *)key, strlen ((const char *)key), perl_xmmsclient_xmms_result_cast_value (type, value), 0);
+	if (!hv_store (subhash, (const char *)key, strlen ((const char *)key), perl_xmmsclient_xmms_result_cast_value (type, value), 0)) {
+		croak ("Failed to convert propdict to hash");
+	}
 }
 
 MODULE = Audio::XMMSClient::Result::PropDict	PACKAGE = Audio::XMMSClient::Result::PropDict

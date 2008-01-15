@@ -136,7 +136,9 @@ perl_xmmsclient_xmmsc_result_dict_foreach_cb (const void *key, xmmsc_result_valu
 {
 	HV *hash = (HV *)user_data;
 
-	hv_store(hash, (const char *)key, strlen((const char *)key), perl_xmmsclient_xmms_result_cast_value (type, value), 0);
+	if (!hv_store(hash, (const char *)key, strlen((const char *)key), perl_xmmsclient_xmms_result_cast_value (type, value), 0)) {
+		croak ("Failed to convert result to hash");
+	}
 }
 
 SV *
