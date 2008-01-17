@@ -78,3 +78,18 @@ xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash)
 
 	return xmmsc_send_msg (c, msg);
 }
+
+/**
+ * List all bindata hashes stored on the server
+ */
+xmmsc_result_t *
+xmmsc_bindata_list (xmmsc_connection_t *c)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
+	                        XMMS_IPC_CMD_LIST_DATA);
+
+	return xmmsc_send_msg (c, msg);
+}

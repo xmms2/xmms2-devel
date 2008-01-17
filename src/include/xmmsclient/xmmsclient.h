@@ -199,6 +199,7 @@ xmmsc_result_t *xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const c
 xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
 xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash);
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
+xmmsc_result_t *xmmsc_bindata_list (xmmsc_connection_t *c);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
