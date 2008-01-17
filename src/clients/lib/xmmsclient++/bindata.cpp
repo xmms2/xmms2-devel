@@ -55,6 +55,14 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
+	StringListResult Bindata::list() const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_bindata_list, conn_ ) );
+		return StringListResult( res, ml_ );
+	}
+
 	Bindata::Bindata( xmmsc_connection_t*& conn, bool& connected,
 	                  MainloopInterface*& ml ) :
 		conn_( conn ), connected_( connected ), ml_( ml )

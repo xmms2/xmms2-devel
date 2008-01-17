@@ -83,6 +83,17 @@ namespace Xmms
 			 */
 			VoidResult remove( const std::string& hash ) const;
 
+			/** List all bindata hashes stored on the server.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			StringListResult list() const;
+
 		/** @cond */
 		private:
 
