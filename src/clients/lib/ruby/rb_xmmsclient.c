@@ -1113,6 +1113,18 @@ c_bindata_remove (VALUE self, VALUE hash)
 	METHOD_ADD_HANDLER_STR (bindata_remove, hash);
 }
 
+/*
+ * call-seq:
+ *  xc.bindata_list -> result
+ *
+ * List all bindata hashes stored on the server.
+ */
+static VALUE
+c_bindata_list (VALUE self)
+{
+	METHOD_ADD_HANDLER (bindata_list);
+}
+
 /* call-seq:
  * xc.coll_get(name, [ns])
  *
@@ -1533,6 +1545,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "bindata_add", c_bindata_add, 1);
 	rb_define_method (c, "bindata_retrieve", c_bindata_retrieve, 1);
 	rb_define_method (c, "bindata_remove", c_bindata_remove, 1);
+	rb_define_method (c, "bindata_list", c_bindata_list, 0);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PLAY));
