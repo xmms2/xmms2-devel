@@ -262,11 +262,12 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, unsigned int id, char *key)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
-	
+
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
 	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, char *, int len)
 	xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, char *hash)
 	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
+	xmmsc_result_t *xmmsc_bindata_list (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -2269,7 +2270,7 @@ cdef class XMMS:
 		flds = _ListConverter(fields)
 		orderflds = _ListConverter(order)
 		grpby = _ListConverter(groupby)
-		
+
 		c = <Collection> coll
 		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, c.coll, orderflds.lst, start, leng, flds.lst, grpby.lst))
 
@@ -2304,3 +2305,12 @@ cdef class XMMS:
 		"""
 		return self.create_result(cb, xmmsc_bindata_remove(self.conn,hash))
 
+	def bindata_list(self, cb=None):
+		"""
+		bindata_list(cb=None) -> XMMSResult
+
+		List all bindata hashes stored on the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		return self.create_result(cb, xmmsc_bindata_list(self.conn))
