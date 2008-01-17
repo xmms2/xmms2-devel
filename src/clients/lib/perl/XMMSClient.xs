@@ -1221,6 +1221,26 @@ xmmsc_bindata_remove (c, hash)
 		xmmsc_connection_t *c
 		const char *hash
 
+=head2 bindata_list
+
+=over 4
+
+=item Arguments: none
+
+=item Return Value: $result
+
+=back
+
+  my $result = $conn->bindata_list;
+
+List all bindata hashes stored on the server.
+
+=cut
+
+xmmsc_result_t *
+xmmsc_bindata_list (c)
+		xmmsc_connection_t *c
+
 
 ## Other
 
