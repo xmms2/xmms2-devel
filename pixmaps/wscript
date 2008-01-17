@@ -9,6 +9,7 @@ def build(bld):
         obj = bld.create_obj('cc', 'objects')
         obj.target = 'xmms_icon'
         obj.source = 'xmms2.rc'
+        obj.install_var = 0
 
     images = """
     xmms2-16.png
