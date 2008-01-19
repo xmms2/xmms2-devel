@@ -87,7 +87,7 @@ src/plugins/daap/*:
         Licensed under GPL license.
 
 src/plugins/normalize/compress*:
-	Copyright (C) 2002-2003 trikuare studios (http://trikuare.cx)
+        Copyright (C) 2002-2003 trikuare studios (http://trikuare.cx)
 
 src/includepriv/xmmspriv/xmms_list.h:
         Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
