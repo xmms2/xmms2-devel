@@ -128,7 +128,7 @@ L<Audio::XMMSClient>, L<Audio::XMMSClient::Result::PropDict>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2007, Florian Ragwitz
+Copyright (C) 2006-2008, Florian Ragwitz
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself, either Perl version 5.8.8 or, at your option,
