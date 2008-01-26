@@ -25,9 +25,9 @@
 
 #include <glib.h>
 
-/* scons takes care of this too, this is just an extra check */
-#if !GLIB_CHECK_VERSION(2,6,0)
-# error You need atleast glib 2.6.0
+/* WAF checks this too, this is just an extra check */
+#if !GLIB_CHECK_VERSION(2,8,0)
+# error You need atleast glib 2.8.0
 #endif
 
 #include "xmms_configuration.h"

@@ -339,7 +339,7 @@ def configure(conf):
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
-    conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
+    conf.check_pkg2('glib-2.0', version='2.8.0', uselib='glib2')
 
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
