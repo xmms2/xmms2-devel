@@ -365,9 +365,6 @@ main (int argc, char **argv)
 	int loglevel = 1;
 	xmms_playlist_t *playlist;
 	gchar default_path[XMMS_PATH_MAX + 16], *tmp;
-
-	const gchar *vererr;
-
 	gboolean verbose = FALSE;
 	gboolean quiet = FALSE;
 	gboolean version = FALSE;
@@ -398,9 +395,13 @@ main (int argc, char **argv)
 	};
 
 	/** Check that we are running against the correct glib version */
-	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
-	if (vererr) {
-		g_print ("Bad glib version: %s\n", vererr);
+	if (glib_major_version != GLIB_MAJOR_VERSION ||
+	    glib_minor_version < GLIB_MINOR_VERSION) {
+		g_print ("xmms2d is build against version %d.%d,\n"
+		         "but is (runtime) linked against %d.%d.\n"
+		         "Refusing to start.\n",
+		         GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION,
+		         glib_major_version, glib_minor_version);
 		exit (EXIT_FAILURE);
 	}
 
