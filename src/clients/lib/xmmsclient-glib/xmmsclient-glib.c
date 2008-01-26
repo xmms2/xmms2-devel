@@ -52,7 +52,7 @@ xmmsc_glib_write_cb (GIOChannel *iochan, GIOCondition cond, gpointer data)
 }
 
 static void
-xmmsc_mainloop_need_out_cb (int need_out, void *data)
+xmmsc_mainloop_need_out_cb (gboolean need_out, void *data)
 {
 	xmmsc_glib_watch_t *watch = data;
 
@@ -89,8 +89,9 @@ xmmsc_mainloop_gmain_init (xmmsc_connection_t *c)
 	                watch);
 	g_io_channel_unref (watch->iochan);
 
-	if (xmmsc_io_want_out (c))
-		xmmsc_mainloop_need_out_cb (1, watch);
+	if (xmmsc_io_want_out (c)) {
+		xmmsc_mainloop_need_out_cb (TRUE, watch);
+	}
 
 	return watch;
 }
