@@ -150,7 +150,7 @@ xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                              NULL, xmms_object_cmd_value_unref);
+	                              NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, (gpointer) "type", val);
 	val = xmms_object_cmd_value_str_new (plname);
@@ -1894,7 +1894,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 
 	/* Transform the list into a HashMap */
 	infos = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                               g_free, xmms_object_cmd_value_unref);
+	                               g_free, (GDestroyNotify)xmms_object_cmd_value_unref);
 	for (state = 0, n = res; n; state = (state + 1) % 3, n = n->next) {
 		switch (state) {
 		case 0:  /* source */

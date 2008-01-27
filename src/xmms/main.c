@@ -111,7 +111,7 @@ stats (xmms_object_t *object, xmms_error_t *error)
 	gint starttime;
 	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free,
-	                                         xmms_object_cmd_value_unref);
+	                                         (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	starttime = ((xmms_main_t*)object)->starttime;
 

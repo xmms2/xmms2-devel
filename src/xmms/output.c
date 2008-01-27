@@ -1136,7 +1136,7 @@ xmms_volume_map_to_hash (xmms_volume_map_t *vl)
 	gint i;
 
 	ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                             NULL, xmms_object_cmd_value_unref);
+	                             NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
 	if (!ret) {
 		return NULL;
 	}

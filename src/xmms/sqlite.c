@@ -496,7 +496,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		xmms_object_cmd_value_t *val;
 		GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
 		                                         g_free,
-		                                         xmms_object_cmd_value_unref);
+		                                         (GDestroyNotify)xmms_object_cmd_value_unref);
 		gint num = sqlite3_data_count (stm);
 
 		for (i = 0; i < num; i++) {

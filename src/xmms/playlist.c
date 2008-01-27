@@ -1614,7 +1614,7 @@ xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
 	dict = g_hash_table_new_full (g_str_hash,
 	                              g_str_equal,
 	                              NULL,
-	                              xmms_object_cmd_value_unref);
+	                              (GDestroyNotify)xmms_object_cmd_value_unref);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, (gpointer) "type", val);
 	if (id) {

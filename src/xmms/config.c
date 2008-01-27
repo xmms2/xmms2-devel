@@ -209,7 +209,7 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	                  (gpointer) data);
 
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
-	                              xmms_object_cmd_value_unref);
+	                              (GDestroyNotify)xmms_object_cmd_value_unref);
 	g_hash_table_insert (dict, (gchar *) prop->name,
 	                     xmms_object_cmd_value_str_new (prop->value));
 
@@ -604,7 +604,7 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 	GHashTable *ret;
 
 	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
-	                             xmms_object_cmd_value_unref);
+	                             (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	g_mutex_lock (conf->mutex);
 	g_hash_table_foreach (conf->properties,
