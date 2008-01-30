@@ -145,6 +145,9 @@ int main(int argc, char *argv[]) { Py_Initialize(); Py_Finalize(); return 0; }
 		conf.env['LIBPATH_PYEMBED'] = lib.path
 		conf.env.append_value('LIB_PYEMBED', lib.name)
 
+	# according to 
+	# distutils.command.build_ext.build_ext.get_libraries.__doc__
+	# this might want to be OS/2 aswell.
 	if sys.platform == 'win32' or (Py_ENABLE_SHARED is not None
 					and sys.platform != 'darwin'):
 		conf.env['LIBPATH_PYEXT'] = conf.env['LIBPATH_PYEMBED']
@@ -246,8 +249,8 @@ def detect(conf):
 		v['pyext_SUFFIX'] = '.pyd'
 
 	# now a small difference
-	v['pyext_USELIB'] = 'PYTHON PYEXT'
-	v['pyembed_USELIB'] = 'PYTHON PYEMBED'
+	v['pyext_USELIB'] = 'PYEXT'
+	v['pyembed_USELIB'] = 'PYEMBED'
 
 	conf.hook(check_python_version)
 	conf.hook(check_python_headers)
