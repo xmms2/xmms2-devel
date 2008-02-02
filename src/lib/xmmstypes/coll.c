@@ -344,6 +344,10 @@ xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
 
 	x_return_val_if_fail (coll, 0);
 
+	if (index >= coll->idlist_size - 1) {
+		return 0;
+	}
+
 	coll->idlist_size--;
 	for (i = index; i < coll->idlist_size; i++) {
 		coll->idlist[i] = coll->idlist[i + 1];

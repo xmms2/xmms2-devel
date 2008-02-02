@@ -672,20 +672,17 @@ static gboolean
 xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
                                xmmsc_coll_t *plcoll, guint pos, xmms_error_t *err)
 {
-	gint currpos, size;
+	gint currpos;
 	GHashTable *dict;
 
 	g_return_val_if_fail (playlist, FALSE);
 
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
-	size = xmms_playlist_coll_get_size (plcoll);
 
-	if (pos >= size) {
+	if (!xmmsc_coll_idlist_remove (plcoll, pos)) {
 		if (err) xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
 		return FALSE;
 	}
-
-	xmmsc_coll_idlist_remove (plcoll, pos);
 
 	/* decrease currentpos if removed entry was before or if it's
 	 * the current entry, but only if currentpos is a valid entry.
