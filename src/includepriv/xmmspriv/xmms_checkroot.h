@@ -23,7 +23,7 @@
 #include <glib.h>
 
 
-gboolean xmms_checkroot ();
+gboolean xmms_checkroot (void);
 
 #endif
 

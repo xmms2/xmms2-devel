@@ -19,6 +19,6 @@
 
 typedef struct xmms_bindata_St xmms_bindata_t;
 
-xmms_bindata_t *xmms_bindata_init ();
+xmms_bindata_t *xmms_bindata_init (void);
 
 #endif

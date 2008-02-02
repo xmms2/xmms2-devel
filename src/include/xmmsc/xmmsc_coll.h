@@ -66,7 +66,7 @@ int xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key);
 int xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value);
 void xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll, xmmsc_coll_attribute_foreach_func func, void *user_data);
 
-xmmsc_coll_t* xmmsc_coll_universe ();
+xmmsc_coll_t* xmmsc_coll_universe (void);
 
 #ifdef __cplusplus
 }

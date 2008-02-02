@@ -42,11 +42,11 @@ typedef int socklen_t;
 typedef int xmms_socket_t;
 #endif
 
-int xmms_sockets_initialize();
+int xmms_sockets_initialize(void);
 int xmms_socket_set_nonblock(xmms_socket_t socket);
 int xmms_socket_valid(xmms_socket_t socket);
 void xmms_socket_close(xmms_socket_t socket);
-int xmms_socket_errno();
-bool xmms_socket_error_recoverable();
+int xmms_socket_errno(void);
+bool xmms_socket_error_recoverable(void);
 
 #endif
