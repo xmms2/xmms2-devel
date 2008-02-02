@@ -310,7 +310,7 @@ xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int new
 
 	x_return_val_if_fail (coll, 0);
 
-	if ((index >= coll->idlist_size) || (newindex >= coll->idlist_size)) {
+	if ((index >= coll->idlist_size - 1) || (newindex >= coll->idlist_size - 1)) {
 		return 0;
 	}
 
