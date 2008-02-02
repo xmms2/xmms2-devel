@@ -927,6 +927,18 @@ c_playlist_list (VALUE self)
 
 /*
  * call-seq:
+ *  xc.playlist_current_active -> result
+ *
+ * Retrieves the name of the active playlist.
+ */
+static VALUE
+c_playlist_current_active (VALUE self)
+{
+	METHOD_ADD_HANDLER (playlist_current_active);
+}
+
+/*
+ * call-seq:
  *  xc.medialib_path_import(path) -> result
  *
  * Recursively imports all media files under _path_ to the medialib.
@@ -1495,6 +1507,8 @@ Init_Client (VALUE mXmms)
 
 	rb_define_method (c, "playlist", c_playlist, -1);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
+	rb_define_method (c, "playlist_current_active",
+	                  c_playlist_current_active, 0);
 	rb_define_method (c, "playlist_set_next", c_playlist_set_next, 1);
 	rb_define_method (c, "playlist_set_next_rel", c_playlist_set_next_rel, 1);
 

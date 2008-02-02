@@ -398,6 +398,8 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "remove", c_remove, 0);
 	rb_define_method (c, "add_collection", c_add_collection, -1);
 
+	rb_define_const (c, "ACTIVE_NAME", INT2FIX (XMMS_ACTIVE_PLAYLIST));
+
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, ADD);
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, INSERT);
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SHUFFLE);
