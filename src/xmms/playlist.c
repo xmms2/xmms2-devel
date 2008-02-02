@@ -569,16 +569,27 @@ xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 static void
 xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 {
-	xmmsc_coll_t *plcoll;
+	xmmsc_coll_t *plcoll, *active_coll;
 
 	if (strcmp (name, XMMS_ACTIVE_PLAYLIST) == 0) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid playlist to load");
 		return;
 	}
 
+	active_coll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
+	if (active_coll == NULL) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "no active playlist");
+		return;
+	}
+
 	plcoll = xmms_playlist_get_coll (playlist, name, err);
 	if (plcoll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such playlist");
+		return;
+	}
+
+	if (active_coll == plcoll) {
+		XMMS_DBG ("Not loading %s playlist, already active!", name);
 		return;
 	}
 
