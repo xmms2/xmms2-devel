@@ -92,11 +92,14 @@ def check_python_headers(conf):
 	python = conf.env['PYTHON']
 	assert python, ("python is %r !" % (python,))
 
-	v = 'prefix CC SYSLIBS SHLIBS LIBDIR LIBPL INCLUDEPY Py_ENABLE_SHARED'.split()
-	(python_prefix, python_CC, python_SYSLIBS, python_SHLIBS,
+	v = 'prefix SO SYSLIBS SHLIBS LIBDIR LIBPL INCLUDEPY Py_ENABLE_SHARED'.split()
+	(python_prefix, python_SO, python_SYSLIBS, python_SHLIBS,
 	 python_LIBDIR, python_LIBPL, INCLUDEPY, Py_ENABLE_SHARED) = \
 		_get_python_variables(python, ["get_config_var('%s')" % x for x in v], ['from distutils.sysconfig import get_config_var'])
 	python_includes = [INCLUDEPY]
+
+	conf.env['pyext_PREFIX'] = ''
+	conf.env['pyext_SUFFIX'] = python_SO
 
 	## Check for python libraries for embedding
 	if python_SYSLIBS is not None:
@@ -242,11 +245,6 @@ def detect(conf):
 
 	v['pyembed_INST_VAR'] = v['program_INST_VAR']
 	v['pyembed_INST_DIR'] = v['program_INST_DIR']
-
-	v['pyext_PREFIX'] = ''
-
-	if sys.platform == 'win32':
-		v['pyext_SUFFIX'] = '.pyd'
 
 	# now a small difference
 	v['pyext_USELIB'] = 'PYEXT'
