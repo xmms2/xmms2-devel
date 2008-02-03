@@ -145,6 +145,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef struct xmmsc_coll_t
 	ctypedef void (*xmmsc_result_notifier_t)(xmmsc_result_t *res, void *user_data)
 	ctypedef void (*xmmsc_user_data_free_func_t) (void *user_data)
+	ctypedef void (*xmmsc_io_need_out_callback_func_t) (int, void*)
+	ctypedef void (*xmmsc_disconnect_func_t) (void *user_data)
+
 
 	xmmsc_result_t *xmmsc_result_restart(xmmsc_result_t *res)
 	void xmmsc_result_ref(xmmsc_result_t *res)
@@ -176,7 +179,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_result_list_valid(xmmsc_result_t *res)
 
 	xmmsc_connection_t *xmmsc_init(char *clientname)
-	void xmmsc_disconnect_callback_set(xmmsc_connection_t *c, object(*callback)(object), object userdata)
+	void xmmsc_disconnect_callback_set(xmmsc_connection_t *c, xmmsc_disconnect_func_t callback, void *userdata)
+	void xmmsc_disconnect_callback_set_full(xmmsc_connection_t *c, xmmsc_disconnect_func_t disconnect_func, void *userdata, xmmsc_user_data_free_func_t free_func)
 	int xmmsc_connect(xmmsc_connection_t *c, char *p)
 	void xmmsc_unref(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
@@ -264,7 +268,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
-	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, char *, int len)
+	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, unsigned char *, int len)
 	xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, char *hash)
 	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
 	xmmsc_result_t *xmmsc_bindata_list (xmmsc_connection_t *c)
@@ -278,7 +282,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	char *xmmsc_userconfdir_get (char *buf, int len)
 
-	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, object(*callback)(int, object), object userdata)
+	void xmmsc_io_need_out_callback_set_full(xmmsc_connection_t *c, xmmsc_io_need_out_callback_func_t callback, void *userdata, xmmsc_user_data_free_func_t free_func)
 	void xmmsc_io_disconnect(xmmsc_connection_t *c)
 	int xmmsc_io_want_out(xmmsc_connection_t *c)
 	int xmmsc_io_out_handle(xmmsc_connection_t *c)
@@ -409,7 +413,7 @@ cdef void ResultNotifier(xmmsc_result_t *res, void *o):
 	obj = <object> o
 	obj._cb()
 
-cdef void ResultFreeer(void *o):
+cdef void ObjectFreeer(void *o):
 	cdef object obj
 	obj = <object> o
 	Py_DECREF(obj)
@@ -847,7 +851,7 @@ cdef class XMMSResult:
 	def more_init(self):
 		if self.callback:
 			Py_INCREF(self)
-			xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ResultFreeer)
+			xmmsc_result_notifier_set_full(self.res, ResultNotifier, <void *>self, ObjectFreeer)
 			xmmsc_result_unref(self.res)
 
 	def _cb(self):
@@ -1057,11 +1061,15 @@ cdef class XMMSResult:
 		"""
 		self._unref()
 
-cdef python_need_out_fun(int i, obj):
-	obj._needout_cb(i)
+cdef void python_need_out_fun(int i, void *obj):
+	cdef object o
+	o = <object> obj
+	o._needout_cb(i)
 
-cdef python_disconnect_fun(obj):
-	obj._disconnect_cb()
+cdef void python_disconnect_fun(void *obj):
+	cdef object o
+	o = <object> obj
+	o._disconnect_cb()
 
 def userconfdir_get():
 	"""
@@ -1188,7 +1196,8 @@ cdef class XMMS:
 		"""
 		set_need_out_fun(fun)
 		"""
-		xmmsc_io_need_out_callback_set(self.conn, python_need_out_fun, self)
+		Py_INCREF(self)
+		xmmsc_io_need_out_callback_set_full(self.conn, python_need_out_fun, <void *>self, ObjectFreeer)
 		self.needout_fun = fun
 		
 	def get_fd(self):
@@ -1235,7 +1244,8 @@ cdef class XMMS:
 			raise IOError("Couldn't connect to server!")
 
 		self.disconnect_fun = disconnect_func
-		xmmsc_disconnect_callback_set(self.conn, python_disconnect_fun, self)
+		Py_INCREF(self)
+		xmmsc_disconnect_callback_set_full(self.conn, python_disconnect_fun, <void *>self, ObjectFreeer)
 
 
 	def quit(self, cb = None):
@@ -2283,7 +2293,9 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_bindata_add(self.conn,data,len(data)))
+		cdef char *t
+		t = data
+		return self.create_result(cb, xmmsc_bindata_add(self.conn,<unsigned char *>t,len(data)))
 
 	def bindata_retrieve(self, hash, cb=None):
 		"""
