@@ -3,7 +3,7 @@ import Params
 import Common
 
 def build(bld):
-    obj = bld.create_obj('cc', 'shlib', 'pyext')
+    obj = bld.create_obj('cc', 'plugin', 'pyext')
     obj.target = 'xmmsapi'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = ['xmmsapi.pyx']
