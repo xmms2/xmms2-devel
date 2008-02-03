@@ -43,6 +43,7 @@ typedef enum {
 
 typedef void (*xmmsc_disconnect_func_t) (void *user_data);
 typedef void (*xmmsc_user_data_free_func_t) (void *user_data);
+typedef void (*xmmsc_io_need_out_callback_func_t) (int, void*);
 
 xmmsc_connection_t *xmmsc_init (const char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
@@ -52,8 +53,8 @@ void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, xmmsc_disconnect_func_t disconnect_func, void *userdata);
 void xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c, xmmsc_disconnect_func_t disconnect_func, void *userdata, xmmsc_user_data_free_func_t free_func);
 
-void xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata);
-void xmmsc_io_need_out_callback_set_full (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata, xmmsc_user_data_free_func_t free_func);
+void xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, xmmsc_io_need_out_callback_func_t callback, void *userdata);
+void xmmsc_io_need_out_callback_set_full (xmmsc_connection_t *c, xmmsc_io_need_out_callback_func_t callback, void *userdata, xmmsc_user_data_free_func_t free_func);
 void xmmsc_io_disconnect (xmmsc_connection_t *c);
 int xmmsc_io_want_out (xmmsc_connection_t *c);
 int xmmsc_io_out_handle (xmmsc_connection_t *c);
