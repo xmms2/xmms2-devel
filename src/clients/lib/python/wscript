@@ -5,7 +5,7 @@ import Common
 def build(bld):
     obj = bld.create_obj('cc', 'plugin', 'pyext')
     obj.target = 'xmmsapi'
-    obj.includes = '../../../include ../../../includepriv'
+    obj.includes = '../../../include ../../../includepriv .'
     obj.source = ['xmmsapi.pyx']
     obj.uselib_local = 'xmmsclient'
     obj.install_var = "xmmsclient_PYTHONDIR"

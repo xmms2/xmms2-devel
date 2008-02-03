@@ -17,6 +17,14 @@ cdef extern from "string.h":
 	int strcmp(char *s1, char *s2)
 	char *strdup(char *str)
 
+cdef extern from "xmms_pyrex_hacks.h":
+	# pyrex doesn't know about const, so we do some tricks to get
+	# rid of compiler warnings
+	ctypedef struct xmms_pyrex_constcharp_t:
+		pass
+	ctypedef struct xmms_pyrex_constcharpp_t:
+		pass
+
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmms_object_cmd_arg_type_t:
 		XMMS_OBJECT_CMD_ARG_NONE,
@@ -161,7 +169,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	int xmmsc_result_get_int(xmmsc_result_t *res, int *r)
 	int xmmsc_result_get_uint(xmmsc_result_t *res, unsigned int *r)
-	int xmmsc_result_get_string(xmmsc_result_t *res, char **r)
+	int xmmsc_result_get_string(xmmsc_result_t *res, xmms_pyrex_constcharpp_t r)
 	int xmmsc_result_get_bin(xmmsc_result_t *res, unsigned char **r, unsigned int *rlen)
 	int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 	int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll)
@@ -196,12 +204,12 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_add_url(xmmsc_connection_t *, char *playlist, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, char *playlist, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_add_encoded(xmmsc_connection_t *, char *, char *)
-	xmmsc_result_t *xmmsc_playlist_add_collection(xmmsc_connection_t *, char *playlist, xmmsc_coll_t *coll, char **order)
+	xmmsc_result_t *xmmsc_playlist_add_collection(xmmsc_connection_t *, char *playlist, xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t order)
 	xmmsc_result_t *xmmsc_playlist_remove_entry(xmmsc_connection_t *, char *playlist, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_list_entries(xmmsc_connection_t *, char *playlist)
-	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *, char *playlist, char **properties)
+	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *, char *playlist, xmms_pyrex_constcharpp_t properties)
 	xmmsc_result_t *xmmsc_playlist_set_next(xmmsc_connection_t *, int pos)
 	xmmsc_result_t *xmmsc_playlist_set_next_rel(xmmsc_connection_t *, int)
 	xmmsc_result_t *xmmsc_playlist_move_entry(xmmsc_connection_t *, char *playlist, unsigned int id, int movement)
@@ -211,7 +219,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_insert_url(xmmsc_connection_t *, char *playlist, int pos, char *)
 	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, char *playlist, int pos, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_insert_encoded(xmmsc_connection_t *, char *, int pos, char *)
-	xmmsc_result_t *xmmsc_playlist_insert_collection(xmmsc_connection_t *, char *playlist, int pos, xmmsc_coll_t *coll, char **order)
+	xmmsc_result_t *xmmsc_playlist_insert_collection(xmmsc_connection_t *, char *playlist, int pos, xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t order)
 	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *, char *path)
 	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
 
@@ -303,8 +311,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name, char* to_name, xmmsc_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, char *path)
 
-	xmmsc_result_t *xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char **order, unsigned int limit_start, unsigned int limit_len)
-	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char **order, unsigned int limit_start, unsigned int limit_len, char **fetch, char **group)
+	xmmsc_result_t *xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t order, unsigned int limit_start, unsigned int limit_len)
+	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t order, unsigned int limit_start, unsigned int limit_len,  xmms_pyrex_constcharpp_t fetch, xmms_pyrex_constcharpp_t group)
 
 
 	xmmsc_coll_t *xmmsc_coll_new (xmmsc_coll_type_t)
@@ -339,7 +347,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_coll_attribute_get (xmmsc_coll_t *coll, char *key, char **value)
 	void xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
 	int xmmsc_coll_attribute_list_valid (xmmsc_coll_t *coll)
-	void xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, char **k, char **v)
+	void xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t k, xmms_pyrex_constcharpp_t v)
 	void xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
 
 
@@ -589,7 +597,7 @@ cdef class CollectionAttributes:
 		dct = {}
 		xmmsc_coll_attribute_list_first(self.coll)
 		while xmmsc_coll_attribute_list_valid(self.coll):
-			xmmsc_coll_attribute_list_entry(self.coll, &x, &y)
+			xmmsc_coll_attribute_list_entry(self.coll, <xmms_pyrex_constcharpp_t>&x, <xmms_pyrex_constcharpp_t>&y)
 			dct[x] = y
 			xmmsc_coll_attribute_list_next(self.coll)
 		return dct
@@ -964,7 +972,7 @@ cdef class XMMSResult:
 		cdef char *ret
 
 		self._check()
-		if xmmsc_result_get_string(self.res, &ret):
+		if xmmsc_result_get_string(self.res, <xmms_pyrex_constcharpp_t>&ret):
 			return to_unicode(ret)
 		else:
 			raise ValueError("Failed to retrieve value!")
@@ -1602,9 +1610,9 @@ cdef class XMMS:
 
 		if playlist is not None:
 			pl = from_unicode(playlist)
-			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, pl, pos, c.coll, orderflds.lst))
+			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, pl, pos, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst))
 		else:
-			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, NULL, pos, c.coll, orderflds.lst))
+			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, NULL, pos, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst))
 
 	def playlist_radd(self, url, playlist = None, cb = None):
 		"""
@@ -1714,9 +1722,9 @@ cdef class XMMS:
 
 		if playlist is not None:
 			pl = from_unicode(playlist)
-			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, pl, c.coll, orderflds.lst))
+			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, pl, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst))
 		else:
-			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, NULL, c.coll, orderflds.lst))
+			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, NULL, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst))
 
 
 
@@ -1778,9 +1786,9 @@ cdef class XMMS:
 	
 		if playlist is not None:
 			pl = from_unicode(playlist)
-			return self.create_result(cb, xmmsc_playlist_sort(self.conn, pl, prl.lst))
+			return self.create_result(cb, xmmsc_playlist_sort(self.conn, pl, <xmms_pyrex_constcharpp_t>prl.lst))
 		else:
-			return self.create_result(cb, xmmsc_playlist_sort(self.conn, NULL, prl.lst))
+			return self.create_result(cb, xmmsc_playlist_sort(self.conn, NULL, <xmms_pyrex_constcharpp_t>prl.lst))
 
 	def playlist_set_next_rel(self, position, cb = None):
 		"""
@@ -2256,7 +2264,7 @@ cdef class XMMS:
 		orderflds = _ListConverter(order)
 
 		c = <Collection> coll
-		return self.create_result(cb, xmmsc_coll_query_ids(self.conn, c.coll, orderflds.lst, start, leng))
+		return self.create_result(cb, xmmsc_coll_query_ids(self.conn, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst, start, leng))
 
 	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
@@ -2282,7 +2290,7 @@ cdef class XMMS:
 		grpby = _ListConverter(groupby)
 
 		c = <Collection> coll
-		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, c.coll, orderflds.lst, start, leng, flds.lst, grpby.lst))
+		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, c.coll, <xmms_pyrex_constcharpp_t>orderflds.lst, start, leng, <xmms_pyrex_constcharpp_t>flds.lst, <xmms_pyrex_constcharpp_t>grpby.lst))
 
 
 	def bindata_add(self, data, cb=None):
