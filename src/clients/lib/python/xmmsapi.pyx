@@ -678,17 +678,10 @@ class BaseCollection(Collection):
 		idl.coll = self.coll
 
 class Reference(BaseCollection):
-	def __init__(Collection self, ref):
+	def __init__(Collection self, ref, ns="Collections"):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE)
-		a = ref.split(":", 1)
-		a0 = a[0]
-		if len(a) == 2:
-			a1 = a[1]
-			xmmsc_coll_attribute_set (self.coll, "namespace", a0);
-			xmmsc_coll_attribute_set (self.coll, "reference", a1);
-		else:
-			xmmsc_coll_attribute_set (self.coll, "namespace", "Collections");
-			xmmsc_coll_attribute_set (self.coll, "reference", a0);
+		xmmsc_coll_attribute_set (self.coll, "namespace", ns);
+		xmmsc_coll_attribute_set (self.coll, "reference", ref);
 
 class Universe(Reference):
 	def __init__(self):
