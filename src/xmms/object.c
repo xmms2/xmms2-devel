@@ -411,13 +411,19 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	xmms_object_emit (object, signalid, &arg);
 
 	/*
-	 * Let's not use value_free since that will free whatever
-	 * is in the struct also. This should be owned by the
-	 * parent
+	 * We're only calling xmms_object_cmd_value_unref() here for
+	 * retvals that either hold no payload at all (_ARG_NONE) or that
+	 * have their own copy/reference in the payload (_ARG_STRING and
+	 * maybe more later).
 	 */
-	if (type != XMMS_OBJECT_CMD_ARG_NONE)
-		g_free (arg.retval);
-
+	switch (type) {
+		case XMMS_OBJECT_CMD_ARG_STRING:
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			xmms_object_cmd_value_unref (arg.retval);
+			break;
+		default:
+			g_free (arg.retval);
+	}
 }
 
 
