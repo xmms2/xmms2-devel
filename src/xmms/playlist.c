@@ -78,6 +78,7 @@ XMMS_CMD_DEFINE  (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, STRING,
 XMMS_CMD_DEFINE3 (move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
 XMMS_CMD_DEFINE  (add_url, xmms_playlist_add_url, xmms_playlist_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE  (add_id, xmms_playlist_add_id, xmms_playlist_t *, NONE, STRING, UINT32);
+XMMS_CMD_DEFINE  (add_idlist, xmms_playlist_add_idlist, xmms_playlist_t *, NONE, STRING, COLL);
 XMMS_CMD_DEFINE3 (add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE, STRING, COLL, STRINGLIST);
 XMMS_CMD_DEFINE  (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE  (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, STRINGLIST);
@@ -344,6 +345,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_ADD_ID,
 	                     XMMS_CMD_FUNC (add_id));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_ADD_IDLIST,
+	                     XMMS_CMD_FUNC (add_idlist));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_ADD_COLL,
@@ -1037,6 +1042,28 @@ xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname,
 	}
 
 	xmms_playlist_add_entry (playlist, plname, file, err);
+
+	return TRUE;
+}
+
+gboolean
+xmms_playlist_add_idlist (xmms_playlist_t *playlist, gchar *plname,
+                          xmmsc_coll_t *coll,
+                          xmms_error_t *err)
+{
+	uint32_t *idlist;
+
+	for (idlist = xmmsc_coll_get_idlist(coll); *idlist; idlist++) {
+		if (!xmms_medialib_check_id (*idlist)) {
+			xmms_error_set (err, XMMS_ERROR_NOENT,
+			                "Idlist contains invalid medialib id!");
+			return FALSE;
+		}
+	}
+
+	for (idlist = xmmsc_coll_get_idlist(coll); *idlist; idlist++) {
+		xmms_playlist_add_entry (playlist, plname, *idlist, err);
+	}
 
 	return TRUE;
 }

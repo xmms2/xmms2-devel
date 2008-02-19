@@ -18,7 +18,7 @@
 #define __SIGNAL_XMMS_H__
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 10
+#define XMMS_IPC_PROTOCOL_VERSION 11
 
 typedef enum {
 	XMMS_OBJECT_CMD_ARG_NONE,
@@ -86,6 +86,7 @@ typedef enum {
 	XMMS_IPC_CMD_SET_POS_REL,
 	XMMS_IPC_CMD_ADD_URL,
 	XMMS_IPC_CMD_ADD_ID,
+	XMMS_IPC_CMD_ADD_IDLIST,
 	XMMS_IPC_CMD_ADD_COLL,
 	XMMS_IPC_CMD_REMOVE_ENTRY,
 	XMMS_IPC_CMD_MOVE_ENTRY,
