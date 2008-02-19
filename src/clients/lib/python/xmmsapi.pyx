@@ -276,6 +276,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
+	xmmsc_result_t *xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, char *url)
 	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, unsigned char *, int len)
 	xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, char *hash)
 	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
@@ -2141,6 +2142,15 @@ cdef class XMMS:
 		"""
 		u = from_unicode(url)
 		return self.create_result(cb, xmmsc_xform_media_browse(self.conn,u))
+
+	def xform_media_browse_encoded(self, url, cb=None):
+		"""
+		Browse files from xform plugins.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		u = from_unicode(url)
+		return self.create_result(cb, xmmsc_xform_media_browse_encoded(self.conn,u))
 
 	def coll_get(self, name, ns, cb=None):
 		"""
