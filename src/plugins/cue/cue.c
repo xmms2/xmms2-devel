@@ -148,6 +148,7 @@ add_index (cue_track *tr, gchar *idx)
 		tr->index2 = ms;
 	}
 
+	g_strfreev (a);
 }
 
 static void
