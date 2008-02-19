@@ -179,7 +179,7 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 2; argv[i]; i++) {
 		/* FIXME: Fulhack to check for optional playlist argument */
 		if (i == 2 && argc > 3 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
-			playlist = argv[i];
+			playlist = argv[i++];
 		}
 
 		add_item_to_playlist (conn, playlist, argv[i]);
@@ -864,7 +864,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res2 = xmmsc_playlist_add_collection (conn, playlist, coll, order);
 	xmmsc_result_wait (res2);
 	if (xmmsc_result_iserror (res2)) {
-		print_error ("%s", xmmsc_result_get_error (res2));                                                  
+		print_error ("%s", xmmsc_result_get_error (res2));
 	}
 
 	print_info ("Playlist with %d entries added", xmmsc_coll_idlist_get_size (coll));
