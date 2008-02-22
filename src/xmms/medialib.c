@@ -107,6 +107,8 @@ struct xmms_medialib_session_St {
 
 	/* Write or read lock, true if write */
 	gboolean write;
+
+	gint next_id;
 };
 
 
@@ -420,6 +422,8 @@ _xmms_medialib_begin (gboolean write, const char *file, int line)
 			xmms_log_error ("transaction failed!");
 		}
 	}
+
+	session->next_id = -1;
 
 	return session;
 }
@@ -952,6 +956,7 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 
 	g_return_val_if_fail (url, 0);
 	g_return_val_if_fail (session, 0);
+	g_return_val_if_fail (session->write, 0);
 
 	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
 
@@ -963,13 +968,16 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 	if (id) {
 		ret = id;
 	} else {
-		if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-		                              "select ifnull(MAX (id),0) from Media")) {
+		if (session->next_id <= 0 &&
+		    !xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb,
+		                              &session->next_id,
+		                              "SELECT IFNULL(MAX (id),0)+1 "
+		                              "FROM Media")) {
 			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
 			return 0;
 		}
 
-		ret++; /* next id */
+		ret = session->next_id++;
 
 		if (!xmms_medialib_entry_new_insert (session, ret, url, error))
 			return 0;
