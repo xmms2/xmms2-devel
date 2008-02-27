@@ -74,10 +74,11 @@ new (class, clientname=NULL)
 		con = xmmsc_init (clientname);
 
 		if (con == NULL) {
-			XSRETURN_UNDEF;
+			RETVAL = &PL_sv_undef;
 		}
-
-		RETVAL = perl_xmmsclient_new_sv_from_ptr (con, class);
+		else {
+			RETVAL = perl_xmmsclient_new_sv_from_ptr (con, class);
+		}
 	OUTPUT:
 		RETVAL
 
