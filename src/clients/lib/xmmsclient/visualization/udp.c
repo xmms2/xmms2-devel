@@ -96,25 +96,46 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 	return true;
 }
 
-bool
-setup_udp (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id)
+xmmsc_result_t *
+setup_udp_prepare (xmmsc_connection_t *c, int32_t vv)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
-	bool ret;
+	xmmsc_visualization_t *v;
+
+	x_check_conn (c, 0);
+	v = get_dataset (c, vv);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_INIT_UDP);
-	xmms_ipc_msg_put_int32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, v->id);
 	res = xmmsc_send_msg (c, msg);
-	xmmsc_result_wait (res);
+	if (res) {
+		xmmsc_result_visc_set (res, v);
+	}
+	return res;
+}
+
+bool
+setup_udp_handle (xmmsc_result_t *res)
+{
+	bool ret;
+	xmmsc_vis_udp_t *t;
+	xmmsc_visualization_t *visc;
+
+	visc = xmmsc_result_visc_get (res);
+	if (!visc) {
+		x_api_error_if (1, "non vis result?", -1);
+	}
+
+	t = &visc->transport.udp;
+
 	if (!xmmsc_result_iserror (res)) {
 		int port;
 		xmmsc_result_get_int (res, &port);
-		ret = setup_socket (c, t, id, port);
+		ret = setup_socket (xmmsc_result_get_connection (res), t, visc->id, port);
 	} else {
 		ret = false;
 	}
-	xmmsc_result_unref (res);
 
 	return ret;
 }

@@ -175,9 +175,14 @@ typedef const char *xmmsc_visualization_properties_t[];
 
 /* commands */
 xmmsc_result_t *xmmsc_visualization_version (xmmsc_connection_t *c);
-int xmmsc_visualization_init (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_visualization_init (xmmsc_connection_t *c);
 /* Returns 1 on success, 0 on failure. In that case, see xmmsc_get_last_error() */
-int xmmsc_visualization_start (xmmsc_connection_t *c, int v);
+int xmmsc_visualization_init_handle (xmmsc_result_t *res);
+xmmsc_result_t *xmmsc_visualization_start (xmmsc_connection_t *c, int vv);
+void xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res);
+bool xmmsc_visualization_started (xmmsc_connection_t *c, int vv);
+bool xmmsc_visualization_errored (xmmsc_connection_t *c, int vv);
+
 xmmsc_result_t *xmmsc_visualization_property_set (xmmsc_connection_t *c, int v, const char *key, const char *value);
 xmmsc_result_t *xmmsc_visualization_properties_set (xmmsc_connection_t *c, int v, xmmsc_visualization_properties_t prop);
 /*

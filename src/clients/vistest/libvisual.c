@@ -55,7 +55,12 @@ void xmms2_init ()
 		x_exit ("couldn't connect to xmms2d!");
 	}
 
-	x_vis = xmmsc_visualization_init (x_connection);
+	res = xmmsc_visualization_init (x_connection);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		x_exit (xmmsc_result_get_error (res));
+	}
+	x_vis = xmmsc_visualization_init_handle (res);
 	res = xmmsc_visualization_properties_set (x_connection, x_vis, x_config);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
@@ -63,9 +68,18 @@ void xmms2_init ()
 	}
 	xmmsc_result_unref (res);
 
-	if (!xmmsc_visualization_start (x_connection, x_vis)) {
-		printf ("%s\n", xmmsc_get_last_error (x_connection));
-		x_exit ("Couldn't setup visualization transfer!");
+	while (!xmmsc_visualization_started (x_connection, x_vis)) {
+		res = xmmsc_visualization_start (x_connection, x_vis);
+		if (xmmsc_visualization_errored (x_connection, x_vis)) {
+			printf ("Couldn't start visualization transfer: %s\n",
+				xmmsc_get_last_error (x_connection));
+			exit (EXIT_FAILURE);
+		}
+		if (res) {
+			xmmsc_result_wait (res);
+			xmmsc_visualization_start_handle (x_connection, res);
+			xmmsc_result_unref (res);
+		}
 	}
 
 	atexit (xmms2_quit);

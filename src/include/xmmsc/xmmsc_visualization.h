@@ -134,6 +134,15 @@ typedef enum {
 	VIS_NONE
 } xmmsc_vis_transport_t;
 
+typedef enum {
+	VIS_NEW,
+	VIS_TRYING_UNIXSHM,
+	VIS_TO_TRY_UDP,
+	VIS_TRYING_UDP,
+	VIS_ERRORED,
+	VIS_WORKING,
+} xmmsc_vis_state_t;
+
 /**
  * data describing a unixshm transport
  */

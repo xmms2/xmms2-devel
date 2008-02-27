@@ -35,18 +35,9 @@
  * @{
  */
 
-struct xmmsc_visualization_St {
-	union {
-		xmmsc_vis_unixshm_t shm;
-		xmmsc_vis_udp_t udp;
-	} transport;
-	xmmsc_vis_transport_t type;
-	/** server side identifier */
-	int32_t id;
-};
-
-static xmmsc_visualization_t *
-get_dataset(xmmsc_connection_t *c, int vv) {
+xmmsc_visualization_t *
+get_dataset (xmmsc_connection_t *c, int vv)
+{
 	if (vv < 0 || vv >= c->visc)
 		return NULL;
 
@@ -69,9 +60,10 @@ xmmsc_visualization_version (xmmsc_connection_t *c)
  * Initializes a new visualization dataset
  */
 
-int
-xmmsc_visualization_init (xmmsc_connection_t *c) {
-	xmmsc_result_t *res;
+xmmsc_result_t *
+xmmsc_visualization_init (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res = NULL;
 
 	x_check_conn (c, 0);
 
@@ -86,58 +78,143 @@ xmmsc_visualization_init (xmmsc_connection_t *c) {
 		if (!(c->visv[vv] = x_new0 (xmmsc_visualization_t, 1))) {
 			x_oom ();
 		} else {
+			c->visv[vv]->idx = vv;
+			c->visv[vv]->state = VIS_NEW;
 			res = xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_REGISTER);
-			xmmsc_result_wait (res);
-			if (xmmsc_result_iserror (res)) {
-				c->error = strdup("Couldn't register to the server!");
-				return -1;
+			if (res) {
+				xmmsc_result_visc_set (res, c->visv[vv]);
 			}
-			xmmsc_result_get_int (res, &c->visv[vv]->id);
-			c->visv[vv]->type = VIS_NONE;
-			xmmsc_result_unref (res);
 		}
 	}
-	return c->visc-1;
+	return res;
 }
 
+int
+xmmsc_visualization_init_handle (xmmsc_result_t *res)
+{
+	xmmsc_visualization_t *visc;
+
+	if (xmmsc_result_iserror (res)) {
+		return -1;
+	}
+	visc = xmmsc_result_visc_get (res);
+	if (!visc) {
+		x_api_error_if (1, "non vis result?", -1);
+	}
+	xmmsc_result_get_int (res, &visc->id);
+	visc->type = VIS_NONE;
+
+	return visc->idx;
+
+}
 
 /**
  * Initializes a new visualization connection
  */
 
-int
-xmmsc_visualization_start (xmmsc_connection_t *c, int vv) {
-	xmms_ipc_msg_t *msg;
+xmmsc_result_t *
+xmmsc_visualization_start (xmmsc_connection_t *c, int vv)
+{
+	xmmsc_result_t *res;
 	xmmsc_visualization_t *v;
-	bool ret;
 
 	x_check_conn (c, 0);
 	v = get_dataset (c, vv);
 	x_api_error_if (!v, "with unregistered/unconnected visualization dataset", 0);
 
-	x_api_error_if (!(v->type == VIS_NONE), "with already transmitting visualization dataset", 0);
-
-	/* first try unixshm */
-	v->type = VIS_UNIXSHM;
-	ret = setup_shm (c, &v->transport.shm, v->id);
-
-	if (!ret) {
-		/* next try udp */
+	switch (v->state) {
+	case VIS_WORKING:
+	case VIS_ERRORED:
+		break;
+	case VIS_NEW:
+		/* first try unixshm */
+		v->type = VIS_UNIXSHM;
+		res = setup_shm_prepare (c, vv);
+		v->state = VIS_TRYING_UNIXSHM;
+		break;
+	case VIS_TO_TRY_UDP:
 		v->type = VIS_UDP;
-		ret = setup_udp (c, &v->transport.udp, v->id);
+		res = setup_udp_prepare (c, vv);
+		v->state = VIS_TRYING_UDP;
+		break;
+	default:
+		v->state = VIS_ERRORED;
+		x_api_warning ("out of sequence");
+		break;
 	}
 
-	if (!ret) {
-		/* finally give up */
-		v->type = VIS_NONE;
-		msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
-		xmms_ipc_msg_put_int32 (msg, v->id);
-		xmmsc_send_msg (c, msg);
-	}
-
-	/* c->error is written by setup_*(...) */
-	return (ret ? 1 : 0);
+	return res;
 }
+
+void
+xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res)
+{
+	xmmsc_visualization_t *v;
+	bool ret;
+
+	v = xmmsc_result_visc_get (res);
+	if (!v) {
+		x_api_error_if (1, "non vis result?", );
+	}
+
+	switch (v->state) {
+	case VIS_WORKING:
+	case VIS_ERRORED:
+		break;
+	case VIS_TRYING_UNIXSHM:
+		ret = setup_shm_handle (res);
+		if (!ret) {
+			c->error = strdup ("Server doesn't support or couldn't attach shared memory!");
+			v->state = VIS_TO_TRY_UDP;
+		} else {
+			v->state = VIS_WORKING;
+		}
+		break;
+	case VIS_TRYING_UDP:
+		ret = setup_udp_handle (res);
+		if (!ret) {
+			xmms_ipc_msg_t *msg;
+			c->error = strdup ("Server doesn't support or couldn't setup UDP!");
+			v->state = VIS_ERRORED;
+			v->type = VIS_NONE;
+			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
+			xmms_ipc_msg_put_int32 (msg, v->id);
+			xmmsc_send_msg (c, msg);
+		} else {
+			v->state = VIS_WORKING;
+		}
+		break;
+	default:
+		v->state = VIS_ERRORED;
+		x_api_warning ("out of sequence");
+		break;
+	}
+}
+
+bool
+xmmsc_visualization_started (xmmsc_connection_t *c, int vv)
+{
+	xmmsc_visualization_t *v;
+
+	x_check_conn (c, 0);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered/unconnected visualization dataset", 0);
+
+	return (v->state == VIS_WORKING);
+}
+
+bool
+xmmsc_visualization_errored (xmmsc_connection_t *c, int vv)
+{
+	xmmsc_visualization_t *v;
+
+	x_check_conn (c, 0);
+	v = get_dataset (c, vv);
+	x_api_error_if (!v, "with unregistered/unconnected visualization dataset", 0);
+
+	return (v->state == VIS_ERRORED);
+}
+
 
 /**
  * Deliver one property

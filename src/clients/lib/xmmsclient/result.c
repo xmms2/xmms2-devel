@@ -103,6 +103,8 @@ struct xmmsc_result_St {
 
 	/* things we want to free when the result is freed*/
 	x_list_t *extra_free;
+
+	xmmsc_visualization_t *visc;
 };
 
 static const char *default_source_pref[] = {
@@ -549,6 +551,30 @@ xmmsc_result_cookie_get (xmmsc_result_t *res)
 	x_return_val_if_fail (res, 0);
 
 	return res->cookie;
+}
+
+void
+xmmsc_result_visc_set (xmmsc_result_t *res, xmmsc_visualization_t *visc)
+{
+	x_return_if_fail (res);
+	x_return_if_fail (!res->visc);
+	res->visc = visc;
+}
+
+xmmsc_visualization_t *
+xmmsc_result_visc_get (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, NULL);
+	x_return_val_if_fail (res->visc, NULL);
+	return res->visc;
+}
+
+xmmsc_connection_t *
+xmmsc_result_get_connection (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, NULL);
+	x_return_val_if_fail (res->c, NULL);
+	return res->c;
 }
 
 /**

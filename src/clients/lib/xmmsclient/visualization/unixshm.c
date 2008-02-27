@@ -8,14 +8,19 @@
 
 #include <errno.h>
 
-bool
-setup_shm (xmmsc_connection_t *c, xmmsc_vis_unixshm_t *t, int32_t id)
+xmmsc_result_t *
+setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
 	xmmsc_vischunk_t *buffer;
-	int32_t shmid;
-	bool ret;
+	xmmsc_vis_unixshm_t *t;
+	xmmsc_visualization_t *v;
+
+	x_check_conn (c, 0);
+	v = get_dataset (c, vv);
+
+	t = &v->transport.shm;
 
 	/* TODO: 64 bit architectures. It could be that the shm identifier is 64 bits long and is cut on transmission.
 	   We are unable to transmit 64 bit values currently. Workaround is to ignore this problem, which results in a silent
@@ -23,38 +28,55 @@ setup_shm (xmmsc_connection_t *c, xmmsc_vis_unixshm_t *t, int32_t id)
 
 	/* prepare unixshm + semaphores */
 	/* following access modifiers imply everyone on the system could inject wrong vis data ;) */
-	shmid = shmget (IPC_PRIVATE, sizeof (xmmsc_vischunk_t) * XMMS_VISPACKET_SHMCOUNT, S_IRWXU + S_IRWXG + S_IRWXO);
-	if (shmid == -1) {
+	t->shmid = shmget (IPC_PRIVATE, sizeof (xmmsc_vischunk_t) * XMMS_VISPACKET_SHMCOUNT, S_IRWXU + S_IRWXG + S_IRWXO);
+	if (t->shmid == -1) {
 		c->error = strdup ("Couldn't create the shared memory!");
 		return false;
 	}
 	/* attach early, so that the server doesn't think we aren't there */
-	buffer = shmat(shmid, NULL, SHM_RDONLY);
+	buffer = shmat(t->shmid, NULL, SHM_RDONLY);
+	t->buffer = buffer;
 
 	/* send packet */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_INIT_SHM);
-	xmms_ipc_msg_put_int32 (msg, id);
-	xmms_ipc_msg_put_int32 (msg, shmid);
+	xmms_ipc_msg_put_int32 (msg, v->id);
+	xmms_ipc_msg_put_int32 (msg, t->shmid);
 	res = xmmsc_send_msg (c, msg);
 
-	/* find out if it worked */
-	xmmsc_result_wait (res);
+	if (res) {
+		xmmsc_result_visc_set (res, v);
+	}
+
+	return res;
+}
+
+bool
+setup_shm_handle (xmmsc_result_t *res)
+{
+	bool ret;
+	xmmsc_visualization_t *visc;
+	xmmsc_vis_unixshm_t *t;
+
+	visc = xmmsc_result_visc_get (res);
+	if (!visc) {
+		x_api_error_if (1, "non vis result?", -1);
+	}
+
+	t = &visc->transport.shm;
+
 	if (!xmmsc_result_iserror (res)) {
-		t->buffer = buffer;
 		t->size = XMMS_VISPACKET_SHMCOUNT;
 		t->pos = 0;
 		xmmsc_result_get_int (res, &t->semid);
 		ret = true;
 	} else {
 		/* didn't work, detach from shm to get it removed later on */
-		c->error = strdup ("Server doesn't support or couldn't attach shared memory!");
-		shmdt (buffer);
+		shmdt (t->buffer);
 		ret = false;
 	}
-	xmmsc_result_unref (res);
 	/* In either case, mark the shared memory segment to be destroyed.
 	   The segment will only actually be destroyed after the last process detaches it. */
-	shmctl (shmid, IPC_RMID, NULL);
+	shmctl (t->shmid, IPC_RMID, NULL);
 	return ret;
 }
 

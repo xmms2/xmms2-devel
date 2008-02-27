@@ -136,7 +136,14 @@ main (int argc, char **argv)
 	}
 	xmmsc_result_unref (res);
 
-	vis = xmmsc_visualization_init (connection);
+	res = xmmsc_visualization_init (connection);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		puts (xmmsc_result_get_error (res));
+		exit (EXIT_FAILURE);
+	}
+	vis = xmmsc_visualization_init_handle (res);
+
 	res = xmmsc_visualization_properties_set (connection, vis, config);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
@@ -145,10 +152,18 @@ main (int argc, char **argv)
 	}
 	xmmsc_result_unref (res);
 
-	if (!xmmsc_visualization_start (connection, vis)) {
-		printf ("Couldn't start visualization transfer: %s\n",
-		        xmmsc_get_last_error (connection));
-		exit (EXIT_FAILURE);
+	while (!xmmsc_visualization_started (connection, vis)) {
+		res = xmmsc_visualization_start (connection, vis);
+		if (xmmsc_visualization_errored (connection, vis)) {
+			printf ("Couldn't start visualization transfer: %s\n",
+				xmmsc_get_last_error (connection));
+			exit (EXIT_FAILURE);
+		}
+		if (res) {
+			xmmsc_result_wait (res);
+			xmmsc_visualization_start_handle (connection, res);
+			xmmsc_result_unref (res);
+		}
 	}
 
 	/* using GTK mainloop */
