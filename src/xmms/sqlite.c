@@ -34,7 +34,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 34
+#define DB_VERSION 35
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -66,7 +66,10 @@ const char fill_init_playlist_stm[] = "INSERT INTO CollectionOperators VALUES(1,
                                       "INSERT INTO CollectionIdlists VALUES(1, 1, 1);";
 
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
-						      "create index prop_idx on Media (key,value);"
+                              "CREATE INDEX id_key_value_1x ON Media (id, key, value COLLATE BINARY);"
+                              "CREATE INDEX id_key_value_2x ON Media (id, key, value COLLATE NOCASE);"
+                              "CREATE INDEX key_value_1x ON Media (key, value COLLATE BINARY);"
+                              "CREATE INDEX key_value_2x ON Media (key, value COLLATE NOCASE);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
 
@@ -204,6 +207,20 @@ upgrade_v33_to_v34 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+
+static void
+upgrade_v34_to_v35 (sqlite3 *sql)
+{
+	XMMS_DBG ("upgrade v34->v35");
+	sqlite3_exec (sql, "DROP INDEX prop_idx;"
+	                   "CREATE INDEX id_key_value_1x ON Media (id, key, value COLLATE BINARY);"
+	                   "CREATE INDEX id_key_value_2x ON Media (id, key, value COLLATE NOCASE);"
+	                   "CREATE INDEX key_value_1x ON Media (key, value COLLATE BINARY);"
+	                   "CREATE INDEX key_value_2x ON Media (key, value COLLATE NOCASE);"
+	                   "UPDATE CollectionAttributes SET value=replace(replace(value, '%', '*'), '_', '?') WHERE collid IN (SELECT id FROM CollectionOperators WHERE type='6');", NULL, NULL, NULL);
+	XMMS_DBG ("done");
+}
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -226,6 +243,8 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v32_to_v33 (sql);
 		case 33:
 			upgrade_v33_to_v34 (sql);
+		case 34:
+			upgrade_v34_to_v35 (sql);
 			break; /* remember to (re)move this! We want fallthrough */
 		default:
 			can_upgrade = FALSE;

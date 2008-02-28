@@ -443,6 +443,8 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 {
 	coll_query_alias_t *alias;
 	gboolean optional;
+	gchar *temp;
+	gint i;
 
 	if (type == XMMS_COLLECTION_TYPE_HAS) {
 		optional = TRUE;
@@ -459,23 +461,34 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 		if (case_sens) {
 			query_string_append_alias (query->conditions, alias);
 		} else {
-			query_append_string (query, "LOWER(");
+			query_append_string (query, "(");
 			query_string_append_alias (query->conditions, alias);
-			query_append_string (query, ")");
+			query_append_string (query, " COLLATE NOCASE)");
 		}
 
 		if (type == XMMS_COLLECTION_TYPE_EQUALS) {
 			query_append_string (query, "=");
 		} else {
-			query_append_string (query, " GLOB ");
+			if (case_sens) {
+				query_append_string (query, " GLOB ");
+			} else {
+				query_append_string (query, " LIKE ");
+			}
 		}
 
-		if (case_sens) {
-			query_append_protect_string (query, value);
+		if (type == XMMS_COLLECTION_TYPE_MATCH && !case_sens) {
+			temp = g_strdup(value);
+			for (i = 0; temp[i]; i++) {
+				switch (temp[i]) {
+					case '*': temp[i] = '%'; break;
+					case '?': temp[i] = '_'; break;
+					default :                break;
+				}
+			}
+			query_append_protect_string (query, temp);
+			g_free(temp);
 		} else {
-			query_append_string (query, "LOWER(");
 			query_append_protect_string (query, value);
-			query_append_string (query, ")");
 		}
 		break;
 
