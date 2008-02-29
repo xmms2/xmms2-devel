@@ -488,7 +488,7 @@ void volume_set_cb(pa_context *c, int success, void *udata) {
 int xmms_pulse_backend_volume_set(xmms_pulse *p, unsigned int vol) {
 	pa_operation *o;
 	pa_cvolume cvol;
-	int idx, res;
+	int idx, res = 0;
 
 	if (p == NULL) {
 		return FALSE;
@@ -504,18 +504,20 @@ int xmms_pulse_backend_volume_set(xmms_pulse *p, unsigned int vol) {
 
 		o = pa_context_set_sink_input_volume(p->context, idx, &cvol,
 		                                     volume_set_cb, &res);
+		if (o) {
+			/* wait for result to land */
+			while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
+				pa_threaded_mainloop_wait(p->mainloop);
+			}
 
-		/* wait for result to land */
-		while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-			pa_threaded_mainloop_wait(p->mainloop);
+			pa_operation_unref(o);
+
+			/* The cb set res to 1 or 0 depending on success */
+			if (res) {
+				p->volume = vol;
+			}
 		}
 
-		pa_operation_unref(o);
-
-		/* The cb set the volume to 1 or 0 depending on success */
-		if (res) {
-			p->volume = vol;
-		}
 	}
 
 	pa_threaded_mainloop_unlock(p->mainloop);
@@ -558,11 +560,13 @@ int xmms_pulse_backend_volume_get(xmms_pulse *p, unsigned int *vol) {
 		o = pa_context_get_sink_input_info(p->context, idx,
 		                                   volume_get_cb, vol);
 
-		while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-			pa_threaded_mainloop_wait(p->mainloop);
-		}
+		if (o) {
+			while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
+				pa_threaded_mainloop_wait(p->mainloop);
+			}
 
-		pa_operation_unref(o);
+			pa_operation_unref(o);
+		}
 	}
 
 	pa_threaded_mainloop_unlock(p->mainloop);
