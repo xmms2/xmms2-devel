@@ -411,15 +411,20 @@ main (int argc, char **argv)
 
 	context = g_option_context_new ("- XMMS2 Daemon");
 	g_option_context_add_main_entries (context, opts, NULL);
+	g_option_context_set_ignore_unknown_options (context, TRUE);
 	if (!g_option_context_parse (context, &argc, &argv, &error) || error) {
 		g_print ("Error parsing options: %s\n", error->message);
 		g_clear_error (&error);
 		exit (EXIT_FAILURE);
 	}
+	if ((argc == 2) && (strcmp(argv[1], "-h") == 0)) {
+		g_print (g_option_context_get_help (context, TRUE, NULL));
+		exit (EXIT_SUCCESS);
+	}
 	g_option_context_free (context);
 
 	if (argc != 1) {
-		g_print ("There was unknown options, aborting!\n");
+		g_print ("There were unknown options, aborting!\n");
 		exit (EXIT_FAILURE);
 	}
 
