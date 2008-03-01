@@ -2114,15 +2114,6 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 			g_free (buf);
 		}
 
-		/* Transform SQL wildcards to GLib wildcards */
-		for (i = 0, len = strlen (mediaval); i < len; i++) {
-			switch (mediaval[i]) {
-			case '%':  mediaval[i] = '*';  break;
-			case '_':  mediaval[i] = '?';  break;
-			default:                       break;
-			}
-		}
-
 		match = g_pattern_match_simple (opval, mediaval);
 
 		if (case_sens) {

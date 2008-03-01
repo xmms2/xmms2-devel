@@ -262,13 +262,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 				} else if ((*tmp == '*') || (*tmp == '?')) {
 					type = XMMS_COLLECTION_TOKEN_PATTERN;
 				}
-
-				/* FIXME: Kinda dirty, and we should escape % and _ then ! */
-				switch (*tmp) {
-				case '*':  strval[i++] = '%';  break;
-				case '?':  strval[i++] = '_';  break;
-				default:   strval[i++] = *tmp; break;
-				}
+				strval[i++] = *tmp;
 			}
 
 			tmp++;
@@ -341,12 +335,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 			escape = 0;
 		}
 
-		switch (*tmp) {
-		case '*':  strval[i++] = '%';  break;
-		case '?':  strval[i++] = '_';  break;
-		default:   strval[i++] = *tmp; break;
-		}
-
+		strval[i++] = *tmp;
 		tmp++;
 	}
 
@@ -432,7 +421,7 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 				curr->type = XMMS_COLLECTION_TOKEN_STRING;
 			}
 
-			/* Fuzzy match the operand to MATCH, i.e. surround with '%' */
+			/* Fuzzy match the operand to MATCH, i.e. surround with '*' */
 			if (curr->type == XMMS_COLLECTION_TOKEN_STRING ||
 			    curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
 				int i, o;
@@ -440,14 +429,14 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 				i = 0;
 				o = 0;
 
-				if (curr->string[i] != '%') {
-					newstr[o++] = '%';
+				if (curr->string[i] != '*') {
+					newstr[o++] = '*';
 				}
 				while (curr->string[i] != '\0') {
 					newstr[o++] = curr->string[i++];
 				}
-				if (i > 0 && curr->string[i - 1] != '%') {
-					newstr[o++] = '%';
+				if (i > 0 && curr->string[i - 1] != '*') {
+					newstr[o++] = '*';
 				}
 				newstr[o] = '\0';
 

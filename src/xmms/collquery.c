@@ -467,7 +467,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 		if (type == XMMS_COLLECTION_TYPE_EQUALS) {
 			query_append_string (query, "=");
 		} else {
-			query_append_string (query, " LIKE ");
+			query_append_string (query, " GLOB ");
 		}
 
 		if (case_sens) {
