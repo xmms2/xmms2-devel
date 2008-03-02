@@ -80,6 +80,24 @@ path_get_body (const gchar *path)
 	return g_strndup (path, end - path);
 }
 
+/* g_path_get_dirname returns "file:" with "file:///foo.pls", while "file://"
+   is wanted. */
+static gchar *
+path_get_dirname (const gchar *path)
+{
+	guint i, n = 0;
+
+	g_return_val_if_fail (path, NULL);
+
+	for (i = 0; path[i] ; i++) {
+		if (path[i] == '/') {
+			n = i;
+		}
+	}
+
+	return g_strndup (path, n);
+}
+
 gchar *
 xmms_build_playlist_url (const gchar *plspath, const gchar *file)
 {
@@ -95,10 +113,11 @@ xmms_build_playlist_url (const gchar *plspath, const gchar *file)
 
 	if (file[0] == '/') {
 		path = path_get_body (plspath);
+		url = g_strconcat (path, file, NULL);
 	} else {
-		path = g_path_get_dirname (plspath);
+		path = path_get_dirname (plspath);
+		url = g_strconcat (path, "/", file, NULL);
 	}
-	url = g_build_filename (path, file, NULL);
 
 	g_free (path);
 	return url;
