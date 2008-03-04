@@ -372,6 +372,7 @@ main (int argc, char **argv)
 	gboolean version = FALSE;
 	gboolean nologging = FALSE;
 	gboolean runasroot = FALSE;
+	gboolean showhelp = FALSE;
 	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
 	gchar *ppath = NULL;
@@ -393,6 +394,7 @@ main (int argc, char **argv)
 		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &conffile, "Specify alternate configuration file", "<file>"},
 		{"status-fd", 's', 0, G_OPTION_ARG_INT, &status_fd, "Specify a filedescriptor to write to when started", "fd"},
 		{"yes-run-as-root", 0, 0, G_OPTION_ARG_NONE, &runasroot, "Give me enough rope to shoot myself in the foot", NULL},
+		{"show-help", 'h', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &showhelp, "Use --help or -? instead", NULL},
 		{NULL}
 	};
 
@@ -411,15 +413,19 @@ main (int argc, char **argv)
 
 	context = g_option_context_new ("- XMMS2 Daemon");
 	g_option_context_add_main_entries (context, opts, NULL);
-	g_option_context_set_ignore_unknown_options (context, TRUE);
 	if (!g_option_context_parse (context, &argc, &argv, &error) || error) {
 		g_print ("Error parsing options: %s\n", error->message);
 		g_clear_error (&error);
 		exit (EXIT_FAILURE);
 	}
-	if ((argc == 2) && (strcmp(argv[1], "-h") == 0)) {
+	if (showhelp) {
+#if GLIB_CHECK_VERSION(2,14,0)
 		g_print (g_option_context_get_help (context, TRUE, NULL));
 		exit (EXIT_SUCCESS);
+#else
+		g_print ("Please use --help or -? for help\n");
+		exit (EXIT_FAILURE);
+#endif
 	}
 	g_option_context_free (context);
 
