@@ -254,13 +254,14 @@ coll_read_collname (gchar *str, gchar **name, gchar **namespace)
 		return FALSE;
 	} else if (!s[1]) {
 		/* No namespace, assume default */
-		*name = s[0];
+		*name = g_strdup (s[0]);
 		*namespace = g_strdup (CMD_COLL_DEFAULT_NAMESPACE);
 	} else {
-		*name = s[1];
-		*namespace = s[0];
+		*name = g_strdup (s[1]);
+		*namespace = g_strdup (s[0]);
 	}
 
+	g_strfreev (s);
 	return TRUE;
 }
 

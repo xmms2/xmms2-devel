@@ -101,11 +101,12 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 		xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
 	}
 
-	/* FIXME: free the two strings? */
-
 	/* Set operand */
 	xmmsc_coll_add_operand (coll, refcoll);
 	xmmsc_coll_unref (refcoll);
+
+	g_free (s_name);
+	g_free (s_namespace);
 }
 
 

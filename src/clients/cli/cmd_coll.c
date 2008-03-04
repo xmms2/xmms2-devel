@@ -533,6 +533,9 @@ cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_get_collection (res, &coll);
 		coll_print (coll);
 	}
+
+	g_free (name);
+	g_free (namespace);
 }
 
 
@@ -556,6 +559,9 @@ cmd_coll_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
+
+	g_free (name);
+	g_free (namespace);
 }
 
 
@@ -619,6 +625,9 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	xmmsc_result_unref (res);
+
+	g_free (name);
+	g_free (namespace);
 }
 
 void
