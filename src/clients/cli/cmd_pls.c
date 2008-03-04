@@ -85,16 +85,23 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 		print_error ("invalid source collection name");
 	}
 
-	psres = xmmsc_coll_get (conn, s_name, s_namespace);
-	xmmsc_result_wait (psres);
+	/* Quick shortcut to use Universe for "All Media" */
+	if (strcmp (s_name, "All Media") == 0) {
+		refcoll = xmmsc_coll_universe ();
+	} else {
+		psres = xmmsc_coll_get (conn, s_name, s_namespace);
+		xmmsc_result_wait (psres);
 
-	if (xmmsc_result_iserror (psres)) {
-		print_error ("%s", xmmsc_result_get_error (psres));
+		if (xmmsc_result_iserror (psres)) {
+			print_error ("%s", xmmsc_result_get_error (psres));
+		}
+
+		refcoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+		xmmsc_coll_attribute_set (refcoll, "reference", s_name);
+		xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
 	}
 
-	refcoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsc_coll_attribute_set (refcoll, "reference", s_name);
-	xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
+	/* FIXME: free the two strings? */
 
 	/* Set operand */
 	xmmsc_coll_add_operand (coll, refcoll);
