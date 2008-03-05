@@ -2099,7 +2099,6 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	gchar *mediaval;
 	gchar *opval;
 	gboolean case_sens;
-	gint i, len;
 
 	if (filter_get_mediainfo_field_string (coll, mediainfo, &buf) &&
 	    filter_get_operator_value_string (coll, &opval) &&
