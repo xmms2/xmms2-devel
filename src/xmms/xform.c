@@ -101,7 +101,7 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
                                             GList *goal_formats,
                                             const gchar *name);
 static void xmms_xform_destroy (xmms_object_t *object);
-
+static void effect_callbacks_init (void);
 
 void
 xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
@@ -329,6 +329,8 @@ xmms_xform_object_init (void)
 
 	xmms_object_cmd_add (XMMS_OBJECT (obj), XMMS_IPC_CMD_BROWSE,
 	                     XMMS_CMD_FUNC (browse));
+
+	effect_callbacks_init ();
 
 	return obj;
 }
@@ -1574,16 +1576,14 @@ add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
 
 		cfg = xmms_config_lookup (key);
 		if (!cfg) {
-			/* this is just a ugly hack to have a configvalue
-			   to set */
-			xmms_config_property_register (key, "", NULL, NULL);
 			break;
 		}
 
 		name = xmms_config_property_get_string (cfg);
 
-		if (!name[0])
-			break;
+		if (!name[0]) {
+			continue;
+		}
 
 		last = xmms_xform_new_effect (last, entry, goal_formats, name);
 	}
@@ -1628,3 +1628,85 @@ xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
 	xmms_object_unref (plugin);
 	return last;
 }
+
+static void
+update_effect_properties (xmms_object_t *object, gconstpointer data,
+                          gpointer userdata)
+{
+	gint effect_no = GPOINTER_TO_INT (userdata);
+	const gchar *name = (gchar *)data;
+
+	xmms_config_property_t *cfg;
+	xmms_xform_plugin_t *xform_plugin;
+	xmms_plugin_t *plugin;
+	gchar key[64];
+
+	if (name[0]) {
+		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+		if (!plugin) {
+			xmms_log_error ("Couldn't find any effect named '%s'", name);
+		} else {
+			xform_plugin = (xmms_xform_plugin_t *) plugin;
+			xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
+			                                            "0", NULL, NULL);
+			xmms_object_unref (plugin);
+		}
+
+		/* setup new effect.order.n */
+		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no + 1);
+
+		cfg = xmms_config_lookup (key);
+		if (!cfg) {
+			xmms_config_property_register (key, "", update_effect_properties,
+			                               (gpointer)(effect_no + 1));
+		}
+	}
+}
+
+static void
+effect_callbacks_init (void)
+{
+	gint effect_no;
+
+	xmms_config_property_t *cfg;
+	xmms_xform_plugin_t *xform_plugin;
+	xmms_plugin_t *plugin;
+	gchar key[64];
+	const gchar *name;
+
+	for (effect_no = 0; ; effect_no++) {
+		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no);
+
+		cfg = xmms_config_lookup (key);
+		if (!cfg) {
+			break;
+		}
+		xmms_config_property_callback_set (cfg, update_effect_properties,
+		                                   GINT_TO_POINTER (effect_no));
+
+		name = xmms_config_property_get_string (cfg);
+		if (!name[0]) {
+			continue;
+		}
+
+		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+		if (!plugin) {
+			xmms_log_error ("Couldn't find any effect named '%s'", name);
+			continue;
+		}
+
+		xform_plugin = (xmms_xform_plugin_t *) plugin;
+		xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
+		                                            "0", NULL, NULL);
+
+		xmms_object_unref (plugin);
+	}
+
+	/* the name stored in the last present property was not "" or there was no
+	   last present property */
+	if ((!effect_no) || name[0]) {
+			xmms_config_property_register (key, "", update_effect_properties,
+			                               GINT_TO_POINTER (effect_no));
+	}
+}
+
