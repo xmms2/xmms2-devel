@@ -1648,7 +1648,7 @@ update_effect_properties (xmms_object_t *object, gconstpointer data,
 		} else {
 			xform_plugin = (xmms_xform_plugin_t *) plugin;
 			xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
-			                                            "0", NULL, NULL);
+			                                            "1", NULL, NULL);
 			xmms_object_unref (plugin);
 		}
 
@@ -1697,7 +1697,7 @@ effect_callbacks_init (void)
 
 		xform_plugin = (xmms_xform_plugin_t *) plugin;
 		xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
-		                                            "0", NULL, NULL);
+		                                            "1", NULL, NULL);
 
 		xmms_object_unref (plugin);
 	}
