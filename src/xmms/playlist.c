@@ -1243,7 +1243,7 @@ static guint
 xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos,
                                         xmms_error_t *err)
 {
-	gint currpos;
+	gint currpos, newpos;
 	guint mid = 0;
 	xmmsc_coll_t *plcoll;
 
@@ -1255,8 +1255,24 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos,
 	if (plcoll != NULL) {
 		currpos = xmms_playlist_coll_get_currpos (plcoll);
 
-		if (currpos + pos >= 0)
-			mid = xmms_playlist_set_current_position_do (playlist, currpos + pos, err);
+		if (playlist->repeat_all) {
+			newpos = (pos+currpos) % (gint)xmmsc_coll_idlist_get_size (plcoll);
+
+			if (newpos < 0) {
+				newpos += xmmsc_coll_idlist_get_size (plcoll);
+			}
+
+			mid = xmms_playlist_set_current_position_do (playlist, newpos, err);
+		} else {
+			if (currpos + pos >= 0) {
+				mid = xmms_playlist_set_current_position_do (playlist,
+				                                             currpos + pos,
+				                                             err);
+			} else {
+				xmms_error_set (err, XMMS_ERROR_INVAL,
+				                "Can't set pos outside the current playlist!");
+			}
+		}
 	}
 
 	g_mutex_unlock (playlist->mutex);
