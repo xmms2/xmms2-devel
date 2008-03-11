@@ -933,16 +933,17 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	}
 	xmmsc_coll_idlist_insert (plcoll, pos, file);
 
-	currpos = xmms_playlist_coll_get_currpos (plcoll);
-	if (pos <= currpos) {
-		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
-	}
-
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
 	g_hash_table_insert (dict, (gpointer) "position",
 	                     xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
+
+	/** update position once client is familiar with the new item. */
+	currpos = xmms_playlist_coll_get_currpos (plcoll);
+	if (pos <= currpos) {
+		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
+	}
 
 	g_mutex_unlock (playlist->mutex);
 	return TRUE;
