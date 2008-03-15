@@ -96,6 +96,10 @@ const char *xmms_xform_shortname (xmms_xform_t *xform);
 static xmms_xform_t *add_effects (xmms_xform_t *last,
                                   xmms_medialib_entry_t entry,
                                   GList *goal_formats);
+static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
+                                            xmms_medialib_entry_t entry,
+                                            GList *goal_formats,
+                                            const gchar *name);
 static void xmms_xform_destroy (xmms_object_t *object);
 
 
@@ -1559,17 +1563,14 @@ static xmms_xform_t *
 add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
              GList *goal_formats)
 {
-	xmms_xform_t *xform;
-	gint effect_no = 0;
+	gint effect_no;
 
-	while (42) {
+	for (effect_no = 0; TRUE; effect_no++) {
 		xmms_config_property_t *cfg;
-		xmms_xform_plugin_t *xform_plugin;
-		xmms_plugin_t *plugin;
 		gchar key[64];
 		const gchar *name;
 
-		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no++);
+		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no);
 
 		cfg = xmms_config_lookup (key);
 		if (!cfg) {
@@ -1584,33 +1585,46 @@ add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
 		if (!name[0])
 			break;
 
-		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
-
-		if (!plugin) {
-			xmms_log_error ("Couldn't find any effect named '%s'",
-			                name);
-			continue;
-		}
-
-		xform_plugin = (xmms_xform_plugin_t *) plugin;
-		if (!xmms_xform_plugin_supports (xform_plugin, last->out_type)) {
-			xmms_log_info ("Skipping effect '%s' that doesn't support format",
-			               xmms_plugin_shortname_get (plugin));
-			xmms_object_unref (plugin);
-			continue;
-		}
-
-		xform = xmms_xform_new (xform_plugin, last, entry, goal_formats);
-
-		if (xform) {
-			xmms_object_unref (last);
-			last = xform;
-		}
-		xmms_xform_plugin_config_property_register (xform_plugin,
-		                                            "enabled", "0",
-		                                            NULL, NULL);
-		xmms_object_unref (plugin);
+		last = xmms_xform_new_effect (last, entry, goal_formats, name);
 	}
 
+	return last;
+}
+
+static xmms_xform_t *
+xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
+                       GList *goal_formats, const gchar *name)
+{
+	xmms_plugin_t *plugin;
+	xmms_xform_plugin_t *xform_plugin;
+	xmms_xform_t *xform;
+
+	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+	if (!plugin) {
+		xmms_log_error ("Couldn't find any effect named '%s'", name);
+		return last;
+	}
+
+	xform_plugin = (xmms_xform_plugin_t *) plugin;
+	if (!xmms_xform_plugin_supports (xform_plugin, last->out_type)) {
+		xmms_log_info ("Effect '%s' doesn't support format, skipping",
+		               xmms_plugin_shortname_get (plugin));
+		xmms_object_unref (plugin);
+		return last;
+	}
+
+	xform = xmms_xform_new (xform_plugin, last, entry, goal_formats);
+
+	if (xform) {
+		xmms_object_unref (last);
+		last = xform;
+	} else {
+		xmms_log_info ("Effect '%s' failed to initialize, skipping",
+		               xmms_plugin_shortname_get (plugin));
+	}
+	xmms_xform_plugin_config_property_register (xform_plugin,
+	                                            "enabled", "0",
+	                                            NULL, NULL);
+	xmms_object_unref (plugin);
 	return last;
 }
