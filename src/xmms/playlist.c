@@ -68,6 +68,8 @@ static gint xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll);
 static void xmms_playlist_update_queue (xmms_playlist_t *playlist, const gchar *plname, xmmsc_coll_t *coll);
 static void xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, const gchar *plname, xmmsc_coll_t *coll);
 
+static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
+
 
 XMMS_CMD_DEFINE  (load, xmms_playlist_load, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE3 (insert_url, xmms_playlist_insert_url, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
@@ -90,6 +92,7 @@ XMMS_CMD_DEFINE  (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_play
 XMMS_CMD_DEFINE  (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, STRING);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
+#define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, pos, name)
 
 
 /** @defgroup Playlist Playlist
@@ -414,6 +417,7 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 	char *jumplist;
 	xmms_error_t err;
 	xmms_playlist_t *buffer = playlist;
+	guint newpos;
 
 	g_return_val_if_fail (playlist, FALSE);
 
@@ -439,19 +443,14 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
 			xmms_collection_set_int_attr (plcoll, "position", 0);
-			xmms_object_emit_f (XMMS_OBJECT (playlist),
-			                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-			                    XMMS_OBJECT_CMD_ARG_UINT32,
-			                    0);
+			XMMS_PLAYLIST_CURRPOS_MSG (0, XMMS_ACTIVE_PLAYLIST);
 
 			xmms_playlist_load (buffer, jumplist, &err);
 			ret = xmms_error_isok (&err);
 		} else {
-			xmms_collection_set_int_attr (plcoll, "position", currpos%size);
-			xmms_object_emit_f (XMMS_OBJECT (playlist),
-			                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-			                    XMMS_OBJECT_CMD_ARG_UINT32,
-			                    currpos%size);
+			newpos = currpos%size;
+			xmms_collection_set_int_attr (plcoll, "position", newpos);
+			XMMS_PLAYLIST_CURRPOS_MSG (newpos, XMMS_ACTIVE_PLAYLIST);
 			ret = (currpos != size) || playlist->repeat_all;
 		}
 	}
@@ -488,9 +487,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	if (currpos == -1 && (size > 0)) {
 		currpos = 0;
 		xmms_collection_set_int_attr (plcoll, "position", currpos);
-		xmms_object_emit_f (XMMS_OBJECT (playlist),
-		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-		                    XMMS_OBJECT_CMD_ARG_UINT32, 0);
+		XMMS_PLAYLIST_CURRPOS_MSG (0, XMMS_ACTIVE_PLAYLIST);
 	}
 
 	if (currpos < size) {
@@ -665,10 +662,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *e
 	}
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, plname);
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    currpos);
+	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 
 	g_mutex_unlock (playlist->mutex);
 }
@@ -702,10 +696,7 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 	                     xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    currpos);
+	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 
 	return TRUE;
 }
@@ -851,10 +842,7 @@ xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
 	                     xmms_object_cmd_value_int_new (newpos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    currpos);
+	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 
 	g_mutex_unlock (playlist->mutex);
 
@@ -1191,10 +1179,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 	    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
 		xmms_collection_set_int_attr (plcoll, "position", 0);
-		xmms_object_emit_f (XMMS_OBJECT (playlist),
-		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    0);
+		XMMS_PLAYLIST_CURRPOS_MSG (0, XMMS_ACTIVE_PLAYLIST);
 
 		xmms_playlist_load (playlist, jumplist, err);
 		if (xmms_error_iserror (err)) {
@@ -1208,11 +1193,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 	} else if (pos < size) {
 		XMMS_DBG ("newpos! %d", pos);
 		xmms_collection_set_int_attr (plcoll, "position", pos);
-
-		xmms_object_emit_f (XMMS_OBJECT (playlist),
-		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    pos);
+		XMMS_PLAYLIST_CURRPOS_MSG (pos, XMMS_ACTIVE_PLAYLIST);
 	} else {
 		xmms_error_set (err, XMMS_ERROR_INVAL,
 		                "Can't set pos outside the current playlist!");
@@ -1511,11 +1492,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 	g_list_free (tmp);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0, plname);
-
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    currpos);
+	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 
 	g_mutex_unlock (playlist->mutex);
 }
@@ -1702,6 +1679,35 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    dict);
+
+	g_hash_table_destroy (dict);
+}
+
+static void
+xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist,
+                                    guint32 pos, const gchar *plname)
+{
+	GHashTable *dict;
+	xmms_object_cmd_value_t *val;
+	const gchar *tmp;
+
+	g_return_if_fail (playlist);
+
+	dict = g_hash_table_new_full (g_str_hash,
+	                              g_str_equal,
+	                              NULL,
+	                              (GDestroyNotify)xmms_object_cmd_value_unref);
+	val = xmms_object_cmd_value_uint_new (pos);
+	g_hash_table_insert (dict, (gpointer) "position", val);
+
+	tmp = xmms_playlist_canonical_name (playlist, plname);
+	val = xmms_object_cmd_value_str_new (tmp);
+	g_hash_table_insert (dict, (gpointer) "name", val);
+
+	xmms_object_emit_f (XMMS_OBJECT (playlist),
+	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
 	                    XMMS_OBJECT_CMD_ARG_DICT,
 	                    dict);
 
