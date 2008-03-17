@@ -89,6 +89,12 @@ src/plugins/daap/*:
 src/plugins/normalize/compress*:
         Copyright (C) 2002-2003 trikuare studios (http://trikuare.cx)
 
+src/plugins/airplay/rtsp*:
+	Copyright (C) <2005> Wim Taymans <wim@fluendo.com>
+
+src/plugins/airplay/airplay.c:
+	Copyright (C) 2005-2006 Mohsin Patel <mohsin.patel@gmail.com>
+
 src/includepriv/xmmspriv/xmms_list.h:
         Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
 

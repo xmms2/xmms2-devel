@@ -1,0 +1,10 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+	return conf.check_pkg('openssl', destvar='openssl')
+
+configure, build = plugin('airplay', configure=plugin_configure,
+                          source=['airplay.c', 'raop_client.c',
+                                  'net_utils.c', 'rtspdefs.c',
+                                  'rtspconnection.c', 'rtspmessage.c'],
+                          extra_libs=['openssl'], output_prio=4)
