@@ -413,6 +413,7 @@ c_propdict_init (VALUE self, VALUE result)
 	return self;
 }
 
+#ifdef HAVE_PROTECT_INSPECT
 static VALUE
 propdict_inspect_cb (VALUE args, VALUE s)
 {
@@ -455,6 +456,7 @@ c_propdict_inspect (VALUE self)
 {
 	return rb_protect_inspect (propdict_inspect, self, 0);
 }
+#endif /* HAVE_PROTECT_INSPECT */
 
 static VALUE
 c_propdict_aref (VALUE self, VALUE key)
@@ -641,7 +643,9 @@ Init_Result (VALUE mXmms)
 	cPropDict = rb_define_class_under (mXmms, "PropDict", rb_cObject);
 
 	rb_define_method (cPropDict, "initialize", c_propdict_init, 1);
+#ifdef HAVE_PROTECT_INSPECT
 	rb_define_method (cPropDict, "inspect", c_propdict_inspect, 0);
+#endif /* HAVE_PROTECT_INSPECT */
 
 	rb_define_method (cPropDict, "[]", c_propdict_aref, 1);
 	rb_define_method (cPropDict, "has_key?", c_propdict_has_key, 1);

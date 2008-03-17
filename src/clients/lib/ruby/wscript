@@ -47,21 +47,44 @@ def configure(conf):
     if not ruby:
         return False
 
-    version = os.popen(ruby + " -e 'puts defined?(VERSION) ? VERSION : RUBY_VERSION'").read().strip()
-    if not version or [int(a) for a in version.split(".")] < [1, 8]:
-        conf.check_message('ruby version', '> 1.8', False, version)
+    version_str = os.popen(ruby + " -e 'puts defined?(VERSION) ? VERSION : RUBY_VERSION'").read().strip()
+    if version_str:
+        version = [int(a) for a in version_str.split('.')][:2]
+    if not version_str or version < [1, 8]:
+        conf.check_message('ruby version', '> 1.8', False, version_str or 'not found')
         return False
-    conf.check_message('ruby version', '> 1.8', True, version)
+    conf.check_message('ruby version', '> 1.8', True, version_str)
 
-    ruby_h = os.popen(ruby + " -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"archdir\"] + \"/ruby.h\")'").read().strip()
+    if version == [1, 8]: # Ruby 1.8
+        ruby_h = os.popen(ruby + " -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"archdir\"] + \"/ruby.h\")'").read().strip()
+    else: # Ruby 1.9
+        ruby_h = os.popen(ruby + " -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"rubyhdrdir\"] + \"/ruby.h\")'").read().strip()
     if ruby_h != 'true':
         conf.check_message('ruby', 'header file', False)
         return False
     conf.check_message('ruby', 'header file', True)
 
     dir = os.popen(ruby + " -rrbconfig -e 'puts \"%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'").read().strip()
-    conf.env["CPPPATH_ruby"] = dir
+    conf.env["CPPPATH_ruby"] = [dir]
     conf.env["LINKFLAGS_ruby"] = '-L%s' % dir
+
+    if version == [1, 9]: # Ruby 1.9
+        hdir = os.popen(ruby + " -rrbconfig -e 'puts Config::CONFIG[\"rubyhdrdir\"]'").read().strip()
+        conf.env["CPPPATH_ruby"] += [hdir, os.path.join(hdir, "ruby")]
+        hdir = os.popen(ruby + " -rrbconfig -e 'puts File.join(Config::CONFIG[\"rubyhdrdir\"], Config::CONFIG[\"arch\"])'").read().strip()
+        conf.env["CPPPATH_ruby"] += [hdir]
+
+    lib = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"RUBY_SO_NAME\"]'").read().strip()
+
+    # Check for rb_protect_inspect for our inspect methods.
+    test = conf.create(enumerator='function')
+    test.function = 'rb_protect_inspect'
+    test.headers = ['ruby.h']
+    test.include_paths = conf.env["CPPPATH_ruby"]
+    test.libs = [lib]
+    test.mandatory = 0
+    if test.run():
+        conf.env['CCDEFINES_ruby'] = ['HAVE_PROTECT_INSPECT']
 
     ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LDSHARED\"]'").read().strip()
     # ok this is really stupid, but the command and flags are combined.
@@ -103,7 +126,6 @@ def configure(conf):
     conf.env["rubyext_SUFFIX"] = '.' + os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"DLEXT\"]'").read().strip()
     conf.env["rubyext_USELIB"] = "ruby"
     conf.env["rubyext_obj_ext"] = conf.env["shlib_obj_ext"]
-
 
     return True
 
