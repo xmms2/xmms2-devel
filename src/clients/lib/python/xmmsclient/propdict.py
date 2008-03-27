@@ -45,8 +45,8 @@ class PropDict(dict):
     def _get_sources(self):
         return self._sources
     def _set_sources(self, val):
-        if not isinstance(val, list):
-            raise TypeError("Need a list of sources")
+        if isinstance(val, basestring):
+            raise TypeError("Need a sequence of sources")
         for i in val:
             if not isinstance(i, basestring):
                 raise TypeError("Sources need to be strings")
