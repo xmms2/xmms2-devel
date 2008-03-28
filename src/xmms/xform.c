@@ -1447,6 +1447,13 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 		return NULL;
 	}
 
+	/* Enable segment by default */
+	last = xmms_xform_new_effect (last, entry, goal_formats, "segment");
+	if (!last) {
+		g_free (url);
+		return NULL;
+	}
+	
 	last = add_effects (last, entry, goal_formats);
 	if (!last) {
 		g_free (url);
@@ -1498,6 +1505,13 @@ xmms_xform_chain_setup_rehash (xmms_medialib_entry_t entry,
 		return NULL;
 	}
 
+	/* Enable segment by default */
+	xform = xmms_xform_new_effect (xform, entry, goal_formats, "segment");
+	if (!xform) {
+		g_free (url);
+		return NULL;
+	}
+	
 	chain_finalize (xform, entry, url, TRUE);
 	g_free (url);
 	return xform;

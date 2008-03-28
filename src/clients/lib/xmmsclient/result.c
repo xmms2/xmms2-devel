@@ -106,7 +106,13 @@ struct xmmsc_result_St {
 };
 
 static const char *default_source_pref[] = {
-	"server", "client/*", "plugin/id3v2", "plugin/*", "*", NULL
+	"server",
+	"client/*",
+	"plugin/id3v2",
+	"plugin/segment",
+	"plugin/*",
+	"*",
+	NULL
 };
 
 /**
