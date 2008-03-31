@@ -245,7 +245,7 @@ main (gint argc, gchar **argv)
 
 	if (argc < 2) {
 		print_info ("Available commands:");
-		
+
 		for (i = 0; commands[i].name; i++) {
 			print_info ("  %s - %s", commands[i].name, commands[i].help);
 		}
