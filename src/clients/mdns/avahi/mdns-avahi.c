@@ -107,9 +107,9 @@ create_services (AvahiClient *c)
 	}
 
 	if ((ret = avahi_entry_group_add_service (group, AVAHI_IF_UNSPEC,
-											  AVAHI_PROTO_UNSPEC,
-											  0, name, "_xmms2._tcp",
-											  NULL, NULL, port, NULL)) < 0)
+	                                          AVAHI_PROTO_UNSPEC,
+	                                          0, name, "_xmms2._tcp",
+	                                          NULL, NULL, port, NULL)) < 0)
 	{
 		printf ("couldn't add entry to group: %s\n", avahi_strerror (ret));
 		g_free (name);
