@@ -161,9 +161,9 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 
 	case XMMS_COLLECTION_TYPE_UNION:
 		print_info ("%sUnion:", indent);
-		for(xmmsc_coll_operand_list_first (coll);
-			xmmsc_coll_operand_list_entry (coll, &operand);
-			xmmsc_coll_operand_list_next (coll)) {
+		for (xmmsc_coll_operand_list_first (coll);
+		     xmmsc_coll_operand_list_entry (coll, &operand);
+		     xmmsc_coll_operand_list_next (coll)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
