@@ -195,12 +195,12 @@ xmms_pulse_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	xmms_format = xmms_stream_type_get_int (
-		format, XMMS_STREAM_TYPE_FMT_FORMAT);
-	channels = xmms_stream_type_get_int (
-		format, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	samplerate = xmms_stream_type_get_int (
-		format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	xmms_format = xmms_stream_type_get_int (format,
+	                                        XMMS_STREAM_TYPE_FMT_FORMAT);
+	channels = xmms_stream_type_get_int (format,
+	                                     XMMS_STREAM_TYPE_FMT_CHANNELS);
+	samplerate = xmms_stream_type_get_int (format,
+	                                       XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 
 	val = xmms_output_config_lookup (output, "sink");
 	sink = xmms_config_property_get_string (val);
