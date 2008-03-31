@@ -108,10 +108,10 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (argc > 2) {
-		xmmsc_entry_format (print_text, sizeof(print_text), argv[2], res);	
+		xmmsc_entry_format (print_text, sizeof (print_text), argv[2], res);
 	} else {
-		xmmsc_entry_format (print_text, sizeof(print_text), 
-                            "${artist} - ${title}", res);
+		xmmsc_entry_format (print_text, sizeof (print_text),
+		                    "${artist} - ${title}", res);
 	}
 
 	print_info ("%s", print_text);
