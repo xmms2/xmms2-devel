@@ -52,15 +52,15 @@ struct xmms_pulse {
 	int volume;
 };
 
-static gboolean check_pulse_health(xmms_pulse *p, int *rerror) {
-	if (!p->context || pa_context_get_state(p->context) != PA_CONTEXT_READY ||
-	    !p->stream || pa_stream_get_state(p->stream) != PA_STREAM_READY) {
+static gboolean check_pulse_health (xmms_pulse *p, int *rerror) {
+	if (!p->context || pa_context_get_state (p->context) != PA_CONTEXT_READY ||
+	    !p->stream || pa_stream_get_state (p->stream) != PA_STREAM_READY) {
 		if ((p->context &&
-		     pa_context_get_state(p->context) == PA_CONTEXT_FAILED) ||
+		     pa_context_get_state (p->context) == PA_CONTEXT_FAILED) ||
 		    (p->stream &&
-		     pa_stream_get_state(p->stream) == PA_STREAM_FAILED)) {
+		     pa_stream_get_state (p->stream) == PA_STREAM_FAILED)) {
 			if (rerror)
-				*(rerror) = pa_context_errno(p->context);
+				*(rerror) = pa_context_errno (p->context);
 		} else if (rerror)
 			*(rerror) = PA_ERR_BADSTATE;
 		return FALSE;
