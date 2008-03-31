@@ -60,7 +60,7 @@ cmds commands[] = {
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
 	{ "addpls", "Adds the contents of a playlist file to the playlist", cmd_addpls },
-	
+
 	/* Playback managment */
 	{ "play", "starts playback", cmd_play },
 	{ "stop", "stops playback", cmd_stop },
