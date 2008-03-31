@@ -276,13 +276,13 @@ xmms_pulse_volume_get (xmms_output_t *output, const gchar **names,
 
 	names[0] = "master";
 
-	return xmms_pulse_backend_volume_get(data->pulse, &values[0]);
+	return xmms_pulse_backend_volume_get (data->pulse, &values[0]);
 }
 
 
 static void
 xmms_pulse_write (xmms_output_t *output, gpointer buffer, gint len,
-		  xmms_error_t *err)
+                  xmms_error_t *err)
 {
 	xmms_pulse_data_t *data;
 
