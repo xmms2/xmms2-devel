@@ -1,4 +1,4 @@
-/** @file xmmsclient-cf.c 
+/** @file xmmsclient-cf.c
  *  Mac OS X CoreFoundation run loop integration
  *
  *  Copyright (C) 2005-2008 XMMS2 Team
