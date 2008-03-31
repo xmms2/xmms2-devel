@@ -38,12 +38,12 @@ static gboolean xmms_pulse_plugin_setup (xmms_output_plugin_t *plugin);
 static void xmms_pulse_flush (xmms_output_t *output);
 static void xmms_pulse_close (xmms_output_t *output);
 static void xmms_pulse_write (xmms_output_t *output, gpointer buffer, gint len,
-			      xmms_error_t *err);
+                              xmms_error_t *err);
 static gboolean xmms_pulse_open (xmms_output_t *output);
 static gboolean xmms_pulse_new (xmms_output_t *output);
 static void xmms_pulse_destroy (xmms_output_t *output);
 static gboolean xmms_pulse_format_set (xmms_output_t *output,
-				       const xmms_stream_type_t *format);
+                                       const xmms_stream_type_t *format);
 static gboolean xmms_pulse_volume_set (xmms_output_t *output,
                                        const gchar *channel,
                                        guint volume);
