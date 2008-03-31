@@ -239,7 +239,7 @@ main (int argc, char **argv)
 
 	get_systemname ();
 
-	send_socket = socket(PF_INET, SOCK_DGRAM, 0);
+	send_socket = socket (PF_INET, SOCK_DGRAM, 0);
 
 	ml = g_main_loop_new (NULL, FALSE);
 
