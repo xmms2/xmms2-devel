@@ -411,7 +411,7 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *playlist;
 	const gchar **sortby;
 	xmmsc_result_t *res;
-	
+
 	if (argc < 3) {
 		print_error ("Sort needs a property to sort on, %d", argc);
 	} else if (argc == 3) {
