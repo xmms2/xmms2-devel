@@ -77,7 +77,7 @@ cmd_mlib (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gint i;
 	if (argc < 3) {
-		cmd_mlib_help();
+		cmd_mlib_help ();
 		return;
 	}
 
