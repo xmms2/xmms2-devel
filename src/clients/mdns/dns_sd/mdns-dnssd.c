@@ -152,7 +152,7 @@ main (int argc, char **argv)
 			gp = ipcsplit[i];
 		}
 	}
-	
+
 	if (!gp) {
 		printf ("Need to have a socket listening to TCP before we can do that!");
 		exit (1);
