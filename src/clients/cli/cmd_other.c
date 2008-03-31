@@ -20,7 +20,7 @@ void
 cmd_stats (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	
+
 	res = xmmsc_main_stats (conn);
 	xmmsc_result_wait (res);
 
