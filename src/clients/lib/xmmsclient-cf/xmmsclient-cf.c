@@ -72,18 +72,18 @@ xmmsc_setup_with_cf (xmmsc_connection_t *c)
 	if (xmmsc_io_want_out (c))
 		flags |= kCFSocketWriteCallBack;
 
-	sockRef = CFSocketCreateWithNative (kCFAllocatorDefault, 
-										xmmsc_io_fd_get (c),
-										flags,
-										&xmmsc_io_cf_event_callback,
-										&context);
+	sockRef = CFSocketCreateWithNative (kCFAllocatorDefault,
+	                                    xmmsc_io_fd_get (c),
+	                                    flags,
+	                                    &xmmsc_io_cf_event_callback,
+	                                    &context);
 
 	if (!sockRef)
 		return 0;
 
 
-	runLoopSourceRef = CFSocketCreateRunLoopSource (kCFAllocatorDefault, 
-													sockRef, 4);
+	runLoopSourceRef = CFSocketCreateRunLoopSource (kCFAllocatorDefault,
+	                                                sockRef, 4);
 
 	CFRunLoopAddSource (runLoopRef, runLoopSourceRef, kCFRunLoopDefaultMode);
 
