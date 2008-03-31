@@ -88,7 +88,7 @@ cmd_mlib (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 
-	cmd_mlib_help();
+	cmd_mlib_help ();
 	print_error ("Unrecognised mlib command: %s", argv[2]);
 }
 
