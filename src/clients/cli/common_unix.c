@@ -41,13 +41,13 @@ find_terminal_width () {
 		columns = ws.ws_col;
 	} else {
 		colstr = getenv ("COLUMNS");
-		if(colstr != NULL) {
+		if (colstr != NULL) {
 			columns = strtol (colstr, &endptr, 10);
 		}
 	}
 
 	/* Default to 80 columns */
-	if(columns <= 0) {
+	if (columns <= 0) {
 		columns = 80;
 	}
 
