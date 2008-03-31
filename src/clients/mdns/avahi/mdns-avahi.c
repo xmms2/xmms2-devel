@@ -126,10 +126,10 @@ create_services (AvahiClient *c)
 	return;
 }
 
-static void 
-client_callback (AvahiClient *c, 
-				 AvahiClientState state, 
-				 void *userdata) 
+static void
+client_callback (AvahiClient *c,
+                 AvahiClientState state,
+                 void *userdata)
 {
 	g_return_if_fail (c);
 
