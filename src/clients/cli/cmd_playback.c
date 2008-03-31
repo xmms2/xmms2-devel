@@ -165,7 +165,7 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		print_error ("Couldn't seek to %d arg: %s", arg,
-					 xmmsc_result_get_error (res));
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 }
