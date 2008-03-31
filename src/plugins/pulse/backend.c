@@ -549,26 +549,26 @@ int xmms_pulse_backend_volume_get (xmms_pulse *p, unsigned int *vol) {
 		return FALSE;
 	}
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
 	*vol = -1;
 
 	if (p->stream != NULL) {
-		idx = pa_stream_get_index(p->stream);
+		idx = pa_stream_get_index (p->stream);
 
-		o = pa_context_get_sink_input_info(p->context, idx,
-		                                   volume_get_cb, vol);
+		o = pa_context_get_sink_input_info (p->context, idx,
+		                                    volume_get_cb, vol);
 
 		if (o) {
-			while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-				pa_threaded_mainloop_wait(p->mainloop);
+			while (pa_operation_get_state (o) != PA_OPERATION_DONE) {
+				pa_threaded_mainloop_wait (p->mainloop);
 			}
 
-			pa_operation_unref(o);
+			pa_operation_unref (o);
 		}
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 
 	return *vol != -1;
 }
