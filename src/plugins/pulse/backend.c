@@ -30,10 +30,10 @@ static struct {
 } xmms_pulse_formats[] = {
 	{XMMS_SAMPLE_FORMAT_U8, PA_SAMPLE_U8},
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN /* Yes, there is PA_SAMPLE_xxNE,
-				       but they does only work
-				       if you can be sure that
-				       WORDS_BIGENDIAN is correctly
-				       defined */
+                                       but they does only work
+                                       if you can be sure that
+                                       WORDS_BIGENDIAN is correctly
+                                       defined */
 	{XMMS_SAMPLE_FORMAT_S16, PA_SAMPLE_S16LE},
 	{XMMS_SAMPLE_FORMAT_FLOAT, PA_SAMPLE_FLOAT32LE},
 #else
