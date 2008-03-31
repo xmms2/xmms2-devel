@@ -83,7 +83,7 @@ cmd_status (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 void
 cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{ 
+{
 	xmmsc_result_t *res;
 	gchar print_text[256];
 	guint id;
