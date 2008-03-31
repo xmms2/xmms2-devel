@@ -146,7 +146,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 	g_vsnprintf (buf, 1024, fmt, ap);
 	va_end (ap);
 
-	padstring = g_strnfill (columns - g_utf8_strlen(buf, -1), padchar);
+	padstring = g_strnfill (columns - g_utf8_strlen (buf, -1), padchar);
 
 	if (padright) {
 		print_info ("%s%s", buf, padstring);
