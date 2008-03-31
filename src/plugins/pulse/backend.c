@@ -320,32 +320,32 @@ gboolean xmms_pulse_backend_write (xmms_pulse *p, const char *data,
 		return FALSE;
 	}
 
-	pa_threaded_mainloop_lock(p->mainloop);
-	if (!check_pulse_health(p, rerror))
+	pa_threaded_mainloop_lock (p->mainloop);
+	if (!check_pulse_health (p, rerror))
 		goto unlock_and_fail;
 
 	while (length > 0) {
 		size_t buf_len;
 		int ret;
 
-		while (!(buf_len = pa_stream_writable_size(p->stream))) {
-			pa_threaded_mainloop_wait(p->mainloop);
-			if (!check_pulse_health(p, rerror))
+		while (!(buf_len = pa_stream_writable_size (p->stream))) {
+			pa_threaded_mainloop_wait (p->mainloop);
+			if (!check_pulse_health (p, rerror))
 				goto unlock_and_fail;
 		}
 
 		if (buf_len == (size_t)-1) {
 			if (rerror)
-				*rerror = pa_context_errno((p)->context);
+				*rerror = pa_context_errno ((p)->context);
 			goto unlock_and_fail;
 		}
 		if (buf_len > length)
 			buf_len = length;
 
-		ret = pa_stream_write(p->stream, data, buf_len, NULL, 0, PA_SEEK_RELATIVE);
+		ret = pa_stream_write (p->stream, data, buf_len, NULL, 0, PA_SEEK_RELATIVE);
 		if (ret < 0) {
 			if (rerror)
-				*rerror = pa_context_errno((p)->context);
+				*rerror = pa_context_errno ((p)->context);
 			goto unlock_and_fail;
 		}
 
