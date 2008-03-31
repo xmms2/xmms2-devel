@@ -302,7 +302,7 @@ cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("Unable to insert %u at position %u: %s", mlib_id,
-		             pos, xmmsc_result_get_error(res));
+		             pos, xmmsc_result_get_error (res));
 	}
 
 	print_info ("Inserted %u at position %u", mlib_id, pos);
