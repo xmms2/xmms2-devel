@@ -243,7 +243,7 @@ cmd_mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	for (i = 3; argv[i]; i++) {
 		gchar *url;
-		
+
 		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
 		if (url) {
 			res = xmmsc_medialib_add_entry (conn, url);
