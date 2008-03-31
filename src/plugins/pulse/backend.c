@@ -536,12 +536,12 @@ void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
 			total += i->volume.values[j] * 100.0 / PA_VOLUME_NORM;
 		}
 
-		*vol = (unsigned int) ceil(total / i->volume.channels);
+		*vol = (unsigned int) ceil (total / i->volume.channels);
 	}
 }
 
 
-int xmms_pulse_backend_volume_get(xmms_pulse *p, unsigned int *vol) {
+int xmms_pulse_backend_volume_get (xmms_pulse *p, unsigned int *vol) {
 	pa_operation *o;
 	int idx;
 
