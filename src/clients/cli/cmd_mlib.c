@@ -433,7 +433,7 @@ cmd_mlib_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	for (i = 3; i < argc; i++) {
 		entryid = atoi (argv[i]);
-		print_info("Removing entry %i", entryid);
+		print_info ("Removing entry %i", entryid);
 		res = xmmsc_medialib_remove_entry (conn, entryid);
 		xmmsc_result_wait (res);
 		if (xmmsc_result_iserror (res)) {
