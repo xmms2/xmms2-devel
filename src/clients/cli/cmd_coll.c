@@ -50,7 +50,7 @@ cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gint i;
 	if (argc < 3) {
-		cmd_coll_help();
+		cmd_coll_help ();
 		return;
 	}
 
@@ -61,7 +61,7 @@ cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 
-	cmd_coll_help();
+	cmd_coll_help ();
 	print_error ("Unrecognised coll command: %s", argv[2]);
 }
 
