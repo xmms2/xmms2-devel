@@ -55,7 +55,7 @@ void
 cmd_status (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	GMainLoop *ml;
-	
+
 	ml = g_main_loop_new (NULL, FALSE);
 
 	has_songname = FALSE;
