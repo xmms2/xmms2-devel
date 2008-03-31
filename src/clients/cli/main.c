@@ -283,13 +283,13 @@ main (gint argc, gchar **argv)
 	if (!ret) {
 		gboolean autostart = FALSE;
 		gchar *tmp;
-	
+
 		tmp = g_hash_table_lookup (config, "autostart");
 		if (tmp && !g_ascii_strcasecmp (tmp, "true")) {
 		   autostart = TRUE;
 		}
 
-		if (autostart && g_ascii_strncasecmp(argv[1], "quit", 4) &&
+		if (autostart && g_ascii_strncasecmp (argv[1], "quit", 4) &&
 		    (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
 			if (!system ("xmms2-launcher")) {
 				ret = xmmsc_connect (connection, path);
