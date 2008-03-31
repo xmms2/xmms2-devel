@@ -93,14 +93,14 @@ print_hash (const void *key, xmmsc_result_value_type_t type,
 
 void
 print_entry (const void *key, xmmsc_result_value_type_t type,
-			 const void *value, const gchar *source, void *udata)
+             const void *value, const gchar *source, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		/* Ok it's a string, if it's the URL property from the
 		 * server source we need to decode it since it's
 		 * encoded in the server
 		 */
-		if (strcmp (key, "url") == 0 && strcmp(source, "server") == 0) {
+		if (strcmp (key, "url") == 0 && strcmp (source, "server") == 0) {
 			/* First decode the URL encoding */
 			const gchar *tmp = xmmsc_result_decode_url ((xmmsc_result_t *)udata, value);
 
