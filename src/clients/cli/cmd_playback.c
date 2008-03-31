@@ -194,7 +194,7 @@ cmd_jump (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("Couldn't go to next song: %s",
-					 xmmsc_result_get_error (res));
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 }
