@@ -81,7 +81,7 @@ print_error (const gchar *fmt, ...)
 
 void
 print_hash (const void *key, xmmsc_result_value_type_t type,
-			const void *value, void *udata)
+            const void *value, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		print_info ("%s = %s", key, value);
