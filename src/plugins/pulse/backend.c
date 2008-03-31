@@ -519,13 +519,13 @@ int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol) {
 
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 
 	return res;
 }
 
 
-void volume_get_cb(pa_context *c, const pa_sink_input_info *i,
+void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
                    int eol, void *udata) {
 	unsigned int *vol = (unsigned int *) udata;
 	double total = 0;
