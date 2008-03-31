@@ -662,6 +662,13 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean reh
 	                                                     info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
 
+	/* times_played == -1 if we haven't played this entry yet. so after initial
+	 * metadata collection the mlib would have timesplayed = -1 if we didn't do
+	 * the following */
+	if (times_played < 0) {
+		times_played = 0;
+	}
+
 	last_started = xmms_medialib_entry_property_get_int (info.session,
 	                                                     info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
