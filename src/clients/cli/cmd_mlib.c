@@ -183,7 +183,7 @@ cmd_mlib_set_int (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	id = strtol (argv[3], NULL, 10);
-	
+
 	if (argc == 7) {
 		res = xmmsc_medialib_entry_property_set_int_with_source (conn,
 		                                                         id,
