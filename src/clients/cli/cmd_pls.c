@@ -138,7 +138,7 @@ cmd_playlist (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 
-	cmd_playlist_help();
+	cmd_playlist_help ();
 	print_error ("Unrecognised playlist command: %s", argv[2]);
 }
 
