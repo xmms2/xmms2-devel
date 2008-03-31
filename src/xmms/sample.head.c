@@ -100,7 +100,7 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	                                   conv->resample);
 
 	if (!conv->func) {
-		xmms_object_unref(conv);
+		xmms_object_unref (conv);
 		xmms_log_error ("Can not convert between requested formats");
 		return NULL;
 	}
