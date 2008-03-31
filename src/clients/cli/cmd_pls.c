@@ -589,7 +589,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	/* rounding */
 	total_playtime += 500;
 
-	print_info ("\nTotal playtime: %d:%02d:%02d", total_playtime / 3600000, 
+	print_info ("\nTotal playtime: %d:%02d:%02d", total_playtime / 3600000,
 	            (total_playtime / 60000) % 60, (total_playtime / 1000) % 60);
 }
 
