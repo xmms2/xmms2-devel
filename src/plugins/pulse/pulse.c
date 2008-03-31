@@ -248,7 +248,7 @@ xmms_pulse_volume_set (xmms_output_t *output,
 
 	g_return_val_if_fail (volume <= 100, FALSE);
 
-	return xmms_pulse_backend_volume_set(data->pulse, volume);
+	return xmms_pulse_backend_volume_set (data->pulse, volume);
 }
 
 
