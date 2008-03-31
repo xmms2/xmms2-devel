@@ -132,8 +132,8 @@ static void drain_result_cb (pa_stream *s, int success, void *userdata) {
  * Public API.
  */
 xmms_pulse *
-xmms_pulse_backend_new(const char *server, const char *name,
-		       int *rerror) {
+xmms_pulse_backend_new (const char *server, const char *name,
+                        int *rerror) {
 	xmms_pulse *p;
 	int error = PA_ERR_INTERNAL;
 
