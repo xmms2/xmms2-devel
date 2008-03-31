@@ -1453,7 +1453,7 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 		g_free (url);
 		return NULL;
 	}
-	
+
 	last = add_effects (last, entry, goal_formats);
 	if (!last) {
 		g_free (url);
