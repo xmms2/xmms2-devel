@@ -187,16 +187,16 @@ xmms_output_private_data_set (xmms_output_t *output, gpointer data)
 void
 xmms_output_stream_type_add (xmms_output_t *output, ...)
 {
-        xmms_stream_type_t *f;
+	xmms_stream_type_t *f;
 	va_list ap;
 
 	va_start (ap, output);
 	f = xmms_stream_type_parse (ap);
 	va_end (ap);
 
-        g_return_if_fail (f);
+	g_return_if_fail (f);
 
-        output->format_list = g_list_append (output->format_list, f);
+	output->format_list = g_list_append (output->format_list, f);
 }
 
 void
