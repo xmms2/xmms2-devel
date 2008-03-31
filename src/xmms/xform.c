@@ -1511,7 +1511,7 @@ xmms_xform_chain_setup_rehash (xmms_medialib_entry_t entry,
 		g_free (url);
 		return NULL;
 	}
-	
+
 	chain_finalize (xform, entry, url, TRUE);
 	g_free (url);
 	return xform;
