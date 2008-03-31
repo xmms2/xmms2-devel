@@ -154,7 +154,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 		print_info ("%s%s", padstring, buf);
 	}
 
-	g_free(padstring);
+	g_free (padstring);
 }
 
 gchar*
