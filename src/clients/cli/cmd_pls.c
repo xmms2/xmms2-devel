@@ -161,8 +161,8 @@ cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_result_wait (res);
 
 			if (xmmsc_result_iserror (res)) {
-				print_error ("Couldn't add %d to playlist: %s", id, 
-							 xmmsc_result_get_error (res));
+				print_error ("Couldn't add %d to playlist: %s", id,
+				             xmmsc_result_get_error (res));
 			}
 			xmmsc_result_unref (res);
 
