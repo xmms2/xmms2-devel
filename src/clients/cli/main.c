@@ -134,7 +134,7 @@ read_config ()
 	gint read_bytes = 0;
 	struct stat st;
 	FILE *fp;
-	
+
 	gchar userconf[PATH_MAX];
 	xmmsc_userconfdir_get (userconf, PATH_MAX);
 	file = g_build_path (G_DIR_SEPARATOR_S, userconf,
