@@ -555,11 +555,11 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			}
 		} else if (!res_has_key (info_res, "title")) {
 			const gchar *url;
-		  	gchar dur[10];
-			
+			gchar dur[10];
+
 			xmmsc_entry_format (dur, sizeof (dur),
 			                    "(${minutes}:${seconds})", info_res);
-			
+
 			if (xmmsc_result_get_dict_entry_string (info_res, "url", &url)) {
 				gchar *filename = g_path_get_basename (url);
 				if (filename) {
