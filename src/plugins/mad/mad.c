@@ -300,7 +300,7 @@ xmms_mad_init (xmms_xform_t *xform)
 			/* FIXME: add a check for ignore_lame_headers from the medialib */
 			data->frames_to_skip = 1;
 			data->samples_to_skip = lame->start_delay;
-			data->samples_to_play = ((guint64) xmms_xing_get_frames (data->xing) * 1152ULL) - 
+			data->samples_to_play = ((guint64) xmms_xing_get_frames (data->xing) * 1152ULL) -
 			                        lame->start_delay - lame->end_padding;
 			XMMS_DBG ("Samples to skip in the beginning: %d, total: %" G_GINT64_FORMAT,
 			          data->samples_to_skip, data->samples_to_play);
