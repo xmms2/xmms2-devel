@@ -89,10 +89,10 @@ void
 cmd_stop (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	
+
 	res = xmmsc_playback_stop (conn);
 	xmmsc_result_wait (res);
-	
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("Couldn't stop playback: %s",
 		             xmmsc_result_get_error (res));
