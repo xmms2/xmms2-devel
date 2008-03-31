@@ -186,8 +186,8 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 		break;
 
 	case XMMS_COLLECTION_TYPE_EQUALS:
-		xmmsc_coll_attribute_get(coll, "field",  &attr1);
-		xmmsc_coll_attribute_get(coll, "value", &attr2);
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sEquals ('%s', '%s') for:", indent, attr1, attr2);
 		xmmsc_coll_operand_list_first (coll);
 		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
