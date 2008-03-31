@@ -745,7 +745,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 		if (xmmsc_result_iserror (saveres)) {
 			print_error ("Couldn't save %s : %s",
-				         name, xmmsc_result_get_error (saveres));
+			             name, xmmsc_result_get_error (saveres));
 		}
 
 		xmmsc_coll_unref (newcoll);
