@@ -570,7 +570,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 				}
 			}
 		} else {
-			xmmsc_entry_format (line, sizeof(line), listformat, info_res);
+			xmmsc_entry_format (line, sizeof (line), listformat, info_res);
 		}
 
 		if (p == pos) {
