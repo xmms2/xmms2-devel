@@ -230,9 +230,9 @@ main (int argc, char **argv)
 
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);
 	xmmsc_disconnect_callback_set (conn, disconnected, NULL);
-	
+
 	register_service ();
-	
+
 	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
