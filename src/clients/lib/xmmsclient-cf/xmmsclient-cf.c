@@ -64,7 +64,7 @@ xmmsc_setup_with_cf (xmmsc_connection_t *c)
 
 	context.version = 0;
 	context.info = c;
-	context.retain = NULL; 
+	context.retain = NULL;
 	context.release = NULL;
 	context.copyDescription = NULL;
 
