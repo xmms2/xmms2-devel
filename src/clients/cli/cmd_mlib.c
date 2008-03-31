@@ -128,7 +128,7 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("Broken resultset");
 		}
 		xmmsc_result_unref (res);
-		
+
 		res = xmmsc_medialib_get_info (conn, id);
 		xmmsc_result_wait (res);
 
