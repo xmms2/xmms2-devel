@@ -404,7 +404,7 @@ xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 	                     xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
 	g_hash_table_insert (hash, "type",
 	                     xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
-	
+
 	*list = g_list_prepend (*list, xmms_object_cmd_value_dict_new (hash));
 
 	return TRUE;
