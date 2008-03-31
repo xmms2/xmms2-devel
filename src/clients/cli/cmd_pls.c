@@ -810,7 +810,7 @@ cmd_playlist_active (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	if (!xmmsc_result_iserror (active_res) &&
 	    xmmsc_result_get_string (active_res, &active_name)) {
-		print_info("%s",active_name);
+		print_info ("%s",active_name);
 	}
 
 	xmmsc_result_unref (active_res);
