@@ -127,7 +127,7 @@ cmd_playlist (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gint i;
 	if (argc < 3) {
-		cmd_playlist_help();
+		cmd_playlist_help ();
 		return;
 	}
 
