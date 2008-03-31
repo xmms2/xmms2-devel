@@ -404,8 +404,8 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	/* Create a reference collection to the saved coll */
 	collref = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
- 	xmmsc_coll_attribute_set (collref, "reference", name);
- 	xmmsc_coll_attribute_set (collref, "namespace", namespace);
+	xmmsc_coll_attribute_set (collref, "reference", name);
+	xmmsc_coll_attribute_set (collref, "namespace", namespace);
 
 	res = xmmsc_coll_query_ids (conn, collref, (const gchar**)order, 0, 0);
 	xmmsc_result_wait (res);
