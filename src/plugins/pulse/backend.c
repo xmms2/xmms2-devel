@@ -493,23 +493,23 @@ int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol) {
 		return FALSE;
 	}
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
 	if (p->stream != NULL) {
-		pa_cvolume_set(&cvol, p->sample_spec.channels,
-		               PA_VOLUME_NORM * vol / 100);
+		pa_cvolume_set (&cvol, p->sample_spec.channels,
+		                PA_VOLUME_NORM * vol / 100);
 
-		idx = pa_stream_get_index(p->stream);
+		idx = pa_stream_get_index (p->stream);
 
-		o = pa_context_set_sink_input_volume(p->context, idx, &cvol,
-		                                     volume_set_cb, &res);
+		o = pa_context_set_sink_input_volume (p->context, idx, &cvol,
+		                                      volume_set_cb, &res);
 		if (o) {
 			/* wait for result to land */
-			while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-				pa_threaded_mainloop_wait(p->mainloop);
+			while (pa_operation_get_state (o) != PA_OPERATION_DONE) {
+				pa_threaded_mainloop_wait (p->mainloop);
 			}
 
-			pa_operation_unref(o);
+			pa_operation_unref (o);
 
 			/* The cb set res to 1 or 0 depending on success */
 			if (res) {
