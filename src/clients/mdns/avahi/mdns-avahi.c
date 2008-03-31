@@ -60,8 +60,8 @@ handle_quit (xmmsc_result_t *res, void *data)
 
 static void
 group_callback (AvahiEntryGroup *g,
-				AvahiEntryGroupState state,
-				void *userdata)
+                AvahiEntryGroupState state,
+                void *userdata)
 {
 	g_return_if_fail (g == group);
 
