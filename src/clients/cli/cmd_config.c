@@ -52,7 +52,7 @@ cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		return;
 	}
 
-	if (g_ascii_strcasecmp(argv[3], "=") == 0) {
+	if (g_ascii_strcasecmp (argv[3], "=") == 0) {
 		value = argv[4];
 	} else {
 		value = argv[3];
