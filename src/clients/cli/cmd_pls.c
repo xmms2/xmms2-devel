@@ -378,7 +378,7 @@ cmd_shuffle (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (argc == 3) {
 		playlist = argv[2];
 	}
-	
+
 	res = xmmsc_playlist_shuffle (conn, playlist);
 	xmmsc_result_wait (res);
 
