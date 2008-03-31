@@ -1062,7 +1062,7 @@ xmms_playlist_add_idlist (xmms_playlist_t *playlist, gchar *plname,
 		}
 	}
 
-	for (idlist = xmmsc_coll_get_idlist(coll); *idlist; idlist++) {
+	for (idlist = xmmsc_coll_get_idlist (coll); *idlist; idlist++) {
 		xmms_playlist_add_entry (playlist, plname, *idlist, err);
 	}
 
