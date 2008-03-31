@@ -489,7 +489,7 @@ cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 		xmmsc_result_unref (res);
 	}
-	
+
 	g_free (sort);
 }
 
