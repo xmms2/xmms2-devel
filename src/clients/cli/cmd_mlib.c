@@ -526,7 +526,7 @@ cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 			res2 = xmmsc_medialib_entry_property_set_str (conn, id, "picture_front", hash);
 			xmmsc_result_wait (res2);
-			
+
 			if (xmmsc_result_iserror (res2)) {
 				print_info ("%s", xmmsc_result_get_error (res2));
 			}
