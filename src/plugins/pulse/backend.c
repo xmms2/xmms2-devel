@@ -110,21 +110,21 @@ static void stream_state_cb (pa_stream *s, void * userdata) {
 	}
 }
 
-static void stream_latency_update_cb(pa_stream *s, void *userdata) {
-	signal_mainloop(userdata);
+static void stream_latency_update_cb (pa_stream *s, void *userdata) {
+	signal_mainloop (userdata);
 }
 
-static void stream_request_cb(pa_stream *s, size_t length, void *userdata) {
-	signal_mainloop(userdata);
+static void stream_request_cb (pa_stream *s, size_t length, void *userdata) {
+	signal_mainloop (userdata);
 }
 
-static void drain_result_cb(pa_stream *s, int success, void *userdata) {
+static void drain_result_cb (pa_stream *s, int success, void *userdata) {
 	xmms_pulse *p = userdata;
-	assert(s);
-	assert(p);
+	assert (s);
+	assert (p);
 
 	p->operation_success = success;
-	signal_mainloop(userdata);
+	signal_mainloop (userdata);
 }
 
 
