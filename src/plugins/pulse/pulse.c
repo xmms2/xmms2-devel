@@ -230,7 +230,7 @@ xmms_pulse_flush (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	if (data->pulse)
-		xmms_pulse_backend_flush(data->pulse, NULL);
+		xmms_pulse_backend_flush (data->pulse, NULL);
 }
 
 
