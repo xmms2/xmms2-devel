@@ -28,12 +28,12 @@ xmmsc_io_cf_toggle_socket_flags (int toggle, void *userdata)
 		CFSocketDisableCallBacks (sockRef, kCFSocketWriteCallBack);
 }
 
-static void 
-xmmsc_io_cf_event_callback (CFSocketRef s, 
-							 CFSocketCallBackType type, 
-							 CFDataRef address, 
-							 const void *data, 
-							 void *info)
+static void
+xmmsc_io_cf_event_callback (CFSocketRef s,
+                            CFSocketCallBackType type,
+                            CFDataRef address,
+                            const void *data,
+                            void *info)
 {
 	CFSocketContext context;
 
