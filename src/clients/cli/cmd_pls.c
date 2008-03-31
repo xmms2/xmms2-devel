@@ -766,7 +766,7 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	active_res = xmmsc_playlist_current_active (conn);
 	xmmsc_result_wait (active_res);
 
-	if (xmmsc_result_iserror (active_res) || 
+	if (xmmsc_result_iserror (active_res) ||
 	    !xmmsc_result_get_string (active_res, &active_name)) {
 		active_name = NULL;
 	}
