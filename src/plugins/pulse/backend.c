@@ -259,7 +259,7 @@ gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
 	pa_stream_set_latency_update_callback(p->stream, stream_latency_update_cb, p);
 
 	pa_cvolume_set(&cvol, p->sample_spec.channels,
-	               PA_VOLUME_NORM * p->volume / 100),
+	               PA_VOLUME_NORM * p->volume / 100);
 
 	ret = pa_stream_connect_playback(
 		p->stream, sink, NULL,
