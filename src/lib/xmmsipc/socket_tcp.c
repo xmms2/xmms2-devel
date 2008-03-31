@@ -82,7 +82,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 
-	if ((gai_errno = getaddrinfo (url->host[0] ? url->host : NULL, url->port[0] ? url->port : XMMS_STRINGIFY (XMMS_DEFAULT_TCP_PORT), &hints, &addrinfos))) {
+	if ((gai_errno = xmms_getaddrinfo (url->host[0] ? url->host : NULL, url->port[0] ? url->port : XMMS_STRINGIFY (XMMS_DEFAULT_TCP_PORT), &hints, &addrinfos))) {
 		return NULL;
 	}
 
@@ -104,7 +104,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 		close (fd);
 	}
 
-	freeaddrinfo (addrinfos);
+	xmms_freeaddrinfo (addrinfos);
 
 	if (!addrinfo) {
 		return NULL;
@@ -186,7 +186,7 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 
-	if ((gai_errno = getaddrinfo (url->host[0] ? url->host : NULL, url->port[0] ? url->port : XMMS_STRINGIFY (XMMS_DEFAULT_TCP_PORT), &hints, &addrinfos))) {
+	if ((gai_errno = xmms_getaddrinfo (url->host[0] ? url->host : NULL, url->port[0] ? url->port : XMMS_STRINGIFY (XMMS_DEFAULT_TCP_PORT), &hints, &addrinfos))) {
 		return NULL;
 	}
 
@@ -211,7 +211,7 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 		close (fd);
 	}
 
-	freeaddrinfo (addrinfos);
+	xmms_freeaddrinfo (addrinfos);
 
 	if (!addrinfo) {
 		return NULL;

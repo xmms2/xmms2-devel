@@ -58,7 +58,7 @@ daap_open_connection (gchar *host, gint port)
 		return NULL;
 	}
 
-	/* call getaddrinfo() to convert a hostname to ip */
+	/* call xmms_getaddrinfo() to convert a hostname to ip */
 
 	ai_hint = g_new0 (struct addrinfo, 1);
 	/* FIXME sometime in the future, we probably want to append
@@ -66,7 +66,7 @@ daap_open_connection (gchar *host, gint port)
 	ai_hint->ai_family = AF_INET;
 	ai_hint->ai_protocol = PF_INET;
 
-	while ((ai_status = getaddrinfo (host, NULL, ai_hint, &ai_result))) {
+	while ((ai_status = xmms_getaddrinfo (host, NULL, ai_hint, &ai_result))) {
 		if (ai_status != EAI_AGAIN) {
 			XMMS_DBG ("Error with getaddrinfo(): %s", gai_strerror (ai_status));
 			g_io_channel_unref (sock_chan);
@@ -81,7 +81,7 @@ daap_open_connection (gchar *host, gint port)
 	server.sin_port = htons (port);
 
 	g_free (ai_hint);
-	freeaddrinfo (ai_result);
+	xmms_freeaddrinfo (ai_result);
 
 	while (42) {
 		fd_set fds;

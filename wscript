@@ -329,6 +329,39 @@ def configure(conf):
         conf.env['socket_impl'] = 'socket'
     # Check win32 (winsock2) socket support
     elif Params.g_platform == 'win32':
+        if Params.g_options.winver:
+            major, minor = [int(x) for x in Params.g_options.winver.split('.')]
+        else:
+            try:
+                major, minor = sys.getwindowsversion()[:2]
+            except AttributeError, e:
+                Params.warning('No Windows version found and no version set. ' +
+                               'Defaulting to 5.1 (XP). You will not be able ' +                               'to use this build of XMMS2 on older Windows ' +
+                               'versions.')
+                major, minor = (5, 1)
+        need_wspiapi = True
+        if (major >= 5 and minor >= 1):
+            need_wspiapi = False
+        conf.check_header2('windows.h')
+        conf.check_header2('ws2tcpip.h')
+        conf.check_header2('winsock2.h')
+        conf.env['CCDEFINES'] += ['HAVE_WINSOCK2']
+        conf.env['CXXDEFINES'] += ['HAVE_WINSOCK2']
+        h = conf.create_header_configurator()
+        h.name = 'wspiapi.h'
+        h.header_code = "#include <windows.h>\n#include <ws2tcpip.h>"
+        if h.run():
+            conf.env['CCDEFINES'] += ['HAVE_WSPIAPI']
+        elif need_wspiapi:
+            Params.fatal('XMMS2 requires WSPiApi.h on Windows versions prior ' +
+                         'to XP. WSPiApi.h is provided by the Platform SDK.')
+        else:
+            print('This XMMS2 will only run on Windows XP and newer ' +
+                  'machines. If you are planning to use XMMS2 on older ' +
+                  'versions of Windows or are packaging a binary, please ' +
+                  'consider installing the WSPiApi.h header for ' +
+                  'compatibility. It is provided by the Platform SDK.')
+        conf.env['CCDEFINES'] += ['_WIN32_WINNT=0x%02x%02x' % (major, minor)]
         if not conf.check_library2("wsock32", uselib='socket'):
             Params.fatal("xmms2 requires wsock32 on windows.")
         conf.env.append_unique('LIB_socket', 'ws2_32')
@@ -385,7 +418,8 @@ def set_options(opt):
     opt.add_option('--with-libdir', type='string', dest='libdir')
     opt.add_option('--with-pkgconfigdir', type='string', dest='pkgconfigdir')
     opt.add_option('--with-target-platform', type='string',
-	               dest='target_platform')
+                   dest='target_platform')
+    opt.add_option('--with-windows-version', type='string', dest='winver')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)

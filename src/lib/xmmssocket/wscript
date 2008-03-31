@@ -14,6 +14,7 @@ def build(bld):
     else:
         obj.source.append("socket_unix.c")
     obj.includes='. ../../include'
+    obj.uselib='socket'
     obj.target='xmmssocket'
     obj.install_var = 0
 

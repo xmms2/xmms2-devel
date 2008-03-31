@@ -4,10 +4,7 @@
 #include <xmmsc/xmmsc_stdbool.h>
 
 /* Windows */
-
-#ifdef __WIN32__
-/* Only support Windows XP and newer */
-#define _WIN32_WINNT 0x0501
+#ifdef HAVE_WINSOCK2
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef SOCKET xmms_socket_t;
@@ -15,8 +12,6 @@ typedef int socklen_t;
 #define XMMS_EINTR WSAEINTR
 #define XMMS_EAGAIN WSAEWOULDBLOCK
 #define XMMS_EINPROGRESS WSAEINPROGRESS
-
-
 /* UNIX */
 #else
 #define SOCKET_ERROR (-1)
@@ -48,5 +43,8 @@ int xmms_socket_valid(xmms_socket_t socket);
 void xmms_socket_close(xmms_socket_t socket);
 int xmms_socket_errno(void);
 bool xmms_socket_error_recoverable(void);
+int xmms_getaddrinfo (const char *node, const char *service,
+                      const struct addrinfo *hints, struct addrinfo **res);
+void xmms_freeaddrinfo (struct addrinfo *res);
 
 #endif
