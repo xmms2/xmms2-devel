@@ -76,8 +76,8 @@ dns_ipc_source_check (GSource *source)
 }
 
 static gboolean
-dns_ipc_source_dispatch (GSource *source, GSourceFunc callback, 
-						 gpointer user_data)
+dns_ipc_source_dispatch (GSource *source, GSourceFunc callback,
+                         gpointer user_data)
 {
 	if (pollfd->revents & G_IO_IN) {
 		if (DNSServiceProcessResult (g_sdref) != kDNSServiceErr_NoError) {
