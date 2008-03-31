@@ -32,12 +32,12 @@ static GPollFD *pollfd;
 static GMainLoop *ml;
 
 void
-dns_callback (DNSServiceRef sdref, 
-			  DNSServiceFlags flags, 
-			  DNSServiceErrorType errorCode, 
-			  const char *name, 
-			  const char *regtype, 
-			  const char *domain, void *context)
+dns_callback (DNSServiceRef sdref,
+              DNSServiceFlags flags,
+              DNSServiceErrorType errorCode,
+              const char *name,
+              const char *regtype,
+              const char *domain, void *context)
 {
 	if (errorCode == kDNSServiceErr_NoError) {
 		printf ("Registered: %s %s %s\n", name, regtype, domain);
