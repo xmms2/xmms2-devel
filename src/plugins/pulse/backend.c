@@ -236,84 +236,83 @@ gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
 
 	/* The existing stream needs to be shut down. */
 	if (p->stream)
-		xmms_pulse_backend_close_stream(p);
+		xmms_pulse_backend_close_stream (p);
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
 
 	/* Configure the new stream. */
 	p->sample_spec.format = pa_format;
 	p->sample_spec.rate = samplerate;
 	p->sample_spec.channels = channels;
-	pa_channel_map_init_auto(&p->channel_map, channels, PA_CHANNEL_MAP_DEFAULT);
+	pa_channel_map_init_auto (&p->channel_map, channels, PA_CHANNEL_MAP_DEFAULT);
 
 	/* Create and set up the new stream. */
-	p->stream = pa_stream_new(p->context, stream_name, &p->sample_spec, &p->channel_map);
+	p->stream = pa_stream_new (p->context, stream_name, &p->sample_spec, &p->channel_map);
 	if (!p->stream) {
-		error = pa_context_errno(p->context);
+		error = pa_context_errno (p->context);
 		goto unlock_and_fail;
 	}
 
-	pa_stream_set_state_callback(p->stream, stream_state_cb, p);
-	pa_stream_set_write_callback(p->stream, stream_request_cb, p);
-	pa_stream_set_latency_update_callback(p->stream, stream_latency_update_cb, p);
+	pa_stream_set_state_callback (p->stream, stream_state_cb, p);
+	pa_stream_set_write_callback (p->stream, stream_request_cb, p);
+	pa_stream_set_latency_update_callback (p->stream, stream_latency_update_cb, p);
 
-	pa_cvolume_set(&cvol, p->sample_spec.channels,
-	               PA_VOLUME_NORM * p->volume / 100);
+	pa_cvolume_set (&cvol, p->sample_spec.channels,
+	                PA_VOLUME_NORM * p->volume / 100);
 
-	ret = pa_stream_connect_playback(
-		p->stream, sink, NULL,
-		PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
-		&cvol, NULL);
+	ret = pa_stream_connect_playback (p->stream, sink, NULL,
+	                                  PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
+	                                  &cvol, NULL);
 
 	if (ret < 0) {
-		error = pa_context_errno(p->context);
+		error = pa_context_errno (p->context);
 		goto unlock_and_fail;
 	}
 
 	/* Wait until the stream is ready */
-	while (pa_stream_get_state(p->stream) == PA_STREAM_CREATING) {
-		pa_threaded_mainloop_wait(p->mainloop);
-	}		
-	if (pa_stream_get_state(p->stream) != PA_STREAM_READY) {
-		error = pa_context_errno(p->context);
+	while (pa_stream_get_state (p->stream) == PA_STREAM_CREATING) {
+		pa_threaded_mainloop_wait (p->mainloop);
+	}
+	if (pa_stream_get_state (p->stream) != PA_STREAM_READY) {
+		error = pa_context_errno (p->context);
 		goto unlock_and_fail;
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return TRUE;
 
  unlock_and_fail:
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	if (rerror)
 		*rerror = error;
 	if (p->stream)
-		pa_stream_unref(p->stream);
+		pa_stream_unref (p->stream);
 	p->stream = NULL;
 	return FALSE;
 }
 
 
-void xmms_pulse_backend_close_stream(xmms_pulse *p)
+void xmms_pulse_backend_close_stream (xmms_pulse *p)
 {
-	assert(p);
+	assert (p);
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
 	/* We're killing it anyway, sod errors. */
-	xmms_pulse_backend_drain(p, NULL);
+	xmms_pulse_backend_drain (p, NULL);
 
-	pa_stream_disconnect(p->stream);
-	pa_stream_unref(p->stream);
+	pa_stream_disconnect (p->stream);
+	pa_stream_unref (p->stream);
 	p->stream = NULL;
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 }
 
-gboolean xmms_pulse_backend_write(xmms_pulse *p, const char *data,
-				  size_t length, int *rerror)
+gboolean xmms_pulse_backend_write (xmms_pulse *p, const char *data,
+                                   size_t length, int *rerror)
 {
-	assert(p);
+	assert (p);
 
 	if (!data || !length) {
 		if (rerror)
