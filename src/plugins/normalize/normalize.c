@@ -180,7 +180,7 @@ xmms_normalize_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 			                      data->buckets);
 			data->dirty = FALSE;
 		}
-		
+
 		compress_do (data->compress, buf, read);
 	}
 
