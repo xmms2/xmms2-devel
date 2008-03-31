@@ -143,83 +143,83 @@ xmms_pulse_backend_new (const char *server, const char *name,
 		return NULL;
 	}
 
-	p = g_new0(xmms_pulse, 1);
+	p = g_new0 (xmms_pulse, 1);
 	if (!p)
 		return NULL;
 
 	p->volume = 100;
 
-	p->mainloop = pa_threaded_mainloop_new();
+	p->mainloop = pa_threaded_mainloop_new ();
 	if (!p->mainloop)
 		goto fail;
 
-	p->context = pa_context_new(pa_threaded_mainloop_get_api(p->mainloop), name);
+	p->context = pa_context_new (pa_threaded_mainloop_get_api (p->mainloop), name);
 	if (!p->context)
 		goto fail;
 
-	pa_context_set_state_callback(p->context, context_state_cb, p);
+	pa_context_set_state_callback (p->context, context_state_cb, p);
 
-	if (pa_context_connect(p->context, server, 0, NULL) < 0) {
-		error = pa_context_errno(p->context);
+	if (pa_context_connect (p->context, server, 0, NULL) < 0) {
+		error = pa_context_errno (p->context);
 		goto fail;
 	}
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
-	if (pa_threaded_mainloop_start(p->mainloop) < 0)
+	if (pa_threaded_mainloop_start (p->mainloop) < 0)
 		goto unlock_and_fail;
 
 	/* Wait until the context is ready */
-	pa_threaded_mainloop_wait(p->mainloop);
+	pa_threaded_mainloop_wait (p->mainloop);
 
-	if (pa_context_get_state(p->context) != PA_CONTEXT_READY) {
-		error = pa_context_errno(p->context);
+	if (pa_context_get_state (p->context) != PA_CONTEXT_READY) {
+		error = pa_context_errno (p->context);
 		goto unlock_and_fail;
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return p;
 
  unlock_and_fail:
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
  fail:
 	if (rerror)
 		*rerror = error;
-	xmms_pulse_backend_free(p);
+	xmms_pulse_backend_free (p);
 	return NULL;
 }
 
 
-void xmms_pulse_backend_free(xmms_pulse *p) {
-	assert(p);
+void xmms_pulse_backend_free (xmms_pulse *p) {
+	assert (p);
 
 	if (p->stream)
-		xmms_pulse_backend_close_stream(p);
+		xmms_pulse_backend_close_stream (p);
 	if (p->mainloop)
-		pa_threaded_mainloop_stop(p->mainloop);
+		pa_threaded_mainloop_stop (p->mainloop);
 	if (p->context)
-		pa_context_unref(p->context);
+		pa_context_unref (p->context);
 	if (p->mainloop)
-		pa_threaded_mainloop_free(p->mainloop);
+		pa_threaded_mainloop_free (p->mainloop);
 
-	g_free(p);
+	g_free (p);
 }
 
 
-gboolean xmms_pulse_backend_set_stream(xmms_pulse *p, const char *stream_name,
-				       const char *sink,
-				       xmms_sample_format_t format,
-				       int samplerate, int channels,
-				       int *rerror) {
+gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
+                                        const char *sink,
+                                        xmms_sample_format_t format,
+                                        int samplerate, int channels,
+                                        int *rerror) {
 	pa_sample_format_t pa_format = PA_SAMPLE_INVALID;
 	pa_cvolume cvol;
 	int error = PA_ERR_INTERNAL;
 	int ret;
 	int i;
-	assert(p);
+	assert (p);
 
 	/* Convert the XMMS2 sample format to the pulse format. */
-	for (i = 0; i < G_N_ELEMENTS(xmms_pulse_formats); i++) {
+	for (i = 0; i < G_N_ELEMENTS (xmms_pulse_formats); i++) {
 		if (xmms_pulse_formats[i].xmms_fmt == format) {
 			pa_format = xmms_pulse_formats[i].pulse_fmt;
 			break;
