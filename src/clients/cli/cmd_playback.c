@@ -142,7 +142,7 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("You need to specify a number of seconds. Usage:\n"
 		             "xmms2 seek n  - seek to absolute position in song\n"
 		             "xmms2 seek +n - seek n seconds forward in song\n"
-                     "xmms2 seek -n - seek n seconds backwards");
+		             "xmms2 seek -n - seek n seconds backwards");
 	}
 
 	/* parse the movement argument */
