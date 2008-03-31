@@ -166,7 +166,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
-	
+
 	if (!xmmsc_result_get_uint (res, &dur)) {
 		print_error ("Broken resultset");
 	}
