@@ -124,7 +124,7 @@ coll_idlist_to_string (xmmsc_coll_t *coll)
 
 	idlist = xmmsc_coll_get_idlist (coll);
 	for (i = 0; idlist[i] != 0; ++i) {
-		if(i > 0) {
+		if (i > 0) {
 			g_string_append (s, ", ");
 		}
 		g_string_append_printf (s, "%d", idlist[i]);
