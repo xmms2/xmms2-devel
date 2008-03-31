@@ -577,7 +577,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		gboolean b;
 
 		/* I'm a bit paranoid */
-		g_assert (num_cols == sqlite3_data_count(stm));
+		g_assert (num_cols == sqlite3_data_count (stm));
 
 		for (i = 0; i < num_cols; i++) {
 			row[i] = xmms_sqlite_column_to_val (stm, i);
