@@ -394,97 +394,97 @@ gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror) {
 
  unlock_and_fail:
 	if (o) {
-		pa_operation_cancel(o);
-		pa_operation_unref(o);
+		pa_operation_cancel (o);
+		pa_operation_unref (o);
 	}
 
 	return FALSE;
 }
 
 
-gboolean xmms_pulse_backend_flush(xmms_pulse *p, int *rerror) {
+gboolean xmms_pulse_backend_flush (xmms_pulse *p, int *rerror) {
 	pa_operation *o;
 
-	pa_threaded_mainloop_lock(p->mainloop);
-	if (!check_pulse_health(p, rerror))
+	pa_threaded_mainloop_lock (p->mainloop);
+	if (!check_pulse_health (p, rerror))
 		goto unlock_and_fail;
 
-	o = pa_stream_flush(p->stream, drain_result_cb, p);
+	o = pa_stream_flush (p->stream, drain_result_cb, p);
 	if (!o) {
 		if (rerror)
-			*rerror = pa_context_errno((p)->context);
+			*rerror = pa_context_errno ((p)->context);
 		goto unlock_and_fail;
 	}
 
 	p->operation_success = 0;
-	while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-		pa_threaded_mainloop_wait(p->mainloop);
-		if (!check_pulse_health(p, rerror))
+	while (pa_operation_get_state (o) != PA_OPERATION_DONE) {
+		pa_threaded_mainloop_wait (p->mainloop);
+		if (!check_pulse_health (p, rerror))
 			goto unlock_and_fail;
 	}
-	pa_operation_unref(o);
+	pa_operation_unref (o);
 	o = NULL;
 	if (!p->operation_success) {
 		if (rerror)
-			*rerror = pa_context_errno((p)->context);
+			*rerror = pa_context_errno ((p)->context);
 		goto unlock_and_fail;
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return 0;
-    
+
  unlock_and_fail:
 	if (o) {
-		pa_operation_cancel(o);
-		pa_operation_unref(o);
+		pa_operation_cancel (o);
+		pa_operation_unref (o);
 	}
-    
-	pa_threaded_mainloop_unlock(p->mainloop);
+
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return -1;
 }
 
 
-int xmms_pulse_backend_get_latency(xmms_pulse *p, int *rerror) {
+int xmms_pulse_backend_get_latency (xmms_pulse *p, int *rerror) {
 	pa_usec_t t;
 	int negative, r;
-	assert(p);
+	assert (p);
 
-	pa_threaded_mainloop_lock(p->mainloop);
+	pa_threaded_mainloop_lock (p->mainloop);
 
 	while (1) {
-		if (!check_pulse_health(p, rerror))
+		if (!check_pulse_health (p, rerror))
 			goto unlock_and_fail;
 
-		if (pa_stream_get_latency(p->stream, &t, &negative) >= 0)
+		if (pa_stream_get_latency (p->stream, &t, &negative) >= 0)
 			break;
 
-		r = pa_context_errno(p->context);
+		r = pa_context_errno (p->context);
 		if (r != PA_ERR_NODATA) {
 			if (rerror)
 				*rerror = r;
 			goto unlock_and_fail;
 		}
 		/* Wait until latency data is available again */
-		pa_threaded_mainloop_wait(p->mainloop);
+		pa_threaded_mainloop_wait (p->mainloop);
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 
 	return negative ? 0 : t;
 
  unlock_and_fail:
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return -1;
 }
 
 
-void volume_set_cb(pa_context *c, int success, void *udata) {
+void volume_set_cb (pa_context *c, int success, void *udata) {
 	int *res = (int *) udata;
 	*res = success;
 }
 
 
-int xmms_pulse_backend_volume_set(xmms_pulse *p, unsigned int vol) {
+int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol) {
 	pa_operation *o;
 	pa_cvolume cvol;
 	int idx, res = 0;
