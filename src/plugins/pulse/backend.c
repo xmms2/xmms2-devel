@@ -95,14 +95,14 @@ static void context_state_cb (pa_context *c, void *userdata) {
 	}
 }
 
-static void stream_state_cb(pa_stream *s, void * userdata) {
-	assert(s);
+static void stream_state_cb (pa_stream *s, void * userdata) {
+	assert (s);
 
-	switch (pa_stream_get_state(s)) {
+	switch (pa_stream_get_state (s)) {
 	case PA_STREAM_READY:
 	case PA_STREAM_FAILED:
 	case PA_STREAM_TERMINATED:
-		signal_mainloop(userdata);
+		signal_mainloop (userdata);
 
 	case PA_STREAM_UNCONNECTED:
 	case PA_STREAM_CREATING:
