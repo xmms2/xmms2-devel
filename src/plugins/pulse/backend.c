@@ -353,40 +353,40 @@ gboolean xmms_pulse_backend_write (xmms_pulse *p, const char *data,
 		length -= buf_len;
 	}
 
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return TRUE;
 
  unlock_and_fail:
-	pa_threaded_mainloop_unlock(p->mainloop);
+	pa_threaded_mainloop_unlock (p->mainloop);
 	return FALSE;
 }
 
 
-gboolean xmms_pulse_backend_drain(xmms_pulse *p, int *rerror) {
+gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror) {
 	pa_operation *o = NULL;
-	assert(p);
+	assert (p);
 
-	if (!check_pulse_health(p, rerror))
+	if (!check_pulse_health (p, rerror))
 		goto unlock_and_fail;
 
-	o = pa_stream_drain(p->stream, drain_result_cb, p);
+	o = pa_stream_drain (p->stream, drain_result_cb, p);
 	if (!o) {
 		if (rerror)
-			*rerror = pa_context_errno((p)->context);
+			*rerror = pa_context_errno ((p)->context);
 		goto unlock_and_fail;
 	}
 
 	p->operation_success = 0;
-	while (pa_operation_get_state(o) != PA_OPERATION_DONE) {
-		pa_threaded_mainloop_wait(p->mainloop);
-		if (!check_pulse_health(p, rerror))
+	while (pa_operation_get_state (o) != PA_OPERATION_DONE) {
+		pa_threaded_mainloop_wait (p->mainloop);
+		if (!check_pulse_health (p, rerror))
 			goto unlock_and_fail;
 	}
-	pa_operation_unref(o);
+	pa_operation_unref (o);
 	o = NULL;
 	if (!p->operation_success) {
 		if (rerror)
-			*rerror = pa_context_errno((p)->context);
+			*rerror = pa_context_errno ((p)->context);
 		goto unlock_and_fail;
 	}
 
