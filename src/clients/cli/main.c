@@ -169,7 +169,7 @@ read_config ()
 
 		while (read_bytes < st.st_size) {
 			guint ret = fread (buffer + read_bytes,
-							   st.st_size - read_bytes, 1, fp);
+			                   st.st_size - read_bytes, 1, fp);
 
 			if (ret == 0) {
 				break;
