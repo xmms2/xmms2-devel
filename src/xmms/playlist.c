@@ -1054,7 +1054,7 @@ xmms_playlist_add_idlist (xmms_playlist_t *playlist, gchar *plname,
 {
 	uint32_t *idlist;
 
-	for (idlist = xmmsc_coll_get_idlist(coll); *idlist; idlist++) {
+	for (idlist = xmmsc_coll_get_idlist (coll); *idlist; idlist++) {
 		if (!xmms_medialib_check_id (*idlist)) {
 			xmms_error_set (err, XMMS_ERROR_NOENT,
 			                "Idlist contains invalid medialib id!");
