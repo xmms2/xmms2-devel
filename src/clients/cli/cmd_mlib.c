@@ -317,7 +317,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 	g_free (args);
 	g_free (pattern);
-	
+
 	/* FIXME: Always add to active playlist: allow loading in other playlist! */
 	res = xmmsc_playlist_add_collection (conn, NULL, query, order);
 	xmmsc_result_wait (res);
