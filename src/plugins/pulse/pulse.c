@@ -213,7 +213,7 @@ xmms_pulse_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 		name = XMMS_PULSE_DEFAULT_NAME;
 
 	if (!xmms_pulse_backend_set_stream (data->pulse, name, sink, xmms_format,
-                                            samplerate, channels, NULL))
+	                                    samplerate, channels, NULL))
 		return FALSE;
 
 	return TRUE;
