@@ -544,7 +544,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		if (xmmsc_result_get_dict_entry_int (info_res, "duration", &playtime)) {
 			total_playtime += playtime;
 		}
-		
+
 		if (res_has_key (info_res, "channel")) {
 			if (res_has_key (info_res, "title")) {
 				xmmsc_entry_format (line, sizeof (line),
