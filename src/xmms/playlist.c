@@ -1625,7 +1625,7 @@ xmms_playlist_coll_get_currpos (xmmsc_coll_t *plcoll)
 static gint
 xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll)
 {
-	return xmmsc_coll_idlist_get_size(plcoll);
+	return xmmsc_coll_idlist_get_size (plcoll);
 }
 
 
