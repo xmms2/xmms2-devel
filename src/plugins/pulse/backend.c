@@ -71,21 +71,21 @@ static gboolean check_pulse_health (xmms_pulse *p, int *rerror) {
 /*
  * Callbacks to handle updates from the Pulse daemon.
  */
-static void signal_mainloop(void *userdata) {
+static void signal_mainloop (void *userdata) {
 	xmms_pulse *p = userdata;
-	assert(p);
+	assert (p);
 
-	pa_threaded_mainloop_signal(p->mainloop, 0);
+	pa_threaded_mainloop_signal (p->mainloop, 0);
 }
 
-static void context_state_cb(pa_context *c, void *userdata) {
-	assert(c);
+static void context_state_cb (pa_context *c, void *userdata) {
+	assert (c);
 
-	switch (pa_context_get_state(c)) {
+	switch (pa_context_get_state (c)) {
 	case PA_CONTEXT_READY:
 	case PA_CONTEXT_TERMINATED:
 	case PA_CONTEXT_FAILED:
-		signal_mainloop(userdata);
+		signal_mainloop (userdata);
 
 	case PA_CONTEXT_UNCONNECTED:
 	case PA_CONTEXT_CONNECTING:
