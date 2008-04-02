@@ -114,7 +114,7 @@ FETCH (res, key)
 				RETVAL = newSVpv (string_val, 0);
 				break;
 			default:
-				croak ("invalid arg type");
+				XSRETURN_UNDEF;
 		}
 
 		if (ret != 1) {
