@@ -139,16 +139,18 @@ xmms_segment_init (xmms_xform_t *xform)
 
 	g_return_val_if_fail (xform, FALSE);
 
+	xmms_xform_outdata_type_copy (xform);
+
 	/* get startms */
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_STARTMS;
 	if (!xmms_xform_metadata_get_str (xform, metakey, &nptr)) {
-		return FALSE;
+		return TRUE;
 	}
 
 	startms = (gint) strtol (nptr, &endptr, 10);
 	if (*endptr != '\0') {
 		XMMS_DBG ("\"startms\" has garbage!");
-		return FALSE;
+		return TRUE;
 	}
 
 	/* get stopms */
@@ -156,8 +158,8 @@ xmms_segment_init (xmms_xform_t *xform)
 	if (xmms_xform_metadata_get_str (xform, metakey, &nptr)) {
 		stopms = (gint) strtol (nptr, &endptr, 10);
 		if (*endptr != '\0') {
-			XMMS_DBG ("\"stopms\" has garbage");
-			return FALSE;
+			xmms_log_info ("\"stopms\" has garbage, ignoring");
+			stopms = INT_MAX;
 		}
 	} else {
 		/* This is the last track, stopms is the playback duration */
@@ -174,8 +176,6 @@ xmms_segment_init (xmms_xform_t *xform)
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		xmms_xform_metadata_set_int (xform, metakey, stopms - startms);
 	}
-
-	xmms_xform_outdata_type_copy (xform);
 
 	/* some calculation */
 	channels = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
@@ -207,7 +207,11 @@ xmms_segment_init (xmms_xform_t *xform)
 static void
 xmms_segment_destroy (xmms_xform_t *xform)
 {
-	g_free (xmms_xform_private_data_get (xform));
+	xmms_segment_data_t *data;
+
+	data = xmms_xform_private_data_get (xform);
+	if (data)
+		g_free (data);
 }
 
 static gint
@@ -220,14 +224,13 @@ xmms_segment_read (xmms_xform_t *xform,
 	gint res;
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, -1);
 
-	if (data->current_bytes + len >= data->stop_bytes) {
+	if (data && (data->current_bytes + len >= data->stop_bytes)) {
 		len = data->stop_bytes - data->current_bytes;
 	}
 
 	res = xmms_xform_read (xform, buf, len, error);
-	if (res > 0) {
+	if (data && (res > 0)) {
 		data->current_bytes += res;
 	}
 
@@ -244,10 +247,13 @@ xmms_segment_seek (xmms_xform_t *xform,
 	gint64 res;
 	gint64 tmp;
 
-	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
-
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, -1);
+
+	if (!data) {
+		return xmms_xform_seek (xform, samples, whence, error);
+	}
+
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 
 	if (samples < 0 ||
 	    samples > bytes_to_samples (data->unit,
