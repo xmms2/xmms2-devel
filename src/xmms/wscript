@@ -27,6 +27,7 @@ source = """config.c
             xform.c
             streamtype.c
             converter_plugin.c
+	    segment_plugin.c
             ringbuf_xform.c
             outputplugin.c
             strfunc.c

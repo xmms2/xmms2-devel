@@ -199,10 +199,12 @@ xmms_plugin_add_builtin_plugins (void)
 	extern const xmms_plugin_desc_t xmms_builtin_ringbuf;
 	extern const xmms_plugin_desc_t xmms_builtin_magic;
 	extern const xmms_plugin_desc_t xmms_builtin_converter;
+	extern const xmms_plugin_desc_t xmms_builtin_segment;
 
 	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
 	xmms_plugin_load (&xmms_builtin_magic, NULL);
 	xmms_plugin_load (&xmms_builtin_converter, NULL);
+	xmms_plugin_load (&xmms_builtin_segment, NULL);
 }
 
 

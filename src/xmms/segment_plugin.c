@@ -16,9 +16,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "xmms/xmms_object.h"
 #include "xmms/xmms_sample.h"
-#include "xmms/xmms_xformplugin.h"
+#include "xmmspriv/xmms_xform.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_error.h"
 
@@ -70,12 +69,6 @@ static gint64 xmms_segment_seek (xmms_xform_t *xform,
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("segment",
-                   "Segment Effect",
-                   XMMS_VERSION,
-                   "Handling segment information specified by startms/stopms",
-                   xmms_segment_plugin_setup);
-
 
 static inline gint64
 ms_to_samples (gint rate,
@@ -276,3 +269,10 @@ xmms_segment_seek (xmms_xform_t *xform,
 	                                        res);
 	return res - tmp;
 }
+
+XMMS_XFORM_BUILTIN (segment,
+                    "Segment Effect",
+                    XMMS_VERSION,
+                    "Handling segment information specified by startms/stopms",
+                    xmms_segment_plugin_setup);
+
