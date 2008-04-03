@@ -45,10 +45,6 @@ static gboolean xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gboolean xmms_gme_init (xmms_xform_t *decoder);
 static void xmms_gme_destroy (xmms_xform_t *decoder);
-#if 0 /* Works in progress */
-static gint64 xmms_gme_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
-static gboolean xmms_gme_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
-#endif
 
 /*
  * Plugin header
@@ -68,10 +64,6 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_gme_init;
 	methods.destroy = xmms_gme_destroy;
 	methods.read = xmms_gme_read;
-#if 0
-	methods.seek = xmms_gme_seek;
-	methods.browse = xmms_gme_browse;
-#endif
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -182,19 +174,18 @@ xmms_gme_init (xmms_xform_t *xform)
 			XMMS_DBG ("Invalid subtune index");
 			return FALSE;
 		}
-	}
-	else {
+	} else {
 		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES, gme_track_count (data->emu));
 	}
 
 	/*
 	 *  Get metadata here
 	 */
-	if ((init_error = gme_track_info (data->emu, &metadata, subtune))) {
+	init_error = gme_track_info (data->emu, &metadata, subtune);
+	if (init_error) {
 		XMMS_DBG ("Couldn't get GME track info: %s", init_error);
 		init_error = "";
-	}
-	else {
+	} else {
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, metadata.song);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, metadata.author);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, metadata.game);
@@ -211,8 +202,7 @@ xmms_gme_init (xmms_xform_t *xform)
 			if ((loops > 0) && (metadata.loop_length > 0)) {
 				fadelen = metadata.intro_length + loops * metadata.loop_length;
 				XMMS_DBG ("fadelen now = %ld", fadelen);
-			}
-			else {
+			} else {
 				fadelen = metadata.length;
 				XMMS_DBG ("fadelen now = %ld", fadelen);
 			}
@@ -231,7 +221,8 @@ xmms_gme_init (xmms_xform_t *xform)
 
 	XMMS_DBG ("gme.fadelen = %ld", fadelen);
 
-	if ((init_error = gme_start_track (data->emu, subtune))) {
+	init_error = gme_start_track (data->emu, subtune);
+	if (init_error) {
 		XMMS_DBG ("gme_start_track returned an error: %s", init_error);
 		return FALSE;
 	}
@@ -247,10 +238,6 @@ xmms_gme_init (xmms_xform_t *xform)
 	return TRUE;
 }
 
-/*
- * Don't be like Photoshop!
- * Give back what you borrowed!
- */
 static void
 xmms_gme_destroy (xmms_xform_t *xform)
 {
@@ -284,7 +271,8 @@ xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	if (gme_track_ended (data->emu))
 		return 0;
 
-	if ((play_error = gme_play (data->emu, len/2, buf))) {
+	play_error = gme_play (data->emu, len/2, buf);
+	if (play_error) {
 		XMMS_DBG ("gme_play returned an error: %s", play_error);
 		xmms_error_set (err, XMMS_ERROR_GENERIC, play_error);
 		return -1;
@@ -293,37 +281,3 @@ xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	return len;
 }
 
-/*
- * This function is going to be just a bit on the messy side, so I'll implement it later
- */
-#if 0
-static gint64
-xmms_gme_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
-{
-	xmms_gme_data_t *data;
-
-	g_return_val_if_fail (xform, FALSE);
-
-	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, FALSE);
-
-	return -1;
-}
-#endif
-
-/*
- * This function adds subtunes to the playlist
- */
-#if 0 /* Will begin notes on this method on the wiki so I can get it figured out */
-static gboolean
-xmms_gme_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
-{
-	int tracks;
-
-	g_return_val_if_fail (xform, FALSE);
-
-	tracks = gme_track_count (/* some emu from somewhere */);
-
-	return TRUE;
-}
-#endif
