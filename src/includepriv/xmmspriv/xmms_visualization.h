@@ -28,7 +28,7 @@ typedef struct xmms_visualization_St xmms_visualization_t;
 
 uint32_t xmms_visualization_version (xmms_visualization_t *vis, xmms_error_t *err);
 int32_t xmms_visualization_register_client (xmms_visualization_t *vis, xmms_error_t *err);
-int32_t xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, int32_t shmid, xmms_error_t *err);
+int32_t xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *shmid, xmms_error_t *err);
 int32_t xmms_visualization_init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
 int32_t xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, gchar *key, gchar *value, xmms_error_t *err);
 int32_t xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, GList *prop, xmms_error_t *err);

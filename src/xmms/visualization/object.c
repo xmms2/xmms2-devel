@@ -34,7 +34,7 @@ static xmms_visualization_t *vis = NULL;
 
 XMMS_CMD_DEFINE (query_version, xmms_visualization_version, xmms_visualization_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (registercl, xmms_visualization_register_client, xmms_visualization_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (init_shm, xmms_visualization_init_shm, xmms_visualization_t *, INT32, INT32, INT32);
+XMMS_CMD_DEFINE (init_shm, xmms_visualization_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
 XMMS_CMD_DEFINE (init_udp, xmms_visualization_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
 XMMS_CMD_DEFINE3 (property_set, xmms_visualization_property_set, xmms_visualization_t *, INT32, INT32, STRING, STRING);
 XMMS_CMD_DEFINE (properties_set, xmms_visualization_properties_set, xmms_visualization_t *, INT32, INT32, STRINGLIST);
@@ -272,8 +272,14 @@ xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, GList*
 }
 
 int32_t
-xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, int32_t shmid, xmms_error_t *err)
+xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *shmidstr, xmms_error_t *err)
 {
+	int shmid;
+
+	if (sscanf (shmidstr, "%d", &shmid) != 1) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "couldn't parse shmid");
+		return -1;
+	}
 	return init_shm (vis, id, shmid, err);
 }
 

@@ -16,15 +16,12 @@ setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)
 	xmmsc_vischunk_t *buffer;
 	xmmsc_vis_unixshm_t *t;
 	xmmsc_visualization_t *v;
+	char shmidstr[32];
 
 	x_check_conn (c, 0);
 	v = get_dataset (c, vv);
 
 	t = &v->transport.shm;
-
-	/* TODO: 64 bit architectures. It could be that the shm identifier is 64 bits long and is cut on transmission.
-	   We are unable to transmit 64 bit values currently. Workaround is to ignore this problem, which results in a silent
-	   fallback to UDP. */
 
 	/* prepare unixshm + semaphores */
 	/* following access modifiers imply everyone on the system could inject wrong vis data ;) */
@@ -40,7 +37,10 @@ setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)
 	/* send packet */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_INIT_SHM);
 	xmms_ipc_msg_put_int32 (msg, v->id);
-	xmms_ipc_msg_put_int32 (msg, t->shmid);
+	/* we send it as string to make it work on 64bit systems.
+	   Ugly? Yes, but works. */
+	snprintf (shmidstr, sizeof (shmidstr), "%d", t->shmid);
+	xmms_ipc_msg_put_string (msg, shmidstr);
 	res = xmmsc_send_msg (c, msg);
 
 	if (res) {
