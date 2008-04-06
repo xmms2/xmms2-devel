@@ -28,6 +28,8 @@
 
 struct xmms_stream_type_St {
 	xmms_object_t obj;
+	gint priority;
+	gchar *name;
 	GList *list;
 };
 
@@ -52,6 +54,8 @@ xmms_stream_type_destroy (xmms_object_t *obj)
 	xmms_stream_type_t *st = (xmms_stream_type_t *)obj;
 	GList *n;
 
+	g_free (st->name);
+
 	for (n = st->list; n; n = g_list_next (n)) {
 		xmms_stream_type_val_t *val = n->data;
 		if (val->type == STRING) {
@@ -73,13 +77,26 @@ xmms_stream_type_parse (va_list ap)
 		return NULL;
 	}
 
+	res->priority = -1;
+	res->name = NULL;
+
 	for (;;) {
 		xmms_stream_type_val_t *val;
 		xmms_stream_type_key_t key;
 
 		key = va_arg (ap, int);
 		if (key == XMMS_STREAM_TYPE_END)
-			return res;
+			break;
+
+		if (key == XMMS_STREAM_TYPE_NAME) {
+			res->name = g_strdup (va_arg (ap, char *));
+			continue;
+		}
+
+		if (key == XMMS_STREAM_TYPE_PRIORITY) {
+			res->priority = va_arg (ap, int);
+			continue;
+		}
 
 		val = g_new0 (xmms_stream_type_val_t, 1);
 		val->key = key;
@@ -102,13 +119,37 @@ xmms_stream_type_parse (va_list ap)
 		}
 		res->list = g_list_append (res->list, val);
 	}
-}
 
+	if (!res->name) {
+		const gchar *mime = xmms_stream_type_get_str (res, XMMS_STREAM_TYPE_MIMETYPE);
+		const gchar *url = xmms_stream_type_get_str (res, XMMS_STREAM_TYPE_URL);
+
+		if (mime && url) {
+			res->name = g_strconcat (mime, ":", url, NULL);
+		} else if (mime) {
+			res->name = g_strdup (mime);
+		} else {
+			g_assert_not_reached ();
+		}
+
+		g_strdelimit (res->name, ".", '_');
+	}
+
+	if (res->priority < 0) {
+		res->priority = XMMS_STREAM_TYPE_PRIORITY_DEFAULT;
+	}
+
+	return res;
+}
 
 const char *
 xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key)
 {
 	GList *n;
+
+	if (key == XMMS_STREAM_TYPE_NAME) {
+		return st->name;
+	}
 
 	for (n = st->list; n; n = g_list_next (n)) {
 		xmms_stream_type_val_t *val = n->data;
@@ -128,6 +169,10 @@ gint
 xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key)
 {
 	GList *n;
+
+	if (key == XMMS_STREAM_TYPE_PRIORITY) {
+		return st->priority;
+	}
 
 	for (n = st->list; n; n = g_list_next (n)) {
 		xmms_stream_type_val_t *val = n->data;

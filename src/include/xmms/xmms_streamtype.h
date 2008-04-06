@@ -30,10 +30,14 @@ typedef enum xmms_stream_type_key_E {
 	XMMS_STREAM_TYPE_FMT_FORMAT,
 	XMMS_STREAM_TYPE_FMT_CHANNELS,
 	XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+	XMMS_STREAM_TYPE_PRIORITY,
+	XMMS_STREAM_TYPE_NAME
 } xmms_stream_type_key_t;
 
 struct xmms_stream_type_St;
 typedef struct xmms_stream_type_St xmms_stream_type_t;
+
+#define XMMS_STREAM_TYPE_PRIORITY_DEFAULT 50
 
 const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
 gint xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
