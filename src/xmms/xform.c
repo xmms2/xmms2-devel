@@ -1193,12 +1193,17 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 }
 
 static gboolean
-xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st)
+xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st,
+                            gint *priority)
 {
 	GList *t;
 
 	for (t = plugin->in_types; t; t = g_list_next (t)) {
 		if (xmms_stream_type_match (t->data, st)) {
+			if (priority) {
+				*priority = xmms_stream_type_get_int (t->data,
+				                                      XMMS_STREAM_TYPE_PRIORITY);
+			}
 			return TRUE;
 		}
 	}
@@ -1208,6 +1213,7 @@ xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st)
 typedef struct match_state_St {
 	xmms_xform_plugin_t *match;
 	xmms_stream_type_t *out_type;
+	gint priority;
 } match_state_t;
 
 static gboolean
@@ -1215,9 +1221,9 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 {
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *)_plugin;
 	match_state_t *state = (match_state_t *)user_data;
+	gint priority;
 
 	g_assert (_plugin->type == XMMS_PLUGIN_TYPE_XFORM);
-	g_assert (!state->match);
 
 	if (!plugin->in_types) {
 		XMMS_DBG ("Skipping plugin '%s'", xmms_plugin_shortname_get (_plugin));
@@ -1225,10 +1231,20 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 	}
 
 	XMMS_DBG ("Trying plugin '%s'", xmms_plugin_shortname_get (_plugin));
-	if (xmms_xform_plugin_supports (plugin, state->out_type)) {
-		XMMS_DBG ("Plugin '%s' matched",  xmms_plugin_shortname_get (_plugin));
-		state->match = plugin;
-		return FALSE;
+	if (xmms_xform_plugin_supports (plugin, state->out_type, &priority)) {
+		XMMS_DBG ("Plugin '%s' matched (priority %d)",
+		          xmms_plugin_shortname_get (_plugin), priority);
+		if (priority > state->priority) {
+			if (state->match) {
+				XMMS_DBG ("Using plugin '%s' (priority %d) instead of '%s' (priority %d)",
+				          xmms_plugin_shortname_get (_plugin), priority,
+				          xmms_plugin_shortname_get ((xmms_plugin_t *)state->match),
+						  state->priority);
+			}
+
+			state->match = plugin;
+			state->priority = priority;
+		}
 	}
 
 	return TRUE;
@@ -1243,6 +1259,7 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
 
 	state.out_type = prev->out_type;
 	state.match = NULL;
+	state.priority = -1;
 
 	xmms_plugin_foreach (XMMS_PLUGIN_TYPE_XFORM, xmms_xform_match, &state);
 
@@ -1627,7 +1644,7 @@ xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
 	}
 
 	xform_plugin = (xmms_xform_plugin_t *) plugin;
-	if (!xmms_xform_plugin_supports (xform_plugin, last->out_type)) {
+	if (!xmms_xform_plugin_supports (xform_plugin, last->out_type, NULL)) {
 		xmms_log_info ("Effect '%s' doesn't support format, skipping",
 		               xmms_plugin_shortname_get (plugin));
 		xmms_object_unref (plugin);
