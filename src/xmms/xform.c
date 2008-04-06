@@ -1185,10 +1185,23 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 {
 	xmms_stream_type_t *t;
 	va_list ap;
+	gchar *config_key, *config_value;
+	gint priority;
 
 	va_start (ap, plugin);
 	t = xmms_stream_type_parse (ap);
 	va_end (ap);
+
+	config_key = g_strconcat ("priority.",
+	                          xmms_stream_type_get_str (t, XMMS_STREAM_TYPE_NAME),
+	                          NULL);
+	priority = xmms_stream_type_get_int (t, XMMS_STREAM_TYPE_PRIORITY);
+	config_value = g_strdup_printf ("%d", priority);
+	xmms_xform_plugin_config_property_register (plugin, config_key,
+	                                            config_value, NULL, NULL);
+	g_free (config_key);
+	g_free (config_value);
+
 	plugin->in_types = g_list_prepend (plugin->in_types, t);
 }
 
@@ -1201,8 +1214,21 @@ xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st,
 	for (t = plugin->in_types; t; t = g_list_next (t)) {
 		if (xmms_stream_type_match (t->data, st)) {
 			if (priority) {
-				*priority = xmms_stream_type_get_int (t->data,
-				                                      XMMS_STREAM_TYPE_PRIORITY);
+				gchar *config_key;
+				xmms_config_property_t *conf_priority;
+
+				config_key = g_strconcat ("priority.",
+				                          xmms_stream_type_get_str (t->data, XMMS_STREAM_TYPE_NAME),
+				                          NULL);
+				conf_priority = xmms_plugin_config_lookup ((xmms_plugin_t *)plugin,
+				                                           config_key);
+				g_free (config_key);
+
+				if (conf_priority) {
+					*priority = xmms_config_property_get_int (conf_priority);
+				} else {
+					*priority = XMMS_STREAM_TYPE_PRIORITY_DEFAULT;
+				}
 			}
 			return TRUE;
 		}
