@@ -697,7 +697,7 @@ xmmsc_result_get_type (xmmsc_result_t *res)
 int
 xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -720,7 +720,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r)
 int
 xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -741,7 +741,7 @@ xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r)
 int
 xmmsc_result_get_string (xmmsc_result_t *res, const char **r)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -763,7 +763,7 @@ xmmsc_result_get_string (xmmsc_result_t *res, const char **r)
 int
 xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -786,7 +786,7 @@ xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
 int
 xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -884,7 +884,7 @@ int
 xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r)
 {
 	xmmsc_result_value_t *val;
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		*r = -1;
 		return 0;
 	}
@@ -919,10 +919,11 @@ xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *
  *
  */
 int
-xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r)
+xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key,
+                                  uint32_t *r)
 {
 	xmmsc_result_value_t *val;
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		*r = -1;
 		return 0;
 	}
@@ -962,7 +963,7 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res,
                                     const char *key, const char **r)
 {
 	xmmsc_result_value_t *val;
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		*r = NULL;
 		return 0;
 	}
@@ -1002,7 +1003,7 @@ xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
                                         xmmsc_coll_t **c)
 {
 	xmmsc_result_value_t *val;
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		*c = NULL;
 		return 0;
 	}
@@ -1036,7 +1037,7 @@ xmmsc_result_value_type_t
 xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 {
 	xmmsc_result_value_t *val;
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
 
@@ -1060,7 +1061,7 @@ xmmsc_result_propdict_foreach (xmmsc_result_t *res,
 {
 	x_list_t *n;
 
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -1100,11 +1101,12 @@ xmmsc_result_propdict_foreach (xmmsc_result_t *res,
  *
  */
 int
-xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data)
+xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func,
+                           void *user_data)
 {
 	x_list_t *n;
 
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -1136,7 +1138,7 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, vo
 int
 xmmsc_result_is_list (xmmsc_result_t *res)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -1155,7 +1157,7 @@ xmmsc_result_is_list (xmmsc_result_t *res)
 int
 xmmsc_result_list_valid (xmmsc_result_t *res)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -1179,7 +1181,7 @@ xmmsc_result_list_valid (xmmsc_result_t *res)
 int
 xmmsc_result_list_next (xmmsc_result_t *res)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
@@ -1214,7 +1216,7 @@ xmmsc_result_list_next (xmmsc_result_t *res)
 int
 xmmsc_result_list_first (xmmsc_result_t *res)
 {
-	if (!res || res->error != XMMS_ERROR_NONE) {
+	if (xmmsc_result_iserror (res)) {
 		return 0;
 	}
 
