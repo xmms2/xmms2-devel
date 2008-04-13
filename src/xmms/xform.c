@@ -1679,7 +1679,7 @@ update_effect_properties (xmms_object_t *object, gconstpointer data,
 		cfg = xmms_config_lookup (key);
 		if (!cfg) {
 			xmms_config_property_register (key, "", update_effect_properties,
-			                               (gpointer)(effect_no + 1));
+			                               GINT_TO_POINTER (effect_no + 1));
 		}
 	}
 }
