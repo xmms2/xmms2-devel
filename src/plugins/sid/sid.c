@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 /*
@@ -44,6 +45,7 @@ static gboolean xmms_sid_init (xmms_xform_t *xform);
 static void xmms_sid_destroy (xmms_xform_t *xform);
 static gint xmms_sid_read (xmms_xform_t *xform, void *out, gint outlen, xmms_error_t *error);
 static void xmms_sid_get_media_info (xmms_xform_t *xform);
+static void xmms_sid_get_songlength (xmms_xform_t *xform);
 
 /*
  * Plugin header
@@ -90,6 +92,10 @@ xmms_sid_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string PSID", NULL);
 	xmms_magic_add ("rsid header", "audio/prs.sid",
 	                "0 string RSID", NULL);
+
+
+	xmms_xform_plugin_config_property_register (xform_plugin, "songlength_path",
+	                                            "", NULL, NULL);
 
 	return TRUE;
 }
@@ -183,6 +189,7 @@ static void
 xmms_sid_get_media_info (xmms_xform_t *xform)
 {
 	xmms_sid_data_t *data;
+	const gchar *md5sum;
 	const gchar *metakey;
 	char artist[32];
 	char title[32];
@@ -204,10 +211,96 @@ xmms_sid_get_media_info (xmms_xform_t *xform)
 	xmms_xform_metadata_set_int (xform, metakey,
 	                             sidplay_wrapper_subtunes (data->wrapper));
 
-	xmms_xform_metadata_set_str (xform,
-	                             "HVSCfingerprint",
-	                             sidplay_wrapper_md5 (data->wrapper));
+	md5sum = sidplay_wrapper_md5 (data->wrapper);
+	xmms_xform_metadata_set_str (xform, "HVSCfingerprint", md5sum);
 
+	xmms_sid_get_songlength (xform);
+
+}
+
+static void
+xmms_sid_get_songlength (xmms_xform_t *xform)
+{
+	xmms_config_property_t *config;
+	const gchar *tmp, *md5sum, *songlength_path;
+	gint subtune = 1;
+	GIOChannel* io;
+	GString *buf;
+
+	g_return_if_fail (xform);
+
+	config = xmms_xform_config_lookup (xform, "songlength_path");
+	g_return_if_fail (config);
+	songlength_path = xmms_config_property_get_string (config);
+	if (!songlength_path[0])
+		return;
+
+	if (xmms_xform_metadata_get_str (xform, "subtune", &tmp)) {
+		subtune = atoi (tmp);
+	}
+
+	if (!xmms_xform_metadata_get_str (xform, "HVSCfingerprint", &md5sum)) {
+		return;
+	}
+
+	io = g_io_channel_new_file (songlength_path, "r", NULL);
+	if (!io) {
+		xmms_log_error ("Unable to load songlengths database '%s'", songlength_path);
+		return;
+	}
+
+	buf = g_string_new ("");
+	while (g_io_channel_read_line_string (io, buf, NULL, NULL) == G_IO_STATUS_NORMAL) {
+		if (buf->len > 33 && g_ascii_strncasecmp (buf->str, md5sum, 32) == 0) {
+			gint cur = 0;
+			gchar *b;
+
+			b = buf->str + 33;
+			while (*b) {
+				gint min, sec;
+
+				/* read timestamp */
+				if (sscanf (b, "%d:%d", &min, &sec) != 2) {
+					/* no more timestamps on this line */
+					break;
+				} else {
+					cur++;
+				}
+
+				if (cur == subtune) {
+					const gchar *metakey;
+					gchar ms_str[10 + 1]; /* LONG_MAX in str, \w NULL */
+					glong ms;
+
+					ms = (min * 60 + sec) * 1000;
+
+					metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+					xmms_xform_metadata_set_int (xform, metakey, ms);
+
+					if (g_snprintf (ms_str, 10 + 1, "%ld", ms) > 0) {
+						metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_STARTMS;
+						xmms_xform_metadata_set_str (xform, metakey, "0");
+
+						metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_STOPMS;
+						xmms_xform_metadata_set_str (xform, metakey, ms_str);
+					}
+
+					goto done;
+				}
+
+				/* forward to next possible timestamp */
+				b = strchr (b, ' ');
+				if (!b) {
+					/* no more timestamps on this line */
+					break;
+				}
+				b++;
+			}
+		}
+	}
+	xmms_log_info ("Couldn't find sid tune in songlength.txt");
+done:
+	g_io_channel_unref (io);
 }
 
 static gint
