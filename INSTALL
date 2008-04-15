@@ -30,7 +30,7 @@ These libraries are '''not needed''' for building xmms2d itself, but will add ex
 ** [http://www.samba.org/ SAMBA] - for smbclient support
 ** [http://libmms.sf.net/ libmms] - for mms stream support
 ** [http://www.gnome.org/ libgnomevfs] - for ssh support
-** [http://ffmpeg.mplayerhq.hu/ FFmpeg] - for wma, avcodec and avformat support
+** [http://ffmpeg.mplayerhq.hu/ FFmpeg] - for wma and avcodec support
 ** [http://jack.sf.net/ Jack] - for JACK support
 ** [http://fftw.org/ FFTW3] and [http://www.mega-nerd.com/SRC/ libsamplerate] - for vocoder support
 ** [http://xmlsoft.org/ libxml2] - for XSPF and RSS (read: podcast)
