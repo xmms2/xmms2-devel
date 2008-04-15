@@ -280,7 +280,8 @@ xmms_ao_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *e
 	if (!ao_play (data->device, buffer, len)) {
 		ao_close (data->device);
 		data->device = NULL;
-		xmms_log_fatal ("Error writing to libao, output closed");
+		xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE,
+		                "Error writing to libao, output closed");
 	}
 }
 
