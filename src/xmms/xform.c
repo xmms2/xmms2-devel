@@ -141,7 +141,7 @@ xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename,
 	s = g_string_new (eurl);
 
 	for (i = 0; i < nargs; i++) {
-		g_string_append (s, i == 0 ? "?" : "&");
+		g_string_append_c (s, i == 0 ? '?' : '&');
 		g_string_append (s, args[i]);
 	}
 
@@ -635,7 +635,7 @@ xmms_xform_metadata_collect_r (xmms_xform_t *xform, metadata_festate_t *info,
 
 	if (xform->plugin) {
 		if (namestr->len) {
-			g_string_append (namestr, ":");
+			g_string_append_c (namestr, ':');
 		}
 		g_string_append (namestr, xmms_xform_shortname (xform));
 	}

@@ -129,7 +129,7 @@ coll_idlist_to_string (xmmsc_coll_t *coll)
 		}
 		g_string_append_printf (s, "%d", idlist[i]);
 	}
-	g_string_append (s, ")");
+	g_string_append_c (s, ')');
 
 	return s;
 }
