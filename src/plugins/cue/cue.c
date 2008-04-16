@@ -163,18 +163,20 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 	file = xmms_build_playlist_url (xmms_xform_get_url (xform), tr->file);
 
 	while (n) {
-		gchar *arg[2];
+		gchar arg0[32], arg1[32];
+		gchar *arg[2] = { arg0, arg1 };
 		gint numargs = 1;
 		cue_track *t = n->data;
 		if (!t) {
 			continue;
 		}
 
-		arg[0] = g_strdup_printf ("startms=%d", t->index2 ? t->index2 : t->index);
+		g_snprintf (arg0, sizeof (arg0), "startms=%d",
+		            t->index2 ? t->index2 : t->index);
 
 		if (n->next && n->next->data) {
 			cue_track *t2 = n->next->data;
-			arg[1] = g_strdup_printf ("stopms=%d", t2->index);
+			g_snprintf (arg1, sizeof (arg1), "stopms=%d", t2->index);
 			numargs = 2;
 		}
 
@@ -183,11 +185,6 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 		xmms_xform_browse_add_entry_property_str (xform, "title", t->title);
 		xmms_xform_browse_add_entry_property_str (xform, "artist", t->artist);
 		xmms_xform_browse_add_entry_property_str (xform, "album", tr->album);
-
-		g_free (arg[0]);
-		if (numargs == 2) {
-			g_free (arg[1]);
-		}
 
 		g_free (t);
 		n = g_list_delete_link (n, n);
