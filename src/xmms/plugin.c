@@ -76,7 +76,7 @@ xmms_config_property_t *
 xmms_plugin_config_lookup (xmms_plugin_t *plugin,
                            const gchar *key)
 {
-	gchar path[256];
+	gchar path[XMMS_PLUGIN_SHORTNAME_MAX_LEN + 256];
 	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -107,7 +107,7 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
                                       xmms_object_handler_t cb,
                                       gpointer userdata)
 {
-	gchar fullpath[256];
+	gchar fullpath[XMMS_PLUGIN_SHORTNAME_MAX_LEN + 256];
 	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);

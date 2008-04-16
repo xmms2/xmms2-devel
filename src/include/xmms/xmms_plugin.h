@@ -24,10 +24,12 @@
 #include <xmmsc/xmmsc_idnumbers.h>
 #include "xmms_configuration.h"
 
+#define XMMS_PLUGIN_SHORTNAME_MAX_LEN 32
+
 typedef struct xmms_plugin_desc_St {
 	xmms_plugin_type_t type;
 	gint api_version;
-	const gchar *shortname;
+	gchar shortname[XMMS_PLUGIN_SHORTNAME_MAX_LEN];
 	const gchar *name;
 	const gchar *version;
 	const gchar *description;

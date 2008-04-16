@@ -43,7 +43,7 @@ typedef struct xmms_output_St xmms_output_t;
 /**
  * The current API version.
  */
-#define XMMS_OUTPUT_API_VERSION 5
+#define XMMS_OUTPUT_API_VERSION 6
 
 struct xmms_output_plugin_St;
 typedef struct xmms_output_plugin_St xmms_output_plugin_t;

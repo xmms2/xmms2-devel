@@ -612,16 +612,16 @@ add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 static void
 xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 {
-	gchar *src;
+	gchar src[XMMS_PLUGIN_SHORTNAME_MAX_LEN + 8];
 
 	XMMS_DBG ("Collecting metadata from %s", xmms_xform_shortname (xform));
 
-	src = g_strdup_printf ("plugin/%s", xmms_xform_shortname (xform));
+	g_snprintf (src, sizeof (src), "plugin/%s",
+	            xmms_xform_shortname (xform));
 
 	info->source = xmms_medialib_source_to_id (info->session, src);
 	g_hash_table_foreach (xform->metadata, add_metadatum, info);
 
-	g_free (src);
 	xform->metadata_changed = FALSE;
 }
 
