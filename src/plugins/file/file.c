@@ -14,6 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
+#ifdef HAVE_FSTATAT
+# define _ATFILE_SOURCE
+#endif
+
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 
@@ -23,8 +27,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
-
 #include <string.h>
+
+#ifdef HAVE_FSTATAT
+# include <dirent.h>
+#endif
 
 /* not available everywhere. */
 #if !defined(O_BINARY)
@@ -212,25 +219,61 @@ xmms_file_browse (xmms_xform_t *xform,
                   const gchar *url,
                   xmms_error_t *error)
 {
+#ifndef HAVE_FSTATAT
 	GDir *dir;
 	GError *err = NULL;
-	const gchar *tmp, *d;
+	const gchar *d;
+#else
+	DIR *dir;
+	struct dirent *d;
+	int dir_fd;
+#endif
+
+	const gchar *tmp;
 	struct stat st;
 
 	tmp = url + 7; /* maybe a bit unsafe */
 
+#ifndef HAVE_FSTATAT
 	dir = g_dir_open (tmp, 0, &err);
 	if (!dir) {
 		xmms_error_set (error, XMMS_ERROR_NOENT, err->message);
 		return FALSE;
 	}
+#else
+	dir = opendir (tmp);
+	if (!dir) {
+		xmms_error_set (error, XMMS_ERROR_NOENT, strerror (errno));
+		return FALSE;
+	}
 
+	dir_fd = dirfd (dir);
+#endif
+
+#ifndef HAVE_FSTATAT
 	while ((d = g_dir_read_name (dir))) {
+#else
+	while ((d = readdir (dir))) {
+#endif
 		guint32 flags = 0;
+		const char *entry;
+		int ret;
+
+#ifndef HAVE_FSTATAT
 		gchar *t = g_build_filename (tmp, d, NULL);
 
-		int ret = stat (t, &st);
+		ret = stat (t, &st);
 		g_free (t);
+
+		entry = d;
+#else
+		entry = d->d_name;
+
+		if (!strcmp (d->d_name, ".") || !strcmp (d->d_name, ".."))
+			continue;
+
+		ret = fstatat (dir_fd, d->d_name, &st, 0);
+#endif
 
 		if (ret) {
 			continue;
@@ -240,7 +283,7 @@ xmms_file_browse (xmms_xform_t *xform,
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
 		}
 
-		xmms_xform_browse_add_entry (xform, d, flags);
+		xmms_xform_browse_add_entry (xform, entry, flags);
 
 		if (!S_ISDIR (st.st_mode)) {
 			xmms_xform_browse_add_entry_property_int (xform, "size",
@@ -248,7 +291,11 @@ xmms_file_browse (xmms_xform_t *xform,
 		}
 	}
 
+#ifndef HAVE_FSTATAT
 	g_dir_close (dir);
+#else
+	closedir (dir);
+#endif
 
 	return TRUE;
 }
