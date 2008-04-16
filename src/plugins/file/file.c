@@ -235,11 +235,17 @@ xmms_file_browse (xmms_xform_t *xform,
 		if (ret) {
 			continue;
 		}
+
 		if (S_ISDIR (st.st_mode)) {
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
 		}
+
 		xmms_xform_browse_add_entry (xform, d, flags);
-		xmms_xform_browse_add_entry_property_int (xform, "size", st.st_size);
+
+		if (!S_ISDIR (st.st_mode)) {
+			xmms_xform_browse_add_entry_property_int (xform, "size",
+			                                          st.st_size);
+		}
 	}
 
 	g_dir_close (dir);
