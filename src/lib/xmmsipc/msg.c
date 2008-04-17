@@ -501,7 +501,7 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
-	str = x_malloc0 (l + 1);
+	str = x_malloc (l + 1);
 	if (!str) {
 		return false;
 	}
@@ -534,7 +534,7 @@ xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
 	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
-	b = x_malloc0 (l);
+	b = x_malloc (l);
 	if (!b) {
 		return false;
 	}
