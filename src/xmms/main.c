@@ -173,7 +173,7 @@ do_scriptdir (const gchar *scriptdir)
 static void
 load_config ()
 {
-	gchar *configdir = g_malloc0 (PATH_MAX);
+	gchar configdir[PATH_MAX];
 
 	if (!conffile) {
 		conffile = XMMS_BUILD_PATH ("xmms2.conf");
@@ -181,12 +181,11 @@ load_config ()
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
 
-	if (!xmms_userconfdir_get (configdir, PATH_MAX))
+	if (!xmms_userconfdir_get (configdir, sizeof (configdir))) {
 		xmms_log_error ("Could not get path to config dir");
-	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
+	} else if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
 		g_mkdir_with_parents (configdir, 0755);
 	}
-	g_free (configdir);
 
 	xmms_config_init (conffile);
 }
