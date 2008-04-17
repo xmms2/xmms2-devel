@@ -191,7 +191,7 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 		*header = NULL;
 	}
 
-	response = (gchar *) g_malloc0 (sizeof (gchar) * MAX_HEADER_LENGTH);
+	response = g_malloc0 (MAX_HEADER_LENGTH);
 	if (NULL == response) {
 		XMMS_DBG ("Error: couldn't allocate memory for response.\n");
 		return;
@@ -214,8 +214,7 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 			if (strcmp (recv_line, "\r\n") == 0) {
 				g_free (recv_line);
 				if (NULL != header) {
-					*header = (gchar *) g_malloc0 (sizeof (gchar) *
-					                               n_total_bytes_recvd);
+					*header = g_malloc0 (n_total_bytes_recvd);
 					if (NULL == *header) {
 						XMMS_DBG ("error: couldn't allocate header\n");
 						break;
@@ -269,7 +268,7 @@ daap_handle_data (GIOChannel *sock_chan, gchar *header)
 		return NULL;
 	}
 
-	response_data = (gchar *) g_malloc0 (sizeof (gchar) * response_length);
+	response_data = g_malloc0 (response_length);
 	if (NULL == response_data) {
 		XMMS_DBG ("error: could not allocate response memory\n");
 		return NULL;
