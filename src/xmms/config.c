@@ -813,7 +813,7 @@ dump_tree (gchar *current_key, xmms_config_property_t *prop,
            dump_tree_data_t *data)
 {
 	gchar *prop_name, section[256];
-	gchar *dot, *current_last_dot;
+	gchar *dot = NULL, *current_last_dot, *start = current_key;
 
 	prop_name = strrchr (current_key, '.');
 
@@ -832,6 +832,9 @@ dump_tree (gchar *current_key, xmms_config_property_t *prop,
 		while (*c && *o && *c == *o) {
 			c++;
 			o++;
+
+			if (*c == '.')
+				start = c + 1;
 		};
 
 		/* from this position on, count the number of dots in the
@@ -860,22 +863,20 @@ dump_tree (gchar *current_key, xmms_config_property_t *prop,
 	}
 
 	/* open section tags */
-	dot = strchr (current_key, '.');
-	current_last_dot = current_key - 1;
+	dot = strchr (start, '.');
+	current_last_dot = start - 1;
 
 	while (dot) {
 		strncpy (section, current_last_dot + 1, dot - current_last_dot + 1);
 		section[dot - current_last_dot - 1] = 0;
 
-		if (!data->prev_key) {
-			fprintf (data->fp, "%s<section name=\"%s\">\n",
-			         data->indent, section);
+		fprintf (data->fp, "%s<section name=\"%s\">\n",
+		         data->indent, section);
 
-			/* increase indent level */
-			g_assert (data->indent_level < 127);
-			data->indent[data->indent_level] = '\t';
-			data->indent[++data->indent_level] = '\0';
-		}
+		/* increase indent level */
+		g_assert (data->indent_level < 127);
+		data->indent[data->indent_level] = '\t';
+		data->indent[++data->indent_level] = '\0';
 
 		current_last_dot = dot;
 		dot = strchr (dot + 1, '.');
