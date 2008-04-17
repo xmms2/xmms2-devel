@@ -118,3 +118,8 @@ src/plugins/gme/gme/*
         Game_Music_Emu library copyright (C) 2003-2006 Shay Green <gblargg@gmail.com>.
         SNES SPC DSP emulator based on OpenSPC, copyright (C) 2002 Brad Martin.
         Sega Genesis YM2612 emulator copyright (C) 2002 Stephane Dallongeville.
+
+src/plugins/karaoke/*
+        Heavily based on DeFX, copyright (C) 2002 Franco Catrin L. <ancelot@directo.cl>.
+        Licensed under GPL license.
+
