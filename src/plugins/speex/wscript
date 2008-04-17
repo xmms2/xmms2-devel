@@ -1,3 +1,6 @@
 from waftools.plugin import plugin
 
-configure, build = plugin('speex', broken=True)
+def plugin_configure(conf):
+    return conf.check_pkg('speex', destvar='speex')
+
+configure, build = plugin('speex', needs_lib=True, configure=plugin_configure)
