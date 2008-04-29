@@ -336,7 +336,8 @@ def configure(conf):
                 major, minor = sys.getwindowsversion()[:2]
             except AttributeError, e:
                 Params.warning('No Windows version found and no version set. ' +
-                               'Defaulting to 5.1 (XP). You will not be able ' +                               'to use this build of XMMS2 on older Windows ' +
+                               'Defaulting to 5.1 (XP). You will not be able ' +
+                               'to use this build of XMMS2 on older Windows ' +
                                'versions.')
                 major, minor = (5, 1)
         need_wspiapi = True
