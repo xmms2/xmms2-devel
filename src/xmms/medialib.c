@@ -166,16 +166,15 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
 static gint
-source_match_pattern (gchar* source, gchar* pattern)
+source_match_pattern (const gchar *source, const gchar *pattern)
 {
 	gboolean match = FALSE;
 	gint lpos = strlen (pattern) - 1;
 
 	if (g_strcasecmp (pattern, source) == 0) {
 		match = TRUE;
-	}
-	else if (lpos >= 0 && pattern[lpos] == '*' &&
-	        (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
+	} else if (lpos >= 0 && pattern[lpos] == '*' &&
+	           (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
 		match = TRUE;
 	}
 
