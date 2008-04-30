@@ -97,9 +97,6 @@ struct xmms_medialib_session_St {
 	/** The SQLite handler */
 	sqlite3 *sql;
 
-	/** The source to be working with */
-	gchar *source_pref;
-
 	/** debug file */
 	const gchar *file;
 	/** debug line number */
@@ -120,6 +117,8 @@ struct xmms_medialib_session_St {
   * and altering the function callers...
   */
 static xmms_medialib_t *medialib;
+
+static const char source_pref[] = "server:client/*:plugin/id3v2:plugin/*";
 
 /**
   * This is only used if we are using a older version of sqlite.
@@ -266,7 +265,7 @@ xmms_medialib_session_new (const char *file, int line)
 	session->file = file;
 	session->line = line;
 	session->sql = xmms_sqlite_open ();
-	session->source_pref = g_strdup ("server:client/*:plugin/id3v2:plugin/*");
+
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
 
@@ -448,8 +447,6 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 		return;
 	}
 
-	g_free (session->source_pref);
-
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
 	g_free (session);
@@ -514,7 +511,7 @@ xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session,
 	} else {
 		xmms_sqlite_query_array (session->sql, xmms_medialib_cmd_value_cb,
 		                         &ret, XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-		                         property, entry, session->source_pref);
+		                         property, entry, source_pref);
 	}
 
 	return ret;
@@ -543,7 +540,7 @@ xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_string_cb, &ret,
 	                         XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-	                         property, entry, session->source_pref);
+	                         property, entry, source_pref);
 
 	return ret;
 }
@@ -570,7 +567,7 @@ xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
 	                         XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-	                         property, entry, session->source_pref);
+	                         property, entry, source_pref);
 
 	return ret;
 }
