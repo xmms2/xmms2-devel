@@ -240,7 +240,7 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 		}
 	}
 
-	gchar *name, *value, *metakey;
+	const gchar *name, *value, *metakey;
 	gint filesize;
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
@@ -251,12 +251,6 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 	}
 
 	/* Technical Information */
-
-	/* APE Version */
-	name = "Version";
-	value = g_strdup_printf ("%.2f", (float) data->p_decompress->GetInfo (APE_INFO_FILE_VERSION) / float (1000));
-	xmms_xform_metadata_set_str (xform, name, value);
-	g_free (value);
 
 	/* Compression Level */
 	name = "Compression Level";
