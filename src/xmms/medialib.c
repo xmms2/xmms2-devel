@@ -165,29 +165,37 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
 static gint
-source_match_pattern (const gchar *source, const gchar *pattern)
+source_match_pattern (const gchar *source, const gchar *pattern,
+                      gint pattern_len)
 {
-	gboolean match = FALSE;
-	gint lpos = strlen (pattern) - 1;
+	/* check whether we need to keep a wildcard in mind when matching
+	 * the strings.
+	 */
+	if (pattern_len > 0 && pattern[pattern_len - 1] == '*') {
+		/* if the asterisk is the first character of the pattern,
+		 * it obviously accepts anything.
+		 */
+		if (pattern_len == 1) {
+			return TRUE;
+		}
 
-	if (g_strcasecmp (pattern, source) == 0) {
-		match = TRUE;
-	} else if (lpos >= 0 && pattern[lpos] == '*' &&
-	           (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
-		match = TRUE;
+		/* otherwise we have to compare the characters just up to the
+		 * asterisk.
+		 */
+		return !g_strncasecmp (source, pattern, pattern_len - 1);
 	}
 
-	return match;
+	/* there's no wildcards, so just compare all of the characters. */
+	return !g_strncasecmp (pattern, source, pattern_len);
 }
 
 static void
 xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val)
 {
 	gint source;
-	const guchar *pref;
-	gchar **split;
+	const gchar *pref;
 	xmms_medialib_t *mlib;
-	gchar *source_name;
+	gchar *source_name, *colon;
 	gint i;
 
 	mlib = sqlite3_user_data (context);
@@ -202,23 +210,33 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 	}
 
 	source = sqlite3_value_int (val[0]);
-	pref = sqlite3_value_text (val[1]);
+	pref = (const gchar *) sqlite3_value_text (val[1]);
 
 	g_mutex_lock (mlib->source_lock);
 	source_name = g_hash_table_lookup (mlib->sources, GINT_TO_POINTER (source));
 	g_mutex_unlock (mlib->source_lock);
 
-	split = g_strsplit ((gchar *)pref, ":", 0);
+	do {
+		gsize len;
 
-	for (i = 0; split[i]; i++) {
-		if (source_match_pattern (source_name, split[i])) {
+		colon = strchr (pref, ':');
+
+		/* get the length of this substring */
+		len = colon ? colon - pref : strlen (pref);
+
+		/* check whether the substring matches */
+		if (source_match_pattern (source_name, pref, len)) {
 			sqlite3_result_int (context, i);
-			g_strfreev (split);
 			return;
 		}
-	}
 
-	g_strfreev (split);
+		if (colon) {
+			pref = colon + 1;
+		}
+
+		/* if we just processed the final substring, then we're done */
+	} while (colon);
+
 	sqlite3_result_int (context, -1);
 }
 
