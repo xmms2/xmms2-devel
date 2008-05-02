@@ -1132,12 +1132,12 @@ static void
 xmms_xform_plugin_destroy (xmms_object_t *obj)
 {
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *)obj;
-	xmms_stream_type_t *in_type;
-	GList *n;
 
-	for (n = plugin->in_types; n; n = g_list_next (n)) {
-		in_type = (xmms_stream_type_t *)n->data;
-		xmms_object_unref (in_type);
+	while (plugin->in_types) {
+		xmms_object_unref (plugin->in_types->data);
+
+		plugin->in_types = g_list_delete_link (plugin->in_types,
+		                                       plugin->in_types);
 	}
 
 	xmms_plugin_destroy ((xmms_plugin_t *)obj);
