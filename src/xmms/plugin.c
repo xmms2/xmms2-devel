@@ -370,12 +370,13 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
-		g_free (path);
-
 		if (!g_module_symbol (module, "XMMS_PLUGIN_DESC", &sym)) {
+			xmms_log_error ("Failed to find plugin header in %s", path);
 			g_module_close (module);
+			g_free (path);
 			continue;
 		}
+		g_free (path);
 
 		if (!xmms_plugin_load ((const xmms_plugin_desc_t *) sym, module)) {
 			g_module_close (module);
