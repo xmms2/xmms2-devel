@@ -2105,8 +2105,8 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		if (case_sens) {
 			mediaval = g_strdup (buf);
 		} else {
-			opval = g_utf8_strdown (opval, strlen (opval));
-			mediaval = g_utf8_strdown (buf, strlen (buf));
+			opval = g_utf8_strdown (opval, -1);
+			mediaval = g_utf8_strdown (buf, -1);
 			g_free (buf);
 		}
 
