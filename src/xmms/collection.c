@@ -2103,7 +2103,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 		/* Prepare values */
 		if (case_sens) {
-			mediaval = g_strdup (buf);
+			mediaval = buf;
 		} else {
 			opval = g_utf8_strdown (opval, -1);
 			mediaval = g_utf8_strdown (buf, -1);
