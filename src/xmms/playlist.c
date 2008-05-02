@@ -950,10 +950,9 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname,
 		xmms_object_cmd_value_t *val = (xmms_object_cmd_value_t*)res->data;
 		xmms_playlist_insert_id (playlist, plname, pos, val->value.int32, err);
 		g_free (res->data);
-		res = res->next;
-	}
 
-	g_list_free (res);
+		res = g_list_delete_link (res, res);
+	}
 
 	/* FIXME: detect errors? */
 	return TRUE;
@@ -1070,10 +1069,9 @@ xmms_playlist_add_collection (xmms_playlist_t *playlist, gchar *plname,
 		xmms_object_cmd_value_t *val = (xmms_object_cmd_value_t*)res->data;
 		xmms_playlist_add_entry (playlist, plname, val->value.int32, err);
 		g_free (res->data);
-		res = res->next;
-	}
 
-	g_list_free (res);
+		res = g_list_delete_link (res, res);
+	}
 
 	/* FIXME: detect errors? */
 	return TRUE;
