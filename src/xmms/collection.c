@@ -2112,7 +2112,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 		match = g_pattern_match_simple (opval, mediaval);
 
-		if (case_sens) {
+		if (!case_sens) {
 			g_free (opval);
 		}
 		g_free (mediaval);
