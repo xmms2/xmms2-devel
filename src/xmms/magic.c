@@ -532,7 +532,7 @@ xmms_magic_add (const gchar *desc, const gchar *mime, ...)
 	tree = g_node_new (root_props);
 
 	do {
-		if (!strlen (s)) {
+		if (!*s) {
 			ret = FALSE;
 			xmms_log_error ("invalid magic spec: '%s'", s);
 			break;
