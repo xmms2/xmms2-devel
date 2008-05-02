@@ -894,17 +894,14 @@ xmms_collection_set_int_attr (xmmsc_coll_t *coll, const gchar *attrname,
                               gint newval)
 {
 	gboolean retval = FALSE;
-	gchar *str;
+	gchar str[XMMS_MAX_INT_ATTRIBUTE_LEN + 1];
 	gint written;
 
-	str = g_new (char, XMMS_MAX_INT_ATTRIBUTE_LEN + 1);
-	written = g_snprintf (str, XMMS_MAX_INT_ATTRIBUTE_LEN, "%d", newval);
+	written = g_snprintf (str, sizeof (str), "%d", newval);
 	if (written < XMMS_MAX_INT_ATTRIBUTE_LEN) {
 		xmmsc_coll_attribute_set (coll, attrname, str);
 		retval = TRUE;
 	}
-
-	g_free (str);
 
 	return retval;
 }
