@@ -232,7 +232,6 @@ xmms_plugin_init (const gchar *path)
 void
 xmms_plugin_shutdown ()
 {
-	GList *n;
 #ifdef HAVE_VALGRIND
 	/* print out a leak summary at this point, because the final leak
 	 * summary won't include proper backtraces of leaks found in
@@ -245,8 +244,8 @@ xmms_plugin_shutdown ()
 		;
 #endif
 
-	for (n = xmms_plugin_list; n; n = g_list_next (n)) {
-		xmms_plugin_t *p = n->data;
+	while (xmms_plugin_list) {
+		xmms_plugin_t *p = xmms_plugin_list->data;
 
 		/* if this plugin's refcount is > 1, then there's a bug
 		 * in one of the other subsystems
@@ -257,6 +256,9 @@ xmms_plugin_shutdown ()
 		}
 
 		xmms_object_unref (p);
+
+		xmms_plugin_list = g_list_delete_link (xmms_plugin_list,
+		                                       xmms_plugin_list);
 	}
 }
 
