@@ -89,7 +89,6 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	xmms_object_cmd_value_t *cmdval;
 	const gchar *query;
 	GList *res;
-	GList *n;
 	gint previd;
 
 	session = xmms_medialib_begin ();
@@ -103,11 +102,12 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	res = xmms_medialib_select (session, query, NULL);
 
 	previd = -1;
-	for (n = res; n; n = n->next) {
+
+	while (res) {
 		gint id, type, nsid;
 		const gchar *label;
 
-		cmdval = (xmms_object_cmd_value_t*)n->data;
+		cmdval = (xmms_object_cmd_value_t*)res->data;
 		id = cmdval_get_dict_int (cmdval, "id");
 		type = cmdval_get_dict_int (cmdval, "type");
 		nsid = cmdval_get_dict_int (cmdval, "nsid");
@@ -121,7 +121,11 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 		else {
 			xmmsc_coll_ref (coll);  /* New label references the coll */
 		}
+
 		xmms_collection_dag_replace (dag, nsid, g_strdup (label), coll);
+
+		xmms_object_cmd_value_unref (cmdval);
+		res = g_list_delete_link (res, res);
 	}
 
 	xmms_medialib_end (session);
