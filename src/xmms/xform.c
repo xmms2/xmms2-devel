@@ -1185,7 +1185,7 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 {
 	xmms_stream_type_t *t;
 	va_list ap;
-	gchar *config_key, *config_value;
+	gchar *config_key, config_value[32];
 	gint priority;
 
 	va_start (ap, plugin);
@@ -1196,11 +1196,10 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 	                          xmms_stream_type_get_str (t, XMMS_STREAM_TYPE_NAME),
 	                          NULL);
 	priority = xmms_stream_type_get_int (t, XMMS_STREAM_TYPE_PRIORITY);
-	config_value = g_strdup_printf ("%d", priority);
+	g_snprintf (config_value, sizeof (config_value), "%d", priority);
 	xmms_xform_plugin_config_property_register (plugin, config_key,
 	                                            config_value, NULL, NULL);
 	g_free (config_key);
-	g_free (config_value);
 
 	plugin->in_types = g_list_prepend (plugin->in_types, t);
 }
