@@ -496,7 +496,9 @@ cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("Error reading file: %s", error->message);
 		}
 
-		g_io_channel_close (io);
+		if (g_io_channel_shutdown (io, FALSE, &error) == G_IO_STATUS_ERROR) {
+			print_error ("Error closing file: %s", error->message);
+		}
 
 		res = xmmsc_bindata_add (conn, (guchar*)contents, filesize);
 		xmmsc_result_wait (res);
