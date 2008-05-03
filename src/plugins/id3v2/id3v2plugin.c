@@ -36,7 +36,6 @@ typedef struct xmms_id3v2_data_St {
  */
 
 gboolean xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin);
-static gint xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_id3v2_destroy (xmms_xform_t *decoder);
 static gboolean xmms_id3v2_init (xmms_xform_t *decoder);
 static gint64 xmms_id3v2_seek (xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err);
@@ -59,7 +58,7 @@ xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_id3v2_init;
 	methods.destroy = xmms_id3v2_destroy;
-	methods.read = xmms_id3v2_read;
+	methods.read = xmms_xform_read;
 	methods.seek = xmms_id3v2_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
@@ -152,12 +151,6 @@ xmms_id3v2_init (xmms_xform_t *xform)
 	                             "application/octet-stream",
 	                             XMMS_STREAM_TYPE_END);
 	return TRUE;
-}
-
-static gint
-xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
-{
-	return xmms_xform_read (xform, buf, len, err);
 }
 
 static gint64
