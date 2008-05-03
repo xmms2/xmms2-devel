@@ -398,7 +398,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 {
 	gboolean ret = FALSE;
 
-	if (g_strcasecmp (url, "daap://") == 0) {
+	if (g_ascii_strcasecmp (url, "daap://") == 0) {
 
 		GSList *sl = daap_mdns_get_server_list ();
 

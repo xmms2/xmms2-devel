@@ -36,7 +36,7 @@
 #define TAG_HEADER_SIZE   32
 #define TAG_SIGNATURE_SIZE 8
 
-#define TAG_IS_APE(buff) (g_strncasecmp ((buff), "APETAGEX", 8) == 0)
+#define TAG_IS_APE(buff) (g_ascii_strncasecmp ((buff), "APETAGEX", 8) == 0)
 
 #define TAG_FLAGS_TYPE    (6)
 #define TAG_IS_TEXT(flags) (((flags) & TAG_FLAGS_TYPE) == 0)

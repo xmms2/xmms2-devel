@@ -112,7 +112,7 @@ parse_config (const gchar *buffer)
 
 		s = g_strsplit (split[i], "=", 2);
 		if (s && s[0] && s[1]) {
-			if (g_strcasecmp (s[1], "NULL") == 0) {
+			if (g_ascii_strcasecmp (s[1], "NULL") == 0) {
 				g_hash_table_insert (config, g_strdup (s[0]), NULL);
 			} else {
 				g_hash_table_insert (config, g_strdup (s[0]), g_strdup (s[1]));
@@ -216,7 +216,7 @@ cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv) {
 	else if (argc == 3) {
 		/* print help for specified command */
 		for (i = 0; commands[i].name; i++) {
-			if (g_strcasecmp (commands[i].name, argv[2]) == 0) {
+			if (g_ascii_strcasecmp (commands[i].name, argv[2]) == 0) {
 				print_info ("  %s - %s", commands[i].name, commands[i].help);
 			}
 		}
@@ -251,7 +251,7 @@ main (gint argc, gchar **argv)
 		}
 
 		exit (EXIT_SUCCESS);
-	} else if (g_strcasecmp (argv[1], "help") == 0) {
+	} else if (g_ascii_strcasecmp (argv[1], "help") == 0) {
 		cmd_help (NULL, argc, argv);
 		exit (EXIT_SUCCESS);
 	}
@@ -269,7 +269,7 @@ main (gint argc, gchar **argv)
 
 
 	for (i = 0; commands[i].name; i++) {
-		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
+		if (g_ascii_strcasecmp (commands[i].name, argv[1]) == 0) {
 			func = commands[i].func;
 		}
 	}

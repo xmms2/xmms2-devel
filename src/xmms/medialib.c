@@ -182,11 +182,11 @@ source_match_pattern (const gchar *source, const gchar *pattern,
 		/* otherwise we have to compare the characters just up to the
 		 * asterisk.
 		 */
-		return !g_strncasecmp (source, pattern, pattern_len - 1);
+		return !g_ascii_strncasecmp (source, pattern, pattern_len - 1);
 	}
 
 	/* there's no wildcards, so just compare all of the characters. */
-	return !g_strncasecmp (pattern, source, pattern_len);
+	return !g_ascii_strncasecmp (pattern, source, pattern_len);
 }
 
 static void
@@ -1203,7 +1203,7 @@ xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
 	guint32 sourceid;
 	xmms_medialib_session_t *session;
 
-	if (g_strcasecmp (source, "server") == 0) {
+	if (g_ascii_strcasecmp (source, "server") == 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "Can't write to source server!");
 		return;
@@ -1227,7 +1227,7 @@ xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry,
 	guint32 sourceid;
 	xmms_medialib_session_t *session;
 
-	if (g_strcasecmp (source, "server") == 0) {
+	if (g_ascii_strcasecmp (source, "server") == 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "Can't write to source server!");
 		return;
@@ -1264,7 +1264,7 @@ xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
                                       gchar *source, gchar *key,
                                       xmms_error_t *error)
 {
-	if (g_strcasecmp (source, "server") == 0) {
+	if (g_ascii_strcasecmp (source, "server") == 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "Can't remove properties set by the server!");
 		return;

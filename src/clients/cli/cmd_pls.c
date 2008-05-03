@@ -132,7 +132,7 @@ cmd_playlist (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	for (i = 0; plist_commands[i].name; i++) {
-		if (g_strcasecmp (plist_commands[i].name, argv[2]) == 0) {
+		if (g_ascii_strcasecmp (plist_commands[i].name, argv[2]) == 0) {
 			plist_commands[i].func (conn, argc, argv);
 			return;
 		}

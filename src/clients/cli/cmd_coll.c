@@ -55,7 +55,7 @@ cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	for (i = 0; coll_commands[i].name; i++) {
-		if (g_strcasecmp (coll_commands[i].name, argv[2]) == 0) {
+		if (g_ascii_strcasecmp (coll_commands[i].name, argv[2]) == 0) {
 			coll_commands[i].func (conn, argc, argv);
 			return;
 		}

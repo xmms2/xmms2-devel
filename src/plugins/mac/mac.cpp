@@ -218,7 +218,7 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 				guint i = 0;
 				for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-					if (g_strcasecmp (name, properties[i].vname) == 0) {
+					if (g_ascii_strcasecmp (name, properties[i].vname) == 0) {
 						if (properties[i].type == INTEGER) {
 							gint tmp = strtol (field_value, NULL, 10);
 							xmms_xform_metadata_set_int (xform,

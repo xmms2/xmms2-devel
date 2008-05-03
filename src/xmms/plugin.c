@@ -454,7 +454,7 @@ xmms_plugin_find_foreach (xmms_plugin_t *plugin, gpointer udata)
 {
 	xmms_plugin_find_foreach_data_t *data = udata;
 
-	if (!g_strcasecmp (plugin->shortname, data->name)) {
+	if (!g_ascii_strcasecmp (plugin->shortname, data->name)) {
 		xmms_object_ref (plugin);
 		data->plugin = plugin;
 		return FALSE;

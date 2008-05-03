@@ -40,9 +40,9 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmms_plugin_type_t type = XMMS_PLUGIN_TYPE_ALL;
 
 	if (argc > 2) {
-		if (g_strcasecmp (argv[2], "output") == 0) {
+		if (g_ascii_strcasecmp (argv[2], "output") == 0) {
 			type = XMMS_PLUGIN_TYPE_OUTPUT;
-		} else if (g_strcasecmp (argv[2], "xform") == 0) {
+		} else if (g_ascii_strcasecmp (argv[2], "xform") == 0) {
 			type = XMMS_PLUGIN_TYPE_XFORM;
 		} else {
 			print_error ("no such plugin type!");

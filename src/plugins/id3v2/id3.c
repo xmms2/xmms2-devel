@@ -281,24 +281,24 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 	}
 
-	if (g_strcasecmp (key, "MusicBrainz Album Id") == 0) {
+	if (g_ascii_strcasecmp (key, "MusicBrainz Album Id") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID;
 		xmms_xform_metadata_set_str (xform, metakey, val);
-	} else if (g_strcasecmp (key, "MusicBrainz Artist Id") == 0) {
+	} else if (g_ascii_strcasecmp (key, "MusicBrainz Artist Id") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID;
 		xmms_xform_metadata_set_str (xform, metakey, val);
-	} else if ((g_strcasecmp (key, "MusicBrainz Album Artist Id") == 0) &&
-	           (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
+	} else if ((g_ascii_strcasecmp (key, "MusicBrainz Album Artist Id") == 0) &&
+	           (g_ascii_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
 		xmms_xform_metadata_set_int (xform, metakey, 1);
-	} else if (g_strcasecmp (key, "ASIN") == 0) {
+	} else if (g_ascii_strcasecmp (key, "ASIN") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN;
 		xmms_xform_metadata_set_str (xform, metakey, val);
-	} else if (g_strcasecmp (key, "QuodLibet::albumartist") == 0) {
+	} else if (g_ascii_strcasecmp (key, "QuodLibet::albumartist") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
 		xmms_xform_metadata_set_str (xform, metakey, val);
 		// ArtistAlbumSort as last resort
-	} else if ((g_strcasecmp (key, "ALBUMARTISTSORT") == 0)) {
+	} else if ((g_ascii_strcasecmp (key, "ALBUMARTISTSORT") == 0)) {
 		const gchar *tmp;
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
 		if (xmms_xform_metadata_get_str (xform, metakey, &tmp) && !strlen (tmp)) {
@@ -338,7 +338,7 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	if (!val)
 		return;
 
-	if (g_strcasecmp (buf, "http://musicbrainz.org") == 0) {
+	if (g_ascii_strcasecmp (buf, "http://musicbrainz.org") == 0) {
 		const gchar *metakey;
 		gchar *val0;
 		/* make sure it is NUL terminated */

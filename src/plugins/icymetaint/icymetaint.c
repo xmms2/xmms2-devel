@@ -240,7 +240,7 @@ handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
-		if (g_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
+		if (g_ascii_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
 			const gchar *metakey;
 			gchar *raw;
 

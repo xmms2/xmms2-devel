@@ -82,7 +82,7 @@ cmd_mlib (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	for (i = 0; mlib_commands[i].name; i++) {
-		if (g_strcasecmp (mlib_commands[i].name, argv[2]) == 0) {
+		if (g_ascii_strcasecmp (mlib_commands[i].name, argv[2]) == 0) {
 			mlib_commands[i].func (conn, argc, argv);
 			return;
 		}
@@ -477,7 +477,7 @@ cmd_mlib_addcover (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	filename = argv[3];
-	if (g_strcasecmp (filename, "-")) {
+	if (g_ascii_strcasecmp (filename, "-")) {
 		io = g_io_channel_new_file (filename, "r", &error);
 	} else {
 		io = g_io_channel_unix_new (STDIN_FILENO);

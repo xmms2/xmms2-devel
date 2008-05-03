@@ -48,8 +48,8 @@ xmms_statfs_is_remote (const gchar *path)
 		return FALSE;
 	}
 
-	if ((g_strcasecmp (st.f_fstypename, "nfs") == 0) ||
-	    (g_strcasecmp (st.f_fstypename, "smb") == 0)) {
+	if ((g_ascii_strcasecmp (st.f_fstypename, "nfs") == 0) ||
+	    (g_ascii_strcasecmp (st.f_fstypename, "smb") == 0)) {
 		return TRUE;
 	}
 
