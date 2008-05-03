@@ -735,25 +735,22 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                            guint lim_start, guint lim_len, GList *order,
                            xmms_error_t *err)
 {
-	GList *res = NULL;
-	GList *ids = NULL;
+	GList *res, *n;
 	GList *fetch = g_list_prepend (NULL, (gpointer) "id");
-	GList *n = NULL;
 
 	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, fetch, NULL, err);
 
 	/* FIXME: get an int list directly ! */
 	for (n = res; n; n = n->next) {
-		xmms_object_cmd_value_t *buf;
-		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)n->data;
-		buf = g_hash_table_lookup (cmdval->value.dict, "id");
-		ids = g_list_prepend (ids, xmms_object_cmd_value_uint_new (buf->value.int32));
-		xmms_object_cmd_value_unref (n->data);
+		xmms_object_cmd_value_t *id_val, *cmdval = n->data;
+
+		id_val = g_hash_table_lookup (cmdval->value.dict, "id");
+		n->data = xmms_object_cmd_value_uint_new (id_val->value.int32);
+
+		xmms_object_cmd_value_unref (cmdval);
 	}
 
-	g_list_free (res);
-
-	return g_list_reverse (ids);
+	return res;
 }
 
 
