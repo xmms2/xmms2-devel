@@ -32,13 +32,13 @@ typedef struct xmms_ao_data_St {
 	ao_sample_format format;
 } xmms_ao_data_t;
 
-static xmms_sample_format_t formats[] = {
+static const xmms_sample_format_t formats[] = {
 	XMMS_SAMPLE_FORMAT_S8,
 	XMMS_SAMPLE_FORMAT_S16,
 	XMMS_SAMPLE_FORMAT_S32,
 };
 
-static int rates[] = {
+static const int rates[] = {
 	8000,
 	11025,
 	16000,
