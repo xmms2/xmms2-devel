@@ -110,14 +110,14 @@ stats (xmms_object_t *object, xmms_error_t *error)
 {
 	gint starttime;
 	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                         g_free,
+	                                         NULL,
 	                                         (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	starttime = ((xmms_main_t*)object)->starttime;
 
-	g_hash_table_insert (ret, g_strdup ("version"),
+	g_hash_table_insert (ret, (gpointer) "version",
 	                     xmms_object_cmd_value_str_new (XMMS_VERSION));
-	g_hash_table_insert (ret, g_strdup ("uptime"),
+	g_hash_table_insert (ret, (gpointer) "uptime",
 	                     xmms_object_cmd_value_int_new (time (NULL)-starttime));
 
 	return ret;
