@@ -40,8 +40,8 @@ static void dbwrite_operator (void *key, void *value, void *udata);
 static void dbwrite_coll_attributes (const char *key, const char *value, void *udata);
 static void dbwrite_strip_tmpprops (void *key, void *value, void *udata);
 
-static gint cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key);
-static const gchar *cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key);
+static gint cmdval_get_hash_int (xmms_object_cmd_value_t *cmdval, const gchar *key);
+static const gchar *cmdval_get_hash_string (xmms_object_cmd_value_t *cmdval, const gchar *key);
 
 
 
@@ -108,10 +108,10 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 		const gchar *label;
 
 		cmdval = (xmms_object_cmd_value_t*)res->data;
-		id = cmdval_get_dict_int (cmdval, "id");
-		type = cmdval_get_dict_int (cmdval, "type");
-		nsid = cmdval_get_dict_int (cmdval, "nsid");
-		label = cmdval_get_dict_string (cmdval, "label");
+		id = cmdval_get_hash_int (cmdval, "id");
+		type = cmdval_get_hash_int (cmdval, "type");
+		nsid = cmdval_get_hash_int (cmdval, "nsid");
+		label = cmdval_get_hash_string (cmdval, "label");
 
 		/* Do not duplicate operator if same id */
 		if (previd < 0 || id != previd) {
@@ -168,8 +168,8 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		const gchar *key, *value;
 
 		cmdval = (xmms_object_cmd_value_t*)n->data;
-		key = cmdval_get_dict_string (cmdval, "key");
-		value = cmdval_get_dict_string (cmdval, "value");
+		key = cmdval_get_hash_string (cmdval, "key");
+		value = cmdval_get_hash_string (cmdval, "value");
 		xmmsc_coll_attribute_set (coll, key, value);
 
 		xmms_object_cmd_value_unref (n->data);
@@ -187,7 +187,7 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 	for (n = res; n; n = n->next) {
 
 		cmdval = (xmms_object_cmd_value_t*)n->data;
-		xmmsc_coll_idlist_append (coll, cmdval_get_dict_int (cmdval, "mid"));
+		xmmsc_coll_idlist_append (coll, cmdval_get_hash_int (cmdval, "mid"));
 
 		xmms_object_cmd_value_unref (n->data);
 	}
@@ -205,8 +205,8 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		gint type;
 
 		cmdval = (xmms_object_cmd_value_t*)n->data;
-		id = cmdval_get_dict_int (cmdval, "id");
-		type = cmdval_get_dict_int (cmdval, "type");
+		id = cmdval_get_hash_int (cmdval, "id");
+		type = cmdval_get_hash_int (cmdval, "type");
 
 		op = xmms_collection_dbread_operator (session, id, type);
 		xmmsc_coll_add_operand (coll, op);
@@ -338,18 +338,18 @@ dbwrite_strip_tmpprops (void *key, void *value, void *udata)
 
 /* Extract the int value out of a xmms_object_cmd_value_t object. */
 static gint
-cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key)
+cmdval_get_hash_int (xmms_object_cmd_value_t *cmdval, const gchar *key)
 {
 	xmms_object_cmd_value_t *buf;
-	buf = g_hash_table_lookup (cmdval->value.dict, key);
+	buf = g_hash_table_lookup (cmdval->value.hash, key);
 	return buf->value.int32;
 }
 
 /* Extract the string value out of a xmms_object_cmd_value_t object. */
 static const gchar *
-cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key)
+cmdval_get_hash_string (xmms_object_cmd_value_t *cmdval, const gchar *key)
 {
 	xmms_object_cmd_value_t *buf;
-	buf = g_hash_table_lookup (cmdval->value.dict, key);
+	buf = g_hash_table_lookup (cmdval->value.hash, key);
 	return buf->value.string;
 }

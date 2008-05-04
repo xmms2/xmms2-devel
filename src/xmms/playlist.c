@@ -197,7 +197,7 @@ on_playlist_updated_chg (xmms_object_t *object, gconstpointer data,
 
 	XMMS_DBG ("PLAYLIST: updated chg!");
 
-	pl_cmd_val = g_hash_table_lookup (val->retval->value.dict, "name");
+	pl_cmd_val = g_tree_lookup (val->retval->value.dict, "name");
 	if (pl_cmd_val != NULL) {
 		plname = pl_cmd_val->value.string;
 	} else {
@@ -672,7 +672,7 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
                                xmmsc_coll_t *plcoll, guint pos, xmms_error_t *err)
 {
 	gint currpos;
-	GHashTable *dict;
+	GTree *dict;
 
 	g_return_val_if_fail (playlist, FALSE);
 
@@ -692,8 +692,8 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 	}
 
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_REMOVE, 0, plname);
-	g_hash_table_insert (dict, (gpointer) "position",
-	                     xmms_object_cmd_value_int_new (pos));
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
@@ -786,7 +786,7 @@ static gboolean
 xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
                     guint newpos, xmms_error_t *err)
 {
-	GHashTable *dict;
+	GTree *dict;
 	guint32 id;
 	gint currpos, size;
 	gint64 ipos, inewpos;
@@ -836,10 +836,10 @@ xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
 	xmmsc_coll_idlist_get_index (plcoll, newpos, &id);
 
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_MOVE, id, plname);
-	g_hash_table_insert (dict, (gpointer) "position",
-	                     xmms_object_cmd_value_int_new (pos));
-	g_hash_table_insert (dict, (gpointer) "newposition",
-	                     xmms_object_cmd_value_int_new (newpos));
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (pos));
+	g_tree_insert (dict, (gpointer) "newposition",
+	               xmms_object_cmd_value_int_new (newpos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
@@ -892,7 +892,7 @@ static gboolean
 xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
                          xmms_medialib_entry_t file, xmms_error_t *err)
 {
-	GHashTable *dict;
+	GTree *dict;
 	gint currpos;
 	gint len;
 	xmmsc_coll_t *plcoll;
@@ -923,8 +923,8 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
-	g_hash_table_insert (dict, (gpointer) "position",
-	                     xmms_object_cmd_value_int_new (pos));
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	/** update position once client is familiar with the new item. */
@@ -1110,15 +1110,15 @@ xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist,
                                   xmms_error_t *err)
 {
 	gint prev_size;
-	GHashTable *dict;
+	GTree *dict;
 
 	prev_size = xmms_playlist_coll_get_size (plcoll);
 	xmmsc_coll_idlist_append (plcoll, file);
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_ADD, file, plname);
-	g_hash_table_insert (dict, (gpointer) "position",
-	                     xmms_object_cmd_value_int_new (prev_size));
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (prev_size));
 	xmms_playlist_changed_msg_send (playlist, dict);
 }
 
@@ -1629,35 +1629,35 @@ xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll)
 }
 
 
-GHashTable *
+GTree *
 xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
                                xmms_playlist_changed_actions_t type,
                                guint32 id, const gchar *plname)
 {
-	GHashTable *dict;
+	GTree *dict;
 	xmms_object_cmd_value_t *val;
 	const gchar *tmp;
 
-	dict = g_hash_table_new_full (g_str_hash,
-	                              g_str_equal,
-	                              NULL,
-	                              (GDestroyNotify)xmms_object_cmd_value_unref);
+	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+
 	val = xmms_object_cmd_value_int_new (type);
-	g_hash_table_insert (dict, (gpointer) "type", val);
+	g_tree_insert (dict, (gpointer) "type", val);
+
 	if (id) {
 		val = xmms_object_cmd_value_uint_new (id);
-		g_hash_table_insert (dict, (gpointer) "id", val);
+		g_tree_insert (dict, (gpointer) "id", val);
 	}
 
 	tmp = xmms_playlist_canonical_name (playlist, plname);
 	val = xmms_object_cmd_value_str_new (tmp);
-	g_hash_table_insert (dict, (gpointer) "name", val);
+	g_tree_insert (dict, (gpointer) "name", val);
 
 	return dict;
 }
 
 void
-xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
+xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict)
 {
 	xmms_object_cmd_value_t *type_cmd_val;
 	xmms_object_cmd_value_t *pl_cmd_val;
@@ -1666,8 +1666,8 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
 	g_return_if_fail (dict);
 
 	/* If local playlist change, trigger a COLL_CHANGED signal */
-	type_cmd_val = g_hash_table_lookup (dict, "type");
-	pl_cmd_val = g_hash_table_lookup (dict, "name");
+	type_cmd_val = g_tree_lookup (dict, "type");
+	pl_cmd_val = g_tree_lookup (dict, "name");
 	if (type_cmd_val != NULL &&
 	    type_cmd_val->value.int32 != XMMS_PLAYLIST_CHANGED_UPDATE &&
 	    pl_cmd_val != NULL) {
@@ -1680,34 +1680,33 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
 	                    XMMS_OBJECT_CMD_ARG_DICT,
 	                    dict);
 
-	g_hash_table_destroy (dict);
+	g_tree_destroy (dict);
 }
 
 static void
 xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist,
                                     guint32 pos, const gchar *plname)
 {
-	GHashTable *dict;
+	GTree *dict;
 	xmms_object_cmd_value_t *val;
 	const gchar *tmp;
 
 	g_return_if_fail (playlist);
 
-	dict = g_hash_table_new_full (g_str_hash,
-	                              g_str_equal,
-	                              NULL,
-	                              (GDestroyNotify)xmms_object_cmd_value_unref);
+	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+
 	val = xmms_object_cmd_value_uint_new (pos);
-	g_hash_table_insert (dict, (gpointer) "position", val);
+	g_tree_insert (dict, (gpointer) "position", val);
 
 	tmp = xmms_playlist_canonical_name (playlist, plname);
 	val = xmms_object_cmd_value_str_new (tmp);
-	g_hash_table_insert (dict, (gpointer) "name", val);
+	g_tree_insert (dict, (gpointer) "name", val);
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
 	                    XMMS_OBJECT_CMD_ARG_DICT,
 	                    dict);
 
-	g_hash_table_destroy (dict);
+	g_tree_destroy (dict);
 }

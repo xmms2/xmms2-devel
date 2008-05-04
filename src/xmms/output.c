@@ -65,14 +65,14 @@ typedef enum xmms_output_filler_state_E {
 } xmms_output_filler_state_t;
 
 static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
-static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
+static GTree *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
 static void xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state);
 static void xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state_t state);
 
 static void xmms_volume_map_init (xmms_volume_map_t *vl);
 static void xmms_volume_map_free (xmms_volume_map_t *vl);
 static void xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst);
-static GHashTable *xmms_volume_map_to_hash (xmms_volume_map_t *vl);
+static GTree *xmms_volume_map_to_dict (xmms_volume_map_t *vl);
 
 static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
 static gboolean set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin);
@@ -672,10 +672,10 @@ xmms_output_volume_set (xmms_output_t *output, const gchar *channel,
 	}
 }
 
-static GHashTable *
+static GTree *
 xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 {
-	GHashTable *ret;
+	GTree *ret;
 	xmms_volume_map_t map;
 
 	if (!output->plugin) {
@@ -716,7 +716,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 		return NULL; /* error is set (-> no leak) */
 	}
 
-	ret = xmms_volume_map_to_hash (&map);
+	ret = xmms_volume_map_to_dict (&map);
 
 	/* success! */
 	xmms_error_reset (error);
@@ -1129,14 +1129,14 @@ xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst)
 	memcpy (dst->values, src->values, src->num_channels * sizeof (guint));
 }
 
-static GHashTable *
-xmms_volume_map_to_hash (xmms_volume_map_t *vl)
+static GTree *
+xmms_volume_map_to_dict (xmms_volume_map_t *vl)
 {
-	GHashTable *ret;
+	GTree *ret;
 	gint i;
 
-	ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                             NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                       NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
 	if (!ret) {
 		return NULL;
 	}
@@ -1145,7 +1145,7 @@ xmms_volume_map_to_hash (xmms_volume_map_t *vl)
 		xmms_object_cmd_value_t *val;
 
 		val = xmms_object_cmd_value_uint_new (vl->values[i]);
-		g_hash_table_insert (ret, (gpointer) vl->names[i], val);
+		g_tree_replace (ret, (gpointer) vl->names[i], val);
 	}
 
 	return ret;
@@ -1154,7 +1154,7 @@ xmms_volume_map_to_hash (xmms_volume_map_t *vl)
 static gpointer
 xmms_output_monitor_volume_thread (gpointer data)
 {
-	GHashTable *hash;
+	GTree *dict;
 	xmms_output_t *output = data;
 	xmms_volume_map_t old, cur;
 
@@ -1199,11 +1199,11 @@ xmms_output_monitor_volume_thread (gpointer data)
 		     !xmms_volume_map_equal (&old, &cur))) {
 			/* emit the broadcast */
 			if (cur.status) {
-				hash = xmms_volume_map_to_hash (&cur);
+				dict = xmms_volume_map_to_dict (&cur);
 				xmms_object_emit_f (XMMS_OBJECT (output),
 				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
-				                    XMMS_OBJECT_CMD_ARG_DICT, hash);
-				g_hash_table_destroy (hash);
+				                    XMMS_OBJECT_CMD_ARG_DICT, dict);
+				g_tree_destroy (dict);
 			} else {
 				/** @todo When bug 691 is solved, emit an error here */
 				xmms_object_emit_f (XMMS_OBJECT (output),

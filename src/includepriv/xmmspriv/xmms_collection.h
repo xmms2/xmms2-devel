@@ -82,8 +82,8 @@ const gchar *xmms_collection_get_namespace_string (xmms_collection_namespace_id_
 gboolean xmms_collection_get_int_attr (xmmsc_coll_t *coll, const gchar *attrname, gint *val);
 gboolean xmms_collection_set_int_attr (xmmsc_coll_t *coll, const gchar *attrname, gint newval);
 
-GHashTable *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
-void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict);
+GTree *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
+void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GTree *dict);
 
 void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 

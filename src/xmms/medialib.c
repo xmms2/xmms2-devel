@@ -758,7 +758,7 @@ lookup_string (xmms_object_cmd_value_t *tbl, const gchar *key)
 	if (!tbl || tbl->type != XMMS_OBJECT_CMD_ARG_DICT)
 		return NULL;
 
-	val = g_hash_table_lookup (tbl->value.dict, key);
+	val = g_tree_lookup (tbl->value.dict, key);
 
 	if (!val)
 		return NULL;
@@ -777,7 +777,7 @@ lookup_int (xmms_object_cmd_value_t *tbl, const gchar *key)
 	if (!tbl || tbl->type != XMMS_OBJECT_CMD_ARG_DICT)
 		return 0;
 
-	val = g_hash_table_lookup (tbl->value.dict, key);
+	val = g_tree_lookup (tbl->value.dict, key);
 
 	if (!val)
 		return 0;
@@ -1136,7 +1136,7 @@ select_callback (GHashTable *row, gpointer udata)
 {
 	GList **l = (GList **) udata;
 
-	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (row));
+	*l = g_list_prepend (*l, xmms_object_cmd_value_hash_table_new (row));
 	return TRUE;
 }
 

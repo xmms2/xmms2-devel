@@ -58,10 +58,11 @@ typedef struct dump_tree_data_St {
 	gchar *prev_key;
 } dump_tree_data_t;
 
-static GHashTable *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
+static GTree *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_property_t *xmms_config_property_new (const gchar *name);
 static gchar *xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
 static gchar *xmms_config_property_client_register (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
+static gint compare_key (gconstpointer a, gconstpointer b, gpointer user_data);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, DICT, NONE, NONE);
@@ -202,7 +203,7 @@ xmms_config_property_get_name (const xmms_config_property_t *prop)
 void
 xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 {
-	GHashTable *dict;
+	GTree *dict;
 
 	g_return_if_fail (prop);
 	g_return_if_fail (data);
@@ -217,17 +218,17 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	                  XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 	                  (gpointer) data);
 
-	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
-	                              (GDestroyNotify)xmms_object_cmd_value_unref);
-	g_hash_table_insert (dict, (gchar *) prop->name,
-	                     xmms_object_cmd_value_str_new (prop->value));
+	dict = g_tree_new_full (compare_key, NULL,
+	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+	g_tree_insert (dict, (gchar *) prop->name,
+	               xmms_object_cmd_value_str_new (prop->value));
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 	                    XMMS_OBJECT_CMD_ARG_DICT,
 	                    dict);
 
-	g_hash_table_destroy (dict);
+	g_tree_destroy (dict);
 
 	/* save the database to disk, so we don't lose any data
 	 * if the daemon crashes
@@ -595,10 +596,10 @@ xmms_config_setvalue (xmms_config_t *conf, const gchar *key, const gchar *value,
  */
 static gboolean
 xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
-                          GHashTable *dict)
+                          GTree *dict)
 {
-	g_hash_table_insert (dict, g_strdup (key),
-	                     xmms_object_cmd_value_str_new (prop->value));
+	g_tree_insert (dict, g_strdup (key),
+	               xmms_object_cmd_value_str_new (prop->value));
 
 	return FALSE; /* keep going */
 }
@@ -609,13 +610,13 @@ xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
  * @param err To be filled in if an error occurs
  * @return a dict with config properties and values
  */
-static GHashTable *
+static GTree *
 xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
-	GHashTable *ret;
+	GTree *ret;
 
-	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
-	                             (GDestroyNotify)xmms_object_cmd_value_unref);
+	ret = g_tree_new_full (compare_key, NULL,
+	                       g_free, (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	g_mutex_lock (conf->mutex);
 	g_tree_foreach (conf->properties,

@@ -60,7 +60,7 @@
  * Forward declarations of the methods in the main object
  */
 static void quit (xmms_object_t *object, xmms_error_t *error);
-static GHashTable *stats (xmms_object_t *object, xmms_error_t *error);
+static GTree *stats (xmms_object_t *object, xmms_error_t *error);
 static void hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
@@ -105,20 +105,21 @@ static gchar *conffile = NULL;
 /**
  * This returns the main stats for the server
  */
-static GHashTable *
+static GTree *
 stats (xmms_object_t *object, xmms_error_t *error)
 {
+	GTree *ret;
 	gint starttime;
-	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                         NULL,
-	                                         (GDestroyNotify)xmms_object_cmd_value_unref);
+
+	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                       NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	starttime = ((xmms_main_t*)object)->starttime;
 
-	g_hash_table_insert (ret, (gpointer) "version",
-	                     xmms_object_cmd_value_str_new (XMMS_VERSION));
-	g_hash_table_insert (ret, (gpointer) "uptime",
-	                     xmms_object_cmd_value_int_new (time (NULL)-starttime));
+	g_tree_insert (ret, (gpointer) "version",
+	               xmms_object_cmd_value_str_new (XMMS_VERSION));
+	g_tree_insert (ret, (gpointer) "uptime",
+	               xmms_object_cmd_value_int_new (time (NULL)-starttime));
 
 	return ret;
 }

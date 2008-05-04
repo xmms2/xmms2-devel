@@ -223,12 +223,23 @@ xmms_object_cmd_value_int_new (gint32 i)
 }
 
 xmms_object_cmd_value_t *
-xmms_object_cmd_value_dict_new (GHashTable *dict)
+xmms_object_cmd_value_dict_new (GTree *dict)
 {
 	xmms_object_cmd_value_t *val;
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.dict = dict;
 	val->type = XMMS_OBJECT_CMD_ARG_DICT;
+	val->refcount = 1;
+	return val;
+}
+
+xmms_object_cmd_value_t *
+xmms_object_cmd_value_hash_table_new (GHashTable *hash)
+{
+	xmms_object_cmd_value_t *val;
+	val = g_new0 (xmms_object_cmd_value_t, 1);
+	val->value.hash = hash;
+	val->type = XMMS_OBJECT_CMD_ARG_HASH_TABLE;
 	val->refcount = 1;
 	return val;
 }
@@ -305,10 +316,17 @@ xmms_object_cmd_value_free (xmms_object_cmd_value_t *v)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			if (v->value.dict) {
-				g_hash_table_destroy (v->value.dict);
+				g_tree_destroy (v->value.dict);
 			}
 
 			break;
+		case XMMS_OBJECT_CMD_ARG_HASH_TABLE:
+			if (v->value.hash) {
+				g_hash_table_destroy (v->value.hash);
+			}
+
+			break;
+
 		case XMMS_OBJECT_CMD_ARG_COLL:
 			if (v->value.coll) {
 				xmmsc_coll_unref (v->value.coll);
@@ -392,7 +410,10 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			arg.retval = xmms_object_cmd_value_bin_new (va_arg (ap, GString *));
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			arg.retval = xmms_object_cmd_value_dict_new (va_arg (ap, GHashTable *));
+			arg.retval = xmms_object_cmd_value_dict_new (va_arg (ap, GTree *));
+			break;
+		case XMMS_OBJECT_CMD_ARG_HASH_TABLE:
+			arg.retval = xmms_object_cmd_value_hash_table_new (va_arg (ap, GHashTable *));
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:

@@ -64,7 +64,7 @@ struct xmms_xform_St {
 	GQueue *hotspots;
 
 	GList *browse_list;
-	GHashTable *browse_hash;
+	GTree *browse_dict;
 	gint browse_index;
 
 	/** used for line reading */
@@ -163,11 +163,11 @@ xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key,
                                       xmms_object_cmd_value_t *val)
 {
 	g_return_if_fail (xform);
-	g_return_if_fail (xform->browse_hash);
+	g_return_if_fail (xform->browse_dict);
 	g_return_if_fail (key);
 	g_return_if_fail (val);
 
-	g_hash_table_insert (xform->browse_hash, g_strdup (key), val);
+	g_tree_insert (xform->browse_dict, g_strdup (key), val);
 }
 
 void
@@ -187,9 +187,9 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	url = xmms_xform_get_url (xform);
 	g_return_if_fail (url);
 
-	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                            g_free,
-	                                            (GDestroyNotify)xmms_object_cmd_value_unref);
+	xform->browse_dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                                      g_free,
+	                                      (GDestroyNotify)xmms_object_cmd_value_unref);
 
 	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
@@ -207,7 +207,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	xmms_xform_browse_add_entry_property_str (xform, "path", t);
 	xmms_xform_browse_add_entry_property_int (xform, "isdir", isdir);
 
-	val = xmms_object_cmd_value_dict_new (xform->browse_hash);
+	val = xmms_object_cmd_value_dict_new (xform->browse_dict);
 	xform->browse_list = g_list_prepend (xform->browse_list, val);
 
 	g_free (t);
@@ -226,8 +226,8 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 
-	tmp1 = g_hash_table_lookup (val1->value.dict, "intsort");
-	tmp2 = g_hash_table_lookup (val2->value.dict, "intsort");
+	tmp1 = g_tree_lookup (val1->value.dict, "intsort");
+	tmp2 = g_tree_lookup (val2->value.dict, "intsort");
 
 	if (tmp1 && tmp2) {
 		g_return_val_if_fail (tmp1->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
@@ -235,8 +235,8 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 		return tmp1->value.int32 > tmp2->value.int32;
 	}
 
-	tmp1 = g_hash_table_lookup (val1->value.dict, "path");
-	tmp2 = g_hash_table_lookup (val2->value.dict, "path");
+	tmp1 = g_tree_lookup (val1->value.dict, "path");
+	tmp2 = g_tree_lookup (val2->value.dict, "path");
 
 	g_return_val_if_fail (!!tmp1, 0);
 	g_return_val_if_fail (!!tmp2, 0);
