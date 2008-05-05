@@ -70,7 +70,11 @@ refresh_currpos (xmmsc_result_t *res, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_uint (res, &cache->currpos);
+		if (xmmsc_result_get_class (res) == XMMSC_RESULT_CLASS_BROADCAST) { /* <<<<< */
+			xmmsc_result_get_dict_entry_uint (res, "position", &cache->currpos);
+		} else {
+			xmmsc_result_get_uint (res, &cache->currpos);
+		}
 	}
 
 	freshness_received (&cache->freshness_currpos);

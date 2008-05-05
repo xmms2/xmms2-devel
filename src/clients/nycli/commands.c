@@ -40,6 +40,10 @@ CLI_SIMPLE_SETUP("pause", cli_pause,
                  COMMAND_REQ_CONNECTION,
                  NULL,
                  _("Pause playback."))
+CLI_SIMPLE_SETUP("toggle", cli_toggle, /* <<<<< */
+		 COMMAND_REQ_CONNECTION,
+		 NULL,
+		 _("Toggle playback."))
 CLI_SIMPLE_SETUP("seek", cli_seek,
                  COMMAND_REQ_CONNECTION,
                  _("<time|offset>"),
@@ -347,6 +351,36 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
+/* <<<<< */
+gboolean 
+cli_toggle  (cli_infos_t *infos, command_context_t *ctx)
+{
+  uint32_t status;
+  xmmsc_result_t *res;
+
+  res = xmmsc_playback_status (infos->conn);
+  xmmsc_result_wait (res);
+
+  if (xmmsc_result_iserror (res)) {
+    g_printf (_("Error: Couldn't get playback status: %s"),
+		 xmmsc_result_get_error (res));
+  }
+
+  if (!xmmsc_result_get_uint(res, &status)) {
+    g_printf (_("Error: Broken resultset"));
+  }
+
+  if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+    cli_pause(infos, ctx);
+  } else {
+    cli_play(infos, ctx);
+  }
+	
+  xmmsc_result_unref(res);
+
+  return TRUE;
+}
+
 gboolean
 cli_seek (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -389,6 +423,7 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
+
 	res = xmmsc_medialib_get_info (infos->conn, currid);
 	xmmsc_result_notifier_set (res, cb_entry_print_status, infos);
 	xmmsc_result_notifier_set (res, cb_done, infos);
