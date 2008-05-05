@@ -415,7 +415,7 @@ void
 on_config_ipcsocket_change (xmms_object_t *object, gconstpointer data, gpointer udata)
 {
 	xmms_ipc_shutdown ();
-	XMMS_DBG ("Shuttind down ipc server threads through config property \"core.ipcsocket\" change.");
+	XMMS_DBG ("Shutting down ipc server threads through config property \"core.ipcsocket\" change.");
 	xmms_ipc_setup_server ((gchar *)data);
 }
 
