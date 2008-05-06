@@ -243,6 +243,7 @@ xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types
 	}
 
 	if (!best) {
+		xmms_log_error ("Couldn't convert sample format to any of the %d goal formats", g_list_length (goal_types));
 		return NULL;
 	}
 
