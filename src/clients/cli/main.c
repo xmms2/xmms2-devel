@@ -203,7 +203,8 @@ free_config ()
  * Usage
  */
 static void
-cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv) {
+cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
 
 	gint i;
 	if (argc == 2) {
@@ -212,8 +213,7 @@ cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv) {
 		for (i = 0; commands[i].name; i++) {
 			print_info ("  %s - %s", commands[i].name, commands[i].help);
 		}
-	}
-	else if (argc == 3) {
+	} else if (argc == 3) {
 		/* print help for specified command */
 		for (i = 0; commands[i].name; i++) {
 			if (g_ascii_strcasecmp (commands[i].name, argv[2]) == 0) {

@@ -61,7 +61,8 @@ cmds mlib_commands[] = {
 
 
 static void
-cmd_mlib_help (void) {
+cmd_mlib_help (void)
+{
 	gint i;
 
 	print_info ("Available medialib commands:");

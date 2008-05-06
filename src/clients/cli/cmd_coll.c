@@ -34,7 +34,8 @@ cmds coll_commands[] = {
 
 
 static void
-cmd_coll_help (void) {
+cmd_coll_help (void)
+{
 	gint i;
 
 	print_info ("Available collection commands:");

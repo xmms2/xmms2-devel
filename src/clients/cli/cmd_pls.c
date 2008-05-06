@@ -111,7 +111,8 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 
 
 static void
-cmd_playlist_help (void) {
+cmd_playlist_help (void)
+{
 	gint i;
 
 	print_info ("Available playlist commands:");
@@ -250,8 +251,7 @@ cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	pos = strtol (argv[2], &endptr, 10);
 	if (*endptr == '\0') {
 		url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);  /* No playlist name */
-	}
-	else {
+	} else {
 		playlist = argv[2];  /* extract playlist name */
 		pos = strtol (argv[3], NULL, 10);
 		url = format_url (argv[4], G_FILE_TEST_IS_REGULAR);
@@ -290,8 +290,7 @@ cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	pos = strtol (argv[2], &endptr, 10);
 	if (*endptr == '\0') {
 		mlib_id = strtol (argv[3], NULL, 10); /* No playlist name */
-	}
-	else {
+	} else {
 		playlist = argv[2];  /* extract playlist name */
 		pos = strtol (argv[3], NULL, 10);
 		mlib_id = strtol (argv[4], NULL, 10);
