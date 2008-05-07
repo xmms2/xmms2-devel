@@ -568,6 +568,8 @@ xmmsc_result_source_preference_set (res, ...)
 
 =head2 source_preference_get
 
+=over 4
+
 =item Arguments: none
 
 =item Return Value: @source_preferences
