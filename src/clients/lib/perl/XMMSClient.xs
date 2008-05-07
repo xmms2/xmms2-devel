@@ -327,13 +327,13 @@ handle the actual file move yourself.
 
 =back
 
+=cut
+
 xmmsc_result_t *
 xmmsc_medialib_move_entry (c, id, url)
 		xmmsc_connection_t *c
-		uint32_t entry
+		uint32_t id
 		const char *url
-
-=cut
 
 =head2 medialib_remove_entry
 
