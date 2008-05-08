@@ -31,6 +31,11 @@ def configure(conf):
 
     conf.check_perl_ext_devel()
 
+    if not os.path.commonprefix([conf.env['ARCHDIR_PERL'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
+        Params.warning('default perl libdir is not under PREFIX. specify path '
+                + 'manually using --with-perl-archdir if you don\'t want the '
+                + 'perl bindings to be installed to ' + conf.env['ARCHDIR_PERL'])
+
     conf.env['INSTALLDIR_PERL_AUTO'] = os.path.join(conf.env['ARCHDIR_PERL'], "auto", "Audio", "XMMSClient")
     conf.env['INSTALLDIR_PERL_LIB'] = os.path.join(conf.env['ARCHDIR_PERL'], "Audio")
 
