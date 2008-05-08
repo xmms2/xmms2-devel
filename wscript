@@ -66,11 +66,17 @@ all_optionals = sets.Set([os.path.basename(o) for o in optional_subdirs])
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")
                         if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
+libprefix = None
+
 ####
 ## Build
 ####
 def build(bld):
     env = bld.env()
+
+    # set libprefix for later use in shutdown
+    global libprefix
+    libprefix = os.path.join(env[env['shlib_INST_VAR']], env['shlib_INST_DIR'])
 
     if env["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
@@ -426,8 +432,8 @@ def set_options(opt):
         opt.sub_options(o)
 
 def shutdown():
-    if Params.g_commands['install'] and os.geteuid() == 0:
+    if Params.g_commands['install'] and os.geteuid() == 0 and libprefix:
         ldconfig = '/sbin/ldconfig'
         if os.path.isfile(ldconfig):
-            try: os.popen(ldconfig)
+            try: os.spawnvp(os.P_WAIT, 'ldconfig', ['', libprefix])
             except: pass
