@@ -24,7 +24,7 @@ def build(bld):
                   xform.cpp""".split()
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'boosth boostl socket'
-    obj.vnum = '2.0.0'
+    obj.vnum = '3.0.0'
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
