@@ -26,6 +26,12 @@ def configure(conf):
 
     conf.env['xmmsclient_PYTHONDIR'] = os.path.join(conf.env['PYTHONDIR'], 'xmmsclient')
 
+    if not os.path.commonprefix([conf.env['PYTHONDIR'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
+        Params.warning('default python libdir is not under PREFIX. specify path '
+                + 'manually using the PYTHONDIR environment variable if you '
+                + 'don\'t want the python bindings to be installed to '
+                + conf.env['PYTHONDIR'])
+
     return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
 
 def set_options(opt):
