@@ -25,7 +25,7 @@ def plugin(name, source=None, configure=False, build=False,
         if source:
             obj.source = source
         else:
-            obj.source = '%s.c' % name
+            obj.source = ['%s.c' % name]
 
         libs = ['glib2']
         if needs_lib:
