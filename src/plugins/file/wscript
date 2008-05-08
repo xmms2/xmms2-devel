@@ -1,5 +1,13 @@
 from waftools.plugin import plugin
 
+
+def plugin_build(bld, obj):
+    env = bld.env()
+    if env['FSTATAT']:
+        obj.source.append('browse/fstatat.c')
+    else:
+        obj.source.append('browse/gdir.c')
+
 def plugin_configure(conf):
     test = conf.create(enumerator='function')
     test.function = 'fstatat'
@@ -7,9 +15,8 @@ def plugin_configure(conf):
     test.headers = ['fcntl.h', 'sys/stat.h']
     test.mandatory = False
 
-    if test.run():
-        conf.env['CCDEFINES_file'] += ['HAVE_FSTATAT']
+    test.run()
 
     return True
 
-configure, build = plugin('file', configure=plugin_configure, needs_lib=True)
+configure, build = plugin('file', configure=plugin_configure, build=plugin_build, needs_lib=True)
