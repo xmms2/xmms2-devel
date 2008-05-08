@@ -89,6 +89,11 @@ def configure(conf):
     else:
         conf.env["LIBDIR_ruby"] = Params.g_options.rubylibdir
 
+    if not os.path.commonprefix([conf.env['ARCHDIR_ruby'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
+        Params.warning('default ruby archdir is not under PREFIX. specify path '
+                + 'manually using --with-ruby-archdir if you don\'t want the '
+                + 'ruby bindings to be installed to ' + conf.env['ARCHDIR_ruby'])
+
     conf.env["rubyext_PREFIX"] = ''
     conf.env["rubyext_SUFFIX"] = '.' + os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"DLEXT\"]'").read().strip()
     conf.env["rubyext_USELIB"] = "ruby"
