@@ -248,7 +248,7 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 			data->total_samples = metadata->data.stream_info.total_samples;
 
 			if (filesize > 0 && data->total_samples) {
-				data->bit_rate = (guint) (filesize * 8 *
+				data->bit_rate = (guint) ((guint64) filesize * 8 *
 				                 (guint64) data->sample_rate /
 				                 (guint64) data->total_samples);
 			}
