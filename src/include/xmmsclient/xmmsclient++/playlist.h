@@ -495,7 +495,7 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			UintSignal broadcastCurrentPos() const;
+			DictSignal broadcastCurrentPos() const;
 
 			/** Request the playlist loaded broadcast from the server.
 			 *

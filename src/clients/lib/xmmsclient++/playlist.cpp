@@ -300,12 +300,12 @@ namespace Xmms
 		return DictSignal( res, ml_ );
 	}
 
-	UintSignal Playlist::broadcastCurrentPos() const
+	DictSignal Playlist::broadcastCurrentPos() const
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
 		          boost::bind( xmmsc_broadcast_playlist_current_pos, conn_ ) );
-		return UintSignal( res, ml_ );
+		return DictSignal( res, ml_ );
 	}
 
 	StringSignal Playlist::broadcastLoaded() const
