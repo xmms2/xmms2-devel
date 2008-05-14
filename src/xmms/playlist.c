@@ -68,8 +68,8 @@ static gint xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll);
 static void xmms_playlist_update_queue (xmms_playlist_t *playlist, const gchar *plname, xmmsc_coll_t *coll);
 static void xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, const gchar *plname, xmmsc_coll_t *coll);
 
-static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
-
+static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, GTree *dict);
+static GTree * xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
 
 XMMS_CMD_DEFINE  (load, xmms_playlist_load, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE3 (insert_url, xmms_playlist_insert_url, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
@@ -85,14 +85,14 @@ XMMS_CMD_DEFINE3 (add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NON
 XMMS_CMD_DEFINE  (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE  (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, STRINGLIST);
 XMMS_CMD_DEFINE  (list_entries, xmms_playlist_list_entries, xmms_playlist_t *, LIST, STRING, NONE);
-XMMS_CMD_DEFINE  (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, STRING, NONE);
+XMMS_CMD_DEFINE  (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, DICT, STRING, NONE);
 XMMS_CMD_DEFINE  (current_active, xmms_playlist_current_active, xmms_playlist_t *, STRING, NONE, NONE);
 XMMS_CMD_DEFINE  (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE  (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE  (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, STRING);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
-#define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, pos, name)
+#define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, xmms_playlist_current_pos_msg_new (playlist, pos, name))
 
 
 /** @defgroup Playlist Playlist
@@ -508,12 +508,13 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
  * Retrieve the position of the currently active xmms_medialib_entry_t
  *
  */
-guint32
+GTree *
 xmms_playlist_current_pos (xmms_playlist_t *playlist, gchar *plname,
                            xmms_error_t *err)
 {
 	guint32 pos;
 	xmmsc_coll_t *plcoll;
+	GTree *dict;
 
 	g_return_val_if_fail (playlist, 0);
 
@@ -533,7 +534,9 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, gchar *plname,
 
 	g_mutex_unlock (playlist->mutex);
 
-	return pos;
+	dict = xmms_playlist_current_pos_msg_new (playlist, pos, plname);
+
+	return dict;
 }
 
 /**
@@ -1656,6 +1659,27 @@ xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
 	return dict;
 }
 
+GTree *
+xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist,
+                                   guint32 pos, const gchar *plname)
+{
+	GTree *dict;
+	xmms_object_cmd_value_t *val;
+	const gchar *tmp;
+
+	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
+	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+
+	val = xmms_object_cmd_value_uint_new (pos);
+	g_tree_insert (dict, (gpointer) "position", val);
+
+	tmp = xmms_playlist_canonical_name (playlist, plname);
+	val = xmms_object_cmd_value_str_new (tmp);
+	g_tree_insert (dict, (gpointer) "name", val);
+
+	return dict;
+}
+
 void
 xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict)
 {
@@ -1685,23 +1709,11 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict)
 
 static void
 xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist,
-                                    guint32 pos, const gchar *plname)
+                                   GTree *dict)
 {
-	GTree *dict;
-	xmms_object_cmd_value_t *val;
-	const gchar *tmp;
-
 	g_return_if_fail (playlist);
 
-	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
-
-	val = xmms_object_cmd_value_uint_new (pos);
-	g_tree_insert (dict, (gpointer) "position", val);
-
-	tmp = xmms_playlist_canonical_name (playlist, plname);
-	val = xmms_object_cmd_value_str_new (tmp);
-	g_tree_insert (dict, (gpointer) "name", val);
+	g_return_if_fail (dict);
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,

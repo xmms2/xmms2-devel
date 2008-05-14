@@ -510,7 +510,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_wait (res);
 
 	if (!xmmsc_result_iserror (res)) {
-		if (!xmmsc_result_get_uint (res, &p)) {
+		if (!xmmsc_result_get_dict_entry_uint (res, "position", &p)) {
 			print_error ("Broken resultset");
 		}
 		xmmsc_result_unref (res);
