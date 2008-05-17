@@ -128,19 +128,25 @@ typedef struct {
 static void
 add_index (cue_track *tr, gchar *idx)
 {
-	guint ms;
+	guint ms = 0;
 	guint tmp;
 
 	gchar **a = g_strsplit (idx, ":", 0);
 
-	tmp = strtol (a[0], NULL, 10);
-	ms = tmp * 60000;
+	if (a[0] != NULL) {
+		tmp = strtol (a[0], NULL, 10);
+		ms = tmp * 60000;
 
-	tmp = strtol (a[1], NULL, 10);
-	ms += tmp * 1000;
+		if (a[1] != NULL) {
+			tmp = strtol (a[1], NULL, 10);
+			ms += tmp * 1000;
 
-	tmp = strtol (a[2], NULL, 10);
-	ms += (guint)((gfloat)tmp * 1.0/75.0) * 1000.0;
+			if (a[2] != NULL) {
+				tmp = strtol (a[2], NULL, 10);
+				ms += (guint)((gfloat)tmp * 1.0/75.0) * 1000.0;
+			}
+		}
+	}
 
 	if (!tr->index) {
 		tr->index = ms;
