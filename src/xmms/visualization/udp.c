@@ -216,3 +216,20 @@ write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, xmms_s
 	sendto (socket, packet, XMMS_VISPACKET_UDP_OFFSET + offset + ntohs (dest->size) * sizeof(int16_t), 0, (struct sockaddr *)&t->addr, sl);
 	free (packet);
 }
+
+gboolean
+write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf, int socket) {
+	xmmsc_vischunk_t *dest;
+	short res;
+
+	if (!write_start_udp (id, t, &dest))
+		return FALSE;
+
+	tv2net (dest->timestamp, time);
+	dest->format = htons (c->format);
+	res = fill_buffer (dest->data, &c->prop, channels, size, buf);
+	dest->size = htons (res);
+	write_finish_udp (id, t, dest, socket);
+
+	return TRUE;
+}

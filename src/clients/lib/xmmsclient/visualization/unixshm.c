@@ -125,7 +125,7 @@ increment_server (xmmsc_vis_unixshm_t *t) {
 	}
 }
 
-int
+static int
 read_start_shm (xmmsc_vis_unixshm_t *t, unsigned int blocking, xmmsc_vischunk_t **dest)
 {
 	int decr = decrement_client (t, blocking);
@@ -135,7 +135,7 @@ read_start_shm (xmmsc_vis_unixshm_t *t, unsigned int blocking, xmmsc_vischunk_t 
 	return decr;
 }
 
-void
+static void
 read_finish_shm (xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t *dest) {
 	t->pos = (t->pos + 1) % t->size;
 	increment_server (t);

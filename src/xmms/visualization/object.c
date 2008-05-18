@@ -276,6 +276,8 @@ xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *
 {
 	int shmid;
 
+	XMMS_DBG ("Trying to init shm!");
+
 	if (sscanf (shmidstr, "%d", &shmid) != 1) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "couldn't parse shmid");
 		return -1;
@@ -286,6 +288,7 @@ xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *
 int32_t
 xmms_visualization_init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 {
+	XMMS_DBG ("Trying to init udp!");
 	return init_udp (vis, id, err);
 }
 
@@ -298,52 +301,43 @@ xmms_visualization_shutdown_client (xmms_visualization_t *vis, int32_t id, xmms_
 }
 
 static gboolean
-package_write_start (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t **dest) {
+package_write (xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf)
+{
 	if (c->type == VIS_UNIXSHM) {
-		return write_start_shm (id, &c->transport.shm, dest);
+		return write_shm (&c->transport.shm, c, id, time, channels, size, buf);
 	} else if (c->type == VIS_UDP) {
-		return write_start_udp (id, &c->transport.udp, dest);
+		return write_udp (&c->transport.udp, c, id, time, channels, size, buf, vis->socket);
 	}
 	return FALSE;
-}
-
-static void
-package_write_finish (int32_t id, xmms_vis_client_t* c, xmmsc_vischunk_t *dest) {
-	if (c->type == VIS_UNIXSHM) {
-		write_finish_shm (id, &c->transport.shm, dest);
-	} else if (c->type == VIS_UDP) {
-		write_finish_udp (id, &c->transport.udp, dest, vis->socket);
-	}
 }
 
 void
 send_data (int channels, int size, short *buf)
 {
 	int i;
-	xmmsc_vischunk_t *dest;
 	struct timeval time;
-	guint32 latency = xmms_output_latency (vis->output);
+	guint32 latency;
 
 	if (!vis) {
 		return;
 	}
 
+	latency = xmms_output_latency (vis->output);
+
 	fft_init ();
 
 	gettimeofday (&time, NULL);
+	time.tv_sec += (latency / 1000);
+	time.tv_usec += (latency % 1000) * 1000;
+	if (time.tv_usec > 1000000) {
+		time.tv_sec++;
+		time.tv_usec -= 1000000;
+	}
+
 	g_mutex_lock (vis->clientlock);
 	for (i = 0; i < vis->clientc; ++i) {
 		if (vis->clientv[i]) {
-			if (!package_write_start (i, vis->clientv[i], &dest)) {
-				continue;
-			}
-
-			ts2net (dest->timestamp, tv2ts (&time) + latency * 0.001);
-			dest->format = htons (vis->clientv[i]->format);
-
-			dest->size = htons (fill_buffer (dest->data, &vis->clientv[i]->prop, channels, size, buf));
-
-			package_write_finish (i, vis->clientv[i], dest);
+			package_write (vis->clientv[i], i, &time, channels, size, buf);
 		}
 	}
 	g_mutex_unlock (vis->clientlock);

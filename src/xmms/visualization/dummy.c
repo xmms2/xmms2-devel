@@ -31,3 +31,9 @@ write_start_shm (int32_t id, xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t **dest)
 { return FALSE; }
 
 void write_finish_shm (int32_t id, xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t *dest) {}
+
+gboolean
+write_shm (xmmsc_vis_unixshm_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf)
+{
+	return FALSE;
+}

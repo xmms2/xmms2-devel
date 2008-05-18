@@ -18,12 +18,7 @@ cleanup_shm (xmmsc_vis_unixshm_t *t)
 }
 
 int
-read_start_shm (xmmsc_vis_unixshm_t *t, unsigned int blocking, xmmsc_vischunk_t **dest)
+read_do_shm (xmmsc_vis_unixshm_t *t, xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
 {
 	return -1;
-}
-
-void
-read_finish_shm (xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t *dest)
-{
 }
