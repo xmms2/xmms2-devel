@@ -178,9 +178,12 @@ cleanup_udp (xmmsc_vis_udp_t *t, xmms_socket_t socket)
 }
 
 gboolean
-write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest)
+write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf, int socket)
 {
 	xmmsc_vis_udp_data_t packet_d;
+	xmmsc_vischunk_t *__unaligned_dest;
+	short res;
+	int offset;
 	char* packet;
 
 	/* first check if the client is still there */
@@ -195,41 +198,23 @@ write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest)
 	packet = packet_init_data (&packet_d);
 	t->grace--;
 	XMMSC_VIS_UNALIGNED_WRITE (packet_d.__unaligned_grace, htons (t->grace), uint16_t);
-	*dest = packet_d.__unaligned_data; /* XXX FIXME BROKEN */
-	return TRUE;
-}
+	__unaligned_dest = packet_d.__unaligned_data;
 
-void
-write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, xmms_socket_t socket)
-{
-	socklen_t sl = sizeof (t->addr);
-	/* debug code starts
-	char adrb[INET6_ADDRSTRLEN];
-	struct sockaddr_in6 *a = (struct sockaddr_in6 *)&c->transport.udp.addr;
-	printf ("Destination: %s:%d, %d\n", inet_ntop (AF_INET6, &a->sin6_addr,
-			adrb, INET6_ADDRSTRLEN), a->sin6_port, id);
-	 debug code ends */
-	/* nasty trick that won't get through code review */
-	int offset = ((char*)&dest->data - (char*)dest);
-	char *packet = (char*)dest - XMMS_VISPACKET_UDP_OFFSET;
+	XMMSC_VIS_UNALIGNED_WRITE (&__unaligned_dest->timestamp[0],
+	                           (int32_t)htonl (time->tv_sec), int32_t);
+	XMMSC_VIS_UNALIGNED_WRITE (&__unaligned_dest->timestamp[1],
+	                           (int32_t)htonl (time->tv_usec), int32_t);
 
-	sendto (socket, packet, XMMS_VISPACKET_UDP_OFFSET + offset + ntohs (dest->size) * sizeof(int16_t), 0, (struct sockaddr *)&t->addr, sl);
+
+	XMMSC_VIS_UNALIGNED_WRITE (&__unaligned_dest->format, (uint16_t)htons (c->format), uint16_t);
+	res = fill_buffer (__unaligned_dest->data, &c->prop, channels, size, buf);
+	XMMSC_VIS_UNALIGNED_WRITE (&__unaligned_dest->size, (uint16_t)htons (res), uint16_t);
+
+	offset = ((char*)&__unaligned_dest->data - (char*)__unaligned_dest);
+
+	sendto (socket, packet, XMMS_VISPACKET_UDP_OFFSET + offset + res * sizeof (int16_t), 0, (struct sockaddr *)&t->addr, sizeof (t->addr));
 	free (packet);
-}
 
-gboolean
-write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf, int socket) {
-	xmmsc_vischunk_t *dest;
-	short res;
-
-	if (!write_start_udp (id, t, &dest))
-		return FALSE;
-
-	tv2net (dest->timestamp, time);
-	dest->format = htons (c->format);
-	res = fill_buffer (dest->data, &c->prop, channels, size, buf);
-	dest->size = htons (res);
-	write_finish_udp (id, t, dest, socket);
 
 	return TRUE;
 }

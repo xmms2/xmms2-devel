@@ -53,8 +53,6 @@ gboolean write_shm (xmmsc_vis_unixshm_t *t, xmms_vis_client_t *c, int32_t id, st
 /* provided by udp.c */
 int32_t init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
 void cleanup_udp (xmmsc_vis_udp_t *t, xmms_socket_t socket);
-gboolean write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest);
-void write_finish_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest, xmms_socket_t socket);
 gboolean write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf, int socket);
 
 /* provided by format.c */
