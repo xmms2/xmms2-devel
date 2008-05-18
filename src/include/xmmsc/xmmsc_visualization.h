@@ -69,11 +69,24 @@ typedef struct {
  */
 
 typedef struct {
-	char* type; /* = 'V' */;
-	uint16_t* grace;
-	xmmsc_vischunk_t* data;
+	char *__unaligned_type; /* = 'V' */;
+	uint16_t *__unaligned_grace;
+	xmmsc_vischunk_t *__unaligned_data;
 	int size;
 } xmmsc_vis_udp_data_t;
+
+#define XMMSC_VIS_UNALIGNED_WRITE(dst, src, typ) do {	\
+    typ *__d = (dst);					\
+    typ __s = (src);					\
+    memcpy (__d, &__s, sizeof (typ));			\
+  } while (0)
+
+#define XMMSC_VIS_UNALIGNED_READ(dst, src, typ) do {	\
+    typ *__s = (src);					\
+    memcpy (&(dst), __s, sizeof (typ));			\
+  } while (0)
+
+
 
 #define XMMS_VISPACKET_UDP_OFFSET (1 + sizeof (uint16_t))
 
@@ -82,10 +95,10 @@ typedef struct {
  */
 
 typedef struct {
-	char* type; /* = 'T' */
-	int32_t* id;
-	int32_t* clientstamp;
-	int32_t* serverstamp;
+	char *__unaligned_type; /* = 'T' */
+	int32_t *__unaligned_id;
+	int32_t *__unaligned_clientstamp;
+	int32_t *__unaligned_serverstamp;
 	int size;
 } xmmsc_vis_udp_timing_t;
 

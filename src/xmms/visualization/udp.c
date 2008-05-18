@@ -25,9 +25,12 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 	xmmsc_vis_udp_timing_t packet_d;
 	char* packet = packet_init_timing (&packet_d);
 	if ((recvfrom (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, &sl)) > 0) {
-		if (*packet_d.type == 'H') {
+		if (*packet_d.__unaligned_type == 'H') {
 			xmms_vis_client_t *c;
-			int32_t id = ntohl (*packet_d.id);
+			int32_t id;
+
+			XMMSC_VIS_UNALIGNED_READ (id, packet_d.__unaligned_id, int32_t);
+			id = ntohl (id);
 
 			/* debug code starts
 			char adrb[INET6_ADDRSTRLEN];
@@ -46,10 +49,13 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			c->transport.udp.socket[0] = 1;
 			c->transport.udp.grace = 2000;
 			g_mutex_unlock (vis->clientlock);
-		} else if (*packet_d.type == 'T') {
+		} else if (*packet_d.__unaligned_type == 'T') {
 			struct timeval time;
 			xmms_vis_client_t *c;
-			int32_t id = ntohl (*packet_d.id);
+			int32_t id;
+
+			XMMSC_VIS_UNALIGNED_READ (id, packet_d.__unaligned_id, int32_t);
+			id = ntohl (id);
 
 			g_mutex_lock (vis->clientlock);
 			c = get_client (id);
@@ -63,7 +69,26 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 
 			/* give pong */
 			gettimeofday (&time, NULL);
-			ts2net (packet_d.serverstamp, tv2ts (&time) - net2ts (packet_d.clientstamp));
+
+			struct timeval cts, sts;
+
+			XMMSC_VIS_UNALIGNED_READ (cts.tv_sec, &packet_d.__unaligned_clientstamp[0], int32_t);
+			XMMSC_VIS_UNALIGNED_READ (cts.tv_usec, &packet_d.__unaligned_clientstamp[1], int32_t);
+			cts.tv_sec = ntohl (cts.tv_sec);
+			cts.tv_usec = ntohl (cts.tv_usec);
+
+			sts.tv_sec = time.tv_sec - cts.tv_sec;
+			sts.tv_usec = time.tv_usec - cts.tv_usec;
+			if (sts.tv_usec < 0) {
+				sts.tv_sec--;
+				sts.tv_usec += 1000000;
+			}
+
+			XMMSC_VIS_UNALIGNED_WRITE (&packet_d.__unaligned_serverstamp[0],
+			                           (int32_t)htonl (sts.tv_sec), int32_t);
+			XMMSC_VIS_UNALIGNED_WRITE (&packet_d.__unaligned_serverstamp[1],
+			                           (int32_t)htonl (sts.tv_usec), int32_t);
+
 			sendto (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, sl);
 
 			/* new debug:
@@ -168,8 +193,9 @@ write_start_udp (int32_t id, xmmsc_vis_udp_t *t, xmmsc_vischunk_t **dest)
 	}
 
 	packet = packet_init_data (&packet_d);
-	*packet_d.grace = htons (--t->grace);
-	*dest = packet_d.data;
+	t->grace--;
+	XMMSC_VIS_UNALIGNED_WRITE (packet_d.__unaligned_grace, htons (t->grace), uint16_t);
+	*dest = packet_d.__unaligned_data; /* XXX FIXME BROKEN */
 	return TRUE;
 }
 

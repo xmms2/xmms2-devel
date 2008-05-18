@@ -11,19 +11,35 @@ udp_timediff (int32_t id, int socket) {
 	char* packet = packet_init_timing (&packet_d);
 
 	gettimeofday (&time, NULL);
-	*packet_d.id = htonl (id);
-	tv2net (packet_d.clientstamp, &time);
+	XMMSC_VIS_UNALIGNED_WRITE (packet_d.__unaligned_id, (int32_t)htonl (id), int32_t);
+	XMMSC_VIS_UNALIGNED_WRITE (&packet_d.__unaligned_clientstamp[0],
+	                           (int32_t)htonl (time.tv_sec), int32_t);
+	XMMSC_VIS_UNALIGNED_WRITE (&packet_d.__unaligned_clientstamp[1],
+	                           (int32_t)htonl (time.tv_usec), int32_t);
+
 	/* TODO: handle lost packages! */
 	for (i = 0; i < 10; ++i) {
 		send (socket, packet, packet_d.size, 0);
 	}
 	printf ("Syncing ");
 	do {
-		if ((recv (socket, packet, packet_d.size, 0) == packet_d.size) && (*packet_d.type == 'T')) {
+		if ((recv (socket, packet, packet_d.size, 0) == packet_d.size) && (*packet_d.__unaligned_type == 'T')) {
+			struct timeval rtv;
 			gettimeofday (&time, NULL);
-			lag = (tv2ts (&time) - net2ts (packet_d.clientstamp)) / 2.0;
+			XMMSC_VIS_UNALIGNED_READ (rtv.tv_sec, &packet_d.__unaligned_clientstamp[0], int32_t);
+			XMMSC_VIS_UNALIGNED_READ (rtv.tv_usec, &packet_d.__unaligned_clientstamp[1], int32_t);
+			rtv.tv_sec = ntohl (rtv.tv_sec);
+			rtv.tv_usec = ntohl (rtv.tv_usec);
+
+			lag = (tv2ts (&time) - tv2ts (&rtv)) / 2.0;
 			diffc++;
-			diff += net2ts (packet_d.serverstamp) - lag;
+
+			XMMSC_VIS_UNALIGNED_READ (rtv.tv_sec, &packet_d.__unaligned_serverstamp[0], int32_t);
+			XMMSC_VIS_UNALIGNED_READ (rtv.tv_usec, &packet_d.__unaligned_serverstamp[1], int32_t);
+			rtv.tv_sec = ntohl (rtv.tv_sec);
+			rtv.tv_usec = ntohl (rtv.tv_usec);
+
+			diff += tv2ts (&rtv) - lag;
 			/* debug output
 			printf("server diff: %f \t old timestamp: %f, new timestamp %f\n",
 			       net2ts (packet_d.serverstamp), net2ts (packet_d.clientstamp), tv2ts (&time));
@@ -167,25 +183,37 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 		}
 	}
 	ret = recv (t->socket[0], packet, packet_d.size, MSG_DONTWAIT);
-	if ((ret > 0) && (*packet_d.type == 'V')) {
-		*dest = packet_d.data;
+	if ((ret > 0) && (*packet_d.__unaligned_type == 'V')) {
+		uint16_t grace;
+		struct timeval rtv;
+
+		xmmsc_vischunk_t data;
+		XMMSC_VIS_UNALIGNED_READ (data, packet_d.__unaligned_data, xmmsc_vischunk_t);
+
+		*dest = packet_d.__unaligned_data; /* XXX FIXME BROKEN */
 		/* resync connection */
-		if (ntohs (*packet_d.grace) < 1000) {
+		XMMSC_VIS_UNALIGNED_READ (grace, packet_d.__unaligned_grace, uint16_t);
+		grace = ntohs (grace);
+		if (grace < 1000) {
 			if (t->grace != 0) {
 				t->grace = 0;
 				/* use second socket here, so vis packets don't get lost */
 				t->timediff = udp_timediff (id, t->socket[1]);
 			}
 		} else {
-			t->grace = ntohs (*packet_d.grace);
+			t->grace = grace;
 		}
 		/* include the measured time difference */
-		double interim = net2ts (packet_d.data->timestamp);
+
+		rtv.tv_sec = ntohl (data.timestamp[0]);
+		rtv.tv_usec = ntohl (data.timestamp[1]);
+
+		double interim = tv2ts (&rtv);
 		interim -= t->timediff;
-		ts2net (packet_d.data->timestamp, interim);
+		ts2net (data.timestamp, interim);
 		return 1;
 	} else {
-		if (ret == 1 && *packet_d.type == 'K') {
+		if (ret == 1 && *packet_d.__unaligned_type == 'K') {
 			ret = -1;
 		} else if (ret > -1 || xmms_socket_error_recoverable ()) {
 			ret = 0;
