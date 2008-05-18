@@ -27,16 +27,6 @@
  * Public definitions
  */
 
-typedef enum {
-	XMMS_PLAYLIST_SET_NEXT_RELATIVE,
-	XMMS_PLAYLIST_SET_NEXT_BYID,
-} xmms_playlist_set_next_types_t;
-
-typedef enum {
-	XMMS_PLAYLIST_APPEND,
-	XMMS_PLAYLIST_PREPEND,
-} xmms_playlist_actions_t;
-
 /*
  * Private defintions
  */
