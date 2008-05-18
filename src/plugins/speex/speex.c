@@ -140,7 +140,7 @@ xmms_speex_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	data->speexheader = speex_packet_to_header (data->ogg_packet.packet,
+	data->speexheader = speex_packet_to_header ((char *)data->ogg_packet.packet,
 	                                            data->ogg_packet.bytes);
 	data->speex_state = speex_decoder_init (speex_mode_list[data->speexheader->mode]);
 
@@ -221,7 +221,7 @@ xmms_speex_read (xmms_xform_t *xform, gpointer buf, gint len,
 			gint frame;
 
 			speex_bits_read_from (&data->speex_bits,
-			                      data->ogg_packet.packet,
+			                      (char *)data->ogg_packet.packet,
 			                      data->ogg_packet.bytes);
 
 			for (frame = 0; frame < data->speexheader->frames_per_packet; frame++) {
