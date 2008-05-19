@@ -33,7 +33,11 @@ source = """config.c
             strfunc.c
             bindata.c
             sample.genpy
-            utils.c""".split()
+            utils.c
+            visualization/format.c
+            visualization/object.c
+            visualization/udp.c
+            visualization/xform.c""".split()
 
 def build(bld):
     env = bld.env()
@@ -47,6 +51,10 @@ def build(bld):
     prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
 
     source.append("compat/statfs_%s.c" % env["statfs_impl"])
+    if bld.env()['has_server_unixshmsupport']:
+        source.append("visualization/unixshm.c")
+    else:
+        source.append("visualization/dummy.c")
 
     if env['xmms_shared_library']:
         lib = bld.create_obj('cc', 'shlib')
@@ -60,8 +68,8 @@ def build(bld):
     else:
         prog.source += source
 
-    prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes visualization xmmsvisualization'
-    prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
+    prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
+    prog.uselib = 'm glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
     if env['xmms_icon']:
         prog.add_objects = 'xmms_icon'
@@ -82,6 +90,8 @@ def configure(conf):
     test.libs = ['m']
     test.mandatory = 1
     test.run()
+
+    conf.env['LIBS_m'] = ['m']
 
     # Detect the type of stat call used
 
@@ -121,9 +131,23 @@ def configure(conf):
     else:
         conf.env['compat_impl'] = 'unix'
 
+    if Params.g_options.without_unixshmserver:
+        conf.env['has_server_unixshmsupport'] = False
+    else:
+        test = conf.create(enumerator='function')
+        test.function = 'semtimedop'
+        test.header_code = '#define _GNU_SOURCE 1'
+        test.headers = ['sys/types.h','sys/ipc.h','sys/sem.h']
+        test.mandatory = False
+        if test.run():
+            conf.env['has_server_unixshmsupport'] = True
+        else:
+            Params.warning("Compiling visualization without shm support")
+            conf.env['has_server_unixshmsupport'] = False
+
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 
     return True
 
 def set_options(opt):
-    pass
+    opt.add_option('--disable-shmvis-server', action='store_true', dest='without_unixshmserver', default=False)

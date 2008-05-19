@@ -82,7 +82,6 @@ def build(bld):
 
     if env["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
-        subdirs.append("src/xmms/visualization")
 
     newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
     if env['NEWEST_WSCRIPT_SUBDIR'] and newest > env['NEWEST_WSCRIPT_SUBDIR']:
@@ -431,6 +430,7 @@ def set_options(opt):
                    dest='target_platform')
     opt.add_option('--with-windows-version', type='string', dest='winver')
 
+    opt.sub_options("src/xmms")
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
 
