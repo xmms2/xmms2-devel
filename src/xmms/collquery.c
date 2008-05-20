@@ -58,6 +58,7 @@ typedef struct {
 
 
 static coll_query_t* init_query (coll_query_params_t *params);
+static void add_order_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params);
 static void destroy_query (coll_query_t* query);
 static GString* xmms_collection_gen_query (coll_query_t *query);
 static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
@@ -97,8 +98,9 @@ xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	coll_query_params_t params = { limit_start, limit_len, order, fetch, group };
 
 	query = init_query (&params);
-
 	xmms_collection_append_to_query (dag, coll, query);
+	add_order_fetch_group_aliases (query, &params);
+
 	qstring = xmms_collection_gen_query (query);
 
 	destroy_query (query);
@@ -111,7 +113,6 @@ xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 static coll_query_t*
 init_query (coll_query_params_t *params)
 {
-	GList *n;
 	coll_query_t *query;
 
 	query = g_new (coll_query_t, 1);
@@ -127,6 +128,14 @@ init_query (coll_query_params_t *params)
 	query->conditions = g_string_new (NULL);
 	query->params = params;
 
+	return query;
+}
+
+static void
+add_order_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params)
+{
+	GList *n;
+
 	/* Prepare aliases for the order/group/fetch fields */
 	for (n = query->params->order; n; n = n->next) {
 		gchar *field = canonical_field_name (n->data);
@@ -140,8 +149,6 @@ init_query (coll_query_params_t *params)
 	for (n = query->params->fetch; n; n = n->next) {
 		query_make_alias (query, n->data, TRUE);
 	}
-
-	return query;
 }
 
 /* Free a coll_query_t object */
