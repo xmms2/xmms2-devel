@@ -1,0 +1,3 @@
+[submodule "doc/tutorial"]
+	path = doc/tutorial
+	url = git://git.xmms.se/xmms2/xmms2-tutorial.git
