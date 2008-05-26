@@ -182,8 +182,8 @@ namespace Xmms
 	inline xmms_mediainfo_reader_status_t*
 	extract_value( xmmsc_result_t* res )
 	{
-		unsigned int temp = 0;
-		xmmsc_result_get_uint( res, &temp );
+		int temp = 0;
+		xmmsc_result_get_int( res, &temp );
 		xmms_mediainfo_reader_status_t* result
 			= new xmms_mediainfo_reader_status_t;
 		*result = static_cast< xmms_mediainfo_reader_status_t >( temp );
