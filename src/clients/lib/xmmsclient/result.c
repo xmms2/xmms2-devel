@@ -1329,6 +1329,10 @@ xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr)
 {
 	res->error_str = strdup (errstr);
 	res->error = 1;
+
+	if (!res->error_str) {
+		x_oom ();
+	}
 }
 
 void
