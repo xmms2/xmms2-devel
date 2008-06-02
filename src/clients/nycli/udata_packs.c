@@ -134,3 +134,29 @@ free_infos_playlist_config (pack_infos_playlist_config_t *pack)
 	g_free (pack->input);
 	g_free (pack);
 }
+
+struct pack_infos_ctx_St {
+	cli_infos_t *infos;
+	command_context_t *ctx;
+};
+
+pack_infos_ctx_t *
+pack_infos_ctx (cli_infos_t *infos, command_context_t *ctx)
+{
+	pack_infos_ctx_t *pack = g_new0 (pack_infos_ctx_t, 1);
+	pack->infos = infos;
+	pack->ctx = ctx;
+	return pack;
+}
+
+void
+unpack_infos_ctx(pack_infos_ctx_t *pack, cli_infos_t **infos,command_context_t **ctx)
+{
+	*infos = pack->infos;
+	*ctx = pack->ctx;
+}
+
+void
+free_infos_ctx(pack_infos_ctx_t *pack) {
+	g_free (pack);
+}

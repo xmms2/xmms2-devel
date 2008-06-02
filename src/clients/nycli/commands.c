@@ -41,9 +41,9 @@ CLI_SIMPLE_SETUP("pause", cli_pause,
                  NULL,
                  _("Pause playback."))
 CLI_SIMPLE_SETUP("toggle", cli_toggle, /* <<<<< */
-		 COMMAND_REQ_CONNECTION,
-		 NULL,
-		 _("Toggle playback."))
+				 COMMAND_REQ_CONNECTION,
+				 NULL,
+				 _("Toggle playback."))
 CLI_SIMPLE_SETUP("seek", cli_seek,
                  COMMAND_REQ_CONNECTION,
                  _("<time|offset>"),
@@ -73,10 +73,10 @@ CLI_SIMPLE_SETUP("help", cli_help,
                  _("[command]"),
                  _("List all commands, or help on one command."))
 
-CLI_SIMPLE_SETUP("playlist list", cli_pl_list,
-                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
-                 _("[pattern]"),
-                 _("List all playlist."))
+/* CLI_SIMPLE_SETUP("playlist list", cli_pl_list, */
+/*                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, */
+/*                  _("[pattern]"), */
+/*                  _("List all playlist.")) */
 CLI_SIMPLE_SETUP("playlist switch", cli_pl_switch,
                  COMMAND_REQ_CONNECTION,
                  _("<playlist>"),
@@ -247,6 +247,24 @@ cli_pl_config_setup (command_action_t *action)
 	                     _("Configure a playlist by changing its type, attributes, etc.\nBy default, configure the active playlist."));
 }
 
+
+/* CLI_SIMPLE_SETUP("playlist list", cli_pl_list, */
+/*                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, */
+/*                  _("[pattern]"), */
+/*                  _("List all playlist.")) */
+
+
+void
+cli_pl_list_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "all",  'a', 0, G_OPTION_ARG_NONE, NULL, _("Include hidden playlists."), NULL },
+		{ NULL }
+	};
+	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+						 _("[-a] [pattern]"),
+						 _("List all playlists."));
+} 
 
 void
 fill_column_display (cli_infos_t *infos, column_display_t *disp,
@@ -769,12 +787,19 @@ gboolean
 cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
+	gboolean all;
 
 	/* FIXME: support pattern argument (only display playlist containing matching media) */
 	/* FIXME: --all flag to show hidden playlists */
 
 	res = xmmsc_playlist_list (infos->conn);
-	xmmsc_result_notifier_set (res, cb_list_print_playlists, infos);
+	command_flag_boolean_get (ctx, "all", &all);
+
+	if (all) {
+		xmmsc_result_notifier_set (res, cb_list_print_all_playlists, infos);
+	} else {
+		xmmsc_result_notifier_set (res, cb_list_print_playlists, infos);
+	}
 	xmmsc_result_unref (res);
 
 	return TRUE;

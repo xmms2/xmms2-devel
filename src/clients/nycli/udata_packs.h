@@ -36,5 +36,11 @@ pack_infos_playlist_config_t *pack_infos_playlist_config (cli_infos_t *infos, gc
 void unpack_infos_playlist_config (pack_infos_playlist_config_t *pack, cli_infos_t **infos, gchar **playlist, gint *history, gint *upcoming, xmmsc_coll_type_t *type, gchar **input);
 void free_infos_playlist_config (pack_infos_playlist_config_t *pack);
 
+typedef struct pack_infos_ctx_St pack_infos_ctx_t;
+pack_infos_ctx_t *pack_infos_ctx (cli_infos_t *infos, command_context_t *ctx);
+void unpack_infos_ctx(pack_infos_ctx_t *pack, cli_infos_t **infos,command_context_t **ctx);
+void free_infos_ctx(pack_infos_ctx_t *pack);
+
+
 
 #endif /* __UDATA_PACKS__ */

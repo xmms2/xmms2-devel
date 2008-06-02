@@ -27,6 +27,8 @@ static void coll_copy_attributes (const char *key, const char *value, void *udat
 static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
 static void coll_print_config (xmmsc_coll_t *coll, const char *name);
 
+static void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all);
+
 
 /* Dumps a propdict on stdout */
 static void
@@ -230,13 +232,24 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 void
 cb_list_print_playlists (xmmsc_result_t *res, void *udata)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
+	list_print_playlists (res, (cli_infos_t *) udata, FALSE);
+}
+
+void 
+cb_list_print_all_playlists (xmmsc_result_t *res, void *udata)
+{
+	list_print_playlists (res, (cli_infos_t *) udata, TRUE);
+}
+
+static void
+list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
+{
 	gchar *s;
 
 	if (!xmmsc_result_iserror (res)) {
 		while (xmmsc_result_list_valid (res)) {
-			/* Skip hidden playlists */
-			if (xmmsc_result_get_string (res, &s) && (*s != '_')) {
+			/* Skip hidden playlists if all is FALSE*/
+			if (xmmsc_result_get_string (res, &s) && ((*s != '_') || all)) {
 				/* Highlight active playlist */
 				if (strcmp (s, infos->cache->active_playlist_name) == 0) {
 					g_printf ("* %s\n", s);
