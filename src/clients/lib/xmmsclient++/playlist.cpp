@@ -256,6 +256,14 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
+	VoidResult Playlist::remove( const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_remove, conn_, playlist.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
 	UintResult Playlist::setNext( unsigned int pos ) const
 	{
 		xmmsc_result_t* res = 

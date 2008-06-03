@@ -141,6 +141,10 @@ D: Supplied us with a great "intro" clip.
 D: Lament for Lost Dreams clip by mind.in.a.box
 D: Copyright (c) by Stefan Poiss and Markus Hadwiger
 
+N: Dave Moore
+E: wrex006@gmail.com
+D: missing method in C++ bindings.
+
 N: Chris Morgan
 E: cmorgan@alum.wpi.edu
 D: Jack output plugin.
