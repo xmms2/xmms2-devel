@@ -7,7 +7,7 @@ use IO::Handle;
 use IO::Select;
 use Audio::XMMSClient::Collection;
 
-our $VERSION = 0.03;
+our $VERSION = '0.04';
 our @ISA;
 
 eval {
