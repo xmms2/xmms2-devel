@@ -38,6 +38,11 @@ readline_callback (gchar *input)
 			add_history (input);
 			command_dispatch (readline_cli_infos, argc, argv);
 		} else {
+			if (g_error_matches (error, G_SHELL_ERROR, G_SHELL_ERROR_BAD_QUOTING)) {
+				g_printf (_("Error: Mismatched quote\n"));
+			} else if (g_error_matches (error, G_SHELL_ERROR, G_SHELL_ERROR_FAILED)) {
+				g_printf (_("Error: Invalid input\n"));
+			}
 			/* FIXME: Handle errors */
 		}
 	}
