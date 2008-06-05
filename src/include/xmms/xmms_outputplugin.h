@@ -31,6 +31,8 @@
 #include "xmms/xmms_streamtype.h"
 
 
+G_BEGIN_DECLS
+
 /**
  * @defgroup OutputPlugin OutputPlugin
  * @ingroup XMMSPlugin
@@ -379,5 +381,7 @@ xmms_config_property_t *xmms_output_config_property_register (xmms_output_t *out
 xmms_config_property_t *xmms_output_config_lookup (xmms_output_t *output, const gchar *path);
 
 /** @} */
+
+G_END_DECLS
 
 #endif

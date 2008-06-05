@@ -17,10 +17,13 @@
 #ifndef __XMMS_CONFIG_H__
 #define __XMMS_CONFIG_H__
 
+#include <glib.h>
+#include "xmms/xmms_object.h"
+
+G_BEGIN_DECLS
+
 typedef struct xmms_config_St xmms_config_t;
 typedef struct xmms_config_property_St xmms_config_property_t;
-
-#include "xmms/xmms_object.h"
 
 xmms_config_property_t *xmms_config_lookup (const gchar *path);
 
@@ -35,5 +38,7 @@ void xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *d
 
 void xmms_config_property_callback_set (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
 void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
+
+G_END_DECLS
 
 #endif

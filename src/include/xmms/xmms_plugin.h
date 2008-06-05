@@ -26,6 +26,8 @@
 
 #define XMMS_PLUGIN_SHORTNAME_MAX_LEN 32
 
+G_BEGIN_DECLS
+
 typedef struct xmms_plugin_desc_St {
 	xmms_plugin_type_t type;
 	gint api_version;
@@ -47,5 +49,6 @@ typedef struct xmms_plugin_desc_St {
 		setupfunc						\
 	};
 		
+G_END_DECLS
 
 #endif /* __XMMS_PLUGIN_H__ */

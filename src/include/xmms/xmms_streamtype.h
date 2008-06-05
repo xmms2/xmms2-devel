@@ -23,6 +23,8 @@
 #include <glib.h>
 #include <string.h>
 
+G_BEGIN_DECLS
+
 typedef enum xmms_stream_type_key_E {
 	XMMS_STREAM_TYPE_END,
 	XMMS_STREAM_TYPE_MIMETYPE,
@@ -42,5 +44,6 @@ typedef struct xmms_stream_type_St xmms_stream_type_t;
 const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
 gint xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
 
+G_END_DECLS
 
 #endif

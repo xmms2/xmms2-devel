@@ -17,7 +17,10 @@
 #ifndef __SAMPLE_H__
 #define __SAMPLE_H__
 
+#include <glib.h>
 #include "xmms/xmms_streamtype.h"
+
+G_BEGIN_DECLS
 
 typedef enum {
 	XMMS_SAMPLE_FORMAT_UNKNOWN,
@@ -102,7 +105,7 @@ xmms_sample_signed_get (xmms_sample_format_t fmt)
 
 }
 
-static inline const char *
+static inline const gchar *
 xmms_sample_name_get (xmms_sample_format_t fmt)
 {
 	switch (fmt) {
@@ -127,5 +130,7 @@ xmms_sample_name_get (xmms_sample_format_t fmt)
 	}
 	return "UNKNOWN";
 }
+
+G_END_DECLS
 
 #endif

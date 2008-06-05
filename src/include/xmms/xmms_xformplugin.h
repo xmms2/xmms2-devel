@@ -59,6 +59,8 @@
 #include "xmms/xmms_medialib.h"
 
 
+G_BEGIN_DECLS
+
 struct xmms_xform_plugin_St;
 /**
  * Xform plugin.
@@ -333,5 +335,6 @@ void xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basen
 /**
  * @}
  */
+G_END_DECLS
 
 #endif

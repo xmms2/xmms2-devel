@@ -81,6 +81,8 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_PUBLISHER "website_publisher"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_COPYRIGHT "website_copyright"
 
+G_BEGIN_DECLS
+
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
@@ -103,5 +105,7 @@ xmms_medialib_session_t * _xmms_medialib_begin (gboolean write, const char *file
 void xmms_medialib_end (xmms_medialib_session_t *session);
 
 #define xmms_medialib_entry_status_set(session, e, st) xmms_medialib_entry_property_set_int_source(session, e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, 1) /** @todo: hardcoded server id might be bad? */
+
+G_END_DECLS
 
 #endif /* __XMMS_MEDIALIB_H__ */

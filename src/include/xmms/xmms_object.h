@@ -27,6 +27,8 @@
 
 #define XMMS_OBJECT_MID 0x00455574
 
+G_BEGIN_DECLS
+
 struct xmms_object_St;
 typedef struct xmms_object_St xmms_object_t;
 typedef struct xmms_object_cmd_desc_St xmms_object_cmd_desc_t;
@@ -180,5 +182,7 @@ xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t dest
 } while (0)
 
 #define xmms_object_new(objtype,destroyfunc) (objtype *) __int_xmms_object_new (sizeof (objtype), destroyfunc)
+
+G_END_DECLS
 
 #endif /* __XMMS_OBJECT_H__ */

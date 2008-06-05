@@ -20,9 +20,12 @@
 #ifndef __XMMS_ERROR_H__
 #define __XMMS_ERROR_H__
 
+#include <glib.h>
+#include "xmmsc/xmmsc_errorcodes.h"
+
 #define XMMS_ERROR_MESSAGE_MAXLEN 255
 
-#include "xmmsc/xmmsc_errorcodes.h"
+G_BEGIN_DECLS
 
 typedef struct xmms_error_St {
 	xmms_error_code_t code;
@@ -57,5 +60,7 @@ xmms_error_reset (xmms_error_t *err)
 #define xmms_error_type_get(e) ((e)->code)
 
 const gchar *xmms_error_message_get (xmms_error_t *err);
+
+G_END_DECLS
 
 #endif

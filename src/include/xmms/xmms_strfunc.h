@@ -19,6 +19,10 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 gsize xmms_strnlen (const gchar *str, gsize max_len);
+
+G_END_DECLS
 
 #endif
