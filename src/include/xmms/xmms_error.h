@@ -56,7 +56,6 @@ xmms_error_reset (xmms_error_t *err)
 
 #define xmms_error_type_get(e) ((e)->code)
 
-const gchar *xmms_error_type_get_str (xmms_error_t *err);
 const gchar *xmms_error_message_get (xmms_error_t *err);
 
 #endif
