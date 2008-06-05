@@ -207,9 +207,7 @@ xmms_samba_read (xmms_xform_t *xform, void *buffer, gint len,
 	ret = smbc_read (data->fd, buffer, len);
 	g_static_mutex_unlock (&mutex);
 
-	if (ret == 0) {
-		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
-	} else if (ret < 0) {
+	if (ret < 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, strerror (errno));
 	}
 

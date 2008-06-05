@@ -165,9 +165,7 @@ xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 
 	ret = read (data->fd, buffer, len);
 
-	if (ret == 0) {
-		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
-	} else if (ret == -1) {
+	if (ret == -1) {
 		xmms_log_error ("errno(%d) %s", errno, strerror (errno));
 		xmms_error_set (error, XMMS_ERROR_GENERIC, strerror (errno));
 	}

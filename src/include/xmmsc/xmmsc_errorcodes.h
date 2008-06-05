@@ -25,7 +25,6 @@ typedef enum {
 	XMMS_ERROR_PERMISSION,
 	XMMS_ERROR_NOENT,
 	XMMS_ERROR_INVAL,
-	XMMS_ERROR_EOS,
 	XMMS_ERROR_NO_SAUSAGE,
 	XMMS_ERROR_COUNT /* must be last */
 } xmms_error_code_t;
