@@ -19,15 +19,16 @@
   * @url http://wiki.xmms2.xmms.se/index.php/Notes_from_developing_an_xform_plugin
   */
 
+#include <glib.h>
+#include <stdlib.h>
+
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
-
 #include "gme/gme.h"
 
-#include <glib.h>
-#include <stdlib.h>
+extern "C" {
 
 /* 
  * Persistent data
@@ -241,12 +242,11 @@ xmms_gme_init (xmms_xform_t *xform)
 static void
 xmms_gme_destroy (xmms_xform_t *xform)
 {
-
 	xmms_gme_data_t *data;
 
 	g_return_if_fail (xform);
 
-	data = xmms_xform_private_data_get (xform);
+	data = (xmms_gme_data_t *)xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
 	if (data->emu)
@@ -265,13 +265,13 @@ xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 
 	g_return_val_if_fail (xform, -1);
 
-	data = xmms_xform_private_data_get (xform);
+	data = (xmms_gme_data_t *)xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
 	if (gme_track_ended (data->emu))
 		return 0;
 
-	play_error = gme_play (data->emu, len/2, buf);
+	play_error = gme_play (data->emu, len/2, (short int *)buf);
 	if (play_error) {
 		XMMS_DBG ("gme_play returned an error: %s", play_error);
 		xmms_error_set (err, XMMS_ERROR_GENERIC, play_error);
@@ -281,3 +281,4 @@ xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	return len;
 }
 
+}
