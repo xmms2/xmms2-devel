@@ -20,8 +20,6 @@
 #include <mac/APEInfo.h>
 #include <mac/CharacterHelper.h>
 
-extern "C" {
-
 #include "source_adapter.h"
 
 #include "xmms/xmms_log.h"
@@ -30,6 +28,8 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
+
+extern "C" {
 /*
  * Type Definitions
  */
@@ -84,8 +84,6 @@ XMMS_XFORM_PLUGIN ("mac",
                    "Monkey's Audio", XMMS_VERSION,
                    "Monkey's Audio Decoder",
                    xmms_mac_plugin_setup);
-
-}
 
 static gboolean
 xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -327,3 +325,4 @@ xmms_mac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	return blocks;
 }
 
+}
