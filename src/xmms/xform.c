@@ -908,7 +908,8 @@ xmms_xform_hotspot_callback (gpointer data, gpointer user_data)
 }
 
 static gint
-xmms_xform_hotspots_update (xmms_xform_t *xform) {
+xmms_xform_hotspots_update (xmms_xform_t *xform)
+{
 	xmms_xform_hotspot_t *hs;
 	gint ret = -1;
 
@@ -1264,7 +1265,7 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 				XMMS_DBG ("Using plugin '%s' (priority %d) instead of '%s' (priority %d)",
 				          xmms_plugin_shortname_get (_plugin), priority,
 				          xmms_plugin_shortname_get ((xmms_plugin_t *)state->match),
-						  state->priority);
+				          state->priority);
 			}
 
 			state->match = plugin;
