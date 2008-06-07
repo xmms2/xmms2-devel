@@ -296,6 +296,11 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 			                            2, COLUMN_DEF_ALIGN_LEFT,
 			                            column_display_render_highlight);
 			nextsep = FALSE;
+		} else if (strcmp (columns[i], "next") == 0) {
+			column_display_add_special (disp, "next",
+										GINT_TO_POINTER(infos->cache->currpos),
+										4, COLUMN_DEF_ALIGN_RIGHT,
+										column_display_render_next);
 		} else {
 			column_display_add_property (disp, columns[i], columns[i], 20,
 			                             FALSE, COLUMN_DEF_ALIGN_LEFT);
@@ -547,7 +552,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
-	                                   "title", NULL };
+	                                   "next", "title", NULL };
 
 	command_arg_longstring_get (ctx, 0, &pattern);
 	if (pattern) {

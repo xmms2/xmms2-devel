@@ -51,6 +51,7 @@ void column_display_print_footer (column_display_t *disp);
 
 void column_display_render_position (column_display_t *disp, column_def_t *coldef, xmmsc_result_t *res);
 void column_display_render_highlight (column_display_t *disp, column_def_t *coldef, xmmsc_result_t *res);
+void column_display_render_next (column_display_t *disp, column_def_t *coldef, xmmsc_result_t *res);
 void column_display_render_text (column_display_t *disp, column_def_t *coldef, xmmsc_result_t *res);
 void column_display_render_property (column_display_t *disp, column_def_t *coldef, xmmsc_result_t *res);
 

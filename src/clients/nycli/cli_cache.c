@@ -105,9 +105,9 @@ refresh_active_playlist (xmmsc_result_t *res, void *udata)
 	if (!xmmsc_result_iserror (res)) {
 		/* Reset array */
 		if (cache->active_playlist->len > 0) {
-			gint end_index = cache->active_playlist->len - 1;
+			gint len = cache->active_playlist->len;
 			cache->active_playlist = g_array_remove_range (cache->active_playlist,
-			                                               0, end_index);
+			                                               0, len);
 		}
 
 		/* .. and refill it */
