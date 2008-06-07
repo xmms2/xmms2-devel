@@ -369,7 +369,7 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-/* <<<<< */
+/* <<<<< Make async? Create cb_toggle that call cli_play or cli_stop? */
 gboolean 
 cli_toggle  (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -915,7 +915,7 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 	gchar *playlist;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
-		playlist = infos->cache->active_playlist_name;
+		playlist = g_strdup (infos->cache->active_playlist_name);
 	}
 
 	res = xmmsc_playlist_clear (infos->conn, playlist);

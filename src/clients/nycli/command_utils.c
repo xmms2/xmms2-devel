@@ -144,6 +144,11 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	return retval;
 }
 
+gboolean
+parse_time (gchar *s, gchar **endptr, guint *v) {
+	return TRUE;
+}
+
 /* Parse a time value, either an absolute position or an offset. */
 gboolean
 command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
