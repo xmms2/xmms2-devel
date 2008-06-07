@@ -70,6 +70,9 @@ static void xmms_mpc_collect_metadata (xmms_xform_t *xform);
 static gint xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
                            gint len, xmms_error_t *err);
 
+static gint64 xmms_mpc_seek (xmms_xform_t *xform, gint64 offset,
+                             xmms_xform_seek_mode_t whence, xmms_error_t *err);
+
 XMMS_XFORM_PLUGIN ("musepack", "Musepack decoder", XMMS_VERSION,
                    "Musepack Living Audio Compression",
                    xmms_mpc_plugin_setup);
@@ -86,6 +89,7 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_mpc_init;
 	methods.destroy = xmms_mpc_destroy;
 	methods.read = xmms_mpc_read;
+	methods.seek = xmms_mpc_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -431,6 +435,25 @@ xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 	g_string_erase (data->buffer, 0, size);
 
 	return size;
+}
+
+static gint64
+xmms_mpc_seek (xmms_xform_t *xform, gint64 offset,
+               xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	xmms_mpc_data_t *data;
+	data = xmms_xform_private_data_get (xform);
+
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+
+#ifdef HAVE_MPCDEC_OLD
+	mpc_decoder_seek_sample (&data->decoder, offset);
+#else
+	mpc_demux_seek_sample (data->demux, offset);
+#endif
+	g_string_erase (data->buffer, 0, data->buffer->len);
+
+	return offset;
 }
 
 void
