@@ -37,6 +37,10 @@ N: Alexander Botero-Lowry
 E: alex@foxybanana.com
 D: *BSD support. Manpages. Various fixes.
 
+N: Nicolas Botti
+E: r2d@musepack.net
+D: Updates to the musepack plugin to support new APIs.
+
 N: Sébastien Cevey
 E: seb@cine7.net
 W: http://sirius.cine7.net/

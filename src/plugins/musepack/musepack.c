@@ -24,11 +24,19 @@
 
 #include <glib.h>
 
+#ifdef HAVE_MPCDEC_OLD
+# define READER_OBJ	void
+# define READER_DATA(r) (r)
 #include <mpcdec/mpcdec.h>
-#include <mpcdec/reader.h>
+#else
+# define READER_OBJ	mpc_reader
+# define READER_DATA(r) ((r)->data)
+#include <mpc/mpcdec.h>
+#endif
 
 #include "ape.h"
 
+#ifdef HAVE_MPCDEC_OLD
 typedef struct xmms_mpc_data_St {
 	mpc_decoder decoder;
 	mpc_reader reader;
@@ -36,6 +44,15 @@ typedef struct xmms_mpc_data_St {
 
 	GString *buffer;
 } xmms_mpc_data_t;
+#else
+typedef struct xmms_mpc_data_St {
+	mpc_demux *demux;
+	mpc_reader reader;
+	mpc_streaminfo info;
+
+	GString *buffer;
+} xmms_mpc_data_t;
+#endif
 
 /*
  * Function prototypes
@@ -77,15 +94,21 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_magic_add ("mpc header", "audio/x-mpc", "0 string MP+", NULL);
 
+#ifndef HAVE_MPCDEC_OLD
+	/* The old API doesn't support sv8 bitstream, so we add it only for the
+	 * new version */
+	xmms_magic_add ("mpc header", "audio/x-mpc", "0 string MPCK", NULL);
+#endif
+
 	return TRUE;
 }
 
 
 
 static mpc_int32_t
-xmms_mpc_callback_read (void *data, void *buffer, mpc_int32_t size)
+xmms_mpc_callback_read (READER_OBJ *p_obj, void *buffer, mpc_int32_t size)
 {
-	xmms_xform_t *xform = data;
+	xmms_xform_t *xform = READER_DATA (p_obj);
 	xmms_error_t err;
 
 	g_return_val_if_fail (xform, -1);
@@ -97,9 +120,9 @@ xmms_mpc_callback_read (void *data, void *buffer, mpc_int32_t size)
 
 
 static mpc_bool_t
-xmms_mpc_callback_seek (void *data, mpc_int32_t offset)
+xmms_mpc_callback_seek (READER_OBJ *p_obj, mpc_int32_t offset)
 {
-	xmms_xform_t *xform = data;
+	xmms_xform_t *xform = READER_DATA (p_obj);
 	xmms_error_t err;
 	gint ret;
 
@@ -114,9 +137,9 @@ xmms_mpc_callback_seek (void *data, mpc_int32_t offset)
 
 
 static mpc_int32_t
-xmms_mpc_callback_tell (void *data)
+xmms_mpc_callback_tell (READER_OBJ *p_obj)
 {
-	xmms_xform_t *xform = data;
+	xmms_xform_t *xform = READER_DATA (p_obj);
 	xmms_error_t err;
 
 	g_return_val_if_fail (xform, -1);
@@ -128,9 +151,9 @@ xmms_mpc_callback_tell (void *data)
 
 
 static mpc_bool_t
-xmms_mpc_callback_canseek (void *data)
+xmms_mpc_callback_canseek (READER_OBJ *p_obj)
 {
-	xmms_xform_t *xform = data;
+	xmms_xform_t *xform = READER_DATA (p_obj);
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -139,9 +162,9 @@ xmms_mpc_callback_canseek (void *data)
 
 
 static mpc_int32_t
-xmms_mpc_callback_get_size (void *data)
+xmms_mpc_callback_get_size (READER_OBJ *p_obj)
 {
-	xmms_xform_t *xform = data;
+	xmms_xform_t *xform = READER_DATA (p_obj);
 	const gchar *metakey;
 	gint ret;
 
@@ -161,8 +184,6 @@ static gboolean
 xmms_mpc_init (xmms_xform_t *xform)
 {
 	xmms_mpc_data_t *data;
-	gboolean ret = FALSE;
-	gint err;
 
 	data = g_new0 (xmms_mpc_data_t, 1);
 	xmms_xform_private_data_set (xform, data);
@@ -180,32 +201,65 @@ xmms_mpc_init (xmms_xform_t *xform)
 
 	data->reader.data = xform;
 
+#ifdef HAVE_MPCDEC_OLD
 	mpc_streaminfo_init (&data->info);
+	if (mpc_streaminfo_read (&data->info, &data->reader) != ERROR_CODE_OK)
+		return FALSE;
 
-	err = mpc_streaminfo_read (&data->info, &data->reader);
-	if (err == ERROR_CODE_OK) {
-		xmms_mpc_cache_streaminfo (xform);
+	mpc_decoder_setup (&data->decoder, &data->reader);
 
-		xmms_xform_outdata_type_add (xform,
-		                             XMMS_STREAM_TYPE_MIMETYPE,
-		                             "audio/pcm",
-		                             XMMS_STREAM_TYPE_FMT_FORMAT,
-		                             XMMS_SAMPLE_FORMAT_FLOAT,
-		                             XMMS_STREAM_TYPE_FMT_CHANNELS,
-		                             data->info.channels,
-		                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-		                             data->info.sample_freq,
-		                             XMMS_STREAM_TYPE_END);
+	if (mpc_decoder_initialize (&data->decoder, &data->info) == FALSE)
+		return FALSE;
+#else
+	data->demux = mpc_demux_init (&data->reader);
+	if (!data->demux) return FALSE;
 
-		mpc_decoder_setup (&data->decoder, &data->reader);
+	mpc_demux_get_info (data->demux,  &data->info);
+#endif
 
-		ret = mpc_decoder_initialize (&data->decoder, &data->info);
+	xmms_mpc_cache_streaminfo (xform);
 
-	}
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT,
+	                             XMMS_SAMPLE_FORMAT_FLOAT,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+	                             data->info.channels,
+	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+	                             data->info.sample_freq,
+	                             XMMS_STREAM_TYPE_END);
 
-	return ret;
+	return TRUE;
 }
 
+#ifdef HAVE_MPCDEC_OLD
+
+static inline double
+xmms_mpc_normalize_gain (gdouble gain)
+{
+	return pow (10.0, gain / 2000.0);
+}
+
+static inline double
+xmms_mpc_normalize_peak (gdouble peak)
+{
+	return (peak / 32768.0);
+}
+#else
+
+static inline double
+xmms_mpc_normalize_gain (gdouble gain)
+{
+	return pow (10.0, 20.0 * (MPC_OLD_GAIN_REF - gain / 256.0));
+}
+
+static inline double
+xmms_mpc_normalize_peak (gdouble peak)
+{
+	return pow (10.0, peak / (20.0 * 256.0) / 32768.0);
+}
+#endif
 
 static void
 xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
@@ -219,6 +273,8 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
+
+	XMMS_DBG ("stream version = %d", data->info.stream_version);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
 	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
@@ -235,32 +291,31 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 
 	if (data->info.gain_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            pow (10.0, (gdouble) data->info.gain_album / 2000.0));
+		            xmms_mpc_normalize_gain ((gdouble) data->info.gain_album));
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
 		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.gain_title) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            pow (10.0, (gdouble) data->info.gain_title / 2000.0));
+		            xmms_mpc_normalize_gain ((gdouble) data->info.gain_title));
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
 		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.peak_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            (gdouble) data->info.peak_album / 32768.0);
+		            xmms_mpc_normalize_peak ((gdouble) data->info.peak_album));
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 
 	if (data->info.peak_title) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            (gdouble) data->info.peak_title / 32768.0);
+		            xmms_mpc_normalize_peak ((gdouble) data->info.peak_title));
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
 		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
-
 }
 
 
@@ -334,6 +389,7 @@ xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 
 	size = MIN (data->buffer->len, len);
 
+#ifdef HAVE_MPCDEC_OLD
 	if (size <= 0) {
 		ret = mpc_decoder_decode (&data->decoder, internal, NULL, NULL);
 		if (ret == -1) {
@@ -346,7 +402,29 @@ xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 
 		g_string_append_len (data->buffer, (gchar *) internal, ret);
 	}
+#else
+	if (size <= 0) {
+		mpc_frame_info frame;
 
+		frame.buffer = internal;
+		do {
+			ret = mpc_demux_decode (data->demux, &frame);
+		} while (frame.bits != -1 && frame.samples == 0);
+
+		if (frame.bits == -1 && ret != MPC_STATUS_OK) {
+			xmms_error_set (err, XMMS_ERROR_GENERIC, "Musepack decoder failed");
+			return -1;
+		}
+		ret = frame.samples;
+
+		ret *= xmms_sample_size_get (XMMS_SAMPLE_FORMAT_FLOAT);
+		ret *= data->info.channels;
+
+		g_string_append_len (data->buffer, (gchar *) internal, ret);
+	}
+#endif
+
+	/* Update the current size of available data */
 	size = MIN (data->buffer->len, len);
 
 	memcpy (buffer, data->buffer->str, size);
@@ -354,7 +432,6 @@ xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 
 	return size;
 }
-
 
 void
 xmms_mpc_destroy (xmms_xform_t *xform)
@@ -365,6 +442,11 @@ xmms_mpc_destroy (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
+
+#ifndef HAVE_MPCDEC_OLD
+	if (data->demux)
+		mpc_demux_exit (data->demux);
+#endif
 
 	if (data->buffer) {
 		g_string_free (data->buffer, TRUE);
