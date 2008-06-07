@@ -372,6 +372,7 @@ xmms_alsa_close (xmms_output_t *output)
 		xmms_log_error ("Audio device could not be released: %s",
 		                snd_strerror (err));
 	} else {
+		data->pcm = NULL;
 		XMMS_DBG ("audio device closed.");
 	}
 }
@@ -812,6 +813,7 @@ xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
 	g_return_if_fail (buffer);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
+	g_return_if_fail (data->pcm);
 
 	frames = snd_pcm_bytes_to_frames (data->pcm, len);
 
