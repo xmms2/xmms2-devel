@@ -288,24 +288,49 @@ xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 }
 
 static int
-package_read_start (xmmsc_visualization_t *v, unsigned int blocking, xmmsc_vischunk_t **dest)
+package_read_do (xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
 {
 	if (v->type == VIS_UNIXSHM) {
-		return read_start_shm (&v->transport.shm, blocking, dest);
+		return read_do_shm (&v->transport.shm, v, buffer, drawtime, blocking);
 	} else if (v->type == VIS_UDP) {
-		return read_start_udp (&v->transport.udp, blocking, dest, v->id);
+		return read_do_udp (&v->transport.udp, v, buffer, drawtime, blocking);
 	}
+
 	return -1;
 }
 
-static void
-package_read_finish (xmmsc_visualization_t *v, xmmsc_vischunk_t *dest)
+int
+check_drawtime (double ts, int drawtime)
 {
-	if (v->type == VIS_UNIXSHM) {
-		read_finish_shm (&v->transport.shm, dest);
-	} else if (v->type == VIS_UDP) {
-		read_finish_udp (&v->transport.udp, dest);
+	struct timeval time;
+	double diff;
+	struct timespec sleeptime;
+	double dontcare;
+
+	if (drawtime <= 0)
+		return 0;
+
+	gettimeofday (&time, NULL);
+	diff = ts - tv2ts (&time);
+	if (diff < 0) {
+		return 1;
 	}
+
+	/* nanosleep has a garantueed granularity of 10 ms.
+	   to not sleep too long, we sleep 10 ms less than intended */
+	diff -= (drawtime + 10) * 0.001;
+	if (diff < 0) {
+		diff = 0;
+	}
+	sleeptime.tv_sec = diff;
+	sleeptime.tv_nsec = modf (diff, &dontcare) * 1000000000;
+	while (nanosleep (&sleeptime, &sleeptime) == -1) {
+		if (errno != EINTR) {
+			break;
+		}
+	}
+
+	return 0;
 }
 
 /**
@@ -317,58 +342,13 @@ xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int
 {
 	xmmsc_visualization_t *v;
 	xmmsc_vischunk_t *src;
-	struct timeval time;
-	double diff;
-	struct timespec sleeptime;
-	int old;
-	int i, ret, size;
+	int i, ret;
 
 	x_check_conn (c, 0);
 	v = get_dataset (c, vv);
 	x_api_error_if (!v, "with unregistered visualization dataset", 0);
 
-	while (1) {
-		ret = package_read_start (v, blocking, &src);
-		if (ret < 1) {
-			return ret;
-		}
-
-		if (drawtime >= 0) {
-			gettimeofday (&time, NULL);
-			diff = net2ts (src->timestamp) - tv2ts (&time);
-			if (diff >= 0) {
-				double dontcare;
-				old = 0;
-				/* nanosleep has a garantueed granularity of 10 ms.
-				   to not sleep too long, we sleep 10 ms less than intended */
-				diff -= (drawtime + 10) * 0.001;
-				if (diff < 0) {
-					diff = 0;
-				}
-				sleeptime.tv_sec = diff;
-				sleeptime.tv_nsec = modf (diff, &dontcare) * 1000000000;
-				while (nanosleep (&sleeptime, &sleeptime) == -1) {
-					if (errno != EINTR) {
-						break;
-					}
-				};
-			} else {
-				old = 1;
-			}
-		} else {
-			old = 0;
-		}
-		if (!old) {
-			size = ntohs (src->size);
-			for (i = 0; i < size; ++i) {
-				buffer[i] = (int16_t)ntohs (src->data[i]);
-			}
-		}
-		package_read_finish (v, src);
-		if (!old) {
-			return size;
-		}
-	}
+	return package_read_do (v, buffer, drawtime, blocking);
 }
 
 /** @} */

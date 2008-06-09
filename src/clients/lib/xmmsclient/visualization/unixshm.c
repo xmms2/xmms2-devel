@@ -141,3 +141,30 @@ read_finish_shm (xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t *dest) {
 	increment_server (t);
 }
 
+int
+read_do_shm (xmmsc_vis_unixshm_t *t, xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
+{
+	int old;
+	int ret;
+	xmmsc_vischunk_t *src;
+	int i, size;
+
+	ret = read_start_shm (t, blocking, &src);
+	if (ret < 1) {
+		return ret;
+	}
+
+	old = check_drawtime (net2ts (src->timestamp), drawtime);
+
+	if (!old) {
+		size = ntohs (src->size);
+		for (i = 0; i < size; ++i) {
+			buffer[i] = (int16_t)ntohs (src->data[i]);
+		}
+	}
+	read_finish_shm (t, src);
+	if (!old) {
+		return size;
+	}
+	return 0;
+}

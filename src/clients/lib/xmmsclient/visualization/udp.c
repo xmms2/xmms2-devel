@@ -163,6 +163,21 @@ cleanup_udp (xmmsc_vis_udp_t *t)
 	xmms_socket_close (t->socket[1]);
 }
 
+
+int
+wait_for_socket (xmmsc_vis_udp_t *t, unsigned int blocking)
+{
+	int ret;
+	fd_set rfds;
+	struct timeval time;
+	FD_ZERO (&rfds);
+	FD_SET (t->socket[0], &rfds);
+	time.tv_sec = blocking / 1000;
+	time.tv_usec = (blocking % 1000) * 1000;
+	ret = select (t->socket[0] + 1, &rfds, NULL, NULL, &time);
+	return ret;
+}
+
 int
 read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **dest, int32_t id)
 {
@@ -171,16 +186,7 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 	char* packet = packet_init_data (&packet_d);
 
 	if (blocking) {
-		fd_set rfds;
-		struct timeval time;
-		FD_ZERO (&rfds);
-		FD_SET (t->socket[0], &rfds);
-		time.tv_sec = blocking / 1000;
-		time.tv_usec = (blocking % 1000) * 1000;
-		ret = select (t->socket[0] + 1, &rfds, NULL, NULL, &time);
-		if (ret == -1) {
-			return -1;
-		}
+		wait_for_socket (t, blocking);
 	}
 	ret = recv (t->socket[0], packet, packet_d.size, MSG_DONTWAIT);
 	if ((ret > 0) && (*packet_d.__unaligned_type == 'V')) {
@@ -229,4 +235,32 @@ void
 read_finish_udp (xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest) {
 	char *packet = (char*)dest - XMMS_VISPACKET_UDP_OFFSET;
 	free (packet);
+}
+
+int
+read_do_udp (xmmsc_vis_udp_t *t, xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
+{
+	int old;
+	int ret;
+	xmmsc_vischunk_t *src;
+	int i, size;
+
+	ret = read_start_udp (t, blocking, &src, v->id);
+	if (ret < 1) {
+		return ret;
+	}
+
+	old = check_drawtime (net2ts (src->timestamp), drawtime);
+
+	if (!old) {
+		size = ntohs (src->size);
+		for (i = 0; i < size; ++i) {
+			buffer[i] = (int16_t)ntohs (src->data[i]);
+		}
+	}
+	read_finish_udp (t, src);
+	if (!old) {
+		return size;
+	}
+	return 0;
 }
