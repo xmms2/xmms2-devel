@@ -137,10 +137,8 @@ xmms_nms_new (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	int i, j;
-	for(i = 0; i < SUPPORTED_CHANNELS; i++)
-	{
-		for(j = 0; j < SUPPORTED_SAMPLERATES; j++)
-		{
+	for (i = 0; i < SUPPORTED_CHANNELS; i++) {
+		for (j = 0; j < SUPPORTED_SAMPLERATES; j++) {
 			xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, channels[i], samplerate[j]);
 		}
 	}
@@ -171,14 +169,14 @@ xmms_nms_flush (xmms_output_t *output)
 	xmms_log_info ("Neuros Output Plugin calling flush\n");
 
 	if (data->neuros_plugin)
-		data->neuros_plugin->flush(1);
+		data->neuros_plugin->flush (1);
 }
 
 static gboolean
 xmms_nms_open (xmms_output_t *output)
 {
 	xmms_nms_data_t *data;
-	void * plugin_lib;
+	void *plugin_lib;
 	GetNmsOutputPluginFunc interface_get;
 	int ret;
 
@@ -194,13 +192,13 @@ xmms_nms_open (xmms_output_t *output)
 		return FALSE;
 	}
 
-	interface_get = dlsym(plugin_lib, NMS_PLUGIN_SYMBOL_OUTPUT);
+	interface_get = dlsym (plugin_lib, NMS_PLUGIN_SYMBOL_OUTPUT);
 	if (interface_get == NULL) {
 		xmms_log_error ("Neuros Output Plugin has no interface symbol %s\n", NMS_PLUGIN_SYMBOL_OUTPUT);
 		return FALSE;
 	}
 
-	data->neuros_plugin = interface_get();
+	data->neuros_plugin = interface_get ();
 	if (data->neuros_plugin == NULL) {
 		xmms_log_error ("Neuros Output Plugin interface not found\n");
 		return FALSE;
@@ -217,9 +215,9 @@ xmms_nms_open (xmms_output_t *output)
 			xmms_log_error ("Neuros output plugin failed init: error %d.", ret);
 			return TRUE;
 		}
-	} 
+	}
 
-	ret = data->neuros_plugin->start();
+	ret = data->neuros_plugin->start ();
 	if (ret != 0) {
 		data->neuros_plugin = NULL;
 		data->neuros_plugin_error = ret;
@@ -242,7 +240,7 @@ xmms_nms_close (xmms_output_t *output)
 
 	//Wait for all the data in buffer to drain to speakers.
 	//In case this is a STOP command, flush is already called.
-	data->neuros_plugin->finish(1);
+	data->neuros_plugin->finish (1);
 }
 
 static void
@@ -256,10 +254,11 @@ xmms_nms_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *
 
 	if (data->neuros_plugin == NULL) {
 		//this is the result of a previous error during init, let's report it now that we can.
-		if (data->neuros_plugin_error == 1)
+		if (data->neuros_plugin_error == 1) {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "Neuros Output Plugin failed to init: dm320 output locked.");
-		else
+		} else {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "Neuros Output Plugin failed to init or start.");
+		}
 		return;
 	}
 
@@ -273,20 +272,21 @@ xmms_nms_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *
 	And actually lowering the size of the dm320 buffers seems to be a pretty daunting prospect, according to Gao.
 	So we resort to this hack. Let's live with it for the time being.
 	*/
-	while (data->neuros_plugin->bufferedData(NMS_BUFFER_AUDIO) >= FAUX_BUFFER_SIZE) {
-		usleep(NO_BUFFERS_SLEEP_TIME);
+	while (data->neuros_plugin->bufferedData (NMS_BUFFER_AUDIO) >= FAUX_BUFFER_SIZE) {
+		usleep (NO_BUFFERS_SLEEP_TIME);
 	}
 
 	// If no REAL dm320 buffer available at the moment, keep trying until there's a free one.
 	// if the faux hack buffer is enabled, a real buffer will be surely available, unless some failure happens
-	while ((ret = data->neuros_plugin->getBuffer(&data->buf, 0, 0)) == 1) {
-		usleep(NO_BUFFERS_SLEEP_TIME);
+	ret = data->neuros_plugin->getBuffer (&data->buf, 0, 0);
+	while (ret == 1) {
+		usleep (NO_BUFFERS_SLEEP_TIME);
 	}
 	if (ret < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Neuros Output Plugin failed to get output buffer!");
 		xmms_log_error ("Neuros Output Plugin failed to get output buffer!");
 		return;
-	} 
+	}
 
 	// If this happens, it means imem has some problems allocating buffers. No hope of recovery, in my opinion, so we bail
 	if (data->buf.abuf.size == 0) {
@@ -302,7 +302,7 @@ xmms_nms_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *
 			memcpy (data->buf.abuf.data, buffer + written, sz);
 			data->buf.abuf.size = sz;
 			data->buf.curbuf = &data->buf.abuf;
-			data->neuros_plugin->write(&data->buf);
+			data->neuros_plugin->write (&data->buf);
 			written += sz;
 		}
 	}
@@ -316,15 +316,15 @@ xmms_nms_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	int ret;
 
 	data = xmms_output_private_data_get (output);
-	if (data == NULL) return FALSE;
+	if (data == NULL)
+		return FALSE;
 
 	sformat = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
 	schannels = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS);
 	srate = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 
-	if (data->neuros_plugin)
-	{
-		data->neuros_plugin->finish(0);
+	if (data->neuros_plugin) {
+		data->neuros_plugin->finish (0);
 
 		desc.adesc.num_channels = schannels;
 		desc.adesc.sample_rate = srate;
@@ -332,7 +332,7 @@ xmms_nms_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 
 		xmms_log_info ("Neuros Output Plugin calling new format set (rate:%d format:%d channels:%d)\n",srate,sformat,schannels);
 
-		ret = data->neuros_plugin->init(&desc, 0, 0);
+		ret = data->neuros_plugin->init (&desc, 0, 0);
 		if (ret != 0) {
 			data->neuros_plugin = NULL;
 			data->neuros_plugin_error = ret;
@@ -345,7 +345,7 @@ xmms_nms_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 			}
 		}
 
-		data->neuros_plugin->start();
+		data->neuros_plugin->start ();
 	}
 
 	return TRUE;
@@ -360,9 +360,11 @@ xmms_nms_latency_get (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	if (data == NULL) return 0;
 
-	if (data->neuros_plugin)
-		latency = data->neuros_plugin->bufferedData(NMS_BUFFER_AUDIO);
-	else latency = 0;
+	if (data->neuros_plugin) {
+		latency = data->neuros_plugin->bufferedData (NMS_BUFFER_AUDIO);
+	} else {
+		latency = 0;
+	}
 
 	return (guint) latency; //there may be a loss here, as we return the latency as a unsigned long
 }
