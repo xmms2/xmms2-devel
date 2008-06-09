@@ -179,24 +179,26 @@ wait_for_socket (xmmsc_vis_udp_t *t, unsigned int blocking)
 }
 
 int
-read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **dest, int32_t id)
+read_do_udp (xmmsc_vis_udp_t *t, xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
 {
+	int old;
 	int ret;
+	int i, size;
 	xmmsc_vis_udp_data_t packet_d;
 	char* packet = packet_init_data (&packet_d);
+	xmmsc_vischunk_t data;
 
 	if (blocking) {
 		wait_for_socket (t, blocking);
 	}
+
 	ret = recv (t->socket[0], packet, packet_d.size, MSG_DONTWAIT);
 	if ((ret > 0) && (*packet_d.__unaligned_type == 'V')) {
 		uint16_t grace;
 		struct timeval rtv;
 
-		xmmsc_vischunk_t data;
 		XMMSC_VIS_UNALIGNED_READ (data, packet_d.__unaligned_data, xmmsc_vischunk_t);
 
-		*dest = packet_d.__unaligned_data; /* XXX FIXME BROKEN */
 		/* resync connection */
 		XMMSC_VIS_UNALIGNED_READ (grace, packet_d.__unaligned_grace, uint16_t);
 		grace = ntohs (grace);
@@ -204,7 +206,7 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 			if (t->grace != 0) {
 				t->grace = 0;
 				/* use second socket here, so vis packets don't get lost */
-				t->timediff = udp_timediff (id, t->socket[1]);
+				t->timediff = udp_timediff (v->id, t->socket[1]);
 			}
 		} else {
 			t->grace = grace;
@@ -217,7 +219,7 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 		double interim = tv2ts (&rtv);
 		interim -= t->timediff;
 		ts2net (data.timestamp, interim);
-		return 1;
+		ret = 1;
 	} else {
 		if (ret == 1 && *packet_d.__unaligned_type == 'K') {
 			ret = -1;
@@ -229,36 +231,18 @@ read_start_udp (xmmsc_vis_udp_t *t, unsigned int blocking, xmmsc_vischunk_t **de
 		free (packet);
 		return ret;
 	}
-}
 
-void
-read_finish_udp (xmmsc_vis_udp_t *t, xmmsc_vischunk_t *dest) {
-	char *packet = (char*)dest - XMMS_VISPACKET_UDP_OFFSET;
-	free (packet);
-}
-
-int
-read_do_udp (xmmsc_vis_udp_t *t, xmmsc_visualization_t *v, short *buffer, int drawtime, unsigned int blocking)
-{
-	int old;
-	int ret;
-	xmmsc_vischunk_t *src;
-	int i, size;
-
-	ret = read_start_udp (t, blocking, &src, v->id);
-	if (ret < 1) {
-		return ret;
-	}
-
-	old = check_drawtime (net2ts (src->timestamp), drawtime);
+	old = check_drawtime (net2ts (data.timestamp), drawtime);
 
 	if (!old) {
-		size = ntohs (src->size);
+		size = ntohs (data.size);
 		for (i = 0; i < size; ++i) {
-			buffer[i] = (int16_t)ntohs (src->data[i]);
+			buffer[i] = (int16_t)ntohs (data.data[i]);
 		}
 	}
-	read_finish_udp (t, src);
+
+	free (packet);
+
 	if (!old) {
 		return size;
 	}
