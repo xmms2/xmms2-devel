@@ -31,7 +31,7 @@
 #define SUPPORTED_SAMPLERATES 12
 
 #define NEUROS_OUTPUT_PLUGIN_PATH NMS_PLUGIN_DIR "libdm320nmso.so"
-#define NO_BUFFERS_SLEEP_TIME (100 * 1000) //100 ms
+#define NO_BUFFERS_SLEEP_TIME (10 * 1000) //10 ms
 #define FAUX_BUFFER_SIZE (1024 * 128)
 
 //our supported
@@ -206,7 +206,7 @@ xmms_nms_open (xmms_output_t *output)
 		return FALSE;
 	}
 
-	ret = data->neuros_plugin->init (&desc, 0);
+	ret = data->neuros_plugin->init (&desc, 0, 0);
 	if (ret != 0) {
 		data->neuros_plugin = NULL;
 		data->neuros_plugin_error = ret;
@@ -332,7 +332,7 @@ xmms_nms_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 
 		xmms_log_info ("Neuros Output Plugin calling new format set (rate:%d format:%d channels:%d)\n",srate,sformat,schannels);
 
-		ret = data->neuros_plugin->init(&desc, 0);
+		ret = data->neuros_plugin->init(&desc, 0, 0);
 		if (ret != 0) {
 			data->neuros_plugin = NULL;
 			data->neuros_plugin_error = ret;
