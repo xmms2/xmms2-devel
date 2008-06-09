@@ -129,3 +129,5 @@ src/plugins/karaoke/*
         Heavily based on DeFX, copyright (C) 2002 Franco Catrin L. <ancelot@directo.cl>.
         Licensed under GPL license.
 
+src/plugins/samba/samba.c
+        Licensed under the GNU General Public License.
