@@ -34,7 +34,7 @@
 
 #include <glib.h>
 
-#define DEST_IP "83.140.162.43"
+#define DEST_IP "78.47.20.162"
 #define DEST_PORT 24944
 
 static time_t start_time;
