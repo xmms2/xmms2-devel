@@ -26,11 +26,12 @@ typedef struct {
 static const struct {
 	const gchar *mlib;
 	const gchar *gvfs;
+	xmms_object_cmd_arg_type_t type;
 } attr_map[] = {
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIME,        G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,        G_FILE_ATTRIBUTE_TIME_MODIFIED         },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,        G_FILE_ATTRIBUTE_STANDARD_SIZE         },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, G_FILE_ATTRIBUTE_STANDARD_DESCRIPTION  }
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIME,        G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, XMMS_OBJECT_CMD_ARG_STRING },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,        G_FILE_ATTRIBUTE_TIME_MODIFIED,         XMMS_OBJECT_CMD_ARG_INT32  },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,        G_FILE_ATTRIBUTE_STANDARD_SIZE,         XMMS_OBJECT_CMD_ARG_INT32  },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, G_FILE_ATTRIBUTE_STANDARD_DESCRIPTION,  XMMS_OBJECT_CMD_ARG_STRING }
 };
 
 static const struct {
@@ -157,15 +158,34 @@ xmms_gvfs_init (xmms_xform_t *xform)
 		int i;
 
 		for (i = 0; i < G_N_ELEMENTS (attr_map); i++) {
-			gchar *attr;
-
 			if (!g_file_info_has_attribute (info, attr_map[i].gvfs)) {
 				continue;
 			}
 
-			attr = g_file_info_get_attribute_as_string (info, attr_map[i].gvfs);
-			xmms_xform_metadata_set_str (xform, attr_map[i].mlib, attr);
-			g_free (attr);
+			switch (attr_map[i].type) {
+				case XMMS_OBJECT_CMD_ARG_STRING: {
+					gchar *attr = g_file_info_get_attribute_as_string (info,
+					                                                   attr_map[i].gvfs);
+					xmms_xform_metadata_set_str (xform, attr_map[i].mlib, attr);
+					g_free (attr);
+					break;
+				}
+				case XMMS_OBJECT_CMD_ARG_INT32: {
+					/* right now the xform metadata api only handles strings
+					 * and 32 bit ints. however the gvfs api returns uint64 for
+					 * the numeric attributes we're interested in and we just
+					 * pass that to the xform and pray that it doesn't overflow
+					 * as we know it's unsafe.
+					 */
+
+					gint64 attr = g_file_info_get_attribute_uint64 (info,
+					                                                attr_map[i].gvfs);
+					xmms_xform_metadata_set_int (xform, attr_map[i].mlib, attr);
+					break;
+				}
+				default:
+					g_assert_not_reached ();
+			}
 		}
 
 		g_object_unref (info);
