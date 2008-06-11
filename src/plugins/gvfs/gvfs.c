@@ -299,7 +299,7 @@ xmms_gvfs_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 
 		xmms_xform_browse_add_entry (xform, child_name, flags);
 
-		if (child_type & G_FILE_TYPE_DIRECTORY) {
+		if (~child_type & G_FILE_TYPE_DIRECTORY) {
 			xmms_xform_browse_add_entry_property_int (xform,
 			                                          XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
 			                                          child_size);
