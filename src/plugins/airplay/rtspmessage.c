@@ -120,7 +120,7 @@ rtsp_message_init_data (gint channel, RTSPMessage * msg)
 
 RTSPResult
 rtsp_message_add_header (RTSPMessage * msg, RTSPHeaderField field,
-    gchar * value)
+    const gchar * value)
 {
   if (msg == NULL || value == NULL)
     return RTSP_EINVAL;
