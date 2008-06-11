@@ -23,7 +23,7 @@ import Object
 import Utils
 import Common
 
-BASEVERSION="0.4 DrKosmos+WIP+TEST2"
+BASEVERSION="0.4 DrKosmos+WIP+TEST3"
 APPNAME='xmms2'
 
 srcdir='.'
