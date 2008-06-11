@@ -232,7 +232,7 @@ xmms_gvfs_seek (xmms_xform_t *xform, gint64 offset,
 	}
 
 	if (g_seekable_seek (G_SEEKABLE (data->handle), offset, type, NULL, &err)) {
-		return offset;
+		return g_seekable_tell (G_SEEKABLE (data->handle));
 	}
 
 	xmms_error_set (error, XMMS_ERROR_GENERIC, err->message);
