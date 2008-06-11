@@ -241,10 +241,12 @@ namespace Xmms
 			 *  is only thrown if the programmer is careless or doesn't know
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
-			 *  
-			 *  @return current position as unsigned integer.
+			 *
+			 *  @return Dict containing then name of a playlist in 'name' and
+			 *  the current position in that playlist as unsigned integer in
+			 *  'position'.
 			 */
-			UintResult currentPos( const std::string& playlist = DEFAULT_PLAYLIST
+			DictResult currentPos( const std::string& playlist = DEFAULT_PLAYLIST
 			                     ) const;
 
 			/** Retrieve the name of the current active playlist.

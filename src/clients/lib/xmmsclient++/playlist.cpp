@@ -149,13 +149,13 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	UintResult Playlist::currentPos( const std::string& playlist ) const
+	DictResult Playlist::currentPos( const std::string& playlist ) const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_current_pos, conn_,
 		                       playlist.c_str() ) );
-		return UintResult( res, ml_ );
+		return DictResult( res, ml_ );
 	}
 
 	StringResult Playlist::currentActive() const
