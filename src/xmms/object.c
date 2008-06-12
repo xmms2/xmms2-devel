@@ -80,8 +80,6 @@ void
 xmms_object_connect (xmms_object_t *object, guint32 signalid,
                      xmms_object_handler_t handler, gpointer userdata)
 {
-	GList *list = NULL;
-	GList *node;
 	xmms_object_handler_entry_t *entry;
 
 	g_return_if_fail (object);
@@ -92,15 +90,8 @@ xmms_object_connect (xmms_object_t *object, guint32 signalid,
 	entry->handler = handler;
 	entry->userdata = userdata;
 
-	if (object->signals[signalid]) {
-		node = object->signals[signalid];
-		list = g_list_prepend (node, entry);
-		object->signals[signalid] = list;
-	} else {
-		list = g_list_prepend (list, entry);
-		object->signals[signalid] = list;
-	}
-
+	object->signals[signalid] =
+		g_list_prepend (object->signals[signalid], entry);
 }
 
 /**
