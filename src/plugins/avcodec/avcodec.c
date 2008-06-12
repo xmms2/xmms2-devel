@@ -40,6 +40,7 @@ typedef struct {
 	xmms_sample_format_t sampleformat;
 
 	gint bitrate;
+	gint samplebits;
 	const gchar *codec_id;
 	gpointer extradata;
 	gssize extradata_size;
@@ -148,6 +149,11 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	                            "bitrate",
 	                            &data->bitrate);
 
+	/* ALAC and MAC require bits per sample field to be 16 */
+	xmms_xform_auxdata_get_int (xform,
+	                            "samplebits",
+	                            &data->samplebits);
+
 	ret = xmms_xform_auxdata_get_bin (xform,
 	                                  "decoder_config",
 	                                  &data->extradata,
@@ -162,11 +168,9 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->sample_rate = data->samplerate;
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
+	data->codecctx->bits_per_sample = data->samplebits;
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
-
-	/* FIXME: this is for ALAC but can be a different value */
-	data->codecctx->bits_per_sample = 16;
 
 	if (avcodec_open (data->codecctx, codec) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);

@@ -186,6 +186,9 @@ xmms_mp4_init (xmms_xform_t *xform)
 	xmms_xform_auxdata_set_bin (xform, "decoder_config", tmpbuf, tmpbuflen);
 	g_free (tmpbuf);
 
+	/* This is only for ALAC to set 16-bit samples, ignored for AAC */
+	xmms_xform_auxdata_set_int (xform, "samplebits", 16);
+
 	xmms_mp4_get_mediainfo (xform);
 
 	XMMS_DBG ("MP4 demuxer inited successfully!");
