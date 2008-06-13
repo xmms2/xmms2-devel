@@ -39,6 +39,7 @@ typedef enum {
 
 struct cli_infos_St {
 	xmmsc_connection_t *conn;
+	xmmsc_connection_t *sync;
 	execution_mode_t mode;
 	action_status_t status;
 	command_trie_t *commands;

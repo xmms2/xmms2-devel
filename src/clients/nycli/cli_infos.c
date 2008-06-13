@@ -67,6 +67,8 @@ cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
 	infos->conn = NULL;
+	infos->sync = NULL;
+	/* A(sk)T(heefer): Why don't unref connection here? */
 	xmmsc_result_unref (res);
 	cli_infos_loop_resume (infos);
 }
@@ -77,6 +79,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 	gchar *path;
 	xmmsc_result_t *res;
 
+	/* Open Async connection first */
 	infos->conn = xmmsc_init (CLI_CLIENTNAME);
 	if (!infos->conn) {
 		g_printf (_("Could not init connection!\n"));
@@ -101,6 +104,29 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 			infos->conn = NULL;
 			return FALSE;
 		}
+	}
+	
+	/* Sync connection */
+	infos->sync = xmmsc_init (CLI_CLIENTNAME "-sync");
+	if (!infos->sync) {
+		g_printf (_("Could not init sync connection!\n"));
+		return FALSE;
+	}
+
+	if (!xmmsc_connect (infos->sync, path)) {
+		if (path) {
+			g_printf (_("Could not connect to server at '%s'!\n"), path);
+		} else {
+			g_printf (_("Could not connect to server at default path!\n"));
+		}
+
+		xmmsc_unref (infos->conn);
+		xmmsc_unref (infos->sync);
+		
+		infos->conn = NULL;
+		infos->sync = NULL;
+
+		return FALSE;
 	}
 
 	/* Reset the connection state on server quit */

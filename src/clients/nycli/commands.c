@@ -331,8 +331,9 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 
 /* Define commands */
 
+/* Dummy callback that resets the action status as finished. */
 gboolean
-cli_play (cli_infos_t *infos, command_context_t *ctx)
+cli_play_async (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->conn);
@@ -343,12 +344,34 @@ cli_play (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pause (cli_infos_t *infos, command_context_t *ctx)
+cli_play (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playback_start (infos->sync);
+	xmmsc_result_wait (res);
+	cb_done(res, infos);
+
+	return TRUE;
+}
+
+gboolean
+cli_pause_async (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->conn);
 	xmmsc_result_notifier_set (res, cb_done, infos);
 	xmmsc_result_unref (res);
+
+	return TRUE;
+}
+
+gboolean
+cli_pause (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_playback_pause (infos->sync);
+	xmmsc_result_wait (res);
+	cb_done(res, infos);
 
 	return TRUE;
 }
@@ -374,14 +397,13 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-/* <<<<< Make async? Create cb_toggle that call cli_play or cli_stop? */
 gboolean 
 cli_toggle  (cli_infos_t *infos, command_context_t *ctx)
 {
   uint32_t status;
   xmmsc_result_t *res;
 
-  res = xmmsc_playback_status (infos->conn);
+  res = xmmsc_playback_status (infos->sync);
   xmmsc_result_wait (res);
 
   if (xmmsc_result_iserror (res)) {
@@ -546,9 +568,11 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
+	guint id;
+	gint i = 0;
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query = NULL;
-	xmmsc_result_t *res;
+	xmmsc_result_t *res, *infores = NULL;
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
@@ -574,9 +598,35 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	coldisp = create_column_display (infos, ctx, default_columns);
 
-	res = xmmsc_playlist_list_entries (infos->conn, playlist);
-	xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
+	res = xmmsc_playlist_list_entries (infos->sync, playlist);
+	xmmsc_result_wait (res);
+
+	if (!xmmsc_result_iserror (res)) {
+		column_display_prepare (coldisp);
+		column_display_print_header (coldisp);
+		while (xmmsc_result_list_valid (res)) {
+			if (infores) {
+				xmmsc_result_unref (infores); /* unref previous infores */
+			}
+			if (xmmsc_result_get_uint (res, &id)) {
+				infores = xmmsc_medialib_get_info (infos->sync, id);
+				xmmsc_result_wait (infores);
+				column_display_print (coldisp, infores);
+			}
+			xmmsc_result_list_next (res);
+			i++;
+		}
+
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	column_display_print_footer (coldisp);
+	column_display_free (coldisp);
+	cli_infos_loop_resume (infos);
+
 	xmmsc_result_unref (res);
+
 	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
 	g_free (pattern);
