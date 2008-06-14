@@ -182,6 +182,10 @@ N: Tobias Nygren
 E: tnn@nygren.pp.se
 D: HP-UX portability
 
+N: Thomas Orgis
+E: thomas@orgis.org
+D: mpg123 plugin.
+
 N: Heikki Orsila
 E: heikki.orsila@iki.fi
 D: Cleanups.

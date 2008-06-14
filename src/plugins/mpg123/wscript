@@ -1,0 +1,9 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    if not conf.check_header('mpg123.h'):
+        return False
+
+    return conf.check_library2('mpg123', uselib='mpg123', mandatory=0)
+
+configure, build = plugin('mpg123', configure=plugin_configure, needs_lib=True)
