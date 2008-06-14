@@ -135,7 +135,13 @@ xmms_gvfs_init (xmms_xform_t *xform)
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 	g_return_val_if_fail (url, FALSE);
 
-	file = g_file_new_for_uri (url);
+	/* This is an ugly hack to handle files with
+	   chars needing url encoding */
+	if (!g_ascii_strncasecmp (url, "file://", 7)) {
+		file = g_file_new_for_path (url+7);
+	} else {
+		file = g_file_new_for_uri (url);
+	}
 	handle = g_file_read (file, NULL, &error);
 	g_object_unref (file);
 
