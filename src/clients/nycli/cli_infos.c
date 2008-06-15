@@ -66,9 +66,13 @@ void
 cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
+
+	xmmsc_unref(infos->conn);
+	xmmsc_unref(infos->sync);
+
 	infos->conn = NULL;
 	infos->sync = NULL;
-	/* A(sk)T(heefer): Why don't unref connection here? */
+
 	xmmsc_result_unref (res);
 	cli_infos_loop_resume (infos);
 }

@@ -144,9 +144,20 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	return retval;
 }
 
+/* Parse time expressions of the forms:
+ *  D*((:D*+e)(:D*+e)) or
+ *  (D*(hour+h)+E)(D*(min+m)+e)(D*(sec+s)+e)
+ * 
+ * D = [0-9]
+ * strtol (s, endptr, 10) faz matching de D*
+ */
 gboolean
-parse_time (gchar *s, gchar **endptr, guint *v) {
-	return TRUE;
+parse_time (gchar *s, gchar **endptr, guint *v)
+{
+/* 	gboolean retval = TRUE; */
+/* 	gint v, t; */
+/* 	return retval; */
+	return FALSE;
 }
 
 /* Parse a time value, either an absolute position or an offset. */
