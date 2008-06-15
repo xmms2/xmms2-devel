@@ -448,10 +448,10 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
 
-	res = xmmsc_medialib_get_info (infos->conn, currid);
-	xmmsc_result_notifier_set (res, cb_entry_print_status, infos);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_medialib_get_info (infos->sync, currid);
+	xmmsc_result_wait (res);
+
+	cb_entry_print_status(res, infos);
 
 	return TRUE;
 }
@@ -824,17 +824,21 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 	gboolean all;
 
 	/* FIXME: support pattern argument (only display playlist containing matching media) */
-	/* FIXME: --all flag to show hidden playlists */
 
-	res = xmmsc_playlist_list (infos->conn);
 	command_flag_boolean_get (ctx, "all", &all);
 
+	res = xmmsc_playlist_list (infos->sync);
+	xmmsc_result_wait (res);
+
 	if (all) {
-		xmmsc_result_notifier_set (res, cb_list_print_all_playlists, infos);
+		cb_list_print_all_playlists (res, infos);
+/* 		list_print_playlists (res, infos, TRUE); */
+/* 		xmmsc_result_notifier_set (res, cb_list_print_all_playlists, infos); */
 	} else {
-		xmmsc_result_notifier_set (res, cb_list_print_playlists, infos);
+		cb_list_print_playlists (res, infos);
+/* 		list_print_playlists (res, infos, FALSE); */
+/* 		xmmsc_result_notifier_set (res, cb_list_print_playlists, infos); */
 	}
-	xmmsc_result_unref (res);
 
 	return TRUE;
 }

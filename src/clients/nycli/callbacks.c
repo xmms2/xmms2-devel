@@ -108,6 +108,8 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 void
 cb_entry_print_status (xmmsc_result_t *res, void *udata)
 {
+	cli_infos_t *infos = (cli_infos_t *) udata;
+
 	gchar *artist;
 	gchar *title;
 
@@ -123,6 +125,7 @@ cb_entry_print_status (xmmsc_result_t *res, void *udata)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
+	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
