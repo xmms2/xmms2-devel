@@ -416,9 +416,10 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		} else {
 			res = xmmsc_playback_seek_ms (infos->conn, t.value.pos * 1000);
 		}
+		
+ 		xmmsc_result_wait (res); 
+ 		cb_done (res, infos);
 
-		xmmsc_result_notifier_set (res, cb_done, infos);
-		xmmsc_result_unref (res);
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
 		return FALSE;
@@ -849,9 +850,9 @@ cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_load (infos->conn, playlist);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_load (infos->sync, playlist);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (playlist);
 
@@ -904,10 +905,10 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 		oldname = infos->cache->active_playlist_name;
 	}
 
-	res = xmmsc_coll_rename (infos->conn, oldname, newname,
+	res = xmmsc_coll_rename (infos->sync, oldname, newname,
 	                         XMMS_COLLECTION_NS_PLAYLISTS);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (newname);
 
@@ -932,9 +933,9 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_remove (infos->conn, playlist);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_remove (infos->sync, playlist);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (playlist);
 
@@ -951,9 +952,9 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 		playlist = g_strdup (infos->cache->active_playlist_name);
 	}
 
-	res = xmmsc_playlist_clear (infos->conn, playlist);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_clear (infos->sync, playlist);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (playlist);
 
@@ -970,9 +971,9 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 		playlist = infos->cache->active_playlist_name;
 	}
 
-	res = xmmsc_playlist_shuffle (infos->conn, playlist);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_shuffle (infos->sync, playlist);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (playlist);
 
@@ -996,9 +997,9 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_sort (infos->conn, playlist, order);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_sort (infos->sync, playlist, order);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	g_free (playlist);
 	g_free (order);
