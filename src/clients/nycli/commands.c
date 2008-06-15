@@ -333,17 +333,6 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 
 /* Dummy callback that resets the action status as finished. */
 gboolean
-cli_play_async (cli_infos_t *infos, command_context_t *ctx)
-{
-	xmmsc_result_t *res;
-	res = xmmsc_playback_start (infos->conn);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
-
-	return TRUE;
-}
-
-gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
@@ -355,23 +344,12 @@ cli_play (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pause_async (cli_infos_t *infos, command_context_t *ctx)
-{
-	xmmsc_result_t *res;
-	res = xmmsc_playback_pause (infos->conn);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
-
-	return TRUE;
-}
-
-gboolean
 cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->sync);
 	xmmsc_result_wait (res);
-	cb_done(res, infos);
+	cb_done (res, infos);
 
 	return TRUE;
 }
@@ -390,9 +368,9 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 		g_printf (_("--time flag not supported yet!\n"));
 	}
 
-	res = xmmsc_playback_stop (infos->conn);
-	xmmsc_result_notifier_set (res, cb_done, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playback_stop (infos->sync);
+	xmmsc_result_wait (res);
+	cb_done (res, infos);
 
 	return TRUE;
 }
