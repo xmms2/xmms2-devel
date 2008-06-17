@@ -41,6 +41,7 @@ typedef struct {
 
 	gint bitrate;
 	gint samplebits;
+	gint block_align;
 	const gchar *codec_id;
 	gpointer extradata;
 	gssize extradata_size;
@@ -154,6 +155,10 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	                            "samplebits",
 	                            &data->samplebits);
 
+	xmms_xform_auxdata_get_int (xform,
+	                            "block_align",
+	                            &data->block_align);
+
 	ret = xmms_xform_auxdata_get_bin (xform,
 	                                  "decoder_config",
 	                                  &data->extradata,
@@ -169,6 +174,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
 	data->codecctx->bits_per_sample = data->samplebits;
+	data->codecctx->block_align = data->block_align;
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
 
@@ -254,9 +260,6 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		if (bytes_read < 0) {
 			XMMS_DBG ("Error decoding data!");
 			return -1;
-		} else if (bytes_read == 0) {
-			/* FIXME: this is a hack for wma to work without block_align */
-			data->buffer_length = 0;
 		}
 
 		data->buffer_length -= bytes_read;

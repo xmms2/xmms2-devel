@@ -396,6 +396,10 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 			                            wfx->cbSize);
 
 			xmms_xform_auxdata_set_int (xform,
+			                            "block_align",
+			                            wfx->nBlockAlign);
+
+			xmms_xform_auxdata_set_int (xform,
 			                            "bitrate",
 			                            data->bitrate);
 
