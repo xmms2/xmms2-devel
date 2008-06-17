@@ -1132,11 +1132,11 @@ xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 }
 
 static gboolean
-select_callback (GHashTable *row, gpointer udata)
+select_callback (GTree *row, gpointer udata)
 {
 	GList **l = (GList **) udata;
 
-	*l = g_list_prepend (*l, xmms_object_cmd_value_hash_table_new (row));
+	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (row));
 	return TRUE;
 }
 

@@ -59,7 +59,6 @@ typedef struct {
 		guint32 uint32;
 		gchar *string;
 		GTree *dict;
-		GHashTable *hash;
 		GList *list;
 		xmmsc_coll_t *coll;
 		GString *bin;
@@ -73,7 +72,6 @@ xmms_object_cmd_value_t *xmms_object_cmd_value_bin_new (GString *bin);
 xmms_object_cmd_value_t *xmms_object_cmd_value_uint_new (guint32 uint);
 xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GTree *dict);
-xmms_object_cmd_value_t *xmms_object_cmd_value_hash_table_new (GHashTable *hash);
 xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_propdict_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_coll_new (xmmsc_coll_t *coll);

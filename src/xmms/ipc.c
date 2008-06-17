@@ -181,43 +181,12 @@ xmms_ipc_do_dict (xmms_ipc_msg_t *msg, GTree *dict)
 }
 
 static void
-hash_to_dict (gpointer key, gpointer value, gpointer udata)
-{
-	gchar *k = key;
-	xmms_object_cmd_value_t *v = value;
-	dict_to_dict_data_t *d = udata;
-
-	if (k && v) {
-		xmms_ipc_msg_put_string (d->msg, k);
-		xmms_ipc_handle_cmd_value (d->msg, v);
-		d->count++;
-	}
-}
-
-static void
-xmms_ipc_do_hash (xmms_ipc_msg_t *msg, GHashTable *table)
-{
-	dict_to_dict_data_t d = {msg, 0};
-	guint offset;
-
-	offset = xmms_ipc_msg_put_uint32 (msg, 0);
-	g_hash_table_foreach (table, hash_to_dict, &d);
-	xmms_ipc_msg_store_uint32 (msg, offset, d.count);
-}
-
-static void
 xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 {
 	GList *n;
 	guint offset, count;
 
-	/* hash tables are serialized the same way as dicts, and clients
-	 * don't know the difference.
-	 */
-	if (val->type == XMMS_OBJECT_CMD_ARG_HASH_TABLE)
-		xmms_ipc_msg_put_int32 (msg, XMMS_OBJECT_CMD_ARG_DICT);
-	else
-		xmms_ipc_msg_put_int32 (msg, val->type);
+	xmms_ipc_msg_put_int32 (msg, val->type);
 
 	switch (val->type) {
 		case XMMS_OBJECT_CMD_ARG_BIN:
@@ -255,9 +224,6 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			xmms_ipc_do_dict (msg, val->value.dict);
-			break;
-		case XMMS_OBJECT_CMD_ARG_HASH_TABLE:
-			xmms_ipc_do_hash (msg, val->value.hash);
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL :
 			xmms_ipc_msg_put_collection (msg, val->value.coll);

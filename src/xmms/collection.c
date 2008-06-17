@@ -750,7 +750,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	for (n = res; n; n = n->next) {
 		xmms_object_cmd_value_t *id_val, *cmdval = n->data;
 
-		id_val = g_hash_table_lookup (cmdval->value.hash, "id");
+		id_val = g_tree_lookup (cmdval->value.dict, "id");
 		n->data = xmms_object_cmd_value_uint_new (id_val->value.int32);
 
 		xmms_object_cmd_value_unref (cmdval);

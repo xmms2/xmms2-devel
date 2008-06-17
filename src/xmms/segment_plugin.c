@@ -199,7 +199,6 @@ xmms_segment_init (xmms_xform_t *xform)
 	/* Now seek to startms */
 
 	samples = ms_to_samples (samplerate, startms);
-	xmms_error_reset (&error);
 	xmms_xform_seek (xform, samples, XMMS_XFORM_SEEK_SET, &error);
 
 	return TRUE;
