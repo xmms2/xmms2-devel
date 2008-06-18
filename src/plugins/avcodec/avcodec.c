@@ -292,7 +292,7 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		                                   &outbufsize, data->buffer,
 		                                   data->buffer_length);
 
-		if (bytes_read < 0) {
+		if (bytes_read < 0 || bytes_read > data->buffer_length) {
 			XMMS_DBG ("Error decoding data!");
 			return -1;
 		}
@@ -317,6 +317,8 @@ static gint64
 xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_avcodec_data_t *data;
+	char outbuf[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+	gint outbufsize, bytes_read = 0;
 	gint64 ret = -1;
 
 	g_return_val_if_fail (xform, -1);
@@ -324,6 +326,22 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
+
+	/* The buggy ape decoder doesn't flush buffers, so we need to finish decoding
+	 * the frame before seeking to avoid segfaults... this hack sucks */
+	while (data->buffer_length > 0) {
+		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
+		                                   &outbufsize, data->buffer,
+		                                   data->buffer_length);
+
+		if (bytes_read < 0 || bytes_read > data->buffer_length) {
+			XMMS_DBG ("Error decoding data!");
+			return -1;
+		}
+
+		data->buffer_length -= bytes_read;
+		g_memmove (data->buffer, data->buffer + bytes_read, data->buffer_length);
+	}
 
 	ret = xmms_xform_seek (xform, samples, whence, err);
 
