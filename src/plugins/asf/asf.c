@@ -203,7 +203,7 @@ xmms_asf_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	g_return_val_if_fail (xform, -1);
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, FALSE);
+	g_return_val_if_fail (data, -1);
 
 	position = asf_seek_to_msec (data->file, samples * 1000 / data->samplerate);
 	XMMS_DBG ("Seeking %" G_GINT64_FORMAT " returned with %" G_GINT64_FORMAT,
