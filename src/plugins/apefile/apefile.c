@@ -84,6 +84,9 @@ static gboolean xmms_apefile_init_demuxer (xmms_xform_t *xform);
 
 static gint xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
                                gint len, xmms_error_t *err);
+static gint64 xmms_apefile_seek (xmms_xform_t *xform, gint64 samples,
+                                 xmms_xform_seek_mode_t whence,
+                                 xmms_error_t *err);
 
 XMMS_XFORM_PLUGIN ("apefile", "Monkey's Audio demuxer", XMMS_VERSION,
                    "Monkey's Audio file format demuxer",
@@ -125,6 +128,7 @@ xmms_apefile_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_apefile_init;
 	methods.destroy = xmms_apefile_destroy;
 	methods.read = xmms_apefile_read;
+	methods.seek = xmms_apefile_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -447,7 +451,7 @@ xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 
 		/* the data is aligned in 32-bit words, so need to fix alignment */
 		framealign = (data->seektable[data->nextframe] -
-		         data->seektable[0]) & 3;
+		             data->seektable[0]) & 3;
 		framepos -= framealign;
 		framelength += framealign;
 
@@ -501,6 +505,37 @@ xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 	}
 
 	return size;
+}
+
+static gint64
+xmms_apefile_seek (xmms_xform_t *xform, gint64 samples,
+                   xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	xmms_apefile_data_t *data;
+
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+	g_return_val_if_fail (xform, -1);
+
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
+	g_return_val_if_fail (data->seektable, -1);
+
+	if (samples < 0 || samples > data->totalsamples) {
+		/* trying to seek outside file bounds */
+		xmms_error_set (err, XMMS_ERROR_GENERIC,
+		                "Seek index out of bounds, only seek within the file");
+		return -1;
+	}
+
+	/* update the position of the next frame */
+	data->nextframe = samples / data->blocksperframe;
+
+	/* free possibly temporary buffer, it is useless now */
+	g_free (data->buffer);
+	data->buffer = NULL;
+	data->buffer_length = 0;
+
+	return (data->nextframe * data->blocksperframe);
 }
 
 void
