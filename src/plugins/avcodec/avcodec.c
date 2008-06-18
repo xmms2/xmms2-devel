@@ -31,7 +31,7 @@
 typedef struct {
 	AVCodecContext *codecctx;
 
-	guchar buffer[AVCODEC_BUFFER_SIZE];
+	guchar *buffer;
 	guint buffer_length;
 	guint buffer_size;
 
@@ -103,8 +103,9 @@ xmms_avcodec_destroy (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	avcodec_close (data->codecctx);
-	g_string_free (data->outbuf, TRUE);
 
+	g_string_free (data->outbuf, TRUE);
+	g_free (data->buffer);
 	g_free (data);
 }
 
@@ -120,6 +121,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_avcodec_data_t, 1);
 	data->outbuf = g_string_new (NULL);
+	data->buffer = g_malloc (AVCODEC_BUFFER_SIZE);
 	data->buffer_size = AVCODEC_BUFFER_SIZE;
 
 	xmms_xform_private_data_set (xform, data);
@@ -237,6 +239,8 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
 		if (data->buffer_length == 0) {
+			gint read_total;
+
 			bytes_read = xmms_xform_read (xform,
 			                              (gchar *) data->buffer,
 			                              data->buffer_size,
@@ -250,7 +254,38 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 				return 0;
 			}
 
-			data->buffer_length += bytes_read;
+			read_total = bytes_read;
+
+			while (read_total == data->buffer_size) {
+				/* multiply the buffer size and try to read again */
+				data->buffer = g_realloc (data->buffer, data->buffer_size * 2);
+				bytes_read = xmms_xform_read (xform,
+				                              (gchar *) data->buffer +
+				                                data->buffer_size,
+				                              data->buffer_size,
+				                              error);
+				data->buffer_size *= 2;
+
+				if (bytes_read < 0) {
+					XMMS_DBG ("Error while reading data");
+					return bytes_read;
+				}
+
+				read_total += bytes_read;
+
+				if (read_total < data->buffer_size) {
+					/* finally double the buffer size for performance reasons, the
+					 * hotspot handling likes to fit two frames in the buffer */
+					data->buffer = g_realloc (data->buffer, data->buffer_size * 2);
+					data->buffer_size *= 2;
+					XMMS_DBG ("Reallocated avcodec internal buffer to be %d bytes",
+					          data->buffer_size);
+
+					break;
+				}
+			}
+
+			data->buffer_length = read_total;
 		}
 
 		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
@@ -263,6 +298,7 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		}
 
 		data->buffer_length -= bytes_read;
+		g_memmove (data->buffer, data->buffer + bytes_read, data->buffer_length);
 
 		if (outbufsize > 0) {
 			g_string_append_len (data->outbuf, outbuf, outbufsize);
