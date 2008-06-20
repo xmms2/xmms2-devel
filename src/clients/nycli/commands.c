@@ -72,11 +72,6 @@ CLI_SIMPLE_SETUP("help", cli_help,
                  COMMAND_REQ_NONE,
                  _("[command]"),
                  _("List all commands, or help on one command."))
-
-/* CLI_SIMPLE_SETUP("playlist list", cli_pl_list, */
-/*                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, */
-/*                  _("[pattern]"), */
-/*                  _("List all playlist.")) */
 CLI_SIMPLE_SETUP("playlist switch", cli_pl_switch,
                  COMMAND_REQ_CONNECTION,
                  _("<playlist>"),
