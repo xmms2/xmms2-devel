@@ -32,7 +32,7 @@ readline_callback (gchar *input)
 	} else if (*input != 0) {
 		gint argc;
 		gchar **argv;
-		GError *error;
+		GError *error = NULL;
 
 		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
 			add_history (input);
@@ -43,6 +43,7 @@ readline_callback (gchar *input)
 			} else if (g_error_matches (error, G_SHELL_ERROR, G_SHELL_ERROR_FAILED)) {
 				g_printf (_("Error: Invalid input\n"));
 			}
+			g_error_free (error);
 			/* FIXME: Handle errors */
 		}
 	}
