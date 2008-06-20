@@ -96,8 +96,8 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 
 	if (!xmmsc_result_iserror (res)) {
 		res2 = xmmsc_playback_tickle (infos->conn);
-		xmmsc_result_notifier_set (res2, cb_done, infos);
-		xmmsc_result_unref (res2);
+		xmmsc_result_wait (res2);
+		cb_done (res2, infos);
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}

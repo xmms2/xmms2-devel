@@ -451,7 +451,7 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
 
-	cb_entry_print_status(res, infos);
+	cb_entry_print_status (res, infos);
 
 	return TRUE;
 }
@@ -467,9 +467,9 @@ cli_prev (cli_infos_t *infos, command_context_t *ctx)
 		offset = n;
 	}
 
-	res = xmmsc_playlist_set_next_rel (infos->conn, - offset);
-	xmmsc_result_notifier_set (res, cb_tickle, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_set_next_rel (infos->sync, - offset);
+	xmmsc_result_wait (res);
+	cb_tickle (res, infos);
 
 	return TRUE;
 }
@@ -485,9 +485,9 @@ cli_next (cli_infos_t *infos, command_context_t *ctx)
 		offset = n;
 	}
 
-	res = xmmsc_playlist_set_next_rel (infos->conn, offset);
-	xmmsc_result_notifier_set (res, cb_tickle, infos);
-	xmmsc_result_unref (res);
+	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
+	xmmsc_result_wait (res);
+	cb_tickle (res, infos);
 
 	return TRUE;
 }
