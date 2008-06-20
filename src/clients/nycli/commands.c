@@ -497,7 +497,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
-	gboolean backward;
+	gboolean backward = TRUE;
 
 	if (!command_flag_boolean_get (ctx, "backward", &backward)) {
 		backward = FALSE;
@@ -505,13 +505,13 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		/* FIXME: benchmark if efficient to reduce query to Active playlist */
-		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+		xmmsc_result_wait (res);
 		if (backward) {
-			xmmsc_result_notifier_set (res, cb_list_jump_back, infos);
+			cb_list_jump_back (res, infos);
 		} else {
-			xmmsc_result_notifier_set (res, cb_list_jump, infos);
+			cb_list_jump (res, infos);
 		}
-		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
 

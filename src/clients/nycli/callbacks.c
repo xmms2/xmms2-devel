@@ -302,9 +302,9 @@ cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 				/* If both match, jump! */
 				if (xmmsc_result_get_uint (res, &id)
 				    && g_array_index(playlist, guint, i) == id) {
-					jumpres = xmmsc_playlist_set_next (infos->conn, i);
-					xmmsc_result_notifier_set (jumpres, cb_tickle, infos);
-					xmmsc_result_unref (jumpres);
+					jumpres = xmmsc_playlist_set_next (infos->sync, i);
+					xmmsc_result_wait (jumpres);
+					cb_tickle (jumpres, infos);
 					goto finish;
 				}
 			}
