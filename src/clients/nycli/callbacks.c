@@ -206,8 +206,9 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 				xmmsc_result_unref (infores); /* unref previous infores */
 			}
 			if (xmmsc_result_get_uint (res, &id)) {
-				infores = xmmsc_medialib_get_info (infos->conn, id);
-				xmmsc_result_notifier_set (infores, cb_id_print_row, coldisp);
+				infores = xmmsc_medialib_get_info (infos->sync, id);
+				xmmsc_result_wait (infores);
+				column_display_print (coldisp, infores);
 			}
 			xmmsc_result_list_next (res);
 			i++;
@@ -217,17 +218,9 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
-	if (infores) {
-		/* Done after the last callback */
-		xmmsc_result_notifier_set (infores, cb_coldisp_finalize, coldisp);
-		xmmsc_result_notifier_set (infores, cb_done, infos);
-		xmmsc_result_unref (infores);
-	} else {
-		/* No resume-callback pending, we're done */
-		column_display_print_footer (coldisp);
-		column_display_free (coldisp);
-		cli_infos_loop_resume (infos);
-	}
+	column_display_print_footer (coldisp);
+	column_display_free (coldisp);
+	cli_infos_loop_resume (infos);
 
 	xmmsc_result_unref (res);
 }

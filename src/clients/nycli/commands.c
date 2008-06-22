@@ -533,9 +533,11 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
-		res = xmmsc_coll_query_ids (infos->conn, query, order, 0, 0);
-		xmmsc_result_notifier_set (res, cb_list_print_row, coldisp);
-		xmmsc_result_unref (res);
+		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+		xmmsc_result_wait (res);
+		
+		cb_list_print_row (res, coldisp);
+
 		xmmsc_coll_unref (query);
 	}
 
@@ -547,11 +549,9 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
-	guint id;
-	gint i = 0;
 	gchar *pattern = NULL;
 	xmmsc_coll_t *query = NULL;
-	xmmsc_result_t *res, *infores = NULL;
+	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
@@ -579,32 +579,8 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
-
-	if (!xmmsc_result_iserror (res)) {
-		column_display_prepare (coldisp);
-		column_display_print_header (coldisp);
-		while (xmmsc_result_list_valid (res)) {
-			if (infores) {
-				xmmsc_result_unref (infores); /* unref previous infores */
-			}
-			if (xmmsc_result_get_uint (res, &id)) {
-				infores = xmmsc_medialib_get_info (infos->sync, id);
-				xmmsc_result_wait (infores);
-				column_display_print (coldisp, infores);
-			}
-			xmmsc_result_list_next (res);
-			i++;
-		}
-
-	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
-	}
-
-	column_display_print_footer (coldisp);
-	column_display_free (coldisp);
-	cli_infos_loop_resume (infos);
-
-	xmmsc_result_unref (res);
+	
+	cb_list_print_row (res, coldisp);
 
 	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
