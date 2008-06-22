@@ -131,3 +131,6 @@ src/plugins/karaoke/*
 
 src/plugins/samba/samba.c
         Licensed under the GNU General Public License.
+
+src/plugins/faad/faad.c
+        Licensed under the GNU General Public License.
