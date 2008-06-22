@@ -231,7 +231,7 @@ cb_list_print_playlists (xmmsc_result_t *res, void *udata)
 	list_print_playlists (res, (cli_infos_t *) udata, FALSE);
 }
 
-void 
+void
 cb_list_print_all_playlists (xmmsc_result_t *res, void *udata)
 {
 	list_print_playlists (res, (cli_infos_t *) udata, TRUE);
@@ -289,8 +289,8 @@ cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 
 			/* Loop on the matched media */
 			for (xmmsc_result_list_first (res);
-				 xmmsc_result_list_valid (res);
-				 xmmsc_result_list_next (res)) {
+			     xmmsc_result_list_valid (res);
+			     xmmsc_result_list_next (res)) {
 
 				/* If both match, jump! */
 				if (xmmsc_result_get_uint (res, &id)

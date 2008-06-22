@@ -374,14 +374,14 @@ column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
 
 void
 column_display_render_next (column_display_t *disp, column_def_t *coldef,
-							xmmsc_result_t *res)
+                            xmmsc_result_t *res)
 {
 	gint realsize, curr = GPOINTER_TO_INT(coldef->arg.udata);
 
 	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%+d",
-						   disp->counter - curr);
+	                       disp->counter - curr);
 	print_fixed_width_string (disp->buffer, coldef->size, realsize,
-							  coldef->align);
+	                          coldef->align);
 }
 
 /** Always render the label text. */

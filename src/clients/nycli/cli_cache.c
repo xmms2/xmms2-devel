@@ -181,7 +181,6 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 	gchar *buf;
 
 	/* FIXME: Also listen to playlist renames, in case the active PL is renamed! */
-	
 	/* Refresh playlist name */
 	if (xmmsc_result_get_string (res, &buf)) {
 		g_free (infos->cache->active_playlist_name);
@@ -198,7 +197,7 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 }
 
 static void
-update_active_playlist_name(xmmsc_result_t *res, void *udata)
+update_active_playlist_name (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_cache_t *cache = infos->cache;
@@ -213,13 +212,13 @@ update_active_playlist_name(xmmsc_result_t *res, void *udata)
 	if (strcmp (name, cache->active_playlist_name) != 0) {
 		return;
 	}
-	
+
 	if (type == XMMS_COLLECTION_CHANGED_RENAME) {
 		g_free (cache->active_playlist_name);
 		xmmsc_result_get_dict_entry_string (res, "newname", &newname);
-		cache->active_playlist_name = g_strdup(newname);
+		cache->active_playlist_name = g_strdup (newname);
 	}
-	
+
 	unref_transient_result (res);
 }
 

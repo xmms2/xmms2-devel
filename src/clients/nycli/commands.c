@@ -41,9 +41,9 @@ CLI_SIMPLE_SETUP("pause", cli_pause,
                  NULL,
                  _("Pause playback."))
 CLI_SIMPLE_SETUP("toggle", cli_toggle, /* <<<<< */
-				 COMMAND_REQ_CONNECTION,
-				 NULL,
-				 _("Toggle playback."))
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("Toggle playback."))
 CLI_SIMPLE_SETUP("seek", cli_seek,
                  COMMAND_REQ_CONNECTION,
                  _("<time|offset>"),
@@ -262,8 +262,8 @@ cli_pl_list_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-						 _("[-a] [pattern]"),
-						 _("List all playlists."));
+	                     _("[-a] [pattern]"),
+	                     _("List all playlists."));
 } 
 
 void
@@ -298,9 +298,9 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 			nextsep = FALSE;
 		} else if (strcmp (columns[i], "next") == 0) {
 			column_display_add_special (disp, "next",
-										GINT_TO_POINTER(infos->cache->currpos),
-										4, COLUMN_DEF_ALIGN_RIGHT,
-										column_display_render_next);
+			                            GINT_TO_POINTER(infos->cache->currpos),
+			                            4, COLUMN_DEF_ALIGN_RIGHT,
+			                            column_display_render_next);
 		} else {
 			column_display_add_property (disp, columns[i], columns[i], 20,
 			                             FALSE, COLUMN_DEF_ALIGN_LEFT);
@@ -338,7 +338,7 @@ cli_play (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->sync);
 	xmmsc_result_wait (res);
-	cb_done(res, infos);
+	cb_done (res, infos);
 
 	return TRUE;
 }
@@ -375,8 +375,8 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-gboolean 
-cli_toggle  (cli_infos_t *infos, command_context_t *ctx)
+gboolean
+cli_toggle (cli_infos_t *infos, command_context_t *ctx)
 {
   uint32_t status;
   xmmsc_result_t *res;
@@ -386,20 +386,20 @@ cli_toggle  (cli_infos_t *infos, command_context_t *ctx)
 
   if (xmmsc_result_iserror (res)) {
     g_printf (_("Error: Couldn't get playback status: %s"),
-		 xmmsc_result_get_error (res));
+	          xmmsc_result_get_error (res));
   }
 
-  if (!xmmsc_result_get_uint(res, &status)) {
+  if (!xmmsc_result_get_uint (res, &status)) {
     g_printf (_("Error: Broken resultset"));
   }
 
   if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-    cli_pause(infos, ctx);
+    cli_pause (infos, ctx);
   } else {
-    cli_play(infos, ctx);
+    cli_play (infos, ctx);
   }
 	
-  xmmsc_result_unref(res);
+  xmmsc_result_unref (res);
 
   return TRUE;
 }
@@ -535,7 +535,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
 		xmmsc_result_wait (res);
-		
+
 		cb_list_print_row (res, coldisp);
 
 		xmmsc_coll_unref (query);
@@ -579,7 +579,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
-	
+
 	cb_list_print_row (res, coldisp);
 
 	/* FIXME: if not null, xmmsc_coll_unref (query); */

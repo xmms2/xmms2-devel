@@ -67,8 +67,8 @@ cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
 
-	xmmsc_unref(infos->conn);
-	xmmsc_unref(infos->sync);
+	xmmsc_unref (infos->conn);
+	xmmsc_unref (infos->sync);
 
 	infos->conn = NULL;
 	infos->sync = NULL;
@@ -109,7 +109,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 			return FALSE;
 		}
 	}
-	
+
 	/* Sync connection */
 	infos->sync = xmmsc_init (CLI_CLIENTNAME "-sync");
 	if (!infos->sync) {
