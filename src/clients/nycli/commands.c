@@ -242,13 +242,6 @@ cli_pl_config_setup (command_action_t *action)
 	                     _("Configure a playlist by changing its type, attributes, etc.\nBy default, configure the active playlist."));
 }
 
-
-/* CLI_SIMPLE_SETUP("playlist list", cli_pl_list, */
-/*                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, */
-/*                  _("[pattern]"), */
-/*                  _("List all playlist.")) */
-
-
 void
 cli_pl_list_setup (command_action_t *action)
 {
@@ -326,7 +319,6 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 
 /* Define commands */
 
-/* Dummy callback that resets the action status as finished. */
 gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -755,8 +747,6 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	return success;
 }
 
-
-
 gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -803,12 +793,8 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 
 	if (all) {
 		cb_list_print_all_playlists (res, infos);
-/* 		list_print_playlists (res, infos, TRUE); */
-/* 		xmmsc_result_notifier_set (res, cb_list_print_all_playlists, infos); */
 	} else {
 		cb_list_print_playlists (res, infos);
-/* 		list_print_playlists (res, infos, FALSE); */
-/* 		xmmsc_result_notifier_set (res, cb_list_print_playlists, infos); */
 	}
 
 	return TRUE;
