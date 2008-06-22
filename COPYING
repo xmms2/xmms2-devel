@@ -47,6 +47,7 @@ src/plugins/sid/*:
 
 src/plugins/sid/md5.*:
         Copyright (C) 1999 Aladdin Enterprises.
+        Licensed under BSD-style license.
 
 src/plugins/equalizer/eq.c:
         Licensed under GPL license.
