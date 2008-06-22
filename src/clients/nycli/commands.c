@@ -264,7 +264,7 @@ cli_pl_list_setup (command_action_t *action)
 	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-a] [pattern]"),
 	                     _("List all playlists."));
-} 
+}
 
 void
 fill_column_display (cli_infos_t *infos, column_display_t *disp,
@@ -417,8 +417,8 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 			res = xmmsc_playback_seek_ms (infos->sync, t.value.pos * 1000);
 		}
 		
- 		xmmsc_result_wait (res); 
- 		cb_done (res, infos);
+		xmmsc_result_wait (res); 
+		cb_done (res, infos);
 
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));

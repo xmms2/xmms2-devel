@@ -126,7 +126,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 
 		xmmsc_unref (infos->conn);
 		xmmsc_unref (infos->sync);
-		
+
 		infos->conn = NULL;
 		infos->sync = NULL;
 
