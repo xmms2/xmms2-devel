@@ -125,7 +125,8 @@ xmms_id3v2_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	data->len = head.len;
+	/* Total data length is the length of header data plus header bytes */
+	data->len = head.len + 10;
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
 	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
