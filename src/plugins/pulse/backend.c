@@ -403,7 +403,7 @@ gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror) {
 
 
 gboolean xmms_pulse_backend_flush (xmms_pulse *p, int *rerror) {
-	pa_operation *o;
+	pa_operation *o = NULL;
 
 	pa_threaded_mainloop_lock (p->mainloop);
 	if (!check_pulse_health (p, rerror))
