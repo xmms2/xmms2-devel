@@ -83,7 +83,8 @@ get_root_node_name (xmms_xform_t *xform)
 			if (isalpha (buf[i])) {
 				len++;
 			} else if (len) {
-				ret = g_memdup (buf + start + 1, len);
+				ret = g_malloc (len + 1);
+				memcpy (ret, buf + start + 1, len);
 				ret[len] = '\0';
 				break;
 			}
