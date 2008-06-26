@@ -698,24 +698,28 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (fileargs) {
-		/* FIXME: expend / glob? */
+		/* FIXME: expand / glob? */
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
 			command_arg_string_get (ctx, i, &path);
 			fullpath = make_valid_url (path);
 
 			if (norecurs) {
-				res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
+				res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, fullpath);
+				/* AT: requests go to a queue, FIFO? */
+				/* xmmsc_result_wait (res); */
 				if (i == count - 1) {
 					/* Finish after last add */
-					xmmsc_result_notifier_set (res, cb_done, infos);
+					xmmsc_result_wait (res);
+					cb_done (res, infos);
+				} else {
+					xmmsc_result_unref (res);
 				}
-				xmmsc_result_unref (res);
 			} else {
 				/* FIXME: oops, there is no rinsert */
 				g_printf (_("Error: no playlist_rinsert, implement it! doing non-recursive..\n"));
-				res = xmmsc_playlist_insert_url (infos->conn, playlist, pos, fullpath);
-				xmmsc_result_notifier_set (res, cb_done, infos);
-				xmmsc_result_unref (res);
+				res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, fullpath);
+				xmmsc_result_wait (res);
+				cb_done (res, infos);
 			}
 
 			g_free (fullpath);
@@ -733,9 +737,9 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			goto finish;
 		} else {
 			pack = pack_infos_playlist_pos (infos, playlist, pos);
-			res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
-			xmmsc_result_notifier_set (res, cb_add_list, pack);
-			xmmsc_result_unref (res);
+			res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+			xmmsc_result_wait (res);
+			cb_add_list (res, pack);
 			xmmsc_coll_unref (query);
 		}
 	}

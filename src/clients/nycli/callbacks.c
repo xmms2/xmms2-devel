@@ -340,7 +340,7 @@ cb_add_list (xmmsc_result_t *matching, void *udata)
 		     xmmsc_result_list_next (matching)) {
 
 			if (xmmsc_result_get_uint (matching, &id)) {
-				insres = xmmsc_playlist_insert_id (infos->conn, playlist,
+				insres = xmmsc_playlist_insert_id (infos->sync, playlist,
 				                                   pos + offset, id);
 				xmmsc_result_unref (insres);
 				offset++;
