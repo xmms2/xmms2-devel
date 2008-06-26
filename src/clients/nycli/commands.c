@@ -1039,16 +1039,14 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		/* Send the previous coll_t for update. */
 		pack = pack_infos_playlist_config (infos, playlist, history, upcoming,
 		                                   type, input);
-		res = xmmsc_coll_get (infos->conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (res, cb_configure_playlist, pack);
-		xmmsc_result_unref (res);
+		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_wait (res);
+		cb_configure_playlist (res, pack);
 	} else {
 		/* Display current config of the playlist. */
-		res = xmmsc_coll_get (infos->conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (res, cb_playlist_print_config,
-		                           pack_infos_playlist (infos, playlist));
-		xmmsc_result_notifier_set (res, cb_done, infos);
-		xmmsc_result_unref (res);
+		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_wait (res);
+		cb_playlist_print_config (res, pack_infos_playlist (infos, playlist));
 	}
 
 	return TRUE;

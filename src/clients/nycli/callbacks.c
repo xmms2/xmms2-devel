@@ -513,10 +513,10 @@ cb_configure_playlist (xmmsc_result_t *res, void *udata)
 			xmmsc_coll_unref (newcoll);
 		}
 
-		saveres = xmmsc_coll_save (infos->conn, coll, playlist,
+		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (saveres, cb_done, infos);
-		xmmsc_result_unref (saveres);
+		xmmsc_result_wait (saveres);
+		cb_done (saveres, infos);
 	} else {
 		g_printf (_("Cannot find the playlist to configure!\n"));
 		cli_infos_loop_resume (infos);
@@ -541,6 +541,8 @@ cb_playlist_print_config (xmmsc_result_t *res, void *udata)
 	} else {
 		g_printf (_("Invalid playlist!\n"));
 	}
+
+	cli_infos_loop_resume (infos);
 
 	free_infos_playlist (pack);
 	xmmsc_result_unref (res);
