@@ -583,9 +583,9 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
-		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
-		xmmsc_result_notifier_set (res, cb_list_print_info, infos);
-		xmmsc_result_unref (res);
+		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+		xmmsc_result_wait (res);
+		cb_list_print_info (res, infos);
 		xmmsc_coll_unref (query);
 	}
 
@@ -761,17 +761,16 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
-		res = xmmsc_coll_query_ids (infos->conn, query, NULL, 0, 0);
+		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+		xmmsc_result_wait (res);
 		if (!playlist) {
 			/* Optimize by reading active playlist from cache */
-			xmmsc_result_notifier_set (res, cb_remove_cached_list, infos);
+			cb_remove_cached_list (res, infos);
 		} else {
-			plres = xmmsc_playlist_list_entries (infos->conn, playlist);
-			register_double_callback (res, plres, cb_remove_list,
-			                          pack_infos_playlist (infos, playlist));
-			xmmsc_result_unref (plres);
+			plres = xmmsc_playlist_list_entries (infos->sync, playlist);
+			xmmsc_result_wait (plres);
+			cb_remove_list (res, plres, pack_infos_playlist (infos, playlist));
 		}
-		xmmsc_result_unref (res);
 		xmmsc_coll_unref (query);
 	}
 
@@ -835,15 +834,14 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 
 	if (command_flag_string_get (ctx, "playlist", &copy)) {
 		/* Copy the given playlist. */
-		res = xmmsc_coll_get (infos->conn, copy, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (res, cb_copy_playlist,
-		                           pack_infos_playlist (infos, newplaylist));
-		xmmsc_result_unref (res);
+		res = xmmsc_coll_get (infos->sync, copy, XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsc_result_wait (res);
+		cb_copy_playlist (res, pack_infos_playlist (infos, newplaylist));
 	} else {
 		/* Simply create a new empty playlist */
-		res = xmmsc_playlist_create (infos->conn, newplaylist);
-		xmmsc_result_notifier_set (res, cb_done, infos);
-		xmmsc_result_unref (res);
+		res = xmmsc_playlist_create (infos->sync, newplaylist);
+		xmmsc_result_wait (res);
+		cb_done (res, infos);
 	}
 
 	g_free (newplaylist);

@@ -95,7 +95,7 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 	xmmsc_result_t *res2;
 
 	if (!xmmsc_result_iserror (res)) {
-		res2 = xmmsc_playback_tickle (infos->conn);
+		res2 = xmmsc_playback_tickle (infos->sync);
 		xmmsc_result_wait (res2);
 		cb_done (res2, infos);
 	} else {
@@ -141,7 +141,7 @@ cb_id_print_info (xmmsc_result_t *res, void *udata)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
-	xmmsc_result_unref (res);
+ 	xmmsc_result_unref (res);
 }
 
 void
@@ -153,13 +153,10 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 
 	if (!xmmsc_result_iserror (res)) {
 		while (xmmsc_result_list_valid (res)) {
-			if (infores) {
-				xmmsc_result_unref (infores); /* unref previous infores */
-			}
 			if (xmmsc_result_get_uint (res, &id)) {
-				infores = xmmsc_medialib_get_info (infos->conn, id);
-				xmmsc_result_notifier_set (infores, cb_id_print_info,
-				                           GUINT_TO_POINTER(id));
+				infores = xmmsc_medialib_get_info (infos->sync, id);
+				xmmsc_result_wait (infores);
+				cb_id_print_info (infores, GUINT_TO_POINTER(id));
 			}
 			xmmsc_result_list_next (res);
 		}
@@ -168,15 +165,7 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
-	if (infores) {
-		/* Done after the last callback */
-		xmmsc_result_notifier_set (infores, cb_done, infos);
-		xmmsc_result_unref (infores);
-	} else {
-		/* No resume-callback pending, we're done */
-		cli_infos_loop_resume (infos);
-	}
-
+	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -392,7 +381,8 @@ cb_remove_cached_list (xmmsc_result_t *matching, void *udata)
 
 				/* If both match, remove! */
 				if (xmmsc_result_get_uint (matching, &id) && plid == id) {
-					rmres = xmmsc_playlist_remove_entry (infos->conn, NULL, i);
+					rmres = xmmsc_playlist_remove_entry (infos->sync, NULL, i);
+					xmmsc_result_wait (rmres);
 					xmmsc_result_unref (rmres);
 					break;
 				}
@@ -443,8 +433,9 @@ cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, void *udata)
 
 				/* If both match, jump! */
 				if (xmmsc_result_get_uint (matchres, &id) && plid == id) {
-					rmres = xmmsc_playlist_remove_entry (infos->conn, playlist,
+					rmres = xmmsc_playlist_remove_entry (infos->sync, playlist,
 					                                     i - offset);
+					xmmsc_result_wait (rmres);
 					xmmsc_result_unref (rmres);
 					offset++;
 					break;
@@ -473,10 +464,10 @@ cb_copy_playlist (xmmsc_result_t *res, void *udata)
 	unpack_infos_playlist (pack, &infos, &playlist);
 
 	if (xmmsc_result_get_collection (res, &coll)) {
-		saveres = xmmsc_coll_save (infos->conn, coll, playlist,
+		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_notifier_set (saveres, cb_done, infos);
-		xmmsc_result_unref (saveres);
+		xmmsc_result_wait (saveres);
+		cb_done (saveres, infos);
 	} else {
 		g_printf (_("Cannot find the playlist to copy!\n"));
 		cli_infos_loop_resume (infos);
