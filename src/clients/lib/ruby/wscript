@@ -70,7 +70,7 @@ def configure(conf):
 
     if version == [1, 9]: # Ruby 1.9
         hdir = os.popen(ruby + " -rrbconfig -e 'puts Config::CONFIG[\"rubyhdrdir\"]'").read().strip()
-        conf.env["CPPPATH_ruby"] += [hdir, os.path.join(hdir, "ruby")]
+        conf.env["CPPPATH_ruby"] += [hdir]
         hdir = os.popen(ruby + " -rrbconfig -e 'puts File.join(Config::CONFIG[\"rubyhdrdir\"], Config::CONFIG[\"arch\"])'").read().strip()
         conf.env["CPPPATH_ruby"] += [hdir]
 
