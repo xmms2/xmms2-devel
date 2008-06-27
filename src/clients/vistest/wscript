@@ -1,4 +1,7 @@
 def build(bld):
+
+    env = bld.env()
+
     obj = bld.create_obj('cc', 'program')
     obj.target = 'vistest'
     obj.source = """vistest.c""".split()
@@ -13,23 +16,30 @@ def build(bld):
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2 m'
 
-    obj = bld.create_obj('cc', 'program')
-    obj.target = 'xmms2-ripper'
-    obj.source = """ripper.c""".split()
-    obj.includes = '. ../../include'
-    obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'vorbisenc'
+    if env['HAVE_vorbisenc'] == 1:
+        obj = bld.create_obj('cc', 'program')
+        obj.target = 'xmms2-ripper'
+        obj.source = """ripper.c""".split()
+        obj.includes = '. ../../include'
+        obj.uselib_local = 'xmmsclient'
+        obj.uselib = 'vorbisenc'
 
-    obj = bld.create_obj('cc', 'program')
-    obj.target = 'xmms2-libvisual'
-    obj.source = """libvisual.c""".split()
-    obj.includes = '. ../../include'
-    obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'sdl visual'
+    if env['HAVE_visual'] == 1 and env['HAVE_sdl'] == 1:
+        obj = bld.create_obj('cc', 'program')
+        obj.target = 'xmms2-libvisual'
+        obj.source = """libvisual.c""".split()
+        obj.includes = '. ../../include'
+        obj.uselib_local = 'xmmsclient'
+        obj.uselib = 'sdl visual'
+
 def configure(conf):
     conf.env['LIB_m'] = ['m']
-    return (conf.check_pkg('libvisual-0.4', destvar='visual') and
-      conf.check_pkg('sdl', destvar='sdl') and conf.check_pkg('vorbisenc', destvar='vorbisenc'))
+
+    conf.check_pkg('libvisual-0.4', destvar='visual')
+    conf.check_pkg('sdl', destvar='sdl')
+    conf.check_pkg('vorbisenc', destvar='vorbisenc')
+
+    return True
 
 def set_options(opt):
     pass
