@@ -14,6 +14,12 @@
  *  Lesser General Public License for more details.
  */
 
+/*
+ * Demuxing related information gathered from ffmpeg and libdemac source.
+ * APEv2 specification can be downloaded from the hydrogenaudio wiki:
+ * http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
+ */
+
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
@@ -27,12 +33,39 @@
 #define APE_MIN_VERSION 3950
 #define APE_MAX_VERSION 3990
 
+#define APE_TAG_FLAG_HAS_HEADER    0x80000000
+#define APE_TAG_FLAG_HAS_FOOTER    0x40000000
+#define APE_TAG_FLAG_IS_HEADER     0x20000000
+#define APE_TAG_FLAG_DATA_TYPE     0x00000006
+#define APE_TAG_FLAG_READ_ONLY     0x00000001
+
+#define APE_TAG_DATA_TYPE_UTF8     0x00000000
+#define APE_TAG_DATA_TYPE_BINARY   0x00000002
+#define APE_TAG_DATA_TYPE_LOCATOR  0x00000004
+
 #define MAC_FORMAT_FLAG_8_BIT                 1 /* is 8-bit */
 #define MAC_FORMAT_FLAG_CRC                   2 /* uses the new CRC32 error detection */
 #define MAC_FORMAT_FLAG_HAS_PEAK_LEVEL        4 /* uint32 nPeakLevel after the header */
 #define MAC_FORMAT_FLAG_24_BIT                8 /* is 24-bit */
 #define MAC_FORMAT_FLAG_HAS_SEEK_ELEMENTS    16 /* has the number of seek elements after the peak level */
 #define MAC_FORMAT_FLAG_CREATE_WAV_HEADER    32 /* create the wave header on decompression (not stored) */
+
+typedef enum { STRING, INTEGER } ptype;
+typedef struct {
+	const gchar *vname;
+	const gchar *xname;
+	ptype type;
+} props;
+
+static const props properties[] = {
+	{ "Title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
+	{ "Artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
+	{ "Album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },
+	{ "Track",                XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
+	{ "Year",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      INTEGER },
+	{ "Genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
+	{ "Comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+};
 
 typedef struct {
 	guchar magic[4];
@@ -81,6 +114,7 @@ static gboolean xmms_apefile_init (xmms_xform_t *decoder);
 static void xmms_apefile_destroy (xmms_xform_t *decoder);
 
 static gboolean xmms_apefile_init_demuxer (xmms_xform_t *xform);
+static gboolean xmms_apefile_read_tags (xmms_xform_t *xform);
 
 static gint xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
                                gint len, xmms_error_t *err);
@@ -155,6 +189,11 @@ xmms_apefile_init (xmms_xform_t *xform)
 	if (!xmms_apefile_init_demuxer (xform)) {
 		xmms_log_error ("Couldn't initialize the demuxer, please check log");
 		return FALSE;
+	}
+
+	/* Note that this function will seek around the file to another position */
+	if (!xmms_apefile_read_tags (xform)) {
+		XMMS_DBG ("Couldn't read tags from the file");
 	}
 
 	xmms_xform_metadata_set_int (xform,
@@ -385,6 +424,139 @@ xmms_apefile_init_demuxer (xmms_xform_t *xform)
 
 		g_free (tmpbuf);
 	}
+
+	return TRUE;
+}
+
+static gboolean
+xmms_apefile_read_tags (xmms_xform_t *xform)
+{
+	xmms_apefile_data_t *data;
+	guchar buffer[32], *tagdata;
+	xmms_error_t error;
+	guint version, tag_size, items, flags;
+	gint64 tag_position;
+	gint pos, i, j, ret;
+
+	g_return_val_if_fail (xform, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, FALSE);
+
+	/* Try to find the 32-byte footer from the end of file */
+	tag_position = xmms_xform_seek (xform, -32, XMMS_XFORM_SEEK_END, &error);
+	if (tag_position < 0) {
+		/* Seeking failed, failed to read tags */
+		return FALSE;
+	}
+
+	/* Read footer data if seeking was possible */
+	ret = xmms_xform_read (xform, buffer, 32, &error);
+	if (ret != 32) {
+		xmms_log_error ("Failed to read APE tag footer");
+		return FALSE;
+	}
+
+	/* Check that the footer is valid, if not continue searching */
+	if (memcmp (buffer, "APETAGEX", 8)) {
+		/* Try to find the 32-byte footer before 128-byte ID3v1 tag */
+		tag_position = xmms_xform_seek (xform, -160, XMMS_XFORM_SEEK_END, &error);
+		if (tag_position < 0) {
+			/* Seeking failed, failed to read tags */
+			xmms_log_error ("Failed to seek to APE tag footer");
+			return FALSE;
+		}
+
+		/* Read footer data if seeking was possible */
+		ret = xmms_xform_read (xform, buffer, 32, &error);
+		if (ret != 32) {
+			xmms_log_error ("Failed to read APE tag footer");
+			return FALSE;
+		}
+
+		if (memcmp (buffer, "APETAGEX", 8)) {
+			/* Didn't find any APE tag from the file */
+			return FALSE;
+		}
+	}
+
+	version = get_le32 (buffer + 8);
+	tag_size = get_le32 (buffer + 12);
+	items = get_le32 (buffer + 16);
+	flags = get_le32 (buffer + 20);
+
+	if (flags & APE_TAG_FLAG_IS_HEADER) {
+		/* We need a footer, not a header... */
+		return FALSE;
+	}
+
+	if (version != 1000 && version != 2000) {
+		xmms_log_error ("Invalid tag version, the writer is probably corrupted!");
+		return FALSE;
+	}
+
+	/* Seek to the beginning of the actual tag data */
+	ret = xmms_xform_seek (xform,
+	                       tag_position - tag_size + 32,
+	                       XMMS_XFORM_SEEK_SET,
+	                       &error);
+	if (ret < 0) {
+		xmms_log_error ("Couldn't seek to the tag starting position, returned %d", ret);
+		return FALSE;
+	}
+
+	tagdata = g_malloc (tag_size);
+	ret = xmms_xform_read (xform, tagdata, tag_size, &error);
+	if (ret != tag_size) {
+		xmms_log_error ("Couldn't read the tag data, returned %d", ret);
+		g_free (tagdata);
+		return FALSE;
+	}
+
+	pos = 0;
+	for (i = 0; i < items; i++) {
+		gint itemlen, flags;
+		gchar *key;
+
+		itemlen = get_le32 (tagdata + pos);
+		pos += 4;
+		flags = get_le32 (tagdata + pos);
+		pos += 4;
+		key = (gchar *) tagdata + pos;
+		pos += strlen (key) + 1;
+
+		if ((flags & APE_TAG_FLAG_DATA_TYPE) != APE_TAG_DATA_TYPE_UTF8) {
+			/* Non-text tag type, we are not interested */
+			XMMS_DBG ("Ignoring tag '%s' because of unknown type", key);
+			continue;
+		}
+
+		for (j = 0; j < G_N_ELEMENTS (properties); j++) {
+			/* Check if the tag is useful for us */
+			if (g_ascii_strcasecmp (properties[j].vname, key) == 0) {
+				gchar *item = g_strndup ((gchar *) tagdata + pos, itemlen);
+
+				XMMS_DBG ("Adding tag '%s' = '%s'", key, item);
+
+				if (properties[j].type == INTEGER) {
+					gint intval;
+
+					/* Sometimes in form "track/total", so passing NULL is ok */
+					intval = g_ascii_strtoll (item, NULL, 10);
+					xmms_xform_metadata_set_int (xform, properties[j].xname,
+					                             intval);
+				} else if (properties[j].type == STRING) {
+					xmms_xform_metadata_set_str (xform, properties[j].xname,
+					                             item);
+				} else {
+					XMMS_DBG ("Ignoring tag '%s' because of unknown mapping", key);
+				}
+
+				g_free (item);
+			}
+		}
+		pos += itemlen;
+	}
+	g_free (tagdata);
 
 	return TRUE;
 }
