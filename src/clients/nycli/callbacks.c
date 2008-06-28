@@ -19,7 +19,6 @@
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "column_display.h"
-#include "udata_packs.h"
 
 static void coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value);
 static xmmsc_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
@@ -68,10 +67,8 @@ propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
 
 /* Dummy callback that resets the action status as finished. */
 void
-cb_done (xmmsc_result_t *res, void *udata)
+cb_done (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
-
 	if (xmmsc_result_iserror (res)) {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
@@ -81,17 +78,15 @@ cb_done (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_coldisp_finalize (xmmsc_result_t *res, void *udata)
+cb_coldisp_finalize (xmmsc_result_t *res, column_display_t *coldisp)
 {
-	column_display_t *coldisp = (column_display_t *) udata;
 	column_display_print_footer (coldisp);
 	column_display_free (coldisp);
 }
 
 void
-cb_tickle (xmmsc_result_t *res, void *udata)
+cb_tickle (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *res2;
 
 	if (!xmmsc_result_iserror (res)) {
@@ -106,10 +101,8 @@ cb_tickle (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_entry_print_status (xmmsc_result_t *res, void *udata)
+cb_entry_print_status (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
-
 	gchar *artist;
 	gchar *title;
 
@@ -130,10 +123,8 @@ cb_entry_print_status (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_id_print_info (xmmsc_result_t *res, void *udata)
+cb_id_print_info (xmmsc_result_t *res, guint id)
 {
-	guint id = GPOINTER_TO_UINT(udata);
-
 	if (!xmmsc_result_iserror (res)) {
 		g_printf (_("<mid=%u>\n"), id);
 		xmmsc_result_propdict_foreach (res, propdict_dump, NULL);
@@ -145,9 +136,8 @@ cb_id_print_info (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_list_print_info (xmmsc_result_t *res, void *udata)
+cb_list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *infores = NULL;
 	guint id;
 
@@ -156,7 +146,7 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 			if (xmmsc_result_get_uint (res, &id)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
-				cb_id_print_info (infores, GUINT_TO_POINTER(id));
+				cb_id_print_info (infores, id);
 			}
 			xmmsc_result_list_next (res);
 		}
@@ -170,18 +160,16 @@ cb_list_print_info (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_id_print_row (xmmsc_result_t *res, void *udata)
+cb_id_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 {
-	column_display_t *coldisp = (column_display_t *) udata;
 	column_display_print (coldisp, res);
 	xmmsc_result_unref (res);
 }
 
 void
-cb_list_print_row (xmmsc_result_t *res, void *udata)
+cb_list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	column_display_t *coldisp = (column_display_t *) udata;
 	cli_infos_t *infos = column_display_infos_get (coldisp);
 	xmmsc_result_t *infores = NULL;
 	guint id;
@@ -215,15 +203,15 @@ cb_list_print_row (xmmsc_result_t *res, void *udata)
 }
 
 void
-cb_list_print_playlists (xmmsc_result_t *res, void *udata)
+cb_list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	list_print_playlists (res, (cli_infos_t *) udata, FALSE);
+	list_print_playlists (res, infos, FALSE);
 }
 
 void
-cb_list_print_all_playlists (xmmsc_result_t *res, void *udata)
+cb_list_print_all_playlists (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	list_print_playlists (res, (cli_infos_t *) udata, TRUE);
+	list_print_playlists (res, infos, TRUE);
 }
 
 static void
@@ -254,11 +242,10 @@ list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
 
 /* Abstract jump, use inc to choose the direction. */
 static void
-cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
+cb_list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 {
 	guint i;
 	guint id;
-	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *jumpres = NULL;
 
 	gint currpos;
@@ -305,30 +292,28 @@ cb_list_jump_rel (xmmsc_result_t *res, void *udata, gint inc)
 }
 
 void
-cb_list_jump_back (xmmsc_result_t *res, void *udata)
+cb_list_jump_back (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cb_list_jump_rel (res, udata, -1);
+	cb_list_jump_rel (res, infos, -1);
 }
 
 void
-cb_list_jump (xmmsc_result_t *res, void *udata)
+cb_list_jump (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	cb_list_jump_rel (res, udata, 1);
+	cb_list_jump_rel (res, infos, 1);
 }
 
 
 void
-cb_add_list (xmmsc_result_t *matching, void *udata)
+cb_add_list (xmmsc_result_t *matching, cli_infos_t *infos, 
+             gchar *playlist, gint pos)
+
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	pack_infos_playlist_pos_t *pack = (pack_infos_playlist_pos_t *) udata;
-	cli_infos_t *infos;
 	xmmsc_result_t *insres;
 	guint id;
-	gint pos, offset;
-	gchar *playlist;
+	gint offset;
 
-	unpack_infos_playlist_pos (pack, &infos, &playlist, &pos);
 	offset = 0;
 
 	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
@@ -354,10 +339,9 @@ cb_add_list (xmmsc_result_t *matching, void *udata)
 
 
 void
-cb_remove_cached_list (xmmsc_result_t *matching, void *udata)
+cb_remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *rmres;
 	guint plid, id;
 	gint plsize;
@@ -395,17 +379,13 @@ cb_remove_cached_list (xmmsc_result_t *matching, void *udata)
 }
 
 void
-cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, void *udata)
+cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
+                cli_infos_t *infos, gchar *playlist)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	pack_infos_playlist_t *pack = (pack_infos_playlist_t *) udata;
-	cli_infos_t *infos;
 	xmmsc_result_t *rmres;
 	guint plid, id, i;
 	gint offset;
-	gchar *playlist;
-
-	unpack_infos_playlist (pack, &infos, &playlist);
 
 	if (xmmsc_result_iserror (matchres) || !xmmsc_result_is_list (matchres)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
@@ -449,19 +429,13 @@ cb_remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, void *udata)
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matchres);
 	xmmsc_result_unref (plistres);
-	free_infos_playlist (pack);
 }
 
 void
-cb_copy_playlist (xmmsc_result_t *res, void *udata)
+cb_copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
 {
-	pack_infos_playlist_t *pack = (pack_infos_playlist_t *) udata;
-	cli_infos_t *infos;
 	xmmsc_result_t *saveres;
-	gchar *playlist;
 	xmmsc_coll_t *coll;
-
-	unpack_infos_playlist (pack, &infos, &playlist);
 
 	if (xmmsc_result_get_collection (res, &coll)) {
 		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
@@ -473,25 +447,17 @@ cb_copy_playlist (xmmsc_result_t *res, void *udata)
 		cli_infos_loop_resume (infos);
 	}
 
-	free_infos_playlist (pack);
 	xmmsc_result_unref (res);
 }
 
 void
-cb_configure_playlist (xmmsc_result_t *res, void *udata)
+cb_configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
+                       gint history, gint upcoming, xmmsc_coll_type_t type,
+                       gchar *input)
 {
-	pack_infos_playlist_config_t *pack = (pack_infos_playlist_config_t *) udata;
-	cli_infos_t *infos;
 	xmmsc_result_t *saveres;
-	gchar *playlist;
-	gint history, upcoming;
-	xmmsc_coll_type_t type;
-	gchar *input;
 	xmmsc_coll_t *coll;
 	xmmsc_coll_t *newcoll;
-
-	unpack_infos_playlist_config (pack, &infos, &playlist, &history, &upcoming,
-	                              &type, &input);
 
 	if (xmmsc_result_get_collection (res, &coll)) {
 		if (type >= 0 && xmmsc_coll_get_type (coll) != type) {
@@ -522,19 +488,14 @@ cb_configure_playlist (xmmsc_result_t *res, void *udata)
 		cli_infos_loop_resume (infos);
 	}
 
-	free_infos_playlist_config (pack);
 	xmmsc_result_unref (res);
 }
 
 void
-cb_playlist_print_config (xmmsc_result_t *res, void *udata)
+cb_playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
+                          gchar *playlist)
 {
-	pack_infos_playlist_t *pack = (pack_infos_playlist_t *) udata;
-	cli_infos_t *infos;
-	gchar *playlist;
 	xmmsc_coll_t *coll;
-
-	unpack_infos_playlist (pack, &infos, &playlist);
 
 	if (xmmsc_result_get_collection (res, &coll)) {
 		coll_print_config (coll, playlist);
@@ -544,7 +505,6 @@ cb_playlist_print_config (xmmsc_result_t *res, void *udata)
 
 	cli_infos_loop_resume (infos);
 
-	free_infos_playlist (pack);
 	xmmsc_result_unref (res);
 }
 

@@ -22,7 +22,6 @@
 #include "command_utils.h"
 #include "callbacks.h"
 #include "column_display.h"
-#include "udata_packs.h"
 
 
 /* Setup commands */
@@ -662,7 +661,6 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gchar *path, *fullpath;
 	gboolean fileargs;
 	gboolean norecurs;
-	pack_infos_playlist_pos_t *pack;
 	gint i, count;
 	gboolean success = TRUE;
 
@@ -736,10 +734,9 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			success = FALSE;
 			goto finish;
 		} else {
-			pack = pack_infos_playlist_pos (infos, playlist, pos);
 			res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 			xmmsc_result_wait (res);
-			cb_add_list (res, pack);
+			cb_add_list (res, infos, playlist, pos);
 			xmmsc_coll_unref (query);
 		}
 	}
@@ -773,7 +770,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		} else {
 			plres = xmmsc_playlist_list_entries (infos->sync, playlist);
 			xmmsc_result_wait (plres);
-			cb_remove_list (res, plres, pack_infos_playlist (infos, playlist));
+			cb_remove_list (res, plres, infos, playlist);
 		}
 		xmmsc_coll_unref (query);
 	}
@@ -840,7 +837,7 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 		/* Copy the given playlist. */
 		res = xmmsc_coll_get (infos->sync, copy, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_copy_playlist (res, pack_infos_playlist (infos, newplaylist));
+		cb_copy_playlist (res, infos, newplaylist);
 	} else {
 		/* Simply create a new empty playlist */
 		res = xmmsc_playlist_create (infos->sync, newplaylist);
@@ -978,7 +975,6 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	gint history, upcoming;
 	xmmsc_coll_type_t type;
 	gchar *typestr, *input;
-	pack_infos_playlist_config_t *pack;
 	gboolean modif = FALSE;
 
 	history = -1;
@@ -1037,16 +1033,15 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 
 	if (modif) {
 		/* Send the previous coll_t for update. */
-		pack = pack_infos_playlist_config (infos, playlist, history, upcoming,
-		                                   type, input);
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_configure_playlist (res, pack);
+		cb_configure_playlist (res, infos, playlist, history, upcoming,
+		                       type, input);
 	} else {
 		/* Display current config of the playlist. */
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_playlist_print_config (res, pack_infos_playlist (infos, playlist));
+		cb_playlist_print_config (res, infos, playlist);
 	}
 
 	return TRUE;
