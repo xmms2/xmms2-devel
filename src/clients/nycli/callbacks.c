@@ -27,7 +27,7 @@ static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t typ
 static void coll_print_config (xmmsc_coll_t *coll, const char *name);
 
 static void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all);
-
+static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
 /* Dumps a propdict on stdout */
 static void
@@ -61,6 +61,22 @@ propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
 	case XMMSC_RESULT_VALUE_TYPE_NONE:
 		g_printf (_("[%s] %s = <unknown>\n"), source, key);
 		break;
+	}
+}
+
+/* Compare two uint like strcmp */
+static gint
+compare_uint (gconstpointer a, gconstpointer b, gpointer userdata)
+{
+	guint va = *((guint *)a);
+	guint vb = *((guint *)b);
+
+	if (va < vb) {
+		return -1;
+	} else if (va > vb) {
+		return 1;
+	} else {
+		return 0;
 	}
 }
 
@@ -305,7 +321,7 @@ cb_list_jump (xmmsc_result_t *res, cli_infos_t *infos)
 
 
 void
-cb_add_list (xmmsc_result_t *matching, cli_infos_t *infos, 
+cb_add_list (xmmsc_result_t *matching, cli_infos_t *infos,
              gchar *playlist, gint pos)
 
 {
@@ -337,6 +353,75 @@ cb_add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 	xmmsc_result_unref (matching);
 }
 
+void
+cb_move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
+                 gchar *playlist, gint pos)
+{
+	xmmsc_result_t *movres, *lisres;
+	guint id, curr;
+	gint inc;
+	gboolean up;
+	GTree *list;
+
+	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
+		g_printf (_("Error retrieving the media matching the pattern!\n"));
+	} else {
+		lisres = xmmsc_playlist_list_entries (infos->sync, playlist);
+		xmmsc_result_wait (lisres);
+
+		if (xmmsc_result_iserror (lisres) || !xmmsc_result_is_list (lisres)) {
+			g_printf (_("Error retrieving playlist entries\n"));
+			goto finish;
+		}
+
+		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
+
+		for (xmmsc_result_list_first (matching);
+		     xmmsc_result_list_valid (matching);
+		     xmmsc_result_list_next (matching)) {
+			
+			if (xmmsc_result_get_uint (matching, &id)) {
+				guint *tid;
+				tid = g_new (guint, 1);
+				*tid = id;
+				g_tree_insert (list, tid, tid); 
+			}
+		}
+
+		curr = 0;
+		inc = 0;
+		up = TRUE;
+		for (xmmsc_result_list_first (lisres);
+		     xmmsc_result_list_valid (lisres);
+		     xmmsc_result_list_next (lisres)) {
+			if (curr == pos) {
+				inc = 0;
+				up = FALSE;
+			}
+			if (xmmsc_result_get_uint (lisres, &id) &&
+			    g_tree_lookup (list, &id) != NULL) {
+				if (up) {
+					movres = xmmsc_playlist_move_entry (infos->sync, 
+					                                    playlist, curr-inc, pos);
+				} else {
+					movres = xmmsc_playlist_move_entry (infos->sync,
+					                                    playlist, curr+inc, pos);
+				}
+				xmmsc_result_wait (movres);
+				xmmsc_result_unref (movres);
+				inc++;
+			}
+			curr++;
+		}
+		g_tree_destroy (list);
+	}
+	
+    finish:
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (matching);
+	xmmsc_result_unref (lisres);
+}
 
 void
 cb_remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)

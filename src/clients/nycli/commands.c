@@ -178,6 +178,20 @@ cli_remove_setup (command_action_t *action)
 }
 
 void
+cli_move_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Playlist to act on."), "name" },
+		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Move the matching tracks after the current track."), NULL },
+		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Move the matching tracks by an offset or to a position."), "pos|offset"},
+		{ NULL }
+	};
+	command_action_fill (action, "move", &cli_move, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-p <playlist>] [-n | -a <pos|offset>]  <pattern>"),
+	                     _("Move entries inside a playlist."));
+}
+
+void
 cli_status_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
@@ -772,6 +786,45 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 			xmmsc_result_wait (plres);
 			cb_remove_list (res, plres, infos, playlist);
 		}
+		xmmsc_coll_unref (query);
+	}
+
+	return TRUE;
+}
+
+/* 
+usage: move [-p <playlist>] [-n | -a <pos|offset>]  <pattern>
+
+  Move entries inside a playlist.
+
+Valid options:
+  -p, --playlist  Playlist to act on.
+  -n, --next      Move the matching tracks after the current track.
+  -a, --at        Move the matching tracks by an offset or to a position.
+  -h, --help      Display command help.
+*/
+
+gboolean
+cli_move (cli_infos_t *infos, command_context_t *ctx)
+{
+	gchar *playlist = NULL;
+	gint pos;
+	xmmsc_result_t *res;
+	xmmsc_coll_t *query;
+
+	command_flag_string_get (ctx, "playlist", &playlist);
+	if (!playlist) {
+		playlist = NULL;
+	}
+
+	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+		return FALSE;
+	}
+
+	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+		xmmsc_result_wait (res);
+		cb_move_entries (res, infos, playlist, pos);
 		xmmsc_coll_unref (query);
 	}
 

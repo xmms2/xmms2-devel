@@ -38,6 +38,7 @@ gboolean cli_info (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_list (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_add (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_remove (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_move (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_quit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
@@ -73,6 +74,7 @@ void cli_pl_switch_setup (command_action_t *action);
 void cli_pl_create_setup (command_action_t *action);
 void cli_pl_rename_setup (command_action_t *action);
 void cli_pl_remove_setup (command_action_t *action);
+void cli_move_setup (command_action_t *action);
 void cli_pl_clear_setup (command_action_t *action);
 void cli_pl_shuffle_setup (command_action_t *action);
 void cli_pl_sort_setup (command_action_t *action);
@@ -96,6 +98,7 @@ static const command_setup_func commandlist[] =
 	cli_list_setup,
 	cli_add_setup,
 	cli_remove_setup,
+	cli_move_setup,
 	cli_quit_setup,
 	cli_exit_setup,
 	cli_help_setup,
