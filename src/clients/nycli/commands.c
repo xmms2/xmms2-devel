@@ -20,7 +20,7 @@
 #include "cli_cache.h"
 #include "command_trie.h"
 #include "command_utils.h"
-#include "callbacks.h"
+#include "utils.h"
 #include "column_display.h"
 
 
@@ -338,7 +338,7 @@ cli_play (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_start (infos->sync);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	return TRUE;
 }
@@ -349,7 +349,7 @@ cli_pause (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	res = xmmsc_playback_pause (infos->sync);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	return TRUE;
 }
@@ -370,7 +370,7 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playback_stop (infos->sync);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	return TRUE;
 }
@@ -418,7 +418,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		}
 		
 		xmmsc_result_wait (res); 
-		cb_done (res, infos);
+		done (res, infos);
 
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
@@ -451,7 +451,7 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
 
-	cb_entry_print_status (res, infos);
+	entry_print_status (res, infos);
 
 	return TRUE;
 }
@@ -469,7 +469,7 @@ cli_prev (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_set_next_rel (infos->sync, - offset);
 	xmmsc_result_wait (res);
-	cb_tickle (res, infos);
+	tickle (res, infos);
 
 	return TRUE;
 }
@@ -487,7 +487,7 @@ cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
 	xmmsc_result_wait (res);
-	cb_tickle (res, infos);
+	tickle (res, infos);
 
 	return TRUE;
 }
@@ -508,9 +508,9 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		if (backward) {
-			cb_list_jump_back (res, infos);
+			list_jump_back (res, infos);
 		} else {
-			cb_list_jump (res, infos);
+			list_jump (res, infos);
 		}
 		xmmsc_coll_unref (query);
 	}
@@ -536,7 +536,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
 		xmmsc_result_wait (res);
 
-		cb_list_print_row (res, coldisp);
+		list_print_row (res, coldisp);
 
 		xmmsc_coll_unref (query);
 	}
@@ -580,7 +580,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
 
-	cb_list_print_row (res, coldisp);
+	list_print_row (res, coldisp);
 
 	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
@@ -598,7 +598,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
-		cb_list_print_info (res, infos);
+		list_print_info (res, infos);
 		xmmsc_coll_unref (query);
 	}
 
@@ -722,7 +722,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 				if (i == count - 1) {
 					/* Finish after last add */
 					xmmsc_result_wait (res);
-					cb_done (res, infos);
+					done (res, infos);
 				} else {
 					xmmsc_result_unref (res);
 				}
@@ -731,7 +731,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 				g_printf (_("Error: no playlist_rinsert, implement it! doing non-recursive..\n"));
 				res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, fullpath);
 				xmmsc_result_wait (res);
-				cb_done (res, infos);
+				done (res, infos);
 			}
 
 			g_free (fullpath);
@@ -750,7 +750,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		} else {
 			res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 			xmmsc_result_wait (res);
-			cb_add_list (res, infos, playlist, pos);
+			add_list (res, infos, playlist, pos);
 			xmmsc_coll_unref (query);
 		}
 	}
@@ -780,11 +780,11 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		if (!playlist) {
 			/* Optimize by reading active playlist from cache */
-			cb_remove_cached_list (res, infos);
+			remove_cached_list (res, infos);
 		} else {
 			plres = xmmsc_playlist_list_entries (infos->sync, playlist);
 			xmmsc_result_wait (plres);
-			cb_remove_list (res, plres, infos, playlist);
+			remove_list (res, plres, infos, playlist);
 		}
 		xmmsc_coll_unref (query);
 	}
@@ -824,7 +824,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
-		cb_move_entries (res, infos, playlist, pos);
+		move_entries (res, infos, playlist, pos);
 		xmmsc_coll_unref (query);
 	}
 
@@ -844,11 +844,7 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_playlist_list (infos->sync);
 	xmmsc_result_wait (res);
 
-	if (all) {
-		cb_list_print_all_playlists (res, infos);
-	} else {
-		cb_list_print_playlists (res, infos);
-	}
+	list_print_playlists (res, infos, all);
 
 	return TRUE;
 }
@@ -866,7 +862,7 @@ cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_load (infos->sync, playlist);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (playlist);
 
@@ -890,12 +886,12 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 		/* Copy the given playlist. */
 		res = xmmsc_coll_get (infos->sync, copy, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_copy_playlist (res, infos, newplaylist);
+		copy_playlist (res, infos, newplaylist);
 	} else {
 		/* Simply create a new empty playlist */
 		res = xmmsc_playlist_create (infos->sync, newplaylist);
 		xmmsc_result_wait (res);
-		cb_done (res, infos);
+		done (res, infos);
 	}
 
 	g_free (newplaylist);
@@ -921,7 +917,7 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_coll_rename (infos->sync, oldname, newname,
 	                         XMMS_COLLECTION_NS_PLAYLISTS);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (newname);
 
@@ -948,7 +944,7 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_remove (infos->sync, playlist);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (playlist);
 
@@ -967,7 +963,7 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_clear (infos->sync, playlist);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (playlist);
 
@@ -986,7 +982,7 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_shuffle (infos->sync, playlist);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (playlist);
 
@@ -1012,7 +1008,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_playlist_sort (infos->sync, playlist, order);
 	xmmsc_result_wait (res);
-	cb_done (res, infos);
+	done (res, infos);
 
 	g_free (playlist);
 	g_free (order);
@@ -1088,13 +1084,13 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		/* Send the previous coll_t for update. */
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_configure_playlist (res, infos, playlist, history, upcoming,
+		configure_playlist (res, infos, playlist, history, upcoming,
 		                       type, input);
 	} else {
 		/* Display current config of the playlist. */
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
-		cb_playlist_print_config (res, infos, playlist);
+		playlist_print_config (res, infos, playlist);
 	}
 
 	return TRUE;

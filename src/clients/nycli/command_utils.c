@@ -214,7 +214,7 @@ command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
 	return success;
 }
 
-
+/* FIXME(greafine): Can remove double-callbacks? */
 static void
 call_double_callback (xmmsc_result_t *res2, void *infos_udata)
 {

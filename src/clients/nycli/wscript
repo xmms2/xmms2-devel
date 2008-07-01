@@ -7,7 +7,7 @@ def build(bld):
                     command_trie.c
                     commands.c
                     command_utils.c
-                    callbacks.c
+		    utils.c
                     column_display.c
                     readline.c""".split()
     obj.includes = '. ../../include'
