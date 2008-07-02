@@ -144,20 +144,47 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	return retval;
 }
 
-/* Parse time expressions of the forms:
- *  D*((:D*+e)(:D*+e)) or
- *  (D*(hour+h)+E)(D*(min+m)+e)(D*(sec+s)+e)
- * 
- * D = [0-9]
- * strtol (s, endptr, 10) faz matching de D*
+/*
+ * Parse time expressions of the form:
+ *
+ * e0: [0-9]*:[0-9]*:[0-9]
+ * e1: ([0-9]*(hour|h|min|m|sec|s))*
+ *
+ * RFC: Be more restrictive?
+ *   
+ *    Actually it accepts expressions like: 
+ *         1hour2min1hour1s for 2hour2min1s
+ *         1min2hour7sec for 2hour1min7sec
+ *
  */
-gboolean
-parse_time (gchar *s, gchar **endptr, guint *v)
+gint
+parse_time (gchar *s, gchar **endptr, const gint *mul, const gchar **sep)
 {
-/* 	gboolean retval = TRUE; */
-/* 	gint v, t; */
-/* 	return retval; */
-	return FALSE;
+	gint i, n, v;
+
+	n = 0;
+	v = 0;
+	while (*s) {
+		if ('0' <= *s && *s <= '9') {
+			n = n*10+(*s-'0');
+			s++;
+		} else {
+			for (i = 0; sep[i] != NULL; i++) {
+				if (g_str_has_prefix (s, sep[i])) {
+					v += mul[i]*n;
+					s += strlen (sep[i]);
+					n = 0;
+					break;
+				}
+			}
+			if (sep[i] == NULL) {
+				break;
+			}
+		}
+	}
+	*endptr = s;
+
+	return v;
 }
 
 /* Parse a time value, either an absolute position or an offset. */
@@ -167,14 +194,19 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 	gboolean retval = FALSE;
 	gchar *s, *endptr;
 
+	const gchar *separators[] = {"hour", "h", "min", "m", "sec", "s", NULL};
+	const gint multipliers[] = {3600, 3600, 60, 60, 1, 1};
+
 	if (at < command_arg_count (ctx) && command_arg_string_get (ctx, at, &s)) {
 		if (*s == '+' || *s == '-') {
 			v->type = COMMAND_ARG_TIME_OFFSET;
-			v->value.offset = strtol (s, &endptr, 10);
+			/* v->value.offset = strtol (s, &endptr, 10); */
+			v->value.offset = parse_time (s, &endptr, multipliers, separators);
 		} else {
 			/* FIXME: always signed long int anyway? */
 			v->type = COMMAND_ARG_TIME_POSITION;
-			v->value.pos = strtol (s, &endptr, 10);
+			/* v->value.pos = strtol (s, &endptr, 10); */
+			v->value.pos = parse_time (s, &endptr, multipliers, separators);
 		}
 
 		/* FIXME: We can have cleverer parsing for '2:17' or '3min' etc */
