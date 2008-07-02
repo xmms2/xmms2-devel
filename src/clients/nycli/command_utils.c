@@ -144,6 +144,23 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	return retval;
 }
 
+guint 
+parse_time_sep (gchar *s, gchar **endptr)
+{
+	gint i;
+	guint v;
+	gchar *t;
+
+	v = 0;
+	t = s;
+	for (i = 0; i < 3 && *t != '\0'; i++) {
+		v = v*60 + strtol (t, endptr, 10);
+		t = *endptr+1;
+	}
+
+	return v;
+}
+
 /*
  * Parse time expressions of the form:
  *
@@ -157,16 +174,21 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
  *         1min2hour7sec for 2hour1min7sec
  *
  */
-gint
+guint
 parse_time (gchar *s, gchar **endptr, const gint *mul, const gchar **sep)
 {
-	gint i, n, v;
+	gint i;
+	guint n, v;
+
+	if (strchr (s, ':') != NULL) {
+		return parse_time_sep (s, endptr);
+	}
 
 	n = 0;
 	v = 0;
 	while (*s) {
 		if ('0' <= *s && *s <= '9') {
-			n = n*10+(*s-'0');
+			n = n*10 + (*s - '0');
 			s++;
 		} else {
 			for (i = 0; sep[i] != NULL; i++) {
@@ -201,7 +223,10 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 		if (*s == '+' || *s == '-') {
 			v->type = COMMAND_ARG_TIME_OFFSET;
 			/* v->value.offset = strtol (s, &endptr, 10); */
-			v->value.offset = parse_time (s, &endptr, multipliers, separators);
+			v->value.offset = parse_time (s+1, &endptr, multipliers, separators);
+			if (*s == '-') {
+				v->value.offset = -v->value.offset;
+			}
 		} else {
 			/* FIXME: always signed long int anyway? */
 			v->type = COMMAND_ARG_TIME_POSITION;
