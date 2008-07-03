@@ -580,6 +580,24 @@ playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 	xmmsc_result_unref (res);
 }
 
+gboolean
+playlist_exists (cli_infos_t *infos, gchar *playlist)
+{
+	gboolean retval = FALSE;
+	xmmsc_result_t *res;
+
+	res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsc_result_wait (res);
+
+	if (!xmmsc_result_iserror (res)) {
+		retval = TRUE;
+	}
+
+	xmmsc_result_unref (res);
+
+	return retval;
+}
+
 static void
 coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value)
 {

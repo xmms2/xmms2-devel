@@ -881,6 +881,10 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	/* FIXME: Prevent overwriting existing playlists! */
+	if (playlist_exists (infos, newplaylist)) {
+		g_printf (_("Error: playlist %s already exists!\n"), newplaylist);
+		return FALSE;
+	}
 
 	if (command_flag_string_get (ctx, "playlist", &copy)) {
 		/* Copy the given playlist. */

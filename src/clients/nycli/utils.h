@@ -40,5 +40,6 @@ void remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, cli_infos_
 void copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist);
 void configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist, gint history, gint upcoming, xmmsc_coll_type_t type, gchar *input);
 void playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist);
+gboolean playlist_exists (cli_infos_t *infos, gchar *playlist);
 
 #endif /* __UTILS_H__ */
