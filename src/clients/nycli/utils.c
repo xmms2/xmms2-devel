@@ -306,6 +306,64 @@ list_jump (xmmsc_result_t *res, cli_infos_t *infos)
 	list_jump_rel (res, infos, 1);
 }
 
+/* Transform a path (possibly absolute or relative) into a valid XMMS2
+ * path with protocol prefix. The resulting string must be freed
+ * manually.
+ */
+static gchar *
+make_valid_url (gchar *path)
+{
+	gchar *p;
+	gchar *url;
+	gchar *pwd;
+
+	/* Check if path matches "^[a-z]+://" */
+	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
+	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
+		url = g_strdup (path);
+	} else if (*path == '/') {
+		/* Absolute url, just prepend file:// protocol */
+		url = g_strconcat ("file://", path, NULL);
+	} else {
+		/* Relative url, prepend file:// protocol and PWD */
+		pwd = getenv ("PWD");
+		url = g_strconcat ("file://", pwd, "/", path, NULL);
+	}
+
+	return url;
+}
+
+void
+add_recursive (cli_infos_t *infos,
+               gchar *playlist, gchar *path, gint pos, gboolean norecurs)
+{
+	GDir *dir;
+	const gchar *file;
+	gchar *fullpath, *url;
+	xmmsc_result_t *res;
+
+	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
+		url = make_valid_url (path);
+		res = xmmsc_playlist_insert_url (infos->sync, playlist, 
+		                                 pos, url);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
+		g_free (url);
+		return;
+	}
+
+	if (norecurs) {
+		return;
+	}
+
+	dir = g_dir_open (path, 0, NULL);
+	while ((file = g_dir_read_name (dir)) != NULL) {
+		fullpath = g_strdup_printf ("%s/%s", path, file);
+		add_recursive (infos, playlist, fullpath, pos, norecurs);
+		g_free (fullpath);
+	}
+	g_dir_close (dir);
+}
 
 void
 add_list (xmmsc_result_t *matching, cli_infos_t *infos,

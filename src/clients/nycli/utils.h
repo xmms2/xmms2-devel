@@ -34,6 +34,7 @@ void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all
 void list_jump (xmmsc_result_t *res, cli_infos_t *infos);
 void list_jump_back (xmmsc_result_t *res, cli_infos_t *infos);
 void add_list (xmmsc_result_t *matching, cli_infos_t *infos, gchar *playlist, gint pos);
+void add_recursive (cli_infos_t *infos, gchar *playlist, gchar *path, gint pos, gboolean norecurs);
 void move_entries (xmmsc_result_t *matching, cli_infos_t *infos, gchar *playlist, gint pos);
 void remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos);
 void remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, cli_infos_t *infos, gchar *playlist);
