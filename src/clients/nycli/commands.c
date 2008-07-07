@@ -398,7 +398,7 @@ cli_toggle (cli_infos_t *infos, command_context_t *ctx)
   } else {
 	  cli_play (infos, ctx);
   }
-	
+
   xmmsc_result_unref (res);
 
   return TRUE;
@@ -416,7 +416,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		} else {
 			res = xmmsc_playback_seek_ms (infos->sync, t.value.pos * 1000);
 		}
-		
+
 		xmmsc_result_wait (res);
 		done (res, infos);
 
