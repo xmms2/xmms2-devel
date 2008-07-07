@@ -694,7 +694,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	command_flag_boolean_get (ctx, "file", &fileargs);
 	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
-	command_arg_longstring_get (ctx, 0, &pattern);
+	command_arg_longstring_get_escaped (ctx, 0, &pattern);
 
 	/* We need either a file or a pattern! */
 	if (!pattern) {

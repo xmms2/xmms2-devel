@@ -144,7 +144,65 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 	return retval;
 }
 
-guint 
+/* Escape characters in toescape with escape_char.
+ */
+static gchar *
+strescape (gchar *s, gchar *toescape, gchar escape_char)
+{
+	gint len;
+	gchar *t, *r;
+	
+	t = s;
+	for (len = 0; *t != '\0'; len++, t++) {
+		if (strchr (toescape, *t)) {
+			len++;
+		}
+	}
+	r = g_new0 (gchar, len+1);
+	t = r;
+	while (*s) {
+		if (strchr (toescape, *s)) {
+			*t = '\\';
+			t++;
+		} 
+		*t = *s;
+		s++;
+		t++;
+	}
+	
+	return r;
+}
+
+/* Like command_arg_longstring_get but escape spaces with '\'.
+ */
+gboolean
+command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gchar **v)
+{
+	gboolean retval = FALSE;
+	gchar **args;
+	gint i, len, count = command_arg_count (ctx);
+
+	len = count-at+1;
+	if (at < count) {
+		args = g_new0 (gchar *, len);
+		args[len-1] = NULL;
+		for (i = at; i < count; i++) {
+			args[i-at] = strescape (command_arg_get (ctx, i), " ", '\\');
+		}
+		*v = g_strjoinv (" ", args);
+		
+		for (i = at; i < count; i++) {
+			g_free (args[i-at]);
+		}
+		g_free (args);
+
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
+static guint
 parse_time_sep (gchar *s, gchar **endptr)
 {
 	gint i;
@@ -174,7 +232,7 @@ parse_time_sep (gchar *s, gchar **endptr)
  *         1min2hour7sec for 2hour1min7sec
  *
  */
-guint
+static guint
 parse_time (gchar *s, gchar **endptr, const gint *mul, const gchar **sep)
 {
 	gint i;
@@ -256,8 +314,9 @@ command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
 	gboolean success = TRUE;
 
 	/* FIXME: Need a more elegant error system. */
+	/* FIXME(g): Escape tokens? command_arg_longstring_get_escaped ? */
 
-	command_arg_longstring_get (ctx, at, &pattern);
+	command_arg_longstring_get_escaped (ctx, at, &pattern);
 	if (!pattern) {
 		if (warn) g_printf (_("Error: you must provide a pattern!\n"));
 		success = FALSE;
