@@ -385,18 +385,18 @@ cli_toggle (cli_infos_t *infos, command_context_t *ctx)
   xmmsc_result_wait (res);
 
   if (xmmsc_result_iserror (res)) {
-    g_printf (_("Error: Couldn't get playback status: %s"),
-	          xmmsc_result_get_error (res));
+	  g_printf (_("Error: Couldn't get playback status: %s"),
+	            xmmsc_result_get_error (res));
   }
 
   if (!xmmsc_result_get_uint (res, &status)) {
-    g_printf (_("Error: Broken resultset"));
+	  g_printf (_("Error: Broken resultset"));
   }
 
   if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-    cli_pause (infos, ctx);
+	  cli_pause (infos, ctx);
   } else {
-    cli_play (infos, ctx);
+	  cli_play (infos, ctx);
   }
 	
   xmmsc_result_unref (res);
@@ -417,7 +417,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 			res = xmmsc_playback_seek_ms (infos->sync, t.value.pos * 1000);
 		}
 		
-		xmmsc_result_wait (res); 
+		xmmsc_result_wait (res);
 		done (res, infos);
 
 	} else {
@@ -650,7 +650,7 @@ matching_files_dirs (gchar *pattern, GList **files)
 
 	for (i = 0; matched.gl_pathv[i] != NULL; i++) {
 		*files = g_list_prepend (*files, g_strdup(matched.gl_pathv[i]));
-	}		
+	}
 
     finish:
 	globfree (&matched);

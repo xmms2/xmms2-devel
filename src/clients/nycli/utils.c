@@ -147,7 +147,7 @@ id_print_info (xmmsc_result_t *res, guint id)
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
- 	xmmsc_result_unref (res);
+	xmmsc_result_unref (res);
 }
 
 void
@@ -273,7 +273,7 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 
 				/* If both match, jump! */
 				if (xmmsc_result_get_uint (res, &id)
-				    && g_array_index(playlist, guint, i) == id) {
+				    && g_array_index (playlist, guint, i) == id) {
 					jumpres = xmmsc_playlist_set_next (infos->sync, i);
 					xmmsc_result_wait (jumpres);
 					tickle (jumpres, infos);
@@ -344,7 +344,7 @@ add_recursive (cli_infos_t *infos,
 
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
 		url = make_valid_url (path);
-		res = xmmsc_playlist_insert_url (infos->sync, playlist, 
+		res = xmmsc_playlist_insert_url (infos->sync, playlist,
 		                                 pos, url);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
@@ -429,7 +429,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 				guint *tid;
 				tid = g_new (guint, 1);
 				*tid = id;
-				g_tree_insert (list, tid, tid); 
+				g_tree_insert (list, tid, tid);
 			}
 		}
 
@@ -446,7 +446,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			if (xmmsc_result_get_uint (lisres, &id) &&
 			    g_tree_lookup (list, &id) != NULL) {
 				if (up) {
-					movres = xmmsc_playlist_move_entry (infos->sync, 
+					movres = xmmsc_playlist_move_entry (infos->sync,
 					                                    playlist, curr-inc, pos);
 				} else {
 					movres = xmmsc_playlist_move_entry (infos->sync,
@@ -460,7 +460,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		}
 		g_tree_destroy (list);
 	}
-	
+
     finish:
 
 	cli_infos_loop_resume (infos);

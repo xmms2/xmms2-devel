@@ -162,9 +162,9 @@ strescape (gchar *s, gchar *toescape, gchar escape_char)
 	t = r;
 	while (*s) {
 		if (strchr (toescape, *s)) {
-			*t = '\\';
+			*t = escape_char;
 			t++;
-		} 
+		}
 		*t = *s;
 		s++;
 		t++;
