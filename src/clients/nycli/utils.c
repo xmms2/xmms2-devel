@@ -141,7 +141,6 @@ void
 id_print_info (xmmsc_result_t *res, guint id)
 {
 	if (!xmmsc_result_iserror (res)) {
-		g_printf (_("<mid=%u>\n"), id);
 		xmmsc_result_propdict_foreach (res, propdict_dump, NULL);
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
@@ -155,12 +154,19 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 {
 	xmmsc_result_t *infores = NULL;
 	guint id;
+	gboolean first = true;
 
 	if (!xmmsc_result_iserror (res)) {
 		while (xmmsc_result_list_valid (res)) {
 			if (xmmsc_result_get_uint (res, &id)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
+
+				if (!first) {
+					g_printf ("\n");
+				} else {
+					first = false;
+				}
 				id_print_info (infores, id);
 			}
 			xmmsc_result_list_next (res);
