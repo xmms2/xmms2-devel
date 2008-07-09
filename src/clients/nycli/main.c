@@ -95,15 +95,17 @@ void
 command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
 	command_action_t *action;
+	command_trie_match_type_t match;
 	gint argc;
 	gchar **argv;
 
 	/* The arguments will be updated by command_trie_find. */
 	argc = in_argc;
 	argv = in_argv;
-	action = command_trie_find (infos->commands, &argv, &argc, AUTO_UNIQUE_COMPLETE);
+	match = command_trie_find (infos->commands, &argv, &argc,
+	                            AUTO_UNIQUE_COMPLETE, &action);
 
-	if (action) {
+	if (match == COMMAND_TRIE_MATCH_ACTION) {
 
 		/* FIXME: problem if flag is the first element!  */
 

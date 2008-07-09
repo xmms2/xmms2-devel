@@ -19,6 +19,7 @@
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "commands.h"
+#include "cmdnames.h"
 #include "command_trie.h"
 
 
@@ -166,12 +167,15 @@ cli_infos_init (gint argc, gchar **argv)
 		command_action_t *action = command_action_alloc ();
 		commandlist[i] (action);
 		if (command_trie_insert (infos->commands, action)) {
-			infos->cmdnames = g_list_prepend (infos->cmdnames, action->name);
+			gchar **namev;
+			namev = g_strsplit (action->name, " ", 0);
+			infos->cmdnames = cmdnames_prepend (infos->cmdnames, namev);
+			g_strfreev (namev);
 		} else {
 			command_action_free (action);
 		}
 	}
-	infos->cmdnames = g_list_reverse (infos->cmdnames);
+	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 
 	infos->config = g_key_file_new ();
 	infos->cache = cli_cache_init ();

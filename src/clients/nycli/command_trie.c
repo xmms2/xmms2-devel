@@ -16,12 +16,6 @@
 
 #include "command_trie.h"
 
-typedef enum {
-	COMMAND_TRIE_MATCH_NONE,
-	COMMAND_TRIE_MATCH_ACTION,
-	COMMAND_TRIE_MATCH_SUBTRIE
-} command_trie_match_type_t;
-
 typedef struct command_trie_match_St command_trie_match_t;
 struct command_trie_match_St {
 	command_trie_match_type_t type;
@@ -306,28 +300,34 @@ command_trie_find_node (command_trie_t *trie, gchar *input,
 	return node;
 }
 
-command_action_t*
+command_trie_match_type_t
 command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
-                   gboolean auto_complete)
+                   gboolean auto_complete, command_action_t **action)
 {
 	command_trie_t *node;
-	command_action_t *action = NULL;
+	command_trie_match_type_t retval = COMMAND_TRIE_MATCH_NONE;
 
 	/* End recursion if no argument */
-	if (num == 0) {
-		return NULL;
+	/* FIXME: (*num) not (num) right? */
+	if (*num == 0) {
+		return retval;
 	}
 
 	if ((node = command_trie_find_node (trie, **input, auto_complete))) {
 		(*input) ++;
 		(*num) --;
 		if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {
-			action = node->match.action;
+			*action = node->match.action;
+			retval = COMMAND_TRIE_MATCH_ACTION;
 		} else if (node->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
-			action = command_trie_find (node->match.subtrie, input, num,
-			                            auto_complete);
+			if (*num == 0) {
+				retval = COMMAND_TRIE_MATCH_SUBTRIE;
+			} else {
+				retval = command_trie_find (node->match.subtrie, input, num,
+				                            auto_complete, action);
+			}
 		}
 	}
 
-	return action;
+	return retval;
 }

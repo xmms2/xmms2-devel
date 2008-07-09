@@ -20,9 +20,11 @@
 #include "cli_cache.h"
 #include "command_trie.h"
 #include "command_utils.h"
+#include "cmdnames.h"
 #include "utils.h"
 #include "column_display.h"
 
+#define NULL_SUB(elem, null, notnull) elem == NULL ? null : notnull
 
 /* Setup commands */
 
@@ -450,7 +452,6 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
-
 	entry_print_status (res, infos);
 
 	return TRUE;
@@ -715,7 +716,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 				add_recursive (infos, playlist, it->data, pos, norecurs);
 				g_free (it->data);
 			}
-			
+
 			g_list_free (files);
 			/* AT: better to put this in a separate function in utils.c? */
 			cli_infos_loop_resume (infos);
@@ -1114,33 +1115,46 @@ cli_exit (cli_infos_t *infos, command_context_t *ctx)
 static void
 help_short_command (gpointer elem, gpointer udata)
 {
-	gchar *cmdname = (gchar *)elem;
+	command_name_t *cmd = (command_name_t *)elem;
 	/* FIXME: if contains space, change to <subcommand>, then allow 'help playlist' */
-	g_printf ("   %s\n", cmdname);
+	g_printf ("   %s%s\n", cmd->name,
+	          NULL_SUB (cmd->subcommands, "", " <subcommands>"));
+}
+
+static void
+help_list_commands (cli_infos_t *infos, gchar **cmd)
+{
+	gchar *name = g_strjoinv (" ", cmd);
+	g_printf (_("usage: nyxmms2 %s <command> [args]\n\n"),
+	          NULL_SUB (name, "", name));
+	g_printf (_("Available commands:\n"));
+	g_list_foreach (cmdnames_find (infos->cmdnames, cmd),
+	                help_short_command, NULL);
+	g_printf (_("\nType 'help %s <command>' for detailed help about a command.\n"),
+	          NULL_SUB (name, "", name));
+	g_free (name);
 }
 
 static void
 help_all_commands (cli_infos_t *infos)
 {
-	g_printf (_("usage: nyxmms2 <command> [args]\n\n"));
-	g_printf (_("Available commands:\n"));
-	g_list_foreach (infos->cmdnames, help_short_command, NULL);
-	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
+	help_list_commands (infos, NULL);
 }
 
 void
 help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 {
 	command_action_t *action;
+	command_trie_match_type_t match;
 	gint i, k;
 	gint padding, max_flag_len = 0;
 
 	gchar **argv = cmd;
 	gint argc = num_args;
 
-	action = command_trie_find (infos->commands, &argv, &argc,
-	                            AUTO_UNIQUE_COMPLETE);
-	if (action) {
+	match = command_trie_find (infos->commands, &argv, &argc,
+	                            AUTO_UNIQUE_COMPLETE, &action);
+	if (match == COMMAND_TRIE_MATCH_ACTION) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {
 			g_printf (" %s", action->usage);
@@ -1173,6 +1187,8 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 				/* FIXME: align multi-line */
 			}
 		}
+	} else if (match == COMMAND_TRIE_MATCH_SUBTRIE) {
+		help_list_commands (infos, cmd);
 	} else {
 		/* FIXME: Better handle help for subcommands! */
 		g_printf (_("Unknown command: '"));
