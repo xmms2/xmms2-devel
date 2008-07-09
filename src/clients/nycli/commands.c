@@ -867,13 +867,12 @@ Valid options:
 gboolean
 cli_move (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *playlist = NULL;
+	gchar *playlist;
 	gint pos;
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
 
-	command_flag_string_get (ctx, "playlist", &playlist);
-	if (!playlist) {
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = NULL;
 	}
 
