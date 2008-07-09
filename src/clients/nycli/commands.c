@@ -595,15 +595,19 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	gboolean success;
 
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		list_print_info (res, infos);
 		xmmsc_coll_unref (query);
+		success = TRUE;
+	} else {
+		success = FALSE;
 	}
 
-	return TRUE;
+	return success;
 }
 
 
