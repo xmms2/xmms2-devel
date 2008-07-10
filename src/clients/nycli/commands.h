@@ -19,6 +19,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 
+#include <unistd.h>
 #include <glob.h>
 
 #include <glib.h>

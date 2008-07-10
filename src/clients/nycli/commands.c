@@ -659,6 +659,33 @@ matching_files_dirs (gchar *pattern, GList **files)
 	return retval;
 }
 
+/* Transform a path (possibly absolute or relative) into a valid XMMS2
+ * path with protocol prefix. The resulting string must be freed
+ * manually.
+ */
+static gchar *
+make_valid_url (gchar *path)
+{
+	gchar *p;
+	gchar *url;
+	gchar *pwd;
+
+	/* Check if path matches "^[a-z]+://" */
+	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
+	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
+		url = g_strdup (path);
+	} else if (*path == '/') {
+		/* Absolute url, just prepend file:// protocol */
+		url = g_strconcat ("file://", path, NULL);
+	} else {
+		/* Relative url, prepend file:// protocol and PWD */
+		pwd = getenv ("PWD");
+		url = g_strconcat ("file://", pwd, "/", path, NULL);
+	}
+
+	return url;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -706,6 +733,10 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	if (fileargs) {
 		/* FIXME: expand / glob? */
+		gint pid;
+		gchar *tmp_playlist;
+		pid = getpid ();
+		tmp_playlist = g_strdup_printf ("_nycli_tmp_playlist_%d", pid);
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
 			GList *files = NULL, *it;
 
@@ -713,7 +744,46 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			matching_files_dirs (path, &files);
 			
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
-				add_recursive (infos, playlist, it->data, pos, norecurs);
+				gchar *url = make_valid_url (path);
+				if (norecurs) {
+					res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, url);
+					xmmsc_result_wait (res);
+					xmmsc_result_unref (res);
+					g_free (url);
+				} else {
+					/* there's no rinsert. So create a tmp-playlist
+					 * radd to it then insert in the current
+					 * playlist.
+					 * AT: there's a better way? Maybe implement
+					 * rinsert in server?*/
+					res = xmmsc_playlist_create (infos->sync, tmp_playlist);
+					xmmsc_result_wait (res);
+					xmmsc_result_unref (res);
+
+					res = xmmsc_playlist_radd (infos->sync, tmp_playlist, url);
+					xmmsc_result_wait (res);
+					xmmsc_result_unref (res);
+
+					res = xmmsc_playlist_list_entries (infos->sync, tmp_playlist);
+					xmmsc_result_wait (res);
+					for (xmmsc_result_list_first (res);
+						 xmmsc_result_list_valid (res);
+						 xmmsc_result_list_next (res)) {
+						xmmsc_result_t *insres;
+						guint id;
+						if (xmmsc_result_get_uint (res, &id)) {
+							insres = xmmsc_playlist_insert_id (infos->sync,
+							                                   playlist, pos, id);
+							xmmsc_result_wait (insres);
+							xmmsc_result_unref (insres);
+						}
+					}
+					xmmsc_result_unref (res);
+
+					res = xmmsc_playlist_remove (infos->sync, tmp_playlist);
+					xmmsc_result_wait (res);
+					xmmsc_result_unref (res);
+				}
 				g_free (it->data);
 			}
 
@@ -1118,7 +1188,7 @@ help_short_command (gpointer elem, gpointer udata)
 	command_name_t *cmd = (command_name_t *)elem;
 	/* FIXME: if contains space, change to <subcommand>, then allow 'help playlist' */
 	g_printf ("   %s%s\n", cmd->name,
-	          NULL_SUB (cmd->subcommands, "", " <subcommands>"));
+	          NULL_SUB (cmd->subcommands, "", " <subcommand>"));
 }
 
 static void
