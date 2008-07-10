@@ -368,6 +368,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 
 		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
 
+		/* store matching mediaids in a tree (faster lookup) */
 		for (xmmsc_result_list_first (matching);
 		     xmmsc_result_list_valid (matching);
 		     xmmsc_result_list_next (matching)) {
@@ -380,6 +381,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			}
 		}
 
+		/* move matched playlist items */
 		curr = 0;
 		inc = 0;
 		up = TRUE;
@@ -393,11 +395,13 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			if (xmmsc_result_get_uint (lisres, &id) &&
 			    g_tree_lookup (list, &id) != NULL) {
 				if (up) {
-					movres = xmmsc_playlist_move_entry (infos->sync,
-					                                    playlist, curr-inc, pos);
+					/* moving forward */
+					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
+					                                    curr - inc, pos - 1);
 				} else {
-					movres = xmmsc_playlist_move_entry (infos->sync,
-					                                    playlist, curr+inc, pos);
+					/* moving backward */
+					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
+					                                    curr, pos + inc);
 				}
 				xmmsc_result_wait (movres);
 				xmmsc_result_unref (movres);

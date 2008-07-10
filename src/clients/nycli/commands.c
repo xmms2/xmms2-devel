@@ -877,6 +877,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+		g_printf (_("Error: you must provide a position to move entries to!\n"));
 		return FALSE;
 	}
 
@@ -885,6 +886,8 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		move_entries (res, infos, playlist, pos);
 		xmmsc_coll_unref (query);
+	} else {
+		return FALSE;
 	}
 
 	return TRUE;
