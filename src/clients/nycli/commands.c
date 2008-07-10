@@ -24,7 +24,7 @@
 #include "utils.h"
 #include "column_display.h"
 
-#define NULL_SUB(elem, null, notnull) elem == NULL ? null : notnull
+#define NULL_SUB(elem, null, notnull) (elem) == NULL ? (null) : (notnull)
 
 /* Setup commands */
 
@@ -1199,23 +1199,26 @@ help_short_command (gpointer elem, gpointer udata)
 }
 
 static void
-help_list_commands (cli_infos_t *infos, gchar **cmd)
+help_list_commands (cli_infos_t *infos)
 {
-	gchar *name = g_strjoinv (" ", cmd);
-	g_printf (_("usage: nyxmms2 %s <command> [args]\n\n"),
-	          NULL_SUB (name, "", name));
+	g_printf (_("usage: nyxmms2 <command> [args]\n\n"));
 	g_printf (_("Available commands:\n"));
-	g_list_foreach (cmdnames_find (infos->cmdnames, cmd),
+	g_list_foreach (cmdnames_find (infos->cmdnames, NULL),
 	                help_short_command, NULL);
-	g_printf (_("\nType 'help %s <command>' for detailed help about a command.\n"),
-	          NULL_SUB (name, "", name));
-	g_free (name);
+	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
 }
 
 static void
-help_all_commands (cli_infos_t *infos)
+help_list_subcommands (cli_infos_t *infos, gchar **cmd)
 {
-	help_list_commands (infos, NULL);
+	gchar *name = g_strjoinv (" ", cmd);
+	g_printf (_("usage: nyxmms2 %s <subcommand> [args]\n\n"), name);
+	g_printf (_("Available commands:\n"));
+	g_list_foreach (cmdnames_find (infos->cmdnames, cmd),
+	                help_short_command, NULL);
+	g_printf (_("\nType 'help %s <subcommand>' for detailed help "
+	            "about a command.\n"), name);
+	g_free (name);
 }
 
 void
@@ -1265,7 +1268,7 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 			}
 		}
 	} else if (match == COMMAND_TRIE_MATCH_SUBTRIE) {
-		help_list_commands (infos, cmd);
+		help_list_subcommands (infos, cmd);
 	} else {
 		/* FIXME: Better handle help for subcommands! */
 		g_printf (_("Unknown command: '"));
@@ -1287,7 +1290,7 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 
 	/* No argument, display the list of commands */
 	if (num_args == 0) {
-		help_all_commands (infos);
+		help_list_commands (infos);
 	} else {
 		help_command (infos, command_argv_get (ctx), num_args);
 	}
