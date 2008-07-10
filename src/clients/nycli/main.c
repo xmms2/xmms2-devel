@@ -176,8 +176,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 
 		command_context_free (ctx);
 	} else {
-		g_printf (_("Unknown command: '%s'\n"), *argv);
-		g_printf (_("Type 'help' for usage.\n"));
+		/* Call help to print the "no such command" error */
+		help_command (infos, in_argv, in_argc);
 	}
 }
 
