@@ -628,7 +628,7 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
 	} else if (at_isset) {
 		/* FIXME: handle relative values ? */
 		/* beware: int vs uint */
-		if (at == 0 || (at > 0 && at > infos->cache->active_playlist->len + 1)) {
+		if (at == 0 || (at > 0 && at > infos->cache->active_playlist->len)) {
 			g_printf (_("Error: specified position is outside the playlist!\n"));
 			return FALSE;
 		} else {

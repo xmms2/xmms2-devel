@@ -196,6 +196,7 @@ cli_infos_free (cli_infos_t *infos)
 	command_trie_free (infos->commands);
 	g_key_file_free (infos->config);
 	cli_cache_free (infos->cache);
+	cmdnames_free (infos->cmdnames);
 
 	g_free (infos);
 }

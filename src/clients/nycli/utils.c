@@ -389,7 +389,6 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		     xmmsc_result_list_valid (lisres);
 		     xmmsc_result_list_next (lisres)) {
 			if (curr == pos) {
-				inc = 0;
 				up = FALSE;
 			}
 			if (xmmsc_result_get_uint (lisres, &id) &&
@@ -397,7 +396,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 				if (up) {
 					/* moving forward */
 					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
-					                                    curr - inc, pos - 1);
+					                                    curr - inc, pos);
 				} else {
 					/* moving backward */
 					movres = xmmsc_playlist_move_entry (infos->sync, playlist,

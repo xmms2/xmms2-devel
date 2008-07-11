@@ -28,6 +28,21 @@ cmdnames_new (gchar *name)
 	return cmd;
 }
 
+void
+cmdnames_free (GList *list)
+{
+	GList *it;
+	command_name_t *cmd;
+
+	for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+		cmd = it->data;
+		cmdnames_free (cmd->subcommands);
+		g_free (cmd->name);
+	}
+
+	g_list_free (list);
+}
+
 GList *
 cmdnames_prepend (GList *list, gchar **v)
 {

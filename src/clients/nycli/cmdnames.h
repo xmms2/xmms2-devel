@@ -29,6 +29,7 @@ struct command_name_St {
 };
 
 command_name_t* cmdnames_new (gchar *name);
+void cmdnames_free (GList *list);
 GList* cmdnames_prepend (GList *list, gchar **v);
 GList* cmdnames_reverse (GList *list);
 GList* cmdnames_find (GList *list, gchar **v);
