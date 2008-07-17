@@ -1470,6 +1470,8 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 	command_trie_match_type_t match;
 	gint i, k;
 	gint padding, max_flag_len = 0;
+	gchar *c;
+	gboolean indent = TRUE;
 
 	gchar **argv = cmd;
 	gint argc = num_args;
@@ -1483,7 +1485,18 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 		if (action->usage) {
 			g_printf (" %s", action->usage);
 		}
-		g_printf ("\n\n  %s\n\n", action->description);
+		g_printf ("\n\n");
+		for (c = action->description; *c; c++) {
+			if (indent) {
+				g_printf ("  ");
+				indent = FALSE;
+			}
+			g_printf ("%c", *c);
+			if (*c == '\n') {
+				indent = TRUE;
+			}
+		}
+		g_printf ("\n\n");
 		if (action->argdefs && action->argdefs[0].long_name) {
 			/* Find length of longest option */
 			for (i = 0; action->argdefs[i].long_name; ++i) {
