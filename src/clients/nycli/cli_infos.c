@@ -20,6 +20,7 @@
 #include "cli_cache.h"
 #include "commands.h"
 #include "cmdnames.h"
+#include "configuration.h"
 #include "command_trie.h"
 
 
@@ -152,6 +153,9 @@ cli_infos_init (gint argc, gchar **argv)
 
 	infos = g_new0 (cli_infos_t, 1);
 
+	/* readline_init needs PROMPT */
+	infos->config = configuration_init (NULL);
+
 	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;
 		readline_init (infos);
@@ -177,7 +181,6 @@ cli_infos_init (gint argc, gchar **argv)
 	}
 	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 
-	infos->config = g_key_file_new ();
 	infos->cache = cli_cache_init ();
 
 	return infos;
@@ -194,8 +197,8 @@ cli_infos_free (cli_infos_t *infos)
 	}
 
 	command_trie_free (infos->commands);
-	g_key_file_free (infos->config);
 	cli_cache_free (infos->cache);
+	configuration_free (infos->config);
 	cmdnames_free (infos->cmdnames);
 
 	g_free (infos);

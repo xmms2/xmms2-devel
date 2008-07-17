@@ -22,8 +22,8 @@
 /* FIXME: shall be loaded from config when config exists */
 #define DEBUG_AUTOSTART TRUE
 #define STDINFD 0
-#define PROMPT "nycli> "
-#define AUTO_UNIQUE_COMPLETE TRUE
+/* #define PROMPT "nycli> " */
+/* #define AUTO_UNIQUE_COMPLETE TRUE */
 #define MAX_CACHE_REFRESH_LOOP 200
 #define MAX_INT_VALUE_BUFFER_SIZE 64
 
@@ -41,6 +41,7 @@ typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
 typedef struct command_context_St command_context_t;
 typedef struct command_argument_St command_argument_t;
+typedef struct configuration_St configuration_t;
 
 typedef GOptionEntry argument_t;
 

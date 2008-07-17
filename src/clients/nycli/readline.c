@@ -15,6 +15,7 @@
  */
 
 #include "readline.h"
+#include "configuration.h"
 
 #include "cli_infos.h"
 
@@ -38,9 +39,11 @@ readline_callback (gchar *input)
 			add_history (input);
 			command_dispatch (readline_cli_infos, argc, argv);
 		} else {
-			if (g_error_matches (error, G_SHELL_ERROR, G_SHELL_ERROR_BAD_QUOTING)) {
+			if (g_error_matches (error, G_SHELL_ERROR,
+			                     G_SHELL_ERROR_BAD_QUOTING)) {
 				g_printf (_("Error: Mismatched quote\n"));
-			} else if (g_error_matches (error, G_SHELL_ERROR, G_SHELL_ERROR_FAILED)) {
+			} else if (g_error_matches (error, G_SHELL_ERROR,
+			                            G_SHELL_ERROR_FAILED)) {
 				g_printf (_("Error: Invalid input\n"));
 			}
 			g_error_free (error);
@@ -54,7 +57,9 @@ void
 readline_init (cli_infos_t *infos)
 {
 	readline_cli_infos = infos;
-	rl_callback_handler_install (PROMPT, &readline_callback);
+	rl_callback_handler_install (configuration_get_string (infos->config,
+	                                                       "PROMPT"),
+	                             &readline_callback);
 }
 
 void
@@ -66,7 +71,9 @@ readline_suspend (cli_infos_t *infos)
 void
 readline_resume (cli_infos_t *infos)
 {
-	rl_callback_handler_install (PROMPT, &readline_callback);
+	rl_callback_handler_install (configuration_get_string (infos->config,
+	                                                       "PROMPT"),
+	                             &readline_callback);
 }
 
 void

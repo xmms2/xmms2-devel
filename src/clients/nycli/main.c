@@ -27,6 +27,7 @@
 #include "command_trie.h"
 #include "command_utils.h"
 #include "readline.h"
+#include "configuration.h"
 
 
 static void loop_select (cli_infos_t *infos);
@@ -99,11 +100,15 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	gint argc;
 	gchar **argv;
 
+	gboolean auto_complete;
+
 	/* The arguments will be updated by command_trie_find. */
 	argc = in_argc;
 	argv = in_argv;
+	auto_complete = configuration_get_boolean (infos->config,
+	                                           "AUTO_UNIQUE_COMPLETE");
 	match = command_trie_find (infos->commands, &argv, &argc,
-	                            AUTO_UNIQUE_COMPLETE, &action);
+	                            auto_complete, &action);
 
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 

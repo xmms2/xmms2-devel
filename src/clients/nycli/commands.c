@@ -21,6 +21,7 @@
 #include "command_trie.h"
 #include "command_utils.h"
 #include "cmdnames.h"
+#include "configuration.h"
 #include "utils.h"
 #include "column_display.h"
 
@@ -1231,9 +1232,11 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 
 	gchar **argv = cmd;
 	gint argc = num_args;
+	gboolean auto_complete = configuration_get_boolean (infos->config,
+	                                                    "AUTO_UNIQUE_COMPLETE");
 
 	match = command_trie_find (infos->commands, &argv, &argc,
-	                            AUTO_UNIQUE_COMPLETE, &action);
+	                           auto_complete, &action);
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {
