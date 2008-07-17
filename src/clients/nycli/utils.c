@@ -396,7 +396,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 				if (up) {
 					/* moving forward */
 					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
-					                                    curr - inc, pos);
+					                                    curr - inc, pos - 1);
 				} else {
 					/* moving backward */
 					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
