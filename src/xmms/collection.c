@@ -319,7 +319,8 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 	xmms_medialib_session_t *session;
 	guint src;
 
-	xform = xmms_xform_chain_setup_url_without_effects (0, path, global_stream_type);
+	/* we don't want any effects for playlist, so just report we're rehashing */
+	xform = xmms_xform_chain_setup_url (0, path, global_stream_type, TRUE);
 
 	if (!xform) {
 		xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "We can't handle this type of playlist or URL");

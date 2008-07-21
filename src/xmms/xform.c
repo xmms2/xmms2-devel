@@ -1482,43 +1482,8 @@ get_url_for_entry (xmms_medialib_entry_t entry)
 }
 
 xmms_xform_t *
-xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
-{
-	gchar *url;
-	xmms_xform_t *last;
-
-	if (!(url = get_url_for_entry (entry))) {
-		return NULL;
-	}
-
-	last = chain_setup (entry, url, goal_formats);
-	if (!last) {
-		g_free (url);
-		return NULL;
-	}
-
-	/* Enable segment by default */
-	last = xmms_xform_new_effect (last, entry, goal_formats, "segment");
-	if (!last) {
-		g_free (url);
-		return NULL;
-	}
-
-	last = add_effects (last, entry, goal_formats);
-	if (!last) {
-		g_free (url);
-		return NULL;
-	}
-
-	chain_finalize (last, entry, url, FALSE);
-	g_free (url);
-
-	return last;
-}
-
-xmms_xform_t *
-xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry,
-                                        GList *goal_formats)
+xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats,
+                        gboolean rehash)
 {
 	gchar *url;
 	xmms_xform_t *xform;
@@ -1527,79 +1492,50 @@ xmms_xform_chain_setup_without_effects (xmms_medialib_entry_t entry,
 		return NULL;
 	}
 
-	xform = chain_setup (entry, url, goal_formats);
-	if (!xform) {
-		g_free (url);
-		return NULL;
-	}
-
-	chain_finalize (xform, entry, url, FALSE);
+	xform = xmms_xform_chain_setup_url (entry, url, goal_formats, rehash);
 	g_free (url);
-	return xform;
-}
 
-xmms_xform_t *
-xmms_xform_chain_setup_rehash (xmms_medialib_entry_t entry,
-                               GList *goal_formats)
-{
-	gchar *url;
-	xmms_xform_t *xform;
-
-	if (!(url = get_url_for_entry (entry))) {
-		return NULL;
-	}
-
-	xform = chain_setup (entry, url, goal_formats);
-	if (!xform) {
-		g_free (url);
-		return NULL;
-	}
-
-	/* Enable segment by default */
-	xform = xmms_xform_new_effect (xform, entry, goal_formats, "segment");
-	if (!xform) {
-		g_free (url);
-		return NULL;
-	}
-
-	chain_finalize (xform, entry, url, TRUE);
-	g_free (url);
 	return xform;
 }
 
 xmms_xform_t *
 xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url,
-                            GList *goal_formats)
+                            GList *goal_formats, gboolean rehash)
 {
 	xmms_xform_t *last;
+	xmms_plugin_t *plugin;
+	xmms_xform_plugin_t *xform_plugin;
 
 	last = chain_setup (entry, url, goal_formats);
 	if (!last) {
 		return NULL;
 	}
 
-	last = add_effects (last, entry, goal_formats);
-	if (!last) {
-		return NULL;
+	/* first check that segment plugin is available in the system */
+	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, "segment");
+	xform_plugin = (xmms_xform_plugin_t *) plugin;
+
+	/* if segment plugin input is the same as current output, include it
+	 * for collecting additional duration metadata on entries that need it */
+	if (xform_plugin && xmms_xform_plugin_supports (xform_plugin,
+	                                                last->out_type,
+	                                                NULL)) {
+		xmms_object_unref (plugin);
+		last = xmms_xform_new_effect (last, entry, goal_formats, "segment");
+		if (!last) {
+			return NULL;
+		}
 	}
 
-	chain_finalize (last, entry, url, FALSE);
-	return last;
-}
-
-xmms_xform_t *
-xmms_xform_chain_setup_url_without_effects (xmms_medialib_entry_t entry,
-                                            const gchar *url,
-                                            GList *goal_formats)
-{
-	xmms_xform_t *last;
-
-	last = chain_setup (entry, url, goal_formats);
-	if (!last) {
-		return NULL;
+	/* if not rehashing, also initialize all the effect plugins */
+	if (!rehash) {
+		last = add_effects (last, entry, goal_formats);
+		if (!last) {
+			return NULL;
+		}
 	}
 
-	chain_finalize (last, entry, url, FALSE);
+	chain_finalize (last, entry, url, rehash);
 	return last;
 }
 

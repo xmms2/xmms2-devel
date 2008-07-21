@@ -195,7 +195,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		}
 
 		xmms_medialib_end (session);
-		xform = xmms_xform_chain_setup_rehash (entry, goal_format);
+		xform = xmms_xform_chain_setup (entry, goal_format, TRUE);
 
 		if (!xform) {
 			if (prev_status == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
