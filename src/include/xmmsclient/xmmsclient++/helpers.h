@@ -44,8 +44,8 @@ namespace Xmms
 	 */
 	inline std::string getUserConfDir() {
 
-		char buf[PATH_MAX] = { '\0' };
-		if( !xmmsc_userconfdir_get( buf, PATH_MAX ) ) {
+		char buf[XMMS_PATH_MAX] = { '\0' };
+		if( !xmmsc_userconfdir_get( buf, XMMS_PATH_MAX ) ) {
 			throw Xmms::result_error( "Error occured when trying to get "
 			                          "user config directory." );
 		}
