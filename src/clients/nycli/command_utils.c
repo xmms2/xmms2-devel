@@ -262,6 +262,7 @@ parse_time (gchar *s, gchar **endptr, const gint *mul, const gchar **sep)
 			}
 		}
 	}
+	v += n;
 	*endptr = s;
 
 	return v;
