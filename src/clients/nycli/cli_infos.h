@@ -34,7 +34,8 @@ typedef enum {
 typedef enum {
 	CLI_ACTION_STATUS_READY,
 	CLI_ACTION_STATUS_BUSY,
-	CLI_ACTION_STATUS_FINISH
+	CLI_ACTION_STATUS_FINISH,
+	CLI_ACTION_STATUS_REFRESH
 } action_status_t;
 
 struct cli_infos_St {
@@ -50,6 +51,7 @@ struct cli_infos_St {
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
 gboolean cli_infos_connect (cli_infos_t *infos, gboolean autostart);
+void cli_infos_status_mode (cli_infos_t *infos);
 void cli_infos_loop_suspend (cli_infos_t *infos);
 void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);

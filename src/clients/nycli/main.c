@@ -217,7 +217,8 @@ loop_select (cli_infos_t *infos)
 
 	/* Listen to readline in shell mode */
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL &&
-	    infos->status == CLI_ACTION_STATUS_READY) {
+	    (infos->status == CLI_ACTION_STATUS_READY ||
+		 infos->status == CLI_ACTION_STATUS_REFRESH)) {
 		FD_SET(STDINFD, &rfds);
 		if (maxfds < STDINFD) {
 			maxfds = STDINFD;
@@ -246,7 +247,13 @@ loop_select (cli_infos_t *infos)
 		    && FD_ISSET(STDINFD, &rfds)) {
 			rl_callback_read_char ();
 		}
+
 	}
+
+/* 	/\* Status -refresh *\/ */
+/* 	if (infos->status == CLI_ACTION_STATUS_REFRESH) { */
+/* 		g_printf ("Atualizou\n"); */
+/* 	} */
 }
 
 void
@@ -254,7 +261,8 @@ loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	command_dispatch (infos, argc, argv);
 
-	while (infos->status == CLI_ACTION_STATUS_BUSY) {
+	while (infos->status == CLI_ACTION_STATUS_BUSY ||
+	       infos->status == CLI_ACTION_STATUS_REFRESH) {
 		loop_select (infos);
 	}
 }

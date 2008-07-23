@@ -15,6 +15,7 @@
  */
 
 #include "utils.h"
+#include "status.h"
 
 #include "cli_infos.h"
 #include "cli_cache.h"
@@ -116,25 +117,27 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 }
 
 void
-entry_print_status (xmmsc_result_t *res, cli_infos_t *infos)
+status_mode (cli_infos_t *infos, gint refresh)
 {
-	gchar *artist;
-	gchar *title;
+	status_entry_t *status;
 
-	/* FIXME: ad-hoc display, use richer parser */
-	if (!xmmsc_result_iserror (res)) {
-		if (xmmsc_result_get_dict_entry_string (res, "artist", &artist)
-		    && xmmsc_result_get_dict_entry_string (res, "title", &title)) {
-			g_printf (_("Playing: %s - %s\n"), artist, title);
-		} else {
-			g_printf (_("Error getting metadata!\n"));
-		}
+	status = status_init (refresh);
+
+	if (refresh > 0) {
+		g_printf (_("\n"
+		            "   (n) next song\n"
+		            "   (p) previous song\n"
+		            "   (t) toggle playback\n"
+		            "   (ENTER) exit status mode\n\n"));
+		cli_infos_status_mode (infos);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
-	}
+		status_update_all (infos, status);
+		status_print_entry ("", status);
+		g_printf ("\n");
 
-	cli_infos_loop_resume (infos);
-	xmmsc_result_unref (res);
+		status_free (status);
+		cli_infos_loop_resume (infos);
+	}
 }
 
 void
@@ -226,7 +229,7 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 void
 list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
 {
-	gchar *s;
+	const gchar *s;
 
 	if (!xmmsc_result_iserror (res)) {
 		while (xmmsc_result_list_valid (res)) {

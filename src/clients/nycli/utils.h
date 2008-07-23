@@ -27,7 +27,7 @@
 
 void done (xmmsc_result_t *res, cli_infos_t *infos);
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
-void entry_print_status (xmmsc_result_t *res, cli_infos_t *infos);
+void status_mode (cli_infos_t *infos, gint refresh);
 void list_print_info (xmmsc_result_t *res, cli_infos_t *infos);
 void list_print_row (xmmsc_result_t *res, column_display_t *coldisp);
 void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all);

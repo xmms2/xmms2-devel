@@ -434,10 +434,10 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
+/* 	xmmsc_result_t *res; */
 	guint currid;
 	gchar *f;
-	gint r;
+	gint r = 0;
 
 	/* FIXME: Support advanced flags */
 	if (command_flag_int_get (ctx, "refresh", &r)) {
@@ -451,9 +451,13 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
 
-	res = xmmsc_medialib_get_info (infos->sync, currid);
-	xmmsc_result_wait (res);
-	entry_print_status (res, infos);
+
+	status_mode (infos, r);
+/* 	cli_infos_status_mode (infos); */
+
+/* 	res = xmmsc_medialib_get_info (infos->sync, currid); */
+/* 	xmmsc_result_wait (res); */
+/* 	entry_print_status (res, infos); */
 
 	return TRUE;
 }

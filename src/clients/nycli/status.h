@@ -14,18 +14,19 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
+#ifndef __STATUS_H__
+#define __STATUS_H__
 
-#include <glib.h>
-#include <glib/gprintf.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+typedef struct status_entry_St status_entry_t;
+struct status_entry_St {
+	GHashTable *data;
+	gint refresh;
+};
 
-#include "main.h"
+status_entry_t *status_init (gint refresh);
+void status_free (status_entry_t *entry);
+void status_set_next_rel (cli_infos_t *infos, gint offset);
+void status_update_all (cli_infos_t *infos, status_entry_t *entry);
+void status_print_entry (gchar *format, status_entry_t *entry);
 
-void readline_init (cli_infos_t *infos);
-void readline_suspend (cli_infos_t *infos);
-void readline_resume (cli_infos_t *infos);
-void readline_status_mode (cli_infos_t *infos);
-void readline_screen_size (gint *rows, gint *columns);
-void readline_free ();
+#endif /* __STATUS_H__ */

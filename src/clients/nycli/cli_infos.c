@@ -37,7 +37,15 @@ cli_infos_autostart (cli_infos_t *infos, gchar *path)
 	return !!ret;
 }
 
-void cli_infos_loop_suspend (cli_infos_t *infos)
+void
+cli_infos_status_mode (cli_infos_t *infos)
+{
+	infos->status = CLI_ACTION_STATUS_REFRESH;
+	readline_status_mode (infos);
+}
+
+void
+cli_infos_loop_suspend (cli_infos_t *infos)
 {
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
 		readline_suspend (infos);
@@ -48,6 +56,9 @@ void cli_infos_loop_suspend (cli_infos_t *infos)
 void
 cli_infos_loop_resume (cli_infos_t *infos)
 {
+	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+		return;
+	}
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
 		readline_resume (infos);
 	}

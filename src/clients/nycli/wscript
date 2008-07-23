@@ -9,6 +9,7 @@ def build(bld):
                     command_utils.c
 		    cmdnames.c
 		    configuration.c
+		    status.c		    
 		    utils.c
                     column_display.c
                     readline.c""".split()
