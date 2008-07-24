@@ -25,7 +25,6 @@
 
 #include "main.h"
 
-
 typedef enum {
 	CLI_EXECUTION_MODE_INLINE,
 	CLI_EXECUTION_MODE_SHELL
@@ -47,11 +46,13 @@ struct cli_infos_St {
 	GList *cmdnames;  /* List of command names, faster help. */
 	configuration_t *config;
 	cli_cache_t *cache;
+	status_entry_t *status_entry;
 };
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
 gboolean cli_infos_connect (cli_infos_t *infos, gboolean autostart);
-void cli_infos_status_mode (cli_infos_t *infos);
+void cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry);
+void cli_infos_status_mode_exit (cli_infos_t *infos);
 void cli_infos_loop_suspend (cli_infos_t *infos);
 void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);

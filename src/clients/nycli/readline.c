@@ -78,8 +78,12 @@ readline_status_callback (gchar *input)
 
 	rl_callback_handler_remove ();
 
-	readline_cli_infos->status = CLI_ACTION_STATUS_BUSY;
-	cli_infos_loop_resume (readline_cli_infos);
+	status_free (readline_cli_infos->status_entry);
+
+	cli_infos_status_mode_exit (readline_cli_infos);
+
+/* 	readline_cli_infos->status = CLI_ACTION_STATUS_BUSY; */
+/* 	cli_infos_loop_resume (readline_cli_infos); */
 }
 
 static gint

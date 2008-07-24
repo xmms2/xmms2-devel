@@ -23,6 +23,7 @@
 
 #include "cli_infos.h"
 #include "cli_cache.h"
+#include "status.h"
 #include "commands.h"
 #include "command_trie.h"
 #include "command_utils.h"
@@ -225,7 +226,14 @@ loop_select (cli_infos_t *infos)
 		}
 	}
 
-	modfds = select (maxfds + 1, &rfds, &wfds, NULL, NULL);
+	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+		struct timeval refresh;
+		refresh.tv_sec = infos->status_entry->refresh;
+		refresh.tv_usec = 0;
+		modfds = select (maxfds + 1, &rfds, &wfds, NULL, &refresh);
+	} else {
+		modfds = select (maxfds + 1, &rfds, &wfds, NULL, NULL);
+	}
 
 	if(modfds < 0) {
 		g_printf (_("Error: invalid I/O result!"));
@@ -250,10 +258,12 @@ loop_select (cli_infos_t *infos)
 
 	}
 
-/* 	/\* Status -refresh *\/ */
-/* 	if (infos->status == CLI_ACTION_STATUS_REFRESH) { */
-/* 		g_printf ("Atualizou\n"); */
-/* 	} */
+	/* Status -refresh
+	   Ask theefer: use callbacks for update and -refresh only for print? */
+	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+		status_update_all (infos, infos->status_entry);
+		status_print_entry (infos->status_entry);
+	}
 }
 
 void

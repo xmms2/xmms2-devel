@@ -37,6 +37,7 @@
 
 typedef struct cli_infos_St cli_infos_t;
 typedef struct cli_cache_St cli_cache_t;
+typedef struct status_entry_St status_entry_t;
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
 typedef struct command_context_St command_context_t;

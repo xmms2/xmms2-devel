@@ -38,10 +38,19 @@ cli_infos_autostart (cli_infos_t *infos, gchar *path)
 }
 
 void
-cli_infos_status_mode (cli_infos_t *infos)
+cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry)
 {
 	infos->status = CLI_ACTION_STATUS_REFRESH;
+	infos->status_entry = entry;
 	readline_status_mode (infos);
+}
+
+void
+cli_infos_status_mode_exit (cli_infos_t *infos)
+{
+	infos->status = CLI_ACTION_STATUS_BUSY;
+	infos->status_entry = NULL;
+	cli_infos_loop_resume (infos);
 }
 
 void

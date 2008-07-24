@@ -117,11 +117,11 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 }
 
 void
-status_mode (cli_infos_t *infos, gint refresh)
+status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 {
 	status_entry_t *status;
 
-	status = status_init (refresh);
+	status = status_init (format, refresh);
 
 	if (refresh > 0) {
 		g_printf (_("\n"
@@ -129,12 +129,10 @@ status_mode (cli_infos_t *infos, gint refresh)
 		            "   (p) previous song\n"
 		            "   (t) toggle playback\n"
 		            "   (ENTER) exit status mode\n\n"));
-		cli_infos_status_mode (infos);
+		cli_infos_status_mode (infos, status);
 	} else {
 		status_update_all (infos, status);
-		status_print_entry ("", status);
-		g_printf ("\n");
-
+		status_print_entry (status);
 		status_free (status);
 		cli_infos_loop_resume (infos);
 	}

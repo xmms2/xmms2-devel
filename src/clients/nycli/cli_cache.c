@@ -81,7 +81,7 @@ static void
 refresh_active_playlist_name (xmmsc_result_t *res, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
-	gchar *buf;
+	const gchar *buf;
 
 	if (!xmmsc_result_iserror (res) && xmmsc_result_get_string (res, &buf)) {
 		g_free (cache->active_playlist_name);
@@ -127,7 +127,7 @@ update_active_playlist (xmmsc_result_t *res, void *udata)
 	xmmsc_result_t *refres;
 	gint pos, newpos, type;
 	guint id;
-	gchar *name;
+	const gchar *name;
 
 	xmmsc_result_get_dict_entry_int (res, "type", &type);
 	xmmsc_result_get_dict_entry_int (res, "position", &pos);
@@ -178,7 +178,7 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *refres;
-	gchar *buf;
+	const gchar *buf;
 
 	/* FIXME: Also listen to playlist renames, in case the active PL is renamed! */
 	/* Refresh playlist name */
@@ -201,9 +201,8 @@ update_active_playlist_name (xmmsc_result_t *res, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_cache_t *cache = infos->cache;
-	xmmsc_result_t *refres;
 	gint type;
-	gchar *name, *newname;
+	const gchar *name, *newname;
 
 	xmmsc_result_get_dict_entry_int (res, "type", &type);
 	xmmsc_result_get_dict_entry_string (res, "name", &name);

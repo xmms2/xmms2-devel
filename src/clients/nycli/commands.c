@@ -434,30 +434,24 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
-/* 	xmmsc_result_t *res; */
 	guint currid;
-	gchar *f;
-	gint r = 0;
+	gchar *format;
+	gint refresh;
 
 	/* FIXME: Support advanced flags */
-	if (command_flag_int_get (ctx, "refresh", &r)) {
-		g_printf (_("--refresh flag not supported yet!\n"));
+	if (!command_flag_int_get (ctx, "refresh", &refresh)) {
+		refresh = 0;
 	}
 
-	if (command_flag_string_get (ctx, "format", &f)) {
-		g_printf (_("--format flag not supported yet!\n"));
+	if (!command_flag_string_get (ctx, "format", &format)) {
+		format = "${playback_status}: ${artist} - "
+		         "${title}: ${playtime} of ${duration}";
 	}
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
 
-
-	status_mode (infos, r);
-/* 	cli_infos_status_mode (infos); */
-
-/* 	res = xmmsc_medialib_get_info (infos->sync, currid); */
-/* 	xmmsc_result_wait (res); */
-/* 	entry_print_status (res, infos); */
+	status_mode (infos, format, refresh);
 
 	return TRUE;
 }
@@ -700,7 +694,7 @@ gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
-	gchar *playlist = NULL;
+	gchar *playlist;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 	gint pos;
@@ -718,8 +712,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 --at  Add media at a given position in the playlist, or at a given offset from the current track.
 */
 
-	command_flag_string_get (ctx, "playlist", &playlist);
-	if (!playlist) {
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = NULL;
 	}
 

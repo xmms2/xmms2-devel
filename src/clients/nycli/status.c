@@ -126,14 +126,43 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 	xmmsc_result_unref (res);
 }
 
+static GList *
+parse_format (gchar *format) {
+	gchar *copy, *s, *last;
+	GList *strings = NULL;
+
+	copy = g_strdup (format);
+
+	last = copy;
+	while ((s = strstr(last, "${")) != NULL) {
+		if (last != s) {
+			*s = '\0';
+			strings = g_list_prepend (strings, g_strdup (last));
+			*s = '$';
+		}
+
+		last = strchr (s, '}');
+		*last = '\0';
+		strings = g_list_prepend (strings, g_strdup (s));
+
+		last++;
+	}
+	strings = g_list_reverse (strings);
+
+	g_free (copy);
+
+	return strings;
+}
+
 status_entry_t *
-status_init (gint refresh)
+status_init (gchar *format, gint refresh)
 {
 	status_entry_t *entry;
 
 	entry = g_new0 (status_entry_t, 1);
 
 	entry->data = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+	entry->format = parse_format (format);
 	entry->refresh = refresh;
 
 	return entry;
@@ -142,6 +171,13 @@ status_init (gint refresh)
 void
 status_free (status_entry_t *entry)
 {
+	GList *it;
+
+	for (it = g_list_first (entry->format); it != NULL; it = g_list_next (it)) {
+		g_free (it->data);
+	}
+	g_list_free (entry->format);
+
 	g_hash_table_destroy (entry->data);
 	g_free (entry);
 }
@@ -164,36 +200,34 @@ status_set_next_rel (cli_infos_t *infos, gint offset)
 }
 
 void
-status_print_entry (gchar *format, status_entry_t *entry)
+status_print_entry (status_entry_t *entry)
 {
-/* 	gchar *buffer; */
-	gint rows, columns, currlen, maxlen;
+	GList *it;
+	gint rows, columns, currlen;
 
 	readline_screen_size (&rows, &columns);
-	maxlen = columns;
+
 	currlen = 0;
+	g_printf("\r");
+	for (it = g_list_first (entry->format); it != NULL; it = g_list_next (it)) {
+		gchar *s = it->data;
+		if (s[0] == '$' && s[1] == '{') {
+			s = g_hash_table_lookup (entry->data, s+2);
+		}
 
-	/* Playback: Artist - Title: 00:00 of 00:00 */
-	g_printf ("\r%s: %s - %s: %s of %s",
-	          (gchar *)g_hash_table_lookup (entry->data, "playback_status"),
-	          (gchar *)g_hash_table_lookup (entry->data, "artist"),
-	          (gchar *)g_hash_table_lookup (entry->data, "title"),
-	          (gchar *)g_hash_table_lookup (entry->data, "playtime"),
-	          (gchar *)g_hash_table_lookup (entry->data, "duration"));
+		currlen += strlen (s);
+		if (currlen >= columns) {
+			break;
+		} else {
+			g_printf ("%s", s);
+		}
+	}
 
-/* 	/\* FIXME: ad-hoc display, use richer parser *\/ */
-/* 	if (!xmmsc_result_iserror (res)) { */
-/* 		if (xmmsc_result_get_dict_entry_string (res, "artist", &artist) */
-/* 		    && xmmsc_result_get_dict_entry_string (res, "title", &title)) { */
-/* 			g_printf (_("\r%s"), buffer); */
-/* 		} else { */
-/* 			g_printf (_("Error getting metadata!\n")); */
-/* 		} */
-/* 	} else { */
-/* 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res)); */
-/* 	} */
-	
+	while (currlen++ < columns) {
+		g_printf (" ");
+	}
+
+	/* ${playback_status}: ${artist} - ${title}: ${playtime} of ${duration} */
+
 	fflush (stdout);
-/* 	cli_infos_loop_resume (infos); */
-/* 	xmmsc_result_unref (res); */
 }
