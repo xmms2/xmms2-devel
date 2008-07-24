@@ -27,6 +27,8 @@
 #include "cli_cache.h"
 #include "cli_infos.h"
 
+static gchar *format_time (gint duration);
+
 static void
 status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 {
@@ -42,16 +44,16 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 
 		switch (status) {
 		case XMMS_PLAYBACK_STATUS_STOP:
-			playback = g_strdup ("Stopped");
+			playback = g_strdup (_("Stopped"));
 			break;
 		case XMMS_PLAYBACK_STATUS_PLAY:
-			playback = g_strdup ("Playing");
+			playback = g_strdup (_("Playing"));
 			break;
 		case XMMS_PLAYBACK_STATUS_PAUSE:
-			playback = g_strdup ("Paused");
+			playback = g_strdup (_("Paused"));
 			break;
 		default:
-			playback = g_strdup ("Unknown");
+			playback = g_strdup (_("Unknown"));
 		}
 
 		g_hash_table_insert (entry->data, "playback_status", playback);
@@ -68,8 +70,10 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
 	guint currid;
-	gint duration, min, sec;
-	const gchar *title, *artist;
+	gint i;
+
+	const gchar *time_fields[] = { "duration", NULL };
+	const gchar *noinfo_fields[] = { "playback_status", "playtime", NULL };
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
@@ -77,21 +81,62 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
 
-	/* FIXME: use xmmsc_entry_format ? */
 	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_dict_entry_string (res, "title", &title);
-		xmmsc_result_get_dict_entry_string (res, "artist", &artist);
+		GList *it;
 
-		/* + 500 for rounding */
-		xmmsc_result_get_dict_entry_int (res, "duration", &duration);
-		sec = (duration+500) / 1000;
-		min = sec / 60;
-		sec = sec % 60;
+		for (it = g_list_first (entry->format);
+		     it != NULL;
+		     it = g_list_next (it)) {
 
-		g_hash_table_insert (entry->data, "title", g_strdup (title));
-		g_hash_table_insert (entry->data, "artist", g_strdup (artist));
-		g_hash_table_insert (entry->data, "duration",
-		                     g_strdup_printf ("%02d:%02d", min, sec));
+			gint ival;
+			gchar *value, *field;
+			const gchar *sval;
+			xmmsc_result_value_type_t type;
+
+			field = (gchar *)it->data + 2;
+
+			for (i = 0; noinfo_fields[i] != NULL; i++) {
+				if (!strcmp (field, noinfo_fields[i])) {
+					goto not_info_field;
+				}
+			}
+
+			type = xmmsc_result_get_dict_entry_type (res, field);
+			switch (type) {
+			case XMMSC_RESULT_VALUE_TYPE_STRING:
+				xmmsc_result_get_dict_entry_string (res, field, &sval);
+				value = g_strdup (sval);
+				break;
+
+			case XMMSC_RESULT_VALUE_TYPE_INT32:
+				xmmsc_result_get_dict_entry_int (res, field, &ival);
+
+				for (i = 0; time_fields[i] != NULL; i++) {
+					if (!strcmp (time_fields[i], field)) {
+						break;
+					}
+				}
+
+				if (time_fields[i] != NULL) {
+					value = format_time (ival);
+				} else {
+					value = g_strdup_printf ("%d", ival);
+				}
+				break;
+
+			default:
+				value = g_strdup (_("invalid field"));
+			}
+
+			/* FIXME: work with undefined fileds! pll parser? */
+			g_hash_table_insert (entry->data, field, value);
+
+		    not_info_field:
+			;
+		}
+
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
 	xmmsc_result_unref (res);
@@ -101,8 +146,7 @@ static void
 status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
-	guint playtime, min, sec;
-	gchar *formated;
+	guint playtime;
 
 	res = xmmsc_playback_playtime (infos->sync);
 	xmmsc_result_wait (res);
@@ -110,20 +154,27 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 	if (!xmmsc_result_iserror (res)) {
 		xmmsc_result_get_uint (res, &playtime);
 		
-		/* + 500 for rounding */
-		sec = (playtime+500) / 1000;
-		min = sec / 60;
-		sec = sec % 60;
-
-		formated = g_strdup_printf ("%02d:%02d", min, sec);
-
-		g_hash_table_insert (entry->data, "playtime", formated);
+		g_hash_table_insert (entry->data, "playtime", format_time (playtime));
 
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
 
 	xmmsc_result_unref (res);
+}
+
+/* Returned string must be freed by the caller */
+static gchar *
+format_time (gint duration)
+{
+	gint min, sec;
+
+	/* +500 for rounding */
+	sec = (duration+500) / 1000;
+	min = sec / 60;
+	sec = sec % 60;
+
+	return g_strdup_printf ("%02d:%02d", min, sec);
 }
 
 static GList *
