@@ -60,7 +60,7 @@ cmdnames_prepend (GList *list, gchar **v)
 			return list;
 		}
 	}
-	
+
 	cmd = cmdnames_new (*v);
 	cmd->subcommands = cmdnames_prepend (cmd->subcommands, v+1);
 	list = g_list_prepend (list, cmd);
@@ -85,7 +85,7 @@ GList *
 cmdnames_find (GList *list, gchar **v)
 {
 	GList *it;
-	
+
 	if (v == NULL || *v == NULL) {
 		return list;
 	}

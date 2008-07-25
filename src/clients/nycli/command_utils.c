@@ -151,7 +151,7 @@ strescape (gchar *s, gchar *toescape, gchar escape_char)
 {
 	gint len;
 	gchar *t, *r;
-	
+
 	t = s;
 	for (len = 0; *t != '\0'; len++, t++) {
 		if (strchr (toescape, *t)) {
@@ -169,7 +169,7 @@ strescape (gchar *s, gchar *toescape, gchar escape_char)
 		s++;
 		t++;
 	}
-	
+
 	return r;
 }
 
@@ -190,7 +190,7 @@ command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gchar **v)
 			args[i-at] = strescape (command_arg_get (ctx, i), " ", '\\');
 		}
 		*v = g_strjoinv (" ", args);
-		
+
 		for (i = at; i < count; i++) {
 			g_free (args[i-at]);
 		}

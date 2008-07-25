@@ -443,6 +443,7 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 		refresh = 0;
 	}
 
+	/* FIXME(g): Read default format from config file */
 	if (!command_flag_string_get (ctx, "format", &format)) {
 		format = "${playback_status}: ${artist} - "
 		         "${title}: ${playtime} of ${duration}";
@@ -611,7 +612,8 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 
 
 static gboolean
-cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos) {
+cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
+{
 	gboolean next;
 	gint at;
 	gboolean at_isset;
@@ -738,6 +740,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		/* FIXME: expand / glob? */
 		gint pid;
 		gchar *tmp_playlist;
+
 		pid = getpid ();
 		tmp_playlist = g_strdup_printf ("_nycli_tmp_playlist_%d", pid);
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
@@ -745,10 +748,10 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 			command_arg_string_get (ctx, i, &path);
 			matching_files_dirs (path, &files);
-			
+
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
-				gchar *url = make_valid_url (path);
-				if (norecurs) {
+				gchar *url = make_valid_url (it->data);
+				if (norecurs || g_file_test (it->data, G_FILE_TEST_IS_REGULAR)) {
 					res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
@@ -770,8 +773,8 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					res = xmmsc_playlist_list_entries (infos->sync, tmp_playlist);
 					xmmsc_result_wait (res);
 					for (xmmsc_result_list_first (res);
-						 xmmsc_result_list_valid (res);
-						 xmmsc_result_list_next (res)) {
+					     xmmsc_result_list_valid (res);
+					     xmmsc_result_list_next (res)) {
 						xmmsc_result_t *insres;
 						guint id;
 						if (xmmsc_result_get_uint (res, &id)) {

@@ -68,18 +68,18 @@ configuration_init (const gchar *path)
 			if (error) {
 				g_printf ("Error: Couldn't load configuration parameters");
 			}
-			
+
 			for (i = 0; keys[i] != NULL; i++) {
 				g_hash_table_insert (config->values,
 				                     g_strdup (keys[i]),
 				                     g_key_file_get_value (config->file,
-							                               "main", keys[i],
+				                                           "main", keys[i],
 				                                           NULL));
 			}
 			g_strfreev (keys);
 		}
 	}
-	
+
 	return config;
 }
 
@@ -97,11 +97,11 @@ configuration_get_boolean (configuration_t *config, gchar *key)
 	gchar *val;
 
 	val = g_hash_table_lookup (config->values, key);
-	
+
 	if (!strcmp (val, "true") || !strcmp (val, "1")) {
 		return TRUE;
 	}
-	
+
 	return FALSE;
 }
 

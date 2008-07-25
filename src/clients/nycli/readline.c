@@ -66,7 +66,7 @@ readline_status_callback (gchar *input)
 	rl_set_keymap (rl_get_keymap_by_name (readline_keymap));
 
 	rl_discard_keymap (active);
-	
+
 /* 	rl_unbind_key (110); */
 /* 	rl_bind_key (110, rl_insert); */
 
@@ -89,14 +89,14 @@ readline_status_callback (gchar *input)
 static gint
 readline_status_next (gint count, gint key)
 {
- 	status_set_next_rel (readline_cli_infos, 1);
+	status_set_next_rel (readline_cli_infos, 1);
 	return 0;
 }
 
 static gint
 readline_status_prev (gint count, gint key)
 {
- 	status_set_next_rel (readline_cli_infos, -1);
+	status_set_next_rel (readline_cli_infos, -1);
 	return 0;
 }
 
@@ -142,7 +142,7 @@ readline_status_mode (cli_infos_t *infos)
 
 	/* New keymap for status mode */
 	stkmap = rl_make_bare_keymap ();
-	
+
 	rl_bind_key_in_map ('\n', rl_newline, stkmap);
 	rl_bind_key_in_map ('\r', rl_newline, stkmap);
 	rl_bind_key_in_map ('n', readline_status_next, stkmap);

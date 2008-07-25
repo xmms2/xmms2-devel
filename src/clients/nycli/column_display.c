@@ -40,7 +40,8 @@ struct column_def_St {
 
 /* FIXME: not portable? */
 static gint
-find_terminal_width () {
+find_terminal_width ()
+{
 	gint columns;
 	struct winsize ws;
 	char *colstr, *endptr;

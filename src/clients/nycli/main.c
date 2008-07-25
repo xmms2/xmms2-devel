@@ -219,7 +219,7 @@ loop_select (cli_infos_t *infos)
 	/* Listen to readline in shell mode */
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL &&
 	    (infos->status == CLI_ACTION_STATUS_READY ||
-		 infos->status == CLI_ACTION_STATUS_REFRESH)) {
+	     infos->status == CLI_ACTION_STATUS_REFRESH)) {
 		FD_SET(STDINFD, &rfds);
 		if (maxfds < STDINFD) {
 			maxfds = STDINFD;
@@ -238,8 +238,7 @@ loop_select (cli_infos_t *infos)
 	if(modfds < 0) {
 		g_printf (_("Error: invalid I/O result!"));
 		return;
-	}
-	else if(modfds != 0) {
+	} else if(modfds != 0) {
 		/* Get/send data to xmms2 */
 		if (infos->conn) {
 			if(FD_ISSET(xmms2fd, &rfds)) {

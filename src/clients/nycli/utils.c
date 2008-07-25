@@ -373,7 +373,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		for (xmmsc_result_list_first (matching);
 		     xmmsc_result_list_valid (matching);
 		     xmmsc_result_list_next (matching)) {
-			
+
 			if (xmmsc_result_get_uint (matching, &id)) {
 				guint *tid;
 				tid = g_new (guint, 1);

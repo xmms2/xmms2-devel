@@ -153,9 +153,7 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 
 	if (!xmmsc_result_iserror (res)) {
 		xmmsc_result_get_uint (res, &playtime);
-		
 		g_hash_table_insert (entry->data, "playtime", format_time (playtime));
-
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
@@ -178,7 +176,8 @@ format_time (gint duration)
 }
 
 static GList *
-parse_format (gchar *format) {
+parse_format (gchar *format)
+{
 	gchar *copy, *s, *last;
 	GList *strings = NULL;
 
@@ -234,7 +233,8 @@ status_free (status_entry_t *entry)
 }
 
 void
-status_update_all (cli_infos_t *infos, status_entry_t *entry) {
+status_update_all (cli_infos_t *infos, status_entry_t *entry)
+{
 	status_update_playback (infos, entry);
 	status_update_info (infos, entry);
 	status_update_playtime (infos, entry);
