@@ -60,8 +60,8 @@ static void md5_append (md5_state_t *pms, const md5_byte_t *data, int nbytes);
 static void md5_finish (md5_state_t *pms, md5_byte_t digest[16]);
 
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
-static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
-static void xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *);
+static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *err);
+static void xmms_bindata_remove (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *);
 static GList *xmms_bindata_list (xmms_bindata_t *bindata, xmms_error_t *err);
 static gboolean _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err);
 
@@ -217,7 +217,8 @@ xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 }
 
 static GString *
-xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
+xmms_bindata_retrieve (xmms_bindata_t *bindata, const gchar *hash,
+                       xmms_error_t *err)
 {
 	gchar *path;
 	GString *str;
@@ -256,7 +257,8 @@ xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
 }
 
 static void
-xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
+xmms_bindata_remove (xmms_bindata_t *bindata, const gchar *hash,
+                     xmms_error_t *err)
 {
 	gchar *path;
 	path = XMMS_BUILD_PATH ("bindata", hash);
@@ -286,8 +288,7 @@ xmms_bindata_list (xmms_bindata_t *bindata, xmms_error_t *err)
 	}
 
 	while ((file = g_dir_read_name (dir))) {
-		entries = g_list_prepend (entries,
-		                          xmms_object_cmd_value_str_new (file));
+		entries = g_list_prepend (entries, xmmsv_new_string (file));
 	}
 
 	g_dir_close (dir);

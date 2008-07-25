@@ -39,17 +39,17 @@
 
 
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
-static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
+static gboolean xmms_medialib_int_cb (xmmsv_t **row, gpointer udata);
 gchar *xmms_medialib_url_encode (const gchar *path);
 
-static void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
-static void xmms_medialib_move_entry (xmms_medialib_t *, guint32 entry, gchar *, xmms_error_t *);
-static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
+static void xmms_medialib_add_entry (xmms_medialib_t *, const gchar *, xmms_error_t *);
+static void xmms_medialib_move_entry (xmms_medialib_t *, guint32 entry, const gchar *, xmms_error_t *);
+static void xmms_medialib_path_import (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
-static void xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
-static void xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gint32 value, xmms_error_t *error);
-static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, xmms_error_t *error);
-static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
+static void xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
+static void xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry, const gchar *source, const gchar *key, gint32 value, xmms_error_t *error);
+static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry, const gchar *source, const gchar *key, xmms_error_t *error);
+static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
 
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, UINT32, NONE);
@@ -471,12 +471,12 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 }
 
 static gboolean
-xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata)
+xmms_medialib_int_cb (xmmsv_t **row, gpointer udata)
 {
 	guint *i = udata;
 
-	if (row && row[0] && row[0]->type == XMMSV_TYPE_INT32)
-		*i = row[0]->value.int32;
+	if (row && row[0] && xmmsv_get_type (row[0]) == XMMSV_TYPE_INT32)
+		xmmsv_get_int (row[0], i);
 	else
 		XMMS_DBG ("Expected int32 but got something else!");
 
@@ -484,24 +484,26 @@ xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata)
 }
 
 static int
-xmms_medialib_string_cb (xmms_object_cmd_value_t **row, gpointer udata)
+xmms_medialib_string_cb (xmmsv_t **row, gpointer udata)
 {
 	gchar **str = udata;
+	const gchar *buf;
 
-	if (row && row[0] && row[0]->type == XMMSV_TYPE_STRING)
-		*str = g_strdup (row[0]->value.string);
-	else
+	if (row && row[0] && xmmsv_get_type (row[0]) == XMMSV_TYPE_STRING) {
+		xmmsv_get_string (row[0], &buf);
+		*str = g_strdup (buf);
+	} else
 		XMMS_DBG ("Expected string but got something else!");
 
 	return 0;
 }
 
 static int
-xmms_medialib_cmd_value_cb (xmms_object_cmd_value_t **row, gpointer udata)
+xmms_medialib_value_cb (xmmsv_t **row, gpointer udata)
 {
-	xmms_object_cmd_value_t **ret = udata;
+	xmmsv_t **ret = udata;
 
-	*ret = xmms_object_cmd_value_ref (row[0]);
+	*ret = xmmsv_ref (row[0]);
 
 	return 0;
 }
@@ -514,20 +516,20 @@ xmms_medialib_cmd_value_cb (xmms_object_cmd_value_t **row, gpointer udata)
 
 #define XMMS_MEDIALIB_RETRV_PROPERTY_SQL "select value from Media where key=%Q and id=%d order by xmms_source_pref(source, %Q) limit 1"
 
-xmms_object_cmd_value_t *
-xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session,
+xmmsv_t *
+xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
                                             xmms_medialib_entry_t entry,
                                             const gchar *property)
 {
-	xmms_object_cmd_value_t *ret = NULL;
+	xmmsv_t *ret = NULL;
 
 	g_return_val_if_fail (property, NULL);
 	g_return_val_if_fail (session, NULL);
 
 	if (!strcmp (property, XMMS_MEDIALIB_ENTRY_PROPERTY_ID)) {
-		ret = xmms_object_cmd_value_int_new (entry);
+		ret = xmmsv_new_int (entry);
 	} else {
-		xmms_sqlite_query_array (session->sql, xmms_medialib_cmd_value_cb,
+		xmms_sqlite_query_array (session->sql, xmms_medialib_value_cb,
 		                         &ret, XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
 		                         property, entry, source_pref);
 	}
@@ -736,7 +738,7 @@ static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_sessi
 
 static void
 process_file (xmms_medialib_session_t *session,
-              gchar *playlist,
+              const gchar *playlist,
               gint32 pos,
               const gchar *path,
               xmms_error_t *error)
@@ -756,56 +758,22 @@ process_file (xmms_medialib_session_t *session,
 	}
 }
 
-static const gchar *
-lookup_string (xmms_object_cmd_value_t *tbl, const gchar *key)
-{
-	xmms_object_cmd_value_t *val;
-
-	if (!tbl || tbl->type != XMMSV_TYPE_DICT)
-		return NULL;
-
-	val = g_tree_lookup (tbl->value.dict, key);
-
-	if (!val)
-		return NULL;
-
-	if (val->type != XMMSV_TYPE_STRING)
-		return NULL;
-
-	return val->value.string;
-}
-
-static gint32
-lookup_int (xmms_object_cmd_value_t *tbl, const gchar *key)
-{
-	xmms_object_cmd_value_t *val;
-
-	if (!tbl || tbl->type != XMMSV_TYPE_DICT)
-		return 0;
-
-	val = g_tree_lookup (tbl->value.dict, key);
-
-	if (!val)
-		return 0;
-
-	if (val->type != XMMSV_TYPE_INT32)
-		return 0;
-
-	return val->value.int32;
-}
-
 static gint
 cmp_val (gconstpointer a, gconstpointer b)
 {
-	xmms_object_cmd_value_t *v1, *v2;
-	v1 = (xmms_object_cmd_value_t *)a;
-	v2 = (xmms_object_cmd_value_t *)b;
-	if (v1->type != XMMSV_TYPE_DICT)
+	xmmsv_t *v1, *v2;
+	const gchar *s1, *s2;
+	v1 = (xmmsv_t *) a;
+	v2 = (xmmsv_t *) b;
+	if (xmmsv_get_type (v1) != XMMSV_TYPE_DICT)
 		return 0;
-	if (v2->type != XMMSV_TYPE_DICT)
+	if (xmmsv_get_type (v2) != XMMSV_TYPE_DICT)
 		return 0;
 
-	return strcmp (lookup_string (v1, "path"), lookup_string (v2, "path"));
+	xmmsv_get_dict_entry_string (v1, "path", &s1);
+	xmmsv_get_dict_entry_string (v2, "path", &s2);
+
+	return strcmp (s1, s2);
 }
 
 /* code ported over from CLI's "radd" command. */
@@ -824,16 +792,20 @@ process_dir (const gchar *directory,
 	list = g_list_sort (list, cmp_val);
 
 	while (list) {
-		xmms_object_cmd_value_t *val = list->data;
-		const gchar *str = lookup_string (val, "path");
+		xmmsv_t *val = list->data;
+		const gchar *str;
+		gint isdir;
 
-		if (lookup_int (val, "isdir") == 1) {
+		xmmsv_get_dict_entry_string (val, "path", &str);
+		xmmsv_get_dict_entry_int (val, "isdir", &isdir);
+
+		if (isdir == 1) {
 			process_dir (str, ret, error);
 		} else {
 			*ret = g_list_prepend (*ret, g_strdup (str));
 		}
 
-		xmms_object_cmd_value_unref (val);
+		xmmsv_unref (val);
 		list = g_list_delete_link (list, list);
 	}
 
@@ -894,8 +866,8 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
  * not NULL.
  */
 void
-xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
-                             gchar *path, xmms_error_t *error)
+xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *playlist,
+                             const gchar *path, xmms_error_t *error)
 {
 	/* Just called insert with negative pos to append */
 	xmms_medialib_insert_recursive (medialib, playlist, -1, path, error);
@@ -907,8 +879,8 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
  * are appended to the playlist.
  */
 void
-xmms_medialib_insert_recursive (xmms_medialib_t *medialib, gchar *playlist,
-                                gint32 pos, gchar *path,
+xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist,
+                                gint32 pos, const gchar *path,
                                 xmms_error_t *error)
 {
 	xmms_medialib_session_t *session;
@@ -945,7 +917,8 @@ xmms_medialib_insert_recursive (xmms_medialib_t *medialib, gchar *playlist,
 }
 
 static void
-xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+xmms_medialib_path_import (xmms_medialib_t *medialib, const gchar *path,
+                           xmms_error_t *error)
 {
 	xmms_medialib_add_recursive (medialib, NULL, path, error);
 }
@@ -1054,7 +1027,8 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms
 }
 
 static guint32
-xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
+xmms_medialib_entry_get_id (xmms_medialib_t *medialib, const gchar *url,
+                            xmms_error_t *error)
 {
 	guint32 id = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
@@ -1069,50 +1043,47 @@ xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t 
 }
 
 static void
-xmms_medialib_tree_add_tuple (GTree *tree, xmms_object_cmd_value_t *key,
-                              xmms_object_cmd_value_t *source,
-                              xmms_object_cmd_value_t *value)
+xmms_medialib_tree_add_tuple (GTree *tree, xmmsv_t *key,
+                              xmmsv_t *source, xmmsv_t *value)
 {
-	xmms_object_cmd_value_t *keytreeval;
-	GTree *keytree;
+	xmmsv_t *keytreeval;
+	const gchar *skey, *ssrc;
+
+	xmmsv_get_string (key, &skey);
+	xmmsv_get_string (source, &ssrc);
 
 	/* Find (or insert) subtree matching the prop key */
-	keytreeval = (xmms_object_cmd_value_t *) g_tree_lookup (tree, key->value.string);
-	if (keytreeval) {
-		keytree = keytreeval->value.dict;
-	} else {
-		keytree = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
-	                               (GDestroyNotify) xmms_object_cmd_value_unref);
-		keytreeval = xmms_object_cmd_value_dict_new (keytree);
-		g_tree_insert (tree, g_strdup (key->value.string), keytreeval);
+	keytreeval = (xmmsv_t *) g_tree_lookup (tree, skey);
+	if (!keytreeval) {
+		keytreeval = xmmsv_new_dict ();
+		g_tree_insert (tree, g_strdup (skey), keytreeval);
 	}
 
 	/* Replace (or insert) value matching the prop source */
-	g_tree_insert (keytree, g_strdup (source->value.string),
-	               xmms_object_cmd_value_ref (value));
+	xmmsv_dict_insert (keytreeval, ssrc, value);
 }
 
 static gboolean
-xmms_medialib_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
+xmms_medialib_list_cb (xmmsv_t **row, gpointer udata)
 {
 	GList **list = (GList**)udata;
 
 	/* Source */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[0]));
+	*list = g_list_prepend (*list, xmmsv_ref (row[0]));
 
 	/* Key */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[1]));
+	*list = g_list_prepend (*list, xmmsv_ref (row[1]));
 
 	/* Value */
-	*list = g_list_prepend (*list, xmms_object_cmd_value_ref (row[2]));
+	*list = g_list_prepend (*list, xmmsv_ref (row[2]));
 
 	return TRUE;
 }
 
 static gboolean
-xmms_medialib_tree_cb (xmms_object_cmd_value_t **row, gpointer udata)
+xmms_medialib_tree_cb (xmmsv_t **row, gpointer udata)
 {
-	xmms_object_cmd_value_t *key, *source, *value;
+	xmmsv_t *key, *source, *value;
 	GTree **tree = (GTree**)udata;
 
 	source = row[0];
@@ -1156,13 +1127,13 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	}
 
 	/* Source */
-	ret = g_list_prepend (ret, xmms_object_cmd_value_str_new ("server"));
+	ret = g_list_prepend (ret, xmmsv_new_string ("server"));
 
 	/* Key */
-	ret = g_list_prepend (ret, xmms_object_cmd_value_str_new ("id"));
+	ret = g_list_prepend (ret, xmmsv_new_string ("id"));
 
 	/* Value */
-	ret = g_list_prepend (ret, xmms_object_cmd_value_int_new (entry));
+	ret = g_list_prepend (ret, xmmsv_new_int (entry));
 
 	return g_list_reverse (ret);
 }
@@ -1182,7 +1153,7 @@ GTree *
 xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_entry_t entry)
 {
 	GTree *ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
-	                              (GDestroyNotify) xmms_object_cmd_value_unref);
+	                              (GDestroyNotify) xmmsv_unref);
 	gboolean s;
 
 	g_return_val_if_fail (session, NULL);
@@ -1199,9 +1170,9 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_ent
 		return NULL;
 	}
 
-	xmms_medialib_tree_add_tuple (ret, xmms_object_cmd_value_str_new ("id"),
-	                              xmms_object_cmd_value_str_new ("server"),
-	                              xmms_object_cmd_value_int_new (entry));
+	xmms_medialib_tree_add_tuple (ret, xmmsv_new_string ("id"),
+	                              xmmsv_new_string ("server"),
+	                              xmmsv_new_int (entry));
 
 	return ret;
 }
@@ -1255,8 +1226,7 @@ static gboolean
 select_callback (GTree *row, gpointer udata)
 {
 	GList **l = (GList **) udata;
-
-	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (row));
+	*l = g_list_prepend (*l, xmms_create_xmmsv_dict (row));
 	return TRUE;
 }
 
@@ -1270,7 +1240,8 @@ select_callback (GTree *row, gpointer udata)
  */
 
 static void
-xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
+xmms_medialib_add_entry (xmms_medialib_t *medialib, const gchar *url,
+                         xmms_error_t *error)
 {
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
@@ -1295,7 +1266,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
  */
 static void
 xmms_medialib_move_entry (xmms_medialib_t *medialib, guint32 entry,
-                          gchar *url, xmms_error_t *error)
+                          const gchar *url, xmms_error_t *error)
 {
 	const gchar *key = XMMS_MEDIALIB_ENTRY_PROPERTY_URL;
 	guint32 sourceid = XMMS_MEDIALIB_SOURCE_SERVER_ID;
@@ -1317,8 +1288,8 @@ xmms_medialib_move_entry (xmms_medialib_t *medialib, guint32 entry,
 
 static void
 xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
-                                       gchar *source, gchar *key,
-                                       gchar *value, xmms_error_t *error)
+                                       const gchar *source, const gchar *key,
+                                       const gchar *value, xmms_error_t *error)
 {
 	guint32 sourceid;
 	xmms_medialib_session_t *session;
@@ -1341,7 +1312,7 @@ xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
 
 static void
 xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry,
-                                       gchar *source, gchar *key,
+                                       const gchar *source, const gchar *key,
                                        gint32 value, xmms_error_t *error)
 {
 	guint32 sourceid;
@@ -1364,7 +1335,7 @@ xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry,
 
 void
 xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
-                               gchar *source, gchar *key,
+                               const gchar *source, const gchar *key,
                                xmms_error_t *error)
 {
 	guint32 sourceid;
@@ -1381,7 +1352,7 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 
 static void
 xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
-                                      gchar *source, gchar *key,
+                                      const gchar *source, const gchar *key,
                                       xmms_error_t *error)
 {
 	if (g_ascii_strcasecmp (source, "server") == 0) {

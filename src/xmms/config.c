@@ -60,7 +60,7 @@ typedef struct dump_tree_data_St {
 
 static GTree *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_property_t *xmms_config_property_new (const gchar *name);
-static gchar *xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
+static gchar *xmms_config_property_client_lookup (xmms_config_t *conf, const gchar *key, xmms_error_t *err);
 static gchar *xmms_config_property_client_register (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
 static gint compare_key (gconstpointer a, gconstpointer b, gpointer user_data);
 
@@ -148,7 +148,7 @@ static xmms_config_t *global_config;
  * @return A string with the value. If the value is an int it will return NULL
  */
 const gchar *
-xmms_config_property_lookup_get_string (xmms_config_t *conf, gchar *key,
+xmms_config_property_lookup_get_string (xmms_config_t *conf, const gchar *key,
                                         xmms_error_t *err)
 {
 	xmms_config_property_t *prop;
@@ -219,9 +219,9 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	                  (gpointer) data);
 
 	dict = g_tree_new_full (compare_key, NULL,
-	                        NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+	                        NULL, (GDestroyNotify) xmmsv_unref);
 	g_tree_insert (dict, (gchar *) prop->name,
-	               xmms_object_cmd_value_str_new (prop->value));
+	               xmmsv_new_string (prop->value));
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
@@ -598,8 +598,7 @@ static gboolean
 xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
                           GTree *dict)
 {
-	g_tree_insert (dict, g_strdup (key),
-	               xmms_object_cmd_value_str_new (prop->value));
+	g_tree_insert (dict, g_strdup (key), xmmsv_new_string (prop->value));
 
 	return FALSE; /* keep going */
 }
@@ -616,7 +615,7 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 	GTree *ret;
 
 	ret = g_tree_new_full (compare_key, NULL,
-	                       g_free, (GDestroyNotify)xmms_object_cmd_value_unref);
+	                       g_free, (GDestroyNotify)xmmsv_unref);
 
 	g_mutex_lock (conf->mutex);
 	g_tree_foreach (conf->properties,
@@ -635,8 +634,8 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
  * @return The value of the key, or NULL if not found
  */
 static gchar *
-xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key,
-                                 xmms_error_t *err)
+xmms_config_property_client_lookup (xmms_config_t *conf, const gchar *key,
+                                    xmms_error_t *err)
 {
 	return g_strdup (xmms_config_property_lookup_get_string (conf, key, err));
 }

@@ -440,19 +440,30 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 uint32_t
 xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 {
-	uint32_t ret;
-	uint32_t u;
-	int32_t i;
-	const char *s;
-	xmmsv_coll_t *c;
-	unsigned char *bc;
-	unsigned int bl;
 	xmmsv_type_t type;
 
 	type = xmmsv_get_type (v);
 	xmms_ipc_msg_put_int32 (msg, type);
 
+	return xmms_ipc_msg_put_value_data (msg, v);
+}
+
+uint32_t
+xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
+{
+	uint32_t ret;
+	uint32_t u;
+	int32_t i;
+	const char *s;
+	xmmsv_coll_t *c;
+	const unsigned char *bc;
+	unsigned int bl;
+	xmmsv_type_t type;
+
+	type = xmmsv_get_type (v);
+
 	/* FIXME: what to do if value fetching fails? */
+	/* FIXME: return -1 unsigned int?? */
 
 	switch (type) {
 	case XMMSV_TYPE_ERROR:
@@ -499,6 +510,7 @@ xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		break;
 
 	case XMMSV_TYPE_NONE:
+		break;
 	default:
 		/* FIXME: weird, no? dump error? */
 		return -1;
@@ -884,15 +896,24 @@ err:
 bool
 xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val)
 {
-	int32_t type, i;
-	uint32_t len, u;
-	char *s;
-	xmmsv_coll_t *c;
-	unsigned char *d;
+	int32_t type;
 
 	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *) &type)) {
 		return false;
 	}
+
+	return xmms_ipc_msg_get_value_of_type_alloc (msg, type, val);
+}
+
+bool
+xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
+                                      xmmsv_t **val)
+{
+	int32_t i;
+	uint32_t len, u;
+	char *s;
+	xmmsv_coll_t *c;
+	unsigned char *d;
 
 	switch (type) {
 		case XMMSV_TYPE_ERROR:

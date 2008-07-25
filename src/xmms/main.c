@@ -62,7 +62,7 @@
  */
 static void quit (xmms_object_t *object, xmms_error_t *error);
 static GTree *stats (xmms_object_t *object, xmms_error_t *error);
-static void hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
+static void hello (xmms_object_t *object, guint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
 static xmms_bindata_t *bindata_obj;
@@ -113,14 +113,14 @@ stats (xmms_object_t *object, xmms_error_t *error)
 	gint starttime;
 
 	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                       NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+	                       NULL, (GDestroyNotify) xmmsv_unref);
 
 	starttime = ((xmms_main_t*)object)->starttime;
 
 	g_tree_insert (ret, (gpointer) "version",
-	               xmms_object_cmd_value_str_new (XMMS_VERSION));
+	               xmmsv_new_string (XMMS_VERSION));
 	g_tree_insert (ret, (gpointer) "uptime",
-	               xmms_object_cmd_value_int_new (time (NULL)-starttime));
+	               xmmsv_new_int (time (NULL) - starttime));
 
 	return ret;
 }
@@ -263,7 +263,7 @@ xmms_main_destroy (xmms_object_t *object)
  * @internal Function to respond to the 'hello' sent from clients on connect
  */
 static void
-hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error)
+hello (xmms_object_t *object, guint protocolver, const gchar *client, xmms_error_t *error)
 {
 	if (protocolver != XMMS_IPC_PROTOCOL_VERSION) {
 		xmms_log_info ("Client '%s' with bad protocol version (%d, not %d) connected", client, protocolver, XMMS_IPC_PROTOCOL_VERSION);

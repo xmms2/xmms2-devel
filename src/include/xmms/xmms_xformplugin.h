@@ -320,7 +320,7 @@ const gchar *xmms_xform_get_url (xmms_xform_t *xform);
 #define XMMS_XFORM_BROWSE_FLAG_DIR (1 << 0)
 
 void xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *path, guint32 flags);
-void xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val);
+void xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmmsv_t *val);
 void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
                                                const gchar *key,
                                                const gchar *value);

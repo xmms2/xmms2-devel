@@ -39,7 +39,7 @@
  * Public functions
  */
 
-GString* xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint limit_start, guint limit_len, GList *order, GList *fetch, GList *group);
+GString* xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint limit_start, guint limit_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group);
 
 
 #endif

@@ -77,7 +77,7 @@ struct xmms_xform_St {
 typedef struct xmms_xform_hotspot_St {
 	guint pos;
 	gchar *key;
-	xmms_object_cmd_value_t *obj;
+	xmmsv_t *obj;
 } xmms_xform_hotspot_t;
 
 #define READ_CHUNK 4096
@@ -108,7 +108,7 @@ xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
                                           const gchar *key,
                                           const gchar *value)
 {
-	xmms_object_cmd_value_t *val = xmms_object_cmd_value_str_new (value);
+	xmmsv_t *val = xmmsv_new_string (value);
 	xmms_xform_browse_add_entry_property (xform, key, val);
 }
 
@@ -118,7 +118,7 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
                                           const gchar *key,
                                           gint value)
 {
-	xmms_object_cmd_value_t *val = xmms_object_cmd_value_int_new (value);
+	xmmsv_t *val = xmmsv_new_int (value);
 	xmms_xform_browse_add_entry_property (xform, key, val);
 }
 
@@ -160,7 +160,7 @@ xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename,
 
 void
 xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key,
-                                      xmms_object_cmd_value_t *val)
+                                      xmmsv_t *val)
 {
 	g_return_if_fail (xform);
 	g_return_if_fail (xform->browse_dict);
@@ -174,7 +174,7 @@ void
 xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
                              guint32 flags)
 {
-	xmms_object_cmd_value_t *val;
+	xmmsv_t *val;
 	const gchar *url;
 	gchar *efile, *eurl, *t;
 	gint l, isdir;
@@ -189,7 +189,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 
 	xform->browse_dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
 	                                      g_free,
-	                                      (GDestroyNotify)xmms_object_cmd_value_unref);
+	                                      (GDestroyNotify) xmmsv_unref);
 
 	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
@@ -207,7 +207,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	xmms_xform_browse_add_entry_property_str (xform, "path", t);
 	xmms_xform_browse_add_entry_property_int (xform, "isdir", isdir);
 
-	val = xmms_object_cmd_value_dict_new (xform->browse_dict);
+	val = xmms_create_xmmsv_dict (xform->browse_dict);
 	xform->browse_list = g_list_prepend (xform->browse_list, val);
 
 	g_free (t);
@@ -218,33 +218,40 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 static gint
 xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 {
-	xmms_object_cmd_value_t *val1, *val2, *tmp1, *tmp2;
+	xmmsv_t *val1, *val2, *tmp1, *tmp2;
+	const gchar *s1, *s2;
 
-	val1 = (xmms_object_cmd_value_t *) a;
-	val2 = (xmms_object_cmd_value_t *) b;
+	val1 = (xmmsv_t *) a;
+	val2 = (xmmsv_t *) b;
 
-	g_return_val_if_fail (val1->type == XMMSV_TYPE_DICT, 0);
-	g_return_val_if_fail (val2->type == XMMSV_TYPE_DICT, 0);
+	g_return_val_if_fail (xmmsv_get_type (val1) == XMMSV_TYPE_DICT, 0);
+	g_return_val_if_fail (xmmsv_get_type (val2) == XMMSV_TYPE_DICT, 0);
 
-	tmp1 = g_tree_lookup (val1->value.dict, "intsort");
-	tmp2 = g_tree_lookup (val2->value.dict, "intsort");
+	xmmsv_dict_get (val1, "intsort", &tmp1);
+	xmmsv_dict_get (val2, "intsort", &tmp2);
 
 	if (tmp1 && tmp2) {
-		g_return_val_if_fail (tmp1->type == XMMSV_TYPE_INT32, 0);
-		g_return_val_if_fail (tmp2->type == XMMSV_TYPE_INT32, 0);
-		return tmp1->value.int32 > tmp2->value.int32;
+		gint i1, i2;
+		g_return_val_if_fail (xmmsv_get_type (tmp1) == XMMSV_TYPE_INT32, 0);
+		g_return_val_if_fail (xmmsv_get_type (tmp2) == XMMSV_TYPE_INT32, 0);
+		xmmsv_get_int (tmp1, &i1);
+		xmmsv_get_int (tmp2, &i2);
+		return i1 > i2;
 	}
 
-	tmp1 = g_tree_lookup (val1->value.dict, "path");
-	tmp2 = g_tree_lookup (val2->value.dict, "path");
+	xmmsv_dict_get (val1, "path", &tmp1);
+	xmmsv_dict_get (val2, "path", &tmp2);
 
 	g_return_val_if_fail (!!tmp1, 0);
 	g_return_val_if_fail (!!tmp2, 0);
 
-	g_return_val_if_fail (tmp1->type == XMMSV_TYPE_STRING, 0);
-	g_return_val_if_fail (tmp2->type == XMMSV_TYPE_STRING, 0);
+	g_return_val_if_fail (xmmsv_get_type (tmp1) == XMMSV_TYPE_STRING, 0);
+	g_return_val_if_fail (xmmsv_get_type (tmp2) == XMMSV_TYPE_STRING, 0);
 
-	return g_utf8_collate (tmp1->value.string, tmp2->value.string);
+	xmmsv_get_string (tmp1, &s1);
+	xmmsv_get_string (tmp2, &s2);
+
+	return g_utf8_collate (s1, s2);
 }
 
 GList *
@@ -384,11 +391,11 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 
 	xform->metadata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free,
-	                                         (GDestroyNotify)xmms_object_cmd_value_unref);
+	                                         (GDestroyNotify) xmmsv_unref);
 
 	xform->privdata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free,
-	                                         (GDestroyNotify)xmms_object_cmd_value_unref);
+	                                         (GDestroyNotify) xmmsv_unref);
 	xform->hotspots = g_queue_new ();
 
 	if (plugin && entry) {
@@ -504,7 +511,7 @@ xmms_xform_metadata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
 	XMMS_DBG ("Setting '%s' to %d", key, val);
 	g_hash_table_insert (xform->metadata, g_strdup (key),
-	                     xmms_object_cmd_value_int_new (val));
+	                     xmmsv_new_int (val));
 	xform->metadata_changed = TRUE;
 }
 
@@ -521,15 +528,15 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
 	}
 
 	g_hash_table_insert (xform->metadata, g_strdup (key),
-	                     xmms_object_cmd_value_str_new (val));
+	                     xmmsv_new_string (val));
 
 	xform->metadata_changed = TRUE;
 }
 
-static const xmms_object_cmd_value_t *
+static const xmmsv_t *
 xmms_xform_metadata_get_val (xmms_xform_t *xform, const char *key)
 {
-	xmms_object_cmd_value_t *val = NULL;
+	xmmsv_t *val = NULL;
 
 	for (; xform; xform = xform->prev) {
 		val = g_hash_table_lookup (xform->metadata, key);
@@ -551,12 +558,12 @@ gboolean
 xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key,
                              gint32 *val)
 {
-	const xmms_object_cmd_value_t *obj;
+	const xmmsv_t *obj;
 	gboolean ret = FALSE;
 
 	obj = xmms_xform_metadata_get_val (xform, key);
-	if (obj && obj->type == XMMSV_TYPE_INT32) {
-		*val = obj->value.int32;
+	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_INT32) {
+		xmmsv_get_int (obj, val);
 		ret = TRUE;
 	}
 
@@ -567,12 +574,12 @@ gboolean
 xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key,
                              const gchar **val)
 {
-	const xmms_object_cmd_value_t *obj;
+	const xmmsv_t *obj;
 	gboolean ret = FALSE;
 
 	obj = xmms_xform_metadata_get_val (xform, key);
-	if (obj && obj->type == XMMSV_TYPE_STRING) {
-		*val = obj->value.string;
+	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_STRING) {
+		xmmsv_get_string (obj, val);
 		ret = TRUE;
 	}
 
@@ -588,21 +595,25 @@ typedef struct {
 static void
 add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 {
-	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *) _value;
+	xmmsv_t *value = (xmmsv_t *) _value;
 	gchar *key = (gchar *) _key;
 	metadata_festate_t *st = (metadata_festate_t *) user_data;
 
-	if (value->type == XMMSV_TYPE_STRING) {
+	if (xmmsv_get_type (value) == XMMSV_TYPE_STRING) {
+		const gchar *s;
+		xmmsv_get_string (value, &s);
 		xmms_medialib_entry_property_set_str_source (st->session,
 		                                             st->entry,
 		                                             key,
-		                                             value->value.string,
+		                                             s,
 		                                             st->source);
-	} else if (value->type == XMMSV_TYPE_INT32) {
+	} else if (xmmsv_get_type (value) == XMMSV_TYPE_INT32) {
+		gint i;
+		xmmsv_get_int (value, &i);
 		xmms_medialib_entry_property_set_int_source (st->session,
 		                                             st->entry,
 		                                             key,
-		                                             value->value.int32,
+		                                             i,
 		                                             st->source);
 	} else {
 		XMMS_DBG ("Unknown type?!?");
@@ -715,8 +726,7 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 }
 
 static void
-xmms_xform_auxdata_set_val (xmms_xform_t *xform, char *key,
-                            xmms_object_cmd_value_t *val)
+xmms_xform_auxdata_set_val (xmms_xform_t *xform, char *key, xmmsv_t *val)
 {
 	xmms_xform_hotspot_t *hs;
 
@@ -731,14 +741,14 @@ xmms_xform_auxdata_set_val (xmms_xform_t *xform, char *key,
 void
 xmms_xform_auxdata_barrier (xmms_xform_t *xform)
 {
-	xmms_object_cmd_value_t *val = xmms_object_cmd_value_none_new ();
+	xmmsv_t *val = xmmsv_new_none ();
 	xmms_xform_auxdata_set_val (xform, NULL, val);
 }
 
 void
 xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, int intval)
 {
-	xmms_object_cmd_value_t *val = xmms_object_cmd_value_int_new (intval);
+	xmmsv_t *val = xmmsv_new_int (intval);
 	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
@@ -746,7 +756,7 @@ void
 xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key,
                             const gchar *strval)
 {
-	xmms_object_cmd_value_t *val;
+	xmmsv_t *val;
 	const char *old;
 
 	if (xmms_xform_auxdata_get_str (xform, key, &old)) {
@@ -755,7 +765,7 @@ xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key,
 		}
 	}
 
-	val = xmms_object_cmd_value_str_new (strval);
+	val = xmmsv_new_string (strval);
 	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
@@ -763,20 +773,18 @@ void
 xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key,
                             gpointer data, gssize len)
 {
-	xmms_object_cmd_value_t *val;
-	GString *bin;
+	xmmsv_t *val;
 
-	bin = g_string_new_len (data, len);
-	val = xmms_object_cmd_value_bin_new (bin);
+	val = xmmsv_new_bin (data, len);
 	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
 }
 
-static const xmms_object_cmd_value_t *
+static const xmmsv_t *
 xmms_xform_auxdata_get_val (xmms_xform_t *xform, const gchar *key)
 {
 	guint i;
 	xmms_xform_hotspot_t *hs;
-	xmms_object_cmd_value_t *val = NULL;
+	xmmsv_t *val = NULL;
 
 	/* privdata is always got from the previous xform */
 	xform = xform->prev;
@@ -806,11 +814,11 @@ xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key)
 gboolean
 xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
 {
-	const xmms_object_cmd_value_t *obj;
+	const xmmsv_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMSV_TYPE_INT32) {
-		*val = obj->value.int32;
+	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_INT32) {
+		xmmsv_get_int (obj, val);
 		return TRUE;
 	}
 
@@ -821,11 +829,11 @@ gboolean
 xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
                             const gchar **val)
 {
-	const xmms_object_cmd_value_t *obj;
+	const xmmsv_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMSV_TYPE_STRING) {
-		*val = obj->value.string;
+	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_STRING) {
+		xmmsv_get_string (obj, val);
 		return TRUE;
 	}
 
@@ -836,15 +844,11 @@ gboolean
 xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
                             gpointer *data, gssize *datalen)
 {
-	const xmms_object_cmd_value_t *obj;
+	const xmmsv_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMSV_TYPE_BIN) {
-		GString *bin = obj->value.bin;
-
-		*data = bin->str;
-		*datalen = bin->len;
-
+	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_BIN) {
+		xmmsv_get_bin (obj, data, datalen);
 		return TRUE;
 	}
 
@@ -1038,7 +1042,7 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset,
 		/* flush the hotspot queue on seek */
 		while ((hs = g_queue_pop_head (xform->hotspots)) != NULL) {
 			g_free (hs->key);
-			xmms_object_cmd_value_unref (hs->obj);
+			xmmsv_unref (hs->obj);
 			g_free (hs);
 		}
 	}

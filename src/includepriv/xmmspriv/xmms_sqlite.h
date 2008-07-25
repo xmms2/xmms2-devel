@@ -23,7 +23,7 @@
 #include <sqlite3.h>
 #include <xmms/xmms_object.h>
 
-typedef gboolean (*xmms_medialib_row_array_method_t) (xmms_object_cmd_value_t **row, gpointer udata);
+typedef gboolean (*xmms_medialib_row_array_method_t) (xmmsv_t **row, gpointer udata);
 typedef gboolean (*xmms_medialib_row_table_method_t) (GTree *row, gpointer udata);
 
 sqlite3 *xmms_sqlite_open (void);

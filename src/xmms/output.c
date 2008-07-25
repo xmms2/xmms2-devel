@@ -1157,15 +1157,15 @@ xmms_volume_map_to_dict (xmms_volume_map_t *vl)
 	gint i;
 
 	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                       NULL, (GDestroyNotify)xmms_object_cmd_value_unref);
+	                       NULL, (GDestroyNotify) xmmsv_unref);
 	if (!ret) {
 		return NULL;
 	}
 
 	for (i = 0; i < vl->num_channels; i++) {
-		xmms_object_cmd_value_t *val;
+		xmmsv_t *val;
 
-		val = xmms_object_cmd_value_uint_new (vl->values[i]);
+		val = xmmsv_new_uint (vl->values[i]);
 		g_tree_replace (ret, (gpointer) vl->names[i], val);
 	}
 

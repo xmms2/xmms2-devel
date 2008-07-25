@@ -424,22 +424,22 @@ xmms_sqlite_open ()
 	return sql;
 }
 
-static xmms_object_cmd_value_t *
+static xmmsv_t *
 xmms_sqlite_column_to_val (sqlite3_stmt *stm, gint column)
 {
-	xmms_object_cmd_value_t *val = NULL;
+	xmmsv_t *val = NULL;
 
 	switch (sqlite3_column_type (stm, column)) {
 		case SQLITE_INTEGER:
 		case SQLITE_FLOAT:
-			val = xmms_object_cmd_value_int_new (sqlite3_column_int (stm, column));
+			val = xmmsv_new_int (sqlite3_column_int (stm, column));
 			break;
 		case SQLITE_TEXT:
 		case SQLITE_BLOB:
-			val = xmms_object_cmd_value_str_new ((gchar *)sqlite3_column_text (stm, column));
+			val = xmmsv_new_string ((gchar *)sqlite3_column_text (stm, column));
 			break;
 		case SQLITE_NULL:
-			val = xmms_object_cmd_value_none_new ();
+			val = xmmsv_new_none ();
 			break;
 		default:
 			XMMS_DBG ("Unhandled SQLite type!");
@@ -522,11 +522,11 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint num, i;
-		xmms_object_cmd_value_t *val;
+		xmmsv_t *val;
 		GTree *dict;
 
 		dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-					g_free, (GDestroyNotify)xmms_object_cmd_value_unref);
+					g_free, (GDestroyNotify) xmmsv_unref);
 		num = sqlite3_data_count (stm);
 
 		for (i = 0; i < num; i++) {
@@ -564,7 +564,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	gchar *q;
 	va_list ap;
 	gint ret, num_cols;
-	xmms_object_cmd_value_t **row;
+	xmmsv_t **row;
 	sqlite3_stmt *stm = NULL;
 
 	g_return_val_if_fail (query, FALSE);
@@ -589,7 +589,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	num_cols = sqlite3_column_count (stm);
 
-	row = g_new (xmms_object_cmd_value_t *, num_cols + 1);
+	row = g_new (xmmsv_t *, num_cols + 1);
 	row[num_cols] = NULL;
 
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
@@ -606,7 +606,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		b = method (row, udata);
 
 		for (i = 0; i < num_cols; i++) {
-			xmms_object_cmd_value_unref (row[i]);
+			xmmsv_unref (row[i]);
 		}
 
 		if (!b) {

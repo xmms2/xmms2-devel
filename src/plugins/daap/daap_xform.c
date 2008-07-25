@@ -426,9 +426,9 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 			                                          mdns_serv->port);
 
 			/* TODO implement the machinery to allow for this */
-			// val = xmms_object_cmd_value_int_new (mdns_serv->need_auth);
+			// val = xmmsv_new_int (mdns_serv->need_auth);
 			// xmms_xform_browse_add_entry_property (xform, "passworded", val);
-			// val = xmms_object_cmd_value_int_new (mdns_serv->version);
+			// val = xmmsv_new_int (mdns_serv->version);
 			// xmms_xform_browse_add_entry_property (xform, "version", val);
 		}
 

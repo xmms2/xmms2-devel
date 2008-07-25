@@ -23,7 +23,7 @@
 
 typedef struct xmms_xspf_track_attr_St {
 	const gchar *key;
-	xmms_object_cmd_value_t *value;
+	xmmsv_t *value;
 } xmms_xspf_track_attr_t;
 
 typedef struct xmms_xspf_track_St {
@@ -106,17 +106,17 @@ xmms_xspf_init (xmms_xform_t *xform)
 static xmms_xspf_track_attr_t *
 xmms_xspf_track_attr_from_node (const xmms_xspf_track_prop_t *prop, xmlNodePtr node)
 {
-	xmms_object_cmd_value_t *value;
+	xmmsv_t *value;
 	xmms_xspf_track_attr_t *attr;
 
 	switch (prop->attr_type) {
 		case XMMS_XSPF_TRACK_ATTR_TYPE_STRING:
-			value = xmms_object_cmd_value_str_new ((char *)node->children->content);
+			value = xmmsv_new_string ((char *)node->children->content);
 			break;
 		case XMMS_XSPF_TRACK_ATTR_TYPE_INT32: {
 			/* TODO: check for errors */
 			gint32 val = strtol ((char *)node->children->content, (char **)NULL, 10);
-			value = xmms_object_cmd_value_int_new (val);
+			value = xmmsv_new_int (val);
 			break;
 		}
 	}

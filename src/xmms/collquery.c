@@ -31,9 +31,9 @@
 typedef struct {
 	guint limit_start;
 	guint limit_len;
-	GList *order;
-	GList *fetch;
-	GList *group;
+	xmmsv_t *order;
+	xmmsv_t *fetch;
+	xmmsv_t *group;
 } coll_query_params_t;
 
 typedef enum {
@@ -70,11 +70,11 @@ static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmm
 static void query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll);
 static void query_append_filter (coll_query_t *query, xmmsv_coll_type_t type, gchar *key, gchar *value, gboolean case_sens);
 static void query_string_append_joins (gpointer key, gpointer val, gpointer udata);
-static void query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields);
+static void query_string_append_alias_list (coll_query_t *query, GString *qstring, xmmsv_t *fields);
 static void query_string_append_fetch (coll_query_t *query, GString *qstring);
 static void query_string_append_alias (GString *qstring, coll_query_alias_t *alias);
 
-static gchar *canonical_field_name (gchar *field);
+static const gchar *canonical_field_name (const gchar *field);
 static gboolean operator_is_allmedia (xmmsv_coll_t *op);
 static coll_query_alias_t *query_make_alias (coll_query_t *query, const gchar *field, gboolean optional);
 static coll_query_alias_t *query_get_alias (coll_query_t *query, const gchar *field);
@@ -92,7 +92,7 @@ static coll_query_alias_t *query_get_alias (coll_query_t *query, const gchar *fi
 GString*
 xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                            guint limit_start, guint limit_len,
-                           GList *order, GList *fetch, GList *group)
+                           xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group)
 {
 	GString *qstring;
 	coll_query_t *query;
@@ -133,20 +133,20 @@ init_query (coll_query_params_t *params)
 }
 
 static void
+append_each_alias (xmmsv_t *value, void *udata)
+{
+	const gchar *name;
+	coll_query_t *query = (coll_query_t *) udata;
+	xmmsv_get_string (value, &name);
+	query_make_alias (query, name, TRUE);
+}
+
+static void
 add_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params)
 {
-	GList *n;
-	gchar *name;
-
 	/* Prepare aliases for the group/fetch fields */
-	for (n = query->params->group; n; n = n->next) {
-		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
-		query_make_alias (query, name, TRUE);
-	}
-	for (n = query->params->fetch; n; n = n->next) {
-		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
-		query_make_alias (query, name, TRUE);
-	}
+	xmmsv_list_foreach (query->params->group, append_each_alias, query);
+	xmmsv_list_foreach (query->params->fetch, append_each_alias, query);
 }
 
 /* Free a coll_query_t object */
@@ -183,14 +183,14 @@ xmms_collection_gen_query (coll_query_t *query)
 	}
 
 	/* Append grouping */
-	if (query->params->group != NULL) {
+	if (xmmsv_list_get_size (query->params->group) > 0) {
 		g_string_append (qstring, " GROUP BY ");
 		query_string_append_alias_list (query, qstring, query->params->group);
 	}
 
 	/* Append ordering */
 	/* FIXME: Ordering is Teh Broken (source?) */
-	if (query->params->order != NULL) {
+	if (xmmsv_list_get_size (query->params->order) > 0) {
 		g_string_append (qstring, " ORDER BY ");
 		query_string_append_alias_list (query, qstring, query->params->order);
 	}
@@ -357,8 +357,8 @@ query_get_alias (coll_query_t *query, const gchar *field)
 }
 
 /* Find the canonical name of a field (strip flags, if any) */
-static gchar *
-canonical_field_name (gchar *field) {
+static const gchar *
+canonical_field_name (const gchar *field) {
 	if (*field == '-') {
 		field++;
 	} else if (*field == '~') {
@@ -553,16 +553,23 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 
 /* Given a list of fields, append the corresponding aliases to the argument string. */
 static void
-query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields)
+query_string_append_alias_list (coll_query_t *query, GString *qstring,
+                                xmmsv_t *fields)
 {
-	GList *n;
+	coll_query_alias_t *alias;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *valstr;
 	gboolean first = TRUE;
 
-	for (n = fields; n; n = n->next) {
-		coll_query_alias_t *alias;
+	for (xmmsv_get_list_iter (fields, &it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
 		/* extract string from cmdval_t */
-		gchar *field = ((xmms_object_cmd_value_t *) n->data)->value.string;
-		gchar *canon_field = canonical_field_name (field);
+		const gchar *field, *canon_field;
+		xmmsv_list_iter_entry (it, &valstr);
+		xmmsv_get_string (valstr, &field);
+		canon_field = canonical_field_name (field);
 
 		if (first) first = FALSE;
 		else {
@@ -599,14 +606,19 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 static void
 query_string_append_fetch (coll_query_t *query, GString *qstring)
 {
-	GList *n;
 	coll_query_alias_t *alias;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *valstr;
 	gboolean first = TRUE;
-	gchar *name;
+	const gchar *name;
 
-	for (n = query->params->fetch; n; n = n->next) {
+	for (xmmsv_get_list_iter (query->params->fetch, &it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
 		/* extract string from cmdval_t */
-		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
+		xmmsv_list_iter_entry (it, &valstr);
+		xmmsv_get_string (valstr, &name);
 		alias = query_make_alias (query, name, TRUE);
 
 		if (first) first = FALSE;

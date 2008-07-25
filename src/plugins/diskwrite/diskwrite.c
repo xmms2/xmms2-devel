@@ -272,8 +272,10 @@ on_playlist_entry_changed (xmms_object_t *object,
                            const xmms_object_cmd_arg_t *arg,
                            xmms_diskwrite_data_t *data)
 {
-	guint id = arg->retval->value.uint32;
+	guint id;
 	gchar dest[XMMS_PATH_MAX];
+
+	xmmsv_get_uint (arg->retval, &id);
 
 	/* assemble path */
 	g_snprintf (dest, sizeof (dest), "%s" G_DIR_SEPARATOR_S "%03u.wav",

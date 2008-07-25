@@ -87,337 +87,27 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
-static void xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val);
-
-
-/* FIXME: temporary "dupe" functions to extract the server variant of
- * value_t. Should go for a regular value_t in the future. */
-static int deserialize_dict (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t **val);
-static int deserialize_list (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t **val);
-
-static bool
-ipc_msg_get_objcmdvalue_alloc (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t **val)
-{
-	int32_t type, i;
-	uint32_t len, u;
-	char *s;
-	xmmsv_coll_t *c;
-	GString *gs;
-
-	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *) &type)) {
-		return false;
-	}
-
-	switch (type) {
-		case XMMSV_TYPE_ERROR:
-			if (!xmms_ipc_msg_get_error_alloc (msg, &s, &len)) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_error_new (s);
-			break;
-		case XMMSV_TYPE_UINT32:
-			if (!xmms_ipc_msg_get_uint32 (msg, &u)) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_uint_new (u);
-			break;
-		case XMMSV_TYPE_INT32:
-			if (!xmms_ipc_msg_get_int32 (msg, &i)) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_int_new (i);
-			break;
-		case XMMSV_TYPE_STRING:
-			if (!xmms_ipc_msg_get_string_alloc (msg, &s, &len)) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_str_new (s);
-			break;
-		case XMMSV_TYPE_DICT:
-			if (!deserialize_dict (msg, val)) {
-				return false;
-			}
-			break;
-
-		case XMMSV_TYPE_LIST :
-			if (!deserialize_list (msg, val)) {
-				return false;
-			}
-			break;
-
-		case XMMSV_TYPE_COLL:
-			xmms_ipc_msg_get_collection_alloc (msg, &c);
-			if (!c) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_coll_new (c);
-			break;
-
-		case XMMSV_TYPE_BIN:
-			gs = g_string_new (NULL);
-			if (!xmms_ipc_msg_get_bin_alloc (msg, (unsigned char **)&gs->str, (uint32_t *)&gs->len)) {
-				return false;
-			}
-			*val = xmms_object_cmd_value_bin_new (gs);
-			g_string_free (gs, FALSE);
-			break;
-
-		case XMMSV_TYPE_NONE:
-		default:
-			/* FIXME: error ? */
-			return false;
-			break;
-	}
-
-	return true;
-}
-
-static int
-deserialize_dict (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t **val)
-{
-	unsigned int len, ignore;
-	char *key;
-	GTree *dict;
-
-	dict = g_tree_new_full ((GCompareDataFunc) strcmp,
-	                        NULL,
-	                        g_free,
-	                        (GDestroyNotify) xmms_object_cmd_value_unref);
-
-	if (!xmms_ipc_msg_get_uint32 (msg, &len)) {
-		goto err;
-	}
-
-	while (len--) {
-		xmmsv_t *v;
-
-		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &ignore)) {
-			goto err;
-		}
-
-		if (!xmms_ipc_msg_get_value_alloc (msg, &v)) {
-			goto err;
-		}
-
-		g_tree_insert (dict, key, v);
-	}
-
-	*val = xmms_object_cmd_value_dict_new (dict);
-
-	return true;
-
-err:
-	g_tree_destroy (dict);
-	g_free (key);
-	return false;
-}
-
-static int
-deserialize_list (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t **val)
-{
-	unsigned int len;
-	GList *list = NULL;
-
-	if (!xmms_ipc_msg_get_uint32 (msg, &len)) {
-		goto err;
-	}
-
-	while (len--) {
-		xmms_object_cmd_value_t *v;
-		if (ipc_msg_get_objcmdvalue_alloc (msg, &v)) {
-			list = g_list_prepend (list, v);
-		} else {
-			goto err;
-		}
-	}
-
-	list = g_list_reverse (list);
-
-	*val = xmms_object_cmd_value_list_new (list);
-
-	return true;
-
-err:
-	while (list) {
-		xmms_object_cmd_value_unref ((xmms_object_cmd_value_t *) list->data);
-		list = g_list_delete_link (list, list);
-	}
-	return false;
-}
 
 
 static gboolean
 type_and_msg_to_arg (xmmsv_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
 {
-	guint len;
-	guint size, k;
-	GString *bin;
-
-	switch (type) {
-		case XMMSV_TYPE_NONE:
-			break;
-		case XMMSV_TYPE_UINT32 :
-			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].value.uint32))
-				return FALSE;
-			break;
-		case XMMSV_TYPE_INT32 :
-			if (!xmms_ipc_msg_get_int32 (msg, &arg->values[i].value.int32))
-				return FALSE;
-			break;
-		case XMMSV_TYPE_STRING :
-			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
-				return FALSE;
-			}
-			break;
-		case XMMSV_TYPE_COLL :
-			if (!xmms_ipc_msg_get_collection_alloc (msg, &arg->values[i].value.coll)) {
-				return FALSE;
-			}
-			break;
-		case XMMSV_TYPE_BIN :
-			bin = g_string_new (NULL);
-			if (!xmms_ipc_msg_get_bin_alloc (msg, (unsigned char **)&bin->str, (uint32_t *)&bin->len)) {
-				return FALSE;
-			}
-			arg->values[i].value.bin = bin;
-			break;
-		case XMMSV_TYPE_LIST :
-			if (!xmms_ipc_msg_get_uint32 (msg, &size)) {
-				return FALSE;
-			}
-			for (k = 0; k < size; k++) {
-				xmms_object_cmd_value_t *v;
-				if (!ipc_msg_get_objcmdvalue_alloc (msg, &v) ||
-				    !(arg->values[i].value.list = g_list_prepend (arg->values[i].value.list, v))) {
-					GList *list = arg->values[i].value.list;
-					while (list) {
-						/* free entry data */
-						xmms_object_cmd_value_unref ((xmms_object_cmd_value_t *) list->data);
-						list = g_list_delete_link (list, list);
-					}
-					return FALSE;
-				}
-			}
-			arg->values[i].value.list = g_list_reverse (arg->values[i].value.list);
-			break;
-		case XMMSV_TYPE_DICT :
-			if (!xmms_ipc_msg_get_uint32 (msg, &size)) {
-				return FALSE;
-			}
-			arg->values[i].value.dict = g_tree_new_full ((GCompareDataFunc) strcmp,
-			                                             NULL,
-			                                             g_free,
-			                                             (GDestroyNotify) xmms_object_cmd_value_unref);
-			for (k = 0; k < size; k++) {
-				gchar *key;
-				xmms_object_cmd_value_t *v;
-				if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len) ||
-				    !ipc_msg_get_objcmdvalue_alloc (msg, &v)) {
-					g_free (key);
-					g_tree_destroy (arg->values[i].value.dict);
-					return FALSE;
-				}
-
-				g_tree_insert (arg->values[i].value.dict, key, v);
-			}
-			break;
-		default:
-			XMMS_DBG ("Unknown value for a caller argument?");
-			return FALSE;
-			break;
+	if (!xmms_ipc_msg_get_value_of_type_alloc (msg, type, &arg->values[i])) {
+		XMMS_DBG ("Failed fetching the value of the argument from the IPC message!");
+		return FALSE;
 	}
-	arg->values[i].type = type;
+
 	return TRUE;
 }
 
-typedef struct dict_to_dict_data_St {
-	xmms_ipc_msg_t *msg;
-	guint count;
-} dict_to_dict_data_t;
-
-static gboolean
-tree_to_dict (gpointer key, gpointer value, gpointer udata)
-{
-	gchar *k = key;
-	xmms_object_cmd_value_t *v = value;
-	dict_to_dict_data_t *d = udata;
-
-	if (k && v) {
-		xmms_ipc_msg_put_string (d->msg, k);
-		xmms_ipc_handle_cmd_value (d->msg, v);
-		d->count++;
-	}
-
-	return FALSE; /* keep going */
-}
-
 static void
-xmms_ipc_do_dict (xmms_ipc_msg_t *msg, GTree *dict)
+xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
 {
-	dict_to_dict_data_t d = {msg, 0};
-	guint offset;
+	xmms_ipc_msg_put_value (msg, val);
 
-	offset = xmms_ipc_msg_put_uint32 (msg, 0);
-	g_tree_foreach (dict, tree_to_dict, &d);
-	xmms_ipc_msg_store_uint32 (msg, offset, d.count);
-}
-
-static void
-xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
-{
-	GList *n;
-	guint offset, count;
-
-	xmms_ipc_msg_put_int32 (msg, val->type);
-
-	switch (val->type) {
-		case XMMSV_TYPE_ERROR:
-			xmms_ipc_msg_put_error (msg, val->value.error);
-			break;
-		case XMMSV_TYPE_BIN:
-			xmms_ipc_msg_put_bin (msg, (guchar *)val->value.bin->str, val->value.bin->len);
-			break;
-		case XMMSV_TYPE_STRING:
-			xmms_ipc_msg_put_string (msg, val->value.string);
-			break;
-		case XMMSV_TYPE_UINT32:
-			xmms_ipc_msg_put_uint32 (msg, val->value.uint32);
-			break;
-		case XMMSV_TYPE_INT32:
-			xmms_ipc_msg_put_int32 (msg, val->value.int32);
-			break;
-		case XMMSV_TYPE_LIST:
-			/* store a dummy value first, and get the offset at where
-			 * it was put, so we can store the real count later.
-			 */
-			offset = xmms_ipc_msg_put_uint32 (msg, 0);
-			count = 0;
-
-			for (n = val->value.list; n; n = g_list_next (n)) {
-				xmms_object_cmd_value_t *lval = n->data;
-
-				xmms_ipc_handle_cmd_value (msg, lval);
-				count++;
-			}
-
-			/* now that we know how many items we stored we can
-			 * overwrite the dummy value from before.
-			 */
-			xmms_ipc_msg_store_uint32 (msg, offset, count);
-
-			break;
-		case XMMSV_TYPE_DICT:
-			xmms_ipc_do_dict (msg, val->value.dict);
-			break;
-		case XMMSV_TYPE_COLL :
-			xmms_ipc_msg_put_collection (msg, val->value.coll);
-			break;
-		case XMMSV_TYPE_NONE:
-			break;
-		default:
-			xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", val->type);
-			break;
-	}
+	/* FIXME: error?
+	xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", val->type);
+	*/
 }
 
 static void
@@ -522,36 +212,20 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		/* FIXME: or we could change the client code to transform
 		 * CMD_ERROR to an error value_t. If so, remove the handling
 		 * of ERROR in xmms_ipc_handle_cmd_value, okay? */
-/*
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
-*/
+/*
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
+*/
 	}
 
 	if (arg.retval)
-		xmms_object_cmd_value_unref (arg.retval);
+		xmmsv_unref (arg.retval);
 
 err:
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (arg.values[i].type == XMMSV_TYPE_STRING) {
-			g_free (arg.values[i].value.string);
-		} else if (arg.values[i].type == XMMSV_TYPE_COLL) {
-			xmmsv_coll_unref (arg.values[i].value.coll);
-		} else if (arg.values[i].type == XMMSV_TYPE_BIN) {
-			g_string_free (arg.values[i].value.bin, TRUE);
-		} else if (arg.values[i].type == XMMSV_TYPE_LIST) {
-			/* free list and its content */
-			GList *list = arg.values[i].value.list;
-			while (list) {
-				/* free entry data */
-				xmms_object_cmd_value_unref ((xmms_object_cmd_value_t *) list->data);
-				list = g_list_delete_link (list, list);
-			}
-		} else if (arg.values[i].type == XMMSV_TYPE_DICT) {
-			g_tree_destroy (arg.values[i].value.dict);
-		}
+		xmmsv_unref (arg.values[i]);
 	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);

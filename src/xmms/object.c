@@ -21,6 +21,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+static void create_xmmsv_list_foreach (gpointer data, gpointer userdata);
+static gboolean create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata);
+
+
 /** @defgroup Object Object
   * @ingroup XMMSServer
   * @brief Object representation in XMMS server. A object can
@@ -219,163 +223,6 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 	}
 }
 
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_error_new (const gchar *error)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.error = g_strdup (error);
-	val->type = XMMSV_TYPE_ERROR;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_bin_new (GString *bin)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.bin = bin;
-	val->type = XMMSV_TYPE_BIN;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_str_new (const gchar *string)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.string = g_strdup (string);
-	val->type = XMMSV_TYPE_STRING;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_uint_new (guint32 uint)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.uint32 = uint;
-	val->type = XMMSV_TYPE_UINT32;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_int_new (gint32 i)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.int32 = i;
-	val->type = XMMSV_TYPE_INT32;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_dict_new (GTree *dict)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.dict = dict;
-	val->type = XMMSV_TYPE_DICT;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_list_new (GList *list)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.list = list;
-	val->type = XMMSV_TYPE_LIST;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_coll_new (xmmsv_coll_t *coll)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->value.coll = coll;
-	val->type = XMMSV_TYPE_COLL;
-	val->refcount = 1;
-	return val;
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_none_new (void)
-{
-	xmms_object_cmd_value_t *val;
-	val = g_new0 (xmms_object_cmd_value_t, 1);
-	val->type = XMMSV_TYPE_NONE;
-	val->refcount = 1;
-	return val;
-}
-
-static void
-xmms_object_cmd_value_free (xmms_object_cmd_value_t *v)
-{
-	switch (v->type) {
-		case XMMSV_TYPE_STRING:
-			if (v->value.string)
-				g_free (v->value.string);
-			break;
-		case XMMSV_TYPE_BIN:
-			if (v->value.bin)
-				g_string_free (v->value.bin, TRUE);
-			break;
-		case XMMSV_TYPE_LIST:
-			while (v->value.list) {
-				xmms_object_cmd_value_unref (v->value.list->data);
-				v->value.list = g_list_delete_link (v->value.list,
-				                                    v->value.list);
-			}
-			break;
-		case XMMSV_TYPE_DICT:
-			if (v->value.dict) {
-				g_tree_destroy (v->value.dict);
-			}
-
-			break;
-		case XMMSV_TYPE_COLL:
-			if (v->value.coll) {
-				xmmsv_coll_unref (v->value.coll);
-			}
-			break;
-		default:
-			break;
-	}
-
-	g_free (v);
-}
-
-void
-xmms_object_cmd_value_unref (xmms_object_cmd_value_t *val)
-{
-	g_return_if_fail (val);
-
-	val->refcount--;
-
-	if (!val->refcount) {
-		xmms_object_cmd_value_free (val);
-	}
-}
-
-xmms_object_cmd_value_t *
-xmms_object_cmd_value_ref (xmms_object_cmd_value_t *val)
-{
-	g_return_val_if_fail (val, NULL);
-
-	val->refcount++;
-
-	return val;
-}
-
 /**
  * Initialize a command argument.
  */
@@ -413,31 +260,31 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 
 	switch (type) {
 		case XMMSV_TYPE_ERROR:
-			arg.retval = xmms_object_cmd_value_error_new (va_arg (ap, gchar *));
+			arg.retval = xmmsv_new_error (va_arg (ap, gchar *));
 			break;
 		case XMMSV_TYPE_UINT32:
-			arg.retval = xmms_object_cmd_value_uint_new (va_arg (ap, guint32));
+			arg.retval = xmmsv_new_uint (va_arg (ap, guint32));
 			break;
 		case XMMSV_TYPE_INT32:
-			arg.retval = xmms_object_cmd_value_int_new (va_arg (ap, gint32));
+			arg.retval = xmmsv_new_int (va_arg (ap, gint32));
 			break;
 		case XMMSV_TYPE_STRING:
-			arg.retval = xmms_object_cmd_value_str_new (va_arg (ap, gchar *));
+			arg.retval = xmmsv_new_string (va_arg (ap, gchar *));
 			break;
 		case XMMSV_TYPE_BIN:
-			arg.retval = xmms_object_cmd_value_bin_new (va_arg (ap, GString *));
+			arg.retval = xmms_create_xmmsv_bin (va_arg (ap, GString *));
 			break;
 		case XMMSV_TYPE_DICT:
-			arg.retval = xmms_object_cmd_value_dict_new (va_arg (ap, GTree *));
+			arg.retval = xmms_create_xmmsv_dict (va_arg (ap, GTree *));
 			break;
 		case XMMSV_TYPE_LIST:
-			arg.retval = xmms_object_cmd_value_list_new (va_arg (ap, GList *));
+			arg.retval = xmms_create_xmmsv_list (va_arg (ap, GList *));
 			break;
 		case XMMSV_TYPE_COLL:
-			arg.retval = xmms_object_cmd_value_coll_new (va_arg (ap, xmmsv_coll_t *));
+			arg.retval = xmmsv_new_coll (va_arg (ap, xmmsv_coll_t *));
 			break;
 		case XMMSV_TYPE_NONE:
-			arg.retval = xmms_object_cmd_value_none_new ();
+			arg.retval = xmmsv_new_none ();
 			break;
 		case XMMSV_TYPE_END:
 		default:
@@ -450,7 +297,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	xmms_object_emit (object, signalid, &arg);
 
 	/*
-	 * We're only calling xmms_object_cmd_value_unref() here for
+	 * We're only calling xmmsv_unref() here for
 	 * retvals that either hold no payload at all (_ARG_NONE) or that
 	 * have their own copy/reference in the payload (_ARG_STRING and
 	 * maybe more later).
@@ -458,9 +305,10 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	switch (type) {
 		case XMMSV_TYPE_STRING:
 		case XMMSV_TYPE_NONE:
-			xmms_object_cmd_value_unref (arg.retval);
+			xmmsv_unref (arg.retval);
 			break;
 		default:
+			/* FIXME: er what is this ? */
 			g_free (arg.retval);
 	}
 }
@@ -517,7 +365,111 @@ xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t 
 		desc->func (object, arg);
 }
 
+
+/**
+ * Create a new #xmmsv_t list initialized with the argument.
+ * @param list The list of values to initially fill the #xmmsv_t with.
+ * @return a new #xmmsv_t list.
+ */
+xmmsv_t *
+xmms_create_xmmsv_list (GList *list)
+{
+	xmmsv_t *v = xmmsv_new_list ();
+	g_list_foreach (list, create_xmmsv_list_foreach, (gpointer) v);
+	return v;
+}
+
+/**
+ * Create a new #xmmsv_t dict initialized with the argument.
+ * @param dict The dict of values to initially fill the #xmmsv_t with.
+ * @return a new #xmmsv_t dict.
+ */
+xmmsv_t *
+xmms_create_xmmsv_dict (GTree *dict)
+{
+	xmmsv_t *v = NULL;
+	if (dict) {
+		v = xmmsv_new_dict ();
+		g_tree_foreach (dict, create_xmmsv_dict_foreach, (gpointer) v);
+	}
+	return v;
+}
+
+/**
+ * Create a new #xmmsv_t bin initialized with the argument.
+ * @param gs The data to initially fill the #xmmsv_t with.
+ * @return a new #xmmsv_t bin.
+ */
+xmmsv_t *
+xmms_create_xmmsv_bin (GString *gs)
+{
+	xmmsv_t *v = NULL;
+	if (gs) {
+		v = xmmsv_new_bin (gs->str, gs->len);
+	}
+	return v;
+}
+
 /** @} */
+
+static void
+create_xmmsv_list_foreach (gpointer data, gpointer userdata)
+{
+	xmmsv_t *v = (xmmsv_t *) data;
+	xmmsv_t *l = (xmmsv_t *) userdata;
+	xmmsv_list_append (l, v);
+}
+
+static gboolean
+create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata)
+{
+	const char *k = (const char *) key;
+	xmmsv_t *v = (xmmsv_t *) data;
+	xmmsv_t *l = (xmmsv_t *) userdata;
+	xmmsv_dict_insert (l, k, v);
+	return FALSE;
+}
+
+int
+xmms_bin_to_gstring (xmmsv_t *value, GString **gs)
+{
+	const guchar *str;
+	guint len;
+	if (!xmmsv_get_bin (value, &str, &len)) {
+		return 0;
+	}
+	*gs = g_string_new_len (str, len);
+	return 1;
+}
+
+int
+dummy_identity (xmmsv_t *value, xmmsv_t **arg)
+{
+	*arg = value;
+	return 1;
+}
+
+/**
+ * Checks that the list only contains string values.
+ */
+gboolean
+check_string_list (xmmsv_t *list)
+{
+	xmmsv_t *valstr;
+	xmmsv_list_iter_t *it;
+
+	for (xmmsv_get_list_iter (list, &it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+		xmmsv_list_iter_entry (it, &valstr);
+		if (xmmsv_get_type (valstr) != XMMSV_TYPE_STRING) {
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 
 void
 __int_xmms_object_unref (xmms_object_t *object)
