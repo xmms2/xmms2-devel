@@ -338,10 +338,7 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_playback_start (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	playback_play (infos);
 
 	return TRUE;
 }
@@ -349,10 +346,15 @@ cli_play (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_playback_pause (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	playback_pause (infos);
+
+	return TRUE;
+}
+
+gboolean
+cli_toggle (cli_infos_t *infos, command_context_t *ctx)
+{
+	playback_toggle (infos);
 
 	return TRUE;
 }
@@ -376,35 +378,6 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	done (res, infos);
 
 	return TRUE;
-}
-
-gboolean
-cli_toggle (cli_infos_t *infos, command_context_t *ctx)
-{
-  uint32_t status;
-  xmmsc_result_t *res;
-
-  res = xmmsc_playback_status (infos->sync);
-  xmmsc_result_wait (res);
-
-  if (xmmsc_result_iserror (res)) {
-	  g_printf (_("Error: Couldn't get playback status: %s"),
-	            xmmsc_result_get_error (res));
-  }
-
-  if (!xmmsc_result_get_uint (res, &status)) {
-	  g_printf (_("Error: Broken resultset"));
-  }
-
-  if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-	  cli_pause (infos, ctx);
-  } else {
-	  cli_play (infos, ctx);
-  }
-
-  xmmsc_result_unref (res);
-
-  return TRUE;
 }
 
 gboolean
@@ -460,7 +433,6 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_prev (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gint n;
 	gint offset = 1;
 
@@ -468,9 +440,7 @@ cli_prev (cli_infos_t *infos, command_context_t *ctx)
 		offset = n;
 	}
 
-	res = xmmsc_playlist_set_next_rel (infos->sync, - offset);
-	xmmsc_result_wait (res);
-	tickle (res, infos);
+	set_next_rel (infos, - offset);
 
 	return TRUE;
 }
@@ -478,7 +448,6 @@ cli_prev (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_next (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gint n;
 	gint offset = 1;
 
@@ -486,9 +455,7 @@ cli_next (cli_infos_t *infos, command_context_t *ctx)
 		offset = n;
 	}
 
-	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
-	xmmsc_result_wait (res);
-	tickle (res, infos);
+	set_next_rel (infos, offset);
 
 	return TRUE;
 }

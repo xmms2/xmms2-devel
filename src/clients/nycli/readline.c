@@ -64,46 +64,31 @@ readline_status_callback (gchar *input)
 	active = rl_get_keymap ();
 
 	rl_set_keymap (rl_get_keymap_by_name (readline_keymap));
-
 	rl_discard_keymap (active);
 
-/* 	rl_unbind_key (110); */
-/* 	rl_bind_key (110, rl_insert); */
-
-/* 	rl_unbind_key (112); */
-/* 	rl_bind_key (112, rl_insert); */
-
-/* 	rl_unbind_key (116); */
-/* 	rl_bind_key (116, rl_insert); */
-
 	rl_callback_handler_remove ();
-
 	status_free (readline_cli_infos->status_entry);
-
 	cli_infos_status_mode_exit (readline_cli_infos);
-
-/* 	readline_cli_infos->status = CLI_ACTION_STATUS_BUSY; */
-/* 	cli_infos_loop_resume (readline_cli_infos); */
 }
 
 static gint
 readline_status_next (gint count, gint key)
 {
-	status_set_next_rel (readline_cli_infos, 1);
+	set_next_rel (readline_cli_infos, 1);
 	return 0;
 }
 
 static gint
 readline_status_prev (gint count, gint key)
 {
-	status_set_next_rel (readline_cli_infos, -1);
+	set_next_rel (readline_cli_infos, -1);
 	return 0;
 }
 
 static gint
 readline_status_toggle (gint count, gint key)
 {
-	g_printf ("TOGGLE PLAYBACK\n");
+	playback_toggle (readline_cli_infos);
 	return 0;
 }
 

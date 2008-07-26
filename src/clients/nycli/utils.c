@@ -314,6 +314,65 @@ list_jump (xmmsc_result_t *res, cli_infos_t *infos)
 }
 
 void
+playback_play (cli_infos_t *infos)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_start (infos->sync);
+	xmmsc_result_wait (res);
+	done (res, infos);
+}
+
+void
+playback_pause (cli_infos_t *infos)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_pause (infos->sync);
+	xmmsc_result_wait (res);
+	done (res, infos);
+}
+
+void
+playback_toggle (cli_infos_t *infos)
+{
+	guint status;
+	xmmsc_result_t *res;
+
+	/* FIXME(g): Cache playback status? */
+	res = xmmsc_playback_status (infos->sync);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		g_printf (_("Error: Couldn't get playback status: %s\n"),
+		           xmmsc_result_get_error (res));
+	}
+
+	if (!xmmsc_result_get_uint (res, &status)) {
+		g_printf (_("Error: Broken resultset\n"));
+	}
+
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+		playback_pause (infos);
+	} else {
+		playback_play (infos);
+	}
+
+	xmmsc_result_unref (res);
+}
+
+void
+set_next_rel (cli_infos_t *infos, gint offset)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
+	xmmsc_result_wait (res);
+	tickle (res, infos);
+}
+
+
+void
 add_list (xmmsc_result_t *matching, cli_infos_t *infos,
              gchar *playlist, gint pos)
 

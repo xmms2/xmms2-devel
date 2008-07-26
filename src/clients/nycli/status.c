@@ -241,16 +241,6 @@ status_update_all (cli_infos_t *infos, status_entry_t *entry)
 }
 
 void
-status_set_next_rel (cli_infos_t *infos, gint offset)
-{
-	xmmsc_result_t *res;
-
-	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
-	xmmsc_result_wait (res);
-	tickle (res, infos);
-}
-
-void
 status_print_entry (status_entry_t *entry)
 {
 	GList *it;

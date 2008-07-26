@@ -27,7 +27,6 @@ struct status_entry_St {
 
 status_entry_t *status_init (gchar *format, gint refresh);
 void status_free (status_entry_t *entry);
-void status_set_next_rel (cli_infos_t *infos, gint offset);
 void status_update_all (cli_infos_t *infos, status_entry_t *entry);
 void status_print_entry (status_entry_t *entry);
 
