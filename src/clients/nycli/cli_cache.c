@@ -78,6 +78,19 @@ refresh_currpos (xmmsc_result_t *res, void *udata)
 }
 
 static void
+refresh_playback_status (xmmsc_result_t *res, void *udata)
+{
+	cli_cache_t *cache = (cli_cache_t *) udata;
+
+	if (!xmmsc_result_iserror (res)) {
+		xmmsc_result_get_uint (res, &cache->playback_status);
+	}
+
+	freshness_received (&cache->freshness_playback_status);
+	unref_transient_result (res);
+}
+
+static void
 refresh_active_playlist_name (xmmsc_result_t *res, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
@@ -229,11 +242,13 @@ cli_cache_init ()
 
 	cache = g_new0 (cli_cache_t, 1);
 	cache->currpos = 0;
+	cache->playback_status = 0;
 	cache->active_playlist = g_array_new (FALSE, TRUE, sizeof (guint));
 	cache->active_playlist_name = NULL;
 
 	/* Init the freshness state */
 	freshness_init (&cache->freshness_currpos);
+	freshness_init (&cache->freshness_playback_status);
 	freshness_init (&cache->freshness_active_playlist);
 	freshness_init (&cache->freshness_active_playlist_name);
 
@@ -251,6 +266,11 @@ cli_cache_start (cli_infos_t *infos)
 	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
 	xmmsc_result_unref (res);
 
+	res = xmmsc_playback_status (infos->conn);
+	xmmsc_result_notifier_set (res, &refresh_playback_status,
+	                           infos->cache);
+	xmmsc_result_unref (res);
+
 	res = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
 	xmmsc_result_notifier_set (res, &refresh_active_playlist, infos->cache);
 	xmmsc_result_unref (res);
@@ -263,6 +283,10 @@ cli_cache_start (cli_infos_t *infos)
 	/* Setup async listeners */
 	res = xmmsc_broadcast_playlist_current_pos (infos->conn);
 	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
+	xmmsc_result_unref (res);
+
+	res = xmmsc_broadcast_playback_status (infos->conn);
+	xmmsc_result_notifier_set (res, &refresh_playback_status, infos->cache);
 	xmmsc_result_unref (res);
 
 	res = xmmsc_broadcast_playlist_changed (infos->conn);
@@ -284,6 +308,7 @@ cli_cache_is_fresh (cli_cache_t *cache)
 {
 	/* Check if all items are fresh */
 	return freshness_is_fresh (&cache->freshness_currpos) &&
+	       freshness_is_fresh (&cache->freshness_playback_status) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist_name);
 }

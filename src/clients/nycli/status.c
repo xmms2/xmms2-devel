@@ -184,7 +184,7 @@ parse_format (gchar *format)
 	copy = g_strdup (format);
 
 	last = copy;
-	while ((s = strstr(last, "${")) != NULL) {
+	while ((s = strstr (last, "${")) != NULL) {
 		if (last != s) {
 			*s = '\0';
 			strings = g_list_prepend (strings, g_strdup (last));
@@ -249,7 +249,7 @@ status_print_entry (status_entry_t *entry)
 	readline_screen_size (&rows, &columns);
 
 	currlen = 0;
-	g_printf("\r");
+	g_printf ("\r");
 	for (it = g_list_first (entry->format); it != NULL; it = g_list_next (it)) {
 		gchar *s = it->data;
 		if (s[0] == '$' && s[1] == '{') {

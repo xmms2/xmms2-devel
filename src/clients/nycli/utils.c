@@ -337,28 +337,14 @@ void
 playback_toggle (cli_infos_t *infos)
 {
 	guint status;
-	xmmsc_result_t *res;
 
-	/* FIXME(g): Cache playback status? */
-	res = xmmsc_playback_status (infos->sync);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		g_printf (_("Error: Couldn't get playback status: %s\n"),
-		           xmmsc_result_get_error (res));
-	}
-
-	if (!xmmsc_result_get_uint (res, &status)) {
-		g_printf (_("Error: Broken resultset\n"));
-	}
+	status = infos->cache->playback_status;
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		playback_pause (infos);
 	} else {
 		playback_play (infos);
 	}
-
-	xmmsc_result_unref (res);
 }
 
 void
