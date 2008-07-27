@@ -31,7 +31,8 @@ struct configuration_St {
 	GHashTable *values;
 };
 
-/* FIXME(g): config or configuration? */
+/* FIXME(g): config or configuration?
+   'configuration' to avoid confusion with xmms2d config. */
 configuration_t *configuration_init (const gchar *path);
 void configuration_free (configuration_t *config);
 

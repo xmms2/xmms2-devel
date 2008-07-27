@@ -418,8 +418,7 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 
 	/* FIXME(g): Read default format from config file */
 	if (!command_flag_string_get (ctx, "format", &format)) {
-		format = "${playback_status}: ${artist} - "
-		         "${title}: ${playtime} of ${duration}";
+		format = configuration_get_string (infos->config, "STATUS_FORMAT");
 	}
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
@@ -623,7 +622,7 @@ matching_files_dirs (gchar *pattern, GList **files)
 	}
 
 	for (i = 0; matched.gl_pathv[i] != NULL; i++) {
-		*files = g_list_prepend (*files, g_strdup(matched.gl_pathv[i]));
+		*files = g_list_prepend (*files, g_strdup (matched.gl_pathv[i]));
 	}
 
     finish:

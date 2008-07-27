@@ -238,7 +238,7 @@ loop_select (cli_infos_t *infos)
 	if(modfds < 0) {
 		g_printf (_("Error: invalid I/O result!"));
 		return;
-	} else if(modfds != 0) {
+	} else if (modfds != 0) {
 		/* Get/send data to xmms2 */
 		if (infos->conn) {
 			if (FD_ISSET(xmms2fd, &rfds)) {

@@ -28,6 +28,10 @@ init_hash ()
 	g_hash_table_insert (table, KEY_VALUE_COPY("PROMPT", "nycli> "));
 	g_hash_table_insert (table, KEY_VALUE_COPY("AUTO_UNIQUE_COMPLETE", "true"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("PLAYLIST_MARKER", "->"));
+	g_hash_table_insert (table, KEY_VALUE_COPY("STATUS_FORMAT",
+	                                           "${playback_status}: ${artist} "
+	                                           "- ${title}: ${playtime} of "
+	                                           "${duration}"));
 
 	return table;
 }
