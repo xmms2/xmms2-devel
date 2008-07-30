@@ -48,6 +48,9 @@
 # define FLAC__stream_decoder_get_state FLAC__seekable_stream_decoder_get_state
 # define FLAC__stream_decoder_seek_absolute FLAC__seekable_stream_decoder_seek_absolute
 # define FLAC__stream_decoder_process_until_end_of_metadata FLAC__seekable_stream_decoder_process_until_end_of_metadata
+typedef unsigned read_callback_size_t;
+#else
+typedef size_t read_callback_size_t;
 #endif
 
 typedef struct xmms_flac_data_St {
@@ -110,7 +113,7 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 static FLAC__StreamDecoderReadStatus
 flac_callback_read (const FLAC__StreamDecoder *flacdecoder,
                     FLAC__byte buffer[],
-                    gsize *bytes,
+                    read_callback_size_t *bytes,
                     void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
