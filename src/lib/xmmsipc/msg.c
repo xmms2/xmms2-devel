@@ -376,31 +376,31 @@ xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 }
 
 uint32_t
-xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
+xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 {
 	int n;
 	uint32_t ret, *idlist;
-	xmmsc_coll_t *op;
+	xmmsv_coll_t *op;
 
 	if (!msg || !coll) {
 		return -1;
 	}
 
 	/* save internal status */
-	xmmsc_coll_operand_list_save (coll);
+	xmmsv_coll_operand_list_save (coll);
 
 	/* push type */
-	xmms_ipc_msg_put_uint32 (msg, xmmsc_coll_get_type (coll));
+	xmms_ipc_msg_put_uint32 (msg, xmmsv_coll_get_type (coll));
 
 	/* attribute counter and values */
 	n = 0;
-	xmmsc_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
+	xmmsv_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
 	xmms_ipc_msg_put_uint32 (msg, n);
 
-	xmmsc_coll_attribute_foreach (coll, xmms_ipc_append_coll_attr, msg);
+	xmmsv_coll_attribute_foreach (coll, xmms_ipc_append_coll_attr, msg);
 
 	/* idlist counter and content */
-	idlist = xmmsc_coll_get_idlist (coll);
+	idlist = xmmsv_coll_get_idlist (coll);
 	for (n = 0; idlist[n] != 0; n++) { }
 
 	xmms_ipc_msg_put_uint32 (msg, n);
@@ -410,26 +410,26 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 
 	/* operands counter and objects */
 	n = 0;
-	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmmsv_coll_operand_list_first (coll);
+		while (xmmsv_coll_operand_list_entry (coll, &op)) {
 			n++;
-			xmmsc_coll_operand_list_next (coll);
+			xmmsv_coll_operand_list_next (coll);
 		}
 	}
 
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
 	if (n > 0) {
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmmsv_coll_operand_list_first (coll);
+		while (xmmsv_coll_operand_list_entry (coll, &op)) {
 			ret = xmms_ipc_msg_put_collection (msg, op);
-			xmmsc_coll_operand_list_next (coll);
+			xmmsv_coll_operand_list_next (coll);
 		}
 	}
 
 	/* restore internal status */
-	xmmsc_coll_operand_list_restore (coll);
+	xmmsv_coll_operand_list_restore (coll);
 
 	return ret;
 }
@@ -581,7 +581,7 @@ xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *buf, unsigned int maxlen)
 }
 
 bool
-xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
+xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll)
 {
 	unsigned int i;
 	unsigned int type;
@@ -595,7 +595,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 		return false;
 	}
 
-	*coll = xmmsc_coll_new (type);
+	*coll = xmmsv_coll_new (type);
 
 	/* Get the list of attributes */
 	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
@@ -612,7 +612,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 			goto err;
 		}
 
-		xmmsc_coll_attribute_set (*coll, key, val);
+		xmmsv_coll_attribute_set (*coll, key, val);
 		free (key);
 		free (val);
 	}
@@ -635,7 +635,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 	}
 
 	idlist[i] = 0;
-	xmmsc_coll_set_idlist (*coll, idlist);
+	xmmsv_coll_set_idlist (*coll, idlist);
 	free (idlist);
 	idlist = NULL;
 
@@ -645,14 +645,14 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 	}
 
 	for (i = 0; i < n_items; i++) {
-		xmmsc_coll_t *operand;
+		xmmsv_coll_t *operand;
 
 		if (!xmms_ipc_msg_get_collection_alloc (msg, &operand)) {
 			goto err;
 		}
 
-		xmmsc_coll_add_operand (*coll, operand);
-		xmmsc_coll_unref (operand);
+		xmmsv_coll_add_operand (*coll, operand);
+		xmmsv_coll_unref (operand);
 	}
 
 	return true;
@@ -662,7 +662,7 @@ err:
 		free (idlist);
 	}
 
-	xmmsc_coll_unref (*coll);
+	xmmsv_coll_unref (*coll);
 
 	return false;
 }

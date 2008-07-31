@@ -115,7 +115,7 @@ coll_find (xmmsc_connection_t *conn, const gchar *namespace, guint mid)
 
 /* Produce a GString from the idlist of the collection (must be freed manually!) */
 static GString *
-coll_idlist_to_string (xmmsc_coll_t *coll)
+coll_idlist_to_string (xmmsv_coll_t *coll)
 {
 	gint i;
 	guint *idlist;
@@ -123,7 +123,7 @@ coll_idlist_to_string (xmmsc_coll_t *coll)
 
 	s = g_string_new ("(");
 
-	idlist = xmmsc_coll_get_idlist (coll);
+	idlist = xmmsv_coll_get_idlist (coll);
 	for (i = 0; idlist[i] != 0; ++i) {
 		if (i > 0) {
 			g_string_append (s, ", ");
@@ -137,14 +137,14 @@ coll_idlist_to_string (xmmsc_coll_t *coll)
 
 /* Dump the structure of the collection as a string */
 static void
-coll_dump (xmmsc_coll_t *coll, unsigned int level)
+coll_dump (xmmsv_coll_t *coll, unsigned int level)
 {
 	gint i;
 	gchar *indent;
 
 	gchar *attr1;
 	gchar *attr2;
-	xmmsc_coll_t *operand;
+	xmmsv_coll_t *operand;
 	GString *idlist_str;
 
 	indent = g_malloc ((level * 2) + 1);
@@ -154,83 +154,83 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 	indent[i] = '\0';
 
 	/* type */
-	switch (xmmsc_coll_get_type (coll)) {
+	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
-		xmmsc_coll_attribute_get (coll, "reference", &attr1);
+		xmmsv_coll_attribute_get (coll, "reference", &attr1);
 		print_info ("%sReference: '%s'", indent, attr1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_UNION:
 		print_info ("%sUnion:", indent);
-		for (xmmsc_coll_operand_list_first (coll);
-		     xmmsc_coll_operand_list_entry (coll, &operand);
-		     xmmsc_coll_operand_list_next (coll)) {
+		for (xmmsv_coll_operand_list_first (coll);
+		     xmmsv_coll_operand_list_entry (coll, &operand);
+		     xmmsv_coll_operand_list_next (coll)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		print_info ("%sIntersection:", indent);
-		for (xmmsc_coll_operand_list_first (coll);
-		     xmmsc_coll_operand_list_entry (coll, &operand);
-		     xmmsc_coll_operand_list_next (coll)) {
+		for (xmmsv_coll_operand_list_first (coll);
+		     xmmsv_coll_operand_list_entry (coll, &operand);
+		     xmmsv_coll_operand_list_next (coll)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		print_info ("%sComplement:", indent);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_EQUALS:
-		xmmsc_coll_attribute_get (coll, "field",  &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		xmmsv_coll_attribute_get (coll, "field",  &attr1);
+		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sEquals ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
-		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		print_info ("%sHas ('%s') for:", indent, attr1);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_MATCH:
-		xmmsc_coll_attribute_get (coll, "field",  &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		xmmsv_coll_attribute_get (coll, "field",  &attr1);
+		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sMatch ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_SMALLER:
-		xmmsc_coll_attribute_get (coll, "field",  &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		xmmsv_coll_attribute_get (coll, "field",  &attr1);
+		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sSmaller ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_GREATER:
-		xmmsc_coll_attribute_get (coll, "field",  &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		xmmsv_coll_attribute_get (coll, "field",  &attr1);
+		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sGreater ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -251,8 +251,8 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 		idlist_str = coll_idlist_to_string (coll);
 		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
 		g_string_free (idlist_str, TRUE);
-		xmmsc_coll_operand_list_first (coll);
-		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+		xmmsv_coll_operand_list_first (coll);
+		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -264,7 +264,7 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 }
 
 static void
-coll_print (xmmsc_coll_t *coll)
+coll_print (xmmsv_coll_t *coll)
 {
 	coll_dump (coll, 0);
 }
@@ -281,7 +281,7 @@ void
 cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name, *namespace;
-	xmmsc_coll_t *coll = NULL;
+	xmmsv_coll_t *coll = NULL;
 	xmmsc_result_t *res;
 	gchar *pattern;
 	gchar **args;
@@ -302,7 +302,7 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	args[i] = NULL;
 
 	pattern = g_strjoinv (" ", args);
-	if (!xmmsc_coll_parse (pattern, &coll)) {
+	if (!xmmsv_coll_parse (pattern, &coll)) {
 		print_error ("Unable to generate query");
 	}
 
@@ -320,7 +320,7 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
-	xmmsc_coll_unref (coll);
+	xmmsv_coll_unref (coll);
 	g_free (name);
 	g_free (namespace);
 }
@@ -385,7 +385,7 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name, *namespace;
 	gchar **order = NULL;
-	xmmsc_coll_t *collref;
+	xmmsv_coll_t *collref;
 	xmmsc_result_t *res;
 	GList *n = NULL;
 
@@ -404,9 +404,9 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	/* Create a reference collection to the saved coll */
-	collref = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsc_coll_attribute_set (collref, "reference", name);
-	xmmsc_coll_attribute_set (collref, "namespace", namespace);
+	collref = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set (collref, "reference", name);
+	xmmsv_coll_attribute_set (collref, "namespace", namespace);
 
 	res = xmmsc_coll_query_ids (conn, collref, (const gchar**)order, 0, 0);
 	xmmsc_result_wait (res);
@@ -435,7 +435,7 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		g_strfreev (order);
 	}
 
-	xmmsc_coll_unref (collref);
+	xmmsv_coll_unref (collref);
 	g_free (name);
 	g_free (namespace);
 }
@@ -445,7 +445,7 @@ cmd_coll_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name, *namespace;
 	gchar **order = NULL;
-	xmmsc_coll_t *collref;
+	xmmsv_coll_t *collref;
 	xmmsc_result_t *res;
 
 	if (argc < 4) {
@@ -463,9 +463,9 @@ cmd_coll_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	/* Create a reference collection to the saved coll */
-	collref = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsc_coll_attribute_set (collref, "reference", name);
-	xmmsc_coll_attribute_set (collref, "namespace", namespace);
+	collref = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set (collref, "reference", name);
+	xmmsv_coll_attribute_set (collref, "namespace", namespace);
 
 	res = xmmsc_playlist_add_collection (conn, NULL, collref, (const gchar**)order);
 	xmmsc_result_wait (res);
@@ -480,7 +480,7 @@ cmd_coll_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		g_strfreev (order);
 	}
 
-	xmmsc_coll_unref (collref);
+	xmmsv_coll_unref (collref);
 	g_free (name);
 	g_free (namespace);
 }
@@ -530,7 +530,7 @@ cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	} else {
-		xmmsc_coll_t *coll;
+		xmmsv_coll_t *coll;
 		xmmsc_result_get_collection (res, &coll);
 		coll_print (coll);
 	}
@@ -586,17 +586,17 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	} else {
-		xmmsc_coll_t *coll;
+		xmmsv_coll_t *coll;
 		xmmsc_result_get_collection (res, &coll);
 
 		/* Print all attributes */
 		if (argc == 4) {
-			xmmsc_coll_attribute_foreach (coll, coll_attr_print, NULL);
+			xmmsv_coll_attribute_foreach (coll, coll_attr_print, NULL);
 
 		/* Print the given attribute */
 		} else if (argc == 5) {
 			gchar *val;
-			if (xmmsc_coll_attribute_get (coll, argv[4], &val)) {
+			if (xmmsv_coll_attribute_get (coll, argv[4], &val)) {
 				coll_attr_print (argv[4], val, NULL);
 			}
 
@@ -604,10 +604,10 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		} else {
 			xmmsc_result_t *saveres;
 			if (strlen (argv[5]) > 0) {
-				xmmsc_coll_attribute_set (coll, argv[4], argv[5]);
+				xmmsv_coll_attribute_set (coll, argv[4], argv[5]);
 			} else {
 				/* Empty value = remove */
-				xmmsc_coll_attribute_remove (coll, argv[4]);
+				xmmsv_coll_attribute_remove (coll, argv[4]);
 			}
 
 			saveres = xmmsc_coll_save (conn, coll, name, namespace);
@@ -622,7 +622,7 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_result_unref (saveres);
 		}
 
-		xmmsc_coll_unref (coll);
+		xmmsv_coll_unref (coll);
 	}
 
 	xmmsc_result_unref (res);

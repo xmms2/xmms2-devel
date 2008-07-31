@@ -66,24 +66,24 @@ static void
 handle_file_del (xmonitor_t *mon, gchar *filename)
 {
 	xmmsc_result_t *res;
-	xmmsc_coll_t *univ, *coll;
+	xmmsv_coll_t *univ, *coll;
 	gchar tmp[MON_FILENAME_MAX];
 
 	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s%%", filename);
 
-	univ = xmmsc_coll_universe ();
-	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_MATCH);
-	xmmsc_coll_add_operand (coll, univ);
-	xmmsc_coll_attribute_set (coll, "field", "url");
-	xmmsc_coll_attribute_set (coll, "value", tmp);
+	univ = xmmsv_coll_universe ();
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_add_operand (coll, univ);
+	xmmsv_coll_attribute_set (coll, "field", "url");
+	xmmsv_coll_attribute_set (coll, "value", tmp);
 
 	res = xmmsc_coll_query_ids (mon->conn, coll, NULL, 0, 0);
 
 	DBG ("remove '%s' from mlib", tmp);
 	xmmsc_result_notifier_set (res, handle_remove_from_mlib, mon);
 	xmmsc_result_unref (res);
-	xmmsc_coll_unref (coll);
-	xmmsc_coll_unref (univ);
+	xmmsv_coll_unref (coll);
+	xmmsv_coll_unref (univ);
 }
 
 static void

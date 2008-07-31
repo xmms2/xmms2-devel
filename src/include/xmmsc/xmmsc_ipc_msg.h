@@ -50,7 +50,7 @@ uint32_t xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v);
 uint32_t xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v);
 uint32_t xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
 uint32_t xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[]);
-uint32_t xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll);
+uint32_t xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll);
 uint32_t xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
 
 void xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg, uint32_t offset, uint32_t v);
@@ -60,7 +60,7 @@ bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);
 bool xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v);
 bool xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, unsigned int maxlen);
 bool xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
-bool xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll);
+bool xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll);
 bool xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg, unsigned char **buf, unsigned int *len);
 
 #endif 

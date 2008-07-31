@@ -298,7 +298,7 @@ xmms_object_cmd_value_list_new (GList *list)
 }
 
 xmms_object_cmd_value_t *
-xmms_object_cmd_value_coll_new (xmmsc_coll_t *coll)
+xmms_object_cmd_value_coll_new (xmmsv_coll_t *coll)
 {
 	xmms_object_cmd_value_t *val;
 	val = g_new0 (xmms_object_cmd_value_t, 1);
@@ -353,7 +353,7 @@ xmms_object_cmd_value_free (xmms_object_cmd_value_t *v)
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:
 			if (v->value.coll) {
-				xmmsc_coll_unref (v->value.coll);
+				xmmsv_coll_unref (v->value.coll);
 			}
 			break;
 		default:
@@ -442,7 +442,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			arg.retval = xmms_object_cmd_value_list_new (va_arg (ap, GList *));
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:
-			arg.retval = xmms_object_cmd_value_coll_new (va_arg (ap, xmmsc_coll_t *));
+			arg.retval = xmms_object_cmd_value_coll_new (va_arg (ap, xmmsv_coll_t *));
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			arg.retval = xmms_object_cmd_value_none_new ();

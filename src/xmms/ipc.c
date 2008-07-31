@@ -350,7 +350,7 @@ err:
 			GList * list = arg.values[i].value.list;
 			while (list) { g_free (list->data); list = g_list_delete_link (list, list); }
 		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_COLL) {
-			xmmsc_coll_unref (arg.values[i].value.coll);
+			xmmsv_coll_unref (arg.values[i].value.coll);
 		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_BIN) {
 			g_string_free (arg.values[i].value.bin, TRUE);
 		}

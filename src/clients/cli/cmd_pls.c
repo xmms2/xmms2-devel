@@ -56,7 +56,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *playlist, gchar *item)
 
 
 static const gchar *
-get_playlist_type_string (xmmsc_coll_type_t type)
+get_playlist_type_string (xmmsv_coll_type_t type)
 {
 	switch (type) {
 	case XMMS_COLLECTION_TYPE_IDLIST:        return "list";
@@ -69,16 +69,16 @@ get_playlist_type_string (xmmsc_coll_type_t type)
 static void
 coll_copy_attributes (const char *key, const char *value, void *udata)
 {
-	xmmsc_coll_t *coll = (xmmsc_coll_t*) udata;
+	xmmsv_coll_t *coll = (xmmsv_coll_t*) udata;
 
-	xmmsc_coll_attribute_set (coll, key, value);
+	xmmsv_coll_attribute_set (coll, key, value);
 }
 
 static void
-playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
+playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsv_coll_t *coll, gchar *ref)
 {
 	xmmsc_result_t *psres;
-	xmmsc_coll_t *refcoll;
+	xmmsv_coll_t *refcoll;
 	gchar *s_name, *s_namespace;
 
 	if (!coll_read_collname (ref, &s_name, &s_namespace)) {
@@ -87,7 +87,7 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 
 	/* Quick shortcut to use Universe for "All Media" */
 	if (strcmp (s_name, "All Media") == 0) {
-		refcoll = xmmsc_coll_universe ();
+		refcoll = xmmsv_coll_universe ();
 	} else {
 		psres = xmmsc_coll_get (conn, s_name, s_namespace);
 		xmmsc_result_wait (psres);
@@ -96,14 +96,14 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 			print_error ("%s", xmmsc_result_get_error (psres));
 		}
 
-		refcoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-		xmmsc_coll_attribute_set (refcoll, "reference", s_name);
-		xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
+		refcoll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+		xmmsv_coll_attribute_set (refcoll, "reference", s_name);
+		xmmsv_coll_attribute_set (refcoll, "namespace", s_namespace);
 	}
 
 	/* Set operand */
-	xmmsc_coll_add_operand (coll, refcoll);
-	xmmsc_coll_unref (refcoll);
+	xmmsv_coll_add_operand (coll, refcoll);
+	xmmsv_coll_unref (refcoll);
 
 	g_free (s_name);
 	g_free (s_namespace);
@@ -719,9 +719,9 @@ void
 cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name;
-	xmmsc_coll_type_t prevtype, newtype;
+	xmmsv_coll_type_t prevtype, newtype;
 	xmmsc_result_t *res;
-	xmmsc_coll_t *coll;
+	xmmsv_coll_t *coll;
 
 	/* Read playlist name */
 	if (argc < 4) {
@@ -738,7 +738,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	xmmsc_result_get_collection (res, &coll);
-	prevtype = xmmsc_coll_get_type (coll);
+	prevtype = xmmsv_coll_get_type (coll);
 
 	/* No type argument, simply display the current type */
 	if (argc < 5) {
@@ -749,7 +749,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		gint typelen;
 		gint idlistsize;
 		xmmsc_result_t *saveres;
-		xmmsc_coll_t *newcoll;
+		xmmsv_coll_t *newcoll;
 		gint i;
 
 		typelen = strlen (argv[4]);
@@ -770,16 +770,16 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 
 		/* Copy collection idlist, attributes and operand (if needed) */
-		newcoll = xmmsc_coll_new (newtype);
+		newcoll = xmmsv_coll_new (newtype);
 
-		idlistsize = xmmsc_coll_idlist_get_size (coll);
+		idlistsize = xmmsv_coll_idlist_get_size (coll);
 		for (i = 0; i < idlistsize; i++) {
 			guint id;
-			xmmsc_coll_idlist_get_index (coll, i, &id);
-			xmmsc_coll_idlist_append (newcoll, id);
+			xmmsv_coll_idlist_get_index (coll, i, &id);
+			xmmsv_coll_idlist_append (newcoll, id);
 		}
 
-		xmmsc_coll_attribute_foreach (coll, coll_copy_attributes, newcoll);
+		xmmsv_coll_attribute_foreach (coll, coll_copy_attributes, newcoll);
 
 		if (newtype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
 			playlist_setup_pshuffle (conn, newcoll, argv[5]);
@@ -794,11 +794,11 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			             name, xmmsc_result_get_error (saveres));
 		}
 
-		xmmsc_coll_unref (newcoll);
+		xmmsv_coll_unref (newcoll);
 		xmmsc_result_unref (saveres);
 	}
 
-	xmmsc_coll_unref (coll);
+	xmmsv_coll_unref (coll);
 	xmmsc_result_unref (res);
 }
 
@@ -887,7 +887,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *playlist;
 	xmmsc_result_t *res, *res2;
-	xmmsc_coll_t *coll;
+	xmmsv_coll_t *coll;
 	gchar *url;
 
 	if (argc < 3) {
@@ -920,7 +920,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res2));
 	}
 
-	print_info ("Playlist with %d entries added", xmmsc_coll_idlist_get_size (coll));
+	print_info ("Playlist with %d entries added", xmmsv_coll_idlist_get_size (coll));
 
 	xmmsc_result_unref (res);
 	xmmsc_result_unref (res2);

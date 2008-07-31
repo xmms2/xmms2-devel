@@ -267,7 +267,7 @@ cmd_mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *playlist = NULL;
 	xmmsc_result_t *res;
-	xmmsc_coll_t *all = xmmsc_coll_universe ();
+	xmmsv_coll_t *all = xmmsv_coll_universe ();
 	const gchar *empty[] = { NULL };
 
 	/* Load in another playlist */
@@ -278,7 +278,7 @@ cmd_mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playlist_add_collection (conn, playlist, all, empty);
 	xmmsc_result_wait (res);
 
-	xmmsc_coll_unref (all);
+	xmmsv_coll_unref (all);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -291,7 +291,7 @@ static void
 cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	xmmsc_coll_t *query;
+	xmmsv_coll_t *query;
 	gchar *pattern;
 	gchar **args;
 	int i;
@@ -309,7 +309,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	args[i] = NULL;
 
 	pattern = g_strjoinv (" ", args);
-	if (!xmmsc_coll_parse (pattern, &query)) {
+	if (!xmmsv_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
 	}
 
@@ -322,7 +322,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	/* FIXME: Always add to active playlist: allow loading in other playlist! */
 	res = xmmsc_playlist_add_collection (conn, NULL, query, order);
 	xmmsc_result_wait (res);
-	xmmsc_coll_unref (query);
+	xmmsv_coll_unref (query);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -335,7 +335,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	GList *n = NULL;
-	xmmsc_coll_t *query;
+	xmmsv_coll_t *query;
 	gchar *pattern;
 	gchar **args;
 	int i;
@@ -352,7 +352,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	args[i] = NULL;
 
 	pattern = g_strjoinv (" ", args);
-	if (!xmmsc_coll_parse (pattern, &query)) {
+	if (!xmmsv_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
 	}
 
@@ -364,7 +364,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	res = xmmsc_coll_query_ids (conn, query, NULL, 0, 0);
 	xmmsc_result_wait (res);
-	xmmsc_coll_unref (query);
+	xmmsv_coll_unref (query);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));

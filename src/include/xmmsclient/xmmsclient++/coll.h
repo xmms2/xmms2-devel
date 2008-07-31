@@ -38,7 +38,7 @@ namespace Xmms
 	namespace Coll
 	{
 
-		typedef xmmsc_coll_type_t Type;
+		typedef xmmsv_coll_type_t Type;
 
 		const Type REFERENCE    = XMMS_COLLECTION_TYPE_REFERENCE;
 		const Type UNION        = XMMS_COLLECTION_TYPE_UNION;
@@ -141,7 +141,7 @@ namespace Xmms
 				virtual const OperandIterator getOperandIterator() const;
 
 				// FIXME: Hide this, we shouldn't need it..
-				xmmsc_coll_t* getColl() const { return coll_; }
+				xmmsv_coll_t* getColl() const { return coll_; }
 
 			/** @cond */
 			protected:
@@ -152,7 +152,7 @@ namespace Xmms
 				friend class IdlistElement;
 				friend class Unary;
 
-				Coll( xmmsc_coll_t *coll );
+				Coll( xmmsv_coll_t *coll );
 				Coll( Type type );
 				Coll( const Coll& src );
 				Coll operator=( const Coll& src );
@@ -160,7 +160,7 @@ namespace Xmms
 				void setIndex( unsigned int index, unsigned int value );
 				unsigned int getIndex( unsigned int index ) const;
 
-				xmmsc_coll_t* coll_;
+				xmmsv_coll_t* coll_;
 
 				void ref();
 				void unref();
@@ -182,7 +182,7 @@ namespace Xmms
 
 			protected:
 				Nary( Type type );
-				Nary( xmmsc_coll_t* coll );
+				Nary( xmmsv_coll_t* coll );
 				~Nary();
 		};
 
@@ -196,7 +196,7 @@ namespace Xmms
 			protected:
 				Unary( Type type );
 				Unary( Type type, Coll& operand );
-				Unary( xmmsc_coll_t* coll );
+				Unary( xmmsv_coll_t* coll );
 				~Unary();
 		};
 
@@ -204,7 +204,7 @@ namespace Xmms
 		class Filter : public Unary
 		{
 			protected:
-				Filter( xmmsc_coll_t* coll );
+				Filter( xmmsv_coll_t* coll );
 				Filter( Type type );
 				Filter( Type type, Coll& operand );
 				Filter( Type type, Coll& operand, const std::string& field);
@@ -229,7 +229,7 @@ namespace Xmms
 			friend class ::Xmms::CollResult;
 
 			protected:
-				Reference( xmmsc_coll_t* coll );
+				Reference( xmmsv_coll_t* coll );
 
 			public:
 				// nsname is actually of type Collection::Namespace,
@@ -278,7 +278,7 @@ namespace Xmms
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
 
 			protected:
-				Union( xmmsc_coll_t* coll );
+				Union( xmmsv_coll_t* coll );
 
 			public:
 				Union();
@@ -304,7 +304,7 @@ namespace Xmms
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
 
 			protected:
-				Intersection( xmmsc_coll_t* coll );
+				Intersection( xmmsv_coll_t* coll );
 
 			public:
 				Intersection();
@@ -330,7 +330,7 @@ namespace Xmms
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
 
 			protected:
-				Complement( xmmsc_coll_t* coll );
+				Complement( xmmsv_coll_t* coll );
 
 			public:
 				Complement();
@@ -346,7 +346,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Has( xmmsc_coll_t* coll );
+				Has( xmmsv_coll_t* coll );
 
 			public:
 				Has();
@@ -363,7 +363,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Smaller( xmmsc_coll_t* coll );
+				Smaller( xmmsv_coll_t* coll );
 
 			public:
 				Smaller();
@@ -383,7 +383,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Greater( xmmsc_coll_t* coll );
+				Greater( xmmsv_coll_t* coll );
 
 			public:
 				Greater();
@@ -403,7 +403,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Equals( xmmsc_coll_t* coll );
+				Equals( xmmsv_coll_t* coll );
 
 			public:
 				Equals();
@@ -424,7 +424,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Match( xmmsc_coll_t* coll );
+				Match( xmmsv_coll_t* coll );
 
 			public:
 				Match();
@@ -460,7 +460,7 @@ namespace Xmms
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
 
 			protected:
-				Idlist( xmmsc_coll_t* coll );
+				Idlist( xmmsv_coll_t* coll );
 				Idlist( Type type );
 
 			public:
@@ -503,7 +503,7 @@ namespace Xmms
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
-				Queue( xmmsc_coll_t* coll );
+				Queue( xmmsv_coll_t* coll );
 				Queue( Type type );
 				Queue( Type type, unsigned int history );
 
@@ -540,7 +540,7 @@ namespace Xmms
 			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
 
 			protected:
-				PartyShuffle( xmmsc_coll_t* coll );
+				PartyShuffle( xmmsv_coll_t* coll );
 
 			public:
 				PartyShuffle();
@@ -606,20 +606,20 @@ namespace Xmms
 		AbstractElement< keyT, valT >::AbstractElement( Coll& coll, keyT index )
 			: coll_ (coll), index_( index )
 		{
-			xmmsc_coll_ref( coll_.getColl() );
+			xmmsv_coll_ref( coll_.getColl() );
 		}
 
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::AbstractElement( const Coll& coll, keyT index )
 			: coll_ (coll), index_( index )
 		{
-			xmmsc_coll_ref( coll_.getColl() );
+			xmmsv_coll_ref( coll_.getColl() );
 		}
 
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::~AbstractElement()
 		{
-			xmmsc_coll_unref( coll_.getColl() );
+			xmmsv_coll_unref( coll_.getColl() );
 		}
 
 	}

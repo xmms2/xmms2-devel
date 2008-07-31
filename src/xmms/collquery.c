@@ -61,21 +61,21 @@ static coll_query_t* init_query (coll_query_params_t *params);
 static void add_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params);
 static void destroy_query (coll_query_t* query);
 static GString* xmms_collection_gen_query (coll_query_t *query);
-static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
+static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, coll_query_t *query);
 
 static void query_append_uint (coll_query_t *query, guint i);
 static void query_append_string (coll_query_t *query, const gchar *s);
 static void query_append_protect_string (coll_query_t *query, gchar *s);
-static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
-static void query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
-static void query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *key, gchar *value, gboolean case_sens);
+static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll);
+static void query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll);
+static void query_append_filter (coll_query_t *query, xmmsv_coll_type_t type, gchar *key, gchar *value, gboolean case_sens);
 static void query_string_append_joins (gpointer key, gpointer val, gpointer udata);
 static void query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields);
 static void query_string_append_fetch (coll_query_t *query, GString *qstring);
 static void query_string_append_alias (GString *qstring, coll_query_alias_t *alias);
 
 static gchar *canonical_field_name (gchar *field);
-static gboolean operator_is_allmedia (xmmsc_coll_t *op);
+static gboolean operator_is_allmedia (xmmsv_coll_t *op);
 static coll_query_alias_t *query_make_alias (coll_query_t *query, const gchar *field, gboolean optional);
 static coll_query_alias_t *query_get_alias (coll_query_t *query, const gchar *field);
 
@@ -90,7 +90,7 @@ static coll_query_alias_t *query_get_alias (coll_query_t *query, const gchar *fi
 
 /* Generate a query string from a collection and query parameters. */
 GString*
-xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                            guint limit_start, guint limit_len,
                            GList *order, GList *fetch, GList *group)
 {
@@ -209,16 +209,16 @@ xmms_collection_gen_query (coll_query_t *query)
 
 /* Recursively append conditions corresponding to the given collection to the query. */
 static void
-xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                                  coll_query_t *query)
 {
 	gint i;
-	xmmsc_coll_t *op;
+	xmmsv_coll_t *op;
 	guint *idlist;
 	gchar *attr1, *attr2, *attr3;
 	gboolean case_sens;
 
-	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
+	xmmsv_coll_type_t type = xmmsv_coll_get_type (coll);
 	switch (type) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		if (!operator_is_allmedia (coll)) {
@@ -234,9 +234,9 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		i = 0;
 		query_append_string (query, "(");
 
-		xmmsc_coll_operand_list_save (coll);
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmmsv_coll_operand_list_save (coll);
+		xmmsv_coll_operand_list_first (coll);
+		while (xmmsv_coll_operand_list_entry (coll, &op)) {
 			if (i != 0) {
 				if (type == XMMS_COLLECTION_TYPE_UNION)
 					query_append_string (query, " OR ");
@@ -246,9 +246,9 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 				i = 1;
 			}
 			xmms_collection_append_to_query (dag, op, query);
-			xmmsc_coll_operand_list_next (coll);
+			xmmsv_coll_operand_list_next (coll);
 		}
-		xmmsc_coll_operand_list_restore (coll);
+		xmmsv_coll_operand_list_restore (coll);
 
 		query_append_string (query, ")");
 		break;
@@ -263,9 +263,9 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_MATCH:
 	case XMMS_COLLECTION_TYPE_SMALLER:
 	case XMMS_COLLECTION_TYPE_GREATER:
-		xmmsc_coll_attribute_get (coll, "field", &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
-		xmmsc_coll_attribute_get (coll, "case-sensitive", &attr3);
+		xmmsv_coll_attribute_get (coll, "field", &attr1);
+		xmmsv_coll_attribute_get (coll, "value", &attr2);
+		xmmsv_coll_attribute_get (coll, "case-sensitive", &attr3);
 		case_sens = (attr3 != NULL && strcmp (attr3, "true") == 0);
 
 		query_append_string (query, "(");
@@ -278,7 +278,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_QUEUE:
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		idlist = xmmsc_coll_get_idlist (coll);
+		idlist = xmmsv_coll_get_idlist (coll);
 		query_append_string (query, "m0.id IN (");
 		for (i = 0; idlist[i] != 0; ++i) {
 			if (i != 0) {
@@ -367,10 +367,10 @@ canonical_field_name (gchar *field) {
 
 /* Determine whether the given operator is a reference to "All Media" */
 static gboolean
-operator_is_allmedia (xmmsc_coll_t *op)
+operator_is_allmedia (xmmsv_coll_t *op)
 {
 	gchar *target_name;
-	xmmsc_coll_attribute_get (op, "reference", &target_name);
+	xmmsv_coll_attribute_get (op, "reference", &target_name);
 	return (target_name != NULL && strcmp (target_name, "All Media") == 0);
 }
 
@@ -397,25 +397,25 @@ query_append_protect_string (coll_query_t *query, gchar *s)
 }
 
 static void
-query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
+query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll)
 {
-	xmmsc_coll_t *op;
+	xmmsv_coll_t *op;
 	gchar *target_name;
 	gchar *target_ns;
 	guint  target_nsid;
 
-	xmmsc_coll_operand_list_save (coll);
-	xmmsc_coll_operand_list_first (coll);
-	if (!xmmsc_coll_operand_list_entry (coll, &op)) {
+	xmmsv_coll_operand_list_save (coll);
+	xmmsv_coll_operand_list_first (coll);
+	if (!xmmsv_coll_operand_list_entry (coll, &op)) {
 		/* Ref'd coll not saved as operand, look for it */
-		if (xmmsc_coll_attribute_get (coll, "reference", &target_name) &&
-		    xmmsc_coll_attribute_get (coll, "namespace", &target_ns)) {
+		if (xmmsv_coll_attribute_get (coll, "reference", &target_name) &&
+		    xmmsv_coll_attribute_get (coll, "namespace", &target_ns)) {
 
 			target_nsid = xmms_collection_get_namespace_id (target_ns);
 			op = xmms_collection_get_pointer (dag, target_name, target_nsid);
 		}
 	}
-	xmmsc_coll_operand_list_restore (coll);
+	xmmsv_coll_operand_list_restore (coll);
 
 	/* Append reference operator */
 	if (op != NULL) {
@@ -429,24 +429,24 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *c
 
 static void
 query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag,
-                                xmmsc_coll_t *coll)
+                                xmmsv_coll_t *coll)
 {
-	xmmsc_coll_t *op;
+	xmmsv_coll_t *op;
 
-	xmmsc_coll_operand_list_save (coll);
-	xmmsc_coll_operand_list_first (coll);
-	if (xmmsc_coll_operand_list_entry (coll, &op)) {
+	xmmsv_coll_operand_list_save (coll);
+	xmmsv_coll_operand_list_first (coll);
+	if (xmmsv_coll_operand_list_entry (coll, &op)) {
 		if (!operator_is_allmedia (op)) {
 			query_append_string (query, " AND ");
 			xmms_collection_append_to_query (dag, op, query);
 		}
 	}
-	xmmsc_coll_operand_list_restore (coll);
+	xmmsv_coll_operand_list_restore (coll);
 }
 
 /* Append a filtering clause on the field value, depending on the operator type. */
 static void
-query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
+query_append_filter (coll_query_t *query, xmmsv_coll_type_t type,
                      gchar *key, gchar *value, gboolean case_sens)
 {
 	coll_query_alias_t *alias;

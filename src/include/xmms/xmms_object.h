@@ -60,7 +60,7 @@ typedef struct {
 		gchar *string;
 		GTree *dict;
 		GList *list;
-		xmmsc_coll_t *coll;
+		xmmsv_coll_t *coll;
 		GString *bin;
 	} value;
 	xmms_object_cmd_arg_type_t type;
@@ -74,7 +74,7 @@ xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GTree *dict);
 xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_propdict_new (GList *list);
-xmms_object_cmd_value_t *xmms_object_cmd_value_coll_new (xmmsc_coll_t *coll);
+xmms_object_cmd_value_t *xmms_object_cmd_value_coll_new (xmmsv_coll_t *coll);
 xmms_object_cmd_value_t *xmms_object_cmd_value_none_new (void);
 xmms_object_cmd_value_t *xmms_object_cmd_value_ref (xmms_object_cmd_value_t *val);
 void xmms_object_cmd_value_unref (xmms_object_cmd_value_t *val);

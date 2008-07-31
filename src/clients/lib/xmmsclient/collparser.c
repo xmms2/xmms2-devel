@@ -33,10 +33,10 @@ typedef struct {
 	 * below.
 	 */
 	char longstr[8];
-} xmmsc_coll_prop_t;
+} xmmsv_coll_prop_t;
 
-static const xmmsc_coll_prop_t
-xmmsc_coll_prop_short[] = { { 'a', "artist" },
+static const xmmsv_coll_prop_t
+xmmsv_coll_prop_short[] = { { 'a', "artist" },
                             { 'l', "album" },
                             { 't', "title" },
                             { 'n', "tracknr" },
@@ -64,32 +64,32 @@ xmmsc_coll_prop_short[] = { { 'a', "artist" },
 } while (0)
 
 
-static int coll_parse_prepare (xmmsc_coll_token_t *tokens);
+static int coll_parse_prepare (xmmsv_coll_token_t *tokens);
 
-static xmmsc_coll_token_t *coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_sequence (xmmsc_coll_token_t *token, const char *field, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_posseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_andop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_orop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-static xmmsc_coll_token_t *coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_expr (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_parenexpr (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_sequence (xmmsv_coll_token_t *token, const char *field, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_idseq (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_posseq (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_operation (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_unaryop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_notop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_andop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_orop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_andop_append (xmmsv_coll_token_t *tokens, xmmsv_coll_t *operator, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_orop_append (xmmsv_coll_token_t *tokens, xmmsv_coll_t *operator, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_reference (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_filter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_unaryfilter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_binaryfilter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret);
+static xmmsv_coll_token_t *coll_parse_autofilter (xmmsv_coll_token_t *token, xmmsv_coll_t **ret);
 
-static xmmsc_coll_token_t *coll_token_new (xmmsc_coll_token_type_t type, char *string);
-static void coll_token_free (xmmsc_coll_token_t *token);
-static xmmsc_coll_token_t *coll_next_token (xmmsc_coll_token_t *token);
-static void coll_append_universe (xmmsc_coll_t *coll);
-static char *coll_parse_prop (xmmsc_coll_token_t *token);
-static char *coll_parse_strval (xmmsc_coll_token_t *token);
+static xmmsv_coll_token_t *coll_token_new (xmmsv_coll_token_type_t type, char *string);
+static void coll_token_free (xmmsv_coll_token_t *token);
+static xmmsv_coll_token_t *coll_next_token (xmmsv_coll_token_t *token);
+static void coll_append_universe (xmmsv_coll_t *coll);
+static char *coll_parse_prop (xmmsv_coll_token_t *token);
+static char *coll_parse_strval (xmmsv_coll_token_t *token);
 
 static char *string_substr (char *start, char *end);
 static char *string_intadd (char *number, int delta);
@@ -132,11 +132,11 @@ static char *string_intadd (char *number, int delta);
  * @return TRUE if the parsing succeeded, false otherwise.
  */
 int
-xmmsc_coll_parse (const char *pattern, xmmsc_coll_t** coll)
+xmmsv_coll_parse (const char *pattern, xmmsv_coll_t** coll)
 {
-	return xmmsc_coll_parse_custom (pattern,
-	                                xmmsc_coll_default_parse_tokens,
-	                                xmmsc_coll_default_parse_build,
+	return xmmsv_coll_parse_custom (pattern,
+	                                xmmsv_coll_default_parse_tokens,
+	                                xmmsv_coll_default_parse_build,
 	                                coll);
 }
 
@@ -157,13 +157,13 @@ xmmsc_coll_parse (const char *pattern, xmmsc_coll_t** coll)
  * @return TRUE if the parsing succeeded, false otherwise.
  */
 int
-xmmsc_coll_parse_custom (const char *pattern,
-                         xmmsc_coll_parse_tokens_f parse_f,
-                         xmmsc_coll_parse_build_f build_f,
-                         xmmsc_coll_t** coll)
+xmmsv_coll_parse_custom (const char *pattern,
+                         xmmsv_coll_parse_tokens_f parse_f,
+                         xmmsv_coll_parse_build_f build_f,
+                         xmmsv_coll_t** coll)
 {
-	xmmsc_coll_token_t *tokens;
-	xmmsc_coll_token_t *k, *last;
+	xmmsv_coll_token_t *tokens;
+	xmmsv_coll_token_t *k, *last;
 	const char *next, *endstr;
 
 	endstr = pattern + strlen (pattern);
@@ -211,12 +211,12 @@ xmmsc_coll_parse_custom (const char *pattern,
  * @param newpos The position in the string after the found token.
  * @return The token found in the string.
  */
-xmmsc_coll_token_t*
-xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
+xmmsv_coll_token_t*
+xmmsv_coll_default_parse_tokens (const char *str, const char **newpos)
 {
 	int i;
 	int escape = 0;
-	xmmsc_coll_token_type_t type;
+	xmmsv_coll_token_type_t type;
 	const char *tmp;
 	char *strval;
 	char quote;
@@ -350,18 +350,18 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
  * @param tokens The chained list of tokens.
  * @return The corresponding collection structure.
  */
-xmmsc_coll_t *
-xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens)
+xmmsv_coll_t *
+xmmsv_coll_default_parse_build (xmmsv_coll_token_t *tokens)
 {
-	xmmsc_coll_token_t *tk;
-	xmmsc_coll_t *coll;
+	xmmsv_coll_token_t *tk;
+	xmmsv_coll_t *coll;
 
 	coll_parse_prepare (tokens);
 	tk = coll_parse_operation (tokens, &coll);
 
 	/* Failed to parse the whole string! */
 	if (tk && coll) {
-		xmmsc_coll_unref (coll);
+		xmmsv_coll_unref (coll);
 		coll = NULL;
 	}
 
@@ -371,9 +371,9 @@ xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens)
 
 /* Pre-process the token list to apply contextual updates to tokens. */
 static int
-coll_parse_prepare (xmmsc_coll_token_t *tokens)
+coll_parse_prepare (xmmsv_coll_token_t *tokens)
 {
-	xmmsc_coll_token_t *prev, *curr;
+	xmmsv_coll_token_t *prev, *curr;
 
 	prev = NULL;
 	curr = tokens;
@@ -486,11 +486,11 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 	return 1;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_expr (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
-	xmmsc_coll_token_t *pos;
+	xmmsv_coll_t *coll;
+	xmmsv_coll_token_t *pos;
 
 	if (tokens == NULL) {
 		*ret = NULL;
@@ -507,11 +507,11 @@ coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_parenexpr (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_token_t *tk;
-	xmmsc_coll_t *expr;
+	xmmsv_coll_token_t *tk;
+	xmmsv_coll_t *expr;
 
 	tk = tokens;
 	TOKEN_ASSERT (tk, XMMS_COLLECTION_TOKEN_GROUP_OPEN);
@@ -521,7 +521,7 @@ coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	/* paren mismatch :-/ */
 	if (!tk || tk->type != XMMS_COLLECTION_TOKEN_GROUP_CLOSE) {
 		if (expr) {
-			xmmsc_coll_unref (expr);
+			xmmsv_coll_unref (expr);
 		}
 		*ret = NULL;
 		return tokens;
@@ -532,12 +532,12 @@ coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 }
 
 
-static xmmsc_coll_token_t *
-coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
-                     xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_sequence (xmmsv_coll_token_t *tokens, const char *field,
+                     xmmsv_coll_t **ret)
 {
 	char *start, *end, *seq, *num;
-	xmmsc_coll_t *coll, *parent;
+	xmmsv_coll_t *coll, *parent;
 
 	if (!tokens || (tokens->type != XMMS_COLLECTION_TOKEN_INTEGER &&
 	                tokens->type != XMMS_COLLECTION_TOKEN_SEQUENCE)) {
@@ -550,7 +550,7 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 
 	/* Take the union if several element in the sequence */
 	if (end != NULL) {
-		parent = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);
+		parent = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 	} else {
 		parent = NULL;
 		end = start + strlen (start);
@@ -562,7 +562,7 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 		/* Contains a '-', parse the sequence */
 		if (seq != NULL && seq < end) {
 			int len_from, len_to;
-			xmmsc_coll_t *coll_from, *coll_to;
+			xmmsv_coll_t *coll_from, *coll_to;
 			char *buf;
 
 			len_from = seq - start;
@@ -571,24 +571,24 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 			if (len_from > 0) {
 				buf = string_substr (start, seq);
 				num = string_intadd (buf, -1);
-				coll_from = xmmsc_coll_new (XMMS_COLLECTION_TYPE_GREATER);
-				xmmsc_coll_attribute_set (coll_from, "field", field);
-				xmmsc_coll_attribute_set (coll_from, "value", num);
+				coll_from = xmmsv_coll_new (XMMS_COLLECTION_TYPE_GREATER);
+				xmmsv_coll_attribute_set (coll_from, "field", field);
+				xmmsv_coll_attribute_set (coll_from, "value", num);
 				coll_append_universe (coll_from);
 				free (buf);
 				free (num);
 			} else {
-				coll_from = xmmsc_coll_universe ();
+				coll_from = xmmsv_coll_universe ();
 			}
 
 			if (len_to > 0) {
 				buf = string_substr (seq + 1, end);
 				num = string_intadd (buf, 1);
-				coll_to = xmmsc_coll_new (XMMS_COLLECTION_TYPE_SMALLER);
-				xmmsc_coll_attribute_set (coll_to, "field", field);
-				xmmsc_coll_attribute_set (coll_to, "value", num);
-				xmmsc_coll_add_operand (coll_to, coll_from);
-				xmmsc_coll_unref (coll_from);
+				coll_to = xmmsv_coll_new (XMMS_COLLECTION_TYPE_SMALLER);
+				xmmsv_coll_attribute_set (coll_to, "field", field);
+				xmmsv_coll_attribute_set (coll_to, "value", num);
+				xmmsv_coll_add_operand (coll_to, coll_from);
+				xmmsv_coll_unref (coll_from);
 				free (buf);
 				free (num);
 			} else {
@@ -600,15 +600,15 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 		/* Just an integer, match it */
 		} else {
 			num = string_substr (start, end);
-			coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-			xmmsc_coll_attribute_set (coll, "field", field);
-			xmmsc_coll_attribute_set (coll, "value", num);
+			coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
+			xmmsv_coll_attribute_set (coll, "field", field);
+			xmmsv_coll_attribute_set (coll, "value", num);
 			coll_append_universe (coll);
 			free (num);
 		}
 
 		if (parent) {
-			xmmsc_coll_add_operand (parent, coll);
+			xmmsv_coll_add_operand (parent, coll);
 		}
 
 		/* Whole string parsed, exit */
@@ -631,10 +631,10 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 	return coll_next_token (tokens);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_idseq (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_token_t *tk;
+	xmmsv_coll_token_t *tk;
 
 	tk = tokens;
 	TOKEN_ASSERT (tk, XMMS_COLLECTION_TOKEN_SYMBOL_ID);
@@ -645,24 +645,24 @@ coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return (ret == NULL ? tokens : tk);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_posseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_posseq (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
 	/* FIXME: link with position in (active) playlist? */
 	return coll_parse_sequence (tokens, "position", ret);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_operation (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
 	return coll_parse_andop (tokens, ret);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_unaryop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
-	xmmsc_coll_token_t *pos;
+	xmmsv_coll_t *coll;
+	xmmsv_coll_token_t *pos;
 
 	PARSER_TRY (coll_parse_notop);
 	PARSER_TRY (coll_parse_reference);
@@ -671,12 +671,12 @@ coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_notop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
-	xmmsc_coll_t *operand;
-	xmmsc_coll_token_t *tk = tokens;
+	xmmsv_coll_t *coll;
+	xmmsv_coll_t *operand;
+	xmmsv_coll_token_t *tk = tokens;
 
 	TOKEN_ASSERT (tk, XMMS_COLLECTION_TOKEN_OPSET_COMPLEMENT);
 
@@ -686,32 +686,32 @@ coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 		return tokens;
 	}
 
-	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsc_coll_add_operand (coll, operand);
-	xmmsc_coll_unref (operand);
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+	xmmsv_coll_add_operand (coll, operand);
+	xmmsv_coll_unref (operand);
 
 	*ret = coll;
 	return tk;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_andop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_andop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
 	return coll_parse_andop_append (tokens, NULL, ret);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_orop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_orop (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
 	return coll_parse_orop_append (tokens, NULL, ret);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
-                         xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_andop_append (xmmsv_coll_token_t *tokens, xmmsv_coll_t *operator,
+                         xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *first, *tmp;
-	xmmsc_coll_token_t *tk;
+	xmmsv_coll_t *first, *tmp;
+	xmmsv_coll_token_t *tk;
 
 	tk = coll_parse_orop (tokens, &first);
 	if (!first) {
@@ -725,24 +725,24 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	}
 
 	if (!operator) {
-		operator = xmmsc_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
-		xmmsc_coll_add_operand (operator, first);
+		operator = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+		xmmsv_coll_add_operand (operator, first);
 		tk = coll_parse_andop_append (tk, operator, &tmp);
 
 		/* actually, only one operand, bypass the 'AND' altogether */
 		if (tmp == NULL) {
-			xmmsc_coll_remove_operand (operator, first);
-			xmmsc_coll_unref (operator);
+			xmmsv_coll_remove_operand (operator, first);
+			xmmsv_coll_unref (operator);
 			*ret = first;
 		}
 		else {
-			xmmsc_coll_unref (first);
+			xmmsv_coll_unref (first);
 			*ret = operator;
 		}
 	}
 	else {
-		xmmsc_coll_add_operand (operator, first);
-		xmmsc_coll_unref (first);
+		xmmsv_coll_add_operand (operator, first);
+		xmmsv_coll_unref (first);
 
 		tk = coll_parse_andop_append (tk, operator, &tmp);
 		*ret = operator;
@@ -752,12 +752,12 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	return tk;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
-                        xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_orop_append (xmmsv_coll_token_t *tokens, xmmsv_coll_t *operator,
+                        xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *first;
-	xmmsc_coll_token_t *tk;
+	xmmsv_coll_t *first;
+	xmmsv_coll_token_t *tk;
 
 	tk = coll_parse_expr (tokens, &first);
 	if (!first) {
@@ -767,13 +767,13 @@ coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 
 	if (tk && tk->type == XMMS_COLLECTION_TOKEN_OPSET_UNION) {
 		if (!operator) {
-			operator = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);
+			operator = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 		}
 	}
 
 	if (operator) {
-		xmmsc_coll_add_operand (operator, first);
-		xmmsc_coll_unref (first);
+		xmmsv_coll_add_operand (operator, first);
+		xmmsv_coll_unref (first);
 
 		if (tk && tk->type == XMMS_COLLECTION_TOKEN_OPSET_UNION) {
 			tk = coll_parse_orop_append (coll_next_token (tk), operator, ret);
@@ -788,12 +788,12 @@ coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	return tk;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_reference (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
+	xmmsv_coll_t *coll;
 	char *namespace, *reference, *slash;
-	xmmsc_coll_token_t *tk = tokens;
+	xmmsv_coll_token_t *tk = tokens;
 
 	TOKEN_ASSERT (tk, XMMS_COLLECTION_TOKEN_REFERENCE);
 
@@ -816,9 +816,9 @@ coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 		reference = slash + 1;
 	}
 
-	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsc_coll_attribute_set (coll, "namespace", namespace);
-	xmmsc_coll_attribute_set (coll, "reference", reference);
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set (coll, "namespace", namespace);
+	xmmsv_coll_attribute_set (coll, "reference", reference);
 
 	free (namespace);
 
@@ -827,11 +827,11 @@ coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 }
 
 
-static xmmsc_coll_token_t *
-coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_filter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
-	xmmsc_coll_token_t *pos;
+	xmmsv_coll_t *coll;
+	xmmsv_coll_token_t *pos;
 
 	PARSER_TRY (coll_parse_unaryfilter);
 	PARSER_TRY (coll_parse_binaryfilter);
@@ -841,12 +841,12 @@ coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-static xmmsc_coll_token_t *
-coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_unaryfilter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
-	xmmsc_coll_t *coll;
+	xmmsv_coll_t *coll;
 	char *prop;
-	xmmsc_coll_token_t *tk = tokens;
+	xmmsv_coll_token_t *tk = tokens;
 
 	TOKEN_ASSERT (tk, XMMS_COLLECTION_TOKEN_OPFIL_HAS);
 
@@ -857,8 +857,8 @@ coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 		return tokens;
 	}
 
-	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_HAS);
-	xmmsc_coll_attribute_set (coll, "field", prop);
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_HAS);
+	xmmsv_coll_attribute_set (coll, "field", prop);
 	coll_append_universe (coll);
 
 	free (prop);
@@ -867,14 +867,14 @@ coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return coll_next_token (tk);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_binaryfilter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 {
 	char *prop, *strval;
-	xmmsc_coll_t *coll = NULL;
-	xmmsc_coll_token_t *operand;
-	xmmsc_coll_type_t colltype;
-	xmmsc_coll_token_t *tk = tokens;
+	xmmsv_coll_t *coll = NULL;
+	xmmsv_coll_token_t *operand;
+	xmmsv_coll_type_t colltype;
+	xmmsv_coll_token_t *tk = tokens;
 
 	if (!tk) {
 		*ret = NULL;
@@ -923,9 +923,9 @@ coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 		}
 
 		if (strval) {
-			coll = xmmsc_coll_new (colltype);
-			xmmsc_coll_attribute_set (coll, "field", prop);
-			xmmsc_coll_attribute_set (coll, "value", strval);
+			coll = xmmsv_coll_new (colltype);
+			xmmsv_coll_attribute_set (coll, "field", prop);
+			xmmsv_coll_attribute_set (coll, "value", strval);
 			coll_append_universe (coll);
 		}
 	}
@@ -936,12 +936,12 @@ coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return coll_next_token (operand);
 }
 
-static xmmsc_coll_token_t *
-coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
+static xmmsv_coll_token_t *
+coll_parse_autofilter (xmmsv_coll_token_t *token, xmmsv_coll_t **ret)
 {
 	char *strval;
-	xmmsc_coll_type_t colltype;
-	xmmsc_coll_t *coll, *operand;
+	xmmsv_coll_type_t colltype;
+	xmmsv_coll_t *coll, *operand;
 	int i;
 	/* Properties to match by default. */
 	const char *coll_autofilter[] = { "artist", "album", "title", NULL };
@@ -966,15 +966,15 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 		return token;
 	}
 
-	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 
 	for (i = 0; coll_autofilter[i] != NULL; i++) {
-		operand = xmmsc_coll_new (colltype);
-		xmmsc_coll_attribute_set (operand, "field", coll_autofilter[i]);
-		xmmsc_coll_attribute_set (operand, "value", strval);
-		xmmsc_coll_add_operand (coll, operand);
+		operand = xmmsv_coll_new (colltype);
+		xmmsv_coll_attribute_set (operand, "field", coll_autofilter[i]);
+		xmmsv_coll_attribute_set (operand, "value", strval);
+		xmmsv_coll_add_operand (coll, operand);
 		coll_append_universe (operand);
-		xmmsc_coll_unref (operand);
+		xmmsv_coll_unref (operand);
 	}
 
 	*ret = coll;
@@ -982,12 +982,12 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 }
 
 
-static xmmsc_coll_token_t *
-coll_token_new (xmmsc_coll_token_type_t type, char *string)
+static xmmsv_coll_token_t *
+coll_token_new (xmmsv_coll_token_type_t type, char *string)
 {
-	xmmsc_coll_token_t* token;
+	xmmsv_coll_token_t* token;
 
-	token = x_new0 (xmmsc_coll_token_t, 1);
+	token = x_new0 (xmmsv_coll_token_t, 1);
 	token->type = type;
 	token->string = string;
 
@@ -995,7 +995,7 @@ coll_token_new (xmmsc_coll_token_type_t type, char *string)
 }
 
 static void
-coll_token_free (xmmsc_coll_token_t *token)
+coll_token_free (xmmsv_coll_token_t *token)
 {
 	if (token->string != NULL) {
 		free (token->string);
@@ -1004,24 +1004,24 @@ coll_token_free (xmmsc_coll_token_t *token)
 	free (token);
 }
 
-static xmmsc_coll_token_t *
-coll_next_token (xmmsc_coll_token_t *token)
+static xmmsv_coll_token_t *
+coll_next_token (xmmsv_coll_token_t *token)
 {
 	return (token ? token->next : NULL);
 }
 
 static void
-coll_append_universe (xmmsc_coll_t *coll)
+coll_append_universe (xmmsv_coll_t *coll)
 {
-	xmmsc_coll_t *univ;
+	xmmsv_coll_t *univ;
 
-	univ = xmmsc_coll_universe ();
-	xmmsc_coll_add_operand (coll, univ);
-	xmmsc_coll_unref (univ);
+	univ = xmmsv_coll_universe ();
+	xmmsv_coll_add_operand (coll, univ);
+	xmmsv_coll_unref (univ);
 }
 
 static char *
-coll_parse_prop (xmmsc_coll_token_t *token)
+coll_parse_prop (xmmsv_coll_token_t *token)
 {
 	int i;
 
@@ -1032,9 +1032,9 @@ coll_parse_prop (xmmsc_coll_token_t *token)
 	switch (token->type) {
 	case XMMS_COLLECTION_TOKEN_PROP_SHORT:
 		/* try to find short prop, else fallback to long prop */
-		for (i = 0; i < X_N_ELEMENTS (xmmsc_coll_prop_short); i++) {
-			if (*token->string == xmmsc_coll_prop_short[i].shortstr) {
-				return strdup (xmmsc_coll_prop_short[i].longstr);
+		for (i = 0; i < X_N_ELEMENTS (xmmsv_coll_prop_short); i++) {
+			if (*token->string == xmmsv_coll_prop_short[i].shortstr) {
+				return strdup (xmmsv_coll_prop_short[i].longstr);
 			}
 		}
 
@@ -1049,7 +1049,7 @@ coll_parse_prop (xmmsc_coll_token_t *token)
 }
 
 static char *
-coll_parse_strval (xmmsc_coll_token_t *token)
+coll_parse_strval (xmmsv_coll_token_t *token)
 {
 	if (!token || (token->type != XMMS_COLLECTION_TOKEN_STRING &&
 	               token->type != XMMS_COLLECTION_TOKEN_PATTERN)) {

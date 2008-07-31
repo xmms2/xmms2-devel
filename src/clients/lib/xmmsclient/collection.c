@@ -48,7 +48,7 @@
  */
 xmmsc_result_t*
 xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
-                xmmsc_coll_namespace_t ns)
+                xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -86,7 +86,7 @@ xmmsc_coll_sync (xmmsc_connection_t *conn)
  * @param ns  The namespace containing the saved collections.
  */
 xmmsc_result_t*
-xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
+xmmsc_coll_list (xmmsc_connection_t *conn, xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -108,8 +108,8 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
  * @param ns  The namespace in which to save the collection.
  */
 xmmsc_result_t*
-xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
-                 const char* name, xmmsc_coll_namespace_t ns)
+xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+                 const char* name, xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -134,7 +134,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
  */
 xmmsc_result_t*
 xmmsc_coll_remove (xmmsc_connection_t *conn,
-                   const char* name, xmmsc_coll_namespace_t ns)
+                   const char* name, xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -158,7 +158,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
  * @param ns  The namespace to consider (cannot be ALL).
  */
 xmmsc_result_t*
-xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns)
+xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -182,7 +182,7 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
                                    const char* from_name,
                                    const char* to_name,
-                                   xmmsc_coll_namespace_t ns)
+                                   xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -211,7 +211,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  * @param limit_len  The maximum number of entries to retrieve (0 to disable).
  */
 xmmsc_result_t*
-xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
+xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                       const char **order, unsigned int limit_start,
                       unsigned int limit_len)
 {
@@ -245,7 +245,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
  * @param group  The list of properties to group by (NULL to disable).
  */
 xmmsc_result_t*
-xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
+xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                         const char **order, unsigned int limit_start,
                         unsigned int limit_len, const char **fetch,
                         const char **group)

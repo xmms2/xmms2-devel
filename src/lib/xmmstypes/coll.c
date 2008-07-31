@@ -24,12 +24,12 @@
 #include "xmmspriv/xmms_list.h"
 
 
-struct xmmsc_coll_St {
+struct xmmsv_coll_St {
 
 	/* refcounting */
 	int ref;
 
-	xmmsc_coll_type_t type;
+	xmmsv_coll_type_t type;
 
 	x_list_t *operands;
 	x_list_t *curr_op;
@@ -49,11 +49,11 @@ struct xmmsc_coll_St {
 };
 
 
-static void xmmsc_coll_free (xmmsc_coll_t *coll);
+static void xmmsv_coll_free (xmmsv_coll_t *coll);
 static int free_udata (void *ptr, void *userdata);
 
-static int xmmsc_coll_unref_udata (void *coll, void *userdata);
-static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
+static int xmmsv_coll_unref_udata (void *coll, void *userdata);
+static int xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize);
 
 
 /**
@@ -65,13 +65,13 @@ static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
  */
 
 /**
- * Increases the references for the #xmmsc_coll_t
+ * Increases the references for the #xmmsv_coll_t
  *
  * @param coll the collection to reference.
  * @return coll
  */
-xmmsc_coll_t *
-xmmsc_coll_ref (xmmsc_coll_t *coll)
+xmmsv_coll_t *
+xmmsv_coll_ref (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, NULL);
 
@@ -82,17 +82,18 @@ xmmsc_coll_ref (xmmsc_coll_t *coll)
 
 /**
  * Allocate a new collection of the given type.
- * The pointer will have to be deallocated using #xmmsc_coll_unref.
+ * The pointer will have to be deallocated using #xmmsv_coll_unref.
  *
- * @param type the #xmmsc_coll_type_t specifying the type of collection to create.
+ * @param type the #xmmsv_coll_type_t specifying the type of collection to create.
  * @return a pointer to the newly created collection.
  */
-xmmsc_coll_t*
-xmmsc_coll_new (xmmsc_coll_type_t type)
+xmmsv_coll_t*
+xmmsv_coll_new (xmmsv_coll_type_t type)
 {
-	xmmsc_coll_t *coll;
+	xmmsv_coll_t *coll;
 
-	if (!(coll = x_new0 (xmmsc_coll_t, 1))) {
+	coll = x_new0 (xmmsv_coll_t, 1);
+	if (!coll) {
 		x_oom ();
 		return NULL;
 	}
@@ -114,25 +115,25 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 	coll->curr_stack = NULL;
 
 	/* user must give this back */
-	xmmsc_coll_ref (coll);
+	xmmsv_coll_ref (coll);
 
 	return coll;
 }
 
 /**
  * Free the memory owned by the collection.
- * You probably want to use #xmmsc_coll_unref instead, which handles
+ * You probably want to use #xmmsv_coll_unref instead, which handles
  * reference counting.
  *
  * @param coll the collection to free.
  */
 static void
-xmmsc_coll_free (xmmsc_coll_t *coll)
+xmmsv_coll_free (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
 
 	/* Unref all the operands and attributes */
-	x_list_foreach (coll->operands, xmmsc_coll_unref_udata, NULL);
+	x_list_foreach (coll->operands, xmmsv_coll_unref_udata, NULL);
 	x_list_foreach (coll->attributes, free_udata, NULL);
 
 	x_list_free (coll->operands);
@@ -145,21 +146,21 @@ xmmsc_coll_free (xmmsc_coll_t *coll)
 }
 
 /**
- * Decreases the references for the #xmmsc_coll_t
+ * Decreases the references for the #xmmsv_coll_t
  * When the number of references reaches 0 it will
  * be freed and all its operands unreferenced as well.
  *
  * @param coll the collection to unref.
  */
 void
-xmmsc_coll_unref (xmmsc_coll_t *coll)
+xmmsv_coll_unref (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
 	x_api_error_if (coll->ref < 1, "with a freed collection",);
 
 	coll->ref--;
 	if (coll->ref == 0) {
-		xmmsc_coll_free (coll);
+		xmmsv_coll_free (coll);
 	}
 }
 
@@ -173,7 +174,7 @@ xmmsc_coll_unref (xmmsc_coll_t *coll)
  * @param ids  the 0-terminated list of ids to store in the collection.
  */
 void
-xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[])
+xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
 {
 	unsigned int i;
 	unsigned int size = 0;
@@ -206,7 +207,7 @@ xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[])
  * @param op    The operand to add.
  */
 void
-xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
+xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
 	x_return_if_fail (coll);
 	x_return_if_fail (op);
@@ -216,7 +217,7 @@ xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 		return;
 	}
 
-	xmmsc_coll_ref (op);
+	xmmsv_coll_ref (op);
 
 	coll->operands = x_list_append (coll->operands, op);
 }
@@ -227,7 +228,7 @@ xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
  * @param op    The operand to remove.
  */
 void
-xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
+xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
 	x_list_t *entry;
 
@@ -242,7 +243,7 @@ xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 
 	coll->operands = x_list_delete_link (coll->operands, entry);
 
-	xmmsc_coll_unref (op);
+	xmmsv_coll_unref (op);
 }
 
 
@@ -253,11 +254,11 @@ xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
+xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return xmmsc_coll_idlist_insert (coll, coll->idlist_size - 1, id);
+	return xmmsv_coll_idlist_insert (coll, coll->idlist_size - 1, id);
 }
 
 /**
@@ -268,7 +269,7 @@ xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int index, unsigned int id)
+xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, unsigned int id)
 {
 	int i;
 	x_return_val_if_fail (coll, 0);
@@ -281,7 +282,7 @@ xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int index, unsigned int i
 	if (coll->idlist_size == coll->idlist_allocated) {
 		int success;
 		size_t double_size = coll->idlist_allocated * 2;
-		success = xmmsc_coll_idlist_resize (coll, double_size);
+		success = xmmsv_coll_idlist_resize (coll, double_size);
 		x_return_val_if_fail (success, 0);
 	}
 
@@ -303,7 +304,7 @@ xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int index, unsigned int i
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int newindex)
+xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
 {
 	int i;
 	uint32_t tmp;
@@ -337,7 +338,7 @@ xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int new
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
+xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
 {
 	int i;
 	size_t half_size;
@@ -356,7 +357,7 @@ xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
 	/* Reduce memory usage by two if possible */
 	half_size = coll->idlist_allocated / 2;
 	if (coll->idlist_size <= half_size) {
-		xmmsc_coll_idlist_resize (coll, half_size);
+		xmmsv_coll_idlist_resize (coll, half_size);
 	}
 
 	return 1;
@@ -368,13 +369,13 @@ xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
+xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
 {
 	unsigned int empty[] = { 0 };
 
 	x_return_val_if_fail (coll, 0);
 
-	xmmsc_coll_set_idlist (coll, empty);
+	xmmsv_coll_set_idlist (coll, empty);
 
 	return 1;
 }
@@ -387,7 +388,7 @@ xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val)
+xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, uint32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -408,7 +409,7 @@ xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *v
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t val)
+xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, uint32_t val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -427,7 +428,7 @@ xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t va
  * @return  The size of the idlist.
  */
 size_t
-xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
+xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -439,10 +440,10 @@ xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
 /**
  * Return the type of the collection.
  * @param coll  The collection to consider.
- * @return The #xmmsc_coll_type_t of the collection, or -1 if invalid.
+ * @return The #xmmsv_coll_type_t of the collection, or -1 if invalid.
  */
-xmmsc_coll_type_t
-xmmsc_coll_get_type (xmmsc_coll_t *coll)
+xmmsv_coll_type_t
+xmmsv_coll_get_type (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, -1);
 
@@ -459,7 +460,7 @@ xmmsc_coll_get_type (xmmsc_coll_t *coll)
  * @return The 0-terminated list of ids.
  */
 uint32_t*
-xmmsc_coll_get_idlist (xmmsc_coll_t *coll)
+xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
 {
 	x_return_null_if_fail (coll);
 
@@ -474,7 +475,7 @@ xmmsc_coll_get_idlist (xmmsc_coll_t *coll)
  * @return 1 upon success, 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_first (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_first (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -490,7 +491,7 @@ xmmsc_coll_operand_list_first (xmmsc_coll_t *coll)
  * @return 1 if the current operand is valid, 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_valid (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -508,14 +509,14 @@ xmmsc_coll_operand_list_valid (xmmsc_coll_t *coll)
  * @return 1 upon success (valid entry), 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand)
+xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand)
 {
 	x_return_val_if_fail (coll, 0);
 	if (coll->curr_op == NULL) {
 		return 0;
 	}
 
-	*operand = (xmmsc_coll_t *)coll->curr_op->data;
+	*operand = (xmmsv_coll_t *)coll->curr_op->data;
 
 	return 1;
 }
@@ -527,7 +528,7 @@ xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand)
  * @return 1 upon success, 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_next (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_next (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 	if (coll->curr_op == NULL) {
@@ -542,7 +543,7 @@ xmmsc_coll_operand_list_next (xmmsc_coll_t *coll)
 
 /**
  * Save the position of the operand iterator, to be restored later by
- * calling #xmmsc_coll_operand_list_restore.  The pointer is saved on
+ * calling #xmmsv_coll_operand_list_restore.  The pointer is saved on
  * a stack, so it can be called any number of times, as long as it is
  * restored as many times.
  * Note that the iterator is not tested for consistency before being
@@ -552,7 +553,7 @@ xmmsc_coll_operand_list_next (xmmsc_coll_t *coll)
  * @return 1 upon success, 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_save (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_save (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -564,7 +565,7 @@ xmmsc_coll_operand_list_save (xmmsc_coll_t *coll)
 
 /**
  * Restore the position of the operand iterator, previously saved by
- * calling #xmmsc_coll_operand_list_save.
+ * calling #xmmsv_coll_operand_list_save.
  * Note that the iterator is not tested for consistency, so you better
  * be careful if the list of operands was manipulated since the
  * iterator was saved!
@@ -573,7 +574,7 @@ xmmsc_coll_operand_list_save (xmmsc_coll_t *coll)
  * @return 1 upon success, 0 otherwise.
  */
 int
-xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 	x_return_val_if_fail (coll->curr_stack, 0);
@@ -592,17 +593,17 @@ xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll)
  * @param coll  The collection to consider.
  */
 void
-xmmsc_coll_operand_list_clear (xmmsc_coll_t *coll)
+xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll)
 {
-	xmmsc_coll_t *op;
+	xmmsv_coll_t *op;
 
 	x_return_if_fail (coll);
 
 	/* Unref all the operands sequentially. */
 	while (coll->operands != NULL) {
-		op = (xmmsc_coll_t *) coll->operands->data;
+		op = (xmmsv_coll_t *) coll->operands->data;
 		coll->operands = x_list_delete_link (coll->operands, coll->operands);
-		xmmsc_coll_unref (op);
+		xmmsv_coll_unref (op);
 	}
 
 	coll->curr_op = NULL;
@@ -618,7 +619,7 @@ xmmsc_coll_operand_list_clear (xmmsc_coll_t *coll)
  * @param value The value of the attribute.
  */
 void
-xmmsc_coll_attribute_set (xmmsc_coll_t *coll, const char *key, const char *value)
+xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
@@ -651,7 +652,7 @@ xmmsc_coll_attribute_set (xmmsc_coll_t *coll, const char *key, const char *value
  * @return 1 upon success, 0 otherwise
  */
 int
-xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
+xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
@@ -686,7 +687,7 @@ xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
+xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
@@ -718,13 +719,13 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
  *
  * void function (const char *key, const char *value, void *user_data);
  *
- * @param coll the #xmmsc_coll_t.
+ * @param coll the #xmmsv_coll_t.
  * @param func function that is called for each key/value-pair
  * @param user_data extra data passed to func
  */
 void
-xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
-                              xmmsc_coll_attribute_foreach_func func,
+xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll,
+                              xmmsv_coll_attribute_foreach_func func,
                               void *user_data)
 {
 	x_list_t *n;
@@ -741,7 +742,7 @@ xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
 }
 
 void
-xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
+xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
 
@@ -749,7 +750,7 @@ xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
 }
 
 int
-xmmsc_coll_attribute_list_valid (xmmsc_coll_t *coll)
+xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -757,7 +758,7 @@ xmmsc_coll_attribute_list_valid (xmmsc_coll_t *coll)
 }
 
 void
-xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, const char **k, const char **v)
+xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, const char **k, const char **v)
 {
 	x_return_if_fail (coll);
 	x_return_if_fail (coll->curr_att);
@@ -768,7 +769,7 @@ xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, const char **k, const char 
 }
 
 void
-xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
+xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
 
@@ -782,16 +783,16 @@ xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
 /**
  * Return a collection referencing the whole media library,
  * that is a reference to the "All Media" collection.
- * The returned structure must be unref'd using #xmmsc_coll_unref
+ * The returned structure must be unref'd using #xmmsv_coll_unref
  * after usage.
  *
  * @return a collection referring to the "All Media" collection.
  */
-xmmsc_coll_t*
-xmmsc_coll_universe ()
+xmmsv_coll_t*
+xmmsv_coll_universe ()
 {
-	xmmsc_coll_t *univ = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsc_coll_attribute_set (univ, "reference", "All Media");
+	xmmsv_coll_t *univ = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set (univ, "reference", "All Media");
 	/* FIXME: namespace? */
 
 	return univ;
@@ -804,14 +805,14 @@ xmmsc_coll_universe ()
 /** @internal */
 
 /**
- * Utility version of the #xmmsc_coll_unref function, voidified and
+ * Utility version of the #xmmsv_coll_unref function, voidified and
  * with an extra userdata argument, to be used as a foreach
  * function.
  */
 static int
-xmmsc_coll_unref_udata (void *coll, void *userdata)
+xmmsv_coll_unref_udata (void *coll, void *userdata)
 {
-	xmmsc_coll_unref ((xmmsc_coll_t *)coll);
+	xmmsv_coll_unref ((xmmsv_coll_t *)coll);
 	return 1;
 }
 
@@ -828,7 +829,7 @@ free_udata (void *ptr, void *userdata)
 
 
 static int
-xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize)
+xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize)
 {
 	uint32_t *newmem;
 

@@ -83,8 +83,8 @@ xmmsc_result_t *xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *play
 xmmsc_result_t *xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, uint32_t id);
 xmmsc_result_t *xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const char *url);
-xmmsc_result_t *xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *playlist, xmmsc_coll_t *coll);
-xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist, xmmsc_coll_t *coll, const char **order);
+xmmsc_result_t *xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *playlist, xmmsv_coll_t *coll);
+xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist, xmmsv_coll_t *coll, const char **order);
 xmmsc_result_t *xmmsc_playlist_remove_entry (xmmsc_connection_t *c, const char *playlist, uint32_t);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist);
@@ -99,7 +99,7 @@ xmmsc_result_t *xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *p
 xmmsc_result_t *xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
 xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, uint32_t id);
 xmmsc_result_t *xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
-xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist, int pos, xmmsc_coll_t *coll, const char **order);
+xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist, int pos, xmmsv_coll_t *coll, const char **order);
 xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *playlist, const char *url);
@@ -247,17 +247,17 @@ xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c);
  * COLLECTION ***********************************************
  */
 
-xmmsc_result_t* xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname, xmmsc_coll_namespace_t ns);
-xmmsc_result_t* xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns);
-xmmsc_result_t* xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* name, xmmsc_coll_namespace_t ns);
-xmmsc_result_t* xmmsc_coll_remove (xmmsc_connection_t *conn, const char* name, xmmsc_coll_namespace_t ns);
-xmmsc_result_t* xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns);
-xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, const char* from_name, const char* to_name, xmmsc_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname, xmmsv_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_list (xmmsc_connection_t *conn, xmmsv_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_coll_t *coll, const char* name, xmmsv_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_remove (xmmsc_connection_t *conn, const char* name, xmmsv_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsv_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, const char* from_name, const char* to_name, xmmsv_coll_namespace_t ns);
 xmmsc_result_t *xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t* xmmsc_coll_sync (xmmsc_connection_t *conn);
 
-xmmsc_result_t* xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len);
-xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len, const char **fetch, const char **group);
+xmmsc_result_t* xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len);
+xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len, const char **fetch, const char **group);
 
 /* string-to-collection parser */
 typedef enum {
@@ -282,26 +282,26 @@ typedef enum {
 	XMMS_COLLECTION_TOKEN_OPFIL_GREATER,
 	XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ,
 	XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ
-} xmmsc_coll_token_type_t;
+} xmmsv_coll_token_type_t;
 
 #define XMMS_COLLECTION_TOKEN_CUSTOM 32
 
-typedef struct xmmsc_coll_token_St xmmsc_coll_token_t;
+typedef struct xmmsv_coll_token_St xmmsv_coll_token_t;
 
-struct xmmsc_coll_token_St {
-	xmmsc_coll_token_type_t type;
+struct xmmsv_coll_token_St {
+	xmmsv_coll_token_type_t type;
 	char *string;
-	xmmsc_coll_token_t *next;
+	xmmsv_coll_token_t *next;
 };
 
-typedef xmmsc_coll_token_t* (*xmmsc_coll_parse_tokens_f) (const char *str, const char **newpos);
-typedef xmmsc_coll_t* (*xmmsc_coll_parse_build_f) (xmmsc_coll_token_t *tokens);
+typedef xmmsv_coll_token_t* (*xmmsv_coll_parse_tokens_f) (const char *str, const char **newpos);
+typedef xmmsv_coll_t* (*xmmsv_coll_parse_build_f) (xmmsv_coll_token_t *tokens);
 
-int xmmsc_coll_parse (const char *pattern, xmmsc_coll_t** coll);
-int xmmsc_coll_parse_custom (const char *pattern, xmmsc_coll_parse_tokens_f parse_f, xmmsc_coll_parse_build_f build_f, xmmsc_coll_t** coll);
+int xmmsv_coll_parse (const char *pattern, xmmsv_coll_t** coll);
+int xmmsv_coll_parse_custom (const char *pattern, xmmsv_coll_parse_tokens_f parse_f, xmmsv_coll_parse_build_f build_f, xmmsv_coll_t** coll);
 
-xmmsc_coll_t *xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens);
-xmmsc_coll_token_t *xmmsc_coll_default_parse_tokens (const char *str, const char **newpos);
+xmmsv_coll_t *xmmsv_coll_default_parse_build (xmmsv_coll_token_t *tokens);
+xmmsv_coll_token_t *xmmsv_coll_default_parse_tokens (const char *str, const char **newpos);
 
 
 /* broadcasts */
@@ -344,7 +344,7 @@ const char * xmmsc_result_get_error (xmmsc_result_t *res);
 int xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, const char **r);
-int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll);
+int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsv_coll_t **coll);
 int xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen);
 
 typedef enum {
@@ -365,7 +365,7 @@ xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res,
 int xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, const char **r);
 int xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r);
 int xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r);
-int xmmsc_result_get_dict_entry_collection (xmmsc_result_t *conn, const char *key, xmmsc_coll_t **coll);
+int xmmsc_result_get_dict_entry_collection (xmmsc_result_t *conn, const char *key, xmmsv_coll_t **coll);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data);
 int xmmsc_result_propdict_foreach (xmmsc_result_t *res, xmmsc_propdict_foreach_func func, void *user_data);
 void xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference);
@@ -379,6 +379,18 @@ int xmmsc_result_list_valid (xmmsc_result_t *res);
 xmmsc_result_value_type_t xmmsc_result_get_type (xmmsc_result_t *res);
 
 const char *xmmsc_result_decode_url (xmmsc_result_t *res, const char *string);
+
+/* compability */
+
+typedef xmmsv_coll_token_type_t xmmsc_coll_token_type_t;
+typedef xmmsv_coll_token_t xmmsc_coll_token_t;
+typedef xmmsv_coll_parse_tokens_f xmmsc_coll_parse_tokens_f;
+typedef xmmsv_coll_parse_build_f xmmsc_coll_parse_build_f;
+
+#define xmmsc_coll_parse xmmsv_coll_parse
+#define xmmsc_coll_parse_custom xmmsv_coll_parse_custom
+#define xmmsc_coll_default_parse_build xmmsv_coll_default_parse_build
+#define xmmsc_coll_default_parse_tokens xmmsv_coll_default_parse_tokens
 
 #ifdef __cplusplus
 }

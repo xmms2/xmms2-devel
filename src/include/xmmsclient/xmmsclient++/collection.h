@@ -39,7 +39,7 @@ namespace Xmms
 
 		public:
 
-			typedef xmmsc_coll_namespace_t Namespace;
+			typedef xmmsv_coll_namespace_t Namespace;
 
 			static const Namespace ALL;
 			static const Namespace COLLECTIONS;

@@ -49,7 +49,7 @@ typedef struct xmmsc_result_value_St {
 		int32_t int32;
 		char *string;
 		x_list_t *dict;
-		xmmsc_coll_t *coll;
+		xmmsv_coll_t *coll;
 		xmmsc_result_value_bin_t *bin;
 	} value;
 	xmmsc_result_value_type_t type;
@@ -99,7 +99,7 @@ struct xmmsc_result_St {
 		int32_t inte;
 		char *string;
 		x_list_t *dict;
-		xmmsc_coll_t *coll;
+		xmmsv_coll_t *coll;
 		xmmsc_result_value_bin_t *bin;
 	} data;
 
@@ -373,7 +373,7 @@ xmmsc_result_value_free (void *v)
 			free_dict_list (val->value.dict);
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:
-			xmmsc_coll_unref (val->value.coll);
+			xmmsv_coll_unref (val->value.coll);
 			break;
 		default:
 			break;
@@ -419,7 +419,7 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 			res->data.dict = NULL;
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:
-			xmmsc_coll_unref (res->data.coll);
+			xmmsv_coll_unref (res->data.coll);
 			res->data.coll = NULL;
 			break;
 	}
@@ -520,13 +520,13 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 		case XMMS_OBJECT_CMD_ARG_COLL:
 			{
-				xmmsc_coll_t *coll;
+				xmmsv_coll_t *coll;
 
 				if (!xmms_ipc_msg_get_collection_alloc (msg, &coll))
 					return false;
 
 				res->data.coll = coll;
-				xmmsc_coll_ref (res->data.coll);
+				xmmsv_coll_ref (res->data.coll);
 			}
 			break;
 
@@ -799,7 +799,7 @@ xmmsc_result_get_string (xmmsc_result_t *res, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
+xmmsc_result_get_collection (xmmsc_result_t *res, xmmsv_coll_t **c)
 {
 	if (xmmsc_result_iserror (res)) {
 		return 0;
@@ -1038,7 +1038,7 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res,
  */
 int
 xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
-                                        xmmsc_coll_t **c)
+                                        xmmsv_coll_t **c)
 {
 	xmmsc_result_value_t *val;
 	if (xmmsc_result_iserror (res)) {
@@ -1497,7 +1497,7 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 			if (!val->value.coll) {
 				goto err;
 			}
-			xmmsc_coll_ref (val->value.coll);
+			xmmsv_coll_ref (val->value.coll);
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
