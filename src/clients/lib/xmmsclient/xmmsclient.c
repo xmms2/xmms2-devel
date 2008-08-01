@@ -170,6 +170,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 
 	if (!xmmsc_ipc_connect (ipc, c->path)) {
 		c->error = strdup ("xmms2d is not running.");
+		xmmsc_ipc_destroy (ipc);
 		return false;
 	}
 
