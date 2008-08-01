@@ -91,7 +91,7 @@ def configure(conf):
     test.mandatory = 1
     test.run()
 
-    conf.env['LIBS_m'] = ['m']
+    conf.env['LIB_m'] = ['m']
 
     # Detect the type of stat call used
 
