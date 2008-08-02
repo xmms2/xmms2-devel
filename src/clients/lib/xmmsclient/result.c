@@ -30,6 +30,7 @@
 #include "xmmsc/xmmsc_errorcodes.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_strlist.h"
+#include "xmmsc/xmmsc_stdbool.h"
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
@@ -78,10 +79,10 @@ struct xmmsc_result_St {
 	/** notifiers */
 	x_list_t *notifier_list;
 
-	int error;
+	bool error;
 	char *error_str;
 
-	int islist;
+	bool islist;
 
 	uint32_t cookie;
 	uint32_t restart_signal;
@@ -90,7 +91,7 @@ struct xmmsc_result_St {
 
 	uint32_t datatype;
 
-	int parsed;
+	bool parsed;
 
 	union {
 		void *generic;
@@ -256,11 +257,7 @@ xmmsc_result_iserror (xmmsc_result_t *res)
 {
 	x_return_val_if_fail (res, 1);
 
-	if (res->error > 0) {
-		return 1;
-	}
-
-	return 0;
+	return !!res->error;
 }
 
 /**
@@ -507,7 +504,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 				res->current = res->list = list;
 
 				if (type == XMMS_OBJECT_CMD_ARG_LIST) {
-					res->islist = 1;
+					res->islist = true;
 
 					if (res->current) {
 						xmmsc_result_value_t *val = res->current->data;
@@ -1183,7 +1180,7 @@ xmmsc_result_is_list (xmmsc_result_t *res)
 		return 0;
 	}
 
-	return res->islist;
+	return !!res->islist;
 }
 
 /**
@@ -1369,7 +1366,7 @@ void
 xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr)
 {
 	res->error_str = strdup (errstr);
-	res->error = 1;
+	res->error = true;
 
 	if (!res->error_str) {
 		x_oom ();
