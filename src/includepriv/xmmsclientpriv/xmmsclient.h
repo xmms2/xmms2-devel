@@ -47,11 +47,7 @@ struct xmmsc_connection_St {
 
 	xmmsc_ipc_t *ipc;
 
-	x_list_t *callbacks;
-	x_list_t *replies;
 	char *error;
-	int timeout;
-	void *data;
 	uint32_t cookie;
 
 	char *clientname;
