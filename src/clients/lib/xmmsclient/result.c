@@ -79,19 +79,19 @@ struct xmmsc_result_St {
 	/** notifiers */
 	x_list_t *notifier_list;
 
-	bool error;
+	xmmsc_ipc_t *ipc;
+
 	char *error_str;
+	bool error;
 
 	bool islist;
+
+	bool parsed;
 
 	uint32_t cookie;
 	uint32_t restart_signal;
 
-	xmmsc_ipc_t *ipc;
-
 	uint32_t datatype;
-
-	bool parsed;
 
 	union {
 		void *generic;
