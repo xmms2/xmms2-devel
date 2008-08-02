@@ -56,6 +56,17 @@ typedef struct xmmsc_result_value_St {
 
 static xmmsc_result_value_t *xmmsc_result_parse_value (xmms_ipc_msg_t *msg);
 
+typedef struct xmmsc_result_notifier_full_St {
+	/** the function that's called when the result is processed */
+	xmmsc_result_notifier_t func;
+
+	/** user data to pass to func (optional) */
+	void *udata;
+
+	/* function that frees udata (optional) */
+	xmmsc_user_data_free_func_t udata_free_func;
+} xmmsc_result_notifier_full_t;
+
 struct xmmsc_result_St {
 	xmmsc_connection_t *c;
 
@@ -65,9 +76,7 @@ struct xmmsc_result_St {
 	xmmsc_result_type_t type;
 
 	/** notifiers */
-	x_list_t *func_list;
-	x_list_t *udata_list;
-	x_list_t *udata_free_func_list;
+	x_list_t *notifier_list;
 
 	int error;
 	char *error_str;
@@ -186,8 +195,6 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
-	x_list_t *n, *l, *f;
-
 	x_return_if_fail (res);
 
 	if (res->error_str)
@@ -200,22 +207,19 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	xmmsc_unref (res->c);
 
-	l = res->udata_list;
-	f = res->udata_free_func_list;
-	for (n = res->func_list; n; n = x_list_next (n)) {
-		if (l->data && f->data) {
-			xmmsc_user_data_free_func_t free_func = f->data;
+	while (res->notifier_list) {
+		xmmsc_result_notifier_full_t *notifier = res->notifier_list->data;
 
-			free_func (l->data);
+		/* free the user data if set */
+		if (notifier->udata_free_func && notifier->udata) {
+			notifier->udata_free_func (notifier->udata);
 		}
 
-		l = x_list_next (l);
-		f = x_list_next (f);
-	}
+		free (notifier);
 
-	x_list_free (res->func_list);
-	x_list_free (res->udata_list);
-	x_list_free (res->udata_free_func_list);
+		res->notifier_list = x_list_delete_link (res->notifier_list,
+		                                         res->notifier_list);
+	}
 
 	if (res->source_pref) {
 		xmms_strlist_destroy (res->source_pref);
@@ -327,7 +331,6 @@ xmmsc_result_restart (xmmsc_result_t *res)
 {
 	xmmsc_result_t *newres;
 	xmms_ipc_msg_t *msg;
-	x_list_t *n, *l, *f;
 
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
@@ -340,16 +343,17 @@ xmmsc_result_restart (xmmsc_result_t *res)
 
 	newres = xmmsc_send_msg (res->c, msg);
 
-	l = res->udata_list;
-	f = res->udata_free_func_list;
-	for (n = res->func_list; n; n = x_list_next (n)) {
-		xmmsc_result_notifier_set_full (newres, n->data, l->data, f->data);
-		l->data = NULL;
-		n->data = NULL;
-		f->data = NULL;
-		l = x_list_next (l);
-		f = x_list_next (f);
+	/* The result's notifiers are moved over to newres. */
+	if (newres->notifier_list) {
+		x_internal_error ("restart result's notifiers non-empty!");
 	}
+
+	newres->notifier_list = res->notifier_list;
+	res->notifier_list = NULL;
+
+	/* Each pending call takes one ref */
+	newres->ref += x_list_length (newres->notifier_list);
+
 	xmmsc_result_restartable (newres, res->restart_signal);
 
 	return newres;
@@ -622,15 +626,26 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 void
 xmmsc_result_notifier_set_full (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data, xmmsc_user_data_free_func_t free_func)
 {
+	xmmsc_result_notifier_full_t *notifier;
+
 	x_return_if_fail (res);
 	x_return_if_fail (func);
 
+	notifier = x_new (xmmsc_result_notifier_full_t, 1);
+
+	if (!notifier) {
+		x_oom ();
+		return;
+	}
+
+	notifier->func = func;
+	notifier->udata = user_data;
+	notifier->udata_free_func = free_func;
+
+	res->notifier_list = x_list_append (res->notifier_list, notifier);
+
 	/* The pending call takes one ref */
 	xmmsc_result_ref (res);
-
-	res->func_list = x_list_append (res->func_list, func);
-	res->udata_list = x_list_append (res->udata_list, user_data);
-	res->udata_free_func_list = x_list_append (res->udata_free_func_list, free_func);
 }
 
 
@@ -1375,7 +1390,7 @@ xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
 void
 xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 {
-	x_list_t *n, *l;
+	x_list_t *n;
 	int cmd;
 	x_return_if_fail (res);
 	x_return_if_fail (msg);
@@ -1391,14 +1406,11 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 	xmmsc_result_ref (res);
 
-	if (res->func_list) {
-		l = res->udata_list;
-		for (n = res->func_list; n; n = x_list_next (n)) {
-			xmmsc_result_notifier_t notifier = n->data;
-			if (notifier) {
-				notifier (res, l->data);
-			}
-			l = x_list_next (l);
+	for (n = res->notifier_list; n; n = x_list_next (n)) {
+		xmmsc_result_notifier_full_t *notifier = n->data;
+
+		if (notifier->func) {
+			notifier->func (res, notifier->udata);
 		}
 	}
 
