@@ -308,7 +308,6 @@ command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
 	command_trie_match_type_t retval = COMMAND_TRIE_MATCH_NONE;
 
 	/* End recursion if no argument */
-	/* FIXME: (*num) not (num) right? */
 	if (*num == 0) {
 		return retval;
 	}

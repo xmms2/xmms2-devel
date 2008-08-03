@@ -1247,6 +1247,7 @@ gboolean
 cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *coll;
+	xmmsc_result_t *res = NULL;
 
 	gchar *collection, *fullname, *ns, *name, *pattern = NULL;
 	gboolean force, empty, coll_isset, retval = TRUE;
@@ -1282,8 +1283,21 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 			goto finish;
 		}
 	} else if (coll_isset) {
-		coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-		xmmsc_coll_attribute_set (coll, "reference", collection);
+		gchar *from_ns, *from_name;
+
+		coll_name_split (collection, &from_ns, &from_name);
+
+		/* get collection to copy from */
+		res = xmmsc_coll_get (infos->sync, from_name, from_ns);
+		xmmsc_result_wait (res);
+
+		if (!xmmsc_result_get_collection (res, &coll)) {
+			g_printf (_("Error: cannot find collection to copy\n"));
+			retval = FALSE;
+		}
+
+		g_free (from_ns);
+		g_free (from_name);
 	} else if (empty) {
 		xmmsc_coll_t *univ;
 
@@ -1297,8 +1311,14 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		coll = xmmsc_coll_universe ();
 	}
 
-	coll_save (infos, coll, ns, name, force);
-	xmmsc_coll_unref (coll);
+	if (retval) {
+		coll_save (infos, coll, ns, name, force);
+		if (res != NULL) {
+			xmmsc_result_unref (res);
+		} else {
+			xmmsc_coll_unref (coll);
+		}
+	}
 
     finish:
 	g_free (pattern);
