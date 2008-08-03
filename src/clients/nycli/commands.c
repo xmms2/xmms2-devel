@@ -106,8 +106,8 @@ CLI_SIMPLE_SETUP("collection config", cli_coll_config,
                  COMMAND_REQ_CONNECTION,
                  _("<collection> [attrname [attrvalue]]"),
                  _("Get or set attributes for the given collection.\n"
-                   "If no attribute name is provided, list all atributes.\n"
-                   "If only an atribute name is provided, display the value of the attribute.\n"
+                   "If no attribute name is provided, list all attributes.\n"
+                   "If only an attribute name is provided, display the value of the attribute.\n"
                    "If both attribute name and value are provided, set the new value of the attribute."))
 
 
