@@ -69,7 +69,7 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 	gint realsize;
 	guint uval;
 	gint ival;
-	gchar *sval;
+	const gchar *sval;
 
 	switch (xmmsc_result_get_dict_entry_type (res, coldef->arg.string)) {
 	case XMMSC_RESULT_VALUE_TYPE_UINT32:
