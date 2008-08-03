@@ -90,6 +90,26 @@ CLI_SIMPLE_SETUP("playlist shuffle", cli_pl_shuffle,
                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
                  _("[playlist]"),
                  _("Shuffle a playlist.  By default, shuffle the active playlist."))
+CLI_SIMPLE_SETUP("collection list", cli_coll_list,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("List all collections."))
+CLI_SIMPLE_SETUP("collection show", cli_coll_show,
+                 COMMAND_REQ_CONNECTION,
+                 _("<collection>"),
+                 _("Display a human-readable description of a collection."));
+CLI_SIMPLE_SETUP("collection remove", cli_coll_remove,
+                 COMMAND_REQ_CONNECTION,
+                 _("<collection>"),
+                 _("Remove a collection."))
+CLI_SIMPLE_SETUP("collection config", cli_coll_config,
+                 COMMAND_REQ_CONNECTION,
+                 _("<collection> [attrname [attrvalue]]"),
+                 _("Get or set attributes for the given collection.\n"
+                   "If no attribute name is provided, list all atributes.\n"
+                   "If only an atribute name is provided, display the value of the attribute.\n"
+                   "If both attribute name and value are provided, set the new value of the attribute."))
+
 
 /* FIXME: Add all playlist commands */
 /* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
@@ -223,11 +243,12 @@ void
 cli_pl_rename_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
+		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force the rename of the collection, overwrite an existing collection if needed."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
 	};
 	command_action_fill (action, "playlist rename", &cli_pl_rename, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>] <newname>"),
+	                     _("[-f] [-p <playlist>] <newname>"),
 	                     _("Rename a playlist.  By default, rename the active playlist."));
 }
 
@@ -241,6 +262,33 @@ cli_pl_sort_setup (command_action_t *action)
 	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-o <order>] [playlist]"),
 	                     _("Sort a playlist.  By default, sort the active playlist."));
+}
+
+void
+cli_coll_create_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force creating of the collection, overwrite an existing collection if needed."), NULL},
+		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Copy an existing collection to the new one."), "name"},
+		{ "empty", 'e', 0, G_OPTION_ARG_NONE, NULL, _("Initialize an empty collection."), NULL},
+		{ NULL }
+	};
+	command_action_fill (action, "collection create", &cli_coll_create, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-f] [-a | -e] [-c <collection>] <name> [pattern]"),
+	                     _("Create a new collection.\nIf pattern is provided, it is used to define the collection."
+	                       "\nOtherwise, the new collection contains the whole media library."));
+}
+
+void
+cli_coll_rename_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force renaming of the collection, overwrite an existing collection if needed."), NULL},
+		{ NULL }
+	};
+	command_action_fill (action, "collection rename", &cli_coll_rename, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-f] <oldname> <newname>"),
+	                     _("Rename a collection."));
 }
 
 void
@@ -936,8 +984,13 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
+/* 	xmmsc_result_t *res; */
+	gboolean force;
 	gchar *oldname, *newname;
+
+	if (!command_flag_boolean_get (ctx, "force", &force)) {
+		force = FALSE;
+	}
 
 	if (!command_arg_longstring_get (ctx, 0, &newname)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
@@ -948,10 +1001,13 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 		oldname = infos->cache->active_playlist_name;
 	}
 
-	res = xmmsc_coll_rename (infos->sync, oldname, newname,
-	                         XMMS_COLLECTION_NS_PLAYLISTS);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	coll_rename (infos, oldname, newname,
+	             XMMS_COLLECTION_NS_PLAYLISTS, force);
+
+/* 	res = xmmsc_coll_rename (infos->sync, oldname, newname, */
+/* 	                         XMMS_COLLECTION_NS_PLAYLISTS); */
+/* 	xmmsc_result_wait (res); */
+/* 	done (res, infos); */
 
 	g_free (newname);
 
@@ -1130,6 +1186,225 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
+/* Strings must be free manually */
+static void
+coll_name_split (gchar *str, gchar **ns, gchar **name)
+{
+	gchar **v;
+
+	v = g_strsplit(str, "/", 2);
+	if (!v[0]) {
+		*ns = NULL;
+		*name = NULL;
+	} else if (!v[1]) {
+		*ns = g_strdup (XMMS_COLLECTION_NS_COLLECTIONS);
+		*name = v[0];
+	} else {
+		*ns = v[0];
+		*name = v[1];
+	}
+
+	g_free (v);
+}
+
+gboolean
+cli_coll_list (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_coll_list (infos->sync, XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsc_result_wait (res);
+	list_print_collections (res, infos);
+
+	return TRUE;
+}
+
+gboolean
+cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *collection, *name, *ns;
+
+	if (!command_arg_longstring_get (ctx, 0, &collection)) {
+		g_printf (_("Error: You must provide a collection!\n"));
+		return FALSE;
+	}
+
+	coll_name_split (collection, &ns, &name);
+
+	res = xmmsc_coll_get (infos->sync, name, ns);
+	xmmsc_result_wait (res);
+	coll_show (infos, res);
+
+	g_free (ns);
+	g_free (name);
+    g_free(collection);
+
+	return TRUE;
+}
+
+gboolean
+cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_coll_t *coll;
+
+	gchar *collection, *fullname, *ns, *name, *pattern = NULL;
+	gboolean force, empty, coll_isset, retval = TRUE;
+
+	command_flag_boolean_get (ctx, "empty", &empty);
+	coll_isset = command_flag_string_get (ctx, "collection", &collection);
+	if (coll_isset && empty) {
+		g_printf (_("Error: -c and -e are mutually exclusive!\n"));
+		return FALSE;
+	}
+
+	if (!command_flag_boolean_get (ctx, "force", &force)) {
+		force = FALSE;
+	}
+
+	if (!command_arg_string_get (ctx, 0, &fullname)) {
+		g_printf (_("Error: You must provide a collection name!\n"));
+	}
+	coll_name_split (fullname, &ns, &name);
+
+	command_arg_longstring_get_escaped (ctx, 1, &pattern);
+	if (pattern) {
+		if (coll_isset || empty) {
+			g_printf (_("Error: "
+			            "pattern is mutually exclusive with -c and -e!\n"));
+			retval = FALSE;
+			goto finish;
+		}
+
+		if (!xmmsc_coll_parse (pattern, &coll)) {
+			g_printf (_("Error: failed to parse the pattern!\n"));
+			retval = FALSE;
+			goto finish;
+		}
+	} else if (coll_isset) {
+		coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+		xmmsc_coll_attribute_set (coll, "reference", collection);
+	} else if (empty) {
+		xmmsc_coll_t *univ;
+
+		/* empty collection == NOT 'All Media' */
+		univ = xmmsc_coll_universe ();
+
+		coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+		xmmsc_coll_add_operand (coll, univ);
+		xmmsc_coll_unref (univ);
+	} else {
+		coll = xmmsc_coll_universe ();
+	}
+
+	coll_save (infos, coll, ns, name, force);
+	xmmsc_coll_unref (coll);
+
+    finish:
+	g_free (pattern);
+	g_free (ns);
+	g_free (name);
+
+	return retval;
+}
+
+gboolean
+cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
+{
+	gboolean retval, force;
+	gchar *oldname, *newname, *from_ns, *to_ns, *from_name, *to_name;
+
+	if (!command_flag_boolean_get (ctx, "force", &force)) {
+		force = FALSE;
+	}
+
+	if (!command_arg_string_get (ctx, 0, &oldname)) {
+		g_printf (_("Error: failed to read collection name!\n"));
+		return FALSE;
+	}
+
+	if (!command_arg_string_get (ctx, 1, &newname)) {
+		g_printf (_("Error: failed to read collection new name!\n"));
+		return FALSE;
+	}
+
+	coll_name_split (oldname, &from_ns, &from_name);
+	coll_name_split (newname, &to_ns, &to_name);
+
+	if (strcmp (from_ns, to_ns)) {
+		g_printf ("Error: collections namespaces can't be different!\n");
+		retval = FALSE;
+	} else {
+		coll_rename (infos, oldname, newname, to_ns, force);
+		retval = TRUE;
+	}
+
+	g_free (from_ns);
+	g_free (from_name);
+	g_free (to_ns);
+	g_free (to_name);
+
+	return retval;
+}
+
+gboolean
+cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *collection, *name, *ns;
+
+	if (!command_arg_longstring_get (ctx, 0, &collection)) {
+		g_printf (_("Error: failed to read the collection name!\n"));
+		return FALSE;
+	}
+
+	coll_name_split (collection, &ns, &name);
+
+	res = xmmsc_coll_remove (infos->sync, name, ns);
+	xmmsc_result_wait (res);
+	done (res, infos);
+
+	g_free (ns);
+	g_free (name);
+    g_free (collection);
+
+	return TRUE;
+}
+
+gboolean
+cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gchar *collection, *name, *ns, *attrname, *attrvalue;
+
+	if (!command_arg_string_get (ctx, 0, &collection)) {
+		g_printf (_("Error: you must provide a collection!\n"));
+		return FALSE;
+	}
+
+	coll_name_split (collection, &ns, &name);
+
+	if (!command_arg_string_get (ctx, 1, &attrname)) {
+		attrname = NULL;
+		attrvalue = NULL;
+	} else if (!command_arg_string_get (ctx, 2, &attrvalue)) {
+		attrvalue = NULL;
+	}
+
+	res = xmmsc_coll_get (infos->sync, name, ns);
+	xmmsc_result_wait (res);
+
+	if (attrvalue) {
+		configure_collection (res, infos, ns, name, attrname, attrvalue);
+	} else {
+		collection_print_config (res, infos, attrname);
+	}
+
+	g_free (ns);
+	g_free (name);
+
+	return TRUE;
+}
 
 /* The loop is resumed in the disconnect callback */
 gboolean

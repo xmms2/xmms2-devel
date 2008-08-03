@@ -24,8 +24,10 @@
 static void coll_int_attribute_set (xmmsc_coll_t *coll, const char *key, gint value);
 static xmmsc_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
 static void coll_copy_attributes (const char *key, const char *value, void *udata);
+static void coll_print_attributes (const char *key, const char *value, void *udata);
 static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
-static void coll_print_config (xmmsc_coll_t *coll, const char *name);
+
+static void pl_print_config (xmmsc_coll_t *coll, const char *name);
 
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
@@ -111,6 +113,7 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 		done (res2, infos);
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -225,7 +228,238 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 }
 
 void
-list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
+coll_rename (cli_infos_t *infos, gchar *oldname, gchar *newname,
+             xmmsc_coll_namespace_t ns, gboolean force)
+{
+	xmmsc_result_t *res;
+
+	if (force) {
+		res = xmmsc_coll_remove (infos->sync, newname, ns);
+		xmmsc_result_wait (res);
+		/* FIXME(g): check something? */
+		xmmsc_result_unref (res);
+	}
+
+	res = xmmsc_coll_rename (infos->sync, oldname, newname, ns);
+	xmmsc_result_wait (res);
+	done (res, infos);
+}
+
+void
+coll_save (cli_infos_t *infos, xmmsc_coll_t *coll,
+           xmmsc_coll_namespace_t ns, gchar *name, gboolean force)
+{
+	xmmsc_result_t *res;
+	gboolean save = TRUE;
+
+	if (!force) {
+		xmmsc_coll_t *exists;
+		res = xmmsc_coll_get (infos->sync, name, ns);
+		xmmsc_result_wait (res);
+		if (xmmsc_result_get_collection (res, &exists)) {
+			g_printf (_("Error: A collection already exists "
+			            "with the target name!\n"));
+			save = FALSE;
+		}
+		xmmsc_result_unref (res);
+	}
+
+	if (save) {
+		res = xmmsc_coll_save (infos->sync, coll, name, ns);
+		xmmsc_result_wait (res);
+		done (res, infos);
+	} else {
+		cli_infos_loop_resume (infos);
+	}
+}
+
+/* (from src/clients/cli/common.c) */
+static void
+print_info (const gchar *fmt, ...)
+{
+	gchar buf[8096];
+	va_list ap;
+
+	va_start (ap, fmt);
+	g_vsnprintf (buf, 8096, fmt, ap);
+	va_end (ap);
+
+	g_printf ("%s\n", buf);
+}
+
+/* Produce a GString from the idlist of the collection.
+   (must be freed manually!)
+   (from src/clients/cli/cmd_coll.c) */
+static GString *
+coll_idlist_to_string (xmmsc_coll_t *coll)
+{
+	gint i;
+	guint *idlist;
+	GString *s;
+
+	s = g_string_new ("(");
+
+	idlist = xmmsc_coll_get_idlist (coll);
+	for (i = 0; idlist[i] != 0; ++i) {
+		if (i > 0) {
+			g_string_append (s, ", ");
+		}
+		g_string_append_printf (s, "%d", idlist[i]);
+	}
+	g_string_append_c (s, ')');
+
+	return s;
+}
+
+/* Dump the structure of the collection as a string
+   (from src/clients/cli/cmd_coll.c) */
+static void
+coll_dump (xmmsc_coll_t *coll, guint level)
+{
+	gint i;
+	gchar *indent;
+
+	gchar *attr1;
+	gchar *attr2;
+	xmmsc_coll_t *operand;
+	GString *idlist_str;
+
+	indent = g_malloc ((level * 2) + 1);
+	for (i = 0; i < level * 2; ++i) {
+		indent[i] = ' ';
+	}
+	indent[i] = '\0';
+
+	/* type */
+	switch (xmmsc_coll_get_type (coll)) {
+	case XMMS_COLLECTION_TYPE_REFERENCE:
+		xmmsc_coll_attribute_get (coll, "reference", &attr1);
+		print_info ("%sReference: '%s'", indent, attr1);
+		break;
+
+	case XMMS_COLLECTION_TYPE_UNION:
+		print_info ("%sUnion:", indent);
+		for (xmmsc_coll_operand_list_first (coll);
+		     xmmsc_coll_operand_list_entry (coll, &operand);
+		     xmmsc_coll_operand_list_next (coll)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_INTERSECTION:
+		print_info ("%sIntersection:", indent);
+		for (xmmsc_coll_operand_list_first (coll);
+		     xmmsc_coll_operand_list_entry (coll, &operand);
+		     xmmsc_coll_operand_list_next (coll)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_COMPLEMENT:
+		print_info ("%sComplement:", indent);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_EQUALS:
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		print_info ("%sEquals ('%s', '%s') for:", indent, attr1, attr2);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_HAS:
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		print_info ("%sHas ('%s') for:", indent, attr1);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_MATCH:
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		print_info ("%sMatch ('%s', '%s') for:", indent, attr1, attr2);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_SMALLER:
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		print_info ("%sSmaller ('%s', '%s') for:", indent, attr1, attr2);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_GREATER:
+		xmmsc_coll_attribute_get (coll, "field",  &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		print_info ("%sGreater ('%s', '%s') for:", indent, attr1, attr2);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_IDLIST:
+		idlist_str = coll_idlist_to_string (coll);
+		print_info ("%sIdlist: %s", indent, idlist_str->str);
+		g_string_free (idlist_str, TRUE);
+		break;
+
+	case XMMS_COLLECTION_TYPE_QUEUE:
+		idlist_str = coll_idlist_to_string (coll);
+		print_info ("%sQueue: %s", indent, idlist_str->str);
+		g_string_free (idlist_str, TRUE);
+		break;
+
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		idlist_str = coll_idlist_to_string (coll);
+		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
+		g_string_free (idlist_str, TRUE);
+		xmmsc_coll_operand_list_first (coll);
+		if (xmmsc_coll_operand_list_entry (coll, &operand)) {
+			coll_dump (operand, level + 1);
+		}
+		break;
+
+	default:
+		print_info ("%sUnknown Operator!", indent);
+		break;
+	}
+}
+/*  */
+
+void
+coll_show (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	xmmsc_coll_t *coll;
+
+	if (!xmmsc_result_iserror (res)) {
+		xmmsc_result_get_collection (res, &coll);
+		coll_dump (coll, 0);
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
+}
+
+static void
+print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
+                        gchar *mark, gboolean all)
 {
 	const gchar *s;
 
@@ -234,7 +468,7 @@ list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
 			/* Skip hidden playlists if all is FALSE*/
 			if (xmmsc_result_get_string (res, &s) && ((*s != '_') || all)) {
 				/* Highlight active playlist */
-				if (strcmp (s, infos->cache->active_playlist_name) == 0) {
+				if (mark && strcmp (s, mark) == 0) {
 					g_printf ("* %s\n", s);
 				} else {
 					g_printf ("  %s\n", s);
@@ -248,6 +482,19 @@ list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
 
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
+}
+
+void
+list_print_collections (xmmsc_result_t *res, cli_infos_t *infos)
+{
+	print_collections_list (res, infos, NULL, TRUE);
+}
+
+void
+list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
+{
+	print_collections_list (res, infos,
+	                        infos->cache->active_playlist_name, all);
 }
 
 /* Abstract jump, use inc to choose the direction. */
@@ -576,10 +823,27 @@ copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
 	xmmsc_result_unref (res);
 }
 
+void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
+                           gchar *ns, gchar *name,
+                           gchar *attrname, gchar *attrvalue)
+{
+	xmmsc_coll_t *coll;
+
+	if (xmmsc_result_get_collection (res, &coll)) {
+		xmmsc_coll_attribute_set (coll, attrname, attrvalue);
+		coll_save (infos, coll, ns, name, TRUE);
+	} else {
+		g_printf (_("Invalid collection!\n"));
+		cli_infos_loop_resume (infos);
+	}
+
+	xmmsc_result_unref (res);
+}
+
 void
 configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
-                       gint history, gint upcoming, xmmsc_coll_type_t type,
-                       gchar *input)
+                    gint history, gint upcoming, xmmsc_coll_type_t type,
+                    gchar *input)
 {
 	xmmsc_result_t *saveres;
 	xmmsc_coll_t *coll;
@@ -618,13 +882,40 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 }
 
 void
+collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
+                         gchar *attrname)
+{
+	xmmsc_coll_t *coll;
+	gchar *attrvalue;
+
+	if (xmmsc_result_get_collection (res, &coll)) {
+		if (attrname == NULL) {
+			xmmsc_coll_attribute_foreach (coll,
+			                              coll_print_attributes, NULL);
+		} else {
+			if (xmmsc_coll_attribute_get (coll, attrname, &attrvalue)) {
+				coll_print_attributes (attrname, attrvalue, NULL);
+			} else {
+				g_printf (_("Invalid attribute!\n"));
+			}
+		}
+	} else {
+		g_printf (_("Invalid collection!\n"));
+	}
+
+	cli_infos_loop_resume (infos);
+
+	xmmsc_result_unref (res);
+}
+
+void
 playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
-                          gchar *playlist)
+                       gchar *playlist)
 {
 	xmmsc_coll_t *coll;
 
 	if (xmmsc_result_get_collection (res, &coll)) {
-		coll_print_config (coll, playlist);
+		pl_print_config (coll, playlist);
 	} else {
 		g_printf (_("Invalid playlist!\n"));
 	}
@@ -679,6 +970,12 @@ coll_copy_attributes (const char *key, const char *value, void *udata)
 	xmmsc_coll_attribute_set ((xmmsc_coll_t *) udata, key, value);
 }
 
+static void
+coll_print_attributes (const char *key, const char *value, void *udata)
+{
+	g_printf ("[%s] %s\n", key, value);
+}
+
 static xmmsc_coll_t *
 coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type)
 {
@@ -701,7 +998,7 @@ coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t type)
 }
 
 static void
-coll_print_config (xmmsc_coll_t *coll, const char *name)
+pl_print_config (xmmsc_coll_t *coll, const char *name)
 {
 	xmmsc_coll_t *op;
 	xmmsc_coll_type_t type;
