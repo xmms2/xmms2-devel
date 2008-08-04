@@ -57,7 +57,7 @@ namespace Xmms
 
 			/** Copy assignment operator.
 			 */
-			virtual SuperList& operator=( const SuperList& list );
+			SuperList& operator=( const SuperList& list );
 
 			/** Destructor.
 			 */
