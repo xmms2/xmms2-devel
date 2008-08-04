@@ -37,7 +37,7 @@ XMMS_CMD_DEFINE (registercl, xmms_visualization_register_client, xmms_visualizat
 XMMS_CMD_DEFINE (init_shm, xmms_visualization_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
 XMMS_CMD_DEFINE (init_udp, xmms_visualization_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
 XMMS_CMD_DEFINE3 (property_set, xmms_visualization_property_set, xmms_visualization_t *, INT32, INT32, STRING, STRING);
-XMMS_CMD_DEFINE (properties_set, xmms_visualization_properties_set, xmms_visualization_t *, INT32, INT32, STRINGLIST);
+XMMS_CMD_DEFINE (properties_set, xmms_visualization_properties_set, xmms_visualization_t *, INT32, INT32, DICT);
 XMMS_CMD_DEFINE (shutdown, xmms_visualization_shutdown_client, xmms_visualization_t *, NONE, INT32, NONE);
 
 /* create an uninitialised vis client. don't use this method without mutex! */
@@ -181,7 +181,7 @@ properties_init (xmmsc_vis_properties_t *p)
 }
 
 static gboolean
-property_set (xmmsc_vis_properties_t *p, gchar* key, gchar* data)
+property_set (xmmsc_vis_properties_t *p, const gchar* key, const gchar* data)
 {
 
 	if (!g_strcasecmp (key, "type")) {
@@ -233,7 +233,7 @@ xmms_visualization_register_client (xmms_visualization_t *vis, xmms_error_t *err
 
 
 int32_t
-xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, gchar* key, gchar* value, xmms_error_t *err)
+xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, const gchar* key, const gchar* value, xmms_error_t *err)
 {
 	xmms_vis_client_t *c;
 
@@ -251,20 +251,32 @@ xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, gchar* k
 }
 
 int32_t
-xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, GList* prop, xmms_error_t *err)
+xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t* prop, xmms_error_t *err)
 {
-	GList* n;
 	xmms_vis_client_t *c;
+	xmmsv_dict_iter_t *it;
+	const gchar *key, *valstr;
+	xmmsv_t *value;
 
 	x_fetch_client (id);
 
-	for (n = prop; n; n = n->next) {
-		if (!property_set (&c->prop, (gchar*)n->data, (gchar*)n->next->data)) {
-			xmms_error_set (err, XMMS_ERROR_INVAL, "property could not be set!");
+	if (!xmmsv_get_type (prop) == XMMSV_TYPE_DICT) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "properties must be sent as a dict!");
+	} else {
+		/* record every pair */
+		xmmsv_get_dict_iter (prop, &it);
+		while (xmmsv_dict_iter_valid (it)) {
+			if (!xmmsv_dict_iter_pair (it, &key, &value)) {
+				xmms_error_set (err, XMMS_ERROR_INVAL, "key-value property pair could not be read!");
+			} else if (!xmmsv_get_string (value, &valstr)) {
+				xmms_error_set (err, XMMS_ERROR_INVAL, "property value could not be read!");
+			} else if (!property_set (&c->prop, key, valstr)) {
+				xmms_error_set (err, XMMS_ERROR_INVAL, "property could not be set!");
+			}
+			xmmsv_dict_iter_next (it);
 		}
-		n = n->next;
+		/* TODO: propagate new format to xform! */
 	}
-	/* TODO: propagate new format to xform! */
 
 	x_release_client ();
 

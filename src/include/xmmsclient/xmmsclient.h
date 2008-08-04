@@ -187,7 +187,7 @@ bool xmmsc_visualization_started (xmmsc_connection_t *c, int vv);
 bool xmmsc_visualization_errored (xmmsc_connection_t *c, int vv);
 
 xmmsc_result_t *xmmsc_visualization_property_set (xmmsc_connection_t *c, int v, const char *key, const char *value);
-xmmsc_result_t *xmmsc_visualization_properties_set (xmmsc_connection_t *c, int v, xmmsc_visualization_properties_t prop);
+xmmsc_result_t *xmmsc_visualization_properties_set (xmmsc_connection_t *c, int v, xmmsv_t *props);
 /*
  * drawtime: expected time needed to process the data in milliseconds after collecting it
     if >= 0, the data is returned as soon as currenttime >= (playtime - drawtime);

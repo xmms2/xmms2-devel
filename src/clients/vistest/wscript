@@ -33,7 +33,6 @@ def build(bld):
         obj.uselib = 'sdl visual'
 
 def configure(conf):
-    return False
     conf.env['LIB_m'] = ['m']
 
     conf.check_pkg('libvisual-0.4', destvar='visual')

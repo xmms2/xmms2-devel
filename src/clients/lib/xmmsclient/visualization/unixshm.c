@@ -65,9 +65,11 @@ setup_shm_handle (xmmsc_result_t *res)
 	t = &visc->transport.shm;
 
 	if (!xmmsc_result_iserror (res)) {
+		xmmsv_t *val;
 		t->size = XMMS_VISPACKET_SHMCOUNT;
 		t->pos = 0;
-		xmmsc_result_get_int (res, &t->semid);
+		val = xmmsc_result_get_value (res);
+		xmmsv_get_int (val, &t->semid);
 		ret = true;
 	} else {
 		/* didn't work, detach from shm to get it removed later on */

@@ -146,8 +146,10 @@ setup_udp_handle (xmmsc_result_t *res)
 	t = &visc->transport.udp;
 
 	if (!xmmsc_result_iserror (res)) {
+		xmmsv_t *val;
 		int port;
-		xmmsc_result_get_int (res, &port);
+		val = xmmsc_result_get_value (res);
+		xmmsv_get_int (val, &port);
 		ret = setup_socket (xmmsc_result_get_connection (res), t, visc->id, port);
 	} else {
 		ret = false;

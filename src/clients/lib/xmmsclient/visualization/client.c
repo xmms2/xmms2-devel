@@ -93,6 +93,7 @@ int
 xmmsc_visualization_init_handle (xmmsc_result_t *res)
 {
 	xmmsc_visualization_t *visc;
+	xmmsv_t *val;
 
 	if (xmmsc_result_iserror (res)) {
 		return -1;
@@ -101,7 +102,8 @@ xmmsc_visualization_init_handle (xmmsc_result_t *res)
 	if (!visc) {
 		x_api_error_if (1, "non vis result?", -1);
 	}
-	xmmsc_result_get_int (res, &visc->id);
+	val = xmmsc_result_get_value (res);
+	xmmsv_get_int (val, &visc->id);
 	visc->type = VIS_NONE;
 
 	return visc->idx;
@@ -242,7 +244,7 @@ xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key
  * Deliver some properties
  */
 xmmsc_result_t *
-xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsc_visualization_properties_t prop)
+xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *props)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_visualization_t *v;
@@ -250,10 +252,12 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsc_visuali
 	x_check_conn (c, NULL);
 	v = get_dataset (c, vv);
 	x_api_error_if (!v, "with unregistered visualization dataset", NULL);
+	x_api_error_if (!props, "with NULL property list", NULL);
+	x_api_error_if (xmmsv_get_type (props) != XMMSV_TYPE_DICT, "with property list of invalid type", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTIES);
 	xmms_ipc_msg_put_int32 (msg, v->id);
-	xmms_ipc_msg_put_string_list (msg, prop);
+	xmms_ipc_msg_put_value_dict (msg, props);
 	return xmmsc_send_msg (c, msg);
 }
 
