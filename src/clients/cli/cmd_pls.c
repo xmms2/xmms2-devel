@@ -459,7 +459,7 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 
 	if (argc < 3) {
-		print_error ("Sort needs a property to sort on, %d", argc);
+		print_error ("Sort needs a property to sort on");
 	} else if (argc == 3) {
 		playlist = NULL;
 		sortby = copy_string_array (&argv[2], argc - 2);
