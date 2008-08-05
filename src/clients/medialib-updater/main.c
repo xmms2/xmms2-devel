@@ -36,15 +36,19 @@ handle_file_add (xmonitor_t *mon, gchar *filename)
 	}
 }
 
-static void
-handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
+static int
+handle_remove_from_mlib (xmmsv_t *v, void *userdata)
 {
 	xmonitor_t *mon = userdata;
 	xmmsc_result_t *res2;
+	xmmsv_list_iter_t *it;
 
-	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+	for (xmmsv_get_list_iter (v, &it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
 		guint32 id;
-		if (!xmmsc_result_get_uint (res, &id)) {
+		xmmsv_t *elem;
+		if (!xmmsv_list_iter_entry (it, &elem) || !xmmsv_get_uint (elem, &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
@@ -59,7 +63,8 @@ handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
 		res2 = xmmsc_medialib_remove_entry (mon->conn, id);
 		xmmsc_result_unref (res2);
 	}
-	xmmsc_result_unref (res);
+
+	return FALSE;
 }
 
 static void
@@ -86,27 +91,27 @@ handle_file_del (xmonitor_t *mon, gchar *filename)
 	xmmsv_coll_unref (univ);
 }
 
-static void
-handle_mlib_update (xmmsc_result_t *res, void *userdata)
+static int
+handle_mlib_update (xmmsv_t *v, void *userdata)
 {
 	xmonitor_t *mon = userdata;
 	xmmsc_result_t *res2;
 	guint32 id;
 
-	if (!xmmsc_result_get_uint (res, &id)) {
+	if (!xmmsv_get_uint (v, &id)) {
 		ERR ("Failed to get id for entry!");
-		xmmsc_result_unref (res);
-		return;
+		return FALSE;
 	}
 
 	if (id == 0) {
 		DBG ("Entry not in db!");
-		return;
+		return FALSE;
 	}
 
 	res2 = xmmsc_medialib_rehash (mon->conn, id);
 	xmmsc_result_unref (res2);
-	xmmsc_result_unref (res);
+
+	return FALSE;
 }
 
 static void
@@ -183,14 +188,14 @@ process_dir (xmonitor_t *mon, gchar *dirpath)
 	g_dir_close (dir);
 }
 
-static void
-handle_addpath (xmmsc_result_t *res, void *data)
+static int
+handle_addpath (xmmsv_t *v, void *data)
 {
 	xmonitor_t *mon = data;
 
 	if (!monitor_add_dir (mon, mon->watch_dir)) {
 		ERR ("Couldn't watch directory!");
-		return;
+		return FALSE;
 	}
 	mon->dir_list = g_list_append (mon->dir_list, mon->watch_dir);
 
@@ -198,11 +203,11 @@ handle_addpath (xmmsc_result_t *res, void *data)
 
 	DBG ("Watching %d dirs", g_list_length (mon->dir_list));
 
-	xmmsc_result_unref (res);
+	return FALSE;
 }
 
 static void
-do_watch_dir (xmonitor_t *mon, gchar *dirs)
+do_watch_dir (xmonitor_t *mon, const gchar *dirs)
 {
 	xmmsc_result_t *res;
 	GList *n;
@@ -232,55 +237,56 @@ do_watch_dir (xmonitor_t *mon, gchar *dirs)
 	xmmsc_result_unref (res);
 }
 
-static void
-handle_config_changed (xmmsc_result_t *res, void *data)
+static int
+handle_config_changed (xmmsv_t *v, void *data)
 {
 	xmonitor_t *mon = data;
-	gchar *val = NULL;
+	const gchar *val = NULL;
 	int s;
 
-	s = xmmsc_result_get_dict_entry_string (res,
-	                                        "clients.mlibupdater.watch_dirs",
-	                                        &val);
+	s = xmmsv_get_dict_entry_string (v,
+	                                 "clients.mlibupdater.watch_dirs",
+	                                 &val);
 	if (s) {
 		do_watch_dir (mon, val);
 	}
 
+	return TRUE; /* keep broadcast alive */
 }
 
-static void
-handle_watch_dirs (xmmsc_result_t *res, void *data)
+static int
+handle_watch_dirs (xmmsv_t *v, void *data)
 {
 	xmonitor_t *mon = data;
-	gchar *dirs;
+	const gchar *dirs;
 
-	if (!xmmsc_result_get_string (res, &dirs)) {
+	if (!xmmsv_get_string (v, &dirs)) {
 		ERR ("Couldn't get configvalue from server!");
-		return;
+		return FALSE;
 	}
 
 	do_watch_dir (mon, dirs);
 
-	xmmsc_result_unref (res);
-
+	return FALSE;
 }
 
-static void
-handle_configval (xmmsc_result_t *res, void *data)
+static int
+handle_configval (xmmsv_t *v, void *data)
 {
 	xmmsc_result_t *res2;
 	xmonitor_t *mon = data;
-	gchar *val;
+	const gchar *val;
 
-	if (!xmmsc_result_get_string (res, &val)) {
+	if (!xmmsv_get_string (v, &val)) {
 		ERR ("Couldn't register value in server!");
-		return;
+		return FALSE;
 	}
 
 	res2 = xmmsc_configval_get (mon->conn, val);
 	xmmsc_result_notifier_set (res2, handle_watch_dirs, mon);
 	xmmsc_result_unref (res2);
-	xmmsc_result_unref (res);
+
+	return FALSE;
 }
 
 static void

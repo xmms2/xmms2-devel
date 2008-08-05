@@ -17,7 +17,6 @@ def build(bld):
     Common.install_files('SCRIPTDIR', None, 'xmms2-mlib-updater.sh', chmod=0755)
 
 def configure(conf):
-    return False
     return conf.check_pkg('gamin', destvar='gamin')
 
 def set_options(opt):
