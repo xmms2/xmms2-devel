@@ -30,6 +30,7 @@ void cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_rinsert (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_shuffle (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv);

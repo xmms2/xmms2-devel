@@ -222,6 +222,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_insert_collection(xmmsc_connection_t *, char *playlist, int pos, xmmsc_coll_t *coll, xmms_pyrex_constcharpp_t order)
 	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *, char *path)
 	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
+	xmmsc_result_t *xmmsc_playlist_rinsert(xmmsc_connection_t *c, char *, int pos, char *path)
+	xmmsc_result_t *xmmsc_playlist_rinsert_encoded(xmmsc_connection_t *c, char *, int pos, char *path)
 
 	xmmsc_result_t *xmmsc_playlist_load(xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, int movement)
@@ -1523,6 +1525,42 @@ cdef class XMMS:
 			return self.create_result(cb, xmmsc_playlist_shuffle(self.conn, pl))
 		else:
 			return self.create_result(cb, xmmsc_playlist_shuffle(self.conn, NULL))
+
+	def playlist_rinsert(self, pos, url, playlist = None, cb = None):
+		"""
+		playlist_rinsert(pos, url, playlist=None, cb=None) -> XMMSResult
+
+		Insert a directory in the playlist.
+		Requires an int 'pos' and a string 'url' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		c = from_unicode(url)
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			return self.create_result(cb, xmmsc_playlist_rinsert(self.conn, pl, pos, c))
+		else:
+			return self.create_result(cb, xmmsc_playlist_rinsert(self.conn, NULL, pos, c))
+
+	def playlist_rinsert_encoded(self, pos, url, playlist = None, cb = None):
+		"""
+		playlist_rinsert_encoded(pos, url, playlist=None, cb=None) -> XMMSResult
+
+		Insert a directory in the playlist.
+		Requires an int 'pos' and a string 'url' as argument.
+
+		'url' argument has to be medialib encoded.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		c = from_unicode(url)
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			return self.create_result(cb, xmmsc_playlist_rinsert_encoded(self.conn, pl, pos, c))
+		else:
+			return self.create_result(cb, xmmsc_playlist_rinsert_encoded(self.conn, NULL, pos, c))
 
 	def playlist_insert_url(self, pos, url, playlist = None, cb = None):
 		"""

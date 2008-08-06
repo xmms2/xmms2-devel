@@ -349,6 +349,53 @@ cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 }
 
 void
+cmd_rinsert (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *playlist;
+	gchar *endptr;
+	xmmsc_result_t *res;
+	guint pos;
+	gint i, fileargn;
+
+	if (argc < 4) {
+		print_error ("Missing argument(s)");
+	}
+
+
+	pos = strtol (argv[2], &endptr, 10);
+	if (*endptr == '\0') {
+		playlist = NULL; /* No playlist name */
+		fileargn = 3;
+	} else {
+		playlist = argv[2];  /* extract playlist name */
+		pos = strtol (argv[3], NULL, 10);
+		fileargn = 4;
+	}
+
+	for (i = fileargn; i < argc; i++) {
+		gchar *rfile;
+
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
+		}
+
+		res = xmmsc_playlist_rinsert (conn, playlist, pos, rfile);
+		g_free (rfile);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot insert path '%s' at position %u: %s",
+			            argv[i], pos, xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
+	}
+}
+
+void
 cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *playlist = NULL;

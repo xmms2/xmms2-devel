@@ -360,6 +360,50 @@ namespace Xmms
 			                             const std::string& playlist = DEFAULT_PLAYLIST
 			                           ) const;
 
+			/**	Insert the directory recursively at a given position in a
+			 *  playlist.
+			 *  The url should be absolute to the server-side.
+			 *  Note that you will have to include the protocol
+			 *  for the url to. ie: file://mp3/my_mp3s/directory
+			 *
+			 *  @param pos A position in the playlist.
+			 *  @param url directory to be added
+			 *  @param playlist the playlist to modify (if omitted,
+			 *                  act on the current playlist)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			VoidResult insertRecursive( int pos, const std::string& url,
+			                            const std::string& playlist
+			                                         = DEFAULT_PLAYLIST
+			                          ) const;
+
+			/**	Insert the directory recursivly at a given position in a
+			 *  playlist.
+			 *  Same as #insertRecursive but takes a encoded URL instead.
+			 *
+			 *  @param pos A position in the playlist.
+			 *  @param url directory to be added
+			 *  @param playlist the playlist to modify (if omitted,
+			 *                  act on the current playlist)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			VoidResult insertRecursiveEncoded( int pos, const std::string& url,
+			                                   const std::string& playlist
+			                                             = DEFAULT_PLAYLIST
+			                                 ) const;
+
 			/** Retrieve the entries in a playlist.
 			 *
 			 *  @param playlist the playlist to consider (if omitted,

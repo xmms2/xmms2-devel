@@ -54,6 +54,7 @@ cmds commands[] = {
 	{ "insert", "inserts one URL at a specific position", cmd_insert },
 	{ "insertid", "inserts one Medialib id at a specific position", cmd_insertid },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
+	{ "rinsert", "inserts a directory recursively at a specific position", cmd_rinsert },
 	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
 	{ "sort", "sort the playlist; use a space delimiter for multiple properties", cmd_sort },

@@ -103,6 +103,8 @@ xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const c
 xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *playlist, const char *url);
+xmmsc_result_t *xmmsc_playlist_rinsert (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
+xmmsc_result_t *xmmsc_playlist_rinsert_encoded (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);

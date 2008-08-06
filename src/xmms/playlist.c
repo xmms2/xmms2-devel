@@ -57,6 +57,7 @@ static gboolean xmms_playlist_insert_url (xmms_playlist_t *playlist, gchar *plna
 static gboolean xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
 static gboolean xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmmsc_coll_t *coll, GList *order, xmms_error_t *error);
 static void xmms_playlist_radd (xmms_playlist_t *playlist, gchar *plname, gchar *path, xmms_error_t *error);
+static void xmms_playlist_rinsert (xmms_playlist_t *playlist, gchar *plname, guint32 pos, gchar *path, xmms_error_t *error);
 
 static void xmms_playlist_load (xmms_playlist_t *, gchar *, xmms_error_t *);
 
@@ -90,6 +91,7 @@ XMMS_CMD_DEFINE  (current_active, xmms_playlist_current_active, xmms_playlist_t 
 XMMS_CMD_DEFINE  (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE  (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE  (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, STRING);
+XMMS_CMD_DEFINE3 (rinsert, xmms_playlist_rinsert, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
 #define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, xmms_playlist_current_pos_msg_new (playlist, pos, name))
@@ -392,6 +394,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_RADD,
 	                     XMMS_CMD_FUNC (radd));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_RINSERT,
+	                     XMMS_CMD_FUNC (rinsert));
 
 	ret->medialib = xmms_medialib_init (ret);
 	ret->mediainfordr = xmms_mediainfo_reader_start ();
@@ -883,6 +889,27 @@ xmms_playlist_insert_url (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 }
 
 /**
+  * Convenient function for inserting a directory at a given position
+  * in the playlist, It will dive down the URL you feed it and
+  * recursivly insert all files.
+  *
+  * @param playlist the playlist to add it URL to.
+  * @param plname the name of the playlist to modify.
+  * @param pos a position in the playlist.
+  * @param nurl the URL of an directory you want to add
+  * @param err an #xmms_error_t that should be defined upon error.
+  */
+static void
+xmms_playlist_rinsert (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
+                       gchar *path, xmms_error_t *err)
+{
+	/* we actually just call the medialib function, but keep
+	 * the ipc method here for not confusing users / developers
+	 */
+	xmms_medialib_insert_recursive (playlist->medialib, plname, pos, path, err);
+}
+
+/**
  * Insert an xmms_medialib_entry to the playlist at given position.
  *
  * @param playlist the playlist to add the entry to.
@@ -895,48 +922,14 @@ static gboolean
 xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
                          xmms_medialib_entry_t file, xmms_error_t *err)
 {
-	GTree *dict;
-	gint currpos;
-	gint len;
-	xmmsc_coll_t *plcoll;
-
 	if (!xmms_medialib_check_id (file)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "That is not a valid medialib id!");
 		return FALSE;
 	}
 
-	g_mutex_lock (playlist->mutex);
+	xmms_playlist_insert_entry (playlist, plname, pos, file, err);
 
-	plcoll = xmms_playlist_get_coll (playlist, plname, err);
-	if (plcoll == NULL) {
-		/* FIXME: happens ? */
-		g_mutex_unlock (playlist->mutex);
-		return FALSE;
-	}
-
-	len = xmms_playlist_coll_get_size (plcoll);
-	if (pos > len || pos < 0) {
-		xmms_error_set (err, XMMS_ERROR_GENERIC,
-		                "Could not insert entry outside of playlist!");
-		g_mutex_unlock (playlist->mutex);
-		return FALSE;
-	}
-	xmmsc_coll_idlist_insert (plcoll, pos, file);
-
-	/** propagate the MID ! */
-	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
-	g_tree_insert (dict, (gpointer) "position",
-	               xmms_object_cmd_value_int_new (pos));
-	xmms_playlist_changed_msg_send (playlist, dict);
-
-	/** update position once client is familiar with the new item. */
-	currpos = xmms_playlist_coll_get_currpos (plcoll);
-	if (pos <= currpos) {
-		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
-	}
-
-	g_mutex_unlock (playlist->mutex);
 	return TRUE;
 }
 
@@ -959,6 +952,55 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname,
 
 	/* FIXME: detect errors? */
 	return TRUE;
+}
+
+/**
+ * Insert an entry at a given position in the playlist without
+ * validating it.
+ *
+ * @internal
+ */
+void
+xmms_playlist_insert_entry (xmms_playlist_t *playlist, gchar *plname,
+                            guint32 pos, xmms_medialib_entry_t file,
+                            xmms_error_t *err)
+{
+	GTree *dict;
+	gint currpos;
+	gint len;
+	xmmsc_coll_t *plcoll;
+
+	g_mutex_lock (playlist->mutex);
+
+	plcoll = xmms_playlist_get_coll (playlist, plname, err);
+	if (plcoll == NULL) {
+		/* FIXME: happens ? */
+		g_mutex_unlock (playlist->mutex);
+		return;
+	}
+
+	len = xmms_playlist_coll_get_size (plcoll);
+	if (pos > len || pos < 0) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC,
+		                "Could not insert entry outside of playlist!");
+		g_mutex_unlock (playlist->mutex);
+		return;
+	}
+	xmmsc_coll_idlist_insert (plcoll, pos, file);
+
+	/** propagate the MID ! */
+	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (pos));
+	xmms_playlist_changed_msg_send (playlist, dict);
+
+	/** update position once client is familiar with the new item. */
+	currpos = xmms_playlist_coll_get_currpos (plcoll);
+	if (pos <= currpos) {
+		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
+	}
+
+	g_mutex_unlock (playlist->mutex);
 }
 
 /**

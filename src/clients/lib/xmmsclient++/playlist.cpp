@@ -212,6 +212,28 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
+	VoidResult Playlist::insertRecursive( int pos, const std::string& url,
+	                                      const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_rinsert, conn_,
+		                       playlist.c_str(), pos, url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
+	VoidResult Playlist::insertRecursiveEncoded( int pos,
+	                                             const std::string& url,
+	                                             const std::string& playlist
+	                                           ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_rinsert_encoded, conn_,
+		                       playlist.c_str(), pos, url.c_str() ) );
+		return VoidResult( res, ml_ );
+	}
+
 	VoidResult Playlist::insertCollection( int pos, const Coll::Coll& collection,
 	                                       const std::list< std::string >& order,
 	                                       const std::string& playlist ) const

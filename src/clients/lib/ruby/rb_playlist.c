@@ -54,6 +54,15 @@
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
+#define PLAYLIST_METHOD_ADD_HANDLER_INT_STR(action, arg1, arg2)	\
+	PLAYLIST_METHOD_HANDLER_HEADER \
+\
+	res = xmmsc_playlist_##action (xmms->real, pl->name, \
+	                               check_int32 (arg1), \
+	                               StringValuePtr (arg2)); \
+\
+	PLAYLIST_METHOD_HANDLER_FOOTER
+
 #define PLAYLIST_METHOD_ADD_HANDLER_UINT(action, arg) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
@@ -237,6 +246,19 @@ c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 
 /*
  * call-seq:
+ *  pl.rinsert(pos, path) -> result
+ *
+ * Recursively imports all media files under _path_ at position _pos_
+ * in the playlist.
+ */
+static VALUE
+c_rinsert (VALUE self, VALUE pos, VALUE path)
+{
+	PLAYLIST_METHOD_ADD_HANDLER_INT_STR (rinsert, pos, path);
+}
+
+/*
+ * call-seq:
  *  pl.remove_entry(pos) -> result
  *
  * Removes the entry at _pos_ from the playlist.
@@ -390,6 +412,7 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "clear", c_clear, 0);
 	rb_define_method (c, "add_entry", c_add_entry, 1);
 	rb_define_method (c, "radd", c_radd, 1);
+	rb_define_method (c, "rinsert", c_rinsert, 2);
 	rb_define_method (c, "insert_entry", c_insert_entry, 2);
 	rb_define_method (c, "remove_entry", c_remove_entry, 1);
 	rb_define_method (c, "move_entry", c_move_entry, 2);

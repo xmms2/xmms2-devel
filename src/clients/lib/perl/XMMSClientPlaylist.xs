@@ -560,6 +560,55 @@ xmmsc_playlist_radd_encoded (p, url)
 	C_ARGS:
 		p->conn, p->name, url
 
+=head2 rinsert
+
+=over 4
+
+=item Arguments: $position, $url
+
+=item Return Value: $result
+
+=back
+
+  my $result = $playlist->rinsert(42, $url);
+
+Inserts a C<$url> recursivly at a given position in the playlist. The
+C<$url> should be absolute to the server-side.
+
+=cut
+
+xmmsc_result_t *
+xmmsc_playlist_rinsert (p, pos, url)
+		perl_xmmsclient_playlist_t *p
+		int pos
+		const char *url
+	C_ARGS:
+		p->conn, p->name, pos, url
+
+=head2 rinsert_encoded
+
+=over 4
+
+=item Arguments: $position, $url
+
+=item Return Value: $result
+
+=back
+
+  my $result = $playlist->rinsert_encoded(5, $url);
+
+Same as L</rinsert>, except it expects C<$url> to be encoded already.
+
+=cut
+
+xmmsc_result_t *
+xmmsc_playlist_rinsert_encoded (p, pos, url)
+		perl_xmmsclient_playlist_t *p
+		int pos
+		const char *url
+	C_ARGS:
+		p->conn, p->name, pos, url
+
 void
 DESTROY (p)
 		perl_xmmsclient_playlist_t *p

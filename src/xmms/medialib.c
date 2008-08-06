@@ -737,6 +737,7 @@ static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_sessi
 static void
 process_file (xmms_medialib_session_t *session,
               gchar *playlist,
+              gint32 pos,
               const gchar *path,
               xmms_error_t *error)
 {
@@ -745,8 +746,13 @@ process_file (xmms_medialib_session_t *session,
 	entry = xmms_medialib_entry_new_encoded (session, path, error);
 
 	if (entry && playlist != NULL) {
-		xmms_playlist_add_entry (session->medialib->playlist,
-		                         playlist, entry, error);
+		if (pos >= 0) {
+			xmms_playlist_insert_entry (session->medialib->playlist,
+			                            playlist, pos, entry, error);
+		} else {
+			xmms_playlist_add_entry (session->medialib->playlist,
+			                         playlist, entry, error);
+		}
 	}
 }
 
@@ -891,6 +897,20 @@ void
 xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
                              gchar *path, xmms_error_t *error)
 {
+	/* Just called insert with negative pos to append */
+	xmms_medialib_insert_recursive (medialib, playlist, -1, path, error);
+}
+
+/* Recursively adding entries under the given path to the medialib,
+ * optionally insert them into a playlist at a given position if the
+ * playlist argument is not NULL. If the position is negative, entries
+ * are appended to the playlist.
+ */
+void
+xmms_medialib_insert_recursive (xmms_medialib_t *medialib, gchar *playlist,
+                                gint32 pos, gchar *path,
+                                xmms_error_t *error)
+{
 	xmms_medialib_session_t *session;
 	GList *first, *list = NULL, *n;
 
@@ -914,7 +934,7 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 	 * g_list_last() call now.
 	 */
 	for (n = first->prev; n; n = g_list_previous (n)) {
-		process_file (session, playlist, n->data, error);
+		process_file (session, playlist, pos, n->data, error);
 		g_free (n->data);
 	}
 
