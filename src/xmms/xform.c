@@ -1505,6 +1505,7 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url,
 	xmms_xform_t *last;
 	xmms_plugin_t *plugin;
 	xmms_xform_plugin_t *xform_plugin;
+	gboolean add_segment = FALSE;
 
 	last = chain_setup (entry, url, goal_formats);
 	if (!last) {
@@ -1516,11 +1517,16 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url,
 	xform_plugin = (xmms_xform_plugin_t *) plugin;
 
 	/* if segment plugin input is the same as current output, include it
-	 * for collecting additional duration metadata on entries that need it */
-	if (xform_plugin && xmms_xform_plugin_supports (xform_plugin,
-	                                                last->out_type,
-	                                                NULL)) {
+	 * for collecting additional duration metadata on audio entries */
+	if (xform_plugin) {
+		add_segment = xmms_xform_plugin_supports (xform_plugin,
+		                                          last->out_type,
+		                                          NULL);
 		xmms_object_unref (plugin);
+	}
+
+	/* add segment plugin to the chain if it can be added */
+	if (add_segment) {
 		last = xmms_xform_new_effect (last, entry, goal_formats, "segment");
 		if (!last) {
 			return NULL;
