@@ -120,6 +120,55 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 }
 
 void
+list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	const gchar *name, *desc;
+
+	if (!xmmsc_result_iserror (res)) {
+		for (xmmsc_result_list_first (res);
+	         xmmsc_result_list_valid (res);
+	         xmmsc_result_list_next (res)) {
+			xmmsc_result_get_dict_entry_string (res, "shortname", &name);
+			xmmsc_result_get_dict_entry_string (res, "description", &desc);
+
+			g_printf ("%s - %s\n", name, desc);
+		}
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+
+	cli_infos_loop_resume (infos);
+}
+
+void
+rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	xmmsc_result_t *hashres;
+
+	if (!xmmsc_result_iserror (res)) {
+		for (xmmsc_result_list_first (res);
+		     xmmsc_result_list_valid (res);
+		     xmmsc_result_list_next (res)) {
+			guint id;
+
+			if (xmmsc_result_get_uint (res, &id)) {
+				hashres = xmmsc_medialib_rehash (infos->sync, id);
+				xmmsc_result_wait (hashres);
+				xmmsc_result_unref (hashres);
+			}
+		}
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	cli_infos_loop_resume (infos);
+
+	xmmsc_result_unref (res);
+}
+
+void
 status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 {
 	status_entry_t *status;

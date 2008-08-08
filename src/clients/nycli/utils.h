@@ -27,6 +27,8 @@
 
 void done (xmmsc_result_t *res, cli_infos_t *infos);
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
+void list_plugins (cli_infos_t *infos, xmmsc_result_t *res);
+void rehash_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void status_mode (cli_infos_t *infos, gchar *format, gint refresh);
 void list_print_info (xmmsc_result_t *res, cli_infos_t *infos);
 void list_print_row (xmmsc_result_t *res, column_display_t *coldisp);

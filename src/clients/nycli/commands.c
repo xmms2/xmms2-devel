@@ -62,10 +62,6 @@ CLI_SIMPLE_SETUP("info", cli_info,
                  COMMAND_REQ_CONNECTION,
                  _("<pattern>"),
                  _("Display all the properties for all media matching the pattern."))
-CLI_SIMPLE_SETUP("quit", cli_quit,
-                 COMMAND_REQ_CONNECTION | COMMAND_REQ_NO_AUTOSTART,
-                 NULL,
-                 _("Terminate the server."))
 CLI_SIMPLE_SETUP("exit", cli_exit,
                  COMMAND_REQ_NONE,
                  NULL,
@@ -109,7 +105,38 @@ CLI_SIMPLE_SETUP("collection config", cli_coll_config,
                    "If no attribute name is provided, list all attributes.\n"
                    "If only an attribute name is provided, display the value of the attribute.\n"
                    "If both attribute name and value are provided, set the new value of the attribute."))
-
+CLI_SIMPLE_SETUP("server remove", cli_server_remove,
+                 COMMAND_REQ_CONNECTION,
+                 _("<pattern>"),
+                 _("Remove the matching media from the media library."))
+CLI_SIMPLE_SETUP("server rehash", cli_server_rehash,
+                 COMMAND_REQ_CONNECTION,
+                 _("[pattern]"),
+                 _("Rehash the media matched by the pattern,\n"
+                   "or the whole media library if no pattern is provided"))
+CLI_SIMPLE_SETUP("server config", cli_server_config,
+                 COMMAND_REQ_CONNECTION,
+                 _("[name [value]]"),
+                 _("Get or set configuration values.\n"
+                   "If no name or value is provided, list all configuration values.\n"
+                   "If only a name is provided, display the content of the corresponding configuration value.\n"
+                   "If both name and a value are provided, set the new content of the configuration value."))
+CLI_SIMPLE_SETUP("server plugins", cli_server_plugins,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("List the plugins loaded in the server."))
+CLI_SIMPLE_SETUP("server stats", cli_server_stats,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("Display statistics about the server: uptime, version, size of the medialib, etc"))
+CLI_SIMPLE_SETUP("server sync", cli_server_sync,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("Force the saving of collections to the disk (otherwise only performed on shutdown)"))
+CLI_SIMPLE_SETUP("server shutdown", cli_server_shutdown,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_NO_AUTOSTART,
+                 NULL,
+                 _("Shutdown the server."))
 
 /* FIXME: Add all playlist commands */
 /* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
@@ -316,6 +343,52 @@ cli_pl_list_setup (command_action_t *action)
 	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-a] [pattern]"),
 	                     _("List all playlists."));
+}
+
+void
+cli_server_import_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "non-recursive", 'N',  0, G_OPTION_ARG_NONE, NULL, _("Do not import directories recursively."), NULL },
+		{ NULL }
+	};
+	command_action_fill (action, "server import", &cli_pl_config, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-N] <path>"),
+	                     _("Import new files into the media library.\n"
+	                     "By default, directories are imported recursively."));
+}
+
+void
+cli_server_property_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "int",    'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as integer."), NULL },
+		{ "string", 's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
+		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
+		{ NULL }
+	};
+	command_action_fill (action, "server property", &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-i | -s | -D] <media> [name [value]]"),
+	                     _("Get or set properties for a given media.\n"
+	                     "If no name or value is provided, list all properties.\n"
+	                     "If only a name is provided, display the value of the property.\n"
+	                     "If both a name and a value are provided, set the new value of the property.\n"
+	                     "By defaul, the value will be used to determine whether it should be saved as a string or an integer.\n"
+	                     "Use the --int or --string flag to override this behaviour."));
+}
+
+void
+cli_server_volume_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "channel", 'c',  0, G_OPTION_ARG_STRING, NULL, _("Get or set the volume only for one channel."), "name" },
+		{ NULL }
+	};
+	command_action_fill (action, "server volume", &cli_pl_config, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-c <name>] [value]"),
+	                     _("Get or set the audio volume (in a range of 0-100).\n"
+	                     "If a value is provided, set the new value of the volume. Otherwise, display the current volume.\n"
+	                     "By default, the command applies to all audio channels. Use the --channel flag to override this behaviour."));
 }
 
 void
@@ -663,6 +736,9 @@ matching_files_dirs (gchar *pattern, GList **files)
 	gint i;
 	gboolean retval = TRUE;
 	glob_t matched;
+
+/* _xmmsc_medialib_decode_url */
+/* xmmsc_xform_media_browse */
 
 	if (glob (pattern, 0, NULL, &matched)) {
 		retval = FALSE;
@@ -1426,9 +1502,124 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
+gboolean
+cli_server_import (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	gboolean norecurs;
+
+	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
+		norecurs = FALSE;
+	}
+
+	/* FIXME(g): globbing */
+	if (norecurs) {
+
+	} else {
+
+	}
+
+	g_printf (_("command not implemented yet!\n"));
+
+	return FALSE;
+}
+
+gboolean
+cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
+{
+	g_printf (_("command not implemented yet!\n"));
+	return FALSE;
+}
+
+gboolean
+cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+	xmmsc_coll_t *coll;
+
+	gboolean retval = TRUE;
+	gchar *pattern;
+
+	if (command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+		if (!xmmsc_coll_parse (pattern, &coll)) {
+			g_printf (_("Error: failed to parse the pattern!\n"));
+			retval = FALSE;
+			goto finish;
+		}
+
+		res = xmmsc_coll_query_ids (infos->sync, coll, NULL, 0, 0);
+		xmmsc_result_wait (res);
+		rehash_ids (infos, res);
+	} else {
+		/* Rehash all media-library */
+		res = xmmsc_medialib_rehash (infos->sync, 0);
+		xmmsc_result_wait (res);
+		done (res, infos);
+
+		pattern = NULL;
+	}
+
+    finish:
+	g_free (pattern);
+
+	return retval;
+}
+
+gboolean
+cli_server_config (cli_infos_t *infos, command_context_t *ctx)
+{
+	g_printf (_("command not implemented yet!\n"));
+	return FALSE;
+}
+
+gboolean
+cli_server_property (cli_infos_t *infos, command_context_t *ctx)
+{
+	g_printf (_("command not implemented yet!\n"));
+	return FALSE;
+}
+
+gboolean
+cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_plugin_list (infos->sync, XMMS_PLUGIN_TYPE_ALL);
+	xmmsc_result_wait (res);
+	list_plugins (infos, res);
+
+	return TRUE;
+}
+
+gboolean
+cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
+{
+	g_printf (_("command not implemented yet!\n"));
+	return FALSE;
+}
+
+gboolean
+cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
+{
+	g_printf (_("command not implemented yet!\n"));
+	return FALSE;
+}
+
+gboolean
+cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_coll_sync (infos->sync);
+	xmmsc_result_wait (res);
+	done (res, infos);
+
+	return TRUE;
+}
+
 /* The loop is resumed in the disconnect callback */
 gboolean
-cli_quit (cli_infos_t *infos, command_context_t *ctx)
+cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
