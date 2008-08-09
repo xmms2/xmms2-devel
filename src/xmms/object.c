@@ -36,6 +36,18 @@ typedef struct {
 	gpointer userdata;
 } xmms_object_handler_entry_t;
 
+static gboolean
+cleanup_signal_list (gpointer key, gpointer value, gpointer data)
+{
+	GList *list = value;
+
+	while (list) {
+		g_free (list->data);
+		list = g_list_delete_link (list, list);
+	}
+
+	return FALSE; /* keep going */
+}
 
 /**
  * Cleanup all the resources for the object
@@ -43,25 +55,42 @@ typedef struct {
 void
 xmms_object_cleanup (xmms_object_t *object)
 {
-	gint i;
-
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 
-	for (i = 0; i < XMMS_IPC_SIGNAL_END; i++) {
-		if (object->signals[i]) {
-			GList *list = object->signals[i];
+	if (object->signals) {
+		/* destroy the tree manually (ie not via a value_destroy_func
+		 * callback since we're often "replacing" values when we're
+		 * adding new elements to the signal lists. and we don't want
+		 * the value to be destroyed in those cases :)
+		 */
+		g_tree_foreach (object->signals, cleanup_signal_list, NULL);
+		g_tree_destroy (object->signals);
+	}
 
-			while (list) {
-				g_free (list->data);
-				list = g_list_delete_link (list, list);
-			}
-		}
+	if (object->cmds) {
+		/* FIXME: Shouldn't we free the commands themselves here, too?
+		 *        The old code didn't do that...
+		 */
+		g_tree_destroy (object->cmds);
 	}
 
 	g_mutex_free (object->mutex);
 }
 
+static gint
+compare_signal_key (gconstpointer a, gconstpointer b)
+{
+	gint aa = GPOINTER_TO_INT (a);
+	gint bb = GPOINTER_TO_INT (b);
+
+	if (aa < bb)
+		return -1;
+	else if (aa > bb)
+		return 1;
+	else
+		return 0;
+}
 
 /**
   * Connect to a signal that is emitted by this object.
@@ -80,6 +109,7 @@ void
 xmms_object_connect (xmms_object_t *object, guint32 signalid,
                      xmms_object_handler_t handler, gpointer userdata)
 {
+	GList *list = NULL;
 	xmms_object_handler_entry_t *entry;
 
 	g_return_if_fail (object);
@@ -90,8 +120,16 @@ xmms_object_connect (xmms_object_t *object, guint32 signalid,
 	entry->handler = handler;
 	entry->userdata = userdata;
 
-	object->signals[signalid] =
-		g_list_prepend (object->signals[signalid], entry);
+	if (!object->signals)
+		object->signals = g_tree_new (compare_signal_key);
+	else
+		list = g_tree_lookup (object->signals,
+		                      GINT_TO_POINTER (signalid));
+
+	list = g_list_prepend (list, entry);
+
+	/* store the list's new head in the tree */
+	g_tree_insert (object->signals, GINT_TO_POINTER (signalid), list);
 }
 
 /**
@@ -111,17 +149,26 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 
 	g_mutex_lock (object->mutex);
 
-	list = object->signals[signalid];
+	if (object->signals) {
+		list = g_tree_lookup (object->signals,
+		                      GINT_TO_POINTER (signalid));
 
-	for (node = list; node; node = g_list_next (node)) {
-		entry = node->data;
+		for (node = list; node; node = g_list_next (node)) {
+			entry = node->data;
 
-		if (entry->handler == handler && entry->userdata == userdata)
-			break;
+			if (entry->handler == handler && entry->userdata == userdata)
+				break;
+		}
+
+		if (node) {
+			list = g_list_remove_link (list, node);
+
+			/* store the list's new head in the tree */
+			g_tree_insert (object->signals,
+			               GINT_TO_POINTER (signalid), list);
+		}
 	}
 
-	if (node)
-		object->signals[signalid] = g_list_remove_link (list, node);
 	g_mutex_unlock (object->mutex);
 
 	g_return_if_fail (node);
@@ -149,11 +196,15 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 
 	g_mutex_lock (object->mutex);
 
-	list = object->signals[signalid];
-	for (node = list; node; node = g_list_next (node)) {
-		entry = node->data;
+	if (object->signals) {
+		list = g_tree_lookup (object->signals,
+		                      GINT_TO_POINTER (signalid));
 
-		list2 = g_list_prepend (list2, entry);
+		for (node = list; node; node = g_list_next (node)) {
+			entry = node->data;
+
+			list2 = g_list_prepend (list2, entry);
+		}
 	}
 
 	g_mutex_unlock (object->mutex);
@@ -417,6 +468,19 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	}
 }
 
+static gint
+compare_cmd_key (gconstpointer a, gconstpointer b)
+{
+	guint aa = GPOINTER_TO_INT (a);
+	guint bb = GPOINTER_TO_INT (b);
+
+	if (aa < bb)
+		return -1;
+	else if (aa > bb)
+		return 1;
+	else
+		return 0;
+}
 
 /**
   * Add a command that could be called from the client API to a object.
@@ -432,7 +496,10 @@ xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
 	g_return_if_fail (object);
 	g_return_if_fail (desc);
 
-	object->cmds[cmdid] = desc;
+	if (!object->cmds)
+		object->cmds = g_tree_new (compare_cmd_key);
+
+	g_tree_insert (object->cmds, GUINT_TO_POINTER (cmdid), desc);
 }
 
 /**
@@ -442,11 +509,12 @@ xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
 void
 xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg)
 {
-	xmms_object_cmd_desc_t *desc;
+	xmms_object_cmd_desc_t *desc = NULL;
 
 	g_return_if_fail (object);
 
-	desc = object->cmds[cmdid];
+	if (object->cmds)
+		desc = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
 
 	if (desc->func)
 		desc->func (object, arg);
@@ -478,6 +546,12 @@ __int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
 	ret->id = XMMS_OBJECT_MID;
 
 	ret->mutex = g_mutex_new ();
+
+	/* don't create the trees for the signals and the commands yet.
+	 * instead we instantiate those when we need them the first
+	 * time.
+	 */
+
 	xmms_object_ref (ret);
 
 	return ret;

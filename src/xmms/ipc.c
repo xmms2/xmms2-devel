@@ -240,7 +240,7 @@ static void
 process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 {
 	xmms_object_t *object;
-	xmms_object_cmd_desc_t *cmd;
+	xmms_object_cmd_desc_t *cmd = NULL;
 	xmms_object_cmd_arg_t arg;
 	xmms_ipc_msg_t *retmsg;
 	uint32_t objid, cmdid;
@@ -310,7 +310,9 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		return;
 	}
 
-	cmd = object->cmds[cmdid];
+	if (object->cmds)
+		cmd = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
+
 	if (!cmd) {
 		xmms_log_error ("No such cmd %d on object %d", cmdid, objid);
 		return;

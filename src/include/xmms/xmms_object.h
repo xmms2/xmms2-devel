@@ -42,8 +42,8 @@ struct xmms_object_St {
 	guint32 id;
 	GMutex *mutex;
 
-	GList *signals[XMMS_IPC_SIGNAL_END];
-	xmms_object_cmd_desc_t *cmds[XMMS_IPC_CMD_END];
+	GTree *signals;
+	GTree *cmds;
 
 	gint ref;
 	xmms_object_destroy_func_t destroy_func;
