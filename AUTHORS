@@ -143,6 +143,10 @@ N: Michael Lindgren
 E: lindgren@debian.as
 D: Curl. HTML pls plugin. Various fixes.
 
+N: David Mason
+E: djmason@gmail.com
+D: Wavpack plugin fixes/tagging
+
 N: Erik Massop
 E: e.massop@hccnet.nl
 D: "jumplist", cli coll queryadd, bugfixes
