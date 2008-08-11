@@ -25,12 +25,12 @@
 #include <glib.h>
 
 #ifdef HAVE_MPCDEC_OLD
-# define READER_OBJ	void
-# define READER_DATA(r) (r)
+# define READER_OBJ      void
+# define READER_DATA(r)  (r)
 #include <mpcdec/mpcdec.h>
 #else
-# define READER_OBJ	mpc_reader
-# define READER_DATA(r) ((r)->data)
+# define READER_OBJ       mpc_reader
+# define READER_DATA(r)   ((r)->data)
 #include <mpc/mpcdec.h>
 #endif
 
