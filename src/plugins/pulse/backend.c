@@ -52,7 +52,8 @@ struct xmms_pulse {
 	int volume;
 };
 
-static gboolean check_pulse_health (xmms_pulse *p, int *rerror) {
+static gboolean check_pulse_health (xmms_pulse *p, int *rerror)
+{
 	if (!p->context || pa_context_get_state (p->context) != PA_CONTEXT_READY ||
 	    !p->stream || pa_stream_get_state (p->stream) != PA_STREAM_READY) {
 		if ((p->context &&
@@ -71,14 +72,16 @@ static gboolean check_pulse_health (xmms_pulse *p, int *rerror) {
 /*
  * Callbacks to handle updates from the Pulse daemon.
  */
-static void signal_mainloop (void *userdata) {
+static void signal_mainloop (void *userdata)
+{
 	xmms_pulse *p = userdata;
 	assert (p);
 
 	pa_threaded_mainloop_signal (p->mainloop, 0);
 }
 
-static void context_state_cb (pa_context *c, void *userdata) {
+static void context_state_cb (pa_context *c, void *userdata)
+{
 	assert (c);
 
 	switch (pa_context_get_state (c)) {
@@ -95,7 +98,8 @@ static void context_state_cb (pa_context *c, void *userdata) {
 	}
 }
 
-static void stream_state_cb (pa_stream *s, void * userdata) {
+static void stream_state_cb (pa_stream *s, void * userdata)
+{
 	assert (s);
 
 	switch (pa_stream_get_state (s)) {
@@ -110,15 +114,18 @@ static void stream_state_cb (pa_stream *s, void * userdata) {
 	}
 }
 
-static void stream_latency_update_cb (pa_stream *s, void *userdata) {
+static void stream_latency_update_cb (pa_stream *s, void *userdata)
+{
 	signal_mainloop (userdata);
 }
 
-static void stream_request_cb (pa_stream *s, size_t length, void *userdata) {
+static void stream_request_cb (pa_stream *s, size_t length, void *userdata)
+{
 	signal_mainloop (userdata);
 }
 
-static void drain_result_cb (pa_stream *s, int success, void *userdata) {
+static void drain_result_cb (pa_stream *s, int success, void *userdata)
+{
 	xmms_pulse *p = userdata;
 	assert (s);
 	assert (p);
@@ -133,7 +140,8 @@ static void drain_result_cb (pa_stream *s, int success, void *userdata) {
  */
 xmms_pulse *
 xmms_pulse_backend_new (const char *server, const char *name,
-                        int *rerror) {
+                        int *rerror)
+{
 	xmms_pulse *p;
 	int error = PA_ERR_INTERNAL;
 
@@ -190,7 +198,8 @@ xmms_pulse_backend_new (const char *server, const char *name,
 }
 
 
-void xmms_pulse_backend_free (xmms_pulse *p) {
+void xmms_pulse_backend_free (xmms_pulse *p)
+{
 	assert (p);
 
 	if (p->stream)
@@ -210,7 +219,8 @@ gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
                                         const char *sink,
                                         xmms_sample_format_t format,
                                         int samplerate, int channels,
-                                        int *rerror) {
+                                        int *rerror)
+{
 	pa_sample_format_t pa_format = PA_SAMPLE_INVALID;
 	pa_cvolume cvol;
 	int error = PA_ERR_INTERNAL;
@@ -362,7 +372,8 @@ gboolean xmms_pulse_backend_write (xmms_pulse *p, const char *data,
 }
 
 
-gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror) {
+gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror)
+{
 	pa_operation *o = NULL;
 	assert (p);
 
@@ -402,7 +413,8 @@ gboolean xmms_pulse_backend_drain (xmms_pulse *p, int *rerror) {
 }
 
 
-gboolean xmms_pulse_backend_flush (xmms_pulse *p, int *rerror) {
+gboolean xmms_pulse_backend_flush (xmms_pulse *p, int *rerror)
+{
 	pa_operation *o = NULL;
 
 	pa_threaded_mainloop_lock (p->mainloop);
@@ -444,7 +456,8 @@ gboolean xmms_pulse_backend_flush (xmms_pulse *p, int *rerror) {
 }
 
 
-int xmms_pulse_backend_get_latency (xmms_pulse *p, int *rerror) {
+int xmms_pulse_backend_get_latency (xmms_pulse *p, int *rerror)
+{
 	pa_usec_t t;
 	int negative, r;
 	assert (p);
@@ -478,13 +491,15 @@ int xmms_pulse_backend_get_latency (xmms_pulse *p, int *rerror) {
 }
 
 
-void volume_set_cb (pa_context *c, int success, void *udata) {
+void volume_set_cb (pa_context *c, int success, void *udata)
+{
 	int *res = (int *) udata;
 	*res = success;
 }
 
 
-int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol) {
+int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol)
+{
 	pa_operation *o;
 	pa_cvolume cvol;
 	int idx, res = 0;
@@ -526,7 +541,8 @@ int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol) {
 
 
 void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
-                   int eol, void *udata) {
+                   int eol, void *udata)
+{
 	unsigned int *vol = (unsigned int *) udata;
 	double total = 0;
 	int j;
@@ -541,7 +557,8 @@ void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
 }
 
 
-int xmms_pulse_backend_volume_get (xmms_pulse *p, unsigned int *vol) {
+int xmms_pulse_backend_volume_get (xmms_pulse *p, unsigned int *vol)
+{
 	pa_operation *o;
 	int idx;
 
