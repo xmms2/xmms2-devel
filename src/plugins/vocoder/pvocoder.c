@@ -302,7 +302,8 @@ pvocoder_add_chunk (pvocoder_t *pvoc, pvocoder_sample_t *chunk)
  * just handle the chunk buffer values and if it returns < 0 we have a problem.
  */
 int
-pvocoder_get_chunk (pvocoder_t *pvoc, pvocoder_sample_t *chunk) {
+pvocoder_get_chunk (pvocoder_t *pvoc, pvocoder_sample_t *chunk)
+{
 	int nsamples, pos, i, j;
 
 	assert (pvoc);
@@ -362,7 +363,8 @@ pvocoder_get_chunk (pvocoder_t *pvoc, pvocoder_sample_t *chunk) {
 }
 
 void
-pvocoder_get_final (pvocoder_t *pvoc, pvocoder_sample_t *chunk) {
+pvocoder_get_final (pvocoder_t *pvoc, pvocoder_sample_t *chunk)
+{
 	int nsamples;
 
 	assert (pvoc);
