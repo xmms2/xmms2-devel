@@ -127,23 +127,27 @@ XMMS_XFORM_PLUGIN ("apefile", "Monkey's Audio demuxer", XMMS_VERSION,
                    xmms_apefile_plugin_setup);
 
 static guint16
-get_le16 (guchar *data) {
+get_le16 (guchar *data)
+{
 	return (data[1] << 8) | data[0];
 }
 
 static void
-set_le16 (guchar *data, guint16 value) {
+set_le16 (guchar *data, guint16 value)
+{
 	data[0] = value & 0xff;
 	data[1] = (value >> 8) & 0xff;
 }
 
 static guint32
-get_le32 (guchar *data) {
+get_le32 (guchar *data)
+{
 	return (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
 }
 
 static void
-set_le32 (guchar *data, guint32 value) {
+set_le32 (guchar *data, guint32 value)
+{
 	data[0] = value & 0xff;
 	data[1] = (value >> 8) & 0xff;
 	data[2] = (value >> 16) & 0xff;
