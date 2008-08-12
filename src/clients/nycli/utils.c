@@ -31,6 +31,12 @@ static void pl_print_config (xmmsc_coll_t *coll, const char *name);
 
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
+typedef enum {
+	IDLIST_CMD_NONE = 0,
+	IDLIST_CMD_REHASH,
+	IDLIST_CMD_REMOVE
+} idlist_command_t;
+
 /* Dumps a propdict on stdout */
 static void
 propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
@@ -142,10 +148,35 @@ list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 	cli_infos_loop_resume (infos);
 }
 
-void
-rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
+static void
+print_server_stats (xmmsc_result_t *res)
 {
-	xmmsc_result_t *hashres;
+	gint uptime;
+	const gchar *version;
+
+	if (!xmmsc_result_iserror (res)) {
+		xmmsc_result_get_dict_entry_string (res, "version", &version);
+		xmmsc_result_get_dict_entry_int (res, "uptime", &uptime);
+		g_printf ("uptime = %d\n"
+		          "version = %s\n", uptime, version);
+	} else {
+		g_printf ("Server error: %s\n", xmmsc_result_get_error (res));
+	}
+}
+
+void
+print_stats (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	print_server_stats (res);
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
+}
+
+void
+apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
+{
+	xmmsc_result_t *cmdres;
 
 	if (!xmmsc_result_iserror (res)) {
 		for (xmmsc_result_list_first (res);
@@ -154,9 +185,18 @@ rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
 			guint id;
 
 			if (xmmsc_result_get_uint (res, &id)) {
-				hashres = xmmsc_medialib_rehash (infos->sync, id);
-				xmmsc_result_wait (hashres);
-				xmmsc_result_unref (hashres);
+				switch (cmd) {
+				case IDLIST_CMD_REHASH:
+					cmdres = xmmsc_medialib_rehash (infos->sync, id);
+					break;
+				case IDLIST_CMD_REMOVE:
+					cmdres = xmmsc_medialib_remove_entry (infos->sync, id);
+					break;
+				default:
+					break;
+				}
+				xmmsc_result_wait (cmdres);
+				xmmsc_result_unref (cmdres);
 			}
 		}
 	} else {
@@ -166,6 +206,82 @@ rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
 	cli_infos_loop_resume (infos);
 
 	xmmsc_result_unref (res);
+}
+
+void
+remove_ids (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	apply_ids (infos, res, IDLIST_CMD_REMOVE);
+}
+
+void
+rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
+{
+	apply_ids (infos, res, IDLIST_CMD_REHASH);
+}
+
+static void
+print_volume_entry (const void *key, xmmsc_result_value_type_t type,
+                    const void *value, void *udata)
+{
+	gchar *channel = udata;
+
+	if (udata == NULL || !strcmp (key, channel)) {
+		g_printf (_("%s = %u\n"), (gchar *)key, XPOINTER_TO_UINT(value));
+	}
+}
+
+void
+print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel)
+{
+	if (!xmmsc_result_iserror (res)) {
+		xmmsc_result_dict_foreach (res, print_volume_entry, channel);
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	}
+
+	cli_infos_loop_resume (infos);
+
+	xmmsc_result_unref (res);
+}
+
+static void
+dict_keys (const void *key, xmmsc_result_value_type_t type,
+           const void *value, void *udata)
+{
+	GList **list = udata;
+
+	*list = g_list_prepend (*list, g_strdup (key));
+}
+
+void
+set_volume (cli_infos_t *infos, gchar *channel, gint volume)
+{
+	xmmsc_result_t *res;
+	GList *it, *channels = NULL;
+
+	if (!channel) {
+		res = xmmsc_playback_volume_get (infos->sync);
+		xmmsc_result_wait (res);
+		xmmsc_result_dict_foreach (res, dict_keys, &channels);
+		xmmsc_result_unref (res);
+	} else {
+		channels = g_list_prepend (channels, g_strdup (channel));
+	}
+
+	/* set volumes for channels in list */
+	for (it = g_list_first (channels); it != NULL; it = g_list_next (it)) {
+		res	= xmmsc_playback_volume_set (infos->sync, it->data, volume);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
+
+		/* free channel string */
+		g_free (it->data);
+	}
+
+	g_list_free (channels);
+
+	cli_infos_loop_resume (infos);
 }
 
 void

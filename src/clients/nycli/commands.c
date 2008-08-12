@@ -352,7 +352,7 @@ cli_server_import_setup (command_action_t *action)
 		{ "non-recursive", 'N',  0, G_OPTION_ARG_NONE, NULL, _("Do not import directories recursively."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "server import", &cli_pl_config, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "server import", &cli_server_import, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-N] <path>"),
 	                     _("Import new files into the media library.\n"
 	                     "By default, directories are imported recursively."));
@@ -367,7 +367,7 @@ cli_server_property_setup (command_action_t *action)
 		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "server property", &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "server property", &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-i | -s | -D] <media> [name [value]]"),
 	                     _("Get or set properties for a given media.\n"
 	                     "If no name or value is provided, list all properties.\n"
@@ -384,7 +384,7 @@ cli_server_volume_setup (command_action_t *action)
 		{ "channel", 'c',  0, G_OPTION_ARG_STRING, NULL, _("Get or set the volume only for one channel."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "server volume", &cli_pl_config, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "server volume", &cli_server_volume, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-c <name>] [value]"),
 	                     _("Get or set the audio volume (in a range of 0-100).\n"
 	                     "If a value is provided, set the new value of the volume. Otherwise, display the current volume.\n"
@@ -1505,7 +1505,6 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gboolean norecurs;
 
 	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
@@ -1527,8 +1526,31 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 {
-	g_printf (_("command not implemented yet!\n"));
-	return FALSE;
+	xmmsc_result_t *res;
+	xmmsc_coll_t *coll;
+
+	gboolean retval = TRUE;
+	gchar *pattern;
+
+	if (!command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+		g_printf (_("Error: you must provide a pattern!\n"));
+		return FALSE;
+	}
+
+	if (!xmmsc_coll_parse (pattern, &coll)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+		retval = FALSE;
+		goto finish;
+	}
+
+	res = xmmsc_coll_query_ids (infos->sync, coll, NULL, 0, 0);
+	xmmsc_result_wait (res);
+	remove_ids (infos, res);
+
+	finish:
+	g_free (pattern);
+
+	return retval;
 }
 
 gboolean
@@ -1594,15 +1616,37 @@ cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 {
-	g_printf (_("command not implemented yet!\n"));
-	return FALSE;
+	xmmsc_result_t *res;
+
+	gchar *channel;
+	gint volume;
+
+	if (!command_flag_string_get (ctx, "channel", &channel)) {
+		channel = NULL;
+	}
+
+	if (!command_arg_int_get (ctx, 0, &volume)) {
+		res = xmmsc_playback_volume_get (infos->sync);
+		xmmsc_result_wait (res);
+		print_volume (res, infos, channel);
+	} else {
+		set_volume (infos, channel, volume);
+	}
+
+	return TRUE;
 }
 
 gboolean
 cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
 {
-	g_printf (_("command not implemented yet!\n"));
-	return FALSE;
+	xmmsc_result_t *res;
+
+	res = xmmsc_main_stats (infos->sync);
+	xmmsc_result_wait (res);
+
+	print_stats(infos, res);
+
+	return TRUE;
 }
 
 gboolean
