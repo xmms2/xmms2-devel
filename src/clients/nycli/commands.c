@@ -368,7 +368,7 @@ cli_server_property_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "server property", &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-i | -s | -D] <media> [name [value]]"),
+	                     _("[-i | -s | -D] <mid> [name [value]]"),
 	                     _("Get or set properties for a given media.\n"
 	                     "If no name or value is provided, list all properties.\n"
 	                     "If only a name is provided, display the value of the property.\n"
@@ -1590,15 +1590,100 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 {
-	g_printf (_("command not implemented yet!\n"));
-	return FALSE;
+	xmmsc_result_t *res;
+	gchar *confname, *confval;
+	
+	if (!command_arg_string_get (ctx, 0, &confname)) {
+		confname = NULL;
+		confval = NULL;
+	} else if (!command_arg_string_get (ctx, 1, &confval)) {
+		confval = NULL;
+	}
+
+	if (confval) {
+		res = xmmsc_configval_set (infos->sync, confname, confval);
+		xmmsc_result_wait (res);
+		done (res, infos);
+	} else {
+		print_config (infos, res, confname);
+	}
+
+	return TRUE;
 }
 
 gboolean
 cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 {
-	g_printf (_("command not implemented yet!\n"));
-	return FALSE;
+	xmmsc_result_t *res;
+
+	gint mid;
+	gchar *propname, *propval;
+	gboolean delete, fint, fstring;
+
+	delete = fint = fstring = FALSE;
+
+	command_flag_boolean_get (ctx, "delete", &delete);
+	command_flag_boolean_get (ctx, "int", &fint);
+	command_flag_boolean_get (ctx, "string", &fstring);
+
+	if (delete && (fint || fstring)) {
+		g_printf ("Error: --int and --string flags are invalid with --delete!\n");
+		return FALSE;
+	}
+
+	if (fint && fstring) {
+		g_printf ("Error: --int and --string flags are mutually exclusive!\n");
+		return FALSE;
+	}
+
+	if (!command_arg_int_get (ctx, 0, &mid)) {
+		g_printf ("Error: you must provide a media-id!\n");
+		return FALSE;
+	}
+
+	if (!command_arg_string_get (ctx, 1, &propname)) {
+		propname = NULL;
+		propval = NULL;
+	} else if (!command_arg_string_get (ctx, 2, &propval)) {
+		propval = NULL;
+	}
+
+	if (delete) {
+		if (!propname) {
+			g_printf (_("Error: you must provide a property to delete!\n"));
+		}
+		res = xmmsc_medialib_entry_property_remove (infos->sync, mid, propname);
+		xmmsc_result_wait (res);
+		done (res, infos);
+	} else if (!propval) {
+		res = xmmsc_medialib_get_info (infos->sync, mid);
+		xmmsc_result_wait (res);
+		print_property (infos, res, mid, propname);
+	} else {
+		gint value;
+		gboolean cons;
+		gchar *endptr;
+
+		value = strtol (propval, &endptr, 0);
+
+		/* determine save-type of the property */
+		cons = endptr == '\0';
+		fstring =  !cons & !fint;
+		fint = cons | fint;
+
+		if (fint) {
+			res = xmmsc_medialib_entry_property_set_int (infos->sync, mid,
+			                                             propname, value);
+		} else {
+			res = xmmsc_medialib_entry_property_set_str (infos->sync, mid,
+			                                             propname, propval);
+		}
+
+		xmmsc_result_wait (res);
+		done (res, infos);
+	}
+
+	return TRUE;
 }
 
 gboolean

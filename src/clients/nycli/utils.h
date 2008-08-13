@@ -29,6 +29,8 @@ void done (xmmsc_result_t *res, cli_infos_t *infos);
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
 void list_plugins (cli_infos_t *infos, xmmsc_result_t *res);
 void print_stats (cli_infos_t *infos, xmmsc_result_t *res);
+void print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname);
+void print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id, gchar *prop);
 void remove_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void rehash_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel);

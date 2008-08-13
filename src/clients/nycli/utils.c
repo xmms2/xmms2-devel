@@ -29,6 +29,8 @@ static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t typ
 
 static void pl_print_config (xmmsc_coll_t *coll, const char *name);
 
+static void id_print_info (xmmsc_result_t *res, guint id);
+
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
 typedef enum {
@@ -173,6 +175,62 @@ print_stats (cli_infos_t *infos, xmmsc_result_t *res)
 	xmmsc_result_unref (res);
 }
 
+static void
+print_config_entry (const void *key, xmmsc_result_value_type_t type,
+                    const void *confval, void *udata)
+{
+	const gchar *confname = key;
+
+	switch (type) {
+	case XMMSC_RESULT_VALUE_TYPE_STRING:
+		g_printf ("%s = %s\n", confname, (gchar *)confval);
+		break;
+	case XMMSC_RESULT_VALUE_TYPE_INT32:
+		g_printf ("%s = %d\n", confname, XPOINTER_TO_INT(confval));
+		break;
+	case XMMSC_RESULT_VALUE_TYPE_UINT32:
+		g_printf ("%s = %u\n", confname, XPOINTER_TO_UINT(confval));
+		break;
+	default:
+		break;
+	}
+}
+
+void
+print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
+{
+	const gchar *confval;
+
+	if (confname == NULL) {
+		res = xmmsc_configval_list (infos->sync);
+		xmmsc_result_wait (res);
+		xmmsc_result_dict_foreach (res, print_config_entry, NULL);
+	} else {
+		res = xmmsc_configval_get (infos->sync, confname);
+		xmmsc_result_wait (res);
+		xmmsc_result_get_string (res, &confval);
+		print_config_entry (confname, xmmsc_result_get_type (res),
+		                    confval, NULL);
+	}
+	
+	cli_infos_loop_resume (infos);
+
+	xmmsc_result_unref (res);
+}
+
+void
+print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id, gchar *prop)
+{
+	if (prop == NULL) {
+		id_print_info (res, id);
+	} else {
+		/* FIXME(g): print if given an specific property */
+	}
+
+	cli_infos_loop_resume (infos);
+}
+
+/* Apply operation to an idlist */
 void
 apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 {
@@ -306,7 +364,7 @@ status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 	}
 }
 
-void
+static void
 id_print_info (xmmsc_result_t *res, guint id)
 {
 	if (!xmmsc_result_iserror (res)) {
