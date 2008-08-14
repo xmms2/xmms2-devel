@@ -1,6 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return conf.check_pkg('speex', destvar='speex')
+    return (conf.check_pkg('speex', destvar='speex') and
+	        conf.check_pkg('ogg', destvar='ogg'))
 
-configure, build = plugin('speex', needs_lib=True, configure=plugin_configure)
+configure, build = plugin('speex', needs_lib=True, configure=plugin_configure,
+                          extra_libs=['ogg'])
