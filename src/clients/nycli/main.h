@@ -43,6 +43,7 @@ typedef struct command_action_St command_action_t;
 typedef struct command_context_St command_context_t;
 typedef struct command_argument_St command_argument_t;
 typedef struct configuration_St configuration_t;
+typedef struct alias_define_St alias_define_t;
 
 typedef GOptionEntry argument_t;
 

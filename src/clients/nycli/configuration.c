@@ -36,14 +36,35 @@ init_hash ()
 	return table;
 }
 
+/* Load a section from a keyfile to a hash-table
+   (replace existing keys in the hash) */
+static void
+section_to_hash (GKeyFile *file, gchar *section, GHashTable *hash)
+{
+	GError *error;
+	gchar **keys;
+	gint i;
+
+	error = NULL;
+	keys = g_key_file_get_keys (file, section, NULL, &error);
+	if (error) {
+		g_printf ("Error: Couldn't load configuration section %s!\n", section);
+	}
+
+	for (i = 0; keys[i] != NULL; i++) {
+		g_hash_table_insert (hash,
+		                     g_strdup (keys[i]),
+		                     g_key_file_get_value (file,
+		                                           section, keys[i],
+		                                           NULL));
+	}
+	g_strfreev (keys);
+}
+
 configuration_t *
 configuration_init (const gchar *path)
 {
 	configuration_t *config;
-	gchar **keys;
-	gint i;
-
-	GError *error;
 
 	config = g_new0 (configuration_t, 1);
 
@@ -60,27 +81,21 @@ configuration_init (const gchar *path)
 	/* init hash to default values */
 	config->values = init_hash ();
 
+	/* no aliases initially */
+	config->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                         g_free, g_free);
+
 	config->file = g_key_file_new ();
 	if (g_file_test (config->path, G_FILE_TEST_EXISTS)) {
 		if (!g_key_file_load_from_file (config->file, config->path,
 		                                G_KEY_FILE_KEEP_COMMENTS, NULL)) {
-			g_printf ("Error: Couldn't load configuration file");
+			g_printf ("Error: Couldn't load configuration file!\n");
 		} else {
 			/* load keys to hash table overriding default values */
-			error = NULL;
-			keys = g_key_file_get_keys (config->file, "main", NULL, &error);
-			if (error) {
-				g_printf ("Error: Couldn't load configuration parameters");
-			}
+			section_to_hash (config->file, "main", config->values);
 
-			for (i = 0; keys[i] != NULL; i++) {
-				g_hash_table_insert (config->values,
-				                     g_strdup (keys[i]),
-				                     g_key_file_get_value (config->file,
-				                                           "main", keys[i],
-				                                           NULL));
-			}
-			g_strfreev (keys);
+			/* load aliases */
+			section_to_hash (config->file, "alias", config->aliases);
 		}
 	}
 
@@ -93,6 +108,13 @@ configuration_free (configuration_t *config)
 	g_free (config->path);
 	g_key_file_free (config->file);
 	g_hash_table_destroy (config->values);
+	g_hash_table_destroy (config->aliases);
+}
+
+GHashTable *
+configuration_get_aliases (configuration_t *config)
+{
+	return config->aliases;
 }
 
 gboolean

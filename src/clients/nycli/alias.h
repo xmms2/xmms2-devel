@@ -14,29 +14,23 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __CONFIGURATION_H__
-#define __CONFIGURATION_H__
-
-#include <xmmsclient/xmmsclient.h>
-#include <string.h>
+#ifndef __ALIAS_H__
+#define __ALIAS_H__
 
 #include <glib.h>
 #include <glib/gprintf.h>
 
 #include "main.h"
 
-struct configuration_St {
-	gchar *path;
-	GKeyFile *file;
-	GHashTable *values;
-	GHashTable *aliases;
+struct alias_define_St {
+	gchar *name;
+	gchar *define;
 };
 
-configuration_t* configuration_init (const gchar *path);
-void configuration_free (configuration_t *config);
+gboolean alias_run (cli_infos_t *infos, command_context_t *ctx);
+void alias_setup (command_action_t *action, alias_define_t *alias);
 
-GHashTable* configuration_get_aliases (configuration_t *config);
-gboolean configuration_get_boolean (configuration_t *config, gchar *key);
-gchar* configuration_get_string (configuration_t *config, gchar *key);
+alias_define_t **alias_list (GHashTable *hash);
+void alias_list_free (alias_define_t **list);
 
-#endif /* __CONFIGURATION_H__ */
+#endif /* __ALIAS_H__ */

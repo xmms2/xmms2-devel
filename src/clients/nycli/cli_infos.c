@@ -22,7 +22,7 @@
 #include "cmdnames.h"
 #include "configuration.h"
 #include "command_trie.h"
-
+#include "alias.h"
 
 gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
@@ -165,10 +165,25 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 	return TRUE;
 }
 
+static gboolean
+register_command (cli_infos_t *infos, command_action_t *action)
+{
+	if (command_trie_insert (infos->commands, action)) {
+		gchar **namev;
+		namev = g_strsplit (action->name, " ", 0);
+		infos->cmdnames = cmdnames_prepend (infos->cmdnames, namev);
+		g_strfreev (namev);
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
 cli_infos_t *
 cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;
+	alias_define_t **aliaslist;
 	gint i;
 
 	infos = g_new0 (cli_infos_t, 1);
@@ -190,17 +205,23 @@ cli_infos_init (gint argc, gchar **argv)
 	for (i = 0; commandlist[i]; ++i) {
 		command_action_t *action = command_action_alloc ();
 		commandlist[i] (action);
-		if (command_trie_insert (infos->commands, action)) {
-			gchar **namev;
-			namev = g_strsplit (action->name, " ", 0);
-			infos->cmdnames = cmdnames_prepend (infos->cmdnames, namev);
-			g_strfreev (namev);
-		} else {
+		if (!register_command (infos, action)) {
 			command_action_free (action);
 		}
 	}
-	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 
+	/* Register aliases with a default callback */
+	aliaslist = alias_list (configuration_get_aliases (infos->config));
+	for (i = 0; aliaslist[i]; ++i) {
+		command_action_t *action = command_action_alloc ();
+		alias_setup (action, aliaslist[i]);
+		if (!register_command (infos, action)) {
+			command_action_free (action);
+		}
+	}
+	alias_list_free (aliaslist);
+
+	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 	infos->cache = cli_cache_init ();
 
 	return infos;

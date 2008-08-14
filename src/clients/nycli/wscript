@@ -11,6 +11,7 @@ def build(bld):
 		    configuration.c
 		    status.c		    
 		    utils.c
+		    alias.c
                     column_display.c
                     readline.c""".split()
     obj.includes = '. ../../include'
