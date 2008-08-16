@@ -365,10 +365,11 @@ cli_server_property_setup (command_action_t *action)
 		{ "int",    'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as integer."), NULL },
 		{ "string", 's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
 		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
+		{ "source", 'S',  0, G_OPTION_ARG_STRING, NULL, _("Property source."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "server property", &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-i | -s | -D] <mid> [name [value]]"),
+	                     _("[-i | -s | -D] [-S] <mid> [name [value]]"),
 	                     _("Get or set properties for a given media.\n"
 	                     "If no name or value is provided, list all properties.\n"
 	                     "If only a name is provided, display the value of the property.\n"
@@ -1617,8 +1618,8 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 
 	gint mid;
-	gchar *propname, *propval;
-	gboolean delete, fint, fstring;
+	gchar *propname, *propval, *src;
+	gboolean delete, fint, fstring, nosrc, retval = TRUE;
 
 	delete = fint = fstring = FALSE;
 
@@ -1641,6 +1642,14 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
+	if (!command_flag_string_get (ctx, "source", &src)) {
+		src = g_strdup_printf ("client/%s", CLI_CLIENTNAME);
+		nosrc = TRUE;
+	} else {
+		src = g_strdup (src);
+		nosrc = FALSE;
+	}
+
 	if (!command_arg_string_get (ctx, 1, &propname)) {
 		propname = NULL;
 		propval = NULL;
@@ -1651,14 +1660,20 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 	if (delete) {
 		if (!propname) {
 			g_printf (_("Error: you must provide a property to delete!\n"));
+			retval = FALSE;
+			goto finish;
 		}
-		res = xmmsc_medialib_entry_property_remove (infos->sync, mid, propname);
+		res = xmmsc_medialib_entry_property_remove_with_source (infos->sync,
+		                                                        mid,
+		                                                        src,
+		                                                        propname);
 		xmmsc_result_wait (res);
 		done (res, infos);
 	} else if (!propval) {
 		res = xmmsc_medialib_get_info (infos->sync, mid);
 		xmmsc_result_wait (res);
-		print_property (infos, res, mid, propname);
+		/* use source-preference when printing and user hasn't set --source */
+		print_property (infos, res, mid, nosrc ? NULL : src, propname);
 	} else {
 		gint value;
 		gboolean cons;
@@ -1672,18 +1687,27 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		fint = cons | fint;
 
 		if (fint) {
-			res = xmmsc_medialib_entry_property_set_int (infos->sync, mid,
-			                                             propname, value);
+			res = xmmsc_medialib_entry_property_set_int_with_source (infos->sync,
+			                                                         mid,
+			                                                         src,
+			                                                         propname,
+			                                                         value);
 		} else {
-			res = xmmsc_medialib_entry_property_set_str (infos->sync, mid,
-			                                             propname, propval);
+			res = xmmsc_medialib_entry_property_set_str_with_source (infos->sync,
+			                                                         mid,
+			                                                         src,
+			                                                         propname,
+			                                                         propval);
 		}
 
 		xmmsc_result_wait (res);
 		done (res, infos);
 	}
 
-	return TRUE;
+    finish:
+	g_free (src);
+
+	return retval;
 }
 
 gboolean

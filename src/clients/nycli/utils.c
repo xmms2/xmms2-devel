@@ -29,7 +29,7 @@ static xmmsc_coll_t *coll_copy_retype (xmmsc_coll_t *coll, xmmsc_coll_type_t typ
 
 static void pl_print_config (xmmsc_coll_t *coll, const char *name);
 
-static void id_print_info (xmmsc_result_t *res, guint id);
+static void id_print_info (xmmsc_result_t *res, guint id, gchar *source);
 
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
@@ -46,6 +46,12 @@ propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
 {
 	const gchar *source = (const char *) vsource;
 	const gchar *key = (const char *) vkey;
+
+	const gchar *filter = (const gchar *) udata;
+	
+	if (filter && strcmp (filter, source) != 0) {
+		return;
+	}
 
 	switch (type) {
 	case XMMSC_RESULT_VALUE_TYPE_UINT32:
@@ -219,10 +225,11 @@ print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
 }
 
 void
-print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id, gchar *prop)
+print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
+                gchar *source, gchar *property)
 {
-	if (prop == NULL) {
-		id_print_info (res, id);
+	if (property == NULL) {
+		id_print_info (res, id, source);
 	} else {
 		/* FIXME(g): print if given an specific property */
 	}
@@ -365,10 +372,10 @@ status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 }
 
 static void
-id_print_info (xmmsc_result_t *res, guint id)
+id_print_info (xmmsc_result_t *res, guint id, gchar *source)
 {
 	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_propdict_foreach (res, propdict_dump, NULL);
+		xmmsc_result_propdict_foreach (res, propdict_dump, source);
 	} else {
 		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
 	}
@@ -394,7 +401,7 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 				} else {
 					first = false;
 				}
-				id_print_info (infores, id);
+				id_print_info (infores, id, NULL);
 			}
 			xmmsc_result_list_next (res);
 		}
