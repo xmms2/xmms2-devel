@@ -178,14 +178,14 @@ alias_list (GHashTable *hash)
 	g_hash_table_iter_init (&it, hash);
 	while (g_hash_table_iter_next (&it, &name, &define)) {
 		alias_define_t *alias;
-	
+
 		alias = g_new0 (alias_define_t, 1);
 		alias->name = g_strdup (name);
 		alias->define = g_strdup (define);
 
 		aliaslist[i++] = alias;
 	}
-	
+
 	return aliaslist;
 }
 

@@ -55,6 +55,7 @@ struct cli_cache_St {
 cli_cache_t *cli_cache_init ();
 void cli_cache_start (cli_infos_t *infos);
 gboolean cli_cache_is_fresh (cli_cache_t *cache);
+void cli_cache_refresh (cli_infos_t *infos);
 void cli_cache_free (cli_cache_t *cache);
 
 #endif /* __CLI_INFOS_H__ */

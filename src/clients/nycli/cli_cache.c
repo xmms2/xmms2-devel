@@ -255,6 +255,28 @@ cli_cache_init ()
 	return cache;
 }
 
+void
+cli_cache_refresh (cli_infos_t *infos)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_current_pos (infos->conn, XMMS_ACTIVE_PLAYLIST);
+	xmmsc_result_wait (res);
+	refresh_currpos (res, infos->cache);
+
+	res = xmmsc_playback_status (infos->conn);
+	xmmsc_result_wait (res);
+	refresh_playback_status (res, infos->cache);
+
+	res = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
+	xmmsc_result_wait (res);
+	refresh_active_playlist (res, infos->cache);
+
+	res = xmmsc_playlist_current_active (infos->conn);
+	xmmsc_result_wait (res);
+	refresh_active_playlist_name (res, infos->cache);
+}
+
 /** Fill the cache with initial (current) data, setup listeners. */
 void
 cli_cache_start (cli_infos_t *infos)
@@ -262,23 +284,7 @@ cli_cache_start (cli_infos_t *infos)
 	xmmsc_result_t *res;
 
 	/* Setup one-time value fetchers, for init */
-	res = xmmsc_playlist_current_pos (infos->conn, XMMS_ACTIVE_PLAYLIST);
-	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
-	xmmsc_result_unref (res);
-
-	res = xmmsc_playback_status (infos->conn);
-	xmmsc_result_notifier_set (res, &refresh_playback_status,
-	                           infos->cache);
-	xmmsc_result_unref (res);
-
-	res = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
-	xmmsc_result_notifier_set (res, &refresh_active_playlist, infos->cache);
-	xmmsc_result_unref (res);
-
-	res = xmmsc_playlist_current_active (infos->conn);
-	xmmsc_result_notifier_set (res, &refresh_active_playlist_name,
-	                           infos->cache);
-	xmmsc_result_unref (res);
+	cli_cache_refresh (infos);
 
 	/* Setup async listeners */
 	res = xmmsc_broadcast_playlist_current_pos (infos->conn);

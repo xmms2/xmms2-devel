@@ -1564,7 +1564,7 @@ cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gchar *confname, *confval;
-	
+
 	if (!command_arg_string_get (ctx, 0, &confname)) {
 		confname = NULL;
 		confval = NULL;

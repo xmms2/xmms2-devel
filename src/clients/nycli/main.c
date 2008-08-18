@@ -80,6 +80,10 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 
 	/* Get the cache ready if needed */
 	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CACHE)) {
+		/* If executing an alias have to refresh manually */
+		if (infos->status == CLI_ACTION_STATUS_ALIAS) {
+			cli_cache_refresh (infos);
+		}
 		while (!cli_cache_is_fresh (infos->cache)) {
 			/* Obviously, there is a problem with updating the cache, abort */
 			if (n == MAX_CACHE_REFRESH_LOOP) {
