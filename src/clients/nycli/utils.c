@@ -48,7 +48,7 @@ propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
 	const gchar *key = (const char *) vkey;
 
 	const gchar *filter = (const gchar *) udata;
-	
+
 	if (filter && strcmp (filter, source) != 0) {
 		return;
 	}
@@ -140,8 +140,8 @@ list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 
 	if (!xmmsc_result_iserror (res)) {
 		for (xmmsc_result_list_first (res);
-	         xmmsc_result_list_valid (res);
-	         xmmsc_result_list_next (res)) {
+		     xmmsc_result_list_valid (res);
+		     xmmsc_result_list_next (res)) {
 			xmmsc_result_get_dict_entry_string (res, "shortname", &name);
 			xmmsc_result_get_dict_entry_string (res, "description", &desc);
 
@@ -218,7 +218,7 @@ print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
 		print_config_entry (confname, xmmsc_result_get_type (res),
 		                    confval, NULL);
 	}
-	
+
 	cli_infos_loop_resume (infos);
 
 	xmmsc_result_unref (res);
@@ -336,7 +336,7 @@ set_volume (cli_infos_t *infos, gchar *channel, gint volume)
 
 	/* set volumes for channels in list */
 	for (it = g_list_first (channels); it != NULL; it = g_list_next (it)) {
-		res	= xmmsc_playback_volume_set (infos->sync, it->data, volume);
+		res = xmmsc_playback_volume_set (infos->sync, it->data, volume);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 
@@ -858,6 +858,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 			if (xmmsc_result_get_uint (matching, &id)) {
 				insres = xmmsc_playlist_insert_id (infos->sync, playlist,
 				                                   pos + offset, id);
+				xmmsc_result_wait (insres);
 				xmmsc_result_unref (insres);
 				offset++;
 			}
