@@ -848,36 +848,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					xmmsc_result_unref (res);
 					g_free (url);
 				} else {
-					/* there's no rinsert. So create a tmp-playlist
-					 * radd to it then insert in the current
-					 * playlist.
-					 * AT: there's a better way? Maybe implement
-					 * rinsert in server?*/
-					res = xmmsc_playlist_create (infos->sync, tmp_playlist);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-
-					res = xmmsc_playlist_radd (infos->sync, tmp_playlist, url);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-
-					res = xmmsc_playlist_list_entries (infos->sync, tmp_playlist);
-					xmmsc_result_wait (res);
-					for (xmmsc_result_list_first (res);
-					     xmmsc_result_list_valid (res);
-					     xmmsc_result_list_next (res)) {
-						xmmsc_result_t *insres;
-						guint id;
-						if (xmmsc_result_get_uint (res, &id)) {
-							insres = xmmsc_playlist_insert_id (infos->sync,
-							                                   playlist, pos, id);
-							xmmsc_result_wait (insres);
-							xmmsc_result_unref (insres);
-						}
-					}
-					xmmsc_result_unref (res);
-
-					res = xmmsc_playlist_remove (infos->sync, tmp_playlist);
+					res = xmmsc_playlist_rinsert (infos->sync, playlist, pos, url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				}
