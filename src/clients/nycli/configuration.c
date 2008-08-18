@@ -73,7 +73,7 @@ configuration_init (const gchar *path)
 		char *dir;
 		dir = g_new0 (char, XMMS_PATH_MAX);
 		xmmsc_userconfdir_get (dir, XMMS_PATH_MAX);
-		config->path = g_strdup_printf ("%s/nycli.conf", dir);
+		config->path = g_strdup_printf ("%s/clients/nycli.conf", dir);
 		g_free (dir);
 	} else {
 		config->path = g_strdup (path);
