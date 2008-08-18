@@ -90,6 +90,12 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 	return retval;
 }
 
+gchar *
+command_name_get (command_context_t *ctx)
+{
+	return ctx->name;
+}
+
 gint
 command_arg_count (command_context_t *ctx)
 {

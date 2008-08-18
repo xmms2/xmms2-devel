@@ -59,6 +59,7 @@ void
 command_context_free (command_context_t *ctx)
 {
 	g_hash_table_destroy (ctx->flags);
+	g_free (ctx->name);
 	g_free (ctx);
 }
 
@@ -161,6 +162,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 			g_hash_table_insert (ctx->flags,
 			                     g_strdup (action->argdefs[i].long_name), arg);
 		}
+
+		ctx->name = g_strdup (action->name);
 
 		context = g_option_context_new (NULL);
 		g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */

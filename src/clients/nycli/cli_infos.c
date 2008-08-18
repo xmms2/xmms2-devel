@@ -54,8 +54,27 @@ cli_infos_status_mode_exit (cli_infos_t *infos)
 }
 
 void
+cli_infos_alias_begin (cli_infos_t *infos)
+{
+	cli_infos_loop_suspend (infos);
+	infos->status = CLI_ACTION_STATUS_ALIAS;
+}
+
+void
+cli_infos_alias_end (cli_infos_t *infos)
+{
+	if (infos->status != CLI_ACTION_STATUS_FINISH) {
+		infos->status = CLI_ACTION_STATUS_BUSY;
+	}
+	cli_infos_loop_resume (infos);
+}
+
+void
 cli_infos_loop_suspend (cli_infos_t *infos)
 {
+	if (infos->status == CLI_ACTION_STATUS_ALIAS) {
+		return;
+	}
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {
 		readline_suspend (infos);
 	}
@@ -65,7 +84,7 @@ cli_infos_loop_suspend (cli_infos_t *infos)
 void
 cli_infos_loop_resume (cli_infos_t *infos)
 {
-	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+	if (infos->status != CLI_ACTION_STATUS_BUSY) {
 		return;
 	}
 	if (infos->mode == CLI_EXECUTION_MODE_SHELL) {

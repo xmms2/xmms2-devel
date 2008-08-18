@@ -58,6 +58,7 @@ typedef enum {
 } command_req_t;
 
 struct command_context_St {
+	gchar *name;
 	gint argc;
 	gchar **argv;
 	GHashTable *flags;
