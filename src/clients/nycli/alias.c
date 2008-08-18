@@ -109,7 +109,10 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 
 	argc = command_arg_count (ctx);
 	argv = command_argv_get (ctx);
-	command_arg_longstring_get_escaped (ctx, 0, &line);
+
+	if (!command_arg_longstring_get_escaped (ctx, 0, &line)) {
+		line = NULL;
+	}
 
 	runnable = runnable_alias (def, argc, argv, line);
 
