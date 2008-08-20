@@ -27,6 +27,23 @@
 
 #define NULL_SUB(elem, null, notnull) (elem) == NULL ? (null) : (notnull)
 
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '*') || \
+                     ((a) == '?'))
+
+
+typedef struct browse_entry_St browse_entry_t;
+struct browse_entry_St {
+	gchar *url;
+	gint isdir;
+};
+
 /* Setup commands */
 
 #define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
@@ -731,29 +748,103 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 	return TRUE;
 }
 
-static gboolean
-matching_files_dirs (gchar *pattern, GList **files)
+/* Check if url is a dir, used if matching_browse arg isn't a pattern
+   (should have a better way) */
+static gint
+url_isdir (cli_infos_t *infos, gchar *url)
 {
-	gint i;
-	gboolean retval = TRUE;
-	glob_t matched;
+	xmmsc_result_t *res;
+	gchar *p, *path;
+	gint ret = 0;
 
-/* _xmmsc_medialib_decode_url */
-/* xmmsc_xform_media_browse */
+	p = url + strlen (url) - 2;
+	while (*p != '/') p--;
+	path = g_strndup (url, p-url+1);
 
-	if (glob (pattern, 0, NULL, &matched)) {
-		retval = FALSE;
-		goto finish;
+	xmmsc_xform_media_browse_encoded (infos->sync, path);
+	xmmsc_result_wait (res);
+
+	if (!xmmsc_result_iserror (res)) {
+		for (xmmsc_result_list_first (res);
+		     xmmsc_result_list_valid (res);
+		     xmmsc_result_list_next (res)) {
+			const gchar *path;
+
+			xmmsc_result_get_dict_entry_string (res, "path", &path);
+			if (!strcmp (path, url)) {
+				xmmsc_result_get_dict_entry_int (res, "isdir", &ret);
+				break;
+			}
+		}
 	}
 
-	for (i = 0; matched.gl_pathv[i] != NULL; i++) {
-		*files = g_list_prepend (*files, g_strdup (matched.gl_pathv[i]));
+	xmmsc_result_unref (res);
+
+	return ret;
+}
+
+static gboolean
+matching_browse (cli_infos_t *infos, const gchar *done,
+                 gchar *path, gint isdir, GList **files)
+{
+	xmmsc_result_t *res;
+
+	GPatternSpec *spec;
+	gchar *s, *dir, *pattern, *nslash, *pslash;
+
+	if ((s = strpbrk (path, "*?")) == NULL) {
+		browse_entry_t *entry = g_new0 (browse_entry_t, 1);
+
+		if (isdir < 0) {
+			isdir = url_isdir (infos, path);
+		}
+
+		entry->url = g_strdup (done);
+		entry->isdir = isdir;
+		*files = g_list_prepend (*files, entry);
+
+		return TRUE;
 	}
 
-    finish:
-	globfree (&matched);
+	pslash = s;
+	while (pslash != path && *pslash != '/') pslash--;;
+	dir = g_strndup (path, pslash-path+1);
 
-	return retval;
+	res = xmmsc_xform_media_browse_encoded (infos->sync, dir);
+	xmmsc_result_wait (res);
+
+	nslash = strchr (s, '/');
+	nslash = (nslash == NULL) ? s+strlen(s) : nslash;
+	pattern = g_strndup (path, nslash-path);
+	spec = g_pattern_spec_new (pattern);
+
+	/* Find matching entries */
+	if (!xmmsc_result_iserror (res)) {
+		for (xmmsc_result_list_first (res);
+		     xmmsc_result_list_valid (res);
+		     xmmsc_result_list_next (res)) {
+			const gchar *file;
+			gint isdir;
+
+			xmmsc_result_get_dict_entry_string (res, "path", &file);
+			xmmsc_result_get_dict_entry_int (res, "isdir", &isdir);
+			if (g_pattern_match_string (spec, file)) {
+				gchar *npath = g_strconcat (file, nslash, NULL);
+				matching_browse (infos, file, npath, isdir, files);
+				g_free (npath);
+			}
+		}
+	} else {
+		return FALSE;
+	}
+
+	xmmsc_result_unref (res);
+
+	g_free (dir);
+	g_free (pattern);
+	g_pattern_spec_free (spec);
+
+	return TRUE;
 }
 
 /* Transform a path (possibly absolute or relative) into a valid XMMS2
@@ -783,6 +874,33 @@ make_valid_url (gchar *path)
 	return url;
 }
 
+static char *
+encode_url (gchar *url)
+{
+	static const char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0;
+	gchar *res;
+
+	res = g_new (gchar, strlen (url) * 3 + 1);
+	if (!res)
+		return NULL;
+
+	for (i = 0; url[i]; i++) {
+		guchar chr = url[i];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	return res;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -806,7 +924,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 */
 
 	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
-		playlist = NULL;
+		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
 	/* FIXME: pos is wrong in non-active playlists (next/offsets are invalid)! */
@@ -829,34 +947,35 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	if (fileargs) {
 		/* FIXME: expand / glob? */
-		gint pid;
-		gchar *tmp_playlist;
-
-		pid = getpid ();
-		tmp_playlist = g_strdup_printf ("_nycli_tmp_playlist_%d", pid);
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
 			GList *files = NULL, *it;
+			gchar *vpath, *enc;
 
 			command_arg_string_get (ctx, i, &path);
-			matching_files_dirs (path, &files);
+			vpath = make_valid_url (path);
+			enc = encode_url (vpath);
+			matching_browse (infos, "", enc, -1, &files);
 
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
-				gchar *url = make_valid_url (it->data);
-				if (norecurs || g_file_test (it->data, G_FILE_TEST_IS_REGULAR)) {
-					res = xmmsc_playlist_insert_url (infos->sync, playlist, pos, url);
+				browse_entry_t *entry = it->data;
+				if (norecurs || !entry->isdir) {
+					res = xmmsc_playlist_insert_encoded (infos->sync, playlist,
+												         pos, entry->url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
-					g_free (url);
 				} else {
-					res = xmmsc_playlist_rinsert (infos->sync, playlist, pos, url);
+					res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist,
+					                                      pos, entry->url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				}
-				g_free (it->data);
+				g_free (entry->url);
+				g_free (entry);
 			}
 
+			g_free (enc);
+			g_free (vpath);
 			g_list_free (files);
-			/* AT: better to put this in a separate function in utils.c? */
 			cli_infos_loop_resume (infos);
 		}
 	} else {
