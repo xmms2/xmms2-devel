@@ -49,12 +49,12 @@ free_token (gpointer data, gpointer udata)
 	g_free (data);
 }
 
-static gchar *
-runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line)
+static gboolean
+runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnable)
 {
 	gint k, len;
 	gchar **subst;
-	gchar *runnable;
+	gboolean retval = TRUE;
 
 	GList *tokens, *it;
 
@@ -74,6 +74,12 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line)
 
 		if (*tok == '$' && strspn (tok, "$0123456789") == size) {
 			i = strtol (tok + 1,  NULL, 10);
+			if (argc < i || (argc == 0 && i == 0)) {
+				g_printf ("Error: Invalid alias call (missing parameters)!\n");
+				*runnable = NULL;
+				retval = FALSE;
+				goto finish;
+			}
 			if (i == 0) {
 				subst[k] = line;
 			} else {
@@ -86,7 +92,9 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line)
 	}
 
 	/* put ';' to make parsing simple */
-	runnable = g_strjoinv (" ", subst);
+	*runnable = g_strjoinv (" ", subst);
+
+	finish:
 
 	/* free tokens */
 	g_list_foreach (tokens, free_token, NULL);
@@ -94,13 +102,14 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line)
 
 	g_free (subst);
 
-	return runnable;
+	return retval;;
 }
 
 gboolean
 alias_action (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *runnable, *def, *line;
+	gboolean retval = TRUE;
 	gchar **argv;
 	gint argc;
 
@@ -114,16 +123,20 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 		line = NULL;
 	}
 
-	runnable = runnable_alias (def, argc, argv, line);
+	if (!runnable_alias (def, argc, argv, line, &runnable)) {
+		retval = FALSE;
+		goto finish;
+	}
 
 	cli_infos_alias_begin (infos);
 	alias_run (infos, runnable);
 	cli_infos_alias_end (infos);
 
+	finish:
 	g_free (line);
 	g_free (runnable);
 
-	return TRUE;
+	return retval;
 }
 
 GList *
