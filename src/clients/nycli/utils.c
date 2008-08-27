@@ -834,10 +834,28 @@ set_next_rel (cli_infos_t *infos, gint offset)
 	tickle (res, infos);
 }
 
+void
+add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
+          gchar *playlist, gint pos)
+{
+	xmmsc_result_t *res;
+	xmmsc_coll_t *coll;
+
+	if (!xmmsc_result_iserror (plsres) &&
+	    xmmsc_result_get_collection (plsres, &coll)) {
+		res = xmmsc_playlist_add_idlist (infos->sync, playlist, coll);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
+	} else {
+		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (plsres));
+	}
+
+	xmmsc_result_unref (plsres);
+}
 
 void
 add_list (xmmsc_result_t *matching, cli_infos_t *infos,
-             gchar *playlist, gint pos)
+          gchar *playlist, gint pos)
 
 {
 	/* FIXME: w00t at code copy-paste, please modularize */

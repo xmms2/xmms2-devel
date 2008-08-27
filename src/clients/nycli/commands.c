@@ -220,6 +220,7 @@ cli_add_setup (command_action_t *action)
 	/* FIXME: allow ordering ? */
 	const argument_t flags[] = {
 		{ "file", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Treat the arguments as file paths instead of a pattern."), "path" },
+		{ "pls", 'P', 0, G_OPTION_ARG_NONE, NULL, _("Treat the files as playlist files (implies --file.)"), "path" },
 		{ "non-recursive", 'N', 0, G_OPTION_ARG_NONE, NULL, _("Do not add directories recursively."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
@@ -227,7 +228,7 @@ cli_add_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-f [-N]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]"),
+	                     _("[-f [-N] [-P]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -390,8 +391,10 @@ cli_server_property_setup (command_action_t *action)
 	                     _("Get or set properties for a given media.\n"
 	                     "If no name or value is provided, list all properties.\n"
 	                     "If only a name is provided, display the value of the property.\n"
-	                     "If both a name and a value are provided, set the new value of the property.\n"
-	                     "By defaul, the value will be used to determine whether it should be saved as a string or an integer.\n"
+	                     "If both a name and a value are provided, set the new value of the property.\n\n"
+	                     "By default, set operations use client specific source and list, display operations use source-preference.\n"
+	                     "Use the --source option to override this behaviour.\n\n"
+	                     "By default, the value will be used to determine whether it should be saved as a string or an integer.\n"
 	                     "Use the --int or --string flag to override this behaviour."));
 }
 
@@ -761,7 +764,7 @@ url_isdir (cli_infos_t *infos, gchar *url)
 	while (*p != '/') p--;
 	path = g_strndup (url, p-url+1);
 
-	xmmsc_xform_media_browse_encoded (infos->sync, path);
+	res = xmmsc_xform_media_browse_encoded (infos->sync, path);
 	xmmsc_result_wait (res);
 
 	if (!xmmsc_result_iserror (res)) {
@@ -797,6 +800,7 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 
 		if (isdir < 0) {
 			isdir = url_isdir (infos, path);
+			done = path;
 		}
 
 		entry->url = g_strdup (done);
@@ -874,11 +878,11 @@ make_valid_url (gchar *path)
 	return url;
 }
 
-static char *
+static gchar *
 encode_url (gchar *url)
 {
-	static const char hex[16] = "0123456789abcdef";
-	int i = 0, j = 0;
+	static const gchar hex[16] = "0123456789abcdef";
+	gint i = 0, j = 0;
 	gchar *res;
 
 	res = g_new (gchar, strlen (url) * 3 + 1);
@@ -901,6 +905,51 @@ encode_url (gchar *url)
 	return res;
 }
 
+gchar *
+decode_url (const gchar *string)
+{
+	gint i = 0, j = 0;
+	gchar *url;
+
+	url = g_strdup (string);
+	if (!url)
+		return NULL;
+
+	while (url[i]) {
+		guchar chr = url[i++];
+
+		if (chr == '+') {
+			chr = ' ';
+		} else if (chr == '%') {
+			gchar ts[3];
+			gchar *t;
+
+			ts[0] = url[i++];
+			if (!ts[0])
+				goto err;
+			ts[1] = url[i++];
+			if (!ts[1])
+				goto err;
+			ts[2] = '\0';
+
+			chr = strtoul (ts, &t, 16);
+
+			if (t != &ts[2])
+				goto err;
+		}
+
+		url[j++] = chr;
+	}
+
+	url[j] = '\0';
+
+	return url;
+
+ err:
+	g_free (url);
+	return NULL;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -912,6 +961,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gchar *path;
 	gboolean fileargs;
 	gboolean norecurs;
+	gboolean plsfile;
 	gint i, count;
 	gboolean success = TRUE;
 
@@ -934,6 +984,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
+	command_flag_boolean_get (ctx, "pls", &plsfile);
 	command_flag_boolean_get (ctx, "file", &fileargs);
 	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
@@ -945,6 +996,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
+	fileargs |= plsfile;
 	if (fileargs) {
 		/* FIXME: expand / glob? */
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
@@ -958,7 +1010,16 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
 				browse_entry_t *entry = it->data;
-				if (norecurs || !entry->isdir) {
+				if (plsfile) {
+					xmmsc_result_t *plsres;
+					gchar *decoded = decode_url (entry->url);
+
+					plsres = xmmsc_coll_idlist_from_playlist_file (infos->sync,
+					                                               decoded);
+					xmmsc_result_wait (plsres);
+					add_pls (plsres, infos, playlist, pos);
+					g_free (decoded);
+				} else if (norecurs || !entry->isdir) {
 					res = xmmsc_playlist_insert_encoded (infos->sync, playlist,
 												         pos, entry->url);
 					xmmsc_result_wait (res);
