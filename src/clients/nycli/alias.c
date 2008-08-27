@@ -58,7 +58,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 
 	GList *tokens, *it;
 
-	/* Substitute parameters: $0: line, $1: field 1, $2: field 2, ... */
+	/* Substitute parameters: $0: line, $@: line, $1: field 1, $2: field 2, ... */
 	tokens = alias_tokenize (def);
 
 	len = g_list_length (tokens);
@@ -72,8 +72,12 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 		gchar *tok = it->data;
 		gint i, size = strlen (tok);
 
-		if (*tok == '$' && strspn (tok, "$0123456789") == size) {
-			i = strtol (tok + 1,  NULL, 10);
+		if (*tok == '$' && strspn (tok, "$@123456789") == size) {
+			if (*(tok+1) == '@') {
+				i = 0;
+			} else {
+				i = strtol (tok + 1,  NULL, 10);
+			}
 			if (argc < i || (argc == 0 && i == 0)) {
 				g_printf ("Error: Invalid alias call (missing parameters)!\n");
 				*runnable = NULL;
