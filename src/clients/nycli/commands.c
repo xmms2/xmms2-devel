@@ -950,6 +950,19 @@ decode_url (const gchar *string)
 	return NULL;
 }
 
+static gboolean guesspls(cli_infos_t *infos, gchar *url)
+{
+	if (!configuration_get_boolean (infos->config, "GUESS_PLS")) {
+		return FALSE;
+	}
+
+	if (g_str_has_suffix (url, ".m3u") || g_str_has_suffix(url, ".pls")) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -1010,7 +1023,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
 				browse_entry_t *entry = it->data;
-				if (plsfile) {
+				if (plsfile || guesspls (infos, entry->url)) {
 					xmmsc_result_t *plsres;
 					gchar *decoded = decode_url (entry->url);
 
