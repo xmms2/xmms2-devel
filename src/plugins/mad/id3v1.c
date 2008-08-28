@@ -89,8 +89,8 @@ typedef struct id3v1tag_St {
 } id3v1tag_t;
 
 static void
-xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
-                    int len, const char *encoding)
+xmms_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
+                int len, const char *encoding)
 {
 	gsize readsize,writsize;
 	GError *err = NULL;
@@ -119,8 +119,8 @@ xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
 	}
 }
 
-gboolean
-xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
+static gboolean
+xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 {
 	xmms_config_property_t *config;
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
@@ -138,20 +138,20 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	encoding = xmms_config_property_get_string (config);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST;
-	xmms_mad_id3v1_set (xform, metakey, tag->artist,
-	                    sizeof (tag->artist), encoding);
+	xmms_id3v1_set (xform, metakey, tag->artist,
+	                sizeof (tag->artist), encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM;
-	xmms_mad_id3v1_set (xform, metakey, tag->album,
-	                    sizeof (tag->album), encoding);
+	xmms_id3v1_set (xform, metakey, tag->album,
+	                sizeof (tag->album), encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
-	xmms_mad_id3v1_set (xform, metakey, tag->title,
-	                    sizeof (tag->title), encoding);
+	xmms_id3v1_set (xform, metakey, tag->title,
+	                sizeof (tag->title), encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR;
-	xmms_mad_id3v1_set (xform, metakey, tag->year,
-	                    sizeof (tag->year), encoding);
+	xmms_id3v1_set (xform, metakey, tag->year,
+	                sizeof (tag->year), encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
 	if (!xmms_xform_metadata_has_val (xform, metakey)) {
@@ -167,9 +167,9 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 
 	if (tag->u.v1_1.__zero == 0 && tag->u.v1_1.track_number > 0) {
 		/* V1.1 */
-		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
-		                    tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment),
-		                    encoding);
+		xmms_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
+		                tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment),
+		                encoding);
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
 		if (!xmms_xform_metadata_has_val (xform, metakey)) {
@@ -179,9 +179,45 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 		}
 	} else {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
-		xmms_mad_id3v1_set (xform, metakey, tag->u.v1_0.comment,
-		                    sizeof (tag->u.v1_0.comment), encoding);
+		xmms_id3v1_set (xform, metakey, tag->u.v1_0.comment,
+		                sizeof (tag->u.v1_0.comment), encoding);
 	}
 
 	return TRUE;
 }
+
+gint
+xmms_id3v1_get_tags (xmms_xform_t *xform)
+{
+	xmms_error_t err;
+	gint64 res;
+	guchar buf[128];
+	gint ret = 0;
+
+	xmms_error_reset (&err);
+
+	res = xmms_xform_seek (xform, -128, XMMS_XFORM_SEEK_END, &err);
+	if (res == -1) {
+		XMMS_DBG ("Couldn't seek - not getting id3v1 tag");
+		return 0;
+	}
+
+	if (xmms_xform_read (xform, buf, 128, &err) == 128) {
+		if (xmms_id3v1_parse (xform, buf)) {
+			ret = 128;
+		}
+	} else {
+		XMMS_DBG ("Read of 128 bytes failed?!");
+		xmms_error_reset (&err);
+	}
+
+	res = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_SET, &err);
+	if (res == -1) {
+		XMMS_DBG ("Couldn't seek after getting id3 tag?!? very bad");
+		return -1;
+	}
+
+	return ret;
+}
+
+

@@ -19,8 +19,6 @@
 #ifndef __XMMS_MAD_ID3V1_H__
 #define __XMMS_MAD_ID3V1_H__
 
-#include <xmms/xmms_medialib.h>
-
-gboolean xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf);
+gint xmms_id3v1_get_tags (xmms_xform_t *xform);
 
 #endif
