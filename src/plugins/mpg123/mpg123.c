@@ -33,7 +33,6 @@
  *  for mpg123...
  *  Perhaps one can make the generic id3 plugin store the necessary info
  *  for retrieval here, or just keep the id3 tags there...
- *  Currently there is no metadata code here, it just _could_ be added.
  */
 
 #include "xmms/xmms_xformplugin.h"
@@ -44,6 +43,8 @@
 #include <glib.h>
 #include <mpg123.h>
 
+#include "id3v1.h"
+
 #define BUFSIZE 4096
 
 typedef struct xmms_mpg123_data_St {
@@ -53,6 +54,7 @@ typedef struct xmms_mpg123_data_St {
 	glong samplerate;
 	gint channels;
 	gboolean eof_found;
+	gint filesize;
 
 	/* input data buffer */
 	guint8 buf[BUFSIZE];
@@ -97,6 +99,12 @@ xmms_mpg123_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.seek = xmms_mpg123_seek;
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
+	xmms_xform_plugin_config_property_register (xform_plugin,
+	                                            "id3v1_encoding",
+	                                            "ISO8859-1",
+	                                            NULL,
+	                                            NULL);
+
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/mpeg",
@@ -133,10 +141,17 @@ xmms_mpg123_init (xmms_xform_t *xform)
 
 	g_return_val_if_fail (xform, FALSE);
 
-	mpg123_rates (&rates, &num_rates);
-
 	data = g_new0 (xmms_mpg123_data_t, 1);
 	xmms_xform_private_data_set (xform, data);
+
+	/* Get the total size of this stream and store it for later */
+	if (xmms_xform_metadata_get_int (xform,
+	                                 XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+	                                 &result)) {
+		data->filesize = result;
+	}
+
+	mpg123_rates (&rates, &num_rates);
 
 	data->param = mpg123_new_pars (&result);
 	g_return_val_if_fail (data->param, FALSE);
@@ -181,7 +196,15 @@ xmms_mpg123_init (xmms_xform_t *xform)
 		}
 	}
 
-	/* FIXME: ID3v1 data should be fetched here */
+	/* Fetch ID3v1 data from the end of file if possible */
+	result = xmms_id3v1_get_tags (xform);
+	if (result < 0) {
+		xmms_log_error ("Seeking error when reading ID3v1 tags");
+		goto bad;
+	} else if (data->filesize > result) {
+		/* Reduce the size of tag data from the filesize */
+		data->filesize -= result;
+	}
 
 	/* Read data from input until decoded data is available from decoder */
 	do {
