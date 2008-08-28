@@ -239,6 +239,11 @@ xmms_mpg123_init (xmms_xform_t *xform)
 		goto mpg123_bad;
 	}
 
+	/* Set the filesize so it can be used for duration estimation */
+	if (data->filesize > 0) {
+		mpg123_set_filesize (data->decoder, data->filesize);
+	}
+
 	/* Get duration in samples, convert to ms and save to xmms2 */
 	length = mpg123_length (data->decoder);
 	if (length > 0) {
