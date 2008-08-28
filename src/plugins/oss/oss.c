@@ -15,8 +15,6 @@
  */
 
 
-
-
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 
@@ -27,12 +25,22 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <string.h>
 #include <stdio.h>
-
-
 #include <glib.h>
+
+/* These are new defines of OSS4 that can't be found from old
+ * version of soundcard.h, therefore define them manually to avoid
+ * OSS4 compile time dependency that can cause some trouble... */
+#ifndef SNDCTL_DSP_GETPLAYVOL
+#define SNDCTL_DSP_GETPLAYVOL       _SIOR ('P', 24, int)
+#endif
+
+#ifndef SNDCTL_DSP_SETPLAYVOL
+#define SNDCTL_DSP_SETPLAYVOL       _SIOWR('P', 24, int)
+#endif
 
 /*
  * Type definitions
@@ -42,6 +50,7 @@ typedef struct xmms_oss_data_St {
 	gint fd;
 	gint mixer_fd;
 	gboolean have_mixer;
+	gboolean oss4_mixer;
 } xmms_oss_data_t;
 
 static const struct {
@@ -150,6 +159,7 @@ xmms_oss_volume_set (xmms_output_t *output,
 {
 	xmms_oss_data_t *data;
 	gint left, right, tmp = 0;
+	gint ret;
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (channel, FALSE);
@@ -161,7 +171,13 @@ xmms_oss_volume_set (xmms_output_t *output,
 		return FALSE;
 
 	/* get current volume */
-	if (ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp) == -1) {
+	if (data->oss4_mixer) {
+		ret = ioctl (data->fd, SNDCTL_DSP_GETPLAYVOL, &tmp);
+	} else {
+		ret = ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp);
+	}
+	if (ret == -1) {
+		XMMS_DBG ("Mixer ioctl failed: %s", strerror (errno));
 		return FALSE;
 	}
 
@@ -179,7 +195,17 @@ xmms_oss_volume_set (xmms_output_t *output,
 	/* and write it back again */
 	tmp = (right << 8) | left;
 
-	return (ioctl (data->mixer_fd, SOUND_MIXER_WRITE_PCM, &tmp) != -1);
+	if (data->oss4_mixer) {
+		ret = ioctl (data->fd, SNDCTL_DSP_SETPLAYVOL, &tmp);
+	} else {
+		ret = ioctl (data->mixer_fd, SOUND_MIXER_WRITE_PCM, &tmp);
+	}
+	if (ret == -1) {
+		XMMS_DBG ("Mixer ioctl failed: %s", strerror (errno));
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /** @todo support PCM/MASTER?*/
@@ -188,7 +214,7 @@ xmms_oss_volume_get (xmms_output_t *output, gchar const **names, guint *values,
                      guint *num_channels)
 {
 	xmms_oss_data_t *data;
-	gint tmp = 0, i;
+	gint tmp = 0, i, ret;
 	struct {
 		const gchar *name;
 		gint value;
@@ -210,7 +236,18 @@ xmms_oss_volume_get (xmms_output_t *output, gchar const **names, guint *values,
 		return TRUE;
 	}
 
-	if (ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp) == -1) {
+	if (data->oss4_mixer) {
+		ret = ioctl (data->fd, SNDCTL_DSP_GETPLAYVOL, &tmp);
+	} else {
+		ret = ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp);
+	}
+	if (ret == -1) {
+		XMMS_DBG ("Mixer ioctl failed: %s", strerror (errno));
+
+		/* Disable mixer support, because volume getting failed */
+		xmms_log_error ("Disabling mixer support!");
+		data->have_mixer = FALSE;
+
 		return FALSE;
 	}
 
@@ -277,7 +314,7 @@ xmms_oss_open (xmms_output_t *output)
 	val = xmms_output_config_lookup (output, "device");
 	dev = xmms_config_property_get_string (val);
 
-	data->fd = open (dev, O_WRONLY);
+	data->fd = open (dev, O_RDWR);
 	if (data->fd == -1)
 		return FALSE;
 
@@ -285,11 +322,16 @@ xmms_oss_open (xmms_output_t *output)
 	if (ioctl (data->fd, SNDCTL_DSP_SETFRAGMENT, &param) == -1)
 		goto error;
 
+	if (data->oss4_mixer) {
+		/* OSS4 mixer is using the device file descriptor */
+		data->have_mixer = TRUE;
+	}
+
 	return TRUE;
 
 error:
 	close (data->fd);
-	if (data->have_mixer)
+	if (data->mixer_fd != -1)
 		close (data->mixer_fd);
 	g_free (data);
 	return FALSE;
@@ -303,24 +345,11 @@ xmms_oss_new (xmms_output_t *output)
 	xmms_config_property_t *val;
 	const gchar *dev;
 	const gchar *mixdev;
-	int i,j,k, param, fmts, fd;
+	int i,j,k, param, fmts, fd, version;
 
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_oss_data_t, 1);
-
-	val = xmms_output_config_lookup (output, "mixer");
-	mixdev = xmms_config_property_get_string (val);
-
-	/* Open mixer here. I am not sure this is entirely correct. */
-	data->mixer_fd = open (mixdev, O_RDONLY);
-	if (!data->mixer_fd == -1)
-		data->have_mixer = FALSE;
-	else
-		data->have_mixer = TRUE;
-
-	XMMS_DBG ("Have mixer = %d", data->have_mixer);
-
 	xmms_output_private_data_set (output, data);
 
 	val = xmms_output_config_lookup (output, "device");
@@ -331,6 +360,13 @@ xmms_oss_new (xmms_output_t *output)
 	fd = open (dev, O_WRONLY);
 	if (fd == -1)
 		return FALSE;
+
+	if (ioctl (fd, OSS_GETVERSION, &version) != -1) {
+		XMMS_DBG ("Found OSS version 0x%06x", version);
+		if (version >= 0x040000) {
+			data->oss4_mixer = TRUE;
+		}
+	}
 
 	if (ioctl (fd, SNDCTL_DSP_GETFMTS, &fmts) == -1)
 		goto err;
@@ -364,7 +400,25 @@ xmms_oss_new (xmms_output_t *output)
 	}
 
 	close (fd);
+
+	val = xmms_output_config_lookup (output, "mixer");
+	mixdev = xmms_config_property_get_string (val);
+
+	if (data->oss4_mixer) {
+		/* OSS4 doesn't use the mixer device, mark it as not opened */
+		data->mixer_fd = -1;
+	} else {
+		/* Open mixer here. I am not sure this is entirely correct. */
+		data->mixer_fd = open (mixdev, O_RDWR);
+		if (data->mixer_fd == -1)
+			data->have_mixer = FALSE;
+		else
+			data->have_mixer = TRUE;
+	}
+
 	XMMS_DBG ("OpenSoundSystem initilized!");
+
+	XMMS_DBG ("Have mixer = %d", (data->have_mixer || data->oss4_mixer));
 
 	return TRUE;
 
@@ -382,7 +436,7 @@ xmms_oss_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	if (data->have_mixer) {
+	if (data->mixer_fd != -1) {
 		close (data->mixer_fd);
 	}
 
@@ -439,6 +493,10 @@ xmms_oss_close (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
+	if (data->oss4_mixer) {
+		/* Mark that the file descriptor is closed and we have no mixer */
+		data->have_mixer = FALSE;
+	}
 	close (data->fd);
 }
 
