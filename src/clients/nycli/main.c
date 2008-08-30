@@ -177,7 +177,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
 			/* Help flag passed, bypass action and show help */
-			help_command (infos, in_argv, in_argc);
+			/* FIXME(g): select aliasnames list if it's an alias */
+			help_command (infos, infos->cmdnames, in_argv, in_argc);
 		} else if (command_runnable (infos, action)) {
 			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);
@@ -190,7 +191,7 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		command_context_free (ctx);
 	} else {
 		/* Call help to print the "no such command" error */
-		help_command (infos, in_argv, in_argc);
+		help_command (infos, infos->cmdnames, in_argv, in_argc);
 	}
 }
 

@@ -83,10 +83,6 @@ CLI_SIMPLE_SETUP("exit", cli_exit,
                  COMMAND_REQ_NONE,
                  NULL,
                  _("Exit the shell-like interface."))
-CLI_SIMPLE_SETUP("help", cli_help,
-                 COMMAND_REQ_NONE,
-                 _("[command]"),
-                 _("List all commands, or help on one command."))
 CLI_SIMPLE_SETUP("playlist switch", cli_pl_switch,
                  COMMAND_REQ_CONNECTION,
                  _("<playlist>"),
@@ -157,6 +153,18 @@ CLI_SIMPLE_SETUP("server shutdown", cli_server_shutdown,
 
 /* FIXME: Add all playlist commands */
 /* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
+
+void
+cli_help_setup (command_action_t *action)
+{
+	const argument_t flags[] = {
+		{ "alias", 'a', 0, G_OPTION_ARG_NONE, NULL, _("List aliases, or alias definition."), NULL },
+		{ NULL }
+	};
+	command_action_fill (action, "help", &cli_help, COMMAND_REQ_NONE, flags,
+	                     _("[-a] [command]"),
+	                     _("List all commands, or help on one command."));
+}
 
 void
 cli_stop_setup (command_action_t *action)
@@ -1969,22 +1977,22 @@ help_short_command (gpointer elem, gpointer udata)
 }
 
 static void
-help_list_commands (cli_infos_t *infos)
+help_list_commands (GList *names)
 {
 	g_printf (_("usage: nyxmms2 <command> [args]\n\n"));
 	g_printf (_("Available commands:\n"));
-	g_list_foreach (cmdnames_find (infos->cmdnames, NULL),
+	g_list_foreach (cmdnames_find (names, NULL),
 	                help_short_command, NULL);
 	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
 }
 
 static void
-help_list_subcommands (cli_infos_t *infos, gchar **cmd)
+help_list_subcommands (GList *names, gchar **cmd)
 {
 	gchar *name = g_strjoinv (" ", cmd);
 	g_printf (_("usage: nyxmms2 %s <subcommand> [args]\n\n"), name);
 	g_printf (_("Available commands:\n"));
-	g_list_foreach (cmdnames_find (infos->cmdnames, cmd),
+	g_list_foreach (cmdnames_find (names, cmd),
 	                help_short_command, NULL);
 	g_printf (_("\nType 'help %s <subcommand>' for detailed help "
 	            "about a command.\n"), name);
@@ -1992,7 +2000,7 @@ help_list_subcommands (cli_infos_t *infos, gchar **cmd)
 }
 
 void
-help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
+help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args)
 {
 	command_action_t *action;
 	command_trie_match_type_t match;
@@ -2053,7 +2061,7 @@ help_command (cli_infos_t *infos, gchar **cmd, gint num_args)
 			}
 		}
 	} else if (match == COMMAND_TRIE_MATCH_SUBTRIE) {
-		help_list_subcommands (infos, cmd);
+		help_list_subcommands (cmdnames, cmd);
 	} else {
 		/* FIXME: Better handle help for subcommands! */
 		g_printf (_("Unknown command: '"));
@@ -2070,14 +2078,20 @@ gboolean
 cli_help (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint num_args;
+	gboolean alias;
+	GList *names = infos->cmdnames;
 
 	num_args = command_arg_count (ctx);
 
+	if (command_flag_boolean_get (ctx, "alias", &alias) && alias) {
+		names = infos->aliasnames;
+	}
+
 	/* No argument, display the list of commands */
 	if (num_args == 0) {
-		help_list_commands (infos);
+		help_list_commands (names);
 	} else {
-		help_command (infos, command_argv_get (ctx), num_args);
+		help_command (infos, names, command_argv_get (ctx), num_args);
 	}
 
 	/* No data pending */

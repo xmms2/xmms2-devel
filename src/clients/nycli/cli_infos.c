@@ -185,12 +185,12 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 }
 
 static gboolean
-register_command (cli_infos_t *infos, command_action_t *action)
+register_command (command_trie_t *commands, GList **names, command_action_t *action)
 {
-	if (command_trie_insert (infos->commands, action)) {
+	if (command_trie_insert (commands, action)) {
 		gchar **namev;
 		namev = g_strsplit (action->name, " ", 0);
-		infos->cmdnames = cmdnames_prepend (infos->cmdnames, namev);
+		*names = cmdnames_prepend (*names, namev);
 		g_strfreev (namev);
 		return TRUE;
 	} else {
@@ -224,7 +224,7 @@ cli_infos_init (gint argc, gchar **argv)
 	for (i = 0; commandlist[i]; ++i) {
 		command_action_t *action = command_action_alloc ();
 		commandlist[i] (action);
-		if (!register_command (infos, action)) {
+		if (!register_command (infos->commands, &infos->cmdnames, action)) {
 			command_action_free (action);
 		}
 	}
@@ -234,12 +234,13 @@ cli_infos_init (gint argc, gchar **argv)
 	for (i = 0; aliaslist[i]; ++i) {
 		command_action_t *action = command_action_alloc ();
 		alias_setup (action, aliaslist[i]);
-		if (!register_command (infos, action)) {
+		if (!register_command (infos->commands, &infos->aliasnames, action)) {
 			command_action_free (action);
 		}
 	}
 	alias_list_free (aliaslist);
 
+	infos->aliasnames = cmdnames_reverse (infos->aliasnames);
 	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 	infos->cache = cli_cache_init ();
 
