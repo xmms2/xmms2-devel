@@ -826,7 +826,7 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 	xmmsc_result_wait (res);
 
 	nslash = strchr (s, '/');
-	nslash = (nslash == NULL) ? s+strlen(s) : nslash;
+	nslash = (nslash == NULL) ? s + strlen (s) : nslash;
 	pattern = g_strndup (path, nslash-path);
 	spec = g_pattern_spec_new (pattern);
 
@@ -958,13 +958,14 @@ decode_url (const gchar *string)
 	return NULL;
 }
 
-static gboolean guesspls(cli_infos_t *infos, gchar *url)
+static gboolean
+guesspls (cli_infos_t *infos, gchar *url)
 {
 	if (!configuration_get_boolean (infos->config, "GUESS_PLS")) {
 		return FALSE;
 	}
 
-	if (g_str_has_suffix (url, ".m3u") || g_str_has_suffix(url, ".pls")) {
+	if (g_str_has_suffix (url, ".m3u") || g_str_has_suffix (url, ".pls")) {
 		return TRUE;
 	}
 
@@ -1042,7 +1043,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					g_free (decoded);
 				} else if (norecurs || !entry->isdir) {
 					res = xmmsc_playlist_insert_encoded (infos->sync, playlist,
-												         pos, entry->url);
+					                                     pos, entry->url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				} else {
@@ -1441,7 +1442,7 @@ coll_name_split (gchar *str, gchar **ns, gchar **name)
 {
 	gchar **v;
 
-	v = g_strsplit(str, "/", 2);
+	v = g_strsplit (str, "/", 2);
 	if (!v[0]) {
 		*ns = NULL;
 		*name = NULL;
@@ -1487,7 +1488,7 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (ns);
 	g_free (name);
-    g_free(collection);
+    g_free (collection);
 
 	return TRUE;
 }
@@ -1678,22 +1679,49 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_result_t *res;
+
+	gint i, count;
+	gchar *path;
 	gboolean norecurs;
 
 	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
 		norecurs = FALSE;
 	}
 
-	/* FIXME(g): globbing */
-	if (norecurs) {
+	for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
+		GList *files = NULL, *it;
+		gchar *vpath, *enc;
 
-	} else {
+		command_arg_string_get (ctx, i, &path);
+		vpath = make_valid_url (path);
+		enc = encode_url (vpath);
+		matching_browse (infos, "", enc, -1, &files);
 
+		for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
+			browse_entry_t *entry = it->data;
+			if (norecurs || !entry->isdir) {
+				res = xmmsc_medialib_add_entry_encoded (infos->sync,
+				                                        entry->url);
+				xmmsc_result_wait (res);
+				xmmsc_result_unref (res);
+			} else {
+				res = xmmsc_medialib_path_import_encoded (infos->sync,
+				                                          entry->url);
+				xmmsc_result_wait (res);
+				xmmsc_result_unref (res);
+			}
+			g_free (entry->url);
+			g_free (entry);
+		}
+
+		g_free (enc);
+		g_free (vpath);
+		g_list_free (files);
+		cli_infos_loop_resume (infos);
 	}
 
-	g_printf (_("command not implemented yet!\n"));
-
-	return FALSE;
+	return TRUE;
 }
 
 gboolean
@@ -1925,7 +1953,7 @@ cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_main_stats (infos->sync);
 	xmmsc_result_wait (res);
 
-	print_stats(infos, res);
+	print_stats (infos, res);
 
 	return TRUE;
 }
