@@ -290,6 +290,29 @@ xmms_xing_parse (struct mad_bitptr ptr)
 	}
 	*/
 
+	if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES) && xing->frames == 0) {
+		xmms_log_info ("Corrupt xing header (frames == 0), ignoring");
+		xmms_xing_free (xing);
+		return NULL;
+	}
+
+	if (xmms_xing_has_flag (xing, XMMS_XING_BYTES) && xing->bytes == 0) {
+		xmms_log_info ("Corrupt xing header (bytes == 0), ignoring");
+		xmms_xing_free (xing);
+		return NULL;
+	}
+
+	if (xmms_xing_has_flag (xing, XMMS_XING_TOC)) {
+		gint i;
+		for (i = 0; i < 99; i++) {
+			if (xing->toc[i] > xing->toc[i + 1]) {
+				xmms_log_info ("Corrupt xing header (toc not monotonic), ignoring");
+				xmms_xing_free (xing);
+				return NULL;
+			}
+		}
+	}
+
 	return xing;
 }
 

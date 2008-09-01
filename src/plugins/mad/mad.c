@@ -157,7 +157,9 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 	data = xmms_xform_private_data_get (xform);
 
-	if (data->xing) {
+	if (data->xing &&
+	    xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES) &&
+	    xmms_xing_has_flag (data->xing, XMMS_XING_TOC)) {
 		guint i;
 
 		i = (guint) (100ULL * samples / xmms_xing_get_frames (data->xing) / 1152);
@@ -267,7 +269,8 @@ xmms_mad_init (xmms_xform_t *xform)
 			}
 		}
 
-		if ((lame = xmms_xing_get_lame (data->xing))) {
+		lame = xmms_xing_get_lame (data->xing);
+		if (lame) {
 			/* FIXME: add a check for ignore_lame_headers from the medialib */
 			data->frames_to_skip = 1;
 			data->samples_to_skip = lame->start_delay;
