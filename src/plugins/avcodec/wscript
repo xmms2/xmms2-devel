@@ -6,7 +6,26 @@ def plugin_configure(conf):
     cfg.uselib = 'avcodec'
     cfg.tests = {'--cflags': 'CCFLAGS',
                  '--plugin-libs avcodec': 'LINKFLAGS'}
-    return (cfg.run() or conf.check_pkg('libavcodec', destvar='avcodec'))
+    if cfg.run():
+	return True
+
+    if not conf.check_pkg('libavcodec', destvar='avcodec'):
+        return False
+
+    h = conf.create_header_configurator()
+    h.name = "avcodec.h"
+    h.path = conf.env['CPPPATH_avcodec']
+
+    if h.run():
+        return True
+
+    h = conf.create_header_configurator()
+    h.name = "libavcodec/avcodec.h"
+    h.path = conf.env['CPPPATH_avcodec']
+    if h.run():
+        return True
+
+    return False
 
 configure, build = plugin('avcodec', configure=plugin_configure,
                           source="avcodec.c",

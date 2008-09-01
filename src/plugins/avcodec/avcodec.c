@@ -14,6 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
+#include "xmms_configuration.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
@@ -24,7 +25,11 @@
 #include <glib.h>
 
 #undef ABS
-#include "avcodec.h"
+#ifdef HAVE_LIBAVCODEC_AVCODEC_H
+# include "libavcodec/avcodec.h"
+#else
+# include "avcodec.h"
+#endif
 
 #define AVCODEC_BUFFER_SIZE 16384
 
