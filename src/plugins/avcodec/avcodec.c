@@ -32,8 +32,10 @@ typedef struct {
 	AVCodecContext *codecctx;
 
 	guchar *buffer;
+	guchar *buffer_pos;
 	guint buffer_length;
 	guint buffer_size;
+	gboolean no_demuxer;
 
 	guint channels;
 	guint samplerate;
@@ -84,6 +86,9 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 belong 0x7ffe8001", NULL);
 	*/
 
+	xmms_magic_add ("Shorten header", "audio/x-ffmpeg-shorten",
+	                "0 string ajkg", NULL);
+
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-ffmpeg-*",
@@ -106,6 +111,9 @@ xmms_avcodec_destroy (xmms_xform_t *xform)
 
 	g_string_free (data->outbuf, TRUE);
 	g_free (data->buffer);
+	if (data->no_demuxer) {
+		g_free (data->extradata);
+	}
 	g_free (data);
 }
 
@@ -167,8 +175,18 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	                                  &data->extradata_size);
 
 	if (!ret) {
-		xmms_log_error ("Decoder config data not found!");
-		return FALSE;
+		/* This should be a list of known formats that don't have a
+		 * demuxer so they will be handled slightly differently... */
+		if (!strcmp(data->codec_id, "shorten")) {
+			/* number 1024 taken from libavformat raw.c RAW_PACKET_SIZE */
+			data->extradata = g_malloc0 (1024);
+			data->extradata_size = 1024;
+			data->no_demuxer = TRUE;
+		} else {
+			/* A demuxer plugin forgot to give decoder config? */
+			xmms_log_error ("Decoder config data not found!");
+			return FALSE;
+		}
 	}
 
 	data->codecctx = g_new0 (AVCodecContext, 1);
@@ -219,6 +237,9 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 err:
 	g_string_free (data->outbuf, TRUE);
+	if (data->no_demuxer) {
+		g_free (data->extradata);
+	}
 	g_free (data);
 
 	return FALSE;
@@ -256,7 +277,8 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 			read_total = bytes_read;
 
-			while (read_total == data->buffer_size) {
+			/* If we have a demuxer plugin, make sure we read the whole packet */
+			while (read_total == data->buffer_size && !data->no_demuxer) {
 				/* multiply the buffer size and try to read again */
 				data->buffer = g_realloc (data->buffer, data->buffer_size * 2);
 				bytes_read = xmms_xform_read (xform,
@@ -285,11 +307,13 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 				}
 			}
 
+			/* Reset the buffer position to beginning and update length */
+			data->buffer_pos = data->buffer;
 			data->buffer_length = read_total;
 		}
 
 		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
-		                                   &outbufsize, data->buffer,
+		                                   &outbufsize, data->buffer_pos,
 		                                   data->buffer_length);
 
 		if (bytes_read < 0 || bytes_read > data->buffer_length) {
@@ -297,8 +321,8 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 			return -1;
 		}
 
+		data->buffer_pos += bytes_read;
 		data->buffer_length -= bytes_read;
-		g_memmove (data->buffer, data->buffer + bytes_read, data->buffer_length);
 
 		if (outbufsize > 0) {
 			g_string_append_len (data->outbuf, outbuf, outbufsize);
@@ -326,6 +350,13 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
+
+	/* We can't seek without a demuxer in general case */
+	if (data->no_demuxer) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC,
+		                "Can't seek in avcodec plugin without a demuxer!");
+		return -1;
+	}
 
 	/* The buggy ape decoder doesn't flush buffers, so we need to finish decoding
 	 * the frame before seeking to avoid segfaults... this hack sucks */
