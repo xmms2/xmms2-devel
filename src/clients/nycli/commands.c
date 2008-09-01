@@ -884,6 +884,9 @@ make_valid_url (gchar *path)
 		url = g_strconcat ("file://", pwd, "/", path, NULL);
 	}
 
+	/* Remove trailing '/' */
+	for (p = url + strlen (url) - 1; *p == '/'; --p) *p = '\0';
+
 	return url;
 }
 
