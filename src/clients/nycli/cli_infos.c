@@ -58,12 +58,14 @@ cli_infos_alias_begin (cli_infos_t *infos)
 {
 	cli_infos_loop_suspend (infos);
 	infos->status = CLI_ACTION_STATUS_ALIAS;
+	infos->alias_count++;
 }
 
 void
 cli_infos_alias_end (cli_infos_t *infos)
 {
-	if (infos->status != CLI_ACTION_STATUS_FINISH) {
+	infos->alias_count--;
+	if (infos->status != CLI_ACTION_STATUS_FINISH && infos->alias_count == 0) {
 		infos->status = CLI_ACTION_STATUS_BUSY;
 	}
 	cli_infos_loop_resume (infos);
@@ -240,6 +242,7 @@ cli_infos_init (gint argc, gchar **argv)
 	}
 	alias_list_free (aliaslist);
 
+	infos->alias_count = 0;
 	infos->aliasnames = cmdnames_reverse (infos->aliasnames);
 	infos->cmdnames = cmdnames_reverse (infos->cmdnames);
 	infos->cache = cli_cache_init ();

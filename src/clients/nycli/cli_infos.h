@@ -49,6 +49,7 @@ struct cli_infos_St {
 	configuration_t *config;
 	cli_cache_t *cache;
 	status_entry_t *status_entry;
+	gint alias_count;  /* For recursive aliases */
 };
 
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
