@@ -86,11 +86,6 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	/*
-	xmms_magic_add ("DTS header", "audio/x-ffmpeg-dts",
-	                "0 belong 0x7ffe8001", NULL);
-	*/
-
 	xmms_magic_add ("Shorten header", "audio/x-ffmpeg-shorten",
 	                "0 string ajkg", NULL);
 
@@ -157,8 +152,14 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		goto err;
 	}
 
-	data->samplerate = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	data->channels = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	ret = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	if (ret > 0) {
+		data->samplerate = ret;
+	}
+	ret = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	if (ret > 0) {
+		data->channels = ret;
+	}
 
 	/* bitrate required for WMA files */
 	xmms_xform_auxdata_get_int (xform,
@@ -203,13 +204,15 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
 
+	/* FIXME: Remove when XMMS2 really supports multichannel */
+	data->codecctx->request_channels = 2;
+
 	if (avcodec_open (data->codecctx, codec) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
 		goto err;
 	} else {
 		gchar buf[42];
 		xmms_error_t error;
-		gint ret;
 
 		/* some codecs need to have something read before they set
 		 * the samplerate and channels correctly, unfortunately... */
@@ -317,6 +320,7 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 			data->buffer_length = read_total;
 		}
 
+		outbufsize = sizeof (outbuf);
 		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
 		                                   &outbufsize, data->buffer_pos,
 		                                   data->buffer_length);
