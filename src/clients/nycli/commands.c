@@ -1341,7 +1341,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 	const gchar **order = NULL;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
-		playlist = infos->cache->active_playlist_name;
+		playlist = g_strdup (infos->cache->active_playlist_name);
 	}
 
 	if (!command_flag_stringlist_get (ctx, "order", &order)) {
