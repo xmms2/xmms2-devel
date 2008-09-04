@@ -692,20 +692,19 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 		return FALSE;
 	}
 
+	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_REMOVE, 0, plname);
+	g_tree_insert (dict, (gpointer) "position",
+	               xmms_object_cmd_value_int_new (pos));
+	xmms_playlist_changed_msg_send (playlist, dict);
+
 	/* decrease currentpos if removed entry was before or if it's
 	 * the current entry, but only if currentpos is a valid entry.
 	 */
 	if (currpos != -1 && pos <= currpos) {
 		currpos--;
 		xmms_collection_set_int_attr (plcoll, "position", currpos);
+		XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 	}
-
-	dict = xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_REMOVE, 0, plname);
-	g_tree_insert (dict, (gpointer) "position",
-	               xmms_object_cmd_value_int_new (pos));
-	xmms_playlist_changed_msg_send (playlist, dict);
-
-	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 
 	return TRUE;
 }
