@@ -651,8 +651,8 @@ static void
 xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean rehashing)
 {
 	metadata_festate_t info;
-	guint times_played;
-	guint last_started;
+	gint times_played;
+	gint last_started;
 	GTimeVal now;
 
 	info.entry = start->entry;
