@@ -546,7 +546,6 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 
 		xmmsc_result_wait (res);
 		done (res, infos);
-
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
 		return FALSE;
@@ -615,7 +614,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
-	gboolean backward = TRUE;
+	gboolean backward = TRUE, retval = TRUE;
 
 	if (!command_flag_boolean_get (ctx, "backward", &backward)) {
 		backward = FALSE;
@@ -631,9 +630,11 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 			list_jump (res, infos);
 		}
 		xmmsc_coll_unref (query);
+	} else {
+		retval = FALSE;
 	}
 
-	return TRUE;
+	return retval;
 }
 
 gboolean
@@ -641,6 +642,9 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+
+	gboolean retval = TRUE;
+
 	column_display_t *coldisp;
 	const gchar **order = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
@@ -657,11 +661,13 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		list_print_row (res, coldisp);
 
 		xmmsc_coll_unref (query);
+
+		g_free (order);
+	} else {
+		retval = FALSE;
 	}
 
-	g_free (order);
-
-	return TRUE;
+	return retval;
 }
 
 gboolean
@@ -1096,6 +1102,7 @@ gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *playlist = NULL;
+	gboolean retval = TRUE;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
 
@@ -1117,9 +1124,11 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 			remove_list (res, plres, infos, playlist);
 		}
 		xmmsc_coll_unref (query);
+	} else {
+		retval = FALSE;
 	}
 
-	return TRUE;
+	return retval;
 }
 
 /* 
