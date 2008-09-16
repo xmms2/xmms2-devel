@@ -1144,7 +1144,7 @@ xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 
 		if (!ret) {
 			xmms_error_set (err, XMMS_ERROR_NOENT,
-			                "Could not retrive info for that entry!");
+			                "Could not retrieve info for that entry!");
 		}
 	}
 
