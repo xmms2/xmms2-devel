@@ -462,7 +462,7 @@ int
 xmmsc_io_in_handle (xmmsc_connection_t *c)
 {
 	x_check_conn (c, -1);
-	x_api_error_if (xmmsc_ipc_disconnected (c->ipc), "although the xmms2 deamon is not connected", -1);
+	x_api_error_if (xmmsc_ipc_disconnected (c->ipc), "although the xmms2 daemon is not connected", -1);
 
 	return xmmsc_ipc_io_in_callback (c->ipc);
 }
