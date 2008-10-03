@@ -67,6 +67,10 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 	subst[len] = ";";
 	subst[len+1] = NULL;
 
+	if (!line) {
+		line = "";
+	}
+
 	k = 0;
 	for (it = g_list_first (tokens); it != NULL; it = g_list_next (it)) {
 		gchar *tok = it->data;
@@ -78,7 +82,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 			} else {
 				i = strtol (tok + 1,  NULL, 10);
 			}
-			if (argc < i || (argc == 0 && i == 0)) {
+			if (argc < i) {
 				g_printf ("Error: Invalid alias call (missing parameters)!\n");
 				*runnable = NULL;
 				retval = FALSE;
