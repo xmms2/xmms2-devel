@@ -67,6 +67,7 @@ readline_status_callback (gchar *input)
 	rl_discard_keymap (active);
 
 	rl_callback_handler_remove ();
+	g_free (readline_keymap);
 	status_free (readline_cli_infos->status_entry);
 	cli_infos_status_mode_exit (readline_cli_infos);
 }

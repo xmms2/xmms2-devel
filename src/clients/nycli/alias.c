@@ -216,9 +216,10 @@ alias_list (GHashTable *hash)
 void
 alias_list_free (alias_define_t **list)
 {
-	int i;
-
+	gint i;
 	for (i = 0; list[i] != NULL; i++) {
+		g_free (list[i]->name);
+		g_free (list[i]->define);
 		g_free (list[i]);
 	}
 	g_free (list);
