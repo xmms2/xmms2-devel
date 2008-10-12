@@ -41,6 +41,7 @@ readline_callback (gchar *input)
 		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
 			add_history (input);
 			command_dispatch (readline_cli_infos, argc, argv);
+			g_strfreev (argv);
 		} else {
 			if (g_error_matches (error, G_SHELL_ERROR,
 			                     G_SHELL_ERROR_BAD_QUOTING)) {

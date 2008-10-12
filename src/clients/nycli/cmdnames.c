@@ -38,6 +38,7 @@ cmdnames_free (GList *list)
 		cmd = it->data;
 		cmdnames_free (cmd->subcommands);
 		g_free (cmd->name);
+		g_free (cmd);
 	}
 
 	g_list_free (list);

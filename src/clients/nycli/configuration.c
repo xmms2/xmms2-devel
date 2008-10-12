@@ -110,6 +110,7 @@ configuration_free (configuration_t *config)
 	g_key_file_free (config->file);
 	g_hash_table_destroy (config->values);
 	g_hash_table_destroy (config->aliases);
+	g_free (config);
 }
 
 GHashTable *

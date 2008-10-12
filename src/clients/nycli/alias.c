@@ -41,6 +41,8 @@ static void alias_run (cli_infos_t *infos, gchar *alias)
 	command_dispatch (infos, in_argc, in_argv);
 
 	alias_run (infos, next + 1);
+
+	g_strfreev (in_argv);
 }
 
 static void

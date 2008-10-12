@@ -228,7 +228,7 @@ column_display_free (column_display_t *disp)
 		coldef = g_array_index (disp->cols, column_def_t *, i);
 		column_def_free (coldef);
 	}
-	g_array_free (disp->cols, FALSE);
+	g_array_free (disp->cols, TRUE);
 
 	g_free (disp->buffer);
 	g_free (disp);

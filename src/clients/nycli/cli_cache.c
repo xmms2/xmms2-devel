@@ -324,6 +324,6 @@ void
 cli_cache_free (cli_cache_t *cache)
 {
 	g_free (cache->active_playlist_name);
-	g_array_free (cache->active_playlist, FALSE);
+	g_array_free (cache->active_playlist, TRUE);
 	g_free (cache);
 }
