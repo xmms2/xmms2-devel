@@ -996,7 +996,9 @@ xmms_playlist_insert_entry (xmms_playlist_t *playlist, gchar *plname,
 	/** update position once client is familiar with the new item. */
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
 	if (pos <= currpos) {
-		xmms_playlist_set_current_position_do (playlist, currpos + 1, err);
+		currpos++;
+		xmms_collection_set_int_attr (plcoll, "position", currpos);
+		XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 	}
 
 	g_mutex_unlock (playlist->mutex);
