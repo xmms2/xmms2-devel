@@ -23,7 +23,6 @@
 #include "xmmsc/xmmsc_value.h"
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_strlist.h"
 #include "xmmsc/xmmsc_errorcodes.h"
 #include "xmmspriv/xmms_list.h"
 

@@ -6,8 +6,7 @@
 
 def build(bld):
     obj = bld.create_obj('cc', 'staticlib')
-    # FIXME: THE DEVIL WROTE THIS. SERIOUSLY!
-    obj.source = "coll.c value.c xlist.c ../xmmsutils/strlist.c".split()
+    obj.source = "coll.c value.c xlist.c".split()
     obj.includes='. ../../include ../../includepriv'
     obj.target='xmmstypes'
     obj.install_var = 0
