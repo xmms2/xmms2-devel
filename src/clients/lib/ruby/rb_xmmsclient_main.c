@@ -48,21 +48,28 @@ m_userconfdir_get (VALUE self)
 static VALUE
 m_decode_url (VALUE self, VALUE str)
 {
-	const char *cstr, *tmp;
-	VALUE url;
+	const unsigned char *burl;
+	unsigned int blen;
+	xmmsv_t *strv, *decoded;
+	VALUE url = Qnil;
 
-	cstr = StringValuePtr (str);
+	strv = xmmsv_new_string (StringValuePtr (str));
 
-	tmp = xmmsc_result_decode_url (NULL, cstr);
-	if (!tmp)
-		return Qnil;
+	decoded = xmmsv_decode_url (strv);
 
-	url = rb_str_new2 (tmp);
+	if (!decoded)
+		goto out;
 
-	/* We have to free tmp here ourselves because we didn't pass a
-	 * result to xmmsc_result_decode_url() above.
-	 */
-	free ((void *) tmp);
+	if (!xmmsv_get_bin (decoded, &burl, &blen))
+		goto out;
+
+	url = rb_str_new ((char *) burl, blen);
+
+out:
+	if (decoded)
+		xmmsv_unref (decoded);
+
+	xmmsv_unref (strv);
 
 	return url;
 }

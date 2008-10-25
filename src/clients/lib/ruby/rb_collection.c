@@ -165,7 +165,7 @@ c_coll_parse (VALUE klass, VALUE pattern)
 
 	Data_Get_Struct (obj, RbCollection, coll);
 
-	if (!xmmsc_coll_parse (StringValuePtr (pattern), &coll->real)) {
+	if (!xmmsv_coll_parse (StringValuePtr (pattern), &coll->real)) {
 		rb_raise (ePatternError, "invalid pattern");
 	}
 

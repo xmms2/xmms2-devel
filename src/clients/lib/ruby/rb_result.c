@@ -26,25 +26,25 @@
 
 typedef struct {
 	xmmsc_result_t *real;
-	xmmsc_result_t *orig;
 	VALUE xmms;
-	VALUE callback;
-	VALUE propdict;
 } RbResult;
 
-static VALUE cResult, cPropDict, cBroadcastResult, cSignalResult,
+/* An xmmsv_t of type XMMSV_TYPE_DICT */
+typedef struct {
+	xmmsv_t *real;
+	VALUE parent;
+} RbDict;
+
+static VALUE extract_value (VALUE parent, xmmsv_t *val);
+
+static VALUE cResult, cDict, cRawDict,
+             cBroadcastResult, cSignalResult,
              eResultError, eValueError;
 
 static void
 c_mark (RbResult *res)
 {
 	rb_gc_mark (res->xmms);
-
-	if (!NIL_P (res->callback))
-		rb_gc_mark (res->callback);
-
-	if (!NIL_P (res->propdict))
-		rb_gc_mark (res->propdict);
 }
 
 static void
@@ -78,9 +78,8 @@ TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 
 	self = Data_Make_Struct (klass, RbResult, c_mark, c_free, rbres);
 
-	rbres->real = rbres->orig = res;
+	rbres->real = res;
 	rbres->xmms = xmms;
-	rbres->callback = rbres->propdict = Qnil;
 
 	rb_obj_call_init (self, 0, NULL);
 
@@ -88,27 +87,34 @@ TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 }
 
 static void
-on_signal (xmmsc_result_t *res2, void *data)
+c_dict_mark (RbDict *dict)
 {
-	VALUE self = (VALUE) data;
-	RbResult *res = NULL;
-	RbXmmsClient *xmms = NULL;
-	bool is_bc = (CLASS_OF (self) == cBroadcastResult);
+	rb_gc_mark (dict->parent);
+}
 
-	Data_Get_Struct (self, RbResult, res);
+static void
+c_dict_free (RbDict *dict)
+{
+	xmmsv_unref (dict->real);
 
-	/* if this result isn't restarted automatically, delete the
-	 * reference. see c_sig_restart
-	 */
-	if (!is_bc) {
-		Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
-		rb_ary_delete (xmms->results, self);
-	}
+	free (dict);
+}
 
-	rb_funcall (res->callback, rb_intern ("call"), 1, self);
+static int
+on_signal (xmmsv_t *val, void *data)
+{
+	VALUE rbval, ret, callback = (VALUE) data;
 
-	if (!is_bc)
-		xmmsc_result_unref (res2);
+	rbval = extract_value (Qnil, val);
+
+	ret = rb_funcall (callback, rb_intern ("call"), 1, rbval);
+
+	if (ret == Qnil || ret == Qfalse)
+		return 0;
+	else if (ret == Qtrue)
+		return 1;
+	else
+		return NUM2INT (ret);
 }
 
 /*
@@ -121,6 +127,7 @@ on_signal (xmmsc_result_t *res2, void *data)
 static VALUE
 c_notifier_set (VALUE self)
 {
+	VALUE callback;
 	RbResult *res = NULL;
 	RbXmmsClient *xmms = NULL;
 
@@ -129,12 +136,12 @@ c_notifier_set (VALUE self)
 	if (!rb_block_given_p ())
 		return Qnil;
 
-	res->callback = rb_block_proc ();
+	callback = rb_block_proc ();
 
 	Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
-	rb_ary_push (xmms->results, self);
+	rb_ary_push (xmms->result_callbacks, callback);
 
-	xmmsc_result_notifier_set (res->real, on_signal, (void *) self);
+	xmmsc_result_notifier_set (res->real, on_signal, (void *) callback);
 
 	return Qnil;
 }
@@ -157,35 +164,6 @@ c_wait (VALUE self)
 	return self;
 }
 
-/*
- * call-seq:
- *  res.restart -> self
- *
- * Restarts _res_. If _res_ is not restartable, a +ResultError+ is
- * raised.
- */
-static VALUE
-c_sig_restart (VALUE self)
-{
-	xmmsc_result_t *res2;
-	RbResult *res = NULL;
-	RbXmmsClient *xmms = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	if (!(res2 = xmmsc_result_restart (res->real)))
-		rb_raise (eResultError, "cannot restart result");
-
-	res->real = res2;
-
-	Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
-	rb_ary_push (xmms->results, self);
-
-	xmmsc_result_unref (res->real);
-
-	return self;
-}
-
 static VALUE
 c_disconnect (VALUE self)
 {
@@ -193,193 +171,137 @@ c_disconnect (VALUE self)
 
 	Data_Get_Struct (self, RbResult, res);
 
-	xmmsc_result_disconnect (res->orig);
+	xmmsc_result_disconnect (res->real);
 
 	return self;
 }
 
 static VALUE
-int_get (RbResult *res)
+c_value_get (VALUE self)
+{
+	RbResult *res = NULL;
+	xmmsv_t *val;
+
+	Data_Get_Struct (self, RbResult, res);
+
+	val = xmmsc_result_get_value (res->real);
+
+	return extract_value (self, val);
+}
+
+static VALUE
+int_get (xmmsv_t *val)
 {
 	int32_t id = 0;
 
-	if (!xmmsc_result_get_int (res->real, &id))
+	if (!xmmsv_get_int (val, &id))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return INT2NUM (id);
 }
 
 static VALUE
-uint_get (RbResult *res)
+uint_get (xmmsv_t *val)
 {
 	uint32_t id = 0;
 
-	if (!xmmsc_result_get_uint (res->real, &id))
+	if (!xmmsv_get_uint (val, &id))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return UINT2NUM (id);
 }
 
 static VALUE
-string_get (RbResult *res)
+string_get (xmmsv_t *val)
 {
 	const char *s = NULL;
 
-	if (!xmmsc_result_get_string (res->real, &s))
+	if (!xmmsv_get_string (val, &s))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return rb_str_new2 (s ? s : "");
 }
 
 static VALUE
-cast_result_value (xmmsc_result_value_type_t type, const void *value)
+bin_get (xmmsv_t *val)
 {
-	VALUE val;
-
-	switch (type) {
-		case XMMSC_RESULT_VALUE_TYPE_STRING:
-			val = rb_str_new2 (value ? value : "");
-			break;
-		case XMMSC_RESULT_VALUE_TYPE_INT32:
-			val = INT2NUM ((int32_t) value);
-			break;
-		case XMMSC_RESULT_VALUE_TYPE_UINT32:
-			val = UINT2NUM ((uint32_t) value);
-			break;
-		default:
-			val = Qnil;
-			break;
-	}
-
-	return val;
-}
-
-static void
-dict_to_hash (const void *key, xmmsc_result_value_type_t type,
-              const void *value, void *udata)
-{
-	VALUE *h = udata;
-
-	rb_hash_aset (*h, ID2SYM (rb_intern (key)),
-	              cast_result_value (type, value));
-}
-
-static VALUE
-hashtable_get (RbResult *res)
-{
-	VALUE hash = rb_hash_new ();
-
-	if (!xmmsc_result_dict_foreach (res->real,
-	                                dict_to_hash, &hash))
-		rb_raise (eValueError, "cannot retrieve value");
-
-	return hash;
-}
-
-static VALUE
-propdict_get (VALUE self, RbResult *res)
-{
-	if (NIL_P (res->propdict))
-		res->propdict = rb_class_new_instance (1, &self, cPropDict);
-
-	return res->propdict;
-}
-
-static VALUE
-bin_get (VALUE self, RbResult *res)
-{
-	unsigned char *data = NULL;
+	const unsigned char *data = NULL;
 	unsigned int len = 0;
 
-	if (!xmmsc_result_get_bin (res->real, &data, &len))
+	if (!xmmsv_get_bin (val, &data, &len))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return rb_str_new ((char *) data, len);
 }
 
 static VALUE
-coll_get (VALUE self, RbResult *res)
+coll_get (xmmsv_t *val)
 {
 	xmmsc_coll_t *coll = NULL;
 
-	if (!xmmsc_result_get_collection (res->real, &coll))
+	if (!xmmsv_get_collection (val, &coll))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return TO_XMMS_CLIENT_COLLECTION (coll);
 }
 
-static VALUE
-value_get (VALUE self, RbResult *res)
+static void
+list_to_array (xmmsv_t *value, void *user_data)
 {
-	VALUE ret;
+	VALUE *args = user_data;
 
-	switch (xmmsc_result_get_type (res->real)) {
-		case XMMS_OBJECT_CMD_ARG_UINT32:
-			ret = uint_get (res);
+	rb_ary_push (args[0], extract_value (args[1], value));
+}
+
+static VALUE
+list_get (VALUE parent, xmmsv_t *val)
+{
+	VALUE args[2];
+
+	args[0] = rb_ary_new ();
+	args[1] = parent;
+
+	xmmsv_list_foreach (val, list_to_array, args);
+
+	return args[0];
+}
+
+static VALUE
+extract_value (VALUE parent, xmmsv_t *val)
+{
+	switch (xmmsv_get_type (val)) {
+		case XMMSV_TYPE_UINT32:
+			return uint_get (val);
+		case XMMSV_TYPE_INT32:
+			return int_get (val);
+		case XMMSV_TYPE_STRING:
+			return string_get (val);
+		case XMMSV_TYPE_BIN:
+			return bin_get (val);
+		case XMMSV_TYPE_COLL:
+			return coll_get (val);
+		case XMMSV_TYPE_LIST:
+			return list_get (parent, val);
+		case XMMSV_TYPE_DICT:
+			// will be handled below
 			break;
-		case XMMS_OBJECT_CMD_ARG_INT32:
-			ret = int_get (res);
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRING:
-			ret = string_get (res);
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICT:
-			ret = hashtable_get (res);
-			break;
-		case XMMS_OBJECT_CMD_ARG_PROPDICT:
-			ret = propdict_get (self, res);
-			break;
-		case XMMS_OBJECT_CMD_ARG_BIN:
-			ret = bin_get (self, res);
-			break;
-		case XMMS_OBJECT_CMD_ARG_COLL:
-			ret = coll_get (self, res);
-			break;
-		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:
-			ret = Qnil;
-			break;
+			return Qnil;
 	}
 
-	return ret;
-}
+	VALUE value;
+	RbDict *dict = NULL;
 
-static VALUE
-list_get (VALUE self, RbResult *res)
-{
-	VALUE ret;
+	value = Data_Make_Struct (cRawDict, RbDict,
+			c_dict_mark, c_dict_free,
+			dict);
 
-	ret = rb_ary_new ();
+	dict->real = xmmsv_ref (val);
+	dict->parent = parent;
 
-	while (xmmsc_result_list_valid (res->real)) {
-		rb_ary_push (ret, value_get (self, res));
+	rb_obj_call_init (value, 0, NULL);
 
-		xmmsc_result_list_next (res->real);
-	}
-
-	return ret;
-}
-
-/*
- * call-seq:
- *  res.value -> int or string or hash or array
- *
- * Returns the value from _res_.
- */
-static VALUE
-c_value_get (VALUE self)
-{
-	RbResult *res;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	if (xmmsc_result_iserror (res->real))
-		rb_raise (eValueError, "cannot retrieve value");
-
-	if (xmmsc_result_is_list (res->real))
-		return list_get (self, res);
-	else
-		return value_get (self, res);
+	return value;
 }
 
 static VALUE
@@ -405,30 +327,17 @@ c_get_error (VALUE self)
 	return rb_str_new2 (error ? error : "");
 }
 
-static VALUE
-c_propdict_init (VALUE self, VALUE result)
-{
-	rb_iv_set (self, "result", result);
-
-	return self;
-}
-
 #ifdef HAVE_PROTECT_INSPECT
 static VALUE
-propdict_inspect_cb (VALUE args, VALUE s)
+dict_inspect_cb (VALUE args, VALUE s)
 {
-	VALUE src, key, value;
+	VALUE key, value;
 
-	src = RARRAY (args)->ptr[0];
-	key = RARRAY (args)->ptr[1];
-	value = RARRAY (args)->ptr[2];
+	key = RARRAY (args)->ptr[0];
+	value = RARRAY (args)->ptr[1];
 
 	if (RSTRING_LEN (s) > 1)
 		rb_str_buf_cat2 (s, ", ");
-
-	rb_str_buf_cat2 (s, "[");
-	rb_str_buf_append (s, src);
-	rb_str_buf_cat2 (s, "]");
 
 	rb_str_buf_append (s, rb_inspect (key));
 	rb_str_buf_cat2 (s, "=>");
@@ -438,12 +347,12 @@ propdict_inspect_cb (VALUE args, VALUE s)
 }
 
 static VALUE
-propdict_inspect (VALUE self)
+dict_inspect (VALUE self)
 {
 	VALUE ret;
 
 	ret = rb_str_new2 ("{");
-	rb_iterate (rb_each, self, propdict_inspect_cb, ret);
+	rb_iterate (rb_each, self, dict_inspect_cb, ret);
 	rb_str_buf_cat2 (ret, "}");
 
 	OBJ_INFECT (ret, self);
@@ -452,158 +361,167 @@ propdict_inspect (VALUE self)
 }
 
 static VALUE
-c_propdict_inspect (VALUE self)
+c_dict_inspect (VALUE self)
 {
-	return rb_protect_inspect (propdict_inspect, self, 0);
+	return rb_protect_inspect (dict_inspect, self, 0);
 }
 #endif /* HAVE_PROTECT_INSPECT */
 
 static VALUE
-c_propdict_aref (VALUE self, VALUE key)
+c_dict_size (VALUE self)
 {
-	RbResult *res = NULL;
-	xmmsc_result_value_type_t type;
-	VALUE tmp;
-	const char *ckey, *vstr;
-	int32_t vint;
-	uint32_t vuint;
+	RbDict *dict = NULL;
+	int size;
 
-	Check_Type (key, T_SYMBOL);
+	Data_Get_Struct (self, RbDict, dict);
 
-	tmp = rb_iv_get (self, "result");
-	Data_Get_Struct (tmp, RbResult, res);
+	size = xmmsv_dict_get_size (dict->real);
 
-	ckey = rb_id2name (SYM2ID (key));
-
-	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
-
-	switch (type) {
-		case XMMSC_RESULT_VALUE_TYPE_INT32:
-			xmmsc_result_get_dict_entry_int (res->real, ckey, &vint);
-			tmp = INT2NUM (vint);
-			break;
-		case XMMSC_RESULT_VALUE_TYPE_UINT32:
-			xmmsc_result_get_dict_entry_uint (res->real, ckey, &vuint);
-			tmp = UINT2NUM (vuint);
-			break;
-		case XMMSC_RESULT_VALUE_TYPE_STRING:
-			xmmsc_result_get_dict_entry_string (res->real, ckey, &vstr);
-			tmp = rb_str_new2 (vstr ? vstr : "");
-			break;
-		default:
-			tmp = Qnil;
-			break;
-	}
-
-	return tmp;
+	return INT2NUM (size);
 }
 
 static VALUE
-c_propdict_has_key (VALUE self, VALUE key)
+c_dict_empty (VALUE self)
 {
-	RbResult *res = NULL;
-	VALUE tmp;
-	xmmsc_result_value_type_t type;
+	RbDict *dict = NULL;
+	int size;
+
+	Data_Get_Struct (self, RbDict, dict);
+
+	size = xmmsv_dict_get_size (dict->real);
+
+	return size == 0 ? Qtrue : Qfalse;
+}
+
+static VALUE
+c_dict_aref (VALUE self, VALUE key)
+{
+	RbDict *dict = NULL;
+	xmmsv_dict_iter_t *it;
+	xmmsv_t *value;
+	const char *ckey;
+	int s;
+
+	Check_Type (key, T_SYMBOL);
+
+	Data_Get_Struct (self, RbDict, dict);
+
+	ckey = rb_id2name (SYM2ID (key));
+
+	xmmsv_get_dict_iter (dict->real, &it);
+
+	s = xmmsv_dict_iter_seek (it, ckey);
+	if (!s)
+		return Qnil;
+
+	xmmsv_dict_iter_pair (it, NULL, &value);
+
+	return extract_value (self, value);
+}
+
+static VALUE
+c_dict_has_key (VALUE self, VALUE key)
+{
+	RbDict *dict = NULL;
+	xmmsv_dict_iter_t *it;
 	const char *ckey;
 
 	Check_Type (key, T_SYMBOL);
 
-	tmp = rb_iv_get (self, "result");
-	Data_Get_Struct (tmp, RbResult, res);
+	Data_Get_Struct (self, RbDict, dict);
 
 	ckey = rb_id2name (SYM2ID (key));
 
-	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
+	xmmsv_get_dict_iter (dict->real, &it);
 
-	return (type == XMMSC_RESULT_VALUE_TYPE_NONE) ? Qfalse : Qtrue;
+	return xmmsv_dict_iter_seek (it, ckey) ? Qtrue : Qfalse;
 }
 
 static void
-propdict_each (const void *key, xmmsc_result_value_type_t type,
-               const void *value, const char *src, void *udata)
+dict_each_pair (const char *key, xmmsv_t *value, void *udata)
 {
-	switch (XPOINTER_TO_INT (udata)) {
-		case EACH_PAIR:
-			rb_yield_values (3, rb_str_new2 (src),
-			                 ID2SYM (rb_intern (key)),
-			                 cast_result_value (type, value));
-			break;
-		case EACH_KEY:
-			rb_yield_values (2, rb_str_new2 (src),
-			                 ID2SYM (rb_intern (key)));
-			break;
-		case EACH_VALUE:
-			rb_yield_values (2, rb_str_new2 (src),
-			                 cast_result_value (type, value));
-			break;
-	}
+	VALUE *parent = udata;
+
+	rb_yield_values (2,
+	                 ID2SYM (rb_intern (key)),
+	                 extract_value (*parent, value));
+}
+
+static void
+dict_each_key (const char *key, xmmsv_t *value, void *udata)
+{
+	rb_yield (ID2SYM (rb_intern (key)));
+}
+
+static void
+dict_each_value (const char *key, xmmsv_t *value, void *udata)
+{
+	VALUE *parent = udata;
+
+	rb_yield (extract_value (*parent, value));
 }
 
 static VALUE
-c_propdict_each (VALUE self)
+c_dict_each (VALUE self)
 {
-	RbResult *res = NULL;
-	VALUE tmp;
+	RbDict *dict = NULL;
 
-	tmp = rb_iv_get (self, "result");
-	Data_Get_Struct (tmp, RbResult, res);
+	Data_Get_Struct (self, RbDict, dict);
 
-	xmmsc_result_propdict_foreach (res->real, propdict_each,
-	                               XINT_TO_POINTER (EACH_PAIR));
+	xmmsv_dict_foreach (dict->real, dict_each_pair, &self);
 
 	return self;
 }
 
 static VALUE
-c_propdict_each_key (VALUE self)
+c_dict_each_key (VALUE self)
 {
-	RbResult *res = NULL;
-	VALUE tmp;
+	RbDict *dict = NULL;
 
-	tmp = rb_iv_get (self, "result");
-	Data_Get_Struct (tmp, RbResult, res);
+	Data_Get_Struct (self, RbDict, dict);
 
-	xmmsc_result_propdict_foreach (res->real, propdict_each,
-	                               XINT_TO_POINTER (EACH_KEY));
+	xmmsv_dict_foreach (dict->real, dict_each_key, NULL);
 
 	return self;
 }
 
 static VALUE
-c_propdict_each_value (VALUE self)
+c_dict_each_value (VALUE self)
 {
-	RbResult *res = NULL;
-	VALUE tmp;
+	RbDict *dict = NULL;
 
-	tmp = rb_iv_get (self, "result");
-	Data_Get_Struct (tmp, RbResult, res);
+	Data_Get_Struct (self, RbDict, dict);
 
-	xmmsc_result_propdict_foreach (res->real, propdict_each,
-	                               XINT_TO_POINTER (EACH_VALUE));
+	xmmsv_dict_foreach (dict->real, dict_each_value, &self);
 
 	return self;
 }
 
 static VALUE
-c_source_preference_get (VALUE self)
+c_raw_dict_to_propdict (VALUE self, VALUE sources)
 {
-	RbResult *res = NULL;
-	VALUE ary = rb_ary_new ();
-	const char **preferences = NULL;
-	unsigned int i;
+	VALUE value;
+	RbDict *dict = NULL, *dict2 = NULL;
+	xmmsv_t *inner_dict;
+	const char **csources;
 
-	Data_Get_Struct (self, RbResult, res);
+	Data_Get_Struct (self, RbDict, dict);
 
-	preferences = xmmsc_result_source_preference_get (res->real);
+	csources = parse_string_array (sources);
+	inner_dict = xmmsv_propdict_to_dict (dict->real, csources);
+	free (csources);
 
-	for (i = 0; preferences[i]; i++) {
-		if (!preferences[i]) {
-			continue;
-		}
-		rb_ary_push (ary, rb_str_new2 (preferences[i]));
-	}
+	value = Data_Make_Struct (cDict, RbDict,
+	                          c_dict_mark, c_dict_free,
+	                          dict2);
 
-	return ary;
+	// don't add a second reference here
+	dict2->real = inner_dict;
+	dict2->parent = dict->parent;
+
+	rb_obj_call_init (value, 0, NULL);
+
+	return value;
 }
 
 void
@@ -623,8 +541,6 @@ Init_Result (VALUE mXmms)
 	rb_define_method (cResult, "error?", c_is_error, 0);
 	rb_define_method (cResult, "error", c_get_error, 0);
 
-	rb_define_method (cResult, "source_preference", c_source_preference_get, 0);
-
 	cBroadcastResult = rb_define_class_under (mXmms,
 	                                          "BroadcastResult",
 	                                          cResult);
@@ -632,7 +548,6 @@ Init_Result (VALUE mXmms)
 
 	cSignalResult = rb_define_class_under (mXmms, "SignalResult",
 	                                       cResult);
-	rb_define_method (cSignalResult, "restart", c_sig_restart, 0);
 	rb_define_method (cSignalResult, "disconnect", c_disconnect, 0);
 
 	eResultError = rb_define_class_under (cResult, "ResultError",
@@ -640,23 +555,29 @@ Init_Result (VALUE mXmms)
 	eValueError = rb_define_class_under (cResult, "ValueError",
 	                                     eResultError);
 
-	cPropDict = rb_define_class_under (mXmms, "PropDict", rb_cObject);
+	cDict = rb_define_class_under (mXmms, "Dict", rb_cObject);
 
-	rb_define_method (cPropDict, "initialize", c_propdict_init, 1);
 #ifdef HAVE_PROTECT_INSPECT
-	rb_define_method (cPropDict, "inspect", c_propdict_inspect, 0);
+	rb_define_method (cDict, "inspect", c_dict_inspect, 0);
 #endif /* HAVE_PROTECT_INSPECT */
 
-	rb_define_method (cPropDict, "[]", c_propdict_aref, 1);
-	rb_define_method (cPropDict, "has_key?", c_propdict_has_key, 1);
-	rb_define_method (cPropDict, "each", c_propdict_each, 0);
-	rb_define_method (cPropDict, "each_key", c_propdict_each_key, 0);
-	rb_define_method (cPropDict, "each_value", c_propdict_each_value, 0);
+	rb_define_method (cDict, "size", c_dict_size, 0);
+	rb_define_method (cDict, "empty?", c_dict_empty, 0);
+	rb_define_method (cDict, "[]", c_dict_aref, 1);
+	rb_define_method (cDict, "has_key?", c_dict_has_key, 1);
+	rb_define_method (cDict, "each", c_dict_each, 0);
+	rb_define_method (cDict, "each_key", c_dict_each_key, 0);
+	rb_define_method (cDict, "each_value", c_dict_each_value, 0);
 
-	rb_define_alias (cPropDict, "include?", "has_key?");
-	rb_define_alias (cPropDict, "key?", "has_key?");
-	rb_define_alias (cPropDict, "member?", "has_key?");
-	rb_define_alias (cPropDict, "each_pair", "each");
+	rb_define_alias (cDict, "length", "size");
+	rb_define_alias (cDict, "include?", "has_key?");
+	rb_define_alias (cDict, "key?", "has_key?");
+	rb_define_alias (cDict, "member?", "has_key?");
+	rb_define_alias (cDict, "each_pair", "each");
 
-	rb_include_module (cPropDict, rb_mEnumerable);
+	rb_include_module (cDict, rb_mEnumerable);
+
+	cRawDict = rb_define_class_under (mXmms, "RawDict", cDict);
+
+	rb_define_method (cRawDict, "to_propdict", c_raw_dict_to_propdict, 1);
 }

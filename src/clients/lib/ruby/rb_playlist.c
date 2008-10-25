@@ -1,4 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
+ *
  *  Copyright (C) 2003-2008 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
@@ -315,30 +316,12 @@ c_clear (VALUE self)
 static VALUE
 c_sort (VALUE self, VALUE props)
 {
-	struct RArray *ary;
-	const char **cprops;
-	int i;
+	xmmsv_t *cprops;
 	PLAYLIST_METHOD_HANDLER_HEADER
 
-	if (!NIL_P (props = rb_check_array_type (props))) {
-		ary = RARRAY (props);
-
-		cprops = malloc (sizeof (char *) * (ary->len + 1));
-
-		for (i = 0; i < ary->len; i++)
-			cprops[i] = StringValuePtr (ary->ptr[i]);
-
-		cprops[i] = NULL;
-	} else if (!NIL_P (rb_check_string_type (props))) {
-		cprops = malloc (sizeof (char *) * 2);
-		cprops[0] = StringValuePtr (props);
-		cprops[1] = NULL;
-	} else
-		rb_raise (ePlaylistError, "unsupported argument");
-
+	cprops = parse_string_array2 (props);
 	res = xmmsc_playlist_sort (xmms->real, pl->name, cprops);
-
-	free (cprops);
+	xmmsv_unref (cprops);
 
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
@@ -379,7 +362,7 @@ c_add_collection (int argc, VALUE *argv, VALUE self)
 	PLAYLIST_METHOD_HANDLER_HEADER
 
 	VALUE rbcoll, order = Qnil;
-	const char **corder = NULL;
+	xmmsv_t *corder = NULL;
 	xmmsc_coll_t *coll;
 
 	rb_scan_args (argc, argv, "11", &rbcoll, &order);
@@ -387,12 +370,14 @@ c_add_collection (int argc, VALUE *argv, VALUE self)
 	coll = FROM_XMMS_CLIENT_COLLECTION (rbcoll);
 
 	if (!NIL_P (order))
-		corder = parse_string_array (order);
+		corder = parse_string_array2 (order);
 
 	res = xmmsc_playlist_add_collection (xmms->real, pl->name,
 	                                     coll, corder);
 
-	free (corder);
+	if (corder)
+		xmmsv_unref (corder);
+
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
 

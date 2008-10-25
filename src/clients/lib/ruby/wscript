@@ -39,8 +39,6 @@ def build(bld):
         obj.env["shlib_PREFIX"] = ''
 
 def configure(conf):
-    return False
-
     if Params.g_options.rubybinary:
         ruby = Params.g_options.rubybinary
     else:
