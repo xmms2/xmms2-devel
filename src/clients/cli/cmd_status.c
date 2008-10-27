@@ -145,7 +145,7 @@ handle_status_change (xmmsv_t *val, void *userdata)
 	curr_status = new_status;
 	update_display ();
 
-	return FALSE;
+	return TRUE;
 }
 
 static int
@@ -169,7 +169,7 @@ handle_current_id (xmmsv_t *val, void *userdata)
 		xmmsc_result_unref (res);
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 
@@ -256,7 +256,7 @@ handle_mediainfo_update (xmmsv_t *val, void *userdata)
 		xmmsc_result_unref (res);
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 
