@@ -498,18 +498,22 @@ c_dict_each_value (VALUE self)
 }
 
 static VALUE
-c_raw_dict_to_propdict (VALUE self, VALUE sources)
+c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 {
-	VALUE value;
+	VALUE value, sources = Qnil;
 	RbDict *dict = NULL, *dict2 = NULL;
 	xmmsv_t *inner_dict;
-	const char **csources;
+	const char **csources = NULL;
 
 	Data_Get_Struct (self, RbDict, dict);
 
-	csources = parse_string_array (sources);
+	rb_scan_args (argc, argv, "01", &sources);
+
+	if (!NIL_P (sources))
+		csources = parse_string_array (sources);
 	inner_dict = xmmsv_propdict_to_dict (dict->real, csources);
-	free (csources);
+	if (csources)
+		free (csources);
 
 	value = Data_Make_Struct (cDict, RbDict,
 	                          c_dict_mark, c_dict_free,
@@ -579,5 +583,5 @@ Init_Result (VALUE mXmms)
 
 	cRawDict = rb_define_class_under (mXmms, "RawDict", cDict);
 
-	rb_define_method (cRawDict, "to_propdict", c_raw_dict_to_propdict, 1);
+	rb_define_method (cRawDict, "to_propdict", c_raw_dict_to_propdict, -1);
 }
