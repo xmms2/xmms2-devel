@@ -14,17 +14,14 @@
  *  Lesser General Public License for more details.
  */
 
+#include "xmmspriv/xmms_localtime.h"
 
-
-
-#ifndef __XMMS_PRIV_LOG_H__
-#define __XMMS_PRIV_LOG_H__
-
-#include "xmms/xmms_log.h"
-
-void xmms_log_set_format (const gchar *format);
-void xmms_log_init (gint verbosity);
-void xmms_log_shutdown (void);
-void xmms_log_daemonize (void);
-
-#endif
+gboolean
+xmms_localtime (const time_t *tt, struct tm *res)
+{
+	if (localtime_r (tt, res)) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}

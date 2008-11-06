@@ -14,17 +14,27 @@
  *  Lesser General Public License for more details.
  */
 
+/* Have thread safe localtime when POSIX localtime_r isn't available */
 
+#include "xmmspriv/xmms_localtime.h"
 
+static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
 
-#ifndef __XMMS_PRIV_LOG_H__
-#define __XMMS_PRIV_LOG_H__
+gboolean
+xmms_localtime (const time_t *tt, struct tm *res)
+{
+	struct tm *ret = NULL;
 
-#include "xmms/xmms_log.h"
+	g_static_mutex_lock (&mutex);
+	if ((ret = localtime (tt))) {
+		memcpy (res, ret, sizeof (struct tm));
+		ret = res;
+	}
+	g_static_mutex_unlock (&mutex);
 
-void xmms_log_set_format (const gchar *format);
-void xmms_log_init (gint verbosity);
-void xmms_log_shutdown (void);
-void xmms_log_daemonize (void);
-
-#endif
+	if (ret) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}

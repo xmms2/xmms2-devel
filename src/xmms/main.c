@@ -465,6 +465,12 @@ main (int argc, char **argv)
 
 	load_config ();
 
+	cv = xmms_config_property_register ("core.logtsfmt",
+	                                    "%H:%M:%S ",
+	                                    NULL, NULL);
+
+	xmms_log_set_format (xmms_config_property_get_string (cv));
+
 	xmms_fallback_ipcpath_get (default_path, sizeof (default_path));
 
 	cv = xmms_config_property_register ("core.ipcsocket",

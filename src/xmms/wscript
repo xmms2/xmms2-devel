@@ -52,6 +52,7 @@ def build(bld):
     prog.source.append("compat/symlink_%s.c" % env['compat_impl'])
     prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
 
+    source.append("compat/localtime_%s.c" % env["localtime_impl"])
     source.append("compat/statfs_%s.c" % env["statfs_impl"])
     if bld.env['HAVE_SEMCTL']:
         source.append("visualization/unixshm.c")
@@ -87,6 +88,12 @@ def configure(conf):
 
     # Check for the sin function in the math lib
     conf.check_cc(lib='m', function_name='sin', header_name=['math.h'], uselib_store="math", mandatory=1)
+
+    # Check if localtime_r exists
+    if conf.check_cc(function_name='localtime_r', header_name=['time.h']):
+        conf.env['localtime_impl'] = 'unix'
+    else:
+        conf.env['localtime_impl'] = 'dummy'
 
     # Detect the type of stat call used
     if Options.platform == 'win32':

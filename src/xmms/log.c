@@ -19,13 +19,26 @@
  *
  */
 
+#include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <glib.h>
 #include "xmmspriv/xmms_log.h"
+#include "xmmspriv/xmms_localtime.h"
 
+static gchar *logts_format = NULL;
 static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);
 
+
+void
+xmms_log_set_format (const gchar *format)
+{
+	/* copying the string ensures the formatting directives will
+	 * last until log_shutdown */
+	g_free (logts_format);
+	logts_format = g_strdup (format);
+}
 
 void
 xmms_log_init (gint verbosity)
@@ -40,14 +53,21 @@ void
 xmms_log_shutdown ()
 {
 	xmms_log_info ("Logging says bye bye :)");
+	g_free (logts_format);
+	logts_format = NULL;
 }
 
 
 static void
 xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
 {
+	gchar logts_buf[256];
+	time_t tv = 0;
+	struct tm st;
 	const char *level = "??";
 	gint verbosity = GPOINTER_TO_INT (user_data);
+
+	tv = time (NULL);
 
 	if (log_level & G_LOG_LEVEL_CRITICAL) {
 		level = " FAIL";
@@ -65,7 +85,14 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 			return;
 	}
 
-	printf ("%s: %s\n", level, message);
+	if (!logts_format ||
+	    !xmms_localtime (&tv, &st) ||
+	    !strftime (logts_buf, sizeof(logts_buf), logts_format, &st)) {
+		logts_buf[0] = '\0';
+	}
+
+	printf ("%s%s: %s\n", logts_buf, level, message);
+
 	fflush (stdout);
 
 	if (log_level & G_LOG_LEVEL_ERROR) {
