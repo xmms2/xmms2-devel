@@ -92,14 +92,31 @@ print_error (const gchar *fmt, ...)
 void
 print_hash (const gchar *key, xmmsv_t *value, void *udata)
 {
-	if (xmmsv_get_type (value) == XMMSV_TYPE_STRING) {
-		const char *s;
-		xmmsv_get_string (value, &s);
-		print_info ("%s = %s", key, s);
-	} else {
-		int i;
-		xmmsv_get_int (value, &i);
-		print_info ("%s = %d", key, i);
+	xmmsv_type_t value_type;
+	const char *string_val;
+	unsigned int int_val;
+	int uint_val;
+
+	value_type = xmmsv_get_type (value);
+
+	switch (value_type) {
+		case XMMSV_TYPE_STRING:
+			xmmsv_get_string (value, &string_val);
+			print_info ("%s = %s", key, string_val);
+
+			break;
+		case XMMSV_TYPE_INT32:
+			xmmsv_get_int (value, &int_val);
+			print_info ("%s = %d", key, int_val);
+
+			break;
+		case XMMSV_TYPE_UINT32:
+			xmmsv_get_uint (value, &uint_val);
+			print_info ("%s = %u", key, uint_val);
+
+			break;
+		default:
+			print_error ("unhandled hash value %i", value_type);
 	}
 }
 
