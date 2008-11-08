@@ -1030,6 +1030,41 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 }
 
 /**
+ * Set the element at the given position in the list #xmmsv_t.
+ *
+ * @param listv A #xmmsv_t containing a list.
+ * @param pos The position in the list. If negative, start counting
+ *            from the end (-1 is the last element, etc).
+ * @param val The element to put at the given position in the list.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
+{
+	unsigned int abspos;
+	xmmsv_t *old_val;
+	xmmsv_list_t *l;
+
+	x_return_val_if_fail (listv, 0);
+	x_return_val_if_fail (val, 0);
+	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+
+	/* prevent accessing after the last element */
+	l = listv->value.list;
+	x_return_val_if_fail (pos < l->size, 0);
+
+	if (!get_absolute_position (pos, l->size, &abspos)) {
+		return 0;
+	}
+
+	old_val = l->list[abspos];
+	l->list[abspos] = xmmsv_ref (val);
+	xmmsv_unref (old_val);
+
+	return 1;
+}
+
+/**
  * Insert an element at the given position in the list #xmmsv_t.
  * The list will hold a reference to the element until it's removed.
  *

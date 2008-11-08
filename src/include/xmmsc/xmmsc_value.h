@@ -77,6 +77,7 @@ int xmmsv_get_dict_iter (const xmmsv_t *val, xmmsv_dict_iter_t **it);
 
 /* List */
 int xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val);
+int xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val);
 int xmmsv_list_append (xmmsv_t *listv, xmmsv_t *val);
 int xmmsv_list_insert (xmmsv_t *listv, int pos, xmmsv_t *val);
 int xmmsv_list_remove (xmmsv_t *listv, int pos);
