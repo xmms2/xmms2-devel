@@ -1538,6 +1538,20 @@ xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func,
 	return 1;
 }
 
+/**
+ * Return the size of the dict.
+ *
+ * @param dictv The #xmmsv_t containing the dict.
+ * @return The size of the dict, or -1 if dict is invalid.
+ */
+int
+xmmsv_dict_get_size (xmmsv_t *dictv)
+{
+	x_return_val_if_fail (dictv, -1);
+	x_return_val_if_fail (xmmsv_is_dict (dictv), -1);
+
+	return dictv->value.dict->flatlist->size / 2;
+}
 
 static xmmsv_dict_iter_t *
 xmmsv_dict_iter_new (xmmsv_dict_t *d)
