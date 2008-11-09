@@ -87,6 +87,10 @@ N: G. Gallino
 E: ggallino@gmail.com
 D: Equaliser fixes
 
+N: Anthony Garcia
+E: anthony@agg.homelinux.net
+D: Compatibility fix to avcodec plugin.
+
 N: Paul Giblock
 E: drfaygo@gmail.com
 D: additional id3-tags

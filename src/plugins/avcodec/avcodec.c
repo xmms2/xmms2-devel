@@ -31,6 +31,19 @@
 # include "avcodec.h"
 #endif
 
+/* Handle API change that happened in libavcodec 52.00 */
+#if LIBAVCODEC_VERSION_INT < 0x340000
+# define CONTEXT_BPS(codecctx) (codecctx)->bits_per_sample
+#else
+# define CONTEXT_BPS(codecctx) (codecctx)->bits_per_coded_sample
+#endif
+
+/* Map avcodec_decode_audio2 into the deprecated version
+ * avcodec_decode_audio in versions earlier than 51.28 */
+#if LIBAVCODEC_VERSION_INT < 0x331c00
+# define avcodec_decode_audio2 avcodec_decode_audio
+#endif
+
 #define AVCODEC_BUFFER_SIZE 16384
 
 typedef struct {
@@ -199,7 +212,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->sample_rate = data->samplerate;
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
-	data->codecctx->bits_per_sample = data->samplebits;
+	CONTEXT_BPS (data->codecctx) = data->samplebits;
 	data->codecctx->block_align = data->block_align;
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
@@ -321,9 +334,9 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		}
 
 		outbufsize = sizeof (outbuf);
-		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
-		                                   &outbufsize, data->buffer_pos,
-		                                   data->buffer_length);
+		bytes_read = avcodec_decode_audio2 (data->codecctx, (short *) outbuf,
+		                                    &outbufsize, data->buffer_pos,
+		                                    data->buffer_length);
 
 		if (bytes_read < 0 || bytes_read > data->buffer_length) {
 			XMMS_DBG ("Error decoding data!");
@@ -370,9 +383,9 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	/* The buggy ape decoder doesn't flush buffers, so we need to finish decoding
 	 * the frame before seeking to avoid segfaults... this hack sucks */
 	while (data->buffer_length > 0) {
-		bytes_read = avcodec_decode_audio (data->codecctx, (short *) outbuf,
-		                                   &outbufsize, data->buffer,
-		                                   data->buffer_length);
+		bytes_read = avcodec_decode_audio2 (data->codecctx, (short *) outbuf,
+		                                    &outbufsize, data->buffer,
+		                                    data->buffer_length);
 
 		if (bytes_read < 0 || bytes_read > data->buffer_length) {
 			XMMS_DBG ("Error decoding data!");
