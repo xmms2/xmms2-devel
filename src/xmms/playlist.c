@@ -264,8 +264,9 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist,
 	}
 	xmmsv_coll_operand_list_restore (coll);
 
+	currpos = xmms_playlist_coll_get_currpos (coll);
 	size = xmms_playlist_coll_get_size (coll);
-	while (size < history + 1 + upcoming) {
+	while (size < currpos + 1 + upcoming) {
 		xmms_medialib_entry_t randentry;
 		randentry = xmms_collection_get_random_media (playlist->colldag, src);
 		if (randentry == 0) {
@@ -273,6 +274,8 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist,
 		}
 		/* FIXME: add_collection might yield better perf here. */
 		xmms_playlist_add_entry_unlocked (playlist, plname, coll, randentry, NULL);
+
+		currpos = xmms_playlist_coll_get_currpos (coll);
 		size = xmms_playlist_coll_get_size (coll);
 	}
 	playlist->update_flag = FALSE;
