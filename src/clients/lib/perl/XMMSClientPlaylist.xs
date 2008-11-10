@@ -129,11 +129,11 @@ Sorts the playlist according to the list of C<\@properties>.
 xmmsc_result_t *
 xmmsc_playlist_sort (p, properties)
 		perl_xmmsclient_playlist_t *p
-		const char **properties = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
+		xmmsv_t *properties = ($type)perl_xmmsclient_pack_stringlist ($arg);
 	C_ARGS:
 		p->conn, p->name, properties
 	CLEANUP:
-		free (properties);
+		xmmsv_unref (properties);
 
 =head2 clear
 
@@ -286,8 +286,8 @@ xmmsc_result_t *
 xmmsc_playlist_insert_collection (p, pos, collection, order)
 		perl_xmmsclient_playlist_t *p
 		int pos
-		xmmsc_coll_t *collection
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
+		xmmsv_coll_t *collection
+		xmmsv_t *order = ($type)perl_xmmsclient_pack_stringlist ($arg);
 	C_ARGS:
 		p->conn, p->name, pos, collection, order
 	CLEANUP:
@@ -415,8 +415,8 @@ C<\@order> and add the results to the end of the playlist.
 xmmsc_result_t *
 xmmsc_playlist_add_collection (p, collection, order)
 		perl_xmmsclient_playlist_t *p
-		xmmsc_coll_t *collection
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr ($arg);
+		xmmsv_coll_t *collection
+		xmmsv_t *order = ($type)perl_xmmsclient_pack_stringlist ($arg);
 	C_ARGS:
 		p->conn, p->name, collection, order
 	CLEANUP:

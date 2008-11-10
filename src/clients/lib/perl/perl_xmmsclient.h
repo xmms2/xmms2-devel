@@ -49,9 +49,14 @@ typedef struct perl_xmmsclient_playlist_St {
 typedef enum {
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_UNKNOWN,
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION,
-	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT,
+	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_VALUE,
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_FLAG
 } PerlXMMSClientCallbackParamType;
+
+typedef enum {
+	PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_NONE,
+	PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_INT
+} PerlXMMSClientCallbackReturnType;
 
 typedef struct _PerlXMMSClientCallback PerlXMMSClientCallback;
 struct _PerlXMMSClientCallback {
@@ -60,6 +65,7 @@ struct _PerlXMMSClientCallback {
 	SV *wrapper;
 	int n_params;
 	PerlXMMSClientCallbackParamType *param_types;
+	PerlXMMSClientCallbackReturnType ret_type;
 #ifdef PERL_IMPLICIT_CONTEXT
 	void *priv;
 #endif
@@ -73,15 +79,15 @@ MAGIC *perl_xmmsclient_get_magic_from_sv (SV *sv, const char *class);
 
 void *perl_xmmsclient_get_ptr_from_sv (SV *sv, const char *class);
 
-PerlXMMSClientCallback *perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[]);
+PerlXMMSClientCallback *perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[], PerlXMMSClientCallbackReturnType ret_type);
 
 void perl_xmmsclient_callback_destroy (PerlXMMSClientCallback *cb);
 
-void perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...);
+void perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, void *retval, ...);
 
-SV *perl_xmmsclient_xmms_result_cast_value (xmmsc_result_value_type_t type, const void *value);
+SV *perl_xmmsclient_xmms_result_cast_value (xmmsv_type_t type, const void *value);
 
-char **perl_xmmsclient_unpack_char_ptr_ptr (SV *sv);
+xmmsv_t *perl_xmmsclient_pack_stringlist (SV *sv);
 
 SV *perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen);
 

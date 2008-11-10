@@ -1,11 +1,11 @@
 #include "perl_xmmsclient.h"
 
-void
-perl_xmmsclient_xmmsc_disconnect_callback_set_cb (void *userdata)
+STATIC void
+disconnect_callback_set_cb (void *userdata)
 {
 	PerlXMMSClientCallback *cb = (PerlXMMSClientCallback *)userdata;
 
-	perl_xmmsclient_callback_invoke (cb);
+	perl_xmmsclient_callback_invoke (cb, NULL);
 }
 
 void
@@ -13,7 +13,7 @@ perl_xmmsclient_xmmsc_io_need_out_callback_set_cb (int flag, void *userdata)
 {
 	PerlXMMSClientCallback *cb = (PerlXMMSClientCallback *)userdata;
 
-	perl_xmmsclient_callback_invoke (cb);
+	perl_xmmsclient_callback_invoke (cb, NULL);
 }
 
 MODULE = Audio::XMMSClient	PACKAGE = Audio::XMMSClient	PREFIX = xmmsc_
@@ -139,10 +139,10 @@ xmmsc_disconnect_callback_set (c, func, data=NULL)
 	CODE:
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION;
 
-		cb = perl_xmmsclient_callback_new (func, data, ST(0), 1, param_types);
+		cb = perl_xmmsclient_callback_new (func, data, ST(0), 1, param_types,
+		                                   PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_NONE);
 
-		xmmsc_disconnect_callback_set_full (c,
-		                                    perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb,
+		xmmsc_disconnect_callback_set_full (c, disconnect_callback_set_cb, cb,
 		                                    (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
 =head2 io_disconnect
@@ -549,7 +549,7 @@ Retrieve information about entry C<$id> from the medialib.
 
 =cut
 
-xmmsc_result_t_MedialibEntryStatus *
+xmmsc_result_t *
 xmmsc_medialib_get_info (c, id)
 		xmmsc_connection_t *c
 		uint32_t id
@@ -767,7 +767,7 @@ xmmsc_result_t *
 xmmsc_coll_get (c, collname, namespace)
 		xmmsc_connection_t *c
 		const char *collname
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_sync
 
@@ -808,7 +808,7 @@ List all collections saved on the server in a given C<$namespace>.
 xmmsc_result_t *
 xmmsc_coll_list (c, namespace)
 		xmmsc_connection_t *c
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_save
 
@@ -830,9 +830,9 @@ C<$namespace>.
 xmmsc_result_t *
 xmmsc_coll_save (c, coll, name, namespace)
 		xmmsc_connection_t *c
-		xmmsc_coll_t *coll
+		xmmsv_coll_t *coll
 		const char *name
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_remove
 
@@ -854,7 +854,7 @@ xmmsc_result_t *
 xmmsc_coll_remove (c, name, namespace)
 		xmmsc_connection_t *c
 		const char *name
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_find
 
@@ -877,7 +877,7 @@ xmmsc_result_t *
 xmmsc_coll_find (c, mediaid, namespace)
 		xmmsc_connection_t *c
 		unsigned int mediaid
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_rename
 
@@ -900,7 +900,7 @@ xmmsc_coll_rename (c, from, to, namespace)
 		xmmsc_connection_t *c
 		char *from
 		char *to
-		xmmsc_coll_namespace_t namespace
+		xmmsv_coll_namespace_t namespace
 
 =head2 coll_query_ids
 
@@ -948,9 +948,9 @@ reference.
 xmmsc_result_t *
 xmmsc_coll_query_ids (c, coll, ...)
 		xmmsc_connection_t *c
-		xmmsc_coll_t *coll
+		xmmsv_coll_t *coll
 	INIT:
-		const char **order = NULL;
+		xmmsv_t *order = NULL;
 		unsigned int limit_start = 0;
 		unsigned int limit_len = 0;
 		HV *args;
@@ -960,7 +960,7 @@ xmmsc_coll_query_ids (c, coll, ...)
 			args = (HV *)SvRV (ST (2));
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "order", 5))) {
-				order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+				order = perl_xmmsclient_pack_stringlist (val);
 			}
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "limit_start", 11))) {
@@ -972,14 +972,14 @@ xmmsc_coll_query_ids (c, coll, ...)
 			}
 		}
 		else {
-			order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST (2));
+			order = perl_xmmsclient_pack_stringlist (ST (2));
 			limit_start = SvOK (ST (3)) ? SvUV (ST (3)) : 0;
 			limit_len = SvOK (ST (4)) ? SvUV (ST (4)) : 0;
 		}
 	C_ARGS:
 		c, coll, order, limit_start, limit_len
 	CLEANUP:
-		free (order);
+		xmmsv_unref (order);
 
 =head2 coll_query_infos
 
@@ -1038,13 +1038,13 @@ reference.
 xmmsc_result_t *
 xmmsc_coll_query_infos (c, coll, ...)
 		xmmsc_connection_t *c
-		xmmsc_coll_t *coll
+		xmmsv_coll_t *coll
 	INIT:
-		const char **order = NULL;
+		xmmsv_t *order = NULL;
 		unsigned int limit_start = 0;
 		unsigned int limit_len = 0;
-		const char **fetch = NULL;
-		const char **group = NULL;
+		xmmsv_t *fetch = NULL;
+		xmmsv_t *group = NULL;
 		HV *args;
 		SV *val;
 
@@ -1052,15 +1052,15 @@ xmmsc_coll_query_infos (c, coll, ...)
 			args = (HV *)SvRV (ST (2));
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "order", 5))) {
-				order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+				order = perl_xmmsclient_pack_stringlist (val);
 			}
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "fetch", 5))) {
-				fetch = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+				fetch = perl_xmmsclient_pack_stringlist (val);
 			}
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "group", 5))) {
-				group = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+				group = perl_xmmsclient_pack_stringlist (val);
 			}
 
 			if ((val = perl_xmmsclient_hv_fetch (args, "limit_start", 11))) {
@@ -1072,18 +1072,18 @@ xmmsc_coll_query_infos (c, coll, ...)
 			}
 		}
 		else {
-			order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST (2));
+			order = perl_xmmsclient_pack_stringlist (ST (2));
 			limit_start = SvOK (ST (3)) ? SvUV (ST (3)) : 0;
 			limit_len = SvOK (ST (4)) ? SvUV (ST (4)) : 0;
-			fetch = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST (5));
-			group = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST (6));
+			fetch = perl_xmmsclient_pack_stringlist (ST (5));
+			group = perl_xmmsclient_pack_stringlist (ST (6));
 		}
 	C_ARGS:
 		c, coll, order, limit_start, limit_len, fetch, group
 	CLEANUP:
-		free (order);
-		free (fetch);
-		free (group);
+		xmmsv_unref (order);
+		xmmsv_unref (fetch);
+		xmmsv_unref (group);
 
 =head2 broadcast_collection_changed
 
@@ -1367,7 +1367,7 @@ Request status for the mediainfo reader. It can be idle or working.
 
 =cut
 
-xmmsc_result_t_MediainfoReaderStatus *
+xmmsc_result_t *
 xmmsc_broadcast_mediainfo_reader_status (c)
 		xmmsc_connection_t *c
 
@@ -1603,7 +1603,7 @@ play, stop and pause is triggered.
 
 =cut
 
-xmmsc_result_t_PlaybackStatus *
+xmmsc_result_t *
 xmmsc_broadcast_playback_status (c)
 		xmmsc_connection_t *c
 
@@ -1623,7 +1623,7 @@ Request the playback status.
 
 =cut
 
-xmmsc_result_t_PlaybackStatus *
+xmmsc_result_t *
 xmmsc_playback_status (c)
 		xmmsc_connection_t *c
 
@@ -1812,7 +1812,7 @@ manipulate the playlist this will be emitted.
 
 =cut
 
-xmmsc_result_t_PlaylistChanged *
+xmmsc_result_t *
 xmmsc_broadcast_playlist_changed (c)
 		xmmsc_connection_t *c
 
@@ -2064,7 +2064,8 @@ xmmsc_io_need_out_callback_set (c, func, data=NULL)
 		param_types[0] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION;
 		param_types[1] = PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_FLAG;
 
-		cb = perl_xmmsclient_callback_new (func, data, ST(0), 2, param_types);
+		cb = perl_xmmsclient_callback_new (func, data, ST(0), 2, param_types,
+		                                   PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_NONE);
 
 		xmmsc_io_need_out_callback_set_full (c,
 		                                     perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb,
@@ -2158,5 +2159,3 @@ BOOT:
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Playlist);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Collection);
 	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result);
-	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result__PropDict);
-	PERL_XMMSCLIENT_CALL_BOOT (boot_Audio__XMMSClient__Result__PropDict__Tie);

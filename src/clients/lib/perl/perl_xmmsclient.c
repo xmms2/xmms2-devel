@@ -49,7 +49,7 @@ _perl_xmmsclient_call_xs (pTHX_ void (*subaddr) (pTHX_ CV *), CV *cv, SV **mark)
 }
 
 PerlXMMSClientCallback *
-perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[]) {
+perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[], PerlXMMSClientCallbackReturnType ret_type) {
 	PerlXMMSClientCallback *cb;
 
 	cb = (PerlXMMSClientCallback *)malloc (sizeof (PerlXMMSClientCallback));
@@ -65,6 +65,7 @@ perl_xmmsclient_callback_new (SV *func, SV *data, SV *wrapper, int n_params, Per
 		cb->wrapper = newSVsv(wrapper);
 	}
 
+	cb->ret_type = ret_type;
 	cb->n_params = n_params;
 
 	if (cb->n_params) {
@@ -107,8 +108,9 @@ perl_xmmsclient_callback_destroy (PerlXMMSClientCallback *cb) {
 }
 
 void
-perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...) {
+perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, void *retval, ...) {
 	va_list va_args;
+	int flags, count;
 	dPERL_XMMS_CLIENT_CALLBACK_MARSHAL_SP;
 
 	if (cb == NULL) {
@@ -122,7 +124,7 @@ perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...) {
 
 	PUSHMARK (sp);
 
-	va_start (va_args, cb);
+	va_start (va_args, retval);
 
 	if (cb->n_params > 0) {
 		int i;
@@ -131,12 +133,14 @@ perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...) {
 			SV *sv;
 			switch (cb->param_types[i]) {
 				case PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION:
-				case PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT:
 					if (!cb->wrapper) {
 						croak("wrapper == NULL in perl_xmmsclient_callback_invoke");
 					}
 
 					sv = cb->wrapper;
+					break;
+				case PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_VALUE:
+					sv = va_arg (va_args, SV *);
 					break;
 				case PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_FLAG:
 					sv = newSViv (va_arg (va_args, int));
@@ -160,20 +164,47 @@ perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, ...) {
 	if (cb->data)
 		XPUSHs (cb->data);
 
+	switch (cb->ret_type) {
+		case PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_NONE:
+			flags = G_VOID | G_DISCARD;
+			break;
+		case PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_INT:
+			flags = G_SCALAR;
+			break;
+		default:
+			croak ("unknown PerlXMMSClientCallbackReturnType");
+	}
+
 	PUTBACK;
 
-	call_sv (cb->func, G_DISCARD);
+	count = call_sv (cb->func, flags);
 
+	switch (cb->ret_type) {
+		case PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_INT:
+			if (count != 1) {
+				croak ("expected one return value from callback, got %d", count);
+			}
+
+			SPAGAIN;
+
+			*(int *)retval = POPi;
+
+			break;
+		case PERL_XMMSCLIENT_CALLBACK_RETURN_TYPE_NONE:
+			break;
+	}
+
+	PUTBACK;
 	FREETMPS;
 	LEAVE;
 }
 
-char **
-perl_xmmsclient_unpack_char_ptr_ptr (SV *arg) {
+xmmsv_t *
+perl_xmmsclient_pack_stringlist (SV *arg) {
 	AV *av;
 	SV **ssv;
 	int avlen, i;
-	char **ret;
+	xmmsv_t *ret;
 
 	if (!SvOK (arg)) {
 		return NULL;
@@ -183,14 +214,12 @@ perl_xmmsclient_unpack_char_ptr_ptr (SV *arg) {
 		av = (AV *)SvRV (arg);
 
 		avlen = av_len (av);
-		ret = (char **)malloc (sizeof (char *) * (avlen + 2));
+		ret = xmmsv_new_list ();
 
 		for (i = 0; i <= avlen; ++i) {
 			ssv = av_fetch (av, i, 0);
-			ret[i] = SvPV_nolen (*ssv);
+			xmmsv_list_append (ret, xmmsv_new_string (SvPV_nolen (*ssv)));
 		}
-
-		ret[avlen + 1] = NULL;
 	}
 	else {
 		croak ("not an array reference");

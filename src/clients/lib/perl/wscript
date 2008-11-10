@@ -12,8 +12,6 @@ def build(bld):
                  XMMSClientPlaylist.xs
                  XMMSClientCollection.xs
                  XMMSClientResult.xs
-                 XMMSClientResultPropDict.xs
-                 XMMSClientResultPropDictTie.xs
                  """.split()
     obj.uselib_local = 'xmmsclient'
     obj.install_var = "INSTALLDIR_PERL_AUTO"
@@ -24,7 +22,6 @@ def build(bld):
     Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Collection.pm')
 
 def configure(conf):
-    return False
     conf.check_tool('perl')
 
     if not conf.check_perl_version((5,7,3)):
