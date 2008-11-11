@@ -1,3 +1,3 @@
 from waftools.plugin import plugin
 
-configure, build = plugin('html', broken=True)
+configure, build = plugin('html')
