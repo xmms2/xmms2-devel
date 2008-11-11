@@ -279,6 +279,9 @@ D: Pythonbindings fix
 N: Daniel Svensson
 E: dsvensson@gmail.com
 E: daniel@nittionio.nu
+E: daniel.svensson@purplescout.se
+W: http://dsvensson.wordpress.com
+P: 1024D/633F5931 9D2D 8156 23A2 8305 95A2 4D71 7BF0 2E28 633F 5931
 D: Musepack. CoreFoundation. Alsa. Gnomevfs. Samba. Sun. Various fixes.
 
 N: Jens Taprogge
