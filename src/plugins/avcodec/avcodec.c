@@ -383,6 +383,7 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	/* The buggy ape decoder doesn't flush buffers, so we need to finish decoding
 	 * the frame before seeking to avoid segfaults... this hack sucks */
 	while (data->buffer_length > 0) {
+		outbufsize = sizeof (outbuf);
 		bytes_read = avcodec_decode_audio2 (data->codecctx, (short *) outbuf,
 		                                    &outbufsize, data->buffer,
 		                                    data->buffer_length);
