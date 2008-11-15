@@ -27,7 +27,6 @@ def build(bld):
     obj.files = ['xmms2.1']
 
 def configure(conf):
-    return False
     if Params.g_platform == 'win32':
         conf.env['common_impl'] = 'win32'
     else:

@@ -20,15 +20,17 @@ void
 cmd_stats (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 
 	res = xmmsc_main_stats (conn);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+	if (xmmsv_is_error (val)) {
+		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	xmmsc_result_dict_foreach (res, print_hash, NULL);
+	xmmsv_dict_foreach (val, print_hash, NULL);
 	xmmsc_result_unref (res);
 }
 
@@ -37,6 +39,8 @@ void
 cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
+	xmmsv_list_iter_t *it;
 	xmms_plugin_type_t type = XMMS_PLUGIN_TYPE_ALL;
 
 	if (argc > 2) {
@@ -51,20 +55,24 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	res = xmmsc_plugin_list (conn, type);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+	if (xmmsv_is_error (val)) {
+		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	while (xmmsc_result_list_valid (res)) {
+	xmmsv_get_list_iter (val, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *dict;
 		const gchar *shortname, *desc;
 
-		if (xmmsc_result_get_dict_entry_string (res, "shortname", &shortname) &&
-		    xmmsc_result_get_dict_entry_string (res, "description", &desc)) {
+		if (xmmsv_list_iter_entry (it, &dict) &&
+		    xmmsv_get_dict_entry_string (dict, "shortname", &shortname) &&
+		    xmmsv_get_dict_entry_string (dict, "description", &desc)) {
 			print_info ("%s - %s", shortname, desc);
 		}
 
-		xmmsc_result_list_next (res);
+		xmmsv_list_iter_next (it);
 	}
 	xmmsc_result_unref (res);
 }
@@ -88,6 +96,8 @@ void
 cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *val;
 
 	if (argc < 3) {
 		print_error ("Need to specify a URL to browse");
@@ -95,25 +105,30 @@ cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	res = xmmsc_xform_media_browse (conn, argv[2]);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+	if (xmmsv_is_error (val)) {
+		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	for (;xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-		xmmsc_result_value_type_t type;
+	xmmsv_get_list_iter (val, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *dict;
+		xmmsv_type_t type;
 		const gchar *r;
 		gint d;
 
-		type = xmmsc_result_get_dict_entry_type (res, "realpath");
-		if (type != XMMSC_RESULT_VALUE_TYPE_NONE) {
-			xmmsc_result_get_dict_entry_string (res, "realpath", &r);
+		xmmsv_list_iter_entry (it, &dict);
+		type = xmmsv_get_dict_entry_type (dict, "realpath");
+		if (type != XMMSV_TYPE_NONE) {
+			xmmsv_get_dict_entry_string (dict, "realpath", &r);
 		} else {
-			xmmsc_result_get_dict_entry_string (res, "path", &r);
+			xmmsv_get_dict_entry_string (dict, "path", &r);
 		}
 
-		xmmsc_result_get_dict_entry_int (res, "isdir", &d);
+		xmmsv_get_dict_entry_int (dict, "isdir", &d);
 		print_info ("%s%c", r, d ? '/' : ' ');
+		xmmsv_list_iter_next (it);
 	}
 
 	xmmsc_result_unref (res);
