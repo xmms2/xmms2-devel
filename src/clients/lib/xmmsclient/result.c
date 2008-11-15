@@ -32,7 +32,6 @@
 #include "xmmsc/xmmsc_stdbool.h"
 
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
-void xmmsc_result_disconnect (xmmsc_result_t *res);
 static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
 static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
 
