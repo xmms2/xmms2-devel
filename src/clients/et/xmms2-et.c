@@ -81,34 +81,32 @@ disconnected (void *data)
 	exit (0);
 }
 
-static void
-handle_quit (xmmsc_result_t *res, void *data)
+static int
+handle_quit (xmmsv_t *v, void *data)
 {
 	g_main_loop_quit ((GMainLoop *) data);
+
+	return FALSE; /* stop the broadcast */
 }
 
-static void
-handle_mediainfo_reader (xmmsc_result_t *res, void *userdata)
+static int
+handle_mediainfo_reader (xmmsv_t *v, void *userdata)
 {
 	static guint last_unindexed;
-	xmmsc_result_t *newres;
 	guint unindexed;
 
-	if (!xmmsc_result_get_uint (res, &unindexed))
-		return;
-
-	if (unindexed < last_unindexed) {
-		mlib_resolves += last_unindexed - unindexed;
+	if (xmmsv_get_uint (v, &unindexed)) {
+		if (unindexed < last_unindexed) {
+			mlib_resolves += last_unindexed - unindexed;
+		}
+		last_unindexed = unindexed;
 	}
-	last_unindexed = unindexed;
 
-	newres = xmmsc_result_restart (res);
-	xmmsc_result_unref (res);
-	xmmsc_result_unref (newres);
+	return TRUE; /* restart the signal */
 }
 
-static void
-handle_mediainfo (xmmsc_result_t *res, void *userdata)
+static int
+handle_mediainfo (xmmsv_t *v, void *userdata)
 {
 	static const gchar *props[] = {"chain", NULL};
 	static const gchar *pref[] = {"server", NULL};
@@ -116,25 +114,27 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 	const gchar *tstr;
 	gint tint, i;
 	guint tuint;
+	xmmsv_t *dict;
 
 	str = g_string_new ("");
 
-	xmmsc_result_source_preference_set (res, pref);
+	/* convert propdict to dict */
+	dict = xmmsv_propdict_to_dict (v, pref);
 
 	for (i = 0; props[i]; i++) {
-		switch (xmmsc_result_get_dict_entry_type (res, props[i])) {
-		case XMMSC_RESULT_VALUE_TYPE_STRING:
-			if (xmmsc_result_get_dict_entry_string (res, props[i], &tstr)) {
+		switch (xmmsv_get_dict_entry_type (dict, props[i])) {
+		case XMMSV_TYPE_STRING:
+			if (xmmsv_get_dict_entry_string (dict, props[i], &tstr)) {
 				g_string_append_printf (str, "%s=%s\n", props[i], tstr);
 			}
 			break;
-		case XMMSC_RESULT_VALUE_TYPE_UINT32:
-			if (xmmsc_result_get_dict_entry_uint (res, props[i], &tuint)) {
+		case XMMSV_TYPE_UINT32:
+			if (xmmsv_get_dict_entry_uint (dict, props[i], &tuint)) {
 				g_string_append_printf (str, "%s=%u\n", props[i], tuint);
 			}
 			break;
-		case XMMSC_RESULT_VALUE_TYPE_INT32:
-			if (xmmsc_result_get_dict_entry_int (res, props[i], &tint)) {
+		case XMMSV_TYPE_INT32:
+			if (xmmsv_get_dict_entry_int (dict, props[i], &tint)) {
 				g_string_append_printf (str, "%s=%d\n", props[i], tint);
 			}
 			break;
@@ -147,55 +147,63 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 	send_msg ("New media", str);
 
 	g_string_free (str, TRUE);
+	return TRUE; /* keep broadcast alive */
 }
 
-static void
-handle_current_id (xmmsc_result_t *res, void *userdata)
+static int
+handle_current_id (xmmsv_t *v, void *userdata)
 {
 	xmmsc_connection_t *conn = userdata;
 	xmmsc_result_t *res2;
 	guint current_id;
 
-	if (!xmmsc_result_get_uint (res, &current_id))
-		return;
+	if (xmmsv_get_uint (v, &current_id)) {
+		res2 = xmmsc_medialib_get_info (conn, current_id);
+		xmmsc_result_notifier_set (res2, handle_mediainfo, conn);
+		xmmsc_result_unref (res2);
+	}
 
-	res2 = xmmsc_medialib_get_info (conn, current_id);
-	xmmsc_result_notifier_set (res2, handle_mediainfo, conn);
-	xmmsc_result_unref (res2);
+	return TRUE; /* keep broadcast alive */
 }
 
-static void
-handle_config (xmmsc_result_t *res, void *userdata)
+static int
+handle_config (xmmsv_t *v, void *userdata)
 {
 	const gchar *value;
 
-	if (!xmmsc_result_get_dict_entry_string (res, "output.plugin", &value))
-		return;
+	if (!xmmsv_get_dict_entry_string (v, "output.plugin", &value))
+		return TRUE;
 
 	g_free (output_plugin);
 	output_plugin = g_strdup (value);
+
+	return TRUE;
 }
 
-static void
-handle_config_val (xmmsc_result_t *res, void *userdata)
+static int
+handle_config_val (xmmsv_t *v, void *userdata)
 {
 	const gchar *value;
 
-	if (!xmmsc_result_get_string (res, &value))
-		return;
+	if (!xmmsv_get_string (v, &value))
+		return TRUE;
 
 	g_free (output_plugin);
 	output_plugin = g_strdup (value);
+
+	return TRUE;
 }
 
-static void
-handle_stats (xmmsc_result_t *res, void *userdata)
+static int
+handle_stats (xmmsv_t *v, void *userdata)
 {
 	const gchar *tstr;
 
-	if (xmmsc_result_get_dict_entry_string (res, "version", &tstr)) {
+	if (xmmsv_get_dict_entry_string (v, "version", &tstr)) {
 		server_version = g_strdup (tstr);
 	}
+
+	return TRUE;
 }
 
 static void
