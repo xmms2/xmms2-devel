@@ -218,6 +218,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 static gint
 xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 {
+	int r1, r2;
 	xmmsv_t *val1, *val2, *tmp1, *tmp2;
 	const gchar *s1, *s2;
 
@@ -227,29 +228,28 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	g_return_val_if_fail (xmmsv_get_type (val1) == XMMSV_TYPE_DICT, 0);
 	g_return_val_if_fail (xmmsv_get_type (val2) == XMMSV_TYPE_DICT, 0);
 
-	xmmsv_dict_get (val1, "intsort", &tmp1);
-	xmmsv_dict_get (val2, "intsort", &tmp2);
+	r1 = xmmsv_dict_get (val1, "intsort", &tmp1);
+	r2 = xmmsv_dict_get (val2, "intsort", &tmp2);
 
-	if (tmp1 && tmp2) {
+	if (r1 && r2) {
 		gint i1, i2;
-		g_return_val_if_fail (xmmsv_get_type (tmp1) == XMMSV_TYPE_INT32, 0);
-		g_return_val_if_fail (xmmsv_get_type (tmp2) == XMMSV_TYPE_INT32, 0);
-		xmmsv_get_int (tmp1, &i1);
-		xmmsv_get_int (tmp2, &i2);
+
+		if (!xmmsv_get_int (tmp1, &i1))
+			return 0;
+		if (!xmmsv_get_int (tmp2, &i2))
+			return 0;
 		return i1 > i2;
 	}
 
-	xmmsv_dict_get (val1, "path", &tmp1);
-	xmmsv_dict_get (val2, "path", &tmp2);
+	if (!xmmsv_dict_get (val1, "path", &tmp1))
+		return 0;
+	if (!xmmsv_dict_get (val2, "path", &tmp2))
+		return 0;
 
-	g_return_val_if_fail (!!tmp1, 0);
-	g_return_val_if_fail (!!tmp2, 0);
-
-	g_return_val_if_fail (xmmsv_get_type (tmp1) == XMMSV_TYPE_STRING, 0);
-	g_return_val_if_fail (xmmsv_get_type (tmp2) == XMMSV_TYPE_STRING, 0);
-
-	xmmsv_get_string (tmp1, &s1);
-	xmmsv_get_string (tmp2, &s2);
+	if (!xmmsv_get_string (tmp1, &s1))
+		return 0;
+	if (!xmmsv_get_string (tmp2, &s2))
+		return 0;
 
 	return g_utf8_collate (s1, s2);
 }
