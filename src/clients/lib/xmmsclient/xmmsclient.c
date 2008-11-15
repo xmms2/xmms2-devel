@@ -155,6 +155,9 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
 	xmmsc_ipc_t *ipc;
 	xmmsc_result_t *result;
+	xmmsv_t *value;
+
+	const char *buf;
 
 	x_api_error_if (!c, "with a NULL connection", false);
 
@@ -177,8 +180,10 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	c->ipc = ipc;
 	result = xmmsc_send_hello (c);
 	xmmsc_result_wait (result);
-	if (xmmsc_result_iserror (result)) {
-		c->error = strdup (xmmsc_result_get_error (result));
+	value = xmmsc_result_get_value (result);
+	if (xmmsv_is_error (value)) {
+		xmmsv_get_error (value, &buf);
+		c->error = strdup (buf);
 		xmmsc_result_unref (result);
 		return false;
 	}

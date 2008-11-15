@@ -223,15 +223,15 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	val1 = (xmms_object_cmd_value_t *) a;
 	val2 = (xmms_object_cmd_value_t *) b;
 
-	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
-	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
+	g_return_val_if_fail (val1->type == XMMSV_TYPE_DICT, 0);
+	g_return_val_if_fail (val2->type == XMMSV_TYPE_DICT, 0);
 
 	tmp1 = g_tree_lookup (val1->value.dict, "intsort");
 	tmp2 = g_tree_lookup (val2->value.dict, "intsort");
 
 	if (tmp1 && tmp2) {
-		g_return_val_if_fail (tmp1->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
-		g_return_val_if_fail (tmp2->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
+		g_return_val_if_fail (tmp1->type == XMMSV_TYPE_INT32, 0);
+		g_return_val_if_fail (tmp2->type == XMMSV_TYPE_INT32, 0);
 		return tmp1->value.int32 > tmp2->value.int32;
 	}
 
@@ -241,8 +241,8 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	g_return_val_if_fail (!!tmp1, 0);
 	g_return_val_if_fail (!!tmp2, 0);
 
-	g_return_val_if_fail (tmp1->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
-	g_return_val_if_fail (tmp2->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
+	g_return_val_if_fail (tmp1->type == XMMSV_TYPE_STRING, 0);
+	g_return_val_if_fail (tmp2->type == XMMSV_TYPE_STRING, 0);
 
 	return g_utf8_collate (tmp1->value.string, tmp2->value.string);
 }
@@ -555,7 +555,7 @@ xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key,
 	gboolean ret = FALSE;
 
 	obj = xmms_xform_metadata_get_val (xform, key);
-	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_INT32) {
+	if (obj && obj->type == XMMSV_TYPE_INT32) {
 		*val = obj->value.int32;
 		ret = TRUE;
 	}
@@ -571,7 +571,7 @@ xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key,
 	gboolean ret = FALSE;
 
 	obj = xmms_xform_metadata_get_val (xform, key);
-	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_STRING) {
+	if (obj && obj->type == XMMSV_TYPE_STRING) {
 		*val = obj->value.string;
 		ret = TRUE;
 	}
@@ -592,13 +592,13 @@ add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 	gchar *key = (gchar *) _key;
 	metadata_festate_t *st = (metadata_festate_t *) user_data;
 
-	if (value->type == XMMS_OBJECT_CMD_ARG_STRING) {
+	if (value->type == XMMSV_TYPE_STRING) {
 		xmms_medialib_entry_property_set_str_source (st->session,
 		                                             st->entry,
 		                                             key,
 		                                             value->value.string,
 		                                             st->source);
-	} else if (value->type == XMMS_OBJECT_CMD_ARG_INT32) {
+	} else if (value->type == XMMSV_TYPE_INT32) {
 		xmms_medialib_entry_property_set_int_source (st->session,
 		                                             st->entry,
 		                                             key,
@@ -809,7 +809,7 @@ xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
 	const xmms_object_cmd_value_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_INT32) {
+	if (obj && obj->type == XMMSV_TYPE_INT32) {
 		*val = obj->value.int32;
 		return TRUE;
 	}
@@ -824,7 +824,7 @@ xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
 	const xmms_object_cmd_value_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_STRING) {
+	if (obj && obj->type == XMMSV_TYPE_STRING) {
 		*val = obj->value.string;
 		return TRUE;
 	}
@@ -839,7 +839,7 @@ xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
 	const xmms_object_cmd_value_t *obj;
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_BIN) {
+	if (obj && obj->type == XMMSV_TYPE_BIN) {
 		GString *bin = obj->value.bin;
 
 		*data = bin->str;

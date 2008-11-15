@@ -136,13 +136,16 @@ static void
 add_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params)
 {
 	GList *n;
+	gchar *name;
 
 	/* Prepare aliases for the group/fetch fields */
 	for (n = query->params->group; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
+		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
+		query_make_alias (query, name, TRUE);
 	}
 	for (n = query->params->fetch; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
+		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
+		query_make_alias (query, name, TRUE);
 	}
 }
 
@@ -557,7 +560,8 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 
 	for (n = fields; n; n = n->next) {
 		coll_query_alias_t *alias;
-		gchar *field = n->data;
+		/* extract string from cmdval_t */
+		gchar *field = ((xmms_object_cmd_value_t *) n->data)->value.string;
 		gchar *canon_field = canonical_field_name (field);
 
 		if (first) first = FALSE;
@@ -598,9 +602,12 @@ query_string_append_fetch (coll_query_t *query, GString *qstring)
 	GList *n;
 	coll_query_alias_t *alias;
 	gboolean first = TRUE;
+	gchar *name;
 
 	for (n = query->params->fetch; n; n = n->next) {
-		alias = query_make_alias (query, n->data, TRUE);
+		/* extract string from cmdval_t */
+		name = ((xmms_object_cmd_value_t *) n->data)->value.string;
+		alias = query_make_alias (query, name, TRUE);
 
 		if (first) first = FALSE;
 		else {
@@ -608,7 +615,7 @@ query_string_append_fetch (coll_query_t *query, GString *qstring)
 		}
 
 		query_string_append_alias (qstring, alias);
-		g_string_append_printf (qstring, " AS %s", (gchar*)n->data);
+		g_string_append_printf (qstring, " AS %s", name);
 	}
 }
 

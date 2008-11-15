@@ -19,6 +19,7 @@ def build(bld):
     Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/qt3.py')
 
 def configure(conf):
+    return False
     if not (conf.check_tool('python') and
             conf.check_python_version() and
             conf.check_python_headers()):

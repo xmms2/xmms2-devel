@@ -26,12 +26,12 @@ typedef struct {
 static const struct {
 	const gchar *mlib;
 	const gchar *gvfs;
-	xmms_object_cmd_arg_type_t type;
+	xmmsv_type_t type;
 } attr_map[] = {
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIME,        G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, XMMS_OBJECT_CMD_ARG_STRING },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,        G_FILE_ATTRIBUTE_TIME_MODIFIED,         XMMS_OBJECT_CMD_ARG_INT32  },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,        G_FILE_ATTRIBUTE_STANDARD_SIZE,         XMMS_OBJECT_CMD_ARG_INT32  },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, G_FILE_ATTRIBUTE_STANDARD_DESCRIPTION,  XMMS_OBJECT_CMD_ARG_STRING }
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIME,        G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, XMMSV_TYPE_STRING },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,        G_FILE_ATTRIBUTE_TIME_MODIFIED,         XMMSV_TYPE_INT32  },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,        G_FILE_ATTRIBUTE_STANDARD_SIZE,         XMMSV_TYPE_INT32  },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, G_FILE_ATTRIBUTE_STANDARD_DESCRIPTION,  XMMSV_TYPE_STRING }
 };
 
 static const struct {
@@ -169,14 +169,14 @@ xmms_gvfs_init (xmms_xform_t *xform)
 			}
 
 			switch (attr_map[i].type) {
-				case XMMS_OBJECT_CMD_ARG_STRING: {
+				case XMMSV_TYPE_STRING: {
 					gchar *attr = g_file_info_get_attribute_as_string (info,
 					                                                   attr_map[i].gvfs);
 					xmms_xform_metadata_set_str (xform, attr_map[i].mlib, attr);
 					g_free (attr);
 					break;
 				}
-				case XMMS_OBJECT_CMD_ARG_INT32: {
+				case XMMSV_TYPE_INT32: {
 					/* right now the xform metadata api only handles strings
 					 * and 32 bit ints. however the gvfs api returns uint64 for
 					 * the numeric attributes we're interested in and we just

@@ -25,6 +25,7 @@ def build(bld):
   obj.files = ['xmms2-mdns-avahi.1']
 
 def configure(conf):
+  return False
   return (conf.check_pkg('avahi-client', destvar='avahiclient') and
     conf.check_pkg('avahi-glib', destvar='avahiglib'))
 

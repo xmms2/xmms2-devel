@@ -117,10 +117,11 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist)
 }
 
 /**
- * Sorts the playlist according to the list of properties (NULL-terminated).
+ * Sorts the playlist according to the list of properties
+ * (#xmmsv_t containing a list of strings).
  */
 xmmsc_result_t *
-xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **properties)
+xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *properties)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -134,7 +135,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **p
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string_list (msg, properties);
+	xmms_ipc_msg_put_value_list (msg, properties); /* purposedly skip typing */
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -374,11 +375,13 @@ xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, const char *playlist, int 
  * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param coll The collection to find media in the medialib.
- * @param order The list of properties by which to order the matching media.
+ * @param order The list of properties by which to order the matching
+ *              media, passed as an #xmmsv_t list of strings.
  */
 xmmsc_result_t *
 xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
-                                  int pos, xmmsv_coll_t *coll, const char **order)
+                                  int pos, xmmsv_coll_t *coll,
+                                  xmmsv_t *order)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -389,11 +392,13 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
+	/* default to empty ordering */
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_COLL);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_string_list (msg, order);
+	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
 
 	return xmmsc_send_msg (c, msg);
 
@@ -612,11 +617,12 @@ xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *playlist,
  * @param c The connection structure.
  * @param playlist The playlist in which to add the media.
  * @param coll The collection to find media in the medialib.
- * @param order The list of properties by which to order the matching media.
+ * @param order The list of properties by which to order the matching
+ *              media, passed as an #xmmsv_t list of strings.
  */
 xmmsc_result_t *
 xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
-                               xmmsv_coll_t *coll, const char **order)
+                               xmmsv_coll_t *coll, xmmsv_t *order)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -627,10 +633,12 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
+	/* default to empty ordering */
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_string_list (msg, order);
+	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
 
 	return xmmsc_send_msg (c, msg);
 

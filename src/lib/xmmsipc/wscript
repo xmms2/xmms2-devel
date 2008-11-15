@@ -15,7 +15,7 @@ def build(bld):
     obj = bld.create_obj('cc', 'staticlib')
     obj.source = " ".join(["msg.c", "socket_tcp.c", "transport.c",
                            "url.c", platform_sources])
-    obj.includes='. ../../include'
+    obj.includes='. ../../include ../../includepriv'
     obj.target='xmmsipc'
     obj.install_var = 0
 

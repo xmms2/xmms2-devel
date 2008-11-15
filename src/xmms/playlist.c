@@ -75,16 +75,16 @@ static GTree * xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, gui
 XMMS_CMD_DEFINE  (load, xmms_playlist_load, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE3 (insert_url, xmms_playlist_insert_url, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
 XMMS_CMD_DEFINE3 (insert_id, xmms_playlist_insert_id, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
-XMMS_CMD_DEFINE4 (insert_coll, xmms_playlist_insert_collection, xmms_playlist_t *, NONE, STRING, UINT32, COLL, STRINGLIST);
+XMMS_CMD_DEFINE4 (insert_coll, xmms_playlist_insert_collection, xmms_playlist_t *, NONE, STRING, UINT32, COLL, LIST);
 XMMS_CMD_DEFINE  (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE  (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, STRING, UINT32);
 XMMS_CMD_DEFINE3 (move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
 XMMS_CMD_DEFINE  (add_url, xmms_playlist_add_url, xmms_playlist_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE  (add_id, xmms_playlist_add_id, xmms_playlist_t *, NONE, STRING, UINT32);
 XMMS_CMD_DEFINE  (add_idlist, xmms_playlist_add_idlist, xmms_playlist_t *, NONE, STRING, COLL);
-XMMS_CMD_DEFINE3 (add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE, STRING, COLL, STRINGLIST);
+XMMS_CMD_DEFINE3 (add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE, STRING, COLL, LIST);
 XMMS_CMD_DEFINE  (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE  (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, STRINGLIST);
+XMMS_CMD_DEFINE  (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, LIST);
 XMMS_CMD_DEFINE  (list_entries, xmms_playlist_list_entries, xmms_playlist_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE  (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, DICT, STRING, NONE);
 XMMS_CMD_DEFINE  (current_active, xmms_playlist_current_active, xmms_playlist_t *, STRING, NONE, NONE);
@@ -613,7 +613,7 @@ xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
-	                    XMMS_OBJECT_CMD_ARG_STRING,
+	                    XMMSV_TYPE_STRING,
 	                    name);
 }
 
@@ -1355,8 +1355,8 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer user_dat
 			return 1;
 		}
 
-		if (val1->type == XMMS_OBJECT_CMD_ARG_STRING &&
-		    val2->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		if (val1->type == XMMSV_TYPE_STRING &&
+		    val2->type == XMMSV_TYPE_STRING) {
 			res = g_utf8_collate (val1->value.string,
 			                      val2->value.string);
 			/* keep comparing next pair if equal */
@@ -1366,14 +1366,14 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer user_dat
 				return res;
 		}
 
-		if ((val1->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-		     val1->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
-		    (val2->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-		     val2->type == XMMS_OBJECT_CMD_ARG_UINT32))
+		if ((val1->type == XMMSV_TYPE_INT32 ||
+		     val1->type == XMMSV_TYPE_UINT32) &&
+		    (val2->type == XMMSV_TYPE_INT32 ||
+		     val2->type == XMMSV_TYPE_UINT32))
 		{
-			s1 = (val1->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+			s1 = (val1->type == XMMSV_TYPE_INT32) ?
 			      val1->value.int32 : val1->value.uint32;
-			s2 = (val2->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+			s2 = (val2->type == XMMSV_TYPE_INT32) ?
 			      val2->value.int32 : val2->value.uint32;
 
 			if (s1 < s2)
@@ -1456,10 +1456,10 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 	gboolean list_changed = FALSE;
 	xmmsv_coll_t *plcoll;
 	gint currpos, size;
+	xmms_object_cmd_value_t *valstr;
 
 	g_return_if_fail (playlist);
 	g_return_if_fail (properties);
-	XMMS_DBG ("Sorting on %s", (char*)properties->data);
 
 	g_mutex_lock (playlist->mutex);
 
@@ -1469,6 +1469,21 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 		g_mutex_unlock (playlist->mutex);
 		return;
 	}
+
+	/* check for invalid property strings */
+	for (n = properties; n; n = n->next) {
+		valstr = (xmms_object_cmd_value_t *) n->data;
+		if (valstr->type != XMMSV_TYPE_STRING) {
+			xmms_error_set (err, XMMS_ERROR_NOENT, "invalid list of properties!");
+			g_mutex_unlock (playlist->mutex);
+			return;
+		}
+		/* in debug, show the first ordering property */
+		if (n == properties) {
+			XMMS_DBG ("Sorting on %s (and maybe more)", valstr->value.string);
+		}
+	}
+
 
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
 	size = xmms_playlist_coll_get_size (plcoll);
@@ -1490,7 +1505,8 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 		/* save the list of values corresponding to the list of sort props */
 		data->val = NULL;
 		for (n = properties; n; n = n->next) {
-			str = n->data;
+			valstr = (xmms_object_cmd_value_t *) n->data;
+			str = valstr->value.string;
 			if (str[0] == '-')
 				str++;
 
@@ -1498,7 +1514,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 			                                                  data->id,
 			                                                  str);
 
-			if (val && val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+			if (val && val->type == XMMSV_TYPE_STRING) {
 				str = val->value.string;
 				val->value.string = g_utf8_casefold (str, strlen (str));
 				g_free (str);
@@ -1747,7 +1763,7 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict)
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
-	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    XMMSV_TYPE_DICT,
 	                    dict);
 
 	g_tree_destroy (dict);
@@ -1763,7 +1779,7 @@ xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist,
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    XMMSV_TYPE_DICT,
 	                    dict);
 
 	g_tree_destroy (dict);

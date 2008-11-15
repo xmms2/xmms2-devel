@@ -20,6 +20,7 @@ def build(bld):
   Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh', chmod=0755)
 
 def configure(conf):
+  return False
   conf.env['explicit_dnssd'] = True
 
   if not conf.check_header('dns_sd.h'):

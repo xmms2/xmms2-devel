@@ -222,7 +222,7 @@ update_playtime (xmms_output_t *output, int advance)
 		if ((ms / 100) != (output->played_time / 100)) {
 			xmms_object_emit_f (XMMS_OBJECT (output),
 			                    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
-			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    XMMSV_TYPE_UINT32,
 			                    ms);
 		}
 		output->played_time = ms;
@@ -287,7 +287,7 @@ song_changed (void *data)
 
 	xmms_object_emit_f (XMMS_OBJECT (arg->output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
+	                    XMMSV_TYPE_UINT32,
 	                    entry);
 
 	return TRUE;
@@ -798,7 +798,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 
 			xmms_object_emit_f (XMMS_OBJECT (output),
 			                    XMMS_IPC_SIGNAL_PLAYBACK_STATUS,
-			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    XMMSV_TYPE_UINT32,
 			                    output->status);
 		}
 	}
@@ -1223,13 +1223,13 @@ xmms_output_monitor_volume_thread (gpointer data)
 				dict = xmms_volume_map_to_dict (&cur);
 				xmms_object_emit_f (XMMS_OBJECT (output),
 				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
-				                    XMMS_OBJECT_CMD_ARG_DICT, dict);
+				                    XMMSV_TYPE_DICT, dict);
 				g_tree_destroy (dict);
 			} else {
 				/** @todo When bug 691 is solved, emit an error here */
 				xmms_object_emit_f (XMMS_OBJECT (output),
 				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
-				                    XMMS_OBJECT_CMD_ARG_NONE);
+				                    XMMSV_TYPE_NONE);
 			}
 		}
 

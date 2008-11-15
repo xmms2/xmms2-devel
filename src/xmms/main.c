@@ -277,7 +277,7 @@ static gboolean
 kill_server (gpointer object) {
 	xmms_object_emit_f (XMMS_OBJECT (object),
 	                    XMMS_IPC_SIGNAL_QUIT,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
+	                    XMMSV_TYPE_UINT32,
 	                    time (NULL)-((xmms_main_t*)object)->starttime);
 
 	xmms_object_unref (object);

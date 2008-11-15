@@ -28,6 +28,7 @@ def build(bld):
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
+    return False
     if not conf.env["HAVE_CXX"]:
         return False
 
