@@ -985,6 +985,7 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 
 	/* free list, declare empty */
 	free (l->list);
+	l->list = NULL;
 
 	l->size = 0;
 	l->allocated = 0;
