@@ -396,25 +396,29 @@ xmms_plugin_scan_directory (const gchar *dir)
 static gboolean
 xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 {
-	GTree *dict;
+	xmmsv_t *dict;
 	GList **list = data;
+	const char *s;
+	unsigned int u;
 
-	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                        NULL,
-	                        (GDestroyNotify) xmmsv_unref);
+	dict = xmmsv_new_dict ();
 
-	g_tree_insert (dict, (gpointer) "name",
-	               xmmsv_new_string (xmms_plugin_name_get (plugin)));
-	g_tree_insert (dict, (gpointer) "shortname",
-	               xmmsv_new_string (xmms_plugin_shortname_get (plugin)));
-	g_tree_insert (dict, (gpointer) "version",
-	               xmmsv_new_string (xmms_plugin_version_get (plugin)));
-	g_tree_insert (dict, (gpointer) "description",
-	              xmmsv_new_string (xmms_plugin_description_get (plugin)));
-	g_tree_insert (dict, (gpointer) "type",
-	               xmmsv_new_uint (xmms_plugin_type_get (plugin)));
+	s = xmms_plugin_name_get (plugin);
+	xmmsv_dict_insert (dict, "name", xmmsv_new_string (s));
 
-	*list = g_list_prepend (*list, xmms_create_xmmsv_dict (dict));
+	s = xmms_plugin_shortname_get (plugin);
+	xmmsv_dict_insert (dict, "shortname", xmmsv_new_string (s));
+
+	s = xmms_plugin_version_get (plugin);
+	xmmsv_dict_insert (dict, "version", xmmsv_new_string (s));
+
+	s = xmms_plugin_description_get (plugin);
+	xmmsv_dict_insert (dict, "description", xmmsv_new_string (s));
+
+	u = xmms_plugin_type_get (plugin);
+	xmmsv_dict_insert (dict, "type", xmmsv_new_uint (u));
+
+	*list = g_list_prepend (*list, dict);
 
 	return TRUE;
 }
