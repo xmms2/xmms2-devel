@@ -326,8 +326,7 @@ xmmsv_new (xmmsv_type_t type)
 
 	val->type = type;
 
-	xmmsv_ref (val);
-	return val;
+	return xmmsv_ref (val);
 }
 
 /**
@@ -908,10 +907,8 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 		         (l->size - abspos) * sizeof (xmmsv_t *));
 	}
 
-	l->list[abspos] = val;
+	l->list[abspos] = xmmsv_ref (val);
 	l->size++;
-
-	xmmsv_ref (val);
 
 	/* update iterators pos */
 	for (n = l->iterators; n; n = n->next) {

@@ -1943,8 +1943,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 			break;
 
 		case 2:  /* prop value */
-			value = n->data;
-			xmmsv_ref (value);
+			value = xmmsv_ref (n->data);
 
 			/* Only insert the first source */
 			if (g_hash_table_lookup (infos, name) == NULL) {
