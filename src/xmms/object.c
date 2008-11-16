@@ -411,7 +411,13 @@ create_xmmsv_list_foreach (gpointer data, gpointer userdata)
 {
 	xmmsv_t *v = (xmmsv_t *) data;
 	xmmsv_t *l = (xmmsv_t *) userdata;
+
 	xmmsv_list_append (l, v);
+
+	/* Transfer ownership of 'v' from the GList to the
+	 * xmmsv list.
+	 */
+	xmmsv_unref (v);
 }
 
 static gboolean
