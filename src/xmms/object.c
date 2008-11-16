@@ -296,21 +296,15 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 
 	xmms_object_emit (object, signalid, &arg);
 
-	/*
-	 * We're only calling xmmsv_unref() here for
-	 * retvals that either hold no payload at all (_ARG_NONE) or that
-	 * have their own copy/reference in the payload (_ARG_STRING and
-	 * maybe more later).
+	/* In all cases above, we created a new xmmsv_t, which we
+	 * now destroy.
+	 * In some cases, those xmmsv_t's are created from GLib objects,
+	 * such as GTrees. Here we must not destroy those GLib objects,
+	 * because the caller wants to do that. However, the xmmsv_t's
+	 * don't hold onto those GLib objects, so unreffing the
+	 * xmmsv_t doesn't kill the GLib object.
 	 */
-	switch (type) {
-		case XMMSV_TYPE_STRING:
-		case XMMSV_TYPE_NONE:
-			xmmsv_unref (arg.retval);
-			break;
-		default:
-			/* FIXME: er what is this ? */
-			g_free (arg.retval);
-	}
+	xmmsv_unref (arg.retval);
 }
 
 static gint
