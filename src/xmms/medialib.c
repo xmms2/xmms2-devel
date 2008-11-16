@@ -1223,10 +1223,10 @@ xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 }
 
 static gboolean
-select_callback (GTree *row, gpointer udata)
+select_callback (xmmsv_t *row, gpointer udata)
 {
 	GList **l = (GList **) udata;
-	*l = g_list_prepend (*l, xmms_create_xmmsv_dict (row));
+	*l = g_list_prepend (*l, row);
 	return TRUE;
 }
 

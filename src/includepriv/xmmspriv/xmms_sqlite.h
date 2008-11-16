@@ -24,7 +24,7 @@
 #include <xmms/xmms_object.h>
 
 typedef gboolean (*xmms_medialib_row_array_method_t) (xmmsv_t **row, gpointer udata);
-typedef gboolean (*xmms_medialib_row_table_method_t) (GTree *row, gpointer udata);
+typedef gboolean (*xmms_medialib_row_table_method_t) (xmmsv_t *row, gpointer udata);
 
 sqlite3 *xmms_sqlite_open (void);
 gboolean xmms_sqlite_create (gboolean *create);

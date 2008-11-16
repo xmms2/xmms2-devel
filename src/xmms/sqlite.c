@@ -522,16 +522,25 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint num, i;
-		xmmsv_t *val;
-		GTree *dict;
+		xmmsv_t *dict;
 
-		dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-					g_free, (GDestroyNotify) xmmsv_unref);
+		dict = xmmsv_new_dict ();
 		num = sqlite3_data_count (stm);
 
 		for (i = 0; i < num; i++) {
+			const char *key;
+			xmmsv_t *val;
+
+			/* We don't need to strdup the key because xmmsv_dict_insert
+			 * will create its own copy.
+			 */
+			key = sqlite3_column_name (stm, i);
 			val = xmms_sqlite_column_to_val (stm, i);
-			g_tree_insert (dict, g_strdup (sqlite3_column_name (stm, i)), val);
+
+			xmmsv_dict_insert (dict, key, val);
+
+			/* The dictionary owns the value. */
+			xmmsv_unref (val);
 		}
 
 		if (!method (dict, udata)) {
