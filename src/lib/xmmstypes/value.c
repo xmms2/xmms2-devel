@@ -1131,8 +1131,6 @@ xmmsv_list_clear (xmmsv_t *listv)
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (xmmsv_is_list (listv), 0);
 
-	/* FIXME: instead, drop warning if not list, make function void */
-
 	_xmmsv_list_clear (listv->value.list);
 
 	return 1;
