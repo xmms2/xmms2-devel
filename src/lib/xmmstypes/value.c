@@ -1015,9 +1015,9 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (xmmsv_is_list (listv), 0);
 
-	/* prevent accessing after the last element */
 	l = listv->value.list;
-	x_return_val_if_fail (pos < l->size, 0);
+
+	/* prevent accessing after the last element */
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
@@ -1049,10 +1049,9 @@ xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 	x_return_val_if_fail (val, 0);
 	x_return_val_if_fail (xmmsv_is_list (listv), 0);
 
-	/* prevent accessing after the last element */
 	l = listv->value.list;
-	x_return_val_if_fail (pos < l->size, 0);
 
+	/* prevent accessing after the last element */
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
