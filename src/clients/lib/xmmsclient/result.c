@@ -413,9 +413,11 @@ xmmsc_result_wait (xmmsc_result_t *res)
  */
 
 /**
- * Get the value from a result.
+ * Get the value from a result. The reference is still owned by the
+ * result.
+ *
  * @param res a #xmmsc_result_t containing the value.
- * @returns The value received by the result.
+ * @returns A borrowed reference to the value received by the result.
  */
 xmmsv_t *
 xmmsc_result_get_value (xmmsc_result_t *res)

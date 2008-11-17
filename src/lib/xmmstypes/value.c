@@ -997,13 +997,15 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 }
 
 /**
- * Get the element at the given position in the list #xmmsv_t.
+ * Get the element at the given position in the list #xmmsv_t. This
+ * function does not increase the refcount of the element, the
+ * reference is still owned by the list.
  *
  * @param listv A #xmmsv_t containing a list.
  * @param pos The position in the list. If negative, start counting
  *            from the end (-1 is the last element, etc).
- * @param val Pointer set to the element at the given position in the
- *            list.
+ * @param val Pointer set to a borrowed reference to the element at
+ *            the given position in the list.
  * @return 1 upon success otherwise 0
  */
 int
@@ -1211,10 +1213,13 @@ xmmsv_list_iter_free (xmmsv_list_iter_t *it)
 
 
 /**
- * Get the element currently pointed at by the iterator.
+ * Get the element currently pointed at by the iterator. This
+ * function does not increase the refcount of the element, the
+ * reference is still owned by the list.
  *
  * @param listv A #xmmsv_list_iter_t.
- * @param val Pointer set to the element pointed at by the iterator.
+ * @param val Pointer set to a borrowed reference to the element
+ *            pointed at by the iterator.
  * @return 1 upon success otherwise 0
  */
 int
@@ -1373,12 +1378,13 @@ xmmsv_dict_free (xmmsv_dict_t *dict)
 
 /**
  * Get the element corresponding to the given key in the dict #xmmsv_t
- * (if it exists).
+ * (if it exists).  This function does not increase the refcount of
+ * the element, the reference is still owned by the dict.
  *
  * @param dictv A #xmmsv_t containing a dict.
  * @param key The key in the dict.
- * @param val Pointer set to the element corresponding to the given
- *            key in the list.
+ * @param val Pointer set to a borrowed reference to the element
+ *            corresponding to the given key in the dict.
  * @return 1 upon success otherwise 0
  */
 int
@@ -1586,11 +1592,14 @@ xmmsv_dict_iter_free (xmmsv_dict_iter_t *it)
 }
 
 /**
- * Get the key-element pair currently pointed at by the iterator.
+ * Get the key-element pair currently pointed at by the iterator. This
+ * function does not increase the refcount of the element, the
+ * reference is still owned by the dict.
  *
  * @param dictv A #xmmsv_dict_iter_t.
  * @param key Pointer set to the key pointed at by the iterator.
- * @param val Pointer set to the element pointed at by the iterator.
+ * @param val Pointer set to a borrowed reference to the element
+ *            pointed at by the iterator.
  * @return 1 upon success otherwise 0
  */
 int
