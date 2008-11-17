@@ -64,7 +64,7 @@ struct xmms_xform_St {
 	GQueue *hotspots;
 
 	GList *browse_list;
-	GTree *browse_dict;
+	xmmsv_t *browse_dict;
 	gint browse_index;
 
 	/** used for line reading */
@@ -167,7 +167,7 @@ xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key,
 	g_return_if_fail (key);
 	g_return_if_fail (val);
 
-	g_tree_insert (xform->browse_dict, g_strdup (key), val);
+	xmmsv_dict_insert (xform->browse_dict, key, val);
 }
 
 void
@@ -187,9 +187,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	url = xmms_xform_get_url (xform);
 	g_return_if_fail (url);
 
-	xform->browse_dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                                      g_free,
-	                                      (GDestroyNotify) xmmsv_unref);
+	xform->browse_dict = xmmsv_new_dict ();
 
 	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
@@ -207,7 +205,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	xmms_xform_browse_add_entry_property_str (xform, "path", t);
 	xmms_xform_browse_add_entry_property_int (xform, "isdir", isdir);
 
-	val = xmms_create_xmmsv_dict (xform->browse_dict);
+	val = xform->browse_dict;
 	xform->browse_list = g_list_prepend (xform->browse_list, val);
 
 	g_free (t);
