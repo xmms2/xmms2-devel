@@ -1438,14 +1438,14 @@ xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 
 	/* else, insert a new key-value pair */
 	} else {
-		xmmsv_list_t *l;
 		xmmsv_t *keyval;
-		l = dictv->value.dict->flatlist;
+
 		keyval = xmmsv_new_string (key);
 
-		ret = _xmmsv_list_append (l, keyval);
+		ret = xmmsv_list_iter_insert (it->lit, keyval);
 		if (ret) {
-			ret = _xmmsv_list_append (l, val);
+			xmmsv_list_iter_next (it->lit);
+			ret = xmmsv_list_iter_insert (it->lit, val);
 			if (!ret) {
 				/* FIXME: oops, remove previously inserted key */
 			}
@@ -1664,7 +1664,9 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 }
 
 /**
- * Move the iterator to the pair with the given key (if it exists).
+ * Move the iterator to the pair with the given key (if it exists)
+ * or move it to the position where the key would have to be
+ * put (if it doesn't exist yet).
  *
  * @param dictv A #xmmsv_dict_iter_t.
  * @param key The key to seek for.
@@ -1673,30 +1675,65 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 int
 xmmsv_dict_iter_seek (xmmsv_dict_iter_t *it, const char *key)
 {
-	const char *startkey, *k = NULL;
+	xmmsv_t *val;
+	const char *k;
+	int s, dict_size, cmp, left, right;
 
 	x_return_val_if_fail (it, 0);
 	x_return_val_if_fail (key, 0);
 
-	xmmsv_dict_iter_pair (it, &k, NULL);
-	startkey = k;
+	/* how many key-value pairs does this dictionary contain? */
+	dict_size = it->parent->flatlist->size / 2;
 
-	/* walk the list once */
-	do {
-		/* read next pair */
-		xmmsv_dict_iter_next (it);
-		if (!xmmsv_dict_iter_valid (it)) {
-			xmmsv_dict_iter_first (it);
-		}
-		xmmsv_dict_iter_pair (it, &k, NULL);
+	/* if it's empty, point the iterator at the beginning of
+	 * the list and report failure.
+	 */
+	if (!dict_size) {
+		xmmsv_list_iter_goto (it->lit, 0);
 
-		/* matching keys, quit now! */
-		if (k && strcmp (k, key) == 0) {
+		return 0;
+	}
+
+	/* perform binary search for the given key */
+	left = 0;
+	right = dict_size - 1;
+
+	while (left <= right) {
+		int mid = left + ((right - left) / 2);
+
+		/* jump to the middle of the current search area */
+		xmmsv_list_iter_goto (it->lit, mid * 2);
+		xmmsv_list_iter_entry (it->lit, &val);
+
+		/* get the key at this slot */
+		s = xmmsv_get_string (val, &k);
+		x_return_val_if_fail (s, 0);
+
+		/* and compare it to the given key */
+		cmp = strcmp (k, key);
+
+		/* hooray, we found the key. */
+		if (cmp == 0)
 			return 1;
-		}
-	} while (k != startkey);
 
-	/* not found, too bad */
+		/* go on searching the left or the right hand side. */
+		if (cmp < 0) {
+			left = mid + 1;
+		} else {
+			right = mid - 1;
+		}
+	}
+
+	/* if we get down here, we failed to find the key
+	 * in the dictionary.
+	 * now, move the iterator so that it points to the slot
+	 * where the key would be inserted.
+	 */
+	if (cmp < 0) {
+		xmmsv_list_iter_next (it->lit);
+		xmmsv_list_iter_next (it->lit);
+	}
+
 	return 0;
 }
 
