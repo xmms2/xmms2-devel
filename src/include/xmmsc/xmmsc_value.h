@@ -118,6 +118,16 @@ int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it);
 
 xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
 
+/* These helps us doing compiletime typechecking */
+static inline const char *__xmmsv_identity_const_charp (const char *v) {return v;}
+static inline xmmsv_t *__xmmsv_identity_xmmsv (xmmsv_t *v) {return v;}
+#define XMMSV_DICT_ENTRY(k, v) __xmmsv_identity_const_charp (k), __xmmsv_identity_xmmsv (v)
+#define XMMSV_DICT_ENTRY_STR(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_string (v))
+#define XMMSV_DICT_ENTRY_INT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_int (v))
+#define XMMSV_DICT_ENTRY_UINT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_uint (v))
+#define XMMSV_DICT_END NULL
+xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
+
 #ifdef __cplusplus
 }
 #endif
