@@ -398,25 +398,14 @@ xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 {
 	xmmsv_t *dict;
 	GList **list = data;
-	const char *s;
-	unsigned int u;
 
-	dict = xmmsv_new_dict ();
-
-	s = xmms_plugin_name_get (plugin);
-	xmmsv_dict_insert (dict, "name", xmmsv_new_string (s));
-
-	s = xmms_plugin_shortname_get (plugin);
-	xmmsv_dict_insert (dict, "shortname", xmmsv_new_string (s));
-
-	s = xmms_plugin_version_get (plugin);
-	xmmsv_dict_insert (dict, "version", xmmsv_new_string (s));
-
-	s = xmms_plugin_description_get (plugin);
-	xmmsv_dict_insert (dict, "description", xmmsv_new_string (s));
-
-	u = xmms_plugin_type_get (plugin);
-	xmmsv_dict_insert (dict, "type", xmmsv_new_uint (u));
+	dict = xmmsv_build_dict (
+	        XMMSV_DICT_ENTRY_STR ("name", xmms_plugin_name_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("shortname", xmms_plugin_shortname_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("version", xmms_plugin_version_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("description", xmms_plugin_description_get (plugin)),
+	        XMMSV_DICT_ENTRY_UINT ("type", xmms_plugin_type_get (plugin)),
+	        XMMSV_DICT_END);
 
 	*list = g_list_prepend (*list, dict);
 
