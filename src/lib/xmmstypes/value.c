@@ -885,7 +885,6 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 	unsigned int abspos;
 	xmmsv_list_iter_t *it;
 	x_list_t *n;
-	int i;
 
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
@@ -904,8 +903,10 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 		x_return_val_if_fail (success, 0);
 	}
 
-	for (i = l->size; i > abspos; i--) {
-		l->list[i] = l->list[i - 1];
+	/* move existing items out of the way */
+	if (l->size > abspos) {
+		memmove (l->list + abspos + 1, l->list + abspos,
+		         (l->size - abspos) * sizeof (xmmsv_t *));
 	}
 
 	l->list[abspos] = val;
@@ -937,7 +938,6 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 	xmmsv_list_iter_t *it;
 	size_t half_size;
 	x_list_t *n;
-	int i;
 
 	/* prevent removing after the last element */
 	x_return_val_if_fail (pos < l->size, 0);
@@ -948,8 +948,11 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 	xmmsv_unref (l->list[abspos]);
 
 	l->size--;
-	for (i = abspos; i < l->size; i++) {
-		l->list[i] = l->list[i + 1];
+
+	/* fill the gap */
+	if (abspos < l->size) {
+		memmove (l->list + abspos, l->list + abspos + 1,
+		         (l->size - abspos) * sizeof (xmmsv_t *));
 	}
 
 	/* Reduce memory usage by two if possible */
