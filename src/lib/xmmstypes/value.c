@@ -1447,7 +1447,12 @@ xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 			xmmsv_list_iter_next (it->lit);
 			ret = xmmsv_list_iter_insert (it->lit, val);
 			if (!ret) {
-				/* FIXME: oops, remove previously inserted key */
+				/* we added the key, but we couldn't add the value.
+				 * we remove the key again to put the dictionary back
+				 * in a consistent state.
+				 */
+				it->lit->position--;
+				xmmsv_list_iter_remove (it->lit);
 			}
 		}
 		xmmsv_unref (keyval);
