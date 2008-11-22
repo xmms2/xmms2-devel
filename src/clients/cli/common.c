@@ -94,8 +94,8 @@ print_hash (const gchar *key, xmmsv_t *value, void *udata)
 {
 	xmmsv_type_t value_type;
 	const char *string_val;
-	unsigned int int_val;
-	int uint_val;
+	unsigned int uint_val;
+	int int_val;
 
 	value_type = xmmsv_get_type (value);
 
