@@ -16,8 +16,6 @@
 #include "cmd_pls.h"
 #include "common.h"
 
-extern const char *default_source_pref[];
-
 cmds plist_commands[] = {
 	{ "list", "List all available playlists", cmd_playlists_list },
 	{ "active", "Displays the name of the active playlist", cmd_playlist_active },
@@ -574,7 +572,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		info_res = xmmsc_medialib_get_info (conn, ui);
 		xmmsc_result_wait (info_res);
 		propdict = xmmsc_result_get_value (info_res);
-		info_val = xmmsv_propdict_to_dict (propdict, default_source_pref);
+		info_val = xmmsv_propdict_to_dict (propdict, NULL);
 
 		if (xmmsv_is_error (info_val)) {
 			print_error ("%s", xmmsv_get_error_old (info_val));

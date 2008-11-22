@@ -21,8 +21,6 @@
 
 #include <glib.h>
 
-extern const char *default_source_pref[];
-
 void cmd_status (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv);
 

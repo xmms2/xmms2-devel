@@ -27,6 +27,18 @@
 #include "xmmspriv/xmms_list.h"
 
 
+/* Default source preferences for accessing "propdicts" */
+const char *default_source_pref[] = {
+	"server",
+	"client/*",
+	"plugin/id3v2",
+	"plugin/segment",
+	"plugin/*",
+	"*",
+	NULL
+};
+
+
 typedef struct xmmsv_list_St xmmsv_list_t;
 typedef struct xmmsv_dict_St xmmsv_dict_t;
 
@@ -580,18 +592,22 @@ source_match_pattern (const char *source, const char *pattern)
 	return match;
 }
 
+/* Return the index of the source in the source prefs list, or -1 if
+ * no match.
+ */
 static int
 find_match_index (const char *source, const char **src_prefs)
 {
-	int i;
+	int i, match = -1;
 
 	for (i = 0; src_prefs[i]; i++) {
 		if (source_match_pattern (source, src_prefs[i])) {
+			match = i;
 			break;
 		}
 	}
 
-	return i;
+	return match;
 }
 
 /**
@@ -601,7 +617,8 @@ find_match_index (const char *source, const char **src_prefs)
  *
  * @param propdict A key-source-value dict-of-dict #xmmsv_t.
  * @param src_prefs A list of source names or patterns. Must be
- *                  NULL-terminated.
+ *                  NULL-terminated. If this argument is NULL, the
+ *                  default source preferences is used.
  * @return An #xmmsv_t containing a simple key-value dict. Must be
  *         unreffed manually when done.
  */
@@ -611,9 +628,12 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 	xmmsv_t *dict, *source_dict, *value, *best_value;
 	xmmsv_dict_iter_t *key_it, *source_it;
 	const char *key, *source;
+	const char **local_prefs;
 	int match_index, best_index;
 
 	dict = xmmsv_new_dict ();
+
+	local_prefs = src_prefs ? src_prefs : default_source_pref;
 
 	xmmsv_get_dict_iter (propdict, &key_it);
 	while (xmmsv_dict_iter_valid (key_it)) {
@@ -624,15 +644,20 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 		xmmsv_get_dict_iter (source_dict, &source_it);
 		while (xmmsv_dict_iter_valid (source_it)) {
 			xmmsv_dict_iter_pair (source_it, &source, &value);
-			match_index = find_match_index (source, src_prefs);
-			if (best_index < 0 || match_index < best_index) {
+			match_index = find_match_index (source, local_prefs);
+			/* keep first match or better match */
+			if (match_index >= 0 && (best_index < 0 ||
+			                         match_index < best_index)) {
 				best_value = value;
 				best_index = match_index;
 			}
 			xmmsv_dict_iter_next (source_it);
 		}
 
-		xmmsv_dict_insert (dict, key, best_value);
+		/* Note: we do not insert a key-value pair if no source matches */
+		if (best_value) {
+			xmmsv_dict_insert (dict, key, best_value);
+		}
 
 		xmmsv_dict_iter_next (key_it);
 	}

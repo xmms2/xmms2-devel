@@ -112,7 +112,7 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_medialib_get_info (conn, id);
 	xmmsc_result_wait (res);
 	propdict = xmmsc_result_get_value (res);
-	val = xmmsv_propdict_to_dict (propdict, default_source_pref);
+	val = xmmsv_propdict_to_dict (propdict, NULL);
 
 	if (xmmsv_is_error (val)) {
 		print_error ("%s", xmmsv_get_error_old (val));
@@ -269,7 +269,7 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 		print_error ("%s", xmmsv_get_error_old (propdict));
 	}
 
-	val = xmmsv_propdict_to_dict (propdict, default_source_pref);
+	val = xmmsv_propdict_to_dict (propdict, NULL);
 
 	print_info ("");
 	if (val_has_key (val, "channel") && val_has_key (val, "title")) {
