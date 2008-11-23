@@ -1843,10 +1843,10 @@ xmmsv_decode_url (const xmmsv_t *inv)
 			char ts[3];
 			char *t;
 
-			ts[0] = url[i++];
+			ts[0] = ins[i++];
 			if (!ts[0])
 				goto err;
-			ts[1] = url[i++];
+			ts[1] = ins[i++];
 			if (!ts[1])
 				goto err;
 			ts[2] = '\0';
