@@ -40,6 +40,7 @@
 
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 gchar *xmms_medialib_url_encode (const gchar *path);
+static gboolean xmms_medialib_check_id_in_session (xmms_medialib_entry_t entry, xmms_medialib_session_t *session);
 
 static void xmms_medialib_add_entry (xmms_medialib_t *, const gchar *, xmms_error_t *);
 static void xmms_medialib_move_entry (xmms_medialib_t *, guint32 entry, const gchar *, xmms_error_t *);
@@ -611,6 +612,13 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 	g_return_val_if_fail (property, FALSE);
 	g_return_val_if_fail (session, FALSE);
 
+	if (!xmms_medialib_check_id_in_session (entry, session)) {
+		XMMS_DBG ("Trying to add property to id %d "
+		          "that is not yet in the medialib. Denied.", entry);
+
+		return FALSE;
+	}
+
 	ret = xmms_sqlite_exec (session->sql,
 	                        "insert or replace into Media (id, value, key, source) values (%d, %d, %Q, %d)",
 	                        entry, value, property, source);
@@ -654,6 +662,13 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 
 	if (value && !g_utf8_validate (value, -1, NULL)) {
 		XMMS_DBG ("OOOOOPS! Trying to set property %s to a NON UTF-8 string (%s) I will deny that!", property, value);
+		return FALSE;
+	}
+
+	if (!xmms_medialib_check_id_in_session (entry, session)) {
+		XMMS_DBG ("Trying to add property to id %d "
+		          "that is not yet in the medialib. Denied.", entry);
+
 		return FALSE;
 	}
 
@@ -1381,17 +1396,30 @@ gboolean
 xmms_medialib_check_id (xmms_medialib_entry_t entry)
 {
 	xmms_medialib_session_t *session;
-	gint c = 0;
+	gboolean ret;
 
 	session = xmms_medialib_begin ();
+	ret = xmms_medialib_check_id_in_session (entry, session);
+	xmms_medialib_end (session);
+
+	return ret;
+}
+
+/**
+ * @internal
+ */
+
+static gboolean
+xmms_medialib_check_id_in_session (xmms_medialib_entry_t entry,
+                                   xmms_medialib_session_t *session)
+{
+	gint c = 0;
+
 	if (!xmms_sqlite_query_int (session->sql, &c,
 	                            "select count(id) from Media where id=%d",
 	                            entry)) {
-		xmms_medialib_end (session);
 		return FALSE;
 	}
-
-	xmms_medialib_end (session);
 
 	return c > 0;
 }

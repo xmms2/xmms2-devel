@@ -214,6 +214,10 @@ N: Algardas Pelakauskas
 E: algardas@gmail.com
 D: Ruby radd binding
 
+N: Andrew G Potter
+E: agpotter@ucdavis.edu
+D: Medialib handling bugfix
+
 N: Robin Lee Powell
 E: rlpowell@chain.digitalkingdom.org
 D: New medialib/collection helper commands.
