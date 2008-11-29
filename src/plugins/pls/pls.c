@@ -106,17 +106,13 @@ xmms_pls_add_entry (xmms_xform_t *xform,
                     xmms_pls_entry_t *e)
 {
 	if (e->file) {
-		gchar *title;
 		gchar *path;
 
 		path = xmms_build_playlist_url (plspath, e->file);
-		title = e->file;
-
-		if (e->title)
-			title = e->title;
 
 		xmms_xform_browse_add_symlink (xform, NULL, path);
-		xmms_xform_browse_add_entry_property_str (xform, "title", e->title);
+		if (e->title)
+			xmms_xform_browse_add_entry_property_str (xform, "title", e->title);
 
 		g_free (path);
 		g_free (e->file);
@@ -187,11 +183,22 @@ xmms_pls_browse (xmms_xform_t *xform, const char *url, xmms_error_t *error)
 			continue;
 		}
 
+		ep++; /* Skip the '=' */
+
+		/* Remove leading and trailing whitespace from the value. */
+		g_strstrip (ep);
+
+		/* Ignore empty values. */
+		if (!*ep) {
+			XMMS_DBG ("Ignoring empty value in line '%s'", buffer);
+			continue;
+		}
+
 		if (entry.num != num && entry.num != -1) {
 			xmms_pls_add_entry (xform, plspath, &entry);
 		}
 
-		*val = g_strdup (ep + 1);
+		*val = g_strdup (ep);
 		entry.num = num;
 	}
 
