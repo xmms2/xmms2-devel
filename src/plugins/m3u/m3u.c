@@ -50,6 +50,8 @@ XMMS_XFORM_PLUGIN ("m3u",
                    "Playlist parser for m3u's",
                    xmms_m3u_plugin_setup);
 
+/* xform methods */
+
 static gboolean
 xmms_m3u_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
@@ -67,6 +69,9 @@ xmms_m3u_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-mpegurl",
 	                              NULL);
 
+	xmms_magic_add ("Extended M3U header", "audio/x-mpegurl",
+	                "0 string #EXTM3U", NULL);
+
 	xmms_magic_extension_add ("audio/x-mpegurl", "*.m3u");
 
 	return TRUE;
@@ -82,9 +87,25 @@ xmms_m3u_init (xmms_xform_t *xform)
 	return TRUE;
 }
 
-/*
- * Member functions
- */
+static gchar *
+get_extinf (const gchar *line)
+{
+	gchar *tmp;
+
+	if (!strncmp (line, "#EXTINF", 7)) {
+		if ((tmp=strchr (line, ','))) {
+			tmp = g_strstrip (g_strdup (++tmp));
+			if (*tmp) {
+				return tmp;
+			} else {
+				g_free (tmp);
+				return NULL;
+			}
+		}
+	}
+
+	return NULL;
+}
 
 static gboolean
 xmms_m3u_browse (xmms_xform_t *xform,
@@ -92,42 +113,44 @@ xmms_m3u_browse (xmms_xform_t *xform,
                  xmms_error_t *error)
 {
 	gchar line[XMMS_XFORM_MAX_LINE_SIZE];
-	xmms_error_t err;
-	gboolean extm3u = FALSE;
 	gchar *tmp;
+	gchar *title = NULL;
 	const gchar *d;
 
 	g_return_val_if_fail (xform, FALSE);
 
-	xmms_error_reset (&err);
+	xmms_error_reset (error);
 
-	if (!xmms_xform_read_line (xform, line, &err)) {
+	if (!xmms_xform_read_line (xform, line, error)) {
 		XMMS_DBG ("Error reading m3u-file");
 		return FALSE;
-	}
-
-	if (strcmp (line, "#EXTM3U") == 0) {
-		extm3u = TRUE;
-		if (!xmms_xform_read_line (xform, line, &err)) {
-			return FALSE;
-		}
 	}
 
 	d = xmms_xform_get_url (xform);
 
 	do {
 		if (line[0] == '#') {
-			if (!xmms_xform_read_line (xform, line, &err)) {
-				return FALSE;
+			if (!title) {
+				title = get_extinf (line);
 			}
+		} else {
+			tmp = xmms_build_playlist_url (d, line);
+			xmms_xform_browse_add_symlink (xform, NULL, tmp);
+
+			if (title) {
+				xmms_xform_browse_add_entry_property_str (xform,
+				                                          "title",
+				                                          title);
+				g_free (title);
+				title = NULL;
+			}
+
+			g_free (tmp);
 		}
 
-		tmp = xmms_build_playlist_url (d, line);
-		xmms_xform_browse_add_symlink (xform, NULL, tmp);
+	} while (xmms_xform_read_line (xform, line, error));
 
-		g_free (tmp);
-
-	} while (xmms_xform_read_line (xform, line, &err));
+	g_free (title);
 
 	return TRUE;
 }
