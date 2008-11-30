@@ -1043,24 +1043,20 @@ xmms_medialib_entry_get_id (xmms_medialib_t *medialib, const gchar *url,
 }
 
 static void
-xmms_medialib_tree_add_tuple (GTree *tree, xmmsv_t *key,
-                              xmmsv_t *source, xmmsv_t *value)
+xmms_medialib_tree_add_tuple (GTree *tree, const char *key,
+                              const char *source, xmmsv_t *value)
 {
 	xmmsv_t *keytreeval;
-	const gchar *skey, *ssrc;
-
-	xmmsv_get_string (key, &skey);
-	xmmsv_get_string (source, &ssrc);
 
 	/* Find (or insert) subtree matching the prop key */
-	keytreeval = (xmmsv_t *) g_tree_lookup (tree, skey);
+	keytreeval = (xmmsv_t *) g_tree_lookup (tree, key);
 	if (!keytreeval) {
 		keytreeval = xmmsv_new_dict ();
-		g_tree_insert (tree, g_strdup (skey), keytreeval);
+		g_tree_insert (tree, g_strdup (key), keytreeval);
 	}
 
 	/* Replace (or insert) value matching the prop source */
-	xmmsv_dict_insert (keytreeval, ssrc, value);
+	xmmsv_dict_insert (keytreeval, source, value);
 }
 
 static gboolean
@@ -1083,11 +1079,12 @@ xmms_medialib_list_cb (xmmsv_t **row, gpointer udata)
 static gboolean
 xmms_medialib_tree_cb (xmmsv_t **row, gpointer udata)
 {
-	xmmsv_t *key, *source, *value;
+	const char *key, *source;
+	xmmsv_t *value;
 	GTree **tree = (GTree**)udata;
 
-	source = row[0];
-	key = row[1];
+	xmmsv_get_string (row[0], &source);
+	xmmsv_get_string (row[1], &key);
 	value = row[2];
 
 	xmms_medialib_tree_add_tuple (*tree, key, source, value);
@@ -1154,6 +1151,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_ent
 {
 	GTree *ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
 	                              (GDestroyNotify) xmmsv_unref);
+	xmmsv_t *v_entry;
 	gboolean s;
 
 	g_return_val_if_fail (session, NULL);
@@ -1170,9 +1168,9 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_ent
 		return NULL;
 	}
 
-	xmms_medialib_tree_add_tuple (ret, xmmsv_new_string ("id"),
-	                              xmmsv_new_string ("server"),
-	                              xmmsv_new_int (entry));
+	v_entry = xmmsv_new_int (entry);
+	xmms_medialib_tree_add_tuple (ret, "id", "server", v_entry);
+	xmmsv_unref (v_entry);
 
 	return ret;
 }
