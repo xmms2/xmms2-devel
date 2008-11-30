@@ -341,8 +341,6 @@ int
 xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int drawtime, unsigned int blocking)
 {
 	xmmsc_visualization_t *v;
-	xmmsc_vischunk_t *src;
-	int i, ret;
 
 	x_check_conn (c, 0);
 	v = get_dataset (c, vv);
