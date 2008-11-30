@@ -64,6 +64,11 @@ xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-scpls",
 	                              NULL);
 
+	xmms_magic_add ("pls header",
+	                "audio/x-scpls",
+	                "0 string [playlist]\r\n",
+	                "0 string [playlist]\n", NULL);
+
 	xmms_magic_extension_add ("audio/x-scpls", "*.pls");
 
 	return TRUE;
