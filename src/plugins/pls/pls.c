@@ -97,7 +97,6 @@ typedef struct {
 	gint num;
 	gchar *file;
 	gchar *title;
-	gchar *length;
 } xmms_pls_entry_t;
 
 static void
@@ -122,11 +121,6 @@ xmms_pls_add_entry (xmms_xform_t *xform,
 	if (e->title) {
 		g_free (e->title);
 		e->title = NULL;
-	}
-
-	if (e->length) {
-		g_free (e->length);
-		e->length = NULL;
 	}
 }
 
@@ -167,9 +161,6 @@ xmms_pls_browse (xmms_xform_t *xform, const char *url, xmms_error_t *error)
 		if (g_ascii_strncasecmp (buffer, "File", 4) == 0) {
 			np = &buffer[4];
 			val = &entry.file;
-		} else if (g_ascii_strncasecmp (buffer, "Length", 6) == 0) {
-			np = &buffer[6];
-			val = &entry.length;
 		} else if (g_ascii_strncasecmp (buffer, "Title", 5) == 0) {
 			np = &buffer[5];
 			val = &entry.title;
