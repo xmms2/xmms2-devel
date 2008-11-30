@@ -21,6 +21,9 @@
 #include <stdarg.h>
 #include <string.h>
 
+static xmmsv_t *xmms_create_xmmsv_list (GList *list);
+static xmmsv_t *xmms_create_xmmsv_dict (GTree *dict);
+static xmmsv_t *xmms_create_xmmsv_bin (GString *gs);
 static void create_xmmsv_list_foreach (gpointer data, gpointer userdata);
 static gboolean create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata);
 
@@ -365,11 +368,22 @@ xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t 
  * @param list The list of values to initially fill the #xmmsv_t with.
  * @return a new #xmmsv_t list.
  */
-xmmsv_t *
+static xmmsv_t *
 xmms_create_xmmsv_list (GList *list)
 {
 	xmmsv_t *v = xmmsv_new_list ();
 	g_list_foreach (list, create_xmmsv_list_foreach, (gpointer) v);
+	return v;
+}
+
+xmmsv_t *
+xmms_convert_and_kill_list (GList *list)
+{
+	xmmsv_t *v;
+
+	v = xmms_create_xmmsv_list (list);
+	g_list_free (list);
+
 	return v;
 }
 
@@ -378,7 +392,7 @@ xmms_create_xmmsv_list (GList *list)
  * @param dict The dict of values to initially fill the #xmmsv_t with.
  * @return a new #xmmsv_t dict.
  */
-xmmsv_t *
+static xmmsv_t *
 xmms_create_xmmsv_dict (GTree *dict)
 {
 	xmmsv_t *v = NULL;
@@ -389,18 +403,53 @@ xmms_create_xmmsv_dict (GTree *dict)
 	return v;
 }
 
+xmmsv_t *
+xmms_convert_and_kill_dict (GTree *dict)
+{
+	xmmsv_t *v;
+
+	v = xmms_create_xmmsv_dict (dict);
+	g_tree_destroy (dict);
+
+	return v;
+}
+
 /**
  * Create a new #xmmsv_t bin initialized with the argument.
  * @param gs The data to initially fill the #xmmsv_t with.
  * @return a new #xmmsv_t bin.
  */
-xmmsv_t *
+static xmmsv_t *
 xmms_create_xmmsv_bin (GString *gs)
 {
 	xmmsv_t *v = NULL;
 	if (gs) {
 		v = xmmsv_new_bin (gs->str, gs->len);
 	}
+	return v;
+}
+
+xmmsv_t *
+xmms_convert_and_kill_bin (GString *gs)
+{
+	xmmsv_t *v;
+
+	v = xmms_create_xmmsv_bin (gs);
+	g_string_free (gs, TRUE);
+
+	return v;
+}
+
+xmmsv_t *
+xmms_convert_and_kill_string (gchar *str)
+{
+	xmmsv_t *v = NULL;
+
+	if (str) {
+		v = xmmsv_new_string (str);
+		g_free (str);
+	}
+
 	return v;
 }
 

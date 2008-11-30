@@ -52,9 +52,10 @@ struct xmms_object_St {
 
 
 /* Convenience wrapper to create #xmmsv_t from GLib types. */
-xmmsv_t *xmms_create_xmmsv_list (GList *list);
-xmmsv_t *xmms_create_xmmsv_dict (GTree *dict);
-xmmsv_t *xmms_create_xmmsv_bin (GString *gs);
+xmmsv_t *xmms_convert_and_kill_list (GList *list);
+xmmsv_t *xmms_convert_and_kill_dict (GTree *dict);
+xmmsv_t *xmms_convert_and_kill_string (gchar *str);
+xmmsv_t *xmms_convert_and_kill_bin (GString *gs);
 
 int xmms_bin_to_gstring (xmmsv_t *value, GString **gs);
 int dummy_identity (xmmsv_t *value, xmmsv_t **arg);
@@ -136,13 +137,13 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_PRINT_ARG_DICT(a)   , argval##a
 
 #define __XMMS_CMD_DO_RETVAL_NONE() arg->retval = xmmsv_new_none();
-#define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_create_xmmsv_dict
+#define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_convert_and_kill_dict
 #define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval = xmmsv_new_uint
 #define __XMMS_CMD_DO_RETVAL_INT32() arg->retval = xmmsv_new_int
-#define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_create_xmmsv_list
-#define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmmsv_new_string
+#define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_convert_and_kill_list
+#define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_convert_and_kill_string
 #define __XMMS_CMD_DO_RETVAL_COLL() arg->retval = xmmsv_new_coll
-#define __XMMS_CMD_DO_RETVAL_BIN() arg->retval = xmms_create_xmmsv_bin
+#define __XMMS_CMD_DO_RETVAL_BIN() arg->retval = xmms_convert_and_kill_bin
 
 #define XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5, argtype6) static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \
