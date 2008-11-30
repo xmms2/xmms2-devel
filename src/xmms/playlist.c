@@ -46,6 +46,7 @@ static void xmms_playlist_shuffle (xmms_playlist_t *playlist, const gchar *plnam
 static void xmms_playlist_clear (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static void xmms_playlist_sort (xmms_playlist_t *playlist, const gchar *plname, xmmsv_t *property, xmms_error_t *err);
 static GList * xmms_playlist_list_entries (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
+static gchar *xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
 gboolean xmms_playlist_remove (xmms_playlist_t *playlist, const gchar *plname, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *plcoll, guint pos, xmms_error_t *err);
@@ -549,13 +550,13 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, const gchar *plname,
 }
 
 /**
- * Retrieve the name of the currently active playlist.
+ * Retrieve a copy of the name of the currently active playlist.
  *
  */
-const gchar *
+static gchar *
 xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 {
-	const gchar *name = NULL;
+	gchar *name = NULL;
 	xmmsv_coll_t *active_coll;
 
 	g_return_val_if_fail (playlist, 0);
@@ -564,11 +565,15 @@ xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	active_coll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 	if (active_coll != NULL) {
-		name = xmms_collection_find_alias (playlist->colldag,
-		                                   XMMS_COLLECTION_NSID_PLAYLISTS,
-		                                   active_coll, XMMS_ACTIVE_PLAYLIST);
-		if (name == NULL) {
+		const gchar *alias;
+
+		alias = xmms_collection_find_alias (playlist->colldag,
+		                                    XMMS_COLLECTION_NSID_PLAYLISTS,
+		                                    active_coll, XMMS_ACTIVE_PLAYLIST);
+		if (alias == NULL) {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "active playlist not referenced!");
+		} else {
+			name = g_strdup (alias);
 		}
 	} else {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "no active playlist");
