@@ -28,6 +28,8 @@
 #include "xmms/xmms_medialib.h"
 #include "gme/gme.h"
 
+#define GME_DEFAULT_SAMPLE_RATE 44100
+
 extern "C" {
 
 /* 
@@ -46,6 +48,7 @@ static gboolean xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gboolean xmms_gme_init (xmms_xform_t *decoder);
 static void xmms_gme_destroy (xmms_xform_t *decoder);
+static gint64 xmms_gme_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -65,6 +68,7 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_gme_init;
 	methods.destroy = xmms_gme_destroy;
 	methods.read = xmms_gme_read;
+	methods.seek = xmms_gme_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -140,7 +144,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
 	                             2, /* stereo */
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                             44100, /* 44 kHz */
+	                             GME_DEFAULT_SAMPLE_RATE, /* User-configurable in the future */
 	                             XMMS_STREAM_TYPE_END);
 
 	file_contents = g_string_new ("");
@@ -161,7 +165,7 @@ xmms_gme_init (xmms_xform_t *xform)
 		g_string_append_len (file_contents, buf, ret);
 	}
 
-	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, 44100);
+	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, GME_DEFAULT_SAMPLE_RATE);
 
 	if (init_error) {
 		XMMS_DBG ("gme_open_data returned an error: %s", init_error);
@@ -279,6 +283,40 @@ xmms_gme_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	}
 
 	return len;
+}
+
+static gint64
+xmms_gme_seek (xmms_xform_t *xform, gint64 samples,
+               xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	xmms_gme_data_t *data;
+	gint64 target_time;
+	gint duration;
+
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+	g_return_val_if_fail (xform, -1);
+
+	data = (xmms_gme_data_t *) xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
+
+	if (samples < 0) {
+		xmms_error_set (err, XMMS_ERROR_INVAL,
+		                "Trying to seek before start of stream");
+		return -1;
+	}
+
+	target_time = (samples / GME_DEFAULT_SAMPLE_RATE) * 1000;
+	xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, &duration);
+
+	if (target_time > duration) {
+		xmms_error_set (err, XMMS_ERROR_INVAL,
+		                "Trying to seek past end of stream");
+		return -1;
+	}
+
+	gme_seek (data->emu, target_time);
+
+	return (gme_tell (data->emu) / 1000) * GME_DEFAULT_SAMPLE_RATE;
 }
 
 }

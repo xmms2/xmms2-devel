@@ -103,6 +103,10 @@ N: Johannes Heimansberg
 E: wejpilot@gmail.com
 D: Fix remove command in cli.
 
+N: Jonathan Horowitz
+E: jhorowitz@cs.uri.edu
+D: GME plugin improvements.
+
 N: Olle Hällnäs
 E: olle@xmms.org
 D: Better seeking in cli.
