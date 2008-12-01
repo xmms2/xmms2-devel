@@ -347,7 +347,10 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 				}
 			}
 		}
+
 		count++;
+
+		xmmsv_unref (val);
 		xmmsc_result_unref (res);
 	}
 

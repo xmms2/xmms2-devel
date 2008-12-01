@@ -125,6 +125,8 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		                    "${artist} - ${title}", val);
 	}
 
+	xmmsv_unref (val);
+
 	print_info ("%s", print_text);
 	xmmsc_result_unref (res);
 }
@@ -303,6 +305,8 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 	} else {
 		curr_dur = 0;
 	}
+
+	xmmsv_unref (val);
 
 	fetching_songname = FALSE;
 
