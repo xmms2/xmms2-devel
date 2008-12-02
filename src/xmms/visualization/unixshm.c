@@ -166,7 +166,8 @@ write_start_shm (int32_t id, xmmsc_vis_unixshm_t *t, xmmsc_vischunk_t **dest)
 		return FALSE;
 	}
 	if (shm_desc.shm_nattch != 2) {
-		g_error ("Unbelievable # of SHM attachments: %d\n", shm_desc.shm_nattch);
+		g_error ("Unbelievable # of SHM attachments: %lu\n",
+		         (unsigned long) shm_desc.shm_nattch);
 	}
 
 	if (!decrement_server (t)) {
