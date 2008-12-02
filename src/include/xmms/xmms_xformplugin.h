@@ -230,7 +230,7 @@ void xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer
 gboolean xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key);
 gboolean xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val);
 gboolean xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val);
-gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen);
+gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, const guchar **data, gsize *datalen);
 
 const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);

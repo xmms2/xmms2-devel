@@ -840,7 +840,7 @@ xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
 
 gboolean
 xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
-                            gpointer *data, gssize *datalen)
+                            const guchar **data, gsize *datalen)
 {
 	const xmmsv_t *obj;
 
