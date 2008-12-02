@@ -25,5 +25,5 @@ xmms_getaddrinfo (const char *node, const char *service,
 void
 xmms_freeaddrinfo (struct addrinfo *res)
 {
-       return freeaddrinfo (res);
+       freeaddrinfo (res);
 }
