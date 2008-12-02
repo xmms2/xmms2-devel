@@ -14,7 +14,6 @@
  *  GNU General Public License for more details.
  */
 
-#define _GNU_SOURCE
 #include <string.h>
 
 #include <stdlib.h>
