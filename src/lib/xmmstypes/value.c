@@ -1851,7 +1851,7 @@ xmmsv_decode_url (const xmmsv_t *inv)
 {
 	int i = 0, j = 0;
 	const char *ins;
-	char *url;
+	unsigned char *url;
 	xmmsv_t *ret;
 
 	if (!xmmsv_get_string (inv, &ins)) {
