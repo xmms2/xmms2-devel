@@ -36,12 +36,6 @@ static xmmsc_connection_t *connection;
 static int vis;
 static int height;
 
-xmmsc_visualization_properties_t config = {
-	"type", "spectrum",
-	"stereo", "0",
-	NULL
-};
-
 short data[256];
 
 void draw () {
@@ -151,7 +145,10 @@ main (int argc, char **argv)
 	}
 	vis = xmmsc_visualization_init_handle (res);
 
-	configval = xmmsv_make_dict (config);
+	configval = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "spectrum"),
+	                              XMMSV_DICT_ENTRY_STR ("stereo", "0"),
+	                              XMMSV_DICT_END);
+
 	res = xmmsc_visualization_properties_set (connection, vis, configval);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {

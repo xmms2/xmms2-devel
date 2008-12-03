@@ -174,8 +174,6 @@ xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
  * VISUALIZATION **************************************************
  */
 
-typedef const char *xmmsc_visualization_properties_t[];
-
 /* commands */
 xmmsc_result_t *xmmsc_visualization_version (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_visualization_init (xmmsc_connection_t *c);

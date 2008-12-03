@@ -73,13 +73,6 @@ quit (int signum)
 	intr = 1;
 }
 
-xmmsc_visualization_properties_t x_config = {
-	"type", "pcm",
-	"stereo", "1",
-	"pcm.hardwire", "1",
-	NULL
-};
-
 void
 xmms2_quit ()
 {
@@ -93,6 +86,8 @@ void xmms2_init ()
 {
 	xmmsc_result_t *res;
 	char *path = getenv ("XMMS_PATH");
+	xmmsv_t *cfg;
+
 	x_connection = xmmsc_init ("xmms2-ripper");
 
 	if (!x_connection || !xmmsc_connect (x_connection, path)){
@@ -108,7 +103,12 @@ void xmms2_init ()
 	}
 	x_vis = xmmsc_visualization_init_handle (res);
 
-	res = xmmsc_visualization_properties_set (x_connection, x_vis, x_config);
+	cfg = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "pcm"),
+	                        XMMSV_DICT_ENTRY_STR ("stereo", "1"),
+	                        XMMSV_DICT_ENTRY_STR ("pcm.hardwire", "1"),
+	                        XMMSV_DICT_END);
+
+	res = xmmsc_visualization_properties_set (x_connection, x_vis, cfg);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		x_exit (xmmsc_result_get_error (res));

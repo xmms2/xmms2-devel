@@ -35,12 +35,6 @@ GMainLoop *mainloop;
 xmmsc_connection_t *connection;
 int vis;
 
-xmmsc_visualization_properties_t config = {
-	"type", "peak",
-	"stereo", "1",
-	NULL
-};
-
 short data[2];
 char buf[38+38];
 
@@ -147,7 +141,10 @@ main (int argc, char **argv)
 	}
 	vis = xmmsc_visualization_init_handle (res);
 
-	configval = xmmsv_make_dict (config);
+	configval = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "peak"),
+	                              XMMSV_DICT_ENTRY_STR ("stereo", "1"),
+	                              XMMSV_DICT_END);
+
 	res = xmmsc_visualization_properties_set (connection, vis, configval);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
