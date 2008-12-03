@@ -497,44 +497,6 @@ xmmsv_make_stringlist (char *array[], int num)
 	return list;
 }
 
-/**
- * Helper function to build a dict #xmmsv_t containing the
- * key-value string pairs from the input array.
- *
- * @param array A flat array of C string pairs (key1, val1, key2,
- *              val2, etc). Must be NULL-terminated.
- * @return An #xmmsv_t containing the list of strings. Must be
- *         unreffed manually when done.
- */
-xmmsv_t *
-xmmsv_make_dict (const char *array[])
-{
-	const char *key;
-	xmmsv_t *dict, *value;
-	int i;
-
-	dict = xmmsv_new_dict ();
-	if (array) {
-		for (i = 0; array[i]; i += 2) {
-			key = array[i];
-			if (!array[i + 1]) {
-				goto err;
-			}
-			value = xmmsv_new_string (array[i + 1]);
-			xmmsv_dict_insert (dict, key, value);
-			xmmsv_unref (value);
-		}
-	}
-
-	return dict;
-
-err:
-	x_api_warning ("with invalid key/value pairs");
-	xmmsv_unref (dict);
-	return NULL;
-}
-
-
 xmmsv_type_t
 xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 {
