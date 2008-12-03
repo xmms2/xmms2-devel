@@ -279,7 +279,7 @@ c_attrs_init (VALUE self, VALUE collection)
 	return self;
 }
 
-#ifdef HAVE_PROTECT_INSPECT
+#ifdef HAVE_RB_PROTECT_INSPECT
 static VALUE
 attrs_inspect_cb (VALUE args, VALUE s)
 {
@@ -317,7 +317,7 @@ c_attrs_inspect (VALUE self)
 {
 	return rb_protect_inspect (attrs_inspect, self, 0);
 }
-#endif /* HAVE_PROTECT_INSPECT */
+#endif /* HAVE_RB_PROTECT_INSPECT */
 
 static VALUE
 c_attrs_aref (VALUE self, VALUE key)
@@ -576,9 +576,9 @@ Init_Collection (VALUE mXmms)
 	cAttributes = rb_define_class_under (cColl, "Attributes", rb_cObject);
 
 	rb_define_method (cAttributes, "initialize", c_attrs_init, 1);
-#ifdef HAVE_PROTECT_INSPECT
+#ifdef HAVE_RB_PROTECT_INSPECT
 	rb_define_method (cAttributes, "inspect", c_attrs_inspect, 0);
-#endif /* HAVE_PROTECT_INSPECT */
+#endif /* HAVE_RB_PROTECT_INSPECT */
 
 	rb_define_method (cAttributes, "[]", c_attrs_aref, 1);
 	rb_define_method (cAttributes, "[]=", c_attrs_aset, 2);

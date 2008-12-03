@@ -84,7 +84,7 @@ def configure(conf):
     test.libs = [lib]
     test.mandatory = 0
     if test.run():
-        conf.env['CCDEFINES_ruby'] = ['HAVE_PROTECT_INSPECT']
+        conf.env['CCDEFINES_ruby'] = ['HAVE_RB_PROTECT_INSPECT']
 
     ldflags = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LDSHARED\"]'").read().strip()
     # ok this is really stupid, but the command and flags are combined.

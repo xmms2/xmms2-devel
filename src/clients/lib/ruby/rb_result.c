@@ -327,7 +327,7 @@ c_get_error (VALUE self)
 	return rb_str_new2 (error ? error : "");
 }
 
-#ifdef HAVE_PROTECT_INSPECT
+#ifdef HAVE_RB_PROTECT_INSPECT
 static VALUE
 dict_inspect_cb (VALUE args, VALUE s)
 {
@@ -365,7 +365,7 @@ c_dict_inspect (VALUE self)
 {
 	return rb_protect_inspect (dict_inspect, self, 0);
 }
-#endif /* HAVE_PROTECT_INSPECT */
+#endif /* HAVE_RB_PROTECT_INSPECT */
 
 static VALUE
 c_dict_size (VALUE self)
