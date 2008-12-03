@@ -29,7 +29,7 @@ def build(bld):
         obj.source.append("visualization/dummy.c")
     obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
     obj.uselib = 'socket visualizationclient'
-    obj.vnum = '4.0.0'
+    obj.vnum = '5.0.0'
 
     tool.add_install_flag(bld, obj)
 

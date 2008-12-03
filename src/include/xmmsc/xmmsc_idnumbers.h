@@ -18,7 +18,7 @@
 #define __SIGNAL_XMMS_H__
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 12
+#define XMMS_IPC_PROTOCOL_VERSION 13
 
 typedef enum {
         XMMSV_TYPE_NONE,
