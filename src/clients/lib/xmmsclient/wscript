@@ -42,7 +42,7 @@ def configure(conf):
     test.mandatory = False
     if test.run():
         conf.env['has_unixshmsupport'] = True
-        conf.env['CCDEFINES_visualizationclient'] = ['HAVE_UNIXSHMSUPPORT']
+        conf.env['CCDEFINES_visualizationclient'] = ['HAVE_SEMTIMEDOP']
     else:
         warning("Compiling visualization without shm support")
         conf.env['has_unixshmsupport'] = False

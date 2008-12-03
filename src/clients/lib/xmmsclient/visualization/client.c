@@ -129,7 +129,7 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv)
 	case VIS_ERRORED:
 		break;
 	case VIS_NEW:
-#ifdef HAVE_UNIXSHMSUPPORT
+#ifdef HAVE_SEMTIMEDOP
 		/* first try unixshm */
 		v->type = VIS_UNIXSHM;
 		res = setup_shm_prepare (c, vv);
