@@ -25,11 +25,6 @@
 
 #include <glib.h>
 
-/* WAF checks this too, this is just an extra check */
-#if !GLIB_CHECK_VERSION(2,8,0)
-# error You need atleast glib 2.8.0
-#endif
-
 #include "xmms_configuration.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_plugin.h"
