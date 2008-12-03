@@ -81,7 +81,8 @@ D: Java bindings
 
 N: Thomas Frauendorfer
 E: Thomas.Frauendorfer@googlemail.com
-D: Small change to C++ bindings.
+P: 1024D/50817EB1 A1A5 77A8 54C3 0B8D 8A4C  749A C49E 18C3 5081 7EB1
+D: Various small fixes
 
 N: Manuel Fuhr
 E: zod@knid.net
