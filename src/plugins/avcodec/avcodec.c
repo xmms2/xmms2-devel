@@ -217,9 +217,6 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
 
-	/* FIXME: Remove when XMMS2 really supports multichannel */
-	data->codecctx->request_channels = 2;
-
 	if (avcodec_open (data->codecctx, codec) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
 		goto err;
