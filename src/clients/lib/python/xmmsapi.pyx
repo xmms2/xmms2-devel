@@ -18,8 +18,6 @@ cdef extern from "xmms_pyrex_hacks.h":
 		pass
 	ctypedef struct xmms_pyrex_constucharpp_t:
 		pass
-	ctypedef struct xmms_pyrex_constxmmsv_t:
-		pass
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmmsv_coll_type_t:
@@ -98,18 +96,18 @@ cdef extern from "xmmsc/xmmsc_value.h":
 	xmmsv_t *xmmsv_ref (xmmsv_t *val)
 	void xmmsv_unref   (xmmsv_t *value)
 
-	xmmsv_type_t xmmsv_get_type(xmms_pyrex_constxmmsv_t res)
+	xmmsv_type_t xmmsv_get_type(xmmsv_t *res)
 
-	int  xmmsv_is_error (xmms_pyrex_constxmmsv_t res)
-	int  xmmsv_is_list  (xmms_pyrex_constxmmsv_t res)
-	int  xmmsv_is_dict  (xmms_pyrex_constxmmsv_t val)
+	int  xmmsv_is_error (xmmsv_t *res)
+	int  xmmsv_is_list  (xmmsv_t *res)
+	int  xmmsv_is_dict  (xmmsv_t *val)
 
-	int  xmmsv_get_error      (xmms_pyrex_constxmmsv_t value, xmms_pyrex_constcharpp_t r)
-	int  xmmsv_get_int        (xmms_pyrex_constxmmsv_t res, int *r)
-	int  xmmsv_get_uint       (xmms_pyrex_constxmmsv_t res, unsigned int *r)
-	int  xmmsv_get_string     (xmms_pyrex_constxmmsv_t res, xmms_pyrex_constcharpp_t r)
-	int  xmmsv_get_collection (xmms_pyrex_constxmmsv_t value, xmmsv_coll_t **coll)
-	int  xmmsv_get_bin        (xmms_pyrex_constxmmsv_t res, xmms_pyrex_constucharpp_t r, unsigned int *rlen)
+	int  xmmsv_get_error      (xmmsv_t *value, xmms_pyrex_constcharpp_t r)
+	int  xmmsv_get_int        (xmmsv_t *res, int *r)
+	int  xmmsv_get_uint       (xmmsv_t *res, unsigned int *r)
+	int  xmmsv_get_string     (xmmsv_t *res, xmms_pyrex_constcharpp_t r)
+	int  xmmsv_get_collection (xmmsv_t *value, xmmsv_coll_t **coll)
+	int  xmmsv_get_bin        (xmmsv_t *res, xmms_pyrex_constucharpp_t r, unsigned int *rlen)
 
 	ctypedef void (*xmmsv_list_foreach_func) (xmmsv_t *value, void *user_data)
 
@@ -123,7 +121,7 @@ cdef extern from "xmmsc/xmmsc_value.h":
 
 	ctypedef struct xmmsv_list_iter_t
 
-	int  xmmsv_get_list_iter    (xmms_pyrex_constxmmsv_t val, xmmsv_list_iter_t **it)
+	int  xmmsv_get_list_iter    (xmmsv_t *val, xmmsv_list_iter_t **it)
 
 	int  xmmsv_list_iter_entry  (xmmsv_list_iter_t *it, xmmsv_t **val)
 	int  xmmsv_list_iter_valid  (xmmsv_list_iter_t *it)
@@ -144,7 +142,7 @@ cdef extern from "xmmsc/xmmsc_value.h":
 
 	ctypedef struct xmmsv_dict_iter_t
 
-	int  xmmsv_get_dict_iter   (xmms_pyrex_constxmmsv_t val, xmmsv_dict_iter_t **it)
+	int  xmmsv_get_dict_iter   (xmmsv_t *val, xmmsv_dict_iter_t **it)
 
 	int  xmmsv_dict_iter_pair  (xmmsv_dict_iter_t *it, xmms_pyrex_constcharp_t *key, xmmsv_t **val)
 	int  xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it)
@@ -866,7 +864,7 @@ cdef class XMMSValue:
 		Return the type of data contained in this result.
 		The return value is one of the OBJECT_CMD_ARG_* constants.
 		"""
-		return xmmsv_get_type(<xmms_pyrex_constxmmsv_t> self.val)
+		return xmmsv_get_type(self.val)
 
 	def value(self):
 		"""
@@ -906,7 +904,7 @@ cdef class XMMSValue:
 		@rtype: int
 		"""
 		cdef int ret
-		if xmmsv_get_int(<xmms_pyrex_constxmmsv_t> self.val, &ret):
+		if xmmsv_get_int(self.val, &ret):
 			return ret
 		else:
 			raise ValueError("Failed to retrieve value!")
@@ -917,7 +915,7 @@ cdef class XMMSValue:
 		@rtype: uint
 		"""
 		cdef unsigned int ret
-		if xmmsv_get_uint(<xmms_pyrex_constxmmsv_t> self.val, &ret):
+		if xmmsv_get_uint(self.val, &ret):
 			return ret
 		else:
 			raise ValueError("Failed to retrieve value!")
@@ -929,7 +927,7 @@ cdef class XMMSValue:
 		"""
 		cdef char *ret
 
-		if xmmsv_get_string(<xmms_pyrex_constxmmsv_t> self.val, <xmms_pyrex_constcharpp_t>&ret):
+		if xmmsv_get_string(self.val, <xmms_pyrex_constcharpp_t>&ret):
 			return to_unicode(ret)
 		else:
 			raise ValueError("Failed to retrieve value!")
@@ -942,7 +940,7 @@ cdef class XMMSValue:
 		cdef unsigned char *ret
 		cdef unsigned int rlen
 
-		if xmmsv_get_bin(<xmms_pyrex_constxmmsv_t> self.val, <xmms_pyrex_constucharpp_t> &ret, &rlen):
+		if xmmsv_get_bin(self.val, <xmms_pyrex_constucharpp_t> &ret, &rlen):
 			return PyString_FromStringAndSize(<char *>ret, rlen)
 		else:
 			raise ValueError("Failed to retrieve value!")
@@ -953,7 +951,7 @@ cdef class XMMSValue:
 		@rtype: Collection
 		"""
 		cdef xmmsv_coll_t *coll
-		if not xmmsv_get_collection(<xmms_pyrex_constxmmsv_t> self.val, &coll):
+		if not xmmsv_get_collection(self.val, &coll):
 			raise ValueError("Failed to retrieve value!")
 
 		return create_coll(coll)
@@ -968,13 +966,13 @@ cdef class XMMSValue:
 		cdef XMMSValue V
 		ret = {}
 
-		if not xmmsv_get_dict_iter(<xmms_pyrex_constxmmsv_t>self.val, &it):
+		if not xmmsv_get_dict_iter(self.val, &it):
 			raise RuntimeError("Failed to get dict iterator")
 
 		while xmmsv_dict_iter_valid(it):
 			xmmsv_dict_iter_pair(it, &k, &v)
 			V=XMMSValue(self.sourcepref)
-			V.set_value(<xmmsv_t *>v)
+			V.set_value(v)
 
 			ret[<char *>k] = V.value()
 			xmmsv_dict_iter_next(it)
@@ -1000,7 +998,7 @@ cdef class XMMSValue:
 
 		ret = []
 
-		xmmsv_get_list_iter(<xmms_pyrex_constxmmsv_t> self.val, &iter)
+		xmmsv_get_list_iter(self.val, &iter)
 		while xmmsv_list_iter_valid(iter):
 			xmmsv_list_iter_entry(iter, &val)
 
@@ -1026,7 +1024,7 @@ cdef class XMMSValue:
 		@return: Whether the value represents an error or not.
 		@rtype: Boolean
 		"""
-		return xmmsv_is_error(<xmms_pyrex_constxmmsv_t> self.val)
+		return xmmsv_is_error(self.val)
 
 	def get_error(self):
 		"""
@@ -1035,7 +1033,7 @@ cdef class XMMSValue:
 		"""
 		cdef char *ret
 
-		if xmmsv_get_error(<xmms_pyrex_constxmmsv_t> self.val, <xmms_pyrex_constcharpp_t>&ret):
+		if xmmsv_get_error(self.val, <xmms_pyrex_constcharpp_t>&ret):
 			return to_unicode(ret)
 		else:
 			raise ValueError("Failed to retrieve value!")
