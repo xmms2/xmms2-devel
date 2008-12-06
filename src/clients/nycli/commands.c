@@ -25,6 +25,8 @@
 #include "utils.h"
 #include "column_display.h"
 
+#define COMMAND_HELP_DESCRIPTION_INDENT 2
+
 #define NULL_SUB(elem, null, notnull) (elem) == NULL ? (null) : (notnull)
 
 #define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
@@ -2053,8 +2055,6 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args)
 	command_trie_match_type_t match;
 	gint i, k;
 	gint padding, max_flag_len = 0;
-	gchar *c;
-	gboolean indent = TRUE;
 
 	gchar **argv = cmd;
 	gint argc = num_args;
@@ -2069,16 +2069,7 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args)
 			g_printf (" %s", action->usage);
 		}
 		g_printf ("\n\n");
-		for (c = action->description; *c; c++) {
-			if (indent) {
-				g_printf ("  ");
-				indent = FALSE;
-			}
-			g_printf ("%c", *c);
-			if (*c == '\n') {
-				indent = TRUE;
-			}
-		}
+		print_indented (action->description, COMMAND_HELP_DESCRIPTION_INDENT);
 		g_printf ("\n\n");
 		if (action->argdefs && action->argdefs[0].long_name) {
 			/* Find length of longest option */

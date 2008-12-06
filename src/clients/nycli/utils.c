@@ -1288,3 +1288,24 @@ pl_print_config (xmmsc_coll_t *coll, const char *name)
 		break;
 	}
 }
+
+void
+print_indented (const gchar *string, guint level)
+{
+	gboolean indent = TRUE;
+	const gchar *c;
+	guint i;
+
+	for (c = string; *c; c++) {
+		if (indent) {
+			for (i = 0; i < level; i++) {
+				g_printf (" ");
+			}
+			indent = FALSE;
+		}
+		g_printf ("%c", *c);
+		if (*c == '\n') {
+			indent = TRUE;
+		}
+	}
+}
