@@ -2038,11 +2038,11 @@ help_list_subcommands (GList *names, gchar **cmd)
 {
 	gchar *name = g_strjoinv (" ", cmd);
 	g_printf (_("usage: nyxmms2 %s <subcommand> [args]\n\n"), name);
-	g_printf (_("Available commands:\n"));
+	g_printf (_("Available '%s' subcommands:\n"), name);
 	g_list_foreach (cmdnames_find (names, cmd),
 	                help_short_command, NULL);
 	g_printf (_("\nType 'help %s <subcommand>' for detailed help "
-	            "about a command.\n"), name);
+	            "about a subcommand.\n"), name);
 	g_free (name);
 }
 
