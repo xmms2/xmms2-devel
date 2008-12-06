@@ -29,6 +29,8 @@
 #include "gme/gme.h"
 
 #define GME_DEFAULT_SAMPLE_RATE 44100
+#define GME_DEFAULT_SONG_LENGTH 300
+#define GME_DEFAULT_SONG_LOOPS 2
 
 extern "C" {
 
@@ -38,6 +40,7 @@ extern "C" {
  */
 typedef struct xmms_gme_data_St {
 	Music_Emu *emu; /* An emulation instance for the GME library */
+	int samplerate; /* The sample rate, set by the user */
 } xmms_gme_data_t;
 
 /*
@@ -72,8 +75,9 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_xform_plugin_config_property_register (xform_plugin, "loops", "2", NULL, NULL);
-	xmms_xform_plugin_config_property_register (xform_plugin, "maxlength", "300", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "loops", G_STRINGIFY (GME_DEFAULT_SONG_LOOPS), NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "maxlength", G_STRINGIFY (GME_DEFAULT_SONG_LENGTH), NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "samplerate", G_STRINGIFY (GME_DEFAULT_SAMPLE_RATE), NULL, NULL);
 
 	/* todo: add other mime types */
 	xmms_xform_plugin_indata_add (xform_plugin,
@@ -128,6 +132,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	const char *subtune_str;
 	int subtune = 0;
 	long fadelen = -1;
+	int samplerate;
 
 
 	g_return_val_if_fail (xform, FALSE);
@@ -135,6 +140,12 @@ xmms_gme_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_gme_data_t, 1);
 
 	xmms_xform_private_data_set (xform, data);
+
+	val = xmms_xform_config_lookup (xform, "samplerate");
+	samplerate = xmms_config_property_get_int (val);
+	if (samplerate < 1)
+		samplerate = GME_DEFAULT_SAMPLE_RATE;
+	data->samplerate = samplerate;
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -144,7 +155,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
 	                             2, /* stereo */
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                             GME_DEFAULT_SAMPLE_RATE, /* User-configurable in the future */
+	                             samplerate,
 	                             XMMS_STREAM_TYPE_END);
 
 	file_contents = g_string_new ("");
@@ -165,7 +176,7 @@ xmms_gme_init (xmms_xform_t *xform)
 		g_string_append_len (file_contents, buf, ret);
 	}
 
-	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, GME_DEFAULT_SAMPLE_RATE);
+	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, samplerate);
 
 	if (init_error) {
 		XMMS_DBG ("gme_open_data returned an error: %s", init_error);
@@ -292,6 +303,7 @@ xmms_gme_seek (xmms_xform_t *xform, gint64 samples,
 	xmms_gme_data_t *data;
 	gint64 target_time;
 	gint duration;
+	int samplerate;
 
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 	g_return_val_if_fail (xform, -1);
@@ -299,13 +311,15 @@ xmms_gme_seek (xmms_xform_t *xform, gint64 samples,
 	data = (xmms_gme_data_t *) xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
+	samplerate = data->samplerate;
+
 	if (samples < 0) {
 		xmms_error_set (err, XMMS_ERROR_INVAL,
 		                "Trying to seek before start of stream");
 		return -1;
 	}
 
-	target_time = (samples / GME_DEFAULT_SAMPLE_RATE) * 1000;
+	target_time = (samples / samplerate) * 1000;
 	xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, &duration);
 
 	if (target_time > duration) {
@@ -316,7 +330,7 @@ xmms_gme_seek (xmms_xform_t *xform, gint64 samples,
 
 	gme_seek (data->emu, target_time);
 
-	return (gme_tell (data->emu) / 1000) * GME_DEFAULT_SAMPLE_RATE;
+	return (gme_tell (data->emu) / 1000) * samplerate;
 }
 
 }
