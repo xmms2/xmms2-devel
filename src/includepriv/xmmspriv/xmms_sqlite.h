@@ -29,6 +29,7 @@ typedef gboolean (*xmms_medialib_row_table_method_t) (xmmsv_t *row, gpointer uda
 sqlite3 *xmms_sqlite_open (void);
 gboolean xmms_sqlite_create (gboolean *create);
 gboolean xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, ...);
+gboolean xmms_sqlite_query_int (sqlite3 *sql, gint32 *r, const gchar *query, ...);
 gboolean xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, xmms_error_t *error, const gchar *query, ...);
 gboolean xmms_sqlite_exec (sqlite3 *sql, const char *query, ...);
 void xmms_sqlite_close (sqlite3 *sql);

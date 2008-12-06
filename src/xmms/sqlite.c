@@ -639,6 +639,36 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	return (ret == SQLITE_DONE);
 }
 
+static gboolean
+xmms_sqlite_int_cb (xmmsv_t **row, gpointer udata)
+{
+	gint *i = udata;
+
+	if (row && row[0] && xmmsv_get_type (row[0]) == XMMSV_TYPE_INT32)
+		xmmsv_get_int (row[0], i);
+	else
+		XMMS_DBG ("Expected int32 but got something else!");
+
+	return TRUE;
+}
+
+gboolean
+xmms_sqlite_query_int (sqlite3 *sql, gint32 *r, const gchar *query, ...)
+{
+	gchar *q;
+	va_list ap;
+
+	g_return_val_if_fail (query, FALSE);
+	g_return_val_if_fail (sql, FALSE);
+
+	va_start (ap, query);
+	q = sqlite3_vmprintf (query, ap);
+	va_end (ap);
+
+	return xmms_sqlite_query_array (sql, xmms_sqlite_int_cb, r, q);
+}
+
+
 /**
  * Close database and free all resources used.
  */
