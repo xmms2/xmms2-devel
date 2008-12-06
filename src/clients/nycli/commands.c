@@ -1697,6 +1697,7 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 	gint i, count;
 	gchar *path;
 	gboolean norecurs;
+	gboolean retval = TRUE;
 
 	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
 		norecurs = FALSE;
@@ -1734,7 +1735,12 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		cli_infos_loop_resume (infos);
 	}
 
-	return TRUE;
+	if (count == 0) {
+		g_printf (_("Error: no path to import!\n"));
+		retval = FALSE;
+	}
+
+	return retval;
 }
 
 gboolean
