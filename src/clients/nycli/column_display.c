@@ -39,6 +39,84 @@ struct column_def_St {
 	guint requested_size;
 };
 
+/* max 4 bytes per ucs-4 character */
+#define MAX_CHARWIDTH 4
+
+
+/* FIXME: needs better utf8, column_width on all platforms */
+
+static guint
+crop_string (gchar *dest, const gchar *str, guint max_len)
+{
+	gunichar *buffer;
+	gunichar *tmp;
+	glong ucslen;
+	guint columns = 0;
+	glong bytes = 0;
+	gchar *utf8tmp;
+	const gchar *iter;
+	const gunichar dot = g_utf8_get_char (".");
+	const gunichar space = g_utf8_get_char (" ");
+
+	if (!str || max_len == 0 ) {
+		return 0;
+	}
+
+	ucslen = sizeof(gunichar) * max_len;
+	buffer = g_malloc (ucslen);
+	tmp = buffer;
+
+	iter = str;
+
+	while (*iter && columns < max_len) {
+		gunichar ch = g_utf8_get_char (iter);
+		++columns;
+		if (g_unichar_iswide (ch)) {
+			++columns;
+		}
+		if (columns > max_len) {
+			*tmp = dot;
+			++tmp;
+			break;
+		}
+		*tmp = ch;
+		++tmp;
+		iter = g_utf8_next_char (iter);
+	}
+
+	if (*iter) {
+		--tmp;
+		if (g_unichar_iswide (*tmp)) {
+			*tmp = dot;
+			*(tmp + 1) = dot;
+			tmp += 2;
+		}
+		else {
+			--tmp;
+			if (g_unichar_iswide (*tmp)) {
+				*tmp = dot;
+				*(tmp + 1) = dot;
+				*(tmp + 2) = space;
+				tmp += 3;
+			}
+			else {
+				*tmp = dot;
+				*(tmp + 1) = dot;
+				tmp += 2;
+			}
+		}
+	}
+
+	utf8tmp = g_ucs4_to_utf8 (buffer, tmp - buffer, NULL, &bytes, NULL);
+
+	strncpy (dest, utf8tmp, bytes);
+	g_free (utf8tmp);
+	*(dest + bytes) = '\0';
+
+	g_free (buffer);
+	return columns;
+}
+
 static gint
 result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 {
@@ -58,10 +136,9 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 		break;
 	case XMMSV_TYPE_STRING:
 		xmmsv_get_dict_entry_string (val, coldef->arg.string, &sval);
-		g_snprintf (buffer, coldef->size + 1, "%s", sval);
 
-		/* count UTF-8 characters, not bytes - FIXME: buggy for Japanese :-/ */
-		realsize = g_utf8_strlen (sval, coldef->size + 1);
+		/* use UTF-8 column width, not characters or bytes */
+		realsize = crop_string (buffer, sval, coldef->size);
 		break;
 	default:
 		/* No valid data, display empty value */
@@ -77,12 +154,6 @@ static void
 print_fixed_width_string (gchar *value, gint width, gint realsize,
                           column_def_align_t align)
 {
-	/* Value was cut, show an ellispsis */
-	if (realsize > width) {
-		value[ width - 1 ] = '.';
-		value[ width - 2 ] = '.';
-	}
-
 	if (align == COLUMN_DEF_ALIGN_LEFT) {
 		g_printf (value);
 		print_padding (width - realsize);
@@ -289,7 +360,7 @@ column_display_prepare (column_display_t *disp)
 		}
 	}
 
-	disp->buffer = g_new0 (gchar, termwidth);
+	disp->buffer = g_new0 (gchar, (termwidth * MAX_CHARWIDTH) + 1);
 }
 
 void
