@@ -105,6 +105,11 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "application/x-vgm",
 	                              NULL);
 
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-sap",
+	                              NULL);
+
 	/* todo: add other magic */
 	xmms_magic_add ("SPC700 save state",
 	                "application/x-spc",
@@ -131,12 +136,18 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string Vgm",
 	                NULL);
 
+	xmms_magic_add ("SAP file",
+	                "application/x-sap",
+	                "0 string SAP",
+	                NULL);
+
 	/* todo: add other file extensions */
 	xmms_magic_extension_add ("application/x-spc", "*.spc");
 	xmms_magic_extension_add ("application/x-nsf", "*.nsf");
 	xmms_magic_extension_add ("application/x-gbs", "*.gbs");
 	xmms_magic_extension_add ("application/x-gym", "*.gym");
 	xmms_magic_extension_add ("application/x-vgm", "*.vgm");
+	xmms_magic_extension_add ("application/x-sap", "*.sap");
 
 	return TRUE;
 }
