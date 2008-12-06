@@ -47,7 +47,9 @@ find_terminal_width ()
 	struct winsize ws;
 	char *colstr, *endptr;
 
-	if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
+	if (!isatty (STDOUT_FILENO)) {
+		columns = 0;
+	} else if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
 	} else {
 		colstr = getenv ("COLUMNS");
