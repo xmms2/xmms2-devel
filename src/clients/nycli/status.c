@@ -176,30 +176,36 @@ format_time (gint duration)
 }
 
 static GList *
-parse_format (gchar *format)
+parse_format (const gchar *format)
 {
-	gchar *copy, *s, *last;
+	const gchar *s, *last;
 	GList *strings = NULL;
 
-	copy = g_strdup (format);
-
-	last = copy;
+	last = format;
 	while ((s = strstr (last, "${")) != NULL) {
+		/* Copy the substring before the variable */
 		if (last != s) {
-			*s = '\0';
-			strings = g_list_prepend (strings, g_strdup (last));
-			*s = '$';
+			strings = g_list_prepend (strings, g_strndup (last, s - last));
 		}
 
 		last = strchr (s, '}');
-		*last = '\0';
-		strings = g_list_prepend (strings, g_strdup (s));
-
-		last++;
+		if (last) {
+			/* Copy the variable (as "${variable}") */
+			strings = g_list_prepend (strings, g_strndup (s, last - s));
+			last++;
+		} else {
+			/* Missing '}', keep '$' as a string and keep going */
+			strings = g_list_prepend (strings, g_strndup (s, 1));
+			last = s + 1;
+		}
 	}
-	strings = g_list_reverse (strings);
 
-	g_free (copy);
+	/* Copy the remaining substring after the last variable */
+	if (*last != '\0') {
+		strings = g_list_prepend (strings, g_strdup (last));
+	}
+
+	strings = g_list_reverse (strings);
 
 	return strings;
 }
