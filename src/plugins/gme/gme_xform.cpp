@@ -92,6 +92,11 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-nsfe",
+	                              NULL);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-gbs",
 	                              NULL);
 
@@ -126,6 +131,11 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string NESM",
 	                NULL);
 
+	xmms_magic_add ("NSFE file",
+	                "application/x-nsfe",
+	                "0 string NSFE",
+	                NULL);
+
 	xmms_magic_add ("GBS file",
 	                "application/x-gbs",
 	                "0 string GBS",
@@ -154,6 +164,7 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	/* todo: add other file extensions */
 	xmms_magic_extension_add ("application/x-spc", "*.spc");
 	xmms_magic_extension_add ("application/x-nsf", "*.nsf");
+	xmms_magic_extension_add ("application/x-nsfe", "*.nsfe");
 	xmms_magic_extension_add ("application/x-gbs", "*.gbs");
 	xmms_magic_extension_add ("application/x-gym", "*.gym");
 	xmms_magic_extension_add ("application/x-vgm", "*.vgm");
