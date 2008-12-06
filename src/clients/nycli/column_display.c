@@ -83,7 +83,10 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 		break;
 	case XMMSC_RESULT_VALUE_TYPE_STRING:
 		xmmsc_result_get_dict_entry_string (res, coldef->arg.string, &sval);
-		realsize = g_snprintf (buffer, coldef->size + 1, "%s", sval);
+		g_snprintf (buffer, coldef->size + 1, "%s", sval);
+
+		/* count UTF-8 characters, not bytes - FIXME: buggy for Japanese :-/ */
+		realsize = g_utf8_strlen (sval, coldef->size + 1);
 		break;
 	default:
 		/* No valid data, display empty value */
