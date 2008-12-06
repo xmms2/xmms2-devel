@@ -15,6 +15,7 @@
  */
 
 #include "column_display.h"
+#include "utils.h"
 
 struct column_display_St {
 	guint num_cols;
@@ -92,15 +93,6 @@ result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 	}
 
 	return realsize;
-}
-
-static void
-print_padding (gint length)
-{
-	gint i;
-	for (i = 0; i < length; ++i) {
-		g_printf (" ");
-	}
 }
 
 static void

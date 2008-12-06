@@ -1290,17 +1290,22 @@ pl_print_config (xmmsc_coll_t *coll, const char *name)
 }
 
 void
+print_padding (gint length)
+{
+	while (length-- > 0) {
+		g_printf (" ");
+	}
+}
+
+void
 print_indented (const gchar *string, guint level)
 {
 	gboolean indent = TRUE;
 	const gchar *c;
-	guint i;
 
 	for (c = string; *c; c++) {
 		if (indent) {
-			for (i = 0; i < level; i++) {
-				g_printf (" ");
-			}
+			print_padding (level);
 			indent = FALSE;
 		}
 		g_printf ("%c", *c);
