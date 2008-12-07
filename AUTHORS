@@ -33,6 +33,10 @@ N: Magnus Bjernstad
 E: bjernstad@gmail.com
 D: PythonAPI fixes.
 
+N: Raphaël Bois
+E: vdust@free.fr
+D: Bindata bugfix.
+
 N: Alexander Botero-Lowry
 E: alex@foxybanana.com
 D: *BSD support. Manpages. Various fixes.

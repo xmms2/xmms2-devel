@@ -59,6 +59,8 @@ static void md5_init (md5_state_t *pms);
 static void md5_append (md5_state_t *pms, const md5_byte_t *data, int nbytes);
 static void md5_finish (md5_state_t *pms, md5_byte_t digest[16]);
 
+static gchar *xmms_bindata_build_path (xmms_bindata_t *bindata, gchar *hash);
+
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
 static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *err);
 static void xmms_bindata_remove (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *);
@@ -143,6 +145,12 @@ xmms_bindata_calculate_md5 (const guchar *data, guint size, gchar ret[33])
 	return ret;
 }
 
+static gchar *
+xmms_bindata_build_path (xmms_bindata_t *bindata, gchar *hash)
+{
+	return g_build_path (G_DIR_SEPARATOR_S, bindata->bindir, hash, NULL);
+}
+
 /** Add binary data from a plugin */
 gboolean
 xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33])
@@ -161,7 +169,7 @@ _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar
 
 	xmms_bindata_calculate_md5 (data, len, hash);
 
-	path = XMMS_BUILD_PATH ("bindata", hash);
+	path = xmms_bindata_build_path (bindata, hash);
 
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
 		XMMS_DBG ("file %s is already in bindata dir", hash);
@@ -224,7 +232,7 @@ xmms_bindata_retrieve (xmms_bindata_t *bindata, const gchar *hash,
 	GString *str;
 	FILE *fp;
 
-	path = XMMS_BUILD_PATH ("bindata", hash);
+	path = xmms_bindata_build_path (bindata, hash);
 
 	fp = fopen (path, "rb");
 	if (!fp) {
@@ -261,7 +269,7 @@ xmms_bindata_remove (xmms_bindata_t *bindata, const gchar *hash,
                      xmms_error_t *err)
 {
 	gchar *path;
-	path = XMMS_BUILD_PATH ("bindata", hash);
+	path = xmms_bindata_build_path (bindata, hash);
 	if (unlink (path) == -1) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Couldn't remove file");
 	}
@@ -277,7 +285,7 @@ xmms_bindata_list (xmms_bindata_t *bindata, xmms_error_t *err)
 	const gchar *file;
 	GDir *dir;
 
-	path = XMMS_BUILD_PATH ("bindata");
+	path = xmms_bindata_build_path (bindata, NULL);
 	dir = g_dir_open (path, 0, NULL);
 	g_free (path);
 
