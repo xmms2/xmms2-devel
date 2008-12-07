@@ -409,7 +409,10 @@ xmms_convert_and_kill_dict (GTree *dict)
 	xmmsv_t *v;
 
 	v = xmms_create_xmmsv_dict (dict);
-	g_tree_destroy (dict);
+
+	if (dict) {
+		g_tree_destroy (dict);
+	}
 
 	return v;
 }
