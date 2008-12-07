@@ -1148,13 +1148,19 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 static GTree *
 xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_entry_t entry)
 {
-	GTree *ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
-	                              (GDestroyNotify) xmmsv_unref);
+	GTree *ret;
 	xmmsv_t *v_entry;
 	gboolean s;
 
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (entry, NULL);
+
+	if (!xmms_medialib_check_id_in_session (entry, session)) {
+		return NULL;
+	}
+
+	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
+	                       (GDestroyNotify) xmmsv_unref);
 
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_tree_cb,
 	                             &ret,
