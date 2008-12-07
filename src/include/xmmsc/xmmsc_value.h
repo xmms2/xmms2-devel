@@ -117,6 +117,9 @@ int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it);
 
 xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
 
+int xmmsv_utf8_validate (const char *str);
+
+
 /* These helps us doing compiletime typechecking */
 static inline const char *__xmmsv_identity_const_charp (const char *v) {return v;}
 static inline xmmsv_t *__xmmsv_identity_xmmsv (xmmsv_t *v) {return v;}

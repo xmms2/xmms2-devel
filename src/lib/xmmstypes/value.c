@@ -194,6 +194,7 @@ xmmsv_new_string (const char *s)
 	xmmsv_t *val;
 
 	x_return_val_if_fail (s, NULL);
+	x_return_val_if_fail (xmmsv_utf8_validate (s), NULL);
 
 	val = xmmsv_new (XMMSV_TYPE_STRING);
 	if (val) {
@@ -1892,6 +1893,49 @@ xmmsv_build_dict (const char *firstkey, ...)
 	va_end (ap);
 
 	return res;
+}
+
+static int
+_xmmsv_utf8_charlen (unsigned char c)
+{
+	if ((c & 0x80) == 0) {
+		return 1;
+	} else if ((c & 0x60) == 0x40) {
+		return 2;
+	} else if ((c & 0x70) == 0x60) {
+		return 3;
+	} else if ((c & 0x78) == 0x70) {
+		return 4;
+	}
+	return 0;
+}
+
+
+/**
+ * Check if a string is valid UTF-8.
+ *
+ */
+int
+xmmsv_utf8_validate (const char *str)
+{
+	int i = 0;
+
+	for (;;) {
+		unsigned char c = str[i++];
+		int l;
+		if (!c) {
+			/* NUL - end of string */
+			return 1;
+		}
+
+		l = _xmmsv_utf8_charlen (c);
+		if (l == 0)
+			return 0;
+		while (l-- > 1) {
+			if ((str[i++] & 0xC0) != 0x80)
+				return 0;
+		}
+	}
 }
 
 
