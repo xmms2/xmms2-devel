@@ -38,6 +38,11 @@ namespace Xmms
 	{
 	}
 
+	value_error::value_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 	argument_error::argument_error( const string& what_arg ) :
 		runtime_error( what_arg )
 	{

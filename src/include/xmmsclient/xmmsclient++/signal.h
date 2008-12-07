@@ -121,58 +121,58 @@ namespace Xmms
 	};
 
 	/** Templated functions for extracting the correct value from
-	 *  xmmsc_result_t.
+	 *  xmmsv_t.
 	 *  @note return value must be deleted
 	 */
 	template< typename T >
-	inline T* extract_value( xmmsc_result_t* res )
+	inline T* extract_value( xmmsv_t* val )
 	{
-		return new T( res );
+		return new T( val );
 	}
 
 	template<>
 	inline unsigned int*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
 		unsigned int* temp = new unsigned int;
-		xmmsc_result_get_uint( res, temp );
+		xmmsv_get_uint( val, temp );
 		return temp;
 	}
 
 	template<>
 	inline int*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
 		int* temp = new int;
-		xmmsc_result_get_int( res, temp );
+		xmmsv_get_int( val, temp );
 		return temp;
 	}
 	
 	template<>
 	inline std::basic_string<unsigned char>*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
-		unsigned char* temp = 0;
+		const unsigned char* temp = 0;
 		unsigned int len = 0;
-		xmmsc_result_get_bin( res, &temp, &len );
+		xmmsv_get_bin( val, &temp, &len );
 		return new std::basic_string<unsigned char>( temp, len );
 	}
 
 	template<>
 	inline std::string*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
 		const char* temp = 0;
-		xmmsc_result_get_string( res, &temp );
+		xmmsv_get_string( val, &temp );
 		return new std::string( temp );
 	}
 
 	template<>
 	inline xmms_playback_status_t*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
 		unsigned int temp = 0;
-		xmmsc_result_get_uint( res, &temp );
+		xmmsv_get_uint( val, &temp );
 		xmms_playback_status_t* result = new xmms_playback_status_t;
 		*result = static_cast< xmms_playback_status_t >( temp );
 		return result;
@@ -180,10 +180,10 @@ namespace Xmms
 
 	template<>
 	inline xmms_mediainfo_reader_status_t*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
 		int temp = 0;
-		xmmsc_result_get_int( res, &temp );
+		xmmsv_get_int( val, &temp );
 		xmms_mediainfo_reader_status_t* result
 			= new xmms_mediainfo_reader_status_t;
 		*result = static_cast< xmms_mediainfo_reader_status_t >( temp );
@@ -191,13 +191,13 @@ namespace Xmms
 	}
 
 	Coll::Coll*
-	extract_collection( xmmsc_result_t* res );
+	extract_collection( xmmsv_t* val );
 
 	template<>
 	inline Coll::Coll*
-	extract_value( xmmsc_result_t* res )
+	extract_value( xmmsv_t* val )
 	{
-		return extract_collection( res );
+		return extract_collection( val );
 	}
 
 
@@ -206,10 +206,10 @@ namespace Xmms
 	 */
 	template< typename T >
 	inline bool
-	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
+	callSignal( const Signal< T >* sig, xmmsv_t*& val )
 	{
 
-		boost::scoped_ptr< T > value( extract_value< T >( res ) );
+		boost::scoped_ptr< T > value( extract_value< T >( val ) );
 		bool ret = sig->signal( *value );
 		return ret;
 
@@ -219,28 +219,39 @@ namespace Xmms
 	 */
 	template<>
 	inline bool
-	callSignal( const Signal< void >* sig, xmmsc_result_t*& /* res */)
+	callSignal( const Signal< void >* sig, xmmsv_t*& /* val */)
 	{
 		return sig->signal();
+	}
+
+	/** Called on the notifier udata when an xmmsc_result_t is freed.
+	 */
+	inline void
+	freeSignal( void* notifier_data )
+	{
+		SignalInterface *sig = static_cast< SignalInterface* >( notifier_data );
+		SignalHolder::getInstance().removeSignal( sig );
 	}
 
 	/** Generic callback function to handle signal calling, error checking,
 	 *  signal renewing, broadcast disconnection and Signal deletion.
 	 */
 	template< typename T >
-	inline void generic_callback( xmmsc_result_t* res, void* userdata )
+	inline int
+	generic_callback( xmmsv_t* val, void* userdata )
 	{
 		if( !userdata ) {
-			xmmsc_result_unref( res );
-			return;
+			return 0; // don't restart
 		}
 
 		Signal< T >* data = static_cast< Signal< T >* >( userdata );
 
 		bool ret = false;
-		if( xmmsc_result_iserror( res ) ) {
+		if( xmmsv_is_error( val ) ) {
+			const char *buf;
+			xmmsv_get_error( val, &buf );
 
-			std::string error( xmmsc_result_get_error( res ) );
+			std::string error( buf );
 			if( !data->error_signal.empty() ) {
 				ret = data->error_signal( error );
 			}
@@ -250,7 +261,7 @@ namespace Xmms
 
 			if( !data->signal.empty() ) {
 				try {
-					ret = callSignal( data, res );
+					ret = callSignal( data, val );
 				}
 				catch( std::exception& e ) {
 
@@ -264,33 +275,10 @@ namespace Xmms
 
 		}
 
-		if( ret && 
-		    xmmsc_result_get_class( res ) == XMMSC_RESULT_CLASS_SIGNAL ) {
+		// Note: the signal is removed from the SignalHolder by
+		// freeSignal when the result is freed.
 
-			xmmsc_result_t* newres = xmmsc_result_restart( res );
-			xmmsc_result_unref( newres );
-
-		}
-		else if( !ret || 
-		         xmmsc_result_get_class( res ) == XMMSC_RESULT_CLASS_DEFAULT) {
-
-			if( xmmsc_result_get_class( res ) == 
-			    XMMSC_RESULT_CLASS_BROADCAST ) {
-
-				xmmsc_result_disconnect( res );
-
-			}
-
-			SignalHolder::getInstance().removeSignal( data ); data = 0;
-
-		}
-
-		if( xmmsc_result_get_class( res ) != XMMSC_RESULT_CLASS_BROADCAST ) {
-
-			xmmsc_result_unref( res );
-
-		}
-
+		return ret;
 	}
 
 	typedef boost::signal< void() > DisconnectCallback;

@@ -67,7 +67,7 @@ namespace Xmms
 			 *  If you want to add multiple files you should call pathImport.
 			 *
 			 *  @param url URL to add to the medialib.
-			 *  @param args List of strings used as arguments.
+			 *  @param args Pairs of key-value strings used as arguments.
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 *  @throw mainloop_running_error If a mainloop is running -

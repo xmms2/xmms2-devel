@@ -41,15 +41,15 @@ namespace Xmms
 
 			/** Constructor.
 			 *
-			 *  @param result xmmsc_result_t* returned by one of the
-			 *         libxmmsclient functions, must be a list.
+			 *  @param value xmmsv_t* extracted from the result, must
+			 *               be a list.
 			 *
-			 *  @throw result_error If the result was in error state.
-			 *  @throw not_list_error If the result is not a list.
+			 *  @throw value_error If the value was in error state.
+			 *  @throw not_list_error If the value is not a list.
 			 *
-			 *  @note You must unref the result you feed to this class.
+			 *  @note You must unref the value you feed to this class.
 			 */
-			SuperList( xmmsc_result_t* result );
+			SuperList( xmmsv_t* value );
 
 			/** Copy-constructor.
 			 */
@@ -84,12 +84,15 @@ namespace Xmms
 			virtual bool isValid() const;
 
 		protected:
-			xmmsc_result_t* result_;
+			xmmsv_t* getElement() const;
 
+		private:
+			xmmsv_t* value_;
+			xmmsv_list_iter_t *iter_;
 	};
 
 	/** @class List list.h "xmmsclient/xmmsclient++/list.h"
-	 *  @brief This class acts as a wrapper for list type results.
+	 *  @brief This class acts as a wrapper for list type values.
 	 *  This is actually a virtual class and is specialized with T being
 	 *  - std::string
 	 *  - int
@@ -107,8 +110,8 @@ namespace Xmms
 			/** Constructor
 			 *  @see SuperList#SuperList.
 			 */
-			List( xmmsc_result_t* result ) :
-				SuperList( result )
+			List( xmmsv_t* value ) :
+				SuperList( value )
 			{
 			}
 
@@ -165,21 +168,10 @@ namespace Xmms
 	{
 
 		public:
-			List( xmmsc_result_t* result ) :
-				SuperList( result )
+			List( xmmsv_t* value ) :
+				SuperList( value )
 			{
-
-				if( xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_INT32 &&
-				    xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
-
-					// SuperList constructor refs the result so we'll unref
-					xmmsc_result_unref( result );
-					throw wrong_type_error( "Expected list of ints" );
-
-				}
-
+				// The typing of elements is checked when an element is fetched
 			}
 
 			List( const List<int>& list ) :
@@ -212,8 +204,10 @@ namespace Xmms
 				}
 
 				int temp = 0;
-				if( !xmmsc_result_get_int( result_, &temp ) ) {
-					// throw something
+				xmmsv_t *elem = getElement();
+				if( !xmmsv_get_int( elem, &temp ) ) {
+					throw wrong_type_error( "Failed to retrieve an int "
+					                        "from the list" );
 				}
 				return temp;
 
@@ -226,20 +220,10 @@ namespace Xmms
 	{
 
 		public:
-			List( xmmsc_result_t* result ) :
-				SuperList( result )
+			List( xmmsv_t* value ) :
+				SuperList( value )
 			{
-
-				if( xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_UINT32 &&
-				    xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
-
-					// SuperList constructor refs the result so we'll unref
-					xmmsc_result_unref( result );
-					throw wrong_type_error( "Expected list of unsigned ints" );
-				}
-
+				// The typing of elements is checked when an element is fetched
 			}
 
 			List( const List<unsigned int>& list ) :
@@ -272,8 +256,10 @@ namespace Xmms
 				}
 
 				unsigned int temp = 0;
-				if( !xmmsc_result_get_uint( result_, &temp ) ) {
-					// throw something
+				xmmsv_t *elem = getElement();
+				if( !xmmsv_get_uint( elem, &temp ) ) {
+					throw wrong_type_error( "Failed to retrieve an unsigned int "
+					                        "from the list" );
 				}
 				return temp;
 
@@ -286,19 +272,10 @@ namespace Xmms
 	{
 
 		public:
-			List( xmmsc_result_t* result ) :
-				SuperList( result )
+			List( xmmsv_t* value ) :
+				SuperList( value )
 			{
-
-				if( xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_STRING &&
-				    xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
-					// SuperList constructor refs the result so we'll unref
-					xmmsc_result_unref( result );
-					throw wrong_type_error( "Expected list of strings" );
-				}
-
+				// The typing of elements is checked when an element is fetched
 			}
 
 			List( const List<std::string>& list ) :
@@ -319,18 +296,18 @@ namespace Xmms
 			const std::string& operator*() const
 			{
 				constructContents();
-				return value_;
+				return str_;
 			}
 
 			const std::string* operator->() const
 			{
 				constructContents();
-				return &value_;
+				return &str_;
 			}
 
 		private:
 
-			mutable std::string value_;
+			mutable std::string str_;
 
 			virtual void constructContents() const
 			{
@@ -340,10 +317,12 @@ namespace Xmms
 				}
 
 				const char* temp = 0;
-				if( !xmmsc_result_get_string( result_, &temp ) ) {
-					// throw something
+				xmmsv_t *elem = getElement();
+				if( !xmmsv_get_string( elem, &temp ) ) {
+					throw wrong_type_error( "Failed to retrieve a string "
+					                        "from the list" );
 				}
-				value_ = std::string( temp );
+				str_ = std::string( temp );
 
 			}
 
@@ -354,26 +333,27 @@ namespace Xmms
 	{
 
 		public:
-			List( xmmsc_result_t* result ) try :
-				SuperList( result )
+			List( xmmsv_t* value ) try :
+				SuperList( value )
 			{
 				// checking the type here is a bit useless since
 				// Dict constructor checks it but we must catch it and
-				// unref the result which SuperList refs or we leak.
+				// unref the value which SuperList refs or we leak.
 			}
-			catch( Xmms::not_dict_error& e )
+			catch( Xmms::not_list_error& e )
 			{
-				if( xmmsc_result_get_type( result ) !=
-				    XMMSC_RESULT_VALUE_TYPE_NONE ) {
+				if( xmmsv_get_type( value ) != XMMSV_TYPE_NONE ) {
 
-					xmmsc_result_unref( result );
+					// FIXME: Do we? It's not been ref'd by SuperList, so
+					// it should be okay
+//					xmmsv_unref( value );
 					throw;
 
 				}
 			}
 
 			List( const List<Dict>& list ) :
-				SuperList( list ), value_( list.value_ )
+				SuperList( list ), dict_( list.dict_ )
 			{
 			}
 
@@ -390,18 +370,18 @@ namespace Xmms
 			const Dict& operator*() const
 			{
 				constructContents();
-				return *value_;
+				return *dict_;
 			}
 
 			const Dict* operator->() const
 			{
 				constructContents();
-				return value_.get();
+				return dict_.get();
 			}
 
 		private:
 
-			mutable boost::shared_ptr< Dict > value_;
+			mutable boost::shared_ptr< Dict > dict_;
 
 			virtual void constructContents() const
 			{
@@ -410,7 +390,8 @@ namespace Xmms
 					throw out_of_range( "List out of range or empty list" );
 				}
 
-				value_ = boost::shared_ptr< Dict >( new Dict( result_ ) );
+				xmmsv_t *elem = getElement();
+				dict_ = boost::shared_ptr< Dict >( new Dict( elem ) );
 
 			}
 

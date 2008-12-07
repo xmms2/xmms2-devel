@@ -28,7 +28,7 @@ namespace Xmms
 {
 	
 	/** @class Dict dict.h "xmmsclient/xmmsclient++/dict.h"
-	 * @brief This class acts as a wrapper for dict type results.
+	 * @brief This class acts as a wrapper for dict type values.
 	 */
 	class Dict
 	{
@@ -37,16 +37,16 @@ namespace Xmms
 
 			typedef boost::variant< int32_t, uint32_t, std::string > Variant;
 
-			/** Constructs Dict and references the result.
-			 *  User must unref the result, the class does not take care of
+			/** Constructs Dict and references the value.
+			 *  User must unref the value, the class does not take care of
 			 *  it
 			 *
-			 * @param res Result to wrap around
+			 * @param val Value to wrap around
 			 *
-			 * @throw not_dict_error Occurs if the result is not Dict
-			 * @throw result_error Occurs if the result is in error state
+			 * @throw not_dict_error Occurs if the value is not Dict
+			 * @throw value_error Occurs if the value is in error state
 			 */
-			Dict( xmmsc_result_t* res );
+			Dict( xmmsv_t* val );
 
 			/** Constructs a copy of an existing Dict.
 			 *  Adds to the reference counter.
@@ -62,7 +62,7 @@ namespace Xmms
 			 */
 			Dict& operator=( const Dict& dict );
 
-			/** Destructs this Dict and unrefs the result.
+			/** Destructs this Dict and unrefs the value.
 			 */
 			virtual ~Dict();
 
@@ -121,30 +121,35 @@ namespace Xmms
 			
 		/** @cond */
 		protected:
-			xmmsc_result_t* result_;
+			xmmsv_t* value_;
+
+			/** Replace the internal #xmmsv_t */
+			void setValue( xmmsv_t *newval );
+
 		/** @endcond */
 
 	};
 
 	
 	/** @class PropDict dict.h "xmmsclient/xmmsclient++/dict.h"
-	 * @brief This class acts as a wrapper for propdict type results.
+	 * @brief This class acts as a wrapper for dict-of-dict
+	 * (previously known as "propdict") type values.
 	 */
 	class PropDict : public Dict
 	{
 
 		public:
 
-			/** Constructs PropDict and references the result.
-			 *  User must unref the result, the class does not take care of
+			/** Constructs PropDict and references the value.
+			 *  User must unref the value, the class does not take care of
 			 *  it
 			 *
-			 * @param res Result to wrap around
+			 * @param res Value to wrap around
 			 *
-			 * @throw not_dict_error Occurs if the result is not PropDict
-			 * @throw result_error Occurs if the result is in error state
+			 * @throw not_dict_error Occurs if the value is not PropDict
+			 * @throw value_error Occurs if the value is in error state
 			 */
-			PropDict( xmmsc_result_t* res );
+			PropDict( xmmsv_t* val );
 
 			/** Constructs a copy of an existing PropDict.
 			 *  Adds to the reference counter.
@@ -155,12 +160,12 @@ namespace Xmms
 
 			/** Assigns an existing PropDict to this PropDict.
 			 *  Adds to the reference counter.
-			 *  
+			 *
 			 *  @param dict source PropDict to be assigned to this PropDict
 			 */
 			PropDict& operator=( const PropDict& dict );
 
-			/** Destructs this PropDict and unrefs the result.
+			/** Destructs this PropDict and unrefs the value.
 			 */
 			virtual ~PropDict();
 
@@ -168,19 +173,36 @@ namespace Xmms
 			 *
 			 * @param src Name of the source to use
 			 */
-			virtual void setSource( const std::string& src ) const;
+			virtual void setSource( const std::string& src );
 
 			/** Set the sources to use when retrieving data from the PropDict.
 			 *
 			 * @param src List of sources to use
 			 */
-			virtual void setSource( const std::list< std::string >& src ) const;
+			virtual void setSource( const std::list< std::string >& src );
 
 			typedef boost::function< void( const std::string&,
 			                               const Dict::Variant&,
 			                               const std::string& ) > ForEachFunc;
 
 			virtual void each( const ForEachFunc& func ) const;
+
+			/* Internal helper structure to run foreach. */
+			struct ForEachData
+			{
+				std::string key;
+				ForEachFunc* func;
+				ForEachData( const std::string& k, ForEachFunc* f )
+					: key( k ), func( f ) {}
+				inline void run( const std::string& s, const Variant& v )
+					{ (*func)( key, v, s ); }
+			};
+
+		/** @cond */
+		protected:
+			xmmsv_t* propdict_;
+
+		/** @endcond */
 
 	};
 

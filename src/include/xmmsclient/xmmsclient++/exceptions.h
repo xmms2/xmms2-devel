@@ -60,6 +60,17 @@ namespace Xmms
 
 	};
 
+	/** @class value_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if the returned value is an error.
+	 */
+	class value_error : public std::runtime_error
+	{
+		public:
+			explicit value_error( const std::string& what_arg );
+
+	};
+
 	/** @class argument_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
 	 *
 	 *  @brief Thrown if the arguments passed to a method are invalid.

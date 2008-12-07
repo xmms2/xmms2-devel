@@ -110,13 +110,15 @@ namespace Xmms
 	                      unsigned int limit_len,
 	                      unsigned int limit_start ) const
 	{
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
+		xmmsv_t *xorder = makeStringList( order );
 
 		xmmsc_result_t* res
 		    = call( connected_,
 		            boost::bind( xmmsc_coll_query_ids, conn_, coll.coll_,
-		                         &corder[0], limit_start, limit_len ) );
+		                         xorder, limit_start, limit_len ) );
+
+		xmmsv_unref( xorder );
+
 		return UintListResult( res, ml_ );
 	}
 
@@ -130,16 +132,22 @@ namespace Xmms
 	                      ) const
 	{
 		assertNonEmptyFetchList( fetch );
-		std::vector< const char* > corder, cfetch, cgroup;
-		fillCharArray( order, corder );
-		fillCharArray( fetch, cfetch );
-		fillCharArray( group, cgroup );
+
+		xmmsv_t *xorder, *xfetch, *xgroup;
+		xorder = makeStringList( order );
+		xfetch = makeStringList( fetch );
+		xgroup = makeStringList( group );
 
 		xmmsc_result_t* res
 		    = call( connected_,
 		            boost::bind( xmmsc_coll_query_infos, conn_, coll.coll_,
-		                         &corder[0], limit_start, limit_len,
-		                         &cfetch[0], &cgroup[0] ) );
+		                         xorder, limit_start, limit_len,
+		                         xfetch, xgroup ) );
+
+		xmmsv_unref( xorder );
+		xmmsv_unref( xfetch );
+		xmmsv_unref( xgroup );
+
 		return DictListResult( res, ml_ );
 	}
 
@@ -148,7 +156,7 @@ namespace Xmms
 	{
 		xmmsc_coll_t* coll;
 
-		if( !xmmsc_coll_parse( pattern.c_str(), &coll ) ) {
+		if( !xmmsv_coll_parse( pattern.c_str(), &coll ) ) {
 			throw collection_parsing_error( "invalid collection pattern" );
 		}
 

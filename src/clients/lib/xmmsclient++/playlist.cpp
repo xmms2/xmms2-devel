@@ -130,14 +130,16 @@ namespace Xmms
 	                                    const std::list< std::string >& order,
 	                                    const std::string& playlist ) const
 	{
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
+		xmmsv_t *xorder = makeStringList( order );
 
 		xmmsc_result_t* res =
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_add_collection, conn_,
 		                       playlist.c_str(), collection.getColl(),
-		                       &corder[0] ) );
+		                       xorder ) );
+
+		xmmsv_unref( xorder );
+
 		return VoidResult( res, ml_ );
 	}
 
@@ -238,14 +240,16 @@ namespace Xmms
 	                                       const std::list< std::string >& order,
 	                                       const std::string& playlist ) const
 	{
-		std::vector< const char* > corder;
-		fillCharArray( order, corder );
+		xmmsv_t *xorder = makeStringList( order );
 
 		xmmsc_result_t* res =
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_insert_collection, conn_,
 		                       playlist.c_str(), pos, collection.getColl(),
-		                       &corder[0] ) );
+		                       xorder ) );
+
+		xmmsv_unref( xorder );
+
 		return VoidResult( res, ml_ );
 	}
 
@@ -313,12 +317,15 @@ namespace Xmms
 	VoidResult Playlist::sort( const std::list<std::string>& properties,
 	                           const std::string& playlist ) const
 	{
-		const char** props = c_stringList( properties );
+		xmmsv_t *xprops = makeStringList( properties );
+
 		xmmsc_result_t* res =
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_sort, conn_,
-		                       playlist.c_str(), props ) );
-		delete [] props;
+		                       playlist.c_str(), xprops ) );
+
+		xmmsv_unref( xprops );
+
 		return VoidResult( res, ml_ );
 	}
 

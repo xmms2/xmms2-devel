@@ -26,132 +26,102 @@
 
 namespace Xmms
 {
+	static void getValue( Dict::Variant& val, xmmsv_t *value );
 
-	Dict::Dict( xmmsc_result_t* res ) : result_( 0 )
+	Dict::Dict( xmmsv_t* val ) : value_( 0 )
 	{
-		if( xmmsc_result_iserror( res ) ) {
-			throw result_error( xmmsc_result_get_error( res ) );
+		if( xmmsv_is_error( val ) ) {
+			const char *buf;
+			xmmsv_get_error( val, &buf );
+			throw value_error( buf );
 		}
-		else if( xmmsc_result_get_type( res ) != XMMSC_RESULT_VALUE_TYPE_DICT &&
-		         xmmsc_result_get_type( res ) != XMMSC_RESULT_VALUE_TYPE_PROPDICT ) {
-			throw not_dict_error( "Result is not a dict" );
+		else if( xmmsv_get_type( val ) != XMMSV_TYPE_DICT ) {
+			throw not_dict_error( "Value is not a dict" );
 		}
-		result_ = res;
-		xmmsc_result_ref( result_ );
+		setValue( val );
 	}
 
-	Dict::Dict( const Dict& dict ) : result_( dict.result_ )
+	Dict::Dict( const Dict& dict ) : value_( dict.value_ )
 	{
-		xmmsc_result_ref( result_ );
+		xmmsv_ref( value_ );
 	}
 
 	Dict& Dict::operator=( const Dict& dict )
 	{
-		if( result_ ) {
-			xmmsc_result_unref( result_ );
-		}
-		result_ = dict.result_;
-		xmmsc_result_ref( result_ );
+		setValue( dict.value_ );
 		return *this;
 	}
 
 	Dict::~Dict()
 	{
-		xmmsc_result_unref( result_ );
+		xmmsv_unref( value_ );
+	}
+
+	void Dict::setValue( xmmsv_t *newval )
+	{
+		if( value_ ) {
+			xmmsv_unref( value_ );
+		}
+		value_ = newval;
+		xmmsv_ref( value_ );
 	}
 
 	bool Dict::contains( const std::string& key ) const
 	{
-		if( xmmsc_result_get_dict_entry_type( result_, key.c_str()) ==
-		    XMMSC_RESULT_VALUE_TYPE_NONE ) {
-			return false;
-		}
-		else {
-			return true;
-		}
+		return !!xmmsv_dict_get( value_, key.c_str(), NULL );
 	}
 
 	Dict::Variant Dict::operator[]( const std::string& key ) const
 	{
 		Dict::Variant value;
-		switch( xmmsc_result_get_dict_entry_type( result_, key.c_str() ) )
-		{
-			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
-				uint32_t temp = 0;
-				if( !xmmsc_result_get_dict_entry_uint( result_, 
-				                                       key.c_str(), 
-				                                       &temp ) ) {
-					// FIXME: handle error
-				}
-				value = temp;
-				break;
-
-			}
-			case XMMSC_RESULT_VALUE_TYPE_INT32: {
-
-				int32_t temp = 0;
-				if( !xmmsc_result_get_dict_entry_int( result_, 
-				                                      key.c_str(), 
-				                                      &temp ) ) {
-					// FIXME: handle error
-				}
-				value = temp;
-				break;
-
-			}
-			case XMMSC_RESULT_VALUE_TYPE_STRING: {
-
-				const char* temp = 0;
-				if( !xmmsc_result_get_dict_entry_string( result_, 
-				                                         key.c_str(), 
-				                                         &temp ) ) {
-					// FIXME: handle error
-				}
-				value = std::string( temp );
-				break;
-
-			}
-			case XMMSC_RESULT_VALUE_TYPE_NONE: {
-				throw no_such_key_error( "No such key: " + key );
-			}
-			default: {
-				// should never happen?
-			}
-
+		xmmsv_t *elem;
+		if( !xmmsv_dict_get( value_, key.c_str(), &elem ) ) {
+			throw no_such_key_error( "No such key: " + key );
 		}
+
+		getValue( value, elem );
 
 		return value;
 
 	}
 
 	static void
-	getValue( Dict::Variant& val, xmmsc_result_value_type_t type,
-	          const void* value )
+	getValue( Dict::Variant& val, xmmsv_t *value )
 	{
-		switch( type ) {
+		switch( xmmsv_get_type( value ) ) {
 			
-			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
+			case XMMSV_TYPE_UINT32: {
 
-				val = static_cast< uint32_t >(
-				          reinterpret_cast< unsigned long >( value ));
-				break;
-
-			}
-			case XMMSC_RESULT_VALUE_TYPE_INT32: {
-
-				val = static_cast< int32_t >(reinterpret_cast< long >( value ));
-				break;
-
-			}
-			case XMMSC_RESULT_VALUE_TYPE_STRING: {
-
-				std::string temp( static_cast< const char* >( value ) );
+				uint32_t temp = 0;
+				if( !xmmsv_get_uint( value, &temp ) ) {
+					// FIXME: handle error
+				}
 				val = temp;
 				break;
 
 			}
-			case XMMSC_RESULT_VALUE_TYPE_NONE: {
+			case XMMSV_TYPE_INT32: {
+
+				int32_t temp = 0;
+				if( !xmmsv_get_int( value, &temp ) ) {
+					// FIXME: handle error
+				}
+				val = temp;
+				break;
+
+			}
+			case XMMSV_TYPE_STRING: {
+
+				const char* temp = 0;
+				if( !xmmsv_get_string( value, &temp ) ) {
+					// FIXME: handle error
+				}
+				val = std::string( temp );
+				break;
+
+			}
+			case XMMSV_TYPE_NONE: {
 				break;
 			}
 			default: {
@@ -161,15 +131,14 @@ namespace Xmms
 	}
 
 	static void
-	dict_foreach( const void* key, xmmsc_result_value_type_t type,
-	              const void* value, void* userdata )
+	dict_foreach( const char* key, xmmsv_t *value, void* userdata )
 	{
 		Xmms::Dict::ForEachFunc* func =
 			static_cast< Xmms::Dict::ForEachFunc* >( userdata );
 		Xmms::Dict::Variant val;
 		std::string keystring( static_cast< const char* >( key ) );
-		getValue( val, type, value );
-		(*func)( keystring, val );
+		getValue( val, value );
+		(*func)( key, val );
 
 	}
 
@@ -177,72 +146,90 @@ namespace Xmms
 	{
 
 		ForEachFunc* f = new ForEachFunc( func );
-		xmmsc_result_dict_foreach( result_, &dict_foreach,
-		                           static_cast< void* >( f ) );
+		xmmsv_dict_foreach( value_, &dict_foreach, static_cast< void* >( f ) );
 		delete f;
 
 	}
 
-	PropDict::PropDict( xmmsc_result_t* res ) : Dict( res )
+
+	PropDict::PropDict( xmmsv_t* val ) : Dict( val ), propdict_( val )
 	{
+		xmmsv_ref( propdict_ );
+
+		// Immediately replace with a "flat" dict (default sources)
+		xmmsv_t *flat = xmmsv_propdict_to_dict( propdict_, NULL );
+		setValue( flat );
 	}
 
-	PropDict::PropDict( const PropDict& dict ) : Dict( dict )
+	PropDict::PropDict( const PropDict& dict )
+		: Dict( dict ), propdict_( dict.propdict_ )
 	{
+		xmmsv_ref( propdict_ );
 	}
 
 	PropDict& PropDict::operator=( const PropDict& dict )
 	{
 		Dict::operator=( dict );
+		if( propdict_ ) {
+			xmmsv_unref( propdict_ );
+		}
+		propdict_ = dict.propdict_;
+		xmmsv_ref( propdict_ );
 		return *this;
 	}
 
 	PropDict::~PropDict()
 	{
+		xmmsv_unref( propdict_ );
 	}
 
-	void PropDict::setSource( const std::string& src ) const
+	void PropDict::setSource( const std::string& src )
 	{
 		std::list< std::string > sources;
 		sources.push_back( src );
 		setSource( sources );
 	}
 
-	void PropDict::setSource( const std::list< std::string >& src ) const
+	void PropDict::setSource( const std::list< std::string >& src )
 	{
 		std::vector< const char* > prefs;
 		fillCharArray( src, prefs );
 
-		xmmsc_result_source_preference_set( result_, &prefs[0] );
+		xmmsv_t *flat = xmmsv_propdict_to_dict( propdict_, &prefs[0] );
+		setValue( flat );
+	}
+
+
+	static void
+	propdict_foreach_inner( const char* source, xmmsv_t *value, void* userdata )
+	{
+		Xmms::PropDict::ForEachData *fedata =
+			static_cast< Xmms::PropDict::ForEachData* >( userdata );
+
+		Dict::Variant val;
+		getValue( val, value );
+
+		fedata->run( source, val );
 	}
 
 	static void
-	propdict_foreach( const void* key, xmmsc_result_value_type_t type,
-	                  const void* value, const char* source,
-	                  void* userdata )
+	propdict_foreach( const char* key, xmmsv_t *pair, void* userdata )
 	{
-
 		Xmms::PropDict::ForEachFunc* func =
 			static_cast< Xmms::PropDict::ForEachFunc* >( userdata );
 
-		Dict::Variant val;
-		getValue( val, type, value );
+		Xmms::PropDict::ForEachData fedata( key, func );
 
-		std::string keystring( static_cast< const char* >( key ) );
-		std::string sourcestring( source );
-
-		(*func)( keystring, val, sourcestring );
-
+		xmmsv_dict_foreach( pair, &propdict_foreach_inner,
+		                    static_cast< void* >( &fedata ) );
 	}
 
 	void PropDict::each( const PropDict::ForEachFunc& func ) const
 	{
+		PropDict::ForEachFunc f( func );
 
-		PropDict::ForEachFunc* f = new PropDict::ForEachFunc( func );
-		xmmsc_result_propdict_foreach( result_, &propdict_foreach,
-		                               static_cast< void* >( f ) );
-		delete f;
-
+		xmmsv_dict_foreach( propdict_, &propdict_foreach,
+		                    static_cast< void* >( &f ) );
 	}
 
 }

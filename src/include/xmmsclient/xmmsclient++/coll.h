@@ -30,7 +30,7 @@ namespace Xmms
 	class Collection;
 	class CollResult;
 
-	Coll::Coll* extract_collection( xmmsc_result_t* );
+	Coll::Coll* extract_collection( xmmsv_t* );
 
 	/** @class Coll coll.h "xmmsclient/xmmsclient++/coll.h"
 	 *  @brief This class is used to build collection structures.
@@ -223,7 +223,7 @@ namespace Xmms
 
 		class Reference : public Coll
 		{
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
@@ -275,7 +275,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 
 			protected:
 				Union( xmmsv_coll_t* coll );
@@ -301,7 +301,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 
 			protected:
 				Intersection( xmmsv_coll_t* coll );
@@ -327,7 +327,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 
 			protected:
 				Complement( xmmsv_coll_t* coll );
@@ -342,7 +342,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -359,7 +359,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -379,7 +379,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -399,7 +399,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -420,7 +420,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -457,7 +457,7 @@ namespace Xmms
 			friend class Element;
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 
 			protected:
 				Idlist( xmmsv_coll_t* coll );
@@ -499,7 +499,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
@@ -537,7 +537,7 @@ namespace Xmms
 		{
 			friend class ::Xmms::Collection;
 			friend class ::Xmms::CollResult;
-			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
 
 			protected:
 				PartyShuffle( xmmsv_coll_t* coll );

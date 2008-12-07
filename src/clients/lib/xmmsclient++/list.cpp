@@ -26,59 +26,65 @@
 namespace Xmms
 {
 
-	SuperList::SuperList( xmmsc_result_t* result )
-		: result_( 0 )
+	SuperList::SuperList( xmmsv_t* value )
+		: value_( 0 )
 	{
 
-		if( xmmsc_result_iserror( result ) ) {
-			throw result_error( xmmsc_result_get_error( result ) );
+		if( xmmsv_is_error( value ) ) {
+			const char *buf;
+			xmmsv_get_error( value, &buf );
+			throw value_error( buf );
 		}
-		if( !xmmsc_result_is_list( result ) ) {
-			throw not_list_error( "Provided result is not a list" );
+		if( !xmmsv_is_list( value ) ) {
+			throw not_list_error( "Provided value is not a list" );
 		}
 
-		result_ = result;
-		xmmsc_result_ref( result_ );
+		value_ = value;
+		xmmsv_ref( value_ );
+
+		xmmsv_get_list_iter( value_, &iter_ );
 
 	}
 
 	SuperList::SuperList( const SuperList& list )
-		: result_( list.result_ )
+		: value_( list.value_ )
 	{
-		xmmsc_result_ref( result_ );
+		xmmsv_ref( value_ );
 	}
 
 	SuperList& SuperList::operator=( const SuperList& list )
 	{
-		result_ = list.result_;
-		xmmsc_result_ref( result_ );
+		value_ = list.value_;
+		xmmsv_ref( value_ );
+		xmmsv_get_list_iter( value_, &iter_ );
 		return *this;
 	}
 
 	SuperList::~SuperList()
 	{
-		xmmsc_result_unref( result_ );
+		xmmsv_unref( value_ );
 	}
 
 	void SuperList::first() const
 	{
-
-		if( !xmmsc_result_list_first( result_ ) ) {
-			// throw something...
-		}
-
+		xmmsv_list_iter_first( iter_ );
 	}
 
 	void SuperList::operator++() const
 	{
-		if( !xmmsc_result_list_next( result_ ) ) {
-			// throw
-		}
+		xmmsv_list_iter_next( iter_ );
 	}
 
 	bool SuperList::isValid() const
 	{
-		return xmmsc_result_list_valid( result_ );
+		return xmmsv_list_iter_valid( iter_ );
+	}
+
+	xmmsv_t* SuperList::getElement() const
+	{
+		xmmsv_t *elem = NULL;
+		xmmsv_list_iter_entry( iter_, &elem );
+		return elem;
 	}
 
 }
