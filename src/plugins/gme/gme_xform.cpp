@@ -31,6 +31,7 @@
 #define GME_DEFAULT_SAMPLE_RATE 44100
 #define GME_DEFAULT_SONG_LENGTH 300
 #define GME_DEFAULT_SONG_LOOPS 2
+#define GME_DEFAULT_STEREO_DEPTH -1.0
 
 extern "C" {
 
@@ -78,6 +79,7 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_config_property_register (xform_plugin, "loops", G_STRINGIFY (GME_DEFAULT_SONG_LOOPS), NULL, NULL);
 	xmms_xform_plugin_config_property_register (xform_plugin, "maxlength", G_STRINGIFY (GME_DEFAULT_SONG_LENGTH), NULL, NULL);
 	xmms_xform_plugin_config_property_register (xform_plugin, "samplerate", G_STRINGIFY (GME_DEFAULT_SAMPLE_RATE), NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "stereodepth", G_STRINGIFY (GME_DEFAULT_STEREO_DEPTH), NULL, NULL);
 
 	/* todo: add other mime types */
 	xmms_xform_plugin_indata_add (xform_plugin,
@@ -188,6 +190,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	int subtune = 0;
 	long fadelen = -1;
 	int samplerate;
+	double stereodepth;
 
 
 	g_return_val_if_fail (xform, FALSE);
@@ -291,6 +294,15 @@ xmms_gme_init (xmms_xform_t *xform)
 	}
 
 	XMMS_DBG ("gme.fadelen = %ld", fadelen);
+
+	val = xmms_xform_config_lookup (xform, "stereodepth");
+	stereodepth = xmms_config_property_get_float (val);
+	if (stereodepth >= 0.0 && stereodepth <= 1.0) {
+		XMMS_DBG ("Setting stereo depth to %f.", stereodepth);
+		gme_set_stereo_depth (data->emu, stereodepth);
+	} else {
+		XMMS_DBG ("gme.stereodepth = %f out of range 0.0 - 1.0; not setting.", stereodepth);
+	}
 
 	init_error = gme_start_track (data->emu, subtune);
 	if (init_error) {
