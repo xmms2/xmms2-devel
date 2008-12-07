@@ -236,6 +236,8 @@ xmms_gme_init (xmms_xform_t *xform)
 
 	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, samplerate);
 
+	g_string_free (file_contents, TRUE);
+
 	if (init_error) {
 		XMMS_DBG ("gme_open_data returned an error: %s", init_error);
 		return FALSE;
@@ -315,8 +317,6 @@ xmms_gme_init (xmms_xform_t *xform)
 		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, fadelen);
 		gme_set_fade (data->emu, fadelen);
 	}
-
-	g_string_free (file_contents, TRUE);
 
 	return TRUE;
 }
