@@ -103,11 +103,9 @@ type_and_msg_to_arg (xmmsv_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg
 static void
 xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
 {
-	xmms_ipc_msg_put_value (msg, val);
-
-	/* FIXME: error?
-	xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", val->type);
-	*/
+	if (xmms_ipc_msg_put_value (msg, val) == (uint32_t) -1) {
+		xmms_log_error ("Failed to serialize the return value into the IPC message!");
+	}
 }
 
 static void
@@ -210,8 +208,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {
 		/* FIXME: or we could change the client code to transform
-		 * CMD_ERROR to an error value_t. If so, remove the handling
-		 * of ERROR in xmms_ipc_handle_cmd_value, okay? */
+		 * CMD_ERROR to an error value_t. If so, don't forget to
+		 * update the client-side of IPC too. */
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 /*
