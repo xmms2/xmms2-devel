@@ -262,7 +262,8 @@ status_print_entry (status_entry_t *entry)
 			s = g_hash_table_lookup (entry->data, s+2);
 		}
 
-		currlen += strlen (s);
+		/* FIXME: print ellipsis when len > columns */
+		currlen += g_utf8_strlen (s, -1);
 		if (currlen >= columns) {
 			break;
 		} else {
@@ -273,8 +274,6 @@ status_print_entry (status_entry_t *entry)
 	while (currlen++ < columns) {
 		g_printf (" ");
 	}
-
-	/* ${playback_status}: ${artist} - ${title}: ${playtime} of ${duration} */
-
+	
 	fflush (stdout);
 }
