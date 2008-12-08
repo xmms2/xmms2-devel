@@ -224,10 +224,10 @@ loop_select (cli_infos_t *infos)
 		}
 	}
 
-	/* Listen to readline in shell mode */
-	if (infos->mode == CLI_EXECUTION_MODE_SHELL &&
-	    (infos->status == CLI_ACTION_STATUS_READY ||
-	     infos->status == CLI_ACTION_STATUS_REFRESH)) {
+	/* Listen to readline in shell mode or status mode */
+	if ((infos->mode == CLI_EXECUTION_MODE_SHELL &&
+	     infos->status == CLI_ACTION_STATUS_READY) ||
+	     infos->status == CLI_ACTION_STATUS_REFRESH) {
 		FD_SET(STDINFD, &rfds);
 		if (maxfds < STDINFD) {
 			maxfds = STDINFD;
@@ -258,11 +258,11 @@ loop_select (cli_infos_t *infos)
 		}
 
 		/* User input found, read it */
-		if (infos->mode == CLI_EXECUTION_MODE_SHELL
-		    && FD_ISSET(STDINFD, &rfds)) {
+		if ((infos->mode == CLI_EXECUTION_MODE_SHELL ||
+		     infos->status == CLI_ACTION_STATUS_REFRESH) &&
+		    FD_ISSET(STDINFD, &rfds)) {
 			rl_callback_read_char ();
 		}
-
 	}
 
 	/* Status -refresh

@@ -122,6 +122,7 @@ readline_status_mode (cli_infos_t *infos)
 {
 	Keymap stkmap;
 
+	readline_cli_infos = infos;
 	rl_callback_handler_install (NULL, &readline_status_callback);
 
 	/* Backup current keymap-name */
@@ -137,12 +138,6 @@ readline_status_mode (cli_infos_t *infos)
 	rl_bind_key_in_map ('t', readline_status_toggle, stkmap);
 
 	rl_set_keymap (stkmap);
-}
-
-void
-readline_screen_size (gint *rows, gint *columns)
-{
-	rl_get_screen_size (rows, columns);
 }
 
 void

@@ -250,9 +250,9 @@ void
 status_print_entry (status_entry_t *entry)
 {
 	GList *it;
-	gint rows, columns, currlen;
+	gint columns, currlen;
 
-	readline_screen_size (&rows, &columns);
+	columns = find_terminal_width ();
 
 	currlen = 0;
 	g_printf ("\r");
