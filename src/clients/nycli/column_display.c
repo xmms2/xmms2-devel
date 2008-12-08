@@ -39,12 +39,18 @@ struct column_def_St {
 	guint requested_size;
 };
 
-/* max 4 bytes per ucs-4 character */
-#define MAX_CHARWIDTH 4
+
+/* FIXME:
+   - make columns as narrow as possible (check widest value)
+   - no width restriction when sending to a pipe (currently 80)
+   - use a GString to accomodate unknown buffer size
+   - proper column_width on all platforms
+*/
 
 
-/* FIXME: needs better utf8, column_width on all platforms */
-
+/* Copy a cropped version of str to dest, of maximum length
+ * max_len. Returns the number of columns the cropped string consists
+ * of. */
 static guint
 crop_string (gchar *dest, const gchar *str, guint max_len)
 {
@@ -68,6 +74,7 @@ crop_string (gchar *dest, const gchar *str, guint max_len)
 
 	iter = str;
 
+	/* Copy at most max_len columns of characters from str to buffer */
 	while (*iter && columns < max_len) {
 		gunichar ch = g_utf8_get_char (iter);
 		++columns;
@@ -84,25 +91,23 @@ crop_string (gchar *dest, const gchar *str, guint max_len)
 		iter = g_utf8_next_char (iter);
 	}
 
+	/* Not EOS, cut it with an ellipsis */
 	if (*iter) {
 		--tmp;
 		if (g_unichar_iswide (*tmp)) {
-			*tmp = dot;
-			*(tmp + 1) = dot;
-			tmp += 2;
+			*tmp++ = dot;
+			*tmp++ = dot;
 		}
 		else {
 			--tmp;
 			if (g_unichar_iswide (*tmp)) {
-				*tmp = dot;
-				*(tmp + 1) = dot;
-				*(tmp + 2) = space;
-				tmp += 3;
+				*tmp++ = dot;
+				*tmp++ = dot;
+				*tmp++ = space;
 			}
 			else {
-				*tmp = dot;
-				*(tmp + 1) = dot;
-				tmp += 2;
+				*tmp++ = dot;
+				*tmp++ = dot;
 			}
 		}
 	}
@@ -137,7 +142,10 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 	case XMMSV_TYPE_STRING:
 		xmmsv_get_dict_entry_string (val, coldef->arg.string, &sval);
 
-		/* use UTF-8 column width, not characters or bytes */
+		/* Use UTF-8 column width, not characters or bytes */
+		/* Note: realsize means the number of columns used to
+		 * *display* this time, instead of "the numbers of bytes that
+		 * would have been written if the buffer was large enough". */
 		realsize = crop_string (buffer, sval, coldef->size);
 		break;
 	default:
@@ -360,7 +368,7 @@ column_display_prepare (column_display_t *disp)
 		}
 	}
 
-	disp->buffer = g_new0 (gchar, (termwidth * MAX_CHARWIDTH) + 1);
+	disp->buffer = g_new0 (gchar, (termwidth * sizeof(gunichar)) + 1);
 }
 
 void
