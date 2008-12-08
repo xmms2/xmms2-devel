@@ -101,7 +101,6 @@ struct xmmsv_St {
 
 static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
-static void value_data_free (xmmsv_t *val);
 static int get_absolute_position (int pos, unsigned int size, unsigned int *abspos);
 
 
@@ -351,17 +350,6 @@ xmmsv_free (xmmsv_t *val)
 {
 	x_return_if_fail (val);
 
-	value_data_free (val);
-
-	free (val);
-}
-
-
-static void
-value_data_free (xmmsv_t *val)
-{
-	x_return_if_fail (val);
-
 	switch (val->type) {
 		case XMMSV_TYPE_NONE :
 		case XMMSV_TYPE_END :
@@ -394,7 +382,7 @@ value_data_free (xmmsv_t *val)
 			break;
 	}
 
-	val->type = XMMSV_TYPE_NONE;
+	free (val);
 }
 
 
