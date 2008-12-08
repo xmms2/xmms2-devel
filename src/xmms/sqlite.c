@@ -567,11 +567,10 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 /**
  * Execute a query to the database.
  */
-gboolean
-xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, ...)
+static gboolean
+xmms_sqlite_query_array_va (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, va_list ap)
 {
 	gchar *q;
-	va_list ap;
 	gint ret, num_cols;
 	xmmsv_t **row;
 	sqlite3_stmt *stm = NULL;
@@ -579,9 +578,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	g_return_val_if_fail (query, FALSE);
 	g_return_val_if_fail (sql, FALSE);
 
-	va_start (ap, query);
 	q = sqlite3_vmprintf (query, ap);
-	va_end (ap);
 
 	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
 
@@ -639,6 +636,19 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	return (ret == SQLITE_DONE);
 }
 
+gboolean
+xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, ...)
+{
+	va_list ap;
+	gboolean r;
+
+	va_start (ap, query);
+	r = xmms_sqlite_query_array_va (sql, method, udata, query, ap);
+	va_end (ap);
+
+	return r;
+}
+
 static gboolean
 xmms_sqlite_int_cb (xmmsv_t **row, gpointer udata)
 {
@@ -653,19 +663,19 @@ xmms_sqlite_int_cb (xmmsv_t **row, gpointer udata)
 }
 
 gboolean
-xmms_sqlite_query_int (sqlite3 *sql, gint32 *r, const gchar *query, ...)
+xmms_sqlite_query_int (sqlite3 *sql, gint32 *out, const gchar *query, ...)
 {
-	gchar *q;
 	va_list ap;
+	gboolean r;
 
 	g_return_val_if_fail (query, FALSE);
 	g_return_val_if_fail (sql, FALSE);
 
 	va_start (ap, query);
-	q = sqlite3_vmprintf (query, ap);
+	r = xmms_sqlite_query_array_va (sql, xmms_sqlite_int_cb, out, query, ap);
 	va_end (ap);
 
-	return xmms_sqlite_query_array (sql, xmms_sqlite_int_cb, r, q);
+	return r;
 }
 
 
