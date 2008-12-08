@@ -1314,3 +1314,30 @@ print_indented (const gchar *string, guint level)
 		}
 	}
 }
+
+/* FIXME: not portable? */
+gint
+find_terminal_width ()
+{
+	gint columns;
+	struct winsize ws;
+	char *colstr, *endptr;
+
+	if (!isatty (STDOUT_FILENO)) {
+		columns = 0;
+	} else if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
+		columns = ws.ws_col;
+	} else {
+		colstr = getenv ("COLUMNS");
+		if (colstr != NULL) {
+			columns = strtol (colstr, &endptr, 10);
+		}
+	}
+
+	/* Default to 80 columns */
+	if (columns <= 0) {
+		columns = 80;
+	}
+
+	return columns;
+}

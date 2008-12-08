@@ -39,33 +39,6 @@ struct column_def_St {
 	guint requested_size;
 };
 
-/* FIXME: not portable? */
-static gint
-find_terminal_width ()
-{
-	gint columns;
-	struct winsize ws;
-	char *colstr, *endptr;
-
-	if (!isatty (STDOUT_FILENO)) {
-		columns = 0;
-	} else if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
-		columns = ws.ws_col;
-	} else {
-		colstr = getenv ("COLUMNS");
-		if (colstr != NULL) {
-			columns = strtol (colstr, &endptr, 10);
-		}
-	}
-
-	/* Default to 80 columns */
-	if (columns <= 0) {
-		columns = 80;
-	}
-
-	return columns;
-}
-
 static gint
 result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
 {
