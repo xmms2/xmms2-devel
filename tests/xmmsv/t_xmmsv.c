@@ -248,6 +248,7 @@ CASE (test_xmmsv_type_list)
 
 		xmmsv_list_iter_next (it);
 	}
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
 
 	xmmsv_list_iter_first (it);
 
@@ -288,6 +289,23 @@ CASE (test_xmmsv_type_list)
 	}
 
 	CU_ASSERT_TRUE (xmmsv_list_foreach (value, _list_foreach, NULL));
+
+	/* list_iter_last */
+	xmmsv_list_iter_last (it);
+	CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
+	CU_ASSERT_EQUAL (i, 9);
+
+	/* list_iter_prev */
+	for (i = 9, xmmsv_list_iter_last (it);
+	    i >= 0;
+	    i--, xmmsv_list_iter_prev (it)) {
+
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
+		CU_ASSERT_TRUE (xmmsv_get_int (tmp, &j));
+		CU_ASSERT_EQUAL (i, j);
+	}
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
 
 	xmmsv_unref (value);
 }

@@ -1237,7 +1237,6 @@ xmmsv_list_iter_valid (xmmsv_list_iter_t *it)
  * Rewind the iterator to the start of the list.
  *
  * @param it A #xmmsv_list_iter_t.
- * @return 1 upon success otherwise 0
  */
 void
 xmmsv_list_iter_first (xmmsv_list_iter_t *it)
@@ -1248,10 +1247,26 @@ xmmsv_list_iter_first (xmmsv_list_iter_t *it)
 }
 
 /**
+ * Move the iterator to end of the list.
+ *
+ * @param listv A #xmmsv_list_iter_t.
+ */
+void
+xmmsv_list_iter_last (xmmsv_list_iter_t *it)
+{
+	x_return_if_fail (it);
+
+	if (it->parent->size > 0) {
+		it->position = it->parent->size - 1;
+	} else {
+		it->position = it->parent->size;
+	}
+}
+
+/**
  * Advance the iterator to the next element in the list.
  *
  * @param it A #xmmsv_list_iter_t.
- * @return 1 upon success otherwise 0
  */
 void
 xmmsv_list_iter_next (xmmsv_list_iter_t *it)
@@ -1262,6 +1277,25 @@ xmmsv_list_iter_next (xmmsv_list_iter_t *it)
 		it->position++;
 	}
 }
+
+/**
+ * Move the iterator to the previous element in the list.
+ *
+ * @param listv A #xmmsv_list_iter_t.
+ */
+void
+xmmsv_list_iter_prev (xmmsv_list_iter_t *it)
+{
+	x_return_if_fail (it);
+
+	if (it->position > 0) {
+		it->position--;
+	} else {
+		/* Move to an invalid position */
+		it->position = it->parent->size;
+	}
+}
+
 
 /**
  * Move the iterator to the n-th element in the list.
