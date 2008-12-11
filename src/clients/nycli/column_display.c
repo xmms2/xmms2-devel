@@ -40,24 +40,24 @@ struct column_def_St {
 };
 
 static gint
-result_to_string (xmmsc_result_t *res, column_def_t *coldef, gchar *buffer)
+result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 {
 	gint realsize;
 	guint uval;
 	gint ival;
 	const gchar *sval;
 
-	switch (xmmsc_result_get_dict_entry_type (res, coldef->arg.string)) {
-	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-		xmmsc_result_get_dict_entry_uint (res, coldef->arg.string, &uval);
+	switch (xmmsv_get_dict_entry_type (val, coldef->arg.string)) {
+	case XMMSV_TYPE_UINT32:
+		xmmsv_get_dict_entry_uint (val, coldef->arg.string, &uval);
 		realsize = g_snprintf (buffer, coldef->size + 1, "%u", uval);
 		break;
-	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		xmmsc_result_get_dict_entry_int (res, coldef->arg.string, &ival);
+	case XMMSV_TYPE_INT32:
+		xmmsv_get_dict_entry_int (val, coldef->arg.string, &ival);
 		realsize = g_snprintf (buffer, coldef->size + 1, "%d", ival);
 		break;
-	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		xmmsc_result_get_dict_entry_string (res, coldef->arg.string, &sval);
+	case XMMSV_TYPE_STRING:
+		xmmsv_get_dict_entry_string (val, coldef->arg.string, &sval);
 		g_snprintf (buffer, coldef->size + 1, "%s", sval);
 
 		/* count UTF-8 characters, not bytes - FIXME: buggy for Japanese :-/ */
@@ -293,29 +293,28 @@ column_display_prepare (column_display_t *disp)
 }
 
 void
-column_display_print (column_display_t *disp, xmmsc_result_t *res)
+column_display_print (column_display_t *disp, xmmsv_t *val)
 {
 	gint i;
 	column_def_t *coldef;
+	const gchar *err;
 
-	if (!xmmsc_result_iserror (res)) {
+	if (!xmmsv_get_error (val, &err)) {
 		for (i = 0; i < disp->cols->len; ++i) {
 			coldef = g_array_index (disp->cols, column_def_t *, i);
-			coldef->render (disp, coldef, res);
+			coldef->render (disp, coldef, val);
 		}
-
 		g_printf ("\n");
 		disp->counter++;
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
-
 }
 
 /** Display a row counter */
 void
 column_display_render_position (column_display_t *disp, column_def_t *coldef,
-                                xmmsc_result_t *res)
+                                xmmsv_t *val)
 {
 	gint realsize;
 
@@ -331,7 +330,7 @@ column_display_render_position (column_display_t *disp, column_def_t *coldef,
  */
 void
 column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
-                                 xmmsc_result_t *res)
+                                 xmmsv_t *val)
 {
 	gint highlight = GPOINTER_TO_INT(coldef->arg.udata);
 
@@ -345,7 +344,7 @@ column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
 
 void
 column_display_render_next (column_display_t *disp, column_def_t *coldef,
-                            xmmsc_result_t *res)
+                            xmmsv_t *val)
 {
 	gint realsize, curr = GPOINTER_TO_INT(coldef->arg.udata);
 
@@ -358,7 +357,7 @@ column_display_render_next (column_display_t *disp, column_def_t *coldef,
 /** Always render the label text. */
 void
 column_display_render_text (column_display_t *disp, column_def_t *coldef,
-                            xmmsc_result_t *res)
+                            xmmsv_t *val)
 {
 	const gchar *sep = coldef->name;
 	g_printf (sep);
@@ -368,11 +367,11 @@ column_display_render_text (column_display_t *disp, column_def_t *coldef,
 /** Render the selected property, possibly shortened. */
 void
 column_display_render_property (column_display_t *disp, column_def_t *coldef,
-                                xmmsc_result_t *res)
+                                xmmsv_t *val)
 {
 	gint realsize;
 
-	realsize = result_to_string (res, coldef, disp->buffer);
+	realsize = result_to_string (val, coldef, disp->buffer);
 	print_fixed_width_string (disp->buffer, coldef->size, realsize,
 	                          coldef->align);
 }

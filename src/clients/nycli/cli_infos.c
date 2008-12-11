@@ -105,8 +105,8 @@ cli_infos_loop_stop (cli_infos_t *infos)
 }
 
 /* Called on server disconnection. We can keep the loop running. */
-void
-cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
+gint
+cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;
 
@@ -116,8 +116,9 @@ cli_infos_disconnect_callback (xmmsc_result_t *res, void *userdata)
 	infos->conn = NULL;
 	infos->sync = NULL;
 
-	xmmsc_result_unref (res);
 	cli_infos_loop_resume (infos);
+
+	return TRUE;
 }
 
 gboolean

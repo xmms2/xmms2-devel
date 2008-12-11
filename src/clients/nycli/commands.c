@@ -644,6 +644,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	xmmsv_t *orderval;
 
 	gboolean retval = TRUE;
 
@@ -657,11 +658,13 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
-		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+		orderval = xmmsv_make_stringlist (order, -1);
+		res = xmmsc_coll_query_ids (infos->sync, query, orderval, 0, 0);
 		xmmsc_result_wait (res);
 
 		list_print_row (res, coldisp);
 
+		xmmsv_unref (orderval);
 		xmmsc_coll_unref (query);
 
 		g_free (order);
@@ -774,6 +777,7 @@ static gint
 url_isdir (cli_infos_t *infos, gchar *url)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val, *entry;
 	gchar *p, *path;
 	gint ret = 0;
 
@@ -783,16 +787,20 @@ url_isdir (cli_infos_t *infos, gchar *url)
 
 	res = xmmsc_xform_media_browse_encoded (infos->sync, path);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (!xmmsc_result_iserror (res)) {
-		for (xmmsc_result_list_first (res);
-		     xmmsc_result_list_valid (res);
-		     xmmsc_result_list_next (res)) {
+	if (!xmmsv_is_error (val)) {
+		xmmsv_list_iter_t *it;
+		xmmsv_get_list_iter (val, &it);
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
 			const gchar *path;
 
-			xmmsc_result_get_dict_entry_string (res, "path", &path);
+			xmmsv_list_iter_entry (it, &entry);
+			xmmsv_get_dict_entry_string (entry, "path", &path);
 			if (!strcmp (path, url)) {
-				xmmsc_result_get_dict_entry_int (res, "isdir", &ret);
+				xmmsv_get_dict_entry_int (entry, "isdir", &ret);
 				break;
 			}
 		}
@@ -808,6 +816,7 @@ matching_browse (cli_infos_t *infos, const gchar *done,
                  gchar *path, gint isdir, GList **files)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 
 	GPatternSpec *spec;
 	gchar *s, *dir, *pattern, *nslash, *pslash;
@@ -833,6 +842,7 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 
 	res = xmmsc_xform_media_browse_encoded (infos->sync, dir);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
 	nslash = strchr (s, '/');
 	nslash = (nslash == NULL) ? s + strlen (s) : nslash;
@@ -840,15 +850,20 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 	spec = g_pattern_spec_new (pattern);
 
 	/* Find matching entries */
-	if (!xmmsc_result_iserror (res)) {
-		for (xmmsc_result_list_first (res);
-		     xmmsc_result_list_valid (res);
-		     xmmsc_result_list_next (res)) {
+	if (!xmmsv_is_error (val)) {
+		xmmsv_list_iter_t *it;
+		xmmsv_get_list_iter (val, &it);
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
 			const gchar *file;
+			xmmsv_t *entry;
 			gint isdir;
 
-			xmmsc_result_get_dict_entry_string (res, "path", &file);
-			xmmsc_result_get_dict_entry_int (res, "isdir", &isdir);
+			xmmsv_list_iter_entry (it, &entry);
+
+			xmmsv_get_dict_entry_string (entry, "path", &file);
+			xmmsv_get_dict_entry_int (entry, "isdir", &isdir);
 			if (g_pattern_match_string (spec, file)) {
 				gchar *npath = g_strconcat (file, nslash, NULL);
 				matching_browse (infos, file, npath, isdir, files);
@@ -1133,7 +1148,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 	return retval;
 }
 
-/* 
+/*
 usage: move [-p <playlist>] [-n | -a <pos|offset>]  <pattern>
 
   Move entries inside a playlist.
@@ -1269,11 +1284,6 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 	coll_rename (infos, oldname, newname,
 	             XMMS_COLLECTION_NS_PLAYLISTS, force);
 
-/* 	res = xmmsc_coll_rename (infos->sync, oldname, newname, */
-/* 	                         XMMS_COLLECTION_NS_PLAYLISTS); */
-/* 	xmmsc_result_wait (res); */
-/* 	done (res, infos); */
-
 	g_free (newname);
 
 	return TRUE;
@@ -1348,6 +1358,7 @@ gboolean
 cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *orderval;
 	gchar *playlist;
 	const gchar **order = NULL;
 
@@ -1361,10 +1372,12 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_sort (infos->sync, playlist, order);
+	orderval = xmmsv_make_stringlist (order, -1);
+	res = xmmsc_playlist_sort (infos->sync, playlist, orderval);
 	xmmsc_result_wait (res);
 	done (res, infos);
 
+	xmmsv_unref (orderval);
 	g_free (playlist);
 	g_free (order);
 
@@ -1511,6 +1524,7 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsv_t *val;
 	xmmsc_coll_t *coll;
 	xmmsc_result_t *res = NULL;
 
@@ -1555,8 +1569,9 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		/* get collection to copy from */
 		res = xmmsc_coll_get (infos->sync, from_name, from_ns);
 		xmmsc_result_wait (res);
+		val = xmmsc_result_get_value (res);
 
-		if (!xmmsc_result_get_collection (res, &coll)) {
+		if (!xmmsv_get_collection (val, &coll)) {
 			g_printf (_("Error: cannot find collection to copy\n"));
 			retval = FALSE;
 		}

@@ -41,43 +41,72 @@ typedef enum {
 
 /* Dumps a propdict on stdout */
 static void
-propdict_dump (const void *vkey, xmmsc_result_value_type_t type,
-               const void *value, const char *vsource, void *udata)
+dict_dump (const gchar *source, xmmsv_t *val, void *udata)
 {
-	const gchar *source = (const char *) vsource;
-	const gchar *key = (const char *) vkey;
+	xmmsv_type_t type;
 
-	const gchar *filter = (const gchar *) udata;
+	const gchar **keyfilter = (const gchar **) udata;
+	const gchar *key = (const gchar *) keyfilter[0];
+	const gchar *filter = (const gchar *) keyfilter[1];
 
 	if (filter && strcmp (filter, source) != 0) {
 		return;
 	}
 
+	type = xmmsv_get_type (val);
+
 	switch (type) {
-	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		g_printf (_("[%s] %s = %u\n"), source, key, XPOINTER_TO_INT (value));
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		/* FIXME: special handling for url, guess charset, see common.c:print_entry */
-		g_printf (_("[%s] %s = %s\n"), source, key, (gchar *) value);
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_DICT:
-		g_printf (_("[%s] %s = <dict>\n"), source, key);
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_PROPDICT:
-		g_printf (_("[%s] %s = <propdict>\n"), source, key);
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_COLL:
-		g_printf (_("[%s] %s = <coll>\n"), source, key);
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_BIN:
-		g_printf (_("[%s] %s = <bin>\n"), source, key);
-		break;
-	case XMMSC_RESULT_VALUE_TYPE_NONE:
-		g_printf (_("[%s] %s = <unknown>\n"), source, key);
+	case XMMSV_TYPE_UINT32:
+	{
+		guint value;
+		xmmsv_get_uint (val, &value);
+		g_printf (_("[%s] %s = %u\n"), source, key, value);
+	}
+	case XMMSV_TYPE_INT32:
+	{
+		gint value;
+		xmmsv_get_int (val, &value);
+		g_printf (_("[%s] %s = %u\n"), source, key, value);
 		break;
 	}
+	case XMMSV_TYPE_STRING:
+	{
+		const gchar *value;
+		xmmsv_get_string (val, &value);
+		/* FIXME: special handling for url, guess charset, see common.c:print_entry */
+		g_printf (_("[%s] %s = %s\n"), source, key, value);
+		break;
+	}
+	case XMMSV_TYPE_LIST:
+		g_printf (_("[%s] %s = <list>\n"), source, key);
+		break;
+	case XMMSV_TYPE_DICT:
+		g_printf (_("[%s] %s = <dict>\n"), source, key);
+		break;
+	case XMMSV_TYPE_COLL:
+		g_printf (_("[%s] %s = <coll>\n"), source, key);
+		break;
+	case XMMSV_TYPE_BIN:
+		g_printf (_("[%s] %s = <bin>\n"), source, key);
+		break;
+	case XMMSV_TYPE_END:
+		g_printf (_("[%s] %s = <end>\n"), source, key);
+		break;
+	case XMMSV_TYPE_NONE:
+		g_printf (_("[%s] %s = <none>\n"), source, key);
+		break;
+	case XMMSV_TYPE_ERROR:
+		g_printf (_("[%s] %s = <error>\n"), source, key);
+		break;
+	}
+}
+
+static void
+propdict_dump (const gchar *key, xmmsv_t *src_dict, void *udata)
+{
+	const gchar *keyfilter[] = {key, udata};
+
+	xmmsv_dict_foreach (src_dict, dict_dump, (void *) keyfilter);
 }
 
 /* Compare two uint like strcmp */
@@ -101,8 +130,13 @@ compare_uint (gconstpointer a, gconstpointer b, gpointer userdata)
 void
 done (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	if (xmmsc_result_iserror (res)) {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+	const gchar *err;
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_error (val, &err)) {
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -121,12 +155,17 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 {
 	xmmsc_result_t *res2;
 
-	if (!xmmsc_result_iserror (res)) {
+	const gchar *err;
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
 		res2 = xmmsc_playback_tickle (infos->sync);
 		xmmsc_result_wait (res2);
 		done (res2, infos);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 		cli_infos_loop_resume (infos);
 	}
 
@@ -136,19 +175,29 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 void
 list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 {
-	const gchar *name, *desc;
+	const gchar *name, *desc, *err;
+	xmmsv_t *val;
 
-	if (!xmmsc_result_iserror (res)) {
-		for (xmmsc_result_list_first (res);
-		     xmmsc_result_list_valid (res);
-		     xmmsc_result_list_next (res)) {
-			xmmsc_result_get_dict_entry_string (res, "shortname", &name);
-			xmmsc_result_get_dict_entry_string (res, "description", &desc);
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_get_list_iter (val, &it);
+
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+			xmmsv_t *elem;
+
+			xmmsv_list_iter_entry (it, &elem);
+			xmmsv_get_dict_entry_string (elem, "shortname", &name);
+			xmmsv_get_dict_entry_string (elem, "description", &desc);
 
 			g_printf ("%s - %s\n", name, desc);
 		}
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (res);
@@ -160,15 +209,19 @@ static void
 print_server_stats (xmmsc_result_t *res)
 {
 	gint uptime;
-	const gchar *version;
+	const gchar *version, *err;
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_dict_entry_string (res, "version", &version);
-		xmmsc_result_get_dict_entry_int (res, "uptime", &uptime);
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_get_dict_entry_string (val, "version", &version);
+		xmmsv_get_dict_entry_int (val, "uptime", &uptime);
 		g_printf ("uptime = %d\n"
 		          "version = %s\n", uptime, version);
 	} else {
-		g_printf ("Server error: %s\n", xmmsc_result_get_error (res));
+		g_printf ("Server error: %s\n", err);
 	}
 }
 
@@ -182,21 +235,34 @@ print_stats (cli_infos_t *infos, xmmsc_result_t *res)
 }
 
 static void
-print_config_entry (const void *key, xmmsc_result_value_type_t type,
-                    const void *confval, void *udata)
+print_config_entry (const gchar *confname, xmmsv_t *val, void *udata)
 {
-	const gchar *confname = key;
+	xmmsv_type_t type;
+
+	type = xmmsv_get_type (val);
 
 	switch (type) {
-	case XMMSC_RESULT_VALUE_TYPE_STRING:
-		g_printf ("%s = %s\n", confname, (gchar *)confval);
+	case XMMSV_TYPE_STRING:
+	{
+		const gchar *confval;
+		xmmsv_get_string (val, &confval);
+		g_printf ("%s = %s\n", confname, confval);
 		break;
-	case XMMSC_RESULT_VALUE_TYPE_INT32:
-		g_printf ("%s = %d\n", confname, XPOINTER_TO_INT(confval));
+	}
+	case XMMSV_TYPE_INT32:
+	{
+		int confval;
+		xmmsv_get_int (val, &confval);
+		g_printf ("%s = %d\n", confname, confval);
 		break;
-	case XMMSC_RESULT_VALUE_TYPE_UINT32:
-		g_printf ("%s = %u\n", confname, XPOINTER_TO_UINT(confval));
+	}
+	case XMMSV_TYPE_UINT32:
+	{
+		guint confval;
+		xmmsv_get_uint (val, &confval);
+		g_printf ("%s = %u\n", confname, confval);
 		break;
+	}
 	default:
 		break;
 	}
@@ -206,17 +272,19 @@ void
 print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
 {
 	const gchar *confval;
+	xmmsv_t *val;
 
 	if (confname == NULL) {
 		res = xmmsc_configval_list (infos->sync);
 		xmmsc_result_wait (res);
-		xmmsc_result_dict_foreach (res, print_config_entry, NULL);
+		val = xmmsc_result_get_value (res);
+		xmmsv_dict_foreach (val, print_config_entry, NULL);
 	} else {
 		res = xmmsc_configval_get (infos->sync, confname);
 		xmmsc_result_wait (res);
-		xmmsc_result_get_string (res, &confval);
-		print_config_entry (confname, xmmsc_result_get_type (res),
-		                    confval, NULL);
+		val = xmmsc_result_get_value (res);
+		xmmsv_get_string (val, &confval);
+		print_config_entry (confname, val, NULL);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -241,15 +309,26 @@ print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
 void
 apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 {
+	const gchar *err;
 	xmmsc_result_t *cmdres;
+	xmmsv_t *val;
 
-	if (!xmmsc_result_iserror (res)) {
-		for (xmmsc_result_list_first (res);
-		     xmmsc_result_list_valid (res);
-		     xmmsc_result_list_next (res)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_get_list_iter (val, &it);
+
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+			xmmsv_t *entry;
 			guint id;
 
-			if (xmmsc_result_get_uint (res, &id)) {
+			xmmsv_list_iter_entry (it, &entry);
+
+			if (xmmsv_get_uint (entry, &id)) {
 				switch (cmd) {
 				case IDLIST_CMD_REHASH:
 					cmdres = xmmsc_medialib_rehash (infos->sync, id);
@@ -265,7 +344,7 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 			}
 		}
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -286,23 +365,29 @@ rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
 }
 
 static void
-print_volume_entry (const void *key, xmmsc_result_value_type_t type,
-                    const void *value, void *udata)
+print_volume_entry (const gchar *key, xmmsv_t *val, void *udata)
 {
 	gchar *channel = udata;
+	guint value;
 
-	if (udata == NULL || !strcmp (key, channel)) {
-		g_printf (_("%s = %u\n"), (gchar *)key, XPOINTER_TO_UINT(value));
+	if (!udata || !strcmp (key, channel)) {
+		xmmsv_get_uint (val, &value);
+		g_printf (_("%s = %u\n"), key, value);
 	}
 }
 
 void
 print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel)
 {
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_dict_foreach (res, print_volume_entry, channel);
+	xmmsv_t *val;
+	const gchar *err;
+
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_dict_foreach (val, print_volume_entry, channel);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -311,8 +396,7 @@ print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel)
 }
 
 static void
-dict_keys (const void *key, xmmsc_result_value_type_t type,
-           const void *value, void *udata)
+dict_keys (const gchar *key, xmmsv_t *val, void *udata)
 {
 	GList **list = udata;
 
@@ -323,12 +407,15 @@ void
 set_volume (cli_infos_t *infos, gchar *channel, gint volume)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 	GList *it, *channels = NULL;
 
 	if (!channel) {
+		/* get all channels */
 		res = xmmsc_playback_volume_get (infos->sync);
 		xmmsc_result_wait (res);
-		xmmsc_result_dict_foreach (res, dict_keys, &channels);
+		val = xmmsc_result_get_value (res);
+		xmmsv_dict_foreach (val, dict_keys, &channels);
 		xmmsc_result_unref (res);
 	} else {
 		channels = g_list_prepend (channels, g_strdup (channel));
@@ -374,10 +461,15 @@ status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 static void
 id_print_info (xmmsc_result_t *res, guint id, gchar *source)
 {
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_propdict_foreach (res, propdict_dump, source);
+	xmmsv_t *val;
+	const gchar *err;
+
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_dict_foreach (val, propdict_dump, source);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (res);
@@ -387,12 +479,22 @@ void
 list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 {
 	xmmsc_result_t *infores = NULL;
+	xmmsv_t *val;
+	const gchar *err;
 	guint id;
 	gboolean first = true;
 
-	if (!xmmsc_result_iserror (res)) {
-		while (xmmsc_result_list_valid (res)) {
-			if (xmmsc_result_get_uint (res, &id)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_get_list_iter (val, &it);
+		while (xmmsv_list_iter_valid (it)) {
+			xmmsv_t *entry;
+
+			xmmsv_list_iter_entry (it, &entry);
+			if (xmmsv_get_uint (entry, &id)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
 
@@ -403,21 +505,14 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 				}
 				id_print_info (infores, id, NULL);
 			}
-			xmmsc_result_list_next (res);
+			xmmsv_list_iter_next (it);
 		}
 
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
-	xmmsc_result_unref (res);
-}
-
-void
-id_print_row (xmmsc_result_t *res, column_display_t *coldisp)
-{
-	column_display_print (coldisp, res);
 	xmmsc_result_unref (res);
 }
 
@@ -427,27 +522,39 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
 	xmmsc_result_t *infores = NULL;
+	xmmsv_t *val, *info;
+
+	const gchar *err;
 	guint id;
 	gint i = 0;
 
-	if (!xmmsc_result_iserror (res)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
 		column_display_prepare (coldisp);
 		column_display_print_header (coldisp);
-		while (xmmsc_result_list_valid (res)) {
+		xmmsv_get_list_iter (val, &it);
+		while (xmmsv_list_iter_valid (it)) {
+			xmmsv_t *entry;
+			xmmsv_list_iter_entry (it, &entry);
+			/* FIXME: check this! seems strange /greafine */
 			if (infores) {
 				xmmsc_result_unref (infores); /* unref previous infores */
 			}
-			if (xmmsc_result_get_uint (res, &id)) {
+			if (xmmsv_get_uint (entry, &id)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
-				column_display_print (coldisp, infores);
+				info = xmmsv_propdict_to_dict (xmmsc_result_get_value (infores),
+				                               NULL);
+				column_display_print (coldisp, info);
+				xmmsv_unref (info);
 			}
-			xmmsc_result_list_next (res);
+			xmmsv_list_iter_next (it);
 			i++;
 		}
-
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	column_display_print_footer (coldisp);
@@ -480,13 +587,15 @@ coll_save (cli_infos_t *infos, xmmsc_coll_t *coll,
            xmmsc_coll_namespace_t ns, gchar *name, gboolean force)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 	gboolean save = TRUE;
 
 	if (!force) {
 		xmmsc_coll_t *exists;
 		res = xmmsc_coll_get (infos->sync, name, ns);
 		xmmsc_result_wait (res);
-		if (xmmsc_result_get_collection (res, &exists)) {
+		val = xmmsc_result_get_value (res);
+		if (xmmsv_get_collection (val, &exists)) {
 			g_printf (_("Error: A collection already exists "
 			            "with the target name!\n"));
 			save = FALSE;
@@ -674,13 +783,17 @@ coll_dump (xmmsc_coll_t *coll, guint level)
 void
 coll_show (cli_infos_t *infos, xmmsc_result_t *res)
 {
+	const gchar *err;
 	xmmsc_coll_t *coll;
+	xmmsv_t *val;
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_collection (res, &coll);
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_get_collection (val, &coll);
 		coll_dump (coll, 0);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -691,12 +804,19 @@ static void
 print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
                         gchar *mark, gboolean all)
 {
-	const gchar *s;
+	const gchar *s, *err;
+	xmmsv_t *val;
 
-	if (!xmmsc_result_iserror (res)) {
-		while (xmmsc_result_list_valid (res)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
+		xmmsv_get_list_iter (val, &it);
+		while (xmmsv_list_iter_valid (it)) {
+			xmmsv_t *entry;
+			xmmsv_list_iter_entry (it, &entry);
 			/* Skip hidden playlists if all is FALSE*/
-			if (xmmsc_result_get_string (res, &s) && ((*s != '_') || all)) {
+			if (xmmsv_get_string (entry, &s) && ((*s != '_') || all)) {
 				/* Highlight active playlist */
 				if (mark && strcmp (s, mark) == 0) {
 					g_printf ("* %s\n", s);
@@ -704,10 +824,10 @@ print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
 					g_printf ("  %s\n", s);
 				}
 			}
-			xmmsc_result_list_next (res);
+			xmmsv_list_iter_next (it);
 		}
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	cli_infos_loop_resume (infos);
@@ -734,6 +854,8 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 	guint i;
 	guint id;
 	xmmsc_result_t *jumpres = NULL;
+	xmmsv_t *val;
+	const gchar *err;
 
 	gint currpos;
 	gint plsize;
@@ -743,7 +865,12 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
-	if (!xmmsc_result_iserror (res) && xmmsc_result_list_valid (res)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err) && xmmsv_is_list (val)) {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_get_list_iter (val, &it);
 
 		inc += plsize; /* magic trick so we can loop in either direction */
 
@@ -751,12 +878,15 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 		for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
 
 			/* Loop on the matched media */
-			for (xmmsc_result_list_first (res);
-			     xmmsc_result_list_valid (res);
-			     xmmsc_result_list_next (res)) {
+			for (xmmsv_list_iter_first (it);
+			     xmmsv_list_iter_valid (it);
+			     xmmsv_list_iter_next (it)) {
+				xmmsv_t *entry;
+
+				xmmsv_list_iter_entry (it, &entry);
 
 				/* If both match, jump! */
-				if (xmmsc_result_get_uint (res, &id)
+				if (xmmsv_get_uint (entry, &id)
 				    && g_array_index (playlist, guint, i) == id) {
 					jumpres = xmmsc_playlist_set_next (infos->sync, i);
 					xmmsc_result_wait (jumpres);
@@ -840,14 +970,18 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *coll;
+	xmmsv_t *val;
+	const char *err;
 
-	if (!xmmsc_result_iserror (plsres) &&
-	    xmmsc_result_get_collection (plsres, &coll)) {
+	val = xmmsc_result_get_value (plsres);
+
+	if (!xmmsv_get_error (val, &err) &&
+	    xmmsv_get_collection (val, &coll)) {
 		res = xmmsc_playlist_add_idlist (infos->sync, playlist, coll);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (plsres));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (plsres);
@@ -862,18 +996,30 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 	xmmsc_result_t *insres;
 	guint id;
 	gint offset;
+	const gchar *err;
+
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (matching);
 
 	offset = 0;
 
-	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
-		/* Loop on the matched media */
-		for (xmmsc_result_list_first (matching);
-		     xmmsc_result_list_valid (matching);
-		     xmmsc_result_list_next (matching)) {
+		xmmsv_list_iter_t *it;
 
-			if (xmmsc_result_get_uint (matching, &id)) {
+		xmmsv_get_list_iter (val, &it);
+
+		/* Loop on the matched media */
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+			xmmsv_t *entry;
+
+			xmmsv_list_iter_entry (it, &entry);
+
+			if (xmmsv_get_uint (entry, &id)) {
 				insres = xmmsc_playlist_insert_id (infos->sync, playlist,
 				                                   pos + offset, id);
 				xmmsc_result_wait (insres);
@@ -897,13 +1043,21 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 	gboolean up;
 	GTree *list;
 
-	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
+	const gchar *err;
+	xmmsv_t *val, *lisval;
+
+	val = xmmsc_result_get_value (matching);
+
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
+		xmmsv_list_iter_t *it;
+		xmmsv_t *entry;
+
 		lisres = xmmsc_playlist_list_entries (infos->sync, playlist);
 		xmmsc_result_wait (lisres);
 
-		if (xmmsc_result_iserror (lisres) || !xmmsc_result_is_list (lisres)) {
+		if (xmmsv_get_error (lisval, &err) || !xmmsv_is_list (lisval)) {
 			g_printf (_("Error retrieving playlist entries\n"));
 			goto finish;
 		}
@@ -911,11 +1065,14 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
 
 		/* store matching mediaids in a tree (faster lookup) */
-		for (xmmsc_result_list_first (matching);
-		     xmmsc_result_list_valid (matching);
-		     xmmsc_result_list_next (matching)) {
+		xmmsv_get_list_iter (val, &it);
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
 
-			if (xmmsc_result_get_uint (matching, &id)) {
+			xmmsv_list_iter_entry (it, &entry);
+
+			if (xmmsv_get_uint (entry, &id)) {
 				guint *tid;
 				tid = g_new (guint, 1);
 				*tid = id;
@@ -927,13 +1084,17 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		curr = 0;
 		inc = 0;
 		up = TRUE;
-		for (xmmsc_result_list_first (lisres);
-		     xmmsc_result_list_valid (lisres);
-		     xmmsc_result_list_next (lisres)) {
+		xmmsv_get_list_iter (lisval, &it);
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+
+			xmmsv_list_iter_entry (it, &entry);
+
 			if (curr == pos) {
 				up = FALSE;
 			}
-			if (xmmsc_result_get_uint (lisres, &id) &&
+			if (xmmsv_get_uint (entry, &id) &&
 			    g_tree_lookup (list, &id) != NULL) {
 				if (up) {
 					/* moving forward */
@@ -970,23 +1131,35 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 	GArray *playlist;
 	gint i;
 
+	const gchar *err;
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (matching);
+
 	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
-	if (xmmsc_result_iserror (matching) || !xmmsc_result_is_list (matching)) {
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_get_list_iter (val, &it);
+
 		/* Loop on the playlist (backward, easier to remove) */
 		for (i = plsize - 1; i >= 0; i--) {
 			plid = g_array_index (playlist, guint, i);
 
 			/* Loop on the matched media */
-			for (xmmsc_result_list_first (matching);
-			     xmmsc_result_list_valid (matching);
-			     xmmsc_result_list_next (matching)) {
+			for (xmmsv_list_iter_first (it);
+			     xmmsv_list_iter_valid (it);
+			     xmmsv_list_iter_next (it)) {
+				xmmsv_t *entry;
+
+				xmmsv_list_iter_entry (it, &entry);
 
 				/* If both match, remove! */
-				if (xmmsc_result_get_uint (matching, &id) && plid == id) {
+				if (xmmsv_get_uint (entry, &id) && plid == id) {
 					rmres = xmmsc_playlist_remove_entry (infos->sync, NULL, i);
 					xmmsc_result_wait (rmres);
 					xmmsc_result_unref (rmres);
@@ -1009,32 +1182,48 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 	guint plid, id, i;
 	gint offset;
 
-	if (xmmsc_result_iserror (matchres) || !xmmsc_result_is_list (matchres)) {
+	const gchar *err;
+	xmmsv_t *matchval, *plistval;
+
+	matchval = xmmsc_result_get_value (matchres);
+	plistval = xmmsc_result_get_value (plistres);
+
+	if (xmmsv_get_error (matchval, &err) || !xmmsv_is_list (matchval)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (matchres));
-	} else if (xmmsc_result_iserror (plistres) || !xmmsc_result_is_list (plistres)) {
+	} else if (xmmsv_get_error (plistval, &err) || !xmmsv_is_list (plistval)) {
 		g_printf (_("Error retrieving the playlist!\n"));
 	} else {
+		xmmsv_list_iter_t *matchit, *plistit;
+
 		/* FIXME: Can we use a GList to remove more safely in the rev order? */
 		offset = 0;
 		i = 0;
 
-		/* Loop on the playlist */
-		for (xmmsc_result_list_first (plistres);
-		     xmmsc_result_list_valid (plistres);
-		     xmmsc_result_list_next (plistres)) {
+		xmmsv_get_list_iter (matchval, &matchit);
+		xmmsv_get_list_iter (plistval, &plistit);
 
-			if (!xmmsc_result_get_uint (plistres, &plid)) {
+		/* Loop on the playlist */
+		for (xmmsv_list_iter_first (plistit);
+		     xmmsv_list_iter_valid (plistit);
+		     xmmsv_list_iter_next (plistit)) {
+			xmmsv_t *plist_entry;
+
+			xmmsv_list_iter_entry (plistit, &plist_entry);
+
+			if (!xmmsv_get_uint (plist_entry, &plid)) {
 				plid = 0;  /* failed to get id, should not happen */
 			}
 
 			/* Loop on the matched media */
-			for (xmmsc_result_list_first (matchres);
-			     xmmsc_result_list_valid (matchres);
-			     xmmsc_result_list_next (matchres)) {
+			for (xmmsv_list_iter_first (matchit);
+			     xmmsv_list_iter_valid (matchit);
+			     xmmsv_list_iter_next (matchit)) {
+				xmmsv_t *match_entry;
+
+				xmmsv_list_iter_entry (matchit, &match_entry);
 
 				/* If both match, jump! */
-				if (xmmsc_result_get_uint (matchres, &id) && plid == id) {
+				if (xmmsv_get_uint (match_entry, &id) && plid == id) {
 					rmres = xmmsc_playlist_remove_entry (infos->sync, playlist,
 					                                     i - offset);
 					xmmsc_result_wait (rmres);
@@ -1059,7 +1248,11 @@ copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
 	xmmsc_result_t *saveres;
 	xmmsc_coll_t *coll;
 
-	if (xmmsc_result_get_collection (res, &coll)) {
+	xmmsv_t *val;
+
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_collection (val, &coll)) {
 		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (saveres);
@@ -1077,8 +1270,11 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
                            gchar *attrname, gchar *attrvalue)
 {
 	xmmsc_coll_t *coll;
+	xmmsv_t *val;
 
-	if (xmmsc_result_get_collection (res, &coll)) {
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_collection (val, &coll)) {
 		xmmsc_coll_attribute_set (coll, attrname, attrvalue);
 		coll_save (infos, coll, ns, name, TRUE);
 	} else {
@@ -1097,8 +1293,11 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 	xmmsc_result_t *saveres;
 	xmmsc_coll_t *coll;
 	xmmsc_coll_t *newcoll;
+	xmmsv_t *val;
 
-	if (xmmsc_result_get_collection (res, &coll)) {
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_collection (val, &coll)) {
 		if (type >= 0 && xmmsc_coll_get_type (coll) != type) {
 			newcoll = coll_copy_retype (coll, type);
 			xmmsc_coll_unref (coll);
@@ -1136,8 +1335,11 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 {
 	xmmsc_coll_t *coll;
 	gchar *attrvalue;
+	xmmsv_t *val;
 
-	if (xmmsc_result_get_collection (res, &coll)) {
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_collection (val, &coll)) {
 		if (attrname == NULL) {
 			xmmsc_coll_attribute_foreach (coll,
 			                              coll_print_attributes, NULL);
@@ -1162,8 +1364,11 @@ playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
                        gchar *playlist)
 {
 	xmmsc_coll_t *coll;
+	xmmsv_t *val;
 
-	if (xmmsc_result_get_collection (res, &coll)) {
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_collection (val, &coll)) {
 		pl_print_config (coll, playlist);
 	} else {
 		g_printf (_("Invalid playlist!\n"));
@@ -1179,11 +1384,14 @@ playlist_exists (cli_infos_t *infos, gchar *playlist)
 {
 	gboolean retval = FALSE;
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 
 	res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 	xmmsc_result_wait (res);
 
-	if (!xmmsc_result_iserror (res)) {
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_is_error (val)) {
 		retval = TRUE;
 	}
 

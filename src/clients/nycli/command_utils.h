@@ -57,11 +57,4 @@ gboolean command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gc
 gboolean command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v);
 gboolean command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v, gboolean warn);
 
-
-typedef void (*double_notifier_f)(xmmsc_result_t *res1, xmmsc_result_t *res2, void *user_data);
-typedef struct double_callback_infos_St double_callback_infos_t;
-
-void register_double_callback (xmmsc_result_t *res1, xmmsc_result_t *res2, double_notifier_f cb, void *udata);
-
-
 #endif /* __COMMAND_UTILS_H__ */

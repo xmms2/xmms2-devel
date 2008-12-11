@@ -33,14 +33,17 @@ static void
 status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 	guint status;
 	gchar *playback;
+	const gchar *err;
 
 	res = xmmsc_playback_status (infos->sync);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_uint (res, &status);
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_get_uint (val, &status);
 
 		switch (status) {
 		case XMMS_PLAYBACK_STATUS_STOP:
@@ -59,7 +62,7 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 		g_hash_table_insert (entry->data, "playback_status", playback);
 
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (res);
@@ -69,20 +72,26 @@ static void
 status_update_info (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 	guint currid;
 	gint i;
 
 	const gchar *time_fields[] = { "duration", NULL };
 	const gchar *noinfo_fields[] = { "playback_status", "playtime", NULL };
+	const gchar *err;
 
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
 
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (!xmmsc_result_iserror (res)) {
+	if (!xmmsv_get_error (val, &err)) {
 		GList *it;
+		xmmsv_t *info;
+
+		info = xmmsv_propdict_to_dict (val, NULL);
 
 		for (it = g_list_first (entry->format);
 		     it != NULL;
@@ -91,25 +100,29 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 			gint ival;
 			gchar *value, *field;
 			const gchar *sval;
-			xmmsc_result_value_type_t type;
+			xmmsv_type_t type;
 
-			field = (gchar *)it->data + 2;
+			field = (gchar *)it->data;
+			if (field[0] != '$' || field[1] != '{') {
+				continue;
+			}
 
+			field += 2;
 			for (i = 0; noinfo_fields[i] != NULL; i++) {
 				if (!strcmp (field, noinfo_fields[i])) {
 					goto not_info_field;
 				}
 			}
 
-			type = xmmsc_result_get_dict_entry_type (res, field);
+			type = xmmsv_get_dict_entry_type (info, field);
 			switch (type) {
-			case XMMSC_RESULT_VALUE_TYPE_STRING:
-				xmmsc_result_get_dict_entry_string (res, field, &sval);
+			case XMMSV_TYPE_STRING:
+				xmmsv_get_dict_entry_string (info, field, &sval);
 				value = g_strdup (sval);
 				break;
 
-			case XMMSC_RESULT_VALUE_TYPE_INT32:
-				xmmsc_result_get_dict_entry_int (res, field, &ival);
+			case XMMSV_TYPE_INT32:
+				xmmsv_get_dict_entry_int (info, field, &ival);
 
 				for (i = 0; time_fields[i] != NULL; i++) {
 					if (!strcmp (time_fields[i], field)) {
@@ -135,8 +148,10 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 			;
 		}
 
+		xmmsv_unref (info);
+
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (res);
@@ -146,16 +161,19 @@ static void
 status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
 	guint playtime;
+	const gchar *err;
 
 	res = xmmsc_playback_playtime (infos->sync);
 	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_uint (res, &playtime);
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_get_uint (val, &playtime);
 		g_hash_table_insert (entry->data, "playtime", format_time (playtime));
 	} else {
-		g_printf (_("Server error: %s\n"), xmmsc_result_get_error (res));
+		g_printf (_("Server error: %s\n"), err);
 	}
 
 	xmmsc_result_unref (res);
@@ -274,6 +292,6 @@ status_print_entry (status_entry_t *entry)
 	while (currlen++ < columns) {
 		g_printf (" ");
 	}
-	
+
 	fflush (stdout);
 }

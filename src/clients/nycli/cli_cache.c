@@ -15,10 +15,7 @@
  */
 
 #include "cli_cache.h"
-
 #include "cli_infos.h"
-
-
 
 static void
 freshness_init (freshness_t *fresh)
@@ -56,62 +53,58 @@ freshness_received (freshness_t *fresh)
 	}
 }
 
-static void
-unref_transient_result (xmmsc_result_t *res)
-{
-	if (xmmsc_result_get_class (res) != XMMSC_RESULT_CLASS_BROADCAST) {
-		xmmsc_result_unref (res);
-	}
-}
-
-static void
-refresh_currpos (xmmsc_result_t *res, void *udata)
+static gint
+refresh_currpos (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_dict_entry_uint (res, "position", &cache->currpos);
+	if (!xmmsv_is_error (val)) {
+		xmmsv_get_dict_entry_uint (val, "position", &cache->currpos);
 	}
 
 	freshness_received (&cache->freshness_currpos);
-	unref_transient_result (res);
+
+	return TRUE;
 }
 
-static void
-refresh_playback_status (xmmsc_result_t *res, void *udata)
+static gint
+refresh_playback_status (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
-	if (!xmmsc_result_iserror (res)) {
-		xmmsc_result_get_uint (res, &cache->playback_status);
+	if (!xmmsv_is_error (val)) {
+		xmmsv_get_uint (val, &cache->playback_status);
 	}
 
 	freshness_received (&cache->freshness_playback_status);
-	unref_transient_result (res);
+
+	return TRUE;
 }
 
-static void
-refresh_active_playlist_name (xmmsc_result_t *res, void *udata)
+static gint
+refresh_active_playlist_name (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
 	const gchar *buf;
 
-	if (!xmmsc_result_iserror (res) && xmmsc_result_get_string (res, &buf)) {
+	if (!xmmsv_is_error (val) && xmmsv_get_string (val, &buf)) {
 		g_free (cache->active_playlist_name);
 		cache->active_playlist_name = g_strdup (buf);
 	}
 
 	freshness_received (&cache->freshness_active_playlist_name);
-	unref_transient_result (res);
+
+	return TRUE;
 }
 
-static void
-refresh_active_playlist (xmmsc_result_t *res, void *udata)
+static gint
+refresh_active_playlist (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
+	xmmsv_list_iter_t *it;
 	guint id;
 
-	if (!xmmsc_result_iserror (res)) {
+	if (!xmmsv_is_error (val)) {
 		/* Reset array */
 		if (cache->active_playlist->len > 0) {
 			gint len = cache->active_playlist->len;
@@ -119,21 +112,26 @@ refresh_active_playlist (xmmsc_result_t *res, void *udata)
 			                                               0, len);
 		}
 
+		xmmsv_get_list_iter (val, &it);
+
 		/* .. and refill it */
-		while (xmmsc_result_list_valid (res)) {
-			xmmsc_result_get_uint (res, &id);
+		while (xmmsv_list_iter_valid (it)) {
+			xmmsv_t *entry;
+			xmmsv_list_iter_entry (it, &entry);
+			xmmsv_get_uint (entry, &id);
 			g_array_append_val (cache->active_playlist, id);
 
-			xmmsc_result_list_next (res);
+			xmmsv_list_iter_next (it);
 		}
 	}
 
 	freshness_received (&cache->freshness_active_playlist);
-	unref_transient_result (res);
+
+	return TRUE;
 }
 
-static void
-update_active_playlist (xmmsc_result_t *res, void *udata)
+static gint
+update_active_playlist (xmmsv_t *val, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_cache_t *cache = infos->cache;
@@ -142,14 +140,14 @@ update_active_playlist (xmmsc_result_t *res, void *udata)
 	guint id;
 	const gchar *name;
 
-	xmmsc_result_get_dict_entry_int (res, "type", &type);
-	xmmsc_result_get_dict_entry_int (res, "position", &pos);
-	xmmsc_result_get_dict_entry_uint (res, "id", &id);
-	xmmsc_result_get_dict_entry_string (res, "name", &name);
+	xmmsv_get_dict_entry_int (val, "type", &type);
+	xmmsv_get_dict_entry_int (val, "position", &pos);
+	xmmsv_get_dict_entry_uint (val, "id", &id);
+	xmmsv_get_dict_entry_string (val, "name", &name);
 
 	/* Active playlist not changed, nevermind */
 	if (strcmp (name, cache->active_playlist_name) != 0) {
-		return;
+		return TRUE;
 	}
 
 	/* Apply changes to the cached playlist */
@@ -163,7 +161,7 @@ update_active_playlist (xmmsc_result_t *res, void *udata)
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_MOVE:
-		xmmsc_result_get_dict_entry_int (res, "newposition", &newpos);
+		xmmsv_get_dict_entry_int (val, "newposition", &newpos);
 		g_array_remove_index (cache->active_playlist, pos);
 		g_array_insert_val (cache->active_playlist, newpos, id);
 		break;
@@ -183,11 +181,11 @@ update_active_playlist (xmmsc_result_t *res, void *udata)
 		break;
 	}
 
-	unref_transient_result (res);
+	return TRUE;
 }
 
-static void
-reload_active_playlist (xmmsc_result_t *res, void *udata)
+static gint
+reload_active_playlist (xmmsv_t *val, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	xmmsc_result_t *refres;
@@ -195,7 +193,7 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 
 	/* FIXME: Also listen to playlist renames, in case the active PL is renamed! */
 	/* Refresh playlist name */
-	if (xmmsc_result_get_string (res, &buf)) {
+	if (xmmsv_get_string (val, &buf)) {
 		g_free (infos->cache->active_playlist_name);
 		infos->cache->active_playlist_name = g_strdup (buf);
 	}
@@ -206,32 +204,32 @@ reload_active_playlist (xmmsc_result_t *res, void *udata)
 	xmmsc_result_unref (refres);
 	freshness_requested (&infos->cache->freshness_active_playlist);
 
-	unref_transient_result (res);
+	return TRUE;
 }
 
-static void
-update_active_playlist_name (xmmsc_result_t *res, void *udata)
+static gint
+update_active_playlist_name (xmmsv_t *val, void *udata)
 {
 	cli_infos_t *infos = (cli_infos_t *) udata;
 	cli_cache_t *cache = infos->cache;
 	gint type;
 	const gchar *name, *newname;
 
-	xmmsc_result_get_dict_entry_int (res, "type", &type);
-	xmmsc_result_get_dict_entry_string (res, "name", &name);
+	xmmsv_get_dict_entry_int (val, "type", &type);
+	xmmsv_get_dict_entry_string (val, "name", &name);
 
 	/* Active playlist have not been renamed */
 	if (strcmp (name, cache->active_playlist_name) != 0) {
-		return;
+		return TRUE;
 	}
 
 	if (type == XMMS_COLLECTION_CHANGED_RENAME) {
 		g_free (cache->active_playlist_name);
-		xmmsc_result_get_dict_entry_string (res, "newname", &newname);
+		xmmsv_get_dict_entry_string (val, "newname", &newname);
 		cache->active_playlist_name = g_strdup (newname);
 	}
 
-	unref_transient_result (res);
+	return TRUE;
 }
 
 /** Initialize the cache, must still be started to be filled. */
@@ -262,19 +260,23 @@ cli_cache_refresh (cli_infos_t *infos)
 
 	res = xmmsc_playlist_current_pos (infos->conn, XMMS_ACTIVE_PLAYLIST);
 	xmmsc_result_wait (res);
-	refresh_currpos (res, infos->cache);
+	refresh_currpos (xmmsc_result_get_value (res), infos->cache);
+	xmmsc_result_unref (res);
 
 	res = xmmsc_playback_status (infos->conn);
 	xmmsc_result_wait (res);
-	refresh_playback_status (res, infos->cache);
+	refresh_playback_status (xmmsc_result_get_value (res), infos->cache);
+	xmmsc_result_unref (res);
 
 	res = xmmsc_playlist_list_entries (infos->conn, XMMS_ACTIVE_PLAYLIST);
 	xmmsc_result_wait (res);
-	refresh_active_playlist (res, infos->cache);
+	refresh_active_playlist (xmmsc_result_get_value (res), infos->cache);
+	xmmsc_result_unref (res);
 
 	res = xmmsc_playlist_current_active (infos->conn);
 	xmmsc_result_wait (res);
-	refresh_active_playlist_name (res, infos->cache);
+	refresh_active_playlist_name (xmmsc_result_get_value (res), infos->cache);
+	xmmsc_result_unref (res);
 }
 
 /** Fill the cache with initial (current) data, setup listeners. */
