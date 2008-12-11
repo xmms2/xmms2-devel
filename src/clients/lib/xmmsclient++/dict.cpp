@@ -142,13 +142,10 @@ namespace Xmms
 
 	}
 
-	void Dict::each( const ForEachFunc& func ) const
+	void Dict::each( ForEachFunc func ) const
 	{
-
-		ForEachFunc* f = new ForEachFunc( func );
-		xmmsv_dict_foreach( value_, &dict_foreach, static_cast< void* >( f ) );
-		delete f;
-
+		xmmsv_dict_foreach( value_, &dict_foreach,
+		                    static_cast< void* >( &func ) );
 	}
 
 
@@ -224,12 +221,10 @@ namespace Xmms
 		                    static_cast< void* >( &fedata ) );
 	}
 
-	void PropDict::each( const PropDict::ForEachFunc& func ) const
+	void PropDict::each( PropDict::ForEachFunc func ) const
 	{
-		PropDict::ForEachFunc f( func );
-
 		xmmsv_dict_foreach( propdict_, &propdict_foreach,
-		                    static_cast< void* >( &f ) );
+		                    static_cast< void* >( &func ) );
 	}
 
 }
