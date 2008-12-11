@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
@@ -1850,8 +1851,6 @@ err:
 	free (url);
 	return NULL;
 }
-
-#include <stdarg.h>
 
 xmmsv_t *
 xmmsv_build_dict (const char *firstkey, ...)
