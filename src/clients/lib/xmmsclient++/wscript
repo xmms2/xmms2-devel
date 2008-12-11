@@ -13,6 +13,7 @@ def build(bld):
                   config.cpp
                   dict.cpp
                   exceptions.cpp
+                  helpers.cpp
                   list.cpp
                   listener.cpp
                   mainloop.cpp

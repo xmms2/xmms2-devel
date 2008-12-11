@@ -53,6 +53,10 @@ namespace Xmms
 
 	}
 
+
+	std::string decodeUrl( const std::string& encoded_url );
+
+
 	/** @cond INTERNAL */
 
 	/** Checks connection state.

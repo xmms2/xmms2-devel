@@ -93,4 +93,9 @@ namespace Xmms
 	{
 	}
 
+	invalid_url::invalid_url( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 }

@@ -184,6 +184,17 @@ namespace Xmms
 
 	};
 
+	/** @class invalid_url exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if an invalid url is used.
+	 */
+	class invalid_url : public std::runtime_error
+	{
+		public:
+			explicit invalid_url( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H
