@@ -160,8 +160,14 @@ c_connect (int argc, VALUE *argv, VALUE self)
 	if (!NIL_P (path))
 		p = StringValuePtr (path);
 
-	if (!xmmsc_connect (xmms->real, p))
-		rb_raise (eClientError, "cannot connect to daemon");
+	if (!xmmsc_connect (xmms->real, p)) {
+		char buf[255];
+
+		snprintf (buf, sizeof (buf), "cannot connect to daemon (%s)\n",
+		          xmmsc_get_last_error (xmms->real));
+
+		rb_raise (eClientError, buf);
+	}
 
 	return self;
 }
