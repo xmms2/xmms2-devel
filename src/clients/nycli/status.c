@@ -80,13 +80,7 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	const gchar *noinfo_fields[] = { "playback_status", "playtime", NULL };
 	const gchar *err;
 
-	/* No current entry, no status */
-	if (infos->cache->currpos < 0) {
-		goto err;
-	}
-
-	currid = g_array_index (infos->cache->active_playlist, guint,
-	                        infos->cache->currpos);
+	currid = infos->cache->currid;
 
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);

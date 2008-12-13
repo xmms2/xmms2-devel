@@ -71,6 +71,20 @@ refresh_currpos (xmmsv_t *val, void *udata)
 }
 
 static gint
+refresh_currid (xmmsv_t *val, void *udata)
+{
+	cli_cache_t *cache = (cli_cache_t *) udata;
+
+	if (!xmmsv_is_error (val)) {
+		xmmsv_get_uint (val, &cache->currid);
+	}
+
+	freshness_received (&cache->freshness_currid);
+
+	return TRUE;
+}
+
+static gint
 refresh_playback_status (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
@@ -243,12 +257,14 @@ cli_cache_init ()
 
 	cache = g_new0 (cli_cache_t, 1);
 	cache->currpos = -1;
+	cache->currid = 0;
 	cache->playback_status = 0;
 	cache->active_playlist = g_array_new (FALSE, TRUE, sizeof (guint));
 	cache->active_playlist_name = NULL;
 
 	/* Init the freshness state */
 	freshness_init (&cache->freshness_currpos);
+	freshness_init (&cache->freshness_currid);
 	freshness_init (&cache->freshness_playback_status);
 	freshness_init (&cache->freshness_active_playlist);
 	freshness_init (&cache->freshness_active_playlist_name);
@@ -264,6 +280,11 @@ cli_cache_refresh (cli_infos_t *infos)
 	res = xmmsc_playlist_current_pos (infos->conn, XMMS_ACTIVE_PLAYLIST);
 	xmmsc_result_wait (res);
 	refresh_currpos (xmmsc_result_get_value (res), infos->cache);
+	xmmsc_result_unref (res);
+
+	res = xmmsc_playback_current_id (infos->conn);
+	xmmsc_result_wait (res);
+	refresh_currid (xmmsc_result_get_value (res), infos->cache);
 	xmmsc_result_unref (res);
 
 	res = xmmsc_playback_status (infos->conn);
@@ -296,6 +317,10 @@ cli_cache_start (cli_infos_t *infos)
 	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
 	xmmsc_result_unref (res);
 
+	res = xmmsc_broadcast_playback_current_id (infos->conn);
+	xmmsc_result_notifier_set (res, &refresh_currid, infos->cache);
+	xmmsc_result_unref (res);
+
 	res = xmmsc_broadcast_playback_status (infos->conn);
 	xmmsc_result_notifier_set (res, &refresh_playback_status, infos->cache);
 	xmmsc_result_unref (res);
@@ -319,6 +344,7 @@ cli_cache_is_fresh (cli_cache_t *cache)
 {
 	/* Check if all items are fresh */
 	return freshness_is_fresh (&cache->freshness_currpos) &&
+	       freshness_is_fresh (&cache->freshness_currid) &&
 	       freshness_is_fresh (&cache->freshness_playback_status) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist) &&
 	       freshness_is_fresh (&cache->freshness_active_playlist_name);

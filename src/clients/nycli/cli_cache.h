@@ -41,12 +41,14 @@ struct freshness_St {
 
 struct cli_cache_St {
 	gint currpos;
+	guint currid;
 	guint playback_status;
 	GArray *active_playlist;
 	gchar *active_playlist_name;
 
 	/* Freshness of each attribute */
 	freshness_t freshness_currpos;
+	freshness_t freshness_currid;
 	freshness_t freshness_playback_status;
 	freshness_t freshness_active_playlist;
 	freshness_t freshness_active_playlist_name;
