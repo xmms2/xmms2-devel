@@ -1453,12 +1453,16 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
 		configure_playlist (res, infos, playlist, history, upcoming,
-		                       type, input);
+		                    type, input);
 	} else {
 		/* Display current config of the playlist. */
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
 		playlist_print_config (res, infos, playlist);
+	}
+
+	if (playlist != infos->cache->active_playlist_name) {
+		g_free (playlist);
 	}
 
 	return TRUE;

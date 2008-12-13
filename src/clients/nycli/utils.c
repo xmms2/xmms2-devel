@@ -1295,13 +1295,15 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 	xmmsv_coll_t *newcoll;
 	xmmsv_t *val;
 
+	gboolean copied = FALSE;
+
 	val = xmmsc_result_get_value (res);
 
 	if (xmmsv_get_collection (val, &coll)) {
 		if (type >= 0 && xmmsv_coll_get_type (coll) != type) {
 			newcoll = coll_copy_retype (coll, type);
-			xmmsv_coll_unref (coll);
 			coll = newcoll;
+			copied = TRUE;
 		}
 		if (history >= 0) {
 			coll_int_attribute_set (coll, "history", history);
@@ -1324,6 +1326,10 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 	} else {
 		g_printf (_("Cannot find the playlist to configure!\n"));
 		cli_infos_loop_resume (infos);
+	}
+
+	if (copied) {
+		xmmsv_coll_unref (coll);
 	}
 
 	xmmsc_result_unref (res);
