@@ -35,11 +35,15 @@
  * version of soundcard.h, therefore define them manually to avoid
  * OSS4 compile time dependency that can cause some trouble... */
 #ifndef SNDCTL_DSP_GETPLAYVOL
-#define SNDCTL_DSP_GETPLAYVOL       _SIOR ('P', 24, int)
+#define SNDCTL_DSP_GETPLAYVOL       _IOR ('P',  24, int)
 #endif
 
 #ifndef SNDCTL_DSP_SETPLAYVOL
-#define SNDCTL_DSP_SETPLAYVOL       _SIOWR('P', 24, int)
+#define SNDCTL_DSP_SETPLAYVOL       _IOWR('P',  24, int)
+#endif
+
+#ifndef OSS_GETVERSION
+#define OSS_GETVERSION              _IOR ('M', 118, int)
 #endif
 
 /*
