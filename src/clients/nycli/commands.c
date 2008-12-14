@@ -47,6 +47,11 @@ struct browse_entry_St {
 	gint isdir;
 };
 
+typedef enum {
+	CMD_TYPE_COMMAND,
+	CMD_TYPE_ALIAS,
+} cmd_type_t;
+
 /* Setup commands */
 
 #define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
@@ -2045,13 +2050,31 @@ help_short_command (gpointer elem, gpointer udata)
 }
 
 static void
-help_list_commands (GList *names)
+help_list_commands (GList *names, cmd_type_t cmdtype)
 {
-	g_printf (_("usage: nyxmms2 <command> [args]\n\n"));
-	g_printf (_("Available commands:\n"));
+	const gchar *cmdtxt_sing, *cmdtxt_plur, *cmdtxt_det;
+
+	/* This is a bit tedious, english-- */
+	switch (cmdtype) {
+	case CMD_TYPE_ALIAS:
+		cmdtxt_sing = _("alias");
+		cmdtxt_plur = _("aliases");
+		cmdtxt_det  = _("an");
+		break;
+	case CMD_TYPE_COMMAND:
+	default:
+		cmdtxt_sing = _("command");
+		cmdtxt_plur = _("commands");
+		cmdtxt_det  = _("a");
+		break;
+	}
+
+	g_printf (_("usage: nyxmms2 <%s> [args]\n\n"), cmdtxt_sing);
+	g_printf (_("Available %s:\n"), cmdtxt_plur);
 	g_list_foreach (cmdnames_find (names, NULL),
 	                help_short_command, NULL);
-	g_printf (_("\nType 'help <command>' for detailed help about a command.\n"));
+	g_printf (_("\nType 'help <%s>' for detailed help about %s %s.\n"),
+	          cmdtxt_sing, cmdtxt_det, cmdtxt_sing);
 }
 
 static void
@@ -2137,16 +2160,18 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 	gint num_args;
 	gboolean alias;
 	GList *names = infos->cmdnames;
+	cmd_type_t cmdtype = CMD_TYPE_COMMAND;
 
 	num_args = command_arg_count (ctx);
 
 	if (command_flag_boolean_get (ctx, "alias", &alias) && alias) {
 		names = infos->aliasnames;
+		cmdtype = CMD_TYPE_ALIAS;
 	}
 
 	/* No argument, display the list of commands */
 	if (num_args == 0) {
-		help_list_commands (names);
+		help_list_commands (names, cmdtype);
 	} else {
 		help_command (infos, names, command_argv_get (ctx), num_args);
 	}
