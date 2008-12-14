@@ -198,7 +198,7 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 }
 
 /**
- * Request the current id signal. This will be called then the 
+ * Request the current id broadcast. This will be called then the
  * current playing id is changed. New song for example.
  */
 xmmsc_result_t *
