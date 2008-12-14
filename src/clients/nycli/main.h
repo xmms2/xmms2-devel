@@ -18,6 +18,7 @@
 #define __MAIN_H__
 
 #define CLI_CLIENTNAME "xmms2-nycli"
+#define XMMS2_CLI_VERSION "0.1 (Speak To Me)"
 
 /* FIXME: shall be loaded from config when config exists */
 #define DEBUG_AUTOSTART TRUE
@@ -91,6 +92,7 @@ struct command_argument_St {
 };
 
 
+void flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
 void command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
 
 

@@ -156,6 +156,73 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 	return ctx;
 }
 
+/* Switch function which should only be called with 'raw' (i.e. inline
+ * mode, not shell mode) argv/argc.  If appropriate, it enters
+ * flag_dispatch to parse program flags.
+ */
+void
+command_or_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
+{
+	/* First argument looks like a flag */
+	if (in_argc > 0 && in_argv[0][0] == '-') {
+		flag_dispatch (infos, in_argc, in_argv);
+	} else {
+		command_dispatch (infos, in_argc, in_argv);
+	}
+}
+
+/* Dispatch actions according to program flags (NOT commands or
+ * command options).
+ */
+void
+flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
+{
+	command_context_t *ctx;
+	gboolean check;
+
+	argument_t flagdefs[] = {
+		{ "help",    'h', 0, G_OPTION_ARG_NONE, NULL,
+		             _("Display this help and exit."), NULL },
+		{ "version", 'v', 0, G_OPTION_ARG_NONE, NULL,
+		             _("Output version information and exit."), NULL },
+		{ NULL }
+	};
+
+	/* Include one command token as a workaround for the bug that
+	 * the option parser does not parse commands starting with a
+	 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
+	 * command utils. */
+	ctx = init_context_from_args (flagdefs, in_argc + 1, in_argv - 1);
+
+	if (command_flag_boolean_get (ctx, "help", &check) && check) {
+		if (ctx->argc > 1) {
+			help_command (infos, infos->cmdnames, ctx->argv + 1, ctx->argc - 1);
+		} else {
+			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
+			g_printf (_("usage: nyxmms2 [<command> [args]]\n\n"));
+			g_printf (_("NyCLI, the awesome command-line XMMS2 client from the future, "
+			          "v" XMMS2_CLI_VERSION ".\n\n"));
+			g_printf (_("If given a command, runs it inline and exit.\n"));
+			g_printf (_("If not, enters a shell-like interface to execute commands.\n\n"));
+			g_printf (_("Type 'help <command>' for detailed help about a command.\n"));
+		}
+	} else if (command_flag_boolean_get (ctx, "version", &check) && check) {
+		g_printf (_("NyCLI version " XMMS2_CLI_VERSION "\n"));
+		g_printf (_("Copyright (C) 2008 XMMS2 Team\n"));
+		g_printf (_("This is free software; see the source for copying conditions.\n"));
+		g_printf (_("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
+		          "PARTICULAR PURPOSE.\n"));
+		/* FIXME: compiled against? use RL_READLINE_VERSION? */
+		g_printf (_(" Using readline version %s\n"), rl_library_version);
+	} else {
+		/* Call help to print the "no such command" error */
+		/* FIXME: Could be a more helpful "invalid flag"?*/
+		help_command (infos, infos->cmdnames, in_argv, in_argc);
+	}
+
+	command_context_free (ctx);
+}
+
 
 void
 command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
@@ -289,7 +356,7 @@ loop_select (cli_infos_t *infos)
 void
 loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 {
-	command_dispatch (infos, argc, argv);
+	command_or_flag_dispatch (infos, argc, argv);
 
 	while (infos->status == CLI_ACTION_STATUS_BUSY ||
 	       infos->status == CLI_ACTION_STATUS_REFRESH) {
