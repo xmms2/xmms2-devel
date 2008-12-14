@@ -301,7 +301,11 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 	memcpy (&msg->data->header.data[total], data, len);
 	xmms_ipc_msg_set_length (msg, total + len);
 
-	/* return the offset that which we placed this value */
+	/* return the offset that which we placed this value.
+	 * If this logic is changed, make sure to update
+	 * the return value of xmms_ipc_msg_put_value_data for
+	 * NONE xmmsv's, too.
+	 */
 	return total;
 }
 
@@ -510,6 +514,11 @@ xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		break;
 
 	case XMMSV_TYPE_NONE:
+		/* just like the other _put_* functions, we
+		 * return the offset that which we placed this value.
+		 * See xmms_ipc_msg_put_data().
+		 */
+		ret = xmms_ipc_msg_get_length (msg);
 		break;
 	default:
 		/* FIXME: weird, no? dump error? */
