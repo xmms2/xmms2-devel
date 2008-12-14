@@ -336,6 +336,18 @@ xmmsc_next_id (xmmsc_connection_t *c)
 	return c->cookie++;
 }
 
+static uint32_t
+xmmsc_write_msg_to_ipc (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
+{
+	uint32_t cookie;
+
+	cookie = xmmsc_next_id (c);
+
+	xmmsc_ipc_msg_write (c->ipc, msg, cookie);
+
+	return cookie;
+}
+
 xmmsc_result_t *
 xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 {
@@ -375,8 +387,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	msg = xmms_ipc_msg_new (object, method);
 
-	cookie = xmmsc_next_id (c);
-	xmmsc_ipc_msg_write (c->ipc, msg, cookie);
+	cookie = xmmsc_write_msg_to_ipc (c, msg);
 
 	return xmmsc_result_new (c, XMMSC_RESULT_CLASS_DEFAULT, cookie);
 }
@@ -387,9 +398,7 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	uint32_t cookie;
 	xmmsc_result_type_t type;
 
-	cookie = xmmsc_next_id (c);
-
-	xmmsc_ipc_msg_write (c->ipc, msg, cookie);
+	cookie = xmmsc_write_msg_to_ipc (c, msg);
 
 	switch (xmms_ipc_msg_get_cmd (msg)) {
 		case XMMS_IPC_CMD_SIGNAL:
