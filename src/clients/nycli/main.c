@@ -98,6 +98,65 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 	return TRUE;
 }
 
+/* Parse the argv array with GOptionContext, using the given argument
+ * definitions, and return a command context structure containing
+ * argument values.
+ * Note: The lib doesn't like argv starting with a flag, so keep a
+ * token before that to avoid problems.
+ */
+static command_context_t *
+init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
+{
+	/* FIXME: look at the error! */
+	command_context_t *ctx;
+	GOptionContext *context;
+	GError *error = NULL;
+	gint i;
+
+	ctx = command_context_init (argc, argv);
+
+	for (i = 0; argdefs && argdefs[i].long_name; ++i) {
+		command_argument_t *arg = g_new (command_argument_t, 1);
+
+		switch (argdefs[i].arg) {
+		case G_OPTION_ARG_NONE:
+			arg->type = COMMAND_ARGUMENT_TYPE_BOOLEAN;
+			arg->value.vbool = FALSE;
+			argdefs[i].arg_data = &arg->value.vbool;
+			break;
+
+		case G_OPTION_ARG_INT:
+			arg->type = COMMAND_ARGUMENT_TYPE_INT;
+			arg->value.vint = -1;
+			argdefs[i].arg_data = &arg->value.vint;
+			break;
+
+		case G_OPTION_ARG_STRING:
+			arg->type = COMMAND_ARGUMENT_TYPE_STRING;
+			arg->value.vstring = NULL;
+			argdefs[i].arg_data = &arg->value.vstring;
+			break;
+
+		default:
+			g_printf (_("Trying to register a flag '%s' of invalid type!"),
+			          argdefs[i].long_name);
+			break;
+		}
+
+		g_hash_table_insert (ctx->flags,
+		                     g_strdup (argdefs[i].long_name), arg);
+	}
+
+	context = g_option_context_new (NULL);
+	g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
+	g_option_context_add_main_entries (context, argdefs, NULL);
+	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
+	g_option_context_free (context);
+
+	return ctx;
+}
+
+
 void
 command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
@@ -118,12 +177,6 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 
-		/* FIXME: problem if flag is the first element!  */
-
-		/* FIXME: look at the error! */
-		GOptionContext *context;
-		GError *error = NULL;
-		gint i;
 		gboolean help;
 		gboolean need_io;
 		command_context_t *ctx;
@@ -132,48 +185,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		 * the option parser does not parse commands starting with a
 		 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 		 * command utils. */
-		ctx = command_context_init (argc + 1, argv - 1);
-
-		for (i = 0; action->argdefs && action->argdefs[i].long_name; ++i) {
-			command_argument_t *arg = g_new (command_argument_t, 1);
-
-			switch (action->argdefs[i].arg) {
-			case G_OPTION_ARG_NONE:
-				arg->type = COMMAND_ARGUMENT_TYPE_BOOLEAN;
-				arg->value.vbool = FALSE;
-				action->argdefs[i].arg_data = &arg->value.vbool;
-				break;
-
-			case G_OPTION_ARG_INT:
-				arg->type = COMMAND_ARGUMENT_TYPE_INT;
-				arg->value.vint = -1;
-				action->argdefs[i].arg_data = &arg->value.vint;
-				break;
-
-			case G_OPTION_ARG_STRING:
-				arg->type = COMMAND_ARGUMENT_TYPE_STRING;
-				arg->value.vstring = NULL;
-				action->argdefs[i].arg_data = &arg->value.vstring;
-				break;
-
-			default:
-				g_printf (_("Trying to register a flag '%s' of invalid type!"),
-				          action->argdefs[i].long_name);
-				break;
-			}
-
-			/* FIXME: check for duplicates */
-			g_hash_table_insert (ctx->flags,
-			                     g_strdup (action->argdefs[i].long_name), arg);
-		}
-
+		ctx = init_context_from_args (action->argdefs, argc + 1, argv - 1);
 		ctx->name = g_strdup (action->name);
-
-		context = g_option_context_new (NULL);
-		g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
-		g_option_context_add_main_entries (context, action->argdefs, NULL);
-		g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
-		g_option_context_free (context);
 
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
 			/* Help flag passed, bypass action and show help */
