@@ -347,8 +347,6 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 
 	res = xmmsc_send_msg (c, msg);
 
-	xmmsc_result_restartable (res, signalid);
-
 	return res;
 }
 
