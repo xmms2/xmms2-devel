@@ -230,6 +230,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 {
 	xmmsc_result_t *newres;
 	xmms_ipc_msg_t *msg;
+	int num_notifiers;
 
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
@@ -251,7 +252,10 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	res->notifiers = NULL;
 
 	/* Each pending call takes one ref */
-	newres->ref += x_list_length (newres->notifiers);
+	num_notifiers = x_list_length (newres->notifiers);
+
+	newres->ref += num_notifiers;
+	res->ref -= num_notifiers;
 
 	xmmsc_result_restartable (newres, res->restart_signal);
 
@@ -490,20 +494,16 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		n = next;
 	}
 
-	/* If we restart a signal, we must cleanup its callback because
-	 * they hold a reference to the result. */
+	/* If this result is a signal, and we still have some notifiers
+	 * we need to restart the signal.
+	 */
 	if (res->notifiers && cmd == XMMS_IPC_CMD_SIGNAL) {
+		/* Note that xmmsc_result_restart will transfer ownership
+		 * of the notifiers from the current result to the
+		 * restarted one, so we don't need to fiddle with the
+		 * notifiers here anymore.
+		 */
 		restart_res = xmmsc_result_restart (res);
-
-		/* notifiers, and their references have been added to restart_res
-		 * Before the notifiers would unref the result themselves,
-		 * but they cannot do that anymore, so we must */
-		n = res->notifiers;
-		while (n) {
-			next = x_list_next (n);
-			xmmsc_result_notifier_remove (res, n);
-			n = next;
-		}
 
 		xmmsc_result_unref (restart_res);
 	}
