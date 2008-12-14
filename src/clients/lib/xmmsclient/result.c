@@ -31,7 +31,7 @@
 #include "xmmsc/xmmsc_strlist.h"
 #include "xmmsc/xmmsc_stdbool.h"
 
-xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
+static xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
 static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
 
@@ -193,39 +193,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
 	}
 }
 
-/**
- * A lot of signals you would like to get notified about
- * when they change, instead of polling the server all the time.
- * This results are "restartable".
- * Here is an example on how you use a restartable signal.
- * @code
- * static void handler (xmmsc_result_t *res, void *userdata) {
- *   uint32_t id;
- *   xmmsc_result_t *newres;
- *
- *   if (xmmsc_result_iserror) {
- *      printf ("error: %s", xmmsc_result_get_error (res);
- *   }
- *
- *   xmmsc_result_get_uint (res, &id);
- *   newres = xmmsc_result_restart (res); // this tells the server to send updates to the SAME function again.
- *   xmmsc_result_unref (res);
- *   xmmsc_result_unref (newres);
- *   printf ("current id is: %d", id);
- * }
- *
- * int main () {
- *   // Connect blah blah ...
- *   xmmsc_result_t *res;
- *   res = xmmsc_signal_playback_playtime (connection);
- *   xmmsc_result_notifier_set (res, handler);
- *   xmmsc_result_unref (res);
- * }
- * @endcode
- * In the above example the handler would be called when the playtime is updated.
- * Only signals are restatable. Broadcasts will automaticly restart.
- */
-xmmsc_result_t *
+static xmmsc_result_t *
 xmmsc_result_restart (xmmsc_result_t *res)
 {
 	xmmsc_result_t *newres;
