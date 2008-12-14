@@ -363,6 +363,20 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 }
 
 
+uint32_t
+xmmsc_write_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
+{
+	xmms_ipc_msg_t *msg;
+	uint32_t cookie;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+	xmms_ipc_msg_put_uint32 (msg, signalid);
+
+	cookie = xmmsc_write_msg_to_ipc (c, msg);
+
+	return cookie;
+}
+
 xmmsc_result_t *
 xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 {

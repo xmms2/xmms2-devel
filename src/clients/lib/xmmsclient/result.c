@@ -31,7 +31,7 @@
 #include "xmmsc/xmmsc_strlist.h"
 #include "xmmsc/xmmsc_stdbool.h"
 
-static xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
+static void xmmsc_result_restart (xmmsc_result_t *res);
 static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
 static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
 
@@ -193,41 +193,18 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
 	}
 }
 
-static xmmsc_result_t *
+static void
 xmmsc_result_restart (xmmsc_result_t *res)
 {
-	xmmsc_result_t *newres;
-	xmms_ipc_msg_t *msg;
-	int num_notifiers;
+	x_return_if_fail (res);
+	x_return_if_fail (res->c);
 
-	x_return_null_if_fail (res);
-	x_return_null_if_fail (res->c);
-
-	x_api_error_if (res->type != XMMSC_RESULT_CLASS_SIGNAL,
-	                "result is not restartable", NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
-
-	newres = xmmsc_send_msg (res->c, msg);
-
-	/* The result's notifiers are moved over to newres. */
-	if (newres->notifiers) {
-		x_internal_error ("restart result's notifiers non-empty!");
+	if (res->type != XMMSC_RESULT_CLASS_SIGNAL) {
+		x_api_warning ("result is not restartable");
+		return;
 	}
 
-	newres->notifiers = res->notifiers;
-	res->notifiers = NULL;
-
-	/* Each pending call takes one ref */
-	num_notifiers = x_list_length (newres->notifiers);
-
-	newres->ref += num_notifiers;
-	res->ref -= num_notifiers;
-
-	xmmsc_result_restartable (newres, res->restart_signal);
-
-	return newres;
+	res->cookie = xmmsc_write_signal_msg (res->c, res->restart_signal);
 }
 
 static bool
@@ -432,7 +409,6 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 {
 	x_list_t *n, *next;
 	int cmd;
-	xmmsc_result_t *restart_res;
 	xmmsc_result_callback_t *cb;
 
 	x_return_if_fail (res);
@@ -466,14 +442,8 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	 * we need to restart the signal.
 	 */
 	if (res->notifiers && cmd == XMMS_IPC_CMD_SIGNAL) {
-		/* Note that xmmsc_result_restart will transfer ownership
-		 * of the notifiers from the current result to the
-		 * restarted one, so we don't need to fiddle with the
-		 * notifiers here anymore.
-		 */
-		restart_res = xmmsc_result_restart (res);
-
-		xmmsc_result_unref (restart_res);
+		/* We restart the signal using the same result. */
+		xmmsc_result_restart (res);
 	}
 
 	if (cmd == XMMS_IPC_CMD_BROADCAST) {
