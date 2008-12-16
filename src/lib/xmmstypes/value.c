@@ -1194,7 +1194,7 @@ xmmsv_list_iter_free (xmmsv_list_iter_t *it)
  * function does not increase the refcount of the element, the
  * reference is still owned by the list.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @param val Pointer set to a borrowed reference to the element
  *            pointed at by the iterator.
  * @return 1 upon success otherwise 0
@@ -1212,7 +1212,7 @@ xmmsv_list_iter_entry (xmmsv_list_iter_t *it, xmmsv_t **val)
 /**
  * Check whether the iterator is valid and points to a valid element.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @return 1 if the iterator is valid, 0 otherwise
  */
 int
@@ -1224,7 +1224,7 @@ xmmsv_list_iter_valid (xmmsv_list_iter_t *it)
 /**
  * Rewind the iterator to the start of the list.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @return 1 upon success otherwise 0
  */
 void
@@ -1238,7 +1238,7 @@ xmmsv_list_iter_first (xmmsv_list_iter_t *it)
 /**
  * Advance the iterator to the next element in the list.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @return 1 upon success otherwise 0
  */
 void
@@ -1254,7 +1254,7 @@ xmmsv_list_iter_next (xmmsv_list_iter_t *it)
 /**
  * Move the iterator to the n-th element in the list.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @param pos The position in the list. If negative, start counting
  *            from the end (-1 is the last element, etc).
  * @return 1 upon success otherwise 0
@@ -1278,7 +1278,7 @@ xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos)
  * Insert an element in the list at the position pointed at by the
  * iterator.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @param val The element to insert.
  * @return 1 upon success otherwise 0
  */
@@ -1295,7 +1295,7 @@ xmmsv_list_iter_insert (xmmsv_list_iter_t *it, xmmsv_t *val)
  * Remove the element in the list at the position pointed at by the
  * iterator.
  *
- * @param listv A #xmmsv_list_iter_t.
+ * @param it A #xmmsv_list_iter_t.
  * @return 1 upon success otherwise 0
  */
 int
@@ -1573,7 +1573,7 @@ xmmsv_dict_iter_free (xmmsv_dict_iter_t *it)
  * function does not increase the refcount of the element, the
  * reference is still owned by the dict.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @param key Pointer set to the key pointed at by the iterator.
  * @param val Pointer set to a borrowed reference to the element
  *            pointed at by the iterator.
@@ -1611,7 +1611,7 @@ xmmsv_dict_iter_pair (xmmsv_dict_iter_t *it, const char **key,
 /**
  * Check whether the iterator is valid and points to a valid pair.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @return 1 if the iterator is valid, 0 otherwise
  */
 int
@@ -1623,7 +1623,7 @@ xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it)
 /**
  * Rewind the iterator to the start of the dict.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @return 1 upon success otherwise 0
  */
 void
@@ -1637,7 +1637,7 @@ xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 /**
  * Advance the iterator to the next pair in the dict.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @return 1 upon success otherwise 0
  */
 void
@@ -1655,7 +1655,7 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
  * or move it to the position where the key would have to be
  * put (if it doesn't exist yet).
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @param key The key to seek for.
  * @return 1 upon success otherwise 0
  */
@@ -1728,7 +1728,7 @@ xmmsv_dict_iter_seek (xmmsv_dict_iter_t *it, const char *key)
  * Replace the element of the pair currently pointed to by the
  * iterator.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @param val The element to set in the pair.
  * @return 1 upon success otherwise 0
  */
@@ -1756,7 +1756,7 @@ xmmsv_dict_iter_set (xmmsv_dict_iter_t *it, xmmsv_t *val)
 /**
  * Remove the pair in the dict pointed at by the iterator.
  *
- * @param dictv A #xmmsv_dict_iter_t.
+ * @param it A #xmmsv_dict_iter_t.
  * @return 1 upon success otherwise 0
  */
 int
