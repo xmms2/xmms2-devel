@@ -32,14 +32,14 @@
 #include "xmmsc/xmmsc_util.h"
 #include "url.h"
 
-void
+static void
 xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
 {
 	free (ipct->path);
 	close (ipct->fd);
 }
 
-int
+static int
 xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
 	int fd;
@@ -54,7 +54,7 @@ xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 	return ret;
 }
 
-int
+static int
 xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
 	int fd;
@@ -114,7 +114,7 @@ xmms_ipc_usocket_client_init (const xmms_url_t *url)
 	return ipct;
 }
 
-xmms_ipc_transport_t *
+static xmms_ipc_transport_t *
 xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 {
 	int fd;

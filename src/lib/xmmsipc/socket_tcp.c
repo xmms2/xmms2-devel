@@ -27,14 +27,14 @@
 #include "xmmsc/xmmsc_unistd.h"
 #include "url.h"
 
-void
+static void
 xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
 {
 	free (ipct->path);
 	close (ipct->fd);
 }
 
-int
+static int
 xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
 	xmms_socket_t fd;
@@ -49,7 +49,7 @@ xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 	return ret;
 }
 
-int
+static int
 xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
 	xmms_socket_t fd;
@@ -127,7 +127,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 	return ipct;
 }
 
-xmms_ipc_transport_t *
+static xmms_ipc_transport_t *
 xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 {
 	xmms_socket_t fd;
