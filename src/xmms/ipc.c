@@ -359,7 +359,9 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->iochan = g_io_channel_unix_new (fd);
 	g_return_val_if_fail (client->iochan, NULL);
 
-	g_io_channel_set_close_on_unref (client->iochan, TRUE);
+	/* We don't set the close_on_unref flag here, because
+	 * the transport will close the fd for us. No need to close it twice.
+	 */
 	g_io_channel_set_encoding (client->iochan, NULL, NULL);
 	g_io_channel_set_buffered (client->iochan, FALSE);
 
