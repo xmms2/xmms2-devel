@@ -30,7 +30,7 @@ struct command_trie_St {
 };
 
 static command_trie_t* command_trie_elem_insert (command_trie_t* node, gchar c);
-static command_trie_t* command_trie_subtrie_insert (command_trie_t* node, gchar c);
+static command_trie_t* command_trie_subtrie_insert (command_trie_t* node, gchar c, gchar *prefix);
 static gboolean command_trie_action_set (command_trie_t* node, command_action_t *action);
 static gint command_trie_elem_cmp (gconstpointer elem, gconstpointer udata);
 static command_trie_t* command_trie_find_leaf (command_trie_t *trie);
@@ -100,6 +100,7 @@ command_trie_free (command_trie_t *trie)
 	if (trie->match.type == COMMAND_TRIE_MATCH_ACTION) {
 		command_action_free (trie->match.action);
 	} else if (trie->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
+		command_action_free (trie->match.action);
 		command_trie_free (trie->match.subtrie);
 	}
 	g_list_foreach (trie->next, command_trie_free_with_udata, NULL);
@@ -161,15 +162,16 @@ argument_copy (const argument_t src[], argument_t **dest)
 static command_trie_t*
 command_trie_string_insert (command_trie_t* trie, gchar *name)
 {
+	/* FIXME: avoid this copy */
 	command_trie_t *curr;
-	gchar *c;
+	gchar *c, *prefix = g_strdup (name);
 
 	curr = trie;
-	for (c = name; curr && *c != 0; ++c) {
+	for (c = prefix; curr && *c != 0; ++c) {
 		/* Command separator, enter the subtrie. */
 		if (*c == ' ') {
-			++c;
-			curr = command_trie_subtrie_insert (curr, *c);
+			*c++ = '\0';
+			curr = command_trie_subtrie_insert (curr, *c, prefix);
 		} else {
 			curr = command_trie_elem_insert (curr, *c);
 		}
@@ -236,7 +238,7 @@ command_trie_elem_insert (command_trie_t* node, gchar c)
 }
 
 static command_trie_t*
-command_trie_subtrie_insert (command_trie_t* node, gchar c)
+command_trie_subtrie_insert (command_trie_t* node, gchar c, gchar *prefix)
 {
 	if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {
 		/* Cannot overwrite an existing action, error! */
@@ -244,6 +246,9 @@ command_trie_subtrie_insert (command_trie_t* node, gchar c)
 	} else if (node->match.type == COMMAND_TRIE_MATCH_NONE) {
 		node->match.type = COMMAND_TRIE_MATCH_SUBTRIE;
 		node->match.subtrie = command_trie_alloc ();
+		node->match.action = command_action_alloc ();
+		command_action_fill (node->match.action, prefix, NULL,
+		                     COMMAND_REQ_NONE, NULL, NULL, NULL);
 	}
 
 	return command_trie_elem_insert (node->match.subtrie, c);
@@ -320,6 +325,7 @@ command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
 			retval = COMMAND_TRIE_MATCH_ACTION;
 		} else if (node->match.type == COMMAND_TRIE_MATCH_SUBTRIE) {
 			if (*num == 0) {
+				*action = node->match.action;
 				retval = COMMAND_TRIE_MATCH_SUBTRIE;
 			} else {
 				retval = command_trie_find (node->match.subtrie, input, num,
