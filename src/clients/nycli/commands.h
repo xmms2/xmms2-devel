@@ -113,7 +113,7 @@ void cli_server_stats_setup (command_action_t *action);
 void cli_server_sync_setup (command_action_t *action);
 void cli_server_shutdown_setup (command_action_t *action);
 
-void help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args);
+void help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args, cmd_type_t cmdtype);
 
 static const command_setup_func commandlist[] =
 {

@@ -196,7 +196,8 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 
 	if (command_flag_boolean_get (ctx, "help", &check) && check) {
 		if (ctx->argc > 1) {
-			help_command (infos, infos->cmdnames, ctx->argv + 1, ctx->argc - 1);
+			help_command (infos, infos->cmdnames, ctx->argv + 1, ctx->argc - 1,
+			              CMD_TYPE_COMMAND);
 		} else {
 			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
 			g_printf (_("usage: nyxmms2 [<command> [args]]\n\n"));
@@ -217,7 +218,7 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	} else {
 		/* Call help to print the "no such command" error */
 		/* FIXME: Could be a more helpful "invalid flag"?*/
-		help_command (infos, infos->cmdnames, in_argv, in_argc);
+		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
 
 	command_context_free (ctx);
@@ -258,7 +259,7 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		if (command_flag_boolean_get (ctx, "help", &help) && help) {
 			/* Help flag passed, bypass action and show help */
 			/* FIXME(g): select aliasnames list if it's an alias */
-			help_command (infos, infos->cmdnames, in_argv, in_argc);
+			help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 		} else if (command_runnable (infos, action)) {
 			/* All fine, run the command */
 			cli_infos_loop_suspend (infos);
@@ -271,7 +272,7 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		command_context_free (ctx);
 	} else {
 		/* Call help to print the "no such command" error */
-		help_command (infos, infos->cmdnames, in_argv, in_argc);
+		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
 }
 

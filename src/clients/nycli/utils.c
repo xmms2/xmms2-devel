@@ -1121,7 +1121,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 
 void
 move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
-                 gchar *playlist, gint pos)
+              gchar *playlist, gint pos)
 {
 	xmmsc_result_t *movres, *lisres;
 	guint id, curr;

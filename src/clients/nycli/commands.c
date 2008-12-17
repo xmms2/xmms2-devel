@@ -47,11 +47,6 @@ struct browse_entry_St {
 	gint isdir;
 };
 
-typedef enum {
-	CMD_TYPE_COMMAND,
-	CMD_TYPE_ALIAS,
-} cmd_type_t;
-
 /* Setup commands */
 
 #define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
@@ -2075,7 +2070,6 @@ cli_exit (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
-
 static void
 help_short_command (gpointer elem, gpointer udata)
 {
@@ -2086,7 +2080,33 @@ help_short_command (gpointer elem, gpointer udata)
 }
 
 static void
-help_list_commands (GList *names, cmd_type_t cmdtype)
+help_list_commands (GList *names,
+                    const gchar *sing, const gchar *plur, const gchar *det)
+{
+	g_printf (_("usage: nyxmms2 <%s> [args]\n\n"), sing);
+	g_printf (_("Available %s:\n"), plur);
+	g_list_foreach (cmdnames_find (names, NULL),
+	                help_short_command, NULL);
+	g_printf (_("\nType 'help <%s>' for detailed help about %s %s.\n"),
+	          sing, det, sing);
+}
+
+static void
+help_list_subcommands (GList *names, gchar *cmd,
+                       const gchar *sing, const gchar *plur, const gchar *det)
+{
+	gchar **cmdv = g_strsplit (cmd, " ", 0);
+	g_printf (_("usage: nyxmms2 %s <sub%s> [args]\n\n"), cmd, sing);
+	g_printf (_("Available '%s' sub%s:\n"), cmd, plur);
+	g_list_foreach (cmdnames_find (names, cmdv),
+	                help_short_command, NULL);
+	g_printf (_("\nType 'help %s <sub%s>' for detailed help "
+	            "about a sub%s.\n"), cmd, sing, sing);
+	g_strfreev (cmdv);
+}
+
+static void
+help_list (GList *names, gchar *cmd, cmd_type_t cmdtype)
 {
 	const gchar *cmdtxt_sing, *cmdtxt_plur, *cmdtxt_det;
 
@@ -2105,29 +2125,16 @@ help_list_commands (GList *names, cmd_type_t cmdtype)
 		break;
 	}
 
-	g_printf (_("usage: nyxmms2 <%s> [args]\n\n"), cmdtxt_sing);
-	g_printf (_("Available %s:\n"), cmdtxt_plur);
-	g_list_foreach (cmdnames_find (names, NULL),
-	                help_short_command, NULL);
-	g_printf (_("\nType 'help <%s>' for detailed help about %s %s.\n"),
-	          cmdtxt_sing, cmdtxt_det, cmdtxt_sing);
-}
-
-static void
-help_list_subcommands (GList *names, gchar **cmd)
-{
-	gchar *name = g_strjoinv (" ", cmd);
-	g_printf (_("usage: nyxmms2 %s <subcommand> [args]\n\n"), name);
-	g_printf (_("Available '%s' subcommands:\n"), name);
-	g_list_foreach (cmdnames_find (names, cmd),
-	                help_short_command, NULL);
-	g_printf (_("\nType 'help %s <subcommand>' for detailed help "
-	            "about a subcommand.\n"), name);
-	g_free (name);
+	if (!cmd) {
+		help_list_commands (names, cmdtxt_sing, cmdtxt_plur, cmdtxt_det);
+	} else {
+		help_list_subcommands (names, cmd, cmdtxt_sing, cmdtxt_plur, cmdtxt_det);
+	}
 }
 
 void
-help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args)
+help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args,
+              cmd_type_t cmdtype)
 {
 	command_action_t *action;
 	command_trie_match_type_t match;
@@ -2177,7 +2184,7 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args)
 			}
 		}
 	} else if (match == COMMAND_TRIE_MATCH_SUBTRIE) {
-		help_list_subcommands (cmdnames, cmd);
+		help_list (cmdnames, action->name, cmdtype);
 	} else {
 		/* FIXME: Better handle help for subcommands! */
 		g_printf (_("Unknown command: '"));
@@ -2207,9 +2214,9 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 
 	/* No argument, display the list of commands */
 	if (num_args == 0) {
-		help_list_commands (names, cmdtype);
+		help_list (names, NULL, cmdtype);
 	} else {
-		help_command (infos, names, command_argv_get (ctx), num_args);
+		help_command (infos, names, command_argv_get (ctx), num_args, cmdtype);
 	}
 
 	/* No data pending */

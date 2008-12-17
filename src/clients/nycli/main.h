@@ -52,6 +52,11 @@ typedef void (*command_setup_func)(command_action_t *action);
 typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
 
 typedef enum {
+	CMD_TYPE_COMMAND,
+	CMD_TYPE_ALIAS,
+} cmd_type_t;
+
+typedef enum {
 	COMMAND_REQ_NONE         = 0,
 	COMMAND_REQ_CONNECTION   = 1,  /* need server connection */
 	COMMAND_REQ_NO_AUTOSTART = 2,  /* don't start server if not running */
