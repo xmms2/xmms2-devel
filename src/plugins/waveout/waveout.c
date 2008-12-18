@@ -66,6 +66,13 @@ static gboolean xmms_waveout_format_set (xmms_output_t *output,
 static void xmms_waveout_write (xmms_output_t *output, gpointer buffer,
                                 gint len, xmms_error_t *err);
 
+static gboolean xmms_waveout_volume_set (xmms_output_t *output,
+                                         const gchar *channel_name,
+                                         guint volume);
+static gboolean xmms_waveout_volume_get (xmms_output_t *output,
+                                         const gchar **names, guint *values,
+                                         guint *num_channels);
+
 static guint xmms_waveout_buffer_bytes_get (xmms_output_t *output);
 
 static void CALLBACK on_block_done (HWAVEOUT hWaveOut, UINT uMsg,
@@ -101,6 +108,9 @@ xmms_waveout_plugin_setup (xmms_output_plugin_t *plugin)
 	methods.format_set = xmms_waveout_format_set;
 
 	methods.write = xmms_waveout_write;
+
+	methods.volume_get = xmms_waveout_volume_get;
+	methods.volume_set = xmms_waveout_volume_set;
 
 	methods.latency_get = xmms_waveout_buffer_bytes_get;
 
@@ -357,6 +367,102 @@ xmms_waveout_write (xmms_output_t *output, gpointer buffer, gint len,
 	}
 }
 
+/**
+ * Get mixer settings.
+ *
+ * @param output The output struct containing waveout data.
+ * @return TRUE on success, FALSE on error.
+ */
+static gboolean
+xmms_waveout_volume_get (xmms_output_t *output, const gchar **names,
+                         guint *values, guint *num_channels)
+{
+	xmms_waveout_data_t *data;
+	DWORD tmp = 0;
+	guint32 left, right;
+
+	g_return_val_if_fail (output, FALSE);
+
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
+	g_return_val_if_fail (num_channels, FALSE);
+
+	if (!*num_channels) {
+		*num_channels = 2;
+		return TRUE;
+	}
+
+	g_return_val_if_fail (*num_channels == 2, FALSE);
+	g_return_val_if_fail (names, FALSE);
+	g_return_val_if_fail (values, FALSE);
+
+	waveOutGetVolume (data->waveout, &tmp);
+
+	right = (tmp & 0xffff0000) >> 16;
+	left = (tmp & 0x0000ffff);
+
+	names[0] = "right";
+	names[1] = "left";
+
+	/* scale from 0x0000..0xffff to 0..100 */
+	right = (right * 100.0 / 0xffff) + 0.5;
+	left = (left * 100.0 / 0xffff) + 0.5;
+
+	values[0] = right;
+	values[1] = left;
+
+	return TRUE;
+}
+
+/**
+ * Change mixer settings.
+ *
+ * @param output The output struct containing waveout data.
+ * @param channel_name The name of the channel to set (e.g. "left").
+ * @param volume The volume to set the channel to.
+ * @return TRUE on success, FALSE on error.
+ */
+static gboolean
+xmms_waveout_volume_set (xmms_output_t *output,
+                         const gchar *channel_name, guint volume)
+{
+	xmms_waveout_data_t *data;
+	DWORD tmp = 0;
+	guint32 left, right;
+
+	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (channel_name, FALSE);
+
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
+	g_return_val_if_fail (volume <= 100, FALSE);
+
+	waveOutGetVolume (data->waveout, &tmp);
+
+	right = (tmp & 0xffff0000) >> 16;
+	left = (tmp & 0x0000ffff);
+
+	/* scale from 0..100 to 0x0000..0xffff */
+	volume = (volume * 0xffff / 100.0) + 0.5;
+
+	/* update the channel volumes */
+	if (!strcmp (channel_name, "right")) {
+		right = volume;
+	} else if (!strcmp (channel_name, "left")) {
+		left = volume;
+	} else {
+		return FALSE;
+	}
+
+	/* and write it back again */
+	volume = (right << 16) | left;
+
+	waveOutSetVolume (data->waveout, volume);
+
+	return TRUE;
+}
 
 static guint
 xmms_waveout_buffer_bytes_get (xmms_output_t *output)
