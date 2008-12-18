@@ -561,9 +561,9 @@ Init_Result (VALUE mXmms)
 
 	cDict = rb_define_class_under (mXmms, "Dict", rb_cObject);
 
-#ifdef HAVE_PROTECT_INSPECT
+#ifdef HAVE_RB_PROTECT_INSPECT
 	rb_define_method (cDict, "inspect", c_dict_inspect, 0);
-#endif /* HAVE_PROTECT_INSPECT */
+#endif /* HAVE_RB_PROTECT_INSPECT */
 
 	rb_define_method (cDict, "size", c_dict_size, 0);
 	rb_define_method (cDict, "empty?", c_dict_empty, 0);
