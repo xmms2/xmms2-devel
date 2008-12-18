@@ -59,7 +59,7 @@ static void md5_init (md5_state_t *pms);
 static void md5_append (md5_state_t *pms, const md5_byte_t *data, int nbytes);
 static void md5_finish (md5_state_t *pms, md5_byte_t digest[16]);
 
-static gchar *xmms_bindata_build_path (xmms_bindata_t *bindata, gchar *hash);
+static gchar *xmms_bindata_build_path (xmms_bindata_t *bindata, const gchar *hash);
 
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
 static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *err);
@@ -146,7 +146,7 @@ xmms_bindata_calculate_md5 (const guchar *data, guint size, gchar ret[33])
 }
 
 static gchar *
-xmms_bindata_build_path (xmms_bindata_t *bindata, gchar *hash)
+xmms_bindata_build_path (xmms_bindata_t *bindata, const gchar *hash)
 {
 	return g_build_path (G_DIR_SEPARATOR_S, bindata->bindir, hash, NULL);
 }
