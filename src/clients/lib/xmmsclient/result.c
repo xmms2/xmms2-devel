@@ -28,7 +28,6 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
 #include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_strlist.h"
 #include "xmmsc/xmmsc_stdbool.h"
 
 static void xmmsc_result_restart (xmmsc_result_t *res);
