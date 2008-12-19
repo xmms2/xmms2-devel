@@ -177,6 +177,8 @@ command_trie_string_insert (command_trie_t* trie, gchar *name)
 		}
 	}
 
+	g_free (prefix);
+
 	return curr;
 }
 
