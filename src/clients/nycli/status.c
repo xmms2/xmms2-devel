@@ -77,7 +77,7 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	gint i;
 
 	const gchar *time_fields[] = { "duration", NULL };
-	const gchar *noinfo_fields[] = { "playback_status", "playtime", NULL };
+	const gchar *noinfo_fields[] = { "playback_status", "playtime", "position", NULL };
 	const gchar *err;
 
 	currid = infos->cache->currid;
@@ -194,6 +194,13 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 	xmmsc_result_unref (res);
 }
 
+static void
+status_update_position (cli_infos_t *infos, status_entry_t *entry)
+{
+	g_hash_table_insert (entry->data, "position",
+	                     g_strdup_printf ("%d", infos->cache->currpos));
+}
+
 /* Returned string must be freed by the caller */
 static gchar *
 format_time (gint duration)
@@ -275,6 +282,7 @@ void
 status_update_all (cli_infos_t *infos, status_entry_t *entry)
 {
 	status_update_playback (infos, entry);
+	status_update_position (infos, entry);
 	status_update_info (infos, entry);
 	status_update_playtime (infos, entry);
 }
