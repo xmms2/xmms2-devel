@@ -8,7 +8,9 @@ typedef int bool;
 #define false 0
 
 #else
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
 
 #endif
 
