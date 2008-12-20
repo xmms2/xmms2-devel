@@ -194,7 +194,7 @@ read_do_udp (xmmsc_vis_udp_t *t, xmmsc_visualization_t *v, short *buffer, int dr
 		wait_for_socket (t, blocking);
 	}
 
-	ret = recv (t->socket[0], packet, packet_d.size, MSG_DONTWAIT);
+	ret = recv (t->socket[0], packet, packet_d.size, 0);
 	if ((ret > 0) && (*packet_d.__unaligned_type == 'V')) {
 		uint16_t grace;
 		struct timeval rtv;
