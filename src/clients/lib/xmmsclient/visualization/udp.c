@@ -74,7 +74,7 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 		host = strdup ("localhost");
 	}
 
-	if (getaddrinfo (host, portstr, &hints, &result) != 0)
+	if (xmms_getaddrinfo (host, portstr, &hints, &result) != 0)
 	{
 		c->error = strdup("Couldn't setup socket!");
 		return false;
@@ -101,7 +101,7 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 		c->error = strdup("Could not connect!");
 		return false;
 	}
-	freeaddrinfo (result);
+	xmms_freeaddrinfo (result);
 
 	packet[0] = 'H';
 	*packet_id = htonl (id);
