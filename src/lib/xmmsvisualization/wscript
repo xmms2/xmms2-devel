@@ -5,22 +5,20 @@
 #
 
 def build(bld):
-    obj = bld.create_obj('cc', 'staticlib')
+    obj = bld.new_task_gen("cc", "staticlib")
     obj.source = """
-                 timestamp.c
-                 udp.c""".split()
-    obj.includes='. ../../include'
-    obj.target='xmmsvisualization'
-    obj.install_var = 0
+        timestamp.c
+        udp.c
+    """.split()
+    obj.includes = ". ../../.. ../../include"
+    obj.target = "xmmsvisualization"
+    obj.uselib = ["math"]
+    obj.install_path = 0
 
 def configure(conf):
     # Check for the modf function in the math lib
-    test = conf.create(enumerator='function')
-    test.function = 'modf'
-    test.headers = ['math.h']
-    test.libs = ['m']
-    test.mandatory = 1
-    test.run()
+    conf.check_cc(function_name="modf", header_name="math.h", lib="m", uselib_store="math", mandatory=1)
+    return True
 
 def set_options(opt):
     pass

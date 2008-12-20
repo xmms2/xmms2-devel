@@ -1,12 +1,12 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.env["HAVE_CXX"]:
+    if not conf.env["CXX"]:
         return False
     return True
 
 configure, build = plugin('gme', configure=plugin_configure,
-                          tool='cpp', source=[
+                          tool='cxx', source=[
     "gme_xform.cpp",
     "gme/Ay_Apu.cpp",
     "gme/Ay_Cpu.cpp",

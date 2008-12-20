@@ -1,363 +1,306 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # encoding: utf-8
-# Thomas Nagy, 2006 (ita)
+# Thomas Nagy, 2006-2008 (ita)
 
 "Gnome support"
 
 import os, re
-import Object, Action, Params, Common, Scan, Utils
+import TaskGen, Utils, Runner, Task, Build, Options, Logs
 import cc
-from Params import fatal, error
+from Logs import error
+from TaskGen import taskgen, before, after, feature
 
 n1_regexp = re.compile('<refentrytitle>(.*)</refentrytitle>', re.M)
 n2_regexp = re.compile('<manvolnum>(.*)</manvolnum>', re.M)
 
+def postinstall_schemas(prog_name):
+	if Options.commands['install']:
+		dir = Build.bld.get_install_path('${PREFIX}/etc/gconf/schemas/%s.schemas' % prog_name)
+		if not Options.options.destdir:
+			# add the gconf schema
+			Utils.pprint('YELLOW', 'Installing GConf schema')
+			command = 'gconftool-2 --install-schema-file=%s 1> /dev/null' % dir
+			ret = Utils.exec_command(command)
+		else:
+			Utils.pprint('YELLOW', 'GConf schema not installed. After install, run this:')
+			Utils.pprint('YELLOW', 'gconftool-2 --install-schema-file=%s' % dir)
 
-def postinstall():
-	if Params.g_commands['install']:
-		import Runner, Common
+def postinstall_icons():
+	dir = Build.bld.get_install_path('${DATADIR}/icons/hicolor')
+	if Options.commands['install']:
+		if not Options.options.destdir:
+			# update the pixmap cache directory
+			Utils.pprint('YELLOW', "Updating Gtk icon cache.")
+			command = 'gtk-update-icon-cache -q -f -t %s' % dir
+			ret = Utils.exec_command(command)
+		else:
+			Utils.pprint('YELLOW', 'Icon cache not updated. After install, run this:')
+			Utils.pprint('YELLOW', 'gtk-update-icon-cache -q -f -t %s' % dir)
 
-		# add the gconf schema
-		dir = Common.path_install('PREFIX', 'etc/gconf/schemas/gnome_test.schemas')
-		command = 'gconftool-2 --install-schema-file=%s 1> /dev/null' % dir
-		ret = Runner.exec_command(command)
-
-		# update the pixmap cache directory
-		dir = Common.path_install('DATADIR', 'icons/hicolor')
-		command = 'gtk-update-icon-cache -q -f -t %s' % dir
-		ret = Runner.exec_command(command)
-
+def postinstall_scrollkeeper(prog_name):
+	if Options.commands['install']:
 		# now the scrollkeeper update if we can write to the log file
 		if os.path.iswriteable('/var/log/scrollkeeper.log'):
-			dir1 = Common.path_install('PREFIX', 'var/scrollkeeper')
-			dir2 = Common.path_install('DATADIR', 'omf/gnome-hello')
+			dir1 = Build.bld.get_install_path('${PREFIX}/var/scrollkeeper')
+			dir2 = Build.bld.get_install_path('${DATADIR}/omf/%s' % prog_name)
 			command = 'scrollkeeper-update -q -p %s -o %s' % (dir1, dir2)
-			ret = Runner.exec_command(command)
+			ret = Utils.exec_command(command)
 
-class sgml_man_scanner(Scan.scanner):
-	def __init__(self):
-		Scan.scanner.__init__(self)
-	def scan(self, node, env):
-		variant = node.variant(env)
+def postinstall(prog_name='myapp', schemas=1, icons=1, scrollkeeper=1):
+	if schemas: postinstall_schemas(prog_name)
+	if icons: postinstall_icons()
+	if scrollkeeper: postinstall_scrollkeeper(prog_name)
 
-		fi = open(node.abspath(env), 'r')
-		content = fi.read()
-		fi.close()
+# OBSOLETE
+class gnome_doc_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-		names = n1_regexp.findall(content)
-		nums = n2_regexp.findall(content)
+@taskgen
+@feature('gmome_doc')
+def init_gnome_doc(self):
+	self.default_install_path = '${PREFIX}/share'
 
-		name = names[0]
-		num  = nums[0]
+@taskgen
+@feature('gnome_doc')
+@after('init_gnome_doc')
+def apply_gnome_doc(self):
+	self.env['APPNAME'] = self.doc_module
+	lst = self.to_list(self.doc_linguas)
+	for x in lst:
+		tsk = self.create_task('xml2po')
+		node = self.path.find_resource(x+'/'+x+'.po')
+		src = self.path.find_resource('C/%s.xml' % self.doc_module)
+		out = self.path.find_or_declare('%s/%s.xml' % (x, self.doc_module))
+		tsk.set_inputs([node, src])
+		tsk.set_outputs(out)
 
-		doc_name = name+'.'+num
+		tsk2 = self.create_task('xsltproc2po')
+		out2 = self.path.find_or_declare('%s/%s-%s.omf' % (x, self.doc_module, x))
+		tsk2.set_outputs(out2)
+		node = self.path.find_resource(self.doc_module+".omf.in")
+		tsk2.inputs = [node, out]
 
-		return ([], [doc_name])
+		tsk2.run_after.append(tsk)
 
-sgml_scanner = sgml_man_scanner()
+		if Options.is_install:
+			path = self.install_path + 'gnome/help/%s/%s' % (self.doc_module, x)
+			Build.bld.install_files(self.install_path + 'omf', out2.abspath(self.env))
+			for y in self.to_list(self.doc_figures):
+				try:
+					os.stat(self.path.abspath() + '/' + x + '/' + y)
+					Common.install_as(path + '/' + y, self.path.abspath() + '/' + x + '/' + y)
+				except:
+					Common.install_as(path + '/' + y, self.path.abspath() + '/C/' + y)
+			Common.install_as(path + '/%s.xml' % self.doc_module, out.abspath(self.env))
 
-# intltool
-class gnome_intltool(Object.genobj):
-	def __init__(self):
-		Object.genobj.__init__(self, 'other')
-		self.source  = ''
-		self.destvar = ''
-		self.subdir  = ''
-		self.flags   = ''
+# OBSOLETE
+class xml_to_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-		self.m_tasks = []
+@taskgen
+@feature('xml_to')
+def init_xml_to(self):
+	Utils.def_attrs(self,
+		source = 'xmlfile',
+		xslt = 'xlsltfile',
+		target = 'hey',
+		default_install_path = '${PREFIX}',
+		task_created = None)
 
-	def apply(self):
-		self.env = self.env.copy()
-		tree = Params.g_build
-		current = tree.m_curdirnode
-		for i in self.to_list(self.source):
-			node = self.path.find_source(i)
+@taskgen
+@feature('xml_to')
+@after('init_xml_to')
+def apply_xml_to(self):
+	tree = Build.bld
+	xmlfile = self.path.find_resource(self.source)
+	xsltfile = self.path.find_resource(self.xslt)
+	tsk = self.create_task('xmlto')
+	tsk.set_inputs([xmlfile, xsltfile])
+	tsk.set_outputs(xmlfile.change_ext('html'))
+	tsk.install_path = self.install_path
 
-			podirnode = self.path.find_source(self.podir)
+def sgml_scan(self):
+	node = self.inputs[0]
 
-			self.env['INTLCACHE'] = os.path.join(Params.g_build.m_curdirnode.bldpath(self.env),".intlcache")
-			self.env['INTLPODIR'] = podirnode.bldpath(self.env)
-			self.env['INTLFLAGS'] = self.flags
+	env = self.env
+	variant = node.variant(env)
 
-			task = self.create_task('intltool', self.env, 2)
-			task.set_inputs(node)
-			task.set_outputs(node.change_ext(''))
+	fi = open(node.abspath(env), 'r')
+	content = fi.read()
+	fi.close()
 
-	def install(self):
-		current = Params.g_build.m_curdirnode
-		for task in self.m_tasks:
-			out = task.m_outputs[0]
-			Common.install_files(self.destvar, self.subdir, out.abspath(self.env), self.env)
+	# we should use a sgml parser :-/
+	name = n1_regexp.findall(content)[0]
+	num = n2_regexp.findall(content)[0]
 
-# sgml2man
-class gnome_sgml2man(Object.genobj):
-	def __init__(self, appname):
-		Object.genobj.__init__(self, 'other')
-		self.m_tasks=[]
-		self.m_appname = appname
-	def apply(self):
-		tree = Params.g_build
-		for node in self.path.files():
-			try:
-				base, ext = os.path.splitext(node.m_name)
-				if ext != '.sgml': continue
+	doc_name = name+'.'+num
+	return ([], [doc_name])
 
-				if tree.needs_rescan(node, self.env):
-					sgml_scanner.do_scan(node, self.env, hashparams={})
+def sig_implicit_deps(self):
+	"override the Task method, see the Task.py"
 
-				variant = node.variant(self.env)
+	def sgml_outputs():
+		dps = Build.bld.raw_deps[self.unique_id()]
+		name = dps[0]
+		self.set_outputs(self.task_generator.path.find_or_declare(name))
 
-				try: tmp_lst = tree.m_raw_deps[variant][node]
-				except: tmp_lst = []
-				name = tmp_lst[0]
+	tree = Build.bld
 
-				task = self.create_task('sgml2man', self.env, 2)
-				task.set_inputs(node)
-				task.set_outputs(self.path.find_build(name))
-			except:
-				raise
-				pass
+	# get the task signatures from previous runs
+	key = self.unique_id()
+	prev_sigs = tree.task_sigs.get(key, ())
+	if prev_sigs and prev_sigs[2] == self.compute_sig_implicit_deps():
+		sgml_outputs()
+		return prev_sigs[2]
 
-	def install(self):
-		current = Params.g_build.m_curdirnode
+	# no previous run or the signature of the dependencies has changed, rescan the dependencies
+	(nodes, names) = self.scan()
+	if Logs.verbose and Logs.zones:
+		debug('deps: scanner for %s returned %s %s' % (str(self), str(nodes), str(names)))
 
-		for task in self.m_tasks:
-			out = task.m_outputs[0]
-			# get the number 1..9
-			name = out.m_name
-			ext = name[-1]
-			# and install the file
+	# store the dependencies in the cache
+	tree = Build.bld
+	tree.node_deps[self.unique_id()] = nodes
+	tree.raw_deps[self.unique_id()] = names
+	sgml_outputs()
 
-			Common.install_files('DATADIR', 'man/man%s/' % ext, out.abspath(self.env), self.env)
+	# recompute the signature and return it
+	sig = self.compute_sig_implicit_deps()
 
-# translations
-class gnome_translations(Object.genobj):
-	def __init__(self, appname):
-		Object.genobj.__init__(self, 'other')
-		self.m_tasks=[]
-		self.m_appname = appname
-	def apply(self):
-		for file in self.path.files():
-			try:
-				base, ext = os.path.splitext(file.m_name)
-				if ext != '.po': continue
+	return sig
 
-				task = self.create_task('po', self.env, 2)
-				task.set_inputs(file)
-				task.set_outputs(file.change_ext('.gmo'))
-			except: pass
-	def install(self):
-		destfilename = self.m_appname+'.mo'
+class gnome_sgml2man_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-		current = Params.g_build.m_curdirnode
-		for file in self.path.files():
-			lang, ext = os.path.splitext(file.m_name)
-			if ext != '.po': continue
+@taskgen
+@feature('gnome_sgml2man')
+def apply_gnome_sgml2man(self):
+	assert(getattr(self, 'appname', None))
 
-			node = self.path.find_source(lang+'.gmo')
-			orig = node.relpath_gen(current)
+	def install_result(task):
+		out = task.outputs[0]
+		name = out.name
+		ext = name[-1]
+		env = task.env
+		Build.bld.install_files('DATADIR', 'man/man%s/' % ext, out.abspath(env), env)
 
-			destfile = os.path.join(lang, 'LC_MESSAGES', destfilename)
-			Common.install_as('GNOMELOCALEDIR', destfile, orig, self.env)
+	tree = Build.bld
+	tree.rescan(self.path)
+	for name in Build.bld.cache_dir_contents[self.path.id]:
+		base, ext = os.path.splitext(name)
+		if ext != '.sgml': continue
 
+		task = self.create_task('sgml2man')
+		task.set_inputs(self.path.find_resource(name))
+		task.task_generator = self
+		if Options.is_install: task.install = install_result
+		# no outputs, the scanner does it
+		# no caching for now, this is not a time-critical feature
+		# in the future the scanner can be used to do more things (find dependencies, etc)
+		task.scan()
 
-class gnomeobj(cc.ccobj):
-	def __init__(self, type='program'):
-		cc.ccobj.__init__(self, type)
-		self.m_linktask = None
-		self.m_latask   = None
-		self.want_libtool = -1 # fake libtool here
+cls = Task.simple_task_type('sgml2man', '${SGML2MAN} -o ${TGT[0].bld_dir(env)} ${SRC}  > /dev/null', color='BLUE')
+cls.scan = sgml_scan
+cls.sig_implicit_deps = sig_implicit_deps
+old_runnable_status = Task.Task.runnable_status
+def runnable_status(self):
+	old_runnable_status(self)
+	return old_runnable_status(self)
+cls.runnable_status = runnable_status
+cls.quiet = 1
 
-		self._dbus_lst    = []
-		self._marshal_lst = []
+Task.simple_task_type('xmlto', '${XMLTO} html -m ${SRC[1].abspath(env)} ${SRC[0].abspath(env)}')
 
-	def add_dbus_file(self, filename, prefix, mode):
-		self._dbus_lst.append([filename, prefix, mode])
+Task.simple_task_type('xml2po', '${XML2PO} ${XML2POFLAGS} ${SRC} > ${TGT}', color='BLUE')
 
-	def add_marshal_file(self, filename, prefix, mode):
-		self._marshal_lst.append([filename, prefix, mode])
+# how do you expect someone to understand this?!
+xslt_magic = """${XSLTPROC2PO} -o ${TGT[0].abspath(env)} \
+--stringparam db2omf.basename ${APPNAME} \
+--stringparam db2omf.format docbook \
+--stringparam db2omf.lang C \
+--stringparam db2omf.dtd '-//OASIS//DTD DocBook XML V4.3//EN' \
+--stringparam db2omf.omf_dir ${PREFIX}/share/omf \
+--stringparam db2omf.help_dir ${PREFIX}/share/gnome/help \
+--stringparam db2omf.omf_in ${SRC[0].abspath(env)} \
+--stringparam db2omf.scrollkeeper_cl ${SCROLLKEEPER_DATADIR}/Templates/C/scrollkeeper_cl.xml \
+${DB2OMF} ${SRC[1].abspath(env)}"""
 
-	def apply_core(self):
-		for i in self._marshal_lst:
-			node = self.path.find_source(i[0])
-
-			if not node:
-				fatal('file not found on gnome obj '+i[0])
-
-			env = self.env.copy()
-
-			if i[2] == '--header':
-
-				env['GGM_PREFIX'] = i[1]
-				env['GGM_MODE']   = i[2]
-
-				task = self.create_task('glib_genmarshal', env, 2)
-				task.set_inputs(node)
-				task.set_outputs(node.change_ext('.h'))
-
-			elif i[2] == '--body':
-				env['GGM_PREFIX'] = i[1]
-				env['GGM_MODE']   = i[2]
-
-				task = self.create_task('glib_genmarshal', env, 2)
-				task.set_inputs(node)
-				task.set_outputs(node.change_ext('.c'))
-
-				# this task is really created with self.env
-				ctask = self.create_task('cc', self.env)
-				ctask.m_inputs = task.m_outputs
-				ctask.set_outputs(node.change_ext('.o'))
-
-			else:
-				error("unknown type for marshal "+i[2])
-
-
-		for i in self._dbus_lst:
-			node = self.path.find_source(i[0])
-
-			if not node:
-				fatal('file not found on gnome obj '+i[0])
-
-			env = self.env.copy()
-
-			env['DBT_PREFIX'] = i[1]
-			env['DBT_MODE']   = i[2]
-
-			task = self.create_task('dbus_binding_tool', env, 2)
-			task.set_inputs(node)
-			task.set_outputs(node.change_ext('.h'))
-
-		# after our targets are created, process the .c files, etc
-		cc.ccobj.apply_core(self)
-
-def setup(env):
-	Action.simple_action('po', '${POCOM} -o ${TGT} ${SRC}', color='BLUE')
-	Action.simple_action('sgml2man', '${SGML2MAN} -o ${TGT[0].bld_dir(env)} ${SRC}  > /dev/null', color='BLUE')
-	Action.simple_action( \
-		'intltool', \
-		'${INTLTOOL} ${INTLFLAGS} -q -u -c ${INTLCACHE} ${INTLPODIR} ${SRC} ${TGT}', \
-		color='BLUE')
-
-	Action.simple_action('glib_genmarshal',
-		'${GGM} ${SRC} --prefix=${GGM_PREFIX} ${GGM_MODE} > ${TGT}',
-		color='BLUE')
-
-	Action.simple_action('dbus_binding_tool',
-		'${DBT} --prefix=${DBT_PREFIX} --mode=${DBT_MODE} --output=${TGT} ${SRC}',
-		color='BLUE')
-
-	Object.register('gnome_translations', gnome_translations)
-	Object.register('gnome_sgml2man', gnome_sgml2man)
-	Object.register('gnome_intltool', gnome_intltool)
-	Object.register('gnome', gnomeobj)
+#--stringparam db2omf.dtd '-//OASIS//DTD DocBook XML V4.3//EN' \
+Task.simple_task_type('xsltproc2po', xslt_magic, color='BLUE')
 
 def detect(conf):
-
-	conf.check_tool('checks')
-
-	pocom = conf.find_program('msgfmt')
-	#if not pocom:
-	#	fatal('The program msgfmt (gettext) is mandatory!')
-	conf.env['POCOM'] = pocom
-
-	sgml2man = conf.find_program('docbook2man')
-	#if not sgml2man:
-	#	fatal('The program docbook2man is mandatory!')
-	conf.env['SGML2MAN'] = sgml2man
-
-	intltool = conf.find_program('intltool-merge')
-	#if not intltool:
-	#	fatal('The program intltool-merge (intltool, gettext-devel) is mandatory!')
-	conf.env['INTLTOOL'] = intltool
-
-	glib_genmarshal = conf.find_program('glib-genmarshal')
-	conf.env['GGM'] = glib_genmarshal
-
-	dbus_binding_tool = conf.find_program('dbus-binding-tool')
-	conf.env['DBT'] = dbus_binding_tool
+	conf.check_tool('gnu_dirs glib2 dbus')
+	sgml2man = conf.find_program('docbook2man', var='SGML2MAN')
 
 	def getstr(varname):
-		#if env.has_key('ARGS'): return env['ARGS'].get(varname, '')
-		v=''
-		try: v = getattr(Params.g_options, varname)
-		except: return ''
-		return v
-
-	prefix  = conf.env['PREFIX']
-	datadir = getstr('datadir')
-	libdir  = getstr('libdir')
-	if not datadir: datadir = os.path.join(prefix,'share')
-	if not libdir:  libdir  = os.path.join(prefix,'lib')
+		return getattr(Options.options, varname, '')
 
 	# addefine also sets the variable to the env
-	conf.add_define('GNOMELOCALEDIR', os.path.join(datadir, 'locale'))
-	conf.add_define('DATADIR', datadir)
-	conf.add_define('LIBDIR', libdir)
+	conf.define('GNOMELOCALEDIR', os.path.join(conf.env['DATADIR'], 'locale'))
+
+	xml2po = conf.find_program('xml2po', var='XML2PO')
+	xsltproc2po = conf.find_program('xsltproc', var='XSLTPROC2PO')
+	conf.env['XML2POFLAGS'] = '-e -p'
+	conf.env['SCROLLKEEPER_DATADIR'] = Utils.cmd_output("scrollkeeper-config --pkgdatadir", silent=1).strip()
+	conf.env['DB2OMF'] = Utils.cmd_output("/usr/bin/pkg-config --variable db2omf gnome-doc-utils", silent=1).strip()
 
 	# TODO: maybe the following checks should be in a more generic module.
 
 	#always defined to indicate that i18n is enabled */
-	conf.add_define('ENABLE_NLS', '1')
+	conf.define('ENABLE_NLS', 1)
 
 	# TODO
 	#Define to 1 if you have the `bind_textdomain_codeset' function.
-	conf.add_define('HAVE_BIND_TEXTDOMAIN_CODESET', '1')
+	conf.define('HAVE_BIND_TEXTDOMAIN_CODESET', 1)
 
 	# TODO
 	#Define to 1 if you have the `dcgettext' function.
-	conf.add_define('HAVE_DCGETTEXT', '1')
+	conf.define('HAVE_DCGETTEXT', 1)
 
 	#Define to 1 if you have the <dlfcn.h> header file.
-	conf.check_header('dlfcn.h', 'HAVE_DLFCN_H')
+	conf.check(header_name='dlfcn.h', define_name='HAVE_DLFCN_H')
 
 	# TODO
 	#Define if the GNU gettext() function is already present or preinstalled.
-	conf.add_define('HAVE_GETTEXT', '1')
+	conf.define('HAVE_GETTEXT', 1)
 
 	#Define to 1 if you have the <inttypes.h> header file.
-	conf.check_header('inttypes.h', 'HAVE_INTTYPES_H')
+	conf.check(header_name='inttypes.h', define_name='HAVE_INTTYPES_H')
 
 	# TODO FIXME
 	#Define if your <locale.h> file defines LC_MESSAGES.
 	#conf.add_define('HAVE_LC_MESSAGES', '1')
 
 	#Define to 1 if you have the <locale.h> header file.
-	conf.check_header('locale.h', 'HAVE_LOCALE_H')
+	conf.check(header_name='locale.h', define_name='HAVE_LOCALE_H')
 
 	#Define to 1 if you have the <memory.h> header file.
-	conf.check_header('memory.h', 'HAVE_MEMORY_H')
+	conf.check(header_name='memory.h', define_name='HAVE_MEMORY_H')
 
 	#Define to 1 if you have the <stdint.h> header file.
-	conf.check_header('stdint.h', 'HAVE_STDINT_H')
+	conf.check(header_name='stdint.h', define_name='HAVE_STDINT_H')
 
 	#Define to 1 if you have the <stdlib.h> header file.
-	conf.check_header('stdlib.h', 'HAVE_STDLIB_H')
+	conf.check(header_name='stdlib.h', define_name='HAVE_STDLIB_H')
 
 	#Define to 1 if you have the <strings.h> header file.
-	conf.check_header('strings.h', 'HAVE_STRINGS_H')
+	conf.check(header_name='strings.h', define_name='HAVE_STRINGS_H')
 
 	#Define to 1 if you have the <string.h> header file.
-	conf.check_header('string.h', 'HAVE_STRING_H')
+	conf.check(header_name='string.h', define_name='HAVE_STRING_H')
 
 	#Define to 1 if you have the <sys/stat.h> header file.
-	conf.check_header('sys/stat.h', 'HAVE_SYS_STAT_H')
+	conf.check(header_name='sys/stat.h', define_name='HAVE_SYS_STAT_H')
 
 	#Define to 1 if you have the <sys/types.h> header file.
-	conf.check_header('sys/types.h', 'HAVE_SYS_TYPES_H')
+	conf.check(header_name='sys/types.h', define_name='HAVE_SYS_TYPES_H')
 
 	#Define to 1 if you have the <unistd.h> header file.
-	conf.check_header('unistd.h', 'HAVE_UNISTD_H')
-
-	return 1
+	conf.check(header_name='unistd.h', define_name='HAVE_UNISTD_H')
 
 def set_options(opt):
-	try:
-		# we do not know yet
-		opt.add_option('--want-rpath', type='int', default=1, dest='want_rpath', help='set rpath to 1 or 0 [Default 1]')
-	except:
-		pass
-
-	for i in "execprefix datadir libdir".split():
-		opt.add_option('--'+i, type='string', default='', dest=i)
+	opt.add_option('--want-rpath', type='int', default=1, dest='want_rpath', help='set rpath to 1 or 0 [Default 1]')
 

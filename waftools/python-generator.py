@@ -1,23 +1,16 @@
-import Action
-import Node
-from Params import error
+import Task
+from TaskGen import extension
 import sys
 
-genpy_str = '${PYTHON} ${SRC} -> ${TGT}'
+Task.simple_task_type('genpy', '${PYTHON} ${SRC} > ${TGT}', color='BLUE', before='cc')
 
+@extension(".genpy")
 def genpy_file(self, node):
-    gentask = self.create_task('genpy', nice=1)
-    gentask.set_inputs([node, node.change_ext('.head.c')])
-    gentask.set_outputs(node.change_ext('.c'))
-
-    cctask = self.create_task('cc')
-    cctask.set_inputs(gentask.m_outputs)
-    cctask.set_outputs(node.change_ext('.o'))
-
-def setup(env):
-    Action.simple_action('genpy', genpy_str, color='BLUE')
-
-    env.hook('cc', 'GENPY_EXT', genpy_file)
+    gentask = self.create_task('genpy')
+    gentask.set_inputs(node)
+    nd = node.change_ext('.c')
+    gentask.set_outputs(nd)
+    self.allnodes.append(nd)
 
 def detect(conf):
     conf.env['PYTHON'] = sys.executable

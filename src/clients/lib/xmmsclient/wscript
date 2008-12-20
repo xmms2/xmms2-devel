@@ -1,51 +1,53 @@
 from waftools import tool
-
-from Params import warning
+from logging import warning
 
 def build(bld):
-    obj = bld.create_obj('cc', 'shlib')
-    obj.target = 'xmmsclient'
-    obj.includes = '../../../include ../../../includepriv'
+    obj = bld.new_task_gen("cc", "shlib")
+    obj.target = "xmmsclient"
+    obj.includes = "../../../.. ../../../include ../../../includepriv"
     obj.source = """
-                 collection.c
-                 collparser.c
-                 bindata.c
-                 config.c
-                 ipc.c
-                 medialib.c
-                 playback.c
-                 playlist.c
-                 result.c
-                 stats.c
-                 xmmsclient.c
-                 xform.c
-                 xqueue.c
-                 visualization/client.c
-                 visualization/udp.c
-                 """.split()
-    if bld.env()['has_unixshmsupport']:
-        obj.source.append("visualization/unixshm.c")
+        collection.c
+        collparser.c
+        bindata.c
+        config.c
+        ipc.c
+        medialib.c
+        playback.c
+        playlist.c
+        result.c
+        stats.c
+        xmmsclient.c
+        xform.c
+        xqueue.c
+        visualization/client.c
+        visualization/udp.c
+    """.split()
+
+    obj.uselib_local = ["xmmsipc", "xmmssocket", "xmmsutils", "xmmstypes", "xmmsvisualization"]
+    obj.uselib = ["socket", "time"]
+
+    if bld.env['HAVE_SEMTIMEDOP']:
+        obj.source += ["visualization/unixshm.c"]
     else:
-        obj.source.append("visualization/dummy.c")
-    obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
-    obj.uselib = 'socket visualizationclient'
-    obj.vnum = '5.0.0'
+        obj.source += ["visualization/dummy.c"]
+
+    obj.vnum = "5.0.0"
 
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client', '-lxmmsclient'))
-    test = conf.create(enumerator='function')
-    test.function = 'semtimedop'
-    test.header_code = '#define _GNU_SOURCE 1'
-    test.headers = ['sys/types.h','sys/ipc.h','sys/sem.h']
-    test.mandatory = False
-    if test.run():
-        conf.env['has_unixshmsupport'] = True
-        conf.env['CCDEFINES_visualizationclient'] = ['HAVE_SEMTIMEDOP']
-    else:
-        warning("Compiling visualization without shm support")
-        conf.env['has_unixshmsupport'] = False
+    conf.env.append_value("XMMS_PKGCONF_FILES", ("xmms2-client", "-lxmmsclient"))
+
+    conf.check_cc(function_name="semtimedop", header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"], defines=["_GNU_SOURCE=1"])
+    if not conf.env["HAVE_SEMTIMEDOP"]:
+        warning("Compiling visualization without shm support!")
+
+    conf.check_cc(function_name="nanosleep", header_name="time.h")
+    if not conf.env["HAVE_NANOSLEEP"]:
+        conf.check_cc(lib="rt", function_name="nanosleep", header_name="time.h", uselib_store="time")
+        if not conf.env["HAVE_NANOSLEEP"]:
+            return False
+
     return True
 
 def set_options(opt):

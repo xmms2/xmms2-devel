@@ -1,12 +1,9 @@
 from waftools.plugin import plugin
-import Params
+import Options
 
 def plugin_configure(conf):
-    platform_names = ['netbsd', 'openbsd']
+    if [x for x in ("netbsd", "openbsd") if Options.platform.startswith(x)]:
+        return True
+    return False
 
-    if not filter(lambda x: Params.g_platform.startswith(x), platform_names):
-        return False
-
-    return True
-
-configure, build = plugin('sun', configure=plugin_configure, output_prio=33)
+configure, build = plugin("sun", configure=plugin_configure, output_prio=33)

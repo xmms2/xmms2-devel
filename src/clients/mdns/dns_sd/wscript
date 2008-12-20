@@ -1,36 +1,25 @@
-import os
-import Common
-import Params
+import Constants
+import Options
 
 def build(bld):
-  env = bld.env()
-
-  obj = bld.create_obj('cc', 'program')
+  obj = bld.new_task_gen('cc', 'program')
   obj.target = 'xmms2-mdns-dnssd'
   obj.source = ['mdns-dnssd.c']
-  obj.includes = '. ../../../include'
-  obj.uselib = 'glib2'
-  if env['explicit_dnssd']:
-    obj.uselib += ' dnssd'
+  obj.includes = '. ../../../.. ../../../include'
+  obj.uselib = 'glib2 dnssd'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
-  obj = bld.create_obj('subst')
+  obj = bld.new_task_gen('subst')
   obj.source = 'xmms2-mdns-launcher.sh.in'
-  obj.dict = {'PRG_PATH' : env['BINDIR']}
-  Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh', chmod=0755)
+  obj.dict = {'PRG_PATH' : bld.env['BINDIR']}
+  obj.install_path = '${SCRIPTDIR}'
+  obj.chmod = Constants.O755
 
 def configure(conf):
-  return False
-  conf.env['explicit_dnssd'] = True
-
-  if not conf.check_header('dns_sd.h'):
-    return False
-  if Params.g_platform == 'darwin':
-    conf.env['explicit_dnssd'] = False
+  if Options.platform == "darwin":
     return True
-  else:
-    return conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)
-
+  if not conf.check_cc(lib="dns_sd", header_name="dns_sd.h", function_name="DNSServiceRegister", uselib_store="dnssd"):
+    return False
   return True
 
 def set_options(opt):

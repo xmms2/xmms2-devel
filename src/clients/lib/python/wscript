@@ -1,38 +1,49 @@
+import Configure
+from logging import warning
 import os
-import Params
-import Common
 
 def build(bld):
-    obj = bld.create_obj('cc', 'plugin', 'pyext')
+    obj = bld.new_task_gen('cc', 'shlib', 'pyext')
     obj.target = 'xmmsapi'
-    obj.includes = '../../../include ../../../includepriv .'
+    obj.includes = '../../../.. ../../../include ../../../includepriv .'
     obj.source = ['xmmsapi.pyx']
     obj.uselib_local = 'xmmsclient'
-    obj.install_var = "xmmsclient_PYTHONDIR"
+    obj.install_path = "${xmmsclient_PYTHONDIR}"
+    obj.mac_bundle = True
 
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/__init__.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/sync.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/propdict.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/consts.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/collections.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/glib.py')
-    Common.install_files('xmmsclient_PYTHONDIR', '', 'xmmsclient/qt3.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/propdict.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/consts.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/collections.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/glib.py')
+    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/qt3.py')
 
 def configure(conf):
-    if not (conf.check_tool('python') and
-            conf.check_python_version() and
-            conf.check_python_headers()):
+    conf.check_tool('python')
+    if not conf.env['PYTHON']:
         return False
 
-    conf.env['xmmsclient_PYTHONDIR'] = os.path.join(conf.env['PYTHONDIR'], 'xmmsclient')
+    try:
+        conf.check_python_version()
+        conf.check_python_headers()
+    except Configure.ConfigurationError:
+        return False
 
-    if not os.path.commonprefix([conf.env['PYTHONDIR'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
-        Params.warning('default python libdir is not under PREFIX. specify path '
-                + 'manually using the PYTHONDIR environment variable if you '
-                + 'don\'t want the python bindings to be installed to '
-                + conf.env['PYTHONDIR'])
+    conf.env['xmmsclient_PYTHONDIR'] = conf.env['PYTHONDIR'] + '/xmmsclient'
 
-    return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
+    prefix = os.path.commonprefix([conf.env['PYTHONDIR'], conf.env['PREFIX']])
+    if not (isinstance(prefix, basestring) or prefix.startswith(conf.env['PREFIX'])):
+        warning('default python libdir is not under PREFIX. specify path '
+              + 'manually using the PYTHONDIR environment variable if you '
+              + 'don\'t want the python bindings to be installed to '
+              + conf.env['PYTHONDIR'])
+
+    conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
+    if not conf.env['PYREX']:
+        return False
+
+    return True
 
 def set_options(opt):
     pass

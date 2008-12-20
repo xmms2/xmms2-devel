@@ -1,11 +1,14 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_header('mpc/mpcdec.h'):
-        if not conf.check_header('mpcdec/mpcdec.h', define='HAVE_MPCDEC_OLD'):
+    if not conf.check_cc(header_name="mpc/mpcdec.h"):
+        if not conf.check_cc(header_name="mpcdec/mpcdec.h", defines="HAVE_MPCDEC_OLD", uselib_store="mpcdec"):
             return False
 
-    return conf.check_library2('mpcdec', uselib='musepack', mandatory=0)
+    if not conf.check_cc(lib="mpcdec", uselib_store="mpcdec"):
+        return False
 
-configure, build = plugin('musepack', configure=plugin_configure,
-                          source=['musepack.c', 'ape.c'], needs_lib=True)
+    return True
+
+configure, build = plugin("musepack", configure=plugin_configure,
+                          source=["musepack.c", "ape.c"], libs=["mpcdec"])

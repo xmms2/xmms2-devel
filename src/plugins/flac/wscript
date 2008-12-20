@@ -1,19 +1,26 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_header2('FLAC/all.h', mandatory=0):
+    if conf.check_cfg(package="flac", args="--cflags --libs", uselib_store="flac"):
+        return True
+
+    # flac versions older than 1.2.0 don't provide a pkg-config file
+    if not conf.check_cc(header_name="FLAC/all.h"):
         return False
 
     # for flac 1.1.2, we just need to link to libFLAC
-    if conf.check_library2('FLAC', uselib='flac', mandatory=0):
+    if conf.check_cc(lib="FLAC", uselib_store="flac"):
         return True
 
     # flac 1.1.3+ wants us to link to libogg, too. so first check
     # for libogg here
-    if not conf.check_pkg('ogg', destvar='flac_ogg'):
+    if not conf.check_cfg(package="ogg", uselib_store="flac_ogg", args="--cflags --libs"):
         return False
 
-    return conf.check_library2('FLAC', uselib='flac flac_ogg', mandatory=0)
+    if not conf.check_cc(lib="FLAC", uselib="flac_ogg", uselib_store="flac"):
+        return False
 
-configure, build = plugin('flac', configure=plugin_configure, needs_lib=True,
-                          extra_libs=['socket'])
+    return True
+
+configure, build = plugin("flac", configure=plugin_configure,
+                          libs=["socket", "flac"])

@@ -5,145 +5,125 @@
 #
 
 import os
-import Common
-import Params
+import Options
+from logging import warning
 
-source = """config.c
-            mediainfo.c
-            sqlite.c
-            medialib.c
-            object.c
-            error.c
-            output.c
-            playlist.c
-            collection.c
-            collquery.c
-            collserial.c
-            ipc.c
-            log.c
-            plugin.c
-            magic.c
-            ringbuf.c
-            xform.c
-            streamtype.c
-            converter_plugin.c
-	    segment_plugin.c
-            ringbuf_xform.c
-            outputplugin.c
-            strfunc.c
-            bindata.c
-            sample.genpy
-            utils.c
-            visualization/format.c
-            visualization/object.c
-            visualization/udp.c
-            visualization/xform.c""".split()
+source = """
+    config.c
+    mediainfo.c
+    sqlite.c
+    medialib.c
+    object.c
+    error.c
+    output.c
+    playlist.c
+    collection.c
+    collquery.c
+    collserial.c
+    ipc.c
+    log.c
+    plugin.c
+    magic.c
+    ringbuf.c
+    xform.c
+    streamtype.c
+    converter_plugin.c
+    segment_plugin.c
+    ringbuf_xform.c
+    outputplugin.c
+    strfunc.c
+    bindata.c
+    sample.genpy
+    utils.c
+    visualization/format.c
+    visualization/object.c
+    visualization/udp.c
+    visualization/xform.c
+""".split()
 
 def build(bld):
-    env = bld.env()
+    env = bld.env
 
-    prog = bld.create_obj('cc', 'program')
+    prog = bld.new_task_gen('cc', 'program')
     prog.target = 'xmms2d'
-    prog.includes = '. ../include ../includepriv'
+    prog.includes = '. ../.. ../include ../includepriv'
     prog.source = ["main.c"]
     prog.source.append("compat/signal_%s.c" % env['compat_impl'])
     prog.source.append("compat/symlink_%s.c" % env['compat_impl'])
     prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
 
     source.append("compat/statfs_%s.c" % env["statfs_impl"])
-    if bld.env()['has_server_unixshmsupport']:
+    if bld.env['HAVE_SEMCTL']:
         source.append("visualization/unixshm.c")
     else:
         source.append("visualization/dummy.c")
 
     if env['xmms_shared_library']:
-        lib = bld.create_obj('cc', 'shlib')
+        lib = bld.new_task_gen('cc', 'shlib')
         lib.target = 'xmms2core'
         lib.source = source
         lib.includes = '. ../include ../includepriv'
-        lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
-        lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
+        lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm'
+        lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
 
         prog.uselib_local = 'xmms2core'
     else:
         prog.source += source
+        prog.uselib_local = ''
 
     prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
-    prog.uselib = 'm glib2 gmodule2 gthread2 sqlite3 statfs socket'
+    prog.uselib = 'math glib2 gmodule2 gthread2 sqlite3 statfs socket shm'
 
     if env['xmms_icon']:
         prog.add_objects = 'xmms_icon'
 
-    obj = bld.create_obj('man')
-    obj.files = ['xmms2d.1']
+    bld.new_task_gen(feature='man', files='xmms2d.1', section='1')
 
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
-    conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule2')
-    conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread2')
-    conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')
+    conf.check_cfg(package='gmodule-2.0', atleast_version='2.6.0', uselib_store='gmodule2', args='--cflags --libs')
+    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0', uselib_store='gthread2', args='--cflags --libs')
+    conf.check_cfg(package='sqlite3', atleast_version='0.0', uselib_store='sqlite3', args='--cflags --libs', mandatory=1)
 
     # Check for the sin function in the math lib
-    test = conf.create(enumerator='function')
-    test.function = 'sin'
-    test.headers = ['math.h']
-    test.libs = ['m']
-    test.mandatory = 1
-    test.run()
-
-    conf.env['LIB_m'] = ['m']
+    conf.check_cc(lib='m', function_name='sin', header_name=['math.h'], uselib_store="math", mandatory=1)
 
     # Detect the type of stat call used
-
-    # This function is ploped down here for now because the change has
-    # been submitted to upstream, and will hopefully get rolled back
-    # into the waf dist.
-    def check_header(header_name, mandatory=0):
-        test = conf.create(enumerator='header')
-        test.name = header_name
-        test.mandatory = mandatory
-        return test.run()
-
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         conf.env['statfs_impl'] = 'dummy'
-    elif check_header('sys/vfs.h'):
-        if Params.g_platform == 'sunos5':
+    elif conf.check(header_name='sys/vfs.h'):
+        if Options.platform == 'sunos':
             conf.env['statfs_impl'] = 'solaris'
         else:
             conf.env['statfs_impl'] = 'linux'
-    elif check_header('sys/param.h'):
+    elif conf.check(header_name='sys/param.h'):
         conf.env['statfs_impl'] = 'bsd'
     else:
         conf.env['statfs_impl'] = 'dummy'
 
     # Add Darwin stuff
-    if Params.g_platform == 'darwin':
+    if Options.platform == 'darwin':
         conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
         conf.env['CCDEFINES'] += ['USE_BUNDLES']
 
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         conf.env['xmms_shared_library'] = True
     else:
         conf.env['xmms_shared_library'] = False
 
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         conf.env['compat_impl'] = 'dummy'
     else:
         conf.env['compat_impl'] = 'unix'
 
-    if Params.g_options.without_unixshmserver:
-        conf.env['has_server_unixshmsupport'] = False
-    else:
-        test = conf.create(enumerator='function')
-        test.function = 'semtimedop'
-        test.header_code = '#define _GNU_SOURCE 1'
-        test.headers = ['sys/types.h','sys/ipc.h','sys/sem.h']
-        test.mandatory = False
-        if test.run():
-            conf.env['has_server_unixshmsupport'] = True
-        else:
-            Params.warning("Compiling visualization without shm support")
-            conf.env['has_server_unixshmsupport'] = False
+    if not Options.options.without_unixshmserver:
+        conf.check_cc(function_name='semctl', header_name=['sys/types.h','sys/ipc.h','sys/sem.h'])
+        semun_fragment = "#include <time.h>\n#include <sys/sem.h>\n int main() { union semun foo; return 0; }\n"
+        if not conf.check_cc(fragment=semun_fragment, uselib_store="semun", msg="Checking for union semun"):
+            conf.env["CCDEFINES_shm"] += ["_SEM_SEMUN_UNDEFINED"]
+
+    if not conf.env['HAVE_SEMCTL']:
+        warning("Compiling visualization without shm support")
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
 

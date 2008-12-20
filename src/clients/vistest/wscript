@@ -1,43 +1,44 @@
+import Options
+
 def build(bld):
-
-    env = bld.env()
-
-    obj = bld.create_obj('cc', 'program')
+    obj = bld.new_task_gen('cc', 'program')
     obj.target = 'vistest'
     obj.source = """vistest.c""".split()
-    obj.includes = '. ../../include'
+    obj.includes = '. ../../.. ../../include'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2'
 
-    obj = bld.create_obj('cc', 'program')
+    obj = bld.new_task_gen('cc', 'program')
     obj.target = 'vistest-fft'
     obj.source = """vistest_fft.c""".split()
-    obj.includes = '. ../../include'
+    obj.includes = '. ../../.. ../../include'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'glib2 m'
+    obj.uselib = 'glib2 math'
 
-    if env['HAVE_vorbisenc'] == 1:
-        obj = bld.create_obj('cc', 'program')
+    if bld.env['LIB_vorbisenc']:
+        obj = bld.new_task_gen('cc', 'program')
         obj.target = 'xmms2-ripper'
-        obj.source = """ripper.c""".split()
-        obj.includes = '. ../../include'
+        obj.source = 'ripper.c'
+        obj.includes = '. ../../.. ../../include'
         obj.uselib_local = 'xmmsclient'
         obj.uselib = 'vorbisenc'
 
-    if env['HAVE_visual'] == 1 and env['HAVE_sdl'] == 1:
-        obj = bld.create_obj('cc', 'program')
+    if bld.env['LIB_visual'] and bld.env['LIB_sdl']:
+        obj = bld.new_task_gen('cc', 'program')
         obj.target = 'xmms2-libvisual'
-        obj.source = """libvisual.c""".split()
-        obj.includes = '. ../../include'
+        obj.source = 'libvisual.c'
+        obj.includes = '. ../../.. ../../include'
         obj.uselib_local = 'xmmsclient'
         obj.uselib = 'sdl visual'
 
 def configure(conf):
-    conf.env['LIB_m'] = ['m']
+    if Options.platform == "win32":
+        return False
 
-    conf.check_pkg('libvisual-0.4', destvar='visual')
-    conf.check_pkg('sdl', destvar='sdl')
-    conf.check_pkg('vorbisenc', destvar='vorbisenc')
+    conf.check_cc(lib="m", uselib_store="math")
+    conf.check_cfg(package='libvisual-0.4', uselib_store='visual', args='--cflags --libs')
+    conf.check_cfg(package='sdl', uselib_store='sdl', args='--cflags --libs')
+    conf.check_cfg(package='vorbisenc', uselib_store='vorbisenc', args='--cflags --libs')
 
     return True
 

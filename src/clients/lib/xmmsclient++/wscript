@@ -1,61 +1,45 @@
 import os
-import Params
 from waftools import tool
 
 def build(bld):
-    obj = bld.create_obj('cpp', 'shlib')
+    obj = bld.new_task_gen('cxx', 'shlib')
     obj.target = 'xmmsclient++'
-    obj.includes = '../../../include ../../../includepriv'
-    obj.source = """ bindata.cpp
-                  client.cpp
-                  collection.cpp
-                  coll.cpp
-                  config.cpp
-                  dict.cpp
-                  exceptions.cpp
-                  helpers.cpp
-                  list.cpp
-                  listener.cpp
-                  mainloop.cpp
-                  medialib.cpp
-                  playback.cpp
-                  playlist.cpp
-                  signal.cpp
-                  stats.cpp
-                  xform.cpp""".split()
+    obj.includes = '../../../.. ../../../include ../../../includepriv'
+    obj.source = """
+        bindata.cpp
+        client.cpp
+        collection.cpp
+        coll.cpp
+        config.cpp
+        dict.cpp
+        exceptions.cpp
+        helpers.cpp
+        list.cpp
+        listener.cpp
+        mainloop.cpp
+        medialib.cpp
+        playback.cpp
+        playlist.cpp
+        signal.cpp
+        stats.cpp
+        xform.cpp
+    """.split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'boosth boostl socket'
+    obj.uselib = 'BOOST BOOST_SIGNALS socket'
     obj.vnum = '3.0.0'
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    if not conf.env["HAVE_CXX"]:
+    if not conf.env["CXX"]:
         return False
 
-    h = conf.create_header_configurator()
-    h.name = 'boost/signal.hpp'
-    h.uselib = 'boosth'
-
-    if Params.g_options.boostprefix:
-        h.path = [os.path.join(Params.g_options.boostprefix, "include")]
-
-    if not h.run():
-        # fail without the header
+    conf.check_tool('boost')
+    if not conf.check_boost(lib='signals', kind='STATIC_BOTH'):
         return False
 
-    for suffix in ["", "-st", "-mt"]:
-        l = conf.create_library_configurator()
-        l.name = "boost_signals"+suffix
-        l.uselib = 'boostl'
+    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
 
-        if Params.g_options.boostprefix:
-            l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
-
-        if l.run():
-            conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
-            return True
-
-    return False
+    return True
 
 def set_options(opt):
-    opt.add_option('--with-boost', type="string", dest="boostprefix")
+    opt.tool_options('boost')

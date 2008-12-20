@@ -1,6 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return conf.check_pkg('wavpack', destvar='wavpack')
+    if not conf.check_cfg(package="wavpack", uselib_store="wavpack", args="--cflags --libs"):
+        return False
+    return True
 
-configure, build = plugin('wavpack', needs_lib=True, configure=plugin_configure, source="wavpack.c")
+configure, build = plugin("wavpack", configure=plugin_configure, source="wavpack.c", libs=["wavpack"])

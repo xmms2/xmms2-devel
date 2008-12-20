@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # encoding: utf-8
 # Thomas Nagy, 2006 (ita)
 
@@ -7,334 +7,440 @@ Custom objects:
  - execute a function everytime
  - copy a file somewhere else
 """
-import warnings # <- thank you for adding this :-/
 
-import shutil, re, os, types, md5
-try: from hashlib import md5
-except ImportError: from md5 import md5
+import shutil, re, os, types
+import TaskGen, Node, Task, Utils, Build, pproc, Constants
+from TaskGen import feature, taskgen, after, before
+from Logs import debug
 
-import Object, Action, Node, Params, Utils, Task
-import pproc as subprocess
-from Params import fatal, debug
-
-def copy_func(task):
+def copy_func(tsk):
 	"Make a file copy. This might be used to make other kinds of file processing (even calling a compiler is possible)"
-	env = task.m_env
-	infile = task.m_inputs[0].abspath(env)
-	outfile = task.m_outputs[0].abspath(env)
+	env = tsk.env
+	infile = tsk.inputs[0].abspath(env)
+	outfile = tsk.outputs[0].abspath(env)
 	try:
 		shutil.copy2(infile, outfile)
-		if task.chmod: os.chmod(outfile, task.chmod)
-		return 0
-	except:
+	except OSError, IOError:
 		return 1
+	else:
+		if tsk.chmod: os.chmod(outfile, tsk.chmod)
+		return 0
 
-def action_process_file_func(task):
+def action_process_file_func(tsk):
 	"Ask the function attached to the task to process it"
-	if not task.fun: fatal('task must have a function attached to it for copy_func to work!')
-	return task.fun(task)
+	if not tsk.fun: raise Utils.WafError('task must have a function attached to it for copy_func to work!')
+	return tsk.fun(tsk)
 
-class cmdobj(Object.genobj):
-	"This object will call a command everytime"
-	def __init__(self, type='none'):
-		Object.genobj.__init__(self, 'other')
-		self.m_type = type
-		self.prio   = 1
-		self.fun    = None
+class cmd_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-	def apply(self):
-		# create a task
-		if not self.fun: fatal('cmdobj needs a function!')
-		import Task
-		Task.TaskCmd(self.fun, self.env, self.prio)
+@taskgen
+@feature('cmd')
+def apply_cmd(self):
+	"call a command everytime"
+	if not self.fun: raise Utils.WafError('cmdobj needs a function!')
+	tsk = Task.TaskBase()
+	tsk.fun = self.fun
+	tsk.env = self.env
+	self.tasks.append(tsk)
+	tsk.install_path = self.install_path
 
-class copyobj(Object.genobj):
+class copy_taskgen(TaskGen.task_gen):
 	"By default, make a file copy, if fun is provided, fun will make the copy (or call a compiler, etc)"
-	def __init__(self, type='none'):
-		Object.genobj.__init__(self, 'other')
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-		self.source = ''
-		self.target = ''
-		self.chmod  = ''
-		self.fun = copy_func
+@taskgen
+@feature('copy')
+@before('apply_core')
+def apply_copy(self):
+	Utils.def_attrs(self, fun=copy_func)
+	self.default_install_path = 0
 
-		self.env = Params.g_build.m_allenvs['default'].copy()
+	lst = self.to_list(self.source)
+	self.meths.remove('apply_core')
 
-	def apply(self):
+	for filename in lst:
+		node = self.path.find_resource(filename)
+		if not node: raise Utils.WafError('cannot find input file %s for processing' % filename)
 
-		lst = self.to_list(self.source)
+		target = self.target
+		if not target or len(lst)>1: target = node.name
 
-		for filename in lst:
-			node = self.path.find_source(filename)
-			if not node: fatal('cannot find input file %s for processing' % filename)
+		# TODO the file path may be incorrect
+		newnode = self.path.find_or_declare(target)
 
-			target = self.target
-			if not target or len(lst)>1: target = node.m_name
+		tsk = self.create_task('copy')
+		tsk.set_inputs(node)
+		tsk.set_outputs(newnode)
+		tsk.fun = self.fun
+		tsk.chmod = self.chmod
 
-			# TODO the file path may be incorrect
-			newnode = self.path.find_build(target)
+		if not tsk.env:
+			tsk.debug()
+			raise Utils.WafError('task without an environment')
 
-			task = self.create_task('copy', self.env, 10)
-			task.set_inputs(node)
-			task.set_outputs(newnode)
-			task.m_env = self.env
-			task.fun = self.fun
-			task.chmod = self.chmod
-
-			if not task.m_env:
-				task.debug()
-				fatal('task witout an environment')
-
-def subst_func(task):
+def subst_func(tsk):
 	"Substitutes variables in a .in file"
 
 	m4_re = re.compile('@(\w+)@', re.M)
 
-	env = task.m_env
-	infile = task.m_inputs[0].abspath(env)
-	outfile = task.m_outputs[0].abspath(env)
+	env = tsk.env
+	infile = tsk.inputs[0].abspath(env)
+	outfile = tsk.outputs[0].abspath(env)
 
 	file = open(infile, 'r')
 	code = file.read()
 	file.close()
 
+	# replace all % by %% to prevent errors by % signs in the input file while string formatting
+	code = code.replace('%', '%%')
+
 	s = m4_re.sub(r'%(\1)s', code)
 
-	dict = task.dict
+	dict = tsk.dict
 	if not dict:
 		names = m4_re.findall(code)
 		for i in names:
-			if task.m_env[i] and type(task.m_env[i]) is types.ListType :
-				dict[i] = " ".join( task.m_env[i] )
-			else: dict[i] = task.m_env[i]
+			if not env[i]: i = i.upper()
+			if env[i] and type(env[i]) is types.ListType :
+				dict[i] = " ".join(env[i])
+			else: dict[i] = env[i]
 
 	file = open(outfile, 'w')
 	file.write(s % dict)
 	file.close()
+	if tsk.chmod: os.chmod(outfile, tsk.chmod)
 
 	return 0
 
-class substobj(Object.genobj):
-	def __init__(self, type='none'):
-		Object.genobj.__init__(self, 'other')
-		self.fun = subst_func
-		self.dict = {}
-		self.prio = 8
-	def apply(self):
+class subst_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-		lst = self.to_list(self.source)
+@taskgen
+@feature('subst')
+@before('apply_core')
+def apply_subst(self):
+	Utils.def_attrs(self, fun=subst_func)
+	self.default_install_path = 0
+	lst = self.to_list(self.source)
+	self.meths.remove('apply_core')
 
-		for filename in lst:
-			node = self.path.find_source(filename)
-			if not node: fatal('cannot find input file %s for processing' % filename)
+	self.dict = getattr(self, 'dict', {})
 
+	for filename in lst:
+		node = self.path.find_resource(filename)
+		if not node: raise Utils.WafError('cannot find input file %s for processing' % filename)
+
+		if self.target:
+			newnode = self.path.find_or_declare(self.target)
+		else:
 			newnode = node.change_ext('')
 
-			task = self.create_task('copy', self.env, self.prio)
-			task.set_inputs(node)
-			task.set_outputs(newnode)
-			task.m_env = self.env
-			task.fun = self.fun
-			task.dict = self.dict
+		if self.dict and not self.env['DICT_HASH']:
+			self.env = self.env.copy()
+			self.env['DICT_HASH'] = hash(str(self.dict)) # <- pretty sure it wont work (ita)
 
-			if not task.m_env:
-				task.debug()
-				fatal('task witout an environment')
+		tsk = self.create_task('copy')
+		tsk.set_inputs(node)
+		tsk.set_outputs(newnode)
+		tsk.fun = self.fun
+		tsk.dict = self.dict
+		tsk.dep_vars = ['DICT_HASH']
+		tsk.install_path = self.install_path
+		tsk.chmod = self.chmod
+
+		if not tsk.env:
+			tsk.debug()
+			raise Utils.WafError('task without an environment')
+
+####################
+## command-output ####
+####################
+
+class cmd_arg(object):
+	"""command-output arguments for representing files or folders"""
+	def __init__(self, name, template='%s'):
+		self.name = name
+		self.template = template
+		self.node = None
+
+class input_file(cmd_arg):
+	def find_node(self, base_path):
+		assert isinstance(base_path, Node.Node)
+		self.node = base_path.find_resource(self.name)
+		if self.node is None:
+			raise Utils.WafError("Input file %s not found in " % (self.name, base_path))
+
+	def get_path(self, env, absolute):
+		if absolute:
+			return self.template % self.node.abspath(env)
+		else:
+			return self.template % self.node.srcpath(env)
+
+class output_file(cmd_arg):
+	def find_node(self, base_path):
+		assert isinstance(base_path, Node.Node)
+		self.node = base_path.find_or_declare(self.name)
+		if self.node is None:
+			raise Utils.WafError("Output file %s not found in " % (self.name, base_path))
+
+	def get_path(self, env, absolute):
+		if absolute:
+			return self.template % self.node.abspath(env)
+		else:
+			return self.template % self.node.bldpath(env)
+
+class cmd_dir_arg(cmd_arg):
+	def __init__(self, name, template=None):
+		cmd_arg.__init__(self)
+		self.name = name
+		self.node = None
+		if template is None:
+			self.template = '%s'
+		else:
+			self.template = template
+
+	def find_node(self, base_path):
+		assert isinstance(base_path, Node.Node)
+		self.node = base_path.find_dir(self.name)
+		if self.node is None:
+			raise Utils.WafError("Directory %s not found in " % (self.name, base_path))
+
+class input_dir(cmd_dir_arg):
+	def get_path(self, dummy_env, dummy_absolute):
+		return self.template % self.node.abspath()
+
+class output_dir(cmd_dir_arg):
+	def get_path(self, env, dummy_absolute):
+		return self.template % self.node.abspath(env)
 
 
-class CommandOutputTask(Task.Task):
-
-	def __init__(self, env, priority, command, command_node, command_args, stdin, stdout):
-		Task.Task.__init__(self, 'command-output', env, priority, normal=1)
+class command_output(Task.Task):
+	color = "BLUE"
+	def __init__(self, env, command, command_node, command_args, stdin, stdout, cwd, os_env, stderr):
+		Task.Task.__init__(self, env, normal=1)
+		assert isinstance(command, (str, Node.Node))
 		self.command = command
 		self.command_args = command_args
 		self.stdin = stdin
 		self.stdout = stdout
+		self.cwd = cwd
+		self.os_env = os_env
+		self.stderr = stderr
 
-		self.dep_nodes = [command_node]
+		if command_node is not None: self.dep_nodes = [command_node]
 		self.dep_vars = [] # additional environment variables to look
 
-class CommandOutput(Object.genobj):
+	def run(self):
+		task = self
+		#assert len(task.inputs) > 0
 
-	CMD_ARGV_INPUT, CMD_ARGV_OUTPUT = range(2)
+		def input_path(node, template):
+			if task.cwd is None:
+				return template % node.bldpath(task.env)
+			else:
+				return template % node.abspath()
+		def output_path(node, template):
+			fun = node.abspath
+			if task.cwd is None: fun = node.bldpath
+			return template % fun(task.env)
 
-	def __init__(self, env=None):
-		Object.genobj.__init__(self, 'other')
-		self.env = env
-		if not self.env:
-			self.env = Params.g_build.m_allenvs['default']
+		if isinstance(task.command, Node.Node):
+			argv = [input_path(task.command, '%s')]
+		else:
+			argv = [task.command]
 
-		## file to use as stdin
-		self.stdin = None
-
-		## file to use as stdout
-		self.stdout = None
-
-		## the command to execute
-		self.command = None
-
-		## whether it is an external command; otherwise it is assumed
-		## to be an excutable binary or script that lives in the
-		## source or build tree.
-		self.command_is_external = False
-
-		## extra parameters (argv) to pass to the command (excluding
-		## the command itself)
-		self.argv = []
-
-		## task priority
-		self.prio = 100
-
-		## dependencies to other objects -> this is probably not what you want (ita)
-		## values must be 'genobj' instances (not names!)
-		self.dependencies = []
-
-		self.dep_vars = []
-
-	# FIXME can you make it more complicated than that ???
-	# FIXME make all methods private please, we will never need to override anything ?????????? (ita)
-
-	## 'priority' backward compatibility
-	def __compat_get_prio(self):
-		warnings.warn("command-output 'priority' is deprecated; use 'prio'", DeprecationWarning, stacklevel=2)
-		return self.prio
-	def __compat_set_prio(self, prio):
-		warnings.warn("command-output 'priority' is deprecated; use 'prio'", DeprecationWarning, stacklevel=2)
-		self.prio = prio
-
-	# FIXME what is doing this in the middle of the class ?????? (ita)
-	priority = property(__compat_get_prio, __compat_set_prio, None, "deprecated alias to the 'prio' atttribute")
-
-	def _command_output_func(task):
-		assert len(task.m_inputs) > 0
-		inputs = [inp.bldpath(task.m_env) for inp in task.m_inputs]
-		outputs = [out.bldpath(task.m_env) for out in task.m_outputs]
-
-		argv = [task.command]
 		for arg in task.command_args:
 			if isinstance(arg, str):
 				argv.append(arg)
 			else:
-				role, node = arg
-				if role == CommandOutput.CMD_ARGV_INPUT:
-					argv.append(node.srcpath(task.m_env))
-				elif role == CommandOutput.CMD_ARGV_OUTPUT:
-					argv.append(node.bldpath(task.m_env))
-				else:
-					raise AssertionError
+				assert isinstance(arg, cmd_arg)
+				argv.append(arg.get_path(task.env, (task.cwd is not None)))
 
 		if task.stdin:
-			stdin = file(task.stdin.srcpath(task.m_env))
+			stdin = file(input_path(task.stdin, '%s'))
 		else:
 			stdin = None
 
 		if task.stdout:
-			stdout = file(task.stdout.bldpath(task.m_env), "w")
+			stdout = file(output_path(task.stdout, '%s'), "w")
 		else:
 			stdout = None
 
-		Params.debug("command-output: stdin=%r, stdout=%r, argv=%r" %
-					 (stdin, stdout, argv))
-		command = subprocess.Popen(argv, stdin=stdin, stdout=stdout)
+		if task.stderr:
+			stderr = file(output_path(task.stderr, '%s'), "w")
+		else:
+			stderr = None
+
+		if task.cwd is None:
+			cwd = ('None (actually %r)' % os.getcwd())
+		else:
+			cwd = repr(task.cwd)
+		debug("command-output: cwd=%s, stdin=%r, stdout=%r, argv=%r" %
+			     (cwd, stdin, stdout, argv))
+
+		if task.os_env is None:
+			os_env = os.environ
+		else:
+			os_env = task.os_env
+		command = pproc.Popen(argv, stdin=stdin, stdout=stdout, stderr=stderr, cwd=task.cwd, env=os_env)
 		return command.wait()
 
-	_command_output_func = staticmethod(_command_output_func)
+class cmd_output_taskgen(TaskGen.task_gen):
+	def __init__(self, *k, **kw):
+		TaskGen.task_gen.__init__(self, *k, **kw)
 
-	def apply(self):
-		if self.command is None:
-			Params.fatal("command-output missing command")
-		if self.command_is_external:
-			cmd = self.command
-			cmd_node = None
-		else:
-			cmd_node = self.path.find_build(self.command)
-			assert cmd_node is not None, ('''Could not find command '%s' in source tree.
+@taskgen
+@feature('command-output')
+def init_cmd_output(self):
+	Utils.def_attrs(self,
+		stdin = None,
+		stdout = None,
+		stderr = None,
+		# the command to execute
+		command = None,
+
+		# whether it is an external command; otherwise it is assumed
+		# to be an executable binary or script that lives in the
+		# source or build tree.
+		command_is_external = False,
+
+		# extra parameters (argv) to pass to the command (excluding
+		# the command itself)
+		argv = [],
+
+		# dependencies to other objects -> this is probably not what you want (ita)
+		# values must be 'task_gen' instances (not names!)
+		dependencies = [],
+
+		# dependencies on env variable contents
+		dep_vars = [],
+
+		# input files that are implicit, i.e. they are not
+		# stdin, nor are they mentioned explicitly in argv
+		hidden_inputs = [],
+
+		# output files that are implicit, i.e. they are not
+		# stdout, nor are they mentioned explicitly in argv
+		hidden_outputs = [],
+
+		# change the subprocess to this cwd (must use obj.input_dir() or output_dir() here)
+		cwd = None,
+
+		# OS environment variables to pass to the subprocess
+		# if None, use the default environment variables unchanged
+		os_env = None)
+
+@taskgen
+@feature('command-output')
+@after('init_cmd_output')
+def apply_cmd_output(self):
+	if self.command is None:
+		raise Utils.WafError("command-output missing command")
+	if self.command_is_external:
+		cmd = self.command
+		cmd_node = None
+	else:
+		cmd_node = self.path.find_resource(self.command)
+		assert cmd_node is not None, ('''Could not find command '%s' in source tree.
 Hint: if this is an external command,
 use command_is_external=True''') % (self.command,)
-			cmd = cmd_node.bldpath(self.env)
+		cmd = cmd_node
 
-		args = []
-		inputs = []
-		outputs = []
+	if self.cwd is None:
+		cwd = None
+	else:
+		assert isinstance(cwd, CmdDirArg)
+		self.cwd.find_node(self.path)
 
-		for arg in self.argv:
-			if isinstance(arg, str):
-				args.append(arg)
-			else:
-				role, file_name = arg
-				if role == CommandOutput.CMD_ARGV_INPUT:
-					input_node = self.path.find_build(file_name)
-					if input_node is None:
-						Params.fatal("File %s not found" % (file_name,))
-					inputs.append(input_node)
-					args.append((role, input_node))
-				elif role == CommandOutput.CMD_ARGV_OUTPUT:
-					output_node = self.path.find_build(file_name)
-					if output_node is None:
-						Params.fatal("File %s not found" % (file_name,))
-					outputs.append(output_node)
-					args.append((role, output_node))
-				else:
-					raise AssertionError
+	args = []
+	inputs = []
+	outputs = []
 
-		if self.stdout is None:
-			stdout = None
-		else:
-			stdout = self.path.find_build(self.stdout)
-			if stdout is None:
-				Params.fatal("File %s not found" % (self.stdout,))
-			outputs.append(stdout)
+	for arg in self.argv:
+		if isinstance(arg, cmd_arg):
+			arg.find_node(self.path)
+			if isinstance(arg, input_file):
+				inputs.append(arg.node)
+			if isinstance(arg, output_file):
+				outputs.append(arg.node)
 
-		if self.stdin is None:
-			stdin = None
-		else:
-			stdin = self.path.find_build(self.stdin)
-			if stdin is None:
-				Params.fatal("File %s not found" % (self.stdin,))
-			inputs.append(stdin)
+	if self.stdout is None:
+		stdout = None
+	else:
+		assert isinstance(self.stdout, basestring)
+		stdout = self.path.find_or_declare(self.stdout)
+		if stdout is None:
+			raise Utils.WafError("File %s not found" % (self.stdout,))
+		outputs.append(stdout)
 
-		if not inputs:
-			Params.fatal("command-output objects must have at least one input file")
+	if self.stderr is None:
+		stderr = None
+	else:
+		assert isinstance(self.stderr, basestring)
+		stderr = self.path.find_or_declare(self.stderr)
+		if stderr is None:
+			raise Utils.WafError("File %s not found" % (self.stderr,))
+		outputs.append(stderr)
 
-		task = CommandOutputTask(self.env, self.prio,
-								 cmd, cmd_node, args,
-								 stdin, stdout)
-		self.m_tasks.append(task)
+	if self.stdin is None:
+		stdin = None
+	else:
+		assert isinstance(self.stdin, basestring)
+		stdin = self.path.find_resource(self.stdin)
+		if stdin is None:
+			raise Utils.WafError("File %s not found" % (self.stdin,))
+		inputs.append(stdin)
 
-		task.set_inputs(inputs)
-		task.set_outputs(outputs)
-		task.dep_vars = self.to_list(self.dep_vars)
+	for hidden_input in self.to_list(self.hidden_inputs):
+		node = self.path.find_resource(hidden_input)
+		if node is None:
+			raise Utils.WafError("File %s not found in dir %s" % (hidden_input, self.path))
+		inputs.append(node)
 
-		for dep in self.dependencies:
-			assert dep is not self
-			if not dep.m_posted:
-				dep.post()
-			for dep_task in dep.m_tasks:
-				task.set_run_after(dep_task)
+	for hidden_output in self.to_list(self.hidden_outputs):
+		node = self.path.find_or_declare(hidden_output)
+		if node is None:
+			raise Utils.WafError("File %s not found in dir %s" % (hidden_output, self.path))
+		outputs.append(node)
 
-	def input_file(self, file_name):
-		"""Returns an object to be used as argv element that instructs
-		the task to use a file from the input vector at the given
-		position as argv element."""
-		return (CommandOutput.CMD_ARGV_INPUT, file_name)
+	if not (inputs or getattr(self, 'no_inputs', None)):
+		raise Utils.WafError('command-output objects must have at least one input file or give self.no_inputs')
+	if not (outputs or getattr(self, 'no_outputs', None)):
+		raise Utils.WafError('command-output objects must have at least one output file or give self.no_outputs')
 
-	def output_file(self, file_name):
-		"""Returns an object to be used as argv element that instructs
-		the task to use a file from the output vector at the given
-		position as argv element."""
-		return (CommandOutput.CMD_ARGV_OUTPUT, file_name)
+	task = command_output(self.env, cmd, cmd_node, self.argv, stdin, stdout, cwd, self.os_env, stderr)
+	Utils.copy_attrs(self, task, 'before after ext_in ext_out', only_if_set=True)
+	self.tasks.append(task)
 
-	def install(self):
-		pass
+	task.inputs = inputs
+	task.outputs = outputs
+	task.dep_vars = self.to_list(self.dep_vars)
 
-def setup(env):
-	Object.register('cmd', cmdobj)
-	Object.register('copy', copyobj)
-	Object.register('subst', substobj)
-	Action.Action('copy', vars=[], func=action_process_file_func)
-	Action.Action('command-output', func=CommandOutput._command_output_func, color='BLUE')
-	Object.register('command-output', CommandOutput)
+	for dep in self.dependencies:
+		assert dep is not self
+		dep.post()
+		for dep_task in dep.tasks:
+			task.set_run_after(dep_task)
 
-def detect(conf):
-	return 1
+	if not task.inputs:
+		# the case for svnversion, always run, and update the output nodes
+		task.runnable_status = type(Task.TaskBase.run)(runnable_status, task, task.__class__) # always run
+		task.post_run = type(Task.TaskBase.run)(post_run, task, task.__class__)
+
+	# TODO the case with no outputs?
+
+def post_run(self):
+	for x in self.outputs:
+		h = Utils.h_file(x.abspath(self.env))
+		self.generator.bld.node_sigs[self.env.variant()][x.id] = h
+
+def runnable_status(self):
+	return Constants.RUN_ME
+
+Task.task_type_from_func('copy', vars=[], func=action_process_file_func)
+TaskGen.task_gen.classes['command-output'] = cmd_output_taskgen
 

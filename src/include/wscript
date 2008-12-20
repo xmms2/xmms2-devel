@@ -1,12 +1,11 @@
 import os
-import Common
 
 def build(bld):
     paths = ['xmms', 'xmmsc', 'xmmsclient', 'xmmsclient/xmmsclient++']
     for p in paths:
         bld.add_subdirs(p)
         f = [os.path.join(p, a) for a in os.listdir(os.path.join('src','include',p)) if a.endswith('.h')]
-        Common.install_files('PREFIX', os.path.join('include', 'xmms2', p), " ".join(f))
+        bld.install_files('${PREFIX}/include/xmms2/' +  p, " ".join(f))
 
 def configure(conf):
     conf.sub_config("xmms")

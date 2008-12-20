@@ -3,7 +3,7 @@
 # themselves.
 
 def plugin(name, source=None, configure=False, build=False,
-           build_replace=False, needs_lib=False, extra_libs=[],
+           build_replace=False, libs=[],
            tool='cc', broken=False, output_prio=None):
     def stock_configure(conf):
         if broken:
@@ -17,26 +17,22 @@ def plugin(name, source=None, configure=False, build=False,
             conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
 
     def stock_build(bld):
-        env = bld.env()
-
-        obj = bld.create_obj(tool, 'plugin')
+        obj = bld.new_task_gen(tool, 'shlib')
         obj.target = 'xmms_%s' % name
-        obj.includes = '../../include'
+        obj.includes = '../../.. ../../include'
+        obj.mac_bundle = True
+
         if source:
             obj.source = source
         else:
             obj.source = ['%s.c' % name]
 
-        libs = ['glib2']
-        if needs_lib:
-            libs.append(name)
-        libs += extra_libs
-        obj.uselib = ' '.join(libs)
+        obj.uselib = ['glib2'] + libs
 
-        if env['xmms_shared_library']:
+        if bld.env['xmms_shared_library']:
             obj.uselib_local = 'xmms2core'
 
-        obj.install_var = 'PLUGINDIR'
+        obj.install_path = '${PLUGINDIR}'
 
         if build:
             build(bld, obj)

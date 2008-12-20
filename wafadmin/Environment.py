@@ -1,145 +1,170 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # encoding: utf-8
 # Thomas Nagy, 2005 (ita)
 
-"Environment representation"
+"""Environment representation
 
-import os, sys, string, types, imp
-import Params, Utils
-from Params import debug, error, fatal, warning
+There is one gotcha: getitem returns [] if the contents evals to False
+This means env['foo'] = {}; print env['foo'] will print [] not {}
+"""
 
-g_idx = 0
-class Environment:
+import os, copy, re
+import Logs, Options
+from Constants import *
+re_imp = re.compile('^(#)*?([^#=]*?)\ =\ (.*?)$', re.M)
+
+class Environment(object):
 	"""A safe-to-use dictionary, but do not attach functions to it please (break cPickle)
 	An environment instance can be stored into a file and loaded easily
 	"""
-	def __init__(self):
-		global g_idx
-		self.m_idx = g_idx
-		g_idx += 1
-		self.m_table={}
-		self.m_var_cache={}
+	__slots__ = ("table", "parent")
+	def __init__(self, filename=None):
+		self.table={}
+		#self.parent = None <- set only if necessary
 
-		# set the prefix once and for everybody on creation (configuration)
-		self.m_table['PREFIX'] = Params.g_options.prefix
+		if Options.commands['configure']:
+			# set the prefix once and for everybody on creation (configuration)
+			self.table['PREFIX'] = os.path.abspath(os.path.expanduser(Options.options.prefix))
+
+		if filename:
+			self.load(filename)
+
+	def __contains__(self, key):
+		if key in self.table: return True
+		try: return self.parent.__contains__(key)
+		except AttributeError: return False # parent may not exist
+
+	def __str__(self):
+		keys = set()
+		cur = self
+		while cur:
+			keys.update(cur.table.keys())
+			cur = getattr(cur, 'parent', None)
+		keys = list(keys)
+		keys.sort()
+		return "\n".join(["%r %r" % (x, self.__getitem__(x)) for x in keys])
 
 	def set_variant(self, name):
-		self.m_table['_VARIANT_'] = name
+		self.table[VARIANT] = name
 
 	def variant(self):
-		return self.m_table.get('_VARIANT_', 'default')
+		env = self
+		while 1:
+			try:
+				return env.table[VARIANT]
+			except KeyError:
+				try: env = env.parent
+				except AttributeError: return DEFAULT
 
 	def copy(self):
 		newenv = Environment()
-		newenv.m_table = self.m_table.copy()
+		if Options.commands['configure']:
+			if self['PREFIX']: del newenv.table['PREFIX']
+		newenv.parent = self
 		return newenv
-
-	def deepcopy(self):
-		import copy
-		newenv = Environment()
-		newenv.m_table = copy.deepcopy(self.m_table)
-		return newenv
-
-	def setup(self, tool, tooldir=None):
-		"setup tools for build process"
-		if type(tool) is types.ListType:
-			for i in tool: self.setup(i)
-			return
-
-		if not tooldir: tooldir = Params.g_tooldir
-
-		file,name,desc = imp.find_module(tool, tooldir)
-		module = imp.load_module(tool,file,name,desc)
-		try:
-			module.setup(self)
-		except AttributeError:
-			fatal("setup function missing in tool: %s " % str(tool))
-		if file: file.close()
-
-	def __str__(self):
-		return "environment table\n"+str(self.m_table)
 
 	def __getitem__(self, key):
-		r = self.m_table.get(key, None)
-		if r is not None:
-			return r
-		return Params.g_globals.get(key, [])
+		x = self.table.get(key, None)
+		if not x is None: return x
+		try:
+			u = self.parent
+		except AttributeError:
+			return []
+		else:
+			return u[key]
 
 	def __setitem__(self, key, value):
-		self.m_table[key] = value
+		self.table[key] = value
 
 	def get_flat(self, key):
-		s = self.m_table.get(key, '')
+		s = self[key]
 		if not s: return ''
-		if type(s) is types.ListType: return ' '.join(s)
+		elif isinstance(s, list): return ' '.join(s)
 		else: return s
 
+	def _get_list_value_for_modification(self, key):
+		"""Gets a value that must be a list for further modification.  The
+		list may be modified inplace and there is no need to
+		"self.table[var] = value" afterwards.
+		"""
+		try:
+			value = self.table[key]
+		except KeyError:
+			try: value = self.parent[key]
+			except AttributeError: value = []
+			if isinstance(value, list):
+				value = copy.copy(value)
+			else:
+				value = [value]
+		else:
+			if not isinstance(value, list):
+				value = [value]
+		self.table[key] = value
+		return value
+
 	def append_value(self, var, value):
-		if type(value) is types.ListType: val = value
-		else: val = [value]
-		#print var, self[var]
-		try: self.m_table[var] = self[var] + val
-		except TypeError: self.m_table[var] = [self[var]] + val
+		current_value = self._get_list_value_for_modification(var)
+
+		if isinstance(value, list):
+			current_value.extend(value)
+		else:
+			current_value.append(value)
 
 	def prepend_value(self, var, value):
-		if type(value) is types.ListType: val = value
-		else: val = [value]
-		#print var, self[var]
-		try: self.m_table[var] = val + self[var]
-		except TypeError: self.m_table[var] = val + [self[var]]
+		current_value = self._get_list_value_for_modification(var)
 
+		if isinstance(value, list):
+			current_value = value + current_value
+			# a new list: update the dictionary entry
+			self.table[var] = current_value
+		else:
+			current_value.insert(0, value)
+
+	# prepend unique would be ambiguous
 	def append_unique(self, var, value):
-		if not self[var]:
-			self[var]=value
-		if value in self[var]: return
-		self.append_value(var, value)
+		current_value = self._get_list_value_for_modification(var)
+
+		if isinstance(value, list):
+			for value_item in value:
+				if value_item not in current_value:
+					current_value.append(value_item)
+		else:
+			if value not in current_value:
+				current_value.append(value)
 
 	def store(self, filename):
 		"Write the variables into a file"
-		file=open(filename, 'w')
-		keys=self.m_table.keys()
+		file = open(filename, 'w')
+
+		# compute a merged table
+		table_list = []
+		env = self
+		while 1:
+			table_list.insert(0, env.table)
+			try: env = env.parent
+			except AttributeError: break
+		merged_table = {}
+		for table in table_list:
+			merged_table.update(table)
+
+		keys = merged_table.keys()
 		keys.sort()
-		file.write('#VERSION=%s\n' % Params.g_version)
-		for key in keys:
-			file.write('%s = %r\n'%(key,self.m_table[key]))
+		for k in keys: file.write('%s = %r\n' % (k, merged_table[k]))
 		file.close()
 
 	def load(self, filename):
 		"Retrieve the variables from a file"
-		if not os.path.isfile(filename): return 0
-		file=open(filename, 'r')
-		for line in file:
-			ln = line.strip()
-			if not ln: continue
-			if ln[:9]=='#VERSION=':
-				if ln[9:] != Params.g_version: warning('waf upgrade? you should perhaps reconfigure')
-			if ln[0]=='#': continue
-			(key,value) = string.split(ln, '=', 1)
-			line = 'self.m_table["%s"] = %s'%(key.strip(), value.strip())
-			exec line
+		tbl = self.table
+		file = open(filename, 'r')
+		code = file.read()
 		file.close()
-		debug(self.m_table, 'env')
-		return 1
+		for m in re_imp.finditer(code):
+			g = m.group
+			tbl[g(2)] = eval(g(3))
+		Logs.debug('env: %s' % str(self.table))
 
 	def get_destdir(self):
 		"return the destdir, useful for installing"
-		if self.m_table.has_key('NOINSTALL'): return ''
-		dst = Params.g_options.destdir
-		try: dst = os.path.join(dst, os.sep, self.m_table['SUBDEST'])
-		except: pass
-		return dst
-
-	def hook(self, classname, ext, func):
-		"silly wrapper"
-		import Object
-		Object.hook(classname, ext, func)
-
-	def set_dependency(self, infile, outfile):
-		"TODO: future: set manual dependencies"
-		pass
-
-	def set_var_dependency(self, infile, text):
-		"TODO: future: add manual dependencies on env variables"
-		pass
-
+		if self.__getitem__('NOINSTALL'): return ''
+		return Options.options.destdir
 

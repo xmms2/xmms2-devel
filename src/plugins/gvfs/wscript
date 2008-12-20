@@ -1,6 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return conf.check_pkg('gio-2.0', destvar='gio')
+    if conf.check_cfg(package="gio-2.0", args="--cflags --libs", uselib_store="gvfs"):
+        return True
+    return False
 
-configure, build = plugin('gvfs', configure=plugin_configure, extra_libs=['gio'])
+configure, build = plugin("gvfs", configure=plugin_configure, libs=["gvfs"])

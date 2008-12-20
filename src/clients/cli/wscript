@@ -1,33 +1,33 @@
-import Params
+import Options
 
 def build(bld):
-    env = bld.env()
-
-    obj = bld.create_obj('cc', 'program')
+    obj = bld.new_task_gen('cc', 'program')
     obj.target = 'xmms2'
-    obj.source = """cmd_config.c
-                    cmd_mlib.c
-                    cmd_other.c
-                    cmd_playback.c
-                    cmd_pls.c
-                    cmd_status.c
-                    cmd_coll.c
-                    common.c
-                    main.c""".split()
-    obj.source.append('common_%s.c' % env['common_impl'])
+    obj.source = """
+        cmd_config.c
+        cmd_mlib.c
+        cmd_other.c
+        cmd_playback.c
+        cmd_pls.c
+        cmd_status.c
+        cmd_coll.c
+        common.c
+        main.c
+    """.split()
 
-    if env["xmms_icon"]:
+    obj.source.append('common_%s.c' % bld.env['common_impl'])
+
+    if bld.env["xmms_icon"]:
         obj.add_objects = 'xmms_icon'
 
-    obj.includes = '. ../../include'
+    obj.includes = '. ../../.. ../../include'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2'
 
-    obj = bld.create_obj('man')
-    obj.files = ['xmms2.1']
+    obj = bld.new_task_gen(features='man', files='xmms2.1', section='1')
 
 def configure(conf):
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         conf.env['common_impl'] = 'win32'
     else:
         conf.env['common_impl'] = 'unix'

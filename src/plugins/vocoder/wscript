@@ -1,9 +1,12 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return (conf.check_pkg('fftw3f', destvar='fftw3f') and
-            conf.check_pkg('samplerate', destvar='samplerate'))
+    if not conf.check_cfg(package="fftw3f", uselib_store="fftw3f", args="--cflags --libs"):
+        return False
+    if not conf.check_cfg(package="samplerate", uselib_store="samplerate", args="--cflags --libs"):
+        return False
+    return True
 
 configure, build = plugin('vocoder', source=['vocoder.c', 'pvocoder.c'],
                           configure=plugin_configure,
-                          extra_libs=['fftw3f', 'samplerate'])
+                          libs=["fftw3f", "samplerate"])

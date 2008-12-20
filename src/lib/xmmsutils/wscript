@@ -4,19 +4,26 @@
 # Copyright (C) 2006-2008 XMMS2 Team
 #
 
-import Params
+import Options
 
 def build(bld):
-    env = bld.env()
+    obj = bld.new_task_gen('cc', 'staticlib')
+    obj.source = """
+        strlist.c
+        utils.c
+    """.split()
 
-    obj = bld.create_obj('cc', 'staticlib')
-    obj.source = ["strlist.c", "utils.c", "utils_%s.c" % env['util_impl']]
-    obj.includes='. ../../include'
-    obj.target='xmmsutils'
-    obj.install_var = 0
+    if bld.env["util_impl"] == "win32":
+        obj.source += ["utils_win32"]
+    else:
+        obj.source += ["utils_unix.c"]
+
+    obj.includes = '. ../../.. ../../include'
+    obj.target = 'xmmsutils'
+    obj.install_path = 0
 
 def configure(conf):
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         conf.env['util_impl'] = 'win32'
     else:
         conf.env['util_impl'] = 'unix'

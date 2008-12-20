@@ -1,214 +1,263 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # encoding: utf-8
 # Thomas Nagy, 2005 (ita)
 
-"Dependency tree holder"
+"""
+Dependency tree holder
 
-import os, cPickle, sys
-import Params, Runner, Object, Node, Task, Scripting, Utils, Environment
-from Params import debug, error, fatal, warning
+The class Build holds all the info related to a build:
+* file system representation (tree of Node instances)
+* various cached objects (task signatures, file scan results, ..)
 
+There is only one Build object at a time (bld singleton)
+"""
 
+import os, sys, types, imp, errno, re, glob, gc, time, shutil
+try: import cPickle
+except: import pickle as cPickle
+import Runner, TaskGen, Node, Scripting, Utils, Environment, Task, Logs, Options
+from Logs import debug, error, info
+from Constants import *
 
-SAVED_ATTRS = 'm_root m_srcnode m_bldnode m_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_sig_cache'.split()
+SAVED_ATTRS = 'root srcnode bldnode node_sigs node_deps raw_deps task_sigs id_nodes'.split()
 "Build class members to save"
 
-class BuildDTO:
-	"holds the data to store using cPickle"
-	def __init__(self):
-		pass
-	def init(self, bdobj):
-		global SAVED_ATTRS
-		for a in SAVED_ATTRS:
-			setattr(self, a, getattr(bdobj, a))
-	def update_build(self, bdobj):
-		global SAVED_ATTRS
-		for a in SAVED_ATTRS:
-			setattr(bdobj, a, getattr(self, a))
+g_modcache = {}
+"Cache for the tools (modules), re-importing raises errors"
 
-class Build:
+bld = None
+"singleton - safe to use when Waf is not used as a library"
+
+class BuildError(Utils.WafError):
+	def __init__(self, b=None, t=[]):
+		self.bld = b
+		self.tasks = t
+		self.ret = 1
+		Utils.WafError.__init__(self, self.format_error())
+
+	def format_error(self):
+		lst = ['Build failed']
+		for tsk in self.tasks:
+			txt = tsk.format_error()
+			if txt: lst.append(txt)
+		return '\n'.join(lst)
+
+class BuildContext(object):
 	"holds the dependency tree"
 	def __init__(self):
 
-		# dependency tree
-		self._init_data()
-
-		# ======================================= #
-		# globals
-
-		# map a name to an environment, the 'default' must be defined
-		self.m_allenvs = {}
-
 		# there should be only one build dir in use at a time
-		Params.g_build = self
+		global bld
+		bld = self
+
+		self.task_manager = Task.TaskManager()
+
+		# instead of hashing the nodes, we assign them a unique id when they are created
+		self.id_nodes = 0
+
+		# map names to environments, the 'default' must be defined
+		self.all_envs = {}
 
 		# ======================================= #
 		# code for reading the scripts
 
-		# project build directory - do not reset() from load_dirs() or _init_data()
-		self.m_bdir = ''
+		# project build directory - do not reset() from load_dirs()
+		self.bdir = ''
 
 		# the current directory from which the code is run
 		# the folder changes everytime a wscript is read
-		self.m_curdirnode = None
-
-		# temporary holding the subdirectories containing scripts - look in Scripting.py
-		self.m_subdirs=[]
+		self.path = None
 
 		# ======================================= #
 		# cache variables
 
-		# local cache for absolute paths - m_abspath_cache[variant][node]
-		self.m_abspath_cache = {}
-
-		# local cache for relative paths
-		# two nodes - hashtable of hashtables - g_relpath_cache[child][parent])
-		self._relpath_cache = {}
+		# local cache for absolute paths - cache_node_abspath[variant][node]
+		self.cache_node_abspath = {}
 
 		# list of folders that are already scanned
 		# so that we do not need to stat them one more time
-		self.m_scanned_folders  = []
-
-		# file contents
-		self._cache_node_content = {}
+		self.cache_scanned_folders = {}
 
 		# list of targets to uninstall for removing the empty folders after uninstalling
-		self.m_uninstall = []
+		self.uninstall = []
 
 		# ======================================= #
 		# tasks and objects
 
 		# build dir variants (release, debug, ..)
-		for name in ['default', 0]:
-			for v in 'm_tstamp_variants m_depends_on m_sig_cache m_deps_tstamp m_raw_deps m_abspath_cache'.split():
-				var = getattr(self, v)
-				if not name in var: var[name] = {}
+		for v in 'cache_node_abspath task_sigs node_deps raw_deps node_sigs'.split():
+			var = {}
+			setattr(self, v, var)
 
-		# TODO used by xmlwaf
-		self.pushed = []
+		self.cache_dir_contents = {}
 
-	def _init_data(self):
-		debug("init data called", 'build')
+		self.all_task_gen = []
+		self.task_gen_cache_names = {}
+		self.cache_sig_vars = {}
+		self.log = None
 
-		# filesystem root - root name is Params.g_rootname
-		self.m_root            = Node.Node('', None)
+		self.root = None
+		self.srcnode = None
+		self.bldnode = None
 
-		# source directory
-		self.m_srcnode         = None
-		# build directory
-		self.m_bldnode         = None
+		# bind the build context to the nodes in use
+		# this means better encapsulation and no build context singleton
+		class node_class(Node.Node):
+			pass
+		self.node_class = node_class
+		self.node_class.__module__ = "Node"
+		self.node_class.__name__ = "Nodu"
+		self.node_class.bld = self
 
-		# TODO: this code does not look too good
-		# nodes signatures: self.m_tstamp_variants[variant_name][node] = signature_value
-		self.m_tstamp_variants = {}
+	def __copy__(self):
+		"nodes are not supposed to be copied"
+		raise Utils.WafError('build contexts are not supposed to be cloned')
 
-		# one node has nodes it depends on, tasks cannot be stored
-		# self.m_depends_on[variant][node] = [node1, node2, ..]
-		self.m_depends_on      = {}
-
-		# m_deps_tstamp[variant][node] = node_tstamp_of_the_last_scan
-		self.m_deps_tstamp     = {}
-
-		# results of a scan: self.m_raw_deps[variant][node] = [filename1, filename2, filename3]
-		# for example, find headers in c files
-		self.m_raw_deps        = {}
-
-		self.m_sig_cache       = {}
-
-	# load existing data structures from the disk (stored using self._store())
-	def _load(self):
+	def load(self):
+		"load the cache from the disk"
 		try:
-			file = open(os.path.join(self.m_bdir, Params.g_dbfile), 'rb')
-			dto = cPickle.load(file)
-			dto.update_build(self)
-			file.close()
-		except IOError:
-			debug("resetting the build object (dto failed)", 'build')
-			self._init_data()
-		if Params.g_verbose>2: self.dump()
+			env = Environment.Environment(os.path.join(self.cachedir, 'build.config.py'))
+		except (IOError, OSError):
+			pass
+		else:
+			if env['version'] < HEXVERSION:
+				raise Utils.WafError('Version mismatch! reconfigure the project')
+			for t in env['tools']:
+				self.setup(**t)
 
-	# store the data structures on disk, retrieve with self._load()
-	def _store(self):
-		file = open(os.path.join(self.m_bdir, Params.g_dbfile), 'wb')
-		dto = BuildDTO()
-		dto.init(self)
-		cPickle.dump(dto, file, -1) # remove the '-1' for unoptimized version
+		try:
+			gc.disable()
+			f = data = None
+
+			Node.Nodu = self.node_class
+
+			try:
+				f = open(os.path.join(self.bdir, DBFILE), 'rb')
+			except (IOError, EOFError):
+				# handle missing file/empty file
+				pass
+
+			try:
+				if f: data = cPickle.load(f)
+			except AttributeError:
+				# handle file of an old Waf version
+				# that has an attribute which no longer exist
+				# (e.g. AttributeError: 'module' object has no attribute 'BuildDTO')
+				if Logs.verbose > 1: raise
+
+			if data:
+				for x in SAVED_ATTRS: setattr(self, x, data[x])
+			else:
+				debug('build: Build cache loading failed')
+
+		finally:
+			if f: f.close()
+			gc.enable()
+
+	def save(self):
+		"store the cache on disk, see self.load"
+		gc.disable()
+		self.root.__class__.bld = None
+
+		# some people are very nervous with ctrl+c so we have to make a temporary file
+		Node.Nodu = self.node_class
+		db = os.path.join(self.bdir, DBFILE)
+		file = open(db + '.tmp', 'wb')
+		data = {}
+		for x in SAVED_ATTRS: data[x] = getattr(self, x)
+		cPickle.dump(data, file, -1) # remove the '-1' for unoptimized version
 		file.close()
+		os.rename(db + '.tmp', db)
+		self.root.__class__.bld = self
+		gc.enable()
 
 	# ======================================= #
 
-	def save(self):
-		self._store()
-
 	def clean(self):
-		debug("clean called", 'build')
+		debug('build: clean called')
+		# does not clean files created during the configuration dep_files
 		def clean_rec(node):
-			for x in node.m_build_lookup:
-				nd = node.m_build_lookup[x]
-				for env in self.m_allenvs.values():
-					pt = nd.abspath(env)
-					# do not remove config files
-					if pt in env['waf_config_files']: continue
-					try: os.remove(pt)
-					except OSError: pass
-			for x in node.m_dirs_lookup:
-				nd = node.m_dirs_lookup[x]
-				clean_rec(nd)
-		clean_rec(self.m_srcnode)
+			for x in node.childs.keys():
+				nd = node.childs[x]
+
+				tp = nd.id & 3
+				if tp == Node.DIR:
+					clean_rec(nd)
+				elif tp == Node.BUILD:
+					for env in self.all_envs.values():
+						pt = nd.abspath(env)
+						if pt in env['waf_config_files']: continue
+						try: os.remove(pt)
+						except OSError: pass
+					node.childs.__delitem__(x)
+
+		# take the node of current dir, or the root node if failed to get the current
+		node = self.srcnode
+		clean_rec(node)
+
+		# when cleaning all, remove cache, depedencies and signatures
+		if node == self.srcnode:
+			for v in 'node_sigs node_deps task_sigs raw_deps cache_node_abspath'.split():
+				var = {}
+				setattr(self, v, var)
 
 	def compile(self):
-		debug("compile called", 'build')
-		ret = 0
+		debug('build: compile called')
 
-		os.chdir(self.m_bdir)
+		os.chdir(self.bdir)
 
-		Object.flush()
 
-		if Params.g_verbose>2: self.dump()
+		"""
+		import cProfile, pstats
+		cProfile.run("import Build\nBuild.bld.flush()", 'profi.txt')
+		p = pstats.Stats('profi.txt')
+		p.sort_stats('cumulative').print_stats(80)
+		"""
+		self.flush()
+		#"""
 
-		if Params.g_options.jobs <=1:
-			generator = Runner.JobGenerator(self)
-			executor = Runner.Serial(generator)
-		else:
-			executor = Runner.Parallel(self, Params.g_options.jobs)
+		self.generator = Runner.Parallel(self, Options.options.jobs)
 
-		self.m_generator = executor.m_generator
+		def dw(on=True):
+			if Options.options.progress_bar:
+				if on: sys.stdout.write(Logs.colors.cursor_on)
+				else: sys.stdout.write(Logs.colors.cursor_off)
 
-		def dw():
-			if Params.g_options.progress_bar: sys.stdout.write(Params.g_cursor_on)
-
-		debug("executor starting", 'build')
+		debug('build: executor starting')
 		try:
-			if Params.g_options.progress_bar: sys.stdout.write(Params.g_cursor_off)
-			ret = executor.start()
-			#ret = 0
+			dw(on=False)
+			self.generator.start()
 		except KeyboardInterrupt:
 			dw()
-			os.chdir(self.m_srcnode.abspath())
-			self._store()
-			raise
-		except Runner.CompilationError:
+			os.chdir(self.srcnode.abspath())
+			self.save()
+			Utils.pprint('RED', 'Build interrupted')
+			if Logs.verbose > 1: raise
+			else: sys.exit(68)
+		except Exception:
 			dw()
-			fatal("Compilation failed")
+			# do not store anything, for something bad happened
+			raise
+		else:
+			dw()
+			self.save()
 
-		dw()
-		if Params.g_verbose>2: self.dump()
+		if self.generator.error:
+			os.chdir(self.srcnode.abspath())
+			raise BuildError(self, self.task_manager.tasks_done)
 
-		os.chdir(self.m_srcnode.abspath())
-		return ret
+		os.chdir(self.srcnode.abspath())
 
 	def install(self):
 		"this function is called for both install and uninstall"
-		debug("install called", 'build')
+		debug('build: install called')
 
-		Object.flush()
-		for obj in Object.g_allobjs:
-			if obj.m_posted: obj.install()
+		self.flush()
 
 		# remove empty folders after uninstalling
-		if Params.g_commands['uninstall']:
+		if Options.commands['uninstall']:
 			lst = []
-			for x in self.m_uninstall:
+			for x in self.uninstall:
 				dir = os.path.dirname(x)
 				if not dir in lst: lst.append(dir)
 			lst.sort()
@@ -228,66 +277,84 @@ class Build:
 				except OSError: pass
 
 	def add_subdirs(self, dirs):
-		lst = Utils.to_list(dirs)
-		lst.reverse()
-		for d in lst:
-			if not d: continue
-			Scripting.add_subdir(d, self)
+		for dir in Utils.to_list(dirs):
+			if dir: Scripting.add_subdir(dir, self)
 
-	def create_obj(self, objname, *k, **kw):
-		return Object.g_allclasses[objname](*k, **kw)
+	def new_task_gen(self, *k, **kw):
+		kw['bld'] = self
+		if len(k) == 0: return TaskGen.task_gen(*k, **kw)
+		cls_name = k[0]
+		try: cls = TaskGen.task_gen.classes[cls_name]
+		except KeyError: raise Utils.WscriptError('%s is not a valid task generator -> %s' %
+			(cls_name, [x for x in TaskGen.task_gen.classes]))
+		else: return cls(*k, **kw)
 
 	def load_envs(self):
-		cachedir = Params.g_cachedir
 		try:
-			lst = os.listdir(cachedir)
-		except OSError:
-			fatal('The project was not configured: run "waf configure" first!')
+			lst = Utils.listdir(self.cachedir)
+		except OSError, e:
+			if e.errno == errno.ENOENT:
+				raise Utils.WafError('The project was not configured: run "waf configure" first!')
+			else:
+				raise
+
 		if not lst:
-			fatal('The cache directory is empty: reconfigure the project')
+			raise Utils.WafError('The cache directory is empty: reconfigure the project')
+
 		for file in lst:
-			if len(file) < 3: continue
-			if file[-3:] != '.py': continue
+			if file.endswith(CACHE_SUFFIX):
+				env = Environment.Environment(os.path.join(self.cachedir, file))
+				name = file.split('.')[0]
 
-			env = Environment.Environment()
-			ret = env.load(os.path.join(cachedir, file))
-			name = file.split('.')[0]
+				self.all_envs[name] = env
 
-			if not ret:
-				error("could not load env "+name)
-				continue
-			self.m_allenvs[name] = env
-			for t in env['tools']: env.setup(**t)
+		self.init_variants()
 
-		self._initialize_variants()
-
-		for env in self.m_allenvs.values():
+		for env in self.all_envs.values():
 			for f in env['dep_files']:
-				newnode = self.m_srcnode.find_build(f, create=1)
+				newnode = self.srcnode.find_or_declare(f)
 				try:
-					hash = Params.h_file(newnode.abspath(env))
-				except IOError:
+					hash = Utils.h_file(newnode.abspath(env))
+				except (IOError, AttributeError):
 					error("cannot find "+f)
-					hash = Params.sig_nil
-				except AttributeError:
-					error("cannot find "+f)
-					hash = Params.sig_nil
-				self.m_tstamp_variants[env.variant()][newnode] = hash
+					hash = SIG_NIL
+				self.node_sigs[env.variant()][newnode.id] = hash
 
+		# TODO: these nodes are removed from the tree when calling rescan()
+		self.bldnode = self.root.find_dir(self.bldnode.abspath())
+		self.path = self.srcnode = self.root.find_dir(self.srcnode.abspath())
 
-	def _initialize_variants(self):
-		debug("init variants", 'build')
+	def setup(self, tool, tooldir=None, funs=None):
+		"setup tools for build process"
+		if type(tool) is types.ListType:
+			for i in tool: self.setup(i, tooldir)
+			return
+
+		if not tooldir: tooldir = Options.tooldir
+
+		file = None
+		key = str((tool, tooldir))
+		module = g_modcache.get(key, None)
+		if not module:
+			file,name,desc = imp.find_module(tool, tooldir)
+			module = imp.load_module(tool,file,name,desc)
+			g_modcache[key] = module
+		if hasattr(module, "setup"): module.setup(self)
+		if file: file.close()
+
+	def init_variants(self):
+		debug('build: init variants')
 
 		lstvariants = []
-		for env in self.m_allenvs.values():
+		for env in self.all_envs.values():
 			if not env.variant() in lstvariants:
 				lstvariants.append(env.variant())
-		self._variants = lstvariants
+		self.lst_variants = lstvariants
 
-		debug("list of variants is "+str(lstvariants), 'build')
+		debug('build: list of variants is %s' % str(lstvariants))
 
 		for name in lstvariants+[0]:
-			for v in 'm_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_abspath_cache'.split():
+			for v in 'node_sigs cache_node_abspath'.split():
 				var = getattr(self, v)
 				if not name in var:
 					var[name] = {}
@@ -296,311 +363,446 @@ class Build:
 	# node and folder handling
 
 	# this should be the main entry point
-	def load_dirs(self, srcdir, blddir, isconfigure=None):
+	def load_dirs(self, srcdir, blddir, load_cache=1):
 		"this functions should be the start of everything"
 
-		# there is no reason to bypass this check
-		try:
-			if srcdir == blddir or os.path.abspath(srcdir)==os.path.abspath(blddir):
-				fatal("build dir must be different from srcdir ->"+str(srcdir)+" ->"+str(blddir))
-		except OSError:
-			pass
+		assert(os.path.isabs(srcdir))
+		assert(os.path.isabs(blddir))
 
-		# set the source directory
-		if not os.path.isabs(srcdir):
-			srcdir = os.path.join(os.path.abspath('.'),srcdir)
+		self.cachedir = os.path.join(blddir, CACHE_DIR)
 
-		# set the build directory it is a path, not a node (either absolute or relative)
-		if not os.path.isabs(blddir):
-			self.m_bdir = os.path.abspath(blddir)
-		else:
-			self.m_bdir = blddir
+		if srcdir == blddir:
+			raise Utils.WafError("build dir must be different from srcdir: %s <-> %s " % (srcdir, blddir))
 
-		if not isconfigure:
-			self._load()
-			if self.m_srcnode:
-				self.m_curdirnode = self.m_srcnode
-				return
+		self.bdir = blddir
 
+		# try to load the cache file, if it does not exist, nothing happens
+		self.load()
 
-		self.m_srcnode = self.ensure_dir_node_from_path(srcdir)
-		debug("srcnode is %s and srcdir %s" % (str(self.m_srcnode), srcdir), 'build')
+		if not self.root:
+			Node.Nodu = self.node_class
+			self.root = Node.Nodu('', None, Node.DIR)
 
-		self.m_curdirnode = self.m_srcnode
+		if not self.srcnode:
+			self.srcnode = self.root.ensure_dir_node_from_path(srcdir)
+		debug('build: srcnode is %s and srcdir %s' % (str(self.srcnode.name), srcdir))
 
-		self.m_bldnode = self.ensure_dir_node_from_path(self.m_bdir)
+		self.path = self.srcnode
 
 		# create this build dir if necessary
 		try: os.makedirs(blddir)
 		except OSError: pass
 
-		self._initialize_variants()
+		if not self.bldnode:
+			self.bldnode = self.root.ensure_dir_node_from_path(blddir)
 
-
-	def ensure_dir_node_from_path(self, abspath):
-		"return a node corresponding to an absolute path, creates nodes if necessary"
-		debug('ensure_dir_node_from_path %s' % (abspath), 'build')
-		plst = Utils.split_path(abspath)
-		curnode = self.m_root # root of the tree
-		for dirname in plst:
-			if not dirname: continue
-			if dirname == '.': continue
-			found = curnode.get_dir(dirname, None)
-			if not found:
-				found = Node.Node(dirname, curnode)
-				curnode.append_dir(found)
-			curnode = found
-		return curnode
+		self.init_variants()
 
 	def rescan(self, src_dir_node):
 		""" first list the files in the src dir and update the nodes
 		    - for each variant build dir (multiple build dirs):
 		        - list the files in the build dir, update the nodes
-
-		this makes (n bdirs)+srdir to scan (at least 2 folders)
-		so we might want to do it in parallel in some future
-		"""
+		this makes (n variant)+srdir to scan (at least 2 folders)"""
 
 		# do not rescan over and over again
-		if src_dir_node in self.m_scanned_folders: return
+		if self.cache_scanned_folders.get(src_dir_node.id, None): return
+		self.cache_scanned_folders[src_dir_node.id] = 1
 
-		# do not rescan the nodes above srcnode
-		#if src_dir_node.height() < self.m_srcnode.height(): return
+		#debug('build: rescanning %s' % str(src_dir_node))
 
-		#debug("rescanning "+str(src_dir_node), 'build')
-
-		# list the files in the src directory, adding the signatures
-		files = self.scan_src_path(src_dir_node, src_dir_node.abspath(), src_dir_node.files())
-		#debug("files found in folder are "+str(files), 'build')
-		src_dir_node.m_files_lookup={}
-		for i in files:	src_dir_node.m_files_lookup[i.m_name]=i
+		# TODO undocumented hook
+		if hasattr(self, 'repository'): self.repository(src_dir_node)
 
 		# list the files in the build dirs
 		# remove the existing timestamps if the build files are removed
+		if sys.platform == "win32" and not src_dir_node.name:
+			return
+		self.listdir_src(src_dir_node, src_dir_node.abspath())
 
 		# first obtain the differences between srcnode and src_dir_node
-		#lst = self.m_srcnode.difflst(src_dir_node)
-		h1 = self.m_srcnode.height()
+		#lst = self.srcnode.difflst(src_dir_node)
+		h1 = self.srcnode.height()
 		h2 = src_dir_node.height()
 
-		lst=[]
+		lst = []
 		child = src_dir_node
 		while h2 > h1:
-			lst.append(child.m_name)
-			child=child.m_parent
-			h2-=1
+			lst.append(child.name)
+			child = child.parent
+			h2 -= 1
 		lst.reverse()
 
-		for variant in self._variants:
-			sub_path = os.path.join(self.m_bldnode.abspath(), variant , *lst)
+		for variant in self.lst_variants:
+			sub_path = os.path.join(self.bldnode.abspath(), variant , *lst)
 			try:
-				files = self.scan_path(src_dir_node, sub_path, src_dir_node.m_build_lookup.values(), variant)
-				src_dir_node.m_build_lookup={}
-				for i in files: src_dir_node.m_build_lookup[i.m_name]=i
+				self.listdir_bld(src_dir_node, sub_path, variant)
 			except OSError:
-				#debug("osError on " + sub_path, 'build')
-
+				#debug('build: osError on ' + sub_path)
 				# listdir failed, remove all sigs of nodes
-				dict = self.m_tstamp_variants[variant]
-				for node in src_dir_node.m_build_lookup.values():
-					if node in dict:
-						dict.__delitem__(node)
-				os.makedirs(sub_path)
-				src_dir_node.m_build_lookup={}
-		self.m_scanned_folders.append(src_dir_node)
+				# TODO more things to remove?
+				dict = self.node_sigs[variant]
+				for node in src_dir_node.childs.values():
+					if node.id in dict:
+						dict.__delitem__(node.id)
 
-	def needs_rescan(self, node, env):
-		"tell if a node has changed, to update the cache"
-		#print "needs_rescan for ", node, node.m_tstamp
-		variant = node.variant(env)
-		try:
-			if self.m_deps_tstamp[variant][node] == self.m_tstamp_variants[variant][node]:
-				#print "no need to rescan", node.m_tstamp
-				return 0
-		except KeyError:
-			return 1
-		return 1
+					# avoid deleting the build dir node
+					if node.id != self.bldnode.id:
+						src_dir_node.childs.__delitem__(node.name)
+				os.makedirs(sub_path)
 
 	# ======================================= #
-	def scan_src_path(self, i_parent_node, i_path, i_existing_nodes):
+	def listdir_src(self, parent_node, path):
+		"""
+		@param parent_node [Node]: parent node of path to scan.
+		@param path [string]: path to folder to scan."""
 
-		try:
-			# read the dir contents, ignore the folders in it
-			l_names_read = os.listdir(i_path)
-		except OSError:
-			warning("OSError exception in scan_src_path()  i_path=%s" % str(i_path) )
-			return None
+		listed_files = set(Utils.listdir(path))
 
-		debug("folder contents "+str(l_names_read), 'build')
+		self.cache_dir_contents[parent_node.id] = listed_files
+		debug('build: folder contents '+str(listed_files))
 
-		# there are two ways to obtain the partitions:
-		# 1 run the comparisons two times (not very smart)
-		# 2 reduce the sizes of the list while looping
+		node_names = set([x.name for x in parent_node.childs.values() if x.id & 3 == Node.FILE])
+		cache = self.node_sigs[0]
 
-		l_names = l_names_read
-		l_nodes = i_existing_nodes
-		l_kept  = []
-
-		for node in l_nodes:
-			i     = 0
-			name  = node.m_name
-			l_len = len(l_names)
-			while i < l_len:
-				if l_names[i] == name:
-					l_kept.append(node)
-					break
-				i += 1
-			if i < l_len:
-				del l_names[i]
-
-		# Now:
-		# l_names contains the new nodes (or files)
-		# l_kept contains only nodes that actually exist on the filesystem
-		for node in l_kept:
+		# nodes to keep
+		to_keep = listed_files & node_names
+		for x in to_keep:
+			node = parent_node.childs[x]
 			try:
-				# update the time stamp
-				self.m_tstamp_variants[0][node] = Params.h_file(node.abspath())
+				# do not call node.abspath here
+				cache[node.id] = Utils.h_file(path + os.sep + node.name)
 			except IOError:
-				fatal("a file is readonly or has become a dir "+node.abspath())
+				raise Utils.WafError("The file %s is not readable or has become a dir" % node.abspath())
 
-		debug("new files found "+str(l_names), 'build')
+		# remove both nodes and signatures
+		to_remove = node_names - listed_files
+		if to_remove:
+			# infrequent scenario
+			cache = self.node_sigs[0]
+			for name in to_remove:
+				nd = parent_node.childs[name]
+				if nd.id in cache:
+					cache.__delitem__(nd.id)
+				parent_node.childs.__delitem__(name)
 
-		l_path = i_path + os.sep
-		for name in l_names:
-			try:
-				# will throw an exception if not a file or if not readable
-				# we assume that this is better than performing a stat() first
-				# TODO is it possible to distinguish the cases ?
-				st = Params.h_file(l_path + name)
-				l_child = Node.Node(name, i_parent_node)
-			except IOError:
-				continue
-			self.m_tstamp_variants[0][l_child] = st
-			l_kept.append(l_child)
-		return l_kept
-
-	def scan_path(self, i_parent_node, i_path, i_existing_nodes, i_variant):
+	def listdir_bld(self, parent_node, path, variant):
 		"""in this function we do not add timestamps but we remove them
 		when the files no longer exist (file removed in the build dir)"""
 
-		# read the dir contents, ignore the folders in it
-		l_names_read = os.listdir(i_path)
+		i_existing_nodes = [x for x in parent_node.childs.values() if x.id & 3 == Node.BUILD]
 
-		# there are two ways to obtain the partitions:
-		# 1 run the comparisons two times (not very smart)
-		# 2 reduce the sizes of the list while looping
+		listed_files = set(Utils.listdir(path))
+		node_names = set([x.name for x in i_existing_nodes])
+		remove_names = node_names - listed_files
 
-		l_names = l_names_read
-		l_nodes = i_existing_nodes
-		l_rm    = []
+		# remove the stamps of the build nodes that no longer exist on the filesystem
+		ids_to_remove = [x.id for x in i_existing_nodes if x.name in remove_names]
+		cache = self.node_sigs[variant]
+		for nid in ids_to_remove:
+			if nid in cache:
+				cache.__delitem__(nid)
 
-		for node in l_nodes:
-			i     = 0
-			name  = node.m_name
-			l_len = len(l_names)
-			while i < l_len:
-				if l_names[i] == name:
-					break
-				i += 1
-			if i < l_len:
-				del l_names[i]
-			else:
-				l_rm.append(node)
+	def get_env(self):
+		return self.env_of_name('default')
+	def set_env(self, name, val):
+		self.all_envs[name] = val
 
-		# remove the stamps of the nodes that no longer exist in the build dir
-		for node in l_rm:
+	env = property(get_env, set_env)
 
-			#print "\nremoving the timestamp of ", node, node.m_name
-			#print node.m_parent.m_build
-			#print l_names_read
-				#print l_names
+	def add_manual_dependency(self, path, value):
+		h = getattr(self, 'deps_man', {})
 
-			if node in self.m_tstamp_variants[i_variant]:
-				self.m_tstamp_variants[i_variant].__delitem__(node)
-		return l_nodes
+		if isinstance(path, Node.Node):
+			node = path
+		elif os.path.isabs(path):
+			node = self.root.find_resource(path)
+		else:
+			node = self.path.find_resource(path)
+		try: h[node.id].append(value)
+		except KeyError: h[node.id] = [value]
+		self.deps_man = h
 
-	def dump(self):
-		"for debugging"
-		def printspaces(count):
-			if count>0: return printspaces(count-1)+"-"
-			return ""
-		def recu(node, count):
-			accu = printspaces(count)
-			accu+= "> "+node.m_name+" (d)\n"
-			for child in node.files():
-				accu+= printspaces(count)
-				accu+= '-> '+child.m_name+' '
+	def launch_node(self):
+		"""return the launch directory as a node"""
+		# p_ln is kind of private, but public in case if
+		try:
+			return self.p_ln
+		except AttributeError:
+			self.p_ln = self.root.find_dir(Options.launch_dir)
+			return self.p_ln
 
-				for variant in self.m_tstamp_variants:
-					#print "variant %s"%variant
-					var = self.m_tstamp_variants[variant]
-					#print var
-					if child in var:
-						accu+=' [%s,%s] ' % (str(variant), Params.vsig(var[child]))
+	def glob(self, pattern, relative=True):
+		"files matching the pattern, seen from the current folder"
+		path = self.path.abspath()
+		files = [self.root.find_resource(x) for x in glob.glob(path+os.sep+pattern)]
+		if relative:
+			files = [x.path_to_parent(self.path) for x in files if x]
+		else:
+			files = [x.abspath() for x in files if x]
+		return files
 
-				accu+='\n'
-				#accu+= ' '+str(child.m_tstamp)+'\n'
-				# TODO #if node.files()[file].m_newstamp != node.files()[file].m_oldstamp: accu += "\t\t\t(modified)"
-				#accu+= node.files()[file].m_newstamp + "< >" + node.files()[file].m_oldstamp + "\n"
-			for child in node.m_build_lookup.values():
-				accu+= printspaces(count)
-				accu+= '-> '+child.m_name+' (b) '
+	## the following methods are candidates for the stable apis ##
 
-				for variant in self.m_tstamp_variants:
-					#print "variant %s"%variant
-					var = self.m_tstamp_variants[variant]
-					#print var
-					if child in var:
-						accu+=' [%s,%s] ' % (str(variant), Params.vsig(var[child]))
+	def add_group(self):
+		self.flush(all=0)
+		self.task_manager.add_group()
 
-				accu+='\n'
-				#accu+= ' '+str(child.m_tstamp)+'\n'
-				# TODO #if node.files()[file].m_newstamp != node.files()[file].m_oldstamp: accu += "\t\t\t(modified)"
-				#accu+= node.files()[file].m_newstamp + "< >" + node.files()[file].m_oldstamp + "\n"
-			for dir in node.dirs(): accu += recu(dir, count+1)
-			return accu
+	def hash_env_vars(self, env, vars_lst):
+		"""hash environment variables
+		['CXX', ..] -> [env['CXX'], ..] -> md5()"""
 
-		Params.pprint('CYAN', recu(self.m_root, 0) )
-		Params.pprint('CYAN', 'size is '+str(self.m_root.size_subtree()))
+		# ccroot objects use the same environment for building the .o at once
+		# the same environment and the same variables are used
 
-		#keys = self.m_name2nodes.keys()
-		#for k in keys:
-		#	print k, '\t\t', self.m_name2nodes[k]
+		idx = str(id(env)) + str(vars_lst)
+		try: return self.cache_sig_vars[idx]
+		except KeyError: pass
 
+		lst = [env.get_flat(a) for a in vars_lst]
+		ret = Utils.h_list(lst)
+		debug("envhash: %s %s" % (ret.encode('hex'), str(lst)))
 
-	def pushdir(self, dir):
-		node = self.m_curdirnode.ensure_node_from_lst(Utils.split_path(dir))
-		self.pushed = [self.m_curdirnode]+self.pushed
-		self.m_curdirnode = node
+		# next time
+		self.cache_sig_vars[idx] = ret
+		return ret
 
-	def popdir(self):
-		self.m_curdirnode = self.pushed.pop(0)
+	def name_to_obj(self, name, env):
+		"""retrieve a task generator from its name or its target name
+		remember that names must be unique"""
+		cache = self.task_gen_cache_names
+		if not cache:
+			# create the index lazily
+			for x in self.all_task_gen:
+				vt = x.env.variant() + '_'
+				if x.name:
+					cache[vt + x.name] = x
+				else:
+					v = vt + x.target
+					if not cache.get(v, None):
+						cache[v] = x
+		return cache.get(env.variant() + '_' + name, None)
+
+	def flush(self, all=1):
+		"""tell the task generators to create the tasks"""
+
+		self.ini = time.time()
+		# force the initialization of the mapping name->object in flush
+		# name_to_obj can be used in userland scripts, in that case beware of incomplete mapping
+		self.task_gen_cache_names = {}
+		self.name_to_obj('', self.env)
+
+		debug('build: delayed operation TaskGen.flush() called')
+
+		if Options.options.compile_targets:
+			debug('task_gen: posting objects listed in compile_targets')
+
+			# ensure the target names exist, fail before any post()
+			target_objects = {}
+			for target_name in Options.options.compile_targets.split(','):
+				# trim target_name (handle cases when the user added spaces to targets)
+				target_name = target_name.strip()
+				for env in self.all_envs.values():
+					obj = self.name_to_obj(target_name, env)
+					if obj:
+						try:
+							target_objects[target_name].append(obj)
+						except KeyError:
+							target_objects[target_name] = [obj]
+				if not target_name in target_objects and all:
+					raise Utils.WafError("target '%s' does not exist" % target_name)
+
+			for target_obj in target_objects.values():
+				for x in target_obj:
+					x.post()
+		else:
+			debug('task_gen: posting objects (normal)')
+			ln = self.launch_node()
+			# if the build is started from the build directory, do as if it was started from the top-level
+			# for the pretty-printing (Node.py), the two lines below cannot be moved to Build::launch_node
+			if ln.is_child_of(self.bldnode) or not ln.is_child_of(self.srcnode):
+				ln = self.srcnode
+			for obj in self.all_task_gen:
+				if not obj.path.is_child_of(ln): continue
+				obj.post()
 
 	def env_of_name(self, name):
 		if not name:
 			error('env_of_name called with no name!')
 			return None
 		try:
-			return self.m_allenvs[name]
+			return self.all_envs[name]
 		except KeyError:
-			error('no such environment'+name)
+			error('no such environment: '+name)
 			return None
 
-	def env(self, name='default'):
-		return self.env_of_name(name)
+	def progress_line(self, state, total, col1, col2):
+		n = len(str(total))
 
-	def add_group(self, name=''):
-		Object.flush()
-		Task.g_tasks.add_group(name)
+		Utils.rot_idx += 1
+		ind = Utils.rot_chr[Utils.rot_idx % 4]
+
+		ini = self.ini
+
+		pc = (100.*state)/total
+		eta = time.strftime('%H:%M:%S', time.gmtime(time.time() - ini))
+		fs = "[%%%dd/%%%dd][%%s%%2d%%%%%%s][%s][" % (n, n, ind)
+		left = fs % (state, total, col1, pc, col2)
+		right = '][%s%s%s]' % (col1, eta, col2)
+
+		cols = Utils.get_term_cols() - len(left) - len(right) + 2*len(col1) + 2*len(col2)
+		if cols < 7: cols = 7
+
+		ratio = int((cols*state)/total) - 1
+
+		bar = ('='*ratio+'>').ljust(cols)
+		msg = Utils.indicator % (left, bar, right)
+
+		return msg
 
 
-	def set_sig_cache(self, key, val):
-		self.m_sig_cache[key] = val
+	# do_install is not used anywhere
+	def do_install(self, src, tgt, chmod=O644):
+		"""returns true if the file was effectively installed or uninstalled, false otherwise"""
+		if Options.commands['install']:
+			if not Options.options.force:
+				# check if the file is already there to avoid a copy
+				try:
+					t1 = os.stat(tgt).st_mtime
+					t2 = os.stat(src).st_mtime
+				except OSError:
+					pass
+				else:
+					if t1 >= t2:
+						return False
 
-	def get_sig_cache(self, key):
-		try:
-			return self.m_sig_cache[key]
-		except KeyError:
-			s = Params.sig_nil
-			return [s, s, s, s, s]
+			srclbl = src.replace(self.srcnode.abspath(None)+os.sep, '')
+			info("* installing %s as %s" % (srclbl, tgt))
+
+			# following is for shared libs and stale inodes (-_-)
+			try: os.remove(tgt)
+			except OSError: pass
+
+			try:
+				shutil.copy2(src, tgt)
+				os.chmod(tgt, chmod)
+			except IOError:
+				try:
+					os.stat(src)
+				except (OSError, IOError):
+					error('File %r does not exist' % src)
+				raise Utils.WafError('Could not install the file %r' % tgt)
+			return True
+
+		elif Options.commands['uninstall']:
+			info("* uninstalling %s" % tgt)
+
+			self.uninstall.append(tgt)
+
+			try: os.remove(tgt)
+			except OSError: pass
+			return True
+
+	def get_install_path(self, path, env=None):
+		"installation path prefixed by the destdir, the variables like in '${PREFIX}/bin' are substituted"
+		if not env: env = self.env
+		destdir = env.get_destdir()
+		path = path.replace('/', os.sep)
+		destpath = Utils.subst_vars(path, env)
+		if destdir:
+			destpath = os.path.join(destdir, destpath.lstrip(os.sep))
+		return destpath
+
+	def install_files(self, path, files, env=None, chmod=O644, relative_trick=False):
+		if not Options.is_install: return []
+		if not path: return []
+
+		node = self.path
+		if type(files) is types.StringType and '*' in files:
+			gl = node.abspath() + os.sep + files
+			lst = glob.glob(gl)
+		else:
+			lst = Utils.to_list(files)
+
+		env = env or self.env
+		destpath = self.get_install_path(path, env)
+
+		Utils.check_dir(destpath)
+
+		installed_files = []
+		for filename in lst:
+			if not os.path.isabs(filename):
+				nd = node.find_resource(filename)
+				if not nd:
+					raise Utils.WafError("Unable to install the file `%s': not found in %s" % (filename, node))
+				if relative_trick:
+					destfile = os.path.join(destpath, filename)
+					Utils.check_dir(os.path.dirname(destfile))
+				else:
+					destfile = os.path.join(destpath, nd.name)
+				filename = nd.abspath(env)
+			else:
+				alst = Utils.split_path(filename)
+				destfile = os.path.join(destpath, alst[-1])
+
+			if self.do_install(filename, destfile, chmod):
+				installed_files.append(destfile)
+		return installed_files
+
+	def install_as(self, path, srcfile, env=None, chmod=O644):
+		"""returns True if the file was effectively installed, False otherwise"""
+		if not Options.is_install: return False
+		if not path: return False
+
+		if not env: env = self.env
+		node = self.path
+
+		destpath = self.get_install_path(path, env)
+
+		dir, name = os.path.split(destpath)
+		Utils.check_dir(dir)
+
+		# the source path
+		if not os.path.isabs(srcfile):
+			filenode = node.find_resource(srcfile)
+			src = filenode.abspath(env)
+		else:
+			src = srcfile
+
+		return self.do_install(src, destpath, chmod)
+
+	def symlink_as(self, path, src, env=None):
+		if not Options.is_install: return
+		if not path: return
+
+		tgt = self.get_install_path(path, env)
+
+		dir, name = os.path.split(tgt)
+		Utils.check_dir(dir)
+
+		if Options.commands['install']:
+			try:
+				if not os.path.islink(tgt) or os.readlink(tgt) != src:
+					info("* symlink %s (-> %s)" % (tgt, src))
+					os.symlink(src, tgt)
+				return 0
+			except OSError:
+				return 1
+		elif Options.commands['uninstall']:
+			try:
+				info("* removing %s" % (tgt))
+				os.remove(tgt)
+				return 0
+			except OSError:
+				return 1
+
+	def exec_command(self, cmd, shell=1, cwd=None):
+		# 'runner' zone is printed out for waf -v, see wafadmin/Options.py
+		debug('runner: system command -> %s' % cmd)
+		if self.log: self.log.write('%s\n' % cmd)
+		return Utils.exec_command(cmd, shell=shell, log=self.log, cwd=cwd)
+
+	def printout(self, s):
+		f = self.log or sys.stdout
+		f.write(s)
+		f.flush()
 

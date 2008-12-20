@@ -1,36 +1,39 @@
+import Options
 from waftools.plugin import plugin
-import Params
 
 def plugin_configure(conf):
     # Set the default fallthrough, if no "intelligent" backend is found.
-    conf.env['XMMS_DAAP_BACKEND'] = 'dummy'
+    conf.env["XMMS_DAAP_BACKEND"] = "dummy"
+
+    conf.check_cfg(package="avahi-glib", uselib_store="avahiglib", args="--cflags --libs")
+    conf.check_cfg(package="avahi-client", uselib_store="avahiclient", args="--cflags --libs")
 
     # First look for Avahi mdns support
-    if (conf.check_pkg("avahi-glib", destvar='avahiglib') and
-        conf.check_pkg("avahi-client", destvar='avahiclient')):
+    if conf.env["HAVE_AVAHIGLIB"] and conf.env["HAVE_AVAHICLIENT"]:
         # Avahi found
-        conf.env['XMMS_DAAP_BACKEND'] = 'avahi'
-    elif conf.check_header('dns_sd.h'):
+        conf.env["XMMS_DAAP_BACKEND"] = "avahi"
+    elif conf.check(header_name="dns_sd.h"):
         # We might have dnssd support. If we're not on OSX, check for the
         # presence of the lib.
-        if Params.g_platform == 'darwin':
-            conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
-        elif conf.check_library2('dns_sd', uselib='dnssd', mandatory=0):
-            conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
+        if Options.platform == "darwin":
+            conf.env["XMMS_DAAP_BACKEND"] = "dnssd"
+        elif conf.check(lib='dns_sd', uselib_store='dnssd'):
+            conf.env["XMMS_DAAP_BACKEND"] = "dnssd"
+
     return True
 
 def plugin_build(bld, obj):
-    env = bld.env()
-    daap_backend = env['XMMS_DAAP_BACKEND']
+    daap_backend = bld.env["XMMS_DAAP_BACKEND"]
+
+    obj.uselib += ["socket"]
+    if daap_backend == "avahi":
+        obj.uselib += ["avahiglib", "avahiclient"]
+    elif daap_backend == "dnssd":
+        obj.uselib += ["dnssd"]
+
     obj.source.append("daap_mdns_%s.c" % daap_backend)
-    if daap_backend == 'avahi':
-        obj.uselib += ' avahiglib avahiclient'
-    elif daap_backend == 'dnssd':
-        obj.uselib += ' dnssd'
-    obj.uselib += ' socket'
 
 configure, build = plugin('daap', configure=plugin_configure,
-                          extra_libs=['curl'], build=plugin_build,
-                          source="""daap_xform.c daap_cmd.c daap_conn.c
-                                    daap_util.c daap_md5.c cc_handlers.c
-                                 """.split())
+                          libs=["curl"], build=plugin_build,
+                          source=["daap_xform.c", "daap_cmd.c", "daap_conn.c",
+                                  "daap_util.c", "daap_md5.c", "cc_handlers.c"])

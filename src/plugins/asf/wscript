@@ -1,10 +1,6 @@
 from waftools.plugin import plugin
 
-def plugin_configure(conf):
-    return True
-
 def plugin_build(bld, obj):
-    obj.find_sources_in_dirs('. libasf', excludes=['asf.c']) # TODO: fix waf to accept lists
+    obj.find_sources_in_dirs("libasf")
 
-configure, build = plugin('asf', configure=plugin_configure, source=[],
-                          build=plugin_build, needs_lib=True)
+configure, build = plugin("asf", build=plugin_build, libs=["asf"])

@@ -1,33 +1,32 @@
-import os
-import Common
+import Constants
 
 def build(bld):
-  env = bld.env()
-
-  obj = bld.create_obj('cc', 'program')
+  obj = bld.new_task_gen('cc', 'program')
   obj.target = 'xmms2-mdns-avahi'
   obj.source = ['mdns-avahi.c']
-  obj.includes = '. ../../../include'
+  obj.includes = '. ../../../.. ../../../include'
   obj.uselib = 'glib2 avahiclient avahiglib'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
-  obj = bld.create_obj('subst')
+  obj = bld.new_task_gen('subst')
   obj.source = 'xmms2-mdns-launcher.sh.in'
-  obj.dict = {'PRG_PATH' : env['BINDIR']}
-  Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh',chmod=0755)
+  obj.dict = {'PRG_PATH' : bld.env['BINDIR']}
+  obj.install_path = '${SCRIPTDIR}'
+  obj.chmod = Constants.O755
 
-  find = bld.create_obj('cc', 'program')
+  find = bld.new_task_gen('cc', 'program')
   find.target = 'xmms2-find-avahi'
   find.source = ['find-avahi.c']
   find.uselib = 'avahiclient'
 
-  obj = bld.create_obj('man')
-  obj.files = ['xmms2-mdns-avahi.1']
+  bld.new_task_gen(feature='man', files='xmms2-mdns-avahi.1', section='1')
 
 def configure(conf):
-  return False
-  return (conf.check_pkg('avahi-client', destvar='avahiclient') and
-    conf.check_pkg('avahi-glib', destvar='avahiglib'))
+  if not conf.check_cfg(package="avahi-client", uselib_store="avahiclient", args="--cflags --libs"):
+    return False
+  if not conf.check_cfg(package="avahi-glib", uselib_store="avahiglib", args="--cflags --libs"):
+    return False
+  return True
 
 def set_options(opt):
   pass

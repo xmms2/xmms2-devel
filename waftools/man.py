@@ -1,53 +1,50 @@
-import Common, Object, Utils, Node, Params
+import TaskGen, Build, Utils, Task
+#import Utils, Node
 import sys, os
 import gzip
-from misc import copyobj
+from misc import copy_taskgen
+
+cls = Task.simple_task_type('man', 'foo', color='YELLOW')
+cls.maxjobs = 1
+
+import sys, os, gzip
+import Utils, misc
+from TaskGen import feature
 
 def gzip_func(task):
-    env = task.m_env
-    infile = task.m_inputs[0].abspath(env)
-    outfile = task.m_outputs[0].abspath(env)
+    env = task.env
+    infile = task.inputs[0].abspath(env)
+    outfile = task.outputs[0].abspath(env)
 
     input = open(infile, 'r')
     output = gzip.GzipFile(outfile, mode='w')
     output.write(input.read())
 
-    return 0
+@feature('man')
+def process_man(self):
+    if not getattr(self, 'files', None):
+        return
 
-class manobj(copyobj):
-    def __init__(self, section=1, type='none'):
-        copyobj.__init__(self, type)
-        self.fun = gzip_func
-        self.files = []
-        self.section = section
+    for x in self.to_list(self.files):
+        node = self.path.find_resource(x)
+        if not node:
+            raise Build.BuildError('cannot find input file %s for processing' % x)
 
-    def apply(self):
-        lst = self.to_list(self.files)
-        for file in lst:
-            node = self.path.find_source(file)
-            if not node: fatal('cannot find input file %s for processing' % file)
+        target = self.target
+        if not target:
+            target = node.name
 
-            target = self.target
-            if not target or len(lst)>1: target = node.m_name
+        out = self.path.find_or_declare(x + '.gz')
 
-            newnode = self.path.find_build(file+'.gz') #target?
+        tsk = self.create_task('copy')
+        tsk.set_inputs(node)
+        tsk.set_outputs(out)
+        tsk.fun = gzip_func
+        tsk.install_path = '${MANDIR}/man' + getattr(self, 'section', '1')
+        tsk.color = 'BLUE'
 
-            if not newnode:
-                newnode = Node.Node(file+'.gz', self.path)
-                self.path.append_build(newnode)
-
-            task = self.create_task('copy', self.env, 8)
-            task.set_inputs(node)
-            task.set_outputs(newnode)
-            task.m_env = self.env
-            task.fun = self.fun
-
-    def install(self):
-        for task in self.m_tasks:
-            self.install_results('MANDIR', 'man' + str(self.section), task)
-
-def setup(env):
-    Object.register('man', manobj)
+#def setup(env):
+#    Object.register('man', manobj)
 
 def detect(conf):
     return 1

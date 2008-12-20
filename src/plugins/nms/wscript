@@ -1,10 +1,11 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_pkg('neuros-cooler-media', destvar='nms-media'):
+    if not conf.check_cfg(package="neuros-cooler-media", args="--cflags --libs", uselib_store="nms-media"):
         return False
-    if not conf.check_pkg('neuros-cooler-core', destvar='nms-core'):
+    if not conf.check_cfg(package="neuros-cooler-core", args="--cflags --libs", uselib_store="nms-core"):
         return False
     return True
 
-configure, build = plugin('nms', configure=plugin_configure, needs_lib=True, output_prio=1, extra_libs=['nms-core','nms-media','comnmsc'])
+configure, build = plugin("nms", configure=plugin_configure, output_prio=1,
+                          libs=["nms-core", "nms-media", "comnmsc"])

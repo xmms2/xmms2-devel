@@ -1,80 +1,69 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # encoding: utf-8
 # Thomas Nagy, 2006 (ita)
 
 "C# support"
 
-import Params, Action, Object, Utils
-from Params import error
+import TaskGen, Utils, Task
+from Logs import error
+from TaskGen import before, after, taskgen, feature
 
-g_types_lst = ['program', 'library']
-class csobj(Object.genobj):
-	def __init__(self, type='program'):
-		Object.genobj.__init__(self, 'other')
+flag_vars= ['FLAGS', 'ASSEMBLIES']
 
-		self.m_type       = type
+@taskgen
+@feature('cs')
+def init_cs(self):
+	Utils.def_attrs(self,
+		flags = '',
+		assemblies = '',
+		resources = '',
+		uselib = '')
 
-		self.source       = ''
-		self.target       = ''
+@taskgen
+@feature('cs')
+@after('init_cs')
+def apply_uselib_cs(self):
+	if not self.uselib:
+		return
+	global flag_vars
+	for var in self.to_list(self.uselib):
+		for v in self.flag_vars:
+			val = self.env[v+'_'+var]
+			if val: self.env.append_value(v, val)
 
-		self.flags        = ''
-		self.assemblies   = ''
-		self.resources    = ''
+@taskgen
+@feature('cs')
+@after('apply_uselib_cs')
+def apply_cs(self):
 
-		self.uselib       = ''
+	# process the flags for the assemblies
+	assemblies_flags = []
+	for i in self.to_list(self.assemblies) + self.env['ASSEMBLIES']:
+		assemblies_flags += '/r:'+i
+	self.env['_ASSEMBLIES'] += assemblies_flags
 
-		self._flag_vars = ['FLAGS', 'ASSEMBLIES']
+	# process the flags for the resources
+	for i in self.to_list(self.resources):
+		self.env['_RESOURCES'].append('/resource:'+i)
 
-		if not self.env: self.env = Params.g_build.m_allenvs['default']
+	# additional flags
+	self.env['_FLAGS'] += self.to_list(self.flags) + self.env['FLAGS']
 
-		if not type in g_types_lst:
-			error('type for csobj is undefined '+type)
-			type='program'
+	curnode = self.path
 
-	def apply(self):
-		self.apply_uselib()
+	# process the sources
+	nodes = []
+	for i in self.to_list(self.source):
+		nodes.append(curnode.find_resource(i))
 
-		# process the flags for the assemblies
-		assemblies_flags = []
-		for i in self.to_list(self.assemblies) + self.env['ASSEMBLIES']:
-			assemblies_flags += '/r:'+i
-		self.env['_ASSEMBLIES'] += assemblies_flags
+	# create the task
+	task = self.create_task('mcs')
+	task.inputs  = nodes
+	task.set_outputs(self.path.find_or_declare(self.target))
 
-		# process the flags for the resources
-		for i in self.to_list(self.resources):
-			self.env['_RESOURCES'].append('/resource:'+i)
-
-		# additional flags
-		self.env['_FLAGS'] += self.to_list(self.flags) + self.env['FLAGS']
-
-		curnode = self.path
-
-		# process the sources
-		nodes = []
-		for i in self.to_list(self.source):
-			nodes.append(curnode.find_source(i))
-
-		# create the task
-		task = self.create_task('mcs', self.env, 101)
-		task.m_inputs  = nodes
-		task.set_outputs(self.path.find_build(self.target))
-
-	def apply_uselib(self):
-		if not self.uselib:
-			return
-		for var in self.to_list(self.uselib):
-			for v in self._flag_vars:
-				val=''
-				try:    val = self.env[v+'_'+var]
-				except: pass
-				if val: self.env.append_value(v, val)
-
-def setup(env):
-	Object.register('cs', csobj)
-	Action.simple_action('mcs', '${MCS} ${SRC} /out:${TGT} ${_FLAGS} ${_ASSEMBLIES} ${_RESOURCES}', color='YELLOW')
+Task.simple_task_type('mcs', '${MCS} ${SRC} /out:${TGT} ${_FLAGS} ${_ASSEMBLIES} ${_RESOURCES}', color='YELLOW')
 
 def detect(conf):
 	mcs = conf.find_program('mcs', var='MCS')
 	if not mcs: mcs = conf.find_program('gmcs', var='MCS')
-	return 1
 

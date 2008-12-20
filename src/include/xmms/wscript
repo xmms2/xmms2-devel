@@ -1,5 +1,7 @@
 import os
-import Params
+import Options
+import Utils
+from logging import warning
 
 def build(bld):
     pass
@@ -26,9 +28,9 @@ def configure(conf):
     l.sort()
     prio,name = l[-1]
     if prio == -1:
-        Params.warning("No output plugin found, this is bad")
+        warning("No output plugin found, this is bad")
     defs['XMMS_OUTPUT_DEFAULT'] = name
-    if Params.g_platform == 'darwin':
+    if Options.platform == 'darwin':
         defs["USERCONFDIR"] = 'Library/xmms2'
         defs["USERCACHEDIR"] = 'Library/xmms2/logs'
     else:
@@ -40,15 +42,15 @@ def configure(conf):
     conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
 
     # The plugin path in Windows should be relative, not absolute
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         defs['PKGLIBDIR'] = 'Plugins/'
 
     for i in defs:
-        conf.add_define(i, defs[i])
+        conf.define(i, defs[i])
     conf.write_config_header('xmms_configuration.h')
 
     print "\nDefault output plugin: ",
-    Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
+    Utils.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
 
     return True
 

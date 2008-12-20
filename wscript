@@ -5,8 +5,8 @@
 #
 
 import sys
-if sys.version_info < (2,3):
-    raise RuntimeError("Python 2.3 or newer is required")
+if sys.version_info < (2,4):
+    raise RuntimeError("Python 2.4 or newer is required")
 
 import os
 import optparse
@@ -18,10 +18,11 @@ sys.path.insert(0,os.getcwd())
 from waftools import gittools
 
 import sets
-import Params
-import Object
+import Options
 import Utils
-import Common
+import Build
+import Configure
+from logging import fatal, warning
 
 BASEVERSION="0.5 DrLecter"
 APPNAME='xmms2'
@@ -68,40 +69,44 @@ all_optionals = sets.Set([os.path.basename(o) for o in optional_subdirs])
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")
                         if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
-libprefix = None
-
 ####
 ## Build
 ####
 def build(bld):
-    env = bld.env()
-
-    # set libprefix for later use in shutdown
-    global libprefix
-    libprefix = os.path.join(env[env['shlib_INST_VAR']], env['shlib_INST_DIR'])
-
-    if env["BUILD_XMMS2D"]:
+    if bld.env["BUILD_XMMS2D"]:
         subdirs.append("src/xmms")
 
     newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
-    if env['NEWEST_WSCRIPT_SUBDIR'] and newest > env['NEWEST_WSCRIPT_SUBDIR']:
-        Params.fatal("You need to run waf configure")
+    if bld.env['NEWEST_WSCRIPT_SUBDIR'] and newest > bld.env['NEWEST_WSCRIPT_SUBDIR']:
+        fatal("You need to run waf configure")
+        raise SystemExit
 
     # Process subfolders
     bld.add_subdirs(subdirs)
 
     # Build configured plugins
-    plugins = env['XMMS_PLUGINS_ENABLED']
+    plugins = bld.env['XMMS_PLUGINS_ENABLED']
     bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
     # Build the clients
-    bld.add_subdirs(env['XMMS_OPTIONAL_BUILD'])
+    bld.add_subdirs(bld.env['XMMS_OPTIONAL_BUILD'])
 
-    # pkg-config
-    o = bld.create_obj('pkgc')
-    o.libs = env['XMMS_PKGCONF_FILES']
+    for name, lib in bld.env['XMMS_PKGCONF_FILES']:
+        obj = bld.new_task_gen('subst')
+        obj.source = 'xmms2.pc.in'
+        obj.target = name + '.pc'
+        obj.dict = {
+               'NAME': name,
+                'LIB': lib,
+             'PREFIX': bld.env['PREFIX'],
+             'BINDIR': os.path.join("${prefix}", "bin"),
+             'LIBDIR': os.path.join("${prefix}", "lib"),
+         'INCLUDEDIR': os.path.join("${prefix}", "include", "xmms2"),
+            'VERSION': bld.env["VERSION"],
+        }
+        obj.install_path = '${PKGCONFIGDIR}'
 
-    Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
+    bld.install_files('${SHAREDDIR}', 'mind.in.a.box-lament_snipplet.ogg')
 
 
 ####
@@ -112,18 +117,19 @@ def _configure_optionals(conf):
     def _check_exist(optionals, msg):
         unknown_optionals = optionals.difference(all_optionals)
         if unknown_optionals:
-            Params.fatal(msg % {'unknown_optionals': ', '.join(unknown_optionals)})
+            fatal(msg % {'unknown_optionals': ', '.join(unknown_optionals)})
+            raise SystemExit
         return optionals
 
     conf.env['XMMS_OPTIONAL_BUILD'] = []
 
-    if Params.g_options.enable_optionals:
-        selected_optionals = _check_exist(sets.Set(Params.g_options.enable_optionals),
+    if Options.options.enable_optionals:
+        selected_optionals = _check_exist(sets.Set(Options.options.enable_optionals),
                                            "The following optional(s) were requested, "
                                            "but don't exist: %(unknown_optionals)s")
         optionals_must_work = True
-    elif Params.g_options.disable_optionals:
-        disabled_optionals = _check_exist(sets.Set(Params.g_options.disable_optionals),
+    elif Options.options.disable_optionals:
+        disabled_optionals = _check_exist(sets.Set(Options.options.disable_optionals),
                                           "The following optional(s) were disabled, "
                                           "but don't exist: %(unknown_optionals)s")
         selected_optionals = all_optionals.difference(disabled_optionals)
@@ -144,8 +150,9 @@ def _configure_optionals(conf):
             failed_optionals.add(o)
 
     if optionals_must_work and failed_optionals:
-        Params.fatal("The following required optional(s) failed to configure: "
+        fatal("The following required optional(s) failed to configure: "
                      "%s" % ', '.join(failed_optionals))
+        raise SystemExit
 
     disabled_optionals = sets.Set(all_optionals)
     disabled_optionals.difference_update(succeeded_optionals)
@@ -157,27 +164,28 @@ def _configure_plugins(conf):
     def _check_exist(plugins, msg):
         unknown_plugins = plugins.difference(all_plugins)
         if unknown_plugins:
-            Params.fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
+            fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
+            raise SystemExit
         return plugins
 
     conf.env['XMMS_PLUGINS_ENABLED'] = []
 
     # If an explicit list was provided, only try to process that
-    if Params.g_options.enable_plugins:
-        selected_plugins = _check_exist(sets.Set(Params.g_options.enable_plugins),
+    if Options.options.enable_plugins:
+        selected_plugins = _check_exist(sets.Set(Options.options.enable_plugins),
                                         "The following plugin(s) were requested, "
                                         "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     # If a disable list was provided, we try all plugins except for those.
-    elif Params.g_options.disable_plugins:
-        disabled_plugins = _check_exist(sets.Set(Params.g_options.disable_plugins),
+    elif Options.options.disable_plugins:
+        disabled_plugins = _check_exist(sets.Set(Options.options.disable_plugins),
                                         "The following plugins(s) were disabled, "
                                         "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
         plugins_must_work = False
     # If we don't have the daemon we don't build plugins.
-    elif Params.g_options.without_xmms2d:
+    elif Options.options.without_xmms2d:
         disabled_plugins = all_plugins
         selected_plugins = sets.Set()
         plugins_must_work = False
@@ -199,23 +207,24 @@ def _configure_plugins(conf):
     if plugins_must_work:
         broken_plugins = selected_plugins.intersection(disabled_plugins)
         if broken_plugins:
-            Params.fatal("The following required plugin(s) failed to configure: "
+            fatal("The following required plugin(s) failed to configure: "
                                      "%s" % ', '.join(broken_plugins))
+            raise SystemExit
 
     return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
 
 def _output_summary(enabled_plugins, disabled_plugins,
                                         enabled_optionals, disabled_optionals):
     print "\nOptional configuration:\n======================"
-    print " Enabled:",
-    Params.pprint('BLUE', ', '.join(enabled_optionals))
-    print " Disabled:",
-    Params.pprint('BLUE', ", ".join(disabled_optionals))
+    print " Enabled: ",
+    Utils.pprint('BLUE', ', '.join(enabled_optionals))
+    print " Disabled: ",
+    Utils.pprint('BLUE', ", ".join(disabled_optionals))
     print "\nPlugins configuration:\n======================"
-    print " Enabled:",
-    Params.pprint('BLUE', ", ".join(enabled_plugins))
-    print " Disabled:",
-    Params.pprint('BLUE', ", ".join(disabled_plugins))
+    print " Enabled: ",
+    Utils.pprint('BLUE', ", ".join(enabled_plugins))
+    print " Disabled: ",
+    Utils.pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
     if os.environ.has_key('PKG_CONFIG_PREFIX'):
@@ -225,37 +234,33 @@ def configure(conf):
         conf.env['PKG_CONFIG_DEFINES'] = {'prefix':prefix}
 
     conf.env["BUILD_XMMS2D"] = False
-    if not Params.g_options.without_xmms2d == True:
+    if not Options.options.without_xmms2d == True:
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
 
-    if Params.g_options.manualdir:
-        conf.env["MANDIR"] = Params.g_options.manualdir
+    if Options.options.manualdir:
+        conf.env["MANDIR"] = Options.options.manualdir
     else:
         conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
 
-    if (conf.check_tool('g++')):
-        conf.env["HAVE_CXX"] = True
-    else:
-        conf.env["HAVE_CXX"] = False
-    conf.check_tool('misc checks')
+    conf.check_tool('misc')
     conf.check_tool('gcc')
-    conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
-    conf.check_tool('man', tooldir=os.path.abspath('waftools'))
+    conf.check_tool('g++')
 
-    if conf.check_tool('winres'):
+    try:
+        conf.check_tool('winres')
         conf.env['WINRCFLAGS'] = '-I' + os.path.abspath('pixmaps')
         conf.env['xmms_icon'] = True
-    else:
+    except Configure.ConfigurationError:
         conf.env['xmms_icon'] = False
 
-    if Params.g_options.target_platform:
-        Params.g_platform = Params.g_options.target_platform
+    if Options.options.target_platform:
+        Options.platform = Options.options.target_platform
 
     nam,changed = gittools.get_info()
     conf.check_message("git commit id", "", True, nam)
-    if Params.g_options.customversion:
-        conf.env["VERSION"] = BASEVERSION + " (%s + %s)" % (nam, Params.g_options.customversion)
+    if Options.options.customversion:
+        conf.env["VERSION"] = BASEVERSION + " (%s + %s)" % (nam, Options.options.customversion)
     else:
         dirty=""
         if changed:
@@ -268,35 +273,31 @@ def configure(conf):
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
-    if Params.g_options.bindir:
-        conf.env["BINDIR"] = Params.g_options.bindir
-        conf.env["program_INST_VAR"] = "BINDIR"
-        conf.env["program_INST_DIR"] = ""
+    if Options.options.bindir:
+        conf.env["BINDIR"] = Options.options.bindir
     else:
         conf.env["BINDIR"] = os.path.join(conf.env["PREFIX"], "bin")
 
-    if Params.g_options.libdir:
-        conf.env["LIBDIR"] = Params.g_options.libdir
-        conf.env["shlib_INST_VAR"]     = "LIBDIR"
-        conf.env["shlib_INST_DIR"]     = ""
-        conf.env["staticlib_INST_VAR"] = "LIBDIR"
-        conf.env["staticlib_INST_DIR"] = ""
+    if Options.options.libdir:
+        conf.env["LIBDIR"] = Options.options.libdir
+    else:
+        conf.env["LIBDIR"] = os.path.join(conf.env["PREFIX"], "lib")
 
-    if Params.g_options.pkgconfigdir:
-        conf.env['PKGCONFIGDIR'] = Params.g_options.pkgconfigdir
+    if Options.options.pkgconfigdir:
+        conf.env['PKGCONFIGDIR'] = Options.options.pkgconfigdir
         print conf.env['PKGCONFIGDIR']
     else:
         conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
 
-    if Params.g_options.config_prefix:
-        for dir in Params.g_options.config_prefix:
+    if Options.options.config_prefix:
+        for dir in Options.options.config_prefix:
             if not os.path.isabs(dir):
                 dir = os.path.abspath(dir)
             conf.env.prepend_value("LIBPATH", os.path.join(dir, "lib"))
             conf.env.prepend_value("CPPPATH", os.path.join(dir, "include"))
 
     # Our static libraries may link to dynamic libraries
-    if Params.g_platform != 'win32':
+    if Options.platform != 'win32':
         conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
     else:
         # As we have to change target platform after the tools
@@ -305,15 +306,13 @@ def configure(conf):
 
         # Make sure we don't have -fPIC and/or -DPIC in our CCFLAGS
         conf.env["shlib_CCFLAGS"] = []
-        conf.env['plugin_CCFLAGS'] = []
 
         # Setup various prefixes
-        conf.env["shlib_SUFFIX"] = '.dll'
-        conf.env['plugin_SUFFIX'] = '.dll'
-        conf.env['program_SUFFIX'] = '.exe'
+        conf.env["shlib_PATTERN"] = 'lib%s.dll'
+        conf.env['program_PATTERN'] = '%s.exe'
 
     # Add some specific OSX things
-    if Params.g_platform == 'darwin':
+    if Options.platform == 'darwin':
         conf.env["LINKFLAGS"] += ['-multiply_defined suppress']
         conf.env["explicit_install_name"] = True
     else:
@@ -323,57 +322,54 @@ def configure(conf):
     has_platform_support = os.name in ('nt', 'posix')
     conf.check_message("platform code for", os.name, has_platform_support)
     if not has_platform_support:
-        Params.fatal("xmms2 only has platform support for Windows "
+        fatal("xmms2 only has platform support for Windows "
                      "and POSIX operating systems.")
-
-    conf.check_tool('checks')
+        raise SystemExit
 
     # Check sunOS socket support
-    if Params.g_platform == 'sunos5':
-        if not conf.check_library2("socket", uselib='socket'):
-            Params.fatal("xmms2 requires libsocket on Solaris.")
+    if Options.platform == 'sunos':
+        conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
+        if not conf.env["HAVE_SOCKET"]:
+            fatal("xmms2 requires libsocket on Solaris.")
+            raise SystemExit
         conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
+        conf.env.append_unique('CCFLAGS', '-std=gnu99')
         conf.env['socket_impl'] = 'socket'
     # Check win32 (winsock2) socket support
-    elif Params.g_platform == 'win32':
-        if Params.g_options.winver:
-            major, minor = [int(x) for x in Params.g_options.winver.split('.')]
+    elif Options.platform == 'win32':
+        if Options.options.winver:
+            major, minor = [int(x) for x in Options.options.winver.split('.')]
         else:
             try:
                 major, minor = sys.getwindowsversion()[:2]
             except AttributeError, e:
-                Params.warning('No Windows version found and no version set. ' +
-                               'Defaulting to 5.1 (XP). You will not be able ' +
-                               'to use this build of XMMS2 on older Windows ' +
-                               'versions.')
+                warning('No Windows version found and no version set. ' +
+                        'Defaulting to 5.1 (XP). You will not be able ' +
+                        'to use this build of XMMS2 on older Windows ' +
+                        'versions.')
                 major, minor = (5, 1)
         need_wspiapi = True
         if (major >= 5 and minor >= 1):
             need_wspiapi = False
-        conf.check_header2('windows.h')
-        conf.check_header2('ws2tcpip.h')
-        conf.check_header2('winsock2.h')
-        conf.env['CCDEFINES'] += ['HAVE_WINSOCK2']
-        conf.env['CXXDEFINES'] += ['HAVE_WINSOCK2']
-        h = conf.create_header_configurator()
-        h.name = 'wspiapi.h'
-        h.header_code = "#include <windows.h>\n#include <ws2tcpip.h>"
-        if h.run():
-            conf.env['CCDEFINES'] += ['HAVE_WSPIAPI']
-        elif need_wspiapi:
-            Params.fatal('XMMS2 requires WSPiApi.h on Windows versions prior ' +
-                         'to XP. WSPiApi.h is provided by the Platform SDK.')
-        else:
-            print('This XMMS2 will only run on Windows XP and newer ' +
-                  'machines. If you are planning to use XMMS2 on older ' +
-                  'versions of Windows or are packaging a binary, please ' +
-                  'consider installing the WSPiApi.h header for ' +
-                  'compatibility. It is provided by the Platform SDK.')
-        conf.env['CCDEFINES'] += ['_WIN32_WINNT=0x%02x%02x' % (major, minor)]
-        if not conf.check_library2("wsock32", uselib='socket'):
-            Params.fatal("xmms2 requires wsock32 on windows.")
-        conf.env.append_unique('LIB_socket', 'ws2_32')
+
+        conf.check_cc(lib="wsock32", uselib_store="socket", mandatory=1)
+        conf.check_cc(lib="ws2_32", uselib_store="socket", mandatory=1)
+        conf.check_cc(header_name="windows.h", uselib="socket", mandatory=1)
+        conf.check_cc(header_name="ws2tcpip.h", uselib="socket", mandatory=1)
+        conf.check_cc(header_name="winsock2.h", uselib="socket", mandatory=1)
+        if not conf.check_cc(header_name="wspiapi.h", fragment="#include <ws2tcpip.h>\n#include <wspiapi.h>\nint main() {return 0;}", uselib="socket", mandatory=need_wspiapi):
+            warning('This XMMS2 will only run on Windows XP and newer ' +
+                    'machines. If you are planning to use XMMS2 on older ' +
+                    'versions of Windows or are packaging a binary, please ' +
+                    'consider installing the WSPiApi.h header for ' +
+                    'compatibility. It is provided by the Platform SDK.')
+
+        conf.env['CCDEFINES_socket'] += [
+            '_WIN32_WINNT=0x%02x%02x' % (major, minor),
+            'HAVE_WINSOCK2', 1
+        ]
+
         conf.env['socket_impl'] = 'wsock32'
     # Default POSIX sockets
     else:
@@ -381,7 +377,7 @@ def configure(conf):
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
-    conf.check_pkg2('glib-2.0', version='2.8.0', uselib='glib2')
+    conf.check_cfg(package='glib-2.0', atleast_version='2.8.0', uselib_store='glib2', args='--cflags --libs', mandatory=1)
 
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
@@ -435,8 +431,9 @@ def set_options(opt):
         opt.sub_options(o)
 
 def shutdown():
-    if Params.g_commands['install'] and os.geteuid() == 0 and libprefix:
+    if Options.commands['install'] and os.geteuid() == 0:
         ldconfig = '/sbin/ldconfig'
         if os.path.isfile(ldconfig):
-            try: os.spawnvp(os.P_WAIT, 'ldconfig', ['', libprefix])
+            libprefix = Utils.subst_vars('${PREFIX}/lib', Build.bld.env)
+            try: Utils.cmd_output(ldconfig + ' ' + libprefix)
             except: pass

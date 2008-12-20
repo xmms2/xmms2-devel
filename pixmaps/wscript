@@ -1,31 +1,29 @@
 import os
-import Params
-import Common
+import Options
 
 def build(bld):
-    env = bld.env()
-
-    if env['xmms_icon']:
-        obj = bld.create_obj('cc', 'objects')
+    if bld.env['xmms_icon']:
+        obj = bld.new_task_gen('cc', 'objects')
         obj.target = 'xmms_icon'
         obj.source = 'xmms2.rc'
-        obj.install_var = 0
+        obj.install_path = 0
 
     images = """
-    xmms2-16.png
-    xmms2-32.png
-    xmms2-48.png
-    xmms2-128.png
-    xmms2.svg
-    xmms2-black-on-white.svg
-    xmms2-white-on-black.svg
+        xmms2-16.png
+        xmms2-32.png
+        xmms2-48.png
+        xmms2-128.png
+        xmms2.svg
+        xmms2-black-on-white.svg
+        xmms2-white-on-black.svg
     """.split()
+
     for image in images:
-        Common.install_files("PIXMAP_DIR", "", image)
+        bld.install_files("${PIXMAP_DIR}", image)
 
 def configure(conf):
-    if Params.g_options.pixmapdir is not None:
-        conf.env["PIXMAP_DIR"] = Params.g_options.pixmapdir
+    if Options.options.pixmapdir is not None:
+        conf.env["PIXMAP_DIR"] = Options.options.pixmapdir
     else:
         conf.env["PIXMAP_DIR"] = os.path.join(conf.env["PREFIX"], "share", "pixmaps")
 

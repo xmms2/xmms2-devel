@@ -1,7 +1,10 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return (conf.check_pkg('modplug', destvar='modplug') or
-            conf.check_pkg('libmodplug', destvar='modplug'))
+    if conf.check_cfg(package="modplug", uselib_store="modplug", args="--cflags --libs"):
+        return True
+    if conf.check_cfg(package="libmodplug", uselib_store="modplug", args="--cflags --libs"):
+        return True
+    return False
 
-configure, build = plugin('modplug', configure=plugin_configure, needs_lib=True)
+configure, build = plugin("modplug", configure=plugin_configure, libs=["modplug"])

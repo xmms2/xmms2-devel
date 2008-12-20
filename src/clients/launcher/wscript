@@ -1,18 +1,17 @@
-import Params
+import Options
 
 def build(bld):
-    obj = bld.create_obj('cc', 'program')
+    obj = bld.new_task_gen('cc', 'program')
     obj.target = 'xmms2-launcher'
     obj.source = ['xmms2-launcher.c']
-    obj.includes = '../../include'
+    obj.includes = '../../.. ../../include'
     obj.uselib = 'glib2'
     obj.uselib_local = 'xmmsutils'
 
-    obj = bld.create_obj('man')
-    obj.files = ['xmms2-launcher.1']
+    obj = bld.new_task_gen(features='man', files='xmms2-launcher.1', section='1')
 
 def configure(conf):
-    if Params.g_platform == 'win32':
+    if Options.platform == 'win32':
         return False
     return True
 

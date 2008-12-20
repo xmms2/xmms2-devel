@@ -5,19 +5,22 @@
 #
 
 def build(bld):
-    env = bld.env()
+    obj = bld.new_task_gen('cc', 'staticlib')
+    obj.source = """
+        msg.c
+        socket_tcp.c
+        transport.c
+        url.c
+    """.split()
 
-    if env['socket_impl'] == 'wsock32':
-        platform_sources = "transport_win.c"
+    if bld.env['socket_impl'] == 'wsock32':
+        obj.source += ["transport_win.c"]
     else:
-        platform_sources = "socket_unix.c transport_unix.c"
+        obj.source += ["socket_unix.c", "transport_unix.c"]
 
-    obj = bld.create_obj('cc', 'staticlib')
-    obj.source = " ".join(["msg.c", "socket_tcp.c", "transport.c",
-                           "url.c", platform_sources])
-    obj.includes='. ../../include ../../includepriv'
+    obj.includes='. ../../.. ../../include ../../includepriv'
     obj.target='xmmsipc'
-    obj.install_var = 0
+    obj.install_path = 0
 
 def configure(conf):
     return True

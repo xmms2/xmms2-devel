@@ -1,6 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return conf.check_pkg('libxml-2.0', destvar='rss')
+    if conf.check_cfg(package="libxml-2.0", uselib_store="xml2", args="--cflags --libs"):
+        return True
+    return False
 
-configure, build = plugin('rss', needs_lib=True, configure=plugin_configure)
+configure, build = plugin("rss", libs=["xml2"], configure=plugin_configure)

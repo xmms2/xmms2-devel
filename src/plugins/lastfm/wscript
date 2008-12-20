@@ -1,12 +1,11 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_pkg('libcurl', destvar='curl'):
+    if conf.check_cfg(package='libcurl', args='--cflags --libs', uselib_store='curl'):
         return True
-    cfg = conf.create(configurator='cfgtool')
-    cfg.binary = 'curl-config'
-    cfg.uselib = 'curl'
-    return (cfg.run() and conf.env['HAVE_curl'])
+    if conf.check_cfg(path='curl-config', package='', uselib_store='curl', args='--cflags --libs'):
+        return True
+    return False
 
 configure, build = plugin('lastfm', configure=plugin_configure,
-                          extra_libs=['curl'])
+                          libs=['curl'])

@@ -1,25 +1,25 @@
 import os
-import Params
-import Common
+from logging import warning
 
 def build(bld):
-    obj = bld.create_obj('cc', 'perlext', 'perlext')
+    obj = bld.new_task_gen('cc', 'shlib', 'perlext')
     obj.target = 'XMMSClient'
-    obj.includes = '. ../../../include ../../../includepriv'
+    obj.includes = '. ../../../.. ../../../include ../../../includepriv'
     obj.source = """
-                 perl_xmmsclient.c
-                 XMMSClient.xs
-                 XMMSClientPlaylist.xs
-                 XMMSClientCollection.xs
-                 XMMSClientResult.xs
-                 """.split()
+        perl_xmmsclient.c
+        XMMSClient.xs
+        XMMSClientPlaylist.xs
+        XMMSClientCollection.xs
+        XMMSClientResult.xs
+    """.split()
     obj.uselib_local = 'xmmsclient'
-    obj.install_var = "INSTALLDIR_PERL_AUTO"
+    obj.install_path = "${INSTALLDIR_PERL_AUTO}"
+    obj.mac_bundle = True
 
-    Common.install_files('INSTALLDIR_PERL_LIB', '', 'pm/XMMSClient.pm')
-    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
-    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
-    Common.install_files('INSTALLDIR_PERL_LIB', 'XMMSClient', 'pm/XMMSClient/Collection.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Sync.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Glib.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Collection.pm')
 
 def configure(conf):
     conf.check_tool('perl')
@@ -30,7 +30,7 @@ def configure(conf):
     conf.check_perl_ext_devel()
 
     if not os.path.commonprefix([conf.env['ARCHDIR_PERL'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
-        Params.warning('default perl libdir is not under PREFIX. specify path '
+        warning('default perl libdir is not under PREFIX. specify path '
                 + 'manually using --with-perl-archdir if you don\'t want the '
                 + 'perl bindings to be installed to ' + conf.env['ARCHDIR_PERL'])
 

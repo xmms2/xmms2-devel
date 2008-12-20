@@ -1,13 +1,15 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_header2('sys/soundcard.h', mandatory=0):
+    if not conf.check_cc(header_name="sys/soundcard.h"):
         return False
-    if conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio'):
+
+    if conf.check_cc(lib='ossaudio', mandatory=0, uselib_store='ossaudio'):
         conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
     else:
         conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
+
     return True
 
-configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss', 'ossaudio'],
+configure, build = plugin("oss", configure=plugin_configure, libs=["oss", "ossaudio"],
                           output_prio=35)
