@@ -1,0 +1,1966 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+vim:expandtab
+-->
+
+<ipc version="1" xmlns="http://numbers.xmms.se/~tilman/ipc.xsd">
+
+    <!--
+    <enum name="playback_status">
+        <prop name="STOP" />
+        <prop name="START" />
+        <prop name="PAUSE" />
+    </enum>
+
+    <enum name="output_cmd">
+        <prop name="START" />
+        <prop name="STOP" />
+        <prop name="PAUSE" />
+        <prop name="STATUS" />
+    </enum>
+
+    <enum name="playlist_cmd">
+        <prop name="ADD_ID" />
+        <prop name="CURRENT_POS" />
+        <prop name="LIST_ENTRIES" />
+        <prop name="CLEAR" />
+    </enum>
+
+    <enum name="message">
+        <prop name="REPLY" />
+        <prop name="ERROR" />
+    </enum>
+    -->
+
+    <object>
+        <name>main</name>
+
+        <method>
+            <name>hello</name>
+
+            <documentation>Says hello to the daemon.</documentation>
+
+            <argument>
+                <name>protocol_version</name>
+                <documentation>The protocol version implemented by the client.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>client</name>
+                <documentation>The client's name.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>quit</name>
+            <documentation>Shuts down the daemon.</documentation>
+        </method>
+
+        <method>
+            <name>list_plugins</name>
+            <documentation>Retrieves the list of available plugins.</documentation>
+
+            <argument>
+                <name>plugin_type</name>
+                <documentation>The type of plugins to retrieve.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <list>
+                        <dictionary>
+                            <unknown />
+                        </dictionary>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>stats</name>
+            <documentation>Retrieves statistics from the server.</documentation>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </return_value>
+        </method>
+
+        <broadcast>
+            <id>11</id>
+            <name>quit</name>
+            <documentation>This broadcast is triggered when the daemon is shutting down.</documentation>
+
+            <return_value>
+                <documentation>The time in seconds that the daemon was running.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <object>
+        <name>playlist</name>
+
+        <!--
+        <prop name="pos">
+            <readable />
+            <writeable />
+            <type>
+                <int />
+            </type>
+        </prop>
+        -->
+
+        <method>
+            <name>shuffle</name>
+            <documentation>Shuffles the current playlist.</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The name of the playlist that will be shuffled.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>set_next</name>
+            <documentation>Sets the playlist entry that will be played next.</documentation>
+
+            <argument>
+                <name>position</name>
+                <documentation>The position of the playlist entry that will be played next (given as an absolute position).</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The ID of the song at the new position of the playlist.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>set_next_rel</name>
+            <documentation>Sets the playlist entry that will be played next.</documentation>
+
+            <argument>
+                <name>position_delta</name>
+                <documentation>The position of the playlist entry that will be played next (given relative to the current position).</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The ID of the song at the new position of the playlist.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>add_url</name>
+            <documentation>Adds an URL to the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist to which to add a URL.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>url</name>
+                <documentation>The url to be added to the playlist.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>add_id</name>
+            <documentation>Adds a song to the given playlist.</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The playlist to which to add the song.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>id</name>
+                <documentation>The ID of the song to add to the playlist.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>add_idlist</name>
+            <documentation>Adds songs to the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist to which to add ids.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>collection</name>
+                <documentation>The idlist collection to be added to the playlist.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>add_collection</name>
+            <documentation>Adds the contents of a collection to the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist to which to add the collection.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>collection</name>
+                <documentation>The collection to be added to the playlist.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+
+            <argument>
+                <name>order</name>
+                <documentation>A list of medialib properties by which to sort the collection.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>remove_entry</name>
+            <documentation>Removes an entry from the given playlist.</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The playlist whose entry is to be removed.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>position</name>
+                <documentation>The position of the entry to remove.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>move_entry</name>
+            <documentation>Moves a playlist entry to a new position (absolute move).</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The playlist whose entry is to be moved.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>current_position</name>
+                <documentation>The current position of the entry to move.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>new_position</name>
+                <documentation>The new position of the entry to move.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>clear</name>
+            <documentation>Removes all songs from the given playlist.</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The playlist to clear.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>sort</name>
+            <documentation>Sorts the given playlist by the given properties.</documentation>
+
+            <argument>
+                <name>playlist</name>
+                <documentation>The playlist to sort.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>properties</name>
+                <documentation>The properties to sort on.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>list_entries</name>
+            <documentation>Lists the contents of the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist whose contents will be listed.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The IDs of the songs that make up the playlist.</documentation>
+
+                <type>
+                    <list>
+                        <int />
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>current_pos</name>
+            <documentation>Retrieves the current position in the playlist with the given name.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist for which to retrieve the current position.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>A dictionary containing the current position of the playlist and the name of the playlist.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>current_active</name>
+            <documentation>Retrieves the name of the currently active playlist.</documentation>
+
+            <return_value>
+                <documentation>The name of the currently active playlist.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>insert_url</name>
+            <documentation>Inserts an URL into the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist into which the URL is to be inserted.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>position</name>
+                <documentation>The playlist position to insert the URL.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>url</name>
+                <documentation>The URL to be inserted into the playlist.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>insert_id</name>
+            <documentation>Inserts a song into the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist into which the song is to be inserted.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>position</name>
+                <documentation>The playlist position to insert the song.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The medialib id of the song.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>insert_collection</name>
+            <documentation>Inserts the contents of a collection into the given playlist.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist into which the collection is to be inserted.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>position</name>
+                <documentation>The playlist position to insert the collection.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>collection</name>
+                <documentation>The collection to be inserted into the playlist.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+
+            <argument>
+                <name>order</name>
+                <documentation>A list of medialib properties on which to sort the collection.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>load</name>
+            <documentation>Loads the playlist with the given name.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist that will be loaded.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>radd</name>
+            <documentation>Adds a directory recursively to the playlist with the given name.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist that will be modified.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>url</name>
+                <documentation>The directory's URL.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>rinsert</name>
+            <documentation>Insert a directory recursively into the playlist with the given name at the given position.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the playlist that will be modified.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>position</name>
+                <documentation>The position at which to insert the directory.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>url</name>
+                <documentation>The directory's URL.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <broadcast>
+            <id>0</id>
+            <name>playlist_changed</name>
+            <documentation>This broadcast is triggered when the playlist changes.</documentation>
+
+            <return_value>
+                <documentation>A dictionary that describes the playlist that was changed.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>6</id>
+            <name>current_pos</name>
+            <documentation>This broadcast is triggered when the position in the playlist changes.</documentation>
+
+            <return_value>
+                <documentation>The currently played song's media ID.</documentation>
+
+                <type>
+                    <dictionary>
+                        <int />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>7</id>
+            <name>loaded</name>
+            <documentation>This broadcast is triggered when another playlist is loaded.</documentation>
+
+            <return_value>
+                <documentation>The loaded playlist's name.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <object>
+        <name>config</name>
+
+        <method>
+            <name>get_value</name>
+            <documentation>Retrieves the value of the config property with the given key.</documentation>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the config property to retrieve.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The value of the config property.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>set_value</name>
+            <documentation>Sets the value of the config property with the given key.</documentation>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the config property to set.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>value</name>
+                <documentation>The new value of the config property.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>register_value</name>
+            <documentation>Registers a new config property for the connected client.</documentation>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the new config property.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>value</name>
+                <documentation>The value of the new config property.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The full path of the config property that was registered.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>list_values</name>
+            <documentation>Retrieves the list of known config properties.</documentation>
+
+            <return_value>
+                <documentation>The list of known config properties.</documentation>
+
+                <type>
+                    <dictionary>
+                        <string />
+                    </dictionary>
+                </type>
+            </return_value>
+        </method>
+
+        <broadcast>
+            <id>1</id>
+            <name>value_changed</name>
+            <documentation>This broadcast is triggered when the value of any config property changes.</documentation>
+
+            <return_value>
+                <documentation>A dictionary that maps the key of the config property to the new value of the config property.</documentation>
+
+                <type>
+                    <dictionary>
+                        <string />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <!--
+    <object name="playback" type="client">
+        <prop name="status">
+            <readable />
+            <type>
+                <enum name="playback_status" />
+            </type>
+        </prop>
+
+        <method name="stop">
+            <return_value>
+                <type>
+                    <none />
+                </type>
+            </return_value>
+        </method>
+
+        <method name="start">
+            <return_value>
+                <type>
+                    <none />
+                </type>
+            </return_value>
+        </method>
+    </object>
+    -->
+
+    <object>
+        <name>playback</name>
+
+        <!--
+        <prop name="playtime">
+            <readable />
+            <type>
+                <int />
+            </type>
+        </prop>
+        -->
+
+        <method>
+            <name>start</name>
+            <documentation>Starts playback.</documentation>
+        </method>
+
+        <method>
+            <name>stop</name>
+            <documentation>Stops playback.</documentation>
+        </method>
+
+        <method>
+            <name>pause</name>
+            <documentation>Pauses playback.</documentation>
+        </method>
+
+        <method>
+            <name>tickle</name>
+            <documentation>Stops decoding of the current song. This will start decoding of the song set with the playlist_set_next command or the current song again if the playlist_set_next command wasn't executed.</documentation>
+        </method>
+
+        <method>
+            <name>playtime</name>
+            <documentation>Retrieves the current playtime.</documentation>
+
+            <return_value>
+                <documentation>The current playtime.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>seek_ms</name>
+            <documentation>Seeks to a position in the currently played song (given in milliseconds).</documentation>
+
+            <argument>
+                <name>offset_milliseconds</name>
+                <documentation>The position in the song in milliseconds.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>whence</name>
+                <documentation>Specifies how the absolute position in milliseconds is determined. If whence is XMMS_PLAYBACK_SEEK_SET, the argument is treated as an absolute value. If whence is XMMS_PLAYBACK_SEEK_CUR, the new position is computed by adding the argument to the current position.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>seek_samples</name>
+            <documentation>Seeks to a position in the currently played song (given in samples).</documentation>
+
+            <argument>
+                <name>offset_samples</name>
+                <documentation>The position in the song in samples.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>whence</name>
+                <documentation>Specifies how the absolute position in samples is determined. If whence is XMMS_PLAYBACK_SEEK_SET, the argument is treated as an absolute value. If whence is XMMS_PLAYBACK_SEEK_CUR, the new position is computed by adding the argument to the current position.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>status</name>
+            <documentation>Retrieves the current playback status.</documentation>
+
+            <return_value>
+                <documentation>The current playback status.</documentation>
+
+                <type>
+                    <!-- FIXME: link to enum playback_status -->
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>current_id</name>
+            <documentation>Retrieves the ID of the song that's currently being played.</documentation>
+
+            <return_value>
+                <documentation>The ID of the song that's currently being played.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>volume_set</name>
+            <documentation>Changes the volume for the given channel.</documentation>
+
+            <argument>
+                <name>channel</name>
+                <documentation>The name of the channel whose volume is set.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>volume</name>
+                <documentation>The new volume.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>volume_get</name>
+            <documentation>Retrieves the volume for all available channel.</documentation>
+
+            <return_value>
+                <documentation>A dictionary that maps the volume channels to the current playback volume.</documentation>
+
+                <type>
+                    <dictionary>
+                        <int />
+                    </dictionary>
+                </type>
+            </return_value>
+        </method>
+
+        <broadcast>
+            <id>2</id>
+            <name>status</name>
+            <documentation>This broadcast is triggered when the playback status changes.</documentation>
+
+            <return_value>
+                <documentation>The current playback status.</documentation>
+
+                <type>
+                    <!-- FIXME: link to enum playback_status -->
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>3</id>
+            <name>volume_changed</name>
+            <documentation>This broadcast is triggered when the playback volume changes.</documentation>
+
+            <return_value>
+                <documentation>A dictionary that maps the volume channels to the current playback volume.</documentation>
+
+                <type>
+                    <dictionary>
+                        <int />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>5</id>
+            <name>current_id</name>
+            <documentation>This broadcast is triggered when the played song's media ID changes.</documentation>
+
+            <return_value>
+                <documentation>The currently played song's media ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <signal>
+            <id>4</id>
+            <name>playtime</name>
+            <documentation>Emits the current playtime.</documentation>
+
+            <return_value>
+                <documentation>The current playtime.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </signal>
+    </object>
+
+    <object>
+        <name>medialib</name>
+
+        <method>
+            <name>get_info</name>
+            <documentation>Retrieves information about a medialib entry.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The ID of the medialib entry.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The information about the medialib entry.</documentation>
+
+                <type>
+                    <!-- get_info returns a dictionary of dictionaries
+                         of unknown values.
+                      -->
+                    <dictionary>
+                        <dictionary>
+                            <unknown />
+                        </dictionary>
+                    </dictionary>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>import_path</name>
+            <documentation>Adds a directory recursively to the medialib.</documentation>
+
+            <argument>
+                <name>directory</name>
+                <documentation>The directory to add to the medialib (given in URL encoding).</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>rehash</name>
+            <documentation>Rehashes the medialib. This will make sure that the data in the medialib is the same as the data in the files. </documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The ID of the song to rehash. If this is zero the whole medialib will be rehashed.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>get_id</name>
+            <documentation>Retrieves the medialib ID that belongs to the given URL.</documentation>
+
+            <argument>
+                <name>url</name>
+                <documentation>The URL to look for in the medialib.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The medialib ID associated with the URL.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>remove_entry</name>
+            <documentation>Removes an entry from the medialib.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The ID of the medialib entry to remove.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>set_property_string</name>
+            <documentation>Sets a medialib property to a string value.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The ID of the medialib entry to manipulate.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>source</name>
+                <documentation>The source which is to set the medialib property (e.g. plugin/id3v2).</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the property to write.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>value</name>
+                <documentation>The new value of the property.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>set_property_int</name>
+            <documentation>Sets a medialib property to an integer value.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The ID of the medialib entry to manipulate.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>source</name>
+                <documentation>The source which is to set the medialib property (e.g. plugin/id3v2).</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the property to write.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>value</name>
+                <documentation>The new value of the property.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>remove_property</name>
+            <documentation>Removes a propert from a medialib entry.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The ID of the medialib entry to manipulate.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>source</name>
+                <documentation>The source which is to set the medialib property (e.g. plugin/id3v2).</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>key</name>
+                <documentation>The key of the property to remove.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>move_entry</name>
+            <documentation>Updates the URL of a medialib entry that has been moved to a new location.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The ID of the medialib entry to move.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>url</name>
+                <documentation>The new URL of the medialib entry.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>add_entry</name>
+            <documentation>Add the given URL to the medialib.</documentation>
+
+            <argument>
+                <name>url</name>
+                <documentation>The URL to add to the medialib.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <broadcast>
+            <id>8</id>
+            <name>entry_added</name>
+            <documentation>This broadcast is triggered when an entry is added to the medialib.</documentation>
+
+            <return_value>
+                <documentation>The added entry's ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>9</id>
+            <name>entry_changed</name>
+            <documentation>This broadcast is triggered when the properties of a medialib entry are changed.</documentation>
+
+            <return_value>
+                <documentation>The changed entry's ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <object>
+        <name>collection</name>
+
+        <method>
+            <name>get</name>
+            <documentation>Retrieves the structure of a given collection.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the collection to retrieve.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace in which to look for the collection.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The collection structure if found, NULL otherwise.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>list</name>
+            <documentation>Lists the collections in the given namespace.</documentation>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace to list collections from.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The list of collection names.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>save</name>
+            <documentation>Save the given collection in the DAG under the given name in the given namespace.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name under which to save the collection.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace in which to save the collection.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>collection</name>
+                <documentation>The collection structure to save.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>remove</name>
+            <documentation>Remove the given collection from the DAG.</documentation>
+
+            <argument>
+                <name>name</name>
+                <documentation>The name of the collection to remove.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace where the collection to remove is.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>find</name>
+            <documentation>Find all collections in the given namespace that contain a given media.</documentation>
+
+            <argument>
+                <name>entry</name>
+                <documentation>The id of the media.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace in which to look for collections.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The list of collection names.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>rename</name>
+            <documentation>Rename a collection in the given namespace.</documentation>
+
+            <argument>
+                <name>original_name</name>
+                <documentation>The name of the collection to rename.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>new_name</name>
+                <documentation>The new name of the collection.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>name_space</name>
+                <documentation>The namespace to consider.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>query_ids</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>collection</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_start</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_len</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>order</name>
+                <documentation>The list of properties to order by.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The retrieved medialib entry ids.</documentation>
+
+                <type>
+                    <list>
+                        <int />
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>query_infos</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>collection</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_start</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_len</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>order</name>
+                <documentation>The list of properties to order by.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <argument>
+                <name>fetch</name>
+                <documentation>The list of properties to be retrieved (may not be empty).</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <argument>
+                <name>group</name>
+                <documentation>The list of properties to group by.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <list>
+                        <dictionary>
+                            <unknown />
+                        </dictionary>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>idlist_from_playlist</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>path</name>
+                <documentation>The URL of the playlist.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>sync</name>
+            <documentation>FIXME.</documentation>
+        </method>
+
+        <broadcast>
+            <id>10</id>
+            <name>changed</name>
+            <documentation>This broadcast is triggered when a collection is changed.</documentation>
+
+            <return_value>
+                <documentation>A dictionary that describes the collection that was changed.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <object>
+        <name>mediainfo_reader</name>
+
+        <broadcast>
+            <id>12</id>
+            <name>status</name>
+            <documentation>This broadcast is triggered when the status of the mediainfo reader changes.</documentation>
+
+            <return_value>
+                <documentation>The current status of the mediainfo reader.</documentation>
+
+                <type>
+                    <!-- FIXME: link to enum mediainfo_reader_status -->
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <signal>
+            <id>13</id>
+            <name>unindexed</name>
+            <documentation>Emits the number of unresolved medialib entries.</documentation>
+
+            <return_value>
+                <documentation>The number of unresolved medialib entries.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </signal>
+    </object>
+
+    <object>
+        <name>visualization</name>
+
+        <method>
+            <name>query_version</name>
+            <documentation>Retrieves the visualization version.</documentation>
+
+            <return_value>
+                <documentation>The visualization version.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>register</name>
+            <documentation>Registers a visualization client.</documentation>
+
+            <return_value>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>init_shm</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>shm_id</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The semaphore ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>init_udp</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The UDP port.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>set_property</name>
+            <documentation>Delivers one property.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>key</name>
+                <documentation>The property's key.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <argument>
+                <name>value</name>
+                <documentation>The property's value.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>set_properties</name>
+            <documentation>Delivers one or more properties.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>properties</name>
+                <documentation>The properties to set.</documentation>
+
+                <type>
+                    <dictionary>
+                        <string />
+                    </dictionary>
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>shutdown</name>
+            <documentation>Shuts down the visualization client.</documentation>
+
+            <argument>
+                <name>id</name>
+                <documentation>The visualization client ID.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+        </method>
+    </object>
+
+    <object>
+        <name>xform</name>
+
+        <method>
+            <name>browse</name>
+            <documentation>Retrieves a list of paths available (directly) under the given path.</documentation>
+
+            <argument>
+                <name>url</name>
+                <documentation>The path to browse.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The list of found paths.</documentation>
+
+                <type>
+                    <list>
+                        <dictionary>
+                            <unknown />
+                        </dictionary>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+    </object>
+
+    <object>
+        <name>bindata</name>
+
+        <method>
+            <name>retrieve</name>
+            <documentation>Retrieves a file from the server's bindata directory given the file's hash.</documentation>
+
+            <argument>
+                <name>hash</name>
+                <documentation>The file's hash.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The file's contents.</documentation>
+
+                <type>
+                    <binary />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>add</name>
+            <documentation>Adds binary data to the server's bindata directory.</documentation>
+
+            <argument>
+                <name>raw_data</name>
+                <documentation>The data to add.</documentation>
+
+                <type>
+                    <binary />
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>The data's hash.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </return_value>
+        </method>
+
+        <method>
+            <name>remove</name>
+            <documentation>Removes binary data from the server's bindata directory.</documentation>
+
+            <argument>
+                <name>hash</name>
+                <documentation>The data's hash.</documentation>
+
+                <type>
+                    <string />
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>list</name>
+            <documentation>Retrieves a list of binary data hashes from the server's bindata directory.</documentation>
+
+            <return_value>
+                <documentation>The available binary data hashes.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </return_value>
+        </method>
+    </object>
+</ipc>

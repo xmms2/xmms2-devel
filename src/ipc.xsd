@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- nxml -*- -->
+<!--
+vim:expandtab
+-->
+
+<!-- XML Schema for the XMMS2 IPC description file -->
+
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xmms="http://numbers.xmms.se/~tilman/ipc.xsd"
+    targetNamespace="http://numbers.xmms.se/~tilman/ipc.xsd"
+    elementFormDefault="qualified">
+
+    <!-- The root node -->
+    <xs:element name="ipc">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="object" type="xmms:object" minOccurs="1" maxOccurs="unbounded" />
+            </xs:sequence>
+
+            <!-- The 'version' attribute is mandatory -->
+            <xs:attribute name="version" type="xs:positiveInteger" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- An object (playlist, medialib, ...) -->
+    <xs:complexType name="object">
+        <xs:sequence>
+            <!-- Objects need a name -->
+            <xs:element name="name" type="xs:string"/>
+
+            <!-- Should this be mandatory? -->
+            <xs:element name="documentation" type="xs:string" minOccurs="0"/>
+
+            <!-- Objects have zero or more methods/broadcasts/signals -->
+            <xs:element name="method" type="xmms:method" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="broadcast" type="xmms:broadcast_or_signal" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="signal" type="xmms:broadcast_or_signal" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- An object's method -->
+    <xs:complexType name="method">
+        <xs:sequence>
+            <!-- Methods need a name -->
+            <xs:element name="name" type="xs:string"/>
+
+            <!-- Methods need documentation -->
+            <xs:element name="documentation" type="xs:string"/>
+
+            <!-- Methods have zero or more arguments -->
+            <xs:element name="argument" type="xmms:argument" minOccurs="0" maxOccurs="unbounded"/>
+
+            <!-- Methods may optionally have a return value -->
+            <xs:element name="return_value" type="xmms:return_value" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- An object's broadcast or signal -->
+    <xs:complexType name="broadcast_or_signal">
+        <xs:sequence>
+            <!-- Broadcasts need an unique ID -->
+            <xs:element name="id" type="xs:integer"/>
+
+            <!-- Broadcasts need a name -->
+            <xs:element name="name" type="xs:string"/>
+
+            <!-- Broadcasts need documentation -->
+            <xs:element name="documentation" type="xs:string"/>
+
+            <!-- Broadcasts need a return value -->
+            <xs:element name="return_value" type="xmms:return_value"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- A method's argument -->
+    <xs:complexType name="argument">
+        <xs:sequence>
+            <!-- Arguments need a name -->
+            <xs:element name="name" type="xs:string"/>
+
+            <!-- Arguments need documentation -->
+            <xs:element name="documentation" type="xs:string"/>
+
+            <!-- One type element is required -->
+            <xs:element name="type" type="xmms:argument_type" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- A method's return value -->
+    <xs:complexType name="return_value">
+        <xs:sequence>
+            <!-- Return values need documentation -->
+            <xs:element name="documentation" type="xs:string"/>
+
+            <!-- Exactly one type element is required -->
+            <xs:element name="type" type="xmms:return_value_type"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- The type of a method's argument -->
+    <xs:complexType name="argument_type">
+        <xs:choice>
+            <xs:element name="int" type="xmms:value_int"/>
+            <xs:element name="string" type="xmms:value_string"/>
+            <xs:element name="binary" type="xmms:value_binary"/>
+            <xs:element name="collection" type="xmms:value_collection"/>
+            <xs:element name="list" type="xmms:value_list"/>
+            <xs:element name="dictionary" type="xmms:value_dictionary"/>
+        </xs:choice>
+    </xs:complexType>
+
+    <!-- The type of a method's return value -->
+    <xs:complexType name="return_value_type">
+        <xs:choice>
+            <xs:element name="none" type="xmms:value_none"/>
+            <xs:element name="int" type="xmms:value_int"/>
+            <xs:element name="string" type="xmms:value_string"/>
+            <xs:element name="binary" type="xmms:value_binary"/>
+            <xs:element name="collection" type="xmms:value_collection"/>
+            <xs:element name="list" type="xmms:value_list"/>
+            <xs:element name="dictionary" type="xmms:value_dictionary"/>
+        </xs:choice>
+    </xs:complexType>
+
+    <!-- Corresponds to an unknown xmmsv -->
+    <xs:complexType name="value_unknown"/>
+
+    <!-- Corresponds to XMMSV_TYPE_NONE -->
+    <xs:complexType name="value_none"/>
+
+    <!-- Corresponds to XMMSV_TYPE_INT32 -->
+    <xs:complexType name="value_int"/>
+
+    <!-- Corresponds to XMMSV_TYPE_ISTRING -->
+    <xs:complexType name="value_string"/>
+
+    <!-- Corresponds to XMMSV_TYPE_COLL -->
+    <xs:complexType name="value_collection"/>
+
+    <!-- Corresponds to XMMSV_TYPE_BIN -->
+    <xs:complexType name="value_binary"/>
+
+    <!-- Corresponds to XMMSV_TYPE_LIST -->
+    <xs:complexType name="value_list">
+        <xs:choice>
+            <xs:element name="unknown" type="xmms:value_unknown"/>
+            <xs:element name="int" type="xmms:value_int"/>
+            <xs:element name="string" type="xmms:value_string"/>
+            <xs:element name="list" type="xmms:value_list"/>
+            <xs:element name="dictionary" type="xmms:value_dictionary"/>
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:complexType name="value_dictionary">
+        <xs:choice>
+            <xs:element name="unknown" type="xmms:value_unknown"/>
+            <xs:element name="int" type="xmms:value_int"/>
+            <xs:element name="string" type="xmms:value_string"/>
+            <xs:element name="list" type="xmms:value_list"/>
+            <xs:element name="dictionary" type="xmms:value_dictionary"/>
+        </xs:choice>
+    </xs:complexType>
+</xs:schema>
