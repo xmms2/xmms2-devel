@@ -18,7 +18,7 @@
 #define __SIGNAL_XMMS_H__
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 13
+#define XMMS_IPC_PROTOCOL_VERSION 14
 
 typedef enum {
 	XMMS_IPC_OBJECT_MAIN,
@@ -53,17 +53,34 @@ typedef enum {
 	XMMS_IPC_SIGNAL_END
 } xmms_ipc_signals_t;
 
-typedef enum {
-	/* Main */
-	XMMS_IPC_CMD_HELLO,
-	XMMS_IPC_CMD_QUIT,
-	XMMS_IPC_CMD_REPLY,
-	XMMS_IPC_CMD_ERROR,
-	XMMS_IPC_CMD_PLUGIN_LIST,
-	XMMS_IPC_CMD_STATS,
+/* Commands 0..31 are reserved for special stuff like marking
+ * a reply or an error.
+ */
+#define XMMS_IPC_CMD_FIRST 32
 
-	/* Playlist */
-	XMMS_IPC_CMD_SHUFFLE,
+/* Special "commands" (0..31) */
+typedef enum {
+	XMMS_IPC_CMD_REPLY,
+	XMMS_IPC_CMD_ERROR
+} xmms_ipc_pseudo_commands;
+
+/* Signal subsystem methods */
+typedef enum {
+	XMMS_IPC_CMD_SIGNAL = XMMS_IPC_CMD_FIRST,
+	XMMS_IPC_CMD_BROADCAST
+} xmms_ipc_signal_cmds_t;
+
+/* Main methods */
+typedef enum {
+	XMMS_IPC_CMD_HELLO = XMMS_IPC_CMD_FIRST,
+	XMMS_IPC_CMD_QUIT,
+	XMMS_IPC_CMD_PLUGIN_LIST,
+	XMMS_IPC_CMD_STATS
+} xmms_ipc_main_cmds_t;
+
+/* Playlist methods */
+typedef enum {
+	XMMS_IPC_CMD_SHUFFLE = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_SET_POS,
 	XMMS_IPC_CMD_SET_POS_REL,
 	XMMS_IPC_CMD_ADD_URL,
@@ -82,16 +99,20 @@ typedef enum {
 	XMMS_IPC_CMD_INSERT_COLL,
 	XMMS_IPC_CMD_LOAD,
 	XMMS_IPC_CMD_RADD,
-	XMMS_IPC_CMD_RINSERT,
+	XMMS_IPC_CMD_RINSERT
+} xmms_ipc_playlist_cmds_t;
 
-	/* Config */
-	XMMS_IPC_CMD_GETVALUE,
+/* Config methods */
+typedef enum {
+	XMMS_IPC_CMD_GETVALUE = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_SETVALUE,
 	XMMS_IPC_CMD_REGVALUE,
-	XMMS_IPC_CMD_LISTVALUES,
+	XMMS_IPC_CMD_LISTVALUES
+} xmms_ipc_config_cmds_t;
 
-	/* output */
-	XMMS_IPC_CMD_START,
+/* output methods */
+typedef enum {
+	XMMS_IPC_CMD_START = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_STOP,
 	XMMS_IPC_CMD_PAUSE,
 	XMMS_IPC_CMD_DECODER_KILL,
@@ -103,10 +124,12 @@ typedef enum {
 	XMMS_IPC_CMD_OUTPUT_STATUS,
 	XMMS_IPC_CMD_CURRENTID,
 	XMMS_IPC_CMD_VOLUME_SET,
-	XMMS_IPC_CMD_VOLUME_GET,
+	XMMS_IPC_CMD_VOLUME_GET
+} xmms_ipc_output_cmds_t;
 
-	/* Medialib */
-	XMMS_IPC_CMD_INFO,
+/* Medialib methods */
+typedef enum {
+	XMMS_IPC_CMD_INFO = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_PATH_IMPORT,
 	XMMS_IPC_CMD_REHASH,
 	XMMS_IPC_CMD_GET_ID,
@@ -114,10 +137,12 @@ typedef enum {
 	XMMS_IPC_CMD_PROPERTY_SET_STR,
 	XMMS_IPC_CMD_PROPERTY_SET_INT,
 	XMMS_IPC_CMD_PROPERTY_REMOVE,
-	XMMS_IPC_CMD_MOVE_URL,
+	XMMS_IPC_CMD_MOVE_URL
+} xmms_ipc_medialib_cmds_t;
 
-	/* Collection */
-	XMMS_IPC_CMD_COLLECTION_GET,
+/* Collection methods */
+typedef enum {
+	XMMS_IPC_CMD_COLLECTION_GET = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_COLLECTION_LIST,
 	XMMS_IPC_CMD_COLLECTION_SAVE,
 	XMMS_IPC_CMD_COLLECTION_REMOVE,
@@ -126,33 +151,32 @@ typedef enum {
 	XMMS_IPC_CMD_QUERY_IDS,
 	XMMS_IPC_CMD_QUERY_INFOS,
 	XMMS_IPC_CMD_IDLIST_FROM_PLS,
-	XMMS_IPC_CMD_COLLECTION_SYNC,
+	XMMS_IPC_CMD_COLLECTION_SYNC
+} xmms_ipc_collection_cmds_t;
 
-	/* Signal subsystem */
-	XMMS_IPC_CMD_SIGNAL,
-	XMMS_IPC_CMD_BROADCAST,
-
-	/* xform object */
-	XMMS_IPC_CMD_BROWSE,
-
-	/* bindata object */
-	XMMS_IPC_CMD_GET_DATA,
+/* bindata methods */
+typedef enum {
+	XMMS_IPC_CMD_GET_DATA = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_ADD_DATA,
 	XMMS_IPC_CMD_REMOVE_DATA,
-	XMMS_IPC_CMD_LIST_DATA,
+	XMMS_IPC_CMD_LIST_DATA
+} xmms_ipc_bindata_cmds_t;
 
-	/* visualization */
-	XMMS_IPC_CMD_VISUALIZATION_QUERY_VERSION,
+/* visualization methods */
+typedef enum {
+	XMMS_IPC_CMD_VISUALIZATION_QUERY_VERSION = XMMS_IPC_CMD_FIRST,
 	XMMS_IPC_CMD_VISUALIZATION_REGISTER,
 	XMMS_IPC_CMD_VISUALIZATION_INIT_SHM,
 	XMMS_IPC_CMD_VISUALIZATION_INIT_UDP,
 	XMMS_IPC_CMD_VISUALIZATION_PROPERTY,
 	XMMS_IPC_CMD_VISUALIZATION_PROPERTIES,
-	XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN,
+	XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN
+} xmms_ipc_visualization_cmds_t;
 
-	/* end */
-	XMMS_IPC_CMD_END
-} xmms_ipc_cmds_t;
+/* xform methods */
+typedef enum {
+	XMMS_IPC_CMD_BROWSE = XMMS_IPC_CMD_FIRST,
+} xmms_ipc_xform_cmds_t;
 
 typedef enum {
 	XMMS_PLAYLIST_CHANGED_ADD,

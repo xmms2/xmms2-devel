@@ -178,11 +178,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		return;
 	}
 
-	if (cmdid >= XMMS_IPC_CMD_END) {
-		xmms_log_error ("Bad command id (%d)", cmdid);
-		return;
-	}
-
 	if (object->cmds)
 		cmd = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
 
