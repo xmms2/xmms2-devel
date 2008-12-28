@@ -58,8 +58,6 @@ uint32_t xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v);
 uint32_t xmms_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v);
 uint32_t xmms_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v);
 
-void xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg, uint32_t offset, uint32_t v);
-
 bool xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
 bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);
 bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);

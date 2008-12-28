@@ -49,6 +49,7 @@ struct xmms_ipc_msg_St {
 	uint32_t xfered;
 };
 
+static void xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg, uint32_t offset, uint32_t v);
 
 static void
 xmms_ipc_append_coll_attr (const char* key, const char* value, void *userdata) {
@@ -342,7 +343,7 @@ xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
-void
+static void
 xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg,
                            uint32_t offset, uint32_t v)
 {
