@@ -52,10 +52,11 @@ disconnected (void *data)
 	exit (0);
 }
 
-static void
-handle_quit (xmmsc_result_t *res, void *data)
+static int
+handle_quit (xmmsv_t *val, void *data)
 {
 	g_main_loop_quit ((GMainLoop *) data);
+	return 0;
 }
 
 static void
