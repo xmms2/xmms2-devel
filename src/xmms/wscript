@@ -97,7 +97,11 @@ def configure(conf):
         else:
             conf.env['statfs_impl'] = 'linux'
     elif conf.check(header_name='sys/param.h'):
-        conf.env['statfs_impl'] = 'bsd'
+        statfs_fragment = "#include <sys/param.h> \n#include <sys/mount.h> \nint main() { struct statfs foo; return 0; }\n"
+        if not conf.check_cc(fragment=statfs_fragment, uselib_store="statfs", msg="Checking for struct statfs"):
+            conf.env['statfs_impl'] = 'netbsd'
+        else:
+            conf.env['statfs_impl'] = 'bsd'
     else:
         conf.env['statfs_impl'] = 'dummy'
 
