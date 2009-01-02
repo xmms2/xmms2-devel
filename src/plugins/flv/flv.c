@@ -90,7 +90,7 @@ get_be24 (guint8 *b)
 
 XMMS_XFORM_PLUGIN ("flv", "FLV demuxer", XMMS_VERSION,
                    "Extracts an audio stream from an FLV",
-		   xmms_flv_setup)
+                   xmms_flv_setup)
 
 static gboolean
 xmms_flv_setup (xmms_xform_plugin_t *xform)
@@ -138,7 +138,7 @@ xmms_flv_init (xmms_xform_t *xform)
 	/* there might be something between the header and
 	 * tag body eventually
 	 */
-	while(dataoffset) {
+	while (dataoffset) {
 		readret = xmms_xform_read (xform, header,
 		                           (dataoffset < FLV_HDR_SIZE)?
 		                           dataoffset : FLV_HDR_SIZE, &err);
@@ -315,7 +315,7 @@ next_audio_tag (xmms_xform_t *xform)
 				break;
 			} else if (ret == -1) {
 				xmms_log_error ("%s",
-				                xmms_error_message_get(&err));
+				                xmms_error_message_get (&err));
 				break;
 			}
 
