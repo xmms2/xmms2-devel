@@ -1,8 +1,8 @@
 from waftools.plugin import plugin
-import Options
+import Options, sys
 
 def plugin_configure(conf):
-    if [x for x in ("netbsd", "openbsd") if Options.platform.startswith(x)]:
+    if [x for x in ("netbsd", "openbsd") if sys.platform.startswith(x)]:
         return True
     return False
 
