@@ -148,19 +148,6 @@ xmms_medialib_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
 
-static void
-xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
-                            gpointer userdata)
-{
-	/*gboolean c;
-	xmms_medialib_t *mlib = userdata;
-	g_mutex_lock (mlib->mutex);
-	xmms_sqlite_close (mlib->sql);
-	medialib->sql = xmms_sqlite_open (&medialib->nextid, &c);
-	g_mutex_unlock (mlib->mutex);*/
-}
-
-
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
@@ -346,9 +333,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 
 	path = XMMS_BUILD_PATH ("medialib.db");
 
-	xmms_config_property_register ("medialib.path",
-	                               path,
-	                               xmms_medialib_path_changed, medialib);
+	xmms_config_property_register ("medialib.path", path, NULL, NULL);
 	xmms_config_property_register ("medialib.analyze_on_startup", "0", NULL, NULL);
 	xmms_config_property_register ("medialib.allow_remote_fs",
 	                               "0", NULL, NULL);
