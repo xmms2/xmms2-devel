@@ -141,7 +141,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_convert_and_kill_list
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_convert_and_kill_string
 #define __XMMS_CMD_DO_RETVAL_COLL() arg->retval = xmmsv_new_coll
-#define __XMMS_CMD_DO_RETVAL_BIN() arg->retval = xmms_convert_and_kill_bin
+#define __XMMS_CMD_DO_RETVAL_BIN() arg->retval =
 
 #define XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5, argtype6) static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \
