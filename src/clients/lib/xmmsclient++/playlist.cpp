@@ -126,6 +126,17 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
+	VoidResult Playlist::addIdlist( const Coll::Coll& idlist,
+	                                const std::string& playlist ) const
+	{
+		xmmsc_result_t* res =
+		    call( connected_,
+		          boost::bind( xmmsc_playlist_add_idlist, conn_,
+		                       playlist.c_str(),
+		                       dynamic_cast<const Coll::Idlist&>(idlist).getColl() ) );
+		return VoidResult( res, ml_ );
+	}
+
 	VoidResult Playlist::addCollection( const Coll::Coll& collection,
 	                                    const std::list< std::string >& order,
 	                                    const std::string& playlist ) const

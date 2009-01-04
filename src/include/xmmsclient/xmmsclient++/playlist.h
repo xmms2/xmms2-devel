@@ -195,6 +195,23 @@ namespace Xmms
 			VoidResult addId( const unsigned int id,
 			                  const std::string& playlist = DEFAULT_PLAYLIST ) const;
 
+			/** Add an idlist to a playlist.
+			 *
+			 *  @param idlist an ID list
+			 *  @param playlist the playlist to modify (if omitted,
+			 *                  act on the current playlist)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 *  @throw std::bad_cast If idlist is not a valid const Coll::Idlist&.
+			 */
+			VoidResult addIdlist( const Coll::Coll& idlist,
+			                      const std::string& playlist = DEFAULT_PLAYLIST ) const;
+
 			/**	Add the content of the given collection to a playlist.
 			 *  The list of ordering properties defines how the set of
 			 *  matching media is added.
