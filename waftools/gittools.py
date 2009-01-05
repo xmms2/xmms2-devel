@@ -9,14 +9,14 @@ def gitsha(path):
     return h.hexdigest()
 
 def git_info():
-    commithash = os.popen('git-rev-parse --verify HEAD 2>/dev/null').read().strip()
+    commithash = os.popen('git rev-parse --verify HEAD 2>/dev/null').read().strip()
     if not commithash:
         raise ValueError("Couldn't get hash")
     if os.getuid() == os.stat(".git/index").st_uid:
-        os.system('git-update-index --refresh >/dev/null')
+        os.system('git update-index --refresh >/dev/null')
     else:
         print "NOT updating git cache, local changes might not be detected"
-    changed = bool(os.popen('git-diff-index -r HEAD').read())
+    changed = bool(os.popen('git diff-index -r HEAD').read())
     return commithash[:8], changed
 
 def snapshot_info():
