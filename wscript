@@ -365,7 +365,16 @@ def configure(conf):
         conf.check_cc(header_name="windows.h", uselib="socket", mandatory=1)
         conf.check_cc(header_name="ws2tcpip.h", uselib="socket", mandatory=1)
         conf.check_cc(header_name="winsock2.h", uselib="socket", mandatory=1)
-        if not conf.check_cc(header_name="wspiapi.h", fragment="#include <ws2tcpip.h>\n#include <wspiapi.h>\nint main() {return 0;}", uselib="socket", mandatory=need_wspiapi):
+        code = """
+            #include <ws2tcpip.h>
+            #include <wspiapi.h>
+
+            int main() {
+                return 0;
+            }
+        """
+        if not conf.check_cc(header_name="wspiapi.h", fragment=code,
+                             uselib="socket", mandatory=need_wspiapi):
             warning('This XMMS2 will only run on Windows XP and newer ' +
                     'machines. If you are planning to use XMMS2 on older ' +
                     'versions of Windows or are packaging a binary, please ' +
