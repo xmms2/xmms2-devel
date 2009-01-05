@@ -152,7 +152,7 @@ def _configure_optionals(conf):
 
     if optionals_must_work and failed_optionals:
         fatal("The following required optional(s) failed to configure: "
-                     "%s" % ', '.join(failed_optionals))
+              "%s" % ', '.join(failed_optionals))
         raise SystemExit
 
     disabled_optionals = set(all_optionals)
@@ -200,8 +200,8 @@ def _configure_plugins(conf):
     for plugin in selected_plugins:
         conf.sub_config("src/plugins/%s" % plugin)
         if (not conf.env["XMMS_PLUGINS_ENABLED"] or
-                (len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0
-                 and conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin)):
+            (len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0 and
+            conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin)):
             disabled_plugins.add(plugin)
 
     # If something failed and we don't tolerate failure...
@@ -209,7 +209,7 @@ def _configure_plugins(conf):
         broken_plugins = selected_plugins.intersection(disabled_plugins)
         if broken_plugins:
             fatal("The following required plugin(s) failed to configure: "
-                                     "%s" % ', '.join(broken_plugins))
+                  "%s" % ', '.join(broken_plugins))
             raise SystemExit
 
     return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
@@ -330,7 +330,7 @@ def configure(conf):
     conf.check_message("platform code for", os.name, has_platform_support)
     if not has_platform_support:
         fatal("xmms2 only has platform support for Windows "
-                     "and POSIX operating systems.")
+              "and POSIX operating systems.")
         raise SystemExit
 
     # Check sunOS socket support
