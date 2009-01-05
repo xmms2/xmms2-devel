@@ -194,7 +194,7 @@ load_config ()
  * @param userdata The #xmms_main_t object
  */
 static void
-change_output (xmms_object_t *object, gconstpointer _data, gpointer userdata)
+change_output (xmms_object_t *object, xmmsv_t *_data, gpointer userdata)
 {
 	xmms_output_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;

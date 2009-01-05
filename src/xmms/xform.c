@@ -1638,7 +1638,7 @@ xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
 }
 
 static void
-update_effect_properties (xmms_object_t *object, gconstpointer _data,
+update_effect_properties (xmms_object_t *object, xmmsv_t *data,
                           gpointer userdata)
 {
 	gint effect_no = GPOINTER_TO_INT (userdata);

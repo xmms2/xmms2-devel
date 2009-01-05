@@ -50,8 +50,7 @@ typedef struct {
 static gboolean xmms_karaoke_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_karaoke_init (xmms_xform_t *xform);
 static void xmms_karaoke_destroy (xmms_xform_t *xform);
-static void xmms_karaoke_config_changed (xmms_object_t *object, gconstpointer data,
-                                         gpointer userdata);
+static void xmms_karaoke_config_changed (xmms_object_t *object, xmmsv_t *d, gpointer userdata);
 static gint xmms_karaoke_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                                xmms_error_t *err);
 static gint64 xmms_karaoke_seek (xmms_xform_t *xform, gint64 offset,
@@ -178,8 +177,7 @@ xmms_karaoke_destroy (xmms_xform_t *xform)
 }
 
 static void
-xmms_karaoke_config_changed (xmms_object_t *object, gconstpointer _data,
-                             gpointer userdata)
+xmms_karaoke_config_changed (xmms_object_t *object, xmmsv_t *_val, gpointer userdata)
 {
 	xmms_config_property_t *val;
 	xmms_karaoke_data_t *data;

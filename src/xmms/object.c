@@ -193,7 +193,7 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
   */
 
 void
-xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
+xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data)
 {
 	GList *list, *node, *list2 = NULL;
 	xmms_object_handler_entry_t *entry;
@@ -255,39 +255,37 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
                     xmmsv_type_t type, ...)
 {
 	va_list ap;
-	xmms_object_cmd_arg_t arg;
-
-	xmms_object_cmd_arg_init (&arg);
+	xmmsv_t *arg;
 
 	va_start (ap, type);
 
 	switch (type) {
 		case XMMSV_TYPE_ERROR:
-			arg.retval = xmmsv_new_error (va_arg (ap, gchar *));
+			arg = xmmsv_new_error (va_arg (ap, gchar *));
 			break;
 		case XMMSV_TYPE_UINT32:
-			arg.retval = xmmsv_new_uint (va_arg (ap, guint32));
+			arg = xmmsv_new_uint (va_arg (ap, guint32));
 			break;
 		case XMMSV_TYPE_INT32:
-			arg.retval = xmmsv_new_int (va_arg (ap, gint32));
+			arg = xmmsv_new_int (va_arg (ap, gint32));
 			break;
 		case XMMSV_TYPE_STRING:
-			arg.retval = xmmsv_new_string (va_arg (ap, gchar *));
+			arg = xmmsv_new_string (va_arg (ap, gchar *));
 			break;
 		case XMMSV_TYPE_BIN:
-			arg.retval = xmms_create_xmmsv_bin (va_arg (ap, GString *));
+			arg = xmms_create_xmmsv_bin (va_arg (ap, GString *));
 			break;
 		case XMMSV_TYPE_DICT:
-			arg.retval = xmms_create_xmmsv_dict (va_arg (ap, GTree *));
+			arg = xmms_create_xmmsv_dict (va_arg (ap, GTree *));
 			break;
 		case XMMSV_TYPE_LIST:
-			arg.retval = xmms_create_xmmsv_list (va_arg (ap, GList *));
+			arg = xmms_create_xmmsv_list (va_arg (ap, GList *));
 			break;
 		case XMMSV_TYPE_COLL:
-			arg.retval = xmmsv_new_coll (va_arg (ap, xmmsv_coll_t *));
+			arg = xmmsv_new_coll (va_arg (ap, xmmsv_coll_t *));
 			break;
 		case XMMSV_TYPE_NONE:
-			arg.retval = xmmsv_new_none ();
+			arg = xmmsv_new_none ();
 			break;
 		case XMMSV_TYPE_END:
 		default:
@@ -297,7 +295,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	}
 	va_end (ap);
 
-	xmms_object_emit (object, signalid, &arg);
+	xmms_object_emit (object, signalid, arg);
 
 	/* In all cases above, we created a new xmmsv_t, which we
 	 * now destroy.
@@ -307,7 +305,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	 * don't hold onto those GLib objects, so unreffing the
 	 * xmmsv_t doesn't kill the GLib object.
 	 */
-	xmmsv_unref (arg.retval);
+	xmmsv_unref (arg);
 }
 
 static gint

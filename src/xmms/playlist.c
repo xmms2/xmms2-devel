@@ -127,7 +127,7 @@ struct xmms_playlist_St {
 
 
 static void
-on_playlist_r_all_changed (xmms_object_t *object, gconstpointer _data,
+on_playlist_r_all_changed (xmms_object_t *object, xmmsv_t *_data,
                            gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
@@ -141,7 +141,7 @@ on_playlist_r_all_changed (xmms_object_t *object, gconstpointer _data,
 }
 
 static void
-on_playlist_r_one_changed (xmms_object_t *object, gconstpointer _data,
+on_playlist_r_one_changed (xmms_object_t *object, xmmsv_t *_data,
                            gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
@@ -187,24 +187,21 @@ on_playlist_updated (xmms_object_t *object, const gchar *plname)
 }
 
 static void
-on_playlist_updated_pos (xmms_object_t *object, gconstpointer data,
-                         gpointer udata)
+on_playlist_updated_pos (xmms_object_t *object, xmmsv_t *val, gpointer udata)
 {
 	XMMS_DBG ("PLAYLIST: updated pos!");
 	on_playlist_updated (object, XMMS_ACTIVE_PLAYLIST);
 }
 
 static void
-on_playlist_updated_chg (xmms_object_t *object, gconstpointer data,
-                         gpointer udata)
+on_playlist_updated_chg (xmms_object_t *object, xmmsv_t *val, gpointer udata)
 {
 	const gchar *plname = NULL;
 	xmmsv_t *pl_val;
-	xmms_object_cmd_arg_t *val = (xmms_object_cmd_arg_t*)data;
 
 	XMMS_DBG ("PLAYLIST: updated chg!");
 
-	xmmsv_dict_get (val->retval, "name", &pl_val);
+	xmmsv_dict_get (val, "name", &pl_val);
 	if (pl_val != NULL) {
 		xmmsv_get_string (pl_val, &plname);
 	} else {

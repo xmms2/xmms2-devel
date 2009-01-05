@@ -64,7 +64,7 @@ gboolean check_string_list (xmmsv_t *list);
 
 /** @} */
 
-typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
+typedef void (*xmms_object_handler_t) (xmms_object_t *object, xmmsv_t *data, gpointer userdata);
 
 #define XMMS_OBJECT_CMD_MAX_ARGS 6
 typedef struct {
@@ -94,8 +94,7 @@ void xmms_object_connect (xmms_object_t *object, guint32 signalid,
 void xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 			     xmms_object_handler_t handler, gpointer userdata);
 
-void xmms_object_emit (xmms_object_t *object, guint32 signalid,
-		       gconstpointer data);
+void xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data);
 
 void xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			 xmmsv_type_t type, ...);

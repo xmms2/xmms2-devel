@@ -45,8 +45,7 @@ static size_t xmms_lastfmeta_now_playing_callback (void *ptr, size_t size,
 static gboolean xmms_lastfm_control (xmms_xform_t *xform, const gchar *cmd);
 static size_t xmms_lastfm_feed_buffer (void *ptr, size_t size,
                                        size_t nmemb, void *udata);
-static void xmms_lastfm_config_changed (xmms_object_t * object,
-                                        gconstpointer data, gpointer udata);
+static void xmms_lastfm_config_changed (xmms_object_t * object, xmmsv_t *data, gpointer udata);
 static gchar *xmms_lastfm_memstr (const gchar *haystack, gint haystack_len,
                                   const gchar *needle);
 
@@ -169,8 +168,7 @@ xmms_lastfmeta_destroy (xmms_xform_t *xform)
 
 
 static void
-xmms_lastfm_config_changed (xmms_object_t * object, gconstpointer _data,
-                            gpointer udata)
+xmms_lastfm_config_changed (xmms_object_t * object, xmmsv_t *_data, gpointer udata)
 {
 	xmms_config_property_t *val;
 	xmms_xform_t *xform;

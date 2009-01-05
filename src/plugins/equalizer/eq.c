@@ -33,10 +33,9 @@ static gint xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                           xmms_error_t *error);
 static gint64 xmms_eq_seek (xmms_xform_t *xform, gint64 offset,
                             xmms_xform_seek_mode_t whence, xmms_error_t *err);
-static void xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
+static void xmms_eq_gain_changed (xmms_object_t *object, xmmsv_t *_data,
                                   gpointer userdata);
-static void xmms_eq_config_changed (xmms_object_t *object, gconstpointer data,
-                                    gpointer userdata);
+static void xmms_eq_config_changed (xmms_object_t *object, xmmsv_t *data, gpointer userdata);
 static gfloat xmms_eq_gain_scale (gfloat gain, gboolean preamp);
 
 typedef struct xmms_equalizer_priv_St {
@@ -294,7 +293,7 @@ xmms_eq_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence,
 }
 
 static void
-xmms_eq_gain_changed (xmms_object_t *object, gconstpointer _data,
+xmms_eq_gain_changed (xmms_object_t *object, xmmsv_t *_data,
                       gpointer userdata)
 {
 	xmms_config_property_t *val;
@@ -354,8 +353,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer _data,
 }
 
 static void
-xmms_eq_config_changed (xmms_object_t * object, gconstpointer _data,
-                        gpointer userdata)
+xmms_eq_config_changed (xmms_object_t * object, xmmsv_t *_data, gpointer userdata)
 {
 	xmms_config_property_t *val;
 	xmms_equalizer_data_t *priv;

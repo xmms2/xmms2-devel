@@ -69,9 +69,7 @@ static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf,
 static gint64 xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
                                     xmms_xform_seek_mode_t whence,
                                     xmms_error_t *error);
-static void xmms_replaygain_config_changed (xmms_object_t *obj,
-                                            gconstpointer value,
-                                            gpointer udata);
+static void xmms_replaygain_config_changed (xmms_object_t *obj, xmmsv_t *_val, gpointer udata);
 
 static void compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data);
 static xmms_replaygain_mode_t parse_mode (const char *s);
@@ -278,8 +276,7 @@ xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
 }
 
 static void
-xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer _data,
-                                gpointer udata)
+xmms_replaygain_config_changed (xmms_object_t *obj, xmmsv_t *_val, gpointer udata)
 {
 	const gchar *name;
 	xmms_xform_t *xform = udata;

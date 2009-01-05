@@ -51,8 +51,7 @@ typedef struct {
 static gboolean xmms_vocoder_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_vocoder_init (xmms_xform_t *xform);
 static void xmms_vocoder_destroy (xmms_xform_t *xform);
-static void xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer data,
-                                         gpointer userdata);
+static void xmms_vocoder_config_changed (xmms_object_t *object, xmmsv_t *_data, gpointer userdata);
 static gint xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                                xmms_error_t *err);
 static gint64 xmms_vocoder_seek (xmms_xform_t *xform, gint64 offset,
@@ -195,8 +194,7 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 }
 
 static void
-xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer _objdata,
-                             gpointer userdata)
+xmms_vocoder_config_changed (xmms_object_t *object, xmmsv_t *_data, gpointer userdata)
 {
 	xmms_config_property_t *val;
 	xmms_vocoder_data_t *data;

@@ -413,7 +413,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
  * Gets called when the config property "core.ipcsocket" has changed.
  */
 void
-on_config_ipcsocket_change (xmms_object_t *object, gconstpointer _data, gpointer udata)
+on_config_ipcsocket_change (xmms_object_t *object, xmmsv_t *_data, gpointer udata)
 {
 	const gchar *value;
 
@@ -546,7 +546,7 @@ xmms_ipc_has_pending (guint signalid)
 }
 
 static void
-xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
+xmms_ipc_signal_cb (xmms_object_t *object, xmmsv_t *arg, gpointer userdata)
 {
 	GList *c, *s;
 	guint signalid = GPOINTER_TO_UINT (userdata);
@@ -564,7 +564,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 			if (cli->pendingsignals[signalid]) {
 				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 				xmms_ipc_msg_set_cookie (msg, cli->pendingsignals[signalid]);
-				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
+				xmms_ipc_handle_cmd_value (msg, arg);
 				xmms_ipc_client_msg_write (cli, msg);
 				cli->pendingsignals[signalid] = 0;
 			}
@@ -578,7 +578,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 }
 
 static void
-xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
+xmms_ipc_broadcast_cb (xmms_object_t *object, xmmsv_t *arg, gpointer userdata)
 {
 	GList *c, *s;
 	guint broadcastid = GPOINTER_TO_UINT (userdata);
@@ -598,7 +598,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 			for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
 				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
 				xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
-				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
+				xmms_ipc_handle_cmd_value (msg, arg);
 				xmms_ipc_client_msg_write (cli, msg);
 			}
 			g_mutex_unlock (cli->lock);
