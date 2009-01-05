@@ -169,7 +169,7 @@ xmms_lastfmeta_destroy (xmms_xform_t *xform)
 
 
 static void
-xmms_lastfm_config_changed (xmms_object_t * object, gconstpointer data,
+xmms_lastfm_config_changed (xmms_object_t * object, gconstpointer _data,
                             gpointer udata)
 {
 	xmms_config_property_t *val;

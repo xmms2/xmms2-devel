@@ -127,26 +127,30 @@ struct xmms_playlist_St {
 
 
 static void
-on_playlist_r_all_changed (xmms_object_t *object, gconstpointer data,
+on_playlist_r_all_changed (xmms_object_t *object, gconstpointer _data,
                            gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
+	gint value;
+
+	value = xmms_config_property_get_int ((xmms_config_property_t *) object);
 
 	g_mutex_lock (playlist->mutex);
-	if (data)
-		playlist->repeat_all = atoi ((gchar *)data);
+	playlist->repeat_all = !!value;
 	g_mutex_unlock (playlist->mutex);
 }
 
 static void
-on_playlist_r_one_changed (xmms_object_t *object, gconstpointer data,
+on_playlist_r_one_changed (xmms_object_t *object, gconstpointer _data,
                            gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
+	gint value;
+
+	value = xmms_config_property_get_int ((xmms_config_property_t *) object);
 
 	g_mutex_lock (playlist->mutex);
-	if (data)
-		playlist->repeat_one = atoi ((gchar *)data);
+	playlist->repeat_one = !!value;
 	g_mutex_unlock (playlist->mutex);
 }
 

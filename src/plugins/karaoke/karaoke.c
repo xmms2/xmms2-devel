@@ -178,7 +178,7 @@ xmms_karaoke_destroy (xmms_xform_t *xform)
 }
 
 static void
-xmms_karaoke_config_changed (xmms_object_t *object, gconstpointer objdata,
+xmms_karaoke_config_changed (xmms_object_t *object, gconstpointer _data,
                              gpointer userdata)
 {
 	xmms_config_property_t *val;

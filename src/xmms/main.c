@@ -194,14 +194,16 @@ load_config ()
  * @param userdata The #xmms_main_t object
  */
 static void
-change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
+change_output (xmms_object_t *object, gconstpointer _data, gpointer userdata)
 {
 	xmms_output_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
-	gchar *outname = (gchar *) data;
+	const gchar *outname;
 
 	if (!mainobj->output)
 		return;
+
+	outname = xmms_config_property_get_string ((xmms_config_property_t *) object);
 
 	xmms_log_info ("Switching to output %s", outname);
 

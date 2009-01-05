@@ -278,18 +278,20 @@ xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
 }
 
 static void
-xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
+xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer _data,
                                 gpointer udata)
 {
 	const gchar *name;
 	xmms_xform_t *xform = udata;
 	xmms_replaygain_data_t *data;
 	gboolean dirty = FALSE;
+	const char *value;
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
 	name = xmms_config_property_get_name ((xmms_config_property_t *) obj);
+	value = xmms_config_property_get_string ((xmms_config_property_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "replaygain.mode")) {
 		data->mode = parse_mode (value);

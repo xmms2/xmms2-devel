@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_config.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 
@@ -412,11 +413,15 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
  * Gets called when the config property "core.ipcsocket" has changed.
  */
 void
-on_config_ipcsocket_change (xmms_object_t *object, gconstpointer data, gpointer udata)
+on_config_ipcsocket_change (xmms_object_t *object, gconstpointer _data, gpointer udata)
 {
-	xmms_ipc_shutdown ();
+	const gchar *value;
+
 	XMMS_DBG ("Shutting down ipc server threads through config property \"core.ipcsocket\" change.");
-	xmms_ipc_setup_server ((gchar *)data);
+
+	xmms_ipc_shutdown ();
+	value = xmms_config_property_get_string ((xmms_config_property_t *) object);
+	xmms_ipc_setup_server (value);
 }
 
 /**

@@ -1638,16 +1638,18 @@ xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
 }
 
 static void
-update_effect_properties (xmms_object_t *object, gconstpointer data,
+update_effect_properties (xmms_object_t *object, gconstpointer _data,
                           gpointer userdata)
 {
 	gint effect_no = GPOINTER_TO_INT (userdata);
-	const gchar *name = (gchar *)data;
+	const gchar *name;
 
 	xmms_config_property_t *cfg;
 	xmms_xform_plugin_t *xform_plugin;
 	xmms_plugin_t *plugin;
 	gchar key[64];
+
+	name = xmms_config_property_get_string ((xmms_config_property_t *) object);
 
 	if (name[0]) {
 		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);

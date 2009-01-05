@@ -294,7 +294,7 @@ xmms_eq_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence,
 }
 
 static void
-xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
+xmms_eq_gain_changed (xmms_object_t *object, gconstpointer _data,
                       gpointer userdata)
 {
 	xmms_config_property_t *val;
@@ -354,7 +354,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
 }
 
 static void
-xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
+xmms_eq_config_changed (xmms_object_t * object, gconstpointer _data,
                         gpointer userdata)
 {
 	xmms_config_property_t *val;

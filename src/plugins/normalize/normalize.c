@@ -188,24 +188,26 @@ xmms_normalize_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 }
 
 static void
-xmms_normalize_config_changed (xmms_object_t *obj, gconstpointer value,
+xmms_normalize_config_changed (xmms_object_t *obj, gconstpointer _data,
                                gpointer udata)
 {
 	xmms_normalize_data_t *data = udata;
 	const gchar *name;
+	gint value;
 
 	name = xmms_config_property_get_name ((xmms_config_property_t *) obj);
+	value = xmms_config_property_get_int ((xmms_config_property_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "normalize.use_anticlip")) {
-		data->use_anticlip = !!atoi (value);
+		data->use_anticlip = !!value;
 	} else if (!g_ascii_strcasecmp (name, "normalize.target")) {
-		data->target = atoi (value);
+		data->target = value;
 	} else if (!g_ascii_strcasecmp (name, "normalize.max_gain")) {
-		data->max_gain = atoi (value);
+		data->max_gain = value;
 	} else if (!g_ascii_strcasecmp (name, "normalize.smooth")) {
-		data->smooth = atoi (value);
+		data->smooth = value;
 	} else if (!g_ascii_strcasecmp (name, "normalize.buckets")) {
-		data->buckets = atoi (value);
+		data->buckets = value;
 	}
 
 	/* reconfigure needed */
