@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "playlist_positions.h"
 
 #define MAX_STRINGLIST_TOKENS 10
 
@@ -56,5 +57,6 @@ gboolean command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 gboolean command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gchar **v);
 gboolean command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v);
 gboolean command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v, gboolean warn);
+gboolean command_arg_positions_get (command_context_t *ctx, gint at, playlist_positions_t **p, gint currpos);
 
 #endif /* __COMMAND_UTILS_H__ */

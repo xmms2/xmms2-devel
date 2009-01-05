@@ -16,6 +16,8 @@
 
 #include "command_utils.h"
 
+#include "cli_infos.h"
+
 #define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
 
 gboolean
@@ -324,6 +326,27 @@ command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
 	}
 
 	g_free (pattern);
+
+	return success;
+}
+
+/** Try to parse a positions expression from the arguments and return
+ *  success status. The resulting positions structure is saved to the p
+ *  argument.
+ */
+gboolean
+command_arg_positions_get (command_context_t *ctx, gint at,
+                           playlist_positions_t **p, gint currpos)
+{
+	gchar *expression = NULL;
+	gboolean success = TRUE;
+
+	command_arg_longstring_get_escaped (ctx, at, &expression);
+	if (!expression || !playlist_positions_parse (expression, p, currpos)) {
+		success = FALSE;
+	}
+
+	g_free (expression);
 
 	return success;
 }

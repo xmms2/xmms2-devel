@@ -13,7 +13,8 @@ def build(bld):
 		    utils.c
 		    alias.c
                     column_display.c
-                    readline.c""".split()
+                    readline.c
+                    playlist_positions.c""".split()
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline'
