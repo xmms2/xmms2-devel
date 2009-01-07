@@ -100,9 +100,12 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 		if (strcmp (key, "seconds") == 0) {
 			int duration;
 
-			xmmsv_dict_iter_seek (it, "duration");
-			xmmsv_dict_iter_pair (it, NULL, &v);
-			xmmsv_get_int (v, &duration);
+			if (xmmsv_dict_iter_seek (it, "duration")) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
+				xmmsv_get_int (v, &duration);
+			} else {
+				duration = 0;
+			}
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -116,9 +119,12 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 		} else if (strcmp (key, "minutes") == 0) {
 			int duration;
 
-			xmmsv_dict_iter_seek (it, "duration");
-			xmmsv_dict_iter_pair (it, NULL, &v);
-			xmmsv_get_int (v, &duration);
+			if (xmmsv_dict_iter_seek (it, "duration")) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
+				xmmsv_get_int (v, &duration);
+			} else {
+				duration = 0;
+			}
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -133,22 +139,23 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 			const char *result = NULL;
 			char tmp[12];
 
-			xmmsv_dict_iter_seek (it, key);
-			xmmsv_dict_iter_pair (it, NULL, &v);
+			if (xmmsv_dict_iter_seek (it, key)) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
 
-			xmmsv_type_t type = xmmsv_get_type (v);
-			if (type == XMMSV_TYPE_STRING) {
-				xmmsv_get_string (v, &result);
-			} else if (type == XMMSV_TYPE_UINT32) {
-				uint32_t ui;
-				xmmsv_get_uint (v, &ui);
-				snprintf (tmp, 12, "%u", ui);
-				result = tmp;
-			} else if (type == XMMSV_TYPE_INT32) {
-				int32_t i;
-				xmmsv_get_int (v, &i);
-				snprintf (tmp, 12, "%d", i);
-				result = tmp;
+				xmmsv_type_t type = xmmsv_get_type (v);
+				if (type == XMMSV_TYPE_STRING) {
+					xmmsv_get_string (v, &result);
+				} else if (type == XMMSV_TYPE_UINT32) {
+					uint32_t ui;
+					xmmsv_get_uint (v, &ui);
+					snprintf (tmp, 12, "%u", ui);
+					result = tmp;
+				} else if (type == XMMSV_TYPE_INT32) {
+					int32_t i;
+					xmmsv_get_int (v, &i);
+					snprintf (tmp, 12, "%d", i);
+					result = tmp;
+				}
 			}
 
 			if (result)
