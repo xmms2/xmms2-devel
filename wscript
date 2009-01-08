@@ -217,14 +217,14 @@ def _output_summary(enabled_plugins, disabled_plugins,
                                         enabled_optionals, disabled_optionals):
     print "\nOptional configuration:\n======================"
     print " Enabled: ",
-    Utils.pprint('BLUE', ', '.join(enabled_optionals))
+    Utils.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
     print " Disabled: ",
-    Utils.pprint('BLUE', ", ".join(disabled_optionals))
+    Utils.pprint('BLUE', ", ".join(sorted(disabled_optionals)))
     print "\nPlugins configuration:\n======================"
     print " Enabled: ",
-    Utils.pprint('BLUE', ", ".join(enabled_plugins))
+    Utils.pprint('BLUE', ", ".join(sorted(enabled_plugins)))
     print " Disabled: ",
-    Utils.pprint('BLUE', ", ".join(disabled_plugins))
+    Utils.pprint('BLUE', ", ".join(sorted(disabled_plugins)))
 
 def configure(conf):
     if os.environ.has_key('PKG_CONFIG_PREFIX'):
