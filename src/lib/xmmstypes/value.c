@@ -487,6 +487,13 @@ xmmsv_make_stringlist (char *array[], int num)
 	return list;
 }
 
+/**
+ * Gets the type of a dict entry.
+ *
+ * @param val A xmmsv_t containing a dict.
+ * @param key The key in the dict.
+ * @return The type of the entry or #XMMSV_TYPE_NONE if something goes wrong.
+ */
 xmmsv_type_t
 xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 {
@@ -495,7 +502,7 @@ xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 
 	if (!val || !xmmsv_get_dict_iter (val, &it) ||
 	    !xmmsv_dict_iter_seek (it, key)) {
-		return 0;
+		return XMMSV_TYPE_NONE;
 	}
 
 	xmmsv_dict_iter_pair (it, NULL, &v);
