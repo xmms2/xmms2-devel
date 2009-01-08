@@ -411,16 +411,8 @@ xmms_playlist_init (void)
 	return ret;
 }
 
-/**
- * Go to next song in playlist according to current playlist mode.
- * xmms_playlist_current_entry is to be used to retrieve the entry.
- *
- * @sa xmms_playlist_current_entry
- *
- * @returns FALSE if end of playlist is reached, TRUE otherwise.
- */
-gboolean
-xmms_playlist_advance (xmms_playlist_t *playlist)
+static gboolean
+xmms_playlist_advance_do (xmms_playlist_t *playlist)
 {
 	gint size, currpos;
 	gboolean ret = TRUE;
@@ -430,11 +422,7 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 	xmms_playlist_t *buffer = playlist;
 	guint newpos;
 
-	g_return_val_if_fail (playlist, FALSE);
-
 	xmms_error_reset (&err);
-
-	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, NULL);
 	if (plcoll == NULL) {
@@ -442,7 +430,11 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 	} else if ((size = xmms_playlist_coll_get_size (plcoll)) == 0) {
 		if (xmmsv_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 			xmms_playlist_load (buffer, jumplist, &err);
-			ret = xmms_error_isok (&err);
+			if (xmms_error_isok (&err)) {
+				ret = xmms_playlist_advance_do (playlist);
+			} else {
+				ret = FALSE;
+			}
 		} else {
 			ret = FALSE;
 		}
@@ -457,7 +449,11 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 			XMMS_PLAYLIST_CURRPOS_MSG (0, XMMS_ACTIVE_PLAYLIST);
 
 			xmms_playlist_load (buffer, jumplist, &err);
-			ret = xmms_error_isok (&err);
+			if (xmms_error_isok (&err)) {
+				ret = xmms_playlist_advance_do (playlist);
+			} else {
+				ret = FALSE;
+			}
 		} else {
 			newpos = currpos%size;
 			xmms_collection_set_int_attr (plcoll, "position", newpos);
@@ -465,13 +461,34 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 			ret = (currpos != size) || playlist->repeat_all;
 		}
 	}
+
+	return ret;
+}
+
+/**
+ * Go to next song in playlist according to current playlist mode.
+ * xmms_playlist_current_entry is to be used to retrieve the entry.
+ *
+ * @sa xmms_playlist_current_entry
+ *
+ * @returns FALSE if end of playlist is reached, TRUE otherwise.
+ */
+gboolean
+xmms_playlist_advance (xmms_playlist_t *playlist)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (playlist, FALSE);
+
+	g_mutex_lock (playlist->mutex);
+	ret = xmms_playlist_advance_do (playlist);
 	g_mutex_unlock (playlist->mutex);
 
 	return ret;
 }
 
 /**
- * Retrive the currently active xmms_medialib_entry_t.
+ * Retrieve the currently active xmms_medialib_entry_t.
  *
  */
 xmms_medialib_entry_t
