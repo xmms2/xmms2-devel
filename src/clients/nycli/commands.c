@@ -232,6 +232,7 @@ cli_add_setup (command_action_t *action)
 	const argument_t flags[] = {
 		{ "file", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Treat the arguments as file paths instead of a pattern."), "path" },
 		{ "pls", 'P', 0, G_OPTION_ARG_NONE, NULL, _("Treat the files as playlist files (implies --file.)"), "path" },
+		{ "pattern", 't', 0, G_OPTION_ARG_NONE, NULL, _("Force treating arguments as pattern."), "pattern" },
 		{ "non-recursive", 'N', 0, G_OPTION_ARG_NONE, NULL, _("Do not add directories recursively."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
@@ -1021,6 +1022,33 @@ guesspls (cli_infos_t *infos, gchar *url)
 	return FALSE;
 }
 
+static gboolean
+guessfile (gchar *pattern)
+{
+	char *p;
+
+	p = strpbrk (pattern, ":/~");
+
+	/* FIXME: check for file extension? esp. if token doesn't start by "url:" */
+	/* FIXME: warning, the string contains all space-separated arguments */
+
+	if (!p) {
+		/* Doesn't contain any of the chars above, not a file? */
+		return FALSE;
+	} else if (p[0] == ':' && p[1] == '/' && p[2] == '/') {
+		/* Contains '://', likely a URL */
+		return TRUE;
+	} else if (p == pattern && p[0] == '/') {
+		/* Starts with '/', should be an absolute path */
+		return TRUE;
+	} else if (p == pattern && p[0] == '~' && strchr (p, '/')) {
+		/* Starts with '~' and contains '/', should be a home path */
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -1033,6 +1061,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gboolean fileargs;
 	gboolean norecurs;
 	gboolean plsfile;
+	gboolean forceptrn;
 	gint i, count;
 	gboolean success = TRUE;
 
@@ -1055,10 +1084,18 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
+	command_flag_boolean_get (ctx, "pattern", &forceptrn);
 	command_flag_boolean_get (ctx, "pls", &plsfile);
 	command_flag_boolean_get (ctx, "file", &fileargs);
 	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
+
+	if (forceptrn && (plsfile || fileargs)) {
+		g_printf (_("Error: --pattern is mutually exclusive with "
+		            "--file and --pls!\n"));
+		success = FALSE;
+		goto finish;
+	}
 
 	/* We need either a file or a pattern! */
 	if (!pattern) {
@@ -1067,7 +1104,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
-	fileargs |= plsfile;
+	fileargs = fileargs || plsfile || (guessfile (pattern) && !forceptrn);
 	if (fileargs) {
 		/* FIXME: expand / glob? */
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
