@@ -18,12 +18,24 @@
 #define __XMMSV_H__
 
 #include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_coll.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum {
+	XMMSV_TYPE_NONE,
+	XMMSV_TYPE_ERROR,
+	XMMSV_TYPE_UINT32,
+	XMMSV_TYPE_INT32,
+	XMMSV_TYPE_STRING,
+	XMMSV_TYPE_COLL,
+	XMMSV_TYPE_BIN,
+	XMMSV_TYPE_LIST,
+	XMMSV_TYPE_DICT,
+	XMMSV_TYPE_END
+} xmmsv_type_t;
 
 typedef struct xmmsv_St xmmsv_t;
 

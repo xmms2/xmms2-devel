@@ -21,19 +21,6 @@
 #define XMMS_IPC_PROTOCOL_VERSION 13
 
 typedef enum {
-        XMMSV_TYPE_NONE,
-        XMMSV_TYPE_ERROR,
-        XMMSV_TYPE_UINT32,
-        XMMSV_TYPE_INT32,
-        XMMSV_TYPE_STRING,
-        XMMSV_TYPE_COLL,
-        XMMSV_TYPE_BIN,
-        XMMSV_TYPE_LIST,
-        XMMSV_TYPE_DICT,
-        XMMSV_TYPE_END
-} xmmsv_type_t;
-
-typedef enum {
 	XMMS_IPC_OBJECT_MAIN,
 	XMMS_IPC_OBJECT_PLAYLIST,
 	XMMS_IPC_OBJECT_CONFIG,

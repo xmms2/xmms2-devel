@@ -84,7 +84,6 @@ static void xmmsv_dict_iter_free (xmmsv_dict_iter_t *it);
 
 struct xmmsv_St {
 	union {
-		void *generic;
 		char *error;
 		uint32_t uint32;
 		int32_t int32;
