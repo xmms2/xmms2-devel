@@ -943,7 +943,7 @@ encode_url (gchar *url)
 	gint i = 0, j = 0;
 	gchar *res;
 
-	res = g_new (gchar, strlen (url) * 3 + 1);
+	res = g_new0 (gchar, strlen (url) * 3 + 1);
 	if (!res)
 		return NULL;
 
@@ -1106,7 +1106,6 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	fileargs = fileargs || plsfile || (guessfile (pattern) && !forceptrn);
 	if (fileargs) {
-		/* FIXME: expand / glob? */
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
 			GList *files = NULL, *it;
 			gchar *vpath, *enc;
@@ -1145,8 +1144,8 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			g_free (enc);
 			g_free (vpath);
 			g_list_free (files);
-			cli_infos_loop_resume (infos);
 		}
+		cli_infos_loop_resume (infos);
 	} else {
 		if (norecurs) {
 			g_printf (_("Error:"
