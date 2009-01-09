@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "xmmsc/xmmsc_stdbool.h"
+
 #define XMMS_STRINGIFY_NOEXPAND(x) #x
 #define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)
 
@@ -46,5 +48,6 @@ const char *xmms_userconfdir_get (char *buf, int len);
 const char *xmms_usercachedir_get (char *buf, int len);
 const char *xmms_default_ipcpath_get (char *buf, int len);
 const char *xmms_fallback_ipcpath_get (char *buf, int len);
+bool xmms_sleep_ms (int n);
 
 #endif /* __XMMS_UTILS_H__ */

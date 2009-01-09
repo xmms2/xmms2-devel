@@ -309,8 +309,6 @@ check_drawtime (double ts, int drawtime)
 {
 	struct timeval time;
 	double diff;
-	struct timespec sleeptime;
-	double dontcare;
 
 	if (drawtime <= 0)
 		return 0;
@@ -321,19 +319,14 @@ check_drawtime (double ts, int drawtime)
 		return 1;
 	}
 
-	/* nanosleep has a garantueed granularity of 10 ms.
-	   to not sleep too long, we sleep 10 ms less than intended */
+	/* xmms_sleep_ms has a granularity of 10 ms.
+	   To not sleep too long, we sleep 10 ms less than intended */
 	diff -= (drawtime + 10) * 0.001;
 	if (diff < 0) {
 		diff = 0;
 	}
-	sleeptime.tv_sec = diff;
-	sleeptime.tv_nsec = modf (diff, &dontcare) * 1000000000;
-	while (nanosleep (&sleeptime, &sleeptime) == -1) {
-		if (errno != EINTR) {
-			break;
-		}
-	}
+
+	xmms_sleep_ms ((int) (diff * 1000));
 
 	return 0;
 }

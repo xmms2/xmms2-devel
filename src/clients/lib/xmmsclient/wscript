@@ -42,12 +42,6 @@ def configure(conf):
     if not conf.env["HAVE_SEMTIMEDOP"]:
         warning("Compiling visualization without shm support!")
 
-    conf.check_cc(function_name="nanosleep", header_name="time.h")
-    if not conf.env["HAVE_NANOSLEEP"]:
-        conf.check_cc(lib="rt", function_name="nanosleep", header_name="time.h", uselib_store="time")
-        if not conf.env["HAVE_NANOSLEEP"]:
-            return False
-
     return True
 
 def set_options(opt):

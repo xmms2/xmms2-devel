@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <time.h>
+#include <errno.h>
 
 #include "xmms_configuration.h"
 #include "xmmsc/xmmsc_util.h"
@@ -100,4 +102,27 @@ xmms_fallback_ipcpath_get (char *buf, int len)
 	snprintf (buf, len, "unix:///tmp/xmms-ipc-%s", pw->pw_name);
 
 	return buf;
+}
+
+/**
+ * Sleep for n milliseconds.
+ *
+ * @param n The number of milliseconds to sleep.
+ * @return true when we waited the full time, false otherwise.
+ */
+bool
+xmms_sleep_ms (int n)
+{
+	struct timespec sleeptime;
+
+	sleeptime.tv_sec = (time_t) (n / 1000);
+	sleeptime.tv_nsec = (n % 1000) * 1000000;
+
+	while (nanosleep (&sleeptime, &sleeptime) == -1) {
+		if (errno != EINTR) {
+			return false;
+		}
+	}
+
+	return true;
 }
