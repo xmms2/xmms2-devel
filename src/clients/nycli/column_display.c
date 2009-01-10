@@ -129,8 +129,25 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 	guint uval;
 	gint ival;
 	const gchar *sval;
+	gchar *value;
 
 	switch (xmmsv_get_dict_entry_type (val, coldef->arg.string)) {
+	case XMMSV_TYPE_NONE:
+		/* Yeah, lots of code duplication, lets fix that */
+		value = NULL;
+		if (!strcmp (coldef->arg.string, "title")) {
+			if (xmmsv_get_dict_entry_string (val, "url", &sval)) {
+				value = g_path_get_basename (sval);
+				realsize = crop_string (buffer, value,
+				                        coldef->size);
+				g_free (value);
+			}
+		}
+		if (!value) {
+			*buffer = '\0';
+			realsize = 0;
+		}
+		break;
 	case XMMSV_TYPE_UINT32:
 		xmmsv_get_dict_entry_uint (val, coldef->arg.string, &uval);
 		realsize = g_snprintf (buffer, coldef->size + 1, "%u", uval);

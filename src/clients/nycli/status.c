@@ -121,6 +121,20 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 
 			type = xmmsv_get_dict_entry_type (info, field);
 			switch (type) {
+			case XMMSV_TYPE_NONE:
+				value = NULL;
+				if (!strcmp (field, "title")) {
+					if (xmmsv_get_dict_entry_string (info,
+					                                 "url",
+					                                 &sval)) {
+						value = g_path_get_basename (sval);
+					}
+				}
+				if (!value) {
+					value = g_strdup ("Unknown");
+				}
+				break;
+
 			case XMMSV_TYPE_STRING:
 				xmmsv_get_dict_entry_string (info, field, &sval);
 				value = g_strdup (sval);
