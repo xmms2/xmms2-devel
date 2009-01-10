@@ -27,7 +27,7 @@ def configure(conf):
     l = conf.env['XMMS_OUTPUT_PLUGINS']
     l.sort()
     prio,name = l[-1]
-    if prio == -1:
+    if not Options.options.without_xmms2d and prio == -1:
         warning("No output plugin found, this is bad")
 
     defs['XMMS_OUTPUT_DEFAULT'] = name
