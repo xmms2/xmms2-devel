@@ -3,7 +3,7 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     if conf.check_cfg(package="libcurl", args="--cflags --libs", uselib_store="curl"):
         return True
-    if conf.check_cfg(path="curl-config", args="--cflags --libs", uselib_store="curl"):
+    if conf.check_cfg(path="curl-config", package="",args="--cflags --libs", uselib_store="curl"):
         return True
     return False
 
