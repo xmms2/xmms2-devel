@@ -1196,9 +1196,10 @@ xmmsv_list_iter_free (xmmsv_list_iter_t *it)
 
 
 /**
- * Get the element currently pointed at by the iterator. This
- * function does not increase the refcount of the element, the
- * reference is still owned by the list.
+ * Get the element currently pointed at by the iterator. This function
+ * does not increase the refcount of the element, the reference is
+ * still owned by the list. If iterator does not point on a valid
+ * element xmmsv_list_iter_entry returns 0 and leaves val untouched.
  *
  * @param it A #xmmsv_list_iter_t.
  * @param val Pointer set to a borrowed reference to the element
@@ -1208,7 +1209,8 @@ xmmsv_list_iter_free (xmmsv_list_iter_t *it)
 int
 xmmsv_list_iter_entry (xmmsv_list_iter_t *it, xmmsv_t **val)
 {
-	x_return_val_if_fail (xmmsv_list_iter_valid (it), 0);
+	if (!xmmsv_list_iter_valid (it))
+		return 0;
 
 	*val = it->parent->list[it->position];
 
