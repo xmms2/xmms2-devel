@@ -671,7 +671,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
-		orderval = xmmsv_make_stringlist (order, -1);
+		orderval = xmmsv_make_stringlist ((gchar **)order, -1);
 		res = xmmsc_coll_query_ids (infos->sync, query, orderval, 0, 0);
 		xmmsc_result_wait (res);
 
@@ -1413,7 +1413,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	orderval = xmmsv_make_stringlist (order, -1);
+	orderval = xmmsv_make_stringlist ((gchar **)order, -1);
 	res = xmmsc_playlist_sort (infos->sync, playlist, orderval);
 	xmmsc_result_wait (res);
 	done (res, infos);
