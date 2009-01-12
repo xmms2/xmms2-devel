@@ -213,16 +213,22 @@ def _configure_plugins(conf):
     return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
 
 def _output_summary(enabled_plugins, disabled_plugins,
-                                        enabled_optionals, disabled_optionals):
-    print "\nOptional configuration:\n======================"
-    print " Enabled: ",
+                    enabled_optionals, disabled_optionals,
+                    output_plugins):
+    print("\nOptional configuration:\n======================")
+    sys.stdout.write("Enabled: ")
     Utils.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
-    print " Disabled: ",
+    sys.stdout.write("Disabled: ")
     Utils.pprint('BLUE', ", ".join(sorted(disabled_optionals)))
-    print "\nPlugins configuration:\n======================"
-    print " Enabled: ",
+    print("\nPlugins configuration:\n======================")
+
+    enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
+
+    print("Output:")
+    Utils.pprint('BLUE', ", ".join(sorted(output_plugins)))
+    print("XForm/Other:")
     Utils.pprint('BLUE', ", ".join(sorted(enabled_plugins)))
-    print " Disabled: ",
+    print("Disabled:")
     Utils.pprint('BLUE', ", ".join(sorted(disabled_plugins)))
 
 def configure(conf):
@@ -386,7 +392,11 @@ def configure(conf):
 
     [conf.sub_config(s) for s in subdirs]
 
-    _output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
+    output_plugins = [name for x,name in conf.env["XMMS_OUTPUT_PLUGINS"] if x > 0]
+
+    _output_summary(enabled_plugins, disabled_plugins,
+                    enabled_optionals, disabled_optionals,
+                    output_plugins)
 
     return True
 
