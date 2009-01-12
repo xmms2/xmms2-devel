@@ -31,11 +31,8 @@ struct xmmsv_coll_St {
 
 	xmmsv_coll_type_t type;
 
-	x_list_t *operands;
-	x_list_t *curr_op;
-
-	/* Stack of curr_op pointers to save/restore */
-	x_list_t *curr_stack;
+	xmmsv_t *operands;
+	x_list_t *operand_iter_stack;
 
 	/* stored as (key1, val1, key2, val2, ...) */
 	x_list_t *attributes;
@@ -52,7 +49,6 @@ struct xmmsv_coll_St {
 static void xmmsv_coll_free (xmmsv_coll_t *coll);
 static int free_udata (void *ptr, void *userdata);
 
-static int xmmsv_coll_unref_udata (void *coll, void *userdata);
 static int xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize);
 
 
@@ -90,6 +86,7 @@ xmmsv_coll_ref (xmmsv_coll_t *coll)
 xmmsv_coll_t*
 xmmsv_coll_new (xmmsv_coll_type_t type)
 {
+	xmmsv_list_iter_t *i;
 	xmmsv_coll_t *coll;
 
 	coll = x_new0 (xmmsv_coll_t, 1);
@@ -108,11 +105,12 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 	coll->ref  = 0;
 	coll->type = type;
 
-	coll->operands   = NULL;
-	coll->attributes = NULL;
+	coll->operands = xmmsv_new_list ();
+	xmmsv_get_list_iter (coll->operands, &i);
 
-	coll->curr_op = coll->operands;
-	coll->curr_stack = NULL;
+	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
+
+	coll->attributes = NULL;
 
 	/* user must give this back */
 	xmmsv_coll_ref (coll);
@@ -133,12 +131,12 @@ xmmsv_coll_free (xmmsv_coll_t *coll)
 	x_return_if_fail (coll);
 
 	/* Unref all the operands and attributes */
-	x_list_foreach (coll->operands, xmmsv_coll_unref_udata, NULL);
+	xmmsv_unref (coll->operands);
+	x_list_free (coll->operand_iter_stack);
+
 	x_list_foreach (coll->attributes, free_udata, NULL);
 
-	x_list_free (coll->operands);
 	x_list_free (coll->attributes);
-	x_list_free (coll->curr_stack);
 
 	free (coll->idlist);
 
@@ -209,17 +207,16 @@ xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
 void
 xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
+	xmmsv_t *v;
 	x_return_if_fail (coll);
 	x_return_if_fail (op);
 
-	/* Already present, don't add twice! */
-	if (x_list_index (coll->operands, op) != -1) {
-		return;
-	}
+	/* we used to check if it already existed here before */
 
-	xmmsv_coll_ref (op);
-
-	coll->operands = x_list_append (coll->operands, op);
+	v = xmmsv_new_coll (op);
+	x_return_if_fail (v);
+	xmmsv_list_append (coll->operands, v);
+	xmmsv_unref (v);
 }
 
 /**
@@ -230,20 +227,26 @@ xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 void
 xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
-	x_list_t *entry;
+	xmmsv_list_iter_t *it;
+	xmmsv_coll_t *c;
+	xmmsv_t *v;
 
 	x_return_if_fail (coll);
 	x_return_if_fail (op);
 
-	/* Find the entry, abort if not in the list */
-	entry = x_list_find (coll->operands, op);
-	if (entry == NULL) {
+	if (!xmmsv_get_list_iter (coll->operands, &it))
 		return;
+
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_list_iter_entry (it, &v);
+		if (xmmsv_get_collection (v, &c)) {
+			if (c == op) {
+				xmmsv_list_iter_remove (it);
+				break;
+			}
+		}
+		xmmsv_list_iter_next (it);
 	}
-
-	coll->operands = x_list_delete_link (coll->operands, entry);
-
-	xmmsv_coll_unref (op);
 }
 
 
@@ -477,9 +480,14 @@ xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
 int
 xmmsv_coll_operand_list_first (xmmsv_coll_t *coll)
 {
-	x_return_val_if_fail (coll, 0);
+	xmmsv_list_iter_t *i;
 
-	coll->curr_op = coll->operands;
+	x_return_val_if_fail (coll, 0);
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+
+	i = coll->operand_iter_stack->data;
+
+	xmmsv_list_iter_first (i);
 
 	return 1;
 }
@@ -493,9 +501,14 @@ xmmsv_coll_operand_list_first (xmmsv_coll_t *coll)
 int
 xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll)
 {
-	x_return_val_if_fail (coll, 0);
+	xmmsv_list_iter_t *i;
 
-	return (coll->curr_op != NULL);
+	x_return_val_if_fail (coll, 0);
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+
+	i = coll->operand_iter_stack->data;
+
+	return xmmsv_list_iter_valid (i);
 }
 
 /**
@@ -511,14 +524,18 @@ xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll)
 int
 xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand)
 {
+	xmmsv_list_iter_t *i;
+	xmmsv_t *v;
+
 	x_return_val_if_fail (coll, 0);
-	if (coll->curr_op == NULL) {
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+
+	i = coll->operand_iter_stack->data;
+
+	if (!xmmsv_list_iter_entry (i, &v))
 		return 0;
-	}
 
-	*operand = (xmmsv_coll_t *)coll->curr_op->data;
-
-	return 1;
+	return xmmsv_get_collection (v, operand);
 }
 
 /**
@@ -530,16 +547,19 @@ xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand)
 int
 xmmsv_coll_operand_list_next (xmmsv_coll_t *coll)
 {
+	xmmsv_list_iter_t *i;
+
 	x_return_val_if_fail (coll, 0);
-	if (coll->curr_op == NULL) {
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+
+	i = coll->operand_iter_stack->data;
+
+	if (!xmmsv_list_iter_valid (i))
 		return 0;
-	}
 
-	coll->curr_op = coll->curr_op->next;
-
+	xmmsv_list_iter_next (i);
 	return 1;
 }
-
 
 /**
  * Save the position of the operand iterator, to be restored later by
@@ -555,9 +575,15 @@ xmmsv_coll_operand_list_next (xmmsv_coll_t *coll)
 int
 xmmsv_coll_operand_list_save (xmmsv_coll_t *coll)
 {
-	x_return_val_if_fail (coll, 0);
+	xmmsv_list_iter_t *i;
 
-	coll->curr_stack = x_list_prepend (coll->curr_stack, coll->curr_op);
+	x_return_val_if_fail (coll, 0);
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+
+	if (!xmmsv_get_list_iter (coll->operands, &i))
+		return 0;
+
+	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
 
 	return 1;
 }
@@ -577,11 +603,11 @@ int
 xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->curr_stack, 0);
+	x_return_val_if_fail (coll->operand_iter_stack, 0);
+	x_return_val_if_fail (coll->operand_iter_stack->next, 0);
 
-	/* Pop stack head and restore curr_op */
-	coll->curr_op = x_list_nth_data (coll->curr_stack, 0);
-	coll->curr_stack = x_list_delete_link (coll->curr_stack, coll->curr_stack);
+	/* we should do explicit free on it here */
+	coll->operand_iter_stack = x_list_delete_link (coll->operand_iter_stack, coll->operand_iter_stack);
 
 	return 1;
 }
@@ -595,21 +621,26 @@ xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll)
 void
 xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll)
 {
-	xmmsv_coll_t *op;
+	xmmsv_list_iter_t *i;
 
 	x_return_if_fail (coll);
 
-	/* Unref all the operands sequentially. */
-	while (coll->operands != NULL) {
-		op = (xmmsv_coll_t *) coll->operands->data;
-		coll->operands = x_list_delete_link (coll->operands, coll->operands);
-		xmmsv_coll_unref (op);
-	}
+	xmmsv_list_clear (coll->operands);
 
-	coll->curr_op = NULL;
-	coll->curr_stack = NULL;
+	if (!xmmsv_get_list_iter (coll->operands, &i))
+		return;
+
+	x_list_free (coll->operand_iter_stack);
+	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
 }
 
+xmmsv_t *
+xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
+{
+	x_return_val_if_fail (coll, NULL);
+
+	return coll->operands;
+ }
 
 /**
  * Set an attribute in the given collection.
@@ -804,17 +835,6 @@ xmmsv_coll_universe ()
 
 /** @internal */
 
-/**
- * Utility version of the #xmmsv_coll_unref function, voidified and
- * with an extra userdata argument, to be used as a foreach
- * function.
- */
-static int
-xmmsv_coll_unref_udata (void *coll, void *userdata)
-{
-	xmmsv_coll_unref ((xmmsv_coll_t *)coll);
-	return 1;
-}
 
 /**
  * Alternate version of the free() C function with an extra userdata

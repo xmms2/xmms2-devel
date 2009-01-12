@@ -17,6 +17,7 @@
 #ifndef __XMMS_COLL_H__
 #define __XMMS_COLL_H__
 
+#include "xmmsc/xmmsc_compiler.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
@@ -35,6 +36,7 @@ void xmmsv_coll_unref (xmmsv_coll_t *coll);
 void xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[]);
 void xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op);
 void xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op);
+struct xmmsv_St *xmmsv_coll_operands_list_get (xmmsv_coll_t *coll);
 
 int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id);
 int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, unsigned int id);
@@ -47,13 +49,13 @@ size_t xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll);
 
 xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll);
 uint32_t *xmmsv_coll_get_idlist (xmmsv_coll_t *coll);
-int xmmsv_coll_operand_list_first (xmmsv_coll_t *coll);
-int xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll);
-int xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand);
-int xmmsv_coll_operand_list_next (xmmsv_coll_t *coll);
-int xmmsv_coll_operand_list_save (xmmsv_coll_t *coll);
-int xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll);
-void xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll);
+int xmmsv_coll_operand_list_first (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+int xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+int xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand) XMMS_DEPRECATED;
+int xmmsv_coll_operand_list_next (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+int xmmsv_coll_operand_list_save (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+int xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+void xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 
 void xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll);
 int xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll);
