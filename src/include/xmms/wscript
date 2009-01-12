@@ -1,7 +1,7 @@
 import os
 import Options
 import Utils
-from logging import warning
+from logging import fatal, warning
 
 def build(bld):
     pass
@@ -29,7 +29,17 @@ def configure(conf):
     prio,name = l[-1]
     if prio == -1:
         warning("No output plugin found, this is bad")
+
     defs['XMMS_OUTPUT_DEFAULT'] = name
+
+    if Options.options.default_output_plugin:
+        preferred = Options.options.default_output_plugin
+        if preferred in (name for _,name in l):
+            defs['XMMS_OUTPUT_DEFAULT'] = preferred
+        else:
+            fatal('The "%s" output plugin could not be found.' % (preferred))
+            raise SystemExit
+
     if Options.platform == 'darwin':
         defs["USERCONFDIR"] = 'Library/xmms2'
         defs["USERCACHEDIR"] = 'Library/xmms2/logs'

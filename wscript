@@ -411,6 +411,8 @@ def set_options(opt):
                    type="string", dest="enable_plugins")
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                    type="string", dest="disable_plugins")
+    opt.add_option('--with-default-output-plugin', type='string',
+                   dest='default_output_plugin')
     opt.add_option('--with-optionals', action="callback", callback=_list_cb,
                    type="string", dest="enable_optionals")
     opt.add_option('--without-optionals', action="callback", callback=_list_cb,
