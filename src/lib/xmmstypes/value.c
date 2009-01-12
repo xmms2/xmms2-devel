@@ -919,7 +919,7 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 	x_list_t *n;
 
 	/* prevent removing after the last element */
-	x_return_val_if_fail (pos < l->size, 0);
+	x_return_val_if_fail (pos < (int)l->size, 0);
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
@@ -1003,6 +1003,7 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 	l = listv->value.list;
 
 	/* prevent accessing after the last element */
+	x_return_val_if_fail (pos < (int)l->size, 0);
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
@@ -1037,6 +1038,7 @@ xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 	l = listv->value.list;
 
 	/* prevent accessing after the last element */
+	x_return_val_if_fail (pos < (int)l->size, 0);
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
