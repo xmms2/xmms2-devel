@@ -17,7 +17,6 @@ sys.path.insert(0,os.getcwd())
 
 from waftools import gittools
 
-import sets
 import Options
 import Utils
 import Build
@@ -65,9 +64,9 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/ruby",
                     "pixmaps"]
 
-all_optionals = sets.Set([os.path.basename(o) for o in optional_subdirs])
-all_plugins = sets.Set([p for p in os.listdir("src/plugins")
-                        if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
+all_optionals = set(os.path.basename(o) for o in optional_subdirs)
+all_plugins = set(p for p in os.listdir("src/plugins")
+                        if os.path.exists(os.path.join("src/plugins",p,"wscript")))
 
 ####
 ## Build
@@ -124,12 +123,12 @@ def _configure_optionals(conf):
     conf.env['XMMS_OPTIONAL_BUILD'] = []
 
     if Options.options.enable_optionals:
-        selected_optionals = _check_exist(sets.Set(Options.options.enable_optionals),
+        selected_optionals = _check_exist(set(Options.options.enable_optionals),
                                            "The following optional(s) were requested, "
                                            "but don't exist: %(unknown_optionals)s")
         optionals_must_work = True
     elif Options.options.disable_optionals:
-        disabled_optionals = _check_exist(sets.Set(Options.options.disable_optionals),
+        disabled_optionals = _check_exist(set(Options.options.disable_optionals),
                                           "The following optional(s) were disabled, "
                                           "but don't exist: %(unknown_optionals)s")
         selected_optionals = all_optionals.difference(disabled_optionals)
@@ -138,8 +137,8 @@ def _configure_optionals(conf):
         selected_optionals = all_optionals
         optionals_must_work = False
 
-    failed_optionals = sets.Set()
-    succeeded_optionals = sets.Set()
+    failed_optionals = set()
+    succeeded_optionals = set()
 
     for o in selected_optionals:
         x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
@@ -154,7 +153,7 @@ def _configure_optionals(conf):
                      "%s" % ', '.join(failed_optionals))
         raise SystemExit
 
-    disabled_optionals = sets.Set(all_optionals)
+    disabled_optionals = set(all_optionals)
     disabled_optionals.difference_update(succeeded_optionals)
 
     return succeeded_optionals, disabled_optionals
@@ -172,14 +171,14 @@ def _configure_plugins(conf):
 
     # If an explicit list was provided, only try to process that
     if Options.options.enable_plugins:
-        selected_plugins = _check_exist(sets.Set(Options.options.enable_plugins),
+        selected_plugins = _check_exist(set(Options.options.enable_plugins),
                                         "The following plugin(s) were requested, "
                                         "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     # If a disable list was provided, we try all plugins except for those.
     elif Options.options.disable_plugins:
-        disabled_plugins = _check_exist(sets.Set(Options.options.disable_plugins),
+        disabled_plugins = _check_exist(set(Options.options.disable_plugins),
                                         "The following plugins(s) were disabled, "
                                         "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
@@ -187,12 +186,12 @@ def _configure_plugins(conf):
     # If we don't have the daemon we don't build plugins.
     elif Options.options.without_xmms2d:
         disabled_plugins = all_plugins
-        selected_plugins = sets.Set()
+        selected_plugins = set()
         plugins_must_work = False
     # Else, we try all plugins.
     else:
         selected_plugins = all_plugins
-        disabled_plugins = sets.Set()
+        disabled_plugins = set()
         plugins_must_work = False
 
 
@@ -285,7 +284,7 @@ def configure(conf):
 
     if Options.options.pkgconfigdir:
         conf.env['PKGCONFIGDIR'] = Options.options.pkgconfigdir
-        print conf.env['PKGCONFIGDIR']
+        print(conf.env['PKGCONFIGDIR'])
     else:
         conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
 

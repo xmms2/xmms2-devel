@@ -1,8 +1,9 @@
 import os
-import sha
+try: from hashlib import sha1 as sha
+except ImportError: from sha import sha
 
 def gitsha(path):
-    h = sha.sha()
+    h = sha()
     data = file(path, 'rb').read()
     h.update("blob %d\0" % len(data))
     h.update(data)

@@ -2,6 +2,7 @@ import os
 import Options
 import Utils
 from logging import fatal, warning
+import sys
 
 def build(bld):
     pass
@@ -59,7 +60,7 @@ def configure(conf):
         conf.define(i, defs[i])
     conf.write_config_header('xmms_configuration.h')
 
-    print "\nDefault output plugin: ",
+    sys.stdout.write("\nDefault output plugin: ")
     Utils.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
 
     return True
