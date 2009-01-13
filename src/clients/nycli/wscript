@@ -1,5 +1,5 @@
 def build(bld):
-    obj = bld.create_obj('cc', 'program')
+    obj = bld.new_task_gen('cc', 'program')
     obj.target = 'nyxmms2'
     obj.source = """main.c
                     cli_infos.c
@@ -23,10 +23,8 @@ def build(bld):
 #    obj.files = ['xmms2.1']
 
 def configure(conf):
-    if not conf.check_library2("readline", uselib='xmms2'):
-        Params.fatal("nyxmms2 requires readline.")
-    conf.env.append_unique('LIB_readline', 'readline')
-
+    if not conf.check_cc(lib="readline", uselib_store="readline"):
+        return False
     return True
 
 def set_options(opt):
