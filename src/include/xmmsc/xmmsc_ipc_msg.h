@@ -17,11 +17,11 @@
 #ifndef __XMMS_IPC_MSG_H__
 #define __XMMS_IPC_MSG_H__
 
+#include "xmmsc/xmmsc_compiler.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_inline.h"
 #include "xmmsc/xmmsc_coll.h"
 #include "xmmsc/xmmsc_value.h"
 

@@ -2,7 +2,7 @@
 #define __XUTILS_H__
 
 #include <stdio.h>
-#include "xmmsc/xmmsc_inline.h"
+#include "xmmsc/xmmsc_compiler.h"
 
 typedef int (*XCompareFunc) (const void *a, const void *b);
 typedef int (*XCompareDataFunc) (const void *a, const void *b, void *user_data);

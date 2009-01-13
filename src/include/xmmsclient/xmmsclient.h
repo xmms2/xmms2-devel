@@ -17,6 +17,7 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
+#include "xmmsc/xmmsc_compiler.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsc/xmmsc_idnumbers.h"
@@ -25,12 +26,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#if defined (__GNUC__) && __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 1)
-#define XMMS_DEPRECATED __attribute__((deprecated))
-#else
-#define XMMS_DEPRECATED
 #endif
 
 typedef struct xmmsc_connection_St xmmsc_connection_t;
