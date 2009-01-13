@@ -64,9 +64,11 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/ruby",
                     "pixmaps"]
 
+def is_plugin(x):
+    return os.path.exists(os.path.join("src/plugins", x, "wscript"))
+
 all_optionals = set(os.path.basename(o) for o in optional_subdirs)
-all_plugins = set(p for p in os.listdir("src/plugins")
-                        if os.path.exists(os.path.join("src/plugins",p,"wscript")))
+all_plugins = set(p for p in os.listdir("src/plugins") if is_plugin(p))
 
 ####
 ## Build
