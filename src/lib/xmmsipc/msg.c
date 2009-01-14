@@ -385,6 +385,8 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 uint32_t
 xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 {
+	xmmsv_list_iter_t *it;
+	xmmsv_t *v;
 	int n;
 	uint32_t ret, *idlist;
 	xmmsv_coll_t *op;
@@ -392,9 +394,6 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	if (!msg || !coll) {
 		return -1;
 	}
-
-	/* save internal status */
-	xmmsv_coll_operand_list_save (coll);
 
 	/* push type */
 	xmms_ipc_msg_put_uint32 (msg, xmmsv_coll_get_type (coll));
@@ -418,25 +417,22 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	/* operands counter and objects */
 	n = 0;
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op)) {
-			n++;
-			xmmsv_coll_operand_list_next (coll);
-		}
+		n = xmmsv_list_get_size (xmmsv_coll_operands_list_get (coll));
 	}
 
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
 	if (n > 0) {
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op)) {
+		xmmsv_get_list_iter (xmmsv_coll_operands_list_get (coll), &it);
+
+		while (xmmsv_list_iter_entry (it, &v)) {
+			if (!xmmsv_get_collection (v, &op)) {
+				x_api_error ("Non collection operand", 0);
+			}
 			ret = xmms_ipc_msg_put_collection (msg, op);
-			xmmsv_coll_operand_list_next (coll);
+			xmmsv_list_iter_next (it);
 		}
 	}
-
-	/* restore internal status */
-	xmmsv_coll_operand_list_restore (coll);
 
 	return ret;
 }
