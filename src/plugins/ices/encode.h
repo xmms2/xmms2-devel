@@ -13,7 +13,7 @@
 
 /*
  * Modifications for xmms2
- * Copyright (C) 2003-2008 XMMS2 Team
+ * Copyright (C) 2003-2009 XMMS2 Team
  */
 
 #ifndef __ENCODE_H

@@ -1,6 +1,6 @@
 /** @file daap_conn.h
  *
- *  Copyright (C) 2006-2008 XMMS2 Team
+ *  Copyright (C) 2006-2009 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License

@@ -1,7 +1,7 @@
 /** @file faad.c
  *  Decoder plugin for AAC and MP4 audio formats
  *
- *  Copyright (C) 2005-2008 XMMS2 Team
+ *  Copyright (C) 2005-2009 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License

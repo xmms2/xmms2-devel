@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2008 XMMS2 Team
+ *  Copyright (C) 2003-2009 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -340,7 +340,7 @@ void
 print_version ()
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
-	printf ("Copyright (C) 2003-2008 XMMS2 Team\n");
+	printf ("Copyright (C) 2003-2009 XMMS2 Team\n");
 	printf ("This is free software; see the source for copying conditions.\n");
 	printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 	printf ("PARTICULAR PURPOSE.\n");

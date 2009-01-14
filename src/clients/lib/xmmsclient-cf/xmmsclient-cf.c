@@ -1,7 +1,7 @@
 /** @file xmmsclient-cf.c
  *  Mac OS X CoreFoundation run loop integration
  *
- *  Copyright (C) 2005-2008 XMMS2 Team
+ *  Copyright (C) 2005-2009 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
