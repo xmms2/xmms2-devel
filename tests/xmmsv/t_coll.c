@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include <xmmsc/xmmsc_coll.h>
-#include <xmmsc/xmmsc_value.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsv.h>
 
 SETUP (coll) {
 	return 0;

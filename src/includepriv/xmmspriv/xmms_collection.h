@@ -42,7 +42,7 @@ struct xmms_coll_dag_St;
 typedef struct xmms_coll_dag_St xmms_coll_dag_t;
 
 #include "xmms/xmms_error.h"
-#include "xmmsc/xmmsc_coll.h"
+#include "xmmsc/xmmsv_coll.h"
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_medialib.h"
 

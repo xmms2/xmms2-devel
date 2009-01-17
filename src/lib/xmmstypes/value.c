@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include "xmmsc/xmmsc_value.h"
+#include "xmmsc/xmmsv.h"
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"

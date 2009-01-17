@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include <xmmsc/xmmsc_value.h>
+#include <xmmsc/xmmsv.h>
 
 SETUP (xmmsv) {
 	return 0;

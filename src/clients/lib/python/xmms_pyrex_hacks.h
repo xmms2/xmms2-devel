@@ -1,7 +1,7 @@
 #ifndef __XMMS_PYREX_HACKS_H__
 #define __XMMS_PYREX_HACKS_H__
 
-#include "xmmsc/xmmsc_value.h"
+#include "xmmsc/xmmsv.h"
 
 /*
  * pyrex doesn't know about const, so we do some tricks to get rid of

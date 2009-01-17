@@ -23,8 +23,8 @@
 #include <glib.h>
 #include "xmms/xmms_error.h"
 #include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_value.h"
-#include "xmmsc/xmmsc_coll.h"
+#include "xmmsc/xmmsv.h"
+#include "xmmsc/xmmsv_coll.h"
 
 #define XMMS_OBJECT_MID 0x00455574
 

@@ -28,7 +28,7 @@
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_sockets.h"
 #include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_coll.h"
+#include "xmmsc/xmmsv_coll.h"
 
 
 typedef union {

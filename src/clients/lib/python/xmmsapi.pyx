@@ -67,7 +67,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_COLLECTION_CHANGED_RENAME,
 		XMMS_COLLECTION_CHANGED_REMOVE
 
-cdef extern from "xmmsc/xmmsc_value.h":
+cdef extern from "xmmsc/xmmsv.h":
 	ctypedef enum xmmsv_type_t:
 		XMMSV_TYPE_NONE,
 		XMMSV_TYPE_ERROR,

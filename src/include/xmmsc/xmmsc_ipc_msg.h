@@ -22,8 +22,8 @@
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_coll.h"
-#include "xmmsc/xmmsc_value.h"
+#include "xmmsc/xmmsv_coll.h"
+#include "xmmsc/xmmsv.h"
 
 #define XMMS_IPC_MSG_DEFAULT_SIZE 128 /*32768*/
 #define XMMS_IPC_MSG_HEAD_LEN 16 /* all but data */

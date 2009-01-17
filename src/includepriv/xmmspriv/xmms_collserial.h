@@ -31,7 +31,7 @@
  * Private defintions
  */
 
-#include "xmmsc/xmmsc_coll.h"
+#include "xmmsc/xmmsv_coll.h"
 #include "xmmspriv/xmms_collection.h"
 
 

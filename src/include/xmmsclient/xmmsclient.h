@@ -21,8 +21,8 @@
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_value.h"
-#include "xmmsc/xmmsc_coll.h"
+#include "xmmsc/xmmsv.h"
+#include "xmmsc/xmmsv_coll.h"
 
 #ifdef __cplusplus
 extern "C" {
