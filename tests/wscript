@@ -1,5 +1,5 @@
 
-types_suite=["xmmsv/t_coll.c"]
+types_suite=["xmmsv/t_xmmsv.c", "xmmsv/t_coll.c"]
 
 def configure(conf):
     if not conf.check_cc(header_name="CUnit/CUnit.h"):
