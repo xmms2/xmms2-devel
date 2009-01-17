@@ -631,7 +631,7 @@ xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll)
 		return;
 
 	x_list_free (coll->operand_iter_stack);
-	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
+	coll->operand_iter_stack = x_list_prepend (NULL, i);
 }
 
 xmmsv_t *
