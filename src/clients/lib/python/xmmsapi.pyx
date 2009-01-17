@@ -370,12 +370,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 	void xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 
-	int xmmsv_coll_operand_list_first (xmmsv_coll_t *)
-	int xmmsv_coll_operand_list_valid (xmmsv_coll_t *)
-	int xmmsv_coll_operand_list_entry (xmmsv_coll_t *, xmmsv_coll_t **)
-	int xmmsv_coll_operand_list_next (xmmsv_coll_t *)
-	int xmmsv_coll_operand_list_save (xmmsv_coll_t *)
-	int xmmsv_coll_operand_list_restore (xmmsv_coll_t *)
+	xmmsv_t *xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
 
 	void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, char *key, char *value)
 	int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, char *key)
@@ -752,12 +747,16 @@ class Has(BaseCollection):
 		self.operands.append(parent)
 		self.attributes['field'] = field
 
+
+cdef class XMMSValue
+
 cdef create_coll(xmmsv_coll_t *coll):
 	cdef xmmsv_coll_type_t typ
 	cdef Collection c
 	cdef CollectionAttributes atr
 	cdef CollectionOperands opr
 	cdef CollectionIDList idl
+	cdef XMMSValue V
 	
 	typ = xmmsv_coll_get_type(coll)
 	c = BaseCollection(typ, DontSetup)
@@ -806,12 +805,11 @@ cdef create_coll(xmmsv_coll_t *coll):
 	idl.coll = coll
 
 	opr = c.operands
-	cdef xmmsv_coll_t *ocoll
-	xmmsv_coll_operand_list_first(coll)
-	while xmmsv_coll_operand_list_valid(coll):
-		xmmsv_coll_operand_list_entry(coll, &ocoll)
-		opr.pylist.append(create_coll(ocoll))
-		xmmsv_coll_operand_list_next(coll)
+
+	V = XMMSValue()
+	V.set_value(xmmsv_coll_operands_list_get(coll))
+	opr.pylist = V.value()
+
 	xmmsv_coll_ref(coll)
 	opr.coll = coll
 	
