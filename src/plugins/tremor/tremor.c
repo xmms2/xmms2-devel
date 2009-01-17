@@ -15,23 +15,23 @@
  */
 
 #include <glib.h>
-#include <vorbis/codec.h>
-#include <vorbis/vorbisfile.h>
+#include <tremor/ivorbiscodec.h>
+#include <tremor/ivorbisfile.h>
 
 #include "xmms/xmms_xformplugin.h"
 
 #include "../vorbis_common/common.c"
 
-XMMS_XFORM_PLUGIN ("vorbis",
-                   "Vorbis Decoder", XMMS_VERSION,
-                   "Xiph's Ogg/Vorbis decoder",
+XMMS_XFORM_PLUGIN ("tremor",
+                   "Vorbis Decoder (tremor)", XMMS_VERSION,
+                   "Xiph's Ogg/Vorbis decoder (integer-only version)",
                    xmms_vorbis_plugin_setup);
 
 static void
 xmms_vorbis_set_duration (xmms_xform_t *xform, guint dur)
 {
 	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                             dur * 1000);
+	                             dur);
 }
 
 static gulong
@@ -41,7 +41,7 @@ xmms_vorbis_ov_read (OggVorbis_File *vf, gchar *buf, gint len, gint bigendian,
 	gulong ret;
 
 	do {
-		ret = ov_read (vf, buf, len, bigendian, sampsize, signd, outbuf);
+		ret = ov_read (vf, buf, len, outbuf);
 	} while (ret == OV_HOLE);
 
 	return ret;

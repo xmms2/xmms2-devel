@@ -1,0 +1,12 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    if conf.check_cc(lib="vorbisidec", header_name="tremor/ivorbisfile.h",
+                      uselib_store="tremor"):
+        return True
+    return False
+
+configure, build = plugin('tremor',
+                          configure=plugin_configure,
+                          source="tremor.c",
+                          libs=["tremor"])
