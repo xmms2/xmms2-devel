@@ -158,6 +158,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 	gchar *attr2;
 	xmmsv_coll_t *operand;
 	GString *idlist_str;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *v;
 
 	indent = g_malloc ((level * 2) + 1);
 	for (i = 0; i < level * 2; ++i) {
@@ -174,26 +176,30 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 
 	case XMMS_COLLECTION_TYPE_UNION:
 		print_info ("%sUnion:", indent);
-		for (xmmsv_coll_operand_list_first (coll);
-		     xmmsv_coll_operand_list_entry (coll, &operand);
-		     xmmsv_coll_operand_list_next (coll)) {
-			coll_dump (operand, level + 1);
+		xmmsv_get_list_iter (xmmsv_coll_operands_list_get (coll), &it);
+		while (xmmsv_list_iter_entry (it, &v)) {
+			if (xmmsv_get_collection (v, &operand)) {
+				coll_dump (operand, level + 1);
+			}
+			xmmsv_list_iter_next (it);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		print_info ("%sIntersection:", indent);
-		for (xmmsv_coll_operand_list_first (coll);
-		     xmmsv_coll_operand_list_entry (coll, &operand);
-		     xmmsv_coll_operand_list_next (coll)) {
-			coll_dump (operand, level + 1);
+		xmmsv_get_list_iter (xmmsv_coll_operands_list_get (coll), &it);
+		while (xmmsv_list_iter_entry (it, &v)) {
+			if (xmmsv_get_collection (v, &operand)) {
+				coll_dump (operand, level + 1);
+			}
+			xmmsv_list_iter_next (it);
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		print_info ("%sComplement:", indent);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -202,8 +208,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sEquals ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -211,8 +217,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 	case XMMS_COLLECTION_TYPE_HAS:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		print_info ("%sHas ('%s') for:", indent, attr1);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -221,8 +227,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sMatch ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -231,8 +237,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sSmaller ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -241,8 +247,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sGreater ('%s', '%s') for:", indent, attr1, attr2);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
@@ -263,8 +269,8 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		idlist_str = coll_idlist_to_string (coll);
 		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
 		g_string_free (idlist_str, TRUE);
-		xmmsv_coll_operand_list_first (coll);
-		if (xmmsv_coll_operand_list_entry (coll, &operand)) {
+		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
+		    xmmsv_get_collection (v, &operand)) {
 			coll_dump (operand, level + 1);
 		}
 		break;
