@@ -44,7 +44,6 @@ subdirs = """
           src/lib/xmmsvisualization
           src/clients/lib/xmmsclient
           src/clients/lib/xmmsclient-glib
-          tests
           src/include
           src/includepriv
           """.split()
@@ -63,6 +62,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/python",
                     "src/clients/lib/perl",
                     "src/clients/lib/ruby",
+                    "tests",
                     "pixmaps"]
 
 def is_plugin(x):
