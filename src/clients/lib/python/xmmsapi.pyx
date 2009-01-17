@@ -789,6 +789,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 		raise RuntimeError("Unknown collection typ")
 
 	c.coll = coll
+	xmmsv_coll_ref(coll)
 
 	atr = c.attributes
 	xmmsv_coll_ref(coll)
@@ -809,7 +810,6 @@ cdef create_coll(xmmsv_coll_t *coll):
 	xmmsv_coll_operand_list_first(coll)
 	while xmmsv_coll_operand_list_valid(coll):
 		xmmsv_coll_operand_list_entry(coll, &ocoll)
-		xmmsv_coll_ref(ocoll)
 		opr.pylist.append(create_coll(ocoll))
 		xmmsv_coll_operand_list_next(coll)
 	xmmsv_coll_ref(coll)
