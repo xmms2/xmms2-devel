@@ -44,6 +44,7 @@ subdirs = """
           src/lib/xmmsvisualization
           src/clients/lib/xmmsclient
           src/clients/lib/xmmsclient-glib
+          tests
           src/include
           src/includepriv
           """.split()
@@ -447,6 +448,7 @@ def set_options(opt):
     opt.add_option('--with-target-platform', type='string',
                    dest='target_platform')
     opt.add_option('--with-windows-version', type='string', dest='winver')
+    opt.add_option('--run-tests', type='int', dest='run_tests')
 
     opt.sub_options("src/xmms")
     for o in optional_subdirs + subdirs:
@@ -459,3 +461,6 @@ def shutdown():
             libprefix = Utils.subst_vars('${PREFIX}/lib', Build.bld.env)
             try: Utils.cmd_output(ldconfig + ' ' + libprefix)
             except: pass
+
+    if Options.options.run_tests:
+        os.system(os.path.join(os.getenv('WAF_HOME'), "default/tests/test_xmmstypes"))
