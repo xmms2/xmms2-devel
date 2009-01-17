@@ -491,28 +491,30 @@ c_operands_delete (VALUE self, VALUE arg)
 	return Qnil;
 }
 
+static void
+operands_each (xmmsv_t *value, void *user_data)
+{
+	xmmsv_coll_t *operand = NULL;
+
+	xmmsv_get_collection (value, &operand);
+	xmmsc_coll_ref (operand);
+
+	rb_yield (TO_XMMS_CLIENT_COLLECTION (operand));
+}
+
 static VALUE
 c_operands_each (VALUE self)
 {
 	RbCollection *coll = NULL;
+	xmmsv_t *operands_list;
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	if (!xmmsc_coll_operand_list_first (coll->real))
-		return self;
+	operands_list = xmmsv_coll_operands_list_get (coll->real);
 
-	while (xmmsc_coll_operand_list_valid (coll->real)) {
-		xmmsc_coll_t *operand = NULL;
-
-		xmmsc_coll_operand_list_entry (coll->real, &operand);
-		xmmsc_coll_ref (operand);
-
-		rb_yield (TO_XMMS_CLIENT_COLLECTION (operand));
-
-		xmmsc_coll_operand_list_next (coll->real);
-	}
+	xmmsv_list_foreach (operands_list, operands_each, NULL);
 
 	return self;
 }
