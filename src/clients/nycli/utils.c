@@ -865,6 +865,11 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
+	/* If no currpos, start jump from beginning */
+	if (currpos < 0) {
+		currpos = 0;
+	}
+
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err) && xmmsv_is_list (val)) {

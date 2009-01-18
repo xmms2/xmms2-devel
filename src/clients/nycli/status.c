@@ -80,6 +80,11 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	const gchar *noinfo_fields[] = { "playback_status", "playtime", NULL };
 	const gchar *err;
 
+	/* No current entry, no status */
+	if (infos->cache->currpos < 0) {
+		goto err;
+	}
+
 	currid = g_array_index (infos->cache->active_playlist, guint,
 	                        infos->cache->currpos);
 
@@ -153,6 +158,8 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
+
+err:
 
 	xmmsc_result_unref (res);
 }

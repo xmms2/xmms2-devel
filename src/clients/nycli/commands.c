@@ -459,8 +459,13 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 			                            column_display_render_highlight);
 			nextsep = FALSE;
 		} else if (strcmp (columns[i], "next") == 0) {
+			int currpos = infos->cache->currpos;
+			/* If no currpos, start counting from the beginning */
+			if (currpos < 0) {
+				currpos = 0;
+			}
 			column_display_add_special (disp, "next",
-			                            GINT_TO_POINTER(infos->cache->currpos),
+			                            GINT_TO_POINTER(currpos),
 			                            4, COLUMN_DEF_ALIGN_RIGHT,
 			                            column_display_render_next);
 		} else {
@@ -754,7 +759,13 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 		g_printf (_("Error: --next and --at are mutually exclusive!\n"));
 		return FALSE;
 	} else if (next) {
-		*pos = infos->cache->currpos + 1;
+		if (infos->cache->currpos >= 0) {
+			*pos = infos->cache->currpos + 1;
+		} else {
+			g_printf (_("Error: --next cannot be used if there is no "
+			            "active track!\n"));
+			return FALSE;
+		}
 	} else if (at_isset) {
 		/* FIXME: handle relative values ? */
 		/* beware: int vs uint */

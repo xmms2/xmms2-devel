@@ -60,6 +60,9 @@ refresh_currpos (xmmsv_t *val, void *udata)
 
 	if (!xmmsv_is_error (val)) {
 		xmmsv_get_dict_entry_uint (val, "position", &cache->currpos);
+	} else {
+		/* Current pos not set */
+		cache->currpos = -1;
 	}
 
 	freshness_received (&cache->freshness_currpos);
@@ -239,7 +242,7 @@ cli_cache_init ()
 	cli_cache_t *cache;
 
 	cache = g_new0 (cli_cache_t, 1);
-	cache->currpos = 0;
+	cache->currpos = -1;
 	cache->playback_status = 0;
 	cache->active_playlist = g_array_new (FALSE, TRUE, sizeof (guint));
 	cache->active_playlist_name = NULL;
