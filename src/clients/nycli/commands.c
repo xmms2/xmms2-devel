@@ -84,8 +84,8 @@ CLI_SIMPLE_SETUP("next", cli_next,
                  _("[offset]"),
                  _("Jump to next song."))
 CLI_SIMPLE_SETUP("info", cli_info,
-                 COMMAND_REQ_CONNECTION,
-                 _("<pattern>"),
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
+                 _("<pattern|positions>"),
                  _("Display all the properties for all media matching the pattern."))
 CLI_SIMPLE_SETUP("exit", cli_exit,
                  COMMAND_REQ_NONE,
@@ -191,11 +191,11 @@ void
 cli_jump_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first track matching the pattern backwards"), NULL },
+		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first media matching the pattern"), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "jump", &cli_jump, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-b] <pattern>"),
+	command_action_fill (action, "jump", &cli_jump, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-b] <pattern|positions>"),
 	                     _("Jump to the first media maching the pattern."));
 }
 
@@ -257,7 +257,7 @@ cli_remove_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "remove", &cli_remove, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>] <pattern>"),
+	                     _("[-p <playlist>] <pattern|positions>"),
 	                     _("Remove the matching media from a playlist."));
 }
 
@@ -271,7 +271,7 @@ cli_move_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "move", &cli_move, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>] [-n | -a <pos|offset>]  <pattern>"),
+	                     _("[-p <playlist>] [-n | -a <pos|offset>] <pattern|positions>"),
 	                     _("Move entries inside a playlist."));
 }
 
@@ -623,12 +623,19 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
 	gboolean backward = TRUE, retval = TRUE;
+	playlist_positions_t *positions;
 
 	if (!command_flag_boolean_get (ctx, "backward", &backward)) {
 		backward = FALSE;
 	}
 
-	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	/* Select by positions */
+	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
+		position_jump (infos, positions);
+		playlist_positions_free (positions);
+
+	/* Select by pattern */
+	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		/* FIXME: benchmark if efficient to reduce query to Active playlist */
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
@@ -730,8 +737,16 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 	gboolean success;
+	playlist_positions_t *positions;
 
-	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	/* Select by positions */
+	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
+		positions_print_info (infos, positions);
+		playlist_positions_free (positions);
+		success = TRUE;
+
+	/* Select by pattern */
+	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		list_print_info (res, infos);
@@ -1134,6 +1149,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 	gboolean retval = TRUE;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
+	playlist_positions_t *positions;
 
 	command_flag_string_get (ctx, "playlist", &playlist);
 	if (!playlist
@@ -1141,7 +1157,13 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 		playlist = NULL;
 	}
 
-	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	/* Select by positions */
+	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
+		positions_remove (infos, playlist, positions);
+		playlist_positions_free (positions);
+
+	/* Select by pattern */
+	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		if (!playlist) {
@@ -1179,6 +1201,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 	gint pos;
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
+	playlist_positions_t *positions;
 
 	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = NULL;
@@ -1189,7 +1212,13 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	/* Select by positions */
+	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
+		positions_move (infos, playlist, positions, pos);
+		playlist_positions_free (positions);
+
+	/* Select by pattern */
+	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		move_entries (res, infos, playlist, pos);

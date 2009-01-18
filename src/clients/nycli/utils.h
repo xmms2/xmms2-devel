@@ -24,6 +24,7 @@
 
 #include "main.h"
 #include "column_display.h"
+#include "playlist_positions.h"
 
 void done (xmmsc_result_t *res, cli_infos_t *infos);
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
@@ -42,6 +43,10 @@ void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all
 void list_print_collections (xmmsc_result_t *res, cli_infos_t *infos);
 void list_jump (xmmsc_result_t *res, cli_infos_t *infos);
 void list_jump_back (xmmsc_result_t *res, cli_infos_t *infos);
+void position_jump (cli_infos_t *infos, playlist_positions_t *positions);
+void positions_remove (cli_infos_t *infos, const gchar *playlist, playlist_positions_t *positions);
+void positions_move (cli_infos_t *infos, const gchar *playlist, playlist_positions_t *positions, gint pos);
+void positions_print_info (cli_infos_t *infos, playlist_positions_t *positions);
 void configure_collection (xmmsc_result_t *res, cli_infos_t *infos, gchar *ns, gchar *name, gchar *attrname, gchar *attrvalue);
 void collection_print_config (xmmsc_result_t *res, cli_infos_t *infos, gchar *attrname);
 void coll_rename (cli_infos_t *infos, gchar *oldname, gchar *newname, xmmsc_coll_namespace_t ns, gboolean force);

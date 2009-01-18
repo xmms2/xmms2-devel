@@ -39,6 +39,13 @@ typedef enum {
 	IDLIST_CMD_REMOVE
 } idlist_command_t;
 
+typedef struct {
+	cli_infos_t *infos;
+	const gchar *playlist;
+	gint inc;
+	gint pos;
+} pl_pos_udata_t;
+
 /* Dumps a propdict on stdout */
 static void
 dict_dump (const gchar *source, xmmsv_t *val, void *udata)
@@ -358,6 +365,28 @@ remove_ids (cli_infos_t *infos, xmmsc_result_t *res)
 	apply_ids (infos, res, IDLIST_CMD_REMOVE);
 }
 
+
+static void
+pos_remove_cb (gint pos, void *userdata)
+{
+	xmmsc_result_t *res;
+	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
+
+	res = xmmsc_playlist_remove_entry (pack->infos->sync, pack->playlist, pos);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+}
+
+void
+positions_remove (cli_infos_t *infos, const gchar *playlist,
+                  playlist_positions_t *positions)
+{
+	pl_pos_udata_t udata = { infos, playlist, 0, 0 };
+	playlist_positions_foreach (positions, pos_remove_cb, FALSE, &udata);
+
+	cli_infos_loop_resume (infos);
+}
+
 void
 rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
 {
@@ -514,6 +543,41 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
+}
+
+static void
+pos_print_info_cb (gint pos, void *userdata)
+{
+	xmmsc_result_t *infores;
+	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
+	guint id;
+
+	// Skip if outside of playlist
+	if (pos >= pack->infos->cache->active_playlist->len) {
+		return;
+	}
+
+	id = g_array_index (pack->infos->cache->active_playlist, guint, pos);
+
+	infores = xmmsc_medialib_get_info (pack->infos->sync, id);
+	xmmsc_result_wait (infores);
+
+	/* Do not prepend newline before the first entry */
+	if (pack->inc > 0) {
+		g_printf ("\n");
+	} else {
+		pack->inc++;
+	}
+	id_print_info (infores, id, NULL);
+}
+
+void
+positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
+{
+	pl_pos_udata_t udata = { infos, NULL, 0, 0 };
+	playlist_positions_foreach (positions, pos_print_info_cb, TRUE, &udata);
+
+	cli_infos_loop_resume (infos);
 }
 
 void
@@ -926,6 +990,23 @@ list_jump (xmmsc_result_t *res, cli_infos_t *infos)
 }
 
 void
+position_jump (cli_infos_t *infos, playlist_positions_t *positions)
+{
+	xmmsc_result_t *jumpres;
+	int pos;
+
+	if (playlist_positions_get_single (positions, &pos)) {
+		jumpres = xmmsc_playlist_set_next (infos->sync, pos);
+		xmmsc_result_wait (jumpres);
+		tickle (jumpres, infos);
+	} else {
+		g_printf (_("Cannot jump to several positions!\n"));
+	}
+
+	cli_infos_loop_resume (infos);
+}
+
+void
 playback_play (cli_infos_t *infos)
 {
 	xmmsc_result_t *res;
@@ -1124,6 +1205,45 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matching);
 	xmmsc_result_unref (lisres);
+}
+
+static void
+pos_move_cb (gint curr, void *userdata)
+{
+	xmmsc_result_t *movres;
+	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
+
+	/* Entries are moved in descending order, pack->inc is used as
+	 * offset both for forward and backward moves, and reset
+	 * inbetween. */
+
+	if (curr < pack->pos) {
+		/* moving forward */
+		if (pack->inc >= 0) {
+			pack->inc = -1; /* start inc at -1, decrement */
+		}
+		movres = xmmsc_playlist_move_entry (pack->infos->sync, pack->playlist,
+		                                    curr, pack->pos + pack->inc);
+		pack->inc--;
+	} else {
+		/* moving backward */
+		movres = xmmsc_playlist_move_entry (pack->infos->sync, pack->playlist,
+		                                    curr + pack->inc, pack->pos);
+		pack->inc++;
+	}
+
+	xmmsc_result_wait (movres);
+	xmmsc_result_unref (movres);
+}
+
+void
+positions_move (cli_infos_t *infos, const gchar *playlist,
+                playlist_positions_t *positions, gint pos)
+{
+	pl_pos_udata_t udata = { infos, playlist, 0, pos };
+	playlist_positions_foreach (positions, pos_move_cb, FALSE, &udata);
+
+	cli_infos_loop_resume (infos);
 }
 
 void
