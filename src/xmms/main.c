@@ -57,15 +57,15 @@
  */
 static void quit (xmms_object_t *object, xmms_error_t *error);
 static GTree *stats (xmms_object_t *object, xmms_error_t *error);
-static void hello (xmms_object_t *object, guint protocolver, const gchar *client, xmms_error_t *error);
+static void hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
 static xmms_bindata_t *bindata_obj;
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, NONE, UINT32, STRING);
+XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, NONE, INT32, STRING);
 XMMS_CMD_DEFINE (stats, stats, xmms_object_t *, DICT, NONE, NONE);
-XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
+XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, INT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.
@@ -260,7 +260,7 @@ xmms_main_destroy (xmms_object_t *object)
  * @internal Function to respond to the 'hello' sent from clients on connect
  */
 static void
-hello (xmms_object_t *object, guint protocolver, const gchar *client, xmms_error_t *error)
+hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error)
 {
 	if (protocolver != XMMS_IPC_PROTOCOL_VERSION) {
 		xmms_log_info ("Client '%s' with bad protocol version (%d, not %d) connected", client, protocolver, XMMS_IPC_PROTOCOL_VERSION);

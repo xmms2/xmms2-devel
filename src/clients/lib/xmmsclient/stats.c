@@ -43,7 +43,7 @@ xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
-	xmms_ipc_msg_put_uint32 (msg, type);
+	xmms_ipc_msg_put_int32 (msg, type);
 
 	return xmmsc_send_msg (c, msg);
 }

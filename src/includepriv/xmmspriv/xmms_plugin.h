@@ -48,7 +48,7 @@ void xmms_plugin_destroy (xmms_plugin_t *plugin);
 typedef gboolean (*xmms_plugin_foreach_func_t)(xmms_plugin_t *, gpointer);
 void xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, gpointer user_data);
 
-GList *xmms_plugin_client_list (xmms_object_t *, guint32 type, xmms_error_t *err);
+GList *xmms_plugin_client_list (xmms_object_t *, gint32 type, xmms_error_t *err);
 
 xmms_plugin_t *xmms_plugin_find (xmms_plugin_type_t type, const gchar *name);
 

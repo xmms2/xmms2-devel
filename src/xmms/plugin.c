@@ -413,7 +413,7 @@ xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 }
 
 GList *
-xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
+xmms_plugin_client_list (xmms_object_t *main, gint32 type, xmms_error_t *err)
 {
 	GList *list = NULL;
 	xmms_plugin_foreach (type, xmms_plugin_client_list_foreach, &list);
