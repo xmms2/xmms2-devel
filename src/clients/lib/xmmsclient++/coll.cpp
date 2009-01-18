@@ -34,13 +34,13 @@ namespace Xmms
 
 	Coll::Coll( Type type )
 	{
-		coll_ = xmmsc_coll_new( type );
+		coll_ = xmmsv_coll_new( type );
 		if( !coll_ ) {
 			throw std::runtime_error( "Failed to create a Coll object" );
 		}
 	}
 	
-	Coll::Coll( xmmsc_coll_t *coll )
+	Coll::Coll( xmmsv_coll_t *coll )
 		: coll_( coll )
 	{
 		ref();
@@ -67,16 +67,16 @@ namespace Xmms
 
 	void Coll::ref()
 	{
-		xmmsc_coll_ref( coll_ );
+		xmmsv_coll_ref( coll_ );
 	}
 
 	void Coll::unref()
 	{
-		xmmsc_coll_unref( coll_ );
+		xmmsv_coll_unref( coll_ );
 	}
 
 	Type Coll::getType() const {
-		return xmmsc_coll_get_type( coll_ );
+		return xmmsv_coll_get_type( coll_ );
 	}
 
 	AttributeElement Coll::operator []( const string& attrname )
@@ -91,13 +91,13 @@ namespace Xmms
 
 	void Coll::setAttribute( const string &attrname, const string &value )
 	{
-		xmmsc_coll_attribute_set( coll_, attrname.c_str(), value.c_str() );
+		xmmsv_coll_attribute_set( coll_, attrname.c_str(), value.c_str() );
 	}
 
 	string Coll::getAttribute( const string &attrname ) const
 	{
 		char *val;
-		if( !xmmsc_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
+		if( !xmmsv_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 
@@ -106,14 +106,14 @@ namespace Xmms
 
 	void Coll::removeAttribute( const string &attrname )
 	{
-		if( !xmmsc_coll_attribute_remove( coll_, attrname.c_str() ) ) {
+		if( !xmmsv_coll_attribute_remove( coll_, attrname.c_str() ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 	}
 
 	void Coll::setIndex( unsigned int index, unsigned int value )
 	{
-		if( !xmmsc_coll_idlist_set_index( coll_, index, value ) ) {
+		if( !xmmsv_coll_idlist_set_index( coll_, index, value ) ) {
 			std::stringstream err;
 			err << "Index out of idlist: "  << index;
 			throw out_of_range( err.str() );
@@ -123,7 +123,7 @@ namespace Xmms
 	unsigned int Coll::getIndex( unsigned int index ) const
 	{
 		unsigned int value;
-		if( !xmmsc_coll_idlist_get_index( coll_, index, &value ) ) {
+		if( !xmmsv_coll_idlist_get_index( coll_, index, &value ) ) {
 			std::stringstream err;
 			err << "Index out of idlist: "  << index;
 			throw out_of_range( err.str() );
@@ -197,7 +197,7 @@ namespace Xmms
 	{
 	}
 
-	Nary::Nary( xmmsc_coll_t* coll )
+	Nary::Nary( xmmsv_coll_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -208,12 +208,12 @@ namespace Xmms
 
 	void Nary::addOperand( Coll& operand )
 	{
-		xmmsc_coll_add_operand( coll_, operand.getColl() );
+		xmmsv_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Nary::removeOperand( Coll& operand )
 	{
-		xmmsc_coll_remove_operand( coll_, operand.getColl() );
+		xmmsv_coll_remove_operand( coll_, operand.getColl() );
 	}
 
 	OperandIterator Nary::getOperandIterator()
@@ -238,7 +238,7 @@ namespace Xmms
 		setOperand( operand );
 	}
 
-	Unary::Unary( xmmsc_coll_t* coll )
+	Unary::Unary( xmmsv_coll_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -250,13 +250,13 @@ namespace Xmms
 	void Unary::setOperand( Coll& operand )
 	{
 		removeOperand();
-		xmmsc_coll_add_operand( coll_, operand.getColl() );
+		xmmsv_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Unary::removeOperand()
 	{
 		try {
-			xmmsc_coll_remove_operand( coll_, (*getOperand()).getColl() );
+			xmmsv_coll_remove_operand( coll_, (*getOperand()).getColl() );
 		}
 		/* don't throw an error if none */
 		catch (...) {}
@@ -264,15 +264,15 @@ namespace Xmms
 
 	CollPtr Unary::getOperand() const
 	{
-		xmmsc_coll_t *op;
+		xmmsv_coll_t *op;
 
 		// Find the operand
-		xmmsc_coll_operand_list_save( coll_ );
-		xmmsc_coll_operand_list_first( coll_ );
-		if( !xmmsc_coll_operand_list_entry( coll_, &op ) ) {
+		xmmsv_coll_operand_list_save( coll_ );
+		xmmsv_coll_operand_list_first( coll_ );
+		if( !xmmsv_coll_operand_list_entry( coll_, &op ) ) {
 			op = NULL;
 		}
-		xmmsc_coll_operand_list_restore( coll_ );
+		xmmsv_coll_operand_list_restore( coll_ );
 
 		if( !op ) {
 			throw missing_operand_error( "No operand in this operator!" );
@@ -281,7 +281,7 @@ namespace Xmms
 		return CollResult::createColl( op );
 	}
 
-	Filter::Filter( xmmsc_coll_t* coll )
+	Filter::Filter( xmmsv_coll_t* coll )
 		: Unary( coll )
 	{
 	}
@@ -334,7 +334,7 @@ namespace Xmms
 	{
 	}
 
-	Reference::Reference( xmmsc_coll_t* coll )
+	Reference::Reference( xmmsv_coll_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -358,13 +358,13 @@ namespace Xmms
 
 	Union::Union()
 		: Nary( UNION ) {}
-	Union::Union( xmmsc_coll_t* coll )
+	Union::Union( xmmsv_coll_t* coll )
 		: Nary( coll ) {}
 	Union::~Union() {}
 
 	Intersection::Intersection()
 		: Nary( INTERSECTION ) {}
-	Intersection::Intersection( xmmsc_coll_t* coll )
+	Intersection::Intersection( xmmsv_coll_t* coll )
 		: Nary( coll ) {}
 	Intersection::~Intersection() {}
 
@@ -372,7 +372,7 @@ namespace Xmms
 		: Unary( COMPLEMENT ) {}
 	Complement::Complement( Coll& operand )
 		: Unary( COMPLEMENT, operand ) {}
-	Complement::Complement( xmmsc_coll_t* coll )
+	Complement::Complement( xmmsv_coll_t* coll )
 		: Unary( coll ) {}
 	Complement::~Complement() {}
 
@@ -382,13 +382,13 @@ namespace Xmms
 		: Filter( HAS, operand ) {}
 	Has::Has( Coll& operand, const string& field )
 		: Filter( HAS, operand, field ) {}
-	Has::Has( xmmsc_coll_t* coll )
+	Has::Has( xmmsv_coll_t* coll )
 		: Filter( coll ) {}
 	Has::~Has() {}
 
 	Smaller::Smaller()
 		: Filter( SMALLER ) {}
-	Smaller::Smaller( xmmsc_coll_t* coll )
+	Smaller::Smaller( xmmsv_coll_t* coll )
 		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
 		: Filter( SMALLER, operand ) {}
@@ -402,7 +402,7 @@ namespace Xmms
 
 	Greater::Greater()
 		: Filter( GREATER ) {}
-	Greater::Greater( xmmsc_coll_t* coll )
+	Greater::Greater( xmmsv_coll_t* coll )
 		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
 		: Filter( GREATER, operand ) {}
@@ -416,7 +416,7 @@ namespace Xmms
 
 	Equals::Equals()
 		: Filter( EQUALS ) {}
-	Equals::Equals( xmmsc_coll_t* coll )
+	Equals::Equals( xmmsv_coll_t* coll )
 		: Filter( coll ) {}
 	Equals::Equals( Coll& operand )
 		: Filter( EQUALS, operand ) {}
@@ -432,7 +432,7 @@ namespace Xmms
 
 	Match::Match()
 		: Filter( MATCH ) {}
-	Match::Match( xmmsc_coll_t* coll )
+	Match::Match( xmmsv_coll_t* coll )
 		: Filter( coll ) {}
 	Match::Match( Coll& operand )
 		: Filter( MATCH, operand ) {}
@@ -447,7 +447,7 @@ namespace Xmms
 	Match::~Match() {}
 
 
-	Idlist::Idlist( xmmsc_coll_t* coll )
+	Idlist::Idlist( xmmsv_coll_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -480,7 +480,7 @@ namespace Xmms
 	{
 	}
 
-	Queue::Queue( xmmsc_coll_t* coll )
+	Queue::Queue( xmmsv_coll_t* coll )
 		: Idlist( coll ) {}
 	Queue::Queue( Type type )
 		: Idlist( type ) {}
@@ -502,7 +502,7 @@ namespace Xmms
 	{
 	}
 
-	PartyShuffle::PartyShuffle( xmmsc_coll_t* coll )
+	PartyShuffle::PartyShuffle( xmmsv_coll_t* coll )
 		: Queue( coll ) {}
 	PartyShuffle::PartyShuffle()
 		: Queue( PARTYSHUFFLE )
@@ -524,7 +524,7 @@ namespace Xmms
 
 	void Idlist::append( unsigned int id )
 	{
-		if( !xmmsc_coll_idlist_append( coll_, id ) ) {
+		if( !xmmsv_coll_idlist_append( coll_, id ) ) {
 			std::stringstream err;
 			err << "Failed to append " << id << " to idlist";
 			throw collection_operation_error( err.str() );
@@ -533,7 +533,7 @@ namespace Xmms
 
 	void Idlist::insert( unsigned int index, unsigned int id )
 	{
-		if( !xmmsc_coll_idlist_insert( coll_, index, id ) ) {
+		if( !xmmsv_coll_idlist_insert( coll_, index, id ) ) {
 			std::stringstream err;
 			err << "Failed to insert " << id << " in idlist at index " << index;
 			throw collection_operation_error( err.str() );
@@ -542,7 +542,7 @@ namespace Xmms
 
 	void Idlist::move( unsigned int index, unsigned int newindex )
 	{
-		if( !xmmsc_coll_idlist_move( coll_, index, newindex ) ) {
+		if( !xmmsv_coll_idlist_move( coll_, index, newindex ) ) {
 			std::stringstream err;
 			err << "Failed to move idlist entry from index " << index
 			    << " to " << newindex;
@@ -552,7 +552,7 @@ namespace Xmms
 
 	void Idlist::remove( unsigned int index )
 	{
-		if( !xmmsc_coll_idlist_remove( coll_, index ) ) {
+		if( !xmmsv_coll_idlist_remove( coll_, index ) ) {
 			std::stringstream err;
 			err << "Failed to remove idlist entry at index " << index;
 			throw collection_operation_error( err.str() );
@@ -561,14 +561,14 @@ namespace Xmms
 
 	void Idlist::clear()
 	{
-		if( !xmmsc_coll_idlist_clear( coll_ ) ) {
+		if( !xmmsv_coll_idlist_clear( coll_ ) ) {
 			throw collection_operation_error( "Failed to clear the idlist" );
 		}
 	}
 
 	unsigned int Idlist::size() const
 	{
-		return xmmsc_coll_idlist_get_size( coll_ );
+		return xmmsv_coll_idlist_get_size( coll_ );
 	}
 
 	// get/set value at index
@@ -613,13 +613,13 @@ namespace Xmms
 	void PartyShuffle::setOperand( Coll& operand )
 	{
 		removeOperand();
-		xmmsc_coll_add_operand( coll_, operand.getColl() );
+		xmmsv_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void PartyShuffle::removeOperand()
 	{
 		try {
-			xmmsc_coll_remove_operand( coll_, (*getOperand()).getColl() );
+			xmmsv_coll_remove_operand( coll_, (*getOperand()).getColl() );
 		}
 		/* don't throw an error if none */
 		catch (...) {}
@@ -627,15 +627,15 @@ namespace Xmms
 
 	CollPtr PartyShuffle::getOperand() const
 	{
-		xmmsc_coll_t *op;
+		xmmsv_coll_t *op;
 
 		// Find the operand
-		xmmsc_coll_operand_list_save( coll_ );
-		xmmsc_coll_operand_list_first( coll_ );
-		if( !xmmsc_coll_operand_list_entry( coll_, &op ) ) {
+		xmmsv_coll_operand_list_save( coll_ );
+		xmmsv_coll_operand_list_first( coll_ );
+		if( !xmmsv_coll_operand_list_entry( coll_, &op ) ) {
 			op = NULL;
 		}
-		xmmsc_coll_operand_list_restore( coll_ );
+		xmmsv_coll_operand_list_restore( coll_ );
 
 		if( !op ) {
 			throw missing_operand_error( "No operand in this operator!" );
@@ -679,41 +679,41 @@ namespace Xmms
 
 	void OperandIterator::first()
 	{
-		if( !xmmsc_coll_operand_list_first( coll_.coll_ ) ) {
+		if( !xmmsv_coll_operand_list_first( coll_.coll_ ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 	}
 
 	bool OperandIterator::valid() const
 	{
-		return xmmsc_coll_operand_list_valid( coll_.coll_ );
+		return xmmsv_coll_operand_list_valid( coll_.coll_ );
 	}
 
 	void OperandIterator::next()
 	{
-		if( !xmmsc_coll_operand_list_next( coll_.coll_ ) ) {
+		if( !xmmsv_coll_operand_list_next( coll_.coll_ ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 	}
 
 	void OperandIterator::save()
 	{
-		if( !xmmsc_coll_operand_list_save( coll_.coll_ ) ) {
+		if( !xmmsv_coll_operand_list_save( coll_.coll_ ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 	}
 
 	void OperandIterator::restore()
 	{
-		if( !xmmsc_coll_operand_list_restore( coll_.coll_ ) ) {
+		if( !xmmsv_coll_operand_list_restore( coll_.coll_ ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 	}
 
 	CollPtr OperandIterator::operator *() const
 	{
-		xmmsc_coll_t *op;
-		if( !xmmsc_coll_operand_list_entry( coll_.coll_, &op ) ) {
+		xmmsv_coll_t *op;
+		if( !xmmsv_coll_operand_list_entry( coll_.coll_, &op ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 
