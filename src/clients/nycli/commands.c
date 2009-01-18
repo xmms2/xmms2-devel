@@ -564,7 +564,6 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_status (cli_infos_t *infos, command_context_t *ctx)
 {
-	guint currid;
 	gchar *format;
 	gint refresh;
 
@@ -577,9 +576,6 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	if (!command_flag_string_get (ctx, "format", &format)) {
 		format = configuration_get_string (infos->config, "STATUS_FORMAT");
 	}
-
-	currid = g_array_index (infos->cache->active_playlist, guint,
-	                        infos->cache->currpos);
 
 	status_mode (infos, format, refresh);
 
