@@ -101,6 +101,8 @@ int  xmmsv_list_iter_valid (xmmsv_list_iter_t *it);
 void xmmsv_list_iter_first (xmmsv_list_iter_t *it);
 void xmmsv_list_iter_next (xmmsv_list_iter_t *it);
 int  xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos);
+int  xmmsv_list_iter_tell (const xmmsv_list_iter_t *it);
+xmmsv_t *xmmsv_list_iter_get_parent (const xmmsv_list_iter_t *it);
 
 int  xmmsv_list_iter_insert (xmmsv_list_iter_t *it, xmmsv_t *val);
 int  xmmsv_list_iter_remove (xmmsv_list_iter_t *it);

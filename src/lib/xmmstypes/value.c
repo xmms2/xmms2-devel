@@ -51,6 +51,7 @@ typedef struct xmmsv_bin_St {
 
 struct xmmsv_list_St {
 	xmmsv_t **list;
+	xmmsv_t *parent_value;
 	size_t size;
 	size_t allocated;
 	x_list_t *iterators;
@@ -263,6 +264,7 @@ xmmsv_new_list (void)
 
 	if (val) {
 		val->value.list = xmmsv_list_new ();
+		val->value.list->parent_value = val;
 	}
 
 	return val;
@@ -1282,6 +1284,34 @@ xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos)
 	it->position = abspos;
 
 	return 1;
+}
+
+/**
+ * Tell the position of the iterator.
+ *
+ * @param it A #xmmsv_list_iter_t.
+ * @return The position of the iterator, or -1 if invalid.
+ */
+int
+xmmsv_list_iter_tell (const xmmsv_list_iter_t *it)
+{
+	x_return_val_if_fail (it, -1);
+
+	return it->position;
+}
+
+/**
+ * Return the parent #xmmsv_t of an iterator.
+ *
+ * @param it A #xmmsv_list_iter_t.
+ * @return The parent #xmmsv_t of the iterator, or NULL if invalid.
+ */
+xmmsv_t*
+xmmsv_list_iter_get_parent (const xmmsv_list_iter_t *it)
+{
+	x_return_val_if_fail (it, NULL);
+
+	return it->parent->parent_value;
 }
 
 /**
