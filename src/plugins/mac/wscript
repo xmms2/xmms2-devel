@@ -4,7 +4,7 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     if not conf.env["CXX"]:
         return False
-    if not conf.check_cc(header_name='mac/All.h'):
+    if not conf.check_cxx(header_name='mac/All.h'):
         return False
     if not conf.check_cc(lib="mac", uselib_store="mac"):
         return False
