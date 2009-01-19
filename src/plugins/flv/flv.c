@@ -110,14 +110,14 @@ xmms_flv_setup (xmms_xform_plugin_t *xform)
 static gboolean
 xmms_flv_init (xmms_xform_t *xform)
 {
-	xmms_sample_format_t bps = XMMS_SAMPLE_FORMAT_U8;
-	gint readret = 0;
-	guint8 channels = 1, flags = 0, format = 0;
+	xmms_sample_format_t bps;
+	gint readret;
+	guint8 channels, flags, format;
 	guint8 header[FLV_TAG_SIZE + 5];
-	const gchar *mime = NULL;
-	guint32 dataoffset = 0, samplerate = 0;
+	const gchar *mime;
+	guint32 dataoffset, samplerate;
 	xmms_error_t err;
-	xmms_flv_data_t *flvdata = NULL;
+	xmms_flv_data_t *flvdata;
 
 	readret = xmms_xform_read (xform, header, FLV_HDR_SIZE, &err);
 	if (readret != FLV_HDR_SIZE) {
@@ -169,10 +169,14 @@ xmms_flv_init (xmms_xform_t *xform)
 
 	if (flags&2) {
 		bps = XMMS_SAMPLE_FORMAT_S16;
+	} else {
+		bps = XMMS_SAMPLE_FORMAT_U8;
 	}
 
 	if (flags&1) {
 		channels = 2;
+	} else {
+		channels = 1;
 	}
 
 	format = flags >> 4;
