@@ -265,16 +265,12 @@ namespace Xmms
 	CollPtr Unary::getOperand() const
 	{
 		xmmsv_coll_t *op;
+		xmmsv_t *operands, *val;
 
 		// Find the operand
-		xmmsv_coll_operand_list_save( coll_ );
-		xmmsv_coll_operand_list_first( coll_ );
-		if( !xmmsv_coll_operand_list_entry( coll_, &op ) ) {
-			op = NULL;
-		}
-		xmmsv_coll_operand_list_restore( coll_ );
-
-		if( !op ) {
+		operands = xmmsv_coll_operands_list_get( coll_ );
+		if( !xmmsv_list_get( operands, 0, &val ) ||
+		    !xmmsv_get_collection( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
@@ -628,16 +624,12 @@ namespace Xmms
 	CollPtr PartyShuffle::getOperand() const
 	{
 		xmmsv_coll_t *op;
+		xmmsv_t *operands, *val;
 
 		// Find the operand
-		xmmsv_coll_operand_list_save( coll_ );
-		xmmsv_coll_operand_list_first( coll_ );
-		if( !xmmsv_coll_operand_list_entry( coll_, &op ) ) {
-			op = NULL;
-		}
-		xmmsv_coll_operand_list_restore( coll_ );
-
-		if( !op ) {
+		operands = xmmsv_coll_operands_list_get( coll_ );
+		if( !xmmsv_list_get( operands, 0, &val ) ||
+		    !xmmsv_get_collection( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
@@ -650,24 +642,30 @@ namespace Xmms
 		: coll_( coll )
 	{
 		coll_.ref();
+		initIterator();
 	}
 
 	OperandIterator::OperandIterator( const Coll& coll )
 		: coll_( const_cast< Coll& >( coll ) )
 	{
 		coll_.ref();
+		initIterator();
 	}
 
 	OperandIterator::OperandIterator( const OperandIterator& src )
 		: coll_( src.coll_ )
 	{
 		coll_.ref();
+
+		// We init a new iterator so the copy is independent
+		initIterator();
 	}
 
-	OperandIterator OperandIterator::operator=( const OperandIterator& src ) const
+	OperandIterator OperandIterator::operator=( const OperandIterator& src )
 	{
 		coll_.unref();
 		coll_ = src.coll_;
+		oper_it_ = src.oper_it_;
 		coll_.ref();
 		return *this;
 	}
@@ -675,45 +673,37 @@ namespace Xmms
 	OperandIterator::~OperandIterator()
 	{
 		coll_.unref();
+
+		// The list iterators are automatically freed.
+	}
+
+	void OperandIterator::initIterator()
+	{
+		xmmsv_t *operands( xmmsv_coll_operands_list_get( coll_.coll_ ) );
+		xmmsv_get_list_iter( operands, &oper_it_ );
 	}
 
 	void OperandIterator::first()
 	{
-		if( !xmmsv_coll_operand_list_first( coll_.coll_ ) ) {
-			throw out_of_range( "Access out of the operand list!" );
-		}
+		xmmsv_list_iter_first( oper_it_ );
 	}
 
 	bool OperandIterator::valid() const
 	{
-		return xmmsv_coll_operand_list_valid( coll_.coll_ );
+		return xmmsv_list_iter_valid( oper_it_ );
 	}
 
 	void OperandIterator::next()
 	{
-		if( !xmmsv_coll_operand_list_next( coll_.coll_ ) ) {
-			throw out_of_range( "Access out of the operand list!" );
-		}
-	}
-
-	void OperandIterator::save()
-	{
-		if( !xmmsv_coll_operand_list_save( coll_.coll_ ) ) {
-			throw out_of_range( "Access out of the operand list!" );
-		}
-	}
-
-	void OperandIterator::restore()
-	{
-		if( !xmmsv_coll_operand_list_restore( coll_.coll_ ) ) {
-			throw out_of_range( "Access out of the operand list!" );
-		}
+		xmmsv_list_iter_next( oper_it_ );
 	}
 
 	CollPtr OperandIterator::operator *() const
 	{
+		xmmsv_t *val;
 		xmmsv_coll_t *op;
-		if( !xmmsv_coll_operand_list_entry( coll_.coll_, &op ) ) {
+		if( !xmmsv_list_iter_entry( oper_it_, &val ) ||
+		    !xmmsv_get_collection( val, &op ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 

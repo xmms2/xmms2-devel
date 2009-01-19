@@ -560,14 +560,12 @@ namespace Xmms
 
 			public:
 				OperandIterator( const OperandIterator& src );
-				OperandIterator operator=( const OperandIterator& src ) const;
+				OperandIterator operator=( const OperandIterator& src );
 				~OperandIterator();
 
 				void first();
 				bool valid() const;
 				void next();
-				void save();
-				void restore();
 
 				CollPtr operator *() const;
 				// FIXME: Operator -> ?
@@ -578,7 +576,10 @@ namespace Xmms
 				OperandIterator( Coll& coll );
 				OperandIterator( const Coll& coll );
 
+				void initIterator();
+
 				Coll& coll_;
+				xmmsv_list_iter_t *oper_it_;
 		};
 
 
