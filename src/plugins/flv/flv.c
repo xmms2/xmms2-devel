@@ -28,12 +28,6 @@
 /* random constant */
 #define FLV_CHUNK_SIZE 4096
 
-/* no gotos */
-#define ERROR_OUT(err) do { \
-                       xmms_log_error (err); \
-                       return FALSE; \
-                       } while (0)
-
 /* let libavcodec take care of swapping sample bytes */
 static const gchar *mime_pcm_s16le = "audio/x-ffmpeg-pcm_s16le";
 static const gchar *fmt_mime[11] = {
@@ -127,11 +121,13 @@ xmms_flv_init (xmms_xform_t *xform)
 
 	readret = xmms_xform_read (xform, header, FLV_HDR_SIZE, &err);
 	if (readret != FLV_HDR_SIZE) {
-		ERROR_OUT ("Header read error");
+		xmms_log_error ("Header read error");
+		return FALSE;
 	}
 
 	if ((header[4] & HAS_AUDIO) != HAS_AUDIO) {
-		ERROR_OUT ("FLV has no audio stream");
+		xmms_log_error ("FLV has no audio stream");
+		return FALSE;
 	}
 
 	dataoffset = get_be32 (&header[5]) - FLV_HDR_SIZE;
@@ -143,18 +139,21 @@ xmms_flv_init (xmms_xform_t *xform)
 		                           (dataoffset < FLV_HDR_SIZE)?
 		                           dataoffset : FLV_HDR_SIZE, &err);
 		if (readret == -1) {
-			ERROR_OUT ("Error reading header:tag body gap");
+			xmms_log_error ("Error reading header:tag body gap");
+			return FALSE;
 		}
 
 		dataoffset -= readret;
 	}
 
 	if (next_audio_tag (xform) <= 0) {
-		ERROR_OUT ("Can't find first audio tag");
+		xmms_log_error ("Can't find first audio tag");
+		return FALSE;
 	}
 
 	if (xmms_xform_peek (xform, header, FLV_TAG_SIZE + 5, &err) < FLV_TAG_SIZE + 5) {
-		ERROR_OUT ("Can't read first audio tag");
+		xmms_log_error ("Can't read first audio tag");
+		return FALSE;
 	}
 
 	flags = header[FLV_TAG_SIZE + 4];
@@ -184,7 +183,8 @@ xmms_flv_init (xmms_xform_t *xform)
 			 * samples must be unsigned and 8 bits long
 			 */
 			if (bps != XMMS_SAMPLE_FORMAT_U8) {
-				ERROR_OUT ("Only u8 HE PCM is supported");
+				xmms_log_error ("Only u8 HE PCM is supported");
+				return FALSE;
 			}
 			break;
 		case 3:
