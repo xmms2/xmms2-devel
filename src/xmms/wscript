@@ -20,6 +20,7 @@ source = """
     collection.c
     collquery.c
     collserial.c
+    collsync.c
     ipc.c
     log.c
     plugin.c

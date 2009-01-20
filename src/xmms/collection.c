@@ -30,6 +30,7 @@
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collquery.h"
 #include "xmmspriv/xmms_collserial.h"
+#include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmms/xmms_ipc.h"
@@ -200,6 +201,11 @@ struct xmms_coll_dag_St {
 
 };
 
+static void
+coll_sync_cb (xmms_object_t *object, xmmsv_t *val, gpointer udata)
+{
+	xmms_coll_sync_schedule_sync ();
+}
 
 /** Initializes a new xmms_coll_dag_t.
  *
@@ -216,6 +222,8 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	ret->mutex = g_mutex_new ();
 	ret->playlist = playlist;
 
+	xmms_coll_sync_init (ret);
+
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		ret->collrefs[i] = g_hash_table_new_full (g_str_hash, g_str_equal,
 		                                          g_free, coll_unref);
@@ -225,6 +233,25 @@ xmms_collection_init (xmms_playlist_t *playlist)
 
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
 	                             XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
+
+	/* Connection coll_sync_cb to some signals */
+	xmms_object_connect (XMMS_OBJECT (ret),
+	                     XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                     coll_sync_cb, ret);
+
+	/* FIXME: These signals should trigger COLLECTION_CHANGED */
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                     coll_sync_cb, ret);
+
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+	                     coll_sync_cb, ret);
+
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
+	                     coll_sync_cb, ret);
+
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_COLLECTION_GET,
@@ -1019,6 +1046,7 @@ xmms_collection_destroy (xmms_object_t *object)
 
 	g_return_if_fail (dag);
 
+	xmms_coll_sync_shutdown ();
 	xmms_collection_dag_save (dag);
 
 	g_mutex_free (dag->mutex);
