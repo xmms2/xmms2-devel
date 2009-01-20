@@ -260,9 +260,6 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	va_start (ap, type);
 
 	switch (type) {
-		case XMMSV_TYPE_ERROR:
-			arg = xmmsv_new_error (va_arg (ap, gchar *));
-			break;
 		case XMMSV_TYPE_UINT32:
 			arg = xmmsv_new_uint (va_arg (ap, guint32));
 			break;
@@ -272,24 +269,12 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 		case XMMSV_TYPE_STRING:
 			arg = xmmsv_new_string (va_arg (ap, gchar *));
 			break;
-		case XMMSV_TYPE_BIN:
-			arg = xmms_create_xmmsv_bin (va_arg (ap, GString *));
-			break;
 		case XMMSV_TYPE_DICT:
 			arg = xmms_create_xmmsv_dict (va_arg (ap, GTree *));
 			break;
-		case XMMSV_TYPE_LIST:
-			arg = xmms_create_xmmsv_list (va_arg (ap, GList *));
-			break;
-		case XMMSV_TYPE_COLL:
-			arg = xmmsv_new_coll (va_arg (ap, xmmsv_coll_t *));
-			break;
-		case XMMSV_TYPE_NONE:
-			arg = xmmsv_new_none ();
-			break;
 		case XMMSV_TYPE_END:
 		default:
-			XMMS_DBG ("OBJECT: trying to emit value of invalid type!");
+			XMMS_DBG ("OBJECT: trying to emit value of unsupported type (%d)!", (int)type);
 			g_assert_not_reached ();
 			break;
 	}
@@ -411,32 +396,6 @@ xmms_convert_and_kill_dict (GTree *dict)
 	if (dict) {
 		g_tree_destroy (dict);
 	}
-
-	return v;
-}
-
-/**
- * Create a new #xmmsv_t bin initialized with the argument.
- * @param gs The data to initially fill the #xmmsv_t with.
- * @return a new #xmmsv_t bin.
- */
-static xmmsv_t *
-xmms_create_xmmsv_bin (GString *gs)
-{
-	xmmsv_t *v = NULL;
-	if (gs) {
-		v = xmmsv_new_bin (gs->str, gs->len);
-	}
-	return v;
-}
-
-xmmsv_t *
-xmms_convert_and_kill_bin (GString *gs)
-{
-	xmmsv_t *v;
-
-	v = xmms_create_xmmsv_bin (gs);
-	g_string_free (gs, TRUE);
 
 	return v;
 }
