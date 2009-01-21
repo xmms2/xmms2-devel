@@ -260,6 +260,9 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	va_start (ap, type);
 
 	switch (type) {
+		case XMMSV_TYPE_NONE:
+			arg = xmmsv_new_none ();
+			break;
 		case XMMSV_TYPE_UINT32:
 			arg = xmmsv_new_uint (va_arg (ap, guint32));
 			break;
