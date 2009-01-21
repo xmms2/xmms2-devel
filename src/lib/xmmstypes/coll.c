@@ -81,13 +81,15 @@ xmmsv_coll_ref (xmmsv_coll_t *coll)
  * The pointer will have to be deallocated using #xmmsv_coll_unref.
  *
  * @param type the #xmmsv_coll_type_t specifying the type of collection to create.
- * @return a pointer to the newly created collection.
+ * @return a pointer to the newly created collection, or NULL if the type is invalid.
  */
 xmmsv_coll_t*
 xmmsv_coll_new (xmmsv_coll_type_t type)
 {
 	xmmsv_list_iter_t *i;
 	xmmsv_coll_t *coll;
+
+	x_return_val_if_fail (type <= XMMS_COLLECTION_TYPE_LAST, NULL);
 
 	coll = x_new0 (xmmsv_coll_t, 1);
 	if (!coll) {
