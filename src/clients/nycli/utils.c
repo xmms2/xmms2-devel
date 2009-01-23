@@ -1441,7 +1441,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 		if (input) {
 			/* Replace previous operand. */
 			newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
-			xmmsv_coll_operand_list_clear (coll);
+			xmmsv_list_clear (xmmsv_coll_operands_list_get (coll));
 			xmmsv_coll_add_operand (coll, newcoll);
 			xmmsv_coll_unref (newcoll);
 		}
