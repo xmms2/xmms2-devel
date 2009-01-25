@@ -581,7 +581,8 @@ positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
 }
 
 void
-list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
+list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
+                gboolean is_search)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
@@ -597,7 +598,11 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 	if (!xmmsv_get_error (val, &err)) {
 		xmmsv_list_iter_t *it;
 		column_display_prepare (coldisp);
-		column_display_print_header (coldisp);
+
+		if (is_search) {
+			column_display_print_header (coldisp);
+		}
+
 		xmmsv_get_list_iter (val, &it);
 		while (xmmsv_list_iter_valid (it)) {
 			xmmsv_t *entry;
@@ -621,7 +626,13 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	column_display_print_footer (coldisp);
+	if (is_search) {
+		column_display_print_footer (coldisp);
+	} else {
+		g_printf ("\n");
+		column_display_print_footer_totaltime (coldisp);
+	}
+
 	column_display_free (coldisp);
 	cli_infos_loop_resume (infos);
 

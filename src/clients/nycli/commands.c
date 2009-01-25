@@ -497,6 +497,51 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 	return coldisp;
 }
 
+column_display_t *
+create_list_column_display (cli_infos_t *infos)
+{
+	column_display_t *coldisp;
+
+	/* FIXME: compute field size dynamically instead of hardcoding maxlen? */
+
+	coldisp = column_display_init (infos);
+
+	column_display_add_special (coldisp, "",
+	                            GINT_TO_POINTER(infos->cache->currpos), 2,
+	                            COLUMN_DEF_SIZE_FIXED,
+	                            COLUMN_DEF_ALIGN_LEFT,
+	                            column_display_render_highlight);
+	column_display_add_separator (coldisp, "[");
+	column_display_add_special (coldisp, "pos", NULL, 5,
+	                            COLUMN_DEF_SIZE_AUTO,
+	                            COLUMN_DEF_ALIGN_RIGHT,
+	                            column_display_render_position);
+	column_display_add_separator (coldisp, "/");
+	column_display_add_property (coldisp, "id", "id", 5,
+	                             COLUMN_DEF_SIZE_AUTO,
+	                             COLUMN_DEF_ALIGN_LEFT);
+	column_display_add_separator (coldisp, "] ");
+
+	/* FIXME: custom columns or 'format' */
+
+	column_display_add_property (coldisp, "artist", "artist", 50,
+	                             COLUMN_DEF_SIZE_AUTO,
+	                             COLUMN_DEF_ALIGN_LEFT);
+	column_display_add_separator (coldisp, " - ");
+	column_display_add_property (coldisp, "title", "title", 50,
+	                             COLUMN_DEF_SIZE_AUTO,
+	                             COLUMN_DEF_ALIGN_LEFT);
+
+	column_display_add_separator (coldisp, " (");
+	column_display_add_special (coldisp, "duration", "duration", 10,
+	                            COLUMN_DEF_SIZE_AUTO,
+	                            COLUMN_DEF_ALIGN_LEFT,
+	                            column_display_render_time);
+	column_display_add_separator (coldisp, ")");
+
+	return coldisp;
+}
+
 
 /* Define commands */
 
@@ -677,7 +722,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, orderval, 0, 0);
 		xmmsc_result_wait (res);
 
-		list_print_row (res, coldisp);
+		list_print_row (res, coldisp, TRUE);
 
 		xmmsv_unref (orderval);
 		xmmsc_coll_unref (query);
@@ -719,12 +764,13 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	coldisp = create_column_display (infos, ctx, default_columns);
+	/* FIXME: Allow choice of column display type in config */
+	coldisp = create_list_column_display (infos);
 
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
 
-	list_print_row (res, coldisp);
+	list_print_row (res, coldisp, FALSE);
 
 	/* FIXME: if not null, xmmsc_coll_unref (query); */
 
