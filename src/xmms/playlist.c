@@ -974,6 +974,7 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, const gchar *plname,
 		xmmsv_unref (val);
 
 		res = g_list_delete_link (res, res);
+		pos++;
 	}
 
 	/* FIXME: detect errors? */
