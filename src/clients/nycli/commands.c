@@ -441,17 +441,21 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 		/* FIXME: Allow flags to change alignment */
 
 		if (strcmp (columns[i], "id") == 0) {
-			column_display_add_property (disp, columns[i], columns[i], 5, TRUE,
+			column_display_add_property (disp, columns[i], columns[i], 5,
+			                             COLUMN_DEF_SIZE_FIXED,
 			                             COLUMN_DEF_ALIGN_LEFT);
 		} else if (strcmp (columns[i], "pos") == 0) {
 			column_display_add_special (disp, "pos", NULL, 5,
+			                            COLUMN_DEF_SIZE_FIXED,
 			                            COLUMN_DEF_ALIGN_RIGHT,
 			                            column_display_render_position);
 			nextsep = "/";
 		} else if (strcmp (columns[i], "curr") == 0) {
 			column_display_add_special (disp, "",
 			                            GINT_TO_POINTER(infos->cache->currpos),
-			                            2, COLUMN_DEF_ALIGN_LEFT,
+			                            2,
+			                            COLUMN_DEF_SIZE_FIXED,
+			                            COLUMN_DEF_ALIGN_LEFT,
 			                            column_display_render_highlight);
 			nextsep = FALSE;
 		} else if (strcmp (columns[i], "next") == 0) {
@@ -461,12 +465,14 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 				currpos = 0;
 			}
 			column_display_add_special (disp, "next",
-			                            GINT_TO_POINTER(currpos),
-			                            4, COLUMN_DEF_ALIGN_RIGHT,
+			                            GINT_TO_POINTER(currpos), 4,
+			                            COLUMN_DEF_SIZE_FIXED,
+			                            COLUMN_DEF_ALIGN_RIGHT,
 			                            column_display_render_next);
 		} else {
 			column_display_add_property (disp, columns[i], columns[i], 20,
-			                             FALSE, COLUMN_DEF_ALIGN_LEFT);
+			                             COLUMN_DEF_SIZE_RELATIVE,
+			                             COLUMN_DEF_ALIGN_LEFT);
 		}
 	}
 }

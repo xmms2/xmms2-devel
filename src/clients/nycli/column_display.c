@@ -22,6 +22,7 @@ struct column_display_St {
 	GArray *cols;
 	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
+	gint total_time;
 	gchar *buffer;       /* Used to render strings. */
 };
 
@@ -32,7 +33,7 @@ struct column_def_St {
 		gpointer udata;
 	} arg;
 	guint size;
-	gboolean fixed;
+	column_def_size_t size_type;
 	column_def_align_t align;
 	column_display_rendering_f render;
 
@@ -42,6 +43,7 @@ struct column_def_St {
 
 /* FIXME:
    - make columns as narrow as possible (check widest value)
+   - with AUTO size_type, compute according to data size
    - no width restriction when sending to a pipe (currently 80)
    - use a GString to accomodate unknown buffer size
    - proper column_width on all platforms
@@ -163,7 +165,11 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 		/* Note: realsize means the number of columns used to
 		 * *display* this time, instead of "the numbers of bytes that
 		 * would have been written if the buffer was large enough". */
-		realsize = crop_string (buffer, sval, coldef->size);
+		if (coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
+			realsize = g_snprintf (buffer, coldef->size + 1, "%s", sval);
+		} else {
+			realsize = crop_string (buffer, sval, coldef->size);
+		}
 		break;
 	default:
 		/* No valid data, display empty value */
@@ -188,8 +194,27 @@ print_fixed_width_string (gchar *value, gint width, gint realsize,
 	}
 }
 
+static void
+print_string_using_coldef (column_display_t *disp, column_def_t *coldef,
+                           gint realsize)
+{
+	switch (coldef->size_type) {
+	case COLUMN_DEF_SIZE_FIXED:
+	case COLUMN_DEF_SIZE_RELATIVE:
+		/* Print fixed, with padding/alignment */
+		print_fixed_width_string (disp->buffer, coldef->size, realsize,
+		                          coldef->align);
+		break;
+
+	case COLUMN_DEF_SIZE_AUTO:
+		/* Just print the string */
+		g_printf (disp->buffer);
+		break;
+	}
+}
+
 static column_def_t *
-column_def_init (const gchar *name, guint size, gboolean fixed,
+column_def_init (const gchar *name, guint size, column_def_size_t size_type,
                  column_def_align_t align, column_display_rendering_f render)
 {
 	column_def_t *coldef;
@@ -198,7 +223,7 @@ column_def_init (const gchar *name, guint size, gboolean fixed,
 	coldef->name = name;
 	coldef->size = size;
 	coldef->requested_size = size;
-	coldef->fixed = fixed;
+	coldef->size_type = size_type;
 	coldef->align = align;
 	coldef->render = render;
 
@@ -207,12 +232,12 @@ column_def_init (const gchar *name, guint size, gboolean fixed,
 
 static column_def_t *
 column_def_init_with_prop (const gchar *name, const gchar *property, guint size,
-                           gboolean fixed, column_def_align_t align,
+                           column_def_size_t size_type, column_def_align_t align,
                            column_display_rendering_f render)
 {
 	column_def_t *coldef;
 
-	coldef = column_def_init (name, size, fixed, align, render);
+	coldef = column_def_init (name, size, size_type, align, render);
 	coldef->arg.string = property;
 
 	return coldef;
@@ -220,12 +245,12 @@ column_def_init_with_prop (const gchar *name, const gchar *property, guint size,
 
 static column_def_t *
 column_def_init_with_udata (const gchar *name, gpointer udata, guint size,
-                            gboolean fixed, column_def_align_t align,
+                            column_def_size_t size_type, column_def_align_t align,
                             column_display_rendering_f render)
 {
 	column_def_t *coldef;
 
-	coldef = column_def_init (name, size, fixed, align, render);
+	coldef = column_def_init (name, size, size_type, align, render);
 	coldef->arg.udata = udata;
 
 	return coldef;
@@ -247,6 +272,7 @@ column_display_init (cli_infos_t *infos)
 	disp->infos = infos;
 	disp->cols = g_array_new (TRUE, TRUE, sizeof (column_def_t *));
 	disp->counter = 0;
+	disp->total_time = 0;
 	disp->buffer = NULL;
 
 	return disp;
@@ -256,18 +282,20 @@ void
 column_display_add_separator (column_display_t *disp, const gchar *sep)
 {
 	column_def_t *coldef;
-	coldef = column_def_init (sep, strlen (sep), TRUE, COLUMN_DEF_ALIGN_LEFT,
+	coldef = column_def_init (sep, strlen (sep), COLUMN_DEF_SIZE_FIXED,
+	                          COLUMN_DEF_ALIGN_LEFT,
 	                          column_display_render_text);
 	disp->cols = g_array_append_val (disp->cols, coldef);
 }
 
 void
 column_display_add_property (column_display_t *disp, const gchar *label,
-                             const gchar *prop, guint size, gboolean fixed,
+                             const gchar *prop, guint size,
+                             column_def_size_t size_type,
                              column_def_align_t align)
 {
 	column_def_t *coldef;
-	coldef = column_def_init_with_prop (label, prop, size, fixed, align,
+	coldef = column_def_init_with_prop (label, prop, size, size_type, align,
 	                                    column_display_render_property);
 	disp->cols = g_array_append_val (disp->cols, coldef);
 }
@@ -276,11 +304,13 @@ column_display_add_property (column_display_t *disp, const gchar *label,
 void
 column_display_add_special (column_display_t *disp, const gchar *label,
                             gpointer userdata, guint size,
+                            column_def_size_t size_type,
                             column_def_align_t align,
                             column_display_rendering_f render)
 {
 	column_def_t *coldef;
-	coldef = column_def_init_with_udata (label, userdata, size, TRUE, align, render);
+	coldef = column_def_init_with_udata (label, userdata, size,
+	                                     size_type, align, render);
 	disp->cols = g_array_append_val (disp->cols, coldef);
 }
 
@@ -354,6 +384,22 @@ column_display_print_footer (column_display_t *disp)
 }
 
 void
+column_display_print_footer_totaltime (column_display_t *disp)
+{
+	/* FIXME: put elsewhere */
+	guint hours, mins, secs;
+
+	secs = (disp->total_time + 500) / 1000; /* rounding */
+	mins = secs / 60;
+	hours = mins / 60;
+
+	secs %= 60; /* crop the minutes out */
+	mins %= 60; /* crop the hours out */
+
+	g_printf (_("Total playtime: %d:%02d:%02d\n"), hours, mins, secs);
+}
+
+void
 column_display_prepare (column_display_t *disp)
 {
 	gint termwidth, availchars, totalchars;
@@ -368,7 +414,8 @@ column_display_prepare (column_display_t *disp)
 	/* Exclude fixed-size columns */
 	for (i = 0; i < disp->cols->len; ++i) {
 		coldef = g_array_index (disp->cols, column_def_t *, i);
-		if (coldef->fixed) {
+		if (coldef->size_type == COLUMN_DEF_SIZE_FIXED ||
+		    coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
 			availchars -= coldef->requested_size;
 		} else {
 			totalchars += coldef->requested_size;
@@ -379,7 +426,7 @@ column_display_prepare (column_display_t *disp)
 	ratio = ((double) availchars / totalchars);
 	for (i = 0; i < disp->cols->len; ++i) {
 		coldef = g_array_index (disp->cols, column_def_t *, i);
-		if (!coldef->fixed) {
+		if (coldef->size_type == COLUMN_DEF_SIZE_RELATIVE) {
 			coldef->size = coldef->requested_size * ratio;
 			availchars -= coldef->requested_size;
 		}
@@ -391,7 +438,7 @@ column_display_prepare (column_display_t *disp)
 void
 column_display_print (column_display_t *disp, xmmsv_t *val)
 {
-	gint i;
+	gint i, millisecs;
 	column_def_t *coldef;
 	const gchar *err;
 
@@ -401,6 +448,11 @@ column_display_print (column_display_t *disp, xmmsv_t *val)
 			coldef->render (disp, coldef, val);
 		}
 		g_printf ("\n");
+
+		if (xmmsv_get_dict_entry_int (val, "duration", &millisecs)) {
+			disp->total_time += millisecs;
+		}
+
 		disp->counter++;
 	} else {
 		g_printf (_("Server error: %s\n"), err);
@@ -416,8 +468,7 @@ column_display_render_position (column_display_t *disp, column_def_t *coldef,
 
 	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%d",
 	                       disp->counter + 1);
-	print_fixed_width_string (disp->buffer, coldef->size, realsize,
-	                          coldef->align);
+	print_string_using_coldef (disp, coldef, realsize);
 }
 
 /**
@@ -446,8 +497,7 @@ column_display_render_next (column_display_t *disp, column_def_t *coldef,
 
 	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%+d",
 	                       disp->counter - curr);
-	print_fixed_width_string (disp->buffer, coldef->size, realsize,
-	                          coldef->align);
+	print_string_using_coldef (disp, coldef, realsize);
 }
 
 /** Always render the label text. */
@@ -459,6 +509,35 @@ column_display_render_text (column_display_t *disp, column_def_t *coldef,
 	g_printf (sep);
 }
 
+/** Interpret int/uint value as a time */
+void
+column_display_render_time (column_display_t *disp, column_def_t *coldef,
+                            xmmsv_t *val)
+{
+	gint realsize;
+	guint millisecs, mins, secs;
+	const gchar *propname = (const gchar *) coldef->arg.udata;
+
+	switch (xmmsv_get_dict_entry_type (val, propname)) {
+	case XMMSV_TYPE_UINT32:
+		xmmsv_get_dict_entry_uint (val, propname, &millisecs);
+		break;
+	case XMMSV_TYPE_INT32:
+		xmmsv_get_dict_entry_int (val, propname, &millisecs);
+		break;
+	default:
+		/* Invalid type, don't render anything*/
+		return;
+	}
+
+	secs = (millisecs + 500) / 1000; /* rounding */
+	mins = secs / 60;
+	secs %= 60; /* crop the minutes out */
+
+	realsize = g_snprintf (disp->buffer, coldef->size + 1,
+	                       "%02u:%02u", mins, secs);
+	print_string_using_coldef (disp, coldef, realsize);
+}
 
 /** Render the selected property, possibly shortened. */
 void
@@ -468,6 +547,5 @@ column_display_render_property (column_display_t *disp, column_def_t *coldef,
 	gint realsize;
 
 	realsize = result_to_string (val, coldef, disp->buffer);
-	print_fixed_width_string (disp->buffer, coldef->size, realsize,
-	                          coldef->align);
+	print_string_using_coldef (disp, coldef, realsize);
 }
