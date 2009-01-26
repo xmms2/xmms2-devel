@@ -26,6 +26,7 @@ init_hash ()
 	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
 	g_hash_table_insert (table, KEY_VALUE_COPY("PROMPT", "nycli> "));
+	g_hash_table_insert (table, KEY_VALUE_COPY("SERVER_AUTOSTART", "true"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("AUTO_UNIQUE_COMPLETE", "true"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("PLAYLIST_MARKER", "->"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("GUESS_PLS", "false"));

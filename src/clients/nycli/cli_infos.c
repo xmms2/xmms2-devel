@@ -30,7 +30,8 @@ cli_infos_autostart (cli_infos_t *infos, gchar *path)
 	gint ret = 0;
 
 	/* Start the server if autostart enabled! */
-	if (DEBUG_AUTOSTART && !system ("xmms2-launcher")) {
+	if (configuration_get_boolean (infos->config, "SERVER_AUTOSTART")
+	    && !system ("xmms2-launcher")) {
 		ret = xmmsc_connect (infos->conn, path);
 	}
 

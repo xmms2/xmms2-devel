@@ -21,10 +21,7 @@
 #define XMMS2_CLI_VERSION "0.1 (Speak To Me)"
 
 /* FIXME: shall be loaded from config when config exists */
-#define DEBUG_AUTOSTART TRUE
 #define STDINFD 0
-/* #define PROMPT "nycli> " */
-/* #define AUTO_UNIQUE_COMPLETE TRUE */
 #define MAX_CACHE_REFRESH_LOOP 200
 #define MAX_INT_VALUE_BUFFER_SIZE 64
 
