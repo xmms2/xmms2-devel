@@ -745,7 +745,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	gchar *playlist = NULL;
 	gboolean new_list = TRUE;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
-	                                   "next", "title", NULL };
+	                                   "title", NULL };
 
 	command_arg_longstring_get (ctx, 0, &pattern);
 	if (pattern) {
