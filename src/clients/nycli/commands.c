@@ -743,7 +743,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
-	gboolean new_list = TRUE;
+	gboolean new_list;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
 	                                   "title", NULL };
 
@@ -765,11 +765,11 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	if (configuration_get_boolean (infos->config, "CLASSIC_LIST")) {
-		new_list = FALSE;
-		coldisp = create_list_column_display (infos);
-	} else {
+	new_list = !configuration_get_boolean (infos->config, "CLASSIC_LIST");
+	if (new_list) {
 		coldisp = create_column_display (infos, ctx, default_columns);
+	} else {
+		coldisp = create_list_column_display (infos);
 	}
 
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);

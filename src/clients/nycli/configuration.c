@@ -30,6 +30,7 @@ init_hash ()
 	g_hash_table_insert (table, KEY_VALUE_COPY("AUTO_UNIQUE_COMPLETE", "true"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("PLAYLIST_MARKER", "->"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("GUESS_PLS", "false"));
+	g_hash_table_insert (table, KEY_VALUE_COPY("CLASSIC_LIST", "true"));
 	g_hash_table_insert (table, KEY_VALUE_COPY("STATUS_FORMAT",
 	                                           "${playback_status}: ${artist} "
 	                                           "- ${title}: ${playtime} of "
