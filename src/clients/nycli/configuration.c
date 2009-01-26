@@ -124,7 +124,9 @@ configuration_get_boolean (configuration_t *config, gchar *key)
 {
 	gchar *val;
 
-	val = g_hash_table_lookup (config->values, key);
+	if (!(val = g_hash_table_lookup (config->values, key))) {
+		return FALSE;
+	}
 
 	if (!strcmp (val, "true") || !strcmp (val, "1")) {
 		return TRUE;
