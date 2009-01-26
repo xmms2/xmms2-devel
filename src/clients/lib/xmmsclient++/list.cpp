@@ -26,65 +26,8 @@
 namespace Xmms
 {
 
-	SuperList::SuperList( xmmsv_t* value )
-		: value_( 0 )
-	{
-
-		if( xmmsv_is_error( value ) ) {
-			const char *buf;
-			xmmsv_get_error( value, &buf );
-			throw value_error( buf );
-		}
-		if( !xmmsv_is_list( value ) ) {
-			throw not_list_error( "Provided value is not a list" );
-		}
-
-		value_ = value;
-		xmmsv_ref( value_ );
-
-		xmmsv_get_list_iter( value_, &iter_ );
-
-	}
-
-	SuperList::SuperList( const SuperList& list )
-		: value_( list.value_ )
-	{
-		xmmsv_ref( value_ );
-	}
-
-	SuperList& SuperList::operator=( const SuperList& list )
-	{
-		value_ = list.value_;
-		xmmsv_ref( value_ );
-		xmmsv_get_list_iter( value_, &iter_ );
-		return *this;
-	}
-
-	SuperList::~SuperList()
-	{
-		xmmsv_unref( value_ );
-	}
-
-	void SuperList::first() const
-	{
-		xmmsv_list_iter_first( iter_ );
-	}
-
-	void SuperList::operator++() const
-	{
-		xmmsv_list_iter_next( iter_ );
-	}
-
-	bool SuperList::isValid() const
-	{
-		return xmmsv_list_iter_valid( iter_ );
-	}
-
-	xmmsv_t* SuperList::getElement() const
-	{
-		xmmsv_t *elem = NULL;
-		xmmsv_list_iter_entry( iter_, &elem );
-		return elem;
-	}
+	int (*type_traits< int32_t >::get_func)( const xmmsv_t*, int32_t* ) = xmmsv_get_int;
+	int (*type_traits< uint32_t >::get_func)( const xmmsv_t*, uint32_t* ) = xmmsv_get_uint;
+	int (*type_traits< std::string >::get_func)( const xmmsv_t*, const char** ) = xmmsv_get_string;
 
 }
