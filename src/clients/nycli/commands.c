@@ -501,6 +501,9 @@ column_display_t *
 create_list_column_display (cli_infos_t *infos)
 {
 	column_display_t *coldisp;
+	const gchar *format;
+
+	format = configuration_get_string (infos->config, "CLASSIC_LIST_FORMAT");
 
 	/* FIXME: compute field size dynamically instead of hardcoding maxlen? */
 
@@ -522,15 +525,13 @@ create_list_column_display (cli_infos_t *infos)
 	                             COLUMN_DEF_ALIGN_LEFT);
 	column_display_add_separator (coldisp, "] ");
 
-	/* FIXME: custom columns or 'format' */
+	column_display_add_format (coldisp, "tracks", format, 80,
+	                           COLUMN_DEF_SIZE_AUTO,
+	                           COLUMN_DEF_ALIGN_LEFT);
 
-	column_display_add_property (coldisp, "artist", "artist", 50,
-	                             COLUMN_DEF_SIZE_AUTO,
-	                             COLUMN_DEF_ALIGN_LEFT);
-	column_display_add_separator (coldisp, " - ");
-	column_display_add_property (coldisp, "title", "title", 50,
-	                             COLUMN_DEF_SIZE_AUTO,
-	                             COLUMN_DEF_ALIGN_LEFT);
+	/* FIXME: making duration part of the format would require proper
+	 * rendering of duration in xmmsc_entry_format and conditional
+	 * expressions to the parentheses if no duration is present. */
 
 	column_display_add_separator (coldisp, " (");
 	column_display_add_special (coldisp, "duration", "duration", 10,

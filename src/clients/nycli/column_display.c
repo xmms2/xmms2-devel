@@ -300,6 +300,19 @@ column_display_add_property (column_display_t *disp, const gchar *label,
 	disp->cols = g_array_append_val (disp->cols, coldef);
 }
 
+void
+column_display_add_format (column_display_t *disp, const gchar *label,
+                           const gchar *format, guint size,
+                           column_def_size_t size_type,
+                           column_def_align_t align)
+{
+	column_def_t *coldef;
+	coldef = column_def_init_with_udata (label, (gpointer) format, size,
+	                                     size_type, align,
+	                                     column_display_render_format);
+	disp->cols = g_array_append_val (disp->cols, coldef);
+}
+
 /* FIXME: custom selector string */
 void
 column_display_add_special (column_display_t *disp, const gchar *label,
@@ -547,5 +560,17 @@ column_display_render_property (column_display_t *disp, column_def_t *coldef,
 	gint realsize;
 
 	realsize = result_to_string (val, coldef, disp->buffer);
+	print_string_using_coldef (disp, coldef, realsize);
+}
+
+/** Render the value using the provided format string. */
+void
+column_display_render_format (column_display_t *disp, column_def_t *coldef,
+                              xmmsv_t *val)
+{
+	gint realsize;
+	const gchar *format = (const gchar *) coldef->arg.udata;
+
+	realsize = xmmsc_entry_format (disp->buffer, coldef->size + 1, format, val);
 	print_string_using_coldef (disp, coldef, realsize);
 }

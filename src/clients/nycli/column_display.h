@@ -47,6 +47,7 @@ typedef enum {
 column_display_t *column_display_init (cli_infos_t *infos);
 void column_display_add_separator (column_display_t *disp, const gchar *sep);
 void column_display_add_property (column_display_t *disp, const gchar *label, const gchar *prop, guint size, column_def_size_t size_type, column_def_align_t align);
+void column_display_add_format (column_display_t *disp, const gchar *label, const gchar *format, guint size, column_def_size_t size_type, column_def_align_t align);
 void column_display_add_special (column_display_t *disp, const gchar *label, void *userdata, guint size, column_def_size_t size_type, column_def_align_t align, column_display_rendering_f render);
 void column_display_free (column_display_t *disp);
 cli_infos_t *column_display_infos_get (column_display_t *disp);
@@ -62,6 +63,7 @@ void column_display_render_next (column_display_t *disp, column_def_t *coldef, x
 void column_display_render_text (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
 void column_display_render_time (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
 void column_display_render_property (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+void column_display_render_format (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
 
 
 #endif /* __COLUMN_DISPLAY_H__ */
