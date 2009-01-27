@@ -86,6 +86,10 @@ int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rl
 int xmmsv_get_list_iter (const xmmsv_t *val, xmmsv_list_iter_t **it);
 int xmmsv_get_dict_iter (const xmmsv_t *val, xmmsv_dict_iter_t **it);
 
+void xmmsv_list_iter_explicit_destroy (xmmsv_list_iter_t *it);
+void xmmsv_dict_iter_explicit_destroy (xmmsv_dict_iter_t *it);
+
+
 /* List */
 int xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val);
 int xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val);

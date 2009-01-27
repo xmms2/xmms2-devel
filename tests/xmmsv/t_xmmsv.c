@@ -307,6 +307,8 @@ CASE (test_xmmsv_type_list)
 	}
 	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
 
+	xmmsv_list_iter_explicit_destroy (it);
+
 	xmmsv_unref (value);
 }
 

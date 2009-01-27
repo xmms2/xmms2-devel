@@ -1198,6 +1198,21 @@ xmmsv_list_iter_free (xmmsv_list_iter_t *it)
 	free (it);
 }
 
+/**
+ * Explicitly free list iterator.
+ *
+ * Immediately frees any resources used by this iterator. The iterator
+ * is freed automatically when the list is freed, but this function is
+ * useful when the list can be long lived.
+ *
+ * @param it iterator to free
+ *
+ */
+void
+xmmsv_list_iter_explicit_destroy (xmmsv_list_iter_t *it)
+{
+	xmmsv_list_iter_free (it);
+}
 
 /**
  * Get the element currently pointed at by the iterator. This function
@@ -1640,6 +1655,22 @@ xmmsv_dict_iter_free (xmmsv_dict_iter_t *it)
 	/* unref iterator from dict and free it */
 	it->parent->iterators = x_list_remove (it->parent->iterators, it);
 	free (it);
+}
+
+/**
+ * Explicitly free dict iterator.
+ *
+ * Immediately frees any resources used by this iterator. The iterator
+ * is freed automatically when the dict is freed, but this function is
+ * useful when the dict can be long lived.
+ *
+ * @param it iterator to free
+ *
+ */
+void
+xmmsv_dict_iter_explicit_destroy (xmmsv_dict_iter_t *it)
+{
+	xmmsv_dict_iter_free (it);
 }
 
 /**
