@@ -103,6 +103,7 @@ int xmmsv_list_get_size (xmmsv_t *listv);
 int  xmmsv_list_iter_entry (xmmsv_list_iter_t *it, xmmsv_t **val);
 int  xmmsv_list_iter_valid (xmmsv_list_iter_t *it);
 void xmmsv_list_iter_first (xmmsv_list_iter_t *it);
+void xmmsv_list_iter_last (xmmsv_list_iter_t *it);
 void xmmsv_list_iter_next (xmmsv_list_iter_t *it);
 void xmmsv_list_iter_prev (xmmsv_list_iter_t *it);
 int  xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos);
