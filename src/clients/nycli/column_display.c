@@ -183,13 +183,13 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 
 static void
 print_fixed_width_string (gchar *value, gint width, gint realsize,
-                          column_def_align_t align)
+                          column_def_align_t align, gchar padchar)
 {
 	if (align == COLUMN_DEF_ALIGN_LEFT) {
 		g_printf (value);
-		print_padding (width - realsize);
+		print_padding (width - realsize, padchar);
 	} else {
-		print_padding (width - realsize);
+		print_padding (width - realsize, padchar);
 		g_printf (value);
 	}
 }
@@ -203,7 +203,7 @@ print_string_using_coldef (column_display_t *disp, column_def_t *coldef,
 	case COLUMN_DEF_SIZE_RELATIVE:
 		/* Print fixed, with padding/alignment */
 		print_fixed_width_string (disp->buffer, coldef->size, realsize,
-		                          coldef->align);
+		                          coldef->align, ' ');
 		break;
 
 	case COLUMN_DEF_SIZE_AUTO:
@@ -356,14 +356,14 @@ column_display_print_header (column_display_t *disp)
 	gint termwidth;
 	gint realsize;
 	column_def_t *coldef;
+	gchar *headstr;
 
 	termwidth = find_terminal_width ();
 
 	/* Display Result head line */
-	d = g_printf (_("--[Result]-"));
-	for (i = d; i < termwidth; ++i) {
-		g_printf ("-");
-	}
+	headstr = _("--[Result]-");
+	print_fixed_width_string (headstr, termwidth, strlen (headstr),
+	                          COLUMN_DEF_ALIGN_LEFT, '-');
 	g_printf ("\n");
 
 	/* Display column headers */
@@ -371,7 +371,7 @@ column_display_print_header (column_display_t *disp)
 		coldef = g_array_index (disp->cols, column_def_t *, i);
 		realsize = g_snprintf (disp->buffer, coldef->size + 1, coldef->name);
 		print_fixed_width_string (disp->buffer, coldef->size, realsize,
-		                          coldef->align);
+		                          coldef->align, ' ');
 	}
 	g_printf ("\n");
 
@@ -380,26 +380,20 @@ column_display_print_header (column_display_t *disp)
 void
 column_display_print_footer (column_display_t *disp)
 {
-	gint i, d;
-	gint termwidth;
-	/* FIXME: put elsewhere */
-	const gint maxbufsize = 30;
-	gchar buf[maxbufsize];
+	gint termwidth, realsize;
 
 	termwidth = find_terminal_width ();
-	d = g_snprintf (buf, maxbufsize, _("-[Count:%6.d]--"), disp->counter);
+	realsize = g_snprintf (disp->buffer, termwidth + 1, _("-[Count:%6.d]--"),
+	                       disp->counter);
 
-	for (i = d; i < termwidth; ++i) {
-		g_printf ("-");
-	}
-
-	g_printf ("%s\n", buf);
+	print_fixed_width_string (disp->buffer, termwidth, realsize,
+	                          COLUMN_DEF_ALIGN_RIGHT, '-');
+	g_printf ("\n");
 }
 
 void
 column_display_print_footer_totaltime (column_display_t *disp)
 {
-	/* FIXME: put elsewhere */
 	guint hours, mins, secs;
 
 	secs = (disp->total_time + 500) / 1000; /* rounding */

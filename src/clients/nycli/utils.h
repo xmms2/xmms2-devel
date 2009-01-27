@@ -66,7 +66,7 @@ void copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist);
 void configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist, gint history, gint upcoming, xmmsc_coll_type_t type, gchar *input);
 void playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist);
 gboolean playlist_exists (cli_infos_t *infos, gchar *playlist);
-void print_padding (gint length);
+void print_padding (gint length, gchar padchar);
 void print_indented (const gchar *string, guint level);
 gint find_terminal_width ();
 

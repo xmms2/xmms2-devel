@@ -1632,10 +1632,10 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 }
 
 void
-print_padding (gint length)
+print_padding (gint length, gchar padchar)
 {
 	while (length-- > 0) {
-		g_printf (" ");
+		g_printf ("%c", padchar);
 	}
 }
 
@@ -1647,7 +1647,7 @@ print_indented (const gchar *string, guint level)
 
 	for (c = string; *c; c++) {
 		if (indent) {
-			print_padding (level);
+			print_padding (level, ' ');
 			indent = FALSE;
 		}
 		g_printf ("%c", *c);
