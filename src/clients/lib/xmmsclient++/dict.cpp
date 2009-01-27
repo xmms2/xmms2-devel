@@ -23,10 +23,15 @@
 #include <list>
 #include <vector>
 #include <iostream>
+#include <cstring>
 
 namespace Xmms
 {
 	static void getValue( Dict::Variant& val, xmmsv_t *value );
+
+	Dict::Dict() : value_( xmmsv_new_dict() )
+	{
+	}
 
 	Dict::Dict( xmmsv_t* val ) : value_( 0 )
 	{
@@ -217,5 +222,117 @@ namespace Xmms
 		                    static_cast< void* >( &func ) );
 	}
 
-}
+	Dict::const_iterator
+	Dict::begin() const
+	{
+		return const_iterator( value_ );
+	}
 
+	Dict::const_iterator
+	Dict::end() const
+	{
+		return const_iterator();
+	}
+
+	Dict::const_iterator::const_iterator()
+		: dict_( 0 ), it_( 0 )
+	{
+	}
+
+	Dict::const_iterator::const_iterator( xmmsv_t* dict )
+		: dict_( dict ), it_( 0 )
+	{
+		xmmsv_get_dict_iter( dict_, &it_ );
+	}
+
+	Dict::const_iterator::const_iterator( const const_iterator& rh )
+		: dict_( rh.dict_ ), it_( 0 )
+	{
+		if ( dict_ ) {
+			copy( rh );
+		}
+	}
+
+	Dict::const_iterator& Dict::const_iterator::operator=( const const_iterator& rh )
+	{
+		dict_ = rh.dict_;
+		if( it_ ) {
+			xmmsv_dict_iter_explicit_destroy( it_ );
+		}
+
+		if ( dict_ ) {
+			copy( rh );
+		}
+		else {
+			it_ = 0;
+		}
+
+		return *this;
+	}
+
+	const Dict::const_iterator::value_type&
+	Dict::const_iterator::operator*() const
+	{
+		static value_type value;
+		const char* key;
+		xmmsv_t* val;
+
+		xmmsv_dict_iter_pair( it_, &key, &val );
+
+		Dict::Variant var;
+		getValue( var, val );
+		value = value_type( key, var );
+		return value;
+	}
+
+	const Dict::const_iterator::value_type*
+	Dict::const_iterator::operator->() const
+	{
+		return &( operator*() );
+	}
+
+	Dict::const_iterator&
+	Dict::const_iterator::operator++()
+	{
+		xmmsv_dict_iter_next( it_ );
+		return *this;
+	}
+
+	Dict::const_iterator
+	Dict::const_iterator::operator++( int )
+	{
+		const_iterator tmp( *this );
+		++*this;
+		return tmp;
+	}
+
+	bool
+	Dict::const_iterator::valid() const
+	{
+		return dict_ && it_ && xmmsv_dict_iter_valid( it_ );
+	}
+
+	void
+	Dict::const_iterator::copy( const const_iterator& rh )
+	{
+		const char* key = 0;
+		xmmsv_get_dict_iter( dict_, &it_ );
+		xmmsv_dict_iter_pair( rh.it_, &key, NULL );
+		xmmsv_dict_iter_find( it_, key );
+	}
+
+	bool Dict::const_iterator::equal( const const_iterator& rh ) const
+	{
+		// _equal returns false if it_'s == 0
+		if ( !valid() && !rh.valid() ) {
+			return true;
+		}
+		if ( dict_ == rh.dict_ ) {
+			const char *rh_key, *key;
+			xmmsv_dict_iter_pair( rh.it_, &rh_key, NULL );
+			xmmsv_dict_iter_pair( it_, &key, NULL );
+			return (std::strcmp( key, rh_key ) == 0);
+		}
+		return false;
+	}
+}

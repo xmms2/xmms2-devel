@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <string>
 #include <list>
+#include <iterator>
 
 namespace Xmms
 {
@@ -36,6 +37,12 @@ namespace Xmms
 		public:
 
 			typedef boost::variant< int32_t, uint32_t, std::string > Variant;
+
+			typedef std::pair<std::string, Variant> Pair;
+
+			class const_iterator;
+
+			Dict();
 
 			/** Constructs Dict and references the value.
 			 *  User must unref the value, the class does not take care of
@@ -118,7 +125,11 @@ namespace Xmms
 			                               const Variant& ) > ForEachFunc;
 
 			virtual void each( ForEachFunc func ) const;
-			
+
+			const_iterator begin() const;
+
+			const_iterator end() const;
+
 		/** @cond */
 		protected:
 			xmmsv_t* value_;
@@ -205,6 +216,53 @@ namespace Xmms
 		/** @endcond */
 
 	};
+
+	class Dict::const_iterator
+		: public std::iterator<std::forward_iterator_tag, Dict::Pair>
+	{
+		private:
+			const_iterator( xmmsv_t* );
+
+			friend class Dict;
+
+		public:
+			const_iterator();
+
+			const_iterator( const const_iterator& );
+
+			const_iterator& operator=( const const_iterator& );
+
+			const value_type& operator*() const;
+
+			const value_type* operator->() const;
+
+			const_iterator& operator++();
+
+			const_iterator operator++( int );
+
+			bool equal( const const_iterator& rh ) const;
+
+		private:
+			bool valid() const;
+			void copy( const const_iterator& rh );
+
+			xmmsv_t* dict_;
+
+			xmmsv_dict_iter_t* it_;
+
+	};
+
+	inline
+	bool operator==( const Dict::const_iterator& lh, const Dict::const_iterator& rh )
+	{
+		return lh.equal( rh );
+	}
+
+	inline
+	bool operator!=( const Dict::const_iterator& lh, const Dict::const_iterator& rh )
+	{
+		return !( lh == rh );
+	}
 
 }
 
