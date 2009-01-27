@@ -27,8 +27,6 @@
 #include "cli_cache.h"
 #include "cli_infos.h"
 
-static gchar *format_time (gint duration);
-
 static void
 status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 {
@@ -144,7 +142,7 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 				}
 
 				if (time_fields[i] != NULL) {
-					value = format_time (ival);
+					value = format_time (ival, FALSE);
 				} else {
 					value = g_strdup_printf ("%d", ival);
 				}
@@ -186,7 +184,7 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 
 	if (!xmmsv_get_error (val, &err)) {
 		xmmsv_get_uint (val, &playtime);
-		g_hash_table_insert (entry->data, "playtime", format_time (playtime));
+		g_hash_table_insert (entry->data, "playtime", format_time (playtime, FALSE));
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -199,20 +197,6 @@ status_update_position (cli_infos_t *infos, status_entry_t *entry)
 {
 	g_hash_table_insert (entry->data, "position",
 	                     g_strdup_printf ("%d", infos->cache->currpos));
-}
-
-/* Returned string must be freed by the caller */
-static gchar *
-format_time (gint duration)
-{
-	gint min, sec;
-
-	/* +500 for rounding */
-	sec = (duration+500) / 1000;
-	min = sec / 60;
-	sec = sec % 60;
-
-	return g_strdup_printf ("%02d:%02d", min, sec);
 }
 
 static GList *

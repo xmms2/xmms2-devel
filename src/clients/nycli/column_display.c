@@ -394,16 +394,11 @@ column_display_print_footer (column_display_t *disp)
 void
 column_display_print_footer_totaltime (column_display_t *disp)
 {
-	guint hours, mins, secs;
+	gchar *time = format_time (disp->total_time, TRUE);
 
-	secs = (disp->total_time + 500) / 1000; /* rounding */
-	mins = secs / 60;
-	hours = mins / 60;
+	g_printf (_("Total playtime: %s\n"), time);
 
-	secs %= 60; /* crop the minutes out */
-	mins %= 60; /* crop the hours out */
-
-	g_printf (_("Total playtime: %d:%02d:%02d\n"), hours, mins, secs);
+	g_free (time);
 }
 
 void
@@ -522,7 +517,8 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
                             xmmsv_t *val)
 {
 	gint realsize;
-	guint millisecs, mins, secs;
+	guint millisecs;
+	gchar *time;
 	const gchar *propname = (const gchar *) coldef->arg.udata;
 
 	switch (xmmsv_get_dict_entry_type (val, propname)) {
@@ -537,13 +533,13 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 		return;
 	}
 
-	secs = (millisecs + 500) / 1000; /* rounding */
-	mins = secs / 60;
-	secs %= 60; /* crop the minutes out */
+	time = format_time (millisecs, FALSE);
 
-	realsize = g_snprintf (disp->buffer, coldef->size + 1,
-	                       "%02u:%02u", mins, secs);
+	/* We recopy the string to crop it if needed */
+	realsize = g_snprintf (disp->buffer, coldef->size + 1, time);
 	print_string_using_coldef (disp, coldef, realsize);
+
+	g_free (time);
 }
 
 /** Render the selected property, possibly shortened. */

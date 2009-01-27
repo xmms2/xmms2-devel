@@ -1683,3 +1683,26 @@ find_terminal_width ()
 
 	return columns;
 }
+
+/* Returned string must be freed by the caller */
+gchar *
+format_time (gint duration, gboolean use_hours)
+{
+	gint hour, min, sec;
+	gchar *time;
+
+	/* +500 for rounding */
+	sec = (duration+500) / 1000;
+	min = sec / 60;
+	sec = sec % 60;
+
+	if (use_hours) {
+		hour = min / 60;
+		min = min % 60;
+		time = g_strdup_printf ("%d:%02d:%02d", hour, min, sec);
+	} else {
+		time = g_strdup_printf ("%02d:%02d", min, sec);
+	}
+
+	return time;
+}
