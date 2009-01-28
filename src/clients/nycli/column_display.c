@@ -23,6 +23,8 @@ struct column_display_St {
 	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
 	gint total_time;
+	gint termwidth;
+	gint availchars;
 	gchar *buffer;       /* Used to render strings. */
 };
 
@@ -43,7 +45,6 @@ struct column_def_St {
 
 /* FIXME:
    - make columns as narrow as possible (check widest value)
-   - with AUTO size_type, compute according to data size
    - no width restriction when sending to a pipe (currently 80)
    - use a GString to accomodate unknown buffer size
    - proper column_width on all platforms
@@ -165,11 +166,7 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 		/* Note: realsize means the number of columns used to
 		 * *display* this time, instead of "the numbers of bytes that
 		 * would have been written if the buffer was large enough". */
-		if (coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
-			realsize = g_snprintf (buffer, coldef->size + 1, "%s", sval);
-		} else {
-			realsize = crop_string (buffer, sval, coldef->size);
-		}
+		realsize = crop_string (buffer, sval, coldef->size);
 		break;
 	default:
 		/* No valid data, display empty value */
@@ -273,6 +270,8 @@ column_display_init (cli_infos_t *infos)
 	disp->cols = g_array_new (TRUE, TRUE, sizeof (column_def_t *));
 	disp->counter = 0;
 	disp->total_time = 0;
+	disp->termwidth = find_terminal_width ();
+	disp->availchars = 0;
 	disp->buffer = NULL;
 
 	return disp;
@@ -353,16 +352,13 @@ void
 column_display_print_header (column_display_t *disp)
 {
 	gint i, d;
-	gint termwidth;
 	gint realsize;
 	column_def_t *coldef;
 	gchar *headstr;
 
-	termwidth = find_terminal_width ();
-
 	/* Display Result head line */
 	headstr = _("--[Result]-");
-	print_fixed_width_string (headstr, termwidth, strlen (headstr),
+	print_fixed_width_string (headstr, disp->termwidth, strlen (headstr),
 	                          COLUMN_DEF_ALIGN_LEFT, '-');
 	g_printf ("\n");
 
@@ -380,13 +376,12 @@ column_display_print_header (column_display_t *disp)
 void
 column_display_print_footer (column_display_t *disp)
 {
-	gint termwidth, realsize;
+	gint realsize;
 
-	termwidth = find_terminal_width ();
-	realsize = g_snprintf (disp->buffer, termwidth + 1, _("-[Count:%6.d]--"),
-	                       disp->counter);
+	realsize = g_snprintf (disp->buffer, disp->termwidth + 1,
+	                       _("-[Count:%6.d]--"), disp->counter);
 
-	print_fixed_width_string (disp->buffer, termwidth, realsize,
+	print_fixed_width_string (disp->buffer, disp->termwidth, realsize,
 	                          COLUMN_DEF_ALIGN_RIGHT, '-');
 	g_printf ("\n");
 }
@@ -401,6 +396,10 @@ column_display_print_footer_totaltime (column_display_t *disp)
 	g_free (time);
 }
 
+/* Compute size for relative columns, allocate buffer, etc.
+ * If auto and relative columns are mixed, give a size to auto columns
+ * to keep room for them.
+ */
 void
 column_display_prepare (column_display_t *disp)
 {
@@ -409,45 +408,53 @@ column_display_prepare (column_display_t *disp)
 	double ratio;
 	column_def_t *coldef;
 
-	termwidth = find_terminal_width ();
-	availchars = termwidth;
+	availchars = disp->termwidth;
 	totalchars = 0;
 
 	/* Exclude fixed-size columns */
 	for (i = 0; i < disp->cols->len; ++i) {
 		coldef = g_array_index (disp->cols, column_def_t *, i);
-		if (coldef->size_type == COLUMN_DEF_SIZE_FIXED ||
-		    coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
+		if (coldef->size_type == COLUMN_DEF_SIZE_FIXED) {
 			availchars -= coldef->requested_size;
 		} else {
 			totalchars += coldef->requested_size;
 		}
 	}
 
-	/* Adapt the size of non-fixed columns */
+	/* Adapt the size of relative columns */
 	ratio = ((double) availchars / totalchars);
 	for (i = 0; i < disp->cols->len; ++i) {
 		coldef = g_array_index (disp->cols, column_def_t *, i);
 		if (coldef->size_type == COLUMN_DEF_SIZE_RELATIVE) {
 			coldef->size = coldef->requested_size * ratio;
-			availchars -= coldef->requested_size;
+			availchars -= coldef->size;
 		}
 	}
 
-	disp->buffer = g_new0 (gchar, (termwidth * sizeof(gunichar)) + 1);
+	/* Chars available to the auto columns */
+	disp->availchars = availchars;
+	disp->buffer = g_new0 (gchar, (disp->termwidth * sizeof(gunichar)) + 1);
 }
 
 void
 column_display_print (column_display_t *disp, xmmsv_t *val)
 {
-	gint i, millisecs;
+	gint i, colwidth, availchars, millisecs;
 	column_def_t *coldef;
 	const gchar *err;
+
+	availchars = disp->availchars;
 
 	if (!xmmsv_get_error (val, &err)) {
 		for (i = 0; i < disp->cols->len; ++i) {
 			coldef = g_array_index (disp->cols, column_def_t *, i);
-			coldef->render (disp, coldef, val);
+			if (coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
+				coldef->size = availchars;
+			}
+			colwidth = coldef->render (disp, coldef, val);
+			if (coldef->size_type == COLUMN_DEF_SIZE_AUTO) {
+				availchars = (availchars >= colwidth ? availchars - colwidth : 0);
+			}
 		}
 		g_printf ("\n");
 
@@ -462,7 +469,7 @@ column_display_print (column_display_t *disp, xmmsv_t *val)
 }
 
 /** Display a row counter */
-void
+gint
 column_display_render_position (column_display_t *disp, column_def_t *coldef,
                                 xmmsv_t *val)
 {
@@ -471,27 +478,31 @@ column_display_render_position (column_display_t *disp, column_def_t *coldef,
 	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%d",
 	                       disp->counter + 1);
 	print_string_using_coldef (disp, coldef, realsize);
+
+	return realsize;
 }
 
 /**
  * Highlight if the position of the row matches the userdata integer
  * value.
  */
-void
+gint
 column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
                                  xmmsv_t *val)
 {
-	gint highlight = GPOINTER_TO_INT(coldef->arg.udata);
+	gint realsize, highlight = GPOINTER_TO_INT(coldef->arg.udata);
 
 	/* FIXME: Make these customizable */
 	if (disp->counter == highlight) {
-		g_printf ("->");
+		realsize = g_printf ("->");
 	} else {
-		g_printf ("  ");
+		realsize = g_printf ("  ");
 	}
+
+	return realsize;
 }
 
-void
+gint
 column_display_render_next (column_display_t *disp, column_def_t *coldef,
                             xmmsv_t *val)
 {
@@ -500,19 +511,25 @@ column_display_render_next (column_display_t *disp, column_def_t *coldef,
 	realsize = g_snprintf (disp->buffer, coldef->size + 1, "%+d",
 	                       disp->counter - curr);
 	print_string_using_coldef (disp, coldef, realsize);
+
+	return realsize;
 }
 
 /** Always render the label text. */
-void
+gint
 column_display_render_text (column_display_t *disp, column_def_t *coldef,
                             xmmsv_t *val)
 {
+	gint realsize;
 	const gchar *sep = coldef->name;
-	g_printf (sep);
+
+	realsize = g_printf (sep);
+
+	return realsize;
 }
 
 /** Interpret int/uint value as a time */
-void
+gint
 column_display_render_time (column_display_t *disp, column_def_t *coldef,
                             xmmsv_t *val)
 {
@@ -536,14 +553,22 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 	time = format_time (millisecs, FALSE);
 
 	/* We recopy the string to crop it if needed */
-	realsize = g_snprintf (disp->buffer, coldef->size + 1, time);
+/* 	realsize = g_snprintf (disp->buffer, coldef->size + 1, time); */
+
+	/* FIXME: hack, do _not_ crop size. Note that this might break
+	 * alignment and overflow termwidth if strlen(time) > coldef->size,
+	 * but it's a temporary fix to avoid displaying a wrong time.
+	 */
+	realsize = g_snprintf (disp->buffer, disp->termwidth + 1, time);
 	print_string_using_coldef (disp, coldef, realsize);
 
 	g_free (time);
+
+	return realsize;
 }
 
 /** Render the selected property, possibly shortened. */
-void
+gint
 column_display_render_property (column_display_t *disp, column_def_t *coldef,
                                 xmmsv_t *val)
 {
@@ -551,16 +576,24 @@ column_display_render_property (column_display_t *disp, column_def_t *coldef,
 
 	realsize = result_to_string (val, coldef, disp->buffer);
 	print_string_using_coldef (disp, coldef, realsize);
+
+	return realsize;
 }
 
 /** Render the value using the provided format string. */
-void
+gint
 column_display_render_format (column_display_t *disp, column_def_t *coldef,
                               xmmsv_t *val)
 {
 	gint realsize;
 	const gchar *format = (const gchar *) coldef->arg.udata;
 
-	realsize = xmmsc_entry_format (disp->buffer, coldef->size + 1, format, val);
+	/* Format the whole string first */
+	xmmsc_entry_format (disp->buffer, disp->termwidth, format, val);
+
+	/* then crop (crop_string uses internal buffer, so it's ok that dest=src) */
+	realsize = crop_string (disp->buffer, disp->buffer, coldef->size);
 	print_string_using_coldef (disp, coldef, realsize);
+
+	return realsize;
 }

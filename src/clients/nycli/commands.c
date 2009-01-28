@@ -515,17 +515,17 @@ create_list_column_display (cli_infos_t *infos)
 	                            COLUMN_DEF_ALIGN_LEFT,
 	                            column_display_render_highlight);
 	column_display_add_separator (coldisp, "[");
-	column_display_add_special (coldisp, "pos", NULL, 5,
+	column_display_add_special (coldisp, "pos", NULL, 0,
 	                            COLUMN_DEF_SIZE_AUTO,
 	                            COLUMN_DEF_ALIGN_RIGHT,
 	                            column_display_render_position);
 	column_display_add_separator (coldisp, "/");
-	column_display_add_property (coldisp, "id", "id", 5,
+	column_display_add_property (coldisp, "id", "id", 0,
 	                             COLUMN_DEF_SIZE_AUTO,
 	                             COLUMN_DEF_ALIGN_LEFT);
 	column_display_add_separator (coldisp, "] ");
 
-	column_display_add_format (coldisp, "tracks", format, 80,
+	column_display_add_format (coldisp, "tracks", format, 0,
 	                           COLUMN_DEF_SIZE_AUTO,
 	                           COLUMN_DEF_ALIGN_LEFT);
 
@@ -533,9 +533,10 @@ create_list_column_display (cli_infos_t *infos)
 	 * rendering of duration in xmmsc_entry_format and conditional
 	 * expressions to the parentheses if no duration is present. */
 
+	/* FIXME: if time takes 6 chars, the display will exceed termwidth.. */
 	column_display_add_separator (coldisp, " (");
-	column_display_add_special (coldisp, "duration", "duration", 10,
-	                            COLUMN_DEF_SIZE_AUTO,
+	column_display_add_special (coldisp, "duration", "duration", 5,
+	                            COLUMN_DEF_SIZE_FIXED,
 	                            COLUMN_DEF_ALIGN_LEFT,
 	                            column_display_render_time);
 	column_display_add_separator (coldisp, ")");

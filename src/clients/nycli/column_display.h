@@ -31,7 +31,7 @@
 
 typedef struct column_display_St column_display_t;
 typedef struct column_def_St column_def_t;
-typedef void (*column_display_rendering_f)(column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+typedef gint (*column_display_rendering_f)(column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
 
 typedef enum {
 	COLUMN_DEF_ALIGN_LEFT,
@@ -57,13 +57,13 @@ void column_display_print_header (column_display_t *disp);
 void column_display_print_footer (column_display_t *disp);
 void column_display_print_footer_totaltime (column_display_t *disp);
 
-void column_display_render_position (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_highlight (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_next (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_text (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_time (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_property (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
-void column_display_render_format (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_position (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_highlight (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_next (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_text (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_time (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_property (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
+gint column_display_render_format (column_display_t *disp, column_def_t *coldef, xmmsv_t *val);
 
 
 #endif /* __COLUMN_DISPLAY_H__ */
