@@ -238,6 +238,10 @@ W: http://perldition.org/
 P: 1024D/8E635A5E E8DC 91A1 B7BE E5AB C172  47EE 742F 2A42 8E63 5A5E
 D: Official Debian packages. Bugfixes. Perl bindings.
 
+N: Igor Assis
+E: igor.assis@gmail.com
+D: nycli (Summer of Code 2008)
+
 N: Ugo Riboni
 E: nerochiaro@neuros.us
 W: http://nerochiaro.net
