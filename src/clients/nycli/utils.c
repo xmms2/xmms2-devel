@@ -554,7 +554,7 @@ pos_print_info_cb (gint pos, void *userdata)
 	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
 	guint id;
 
-	// Skip if outside of playlist
+	/* Skip if outside of playlist */
 	if (pos >= pack->infos->cache->active_playlist->len) {
 		return;
 	}

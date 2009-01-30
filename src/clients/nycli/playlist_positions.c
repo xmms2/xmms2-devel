@@ -80,7 +80,7 @@ playlist_positions_parse (const gchar *expr, playlist_positions_t **p,
 	gint i = 0;
 	gboolean success = TRUE;
 
-	// Empty/NULL string, or invalid chars, don't bother
+	/* Empty/NULL string, or invalid chars, don't bother */
 	if (!expr || !*expr || strspn (expr, "0123456789,_+- ") != strlen (expr)) {
 		return FALSE;
 	}
@@ -196,7 +196,7 @@ playlist_positions_free (playlist_positions_t *positions)
 static gboolean
 playlist_positions_parse_token (const gchar *expr, playlist_positions_t *p)
 {
-	// Empty string, don't bother
+	/* Empty string, don't bother */
 	if (!*expr) {
 		return TRUE;
 	}
@@ -218,7 +218,7 @@ playlist_positions_parse_sequence (const gchar *expr, playlist_positions_t *p)
 	gboolean success = TRUE;
 	gint start, end;
 
-	// Quit on '+' or '-' prefix, which would be a relsequence
+	/* Quit on '+' or '-' prefix, which would be a relsequence */
 	if (*expr == '+' || *expr == '-') {
 		return FALSE;
 	}
@@ -228,7 +228,7 @@ playlist_positions_parse_sequence (const gchar *expr, playlist_positions_t *p)
 	while (intervals[i]) {
 		if (interval_parse (intervals[i], &start, &end)) {
 			if (start >= 0) {
-				// note: user lists start at 1
+				/* note: user lists start at 1 */
 				if (end >= 0) {
 					success = playlist_positions_add_interval (p, start - 1, end - 1);
 				} else {
@@ -255,7 +255,7 @@ playlist_positions_parse_relsequence (const gchar *expr, playlist_positions_t *p
 	gboolean success = TRUE;
 	gint start, end, currpos;
 
-	// No '+' or '-' prefix, not a relsequence
+	/* No '+' or '-' prefix, not a relsequence */
 	if (*expr != '+' && *expr != '-') {
 		return FALSE;
 	}
@@ -264,7 +264,7 @@ playlist_positions_parse_relsequence (const gchar *expr, playlist_positions_t *p
 	currpos = p->cached_currpos;
 
 	if (currpos < 0) {
-		// FIXME: error, cannot use relative currpos if not set
+		/* FIXME: error, cannot use relative currpos if not set */
 		return FALSE;
 	}
 
@@ -300,41 +300,41 @@ playlist_positions_parse_currcontext (const gchar *expr, playlist_positions_t *p
 	gchar *endptr;
 	gint currpos;
 
-	// parse [N]_[M]
+	/* parse [N]_[M] */
 
-	// No '_' char, not a currcontext
+	/* No '_' char, not a currcontext */
 	underscore = strchr (expr, '_');
 	if (!underscore) {
 		return FALSE;
 	}
 
 	if (expr == underscore) {
-		// No N value
+		/* No N value */
 		before = 0;
 	} else {
 		before = strtol (expr, &endptr, 10);
 		if (endptr != underscore) {
-			// Incorrect parsing, error!
+			/* Incorrect parsing, error! */
 			return FALSE;
 		}
 	}
 
 	if (*(underscore + 1) == '\0') {
-		// No M value
+		/* No M value */
 		after = 0;
 	} else {
 		after = strtol (underscore + 1, &endptr, 10);
 		if (*endptr != '\0') {
-			// Incorrect parsing, error!
+			/* Incorrect parsing, error! */
 			return FALSE;
 		}
 	}
 
-	// Parsed a valid interval! - note: user lists start at 1
+	/* Parsed a valid interval! - note: user lists start at 1 */
 	currpos = p->cached_currpos;
 
 	if (currpos < 0) {
-		// FIXME: error, cannot use relative currpos if not set
+		/* FIXME: error, cannot use relative currpos if not set */
 		return FALSE;
 	}
 
@@ -347,19 +347,19 @@ playlist_positions_add_atom (playlist_positions_t *positions, gint x)
 {
 	GList *n;
 
-	// Add atom if not already in an interval
+	/* Add atom if not already in an interval */
 	if (!playlist_positions_intervals_contains_atom (positions, x)) {
 		for (n = positions->atoms; n; n = g_list_next (n)) {
 			gint curr = GPOINTER_TO_INT (n->data);
 			if (curr == x) {
-				// Already present, exit
+				/* Already present, exit */
 				return;
 			} else if (curr < x) {
 				break;
 			}
 		}
 
-		// Found the sorted position, insert the atom
+		/* Found the sorted position, insert the atom */
 		positions->atoms = g_list_insert_before (positions->atoms, n,
 		                                         GINT_TO_POINTER (x));
 	}
@@ -372,7 +372,7 @@ playlist_positions_add_interval (playlist_positions_t *positions,
 	GList *n;
 	interval_t *ival, *prev_ival;
 
-	// Invalid interval
+	/* Invalid interval */
 	if (start > end || start < 0) {
 		return FALSE;
 	}
@@ -382,7 +382,7 @@ playlist_positions_add_interval (playlist_positions_t *positions,
 		return TRUE;
 	}
 
-	// Merge or add new interval in list
+	/* Merge or add new interval in list */
 	prev_ival = NULL;
 	for (n = positions->intervals; n; n = g_list_next (n)) {
 		ival = (interval_t *) n->data;
@@ -391,7 +391,7 @@ playlist_positions_add_interval (playlist_positions_t *positions,
 		} else if (end < ival->start) {
 			continue;
 		} else {
-			// Previous interval already merged, free it and extend current
+			/* Previous interval already merged, free it and extend current */
 			if (prev_ival) {
 				ival->end = prev_ival->end;
 				interval_free (prev_ival);
@@ -404,29 +404,29 @@ playlist_positions_add_interval (playlist_positions_t *positions,
 	}
 
 	if (prev_ival) {
-		// extend end of merged interval
+		/* extend end of merged interval */
 		if (end > prev_ival->end) {
 			prev_ival->end = end;
 		}
-		// extend start of merged interval
+		/* extend start of merged interval */
 		if (start < prev_ival->start) {
 			prev_ival->start = start;
 		}
 	} else {
-		// Not merged with an existing interval, create a new one
+		/* Not merged with an existing interval, create a new one */
 		positions->intervals = g_list_insert_before (positions->intervals, n,
 		                                             interval_new (start, end));
 	}
 
-	// Remove atoms included in the new interval
+	/* Remove atoms included in the new interval */
 	for (n = positions->atoms; n; n = g_list_next (n)) {
 		gint curr = GPOINTER_TO_INT (n->data);
 		if (curr <= end) {
 			if (curr >= start) {
-				// atom in the interval, remove
+				/* atom in the interval, remove */
 				positions->atoms = g_list_delete_link (positions->atoms, n);
 			} else {
-				// atom smaller than interval, done
+				/* atom smaller than interval, done */
 				break;
 			}
 		}
@@ -444,15 +444,15 @@ playlist_positions_intervals_contains_atom (playlist_positions_t *positions, gin
 		interval_t *ival = (interval_t *) n->data;
 		if (x >= ival->start) {
 			if (x > ival->end) {
-				// x larger than biggest interval
+				/* x larger than biggest interval */
 				return FALSE;
 			} else {
-				// x inside current interval
+				/* x inside current interval */
 				return TRUE;
 			}
 		}
 
-		// Not in this interval, tried the next (smaller)
+		/* Not in this interval, tried the next (smaller) */
 	}
 
 	return FALSE;
@@ -493,7 +493,7 @@ interval_parse (const gchar *expr, gint *start, gint *end)
 	*start = -1;
 	*end = -1;
 
-	// Empty string, don't bother
+	/* Empty string, don't bother */
 	if (!*expr) {
 		return TRUE;
 	}
@@ -501,14 +501,14 @@ interval_parse (const gchar *expr, gint *start, gint *end)
 	*start = strtol (expr, &endptr, 10);
 
 	if (*endptr == '-') {
-		// A real interval, get end
+		/* A real interval, get end */
 		*end = strtol (endptr + 1, &endptr, 10);
 		if (*endptr != '\0') {
-			// Incorrect parsing of end, error!
+			/* Incorrect parsing of end, error! */
 			return FALSE;
 		}
 	} else if (*endptr != '\0') {
-		// Incorrect parsing of start, error!
+		/* Incorrect parsing of start, error! */
 		return FALSE;
 	}
 
@@ -521,7 +521,7 @@ interval_atom_list_cmp (GList *intervals, GList *atoms)
 	interval_t *ival;
 	int atom;
 
-	// Empty lists lose
+	/* Empty lists lose */
 	if (!intervals) {
 		return ATOM_IS_GREATER;
 	}
@@ -529,7 +529,7 @@ interval_atom_list_cmp (GList *intervals, GList *atoms)
 		return INTERVAL_IS_GREATER;
 	}
 
-	// Need to compare first items
+	/* Need to compare first items */
 	ival = (interval_t *) intervals->data;
 	atom = GPOINTER_TO_INT (atoms->data);
 
