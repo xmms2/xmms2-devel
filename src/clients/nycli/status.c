@@ -79,6 +79,10 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	const gchar *err;
 
 	currid = infos->cache->currid;
+	/* Don't bother if it's 0 */
+	if (!currid) {
+		return;
+	}
 
 	res = xmmsc_medialib_get_info (infos->sync, currid);
 	xmmsc_result_wait (res);
