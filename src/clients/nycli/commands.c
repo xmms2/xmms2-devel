@@ -791,29 +791,31 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
-	gboolean success;
 	playlist_positions_t *positions;
 
 	/* Select by positions */
 	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
 		positions_print_info (infos, positions);
 		playlist_positions_free (positions);
-		success = TRUE;
 
 	/* Select by pattern */
-	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	} else if (command_arg_pattern_get (ctx, 0, &query, FALSE)) {
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		list_print_info (res, infos);
 		xmmsc_coll_unref (query);
-		success = TRUE;
+
+	/* Default to current song */
 	} else {
-		success = FALSE;
+		guint id;
+		id = infos->cache->currid;
+		res = xmmsc_medialib_get_info (infos->sync, id);
+		xmmsc_result_wait (res);
+		print_property (infos, res, id, NULL, NULL);
 	}
 
-	return success;
+	return TRUE;
 }
-
 
 static gboolean
 cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
