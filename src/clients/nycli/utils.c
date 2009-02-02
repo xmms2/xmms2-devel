@@ -569,6 +569,44 @@ positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
 	cli_infos_loop_resume (infos);
 }
 
+/* Returned tree must be freed by the caller */
+static GTree *
+matching_ids_tree (xmmsc_result_t *matching)
+{
+	xmmsv_t *val;
+	guint id;
+	GTree *list = NULL;
+	const gchar *err;
+
+	val = xmmsc_result_get_value (matching);
+
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
+		g_printf (_("Error retrieving the media matching the pattern!\n"));
+	} else {
+		xmmsv_list_iter_t *it;
+		xmmsv_t *entry;
+
+		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
+
+		xmmsv_get_list_iter (val, &it);
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+
+			xmmsv_list_iter_entry (it, &entry);
+
+			if (xmmsv_get_uint (entry, &id)) {
+				guint *tid;
+				tid = g_new (guint, 1);
+				*tid = id;
+				g_tree_insert (list, tid, tid);
+			}
+		}
+	}
+
+	return list;
+}
+
 void
 list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
                 gboolean is_search)
@@ -1118,42 +1156,21 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 	gboolean up;
 	GTree *list;
 
+	xmmsv_t *lisval;
 	const gchar *err;
-	xmmsv_t *val, *lisval;
 
-	val = xmmsc_result_get_value (matching);
+	lisres = xmmsc_playlist_list_entries (infos->sync, playlist);
+	xmmsc_result_wait (lisres);
+	lisval = xmmsc_result_get_value (lisres);
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
-		g_printf (_("Error retrieving the media matching the pattern!\n"));
+	if (xmmsv_get_error (lisval, &err) || !xmmsv_is_list (lisval)) {
+			g_printf (_("Error retrieving playlist entries\n"));
 	} else {
 		xmmsv_list_iter_t *it;
 		xmmsv_t *entry;
 
-		lisres = xmmsc_playlist_list_entries (infos->sync, playlist);
-		xmmsc_result_wait (lisres);
-
-		if (xmmsv_get_error (lisval, &err) || !xmmsv_is_list (lisval)) {
-			g_printf (_("Error retrieving playlist entries\n"));
-			goto finish;
-		}
-
-		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
-
 		/* store matching mediaids in a tree (faster lookup) */
-		xmmsv_get_list_iter (val, &it);
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-
-			xmmsv_list_iter_entry (it, &entry);
-
-			if (xmmsv_get_uint (entry, &id)) {
-				guint *tid;
-				tid = g_new (guint, 1);
-				*tid = id;
-				g_tree_insert (list, tid, tid);
-			}
-		}
+		list = matching_ids_tree (matching);
 
 		/* move matched playlist items */
 		curr = 0;
