@@ -608,13 +608,14 @@ matching_ids_tree (xmmsc_result_t *matching)
 }
 
 void
-list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
-                gboolean is_search)
+list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
+                column_display_t *coldisp, gboolean is_search)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
 	xmmsc_result_t *infores = NULL;
 	xmmsv_t *val, *info;
+	GTree *list = NULL;
 
 	const gchar *err;
 	guint id;
@@ -626,6 +627,15 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
 		xmmsv_list_iter_t *it;
 		column_display_prepare (coldisp);
 
+		if (filter != NULL) {
+			xmmsc_result_t *filres;
+			filres = xmmsc_coll_query_ids (infos->sync, filter, NULL, 0, 0);
+			xmmsc_result_wait (filres);
+			if ((list = matching_ids_tree (filres)) == NULL) {
+				goto finish;
+			}
+		}
+
 		if (is_search) {
 			column_display_print_header (coldisp);
 		}
@@ -634,21 +644,20 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
 		while (xmmsv_list_iter_valid (it)) {
 			xmmsv_t *entry;
 			xmmsv_list_iter_entry (it, &entry);
-			/* FIXME: check this! seems strange /greafine */
-			if (infores) {
-				xmmsc_result_unref (infores); /* unref previous infores */
-			}
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_uint (entry, &id) &&
+			    (!list || g_tree_lookup (list, &id) != NULL)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
 				info = xmmsv_propdict_to_dict (xmmsc_result_get_value (infores),
 				                               NULL);
 				column_display_print (coldisp, info);
+				xmmsc_result_unref (infores);
 				xmmsv_unref (info);
 			}
 			xmmsv_list_iter_next (it);
 			i++;
 		}
+
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -660,6 +669,11 @@ list_print_row (xmmsc_result_t *res, column_display_t *coldisp,
 		column_display_print_footer_totaltime (coldisp);
 	}
 
+finish:
+
+	if (list) {
+		g_tree_destroy (list);
+	}
 	column_display_free (coldisp);
 	cli_infos_loop_resume (infos);
 

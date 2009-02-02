@@ -722,7 +722,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, orderval, 0, 0);
 		xmmsc_result_wait (res);
 
-		list_print_row (res, coldisp, TRUE);
+		list_print_row (res, NULL, coldisp, TRUE);
 
 		xmmsv_unref (orderval);
 		xmmsc_coll_unref (query);
@@ -739,22 +739,23 @@ gboolean
 cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
-	xmmsc_coll_t *query = NULL;
-	xmmsc_result_t *res;
+	xmmsv_coll_t *query = NULL, *filter = NULL, *pl;
+	xmmsc_result_t *res, *inres = NULL;
 	column_display_t *coldisp;
 	gchar *playlist = NULL;
 	gboolean new_list;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
 	                                   "title", NULL };
 
-	command_arg_longstring_get (ctx, 0, &pattern);
+	command_arg_longstring_get_escaped (ctx, 0, &pattern);
 	if (pattern) {
-		if (!xmmsc_coll_parse (pattern, &query)) {
+		xmmsv_coll_t *inter, *pl;
+
+		if (!xmmsv_coll_parse (pattern, &query)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
 			g_free (pattern);
 			return FALSE;
 		}
-		/* FIXME: support filtering */
 	}
 
 	/* Default to active playlist (from cache) */
@@ -763,6 +764,17 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	    || strcmp (playlist, infos->cache->active_playlist_name) == 0) {
 		/* FIXME: Optim by reading data from cache */
 		playlist = XMMS_ACTIVE_PLAYLIST;
+	}
+
+	/* Has filter, retrieve ids from intersection */
+	if (query != NULL) {
+		pl = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+		xmmsv_coll_attribute_set (pl, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsv_coll_attribute_set (pl, "reference", playlist);
+
+		filter = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+		xmmsv_coll_add_operand (filter, query);
+		xmmsv_coll_add_operand (filter, pl);
 	}
 
 	new_list = !configuration_get_boolean (infos->config, "CLASSIC_LIST");
@@ -775,9 +787,13 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
 
-	list_print_row (res, coldisp, new_list);
+	list_print_row (res, filter, coldisp, new_list);
 
-	/* FIXME: if not null, xmmsc_coll_unref (query); */
+	if (filter != NULL) {
+		xmmsv_coll_unref (filter);
+		xmmsv_coll_unref (query);
+		xmmsv_coll_unref (pl);
+	}
 
 	g_free (pattern);
 
