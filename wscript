@@ -252,6 +252,7 @@ def configure(conf):
     else:
         conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
 
+    conf.check_tool('man', tooldir=os.path.abspath('waftools'))
     conf.check_tool('misc')
     conf.check_tool('gcc')
     conf.check_tool('g++')
