@@ -52,14 +52,14 @@ typedef struct xmmsv_bin_St {
 struct xmmsv_list_St {
 	xmmsv_t **list;
 	xmmsv_t *parent_value;
-	size_t size;
-	size_t allocated;
+	int size;
+	int allocated;
 	x_list_t *iterators;
 };
 
 static xmmsv_list_t *xmmsv_list_new (void);
 static void xmmsv_list_free (xmmsv_list_t *l);
-static int xmmsv_list_resize (xmmsv_list_t *l, size_t newsize);
+static int xmmsv_list_resize (xmmsv_list_t *l, int newsize);
 static int _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val);
 static int _xmmsv_list_append (xmmsv_list_t *l, xmmsv_t *val);
 static int _xmmsv_list_remove (xmmsv_list_t *l, int pos);
@@ -102,7 +102,7 @@ struct xmmsv_St {
 
 static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
-static int get_absolute_position (int pos, unsigned int size, unsigned int *abspos);
+static int get_absolute_position (int pos, int size, unsigned int *abspos);
 
 
 
@@ -842,7 +842,7 @@ static void
 xmmsv_list_free (xmmsv_list_t *l)
 {
 	xmmsv_list_iter_t *it;
-	size_t i;
+	int i;
 
 	/* free iterators */
 	while (l->iterators) {
@@ -860,7 +860,7 @@ xmmsv_list_free (xmmsv_list_t *l)
 }
 
 static int
-xmmsv_list_resize (xmmsv_list_t *l, size_t newsize)
+xmmsv_list_resize (xmmsv_list_t *l, int newsize)
 {
 	xmmsv_t **newmem;
 
@@ -932,7 +932,7 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 {
 	unsigned int abspos;
 	xmmsv_list_iter_t *it;
-	size_t half_size;
+	int half_size;
 	x_list_t *n;
 
 	/* prevent removing after the last element */
@@ -1020,7 +1020,7 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 	l = listv->value.list;
 
 	/* prevent accessing after the last element */
-	x_return_val_if_fail (pos < (int)l->size, 0);
+	x_return_val_if_fail (pos < l->size, 0);
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
@@ -1055,7 +1055,7 @@ xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 	l = listv->value.list;
 
 	/* prevent accessing after the last element */
-	x_return_val_if_fail (pos < (int)l->size, 0);
+	x_return_val_if_fail (pos < l->size, 0);
 	if (!get_absolute_position (pos, l->size, &abspos)) {
 		return 0;
 	}
@@ -2049,7 +2049,7 @@ xmmsv_utf8_validate (const char *str)
 /** @} */
 
 static int
-get_absolute_position (int pos, unsigned int size, unsigned int *abspos)
+get_absolute_position (int pos, int size, unsigned int *abspos)
 {
 	int ret;
 
