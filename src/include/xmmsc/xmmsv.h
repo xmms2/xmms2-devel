@@ -17,6 +17,7 @@
 #ifndef __XMMSV_H__
 #define __XMMSV_H__
 
+#include "xmmsc/xmmsc_compiler.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsv_coll.h"
 
@@ -62,7 +63,7 @@ xmmsv_type_t xmmsv_get_type (const xmmsv_t *val);
 int xmmsv_is_error (const xmmsv_t *val);
 int xmmsv_is_list (const xmmsv_t *val);
 int xmmsv_is_dict (const xmmsv_t *val);
-const char * xmmsv_get_error_old (const xmmsv_t *val);
+const char * xmmsv_get_error_old (const xmmsv_t *val) XMMS_DEPRECATED;
 xmmsv_t *xmmsv_make_stringlist (char *array[], int num);
 
 typedef void (*xmmsv_list_foreach_func) (xmmsv_t *value, void *user_data);
