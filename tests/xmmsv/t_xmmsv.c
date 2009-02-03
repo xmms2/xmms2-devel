@@ -34,6 +34,7 @@ CASE (test_xmmsv_type_none)
 {
 	xmmsv_t *value = xmmsv_new_none ();
 	CU_ASSERT_EQUAL (XMMSV_TYPE_NONE, xmmsv_get_type (value));
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_NONE));
 	xmmsv_unref (value);
 }
 
@@ -43,9 +44,11 @@ CASE (test_xmmsv_type_error)
 	xmmsv_t *value;
 
 	value = xmmsv_new_error (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_ERROR, xmmsv_get_type (value));
 	CU_ASSERT_TRUE (xmmsv_is_error (value));
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
 	CU_ASSERT_TRUE (xmmsv_get_error (value, &b));
 	CU_ASSERT_STRING_EQUAL (a, b);
 	CU_ASSERT_STRING_EQUAL (a, xmmsv_get_error_old (value));
@@ -53,6 +56,7 @@ CASE (test_xmmsv_type_error)
 	xmmsv_unref (value);
 
 	value = xmmsv_new_uint (0);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_UINT32));
 	CU_ASSERT_FALSE (xmmsv_get_error (value, &b));
 	CU_ASSERT_PTR_NULL (xmmsv_get_error_old (value));
 	xmmsv_unref (value);
@@ -64,6 +68,7 @@ CASE (test_xmmsv_type_uint32)
 	xmmsv_t *value;
 
 	value = xmmsv_new_uint (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_UINT32));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_UINT32, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
@@ -83,6 +88,7 @@ CASE (test_xmmsv_type_int32)
 	xmmsv_t *value;
 
 	value = xmmsv_new_int (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_INT32, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
@@ -102,6 +108,7 @@ CASE (test_xmmsv_type_string)
 	xmmsv_t *value;
 
 	value = xmmsv_new_string (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_STRING));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_STRING, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
@@ -121,6 +128,7 @@ CASE (test_xmmsv_type_coll)
 	xmmsv_t *value;
 
 	value = xmmsv_new_coll (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_COLL));
 	xmmsv_coll_unref (a);
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_COLL, xmmsv_get_type (value));
@@ -149,6 +157,7 @@ CASE (test_xmmsv_type_bin)
 	xmmsv_t *value;
 
 	value = xmmsv_new_bin (a, a_len);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BIN));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BIN, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
@@ -183,6 +192,7 @@ CASE (test_xmmsv_type_list)
 	int i, j;
 
 	value = xmmsv_new_list ();
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_LIST));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
@@ -190,6 +200,7 @@ CASE (test_xmmsv_type_list)
 
 	tmp = xmmsv_new_int (1);
 	CU_ASSERT_FALSE (xmmsv_is_list (tmp));
+	CU_ASSERT_FALSE (xmmsv_is_type (tmp, XMMSV_TYPE_LIST));
 	xmmsv_unref (tmp);
 
 	for (i = 20; i < 40; i++) {
@@ -358,10 +369,12 @@ CASE (test_xmmsv_type_dict)
 	int i;
 
 	value = xmmsv_new_dict ();
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_DICT));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_DICT, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
 	CU_ASSERT_TRUE (xmmsv_is_dict (value));
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_DICT));
 
 	tmp = xmmsv_new_uint (1);
 	CU_ASSERT_FALSE (xmmsv_is_dict (tmp));
