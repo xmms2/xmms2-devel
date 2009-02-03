@@ -148,7 +148,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	int  xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it)
 	void xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 	void xmmsv_dict_iter_next  (xmmsv_dict_iter_t *it)
-	int  xmmsv_dict_iter_seek  (xmmsv_dict_iter_t *it, char *key)
+	int  xmmsv_dict_iter_find  (xmmsv_dict_iter_t *it, char *key)
 
 	int  xmmsv_dict_iter_set    (xmmsv_dict_iter_t *it, xmmsv_t *val)
 	int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)

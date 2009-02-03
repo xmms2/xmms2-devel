@@ -100,7 +100,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 		if (strcmp (key, "seconds") == 0) {
 			int duration;
 
-			if (xmmsv_dict_iter_seek (it, "duration")) {
+			if (xmmsv_dict_iter_find (it, "duration")) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
 				xmmsv_get_int (v, &duration);
 			} else {
@@ -119,7 +119,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 		} else if (strcmp (key, "minutes") == 0) {
 			int duration;
 
-			if (xmmsv_dict_iter_seek (it, "duration")) {
+			if (xmmsv_dict_iter_find (it, "duration")) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
 				xmmsv_get_int (v, &duration);
 			} else {
@@ -139,7 +139,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 			const char *result = NULL;
 			char tmp[12];
 
-			if (xmmsv_dict_iter_seek (it, key)) {
+			if (xmmsv_dict_iter_find (it, key)) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
 
 				xmmsv_type_t type = xmmsv_get_type (v);

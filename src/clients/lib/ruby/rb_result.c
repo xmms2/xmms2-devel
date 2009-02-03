@@ -410,7 +410,7 @@ c_dict_aref (VALUE self, VALUE key)
 
 	xmmsv_get_dict_iter (dict->real, &it);
 
-	s = xmmsv_dict_iter_seek (it, ckey);
+	s = xmmsv_dict_iter_find (it, ckey);
 	if (!s)
 		return Qnil;
 
@@ -434,7 +434,7 @@ c_dict_has_key (VALUE self, VALUE key)
 
 	xmmsv_get_dict_iter (dict->real, &it);
 
-	return xmmsv_dict_iter_seek (it, ckey) ? Qtrue : Qfalse;
+	return xmmsv_dict_iter_find (it, ckey) ? Qtrue : Qfalse;
 }
 
 static void

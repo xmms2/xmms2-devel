@@ -404,7 +404,7 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_get_dict_iter (value, &it));
 
 	xmmsv_dict_iter_first (it);
-	CU_ASSERT_TRUE (xmmsv_dict_iter_seek (it, "test1"));
+	CU_ASSERT_TRUE (xmmsv_dict_iter_find (it, "test1"));
 
 	tmp = xmmsv_new_int (1337);
 	CU_ASSERT_TRUE (xmmsv_dict_iter_set (it, tmp));

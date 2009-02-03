@@ -517,7 +517,7 @@ xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 	xmmsv_t *v;
 
 	if (!val || !xmmsv_get_dict_iter (val, &it) ||
-	    !xmmsv_dict_iter_seek (it, key)) {
+	    !xmmsv_dict_iter_lookup (it, key)) {
 		return XMMSV_TYPE_NONE;
 	}
 
@@ -538,7 +538,7 @@ xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 		xmmsv_dict_iter_t *it; \
 		xmmsv_t *v; \
 		if (!val || !xmmsv_get_dict_iter (val, &it) || \
-		    !xmmsv_dict_iter_seek (it, key)) { \
+		    !xmmsv_dict_iter_lookup (it, key)) { \
 			return 0; \
 		} \
 		xmmsv_dict_iter_pair (it, NULL, &v); \
@@ -1479,7 +1479,7 @@ xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	if (!xmmsv_dict_iter_seek (it, key)) {
+	if (!xmmsv_dict_iter_find (it, key)) {
 		ret = 0;
 	}
 
@@ -1516,7 +1516,7 @@ xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
 	/* if key already present, replace value */
-	if (xmmsv_dict_iter_seek (it, key)) {
+	if (xmmsv_dict_iter_find (it, key)) {
 		ret = xmmsv_dict_iter_set (it, val);
 
 	/* else, insert a new key-value pair */
@@ -1565,7 +1565,7 @@ xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	if (!xmmsv_dict_iter_seek (it, key)) {
+	if (!xmmsv_dict_iter_find (it, key)) {
 		ret = 0;
 	} else {
 		ret = xmmsv_list_iter_remove (it->lit) &&
@@ -1780,7 +1780,7 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_dict_iter_seek (xmmsv_dict_iter_t *it, const char *key)
+xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 {
 	xmmsv_t *val;
 	const char *k;
