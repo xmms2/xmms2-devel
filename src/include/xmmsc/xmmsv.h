@@ -58,11 +58,13 @@ xmmsv_t *xmmsv_ref (xmmsv_t *val);
 void xmmsv_unref (xmmsv_t *val);
 
 xmmsv_type_t xmmsv_get_type (const xmmsv_t *val);
+int xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t);
 
 /* legacy aliases */
 int xmmsv_is_error (const xmmsv_t *val);
-int xmmsv_is_list (const xmmsv_t *val);
-int xmmsv_is_dict (const xmmsv_t *val);
+int xmmsv_is_list (const xmmsv_t *val) XMMS_DEPRECATED;
+int xmmsv_is_dict (const xmmsv_t *val) XMMS_DEPRECATED;
+
 const char * xmmsv_get_error_old (const xmmsv_t *val) XMMS_DEPRECATED;
 xmmsv_t *xmmsv_make_stringlist (char *array[], int num);
 

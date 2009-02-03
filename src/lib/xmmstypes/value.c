@@ -403,6 +403,21 @@ xmmsv_get_type (const xmmsv_t *val)
 	return val->type;
 }
 
+/**
+ * Check if value is of specified type.
+ *
+ * @param val #xmmsv_t to check.
+ * @param t #xmmsv_type_t to check for.
+ * @return 1 if value is of specified type, 0 otherwise.
+ */
+int
+xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t)
+{
+	x_api_error_if (!val, "NULL value", 0);
+
+	return (xmmsv_get_type (val) == t);
+}
+
 
 /* Merely legacy aliases */
 
@@ -415,7 +430,7 @@ xmmsv_get_type (const xmmsv_t *val)
 int
 xmmsv_is_error (const xmmsv_t *val)
 {
-	return !val || xmmsv_get_type (val) == XMMSV_TYPE_ERROR;
+	return xmmsv_is_type (val, XMMSV_TYPE_ERROR);
 }
 
 /**
@@ -427,7 +442,7 @@ xmmsv_is_error (const xmmsv_t *val)
 int
 xmmsv_is_list (const xmmsv_t *val)
 {
-	return xmmsv_get_type (val) == XMMSV_TYPE_LIST;
+	return xmmsv_is_type (val, XMMSV_TYPE_LIST);
 }
 
 /**
@@ -439,7 +454,7 @@ xmmsv_is_list (const xmmsv_t *val)
 int
 xmmsv_is_dict (const xmmsv_t *val)
 {
-	return xmmsv_get_type (val) == XMMSV_TYPE_DICT;
+	return xmmsv_is_type (val, XMMSV_TYPE_DICT);
 }
 
 /**
