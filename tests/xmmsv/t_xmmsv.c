@@ -217,6 +217,12 @@ CASE (test_xmmsv_type_list)
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
 	CU_ASSERT_EQUAL (i, 20);
 
+	CU_ASSERT_TRUE (xmmsv_list_get (value, -20, &tmp));
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
+	CU_ASSERT_EQUAL (i, 20);
+
+	CU_ASSERT_FALSE (xmmsv_list_get (value, -21, &tmp));
+
 	CU_ASSERT_TRUE (xmmsv_list_remove (value, 0));
 	CU_ASSERT_FALSE (xmmsv_list_remove (value, 1000));
 
