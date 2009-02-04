@@ -108,6 +108,7 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 	coll->type = type;
 
 	coll->operands = xmmsv_new_list ();
+	xmmsv_list_restrict_type (coll->operands, XMMSV_TYPE_COLL);
 	xmmsv_get_list_iter (coll->operands, &i);
 
 	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
