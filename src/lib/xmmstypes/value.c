@@ -513,37 +513,27 @@ xmmsv_make_stringlist (char *array[], int num)
 xmmsv_type_t
 xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 {
-	xmmsv_dict_iter_t *it;
 	xmmsv_t *v;
 
-	if (!val || !xmmsv_get_dict_iter (val, &it) ||
-	    !xmmsv_dict_iter_lookup (it, key)) {
+	if (!xmmsv_dict_get (val, key, &v)) {
 		return XMMSV_TYPE_NONE;
 	}
-
-	xmmsv_dict_iter_pair (it, NULL, &v);
-
-	xmmsv_dict_iter_free (it);
 
 	return xmmsv_get_type (v);
 }
 
 
 /* macro-magically define legacy dict extractors */
-#define GEN_COMPAT_DICT_EXTRACTOR_FUNC(typename, type) \
-	int \
+#define GEN_COMPAT_DICT_EXTRACTOR_FUNC(typename, type)			\
+	int								\
 	xmmsv_get_dict_entry_##typename (xmmsv_t *val, const char *key, \
-	                                      type *r) \
-	{ \
-		xmmsv_dict_iter_t *it; \
-		xmmsv_t *v; \
-		if (!val || !xmmsv_get_dict_iter (val, &it) || \
-		    !xmmsv_dict_iter_lookup (it, key)) { \
-			return 0; \
-		} \
-		xmmsv_dict_iter_pair (it, NULL, &v); \
-		xmmsv_dict_iter_free (it); \
-		return xmmsv_get_##typename (v, r); \
+	                                 type *r)			\
+	{								\
+		xmmsv_t *v;						\
+		if (!xmmsv_dict_get (val, key, &v)) {			\
+			return 0;					\
+		}							\
+		return xmmsv_get_##typename (v, r);			\
 	}
 
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (string, const char *)
