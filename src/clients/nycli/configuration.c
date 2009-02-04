@@ -16,30 +16,26 @@
 
 #include "configuration.h"
 
-#define KEY_VALUE_COPY(k,v) g_strdup ((k)), g_strdup ((v))
-
-static GHashTable *
-init_hash ()
-{
-	GHashTable *table;
-
-	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-	g_hash_table_insert (table, KEY_VALUE_COPY("PROMPT", "nycli> "));
-	g_hash_table_insert (table, KEY_VALUE_COPY("SERVER_AUTOSTART", "true"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("AUTO_UNIQUE_COMPLETE", "true"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("PLAYLIST_MARKER", "->"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("GUESS_PLS", "false"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("CLASSIC_LIST", "true"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("CLASSIC_LIST_FORMAT",
-	                                           "${artist} - ${title}"));
-	g_hash_table_insert (table, KEY_VALUE_COPY("STATUS_FORMAT",
-	                                           "${playback_status}: ${artist} "
-	                                           "- ${title}: ${playtime} of "
-	                                           "${duration}"));
-
-	return table;
-}
+const gchar *const default_config =
+"[main]\n\n"
+"PROMPT=nycli> \n"
+"SERVER_AUTOSTART=true\n"
+"AUTO_UNIQUE_COMPLETE=true\n"
+"PLAYLIST_MARKER=->\n"
+"GUESS_PLS=false\n"
+"CLASSIC_LIST=true\n"
+"CLASSIC_LIST_FORMAT=${artist} - ${title}\n"
+"STATUS_FORMAT=${playback_status}: ${artist} - ${title}: ${playtime} of ${duration}\n\n"
+"[alias]\n\n"
+"ls = list\n"
+"clear = playlist clear\n"
+"quit = exit\n"
+"server kill = server shutdown\n"
+"repeat = seek 0\n"
+"mute = server volume 0\n"
+"scap = stop ; playlist clear ; add $@ ; play\n"
+"current = status -f $1\n"
+"addpls = add -f -P $@\n";
 
 /* Load a section from a keyfile to a hash-table
    (replace existing keys in the hash) */
@@ -83,12 +79,22 @@ configuration_init (const gchar *path)
 		config->path = g_strdup (path);
 	}
 
-	/* init hash to default values */
-	config->values = init_hash ();
+	/* init hash */
+	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, g_free);
 
 	/* no aliases initially */
 	config->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free, g_free);
+
+	if (!g_file_test (config->path, G_FILE_TEST_EXISTS)) {
+		g_fprintf (stderr, "Creating %s...\n", config->path);
+
+		if (!g_file_set_contents (config->path, default_config,
+		                          strlen (default_config), NULL)) {
+			g_fprintf (stderr, "Error: Can't create configuration file!\n");
+		}
+	}
 
 	config->file = g_key_file_new ();
 	if (g_file_test (config->path, G_FILE_TEST_EXISTS)) {
