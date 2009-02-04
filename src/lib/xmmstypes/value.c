@@ -102,7 +102,8 @@ struct xmmsv_St {
 
 static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
-static int get_absolute_position (int pos, int size, int *abspos);
+static int absolutify_and_validate_pos (int *pos, int size, int allow_append);
+
 
 
 
@@ -870,11 +871,10 @@ xmmsv_list_resize (xmmsv_list_t *l, int newsize)
 static int
 _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 {
-	int abspos;
 	xmmsv_list_iter_t *it;
 	x_list_t *n;
 
-	if (!get_absolute_position (pos, l->size, &abspos)) {
+	if (!absolutify_and_validate_pos (&pos, l->size, 1)) {
 		return 0;
 	}
 
@@ -892,18 +892,18 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 	}
 
 	/* move existing items out of the way */
-	if (l->size > abspos) {
-		memmove (l->list + abspos + 1, l->list + abspos,
-		         (l->size - abspos) * sizeof (xmmsv_t *));
+	if (l->size > pos) {
+		memmove (l->list + pos + 1, l->list + pos,
+		         (l->size - pos) * sizeof (xmmsv_t *));
 	}
 
-	l->list[abspos] = xmmsv_ref (val);
+	l->list[pos] = xmmsv_ref (val);
 	l->size++;
 
 	/* update iterators pos */
 	for (n = l->iterators; n; n = n->next) {
 		it = (xmmsv_list_iter_t *) n->data;
-		if (it->position > abspos) {
+		if (it->position > pos) {
 			it->position++;
 		}
 	}
@@ -920,25 +920,23 @@ _xmmsv_list_append (xmmsv_list_t *l, xmmsv_t *val)
 static int
 _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 {
-	int abspos;
 	xmmsv_list_iter_t *it;
 	int half_size;
 	x_list_t *n;
 
 	/* prevent removing after the last element */
-	x_return_val_if_fail (pos < (int)l->size, 0);
-	if (!get_absolute_position (pos, l->size, &abspos)) {
+	if (!absolutify_and_validate_pos (&pos, l->size, 0)) {
 		return 0;
 	}
 
-	xmmsv_unref (l->list[abspos]);
+	xmmsv_unref (l->list[pos]);
 
 	l->size--;
 
 	/* fill the gap */
-	if (abspos < l->size) {
-		memmove (l->list + abspos, l->list + abspos + 1,
-		         (l->size - abspos) * sizeof (xmmsv_t *));
+	if (pos < l->size) {
+		memmove (l->list + pos, l->list + pos + 1,
+		         (l->size - pos) * sizeof (xmmsv_t *));
 	}
 
 	/* Reduce memory usage by two if possible */
@@ -952,7 +950,7 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 	/* update iterator pos */
 	for (n = l->iterators; n; n = n->next) {
 		it = (xmmsv_list_iter_t *) n->data;
-		if (it->position > abspos) {
+		if (it->position > pos) {
 			it->position--;
 		}
 	}
@@ -1001,7 +999,6 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 int
 xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 {
-	int abspos;
 	xmmsv_list_t *l;
 
 	x_return_val_if_fail (listv, 0);
@@ -1010,13 +1007,12 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 	l = listv->value.list;
 
 	/* prevent accessing after the last element */
-	x_return_val_if_fail (pos < l->size, 0);
-	if (!get_absolute_position (pos, l->size, &abspos)) {
+	if (!absolutify_and_validate_pos (&pos, l->size, 0)) {
 		return 0;
 	}
 
 	if (val) {
-		*val = l->list[abspos];
+		*val = l->list[pos];
 	}
 
 	return 1;
@@ -1034,7 +1030,6 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 int
 xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 {
-	int abspos;
 	xmmsv_t *old_val;
 	xmmsv_list_t *l;
 
@@ -1044,14 +1039,12 @@ xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 
 	l = listv->value.list;
 
-	/* prevent accessing after the last element */
-	x_return_val_if_fail (pos < l->size, 0);
-	if (!get_absolute_position (pos, l->size, &abspos)) {
+	if (!absolutify_and_validate_pos (&pos, l->size, 0)) {
 		return 0;
 	}
 
-	old_val = l->list[abspos];
-	l->list[abspos] = xmmsv_ref (val);
+	old_val = l->list[pos];
+	l->list[pos] = xmmsv_ref (val);
 	xmmsv_unref (old_val);
 
 	return 1;
@@ -1328,14 +1321,12 @@ xmmsv_list_iter_prev (xmmsv_list_iter_t *it)
 int
 xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos)
 {
-	int abspos;
-
 	x_return_val_if_fail (it, 0);
 
-	if (!get_absolute_position (pos, it->parent->size, &abspos)) {
+	if (!absolutify_and_validate_pos (&pos, it->parent->size, 1)) {
 		return 0;
 	}
-	it->position = abspos;
+	it->position = pos;
 
 	return 1;
 }
@@ -2038,20 +2029,26 @@ xmmsv_utf8_validate (const char *str)
 
 /** @} */
 
-static int
-get_absolute_position (int pos, int size, int *abspos)
-{
-	int ret;
 
-	if (pos >= 0 && pos <= size) {
-		*abspos = pos;
-		ret = 1;
-	} else if (pos < 0 && -pos <= size) {
-		*abspos = ((int) size) + pos; /* negative index, compute from end */
-		ret = 1;
-	} else {
-		ret = 0; /* out of bounds index */
+/**
+ * @internal
+ */
+static int
+absolutify_and_validate_pos (int *pos, int size, int allow_append)
+{
+	x_return_val_if_fail (size >= 0, 0);
+
+	if (*pos < 0) {
+		if (-*pos > size)
+			return 0;
+		*pos = size + *pos;
 	}
 
-	return ret;
+	if (*pos > size)
+		return 0;
+
+	if (!allow_append && *pos == size)
+		return 0;
+
+	return 1;
 }
