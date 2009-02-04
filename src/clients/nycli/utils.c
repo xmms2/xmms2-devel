@@ -672,7 +672,7 @@ coll_save (cli_infos_t *infos, xmmsv_coll_t *coll,
 		res = xmmsc_coll_get (infos->sync, name, ns);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
-		if (xmmsv_get_collection (val, &exists)) {
+		if (xmmsv_get_coll (val, &exists)) {
 			g_printf (_("Error: A collection already exists "
 			            "with the target name!\n"));
 			save = FALSE;
@@ -737,7 +737,7 @@ coll_dump_list (xmmsv_t *list, unsigned int level)
 
 	xmmsv_get_list_iter (list, &it);
 	while (xmmsv_list_iter_entry (it, &v)) {
-		if (xmmsv_get_collection (v, &operand)) {
+		if (xmmsv_get_coll (v, &operand)) {
 			coll_dump (operand, level);
 		}
 		xmmsv_list_iter_next (it);
@@ -856,7 +856,7 @@ coll_show (cli_infos_t *infos, xmmsc_result_t *res)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_collection (val, &coll);
+		xmmsv_get_coll (val, &coll);
 		coll_dump (coll, 0);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
@@ -1064,7 +1064,7 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
 	val = xmmsc_result_get_value (plsres);
 
 	if (!xmmsv_get_error (val, &err) &&
-	    xmmsv_get_collection (val, &coll)) {
+	    xmmsv_get_coll (val, &coll)) {
 		res = xmmsc_playlist_add_idlist (infos->sync, playlist, coll);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
@@ -1379,7 +1379,7 @@ copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_collection (val, &coll)) {
+	if (xmmsv_get_coll (val, &coll)) {
 		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (saveres);
@@ -1401,7 +1401,7 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_collection (val, &coll)) {
+	if (xmmsv_get_coll (val, &coll)) {
 		xmmsc_coll_attribute_set (coll, attrname, attrvalue);
 		coll_save (infos, coll, ns, name, TRUE);
 	} else {
@@ -1426,7 +1426,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_collection (val, &coll)) {
+	if (xmmsv_get_coll (val, &coll)) {
 		if (type >= 0 && xmmsv_coll_get_type (coll) != type) {
 			newcoll = coll_copy_retype (coll, type);
 			coll = newcoll;
@@ -1472,7 +1472,7 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_collection (val, &coll)) {
+	if (xmmsv_get_coll (val, &coll)) {
 		if (attrname == NULL) {
 			xmmsc_coll_attribute_foreach (coll,
 			                              coll_print_attributes, NULL);
@@ -1501,7 +1501,7 @@ playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_collection (val, &coll)) {
+	if (xmmsv_get_coll (val, &coll)) {
 		pl_print_config (coll, playlist);
 	} else {
 		g_printf (_("Invalid playlist!\n"));
@@ -1615,7 +1615,7 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 		break;
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
 		if (xmmsv_list_get (xmmsv_coll_operands_list_get (coll), 0, &v) &&
-		    xmmsv_get_collection (v, &op)) {
+		    xmmsv_get_coll (v, &op)) {
 			xmmsv_coll_attribute_get (op, "reference", &input);
 			xmmsv_coll_attribute_get (op, "namespace", &input_ns);
 		}

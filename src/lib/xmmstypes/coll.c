@@ -241,7 +241,7 @@ xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_list_iter_entry (it, &v);
-		if (xmmsv_get_collection (v, &c)) {
+		if (xmmsv_get_coll (v, &c)) {
 			if (c == op) {
 				xmmsv_list_iter_remove (it);
 				break;
@@ -537,7 +537,7 @@ xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand)
 	if (!xmmsv_list_iter_entry (i, &v))
 		return 0;
 
-	return xmmsv_get_collection (v, operand);
+	return xmmsv_get_coll (v, operand);
 }
 
 /**

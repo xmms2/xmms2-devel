@@ -731,7 +731,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	xmmsv_get_collection (val, &coll);
+	xmmsv_get_coll (val, &coll);
 	prevtype = xmmsv_coll_get_type (coll);
 
 	/* No type argument, simply display the current type */
@@ -915,7 +915,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_collection (val, &coll)) {
+	if (!xmmsv_get_coll (val, &coll)) {
 		print_error ("Couldn't get collection from result!");
 	}
 

@@ -106,7 +106,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	int  xmmsv_get_int        (xmmsv_t *res, int *r)
 	int  xmmsv_get_uint       (xmmsv_t *res, unsigned int *r)
 	int  xmmsv_get_string     (xmmsv_t *res, xmms_pyrex_constcharpp_t r)
-	int  xmmsv_get_collection (xmmsv_t *value, xmmsv_coll_t **coll)
+	int  xmmsv_get_coll (xmmsv_t *value, xmmsv_coll_t **coll)
 	int  xmmsv_get_bin        (xmmsv_t *res, xmms_pyrex_constucharpp_t r, unsigned int *rlen)
 
 	ctypedef void (*xmmsv_list_foreach_func) (xmmsv_t *value, void *user_data)
@@ -949,7 +949,7 @@ cdef class XMMSValue:
 		@rtype: Collection
 		"""
 		cdef xmmsv_coll_t *coll
-		if not xmmsv_get_collection(self.val, &coll):
+		if not xmmsv_get_coll(self.val, &coll):
 			raise ValueError("Failed to retrieve value!")
 
 		return create_coll(coll)

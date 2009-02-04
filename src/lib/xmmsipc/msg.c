@@ -426,7 +426,7 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 		xmmsv_get_list_iter (xmmsv_coll_operands_list_get (coll), &it);
 
 		while (xmmsv_list_iter_entry (it, &v)) {
-			if (!xmmsv_get_collection (v, &op)) {
+			if (!xmmsv_get_coll (v, &op)) {
 				x_api_error ("Non collection operand", 0);
 			}
 			ret = xmms_ipc_msg_put_collection (msg, op);
@@ -491,7 +491,7 @@ xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		ret = xmms_ipc_msg_put_string (msg, s);
 		break;
 	case XMMSV_TYPE_COLL:
-		if (!xmmsv_get_collection (v, &c)) {
+		if (!xmmsv_get_coll (v, &c)) {
 			return -1;
 		}
 		ret = xmms_ipc_msg_put_collection (msg, c);

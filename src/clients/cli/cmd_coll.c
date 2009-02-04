@@ -158,7 +158,7 @@ coll_dump_list (xmmsv_t *list, unsigned int level)
 
 	xmmsv_get_list_iter (list, &it);
 	while (xmmsv_list_iter_entry (it, &v)) {
-		if (xmmsv_get_collection (v, &operand)) {
+		if (xmmsv_get_coll (v, &operand)) {
 			coll_dump (operand, level);
 		}
 		xmmsv_list_iter_next (it);
@@ -546,7 +546,7 @@ cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsv_get_error_old (val));
 	} else {
 		xmmsv_coll_t *coll;
-		xmmsv_get_collection (val, &coll);
+		xmmsv_get_coll (val, &coll);
 		coll_print (coll);
 	}
 
@@ -604,7 +604,7 @@ cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsv_get_error_old (val));
 	} else {
 		xmmsv_coll_t *coll;
-		xmmsv_get_collection (val, &coll);
+		xmmsv_get_coll (val, &coll);
 
 		/* Print all attributes */
 		if (argc == 4) {

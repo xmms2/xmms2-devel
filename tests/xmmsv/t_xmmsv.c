@@ -133,7 +133,7 @@ CASE (test_xmmsv_type_coll)
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_COLL, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
-	CU_ASSERT_TRUE (xmmsv_get_collection (value, &b));
+	CU_ASSERT_TRUE (xmmsv_get_coll (value, &b));
 
 	xmmsv_unref (value);
 }
@@ -145,7 +145,7 @@ CASE (test_xmmsv_type_coll_wrong_type)
 	xmmsv_t *value;
 
 	value = xmmsv_new_error ("oh noes");
-	CU_ASSERT_FALSE (xmmsv_get_collection (value, &b));
+	CU_ASSERT_FALSE (xmmsv_get_coll (value, &b));
 	xmmsv_unref (value);
 }
 

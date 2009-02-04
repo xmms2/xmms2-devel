@@ -270,7 +270,7 @@ namespace Xmms
 		// Find the operand
 		operands = xmmsv_coll_operands_list_get( coll_ );
 		if( !xmmsv_list_get( operands, 0, &val ) ||
-		    !xmmsv_get_collection( val, &op ) ) {
+		    !xmmsv_get_coll( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
@@ -629,7 +629,7 @@ namespace Xmms
 		// Find the operand
 		operands = xmmsv_coll_operands_list_get( coll_ );
 		if( !xmmsv_list_get( operands, 0, &val ) ||
-		    !xmmsv_get_collection( val, &op ) ) {
+		    !xmmsv_get_coll( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
@@ -703,7 +703,7 @@ namespace Xmms
 		xmmsv_t *val;
 		xmmsv_coll_t *op;
 		if( !xmmsv_list_iter_entry( oper_it_, &val ) ||
-		    !xmmsv_get_collection( val, &op ) ) {
+		    !xmmsv_get_coll( val, &op ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 

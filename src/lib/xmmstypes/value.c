@@ -540,7 +540,7 @@ xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (int, int32_t)
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (uint, uint32_t)
-GEN_COMPAT_DICT_EXTRACTOR_FUNC (collection, xmmsv_coll_t *)
+GEN_COMPAT_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
 static int
 source_match_pattern (const char *source, const char *pattern)
@@ -718,7 +718,7 @@ xmmsv_get_string (const xmmsv_t *val, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_get_collection (const xmmsv_t *val, xmmsv_coll_t **c)
+xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **c)
 {
 	if (!val || val->type != XMMSV_TYPE_COLL) {
 		return 0;

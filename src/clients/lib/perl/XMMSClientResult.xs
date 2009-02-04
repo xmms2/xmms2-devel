@@ -63,7 +63,7 @@ sv_from_value_coll (xmmsv_t *val)
 	int ret;
 	xmmsv_coll_t *coll = NULL;
 
-	ret = xmmsv_get_collection (val, &coll);
+	ret = xmmsv_get_coll (val, &coll);
 
 	if (ret == 0) {
 		croak("could not fetch collection value");

@@ -119,7 +119,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_INIT_ARG_STRING(a) __XMMS_CMD_INIT_ARG(a, string, const gchar *)
 #define __XMMS_CMD_INIT_ARG_UINT32(a) __XMMS_CMD_INIT_ARG(a, uint, guint)
 #define __XMMS_CMD_INIT_ARG_INT32(a)  __XMMS_CMD_INIT_ARG(a, int,  gint)
-#define __XMMS_CMD_INIT_ARG_COLL(a)   __XMMS_CMD_INIT_ARG(a, collection, xmmsv_coll_t *)
+#define __XMMS_CMD_INIT_ARG_COLL(a)   __XMMS_CMD_INIT_ARG(a, coll, xmmsv_coll_t *)
 #define __XMMS_CMD_INIT_ARG_BIN(a)    __XMMS_CMD_INIT_ARG_FULL(a, GString *, xmms_bin_to_gstring)
 #define __XMMS_CMD_INIT_ARG_LIST(a)   __XMMS_CMD_INIT_ARG_FULL(a, xmmsv_t *, dummy_identity)
 #define __XMMS_CMD_INIT_ARG_DICT(a)   __XMMS_CMD_INIT_ARG_FULL(a, xmmsv_t *, dummy_identity)

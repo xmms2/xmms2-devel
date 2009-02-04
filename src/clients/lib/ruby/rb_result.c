@@ -239,7 +239,7 @@ coll_get (xmmsv_t *val)
 {
 	xmmsc_coll_t *coll = NULL;
 
-	if (!xmmsv_get_collection (val, &coll))
+	if (!xmmsv_get_coll (val, &coll))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return TO_XMMS_CLIENT_COLLECTION (coll);

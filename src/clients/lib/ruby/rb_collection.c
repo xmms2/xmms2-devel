@@ -496,7 +496,7 @@ operands_each (xmmsv_t *value, void *user_data)
 {
 	xmmsv_coll_t *operand = NULL;
 
-	xmmsv_get_collection (value, &operand);
+	xmmsv_get_coll (value, &operand);
 	xmmsc_coll_ref (operand);
 
 	rb_yield (TO_XMMS_CLIENT_COLLECTION (operand));

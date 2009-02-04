@@ -368,7 +368,7 @@ namespace Xmms
 
 				xmmsv_coll_t* coll = 0;
 				xmmsv_t *v = xmmsc_result_get_value( this->res_ );
-				if( !xmmsv_get_collection( v, &coll ) ) {
+				if( !xmmsv_get_coll( v, &coll ) ) {
 					throw value_error( "Invalid collection in value" );
 				}
 				return createColl( coll );

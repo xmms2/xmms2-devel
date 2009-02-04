@@ -76,14 +76,14 @@ xmmsv_type_t xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key);
 int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r);
 int xmmsv_dict_entry_get_int (xmmsv_t *val, const char *key, int32_t *r);
 int xmmsv_dict_entry_get_uint (xmmsv_t *val, const char *key, uint32_t *r);
-int xmmsv_dict_entry_get_collection (xmmsv_t *val, const char *key, xmmsv_coll_t **coll);
+int xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **coll);
 xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
 
 int xmmsv_get_error (const xmmsv_t *val, const char **r);
 int xmmsv_get_int (const xmmsv_t *val, int32_t *r);
 int xmmsv_get_uint (const xmmsv_t *val, uint32_t *r);
 int xmmsv_get_string (const xmmsv_t *val, const char **r);
-int xmmsv_get_collection (const xmmsv_t *val, xmmsv_coll_t **coll);
+int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll);
 int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
 
 int xmmsv_get_list_iter (const xmmsv_t *val, xmmsv_list_iter_t **it);

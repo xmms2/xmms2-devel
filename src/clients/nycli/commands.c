@@ -1706,7 +1706,7 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 
-		if (!xmmsv_get_collection (val, &coll)) {
+		if (!xmmsv_get_coll (val, &coll)) {
 			g_printf (_("Error: cannot find collection to copy\n"));
 			retval = FALSE;
 		}
