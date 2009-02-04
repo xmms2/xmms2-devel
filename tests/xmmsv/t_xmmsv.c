@@ -460,7 +460,7 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test2", tmp));
 	xmmsv_unref (tmp);
 
-	CU_ASSERT_EQUAL (xmmsv_get_dict_entry_type (value, "test1"), XMMSV_TYPE_INT32);
+	CU_ASSERT_EQUAL (xmmsv_dict_entry_get_type (value, "test1"), XMMSV_TYPE_INT32);
 	CU_ASSERT_TRUE (xmmsv_dict_foreach (value, _dict_foreach, NULL));
 
 	CU_ASSERT_TRUE (xmmsv_get_dict_iter (value, &it));
@@ -499,7 +499,7 @@ CASE (test_xmmsv_type_dict)
 
 	value = xmmsv_new_error ("oh noes");
 	CU_ASSERT_FALSE (xmmsv_get_dict_iter (value, &it));
-	CU_ASSERT_FALSE (xmmsv_get_dict_entry_type (value, "foo"));
+	CU_ASSERT_FALSE (xmmsv_dict_entry_get_type (value, "foo"));
 	CU_ASSERT_FALSE (xmmsv_dict_foreach (value, _dict_foreach, NULL));
 	xmmsv_unref (value);
 }

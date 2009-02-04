@@ -542,7 +542,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_is_error (val)) {
-		if (!xmmsv_get_dict_entry_uint (val, "position", &p)) {
+		if (!xmmsv_dict_entry_get_uint (val, "position", &p)) {
 			print_error ("Broken resultset");
 		}
 		xmmsc_result_unref (res);
@@ -578,7 +578,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("%s", xmmsv_get_error_old (info_val));
 		}
 
-		if (xmmsv_get_dict_entry_int (info_val, "duration", &playtime)) {
+		if (xmmsv_dict_entry_get_int (info_val, "duration", &playtime)) {
 			total_playtime += playtime;
 		}
 
@@ -597,7 +597,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_entry_format (dur, sizeof (dur),
 			                    "(${minutes}:${seconds})", info_val);
 
-			if (xmmsv_get_dict_entry_string (info_val, "url", &url)) {
+			if (xmmsv_dict_entry_get_string (info_val, "url", &url)) {
 				gchar *filename = g_path_get_basename (url);
 				if (filename) {
 					g_snprintf (line, sizeof (line), "%s %s", filename, dur);

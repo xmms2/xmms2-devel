@@ -134,12 +134,12 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 	const gchar *sval;
 	gchar *value;
 
-	switch (xmmsv_get_dict_entry_type (val, coldef->arg.string)) {
+	switch (xmmsv_dict_entry_get_type (val, coldef->arg.string)) {
 	case XMMSV_TYPE_NONE:
 		/* Yeah, lots of code duplication, lets fix that */
 		value = NULL;
 		if (!strcmp (coldef->arg.string, "title")) {
-			if (xmmsv_get_dict_entry_string (val, "url", &sval)) {
+			if (xmmsv_dict_entry_get_string (val, "url", &sval)) {
 				value = g_path_get_basename (sval);
 				realsize = crop_string (buffer, value,
 				                        coldef->size);
@@ -152,15 +152,15 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 		}
 		break;
 	case XMMSV_TYPE_UINT32:
-		xmmsv_get_dict_entry_uint (val, coldef->arg.string, &uval);
+		xmmsv_dict_entry_get_uint (val, coldef->arg.string, &uval);
 		realsize = g_snprintf (buffer, coldef->size + 1, "%u", uval);
 		break;
 	case XMMSV_TYPE_INT32:
-		xmmsv_get_dict_entry_int (val, coldef->arg.string, &ival);
+		xmmsv_dict_entry_get_int (val, coldef->arg.string, &ival);
 		realsize = g_snprintf (buffer, coldef->size + 1, "%d", ival);
 		break;
 	case XMMSV_TYPE_STRING:
-		xmmsv_get_dict_entry_string (val, coldef->arg.string, &sval);
+		xmmsv_dict_entry_get_string (val, coldef->arg.string, &sval);
 
 		/* Use UTF-8 column width, not characters or bytes */
 		/* Note: realsize means the number of columns used to
@@ -458,7 +458,7 @@ column_display_print (column_display_t *disp, xmmsv_t *val)
 		}
 		g_printf ("\n");
 
-		if (xmmsv_get_dict_entry_int (val, "duration", &millisecs)) {
+		if (xmmsv_dict_entry_get_int (val, "duration", &millisecs)) {
 			disp->total_time += millisecs;
 		}
 
@@ -538,12 +538,12 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 	gchar *time;
 	const gchar *propname = (const gchar *) coldef->arg.udata;
 
-	switch (xmmsv_get_dict_entry_type (val, propname)) {
+	switch (xmmsv_dict_entry_get_type (val, propname)) {
 	case XMMSV_TYPE_UINT32:
-		xmmsv_get_dict_entry_uint (val, propname, &millisecs);
+		xmmsv_dict_entry_get_uint (val, propname, &millisecs);
 		break;
 	case XMMSV_TYPE_INT32:
-		xmmsv_get_dict_entry_int (val, propname, &millisecs);
+		xmmsv_dict_entry_get_int (val, propname, &millisecs);
 		break;
 	default:
 		/* Invalid type, don't render anything*/

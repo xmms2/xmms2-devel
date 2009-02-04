@@ -512,7 +512,7 @@ xmmsv_make_stringlist (char *array[], int num)
  * @return The type of the entry or #XMMSV_TYPE_NONE if something goes wrong.
  */
 xmmsv_type_t
-xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
+xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 {
 	xmmsv_t *v;
 
@@ -527,7 +527,7 @@ xmmsv_get_dict_entry_type (xmmsv_t *val, const char *key)
 /* macro-magically define legacy dict extractors */
 #define GEN_COMPAT_DICT_EXTRACTOR_FUNC(typename, type)			\
 	int								\
-	xmmsv_get_dict_entry_##typename (xmmsv_t *val, const char *key, \
+	xmmsv_dict_entry_get_##typename (xmmsv_t *val, const char *key, \
 	                                 type *r)			\
 	{								\
 		xmmsv_t *v;						\

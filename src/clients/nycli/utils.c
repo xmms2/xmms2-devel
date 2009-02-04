@@ -200,8 +200,8 @@ list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 			xmmsv_t *elem;
 
 			xmmsv_list_iter_entry (it, &elem);
-			xmmsv_get_dict_entry_string (elem, "shortname", &name);
-			xmmsv_get_dict_entry_string (elem, "description", &desc);
+			xmmsv_dict_entry_get_string (elem, "shortname", &name);
+			xmmsv_dict_entry_get_string (elem, "description", &desc);
 
 			g_printf ("%s - %s\n", name, desc);
 		}
@@ -225,8 +225,8 @@ print_server_stats (xmmsc_result_t *res)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_dict_entry_string (val, "version", &version);
-		xmmsv_get_dict_entry_int (val, "uptime", &uptime);
+		xmmsv_dict_entry_get_string (val, "version", &version);
+		xmmsv_dict_entry_get_int (val, "uptime", &uptime);
 		g_printf ("uptime = %d\n"
 		          "version = %s\n", uptime, version);
 	} else {

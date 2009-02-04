@@ -111,12 +111,12 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 				}
 			}
 
-			type = xmmsv_get_dict_entry_type (info, field);
+			type = xmmsv_dict_entry_get_type (info, field);
 			switch (type) {
 			case XMMSV_TYPE_NONE:
 				value = NULL;
 				if (!strcmp (field, "title")) {
-					if (xmmsv_get_dict_entry_string (info,
+					if (xmmsv_dict_entry_get_string (info,
 					                                 "url",
 					                                 &sval)) {
 						value = g_path_get_basename (sval);
@@ -128,12 +128,12 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 				break;
 
 			case XMMSV_TYPE_STRING:
-				xmmsv_get_dict_entry_string (info, field, &sval);
+				xmmsv_dict_entry_get_string (info, field, &sval);
 				value = g_strdup (sval);
 				break;
 
 			case XMMSV_TYPE_INT32:
-				xmmsv_get_dict_entry_int (info, field, &ival);
+				xmmsv_dict_entry_get_int (info, field, &ival);
 
 				for (i = 0; time_fields[i] != NULL; i++) {
 					if (!strcmp (time_fields[i], field)) {

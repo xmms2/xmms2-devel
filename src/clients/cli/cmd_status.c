@@ -284,7 +284,7 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 	} else if (!val_has_key (val, "title")) {
 		const gchar *url;
 
-		if (xmmsv_get_dict_entry_string (val, "url", &url)) {
+		if (xmmsv_dict_entry_get_string (val, "url", &url)) {
 			gchar *filename = g_path_get_basename (url);
 
 			if (filename) {
@@ -299,7 +299,7 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 		has_songname = TRUE;
 	}
 
-	if (xmmsv_get_dict_entry_int (val, "duration", &curr_dur)) {
+	if (xmmsv_dict_entry_get_int (val, "duration", &curr_dur)) {
 		/* rounding */
 		curr_dur += 500;
 	} else {

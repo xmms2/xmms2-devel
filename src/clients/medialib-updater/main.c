@@ -244,7 +244,7 @@ handle_config_changed (xmmsv_t *v, void *data)
 	const gchar *val = NULL;
 	int s;
 
-	s = xmmsv_get_dict_entry_string (v,
+	s = xmmsv_dict_entry_get_string (v,
 	                                 "clients.mlibupdater.watch_dirs",
 	                                 &val);
 	if (s) {

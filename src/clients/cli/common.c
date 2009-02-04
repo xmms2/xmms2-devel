@@ -19,7 +19,7 @@
 gint
 val_has_key (xmmsv_t *val, const gchar *key)
 {
-	return xmmsv_get_dict_entry_type (val, key) != XMMSV_TYPE_NONE;
+	return xmmsv_dict_entry_get_type (val, key) != XMMSV_TYPE_NONE;
 }
 
 
@@ -325,20 +325,20 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 		propdict = xmmsc_result_get_value (res);
 		val = xmmsv_propdict_to_dict (propdict, NULL);
 
-		if (xmmsv_get_dict_entry_string (val, "title", &title)) {
+		if (xmmsv_dict_entry_get_string (val, "title", &title)) {
 			const gchar *artist, *album;
-			if (!xmmsv_get_dict_entry_string (val, "artist", &artist)) {
+			if (!xmmsv_dict_entry_get_string (val, "artist", &artist)) {
 				artist = "Unknown";
 			}
 
-			if (!xmmsv_get_dict_entry_string (val, "album", &album)) {
+			if (!xmmsv_dict_entry_get_string (val, "album", &album)) {
 				album = "Unknown";
 			}
 
 			print_info (format_rows, mid, artist, album, title);
 		} else {
 			const gchar *url;
-			xmmsv_get_dict_entry_string (val, "url", &url);
+			xmmsv_dict_entry_get_string (val, "url", &url);
 			if (url) {
 				gchar *filename = g_path_get_basename (url);
 				if (filename) {

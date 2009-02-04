@@ -67,8 +67,8 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		const gchar *shortname, *desc;
 
 		if (xmmsv_list_iter_entry (it, &dict) &&
-		    xmmsv_get_dict_entry_string (dict, "shortname", &shortname) &&
-		    xmmsv_get_dict_entry_string (dict, "description", &desc)) {
+		    xmmsv_dict_entry_get_string (dict, "shortname", &shortname) &&
+		    xmmsv_dict_entry_get_string (dict, "description", &desc)) {
 			print_info ("%s - %s", shortname, desc);
 		}
 
@@ -119,14 +119,14 @@ cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		gint d;
 
 		xmmsv_list_iter_entry (it, &dict);
-		type = xmmsv_get_dict_entry_type (dict, "realpath");
+		type = xmmsv_dict_entry_get_type (dict, "realpath");
 		if (type != XMMSV_TYPE_NONE) {
-			xmmsv_get_dict_entry_string (dict, "realpath", &r);
+			xmmsv_dict_entry_get_string (dict, "realpath", &r);
 		} else {
-			xmmsv_get_dict_entry_string (dict, "path", &r);
+			xmmsv_dict_entry_get_string (dict, "path", &r);
 		}
 
-		xmmsv_get_dict_entry_int (dict, "isdir", &d);
+		xmmsv_dict_entry_get_int (dict, "isdir", &d);
 		print_info ("%s%c", r, d ? '/' : ' ');
 		xmmsv_list_iter_next (it);
 	}

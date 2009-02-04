@@ -341,7 +341,7 @@ static gint
 value_get_dict_int (xmmsv_t *val, const gchar *key)
 {
 	gint i;
-	xmmsv_get_dict_entry_int (val, key, &i);
+	xmmsv_dict_entry_get_int (val, key, &i);
 	return i;
 }
 
@@ -350,6 +350,6 @@ static const gchar *
 value_get_dict_string (xmmsv_t *val, const gchar *key)
 {
 	const gchar *s;
-	xmmsv_get_dict_entry_string (val, key, &s);
+	xmmsv_dict_entry_get_string (val, key, &s);
 	return s;
 }

@@ -128,7 +128,7 @@ volume_get (xmmsc_connection_t *conn, const gchar *name)
 		             xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_dict_entry_uint (val, name, &ret)) {
+	if (!xmmsv_dict_entry_get_uint (val, name, &ret)) {
 		ret = 0;
 	}
 

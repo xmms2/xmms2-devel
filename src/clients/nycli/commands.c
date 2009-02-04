@@ -880,9 +880,9 @@ url_isdir (cli_infos_t *infos, gchar *url)
 			const gchar *path;
 
 			xmmsv_list_iter_entry (it, &entry);
-			xmmsv_get_dict_entry_string (entry, "path", &path);
+			xmmsv_dict_entry_get_string (entry, "path", &path);
 			if (!strcmp (path, url)) {
-				xmmsv_get_dict_entry_int (entry, "isdir", &ret);
+				xmmsv_dict_entry_get_int (entry, "isdir", &ret);
 				break;
 			}
 		}
@@ -944,8 +944,8 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 
 			xmmsv_list_iter_entry (it, &entry);
 
-			xmmsv_get_dict_entry_string (entry, "path", &file);
-			xmmsv_get_dict_entry_int (entry, "isdir", &isdir);
+			xmmsv_dict_entry_get_string (entry, "path", &file);
+			xmmsv_dict_entry_get_int (entry, "isdir", &isdir);
 			if (g_pattern_match_string (spec, file)) {
 				gchar *npath = g_strconcat (file, nslash, NULL);
 				matching_browse (infos, file, npath, isdir, files);

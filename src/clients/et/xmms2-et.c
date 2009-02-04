@@ -122,19 +122,19 @@ handle_mediainfo (xmmsv_t *v, void *userdata)
 	dict = xmmsv_propdict_to_dict (v, pref);
 
 	for (i = 0; props[i]; i++) {
-		switch (xmmsv_get_dict_entry_type (dict, props[i])) {
+		switch (xmmsv_dict_entry_get_type (dict, props[i])) {
 		case XMMSV_TYPE_STRING:
-			if (xmmsv_get_dict_entry_string (dict, props[i], &tstr)) {
+			if (xmmsv_dict_entry_get_string (dict, props[i], &tstr)) {
 				g_string_append_printf (str, "%s=%s\n", props[i], tstr);
 			}
 			break;
 		case XMMSV_TYPE_UINT32:
-			if (xmmsv_get_dict_entry_uint (dict, props[i], &tuint)) {
+			if (xmmsv_dict_entry_get_uint (dict, props[i], &tuint)) {
 				g_string_append_printf (str, "%s=%u\n", props[i], tuint);
 			}
 			break;
 		case XMMSV_TYPE_INT32:
-			if (xmmsv_get_dict_entry_int (dict, props[i], &tint)) {
+			if (xmmsv_dict_entry_get_int (dict, props[i], &tint)) {
 				g_string_append_printf (str, "%s=%d\n", props[i], tint);
 			}
 			break;
@@ -171,7 +171,7 @@ handle_config (xmmsv_t *v, void *userdata)
 {
 	const gchar *value;
 
-	if (!xmmsv_get_dict_entry_string (v, "output.plugin", &value))
+	if (!xmmsv_dict_entry_get_string (v, "output.plugin", &value))
 		return TRUE;
 
 	g_free (output_plugin);
@@ -199,7 +199,7 @@ handle_stats (xmmsv_t *v, void *userdata)
 {
 	const gchar *tstr;
 
-	if (xmmsv_get_dict_entry_string (v, "version", &tstr)) {
+	if (xmmsv_dict_entry_get_string (v, "version", &tstr)) {
 		server_version = g_strdup (tstr);
 	}
 

@@ -756,8 +756,8 @@ cmp_val (gconstpointer a, gconstpointer b)
 	if (xmmsv_get_type (v2) != XMMSV_TYPE_DICT)
 		return 0;
 
-	xmmsv_get_dict_entry_string (v1, "path", &s1);
-	xmmsv_get_dict_entry_string (v2, "path", &s2);
+	xmmsv_dict_entry_get_string (v1, "path", &s1);
+	xmmsv_dict_entry_get_string (v2, "path", &s2);
 
 	return strcmp (s1, s2);
 }
@@ -782,8 +782,8 @@ process_dir (const gchar *directory,
 		const gchar *str;
 		gint isdir;
 
-		xmmsv_get_dict_entry_string (val, "path", &str);
-		xmmsv_get_dict_entry_int (val, "isdir", &isdir);
+		xmmsv_dict_entry_get_string (val, "path", &str);
+		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
 
 		if (isdir == 1) {
 			process_dir (str, ret, error);

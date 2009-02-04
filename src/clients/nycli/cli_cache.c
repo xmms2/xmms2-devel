@@ -59,7 +59,7 @@ refresh_currpos (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsv_is_error (val)) {
-		xmmsv_get_dict_entry_uint (val, "position", &cache->currpos);
+		xmmsv_dict_entry_get_uint (val, "position", &cache->currpos);
 	} else {
 		/* Current pos not set */
 		cache->currpos = -1;
@@ -157,10 +157,10 @@ update_active_playlist (xmmsv_t *val, void *udata)
 	guint id;
 	const gchar *name;
 
-	xmmsv_get_dict_entry_int (val, "type", &type);
-	xmmsv_get_dict_entry_int (val, "position", &pos);
-	xmmsv_get_dict_entry_uint (val, "id", &id);
-	xmmsv_get_dict_entry_string (val, "name", &name);
+	xmmsv_dict_entry_get_int (val, "type", &type);
+	xmmsv_dict_entry_get_int (val, "position", &pos);
+	xmmsv_dict_entry_get_uint (val, "id", &id);
+	xmmsv_dict_entry_get_string (val, "name", &name);
 
 	/* Active playlist not changed, nevermind */
 	if (strcmp (name, cache->active_playlist_name) != 0) {
@@ -178,7 +178,7 @@ update_active_playlist (xmmsv_t *val, void *udata)
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_MOVE:
-		xmmsv_get_dict_entry_int (val, "newposition", &newpos);
+		xmmsv_dict_entry_get_int (val, "newposition", &newpos);
 		g_array_remove_index (cache->active_playlist, pos);
 		g_array_insert_val (cache->active_playlist, newpos, id);
 		break;
@@ -232,8 +232,8 @@ update_active_playlist_name (xmmsv_t *val, void *udata)
 	gint type;
 	const gchar *name, *newname;
 
-	xmmsv_get_dict_entry_int (val, "type", &type);
-	xmmsv_get_dict_entry_string (val, "name", &name);
+	xmmsv_dict_entry_get_int (val, "type", &type);
+	xmmsv_dict_entry_get_string (val, "name", &name);
 
 	/* Active playlist have not been renamed */
 	if (strcmp (name, cache->active_playlist_name) != 0) {
@@ -242,7 +242,7 @@ update_active_playlist_name (xmmsv_t *val, void *udata)
 
 	if (type == XMMS_COLLECTION_CHANGED_RENAME) {
 		g_free (cache->active_playlist_name);
-		xmmsv_get_dict_entry_string (val, "newname", &newname);
+		xmmsv_dict_entry_get_string (val, "newname", &newname);
 		cache->active_playlist_name = g_strdup (newname);
 	}
 
