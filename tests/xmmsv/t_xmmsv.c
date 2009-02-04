@@ -417,6 +417,67 @@ CASE (test_xmmsv_type_list_get_on_empty_list) {
 
 }
 
+CASE (test_xmmsv_type_list_restrict_1) {
+	xmmsv_t *value, *tmp;
+
+	/* create 2 element list */
+	value = xmmsv_new_list ();
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	CU_ASSERT_TRUE (xmmsv_list_restrict_type (value, XMMSV_TYPE_INT32));
+
+	tmp = xmmsv_new_string ("x");
+	CU_ASSERT_FALSE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	CU_ASSERT_TRUE (xmmsv_list_clear (value));
+
+	CU_ASSERT_FALSE (xmmsv_list_restrict_type (value, XMMSV_TYPE_STRING));
+
+
+	xmmsv_unref (value);
+
+}
+
+CASE (test_xmmsv_type_list_restrict_2) {
+	xmmsv_t *value, *tmp;
+
+	/* create 2 element list */
+	value = xmmsv_new_list ();
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	CU_ASSERT_FALSE (xmmsv_list_restrict_type (value, XMMSV_TYPE_STRING));
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	CU_ASSERT_TRUE (xmmsv_list_clear (value));
+
+	CU_ASSERT_TRUE (xmmsv_list_restrict_type (value, XMMSV_TYPE_STRING));
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_FALSE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	tmp = xmmsv_new_string ("x");
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	xmmsv_unref (value);
+
+}
+
 static void _dict_foreach (const char *key, xmmsv_t *value, void *udata)
 {
 	CU_ASSERT_EQUAL (xmmsv_get_type (value), XMMSV_TYPE_INT32);

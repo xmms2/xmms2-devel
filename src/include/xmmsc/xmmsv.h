@@ -102,6 +102,7 @@ int xmmsv_list_remove (xmmsv_t *listv, int pos);
 int xmmsv_list_clear (xmmsv_t *listv);
 int xmmsv_list_foreach (xmmsv_t *listv, xmmsv_list_foreach_func func, void* user_data);
 int xmmsv_list_get_size (xmmsv_t *listv);
+int xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type);
 
 int  xmmsv_list_iter_entry (xmmsv_list_iter_t *it, xmmsv_t **val);
 int  xmmsv_list_iter_valid (xmmsv_list_iter_t *it);

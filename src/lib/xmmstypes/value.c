@@ -54,6 +54,8 @@ struct xmmsv_list_St {
 	xmmsv_t *parent_value;
 	int size;
 	int allocated;
+	bool restricted;
+	xmmsv_type_t restricttype;
 	x_list_t *iterators;
 };
 
@@ -878,6 +880,10 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 		return 0;
 	}
 
+	if (l->restricted) {
+		x_return_val_if_fail (xmmsv_is_type (val, l->restricttype), 0);
+	}
+
 	/* We need more memory, reallocate */
 	if (l->size == l->allocated) {
 		int success;
@@ -1165,6 +1171,33 @@ xmmsv_list_get_size (xmmsv_t *listv)
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), -1);
 
 	return listv->value.list->size;
+}
+
+
+int
+xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *v;
+
+	x_return_val_if_fail (listv, 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
+
+	x_return_val_if_fail (!listv->value.list->restricted, 0);
+
+	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_list_iter_entry (it, &v);
+		x_return_val_if_fail (xmmsv_is_type (v, type), 0);
+		xmmsv_list_iter_next (it);
+	}
+
+	xmmsv_list_iter_free (it);
+
+	listv->value.list->restricted = true;
+	listv->value.list->restricttype = type;
+
+	return 1;
 }
 
 
