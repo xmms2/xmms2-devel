@@ -71,7 +71,7 @@ static void xmmsv_dict_free (xmmsv_dict_t *dict);
 
 struct xmmsv_list_iter_St {
 	xmmsv_list_t *parent;
-	unsigned int position;
+	int position;
 };
 
 static xmmsv_list_iter_t *xmmsv_list_iter_new (xmmsv_list_t *l);
@@ -102,7 +102,7 @@ struct xmmsv_St {
 
 static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
-static int get_absolute_position (int pos, int size, unsigned int *abspos);
+static int get_absolute_position (int pos, int size, int *abspos);
 
 
 
@@ -870,7 +870,7 @@ xmmsv_list_resize (xmmsv_list_t *l, int newsize)
 static int
 _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 {
-	unsigned int abspos;
+	int abspos;
 	xmmsv_list_iter_t *it;
 	x_list_t *n;
 
@@ -920,7 +920,7 @@ _xmmsv_list_append (xmmsv_list_t *l, xmmsv_t *val)
 static int
 _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 {
-	unsigned int abspos;
+	int abspos;
 	xmmsv_list_iter_t *it;
 	int half_size;
 	x_list_t *n;
@@ -1001,7 +1001,7 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 int
 xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 {
-	unsigned int abspos;
+	int abspos;
 	xmmsv_list_t *l;
 
 	x_return_val_if_fail (listv, 0);
@@ -1034,7 +1034,7 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 int
 xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 {
-	unsigned int abspos;
+	int abspos;
 	xmmsv_t *old_val;
 	xmmsv_list_t *l;
 
@@ -1328,7 +1328,7 @@ xmmsv_list_iter_prev (xmmsv_list_iter_t *it)
 int
 xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos)
 {
-	unsigned int abspos;
+	int abspos;
 
 	x_return_val_if_fail (it, 0);
 
@@ -2039,7 +2039,7 @@ xmmsv_utf8_validate (const char *str)
 /** @} */
 
 static int
-get_absolute_position (int pos, int size, unsigned int *abspos)
+get_absolute_position (int pos, int size, int *abspos)
 {
 	int ret;
 
