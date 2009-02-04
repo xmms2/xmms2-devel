@@ -164,6 +164,43 @@ CASE (test_coll_operands)
 	xmmsv_coll_unref (u);
 }
 
+CASE (test_coll_operands_list)
+{
+	xmmsv_t *opl;
+	xmmsv_coll_t *u;
+	xmmsv_t *t;
+	int i;
+
+	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	CU_ASSERT_PTR_NOT_NULL (u);
+
+	opl = xmmsv_coll_operands_list_get (u);
+	CU_ASSERT_PTR_NOT_NULL (opl);
+
+	t = xmmsv_new_int (1);
+
+	CU_ASSERT_FALSE (xmmsv_list_append (opl, t));
+
+	for (i = 0; i < 10; i++) {
+		xmmsv_coll_t *o;
+		xmmsv_t *ov;
+		o = xmmsv_coll_universe ();
+		CU_ASSERT_PTR_NOT_NULL (o);
+		ov = xmmsv_new_coll (o);
+		xmmsv_coll_unref (o);
+		CU_ASSERT_TRUE (xmmsv_list_append (opl, ov));
+		xmmsv_unref (ov);
+	}
+
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_list_get (u)), 10);
+
+	xmmsv_coll_operand_list_clear (u);
+
+	xmmsv_coll_unref (u);
+
+	xmmsv_unref (t);
+}
+
 CASE (test_coll_attributes)
 {
 	char *v;

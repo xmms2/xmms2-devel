@@ -1243,7 +1243,7 @@ xmmsv_list_iter_entry (xmmsv_list_iter_t *it, xmmsv_t **val)
 int
 xmmsv_list_iter_valid (xmmsv_list_iter_t *it)
 {
-	return it && (it->position < it->parent->size);
+	return it && (it->position < it->parent->size) && (it->position >= 0);
 }
 
 /**
@@ -1301,11 +1301,8 @@ xmmsv_list_iter_prev (xmmsv_list_iter_t *it)
 {
 	x_return_if_fail (it);
 
-	if (it->position > 0) {
+	if (it->position >= 0) {
 		it->position--;
-	} else {
-		/* Move to an invalid position */
-		it->position = it->parent->size;
 	}
 }
 

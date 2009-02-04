@@ -329,13 +329,69 @@ CASE (test_xmmsv_type_list)
 	xmmsv_unref (value);
 }
 
-CASE (test_xmmsv_type_list_iter_on_non_list) {
+CASE (test_xmmsv_type_list_iter_validity) {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *value;
+	xmmsv_t *value, *tmp;
+	int i;
 
-	value = xmmsv_new_error ("oh noes");
-	CU_ASSERT_FALSE (xmmsv_get_list_iter (value, &it));
+	/* create 2 element list */
+	value = xmmsv_new_list ();
+
+	tmp = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+	tmp = xmmsv_new_int (1);
+	CU_ASSERT_TRUE (xmmsv_list_append (value, tmp));
+	xmmsv_unref (tmp);
+
+
+
+	CU_ASSERT_TRUE (xmmsv_get_list_iter (value, &it));
+
+	xmmsv_list_iter_first (it);
+	xmmsv_list_iter_next (it);
+
+	CU_ASSERT_TRUE (xmmsv_list_iter_valid (it));
+	CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
+	CU_ASSERT_EQUAL (i, 1);
+
+	xmmsv_list_iter_next (it);
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
+
+	xmmsv_list_iter_next (it);
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
+
+	xmmsv_list_iter_prev (it);
+	CU_ASSERT_TRUE (xmmsv_list_iter_valid (it));
+	CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
+	CU_ASSERT_EQUAL (i, 1);
+
+	xmmsv_list_iter_prev (it);
+	CU_ASSERT_TRUE (xmmsv_list_iter_valid (it));
+
+	xmmsv_list_iter_prev (it);
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
+
+	xmmsv_list_iter_prev (it);
+	CU_ASSERT_FALSE (xmmsv_list_iter_valid (it));
+
+	xmmsv_list_iter_next (it);
+	CU_ASSERT_TRUE (xmmsv_list_iter_valid (it));
+
+
 	xmmsv_unref (value);
+}
+
+CASE (test_xmmsv_type_list_iter_on_non_list) {
+        xmmsv_list_iter_t *it;
+        xmmsv_t *value;
+
+        value = xmmsv_new_error ("oh noes");
+        CU_ASSERT_FALSE (xmmsv_get_list_iter (value, &it));
+        xmmsv_unref (value);
 }
 
 /* #2103 */
