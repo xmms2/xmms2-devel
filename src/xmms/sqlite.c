@@ -531,13 +531,13 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 			const char *key;
 			xmmsv_t *val;
 
-			/* We don't need to strdup the key because xmmsv_dict_insert
+			/* We don't need to strdup the key because xmmsv_dict_set
 			 * will create its own copy.
 			 */
 			key = sqlite3_column_name (stm, i);
 			val = xmms_sqlite_column_to_val (stm, i);
 
-			xmmsv_dict_insert (dict, key, val);
+			xmmsv_dict_set (dict, key, val);
 
 			/* The dictionary owns the value. */
 			xmmsv_unref (val);

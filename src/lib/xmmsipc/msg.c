@@ -850,7 +850,7 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg, xmmsv_t **val)
 			goto err;
 		}
 
-		xmmsv_dict_insert (dict, key, v);
+		xmmsv_dict_set (dict, key, v);
 		free (key);
 		xmmsv_unref (v);
 	}

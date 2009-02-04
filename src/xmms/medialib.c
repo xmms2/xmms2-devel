@@ -1040,7 +1040,7 @@ xmms_medialib_tree_add_tuple (GTree *tree, const char *key,
 	}
 
 	/* Replace (or insert) value matching the prop source */
-	xmmsv_dict_insert (keytreeval, source, value);
+	xmmsv_dict_set (keytreeval, source, value);
 }
 
 static gboolean

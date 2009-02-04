@@ -167,7 +167,7 @@ xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key,
 	g_return_if_fail (key);
 	g_return_if_fail (val);
 
-	xmmsv_dict_insert (xform->browse_dict, key, val);
+	xmmsv_dict_set (xform->browse_dict, key, val);
 }
 
 void

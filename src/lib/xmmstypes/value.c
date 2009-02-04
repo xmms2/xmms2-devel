@@ -621,7 +621,7 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 
 		/* Note: we do not insert a key-value pair if no source matches */
 		if (best_value) {
-			xmmsv_dict_insert (dict, key, best_value);
+			xmmsv_dict_set (dict, key, best_value);
 		}
 
 		xmmsv_dict_iter_next (key_it);
@@ -1494,7 +1494,7 @@ xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val)
+xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 {
 	xmmsv_dict_iter_t *it;
 	int ret;
@@ -1979,7 +1979,7 @@ xmmsv_build_dict (const char *firstkey, ...)
 	do {
 		val = va_arg (ap, xmmsv_t *);
 
-		if (!xmmsv_dict_insert (res, key, val)) {
+		if (!xmmsv_dict_set (res, key, val)) {
 			xmmsv_unref (res);
 			res = NULL;
 			break;

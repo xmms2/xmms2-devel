@@ -118,7 +118,7 @@ int  xmmsv_list_iter_remove (xmmsv_list_iter_t *it);
 
 /* Dict */
 int xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val);
-int xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val);
+int xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val);
 int xmmsv_dict_remove (xmmsv_t *dictv, const char *key);
 int xmmsv_dict_clear (xmmsv_t *dictv);
 int xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func, void *user_data);

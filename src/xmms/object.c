@@ -438,7 +438,7 @@ create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata)
 	const char *k = (const char *) key;
 	xmmsv_t *v = (xmmsv_t *) data;
 	xmmsv_t *l = (xmmsv_t *) userdata;
-	xmmsv_dict_insert (l, k, v);
+	xmmsv_dict_set (l, k, v);
 	return FALSE;
 }
 

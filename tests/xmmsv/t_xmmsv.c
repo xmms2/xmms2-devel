@@ -381,7 +381,7 @@ CASE (test_xmmsv_type_dict)
 	xmmsv_unref (tmp);
 
 	tmp = xmmsv_new_uint (42);
-	CU_ASSERT_TRUE (xmmsv_dict_insert (value, "test1", tmp));
+	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "test1", &tmp));
@@ -391,11 +391,11 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_FALSE (xmmsv_dict_get (value, "apan tutar i skogen", &tmp));
 
 	tmp = xmmsv_new_int (666);
-	CU_ASSERT_TRUE (xmmsv_dict_insert (value, "test1", tmp));
+	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	tmp = xmmsv_new_int (23);
-	CU_ASSERT_TRUE (xmmsv_dict_insert (value, "test2", tmp));
+	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test2", tmp));
 	xmmsv_unref (tmp);
 
 	CU_ASSERT_EQUAL (xmmsv_get_dict_entry_type (value, "test1"), XMMSV_TYPE_INT32);
@@ -423,14 +423,14 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_FALSE (xmmsv_dict_iter_remove (it)); /* empty! */
 
 	tmp = xmmsv_new_uint (42);
-	CU_ASSERT_TRUE (xmmsv_dict_insert (value, "test1", tmp));
+	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 
 	tmp = xmmsv_new_uint (42);
-	CU_ASSERT_TRUE (xmmsv_dict_insert (value, "test1", tmp));
+	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	xmmsv_unref (value);
