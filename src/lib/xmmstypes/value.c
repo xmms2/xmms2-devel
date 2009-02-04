@@ -1015,7 +1015,7 @@ xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 	xmmsv_list_t *l;
 
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	l = listv->value.list;
 
@@ -1050,7 +1050,7 @@ xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (val, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	l = listv->value.list;
 
@@ -1081,7 +1081,7 @@ int
 xmmsv_list_insert (xmmsv_t *listv, int pos, xmmsv_t *val)
 {
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 	x_return_val_if_fail (val, 0);
 
 	return _xmmsv_list_insert (listv->value.list, pos, val);
@@ -1099,7 +1099,7 @@ int
 xmmsv_list_remove (xmmsv_t *listv, int pos)
 {
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	return _xmmsv_list_remove (listv->value.list, pos);
 }
@@ -1116,7 +1116,7 @@ int
 xmmsv_list_append (xmmsv_t *listv, xmmsv_t *val)
 {
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 	x_return_val_if_fail (val, 0);
 
 	return _xmmsv_list_append (listv->value.list, val);
@@ -1132,7 +1132,7 @@ int
 xmmsv_list_clear (xmmsv_t *listv)
 {
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	_xmmsv_list_clear (listv->value.list);
 
@@ -1155,7 +1155,7 @@ xmmsv_list_foreach (xmmsv_t *listv, xmmsv_list_foreach_func func,
 	xmmsv_t *v;
 
 	x_return_val_if_fail (listv, 0);
-	x_return_val_if_fail (xmmsv_is_list (listv), 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
 
 	while (xmmsv_list_iter_valid (it)) {
@@ -1179,7 +1179,7 @@ int
 xmmsv_list_get_size (xmmsv_t *listv)
 {
 	x_return_val_if_fail (listv, -1);
-	x_return_val_if_fail (xmmsv_is_list (listv), -1);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), -1);
 
 	return listv->value.list->size;
 }
@@ -1476,7 +1476,7 @@ xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (dictv, 0);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
 	if (!xmmsv_dict_iter_find (it, key)) {
@@ -1512,7 +1512,7 @@ xmmsv_dict_insert (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (val, 0);
 	x_return_val_if_fail (dictv, 0);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
 	/* if key already present, replace value */
@@ -1562,7 +1562,7 @@ xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (dictv, 0);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
 	if (!xmmsv_dict_iter_find (it, key)) {
@@ -1588,7 +1588,7 @@ int
 xmmsv_dict_clear (xmmsv_t *dictv)
 {
 	x_return_val_if_fail (dictv, 0);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 
 	_xmmsv_list_clear (dictv->value.dict->flatlist);
 
@@ -1613,7 +1613,7 @@ xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func,
 	xmmsv_t *v;
 
 	x_return_val_if_fail (dictv, 0);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), 0);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
 	while (xmmsv_dict_iter_valid (it)) {
@@ -1637,7 +1637,7 @@ int
 xmmsv_dict_get_size (xmmsv_t *dictv)
 {
 	x_return_val_if_fail (dictv, -1);
-	x_return_val_if_fail (xmmsv_is_dict (dictv), -1);
+	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), -1);
 
 	return dictv->value.dict->flatlist->size / 2;
 }
