@@ -251,12 +251,12 @@ CASE (test_xmmsv_type_list)
 		xmmsv_unref (tmp);
 	}
 
-	CU_ASSERT_FALSE (xmmsv_list_iter_goto (it, 1000));
-	CU_ASSERT_TRUE (xmmsv_list_iter_goto (it, -1));
+	CU_ASSERT_FALSE (xmmsv_list_iter_seek (it, 1000));
+	CU_ASSERT_TRUE (xmmsv_list_iter_seek (it, -1));
 	CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &j));
 	CU_ASSERT_EQUAL (40 - 1, j);
-	CU_ASSERT_TRUE (xmmsv_list_iter_goto (it, 0));
+	CU_ASSERT_TRUE (xmmsv_list_iter_seek (it, 0));
 
 	for (i = 0; i < 40; i++) {
 		CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));

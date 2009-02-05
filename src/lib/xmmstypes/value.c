@@ -1349,7 +1349,7 @@ xmmsv_list_iter_prev (xmmsv_list_iter_t *it)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_list_iter_goto (xmmsv_list_iter_t *it, int pos)
+xmmsv_list_iter_seek (xmmsv_list_iter_t *it, int pos)
 {
 	x_return_val_if_fail (it, 0);
 
@@ -1807,7 +1807,7 @@ xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 	 * the list and report failure.
 	 */
 	if (!dict_size) {
-		xmmsv_list_iter_goto (it->lit, 0);
+		xmmsv_list_iter_seek (it->lit, 0);
 
 		return 0;
 	}
@@ -1820,7 +1820,7 @@ xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 		int mid = left + ((right - left) / 2);
 
 		/* jump to the middle of the current search area */
-		xmmsv_list_iter_goto (it->lit, mid * 2);
+		xmmsv_list_iter_seek (it->lit, mid * 2);
 		xmmsv_list_iter_entry (it->lit, &val);
 
 		/* get the key at this slot */
