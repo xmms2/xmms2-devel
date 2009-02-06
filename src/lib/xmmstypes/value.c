@@ -245,6 +245,7 @@ xmmsv_new_bin (unsigned char *data, unsigned int len)
 		/* copy the data! */
 		val->value.bin.data = x_malloc (len);
 		if (!val->value.bin.data) {
+			free (val);
 			x_oom ();
 			return NULL;
 		}
