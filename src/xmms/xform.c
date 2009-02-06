@@ -519,6 +519,11 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
 {
 	const char *old;
 
+	if (!g_utf8_validate (val, -1, NULL)) {
+		xmms_log_error ("xform '%s' tried to set property '%s' to a NON UTF-8 string!", xmms_xform_shortname (xform), key);
+		return;
+	}
+
 	if (xmms_xform_metadata_get_str (xform, key, &old)) {
 		if (strcmp (old, val) == 0) {
 			return;
