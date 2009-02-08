@@ -242,6 +242,8 @@ CASE (test_coll_attributes)
 	CU_ASSERT_EQUAL (cnt, 3);
 	CU_ASSERT_EQUAL (sum, 1+2+3);
 
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (c)), 3);
+
 	/* replace */
 	xmmsv_coll_attribute_set (c, "k2", "v2new");
 	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "k2", &v));

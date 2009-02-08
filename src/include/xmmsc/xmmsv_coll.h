@@ -57,16 +57,18 @@ int xmmsv_coll_operand_list_save (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 int xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 void xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 
-void xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll);
-int xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll);
-void xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, const char **k, const char **v);
-void xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll);
+void xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+int xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+void xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, const char **k, const char **v) XMMS_DEPRECATED;
+void xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 
 
 void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value);
 int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key);
 int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value);
-void xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll, xmmsv_coll_attribute_foreach_func func, void *user_data);
+void xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll, xmmsv_coll_attribute_foreach_func func, void *user_data) XMMS_DEPRECATED;
+
+struct xmmsv_St *xmmsv_coll_attributes_get (xmmsv_coll_t *coll);
 
 xmmsv_coll_t *xmmsv_coll_universe (void);
 

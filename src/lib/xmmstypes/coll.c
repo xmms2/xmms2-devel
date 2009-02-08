@@ -643,6 +643,14 @@ xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
 	return coll->operands;
 }
 
+xmmsv_t *
+xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
+{
+	x_return_val_if_fail (coll, NULL);
+
+	return coll->attributes;
+}
+
 /**
  * Set an attribute in the given collection.
  *
