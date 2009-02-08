@@ -74,14 +74,14 @@ static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, GTree
 static GTree * xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
 
 XMMS_CMD_DEFINE  (load, xmms_playlist_load, xmms_playlist_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE3 (insert_url, xmms_playlist_insert_url, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
-XMMS_CMD_DEFINE3 (insert_id, xmms_playlist_insert_id, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
-XMMS_CMD_DEFINE4 (insert_coll, xmms_playlist_insert_collection, xmms_playlist_t *, NONE, STRING, UINT32, COLL, LIST);
+XMMS_CMD_DEFINE3 (insert_url, xmms_playlist_insert_url, xmms_playlist_t *, NONE, STRING, INT32, STRING);
+XMMS_CMD_DEFINE3 (insert_id, xmms_playlist_insert_id, xmms_playlist_t *, NONE, STRING, INT32, INT32);
+XMMS_CMD_DEFINE4 (insert_coll, xmms_playlist_insert_collection, xmms_playlist_t *, NONE, STRING, INT32, COLL, LIST);
 XMMS_CMD_DEFINE  (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE  (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, STRING, UINT32);
-XMMS_CMD_DEFINE3 (move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
+XMMS_CMD_DEFINE  (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, STRING, INT32);
+XMMS_CMD_DEFINE3 (move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, INT32, INT32);
 XMMS_CMD_DEFINE  (add_url, xmms_playlist_add_url, xmms_playlist_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE  (add_id, xmms_playlist_add_id, xmms_playlist_t *, NONE, STRING, UINT32);
+XMMS_CMD_DEFINE  (add_id, xmms_playlist_add_id, xmms_playlist_t *, NONE, STRING, INT32);
 XMMS_CMD_DEFINE  (add_idlist, xmms_playlist_add_idlist, xmms_playlist_t *, NONE, STRING, COLL);
 XMMS_CMD_DEFINE3 (add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE, STRING, COLL, LIST);
 XMMS_CMD_DEFINE  (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NONE);
@@ -89,10 +89,10 @@ XMMS_CMD_DEFINE  (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, LIS
 XMMS_CMD_DEFINE  (list_entries, xmms_playlist_list_entries, xmms_playlist_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE  (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, DICT, STRING, NONE);
 XMMS_CMD_DEFINE  (current_active, xmms_playlist_current_active, xmms_playlist_t *, STRING, NONE, NONE);
-XMMS_CMD_DEFINE  (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
+XMMS_CMD_DEFINE  (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE  (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE  (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE3 (rinsert, xmms_playlist_rinsert, xmms_playlist_t *, NONE, STRING, UINT32, STRING);
+XMMS_CMD_DEFINE3 (rinsert, xmms_playlist_rinsert, xmms_playlist_t *, NONE, STRING, INT32, STRING);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
 #define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, xmms_playlist_current_pos_msg_new (playlist, pos, name))
