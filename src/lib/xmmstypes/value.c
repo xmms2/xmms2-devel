@@ -22,9 +22,10 @@
 #include <assert.h>
 
 #include "xmmsc/xmmsv.h"
-#include "xmmsclient/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
+#include "xmmsc/xmmsc_stdbool.h"
+#include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_list.h"
 
 

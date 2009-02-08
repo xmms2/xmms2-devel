@@ -19,8 +19,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsclient/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsv.h"
+#include "xmmsc/xmmsv_coll.h"
+#include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_list.h"
 
 
