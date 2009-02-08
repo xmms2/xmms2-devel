@@ -43,7 +43,9 @@ typedef enum {
 
 typedef struct {
 	cli_infos_t *infos;
+	column_display_t *coldisp;
 	const gchar *playlist;
+	GArray *entries;
 	gint inc;
 	gint pos;
 } pl_pos_udata_t;
@@ -370,7 +372,7 @@ void
 positions_remove (cli_infos_t *infos, const gchar *playlist,
                   playlist_positions_t *positions)
 {
-	pl_pos_udata_t udata = { infos, playlist, 0, 0 };
+	pl_pos_udata_t udata = { infos, NULL, playlist, NULL, 0, 0 };
 	playlist_positions_foreach (positions, pos_remove_cb, FALSE, &udata);
 
 	cli_infos_loop_resume (infos);
@@ -563,10 +565,99 @@ pos_print_info_cb (gint pos, void *userdata)
 void
 positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
 {
-	pl_pos_udata_t udata = { infos, NULL, 0, 0 };
+	pl_pos_udata_t udata = { infos, NULL, NULL, NULL, 0, 0 };
 	playlist_positions_foreach (positions, pos_print_info_cb, TRUE, &udata);
 
 	cli_infos_loop_resume (infos);
+}
+
+static void
+id_coldisp_print_info (cli_infos_t *infos, column_display_t *coldisp, guint id)
+{
+	xmmsc_result_t *infores;
+	xmmsv_t *info;
+
+	infores = xmmsc_medialib_get_info (infos->sync, id);
+	xmmsc_result_wait (infores);
+	info = xmmsv_propdict_to_dict (xmmsc_result_get_value (infores), NULL);
+	column_display_print (coldisp, info);
+
+	xmmsc_result_unref (infores);
+	xmmsv_unref (info);
+}
+
+static void
+pos_print_row_cb (gint pos, void *userdata)
+{
+	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
+	xmmsc_result_t *infores;
+	xmmsv_t *info;
+	guint id;
+
+	if (pos >= pack->entries->len) {
+		return;
+	}
+
+	id = g_array_index (pack->entries, guint, pos);
+	id_coldisp_print_info (pack->infos, pack->coldisp, id);
+}
+
+void
+positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
+                      column_display_t *coldisp, gboolean is_search)
+{
+	cli_infos_t *infos = column_display_infos_get (coldisp);
+	pl_pos_udata_t udata = { infos, coldisp, NULL, NULL, 0, 0};
+	xmmsv_t *val;
+	GArray *entries;
+
+	guint id;
+	const gchar *err;
+
+	/* FIXME: separate function or merge
+	   with list_print_row (lot of if(positions))? */
+	val = xmmsc_result_get_value (res);
+
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_list_iter_t *it;
+		column_display_prepare (coldisp);
+
+		if (is_search) {
+			column_display_print_header (coldisp);
+		}
+
+		entries = g_array_sized_new (FALSE, FALSE, sizeof (guint),
+		                             xmmsv_list_get_size (val));
+
+		for (xmmsv_get_list_iter (val, &it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+			xmmsv_t *entry;
+			xmmsv_list_iter_entry (it, &entry);
+			if (xmmsv_get_uint (entry, &id)) {
+				g_array_append_val (entries, id);
+			}
+		}
+
+		udata.entries = entries;
+		playlist_positions_foreach (positions, pos_print_row_cb, TRUE, &udata);
+
+	} else {
+		g_printf (_("Server error: %s\n"), err);
+	}
+
+	if (is_search) {
+		column_display_print_footer (coldisp);
+	} else {
+		g_printf ("\n");
+		column_display_print_footer_totaltime (coldisp);
+	}
+
+	column_display_free (coldisp);
+	g_array_free (entries, TRUE);
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
 }
 
 /* Returned tree must be freed by the caller */
@@ -646,13 +737,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 			xmmsv_list_iter_entry (it, &entry);
 			if (xmmsv_get_uint (entry, &id) &&
 			    (!list || g_tree_lookup (list, &id) != NULL)) {
-				infores = xmmsc_medialib_get_info (infos->sync, id);
-				xmmsc_result_wait (infores);
-				info = xmmsv_propdict_to_dict (xmmsc_result_get_value (infores),
-				                               NULL);
-				column_display_print (coldisp, info);
-				xmmsc_result_unref (infores);
-				xmmsv_unref (info);
+				id_coldisp_print_info (infos, coldisp, id);
 			}
 			xmmsv_list_iter_next (it);
 			i++;
@@ -675,8 +760,8 @@ finish:
 		g_tree_destroy (list);
 	}
 	column_display_free (coldisp);
-	cli_infos_loop_resume (infos);
 
+	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -1260,7 +1345,7 @@ void
 positions_move (cli_infos_t *infos, const gchar *playlist,
                 playlist_positions_t *positions, gint pos)
 {
-	pl_pos_udata_t udata = { infos, playlist, 0, pos };
+	pl_pos_udata_t udata = { infos, NULL, playlist, NULL, 0, pos };
 	playlist_positions_foreach (positions, pos_move_cb, FALSE, &udata);
 
 	cli_infos_loop_resume (infos);

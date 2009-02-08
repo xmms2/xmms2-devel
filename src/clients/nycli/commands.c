@@ -742,21 +742,12 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	xmmsv_coll_t *query = NULL, *filter = NULL, *pl;
 	xmmsc_result_t *res, *inres = NULL;
 	column_display_t *coldisp;
+	playlist_positions_t *positions;
+	gint pos;
 	gchar *playlist = NULL;
-	gboolean new_list;
+	gboolean new_list, filter_by_pos = FALSE;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
 	                                   "title", NULL };
-
-	command_arg_longstring_get_escaped (ctx, 0, &pattern);
-	if (pattern) {
-		xmmsv_coll_t *inter, *pl;
-
-		if (!xmmsv_coll_parse (pattern, &query)) {
-			g_printf (_("Error: failed to parse the pattern!\n"));
-			g_free (pattern);
-			return FALSE;
-		}
-	}
 
 	/* Default to active playlist (from cache) */
 	command_flag_string_get (ctx, "playlist", &playlist);
@@ -764,6 +755,25 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	    || strcmp (playlist, infos->cache->active_playlist_name) == 0) {
 		/* FIXME: Optim by reading data from cache */
 		playlist = XMMS_ACTIVE_PLAYLIST;
+		pos = infos->cache->currpos;
+	} else {
+		/* currpos is 1 for non-active playlists
+		   FIXME: always true? */
+		pos = 1;
+	}
+
+	/* Filter by positions */
+	if (command_arg_positions_get (ctx, 0, &positions, pos)) {
+		filter_by_pos = TRUE;
+
+	/* Filter by pattern */
+	} else if (command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+		/* Check if is pattern */
+		if (!xmmsv_coll_parse (pattern, &query)) {
+			g_printf (_("Error: failed to parse the pattern!\n"));
+			g_free (pattern);
+			return FALSE;
+		}
 	}
 
 	/* Has filter, retrieve ids from intersection */
@@ -787,12 +797,20 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_playlist_list_entries (infos->sync, playlist);
 	xmmsc_result_wait (res);
 
-	list_print_row (res, filter, coldisp, new_list);
+	if (filter_by_pos) {
+		positions_print_list (res, positions, coldisp, new_list);
+	} else {
+		list_print_row (res, filter, coldisp, new_list);
+	}
 
 	if (filter != NULL) {
 		xmmsv_coll_unref (filter);
 		xmmsv_coll_unref (query);
 		xmmsv_coll_unref (pl);
+	}
+
+	if (filter_by_pos) {
+		playlist_positions_free (positions);
 	}
 
 	g_free (pattern);
