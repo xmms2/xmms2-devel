@@ -223,14 +223,14 @@ xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url)
  * @param url The url to move it to
  */
 xmmsc_result_t *
-xmmsc_medialib_move_entry (xmmsc_connection_t *conn, uint32_t entry, const char *url)
+xmmsc_medialib_move_entry (xmmsc_connection_t *conn, int entry, const char *url)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_MOVE_URL);
-	xmms_ipc_msg_put_uint32 (msg, entry);
+	xmms_ipc_msg_put_int32 (msg, entry);
 	xmms_ipc_msg_put_string (msg, url);
 
 	return xmmsc_send_msg (conn, msg);
@@ -242,14 +242,14 @@ xmmsc_medialib_move_entry (xmmsc_connection_t *conn, uint32_t entry, const char 
  * @param entry The entry id you want to remove
  */
 xmmsc_result_t *
-xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
+xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE_ID);
-	xmms_ipc_msg_put_uint32 (msg, entry);
+	xmms_ipc_msg_put_int32 (msg, entry);
 
 	return xmmsc_send_msg (conn, msg);
 }
@@ -374,15 +374,14 @@ xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
  * the whole medialib.
  */
 xmmsc_result_t *
-xmmsc_medialib_rehash (xmmsc_connection_t *conn,
-                       unsigned int id)
+xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REHASH);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, id);
 
 	return xmmsc_send_msg (conn, msg);
 
@@ -392,14 +391,14 @@ xmmsc_medialib_rehash (xmmsc_connection_t *conn,
  * Retrieve information about a entry from the medialib.
  */
 xmmsc_result_t *
-xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
+xmmsc_medialib_get_info (xmmsc_connection_t *c, int id)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, id);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -434,7 +433,7 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
  * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
+xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, int id,
                                        const char *key, int32_t value)
 {
 	char tmp[256];
@@ -454,7 +453,7 @@ xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
-                                                   uint32_t id,
+                                                   int id,
                                                    const char *source,
                                                    const char *key,
                                                    int32_t value)
@@ -465,7 +464,7 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_SET_INT);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, id);
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_int32 (msg, value);
@@ -478,7 +477,7 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
  * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
+xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, int id,
                                        const char *key, const char *value)
 {
 	char tmp[256];
@@ -498,7 +497,7 @@ xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
-                                                   uint32_t id,
+                                                   int id,
                                                    const char *source,
                                                    const char *key,
                                                    const char *value)
@@ -509,7 +508,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_SET_STR);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, id);
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_string (msg, value);
@@ -522,7 +521,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
  * Uses default source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
+xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, int id,
                                       const char *key)
 {
 	char tmp[256];
@@ -541,7 +540,7 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
-                                                  uint32_t id,
+                                                  int id,
                                                   const char *source,
                                                   const char *key)
 {
@@ -551,7 +550,7 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_REMOVE);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, id);
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
 

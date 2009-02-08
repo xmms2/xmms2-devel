@@ -52,18 +52,18 @@ static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, gui
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
 
-XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, UINT32, NONE);
+XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, INT32, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, UINT32, NONE);
-XMMS_CMD_DEFINE (mlib_move, xmms_medialib_move_entry, xmms_medialib_t *, NONE, UINT32, STRING);
+XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, INT32, NONE);
+XMMS_CMD_DEFINE (mlib_move, xmms_medialib_move_entry, xmms_medialib_t *, NONE, INT32, STRING);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
 
-XMMS_CMD_DEFINE4 (set_property_str, xmms_medialib_property_set_str_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, STRING);
-XMMS_CMD_DEFINE4 (set_property_int, xmms_medialib_property_set_int_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, INT32);
+XMMS_CMD_DEFINE4 (set_property_str, xmms_medialib_property_set_str_method, xmms_medialib_t *, NONE, INT32, STRING, STRING, STRING);
+XMMS_CMD_DEFINE4 (set_property_int, xmms_medialib_property_set_int_method, xmms_medialib_t *, NONE, INT32, STRING, STRING, INT32);
 
-XMMS_CMD_DEFINE3 (remove_property, xmms_medialib_property_remove_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING);
+XMMS_CMD_DEFINE3 (remove_property, xmms_medialib_property_remove_method, xmms_medialib_t *, NONE, INT32, STRING, STRING);
 
 /**
  *

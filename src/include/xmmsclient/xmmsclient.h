@@ -205,23 +205,23 @@ int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val);
 xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int numargs, const char **args);
 xmmsc_result_t *xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url);
-xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, uint32_t);
+xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, int);
 xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn, const char *path);
-xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, uint32_t id);
+xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url);
-xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry);
-xmmsc_result_t *xmmsc_medialib_move_entry (xmmsc_connection_t *conn, uint32_t entry, const char *url);
+xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry);
+xmmsc_result_t *xmmsc_medialib_move_entry (xmmsc_connection_t *conn, int entry, const char *url);
 
-xmmsc_result_t *xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id, const char *key, int32_t value);
-xmmsc_result_t *xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key, int32_t value);
+xmmsc_result_t *xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, int id, const char *key, int32_t value);
+xmmsc_result_t *xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, int id, const char *source, const char *key, int32_t value);
 
-xmmsc_result_t *xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id, const char *key, const char *value);
-xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key, const char *value);
+xmmsc_result_t *xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, int id, const char *key, const char *value);
+xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, int id, const char *source, const char *key, const char *value);
 
-xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);
-xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key);
+xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, int id, const char *key);
+xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, int id, const char *source, const char *key);
 
 /* XForm object */
 xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
