@@ -124,6 +124,7 @@ xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *properties)
 {
 	xmms_ipc_msg_t *msg;
+	int contains_strings_only;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!properties, "with a NULL property", NULL);
@@ -132,6 +133,11 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *prope
 	if (playlist == NULL) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
+
+	contains_strings_only = xmmsv_list_restrict_type (properties,
+	                                                  XMMSV_TYPE_STRING);
+	x_api_error_if (!contains_strings_only,
+	                "property list may only contain strings", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, playlist);
