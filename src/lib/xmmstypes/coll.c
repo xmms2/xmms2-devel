@@ -35,8 +35,8 @@ struct xmmsv_coll_St {
 	x_list_t *operand_iter_stack;
 
 	/* stored as (key1, val1, key2, val2, ...) */
-	x_list_t *attributes;
-	x_list_t *curr_att;
+	xmmsv_t *attributes;
+	xmmsv_dict_iter_t *attributes_iter;
 
 	/* List of ids, 0-terminated. */
 	uint32_t *idlist;
@@ -47,7 +47,6 @@ struct xmmsv_coll_St {
 
 
 static void xmmsv_coll_free (xmmsv_coll_t *coll);
-static int free_udata (void *ptr, void *userdata);
 
 static int xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize);
 
@@ -113,7 +112,8 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 
 	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
 
-	coll->attributes = NULL;
+	coll->attributes = xmmsv_new_dict ();
+	xmmsv_get_dict_iter (coll->attributes, &coll->attributes_iter);
 
 	/* user must give this back */
 	xmmsv_coll_ref (coll);
@@ -137,9 +137,7 @@ xmmsv_coll_free (xmmsv_coll_t *coll)
 	xmmsv_unref (coll->operands);
 	x_list_free (coll->operand_iter_stack);
 
-	x_list_foreach (coll->attributes, free_udata, NULL);
-
-	x_list_free (coll->attributes);
+	xmmsv_unref (coll->attributes);
 
 	free (coll->idlist);
 
@@ -643,7 +641,7 @@ xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
 	x_return_val_if_fail (coll, NULL);
 
 	return coll->operands;
- }
+}
 
 /**
  * Set an attribute in the given collection.
@@ -655,25 +653,13 @@ xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
 void
 xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value)
 {
-	x_list_t *n;
-	for (n = coll->attributes; n; n = x_list_next (n)) {
-		const char *k = n->data;
-		if (strcasecmp (k, key) == 0 && n->next) {
-			/* found right key, update value */
-			free (n->next->data);
-			n->next->data = strdup (value);
-			return;
-		} else {
-			/* skip data part of this entry */
-			n = x_list_next (n);
-		}
-	}
+	xmmsv_t *v;
 
-	/* Key not found, insert the new pair */
-	coll->attributes = x_list_append (coll->attributes, strdup (key));
-	coll->attributes = x_list_append (coll->attributes, strdup (value));
+	v = xmmsv_new_string (value);
+	x_return_if_fail (v);
 
-	return;
+	xmmsv_dict_set (coll->attributes, key, v);
+	xmmsv_unref (v);
 }
 
 /**
@@ -688,25 +674,7 @@ xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value
 int
 xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 {
-	x_list_t *n;
-	for (n = coll->attributes; n; n = x_list_next (n)) {
-		char *k = n->data;
-		if (strcasecmp (k, key) == 0 && n->next) {
-			char *v = n->next->data;
-			/* found right key, remove key and value */
-			coll->attributes = x_list_delete_link (coll->attributes, n->next);
-			coll->attributes = x_list_delete_link (coll->attributes, n);
-			free (k);
-			free (v);
-			return 1;
-		} else {
-			/* skip data part of this entry */
-			n = x_list_next (n);
-		}
-	}
-
-	/* Key not found */
-	return 0;
+	return xmmsv_dict_remove (coll->attributes, key);
 }
 
 /**
@@ -723,29 +691,28 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 int
 xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value)
 {
-	x_list_t *n;
-	for (n = coll->attributes; n; n = x_list_next (n)) {
-		const char *k = n->data;
-		if (strcasecmp (k, key) == 0 && n->next) {
-			/* found right key, return value */
-			if (value) {
-				*value = (char*) n->next->data;
-			}
-
-			return 1;
-		} else {
-			/* skip data part of this entry */
-			n = x_list_next (n);
-		}
-	}
-
-	if (value) {
-		*value = NULL;
-	}
-
-	return 0;
+	return xmmsv_dict_entry_get_string (coll->attributes, key, value);
 }
 
+
+
+struct attr_fe_data {
+	xmmsv_coll_attribute_foreach_func func;
+	void *userdata;
+};
+
+static void
+attr_fe_func (const char *key, xmmsv_t *val, void *user_data)
+{
+	struct attr_fe_data *d = user_data;
+	const char *v;
+	int r;
+
+	r = xmmsv_get_string (val, &v);
+	x_return_if_fail (r)
+
+	d->func (key, v, d->userdata);
+}
 /**
  * Iterate over all key/value-pair of the collection attributes.
  *
@@ -762,25 +729,15 @@ xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll,
                               xmmsv_coll_attribute_foreach_func func,
                               void *user_data)
 {
-	x_list_t *n;
-	for (n = coll->attributes; n; n = x_list_next (n)) {
-		const char *val = NULL;
-		if (n->next) {
-			val = n->next->data;
-		}
-		func ((const char*)n->data, val, user_data);
-		n = x_list_next (n); /* skip data part */
-	}
-
-	return;
+	struct attr_fe_data d = {func, user_data};
+	xmmsv_dict_foreach (coll->attributes, attr_fe_func, &d);
 }
 
 void
 xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
-
-	coll->curr_att = coll->attributes;
+	xmmsv_dict_iter_first (coll->attributes_iter);
 }
 
 int
@@ -788,18 +745,22 @@ xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return !!coll->curr_att;
+	return xmmsv_dict_iter_valid (coll->attributes_iter);
 }
 
 void
 xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, const char **k, const char **v)
 {
-	x_return_if_fail (coll);
-	x_return_if_fail (coll->curr_att);
-	x_return_if_fail (coll->curr_att->next);
+	xmmsv_t *val;
+	int r;
 
-	*k = coll->curr_att->data;
-	*v = coll->curr_att->next->data;
+	x_return_if_fail (coll);
+
+	r = xmmsv_dict_iter_pair (coll->attributes_iter, k, &val);
+	x_return_if_fail (r);
+
+	r = xmmsv_get_string (val, v);
+	x_return_if_fail (r);
 }
 
 void
@@ -807,11 +768,7 @@ xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll)
 {
 	x_return_if_fail (coll);
 
-	if (coll->curr_att && coll->curr_att->next && coll->curr_att->next->next) {
-		coll->curr_att = coll->curr_att->next->next;
-	} else {
-		coll->curr_att = NULL;
-	}
+	xmmsv_dict_iter_next (coll->attributes_iter);
 }
 
 /**
@@ -837,18 +794,6 @@ xmmsv_coll_universe ()
 
 
 /** @internal */
-
-
-/**
- * Alternate version of the free() C function with an extra userdata
- * argument, to be used as a foreach function.
- */
-static int
-free_udata (void *ptr, void *userdata)
-{
-	free (ptr);
-	return 1;
-}
 
 
 static int
