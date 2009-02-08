@@ -62,7 +62,7 @@ asf_byteio_getQWLE(uint8_t *data)
 }
 
 void
-asf_byteio_getGUID(guid_t *guid, uint8_t *data)
+asf_byteio_getGUID(asf_guid_t *guid, uint8_t *data)
 {
 	guid->v1 = asf_byteio_getDWLE(data);
 	guid->v2 = asf_byteio_getWLE(data + 4);
@@ -81,28 +81,15 @@ asf_byteio_get_string(uint16_t *string, uint16_t strlen, uint8_t *data)
 }
 
 int
-asf_byteio_readbyte(asf_stream_t *stream)
-{
-	uint8_t byte;
-	int ret;
-
-	if ((ret = asf_byteio_read(&byte, 1, stream)) <= 0) {
-		return (ret == 0) ? ASF_ERROR_EOF : ASF_ERROR_IO;
-	}
-
-	return byte;
-}
-
-int
-asf_byteio_read(uint8_t *data, int size, asf_stream_t *stream)
+asf_byteio_read(uint8_t *data, int size, asf_iostream_t *iostream)
 {
 	int read = 0, tmp;
 
-	if (!stream->read) {
+	if (!iostream->read) {
 		return ASF_ERROR_INTERNAL;
 	}
 
-	while ((tmp = stream->read(stream->opaque, data+read, size-read)) > 0) {
+	while ((tmp = iostream->read(iostream->opaque, data+read, size-read)) > 0) {
 		read += tmp;
 
 		if (read == size) {

@@ -21,14 +21,6 @@
 
 #include "asf.h"
 
-struct guid_s {
-	uint32_t v1;
-	uint32_t v2;
-	uint16_t v3;
-	uint8_t  v4[8];
-};
-typedef struct guid_s guid_t;
-
 enum guid_type_e {
 	GUID_UNKNOWN,
 
@@ -61,10 +53,10 @@ enum guid_type_e {
 typedef enum guid_type_e guid_type_t;
 
 
-int asf_guid_match(const guid_t *guid1, const guid_t *guid2);
-guid_type_t asf_guid_get_object_type(const guid_t *guid);
-guid_type_t asf_guid_get_stream_type(const guid_t *guid);
-guid_type_t asf_guid_get_type(const guid_t *guid);
+int asf_guid_match(const asf_guid_t *guid1, const asf_guid_t *guid2);
+guid_type_t asf_guid_get_object_type(const asf_guid_t *guid);
+guid_type_t asf_guid_get_stream_type(const asf_guid_t *guid);
+guid_type_t asf_guid_get_type(const asf_guid_t *guid);
 
 #endif
 

@@ -34,11 +34,12 @@
  * the object header (GUID + data size)
  */
 static void
-asf_parse_read_object(asf_object_t *obj, uint8_t *data)
+asf_parse_read_object(asfint_object_t *obj, uint8_t *data)
 {
 	asf_byteio_getGUID(&obj->guid, data);
 	obj->type = asf_guid_get_type(&obj->guid);
 	obj->size = asf_byteio_getQWLE(data + 16);
+	obj->full_data = data;
 	obj->datalen = 0;
 	obj->data = NULL;
 	obj->next = NULL;
@@ -84,7 +85,7 @@ asf_parse_headerext(asf_object_headerext_t *header, uint8_t *buf, uint64_t bufle
 	datalen = header->datalen;
 	data = header->data;
 	while (datalen > 0) {
-		asf_object_t *current;
+		asfint_object_t *current;
 
 		if (datalen < 24) {
 			/* not enough data for reading a new object */
@@ -92,7 +93,7 @@ asf_parse_headerext(asf_object_headerext_t *header, uint8_t *buf, uint64_t bufle
 		}
 
 		/* Allocate a new subobject */
-		current = malloc(sizeof(asf_object_t));
+		current = malloc(sizeof(asfint_object_t));
 		if (!current) {
 			return ASF_ERROR_OUTOFMEM;
 		}
@@ -102,6 +103,7 @@ asf_parse_headerext(asf_object_headerext_t *header, uint8_t *buf, uint64_t bufle
 			/* invalid object size */
 			break;
 		}
+		current->datalen = current->size - 24;
 		current->data = data + 24;
 
 		/* add to the list of subobjects */
@@ -129,7 +131,7 @@ asf_parse_headerext(asf_object_headerext_t *header, uint8_t *buf, uint64_t bufle
 
 /**
  * Takes an initialized asf_file_t structure file as a parameter. Allocates
- * a new asf_object_header_t in file->header and uses the file->stream to
+ * a new asf_object_header_t in file->header and uses the file->iostream to
  * read all fields and subobjects into it. Finally calls the
  * asf_parse_header_validate function to validate the values and parse the
  * commonly used values into the asf_file_t struct itself.
@@ -138,16 +140,16 @@ int
 asf_parse_header(asf_file_t *file)
 {
 	asf_object_header_t *header;
-	asf_stream_t *stream;
+	asf_iostream_t *iostream;
 	uint8_t hdata[30];
 	int tmp;
 
 	file->header = NULL;
-	stream = &file->stream;
+	iostream = &file->iostream;
 
 	/* object minimum is 24 bytes and header needs to have
 	 * the subobject count field and two reserved fields */
-	tmp = asf_byteio_read(hdata, 30, stream);
+	tmp = asf_byteio_read(hdata, 30, iostream);
 	if (tmp < 0) {
 		/* not enough data to read the header object */
 		return tmp;
@@ -160,7 +162,7 @@ asf_parse_header(asf_file_t *file)
 	}
 
 	/* read the object and check its size value */
-	asf_parse_read_object((asf_object_t *) header, hdata);
+	asf_parse_read_object((asfint_object_t *) header, hdata);
 	if (header->size < 30) {
 		/* invalid size for header object */
 		return ASF_ERROR_OBJECT_SIZE;
@@ -176,22 +178,22 @@ asf_parse_header(asf_file_t *file)
 	header->first = NULL;
 	header->last = NULL;
 
+	/* the header data needs to be allocated for reading */
+	header->datalen = header->size - 30;
+	header->data = malloc(header->datalen * sizeof(uint8_t));
+	if (!header->data) {
+		return ASF_ERROR_OUTOFMEM;
+	}
+
+	tmp = asf_byteio_read(header->data, header->datalen, iostream);
+	if (tmp < 0) {
+		return tmp;
+	}
+
 	if (header->subobjects > 0) {
 		uint64_t datalen;
 		uint8_t *data;
 		int i;
-
-		/* the header data needs to be allocated for reading */
-		header->datalen = header->size - 30;
-		header->data = malloc(header->datalen * sizeof(uint8_t));
-		if (!header->data) {
-			return ASF_ERROR_OUTOFMEM;
-		}
-
-		tmp = asf_byteio_read(header->data, header->datalen, stream);
-		if (tmp < 0) {
-			return tmp;
-		}
 
 		debug_printf("starting to read subobjects");
 
@@ -199,14 +201,14 @@ asf_parse_header(asf_file_t *file)
 		datalen = header->datalen;
 		data = header->data;
 		for (i=0; i<header->subobjects; i++) {
-			asf_object_t *current;
+			asfint_object_t *current;
 
 			if (datalen < 24) {
 				/* not enough data for reading object */
 				break;
 			}
 
-			current = malloc(sizeof(asf_object_t));
+			current = malloc(sizeof(asfint_object_t));
 			if (!current) {
 				return ASF_ERROR_OUTOFMEM;
 			}
@@ -242,6 +244,7 @@ asf_parse_header(asf_file_t *file)
 					debug_printf("WARNING! Second header extension object found, ignoring it!");
 				}
 
+				current->datalen = current->size - 24;
 				current->data = data + 24;
 
 				/* add to list of subobjects */
@@ -279,7 +282,7 @@ asf_parse_header(asf_file_t *file)
 
 /**
  * Takes an initialized asf_file_t structure file as a parameter. Allocates
- * a new asf_object_data_t in file->data and uses the file->stream to
+ * a new asf_object_data_t in file->data and uses the file->iostream to
  * read all its compulsory fields into it. Notice that the actual data is
  * not read in any way, because we need to be able to work with non-seekable
  * streams as well.
@@ -288,16 +291,16 @@ int
 asf_parse_data(asf_file_t *file)
 {
 	asf_object_data_t *data;
-	asf_stream_t *stream;
+	asf_iostream_t *iostream;
 	uint8_t ddata[50];
 	int tmp;
 
 	file->data = NULL;
-	stream = &file->stream;
+	iostream = &file->iostream;
 
 	/* object minimum is 24 bytes and data object needs to have
 	 * 26 additional bytes for its internal fields */
-	tmp = asf_byteio_read(ddata, 50, stream);
+	tmp = asf_byteio_read(ddata, 50, iostream);
 	if (tmp < 0) {
 		return tmp;
 	}
@@ -309,7 +312,7 @@ asf_parse_data(asf_file_t *file)
 	}
 
 	/* read the object and check its size value */
-	asf_parse_read_object((asf_object_t *) data, ddata);
+	asf_parse_read_object((asfint_object_t *) data, ddata);
 	if (data->size < 50) {
 		/* invalid size for data object */
 		return ASF_ERROR_OBJECT_SIZE;
@@ -327,7 +330,7 @@ asf_parse_data(asf_file_t *file)
 		return ASF_ERROR_INVALID_VALUE;
 	}
 
-	/* if data->total_data_packets is non-zero (not a stream) and
+	/* if data->total_data_packets is non-zero (not a iostream) and
 	   the data packets count doesn't match, return error */
 	if (data->total_data_packets &&
 	    data->total_data_packets != file->data_packets_count) {
@@ -339,7 +342,7 @@ asf_parse_data(asf_file_t *file)
 
 /**
  * Takes an initialized asf_file_t structure file as a parameter. Allocates
- * a new asf_object_index_t in file->index and uses the file->stream to
+ * a new asf_object_index_t in file->index and uses the file->iostream to
  * read all its compulsory fields into it. Notice that the actual data is
  * not read in any way, because we need to be able to work with non-seekable
  * streams as well.
@@ -348,17 +351,17 @@ int
 asf_parse_index(asf_file_t *file)
 {
 	asf_object_index_t *index;
-	asf_stream_t *stream;
+	asf_iostream_t *iostream;
 	uint8_t idata[56];
 	uint64_t entry_data_size;
 	uint8_t *entry_data = NULL;
 	int tmp, i;
 
 	file->index = NULL;
-	stream = &file->stream;
+	iostream = &file->iostream;
 
 	/* read the raw data of an index header */
-	tmp = asf_byteio_read(idata, 56, stream);
+	tmp = asf_byteio_read(idata, 56, iostream);
 	if (tmp < 0) {
 		return tmp;
 	}
@@ -369,7 +372,7 @@ asf_parse_index(asf_file_t *file)
 		return ASF_ERROR_OUTOFMEM;
 	}
 
-	asf_parse_read_object((asf_object_t *) index, idata);
+	asf_parse_read_object((asfint_object_t *) index, idata);
 	if (index->type != GUID_INDEX) {
 		tmp = index->size;
 		free(index);
@@ -400,7 +403,7 @@ asf_parse_index(asf_file_t *file)
 		free(index);
 		return ASF_ERROR_OUTOFMEM;
 	}
-	tmp = asf_byteio_read(entry_data, entry_data_size, stream);
+	tmp = asf_byteio_read(entry_data, entry_data_size, iostream);
 	if (tmp < 0) {
 		free(index);
 		free(entry_data);

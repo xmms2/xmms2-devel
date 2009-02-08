@@ -1,15 +1,39 @@
+
+The library in this directory is the r87 version of libasf that can be found
+from http://code.google.com/p/libasf/, the original README file of the library
+follows:
+
+
+Compilation and installing
+--------------------------
+
+The library uses Waf (http://freehackers.org/~tnagy/bksys.html) build system
+which requires Python to be installed. There are no other requirements and the
+required Waf script is already included with the distribution. You most likely
+want to compile using the following commands:
+
+./waf configure
+./waf build
+sudo ./waf install
+
+In this case the library its equivalent header and a test program named
+'asftest' is installed to the /usr/local directory on the computer.
+
+
+Current status of the library
+-----------------------------
+
 This library is provided under the LGPL license. It is based mainly on the
 documentation provided by VLC and ffmpeg ASF parsers but it is however
 rewritten and doesn't share any code with them except the necessary identifiers
 and variable names that are file format specific.
 
-Right now the status of this library is almost unusable but working. It is
-written in ANSI C, compiled with '-Wall -ansi -pedantic' flags, doesn't use any
-libraries and only very few libc functions. Therefore it should be highly
-portable. The goal is to make the library usable with all major open source
-music and video players. Already now it handles many errors better than its
-predecessors.
-
+Right now the status of this library is usable and working, but needs more
+testing. It is written in ANSI C, compiled with '-Wall -ansi -pedantic' flags,
+doesn't use any libraries and only very few libc functions. Therefore it should
+be highly portable. The goal is to make the library usable with all major open
+source music and video players. Already now it handles many errors better than
+its predecessors.
 
 
 License issues related to possible VLC derived code

@@ -33,33 +33,30 @@
 	 0 : *(data) : asf_byteio_getWLE(data) : asf_byteio_getDWLE(data))
 
 static int
-asf_data_read_packet_data(asf_packet_t *packet, uint8_t flags, asf_stream_t *stream)
+asf_data_read_packet_data(asf_packet_t *packet, uint8_t flags,
+                          uint8_t *data, uint32_t len)
 {
 	uint8_t datalen;
-	uint8_t data[18];
-	uint8_t *datap;
-	int tmp;
 
 	datalen = GETLEN2b((flags >> 1) & 0x03) +
 	          GETLEN2b((flags >> 3) & 0x03) +
 	          GETLEN2b((flags >> 5) & 0x03) + 6;
 
-	if ((tmp = asf_byteio_read(data, datalen, stream)) < 0) {
-		return tmp;
+	if (datalen > len) {
+		return ASF_ERROR_INVALID_LENGTH;
 	}
 
-	datap = data;
-	packet->length = GETVALUE2b((flags >> 5) & 0x03, datap);
-	datap += GETLEN2b((flags >> 5) & 0x03);
+	packet->length = GETVALUE2b((flags >> 5) & 0x03, data);
+	data += GETLEN2b((flags >> 5) & 0x03);
 	/* sequence value should be never used anywhere */
-	GETVALUE2b((flags >> 1) & 0x03, datap);
-	datap += GETLEN2b((flags >> 1) & 0x03);
-	packet->padding_length = GETVALUE2b((flags >> 3) & 0x03, datap);
-	datap += GETLEN2b((flags >> 3) & 0x03);
-	packet->send_time = asf_byteio_getDWLE(datap);
-	datap += 4;
-	packet->duration = asf_byteio_getWLE(datap);
-	datap += 2;
+	GETVALUE2b((flags >> 1) & 0x03, data);
+	data += GETLEN2b((flags >> 1) & 0x03);
+	packet->padding_length = GETVALUE2b((flags >> 3) & 0x03, data);
+	data += GETLEN2b((flags >> 3) & 0x03);
+	packet->send_time = asf_byteio_getDWLE(data);
+	data += 4;
+	packet->duration = asf_byteio_getWLE(data);
+	data += 2;
 
 	return datalen;
 }
@@ -203,6 +200,10 @@ asf_data_read_payloads(asf_packet_t *packet,
 				pl.pts += pts_delta;
 				memcpy(&packet->payloads[i], &pl, sizeof(asf_payload_t));
 				i++;
+
+				debug_printf("payload(%d/%d) stream: %d, key frame: %d, object: %d, offset: %d, pts: %d, datalen: %d",
+					     i, packet->payload_count, pl.stream_number, (int) pl.key_frame, pl.media_object_number,
+					     pl.media_object_offset, pl.pts, pl.datalen);
 			}
 		} else {
 			pl.data = data + skip;
@@ -211,11 +212,11 @@ asf_data_read_payloads(asf_packet_t *packet,
 			/* update the skipped data amount and payload index */
 			skip += pl.datalen;
 			i++;
-		}
 
-		debug_printf("payload(%d/%d) stream: %d, object: %d, offset: %d, pts: %d, datalen: %d",
-		             i+1, packet->payload_count, pl.stream_number, pl.media_object_number,
-		             pl.media_object_offset, pl.pts, pl.datalen);
+			debug_printf("payload(%d/%d) stream: %d, key frame: %d, object: %d, offset: %d, pts: %d, datalen: %d",
+				     i, packet->payload_count, pl.stream_number, (int) pl.key_frame, pl.media_object_number,
+				     pl.media_object_offset, pl.pts, pl.datalen);
+		}
 	}
 
 	return skip;
@@ -226,7 +227,6 @@ asf_data_init_packet(asf_packet_t *packet)
 {
 	packet->ec_length = 0;
 	packet->ec_data = NULL;
-	packet->ec_data_size = 0;
 
 	packet->length = 0;
 	packet->padding_length = 0;
@@ -239,24 +239,44 @@ asf_data_init_packet(asf_packet_t *packet)
 
 	packet->payload_data_len = 0;
 	packet->payload_data = NULL;
-	packet->payload_data_size = 0;
+
+	packet->data = NULL;
+	packet->data_size = 0;
 }
 
 int
 asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 {
-	asf_stream_t *stream;
+	asf_iostream_t *iostream;
 	uint32_t read = 0;
 	int packet_flags, packet_property, payload_length_type;
 	void *tmpptr;
 	int tmp;
 
-	stream = &file->stream;
-	if ((tmp = asf_byteio_readbyte(stream)) < 0) {
-		return ASF_ERROR_EOF;
+	iostream = &file->iostream;
+	if (file->packet_size == 0) {
+		return ASF_ERROR_INVALID_LENGTH;
 	}
-	read = 1;
 
+	/* If the internal data is not allocated, allocate it */
+	if (packet->data_size < file->packet_size) {
+		tmpptr = realloc(packet->data, file->packet_size);
+		if (!tmpptr) {
+			return ASF_ERROR_OUTOFMEM;
+		}
+		packet->data = tmpptr;
+		packet->data_size = file->packet_size;
+	}
+
+	tmp = asf_byteio_read(packet->data,
+	                      file->packet_size,
+	                      iostream);
+	if (tmp < 0) {
+		/* Error reading packet data */
+		return tmp;
+	}
+
+	tmp = packet->data[read++];
 	if (tmp & 0x80) {
 		uint8_t opaque_data, ec_length_type;
 
@@ -271,32 +291,25 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 			return ASF_ERROR_INVALID_VALUE;
 		}
 
-		if (packet->ec_length > packet->ec_data_size) {
-			tmpptr = realloc(packet->ec_data, packet->ec_length);
-			if (!tmpptr) {
-				return ASF_ERROR_OUTOFMEM;
-			}
-			packet->ec_data = tmpptr;
-			packet->ec_data_size = packet->ec_length;
+		if (read+packet->ec_length > file->packet_size) {
+			return ASF_ERROR_INVALID_LENGTH;
 		}
-
-		if ((tmp = asf_byteio_read(packet->ec_data,
-		                           packet->ec_length,
-		                           stream)) < 0) {
-			return tmp;
-		}
+		packet->ec_data = &packet->data[read];
 		read += packet->ec_length;
 	} else {
 		packet->ec_length = 0;
 	}
 
-	if ((packet_flags = asf_byteio_readbyte(stream)) < 0 ||
-	    (packet_property = asf_byteio_readbyte(stream)) < 0) {
-		return ASF_ERROR_IO;
+	if (read+2 > file->packet_size) {
+		return ASF_ERROR_INVALID_LENGTH;
 	}
-	read += 2;
+	packet_flags = packet->data[read++];
+	packet_property = packet->data[read++];
 
-	tmp = asf_data_read_packet_data(packet, packet_flags, stream);
+	tmp = asf_data_read_packet_data(packet,
+	                                packet_flags,
+	                                &packet->data[read],
+	                                file->packet_size - read);
 	if (tmp < 0) {
 		return tmp;
 	}
@@ -317,22 +330,17 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 		packet->length = file->packet_size;
 	}
 
-	if (packet->length > file->packet_size) {
-		/* packet with too big length value */
-		return ASF_ERROR_INVALID_LENGTH;
-	}
-
-	if (packet->length < read) {
-		/* header exceeded packet size, invalid file */
+	if (packet->length != file->packet_size) {
+		/* packet with invalid length value */
 		return ASF_ERROR_INVALID_LENGTH;
 	}
 
 	/* check if we have multiple payloads */
 	if (packet_flags & 0x01) {
-		if ((tmp = asf_byteio_readbyte(stream)) < 0) {
-			return tmp;
+		if (read+1 > packet->length) {
+			return ASF_ERROR_INVALID_LENGTH;
 		}
-		read++;
+		tmp = packet->data[read++];
 
 		packet->payload_count = tmp & 0x3f;
 		payload_length_type = (tmp >> 6) & 0x03;
@@ -352,20 +360,11 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 		packet->payloads = tmpptr;
 		packet->payloads_size = packet->payload_count;
 	}
-	if (packet->payload_data_len > packet->payload_data_size) {
-		tmpptr = realloc(packet->payload_data,
-		                 packet->payload_data_len);
-		if (!tmpptr) {
-			return ASF_ERROR_OUTOFMEM;
-		}
-		packet->payload_data = tmpptr;
-		packet->payload_data_size = packet->payload_count;
-	}
 
-	if ((tmp = asf_byteio_read(packet->payload_data, packet->payload_data_len, stream)) < 0) {
-		return tmp;
-	}
+	packet->payload_data = &packet->data[read];
+	read += packet->payload_data_len;
 
+	/* The return value will be consumed bytes, not including the padding */
 	tmp = asf_data_read_payloads(packet, file->preroll, packet_flags & 0x01,
 	                             payload_length_type, packet_property,
 	                             packet->payload_data,
@@ -373,10 +372,9 @@ asf_data_get_packet(asf_packet_t *packet, asf_file_t *file)
 	if (tmp < 0) {
 		return tmp;
 	}
-	read += tmp;
 
-	debug_printf("packet read, eclen: %d, length: %d, padding: %d, time %d, duration: %d, payloads: %d",
-	             packet->ec_length, packet->length, packet->padding_length, packet->send_time,
+	debug_printf("packet read %d bytes, eclen: %d, length: %d, padding: %d, time %d, duration: %d, payloads: %d",
+	             read, packet->ec_length, packet->length, packet->padding_length, packet->send_time,
 	             packet->duration, packet->payload_count);
 
 	return read;
@@ -388,11 +386,11 @@ asf_data_free_packet(asf_packet_t *packet)
 	if (!packet)
 		return;
 
-	free(packet->ec_data);
 	free(packet->payloads);
-	free(packet->payload_data);
+	free(packet->data);
 
 	packet->ec_data = NULL;
 	packet->payloads = NULL;
 	packet->payload_data = NULL;
+	packet->data = NULL;
 }

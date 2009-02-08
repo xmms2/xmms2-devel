@@ -32,10 +32,10 @@
  * Finds an object with the corresponding GUID type from header object. If
  * not found, just returns NULL.
  */
-static asf_object_t *
+static asfint_object_t *
 asf_header_get_object(asf_object_header_t *header, const guid_type_t type)
 {
-	asf_object_t *current;
+	asfint_object_t *current;
 
 	current = header->first;
 	while (current) {
@@ -50,16 +50,16 @@ asf_header_get_object(asf_object_header_t *header, const guid_type_t type)
 
 /**
  * Reads the stream properties object's data into the equivalent
- * data structure, and stores it in stream_properties_t structure
+ * data structure, and stores it in asf_stream_t structure
  * with the equivalent stream type. Needs the stream properties
  * object data as its input.
  */
 static int
-asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
+asf_parse_header_stream_properties(asf_stream_t *stream,
                                    uint8_t *objdata,
                                    uint32_t objsize)
 {
-	guid_t guid;
+	asf_guid_t guid;
 	guid_type_t type;
 	uint32_t datalen;
 	uint8_t *data;
@@ -97,7 +97,7 @@ asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
 	{
 		asf_waveformatex_t *wfx;
 
-		sprop->type = ASF_STREAM_TYPE_AUDIO;
+		stream->type = ASF_STREAM_TYPE_AUDIO;
 
 		if (datalen < 18) {
 			return ASF_ERROR_INVALID_LENGTH;
@@ -107,11 +107,12 @@ asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
 		}
 
 		/* this should be freed in asf_close function */
-		sprop->properties = malloc(sizeof(asf_waveformatex_t));
-		if (!sprop->properties)
+		stream->properties = malloc(sizeof(asf_waveformatex_t));
+		if (!stream->properties)
 			return ASF_ERROR_OUTOFMEM;
+		stream->flags |= ASF_STREAM_FLAG_AVAILABLE;
 
-		wfx = sprop->properties;
+		wfx = stream->properties;
 		wfx->wFormatTag = asf_byteio_getWLE(data);
 		wfx->nChannels = asf_byteio_getWLE(data + 2);
 		wfx->nSamplesPerSec = asf_byteio_getDWLE(data + 4);
@@ -133,7 +134,7 @@ asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
 		asf_bitmapinfoheader_t *bmih;
 		uint32_t width, height, flags, data_size;
 
-		sprop->type = ASF_STREAM_TYPE_VIDEO;
+		stream->type = ASF_STREAM_TYPE_VIDEO;
 
 		if (datalen < 51) {
 			return ASF_ERROR_INVALID_LENGTH;
@@ -157,11 +158,12 @@ asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
 		}
 
 		/* this should be freed in asf_close function */
-		sprop->properties = malloc(sizeof(asf_bitmapinfoheader_t));
-		if (!sprop->properties)
+		stream->properties = malloc(sizeof(asf_bitmapinfoheader_t));
+		if (!stream->properties)
 			return ASF_ERROR_OUTOFMEM;
+		stream->flags |= ASF_STREAM_FLAG_AVAILABLE;
 
-		bmih = sprop->properties;
+		bmih = stream->properties;
 		bmih->biSize = asf_byteio_getDWLE(data);
 		bmih->biWidth = asf_byteio_getDWLE(data + 4);
 		bmih->biHeight = asf_byteio_getDWLE(data + 8);
@@ -183,12 +185,127 @@ asf_parse_header_stream_properties(asf_stream_properties_t *sprop,
 		break;
 	}
 	case GUID_STREAM_TYPE_COMMAND:
-		sprop->type = ASF_STREAM_TYPE_COMMAND;
+		stream->type = ASF_STREAM_TYPE_COMMAND;
 		break;
 	default:
-		sprop->type = ASF_STREAM_TYPE_UNKNOWN;
+		stream->type = ASF_STREAM_TYPE_UNKNOWN;
 		break;
 	}
+
+	return 0;
+}
+
+static int
+asf_parse_header_extended_stream_properties(asf_stream_t *stream,
+                                            uint8_t *objdata,
+                                            uint32_t objsize)
+{
+	asf_stream_extended_t ext;
+	uint32_t datalen;
+	uint8_t *data;
+	uint16_t flags;
+	int i;
+
+	ext.start_time = asf_byteio_getQWLE(objdata);
+	ext.end_time = asf_byteio_getQWLE(objdata + 8);
+	ext.data_bitrate = asf_byteio_getDWLE(objdata + 16);
+	ext.buffer_size = asf_byteio_getDWLE(objdata + 20);
+	ext.initial_buf_fullness = asf_byteio_getDWLE(objdata + 24);
+	ext.data_bitrate2 = asf_byteio_getDWLE(objdata + 28);
+	ext.buffer_size2 = asf_byteio_getDWLE(objdata + 32);
+	ext.initial_buf_fullness2 = asf_byteio_getDWLE(objdata + 36);
+	ext.max_obj_size = asf_byteio_getDWLE(objdata + 40);
+	ext.flags = asf_byteio_getDWLE(objdata + 44);
+	ext.stream_num = asf_byteio_getWLE(objdata + 48);
+	ext.lang_idx = asf_byteio_getWLE(objdata + 50);
+	ext.avg_time_per_frame = asf_byteio_getQWLE(objdata + 52);
+	ext.stream_name_count = asf_byteio_getWLE(objdata + 60);
+	ext.num_payload_ext = asf_byteio_getWLE(objdata + 62);
+
+	datalen = objsize - 88;
+	data = objdata + 64;
+
+	/* iterate through all name strings */
+	for (i=0; i<ext.stream_name_count; i++) {
+		uint16_t strlen;
+
+		if (datalen < 4) {
+			return ASF_ERROR_INVALID_VALUE;
+		}
+
+		strlen = asf_byteio_getWLE(data + 2);
+		if (strlen > datalen) {
+			return ASF_ERROR_INVALID_LENGTH;
+		}
+
+		/* skip the current name string */
+		data += 4 + strlen;
+		datalen -= 4 + strlen;
+	}
+
+	/* iterate through all extension systems */
+	for (i=0; i<ext.num_payload_ext; i++) {
+		uint32_t extsyslen;
+
+		if (datalen < 22) {
+			return ASF_ERROR_INVALID_VALUE;
+		}
+
+		extsyslen = asf_byteio_getDWLE(data + 18);
+		if (extsyslen > datalen) {
+			return ASF_ERROR_INVALID_LENGTH;
+		}
+
+		/* skip the current extension system */
+		data += 22 + extsyslen;
+		datalen -= 22 + extsyslen;
+	}
+
+	if (datalen > 0) {
+		asf_guid_t guid;
+
+		debug_printf("hidden stream properties object found!");
+
+		/* this is almost same as in stream properties handler */
+		if (datalen < 78) {
+			return ASF_ERROR_OBJECT_SIZE;
+		}
+
+		/* check that we really have a stream properties object */
+		asf_byteio_getGUID(&guid, data);
+		if (asf_guid_get_type(&guid) != GUID_STREAM_PROPERTIES) {
+			return ASF_ERROR_INVALID_OBJECT;
+		}
+		if (asf_byteio_getQWLE(data + 16) != datalen) {
+			return ASF_ERROR_OBJECT_SIZE;
+		}
+
+		flags = asf_byteio_getWLE(data + 72);
+
+		if ((flags & 0x7f) != ext.stream_num || stream->type) {
+			/* only one stream object per stream allowed and
+			 * stream ids have to match with both objects*/
+			return ASF_ERROR_INVALID_OBJECT;
+		} else {
+			int ret;
+
+			stream->flags |= ASF_STREAM_FLAG_HIDDEN;
+			ret = asf_parse_header_stream_properties(stream,
+								 data + 24,
+								 datalen);
+
+			if (ret < 0) {
+				return ret;
+			}
+		}
+	}
+
+	stream->extended = malloc(sizeof(asf_stream_extended_t));
+	if (!stream->extended) {
+		return ASF_ERROR_OUTOFMEM;
+	}
+	stream->flags |= ASF_STREAM_FLAG_EXTENDED;
+	memcpy(stream->extended, &ext, sizeof(ext));
 
 	return 0;
 }
@@ -204,7 +321,7 @@ asf_parse_header_validate(asf_file_t *file, asf_object_header_t *header)
 {
 	/* some flags for mandatory subobjects */
 	int fileprop = 0, streamprop = 0;
-	asf_object_t *current;
+	asfint_object_t *current;
 
 	if (header->first) {
 		current = header->first;
@@ -247,29 +364,27 @@ asf_parse_header_validate(asf_file_t *file, asf_object_header_t *header)
 			case GUID_STREAM_PROPERTIES:
 			{
 				uint16_t flags;
+				asf_stream_t *stream;
+				int ret;
 
 				if (size < 78)
 					return ASF_ERROR_OBJECT_SIZE;
 
 				streamprop = 1;
 				flags = asf_byteio_getWLE(current->data + 48);
+				stream = &file->streams[flags & 0x7f];
 
-				if (file->streams[flags & 0x7f].type) {
+				if (stream->type) {
 					/* only one stream object per stream allowed */
 					return ASF_ERROR_INVALID_OBJECT;
-				} else {
-					asf_stream_properties_t *sprop;
-					int ret;
+				}
 
-					sprop = file->streams + (flags & 0x7f);
+				ret = asf_parse_header_stream_properties(stream,
+									 current->data,
+									 size);
 
-					ret = asf_parse_header_stream_properties(sprop,
-					                                         current->data,
-					                                         size);
-
-					if (ret < 0) {
-						return ret;
-					}
+				if (ret < 0) {
+					return ret;
 				}
 				break;
 			}
@@ -336,93 +451,22 @@ asf_parse_header_validate(asf_file_t *file, asf_object_header_t *header)
 				break;
 			case GUID_EXTENDED_STREAM_PROPERTIES:
 			{
-				int stream, name_count, extsys_count;
-				uint32_t datalen;
-				uint8_t *data;
-				uint16_t flags;
-				int i;
+				uint16_t stream_num;
+				asf_stream_t *stream;
+				int ret;
 
 				if (size < 88)
 					return ASF_ERROR_OBJECT_SIZE;
 
-				stream = asf_byteio_getWLE(current->data + 48);
-				name_count = asf_byteio_getWLE(current->data + 60);
-				extsys_count = asf_byteio_getWLE(current->data + 62);
+				stream_num = asf_byteio_getWLE(current->data + 48);
+				stream = &file->streams[stream_num];
 
-				datalen = size - 88;
-				data = current->data + 64;
+				ret = asf_parse_header_extended_stream_properties(stream,
+										  current->data,
+										  size);
 
-				/* iterate through all name strings */
-				for (i=0; i<name_count; i++) {
-					uint16_t strlen;
-
-					if (datalen < 4)
-						return ASF_ERROR_INVALID_VALUE;
-
-					strlen = asf_byteio_getWLE(data + 2);
-					if (strlen > datalen) {
-						return ASF_ERROR_INVALID_LENGTH;
-					}
-
-					/* skip the current name string */
-					data += 4 + strlen;
-					datalen -= 4 + strlen;
-				}
-
-				/* iterate through all extension systems */
-				for (i=0; i<extsys_count; i++) {
-					uint32_t extsyslen;
-
-					if (datalen < 22)
-						return ASF_ERROR_INVALID_VALUE;
-
-					extsyslen = asf_byteio_getDWLE(data + 18);
-					if (extsyslen > datalen) {
-						return ASF_ERROR_INVALID_LENGTH;
-					}
-
-					/* skip the current extension system */
-					data += 22 + extsyslen;
-					datalen -= 22 + extsyslen;
-				}
-
-				if (datalen > 0) {
-					guid_t guid;
-
-					debug_printf("hidden stream properties object found!");
-
-					/* this is almost same as in stream properties handler */
-					if (datalen < 78)
-						return ASF_ERROR_OBJECT_SIZE;
-
-					/* check that we really have a stream properties object */
-					asf_byteio_getGUID(&guid, data);
-					if (asf_guid_get_type(&guid) != GUID_STREAM_PROPERTIES)
-						return ASF_ERROR_INVALID_OBJECT;
-					if (asf_byteio_getQWLE(data + 16) != datalen)
-						return ASF_ERROR_OBJECT_SIZE;
-
-					flags = asf_byteio_getWLE(data + 72);
-
-					if ((flags & 0x7f) != stream ||
-					    file->streams[stream].type) {
-						/* only one stream object per stream allowed and
-						 * stream ids have to match with both objects*/
-						return ASF_ERROR_INVALID_OBJECT;
-					} else {
-						asf_stream_properties_t *sprop;
-						int ret;
-
-						sprop = file->streams + stream;
-
-						ret = asf_parse_header_stream_properties(sprop,
-											 data + 24,
-											 datalen);
-
-						if (ret < 0) {
-							return ret;
-						}
-					}
+				if (ret < 0) {
+					return ret;
 				}
 				break;
 			}
@@ -458,13 +502,13 @@ asf_parse_header_validate(asf_file_t *file, asf_object_header_t *header)
  * Destroy the header and all subobjects
  */
 void
-asf_header_destroy(asf_object_header_t *header)
+asf_free_header(asf_object_header_t *header)
 {
 	if (!header)
 		return;
 
 	if (header->first) {
-		asf_object_t *current = header->first, *next;
+		asfint_object_t *current = header->first, *next;
 		while (current) {
 			next = current->next;
 			free(current);
@@ -473,7 +517,7 @@ asf_header_destroy(asf_object_header_t *header)
 	}
 
 	if (header->ext) {
-		asf_object_t *current = header->ext->first, *next;
+		asfint_object_t *current = header->ext->first, *next;
 		while (current) {
 			next = current->next;
 			free(current);
@@ -492,9 +536,9 @@ asf_header_destroy(asf_object_header_t *header)
  * asf_header_metadata_destroy function. Returns NULL on failure.
  */
 asf_metadata_t *
-asf_header_get_metadata(asf_object_header_t *header)
+asf_header_metadata(asf_object_header_t *header)
 {
-	asf_object_t *current;
+	asfint_object_t *current;
 	asf_metadata_t *ret;
 
 	/* allocate the metadata struct */
@@ -631,7 +675,7 @@ asf_header_get_metadata(asf_object_header_t *header)
  * Free the metadata struct and all fields it includes
  */
 void
-asf_header_metadata_destroy(asf_metadata_t *metadata)
+asf_header_free_metadata(asf_metadata_t *metadata)
 {
 	int i;
 

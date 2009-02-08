@@ -32,7 +32,7 @@ asf_file_t *
 asf_open_file(const char *filename)
 {
 	asf_file_t *file;
-	asf_stream_t stream;
+	asf_iostream_t stream;
 	FILE *fstream;
 
 	fstream = fopen(filename, "r");
@@ -54,20 +54,23 @@ asf_open_file(const char *filename)
 }
 
 asf_file_t *
-asf_open_cb(asf_stream_t *stream)
+asf_open_cb(asf_iostream_t *iostream)
 {
 	asf_file_t *file;
 	int i;
+
+	if (!iostream)
+		return NULL;
 
 	file = calloc(1, sizeof(asf_file_t));
 	if (!file)
 		return NULL;
 
 	file->filename = NULL;
-	file->stream.read = stream->read;
-	file->stream.write = stream->write;
-	file->stream.seek = stream->seek;
-	file->stream.opaque = stream->opaque;
+	file->iostream.read = iostream->read;
+	file->iostream.write = iostream->write;
+	file->iostream.seek = iostream->seek;
+	file->iostream.opaque = iostream->opaque;
 
 	file->header = NULL;
 	file->data = NULL;
@@ -75,7 +78,9 @@ asf_open_cb(asf_stream_t *stream)
 
 	for (i=0; i < ASF_MAX_STREAMS; i++) {
 		file->streams[i].type = ASF_STREAM_TYPE_NONE;
+		file->streams[i].flags = ASF_STREAM_FLAG_NONE;
 		file->streams[i].properties = NULL;
+		file->streams[i].extended = NULL;
 	}
 
 	return file;
@@ -104,14 +109,14 @@ asf_init(asf_file_t *file)
 	}
 	file->position += tmp;
 
-	if (file->flags & ASF_FLAG_SEEKABLE && file->stream.seek) {
+	if (file->flags & ASF_FLAG_SEEKABLE && file->iostream.seek) {
 		int64_t seek_position;
 
 		file->index_position = file->data_position +
 		                       file->data->size;
 
-		seek_position = file->stream.seek(file->stream.opaque,
-		                                  file->index_position);
+		seek_position = file->iostream.seek(file->iostream.opaque,
+		                                    file->index_position);
 
 		/* if first seek fails, we can try to recover and just ignore seeking */
 		if (seek_position >= 0) {
@@ -127,7 +132,7 @@ asf_init(asf_file_t *file)
 				if (!file->index)
 					file->index_position += tmp;
 
-				seek_position = file->stream.seek(file->stream.opaque,
+				seek_position = file->iostream.seek(file->iostream.opaque,
 								  file->index_position);
 			}
 
@@ -136,7 +141,7 @@ asf_init(asf_file_t *file)
 				file->index_position = 0;
 			}
 
-			seek_position = file->stream.seek(file->stream.opaque,
+			seek_position = file->iostream.seek(file->iostream.opaque,
 							  file->data->packets_position);
 			if (seek_position != file->data->packets_position) {
 				/* Couldn't seek back to packets position, this is fatal! */
@@ -157,20 +162,21 @@ asf_init(asf_file_t *file)
 void
 asf_close(asf_file_t *file)
 {
-	int i;
-
 	if (file) {
-		asf_header_destroy(file->header);
+		int i;
+
+		asf_free_header(file->header);
 		free(file->data);
 		if (file->index)
 			free(file->index->entries);
 		free(file->index);
 
 		if (file->filename)
-			fclose(file->stream.opaque);
+			fclose(file->iostream.opaque);
 
 		for (i=0; i < ASF_MAX_STREAMS; i++) {
 			free(file->streams[i].properties);
+			free(file->streams[i].extended);
 		}
 
 		free(file);
@@ -215,7 +221,7 @@ asf_get_packet(asf_file_t *file, asf_packet_t *packet)
 }
 
 void
-asf_free_packet(asf_packet_t *packet)
+asf_packet_destroy(asf_packet_t *packet)
 {
 	asf_data_free_packet(packet);
 	free(packet);
@@ -232,7 +238,7 @@ asf_seek_to_msec(asf_file_t *file, int64_t msec)
 	if (!file)
 		return ASF_ERROR_INTERNAL;
 
-	if (!(file->flags & ASF_FLAG_SEEKABLE) || !file->stream.seek) {
+	if (!(file->flags & ASF_FLAG_SEEKABLE) || !file->iostream.seek) {
 		return ASF_ERROR_SEEKABLE;
 	}
 
@@ -271,18 +277,21 @@ asf_seek_to_msec(asf_file_t *file, int64_t msec)
 			return ASF_ERROR_SEEK;
 		}
 		packet = file->index->entries[index_entry].packet_index;
+
+		/* the correct msec time isn't known before reading the packet */
+		new_msec = msec;
 	} else {
 		/* convert msec into bytes per second and divide with packet_size */
 		packet = msec * file->max_bitrate / 8000 / file->packet_size;
+
+		/* calculate the resulting position in the audio stream */
+		new_msec = packet * file->packet_size * 8000 / file->max_bitrate;
 	}
 
 	/* calculate new position to be in the beginning of the current frame */
 	new_position = file->data->packets_position + packet * file->packet_size;
-	new_msec = packet * file->packet_size * 8000 / file->max_bitrate;
 
-	seek_position = file->stream.seek(file->stream.opaque,
-	                                  new_position);
-
+	seek_position = file->iostream.seek(file->iostream.opaque, new_position);
 	if (seek_position < 0 || seek_position != new_position) {
 		return ASF_ERROR_SEEK;
 	}
@@ -291,30 +300,38 @@ asf_seek_to_msec(asf_file_t *file, int64_t msec)
 	file->position = new_position;
 	file->packet = packet;
 
-	debug_printf("requested a seek to %d, seeked to %d", (int) msec, (int) new_msec);
-
 	return new_msec;
 }
 
 asf_metadata_t *
-asf_get_metadata(asf_file_t *file)
+asf_header_get_metadata(asf_file_t *file)
 {
-	if (!file)
+	if (!file || !file->header)
 		return NULL;
 
-	return asf_header_get_metadata(file->header);
+	return asf_header_metadata(file->header);
 }
 
 void
-asf_free_metadata(asf_metadata_t *metadata)
+asf_header_destroy(asf_file_t *file)
 {
-	asf_header_metadata_destroy(metadata);
+	if (!file)
+		return;
+
+	asf_free_header(file->header);
+	file->header = NULL;
+}
+
+void
+asf_metadata_destroy(asf_metadata_t *metadata)
+{
+	asf_header_free_metadata(metadata);
 }
 
 uint8_t
 asf_get_stream_count(asf_file_t *file)
 {
-	uint8_t ret;
+	uint8_t ret = 0;
 	int i;
 
 	for (i = 0; i < ASF_MAX_STREAMS; i++) {
@@ -335,8 +352,8 @@ asf_is_seekable(asf_file_t *file) {
 	return (file->flags & ASF_FLAG_SEEKABLE);
 }
 
-asf_stream_properties_t *
-asf_get_stream_properties(asf_file_t *file, uint8_t track)
+asf_stream_t *
+asf_get_stream(asf_file_t *file, uint8_t track)
 {
 	if (!file || track >= ASF_MAX_STREAMS)
 		return NULL;
