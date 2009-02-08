@@ -96,14 +96,14 @@ xmmsc_playback_start (xmmsc_connection_t *c)
  */
 
 xmmsc_result_t *
-xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
+xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_SEEKMS);
-	xmms_ipc_msg_put_uint32 (msg, milliseconds);
+	xmms_ipc_msg_put_int32 (msg, milliseconds);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -139,14 +139,14 @@ xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
  */
 
 xmmsc_result_t *
-xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
+xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_SEEKSAMPLES);
-	xmms_ipc_msg_put_uint32 (msg, samples);
+	xmms_ipc_msg_put_int32 (msg, samples);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -247,7 +247,7 @@ xmmsc_playback_playtime (xmmsc_connection_t *c)
 
 xmmsc_result_t *
 xmmsc_playback_volume_set (xmmsc_connection_t *c,
-                           const char *channel, unsigned int volume)
+                           const char *channel, int volume)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -257,7 +257,7 @@ xmmsc_playback_volume_set (xmmsc_connection_t *c,
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT,
 	                        XMMS_IPC_CMD_VOLUME_SET);
 	xmms_ipc_msg_put_string (msg, channel);
-	xmms_ipc_msg_put_uint32 (msg, volume);
+	xmms_ipc_msg_put_int32 (msg, volume);
 
 	return xmmsc_send_msg (c, msg);
 }
