@@ -379,7 +379,8 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 
 	for (i=1; i <= stream_count; i++) {
 		asf_stream_t *stream = asf_get_stream (file, i);
-		if (stream->type == ASF_STREAM_TYPE_AUDIO) {
+		if (stream->type == ASF_STREAM_TYPE_AUDIO &&
+		    !(stream->flags & ASF_STREAM_FLAG_HIDDEN)) {
 			asf_waveformatex_t *wfx = stream->properties;
 			const gchar *mimetype;
 
