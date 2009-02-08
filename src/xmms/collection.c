@@ -133,14 +133,14 @@ XMMS_CMD_DEFINE  (collection_get, xmms_collection_get, xmms_coll_dag_t *, COLL, 
 XMMS_CMD_DEFINE  (collection_list, xmms_collection_list, xmms_coll_dag_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE3 (collection_save, xmms_collection_save, xmms_coll_dag_t *, NONE, STRING, STRING, COLL);
 XMMS_CMD_DEFINE  (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, UINT32, STRING);
+XMMS_CMD_DEFINE  (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, INT32, STRING);
 XMMS_CMD_DEFINE3 (collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
 XMMS_CMD_DEFINE  (collection_from_pls, xmms_collection_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
 XMMS_CMD_DEFINE  (collection_sync, xmms_collection_sync, xmms_coll_dag_t *, NONE, NONE, NONE);
 
 
-XMMS_CMD_DEFINE4 (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, LIST);
-XMMS_CMD_DEFINE6 (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, LIST, LIST, LIST);
+XMMS_CMD_DEFINE4 (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST);
+XMMS_CMD_DEFINE6 (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST, LIST, LIST);
 
 
 GTree *

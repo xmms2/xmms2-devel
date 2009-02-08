@@ -158,14 +158,14 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
  * @param ns  The namespace to consider (cannot be ALL).
  */
 xmmsc_result_t*
-xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsv_coll_namespace_t ns)
+xmmsc_coll_find (xmmsc_connection_t *conn, int mediaid, xmmsv_coll_namespace_t ns)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_FIND);
-	xmms_ipc_msg_put_uint32 (msg, mediaid);
+	xmms_ipc_msg_put_int32 (msg, mediaid);
 	xmms_ipc_msg_put_string (msg, ns);
 
 	return xmmsc_send_msg (conn, msg);
@@ -212,8 +212,8 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  */
 xmmsc_result_t*
 xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
-                      xmmsv_t *order, unsigned int limit_start,
-                      unsigned int limit_len)
+                      xmmsv_t *order, int limit_start,
+                      int limit_len)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -229,8 +229,8 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_IDS);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_uint32 (msg, limit_start);
-	xmms_ipc_msg_put_uint32 (msg, limit_len);
+	xmms_ipc_msg_put_int32 (msg, limit_start);
+	xmms_ipc_msg_put_int32 (msg, limit_len);
 	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
 
 	xmmsv_unref (order);
@@ -258,8 +258,8 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
  */
 xmmsc_result_t*
 xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
-                        xmmsv_t *order, unsigned int limit_start,
-                        unsigned int limit_len, xmmsv_t *fetch,
+                        xmmsv_t *order, int limit_start,
+                        int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
 	xmms_ipc_msg_t *msg;
@@ -284,8 +284,8 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_INFOS);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_uint32 (msg, limit_start);
-	xmms_ipc_msg_put_uint32 (msg, limit_len);
+	xmms_ipc_msg_put_int32 (msg, limit_start);
+	xmms_ipc_msg_put_int32 (msg, limit_len);
 	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
 	xmms_ipc_msg_put_value_list (msg, fetch); /* purposedly skip typing */
 	xmms_ipc_msg_put_value_list (msg, group); /* purposedly skip typing */
