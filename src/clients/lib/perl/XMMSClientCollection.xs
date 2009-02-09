@@ -455,150 +455,24 @@ operands (coll)
 	ALIAS:
 		operand_list = 1
 	PREINIT:
+		xmmsv_t *operands_list;
+		xmmsv_list_iter_t *it;
+		xmmsv_t *value;
 		xmmsv_coll_t *op;
 	PPCODE:
 		PERL_UNUSED_VAR (ix);
 
-		for (xmmsv_coll_operand_list_first (coll);
-		     xmmsv_coll_operand_list_entry (coll, &op);
-		     xmmsv_coll_operand_list_next (coll)) {
+		operands_list = xmmsv_coll_operands_get (coll);
+
+		for (xmmsv_get_list_iter (operands_list, &it);
+		     xmmsv_list_iter_entry (it, &value);
+		     xmmsv_list_iter_next (it)) {
+			xmmsv_get_coll (value, &op);
 			xmmsv_coll_ref (op);
 			XPUSHs (sv_2mortal (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection")));
 		}
 
-=head2 operand_list_first
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $success
-
-=back
-
-  my $success = $coll->operand_list_first;
-
-Move the internal pointer of the operand list to the first operand.
-
-=cut
-
-int
-xmmsv_coll_operand_list_first (coll)
-		xmmsv_coll_t *coll
-
-=head2 operand_list_valid
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $is_valid
-
-=back
-
-  my $is_valid = $coll->operand_list_valid;
-
-Checks if the internal pointer points to a valid operand of the list.
-
-=cut
-
-int
-xmmsv_coll_operand_list_valid (coll)
-		xmmsv_coll_t *coll
-
-=head2 operand_list_entry
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $collection | undef
-
-=back
-
-  my $op = $coll->operand_list_entry;
-
-Return a collection representing the current operand in the list.
-
-=cut
-
-NO_OUTPUT int
-xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, OUTLIST xmmsv_coll_t *op)
-	INIT:
-		PERL_UNUSED_VAR (targ);
-	POSTCALL:
-		xmmsv_coll_ref (op);
-
-		if (RETVAL == 0)
-			XSRETURN_UNDEF;
-
-=head2 operand_list_next
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $success
-
-=back
-
-  my $success = $coll->operand_list_next;
-
-Move forward the internal pointer of the operand list.
-
-=cut
-
-int
-xmmsv_coll_operand_list_next (coll)
-		xmmsv_coll_t *coll
-
-=head2 operand_list_save
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $success
-
-=back
-
-  my $success = $coll->operand_list_save;
-
-Save the position of the operand iterator, to be restored later by calling
-L</operand_list_restore>.
-
-Note that the iterator is not tested for consistency, so you better be careful
-if the list of operands was manipulated since the iterator was saved!
-
-=cut
-
-int
-xmmsv_coll_operand_list_save (coll)
-		xmmsv_coll_t *coll
-
-=head2 operand_list_restore
-
-=over 4
-
-=item Arguments: none
-
-=item Return Value: $success
-
-=back
-
-  my $success = $coll->operand_list_restore;
-
-Restore the position of the operand iterator, previously saved by calling
-L</operand_list_save>.
-
-Note that the iterator is not tested for consistency, so you better be careful
-if the list of operands was manipulated since the iterator was saved!
-
-=cut
-
-int
-xmmsv_coll_operand_list_restore (coll)
-		xmmsv_coll_t *coll
+		xmmsv_list_iter_explicit_destroy (it);
 
 =head2 attribute_set
 
