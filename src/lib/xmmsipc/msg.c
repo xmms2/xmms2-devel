@@ -472,12 +472,6 @@ xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		}
 		ret = xmms_ipc_msg_put_error (msg, s);
 		break;
-	case XMMSV_TYPE_UINT32:
-		if (!xmmsv_get_uint (v, &u)) {
-			return -1;
-		}
-		ret = xmms_ipc_msg_put_uint32 (msg, u);
-		break;
 	case XMMSV_TYPE_INT32:
 		if (!xmmsv_get_int (v, &i)) {
 			return -1;
@@ -517,9 +511,8 @@ xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		ret = xmms_ipc_msg_get_length (msg);
 		break;
 	default:
-		/* FIXME: weird, no? dump error? */
+		x_internal_error ("Tried to serialize value of unsupported type");
 		return -1;
-		break;
 	}
 
 	return ret;
@@ -928,12 +921,6 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 			*val = xmmsv_new_error (s);
 			free (s);
 			break;
-		case XMMSV_TYPE_UINT32:
-			if (!xmms_ipc_msg_get_uint32 (msg, &u)) {
-				return false;
-			}
-			*val = xmmsv_new_uint (u);
-			break;
 		case XMMSV_TYPE_INT32:
 			if (!xmms_ipc_msg_get_int32 (msg, &i)) {
 				return false;
@@ -980,8 +967,8 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 			*val = xmmsv_new_none ();
 			break;
 		default:
+			x_internal_error ("Got message of unknown type!");
 			return false;
-			break;
 	}
 
 	return true;
