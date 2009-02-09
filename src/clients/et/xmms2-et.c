@@ -113,7 +113,6 @@ handle_mediainfo (xmmsv_t *v, void *userdata)
 	GString *str;
 	const gchar *tstr;
 	gint tint, i;
-	guint tuint;
 	xmmsv_t *dict;
 
 	str = g_string_new ("");
@@ -126,11 +125,6 @@ handle_mediainfo (xmmsv_t *v, void *userdata)
 		case XMMSV_TYPE_STRING:
 			if (xmmsv_dict_entry_get_string (dict, props[i], &tstr)) {
 				g_string_append_printf (str, "%s=%s\n", props[i], tstr);
-			}
-			break;
-		case XMMSV_TYPE_UINT32:
-			if (xmmsv_dict_entry_get_uint (dict, props[i], &tuint)) {
-				g_string_append_printf (str, "%s=%u\n", props[i], tuint);
 			}
 			break;
 		case XMMSV_TYPE_INT32:

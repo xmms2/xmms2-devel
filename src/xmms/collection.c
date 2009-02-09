@@ -1985,14 +1985,6 @@ filter_get_mediainfo_field_string (xmmsv_coll_t *coll,
 				retval = TRUE;
 				break;
 			}
-			case XMMSV_TYPE_UINT32:
-			{
-				guint u;
-				xmmsv_get_uint (cmdval, &u);
-				*val = g_strdup_printf ("%u", u);
-				retval = TRUE;
-				break;
-			}
 			case XMMSV_TYPE_INT32:
 			{
 				gint i;

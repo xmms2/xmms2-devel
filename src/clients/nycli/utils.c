@@ -65,12 +65,6 @@ dict_dump (const gchar *source, xmmsv_t *val, void *udata)
 	type = xmmsv_get_type (val);
 
 	switch (type) {
-	case XMMSV_TYPE_UINT32:
-	{
-		guint value;
-		xmmsv_get_uint (val, &value);
-		g_printf (_("[%s] %s = %u\n"), source, key, value);
-	}
 	case XMMSV_TYPE_INT32:
 	{
 		gint value;
@@ -263,13 +257,6 @@ print_config_entry (const gchar *confname, xmmsv_t *val, void *udata)
 		int confval;
 		xmmsv_get_int (val, &confval);
 		g_printf ("%s = %d\n", confname, confval);
-		break;
-	}
-	case XMMSV_TYPE_UINT32:
-	{
-		guint confval;
-		xmmsv_get_uint (val, &confval);
-		g_printf ("%s = %u\n", confname, confval);
 		break;
 	}
 	default:

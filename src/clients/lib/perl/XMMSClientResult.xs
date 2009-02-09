@@ -163,9 +163,6 @@ value_to_sv (xmmsv_t *value) {
 		case XMMSV_TYPE_ERROR:
 			croak_value_error (value);
 			break;
-		case XMMSV_TYPE_UINT32:
-			ret = sv_from_value_uint (value);
-			break;
 		case XMMSV_TYPE_INT32:
 			ret = sv_from_value_int (value);
 			break;

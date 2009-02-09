@@ -129,7 +129,6 @@ static gint
 result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 {
 	gint realsize;
-	guint uval;
 	gint ival;
 	const gchar *sval;
 	gchar *value;
@@ -150,10 +149,6 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 			*buffer = '\0';
 			realsize = 0;
 		}
-		break;
-	case XMMSV_TYPE_UINT32:
-		xmmsv_dict_entry_get_uint (val, coldef->arg.string, &uval);
-		realsize = g_snprintf (buffer, coldef->size + 1, "%u", uval);
 		break;
 	case XMMSV_TYPE_INT32:
 		xmmsv_dict_entry_get_int (val, coldef->arg.string, &ival);
@@ -539,9 +534,6 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 	const gchar *propname = (const gchar *) coldef->arg.udata;
 
 	switch (xmmsv_dict_entry_get_type (val, propname)) {
-	case XMMSV_TYPE_UINT32:
-		xmmsv_dict_entry_get_uint (val, propname, &millisecs);
-		break;
 	case XMMSV_TYPE_INT32:
 		xmmsv_dict_entry_get_int (val, propname, &millisecs);
 		break;

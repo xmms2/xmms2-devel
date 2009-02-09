@@ -100,11 +100,6 @@ print_hash (const gchar *key, xmmsv_t *value, void *udata)
 			print_info ("%s = %d", key, int_val);
 
 			break;
-		case XMMSV_TYPE_UINT32:
-			xmmsv_get_uint (value, &uint_val);
-			print_info ("%s = %u", key, uint_val);
-
-			break;
 		default:
 			print_error ("unhandled hash value %i", value_type);
 	}
@@ -190,13 +185,6 @@ print_entry (const gchar *key, xmmsv_t *dict, void *udata)
 				gint i;
 				xmmsv_get_int (v, &i);
 				print_info ("[%s] %s = %d", source, key, i);
-				break;
-			}
-			case XMMSV_TYPE_UINT32:
-			{
-				guint u;
-				xmmsv_get_uint (v, &u);
-				print_info ("[%s] %s = %u", source, key, u);
 				break;
 			}
 			default:

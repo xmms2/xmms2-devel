@@ -270,8 +270,6 @@ static VALUE
 extract_value (VALUE parent, xmmsv_t *val)
 {
 	switch (xmmsv_get_type (val)) {
-		case XMMSV_TYPE_UINT32:
-			return uint_get (val);
 		case XMMSV_TYPE_INT32:
 			return int_get (val);
 		case XMMSV_TYPE_STRING:

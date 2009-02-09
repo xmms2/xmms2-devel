@@ -91,16 +91,6 @@ namespace Xmms
 	{
 		switch( xmmsv_get_type( value ) ) {
 			
-			case XMMSV_TYPE_UINT32: {
-
-				uint32_t temp = 0;
-				if( !xmmsv_get_uint( value, &temp ) ) {
-					// FIXME: handle error
-				}
-				val = temp;
-				break;
-
-			}
 			case XMMSV_TYPE_INT32: {
 
 				int32_t temp = 0;
