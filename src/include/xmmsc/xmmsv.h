@@ -28,7 +28,6 @@ extern "C" {
 typedef enum {
 	XMMSV_TYPE_NONE,
 	XMMSV_TYPE_ERROR,
-	XMMSV_TYPE_UINT32,
 	XMMSV_TYPE_INT32,
 	XMMSV_TYPE_STRING,
 	XMMSV_TYPE_COLL,
@@ -38,6 +37,16 @@ typedef enum {
 	XMMSV_TYPE_END
 } xmmsv_type_t;
 
+static inline xmmsv_type_t XMMSV_TYPE_UINT32_IS_DEPRECATED(void) XMMS_DEPRECATED;
+static inline xmmsv_type_t
+XMMSV_TYPE_UINT32_IS_DEPRECATED (void)
+{
+	return XMMSV_TYPE_INT32;
+}
+#define XMMSV_TYPE_UINT32 XMMSV_TYPE_UINT32_IS_DEPRECATED()
+
+
+
 typedef struct xmmsv_St xmmsv_t;
 
 typedef struct xmmsv_list_iter_St xmmsv_list_iter_t;
@@ -46,7 +55,6 @@ typedef struct xmmsv_dict_iter_St xmmsv_dict_iter_t;
 xmmsv_t *xmmsv_new_none (void);
 xmmsv_t *xmmsv_new_error (const char *errstr); /* FIXME: err id? */
 xmmsv_t *xmmsv_new_int (int32_t i);
-xmmsv_t *xmmsv_new_uint (uint32_t u);
 xmmsv_t *xmmsv_new_string (const char *s);
 xmmsv_t *xmmsv_new_coll (xmmsv_coll_t *coll);
 xmmsv_t *xmmsv_new_bin (unsigned char *data, unsigned int len);
@@ -75,13 +83,12 @@ typedef void (*xmmsv_dict_foreach_func) (const char *key, xmmsv_t *value, void *
 xmmsv_type_t xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key);
 int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r);
 int xmmsv_dict_entry_get_int (xmmsv_t *val, const char *key, int32_t *r);
-int xmmsv_dict_entry_get_uint (xmmsv_t *val, const char *key, uint32_t *r);
 int xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **coll);
 xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
 
 int xmmsv_get_error (const xmmsv_t *val, const char **r);
 int xmmsv_get_int (const xmmsv_t *val, int32_t *r);
-int xmmsv_get_uint (const xmmsv_t *val, uint32_t *r);
+int xmmsv_get_uint (const xmmsv_t *val, uint32_t *r) XMMS_DEPRECATED;
 int xmmsv_get_string (const xmmsv_t *val, const char **r);
 int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll);
 int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
@@ -150,7 +157,6 @@ static inline xmmsv_t *__xmmsv_identity_xmmsv (xmmsv_t *v) {return v;}
 #define XMMSV_DICT_ENTRY(k, v) __xmmsv_identity_const_charp (k), __xmmsv_identity_xmmsv (v)
 #define XMMSV_DICT_ENTRY_STR(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_string (v))
 #define XMMSV_DICT_ENTRY_INT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_int (v))
-#define XMMSV_DICT_ENTRY_UINT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_uint (v))
 #define XMMSV_DICT_END NULL
 xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
 

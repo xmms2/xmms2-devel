@@ -404,7 +404,7 @@ xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 	        XMMSV_DICT_ENTRY_STR ("shortname", xmms_plugin_shortname_get (plugin)),
 	        XMMSV_DICT_ENTRY_STR ("version", xmms_plugin_version_get (plugin)),
 	        XMMSV_DICT_ENTRY_STR ("description", xmms_plugin_description_get (plugin)),
-	        XMMSV_DICT_ENTRY_UINT ("type", xmms_plugin_type_get (plugin)),
+	        XMMSV_DICT_ENTRY_INT ("type", xmms_plugin_type_get (plugin)),
 	        XMMSV_DICT_END);
 
 	*list = g_list_prepend (*list, dict);

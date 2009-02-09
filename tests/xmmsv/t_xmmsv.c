@@ -55,30 +55,10 @@ CASE (test_xmmsv_type_error)
 
 	xmmsv_unref (value);
 
-	value = xmmsv_new_uint (0);
-	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_UINT32));
+	value = xmmsv_new_int (0);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
 	CU_ASSERT_FALSE (xmmsv_get_error (value, &b));
 	CU_ASSERT_PTR_NULL (xmmsv_get_error_old (value));
-	xmmsv_unref (value);
-}
-
-CASE (test_xmmsv_type_uint32)
-{
-	unsigned int b, a = UINT_MAX;
-	xmmsv_t *value;
-
-	value = xmmsv_new_uint (a);
-	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_UINT32));
-
-	CU_ASSERT_EQUAL (XMMSV_TYPE_UINT32, xmmsv_get_type (value));
-	CU_ASSERT_FALSE (xmmsv_is_error (value));
-	CU_ASSERT_TRUE (xmmsv_get_uint (value, &b));
-	CU_ASSERT_EQUAL (a, b);
-
-	xmmsv_unref (value);
-
-	value = xmmsv_new_error ("oh noes");
-	CU_ASSERT_FALSE (xmmsv_get_uint (value, &b));
 	xmmsv_unref (value);
 }
 
@@ -499,16 +479,16 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_is_dict (value));
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_DICT));
 
-	tmp = xmmsv_new_uint (1);
+	tmp = xmmsv_new_int (1);
 	CU_ASSERT_FALSE (xmmsv_is_dict (tmp));
 	xmmsv_unref (tmp);
 
-	tmp = xmmsv_new_uint (42);
+	tmp = xmmsv_new_int (42);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "test1", &tmp));
-	CU_ASSERT_TRUE (xmmsv_get_uint (tmp, &ui));
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &ui));
 	CU_ASSERT_EQUAL (ui, 42);
 
 	CU_ASSERT_FALSE (xmmsv_dict_get (value, "apan tutar i skogen", &tmp));
@@ -545,14 +525,14 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_iter_remove (it));  /* remove "test2" */
 	CU_ASSERT_FALSE (xmmsv_dict_iter_remove (it)); /* empty! */
 
-	tmp = xmmsv_new_uint (42);
+	tmp = xmmsv_new_int (42);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 
-	tmp = xmmsv_new_uint (42);
+	tmp = xmmsv_new_int (42);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 

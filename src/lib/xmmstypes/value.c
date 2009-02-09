@@ -89,7 +89,6 @@ static void xmmsv_dict_iter_free (xmmsv_dict_iter_t *it);
 struct xmmsv_St {
 	union {
 		char *error;
-		uint32_t uint32;
 		int32_t int32;
 		char *string;
 		xmmsv_coll_t *coll;
@@ -162,24 +161,6 @@ xmmsv_new_int (int32_t i)
 
 	if (val) {
 		val->value.int32 = i;
-	}
-
-	return val;
-}
-
-/**
- * Allocates a new unsigned integer #xmmsv_t.
- * @param u The value to store in the #xmmsv_t.
- * @return The new #xmmsv_t. Must be unreferenced with
- * #xmmsv_unref.
- */
-xmmsv_t *
-xmmsv_new_uint (uint32_t u)
-{
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_UINT32);
-
-	if (val) {
-		val->value.uint32 = u;
 	}
 
 	return val;
@@ -360,7 +341,6 @@ xmmsv_free (xmmsv_t *val)
 	switch (val->type) {
 		case XMMSV_TYPE_NONE :
 		case XMMSV_TYPE_END :
-		case XMMSV_TYPE_UINT32 :
 		case XMMSV_TYPE_INT32 :
 			break;
 		case XMMSV_TYPE_ERROR :
@@ -543,7 +523,6 @@ xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (int, int32_t)
-GEN_COMPAT_DICT_EXTRACTOR_FUNC (uint, uint32_t)
 GEN_COMPAT_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
 static int
@@ -687,10 +666,10 @@ xmmsv_get_uint (const xmmsv_t *val, uint32_t *r)
 {
 	if (!val)
 		return 0;
-	if (val->type != XMMSV_TYPE_UINT32 && val->type != XMMSV_TYPE_INT32)
+	if (val->type != XMMSV_TYPE_INT32)
 		return 0;
 
-	*r = val->value.uint32;
+	*r = val->value.int32;
 
 	return 1;
 }
