@@ -685,7 +685,9 @@ xmmsv_get_int (const xmmsv_t *val, int32_t *r)
 int
 xmmsv_get_uint (const xmmsv_t *val, uint32_t *r)
 {
-	if (!val || val->type != XMMSV_TYPE_UINT32)
+	if (!val)
+		return 0;
+	if (val->type != XMMSV_TYPE_UINT32 && val->type != XMMSV_TYPE_INT32)
 		return 0;
 
 	*r = val->value.uint32;
