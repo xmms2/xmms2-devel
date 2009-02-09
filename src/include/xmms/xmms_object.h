@@ -117,7 +117,6 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 
 #define __XMMS_CMD_INIT_ARG_NONE(a)
 #define __XMMS_CMD_INIT_ARG_STRING(a) __XMMS_CMD_INIT_ARG(a, string, const gchar *)
-#define __XMMS_CMD_INIT_ARG_UINT32(a) __XMMS_CMD_INIT_ARG(a, uint, guint)
 #define __XMMS_CMD_INIT_ARG_INT32(a)  __XMMS_CMD_INIT_ARG(a, int,  gint)
 #define __XMMS_CMD_INIT_ARG_COLL(a)   __XMMS_CMD_INIT_ARG(a, coll, xmmsv_coll_t *)
 #define __XMMS_CMD_INIT_ARG_BIN(a)    __XMMS_CMD_INIT_ARG_FULL(a, GString *, xmms_bin_to_gstring)
@@ -126,7 +125,6 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 
 #define __XMMS_CMD_PRINT_ARG_NONE(a)
 #define __XMMS_CMD_PRINT_ARG_STRING(a) , argval##a
-#define __XMMS_CMD_PRINT_ARG_UINT32(a) , argval##a
 #define __XMMS_CMD_PRINT_ARG_INT32(a)  , argval##a
 #define __XMMS_CMD_PRINT_ARG_COLL(a)   , argval##a
 #define __XMMS_CMD_PRINT_ARG_BIN(a)    , argval##a
@@ -135,7 +133,6 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 
 #define __XMMS_CMD_DO_RETVAL_NONE() arg->retval = xmmsv_new_none();
 #define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_convert_and_kill_dict
-#define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval = xmmsv_new_uint
 #define __XMMS_CMD_DO_RETVAL_INT32() arg->retval = xmmsv_new_int
 #define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_convert_and_kill_list
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_convert_and_kill_string
