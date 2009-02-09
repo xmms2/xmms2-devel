@@ -81,7 +81,7 @@ XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (xform_kill, xmms_output_xform_kill, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, INT32, NONE);
@@ -727,7 +727,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 /**
  * Get the current playtime in milliseconds.
  */
-guint32
+gint32
 xmms_output_playtime (xmms_output_t *output, xmms_error_t *error)
 {
 	guint32 ret;

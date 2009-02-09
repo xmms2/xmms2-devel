@@ -34,7 +34,7 @@ xmms_output_t *xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *p
 xmms_medialib_entry_t xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
 
 void xmms_output_flush (xmms_output_t *output);
-guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
+gint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
 
 /* returns the current latency: time left in ms until the data currently read
  *                              from the latest xform in the chain will actually be played
