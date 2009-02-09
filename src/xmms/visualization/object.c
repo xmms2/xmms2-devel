@@ -32,7 +32,7 @@
 
 static xmms_visualization_t *vis = NULL;
 
-XMMS_CMD_DEFINE (query_version, xmms_visualization_version, xmms_visualization_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (query_version, xmms_visualization_version, xmms_visualization_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (registercl, xmms_visualization_register_client, xmms_visualization_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (init_shm, xmms_visualization_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
 XMMS_CMD_DEFINE (init_udp, xmms_visualization_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
@@ -163,7 +163,7 @@ xmms_visualization_destroy ()
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_VISUALIZATION);
 }
 
-uint32_t
+int32_t
 xmms_visualization_version (xmms_visualization_t *vis, xmms_error_t *err)
 {
 	/* if there is a way to disable visualization support on the server side,
