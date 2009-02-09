@@ -530,7 +530,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsv_t *val;
 	xmmsv_list_iter_t *it;
 	gulong total_playtime = 0;
-	guint p = 0;
+	gint p = 0;
 	guint pos = 0;
 
 	if (argc > 2) {
@@ -542,7 +542,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_is_error (val)) {
-		if (!xmmsv_dict_entry_get_uint (val, "position", &p)) {
+		if (!xmmsv_dict_entry_get_int (val, "position", &p)) {
 			print_error ("Broken resultset");
 		}
 		xmmsc_result_unref (res);
