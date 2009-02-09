@@ -59,7 +59,7 @@ refresh_currpos (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsv_is_error (val)) {
-		xmmsv_dict_entry_get_uint (val, "position", &cache->currpos);
+		xmmsv_dict_entry_get_int (val, "position", &cache->currpos);
 	} else {
 		/* Current pos not set */
 		cache->currpos = -1;
@@ -154,12 +154,12 @@ update_active_playlist (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = infos->cache;
 	xmmsc_result_t *refres;
 	gint pos, newpos, type;
-	guint id;
+	gint id;
 	const gchar *name;
 
 	xmmsv_dict_entry_get_int (val, "type", &type);
 	xmmsv_dict_entry_get_int (val, "position", &pos);
-	xmmsv_dict_entry_get_uint (val, "id", &id);
+	xmmsv_dict_entry_get_int (val, "id", &id);
 	xmmsv_dict_entry_get_string (val, "name", &name);
 
 	/* Active playlist not changed, nevermind */
