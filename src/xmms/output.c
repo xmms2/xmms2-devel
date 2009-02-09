@@ -54,7 +54,7 @@ static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t 
 static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error);
 static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
-static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
+static gint32 xmms_output_status (xmms_output_t *output, xmms_error_t *error);
 
 typedef enum xmms_output_filler_state_E {
 	FILLER_STOP,
@@ -86,7 +86,7 @@ XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, INT32, NONE)
 XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seeksamples_rel, xmms_output_seeksamples_rel, xmms_output_t *, NONE, INT32, NONE);
-XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (volume_set, xmms_output_volume_set, xmms_output_t *, NONE, STRING, INT32);
 XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE, NONE);
@@ -626,10 +626,10 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 }
 
 
-static guint
+static gint32
 xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 {
-	guint ret;
+	gint32 ret;
 	g_return_val_if_fail (output, XMMS_PLAYBACK_STATUS_STOP);
 
 	g_mutex_lock (output->status_mutex);
