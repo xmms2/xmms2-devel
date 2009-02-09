@@ -1165,7 +1165,7 @@ xmms_volume_map_to_dict (xmms_volume_map_t *vl)
 	for (i = 0; i < vl->num_channels; i++) {
 		xmmsv_t *val;
 
-		val = xmmsv_new_uint (vl->values[i]);
+		val = xmmsv_new_int (vl->values[i]);
 		g_tree_replace (ret, (gpointer) vl->names[i], val);
 	}
 

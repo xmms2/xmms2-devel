@@ -117,7 +117,7 @@ volume_get (xmmsc_connection_t *conn, const gchar *name)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
-	guint ret;
+	gint ret;
 
 	res = xmmsc_playback_volume_get (conn);
 	xmmsc_result_wait (res);
@@ -128,7 +128,7 @@ volume_get (xmmsc_connection_t *conn, const gchar *name)
 		             xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_dict_entry_get_uint (val, name, &ret)) {
+	if (!xmmsv_dict_entry_get_int (val, name, &ret)) {
 		ret = 0;
 	}
 
