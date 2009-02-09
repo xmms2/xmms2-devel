@@ -83,7 +83,7 @@
 
 G_BEGIN_DECLS
 
-typedef guint32 xmms_medialib_entry_t;
+typedef gint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
 xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms_error_t *error);

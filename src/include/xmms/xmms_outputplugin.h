@@ -328,7 +328,7 @@ void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
  * @param error an error object
  * @return the current medialib id
  */
-guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
+gint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 /**
  * Check if an output plugin needs format updates on each track change.

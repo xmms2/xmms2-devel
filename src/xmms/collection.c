@@ -760,7 +760,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 		xmmsv_dict_get (cmdval, "id", &id_val);
 		xmmsv_get_int (id_val, &id);
-		n->data = xmmsv_new_uint (id);
+		n->data = xmmsv_new_int (id);
 
 		xmmsv_unref (cmdval);
 	}

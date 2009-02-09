@@ -87,7 +87,7 @@ XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT3
 XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seeksamples_rel, xmms_output_seeksamples_rel, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, INT32, NONE, NONE);
 XMMS_CMD_DEFINE (volume_set, xmms_output_volume_set, xmms_output_t *, NONE, STRING, INT32);
 XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE, NONE);
 
@@ -638,7 +638,7 @@ xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 	return ret;
 }
 
-guint
+gint
 xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 {
 	return output->current_entry;
