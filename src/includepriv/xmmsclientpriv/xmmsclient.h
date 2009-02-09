@@ -68,9 +68,9 @@ void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
-xmmsc_result_t *xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
-xmmsc_result_t *xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
-uint32_t xmmsc_write_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
+xmmsc_result_t *xmmsc_send_broadcast_msg (xmmsc_connection_t *c, int signalid);
+xmmsc_result_t *xmmsc_send_signal_msg (xmmsc_connection_t *c, int signalid);
+uint32_t xmmsc_write_signal_msg (xmmsc_connection_t *c, int signalid);
 char *_xmmsc_medialib_encode_url (const char *url, int narg, const char **args);
 int _xmmsc_medialib_verify_url (const char *url);
 

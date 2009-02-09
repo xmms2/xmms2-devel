@@ -126,14 +126,14 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 	if (objid == XMMS_IPC_OBJECT_SIGNAL &&
 	    cmdid == XMMS_IPC_CMD_SIGNAL) {
-		guint signalid;
+		gint32 signalid;
 
-		if (!xmms_ipc_msg_get_uint32 (msg, &signalid)) {
+		if (!xmms_ipc_msg_get_int32 (msg, &signalid)) {
 			xmms_log_error ("No signalid in this msg?!");
 			return;
 		}
 
-		if (signalid >= XMMS_IPC_SIGNAL_END) {
+		if (signalid < 0 || signalid >= XMMS_IPC_SIGNAL_END) {
 			xmms_log_error ("Bad signal id (%d)", signalid);
 			return;
 		}
@@ -144,14 +144,14 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		return;
 	} else if (objid == XMMS_IPC_OBJECT_SIGNAL &&
 	           cmdid == XMMS_IPC_CMD_BROADCAST) {
-		guint broadcastid;
+		gint32 broadcastid;
 
-		if (!xmms_ipc_msg_get_uint32 (msg, &broadcastid)) {
+		if (!xmms_ipc_msg_get_int32 (msg, &broadcastid)) {
 			xmms_log_error ("No broadcastid in this msg?!");
 			return;
 		}
 
-		if (broadcastid >= XMMS_IPC_SIGNAL_END) {
+		if (broadcastid < 0 || broadcastid >= XMMS_IPC_SIGNAL_END) {
 			xmms_log_error ("Bad broadcast id (%d)", broadcastid);
 			return;
 		}
