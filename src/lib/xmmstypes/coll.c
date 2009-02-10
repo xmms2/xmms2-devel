@@ -638,7 +638,7 @@ xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll)
 }
 
 xmmsv_t *
-xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
+xmmsv_coll_operands_get (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, NULL);
 

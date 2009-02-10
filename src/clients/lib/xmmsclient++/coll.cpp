@@ -268,7 +268,7 @@ namespace Xmms
 		xmmsv_t *operands, *val;
 
 		// Find the operand
-		operands = xmmsv_coll_operands_list_get( coll_ );
+		operands = xmmsv_coll_operands_get( coll_ );
 		if( !xmmsv_list_get( operands, 0, &val ) ||
 		    !xmmsv_get_coll( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
@@ -627,7 +627,7 @@ namespace Xmms
 		xmmsv_t *operands, *val;
 
 		// Find the operand
-		operands = xmmsv_coll_operands_list_get( coll_ );
+		operands = xmmsv_coll_operands_get( coll_ );
 		if( !xmmsv_list_get( operands, 0, &val ) ||
 		    !xmmsv_get_coll( val, &op ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
@@ -679,7 +679,7 @@ namespace Xmms
 
 	void OperandIterator::initIterator()
 	{
-		xmmsv_t *operands( xmmsv_coll_operands_list_get( coll_.coll_ ) );
+		xmmsv_t *operands( xmmsv_coll_operands_get( coll_.coll_ ) );
 		xmmsv_get_list_iter( operands, &oper_it_ );
 	}
 

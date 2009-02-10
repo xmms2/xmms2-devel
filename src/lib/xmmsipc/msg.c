@@ -417,13 +417,13 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	/* operands counter and objects */
 	n = 0;
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		n = xmmsv_list_get_size (xmmsv_coll_operands_list_get (coll));
+		n = xmmsv_list_get_size (xmmsv_coll_operands_get (coll));
 	}
 
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
 	if (n > 0) {
-		xmmsv_get_list_iter (xmmsv_coll_operands_list_get (coll), &it);
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
 
 		while (xmmsv_list_iter_entry (it, &v)) {
 			if (!xmmsv_get_coll (v, &op)) {

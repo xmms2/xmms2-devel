@@ -512,7 +512,7 @@ c_operands_each (VALUE self)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	operands_list = xmmsv_coll_operands_list_get (coll->real);
+	operands_list = xmmsv_coll_operands_get (coll->real);
 
 	xmmsv_list_foreach (operands_list, operands_each, NULL);
 

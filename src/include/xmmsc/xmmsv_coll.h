@@ -36,7 +36,7 @@ void xmmsv_coll_unref (xmmsv_coll_t *coll);
 void xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[]);
 void xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op);
 void xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op);
-struct xmmsv_St *xmmsv_coll_operands_list_get (xmmsv_coll_t *coll);
+struct xmmsv_St *xmmsv_coll_operands_get (xmmsv_coll_t *coll);
 
 int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id);
 int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, unsigned int id);

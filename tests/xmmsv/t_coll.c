@@ -153,7 +153,7 @@ CASE (test_coll_operands)
 		xmmsv_coll_add_operand (u, ops[i]);
 	}
 
-	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_list_get (u)), 10);
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);
 
 	for (i = 0; i < 10; i++) {
 		xmmsv_coll_unref (ops[i]);
@@ -174,7 +174,7 @@ CASE (test_coll_operands_list)
 	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (u);
 
-	opl = xmmsv_coll_operands_list_get (u);
+	opl = xmmsv_coll_operands_get (u);
 	CU_ASSERT_PTR_NOT_NULL (opl);
 
 	t = xmmsv_new_int (1);
@@ -192,7 +192,7 @@ CASE (test_coll_operands_list)
 		xmmsv_unref (ov);
 	}
 
-	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_list_get (u)), 10);
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);
 
 	xmmsv_coll_operand_list_clear (u);
 

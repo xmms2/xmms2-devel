@@ -370,7 +370,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 	void xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 
-	xmmsv_t *xmmsv_coll_operands_list_get (xmmsv_coll_t *coll)
+	xmmsv_t *xmmsv_coll_operands_get (xmmsv_coll_t *coll)
 
 	void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, char *key, char *value)
 	int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, char *key)
@@ -807,7 +807,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 	opr = c.operands
 
 	V = XMMSValue()
-	V.set_value(xmmsv_coll_operands_list_get(coll))
+	V.set_value(xmmsv_coll_operands_get(coll))
 	opr.pylist = V.value()
 
 	xmmsv_coll_ref(coll)

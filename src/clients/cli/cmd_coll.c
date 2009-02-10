@@ -192,51 +192,51 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 
 	case XMMS_COLLECTION_TYPE_UNION:
 		print_info ("%sUnion:", indent);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		print_info ("%sIntersection:", indent);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		print_info ("%sComplement:", indent);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_EQUALS:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sEquals ('%s', '%s') for:", indent, attr1, attr2);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		print_info ("%sHas ('%s') for:", indent, attr1);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_MATCH:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sMatch ('%s', '%s') for:", indent, attr1, attr2);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_SMALLER:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sSmaller ('%s', '%s') for:", indent, attr1, attr2);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_GREATER:
 		xmmsv_coll_attribute_get (coll, "field",  &attr1);
 		xmmsv_coll_attribute_get (coll, "value", &attr2);
 		print_info ("%sGreater ('%s', '%s') for:", indent, attr1, attr2);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	case XMMS_COLLECTION_TYPE_IDLIST:
@@ -255,7 +255,7 @@ coll_dump (xmmsv_coll_t *coll, unsigned int level)
 		idlist_str = coll_idlist_to_string (coll);
 		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
 		g_string_free (idlist_str, TRUE);
-		coll_dump_list (xmmsv_coll_operands_list_get (coll), level + 1);
+		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
 
 	default:
