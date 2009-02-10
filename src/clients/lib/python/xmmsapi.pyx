@@ -71,7 +71,6 @@ cdef extern from "xmmsc/xmmsv.h":
 	ctypedef enum xmmsv_type_t:
 		XMMSV_TYPE_NONE,
 		XMMSV_TYPE_ERROR,
-		XMMSV_TYPE_UINT32,
 		XMMSV_TYPE_INT32,
 		XMMSV_TYPE_STRING,
 		XMMSV_TYPE_COLL,
@@ -104,7 +103,6 @@ cdef extern from "xmmsc/xmmsv.h":
 
 	int  xmmsv_get_error      (xmmsv_t *value, xmms_pyrex_constcharpp_t r)
 	int  xmmsv_get_int        (xmmsv_t *res, int *r)
-	int  xmmsv_get_uint       (xmmsv_t *res, unsigned int *r)
 	int  xmmsv_get_string     (xmmsv_t *res, xmms_pyrex_constcharpp_t r)
 	int  xmmsv_get_coll (xmmsv_t *value, xmmsv_coll_t **coll)
 	int  xmmsv_get_bin        (xmmsv_t *res, xmms_pyrex_constucharpp_t r, unsigned int *rlen)
@@ -190,7 +188,6 @@ COLLECTION_CHANGED_REMOVE = XMMS_COLLECTION_CHANGED_REMOVE
 
 VALUE_TYPE_NONE = XMMSV_TYPE_NONE
 VALUE_TYPE_ERROR = XMMSV_TYPE_ERROR
-VALUE_TYPE_UINT32 = XMMSV_TYPE_UINT32
 VALUE_TYPE_INT32 = XMMSV_TYPE_INT32
 VALUE_TYPE_STRING = XMMSV_TYPE_STRING
 VALUE_TYPE_COLL = XMMSV_TYPE_COLL
@@ -877,8 +874,6 @@ cdef class XMMSValue:
 			return None
 		elif typ == XMMSV_TYPE_ERROR:
 			return self.get_error()
-		elif typ == XMMSV_TYPE_UINT32:
-			return self.get_uint()
 		elif typ == XMMSV_TYPE_INT32:
 			return self.get_int()
 		elif typ == XMMSV_TYPE_STRING:
@@ -903,17 +898,6 @@ cdef class XMMSValue:
 		"""
 		cdef int ret
 		if xmmsv_get_int(self.val, &ret):
-			return ret
-		else:
-			raise ValueError("Failed to retrieve value!")
-
-	def get_uint(self):
-		"""
-		Get data from the result structure as an unsigned int.
-		@rtype: uint
-		"""
-		cdef unsigned int ret
-		if xmmsv_get_uint(self.val, &ret):
 			return ret
 		else:
 			raise ValueError("Failed to retrieve value!")
