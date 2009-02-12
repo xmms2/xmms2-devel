@@ -94,6 +94,32 @@ readline_status_toggle (gint count, gint key)
 	return 0;
 }
 
+static int
+char_is_quoted (char *text, int index)
+{
+	return index > 0 && text[index - 1] == '\\';
+}
+
+static char *
+filename_dequoting (char *text, int quote_char)
+{
+	/* freed by readline */
+	char *unquoted = malloc ((strlen (text) + 1) * sizeof (char));
+	char *p = unquoted;
+
+	while (*text) {
+		if (*text == '\\') {
+			text++;
+			continue;
+		}
+		*p++ = *text++;
+	}
+
+	*p = '\0';
+
+	return unquoted;
+}
+
 void
 readline_init (cli_infos_t *infos)
 {
@@ -101,6 +127,14 @@ readline_init (cli_infos_t *infos)
 	rl_callback_handler_install (configuration_get_string (infos->config,
 	                                                       "PROMPT"),
 	                             &readline_callback);
+
+	/* correctly quote filenames with double-quotes */
+	rl_filename_quote_characters = " ";
+	rl_filename_dequoting_function = filename_dequoting;
+
+	rl_completer_quote_characters = "\"'";
+	rl_completer_word_break_characters = " \t\n\"\'";
+	rl_char_is_quoted_p = char_is_quoted;
 }
 
 void
