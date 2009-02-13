@@ -858,18 +858,41 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 /* Check if url is a dir, used if matching_browse arg isn't a pattern
    (should have a better way) */
 static gint
-url_isdir (cli_infos_t *infos, gchar *url)
+url_isdir (cli_infos_t *infos, const gchar *const url)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val, *entry;
-	gchar *p, *path;
+	gchar *p, *path, *urls = NULL, *fullurl;
+	const gchar *cpath;
 	gint ret = 0;
 
-	p = url + strlen (url) - 2;
-	while (*p != '/') p--;
-	path = g_strndup (url, p-url+1);
+	p = g_strdup (url);
 
-	res = xmmsc_xform_media_browse_encoded (infos->sync, path);
+	if ((urls = strstr (p, "://"))) {
+		urls += 3;
+	} else {
+		/* Expects a scheme */
+		g_free (p);
+		return 0;
+	}
+
+	/* g_path_get_dirname has no notion of URLs, so
+	 * split the scheme part and work with the filename
+	 * part, remove the basename then concatenate the
+	 * scheme and path part back together
+	 */
+	path = g_path_get_dirname (urls);
+	*urls = '\0';
+	fullurl = g_strconcat (p, path, NULL);
+	urls = strrchr (path, '/');
+	if (urls && urls != path) {
+		*urls = '\0';
+	}
+	urls = g_strconcat (p, path, NULL);
+	g_free (path);
+	g_free (p);
+
+	res = xmmsc_xform_media_browse_encoded (infos->sync, urls);
 	xmmsc_result_wait (res);
 	val = xmmsc_result_get_value (res);
 
@@ -879,17 +902,18 @@ url_isdir (cli_infos_t *infos, gchar *url)
 		for (xmmsv_list_iter_first (it);
 		     xmmsv_list_iter_valid (it);
 		     xmmsv_list_iter_next (it)) {
-			const gchar *path;
 
 			xmmsv_list_iter_entry (it, &entry);
-			xmmsv_dict_entry_get_string (entry, "path", &path);
-			if (!strcmp (path, url)) {
+			xmmsv_dict_entry_get_string (entry, "path", &cpath);
+			if (!strcmp (cpath, fullurl)) {
 				xmmsv_dict_entry_get_int (entry, "isdir", &ret);
 				break;
 			}
 		}
 	}
 
+	g_free (fullurl);
+	g_free (urls);
 	xmmsc_result_unref (res);
 
 	return ret;
