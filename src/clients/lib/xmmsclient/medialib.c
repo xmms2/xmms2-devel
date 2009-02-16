@@ -183,6 +183,32 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
 xmmsc_result_t *
 xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 {
+	xmmsc_result_t *res;
+	char *enc_url;
+	x_check_conn (conn, NULL);
+
+	enc_url = _xmmsc_medialib_encode_url (url, 0, NULL);
+	if (!enc_url)
+		return NULL;
+
+	res = xmmsc_medialib_get_id_encoded (conn, enc_url);
+
+	free (enc_url);
+	
+	return res;
+}
+
+/**
+ * Search for a entry (URL) in the medialib db and return its ID number
+ *
+ * Same as #xmmsc_medialib_get_id but expects a encoded URL instead
+ *
+ * @param conn The #xmmsc_connection_t
+ * @param url The URL to search for
+ */
+xmmsc_result_t *
+xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url)
+{
 	x_check_conn (conn, NULL);
 
 	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
