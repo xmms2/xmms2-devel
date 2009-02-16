@@ -23,6 +23,7 @@
  * This file controls the XMMS2 main loop.
  */
 
+#include <locale.h>
 #include <glib.h>
 
 #include "xmms_configuration.h"
@@ -380,6 +381,8 @@ main (int argc, char **argv)
 	int status_fd = -1;
 	GOptionContext *context = NULL;
 	GError *error = NULL;
+
+	setlocale (LC_ALL, "");
 
 	/**
 	 * The options that the server accepts.

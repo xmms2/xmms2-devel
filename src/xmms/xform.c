@@ -25,6 +25,7 @@
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_object.h"
@@ -249,7 +250,7 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	if (!xmmsv_get_string (tmp2, &s2))
 		return 0;
 
-	return g_utf8_collate (s1, s2);
+	return xmms_natcmp (s1, s2);
 }
 
 GList *

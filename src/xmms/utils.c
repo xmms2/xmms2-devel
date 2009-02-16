@@ -122,3 +122,32 @@ xmms_build_playlist_url (const gchar *plspath, const gchar *file)
 	g_free (path);
 	return url;
 }
+
+gint
+xmms_natcmp_len (const gchar *str1, gint len1, const gchar *str2, gint len2)
+{
+	gchar *tmp1, *tmp2, *tmp3, *tmp4;
+	gint res;
+
+	/* FIXME: Implement a less allocation-happy variant */
+	tmp1 = g_utf8_casefold (str1, len1);
+	tmp2 = g_utf8_casefold (str2, len2);
+
+	tmp3 = g_utf8_collate_key_for_filename (tmp1, -1);
+	tmp4 = g_utf8_collate_key_for_filename (tmp2, -1);
+
+	res = strcmp (tmp3, tmp4);
+
+	g_free (tmp1);
+	g_free (tmp2);
+	g_free (tmp3);
+	g_free (tmp4);
+
+	return res;
+}
+
+gint
+xmms_natcmp (const gchar *str1, const gchar *str2)
+{
+	return xmms_natcmp_len (str1, -1, str2, -1);
+}
