@@ -191,8 +191,9 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 		if (*t->title) {
 			xmms_xform_browse_add_entry_property_str (xform, "title", t->title);
 		}
-		if (*t->artist) {
-			xmms_xform_browse_add_entry_property_str (xform, "artist", t->artist);
+		if (*t->artist || *tr->artist) {
+			xmms_xform_browse_add_entry_property_str (xform, "artist",
+			                                          (*t->artist)? t->artist : tr->artist);
 		}
 		if (*tr->album) {
 			xmms_xform_browse_add_entry_property_str (xform, "album", tr->album);
