@@ -33,7 +33,7 @@ void alias_setup (command_action_t *action, alias_define_t *alias);
 GList* alias_tokenize (const gchar *define);
 void alias_free (alias_define_t *alias);
 alias_define_t *alias_init (gchar *name, gchar *define);
-alias_define_t **alias_list (GHashTable *hash);
-void alias_list_free (alias_define_t **list);
+alias_define_t *alias_list (GHashTable *hash);
+void alias_list_free (alias_define_t *list);
 
 #endif /* __ALIAS_H__ */

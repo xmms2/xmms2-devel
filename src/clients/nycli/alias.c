@@ -188,41 +188,37 @@ alias_setup (command_action_t *action, alias_define_t *alias)
 	                     alias->define);
 }
 
-alias_define_t **
+alias_define_t *
 alias_list (GHashTable *hash)
 {
-	alias_define_t **aliaslist;
+	alias_define_t *aliaslist;
 	gpointer name, define;
 	guint i, size;
 
 	GHashTableIter it;
 
 	size = g_hash_table_size (hash);
-	aliaslist = g_new0 (alias_define_t *, size + 1);
+	aliaslist = g_new0 (alias_define_t, size + 1);
 
 	i = 0;
 	g_hash_table_iter_init (&it, hash);
 	while (g_hash_table_iter_next (&it, &name, &define)) {
-		alias_define_t *alias;
+		aliaslist[i].name = g_strdup (name);
+		aliaslist[i].define = g_strdup (define);
 
-		alias = g_new0 (alias_define_t, 1);
-		alias->name = g_strdup (name);
-		alias->define = g_strdup (define);
-
-		aliaslist[i++] = alias;
+		i++;
 	}
 
 	return aliaslist;
 }
 
 void
-alias_list_free (alias_define_t **list)
+alias_list_free (alias_define_t *list)
 {
 	gint i;
-	for (i = 0; list[i] != NULL; i++) {
-		g_free (list[i]->name);
-		g_free (list[i]->define);
-		g_free (list[i]);
+	for (i = 0; list[i].name; i++) {
+		g_free (list[i].name);
+		g_free (list[i].define);
 	}
 	g_free (list);
 }

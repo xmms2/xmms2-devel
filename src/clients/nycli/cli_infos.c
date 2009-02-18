@@ -206,7 +206,7 @@ cli_infos_t *
 cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;
-	alias_define_t **aliaslist;
+	alias_define_t *aliaslist;
 	gint i;
 
 	infos = g_new0 (cli_infos_t, 1);
@@ -235,9 +235,9 @@ cli_infos_init (gint argc, gchar **argv)
 
 	/* Register aliases with a default callback */
 	aliaslist = alias_list (configuration_get_aliases (infos->config));
-	for (i = 0; aliaslist[i]; ++i) {
+	for (i = 0; aliaslist[i].name; ++i) {
 		command_action_t *action = command_action_alloc ();
-		alias_setup (action, aliaslist[i]);
+		alias_setup (action, &aliaslist[i]);
 		if (!register_command (infos->commands, &infos->aliasnames, action)) {
 			command_action_free (action);
 		}
