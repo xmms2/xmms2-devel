@@ -85,14 +85,14 @@ namespace Xmms
 	class List_const_iterator_
 	{
 		private:
-			List_const_iterator_( xmmsv_t* );
+			List_const_iterator_( xmmsv_t*, unsigned int );
 			friend class List< T >;
 		public:
 			typedef ptrdiff_t difference_type;
 			typedef std::forward_iterator_tag iterator_category;
 			typedef T value_type;
-			typedef value_type& reference;
-			typedef value_type* pointer;
+			typedef const value_type& reference;
+			typedef const value_type* pointer;
 
 			List_const_iterator_();
 			List_const_iterator_( const List_const_iterator_& );
@@ -136,6 +136,8 @@ namespace Xmms
 		public:
 
 			typedef List_const_iterator_< T > const_iterator;
+
+			typedef std::reverse_iterator< const_iterator > const_reverse_iterator;
 
 			/** Constructor
 			 *  @see SuperList#SuperList.
@@ -182,11 +184,20 @@ namespace Xmms
 
 			const_iterator begin() const
 			{
-				return const_iterator( value_ );
+				return const_iterator( value_, 0 );
 			}
 			const_iterator end() const
 			{
-				return const_iterator();
+				return const_iterator( value_, xmmsv_list_get_size(value_) );
+			}
+
+			const_reverse_iterator rbegin() const
+			{
+				return const_reverse_iterator(end());
+			}
+			const_reverse_iterator rend() const
+			{
+				return const_reverse_iterator(begin());
 			}
 
 		/** @cond */
@@ -211,10 +222,11 @@ namespace Xmms
 	}
 
 	template< typename T >
-	List_const_iterator_< T >::List_const_iterator_( xmmsv_t* list )
+	List_const_iterator_< T >::List_const_iterator_( xmmsv_t* list, unsigned int pos )
 		: list_( list ), it_( 0 )
 	{
 		xmmsv_get_list_iter( list_, &it_ );
+		xmmsv_list_iter_seek( it_, pos );
 	}
 
 	template< typename T >
