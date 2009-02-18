@@ -194,7 +194,7 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 	res = xmmsc_medialib_get_id_encoded (conn, enc_url);
 
 	free (enc_url);
-	
+
 	return res;
 }
 
