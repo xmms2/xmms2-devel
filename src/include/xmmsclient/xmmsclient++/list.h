@@ -113,7 +113,6 @@ namespace Xmms
 				xmmsv_list_iter_entry( it_, &elem );
 				return elem;
 			}
-			bool valid() const;
 
 			xmmsv_t* list_;
 			xmmsv_list_iter_t* it_;
@@ -140,7 +139,6 @@ namespace Xmms
 			typedef std::reverse_iterator< const_iterator > const_reverse_iterator;
 
 			/** Constructor
-			 *  @see SuperList#SuperList.
 			 */
 			List( xmmsv_t* value ) :
 				value_( 0 )
@@ -331,19 +329,10 @@ namespace Xmms
 	template< typename T >
 	bool List_const_iterator_< T >::equal( const List_const_iterator_& rh ) const
 	{
-		if( !valid() && !rh.valid() ) {
-			return true;
-		}
 		if( list_ == rh.list_ ) {
 			return xmmsv_list_iter_tell( it_ ) == xmmsv_list_iter_tell( rh.it_ );
 		}
 		return false;
-	}
-
-	template< typename T >
-	bool List_const_iterator_< T >::valid() const
-	{
-		return list_ && it_ && xmmsv_list_iter_valid( it_ );
 	}
 }
 
