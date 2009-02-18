@@ -89,7 +89,7 @@ namespace Xmms
 			friend class List< T >;
 		public:
 			typedef ptrdiff_t difference_type;
-			typedef std::forward_iterator_tag iterator_category;
+			typedef std::bidirectional_iterator_tag iterator_category;
 			typedef T value_type;
 			typedef const value_type& reference;
 			typedef const value_type* pointer;
