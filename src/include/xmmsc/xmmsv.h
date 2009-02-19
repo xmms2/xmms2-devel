@@ -131,6 +131,7 @@ int xmmsv_dict_remove (xmmsv_t *dictv, const char *key);
 int xmmsv_dict_clear (xmmsv_t *dictv);
 int xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func, void *user_data);
 int xmmsv_dict_get_size (xmmsv_t *dictv);
+int xmmsv_dict_has_key (xmmsv_t *dictv, const char *key);
 
 int  xmmsv_dict_iter_pair (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **val);
 int  xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it);

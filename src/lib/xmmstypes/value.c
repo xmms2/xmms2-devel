@@ -2065,3 +2065,9 @@ absolutify_and_validate_pos (int *pos, int size, int allow_append)
 
 	return 1;
 }
+
+int
+xmmsv_dict_has_key (xmmsv_t *dictv, const char *key)
+{
+	return xmmsv_dict_get (dictv, key, NULL);
+}
