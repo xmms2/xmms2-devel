@@ -2332,6 +2332,18 @@ cdef class XMMS:
 		
 		return self.create_result(cb, xmmsc_coll_rename(self.conn, oldnam, newnam, n))
 
+	def coll_idlist_from_playlist_file(self, path):
+		"""
+		coll_idlist_from_playlist_file(path) -> XMMSResult
+
+		Create an idlist from a playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		path = from_unicode(path)
+
+		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, path))
+
 	def coll_query_ids(self, coll, start=0, leng=0, order=None, cb=None):
 		"""
 		coll_query_ids(coll, start=0, leng=0, order=None, cb=None) -> XMMSResult
