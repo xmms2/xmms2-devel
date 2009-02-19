@@ -126,12 +126,12 @@ def _configure_optionals(conf):
 
     conf.env['XMMS_OPTIONAL_BUILD'] = []
 
-    if Options.options.enable_optionals:
+    if Options.options.enable_optionals != None:
         selected_optionals = _check_exist(set(Options.options.enable_optionals),
                                            "The following optional(s) were requested, "
                                            "but don't exist: %(unknown_optionals)s")
         optionals_must_work = True
-    elif Options.options.disable_optionals:
+    elif Options.options.disable_optionals != None:
         disabled_optionals = _check_exist(set(Options.options.disable_optionals),
                                           "The following optional(s) were disabled, "
                                           "but don't exist: %(unknown_optionals)s")
@@ -174,14 +174,14 @@ def _configure_plugins(conf):
     conf.env['XMMS_PLUGINS_ENABLED'] = []
 
     # If an explicit list was provided, only try to process that
-    if Options.options.enable_plugins:
+    if Options.options.enable_plugins != None:
         selected_plugins = _check_exist(set(Options.options.enable_plugins),
                                         "The following plugin(s) were requested, "
                                         "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     # If a disable list was provided, we try all plugins except for those.
-    elif Options.options.disable_plugins:
+    elif Options.options.disable_plugins != None:
         disabled_plugins = _check_exist(set(Options.options.disable_plugins),
                                         "The following plugins(s) were disabled, "
                                         "but don't exist: %(unknown_plugins)s")
@@ -421,6 +421,8 @@ def configure(conf):
 def _list_cb(option, opt, value, parser):
     """Callback that lets you specify lists of targets."""
     vals = value.split(',')
+    if vals == ['']:
+        vals = []
     if getattr(parser.values, option.dest):
         vals += getattr(parser.values, option.dest)
     setattr(parser.values, option.dest, vals)
@@ -431,15 +433,15 @@ def set_options(opt):
     opt.add_option('--with-custom-version', type='string',
                    dest='customversion')
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="enable_plugins")
+                   type="string", dest="enable_plugins", default=None)
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="disable_plugins")
+                   type="string", dest="disable_plugins", default=None)
     opt.add_option('--with-default-output-plugin', type='string',
                    dest='default_output_plugin')
     opt.add_option('--with-optionals', action="callback", callback=_list_cb,
-                   type="string", dest="enable_optionals")
+                   type="string", dest="enable_optionals", default=None)
     opt.add_option('--without-optionals', action="callback", callback=_list_cb,
-                   type="string", dest="disable_optionals")
+                   type="string", dest="disable_optionals", default=None)
     opt.add_option('--conf-prefix', action="callback", callback=_list_cb,
                    type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', action='store_true', default=False,
