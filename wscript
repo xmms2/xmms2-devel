@@ -442,7 +442,8 @@ def set_options(opt):
                    type="string", dest="disable_optionals")
     opt.add_option('--conf-prefix', action="callback", callback=_list_cb,
                    type='string', dest='config_prefix')
-    opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
+    opt.add_option('--without-xmms2d', action='store_true', default=False,
+                   dest='without_xmms2d')
     opt.add_option('--with-mandir', type='string', dest='manualdir')
     opt.add_option('--with-bindir', type='string', dest='bindir')
     opt.add_option('--with-libdir', type='string', dest='libdir')
@@ -450,7 +451,8 @@ def set_options(opt):
     opt.add_option('--with-target-platform', type='string',
                    dest='target_platform')
     opt.add_option('--with-windows-version', type='string', dest='winver')
-    opt.add_option('--run-tests', type='int', dest='run_tests')
+    opt.add_option('--run-tests', action='store_true', default=False,
+                   dest='run_tests')
 
     opt.sub_options("src/xmms")
     for o in optional_subdirs + subdirs:
