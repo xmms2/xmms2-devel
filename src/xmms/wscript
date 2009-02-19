@@ -84,7 +84,7 @@ def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
     conf.check_cfg(package='gmodule-2.0', atleast_version='2.6.0', uselib_store='gmodule2', args='--cflags --libs')
     conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0', uselib_store='gthread2', args='--cflags --libs')
-    conf.check_cfg(package='sqlite3', atleast_version='3.5.1', uselib_store='sqlite3', args='--cflags --libs', mandatory=1)
+    conf.check_cfg(package='sqlite3', atleast_version='3.5', uselib_store='sqlite3', args='--cflags --libs', mandatory=1)
 
     # Check for the sin function in the math lib
     conf.check_cc(lib='m', function_name='sin', header_name=['math.h'], uselib_store="math", mandatory=1)
