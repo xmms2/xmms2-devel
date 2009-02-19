@@ -19,6 +19,7 @@ def build(bld):
         obj.source += ["utils_unix.c"]
 
     obj.includes = '. ../../.. ../../include'
+    obj.uselib = 'rt'
     obj.target = 'xmmsutils'
     obj.install_path = 0
 
@@ -27,6 +28,11 @@ def configure(conf):
         conf.env['util_impl'] = 'win32'
     else:
         conf.env['util_impl'] = 'unix'
+        if not conf.check_cc(function_name="nanosleep", header_name="time.h"):
+            # nanosleep is in librt on Solaris 10
+            if not conf.check_cc(function_name="nanosleep", header_name="time.h",
+                                 lib="rt", uselib_store="rt"):
+                return False
 
     return True
 
