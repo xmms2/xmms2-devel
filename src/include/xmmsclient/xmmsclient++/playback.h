@@ -167,7 +167,7 @@ namespace Xmms
 			 *
 			 *  @return The currently playing ID.
 			 */
-			UintResult currentID() const;
+			IntResult currentID() const;
 
 			/** Make server emit the playback status.
 			 *
@@ -194,7 +194,7 @@ namespace Xmms
 			 *
 			 *  @return The playtime in milliseconds.
 			 */
-			UintResult getPlaytime() const;
+			IntResult getPlaytime() const;
 
 			/** Set the volume of a channel.
 			 *
@@ -224,10 +224,10 @@ namespace Xmms
 			 */
 			DictResult volumeGet() const;
 
-			UintSignal broadcastCurrentID() const;
+			IntSignal broadcastCurrentID() const;
 			StatusSignal broadcastStatus() const;
 			DictSignal broadcastVolumeChanged() const;
-			UintSignal signalPlaytime() const;
+			IntSignal signalPlaytime() const;
 
 		/** @cond */
 		private:

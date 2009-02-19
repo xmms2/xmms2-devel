@@ -264,13 +264,13 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	UintListResult Playlist::listEntries( const std::string& playlist ) const
+	IntListResult Playlist::listEntries( const std::string& playlist ) const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_list_entries, conn_,
 		                       playlist.c_str() ) );
-		return UintListResult( res, ml_ );
+		return IntListResult( res, ml_ );
 	}
 
 	VoidResult Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
@@ -301,20 +301,20 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	UintResult Playlist::setNext( unsigned int pos ) const
+	IntResult Playlist::setNext( unsigned int pos ) const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_set_next, conn_, pos ) );
-		return UintResult( res, ml_ );
+		return IntResult( res, ml_ );
 	}
 
-	UintResult Playlist::setNextRel( signed int pos ) const
+	IntResult Playlist::setNextRel( signed int pos ) const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,
 		          boost::bind( xmmsc_playlist_set_next_rel, conn_, pos ) );
-		return UintResult( res, ml_ );
+		return IntResult( res, ml_ );
 	}
 
 	VoidResult Playlist::shuffle( const std::string& playlist ) const

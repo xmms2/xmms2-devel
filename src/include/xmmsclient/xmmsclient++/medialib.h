@@ -158,7 +158,7 @@ namespace Xmms
 			 *  
 			 *  @return ID number
 			 */
-			UintResult getID( const std::string& url ) const;
+			IntResult getID( const std::string& url ) const;
 
 			/** Retrieve information about a entry from the medialib.
 			 *
@@ -260,7 +260,7 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			UintSignal broadcastEntryAdded() const;
+			IntSignal broadcastEntryAdded() const;
 
 			/** Request the medialib entry changed broadcast.
 			 *
@@ -274,7 +274,7 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			UintSignal broadcastEntryChanged() const;
+			IntSignal broadcastEntryChanged() const;
 
 		/** @cond */
 		private:

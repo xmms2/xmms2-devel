@@ -122,7 +122,7 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			UintSignal
+			IntSignal
 			signalMediainfoReaderUnindexed() const;
 
 		/** @cond */

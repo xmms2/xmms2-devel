@@ -222,42 +222,39 @@ namespace Xmms
 
 	};
 
-	class QuitSignal : protected SignalAdapter< uint32_t >
+	class QuitSignal : protected SignalAdapter< int32_t >
 	{
 		public:
 
 			QuitSignal( xmmsc_result_t* res, MainloopInterface*& ml )
-				: SignalAdapter< uint32_t >( res, ml )
+				: SignalAdapter< int32_t >( res, ml )
 			{
 				xmmsc_result_notifier_set_full( res_,
-				                                Xmms::generic_callback<uint32_t>,
+				                                Xmms::generic_callback<int32_t>,
 				                                static_cast< void* >( sig_ ),
 				                                &freeSignal );
 			}
 
-			using SignalAdapter< uint32_t >::connect;
-			using SignalAdapter< uint32_t >::connectError;
+			using SignalAdapter< int32_t >::connect;
+			using SignalAdapter< int32_t >::connectError;
 
 	};
 
 	typedef Adapter< int32_t, int32_t, xmmsv_get_int > IntResult;
-	typedef Adapter< uint32_t, uint32_t, xmmsv_get_uint > UintResult;
 	typedef Adapter< std::string, const char*, xmmsv_get_string > StringResult;
-	typedef Adapter< xmms_playback_status_t, uint32_t,
-	                 xmmsv_get_uint > StatusResult;
+	typedef Adapter< xmms_playback_status_t, int32_t,
+	                 xmmsv_get_int > StatusResult;
 
 	typedef ClassAdapter< Dict > DictResult;
 	typedef ClassAdapter< PropDict > PropDictResult;
 	typedef ClassAdapter< List< int > > IntListResult;
-	typedef ClassAdapter< List< unsigned int > > UintListResult;
 	typedef ClassAdapter< List< std::string > > StringListResult;
 	typedef ClassAdapter< List< Dict > > DictListResult;
 
 	typedef SignalAdapter< Dict > DictSignal;
-	typedef SignalAdapter< unsigned int > UintSignal;
+	typedef SignalAdapter< int > IntSignal;
 	typedef SignalAdapter< std::string > StringSignal;
 	typedef SignalAdapter< xmms_playback_status_t > StatusSignal;
-	typedef SignalAdapter< List< unsigned int > > UintListSignal;
 	typedef SignalAdapter< xmms_mediainfo_reader_status_t > ReaderStatusSignal;
 
 	class VoidResult : public AdapterBase< void >

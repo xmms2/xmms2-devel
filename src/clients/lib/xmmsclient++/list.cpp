@@ -27,7 +27,6 @@ namespace Xmms
 {
 
 	int (*type_traits< int32_t >::get_func)( const xmmsv_t*, int32_t* ) = xmmsv_get_int;
-	int (*type_traits< uint32_t >::get_func)( const xmmsv_t*, uint32_t* ) = xmmsv_get_uint;
 	int (*type_traits< std::string >::get_func)( const xmmsv_t*, const char** ) = xmmsv_get_string;
 
 }

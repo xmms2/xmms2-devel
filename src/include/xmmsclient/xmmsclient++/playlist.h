@@ -435,7 +435,7 @@ namespace Xmms
 			 *
 			 *  @return A List of medialib IDs
 			 */
-			UintListResult listEntries( const std::string& playlist
+			IntListResult listEntries( const std::string& playlist
 			                                       = DEFAULT_PLAYLIST ) const;
 
 			/** Move a playlist entry to a new position (absolute move).
@@ -498,7 +498,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			UintResult setNext( unsigned int pos ) const;
+			IntResult setNext( unsigned int pos ) const;
 
 			/** Same as setNext but relative to the current position.
 			 *
@@ -513,7 +513,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			UintResult setNextRel( signed int pos ) const;
+			IntResult setNextRel( signed int pos ) const;
 
 			/** Shuffles a playlist.
 			 *

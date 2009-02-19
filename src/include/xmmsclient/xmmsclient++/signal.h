@@ -131,15 +131,6 @@ namespace Xmms
 	}
 
 	template<>
-	inline unsigned int*
-	extract_value( xmmsv_t* val )
-	{
-		unsigned int* temp = new unsigned int;
-		xmmsv_get_uint( val, temp );
-		return temp;
-	}
-
-	template<>
 	inline int*
 	extract_value( xmmsv_t* val )
 	{
@@ -171,8 +162,8 @@ namespace Xmms
 	inline xmms_playback_status_t*
 	extract_value( xmmsv_t* val )
 	{
-		unsigned int temp = 0;
-		xmmsv_get_uint( val, &temp );
+		int32_t temp = 0;
+		xmmsv_get_int( val, &temp );
 		xmms_playback_status_t* result = new xmms_playback_status_t;
 		*result = static_cast< xmms_playback_status_t >( temp );
 		return result;

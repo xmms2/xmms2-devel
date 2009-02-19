@@ -58,14 +58,14 @@ namespace Xmms
 		return ReaderStatusSignal( res, ml_ );
 	}
 
-	UintSignal
+	IntSignal
 	Stats::signalMediainfoReaderUnindexed() const
 	{
 		using boost::bind;
 		xmmsc_result_t* res =
 		    call( connected_,
 		          bind( xmmsc_signal_mediainfo_reader_unindexed, conn_) );
-		return UintSignal( res, ml_ );
+		return IntSignal( res, ml_ );
 	}
 
 	Stats::Stats( xmmsc_connection_t*& conn, bool& connected,

@@ -127,13 +127,13 @@ namespace Xmms
 	}
 
 
-	UintResult Medialib::getID( const std::string& url ) const
+	IntResult Medialib::getID( const std::string& url ) const
 	{
 		xmmsc_result_t* res = call( connected_,
 		                            boost::bind( xmmsc_medialib_get_id,
 		                                         conn_, url.c_str() )
 		                          );
-		return UintResult( res, ml_ );
+		return IntResult( res, ml_ );
 	}
 
 	PropDictResult Medialib::getInfo( unsigned int id ) const
@@ -189,21 +189,21 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	UintSignal Medialib::broadcastEntryAdded() const
+	IntSignal Medialib::broadcastEntryAdded() const
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
 		          boost::bind( xmmsc_broadcast_medialib_entry_added, conn_ ) );
-		return UintSignal( res, ml_ );
+		return IntSignal( res, ml_ );
 	}
 
-	UintSignal Medialib::broadcastEntryChanged() const
+	IntSignal Medialib::broadcastEntryChanged() const
 	{
 		using boost::bind;
 		xmmsc_result_t* res =
 		    call( connected_,
 		          bind( xmmsc_broadcast_medialib_entry_changed, conn_ ) );
-		return UintSignal( res, ml_ );
+		return IntSignal( res, ml_ );
 	}
 
 	Medialib::Medialib( xmmsc_connection_t*& conn, bool& connected,

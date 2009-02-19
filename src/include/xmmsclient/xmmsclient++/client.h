@@ -92,7 +92,7 @@ namespace Xmms
 			 *
 			 *  @param slot Function pointer to the callback function.
 			 *              Function signature must be
-			 *              bool( const unsigned int& ).
+			 *              bool( const int& ).
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
@@ -155,7 +155,7 @@ namespace Xmms
 			Client( const Client& );
 			const Client operator=( const Client& ) const;
 
-			bool quitHandler( const unsigned int& time );
+			bool quitHandler( const int& time );
 			void dcHandler();
 
 			std::string name_;

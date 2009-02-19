@@ -104,7 +104,7 @@ namespace Xmms
 		return CollResult( res, ml_ );
 	}
 
-	UintListResult
+	IntListResult
 	Collection::queryIds( const Coll::Coll& coll,
 	                      const std::list< std::string >& order,
 	                      unsigned int limit_len,
@@ -119,7 +119,7 @@ namespace Xmms
 
 		xmmsv_unref( xorder );
 
-		return UintListResult( res, ml_ );
+		return IntListResult( res, ml_ );
 	}
 
 	DictListResult

@@ -194,7 +194,7 @@ namespace Xmms
 			 *
 			 *  @return a list of media ids matched by the collection.
 			 */
-			UintListResult
+			IntListResult
 			queryIds( const Coll::Coll& coll,
 			          const std::list<std::string>& order = std::list<std::string>(),
 			          unsigned int limit_len = 0,
