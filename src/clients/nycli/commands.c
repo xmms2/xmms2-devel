@@ -621,12 +621,10 @@ cli_status (cli_infos_t *infos, command_context_t *ctx)
 	gchar *format;
 	gint refresh;
 
-	/* FIXME: Support advanced flags */
 	if (!command_flag_int_get (ctx, "refresh", &refresh)) {
 		refresh = 0;
 	}
 
-	/* FIXME(g): Read default format from config file */
 	if (!command_flag_string_get (ctx, "format", &format)) {
 		format = configuration_get_string (infos->config, "STATUS_FORMAT");
 	}

@@ -60,17 +60,7 @@ readline_callback (gchar *input)
 static void
 readline_status_callback (gchar *input)
 {
-	Keymap active;
-
-	active = rl_get_keymap ();
-
-	rl_set_keymap (rl_get_keymap_by_name (readline_keymap));
-	rl_discard_keymap (active);
-
-	rl_callback_handler_remove ();
-	g_free (readline_keymap);
-	status_free (readline_cli_infos->status_entry);
-	cli_infos_status_mode_exit (readline_cli_infos);
+	readline_status_mode_exit ();
 }
 
 static gint
@@ -172,6 +162,27 @@ readline_status_mode (cli_infos_t *infos)
 	rl_bind_key_in_map ('t', readline_status_toggle, stkmap);
 
 	rl_set_keymap (stkmap);
+}
+
+void
+readline_status_mode_exit ()
+{
+	Keymap active;
+
+	/* Just return if not in status mode */
+	if (readline_cli_infos->status != CLI_ACTION_STATUS_REFRESH) {
+		return;
+	}
+
+	active = rl_get_keymap ();
+
+	rl_set_keymap (rl_get_keymap_by_name (readline_keymap));
+	rl_discard_keymap (active);
+
+	rl_callback_handler_remove ();
+	g_free (readline_keymap);
+	status_free (readline_cli_infos->status_entry);
+	cli_infos_status_mode_exit (readline_cli_infos);
 }
 
 void

@@ -117,6 +117,7 @@ cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 	infos->conn = NULL;
 	infos->sync = NULL;
 
+	readline_status_mode_exit ();
 	cli_infos_loop_resume (infos);
 
 	return TRUE;
