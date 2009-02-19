@@ -96,6 +96,7 @@ typedef struct xmms_magic_checker_St {
 	guint alloc;
 	guint read;
 	guint offset;
+	gint dumpcount;
 } xmms_magic_checker_t;
 
 typedef struct xmms_magic_ext_data_St {
@@ -430,7 +431,8 @@ static gchar *
 xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 {
 	const GList *l;
-	gchar *u;
+	gchar *u, *dump;
+	int i;
 
 	g_return_val_if_fail (c, NULL);
 
@@ -459,6 +461,20 @@ xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 		}
 	}
 	g_free (u);
+
+	if (c->dumpcount > 0) {
+		dump = g_malloc ((MIN (c->read, c->dumpcount) * 3) + 1);
+		u = dump;
+
+		XMMS_DBG ("Magic didn't match anything...");
+		for (i = 0; i < c->dumpcount && i < c->read; i++) {
+			g_sprintf (u, "%02X ", c->buf[i]);
+			u += 3;
+		}
+		XMMS_DBG ("%s", dump);
+
+		g_free (dump);
+	}
 
 	return NULL;
 }
@@ -569,11 +585,15 @@ xmms_magic_plugin_init (xmms_xform_t *xform)
 	xmms_magic_checker_t c;
 	gchar *res;
 	const gchar *url;
+	xmms_config_property_t *cv;
 
 	c.xform = xform;
 	c.read = c.offset = 0;
 	c.alloc = 128; /* start with a 128 bytes buffer */
 	c.buf = g_malloc (c.alloc);
+
+	cv = xmms_xform_config_lookup (xform, "dumpcount");
+	c.dumpcount = xmms_config_property_get_int (cv);
 
 	url = xmms_xform_indata_find_str (xform, XMMS_STREAM_TYPE_URL);
 
@@ -607,6 +627,9 @@ xmms_magic_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/octet-stream",
 	                              XMMS_STREAM_TYPE_END);
+
+	xmms_xform_plugin_config_property_register (xform_plugin, "dumpcount",
+	                                            "16", NULL, NULL);
 
 	return TRUE;
 }
