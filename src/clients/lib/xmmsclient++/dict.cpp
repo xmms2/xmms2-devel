@@ -76,6 +76,18 @@ namespace Xmms
 		return !!xmmsv_dict_get( value_, key.c_str(), NULL );
 	}
 
+	Dict::const_iterator Dict::find( const std::string& key ) const
+	{
+		const_iterator it( value_ );
+
+		if( xmmsv_dict_iter_find( it.it_, key.c_str() ) ) {
+			return it;
+		}
+		else {
+			return end();
+		}
+	}
+
 	Dict::Variant Dict::operator[]( const std::string& key ) const
 	{
 		Dict::Variant value;

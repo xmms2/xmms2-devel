@@ -81,6 +81,14 @@ namespace Xmms
 			 */
 			virtual bool contains( const std::string& key ) const;
 
+			/** Finds a key from dict and returns an iterator to it.
+			 *  @param key Key to look for
+			 *
+			 *  @return Iterator pointing to the element or end if
+			 *  key wasn't found
+			 */
+			const_iterator find( const std::string& key ) const;
+
 			/** Gets the corresponding value of the key.
 			 *  This is basically the same as 
 			 *  @link operator[]() operator[]@endlink but it does the 
