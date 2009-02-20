@@ -544,21 +544,16 @@ xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll,
 }
 
 /**
- * Return a collection referencing the whole media library,
- * that is a reference to the "All Media" collection.
+ * Return a collection referencing the whole media library.
  * The returned structure must be unref'd using #xmmsv_coll_unref
  * after usage.
  *
- * @return a collection referring to the "All Media" collection.
+ * @return a collection containing all media.
  */
 xmmsv_coll_t*
 xmmsv_coll_universe ()
 {
-	xmmsv_coll_t *univ = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsv_coll_attribute_set (univ, "reference", "All Media");
-	/* FIXME: namespace? */
-
-	return univ;
+	return xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
 }
 
 /**
