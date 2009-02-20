@@ -1988,6 +1988,7 @@ xmmsv_build_dict (const char *firstkey, ...)
 			res = NULL;
 			break;
 		}
+		xmmsv_unref (val);
 		key = va_arg (ap, const char *);
 	} while (key);
 
