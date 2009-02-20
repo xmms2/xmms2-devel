@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 /** The goal is to parse the following grammar:
  *
  * positions := sequence | curr-context | curr-sequence
@@ -50,6 +49,8 @@ typedef enum {
 	ATOM_IS_GREATER
 } interval_vs_atom_t;
 
+#define NEXT_POSITION(list, forward) forward ? g_list_previous (list) : g_list_next (list)
+
 static int playlist_positions_count (playlist_positions_t *positions);
 static gboolean playlist_positions_parse_token (const gchar *expr, playlist_positions_t *p);
 static gboolean playlist_positions_parse_sequence (const gchar *expr, playlist_positions_t *p);
@@ -62,9 +63,9 @@ static gboolean playlist_positions_intervals_contains_atom (playlist_positions_t
 
 static interval_t *interval_new (gint start, gint end);
 static void interval_free (interval_t *ival);
-static interval_vs_atom_t interval_atom_list_cmp (GList *intervals, GList *atoms);
+static interval_vs_atom_t interval_atom_list_cmp (GList *intervals, GList *atoms, gboolean forward);
 static gboolean interval_parse (const gchar *expr, gint *start, gint *end);
-static void interval_foreach (interval_t *ival, playlist_positions_func f, void *userdata);
+static void interval_foreach (interval_t *ival, playlist_positions_func f, gboolean forward, void *userdata);
 
 
 /* FIXME: not positions vs syntax error! */
@@ -116,20 +117,25 @@ playlist_positions_foreach (playlist_positions_t *positions,
 	interval_t *ival;
 	int atom;
 
-	i = positions->intervals;
-	a = positions->atoms;
+	if (forward) {
+		i = g_list_last (positions->intervals);
+		a = g_list_last (positions->atoms);
+	} else {
+		i = positions->intervals;
+		a = positions->atoms;
+	}
 
 	while (i || a) {
-		switch (interval_atom_list_cmp (i, a)) {
+		switch (interval_atom_list_cmp (i, a, forward)) {
 		case INTERVAL_IS_GREATER:
 			ival = (interval_t *) i->data;
-			interval_foreach (ival, f, userdata);
-			i = g_list_next (i);
+			interval_foreach (ival, f, forward, userdata);
+			i = NEXT_POSITION (i, forward);
 			break;
 		case ATOM_IS_GREATER:
 			atom = GPOINTER_TO_INT (a->data);
 			f (atom, userdata);
-			a = g_list_next (a);
+			a = NEXT_POSITION (a, forward);
 			break;
 		}
 	}
@@ -477,10 +483,23 @@ interval_free (interval_t *ival)
 }
 
 static void
-interval_foreach (interval_t *ival, playlist_positions_func f, void *userdata)
+interval_foreach (interval_t *ival, playlist_positions_func f,
+                  gboolean forward, void *userdata)
 {
 	int i;
-	for (i = ival->end; i >= ival->start; i--) {
+	int start, end, inc;
+
+	if (forward) {
+		start = ival->start;
+		end = ival->end + 1;
+		inc = 1;
+	} else {
+		start = ival->end;
+		end = ival->start - 1;
+		inc = -1;
+	}
+
+	for (i = start; i != end; i+=inc) {
 		f (i, userdata);
 	}
 }
@@ -516,8 +535,9 @@ interval_parse (const gchar *expr, gint *start, gint *end)
 }
 
 static interval_vs_atom_t
-interval_atom_list_cmp (GList *intervals, GList *atoms)
+interval_atom_list_cmp (GList *intervals, GList *atoms, gboolean forward)
 {
+	interval_vs_atom_t res;
 	interval_t *ival;
 	int atom;
 
@@ -532,6 +552,11 @@ interval_atom_list_cmp (GList *intervals, GList *atoms)
 	/* Need to compare first items */
 	ival = (interval_t *) intervals->data;
 	atom = GPOINTER_TO_INT (atoms->data);
+
+	/* If forward invert comparison result */
+	if (forward) {
+		return (atom < ival->end ? ATOM_IS_GREATER : INTERVAL_IS_GREATER);
+	}
 
 	return (atom > ival->end ? ATOM_IS_GREATER : INTERVAL_IS_GREATER);
 }
