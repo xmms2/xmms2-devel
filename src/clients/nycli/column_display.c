@@ -432,6 +432,12 @@ column_display_prepare (column_display_t *disp)
 }
 
 void
+column_display_set_position (column_display_t *disp, gint pos)
+{
+	disp->counter = pos;
+}
+
+void
 column_display_print (column_display_t *disp, xmmsv_t *val)
 {
 	gint i, colwidth, availchars, millisecs;

@@ -599,6 +599,7 @@ pos_print_row_cb (gint pos, void *userdata)
 	}
 
 	id = g_array_index (pack->entries, guint, pos);
+	column_display_set_position (pack->coldisp, pos);
 	id_coldisp_print_info (pack->infos, pack->coldisp, id);
 }
 
@@ -737,6 +738,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 			xmmsv_list_iter_entry (it, &entry);
 			if (xmmsv_get_uint (entry, &id) &&
 			    (!list || g_tree_lookup (list, &id) != NULL)) {
+				column_display_set_position (coldisp, i);
 				id_coldisp_print_info (infos, coldisp, id);
 			}
 			xmmsv_list_iter_next (it);
