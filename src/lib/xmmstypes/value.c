@@ -1996,6 +1996,138 @@ xmmsv_build_dict (const char *firstkey, ...)
 	return res;
 }
 
+/**
+ * This function will make a pretty string about the information in
+ * xmmsv dict.
+ *
+ * @param target A allocated char *
+ * @param len Length of target
+ * @param fmt A format string to use. You can insert items from the dict by
+ * using specialformat "${field}".
+ * @param val The #xmmsv_t that contains the dict.
+ *
+ * @returns The number of chars written to target
+ */
+int
+xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
+{
+	const char *pos;
+
+	if (!target) {
+		return 0;
+	}
+
+	if (!fmt) {
+		return 0;
+	}
+
+	memset (target, 0, len);
+
+	pos = fmt;
+	while (strlen (target) + 1 < len) {
+		char *next_key, *key, *end;
+		int keylen;
+		xmmsv_dict_iter_t *it;
+		xmmsv_t *v;
+
+		next_key = strstr (pos, "${");
+		if (!next_key) {
+			strncat (target, pos, len - strlen (target) - 1);
+			break;
+		}
+
+		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
+		keylen = strcspn (next_key + 2, "}");
+		key = malloc (keylen + 1);
+
+		if (!key) {
+			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
+			break;
+		}
+
+		memset (key, 0, keylen + 1);
+		strncpy (key, next_key + 2, keylen);
+
+		xmmsv_get_dict_iter (val, &it);
+
+		if (strcmp (key, "seconds") == 0) {
+			int duration;
+
+			if (xmmsv_dict_iter_find (it, "duration")) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
+				xmmsv_get_int (v, &duration);
+			} else {
+				duration = 0;
+			}
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char seconds[10];
+				/* rounding */
+				duration += 500;
+				snprintf (seconds, sizeof (seconds), "%02d", (duration/1000)%60);
+				strncat (target, seconds, len - strlen (target) - 1);
+			}
+		} else if (strcmp (key, "minutes") == 0) {
+			int duration;
+
+			if (xmmsv_dict_iter_find (it, "duration")) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
+				xmmsv_get_int (v, &duration);
+			} else {
+				duration = 0;
+			}
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char minutes[10];
+				/* rounding */
+				duration += 500;
+				snprintf (minutes, sizeof (minutes), "%02d", duration/60000);
+				strncat (target, minutes, len - strlen (target) - 1);
+			}
+		} else {
+			const char *result = NULL;
+			char tmp[12];
+
+			if (xmmsv_dict_iter_find (it, key)) {
+				xmmsv_dict_iter_pair (it, NULL, &v);
+
+				xmmsv_type_t type = xmmsv_get_type (v);
+				if (type == XMMSV_TYPE_STRING) {
+					xmmsv_get_string (v, &result);
+				} else if (type == XMMSV_TYPE_UINT32) {
+					uint32_t ui;
+					xmmsv_get_uint (v, &ui);
+					snprintf (tmp, 12, "%u", ui);
+					result = tmp;
+				} else if (type == XMMSV_TYPE_INT32) {
+					int32_t i;
+					xmmsv_get_int (v, &i);
+					snprintf (tmp, 12, "%d", i);
+					result = tmp;
+				}
+			}
+
+			if (result)
+				strncat (target, result, len - strlen (target) - 1);
+		}
+
+		free (key);
+		end = strchr (next_key, '}');
+
+		if (!end) {
+			break;
+		}
+
+		pos = end + 1;
+	}
+
+	return strlen (target);
+}
+
 static int
 _xmmsv_utf8_charlen (unsigned char c)
 {

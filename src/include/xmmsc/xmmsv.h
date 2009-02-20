@@ -148,6 +148,7 @@ int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it);
 
 
 xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
+int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val);
 
 int xmmsv_utf8_validate (const char *str);
 
