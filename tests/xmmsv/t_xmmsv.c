@@ -545,3 +545,33 @@ CASE (test_xmmsv_type_dict)
 	xmmsv_unref (value);
 }
 
+CASE (test_xmmsv_dict_format) {
+	xmmsv_t *val;
+	char *buf;
+	int r;
+
+	/* We use malloc instead of stack as most tools are better on
+	   detecting overruns on heap */
+	buf = malloc(255);
+
+	val = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("a", "aaaaaaa"),
+	                        XMMSV_DICT_ENTRY_STR ("b", "bbbbbbb"),
+	                        XMMSV_DICT_ENTRY_INT ("c",  1234567),
+	                        XMMSV_DICT_END);
+
+	r = xmmsv_dict_format (buf, 255, "A: ${a} B: ${b} C: ${c}", val);
+	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1234567");
+	/* strlen(buf) == 32 */
+	CU_ASSERT_EQUAL (32, r);
+
+
+	memset (buf, 0xff, 255);
+	r = xmmsv_dict_format (buf, 27, "A: ${a} B: ${b} C: ${c}", val);
+	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1");
+	CU_ASSERT_EQUAL (26, r);
+	CU_ASSERT_EQUAL (0xff, (unsigned char)buf[27]);
+
+	xmmsv_unref (val);
+	free (buf);
+
+}
