@@ -561,4 +561,84 @@ xmmsv_coll_universe ()
 	return univ;
 }
 
+/**
+ * Return a collection with an order-operator added.
+ *
+ * @param coll	the original collection
+ * @param key	an ordering string, optionally starting with "-" (for descending
+ * ordering), followed by a string "id", "random" or a key identifying a
+ * property, such as "artist" or "album"
+ *
+ * @return	coll with order-operators added
+ */
+xmmsv_coll_t *
+xmmsv_coll_add_order_operator (xmmsv_coll_t *coll, const char *key) {
+	xmmsv_coll_t *new;
+
+	new = xmmsv_coll_new (XMMS_COLLECTION_TYPE_ORDER);
+	xmmsv_coll_add_operand (new, coll);
+
+	if (key[0] == '-') {
+		xmmsv_coll_attribute_set (new, "order", "DESC");
+		key++;
+	} else {
+		xmmsv_coll_attribute_set (new, "order", "ASC");
+	}
+
+	if (strcmp (key, "random") == 0) {
+		xmmsv_coll_attribute_set (new, "type", "random");
+	} else if (strcmp (key, "id") == 0) {
+		xmmsv_coll_attribute_set (new, "type", "id");
+	} else {
+		xmmsv_coll_attribute_set (new, "type", "value");
+		xmmsv_coll_attribute_set (new, "field", key);
+	}
+
+	return new;
+}
+
+/**
+ * Return a collection with several order-operators added.
+ *
+ * @param coll	the original collection
+ * @param order	list of ordering strings
+ *
+ * @return	coll with order-operators added
+ */
+xmmsv_coll_t *
+xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
+{
+	xmmsv_coll_t *new, *current;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *val;
+	const char *str;
+
+	/* FIXME: check if order is a list */
+
+	xmmsv_coll_ref (coll);
+
+	if (!order) {
+		return coll;
+	}
+
+	current = coll;
+	xmmsv_get_list_iter (order, &it);
+	xmmsv_list_iter_last (it);
+
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_list_iter_entry (it, &val);
+		if (!xmmsv_get_string (val, &str)) {
+			/* FIXME: how do we throw clientlib errors? */
+		}
+
+		new = xmmsv_coll_add_order_operator (current, str);
+		xmmsv_coll_unref (current);
+
+		current = new;
+		xmmsv_list_iter_prev (it);
+	}
+
+	return current;
+}
+
 /** @} */
