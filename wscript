@@ -121,7 +121,7 @@ def _configure_optionals(conf):
         unknown_optionals = optionals.difference(all_optionals)
         if unknown_optionals:
             fatal(msg % {'unknown_optionals': ', '.join(unknown_optionals)})
-            raise SystemExit
+            raise SystemExit(1)
         return optionals
 
     conf.env['XMMS_OPTIONAL_BUILD'] = []
@@ -155,7 +155,7 @@ def _configure_optionals(conf):
     if optionals_must_work and failed_optionals:
         fatal("The following required optional(s) failed to configure: "
               "%s" % ', '.join(failed_optionals))
-        raise SystemExit
+        raise SystemExit(1)
 
     disabled_optionals = set(all_optionals)
     disabled_optionals.difference_update(succeeded_optionals)
@@ -168,7 +168,7 @@ def _configure_plugins(conf):
         unknown_plugins = plugins.difference(all_plugins)
         if unknown_plugins:
             fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
-            raise SystemExit
+            raise SystemExit(1)
         return plugins
 
     conf.env['XMMS_PLUGINS_ENABLED'] = []
@@ -212,7 +212,7 @@ def _configure_plugins(conf):
         if broken_plugins:
             fatal("The following required plugin(s) failed to configure: "
                   "%s" % ', '.join(broken_plugins))
-            raise SystemExit
+            raise SystemExit(1)
 
     return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
 
@@ -334,14 +334,14 @@ def configure(conf):
     if not has_platform_support:
         fatal("xmms2 only has platform support for Windows "
               "and POSIX operating systems.")
-        raise SystemExit
+        raise SystemExit(1)
 
     # Check sunOS socket support
     if Options.platform == 'sunos':
         conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
         if not conf.env["HAVE_SOCKET"]:
             fatal("xmms2 requires libsocket on Solaris.")
-            raise SystemExit
+            raise SystemExit(1)
         conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CCFLAGS', '-std=gnu99')
