@@ -1,7 +1,6 @@
 
 from xmmsapi import VALUE_TYPE_NONE
 from xmmsapi import VALUE_TYPE_ERROR
-from xmmsapi import VALUE_TYPE_UINT32
 from xmmsapi import VALUE_TYPE_INT32
 from xmmsapi import VALUE_TYPE_STRING
 from xmmsapi import VALUE_TYPE_COLL
