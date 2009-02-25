@@ -20,8 +20,8 @@
 #include "main.h"
 
 struct status_entry_St {
-	GHashTable *data;
-	GList *format;
+	xmmsv_t *data;
+	gchar *format;
 	gint refresh;
 };
 

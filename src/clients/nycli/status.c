@@ -32,8 +32,9 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
+	xmmsv_t *pt;
 	guint status;
-	gchar *playback;
+	const gchar *playback;
 	const gchar *err;
 
 	res = xmmsc_playback_status (infos->sync);
@@ -45,19 +46,21 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 
 		switch (status) {
 		case XMMS_PLAYBACK_STATUS_STOP:
-			playback = g_strdup (_("Stopped"));
+			playback = _("Stopped");
 			break;
 		case XMMS_PLAYBACK_STATUS_PLAY:
-			playback = g_strdup (_("Playing"));
+			playback = _("Playing");
 			break;
 		case XMMS_PLAYBACK_STATUS_PAUSE:
-			playback = g_strdup (_("Paused"));
+			playback = _("Paused");
 			break;
 		default:
-			playback = g_strdup (_("Unknown"));
+			playback = _("Unknown");
 		}
 
-		g_hash_table_insert (entry->data, "playback_status", playback);
+		pt = xmmsv_new_string (playback);
+		xmmsv_dict_set (entry->data, "playback_status", pt);
+		xmmsv_unref (pt);
 
 	} else {
 		g_printf (_("Server error: %s\n"), err);
@@ -74,8 +77,8 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	guint currid;
 	gint i;
 
-	const gchar *time_fields[] = { "duration", NULL };
-	const gchar *noinfo_fields[] = { "playback_status", "playtime", "position", NULL };
+	const gchar *time_fields[] = { "duration"};
+	const gchar *noinfo_fields[] = { "playback_status", "playtime", "position"};
 	const gchar *err;
 
 	currid = infos->cache->currid;
@@ -89,87 +92,36 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		GList *it;
 		xmmsv_t *info;
 
 		info = xmmsv_propdict_to_dict (val, NULL);
 
-		for (it = g_list_first (entry->format);
-		     it != NULL;
-		     it = g_list_next (it)) {
-
-			gint ival;
-			gchar *value, *field;
-			const gchar *sval;
-			xmmsv_type_t type;
-
-			field = (gchar *)it->data;
-			if (field[0] != '$' || field[1] != '{') {
-				continue;
+		/* copy over fields that are not from metadata */
+		for (i = 0; i < G_N_ELEMENTS (noinfo_fields); i++) {
+			xmmsv_t *copy;
+			if (xmmsv_dict_get (entry->data, noinfo_fields[i], &copy)) {
+				xmmsv_dict_set (info, noinfo_fields[i], copy);
 			}
-
-			field += 2;
-			for (i = 0; noinfo_fields[i] != NULL; i++) {
-				if (!strcmp (field, noinfo_fields[i])) {
-					goto not_info_field;
-				}
-			}
-
-			type = xmmsv_dict_entry_get_type (info, field);
-			switch (type) {
-			case XMMSV_TYPE_NONE:
-				value = NULL;
-				if (!strcmp (field, "title")) {
-					if (xmmsv_dict_entry_get_string (info,
-					                                 "url",
-					                                 &sval)) {
-						value = g_path_get_basename (sval);
-					}
-				}
-				if (!value) {
-					value = g_strdup ("Unknown");
-				}
-				break;
-
-			case XMMSV_TYPE_STRING:
-				xmmsv_dict_entry_get_string (info, field, &sval);
-				value = g_strdup (sval);
-				break;
-
-			case XMMSV_TYPE_INT32:
-				xmmsv_dict_entry_get_int (info, field, &ival);
-
-				for (i = 0; time_fields[i] != NULL; i++) {
-					if (!strcmp (time_fields[i], field)) {
-						break;
-					}
-				}
-
-				if (time_fields[i] != NULL) {
-					value = format_time (ival, FALSE);
-				} else {
-					value = g_strdup_printf ("%d", ival);
-				}
-				break;
-
-			default:
-				value = g_strdup (_("invalid field"));
-			}
-
-			/* FIXME: work with undefined fileds! pll parser? */
-			g_hash_table_insert (entry->data, field, value);
-
-		    not_info_field:
-			;
 		}
 
-		xmmsv_unref (info);
-
+		/* pretty format time fields */
+		for (i = 0; i < G_N_ELEMENTS (time_fields); i++) {
+			gint32 tim;
+			if (xmmsv_dict_entry_get_int (info, time_fields[i], &tim)) {
+				gchar *p;
+				xmmsv_t *pt;
+				p = format_time (tim, FALSE);
+				pt = xmmsv_new_string (p);
+				xmmsv_dict_set (info, time_fields[i], pt);
+				xmmsv_unref (pt);
+				g_free (p);
+			}
+		}
+		xmmsv_unref (entry->data);
+		entry->data = info;
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
-
-err:
 
 	xmmsc_result_unref (res);
 }
@@ -188,7 +140,13 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 
 	if (!xmmsv_get_error (val, &err)) {
 		xmmsv_get_uint (val, &playtime);
-		g_hash_table_insert (entry->data, "playtime", format_time (playtime, FALSE));
+		gchar *p;
+		xmmsv_t *pt;
+		p = format_time (playtime, FALSE);
+		pt = xmmsv_new_string (p);
+		xmmsv_dict_set (entry->data, "playtime", pt);
+		xmmsv_unref (pt);
+		g_free (p);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -199,8 +157,10 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 static void
 status_update_position (cli_infos_t *infos, status_entry_t *entry)
 {
-	g_hash_table_insert (entry->data, "position",
-	                     g_strdup_printf ("%d", infos->cache->currpos));
+	xmmsv_t *p;
+	p = xmmsv_new_int (infos->cache->currpos);
+	xmmsv_dict_set (entry->data, "position", p);
+	xmmsv_unref (p);
 }
 
 static GList *
@@ -245,8 +205,8 @@ status_init (gchar *format, gint refresh)
 
 	entry = g_new0 (status_entry_t, 1);
 
-	entry->data = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
-	entry->format = parse_format (format);
+	entry->data = xmmsv_new_dict ();
+	entry->format = g_strdup (format);
 	entry->refresh = refresh;
 
 	return entry;
@@ -255,14 +215,8 @@ status_init (gchar *format, gint refresh)
 void
 status_free (status_entry_t *entry)
 {
-	GList *it;
-
-	for (it = g_list_first (entry->format); it != NULL; it = g_list_next (it)) {
-		g_free (it->data);
-	}
-	g_list_free (entry->format);
-
-	g_hash_table_destroy (entry->data);
+	g_free (entry->format);
+	xmmsv_unref (entry->data);
 	g_free (entry);
 }
 
@@ -278,31 +232,22 @@ status_update_all (cli_infos_t *infos, status_entry_t *entry)
 void
 status_print_entry (status_entry_t *entry)
 {
-	GList *it;
-	gint columns, currlen;
+	gint columns, res;
+	gchar *r;
 
 	columns = find_terminal_width ();
 
-	currlen = 0;
-	g_printf ("\r");
-	for (it = g_list_first (entry->format); it != NULL; it = g_list_next (it)) {
-		gchar *s = it->data;
-		if (s[0] == '$' && s[1] == '{') {
-			s = g_hash_table_lookup (entry->data, s+2);
-		}
+	r = g_malloc (columns + 1);
 
-		/* FIXME: print ellipsis when len > columns */
-		currlen += g_utf8_strlen (s, -1);
-		if (currlen >= columns) {
-			break;
-		} else {
-			g_printf ("%s", s);
-		}
-	}
+	res = xmmsv_dict_format (r, columns + 1, entry->format, entry->data);
 
-	while (currlen++ < columns) {
+	g_printf ("\r%s", r);
+
+	for (;res < columns; res++) {
 		g_printf (" ");
 	}
 
 	fflush (stdout);
+
+	g_free (r);
 }
