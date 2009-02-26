@@ -460,7 +460,7 @@ _xmmsc_medialib_verify_url (const char *url)
 	int i;
 
 	for (i = 0; url[i]; i++) {
-		if (!(GOODCHAR (url[i]) || url[i] == '+' || url[i] == '%' || url[i] == '?' || url[i] == '&'))
+		if (!(GOODCHAR (url[i]) || url[i] == '+' || url[i] == '%' || url[i] == '?'  || url[i] == '=' || url[i] == '&'))
 			return 0;
 	}
 	return 1;
