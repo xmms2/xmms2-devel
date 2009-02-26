@@ -170,7 +170,8 @@ readline_status_mode_exit ()
 	Keymap active;
 
 	/* Just return if not in status mode */
-	if (readline_cli_infos->status != CLI_ACTION_STATUS_REFRESH) {
+	if (!readline_cli_infos ||
+	    readline_cli_infos->status != CLI_ACTION_STATUS_REFRESH) {
 		return;
 	}
 
