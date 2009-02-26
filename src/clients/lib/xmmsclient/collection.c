@@ -323,7 +323,7 @@ xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, const char *path
 
 	x_check_conn (conn, NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (path, 0, NULL);
+	enc_url = _xmmsc_medialib_encode_url (path, NULL);
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_IDLIST_FROM_PLS);
 	xmms_ipc_msg_put_string (msg, enc_url);
 	free (enc_url);

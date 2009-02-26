@@ -72,7 +72,7 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 	char *enc_url;
 	x_check_conn (conn, NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, 0, NULL);
+	enc_url = _xmmsc_medialib_encode_url (url, NULL);
 	if (!enc_url)
 		return NULL;
 
@@ -148,7 +148,7 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry)
 xmmsc_result_t *
 xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 {
-	return xmmsc_medialib_add_entry_args (conn, url, 0, NULL);
+	return xmmsc_medialib_add_entry_full (conn, url, NULL);
 }
 
 /**
@@ -169,7 +169,34 @@ xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int nu
 
 	x_check_conn (conn, NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, numargs, args);
+	enc_url = _xmmsc_medialib_encode_url_old (url, numargs, args);
+	if (!enc_url)
+		return NULL;
+
+	res = xmmsc_medialib_add_entry_encoded (conn, enc_url);
+
+	free (enc_url);
+
+	return res;
+}
+
+/**
+ * Add a URL with arguments to the medialib.
+ *
+ * @param conn The #xmmsc_connection_t
+ * @param url URL to add to the medialib.
+ * @param numargs The number of arguments
+ * @param args array of numargs strings used as arguments
+ */
+xmmsc_result_t *
+xmmsc_medialib_add_entry_full (xmmsc_connection_t *conn, const char *url, xmmsv_t *args)
+{
+	char *enc_url;
+	xmmsc_result_t *res;
+
+	x_check_conn (conn, NULL);
+
+	enc_url = _xmmsc_medialib_encode_url (url, args);
 	if (!enc_url)
 		return NULL;
 
@@ -216,7 +243,7 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
 
 	x_check_conn (conn, NULL);
 
-	enc_path = _xmmsc_medialib_encode_url (path, 0, NULL);
+	enc_path = _xmmsc_medialib_encode_url (path, NULL);
 	if (!enc_path)
 		return NULL;
 
@@ -467,7 +494,7 @@ _xmmsc_medialib_verify_url (const char *url)
 }
 
 char *
-_xmmsc_medialib_encode_url (const char *url, int narg, const char **args)
+_xmmsc_medialib_encode_url_old (const char *url, int narg, const char **args)
 {
 	static const char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0, extra = 0;
@@ -503,6 +530,87 @@ _xmmsc_medialib_encode_url (const char *url, int narg, const char **args)
 		j++;
 		memcpy (&res[j], args[i], l);
 		j += l;
+	}
+
+	res[j] = '\0';
+
+	return res;
+}
+
+static void
+_sum_len_string_dict (const char *key, xmmsv_t *val, void *userdata)
+{
+	const char *arg;
+	int *extra = (int *) userdata;
+
+	if (xmmsv_get_type (val) == XMMSV_TYPE_NONE) {
+		*extra += strlen (key) + 1; /* Leave room for the ampersand. */
+	} else if (xmmsv_get_string (val, &arg)) {
+		/* Leave room for the equals sign and ampersand. */
+		*extra += strlen (key) + strlen (arg) + 2;
+	} else {
+		x_api_warning ("with non-string argument");
+	}
+}
+
+char *
+_xmmsc_medialib_encode_url (const char *url, xmmsv_t *args)
+{
+	static const char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0, extra = 0, l;
+	char *res;
+	xmmsv_dict_iter_t *it;
+
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	if (args) {
+		if (!xmmsv_dict_foreach (args, _sum_len_string_dict, (void *) &extra)) {
+			return NULL;
+		}
+	}
+
+	/* Provide enough room for the worst-case scenario (all characters of the
+	   URL must be encoded), the args, and a \0. */
+	res = malloc (strlen (url) * 3 + 1 + extra);
+	if (!res) {
+		return NULL;
+	}
+
+	for (i = 0; url[i]; i++) {
+		unsigned char chr = url[i];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	if (args) {
+		for (xmmsv_get_dict_iter (args, &it), i = 0;
+		     xmmsv_dict_iter_valid (it);
+		     xmmsv_dict_iter_next (it), i++) {
+
+			const char *arg, *key;
+			xmmsv_t *val;
+
+			xmmsv_dict_iter_pair (it, &key, &val);
+			l = strlen (key);
+			res[j] = (i == 0) ? '?' : '&';
+			j++;
+			memcpy (&res[j], key, l);
+			j += l;
+			if (xmmsv_get_string (val, &arg)) {
+				l = strlen (arg);
+				res[j] = '=';
+				j++;
+				memcpy (&res[j], arg, l);
+				j += l;
+			}
+		}
 	}
 
 	res[j] = '\0';

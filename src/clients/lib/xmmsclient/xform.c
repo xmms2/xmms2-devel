@@ -39,7 +39,7 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, 0, NULL);
+	enc_url = _xmmsc_medialib_encode_url (url, NULL);
 	if (!enc_url)
 		return NULL;
 
