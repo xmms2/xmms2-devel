@@ -194,6 +194,45 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 }
 
+static xmmsv_t *
+args_to_dict (gchar **argv, gint argc)
+{
+	xmmsv_t *dict;
+	gint i;
+
+	dict = xmmsv_new_dict ();
+	if (!dict) {
+		return NULL;
+	}
+
+	for (i = 0; i < argc; i++) {
+		gchar **tuple;
+		xmmsv_t *val;
+
+		/* Split the string into arg and value. */
+		tuple = g_strsplit (argv[i], "=", 2);
+		if (tuple[0] && tuple[1]) {
+			val = xmmsv_new_string (tuple[1]);
+		} else if (tuple[0]) {
+			val = xmmsv_new_none ();
+		} else {
+			g_strfreev (tuple);
+			continue; /* Empty tuple, means empty string. */
+		}
+		if (!val) {
+			xmmsv_unref (dict);
+			return NULL;
+		}
+
+		xmmsv_dict_set (dict, tuple[0], val);
+
+		g_strfreev (tuple);
+		xmmsv_unref (val);
+	}
+
+	return dict;
+}
+
 void
 cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -201,6 +240,7 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *playlist = NULL;
 	gchar *url;
 	int arg_start = 3;
+	xmmsv_t *args;
 
 	if (argc < 4) {
 		print_error ("Need a filename and args to add");
@@ -218,9 +258,8 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 
-	/* Relax, it was const before.. Could we fix const-ness nicely? */
-	res = xmmsc_playlist_add_args (conn, playlist, url, argc - arg_start,
-	                               (const gchar **)&argv[arg_start]);
+	args = args_to_dict (&argv[arg_start], argc - arg_start);
+	res = xmmsc_playlist_add_full (conn, playlist, url, args);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {

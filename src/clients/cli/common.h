@@ -43,6 +43,5 @@ void format_pretty_list (xmmsc_connection_t *conn, GList *list);
 gint val_has_key (xmmsv_t *val, const gchar *key);
 gboolean coll_read_collname (gchar *str, gchar **name, gchar **namespace);
 char *string_escape (const char *s);
-xmmsv_t *make_value_stringlist (gchar **array, gint num);
 
 #endif
