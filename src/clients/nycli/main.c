@@ -350,6 +350,7 @@ loop_select (cli_infos_t *infos)
 	   Ask theefer: use callbacks for update and -refresh only for print? */
 	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
 		status_update_all (infos, infos->status_entry);
+		g_printf ("\r");
 		status_print_entry (infos->status_entry);
 	}
 }
