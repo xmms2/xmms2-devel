@@ -894,7 +894,7 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val, *entry;
-	gchar *p, *path, *urls = NULL, *fullurl;
+	gchar *p, *path, *urls = NULL, *fullurl, *scheme;
 	const gchar *cpath;
 	gint ret = 0;
 
@@ -908,20 +908,27 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 		return 0;
 	}
 
+	ret = strlen (urls);
+	if (ret && urls[ret - 1] == '/') {
+		return 1;
+	}
+	ret = 0;
+
+	for (path = urls + strlen (urls) - 1; path != urls && *path == '/'; --path) {
+		*path = '\0';
+	}
+	scheme = g_strndup (p, urls - p);
+
 	/* g_path_get_dirname has no notion of URLs, so
 	 * split the scheme part and work with the filename
 	 * part, remove the basename then concatenate the
 	 * scheme and path part back together
 	 */
 	path = g_path_get_dirname (urls);
-	*urls = '\0';
-	fullurl = g_strconcat (p, path, NULL);
-	urls = strrchr (path, '/');
-	if (urls && urls != path) {
-		*urls = '\0';
-	}
-	urls = g_strconcat (p, path, NULL);
+	fullurl = g_strconcat (scheme, urls, NULL);
+	urls = g_strconcat (scheme, path, NULL);
 	g_free (path);
+	g_free (scheme);
 	g_free (p);
 
 	res = xmmsc_xform_media_browse_encoded (infos->sync, urls);
