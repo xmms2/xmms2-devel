@@ -115,8 +115,8 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 	w = !!plugin->methods.write;
 	s = !!plugin->methods.status;
 
-	if (!(!w ^ !s)) {
-		XMMS_DBG ("Neither write or status based.");
+	if (w == s) {
+		XMMS_DBG ("Plugin needs to provide either write or status.");
 		return FALSE;
 	}
 
