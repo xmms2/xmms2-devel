@@ -104,6 +104,8 @@ main (int argc, char **argv)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *configval;
+	xmmsv_t *val;
+	const char *errmsg;
 	gchar *path = getenv ("XMMS_PATH");
 	connection = xmmsc_init ("xmms2-vistest");
 
@@ -116,14 +118,13 @@ main (int argc, char **argv)
 	res = xmmsc_visualization_version (connection);
 	xmmsc_result_wait (res);
 
-	if (xmmsc_result_iserror (res)) {
-		puts (xmmsc_result_get_error (res));
+	val = xmmsc_result_get_value (res);
+	if (xmmsv_get_error (val, &errmsg)) {
+		puts (errmsg);
 		exit (EXIT_FAILURE);
 	} else {
 		int32_t version;
-		xmmsv_t *v;
-		v = xmmsc_result_get_value (res);
-		xmmsv_get_int (v, &version);
+		xmmsv_get_int (val, &version);
 		/* insert the version you need here or instead of complaining,
 		   reduce your feature set to fit the version */
 		if (version < 1) {
@@ -135,8 +136,9 @@ main (int argc, char **argv)
 
 	res = xmmsc_visualization_init (connection);
 	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		puts (xmmsc_result_get_error (res));
+	val = xmmsc_result_get_value (res);
+	if (xmmsv_get_error (val, &errmsg)) {
+		puts (errmsg);
 		exit (EXIT_FAILURE);
 	}
 	vis = xmmsc_visualization_init_handle (res);
@@ -147,8 +149,9 @@ main (int argc, char **argv)
 
 	res = xmmsc_visualization_properties_set (connection, vis, configval);
 	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		puts (xmmsc_result_get_error (res));
+	val = xmmsc_result_get_value (res);
+	if (xmmsv_get_error (val, &errmsg)) {
+		puts (errmsg);
 		exit (EXIT_FAILURE);
 	}
 	xmmsc_result_unref (res);

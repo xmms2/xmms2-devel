@@ -41,6 +41,8 @@ xmms2_quit ()
 void xmms2_init ()
 {
 	xmmsc_result_t *res;
+	xmmsv_t *val;
+	const char *errmsg;
 	char *path = getenv ("XMMS_PATH");
 	xmmsv_t *cfg;
 
@@ -53,8 +55,9 @@ void xmms2_init ()
 
 	res = xmmsc_visualization_init (x_connection);
 	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		x_exit (xmmsc_result_get_error (res));
+	val = xmmsc_result_get_value (res);
+	if (xmmsv_get_error (val, &errmsg)) {
+		x_exit (errmsg);
 	}
 	x_vis = xmmsc_visualization_init_handle (res);
 
@@ -64,8 +67,9 @@ void xmms2_init ()
 
 	res = xmmsc_visualization_properties_set (x_connection, x_vis, cfg);
 	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		x_exit (xmmsc_result_get_error (res));
+	val = xmmsc_result_get_value(res);
+	if (xmmsv_get_error(val, &errmsg)) {
+		x_exit (errmsg);
 	}
 	xmmsc_result_unref (res);
 
