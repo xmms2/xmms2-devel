@@ -305,13 +305,17 @@ static VALUE
 c_get_error (VALUE self)
 {
 	RbResult *res;
+	xmmsv_t *val;
 	const char *error;
+	int ret;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	error = xmmsc_result_get_error (res->real);
+	val = xmmsc_result_get_value (res->real);
 
-	return rb_str_new2 (error ? error : "");
+	ret = xmmsv_get_error (val, &error);
+
+	return rb_str_new2 (ret ? error : "");
 }
 
 #ifdef HAVE_RB_PROTECT_INSPECT
