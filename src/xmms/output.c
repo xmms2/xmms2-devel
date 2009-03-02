@@ -222,7 +222,7 @@ update_playtime (xmms_output_t *output, int advance)
 		if ((ms / 100) != (output->played_time / 100)) {
 			xmms_object_emit_f (XMMS_OBJECT (output),
 			                    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
-			                    XMMSV_TYPE_UINT32,
+			                    XMMSV_TYPE_INT32,
 			                    ms);
 		}
 		output->played_time = ms;
@@ -287,7 +287,7 @@ song_changed (void *data)
 
 	xmms_object_emit_f (XMMS_OBJECT (arg->output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-	                    XMMSV_TYPE_UINT32,
+	                    XMMSV_TYPE_INT32,
 	                    entry);
 
 	return TRUE;
@@ -798,7 +798,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 
 			xmms_object_emit_f (XMMS_OBJECT (output),
 			                    XMMS_IPC_SIGNAL_PLAYBACK_STATUS,
-			                    XMMSV_TYPE_UINT32,
+			                    XMMSV_TYPE_INT32,
 			                    output->status);
 		}
 	}

@@ -187,7 +187,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
-			                    XMMSV_TYPE_UINT32,
+			                    XMMSV_TYPE_INT32,
 			                    xmms_medialib_num_not_resolved (session));
 			num = 10;
 		} else {

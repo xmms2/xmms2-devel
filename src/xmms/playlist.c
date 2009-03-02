@@ -1396,20 +1396,11 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer user_dat
 				return res;
 		}
 
-		if ((xmmsv_get_type (val1) == XMMSV_TYPE_INT32 ||
-		     xmmsv_get_type (val1) == XMMSV_TYPE_UINT32) &&
-		    (xmmsv_get_type (val2) == XMMSV_TYPE_INT32 ||
-		     xmmsv_get_type (val2) == XMMSV_TYPE_UINT32))
+		if (xmmsv_get_type (val1) == XMMSV_TYPE_INT32 &&
+		    xmmsv_get_type (val2) == XMMSV_TYPE_INT32)
 		{
-			if (xmmsv_get_type (val1) == XMMSV_TYPE_INT32)
-				xmmsv_get_int (val1, &s1);
-			else
-				xmmsv_get_uint (val1, &s1);
-
-			if (xmmsv_get_type (val2) == XMMSV_TYPE_INT32)
-				xmmsv_get_int (val2, &s2);
-			else
-				xmmsv_get_uint (val2, &s2);
+			xmmsv_get_int (val1, &s1);
+			xmmsv_get_int (val2, &s2);
 
 			if (s1 < s2)
 				return -1;

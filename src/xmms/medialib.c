@@ -679,19 +679,21 @@ xmms_medialib_entry_send_update (xmms_medialib_entry_t entry)
 {
 	xmms_object_emit_f (XMMS_OBJECT (medialib),
 	                    XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
-	                    XMMSV_TYPE_UINT32, entry);
+	                    XMMSV_TYPE_INT32, entry);
 }
 
 /**
  * Trigger an added siginal to the client. This should be
  * called when a new entry has been added to the medialib
  *
- * @param entry Entry to siginal an add for.
+ * @param entry Entry to signal an add for.
  */
 void
 xmms_medialib_entry_send_added (xmms_medialib_entry_t entry)
 {
-	xmms_object_emit_f (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED, XMMSV_TYPE_UINT32, entry);
+	xmms_object_emit_f (XMMS_OBJECT (medialib),
+	                    XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
+	                    XMMSV_TYPE_INT32, entry);
 }
 
 static void
