@@ -37,11 +37,11 @@ extern gchar *statusformat;
 
 static gboolean has_songname = FALSE;
 static gboolean fetching_songname = FALSE;
-static guint current_id = 0;
-static guint last_dur = 0;
+static gint current_id = 0;
+static gint last_dur = 0;
 static gint curr_dur = 0;
 static gchar songname[256];
-static guint curr_status = 0;
+static gint curr_status = 0;
 
 static const gchar *status_messages[] = {
 	"Stopped",
@@ -88,7 +88,7 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	xmmsv_t *propdict, *val;
 	gchar print_text[256];
-	guint id;
+	gint id;
 
 	res = xmmsc_playback_current_id (conn);
 	xmmsc_result_wait (res);
@@ -98,7 +98,7 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &id)) {
+	if (!xmmsv_get_int (val, &id)) {
 		print_error ("Broken resultset");
 	}
 	xmmsc_result_unref (res);
@@ -134,13 +134,13 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 static int
 handle_status_change (xmmsv_t *val, void *userdata)
 {
-	guint new_status;
+	gint new_status;
 
 	if (xmmsv_is_error (val)) {
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &new_status)) {
+	if (!xmmsv_get_int (val, &new_status)) {
 		print_error ("Broken resultset");
 	}
 
@@ -160,7 +160,7 @@ handle_current_id (xmmsv_t *val, void *userdata)
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &current_id)) {
+	if (!xmmsv_get_int (val, &current_id)) {
 		print_error ("Broken resultset");
 	}
 
@@ -178,13 +178,13 @@ handle_current_id (xmmsv_t *val, void *userdata)
 static int
 handle_playtime (xmmsv_t *val, void *userdata)
 {
-	guint dur;
+	gint dur;
 
 	if (xmmsv_is_error (val)) {
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &dur)) {
+	if (!xmmsv_get_int (val, &dur)) {
 		print_error ("Broken resultset");
 	}
 
@@ -240,7 +240,7 @@ static void update_display ()
 static int
 handle_mediainfo_update (xmmsv_t *val, void *userdata)
 {
-	guint id;
+	gint id;
 	xmmsc_result_t *res;
 	xmmsc_connection_t *conn = userdata;
 
@@ -248,7 +248,7 @@ handle_mediainfo_update (xmmsv_t *val, void *userdata)
 		print_error ("%s", xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &id)) {
+	if (!xmmsv_get_int (val, &id)) {
 		print_error ("Broken resultset");
 	}
 

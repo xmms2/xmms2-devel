@@ -601,10 +601,10 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsv_t *val_id, *propdict, *info_val;
 		gchar line[80];
 		gint playtime = 0;
-		guint ui;
+		gint ui;
 
 		xmmsv_list_iter_entry (it, &val_id);
-		if (!xmmsv_get_uint (val_id, &ui)) {
+		if (!xmmsv_get_int (val_id, &ui)) {
 			print_error ("Broken resultset");
 		}
 

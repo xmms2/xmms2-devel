@@ -45,7 +45,7 @@ do_reljump (xmmsc_connection_t *conn, gint where)
 void
 cmd_toggleplay (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	uint32_t status;
+	int32_t status;
 	xmmsc_result_t *res;
 	xmmsv_t *val;
 
@@ -58,7 +58,7 @@ cmd_toggleplay (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		             xmmsv_get_error_old (val));
 	}
 
-	if (!xmmsv_get_uint (val, &status)) {
+	if (!xmmsv_get_int (val, &status)) {
 		print_error ("Broken resultset");
 	}
 

@@ -430,10 +430,10 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsv_get_list_iter (val, &it);
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_t *val_id;
-		guint id;
+		gint id;
 
 		xmmsv_list_iter_entry (it, &val_id);
-		if (!xmmsv_get_uint (val_id, &id)) {
+		if (!xmmsv_get_int (val_id, &id)) {
 			print_error ("Broken resultset");
 		}
 

@@ -99,13 +99,13 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
-	guint id;
+	gint id;
 
 	if (argc > 2) {
 		gint cnt;
 
 		for (cnt = 2; cnt < argc; cnt++) {
-			id = strtoul (argv[cnt], (gchar**) NULL, 10);
+			id = strtol (argv[cnt], (gchar**) NULL, 10);
 
 			res = xmmsc_medialib_get_info (conn, id);
 			xmmsc_result_wait (res);
@@ -128,7 +128,7 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("%s", xmmsv_get_error_old (val));
 		}
 
-		if (!xmmsv_get_uint (val, &id)) {
+		if (!xmmsv_get_int (val, &id)) {
 			print_error ("Broken resultset");
 		}
 		xmmsc_result_unref (res);
@@ -381,11 +381,11 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	xmmsv_get_list_iter (val, &it);
 	while (xmmsv_list_iter_valid (it)) {
-		guint id;
+		gint id;
 		xmmsv_t *val_id;
 
 		if (!xmmsv_list_iter_entry (it, &val_id) ||
-		    !xmmsv_get_uint (val_id, &id)) {
+		    !xmmsv_get_int (val_id, &id)) {
 			print_error ("Broken resultset");
 		}
 

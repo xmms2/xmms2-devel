@@ -19,7 +19,7 @@
 
 typedef struct volume_channel_St {
 	const gchar *name;
-	guint volume;
+	gint volume;
 } volume_channel_t;
 
 void
@@ -107,7 +107,7 @@ get_keys (const gchar *key, xmmsv_t *value, void *user_data)
 
 	chan = g_new (volume_channel_t, 1);
 	chan->name = g_strdup ((const gchar *)key);
-	xmmsv_get_uint (value, &chan->volume);
+	xmmsv_get_int (value, &chan->volume);
 
 	*l = g_list_prepend (*l, chan);
 }
