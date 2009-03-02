@@ -101,7 +101,6 @@ setup_signal ()
 int
 main (int argc, char **argv)
 {
-	uint32_t version;
 	xmmsc_result_t *res;
 	xmmsv_t *configval;
 	gchar *path = getenv ("XMMS_PATH");
@@ -125,9 +124,10 @@ main (int argc, char **argv)
 		puts (xmmsc_result_get_error (res));
 		exit (EXIT_FAILURE);
 	} else {
+		int32_t version;
 		xmmsv_t *val;
 		val = xmmsc_result_get_value (res);
-		xmmsv_get_uint (val, &version);
+		xmmsv_get_int (val, &version);
 		/* insert the version you need here or instead of complaining,
 		   reduce your feature set to fit the version */
 		if (version < 1) {

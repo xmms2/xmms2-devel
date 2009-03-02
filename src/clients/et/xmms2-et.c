@@ -92,10 +92,10 @@ handle_quit (xmmsv_t *v, void *data)
 static int
 handle_mediainfo_reader (xmmsv_t *v, void *userdata)
 {
-	static guint last_unindexed;
-	guint unindexed;
+	static gint last_unindexed;
+	gint unindexed;
 
-	if (xmmsv_get_uint (v, &unindexed)) {
+	if (xmmsv_get_int (v, &unindexed)) {
 		if (unindexed < last_unindexed) {
 			mlib_resolves += last_unindexed - unindexed;
 		}
@@ -149,9 +149,9 @@ handle_current_id (xmmsv_t *v, void *userdata)
 {
 	xmmsc_connection_t *conn = userdata;
 	xmmsc_result_t *res2;
-	guint current_id;
+	gint current_id;
 
-	if (xmmsv_get_uint (v, &current_id)) {
+	if (xmmsv_get_int (v, &current_id)) {
 		res2 = xmmsc_medialib_get_info (conn, current_id);
 		xmmsc_result_notifier_set (res2, handle_mediainfo, conn);
 		xmmsc_result_unref (res2);

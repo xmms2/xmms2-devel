@@ -102,7 +102,6 @@ void shutdown_gtk (gpointer stuff)
 int
 main (int argc, char **argv)
 {
-	uint32_t version;
 	xmmsc_result_t *res;
 	xmmsv_t *configval;
 	gchar *path = getenv ("XMMS_PATH");
@@ -121,9 +120,10 @@ main (int argc, char **argv)
 		puts (xmmsc_result_get_error (res));
 		exit (EXIT_FAILURE);
 	} else {
+		int32_t version;
 		xmmsv_t *v;
 		v = xmmsc_result_get_value (res);
-		xmmsv_get_uint (v, &version);
+		xmmsv_get_int (v, &version);
 		/* insert the version you need here or instead of complaining,
 		   reduce your feature set to fit the version */
 		if (version < 1) {

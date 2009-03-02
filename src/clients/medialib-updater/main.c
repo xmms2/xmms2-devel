@@ -46,9 +46,9 @@ handle_remove_from_mlib (xmmsv_t *v, void *userdata)
 	for (xmmsv_get_list_iter (v, &it);
 	     xmmsv_list_iter_valid (it);
 	     xmmsv_list_iter_next (it)) {
-		guint32 id;
+		gint32 id;
 		xmmsv_t *elem;
-		if (!xmmsv_list_iter_entry (it, &elem) || !xmmsv_get_uint (elem, &id)) {
+		if (!xmmsv_list_iter_entry (it, &elem) || !xmmsv_get_int (elem, &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
@@ -96,9 +96,9 @@ handle_mlib_update (xmmsv_t *v, void *userdata)
 {
 	xmonitor_t *mon = userdata;
 	xmmsc_result_t *res2;
-	guint32 id;
+	gint32 id;
 
-	if (!xmmsv_get_uint (v, &id)) {
+	if (!xmmsv_get_int (v, &id)) {
 		ERR ("Failed to get id for entry!");
 		return FALSE;
 	}
