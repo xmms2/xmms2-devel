@@ -123,6 +123,14 @@ cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 	return TRUE;
 }
 
+/* Called when client was disconnected. xmms2d disappeared */
+static void
+disconnect_callback (void *userdata)
+{
+	cli_infos_t *infos = (cli_infos_t *) userdata;
+	cli_infos_disconnect_callback (NULL, userdata);
+}
+
 gboolean
 cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 {
@@ -181,6 +189,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 
 	/* Reset the connection state on server quit */
 	res = xmmsc_broadcast_quit (infos->conn);
+	xmmsc_disconnect_callback_set (infos->conn, disconnect_callback, infos);
 	xmmsc_result_notifier_set (res, &cli_infos_disconnect_callback, infos);
 	xmmsc_result_unref (res);
 

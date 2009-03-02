@@ -330,11 +330,14 @@ loop_select (cli_infos_t *infos)
 	} else if (modfds != 0) {
 		/* Get/send data to xmms2 */
 		if (infos->conn) {
-			if (FD_ISSET(xmms2fd, &rfds)) {
-				xmmsc_io_in_handle (infos->conn);
+			if (FD_ISSET(xmms2fd, &rfds) &&
+			    !xmmsc_io_in_handle (infos->conn)) {
+				return;
 			}
-			if (FD_ISSET(xmms2fd, &wfds)) {
-				xmmsc_io_out_handle (infos->conn);
+
+			if (FD_ISSET(xmms2fd, &wfds) &&
+			    !xmmsc_io_out_handle (infos->conn)) {
+				return;
 			}
 		}
 
