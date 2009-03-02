@@ -959,8 +959,8 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, const gchar *plname,
 
 static gboolean
 xmms_playlist_insert_collection (xmms_playlist_t *playlist, const gchar *plname,
-                                 guint32 pos, xmmsv_coll_t *coll, xmmsv_t *order,
-                                 xmms_error_t *err)
+                                 guint32 pos, xmmsv_coll_t *coll,
+                                 xmmsv_t *order, xmms_error_t *err)
 {
 	GList *res;
 
@@ -968,8 +968,8 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, const gchar *plname,
 
 	while (res) {
 		xmmsv_t *val = (xmmsv_t*) res->data;
-		guint id;
-		xmmsv_get_uint (val, &id);
+		gint id;
+		xmmsv_get_int (val, &id);
 		xmms_playlist_insert_id (playlist, plname, pos, id, err);
 		xmmsv_unref (val);
 
@@ -1140,8 +1140,8 @@ xmms_playlist_add_collection (xmms_playlist_t *playlist, const gchar *plname,
 
 	while (res) {
 		xmmsv_t *val = (xmmsv_t*) res->data;
-		guint id;
-		xmmsv_get_uint (val, &id);
+		gint id;
+		xmmsv_get_int (val, &id);
 		xmms_playlist_add_entry (playlist, plname, id, err);
 		xmmsv_unref (val);
 

@@ -1019,7 +1019,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 
 	if (res != NULL) {
 		xmmsv_t *val = (xmmsv_t *) res->data;
-		xmmsv_get_uint (val, &mid);
+		xmmsv_get_int (val, &mid);
 		xmmsv_unref (val);
 		g_list_free (res);
 	}
