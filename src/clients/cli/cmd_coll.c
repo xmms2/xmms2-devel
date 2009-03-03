@@ -562,6 +562,7 @@ cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		coll_print (coll);
 	}
 
+	xmmsc_result_unref (res);
 	g_free (name);
 	g_free (namespace);
 }
