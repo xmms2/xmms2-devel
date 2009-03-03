@@ -89,13 +89,14 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsv_t *propdict, *val;
 	gchar print_text[256];
 	gint id;
+	const char *errmsg;
 
 	res = xmmsc_playback_current_id (conn);
 	xmmsc_result_wait (res);
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (!xmmsv_get_int (val, &id)) {
@@ -114,8 +115,8 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	propdict = xmmsc_result_get_value (res);
 	val = xmmsv_propdict_to_dict (propdict, NULL);
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (argc > 2) {
@@ -135,9 +136,10 @@ static int
 handle_status_change (xmmsv_t *val, void *userdata)
 {
 	gint new_status;
+	const char *errmsg;
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (!xmmsv_get_int (val, &new_status)) {
@@ -155,9 +157,10 @@ handle_current_id (xmmsv_t *val, void *userdata)
 {
 	xmmsc_result_t *res;
 	xmmsc_connection_t *conn = userdata;
+	const char *errmsg;
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (!xmmsv_get_int (val, &current_id)) {
@@ -179,9 +182,10 @@ static int
 handle_playtime (xmmsv_t *val, void *userdata)
 {
 	gint dur;
+	const char *errmsg;
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (!xmmsv_get_int (val, &dur)) {
@@ -243,9 +247,10 @@ handle_mediainfo_update (xmmsv_t *val, void *userdata)
 	gint id;
 	xmmsc_result_t *res;
 	xmmsc_connection_t *conn = userdata;
+	const char *errmsg;
 
-	if (xmmsv_is_error (val)) {
-		print_error ("%s", xmmsv_get_error_old (val));
+	if (xmmsv_get_error (val, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	if (!xmmsv_get_int (val, &id)) {
@@ -266,9 +271,10 @@ static int
 do_mediainfo (xmmsv_t *propdict, void *userdata)
 {
 	xmmsv_t *val;
+	const char *errmsg;
 
-	if (xmmsv_is_error (propdict)) {
-		print_error ("%s", xmmsv_get_error_old (propdict));
+	if (xmmsv_get_error (propdict, &errmsg)) {
+		print_error ("%s", errmsg);
 	}
 
 	val = xmmsv_propdict_to_dict (propdict, NULL);
