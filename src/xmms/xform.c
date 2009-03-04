@@ -111,6 +111,7 @@ xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
 {
 	xmmsv_t *val = xmmsv_new_string (value);
 	xmms_xform_browse_add_entry_property (xform, key, val);
+	xmmsv_unref (val);
 }
 
 
@@ -121,6 +122,7 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
 {
 	xmmsv_t *val = xmmsv_new_int (value);
 	xmms_xform_browse_add_entry_property (xform, key, val);
+	xmmsv_unref (val);
 }
 
 void
