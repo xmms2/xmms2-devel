@@ -701,7 +701,11 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 int
 xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value)
 {
-	return xmmsv_dict_entry_get_string (coll->attributes, key, value);
+	if (xmmsv_dict_entry_get_string (coll->attributes, key, value)) {
+		return 1;
+	}
+	*value = NULL;
+	return 0;
 }
 
 
