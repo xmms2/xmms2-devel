@@ -33,7 +33,7 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 	xmmsc_result_t *res;
 	xmmsv_t *val;
 	xmmsv_t *pt;
-	guint status;
+	gint32 status;
 	const gchar *playback;
 	const gchar *err;
 
@@ -42,7 +42,7 @@ status_update_playback (cli_infos_t *infos, status_entry_t *entry)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_uint (val, &status);
+		xmmsv_get_int (val, &status);
 
 		switch (status) {
 		case XMMS_PLAYBACK_STATUS_STOP:
@@ -131,7 +131,7 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
-	guint playtime;
+	gint32 playtime;
 	const gchar *err;
 
 	res = xmmsc_playback_playtime (infos->sync);
@@ -139,7 +139,7 @@ status_update_playtime (cli_infos_t *infos, status_entry_t *entry)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_uint (val, &playtime);
+		xmmsv_get_int (val, &playtime);
 		gchar *p;
 		xmmsv_t *pt;
 		p = format_time (playtime, FALSE);

@@ -322,11 +322,11 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 		     xmmsv_list_iter_valid (it);
 		     xmmsv_list_iter_next (it)) {
 			xmmsv_t *entry;
-			guint id;
+			gint32 id;
 
 			xmmsv_list_iter_entry (it, &entry);
 
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_int (entry, &id)) {
 				switch (cmd) {
 				case IDLIST_CMD_REHASH:
 					cmdres = xmmsc_medialib_rehash (infos->sync, id);
@@ -388,10 +388,10 @@ static void
 print_volume_entry (const gchar *key, xmmsv_t *val, void *udata)
 {
 	gchar *channel = udata;
-	guint value;
+	gint32 value;
 
 	if (!udata || !strcmp (key, channel)) {
-		xmmsv_get_uint (val, &value);
+		xmmsv_get_int (val, &value);
 		g_printf (_("%s = %u\n"), key, value);
 	}
 }
@@ -501,7 +501,7 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 	xmmsc_result_t *infores = NULL;
 	xmmsv_t *val;
 	const gchar *err;
-	guint id;
+	gint32 id;
 	gboolean first = true;
 
 	val = xmmsc_result_get_value (res);
@@ -514,7 +514,7 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 			xmmsv_t *entry;
 
 			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_int (entry, &id)) {
 				infores = xmmsc_medialib_get_info (infos->sync, id);
 				xmmsc_result_wait (infores);
 
@@ -612,7 +612,7 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 	xmmsv_t *val;
 	GArray *entries;
 
-	guint id;
+	gint32 id;
 	const gchar *err;
 
 	/* FIXME: separate function or merge
@@ -635,7 +635,7 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 		     xmmsv_list_iter_next (it)) {
 			xmmsv_t *entry;
 			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_int (entry, &id)) {
 				g_array_append_val (entries, id);
 			}
 		}
@@ -666,7 +666,7 @@ static GTree *
 matching_ids_tree (xmmsc_result_t *matching)
 {
 	xmmsv_t *val;
-	guint id;
+	gint32 id;
 	GTree *list = NULL;
 	const gchar *err;
 
@@ -687,7 +687,7 @@ matching_ids_tree (xmmsc_result_t *matching)
 
 			xmmsv_list_iter_entry (it, &entry);
 
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_int (entry, &id)) {
 				guint *tid;
 				tid = g_new (guint, 1);
 				*tid = id;
@@ -710,7 +710,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 	GTree *list = NULL;
 
 	const gchar *err;
-	guint id;
+	gint32 id;
 	gint i = 0;
 
 	val = xmmsc_result_get_value (res);
@@ -736,7 +736,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 		while (xmmsv_list_iter_valid (it)) {
 			xmmsv_t *entry;
 			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_uint (entry, &id) &&
+			if (xmmsv_get_int (entry, &id) &&
 			    (!list || g_tree_lookup (list, &id) != NULL)) {
 				column_display_set_position (coldisp, i);
 				id_coldisp_print_info (infos, coldisp, id);
@@ -1044,7 +1044,7 @@ static void
 list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 {
 	guint i;
-	guint id;
+	gint32 id;
 	xmmsc_result_t *jumpres = NULL;
 	xmmsv_t *val;
 	const gchar *err;
@@ -1083,7 +1083,7 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 				xmmsv_list_iter_entry (it, &entry);
 
 				/* If both match, jump! */
-				if (xmmsv_get_uint (entry, &id)
+				if (xmmsv_get_int (entry, &id)
 				    && g_array_index (playlist, guint, i) == id) {
 					jumpres = xmmsc_playlist_set_next (infos->sync, i);
 					xmmsc_result_wait (jumpres);
@@ -1208,7 +1208,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	xmmsc_result_t *insres;
-	guint id;
+	gint32 id;
 	gint offset;
 	const gchar *err;
 
@@ -1233,7 +1233,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 
 			xmmsv_list_iter_entry (it, &entry);
 
-			if (xmmsv_get_uint (entry, &id)) {
+			if (xmmsv_get_int (entry, &id)) {
 				insres = xmmsc_playlist_insert_id (infos->sync, playlist,
 				                                   pos + offset, id);
 				xmmsc_result_wait (insres);
@@ -1252,7 +1252,8 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
               gchar *playlist, gint pos)
 {
 	xmmsc_result_t *movres, *lisres;
-	guint id, curr;
+	guint curr;
+	gint32 id;
 	gint inc;
 	gboolean up;
 	GTree *list;
@@ -1287,7 +1288,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			if (curr == pos) {
 				up = FALSE;
 			}
-			if (xmmsv_get_uint (entry, &id) &&
+			if (xmmsv_get_int (entry, &id) &&
 			    g_tree_lookup (list, &id) != NULL) {
 				if (up) {
 					/* moving forward */
@@ -1358,7 +1359,8 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	xmmsc_result_t *rmres;
-	guint plid, id;
+	guint plid;
+	gint32 id;
 	gint plsize;
 	GArray *playlist;
 	gint i;
@@ -1391,7 +1393,7 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 				xmmsv_list_iter_entry (it, &entry);
 
 				/* If both match, remove! */
-				if (xmmsv_get_uint (entry, &id) && plid == id) {
+				if (xmmsv_get_int (entry, &id) && plid == id) {
 					rmres = xmmsc_playlist_remove_entry (infos->sync, NULL, i);
 					xmmsc_result_wait (rmres);
 					xmmsc_result_unref (rmres);
@@ -1411,7 +1413,8 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	xmmsc_result_t *rmres;
-	guint plid, id, i;
+	gint32 plid, id;
+	guint i;
 	gint offset;
 
 	const gchar *err;
@@ -1442,7 +1445,7 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 
 			xmmsv_list_iter_entry (plistit, &plist_entry);
 
-			if (!xmmsv_get_uint (plist_entry, &plid)) {
+			if (!xmmsv_get_int (plist_entry, &plid)) {
 				plid = 0;  /* failed to get id, should not happen */
 			}
 
@@ -1455,7 +1458,7 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 				xmmsv_list_iter_entry (matchit, &match_entry);
 
 				/* If both match, jump! */
-				if (xmmsv_get_uint (match_entry, &id) && plid == id) {
+				if (xmmsv_get_int (match_entry, &id) && plid == id) {
 					rmres = xmmsc_playlist_remove_entry (infos->sync, playlist,
 					                                     i - offset);
 					xmmsc_result_wait (rmres);

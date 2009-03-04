@@ -76,7 +76,7 @@ refresh_currid (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsv_is_error (val)) {
-		xmmsv_get_uint (val, &cache->currid);
+		xmmsv_get_int (val, &cache->currid);
 	}
 
 	freshness_received (&cache->freshness_currid);
@@ -90,7 +90,7 @@ refresh_playback_status (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsv_is_error (val)) {
-		xmmsv_get_uint (val, &cache->playback_status);
+		xmmsv_get_int (val, &cache->playback_status);
 	}
 
 	freshness_received (&cache->freshness_playback_status);
@@ -119,7 +119,7 @@ refresh_active_playlist (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
 	xmmsv_list_iter_t *it;
-	guint id;
+	gint32 id;
 
 	if (!xmmsv_is_error (val)) {
 		/* Reset array */
@@ -135,7 +135,7 @@ refresh_active_playlist (xmmsv_t *val, void *udata)
 		while (xmmsv_list_iter_valid (it)) {
 			xmmsv_t *entry;
 			xmmsv_list_iter_entry (it, &entry);
-			xmmsv_get_uint (entry, &id);
+			xmmsv_get_int (entry, &id);
 			g_array_append_val (cache->active_playlist, id);
 
 			xmmsv_list_iter_next (it);

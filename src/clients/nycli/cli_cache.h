@@ -40,9 +40,9 @@ struct freshness_St {
 };
 
 struct cli_cache_St {
-	gint currpos;
-	guint currid;
-	guint playback_status;
+	gint32 currpos;
+	gint32 currid;
+	gint32 playback_status;
 	GArray *active_playlist;
 	gchar *active_playlist_name;
 
