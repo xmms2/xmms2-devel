@@ -74,8 +74,8 @@ static void xmms_diskwrite_write (xmms_output_t *output, gpointer buffer,
                                   gint len, xmms_error_t *error);
 static void xmms_diskwrite_flush (xmms_output_t *output);
 
-static void on_playlist_entry_changed (xmms_object_t *object, const xmms_object_cmd_arg_t *arg, xmms_diskwrite_data_t *data);
-static void on_dest_directory_changed (xmms_object_t *object, gconstpointer value, xmms_diskwrite_data_t *data);
+static void on_playlist_entry_changed (xmms_object_t *object, xmmsv_t *arg, gpointer udata);
+static void on_dest_directory_changed (xmms_object_t *object, xmmsv_t *value, gpointer udata);
 static void finalize_wave (xmms_diskwrite_data_t *data);
 
 /*
@@ -131,8 +131,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
 	val = xmms_output_config_lookup (output, "destination_directory");
-	xmms_config_property_callback_set (val,
-	    (xmms_object_handler_t) on_dest_directory_changed, data);
+	xmms_config_property_callback_set (val, on_dest_directory_changed, data);
 
 	tmp = xmms_config_property_get_string (val);
 	if (tmp) {
@@ -141,7 +140,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 
 	xmms_object_connect (XMMS_OBJECT (output),
 	                     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-	                     (xmms_object_handler_t ) on_playlist_entry_changed,
+	                     on_playlist_entry_changed,
 	                     data);
 
 	return TRUE;
@@ -158,12 +157,11 @@ xmms_diskwrite_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 
 	val = xmms_output_config_lookup (output, "destination_directory");
-	xmms_config_property_callback_remove (val,
-	                                      (xmms_object_handler_t) on_dest_directory_changed, data);
+	xmms_config_property_callback_remove (val, on_dest_directory_changed, data);
 
 	xmms_object_disconnect (XMMS_OBJECT (output),
 	                        XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-	                        (xmms_object_handler_t ) on_playlist_entry_changed,
+	                        on_playlist_entry_changed,
 	                        data);
 
 	g_free (data);
@@ -254,28 +252,29 @@ xmms_diskwrite_flush (xmms_output_t *output)
 }
 
 static void
-on_dest_directory_changed (xmms_object_t *object, gconstpointer value,
-                           xmms_diskwrite_data_t *data)
+on_dest_directory_changed (xmms_object_t *object, xmmsv_t *_value, gpointer udata)
 {
+	xmms_diskwrite_data_t *data = udata;
+	const char *value;
+
 	g_return_if_fail (data);
 
+	value = xmms_config_property_get_string ((xmms_config_property_t *)object);
 	if (value) {
-		g_snprintf (data->destdir, sizeof (data->destdir), "%s",
-		            (gchar *) value);
+		g_snprintf (data->destdir, sizeof (data->destdir), "%s", value);
 	} else {
 		data->destdir[0] = '\0';
 	}
 }
 
 static void
-on_playlist_entry_changed (xmms_object_t *object,
-                           const xmms_object_cmd_arg_t *arg,
-                           xmms_diskwrite_data_t *data)
+on_playlist_entry_changed (xmms_object_t *object, xmmsv_t *arg, gpointer udata)
 {
-	guint id;
+	xmms_diskwrite_data_t *data = udata;
+	gint32 id;
 	gchar dest[XMMS_PATH_MAX];
 
-	xmmsv_get_uint (arg->retval, &id);
+	xmmsv_get_int (arg, &id);
 
 	/* assemble path */
 	g_snprintf (dest, sizeof (dest), "%s" G_DIR_SEPARATOR_S "%03u.wav",
