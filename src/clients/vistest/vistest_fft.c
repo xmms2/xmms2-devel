@@ -159,6 +159,7 @@ main (int argc, char **argv)
 		exit (EXIT_FAILURE);
 	}
 	xmmsc_result_unref (res);
+	xmmsv_unref (configval);
 
 	while (!xmmsc_visualization_started (connection, vis)) {
 		res = xmmsc_visualization_start (connection, vis);

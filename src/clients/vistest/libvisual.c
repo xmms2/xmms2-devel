@@ -72,6 +72,7 @@ void xmms2_init ()
 		x_exit (errmsg);
 	}
 	xmmsc_result_unref (res);
+	xmmsv_unref (cfg);
 
 	while (!xmmsc_visualization_started (x_connection, x_vis)) {
 		res = xmmsc_visualization_start (x_connection, x_vis);
