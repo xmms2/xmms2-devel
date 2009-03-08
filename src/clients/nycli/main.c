@@ -324,7 +324,7 @@ loop_select (cli_infos_t *infos)
 		modfds = select (maxfds + 1, &rfds, &wfds, NULL, NULL);
 	}
 
-	if (modfds < 0) {
+	if (modfds < 0 && errno != EINTR) {
 		g_printf (_("Error: invalid I/O result!"));
 		return;
 	} else if (modfds != 0) {
