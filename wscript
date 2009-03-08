@@ -428,6 +428,9 @@ def _list_cb(option, opt, value, parser):
     setattr(parser.values, option.dest, vals)
 
 def set_options(opt):
+    opt.add_option('--prefix', default=Options.default_prefix, dest='prefix',
+                   help="installation prefix (configuration only) [Default: '%s']" % Options.default_prefix)
+
     opt.tool_options('gcc')
 
     opt.add_option('--with-custom-version', type='string',
