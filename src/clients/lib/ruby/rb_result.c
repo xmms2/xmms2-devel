@@ -201,17 +201,6 @@ int_get (xmmsv_t *val)
 }
 
 static VALUE
-uint_get (xmmsv_t *val)
-{
-	uint32_t id = 0;
-
-	if (!xmmsv_get_uint (val, &id))
-		rb_raise (eValueError, "cannot retrieve value");
-
-	return UINT2NUM (id);
-}
-
-static VALUE
 string_get (xmmsv_t *val)
 {
 	const char *s = NULL;
