@@ -431,30 +431,42 @@ def set_options(opt):
     opt.tool_options('gcc')
 
     opt.add_option('--with-custom-version', type='string',
-                   dest='customversion')
+                   dest='customversion', help="Override git commit hash version")
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="enable_plugins", default=None)
+                   type="string", dest="enable_plugins", default=None,
+                   help="Comma separated list of plugins to build")
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="disable_plugins", default=None)
+                   type="string", dest="disable_plugins", default=None,
+                   help="Comma separated list of plugins to skip")
     opt.add_option('--with-default-output-plugin', type='string',
-                   dest='default_output_plugin')
+                   dest='default_output_plugin',
+                   help="Force a default output plugin")
     opt.add_option('--with-optionals', action="callback", callback=_list_cb,
-                   type="string", dest="enable_optionals", default=None)
+                   type="string", dest="enable_optionals", default=None,
+                   help="Comma separated list of optionals to build")
     opt.add_option('--without-optionals', action="callback", callback=_list_cb,
-                   type="string", dest="disable_optionals", default=None)
+                   type="string", dest="disable_optionals", default=None,
+                   help="Comma separated list of optionals to skip")
     opt.add_option('--conf-prefix', action="callback", callback=_list_cb,
-                   type='string', dest='config_prefix')
+                   type='string', dest='config_prefix',
+                   help="Specify a directory to prepend to configuration prefix")
     opt.add_option('--without-xmms2d', action='store_true', default=False,
-                   dest='without_xmms2d')
-    opt.add_option('--with-mandir', type='string', dest='manualdir')
-    opt.add_option('--with-bindir', type='string', dest='bindir')
-    opt.add_option('--with-libdir', type='string', dest='libdir')
-    opt.add_option('--with-pkgconfigdir', type='string', dest='pkgconfigdir')
+                   dest='without_xmms2d', help="Skip build of xmms2d")
+    opt.add_option('--with-mandir', type='string', dest='manualdir',
+                   help="Specify directory where to install man pages")
+    opt.add_option('--with-bindir', type='string', dest='bindir',
+                   help="Specify directory where to install executables")
+    opt.add_option('--with-libdir', type='string', dest='libdir',
+                   help="Specify directory where to install libraries")
+    opt.add_option('--with-pkgconfigdir', type='string', dest='pkgconfigdir',
+                   help="Specify directory where to install pkg-config files")
     opt.add_option('--with-target-platform', type='string',
-                   dest='target_platform')
-    opt.add_option('--with-windows-version', type='string', dest='winver')
+                   dest='target_platform',
+                   help="Force a target platform (cross-compilation)")
+    opt.add_option('--with-windows-version', type='string', dest='winver',
+                   help="Force a specific Windows version (cross-compilation)")
     opt.add_option('--run-tests', action='store_true', default=False,
-                   dest='run_tests')
+                   dest='run_tests', help="Run test suite")
 
     opt.sub_options("src/xmms")
     for o in optional_subdirs + subdirs:

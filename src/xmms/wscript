@@ -144,4 +144,6 @@ def configure(conf):
     return True
 
 def set_options(opt):
-    opt.add_option('--disable-shmvis-server', action='store_true', dest='without_unixshmserver', default=False)
+    opt.add_option('--disable-shmvis-server', action='store_true',
+                   dest='without_unixshmserver', default=False,
+                   help="Disable shared memory support for visualization")

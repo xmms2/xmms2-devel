@@ -33,4 +33,5 @@ def configure(conf):
     return True
 
 def set_options(opt):
-    opt.add_option("--with-pixmap-dir", type="string", dest="pixmapdir")
+    opt.add_option("--with-pixmap-dir", type="string", dest="pixmapdir",
+                   help="Specify directory where to install pixmaps")
