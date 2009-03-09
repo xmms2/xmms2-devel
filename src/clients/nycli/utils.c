@@ -23,8 +23,8 @@
 
 static void coll_int_attribute_set (xmmsv_coll_t *coll, const char *key, gint value);
 static xmmsv_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
-static void coll_copy_attributes (const char *key, const char *value, void *udata);
-static void coll_print_attributes (const char *key, const char *value, void *udata);
+static void coll_copy_attributes (const char *key, xmmsv_t *val, void *udata);
+static void coll_print_attributes (const char *key, xmmsv_t *val, void *udata);
 static xmmsv_coll_t *coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t type);
 
 static void pl_print_config (xmmsv_coll_t *coll, const char *name);
@@ -672,7 +672,7 @@ matching_ids_tree (xmmsc_result_t *matching)
 
 	val = xmmsc_result_get_value (matching);
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
 		xmmsv_list_iter_t *it;
@@ -1064,7 +1064,7 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 
 	val = xmmsc_result_get_value (res);
 
-	if (!xmmsv_get_error (val, &err) && xmmsv_is_list (val)) {
+	if (!xmmsv_get_error (val, &err) && xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 		xmmsv_list_iter_t *it;
 
 		xmmsv_get_list_iter (val, &it);
@@ -1218,7 +1218,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 
 	offset = 0;
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
 		xmmsv_list_iter_t *it;
@@ -1265,7 +1265,7 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 	xmmsc_result_wait (lisres);
 	lisval = xmmsc_result_get_value (lisres);
 
-	if (xmmsv_get_error (lisval, &err) || !xmmsv_is_list (lisval)) {
+	if (xmmsv_get_error (lisval, &err) || !xmmsv_is_type (lisval, XMMSV_TYPE_LIST)) {
 			g_printf (_("Error retrieving playlist entries\n"));
 	} else {
 		xmmsv_list_iter_t *it;
@@ -1373,7 +1373,7 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_list (val)) {
+	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
 		xmmsv_list_iter_t *it;
@@ -1423,9 +1423,9 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 	matchval = xmmsc_result_get_value (matchres);
 	plistval = xmmsc_result_get_value (plistres);
 
-	if (xmmsv_get_error (matchval, &err) || !xmmsv_is_list (matchval)) {
+	if (xmmsv_get_error (matchval, &err) || !xmmsv_is_type (matchval, XMMSV_TYPE_LIST)) {
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
-	} else if (xmmsv_get_error (plistval, &err) || !xmmsv_is_list (plistval)) {
+	} else if (xmmsv_get_error (plistval, &err) || !xmmsv_is_type (plistval, XMMSV_TYPE_LIST)) {
 		g_printf (_("Error retrieving the playlist!\n"));
 	} else {
 		xmmsv_list_iter_t *matchit, *plistit;
@@ -1582,11 +1582,11 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 
 	if (xmmsv_get_coll (val, &coll)) {
 		if (attrname == NULL) {
-			xmmsc_coll_attribute_foreach (coll,
-			                              coll_print_attributes, NULL);
+			xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
+			                    coll_print_attributes, NULL);
 		} else {
 			if (xmmsc_coll_attribute_get (coll, attrname, &attrvalue)) {
-				coll_print_attributes (attrname, attrvalue, NULL);
+				g_printf ("[%s] %s\n", attrname, attrvalue);
 			} else {
 				g_printf (_("Invalid attribute!\n"));
 			}
@@ -1663,15 +1663,23 @@ coll_make_reference (const char *name, xmmsc_coll_namespace_t ns)
 }
 
 static void
-coll_copy_attributes (const char *key, const char *value, void *udata)
+coll_copy_attributes (const char *key, xmmsv_t *val, void *udata)
 {
-	xmmsv_coll_attribute_set ((xmmsv_coll_t *) udata, key, value);
+	const char *value;
+
+	if (xmmsv_get_string (val, &value)) {
+		xmmsv_coll_attribute_set ((xmmsv_coll_t *) udata, key, value);
+	}
 }
 
 static void
-coll_print_attributes (const char *key, const char *value, void *udata)
+coll_print_attributes (const char *key, xmmsv_t *val, void *udata)
 {
-	g_printf ("[%s] %s\n", key, value);
+	const char *value;
+
+	if (xmmsv_get_string (val, &value)) {
+		g_printf ("[%s] %s\n", key, value);
+	}
 }
 
 static xmmsv_coll_t *
@@ -1690,7 +1698,8 @@ coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t type)
 		xmmsv_coll_idlist_append (copy, id);
 	}
 
-	xmmsv_coll_attribute_foreach (coll, coll_copy_attributes, copy);
+	xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
+	                    coll_copy_attributes, copy);
 
 	return copy;
 }
