@@ -120,10 +120,10 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (argc > 2) {
-		xmmsc_entry_format (print_text, sizeof (print_text), argv[2], val);
+		xmmsv_dict_format (print_text, sizeof (print_text), argv[2], val);
 	} else {
-		xmmsc_entry_format (print_text, sizeof (print_text),
-		                    "${artist} - ${title}", val);
+		xmmsv_dict_format (print_text, sizeof (print_text),
+		                   "${artist} - ${title}", val);
 	}
 
 	xmmsv_unref (val);
@@ -281,11 +281,11 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 
 	print_info ("");
 	if (xmmsv_dict_has_key (val, "channel") && xmmsv_dict_has_key (val, "title")) {
-		xmmsc_entry_format (songname, sizeof (songname),
-		                    "[stream] ${title}", val);
+		xmmsv_dict_format (songname, sizeof (songname),
+		                   "[stream] ${title}", val);
 		has_songname = TRUE;
 	} else if (xmmsv_dict_has_key (val, "channel")) {
-		xmmsc_entry_format (songname, sizeof (songname), "${channel}", val);
+		xmmsv_dict_format (songname, sizeof (songname), "${channel}", val);
 		has_songname = TRUE;
 	} else if (!xmmsv_dict_has_key (val, "title")) {
 		const gchar *url;
@@ -300,8 +300,8 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 			}
 		}
 	} else {
-		xmmsc_entry_format (songname, sizeof (songname),
-		                    statusformat, val);
+		xmmsv_dict_format (songname, sizeof (songname),
+		                   statusformat, val);
 		has_songname = TRUE;
 	}
 

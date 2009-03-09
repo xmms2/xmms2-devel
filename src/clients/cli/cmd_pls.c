@@ -655,18 +655,18 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 		if (xmmsv_dict_has_key (info_val, "channel")) {
 			if (xmmsv_dict_has_key (info_val, "title")) {
-				xmmsc_entry_format (line, sizeof (line),
-				                    "[stream] ${title}", info_val);
+				xmmsv_dict_format (line, sizeof (line),
+				                   "[stream] ${title}", info_val);
 			} else {
-				xmmsc_entry_format (line, sizeof (line),
-				                    "${channel}", info_val);
+				xmmsv_dict_format (line, sizeof (line),
+				                   "${channel}", info_val);
 			}
 		} else if (!xmmsv_dict_has_key (info_val, "title")) {
 			const gchar *url;
 			gchar dur[10];
 
-			xmmsc_entry_format (dur, sizeof (dur),
-			                    "(${minutes}:${seconds})", info_val);
+			xmmsv_dict_format (dur, sizeof (dur),
+			                   "(${minutes}:${seconds})", info_val);
 
 			if (xmmsv_dict_entry_get_string (info_val, "url", &url)) {
 				gchar *filename = g_path_get_basename (url);
@@ -678,7 +678,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 				}
 			}
 		} else {
-			xmmsc_entry_format (line, sizeof (line), listformat, info_val);
+			xmmsv_dict_format (line, sizeof (line), listformat, info_val);
 		}
 
 		if (p == pos) {
