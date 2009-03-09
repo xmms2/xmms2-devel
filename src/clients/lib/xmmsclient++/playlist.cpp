@@ -116,7 +116,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Playlist::addId( unsigned int id,
+	VoidResult Playlist::addId( int id,
 	                            const std::string& playlist ) const
 	{
 		xmmsc_result_t* res =
@@ -215,7 +215,7 @@ namespace Xmms
 	}
 
 
-	VoidResult Playlist::insertId( int pos, unsigned int id,
+	VoidResult Playlist::insertId( int pos, int id,
 	                               const std::string& playlist ) const
 	{
 		xmmsc_result_t* res =
@@ -273,7 +273,7 @@ namespace Xmms
 		return IntListResult( res, ml_ );
 	}
 
-	VoidResult Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
+	VoidResult Playlist::moveEntry( int curpos, int newpos,
 	                                const std::string& playlist ) const
 	{
 		xmmsc_result_t* res =
@@ -283,7 +283,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Playlist::removeEntry( unsigned int pos,
+	VoidResult Playlist::removeEntry( int pos,
 	                                  const std::string& playlist ) const
 	{
 		xmmsc_result_t* res =
@@ -301,7 +301,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	IntResult Playlist::setNext( unsigned int pos ) const
+	IntResult Playlist::setNext( int pos ) const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,

@@ -75,7 +75,7 @@ namespace Xmms
 	}
 
 	StringListResult
-	Collection::find( unsigned int id, Namespace nsname ) const
+	Collection::find( int id, Namespace nsname ) const
 	{
 		xmmsc_result_t* res
 		    = call( connected_,
@@ -107,8 +107,8 @@ namespace Xmms
 	IntListResult
 	Collection::queryIds( const Coll::Coll& coll,
 	                      const std::list< std::string >& order,
-	                      unsigned int limit_len,
-	                      unsigned int limit_start ) const
+	                      int limit_len,
+	                      int limit_start ) const
 	{
 		xmmsv_t *xorder = makeStringList( order );
 
@@ -126,8 +126,8 @@ namespace Xmms
 	Collection::queryInfos( const Coll::Coll& coll,
 	                        const std::list< std::string >& fetch,
 	                        const std::list< std::string >& order,
-	                        unsigned int limit_len,
-	                        unsigned int limit_start,
+	                        int limit_len,
+	                        int limit_start,
 	                        const std::list< std::string >& group
 	                      ) const
 	{

@@ -109,7 +109,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult entryPropertyRemove( unsigned int id,
+			VoidResult entryPropertyRemove( int id,
 			                                const std::string& key,
 			                                const std::string& source = "" ) const;
 
@@ -130,7 +130,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult entryPropertySet( unsigned int id,
+			VoidResult entryPropertySet( int id,
 			                             const std::string& key,
 			                             const std::string& value,
 			                             const std::string& source = "" ) const;
@@ -139,9 +139,9 @@ namespace Xmms
 			 * @overload
 			 * @note It takes a int instead of string
 			 */
-			VoidResult entryPropertySet( unsigned int id,
+			VoidResult entryPropertySet( int id,
 			                             const std::string& key,
-			                             int value,
+			                             int32_t value,
 			                             const std::string& source = "" ) const;
 
 			/** Search for a entry (URL) in the medialib db
@@ -171,7 +171,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */  
-			PropDictResult getInfo( unsigned int id ) const;
+			PropDictResult getInfo( int id ) const;
 
 			/** Import all files recursively from the 
 			 *  directory passed as argument.
@@ -217,7 +217,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult rehash( unsigned int id = 0 ) const;
+			VoidResult rehash( int id = 0 ) const;
 
 			/** Remove an entry from the medialib.
 			 *  
@@ -230,7 +230,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult removeEntry( unsigned int id ) const;
+			VoidResult removeEntry( int id ) const;
 
 			/** Change the url property of an entry in the media library.  Note
 			 *  that you need to handle the actual file move yourself.
@@ -245,7 +245,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult moveEntry( unsigned int id,
+			VoidResult moveEntry( int id,
 			                      const std::string& path ) const;
 
 			/** Request the medialib entry added broadcast.
@@ -254,7 +254,7 @@ namespace Xmms
 			 *  the medialib serverside.
 			 * 
 			 *  @param slot Function pointer to a function taking a
-			 *              const unsigned int& and returning a bool.
+			 *              const int& and returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
@@ -268,7 +268,7 @@ namespace Xmms
 			 *  The argument will be an medialib id. 
 			 *  
 			 *  @param slot Function pointer to a function taking a
-			 *              const unsigned int& and returning a bool.
+			 *              const int& and returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *

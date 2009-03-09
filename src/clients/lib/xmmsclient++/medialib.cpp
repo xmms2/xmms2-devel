@@ -64,7 +64,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::entryPropertyRemove( unsigned int id,
+	VoidResult Medialib::entryPropertyRemove( int id,
 	                                          const std::string& key,
 	                                          const std::string& source ) const
 	{
@@ -84,7 +84,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::entryPropertySet( unsigned int id,
+	VoidResult Medialib::entryPropertySet( int id,
 	                                       const std::string& key,
 	                                       const std::string& value,
 	                                       const std::string& source ) const
@@ -105,9 +105,9 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::entryPropertySet( unsigned int id,
+	VoidResult Medialib::entryPropertySet( int id,
 	                                       const std::string& key,
-	                                       const int value,
+	                                       int32_t value,
 	                                       const std::string& source ) const
 	{
 		boost::function< xmmsc_result_t*() > f;
@@ -136,7 +136,7 @@ namespace Xmms
 		return IntResult( res, ml_ );
 	}
 
-	PropDictResult Medialib::getInfo( unsigned int id ) const
+	PropDictResult Medialib::getInfo( int id ) const
 	{
 		xmmsc_result_t* res = call( connected_,
 		                            boost::bind( xmmsc_medialib_get_info,
@@ -163,7 +163,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::rehash( unsigned int id ) const
+	VoidResult Medialib::rehash( int id ) const
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
@@ -171,7 +171,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::removeEntry( unsigned int id ) const
+	VoidResult Medialib::removeEntry( int id ) const
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
@@ -179,7 +179,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Medialib::moveEntry( unsigned int id,
+	VoidResult Medialib::moveEntry( int id,
 	                                const std::string& path ) const
 	{
 		xmmsc_result_t* res =

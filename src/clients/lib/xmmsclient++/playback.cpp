@@ -63,7 +63,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Playback::seekMs(unsigned int milliseconds) const
+	VoidResult Playback::seekMs(int milliseconds) const
 	{
 		xmmsc_result_t* res =
 			call( connected_,
@@ -80,7 +80,7 @@ namespace Xmms
 		return VoidResult( res, ml_ );
 	}
 
-	VoidResult Playback::seekSamples(unsigned int samples) const
+	VoidResult Playback::seekSamples(int samples) const
 	{
 		xmmsc_result_t* res =
 			call( connected_,
@@ -122,7 +122,7 @@ namespace Xmms
 	}
 
 	VoidResult Playback::volumeSet(const std::string& channel,
-	                               unsigned int volume) const
+	                               int volume) const
 	{
 		xmmsc_result_t* res =
 			call( connected_,

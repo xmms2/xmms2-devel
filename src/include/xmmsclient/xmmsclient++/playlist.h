@@ -192,7 +192,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult addId( const unsigned int id,
+			VoidResult addId( const int id,
 			                  const std::string& playlist = DEFAULT_PLAYLIST ) const;
 
 			/** Add an idlist to a playlist.
@@ -260,8 +260,7 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 *
 			 *  @return Dict containing then name of a playlist in 'name' and
-			 *  the current position in that playlist as unsigned integer in
-			 *  'position'.
+			 *  the current position in that playlist as integer in 'position'.
 			 */
 			DictResult currentPos( const std::string& playlist = DEFAULT_PLAYLIST
 			                     ) const;
@@ -275,7 +274,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 *
-			 *  @return current position as unsigned integer.
+			 *  @return current position as integer.
 			 */
 			StringResult currentActive() const;
 
@@ -350,7 +349,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult insertId( int pos, unsigned int id,
+			VoidResult insertId( int pos, int id,
 			                     const std::string& playlist = DEFAULT_PLAYLIST
 			                   ) const;
 
@@ -452,7 +451,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult moveEntry( unsigned int curpos, unsigned int newpos,
+			VoidResult moveEntry( int curpos, int newpos,
 			                      const std::string& playlist = DEFAULT_PLAYLIST
 			                    ) const;
 
@@ -470,7 +469,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult removeEntry( unsigned int pos,
+			VoidResult removeEntry( int pos,
 			                        const std::string& playlist = DEFAULT_PLAYLIST
 			                      ) const;
 
@@ -498,7 +497,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			IntResult setNext( unsigned int pos ) const;
+			IntResult setNext( int pos ) const;
 
 			/** Same as setNext but relative to the current position.
 			 *
@@ -565,7 +564,10 @@ namespace Xmms
 			 *  changed this will be called.
 			 *
 			 *  @param slot Function pointer to a function taking a
-			 *              const unsigned int& and returning a bool.
+			 *              const Dict& and returning a bool.
+			 *              Dict contains then name of a playlist
+			 *              in 'name' and the updated position in
+			 *              that playlist as integer in 'position'.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *

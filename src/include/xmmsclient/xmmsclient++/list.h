@@ -42,13 +42,6 @@ namespace Xmms
 	};
 
 	template<>
-	struct type_traits< uint32_t >
-	{
-		typedef uint32_t type;
-		static int (*get_func)( const xmmsv_t*, uint32_t* );
-	};
-
-	template<>
 	struct type_traits< std::string >
 	{
 		typedef const char* type;
@@ -85,7 +78,7 @@ namespace Xmms
 	class List_const_iterator_
 	{
 		private:
-			List_const_iterator_( xmmsv_t*, unsigned int );
+			List_const_iterator_( xmmsv_t*, int );
 			friend class List< T >;
 		public:
 			typedef ptrdiff_t difference_type;
@@ -220,7 +213,7 @@ namespace Xmms
 	}
 
 	template< typename T >
-	List_const_iterator_< T >::List_const_iterator_( xmmsv_t* list, unsigned int pos )
+	List_const_iterator_< T >::List_const_iterator_( xmmsv_t* list, int pos )
 		: list_( list ), it_( 0 )
 	{
 		xmmsv_get_list_iter( list_, &it_ );
@@ -310,10 +303,7 @@ namespace Xmms
 	List_const_iterator_< T >&
 	List_const_iterator_< T >::operator--()
 	{
-		unsigned int pos( xmmsv_list_iter_tell( it_ ) );
-		if ( pos != 0 ) {
-			xmmsv_list_iter_seek( it_, pos - 1 );
-		}
+		xmmsv_list_iter_prev( it_ );
 		return *this;
 	}
 

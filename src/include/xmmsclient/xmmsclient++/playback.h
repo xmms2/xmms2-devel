@@ -110,7 +110,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult seekMs(unsigned int milliseconds) const;
+			VoidResult seekMs(int milliseconds) const;
 
 			/** Seek to a time relative to the current position 
 			 *  in the current playback.
@@ -139,7 +139,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			VoidResult seekSamples(unsigned int samples) const;
+			VoidResult seekSamples(int samples) const;
 
 			/** Seek to a number of samples relative to the current
 			 *  position in the current playback.
@@ -209,7 +209,7 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 */
 			VoidResult volumeSet(const std::string& channel,
-			                     unsigned int volume) const;
+			                     int volume) const;
 
 			/** Get a channel<->volume list from the server.
 			 *
