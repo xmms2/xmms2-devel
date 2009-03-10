@@ -96,10 +96,18 @@ configuration_init (const gchar *path)
 		}
 	}
 
+	/* load the defaults */
+	config->file = g_key_file_new ();
+	g_key_file_load_from_data (config->file, default_config,
+	                           strlen (default_config), G_KEY_FILE_NONE,
+	                           NULL);
+	section_to_hash (config->file, "main", config->values);
+	g_key_file_free (config->file);
+
 	config->file = g_key_file_new ();
 	if (g_file_test (config->path, G_FILE_TEST_EXISTS)) {
 		if (!g_key_file_load_from_file (config->file, config->path,
-		                                G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+		                                G_KEY_FILE_NONE, NULL)) {
 			g_printf ("Error: Couldn't load configuration file!\n");
 		} else {
 			/* load keys to hash table overriding default values */
