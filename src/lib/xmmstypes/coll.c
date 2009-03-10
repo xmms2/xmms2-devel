@@ -201,6 +201,23 @@ xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
 	coll->idlist_allocated = size;
 }
 
+static int
+_xmmsv_coll_operand_find (xmmsv_list_iter_t *it, xmmsv_coll_t *op)
+{
+	xmmsv_coll_t *c;
+	xmmsv_t *v;
+
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_list_iter_entry (it, &v);
+		if (xmmsv_get_coll (v, &c)) {
+			if (c == op) {
+				return 1;
+			}
+		}
+		xmmsv_list_iter_next (it);
+	}
+	return 0;
+}
 
 /**
  * Add the operand to the given collection.
@@ -210,11 +227,22 @@ xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
 void
 xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
+	xmmsv_list_iter_t *it;
 	xmmsv_t *v;
 	x_return_if_fail (coll);
 	x_return_if_fail (op);
 
 	/* we used to check if it already existed here before */
+	if (!xmmsv_get_list_iter (coll->operands, &it))
+		return;
+
+	if (_xmmsv_coll_operand_find (it, op)) {
+		x_api_warning ("with an operand already in operand list");
+		xmmsv_list_iter_explicit_destroy (it);
+		return;
+	}
+
+	xmmsv_list_iter_explicit_destroy (it);
 
 	v = xmmsv_new_coll (op);
 	x_return_if_fail (v);
@@ -231,8 +259,6 @@ void
 xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_coll_t *c;
-	xmmsv_t *v;
 
 	x_return_if_fail (coll);
 	x_return_if_fail (op);
@@ -240,16 +266,12 @@ xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
 	if (!xmmsv_get_list_iter (coll->operands, &it))
 		return;
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
-		if (xmmsv_get_coll (v, &c)) {
-			if (c == op) {
-				xmmsv_list_iter_remove (it);
-				break;
-			}
-		}
-		xmmsv_list_iter_next (it);
+	if (_xmmsv_coll_operand_find (it, op)) {
+		xmmsv_list_iter_remove (it);
+	} else {
+		x_api_warning ("with an operand not in operand list");
 	}
+	xmmsv_list_iter_explicit_destroy (it);
 }
 
 
@@ -609,7 +631,7 @@ xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll)
 	x_return_val_if_fail (coll->operand_iter_stack, 0);
 	x_return_val_if_fail (coll->operand_iter_stack->next, 0);
 
-	/* we should do explicit free on it here */
+	xmmsv_list_iter_explicit_destroy (coll->operand_iter_stack->data);
 	coll->operand_iter_stack = x_list_delete_link (coll->operand_iter_stack, coll->operand_iter_stack);
 
 	return 1;
