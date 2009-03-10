@@ -22,7 +22,7 @@ struct column_display_St {
 	GArray *cols;
 	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
-	gint total_time;
+	guint64 total_time;
 	gint termwidth;
 	gint availchars;
 	gchar *buffer;       /* Used to render strings. */

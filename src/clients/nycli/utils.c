@@ -1861,9 +1861,9 @@ find_terminal_width ()
 
 /* Returned string must be freed by the caller */
 gchar *
-format_time (gint duration, gboolean use_hours)
+format_time (guint64 duration, gboolean use_hours)
 {
-	gint hour, min, sec;
+	guint64 hour, min, sec;
 	gchar *time;
 
 	/* +500 for rounding */
@@ -1874,9 +1874,9 @@ format_time (gint duration, gboolean use_hours)
 	if (use_hours) {
 		hour = min / 60;
 		min = min % 60;
-		time = g_strdup_printf ("%d:%02d:%02d", hour, min, sec);
+		time = g_strdup_printf ("%llu:%02llu:%02llu", hour, min, sec);
 	} else {
-		time = g_strdup_printf ("%02d:%02d", min, sec);
+		time = g_strdup_printf ("%02llu:%02llu", min, sec);
 	}
 
 	return time;
