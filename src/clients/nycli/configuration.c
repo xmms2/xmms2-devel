@@ -18,7 +18,7 @@
 
 const gchar *const default_config =
 "[main]\n\n"
-"PROMPT=nycli> \n"
+"PROMPT=xmms2> \n"
 "SERVER_AUTOSTART=true\n"
 "AUTO_UNIQUE_COMPLETE=true\n"
 "PLAYLIST_MARKER=->\n"
