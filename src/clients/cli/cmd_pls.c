@@ -621,15 +621,15 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			total_playtime += playtime;
 		}
 
-		if (val_has_key (info_val, "channel")) {
-			if (val_has_key (info_val, "title")) {
+		if (xmmsv_dict_has_key (info_val, "channel")) {
+			if (xmmsv_dict_has_key (info_val, "title")) {
 				xmmsc_entry_format (line, sizeof (line),
 				                    "[stream] ${title}", info_val);
 			} else {
 				xmmsc_entry_format (line, sizeof (line),
 				                    "${channel}", info_val);
 			}
-		} else if (!val_has_key (info_val, "title")) {
+		} else if (!xmmsv_dict_has_key (info_val, "title")) {
 			const gchar *url;
 			gchar dur[10];
 

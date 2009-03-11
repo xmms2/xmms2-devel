@@ -274,14 +274,14 @@ do_mediainfo (xmmsv_t *propdict, void *userdata)
 	val = xmmsv_propdict_to_dict (propdict, NULL);
 
 	print_info ("");
-	if (val_has_key (val, "channel") && val_has_key (val, "title")) {
+	if (xmmsv_dict_has_key (val, "channel") && xmmsv_dict_has_key (val, "title")) {
 		xmmsc_entry_format (songname, sizeof (songname),
 		                    "[stream] ${title}", val);
 		has_songname = TRUE;
-	} else if (val_has_key (val, "channel")) {
+	} else if (xmmsv_dict_has_key (val, "channel")) {
 		xmmsc_entry_format (songname, sizeof (songname), "${channel}", val);
 		has_songname = TRUE;
-	} else if (!val_has_key (val, "title")) {
+	} else if (!xmmsv_dict_has_key (val, "title")) {
 		const gchar *url;
 
 		if (xmmsv_dict_entry_get_string (val, "url", &url)) {

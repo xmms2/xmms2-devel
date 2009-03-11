@@ -16,12 +16,6 @@
 
 #include "common.h"
 
-gint
-val_has_key (xmmsv_t *val, const gchar *key)
-{
-	return xmmsv_dict_entry_get_type (val, key) != XMMSV_TYPE_NONE;
-}
-
 
 gchar *
 format_url (gchar *item, GFileTest test)
