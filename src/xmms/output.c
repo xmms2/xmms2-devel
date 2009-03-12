@@ -749,13 +749,13 @@ xmms_output_latency (xmms_output_t *output)
 	guint ret = 0;
 	guint buffersize = 0;
 
-	/* data already waiting in the ringbuffer */
-	buffersize += xmms_ringbuf_bytes_used (output->filler_buffer);
-
-	/* latency of the soundcard */
-	buffersize += xmms_output_plugin_method_latency_get (output->plugin, output);
-
 	if (output->format) {
+		/* data already waiting in the ringbuffer */
+		buffersize += xmms_ringbuf_bytes_used (output->filler_buffer);
+
+		/* latency of the soundcard */
+		buffersize += xmms_output_plugin_method_latency_get (output->plugin, output);
+
 		ret = xmms_sample_bytes_to_ms (output->format, buffersize);
 	}
 
@@ -1009,15 +1009,20 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 	XMMS_DBG ("Setting format!");
 
 	if (!xmms_output_plugin_format_set_always (output->plugin)) {
+		gboolean ret;
+
 		if (output->format && xmms_stream_type_match (output->format, fmt)) {
 			XMMS_DBG ("audio formats are equal, not updating");
 			return TRUE;
 		}
 
-		xmms_object_unref (output->format);
-		xmms_object_ref (fmt);
-		output->format = fmt;
-		return xmms_output_plugin_method_format_set (output->plugin, output, output->format);
+		ret = xmms_output_plugin_method_format_set (output->plugin, output, fmt);
+		if (ret) {
+			xmms_object_unref (output->format);
+			xmms_object_ref (fmt);
+			output->format = fmt;
+		}
+		return ret;
 	} else {
 		if (output->format && !xmms_stream_type_match (output->format, fmt)) {
 			xmms_object_unref (output->format);
