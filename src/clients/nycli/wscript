@@ -17,15 +17,24 @@ def build(bld):
                     playlist_positions.c""".split()
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'glib2 readline'
+    obj.uselib = 'glib2 readline readline-ncurses'
 
 #    obj = bld.create_obj('man')
 #    obj.files = ['xmms2.1']
 
 def configure(conf):
-    if not conf.check_cc(lib="readline", uselib_store="readline"):
+    # first try just linking against libreadline
+    if conf.check_cc(lib="readline", uselib_store="readline"):
+        return True
+
+    # then try ncurses
+    if not conf.check_cc(lib="ncurses", uselib_store="readline-ncurses"):
         return False
-    return True
+    if conf.check_cc(lib="readline", uselib_store="readline", uselib="readline-ncurses"):
+        return True
+
+    # Ok, we give up..
+    return False
 
 def set_options(opt):
     pass
