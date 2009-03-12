@@ -27,11 +27,11 @@ def configure(conf):
         return False
 
     # first try just linking against libreadline
-    if conf.check_cc(lib="readline", uselib_store="readline"):
+    if conf.check_cc(lib="readline", header_name="readline/readline.h", function_name='rl_filename_dequoting_function', uselib_store="readline"):
         return True
 
     # then try ncurses
-    if not conf.check_cc(lib="ncurses", uselib_store="readline-ncurses"):
+    if not conf.check_cc(lib="ncurses", header_name="readline/readline.h", function_name='rl_filename_dequoting_function', uselib_store="readline-ncurses"):
         return False
     if conf.check_cc(lib="readline", uselib_store="readline", uselib="readline-ncurses"):
         return True
