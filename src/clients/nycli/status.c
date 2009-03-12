@@ -95,6 +95,7 @@ status_update_info (cli_infos_t *infos, status_entry_t *entry)
 		xmmsv_t *info;
 
 		info = xmmsv_propdict_to_dict (val, NULL);
+		enrich_mediainfo (info);
 
 		/* copy over fields that are not from metadata */
 		for (i = 0; i < G_N_ELEMENTS (noinfo_fields); i++) {

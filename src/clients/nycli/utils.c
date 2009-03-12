@@ -571,6 +571,63 @@ positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
 	cli_infos_loop_resume (infos);
 }
 
+void
+enrich_mediainfo (xmmsv_t *val)
+{
+	if (!xmmsv_dict_has_key (val, "title") && xmmsv_dict_has_key (val, "url")) {
+		/* First decode the URL encoding */
+		xmmsv_t *tmp, *v, *urlv;
+		gchar *url = NULL;
+		gchar *filename = NULL;
+		const unsigned char *burl;
+		unsigned int blen;
+
+		xmmsv_dict_get (val, "url", &v);
+
+		tmp = xmmsv_decode_url (v);
+		if (tmp && xmmsv_get_bin (tmp, &burl, &blen)) {
+			url = g_malloc (blen + 1);
+			memcpy (url, burl, blen);
+			url[blen] = 0;
+			xmmsv_unref (tmp);
+			filename = strrchr (url, '/');
+			if (!filename || !filename[1]) {
+				filename = url;
+			} else {
+				filename = filename + 1;
+			}
+		}
+
+		/* Let's see if the result is valid utf-8. This must be done
+		 * since we don't know the charset of the binary string */
+		if (filename && g_utf8_validate (filename, -1, NULL)) {
+			/* If it's valid utf-8 we don't have any problem just
+			 * printing it to the screen
+			 */
+			urlv = xmmsv_new_string (filename);
+		} else if (filename) {
+			/* Not valid utf-8 :-( We make a valid guess here that
+			 * the string when it was encoded with URL it was in the
+			 * same charset as we have on the terminal now.
+			 *
+			 * THIS MIGHT BE WRONG since different clients can have
+			 * different charsets and DIFFERENT computers most likely
+			 * have it.
+			 */
+			gchar *tmp2 = g_locale_to_utf8 (filename, -1, NULL, NULL, NULL);
+			urlv = xmmsv_new_string (tmp2);
+			g_free (tmp2);
+		} else {
+			/* Decoding the URL failed for some reason. That's not good. */
+			urlv = xmmsv_new_string (_("?"));
+		}
+
+		xmmsv_dict_set (val, "title", urlv);
+		xmmsv_unref (urlv);
+		g_free (url);
+	}
+}
+
 static void
 id_coldisp_print_info (cli_infos_t *infos, column_display_t *coldisp, guint id)
 {
@@ -580,6 +637,7 @@ id_coldisp_print_info (cli_infos_t *infos, column_display_t *coldisp, guint id)
 	infores = xmmsc_medialib_get_info (infos->sync, id);
 	xmmsc_result_wait (infores);
 	info = xmmsv_propdict_to_dict (xmmsc_result_get_value (infores), NULL);
+	enrich_mediainfo (info);
 	column_display_print (coldisp, info);
 
 	xmmsc_result_unref (infores);

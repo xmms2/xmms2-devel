@@ -70,5 +70,6 @@ void print_padding (gint length, gchar padchar);
 void print_indented (const gchar *string, guint level);
 gint find_terminal_width ();
 gchar *format_time (gint duration, gboolean use_hours);
+void enrich_mediainfo (xmmsv_t *val);
 
 #endif /* __UTILS_H__ */
