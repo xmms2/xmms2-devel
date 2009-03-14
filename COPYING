@@ -115,6 +115,9 @@ wafadmin/libtool_config.py:
 wafadmin/pproc.py:
         Copyright (C) 2003-2004 by Peter Astrand <astrand@lysator.liu.se>
 
+src/clients/nycli/:
+        Licensed under GPL license.
+
 src/clients/lib/perl/:
         Copyright (C) 2006-2007 Florian Ragwitz <rafl@debian.org>
         Licensed under the same terms as Perl itself.
