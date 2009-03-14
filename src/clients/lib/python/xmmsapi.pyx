@@ -1666,7 +1666,7 @@ cdef class XMMS:
 			return self.create_result(cb, xmmsc_playlist_insert_id(self.conn, NULL, pos, id))
 
 
-	def playlist_insert_collection(self, pos, coll, order = None, playlist = None, cb = None):
+	def playlist_insert_collection(self, pos, Collection coll, order = None, playlist = None, cb = None):
 		"""
 		playlist_insert_collection(pos, coll, order, playlist=None, cb=None) -> XMMSResult
 
@@ -1675,18 +1675,14 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		cdef Collection c
-
 		if order is None:
 			order = []
 
-		c = <Collection> coll
-
 		if playlist is not None:
 			pl = from_unicode(playlist)
-			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, pl, pos, c.coll, create_native_value(order)))
+			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, pl, pos, coll.coll, create_native_value(order)))
 		else:
-			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, NULL, pos, c.coll, create_native_value(order)))
+			return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, NULL, pos, coll.coll, create_native_value(order)))
 
 	def playlist_radd(self, url, playlist = None, cb = None):
 		"""
@@ -1776,7 +1772,7 @@ cdef class XMMS:
 			return self.create_result(cb, xmmsc_playlist_add_id(self.conn, NULL, id))
 
 
-	def playlist_add_collection(self, coll, order = None, playlist = None, cb = None):
+	def playlist_add_collection(self, Collection coll, order = None, playlist = None, cb = None):
 		"""
 		playlist_add_collection(coll, order, playlist=None, cb=None) -> XMMSResult
 
@@ -1784,18 +1780,15 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		cdef Collection c
 
 		if order is None:
 			order = []
 
-		c = <Collection> coll
-
 		if playlist is not None:
 			pl = from_unicode(playlist)
-			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, pl, c.coll, create_native_value(order)))
+			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, pl, coll.coll, create_native_value(order)))
 		else:
-			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, NULL, c.coll, create_native_value(order)))
+			return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, NULL, coll.coll, create_native_value(order)))
 
 
 
@@ -2328,7 +2321,7 @@ cdef class XMMS:
 
 		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, path))
 
-	def coll_query_ids(self, coll, start=0, leng=0, order=None, cb=None):
+	def coll_query_ids(self, Collection coll, start=0, leng=0, order=None, cb=None):
 		"""
 		coll_query_ids(coll, start=0, leng=0, order=None, cb=None) -> XMMSResult
 
@@ -2336,15 +2329,12 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		cdef Collection c
-
 		if order is None:
 			order = []
 
-		c = <Collection> coll
-		return self.create_result(cb, xmmsc_coll_query_ids(self.conn, c.coll, create_native_value(order), start, leng))
+		return self.create_result(cb, xmmsc_coll_query_ids(self.conn, coll.coll, create_native_value(order), start, leng))
 
-	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
+	def coll_query_infos(self, Collection coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
 		coll_query_infos(coll, fields, start=0, leng=0, order=None, groupby=None, cb=None) -> XMMSResult
 
@@ -2352,7 +2342,6 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		cdef Collection c
 
 		if order is None:
 			order = []
@@ -2360,8 +2349,7 @@ cdef class XMMS:
 		if groupby is None:
 			groupby = []
 
-		c = <Collection> coll
-		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, c.coll, create_native_value(order), start, leng, create_native_value(fields), create_native_value(groupby)))
+		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, coll.coll, create_native_value(order), start, leng, create_native_value(fields), create_native_value(groupby)))
 
 
 	def bindata_add(self, data, cb=None):
