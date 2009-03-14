@@ -184,21 +184,20 @@ raop_rtsp_get_reply (raop_client_t *rc)
 
 	res = rtsp_message_get_header (&response, RTSP_HDR_AUDIO_JACK_STATUS,
 	                               &ajstatus);
-	if (res != RTSP_OK)
-		return RAOP_EFAIL;
-
-	params = g_strsplit (ajstatus, "; ", -1);
-	if (!g_ascii_strncasecmp (params[0], "connected", strlen ("connected"))) {
-		rc->jack_status = AUDIO_JACK_CONNECTED;
-	} else {
-		rc->jack_status = AUDIO_JACK_DISCONNECTED;
+	if (res == RTSP_OK) {
+		params = g_strsplit (ajstatus, "; ", -1);
+		if (!g_ascii_strncasecmp (params[0], "connected", strlen ("connected"))) {
+			rc->jack_status = AUDIO_JACK_CONNECTED;
+		} else {
+			rc->jack_status = AUDIO_JACK_DISCONNECTED;
+		}
+		if (!g_ascii_strncasecmp (params[1], "type=analog", strlen ("type=analog"))) {
+			rc->jack_type = AUDIO_JACK_ANALOG;
+		} else {
+			rc->jack_type = AUDIO_JACK_DIGITAL;
+		}
+		g_strfreev (params);
 	}
-	if (!g_ascii_strncasecmp (params[1], "type=analog", strlen ("type=analog"))) {
-		rc->jack_type = AUDIO_JACK_ANALOG;
-	} else {
-		rc->jack_type = AUDIO_JACK_DIGITAL;
-	}
-	g_strfreev (params);
 
 	if (rc->rtsp_state == RAOP_RTSP_SETUP) {
 		gchar *transport;
