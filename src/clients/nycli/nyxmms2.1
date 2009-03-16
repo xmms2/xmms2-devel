@@ -1,0 +1,1278 @@
+.\" nycli - The New Korving CLI
+.\"
+.\" nyxmms2.1 - The nycli man page
+.\"
+.\" Copyright (C) 2009 Anthony Garcia
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer
+.\"    in this position and unchanged.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.TH NYXMMS2 1
+.SH NAME
+nycli \- New Korving CLI
+.SH SYNOPSIS
+.B nyxmms2
+[command]
+[arguments]
+.SH DESCRIPTION
+.B nycli
+is the new official CLI XMMS2 client, replacing \fBxmms2\fR(1).
+.SH INVOCATION
+.SS INLINE MODE
+If
+.B nycli
+is passed a command as an argument, that command will be interpreted and
+.B nycli
+will exit after it is finished.
+.SS INTERACTIVE MODE
+.B nycli
+features a powerful shell-like environment via readline that allows the user to
+enter commands at a prompt and have the usual cool features such as pathname expansion
+and line editing.
+.SH GENERAL COMMANDS
+.TP
+\fBplay\fR 
+.PP
+.RS 4
+Start playback.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBpause\fR 
+.PP
+.RS 4
+Pause playback.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBstop\fR [-n <tracks> | -t <time>]
+.PP
+.RS 4
+Stop playback.
+.RE
+.PP
+.RS 4
+\-n | \-\-tracks
+.RE
+.RS 8
+Number of tracks after which to stop playback.
+.RE
+.PP
+.RS 4
+\-t | \-\-time
+.RE
+.RS 8
+Duration after which to stop playback.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBtoggle\fR 
+.PP
+.RS 4
+Toggle playback.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBseek\fR <time|offset>
+.PP
+.RS 4
+Seek to a relative or absolute position.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBstatus\fR [-r <time>] [-f <format>]
+.PP
+.RS 4
+Display playback status, either continuously or once.
+.RE
+.PP
+.RS 4
+\-r | \-\-refresh
+.RE
+.RS 8
+Delay between each refresh of the status. If 0, the status is only printed once (default).
+.RE
+.PP
+.RS 4
+\-f | \-\-format
+.RE
+.RS 8
+Format string used to display status.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBprev\fR [offset]
+.PP
+.RS 4
+Jump to previous song.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBnext\fR [offset]
+.PP
+.RS 4
+Jump to next song.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBjump\fR [-b] <pattern|positions>
+.PP
+.RS 4
+Jump to the first media maching the pattern.
+.RE
+.PP
+.RS 4
+\-b | \-\-backward
+.RE
+.RS 8
+Jump backward to the first media matching the pattern
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBinfo\fR <pattern|positions>
+.PP
+.RS 4
+Display all the properties for all media matching the pattern.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBsearch\fR [-p <name> | -c <name>] [-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>
+.PP
+.RS 4
+Search and print all media matching the pattern. Search can be restricted
+to a collection or a playlist by using the corresponding flag.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Search in the given playlist.
+.RE
+.PP
+.RS 4
+\-c | \-\-collection
+.RE
+.RS 8
+Search in the given collection.
+.RE
+.PP
+.RS 4
+\-o | \-\-order
+.RE
+.RS 8
+List of properties to order by (prefix by '-' for reverse ordering).
+.RE
+.PP
+.RS 4
+\-l | \-\-columns
+.RE
+.RS 8
+List of properties to use as columns.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBlist\fR [-p <name>] [pattern]
+.PP
+.RS 4
+List the contents of a playlist (the active playlist by default). If a
+pattern is provided, contents are further filtered and only the matching
+media are displayed.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+List the given playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBadd\fR [-f [-N] [-P]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]
+.PP
+.RS 4
+Add the matching media or files to a playlist.
+.RE
+.PP
+.RS 4
+\-f | \-\-file
+.RE
+.RS 8
+Treat the arguments as file paths instead of a pattern.
+.RE
+.PP
+.RS 4
+\-P | \-\-pls
+.RE
+.RS 8
+Treat the files as playlist files (implies --file.)
+.RE
+.PP
+.RS 4
+\-t | \-\-pattern
+.RE
+.RS 8
+Force treating arguments as pattern.
+.RE
+.PP
+.RS 4
+\-N | \-\-non-recursive
+.RE
+.RS 8
+Do not add directories recursively.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Add to the given playlist.
+.RE
+.PP
+.RS 4
+\-n | \-\-next
+.RE
+.RS 8
+Add after the current track.
+.RE
+.PP
+.RS 4
+\-a | \-\-at
+.RE
+.RS 8
+Add media at a given position in the playlist, or at a given offset from the current track.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBremove\fR [-p <playlist>] <pattern|positions>
+.PP
+.RS 4
+Remove the matching media from a playlist.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Remove from the given playlist, instead of the active playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBmove\fR [-p <playlist>] [-n | -a <pos|offset>] <pattern|positions>
+.PP
+.RS 4
+Move entries inside a playlist.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Playlist to act on.
+.RE
+.PP
+.RS 4
+\-n | \-\-next
+.RE
+.RS 8
+Move the matching tracks after the current track.
+.RE
+.PP
+.RS 4
+\-a | \-\-at
+.RE
+.RS 8
+Move the matching tracks by an offset or to a position.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBexit\fR 
+.PP
+.RS 4
+Exit the shell-like interface.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBhelp\fR [-a] [command]
+.PP
+.RS 4
+List all commands, or help on one command.
+.RE
+.PP
+.RS 4
+\-a | \-\-alias
+.RE
+.RS 8
+List aliases, or alias definition.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+.SH PLAYLIST COMMANDS
+.TP
+\fBplaylist list\fR [-a] [pattern]
+.PP
+.RS 4
+List all playlists.
+.RE
+.PP
+.RS 4
+\-a | \-\-all
+.RE
+.RS 8
+Include hidden playlists.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist\fR 
+.PP
+.RS 4
+No description
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist switch\fR <playlist>
+.PP
+.RS 4
+Change the active playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist create\fR [-p <playlist>] <name>
+.PP
+.RS 4
+Change the active playlist.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Copy the content of the playlist into the new playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist rename\fR [-f] [-p <playlist>] <newname>
+.PP
+.RS 4
+Rename a playlist.  By default, rename the active playlist.
+.RE
+.PP
+.RS 4
+\-f | \-\-force
+.RE
+.RS 8
+Force the rename of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-p | \-\-playlist
+.RE
+.RS 8
+Rename the given playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist remove\fR <playlist>
+.PP
+.RS 4
+Remove the given playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist clear\fR [playlist]
+.PP
+.RS 4
+Clear a playlist.  By default, clear the active playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist shuffle\fR [playlist]
+.PP
+.RS 4
+Shuffle a playlist.  By default, shuffle the active playlist.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist sort\fR [-o <order>] [playlist]
+.PP
+.RS 4
+Sort a playlist.  By default, sort the active playlist.
+.RE
+.PP
+.RS 4
+\-o | \-\-order
+.RE
+.RS 8
+List of properties to sort by (prefix by '-' for reverse sorting).
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist config\fR [-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [playlist]
+.PP
+.RS 4
+Configure a playlist by changing its type, attributes, etc.
+By default, configure the active playlist.
+.RE
+.PP
+.RS 4
+\-t | \-\-type
+.RE
+.RS 8
+Change the type of the playlist: list, queue, pshuffle.
+.RE
+.PP
+.RS 4
+\-s | \-\-history
+.RE
+.RS 8
+Size of the history of played tracks (for queue, pshuffle).
+.RE
+.PP
+.RS 4
+\-u | \-\-upcoming
+.RE
+.RS 8
+Number of upcoming tracks to maintain (for pshuffle).
+.RE
+.PP
+.RS 4
+\-i | \-\-input
+.RE
+.RS 8
+Input collection for the playlist (for pshuffle). Default to 'All Media'.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+.SH COLLECTION COMMANDS
+.TP
+\fBcollection list\fR 
+.PP
+.RS 4
+List all collections.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection\fR 
+.PP
+.RS 4
+No description
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection show\fR <collection>
+.PP
+.RS 4
+Display a human-readable description of a collection.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection create\fR [-f] [-a | -e] [-c <collection>] <name> [pattern]
+.PP
+.RS 4
+Create a new collection.
+If pattern is provided, it is used to define the collection.
+Otherwise, the new collection contains the whole media library.
+.RE
+.PP
+.RS 4
+\-f | \-\-force
+.RE
+.RS 8
+Force creating of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-c | \-\-collection
+.RE
+.RS 8
+Copy an existing collection to the new one.
+.RE
+.PP
+.RS 4
+\-e | \-\-empty
+.RE
+.RS 8
+Initialize an empty collection.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection rename\fR [-f] <oldname> <newname>
+.PP
+.RS 4
+Rename a collection.
+.RE
+.PP
+.RS 4
+\-f | \-\-force
+.RE
+.RS 8
+Force renaming of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection remove\fR <collection>
+.PP
+.RS 4
+Remove a collection.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection config\fR <collection> [attrname [attrvalue]]
+.PP
+.RS 4
+Get or set attributes for the given collection.
+If no attribute name is provided, list all attributes.
+If only an attribute name is provided, display the value of the attribute.
+If both attribute name and value are provided, set the new value of the attribute.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+.SH SERVER COMMANDS
+.TP
+\fBserver import\fR [-N] <path>
+.PP
+.RS 4
+Import new files into the media library.
+By default, directories are imported recursively.
+.RE
+.PP
+.RS 4
+\-N | \-\-non-recursive
+.RE
+.RS 8
+Do not import directories recursively.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver\fR 
+.PP
+.RS 4
+No description
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver remove\fR <pattern>
+.PP
+.RS 4
+Remove the matching media from the media library.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver rehash\fR [pattern]
+.PP
+.RS 4
+Rehash the media matched by the pattern,
+or the whole media library if no pattern is provided
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver config\fR [name [value]]
+.PP
+.RS 4
+Get or set configuration values.
+If no name or value is provided, list all configuration values.
+If only a name is provided, display the content of the corresponding configuration value.
+If both name and a value are provided, set the new content of the configuration value.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver property\fR [-i | -s | -D] [-S] <mid> [name [value]]
+.PP
+.RS 4
+Get or set properties for a given media.
+If no name or value is provided, list all properties.
+If only a name is provided, display the value of the property.
+If both a name and a value are provided, set the new value of the property.
+
+By default, set operations use client specific source and list, display operations use source-preference.
+Use the --source option to override this behaviour.
+
+By default, the value will be used to determine whether it should be saved as a string or an integer.
+Use the --int or --string flag to override this behaviour.
+.RE
+.PP
+.RS 4
+\-i | \-\-int
+.RE
+.RS 8
+Force the value to be treated as integer.
+.RE
+.PP
+.RS 4
+\-s | \-\-string
+.RE
+.RS 8
+Force the value to be treated as a string.
+.RE
+.PP
+.RS 4
+\-D | \-\-delete
+.RE
+.RS 8
+Delete the selected property.
+.RE
+.PP
+.RS 4
+\-S | \-\-source
+.RE
+.RS 8
+Property source.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver plugins\fR 
+.PP
+.RS 4
+List the plugins loaded in the server.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver volume\fR [-c <name>] [value]
+.PP
+.RS 4
+Get or set the audio volume (in a range of 0-100).
+If a value is provided, set the new value of the volume. Otherwise, display the current volume.
+By default, the command applies to all audio channels. Use the --channel flag to override this behaviour.
+.RE
+.PP
+.RS 4
+\-c | \-\-channel
+.RE
+.RS 8
+Get or set the volume only for one channel.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver stats\fR 
+.PP
+.RS 4
+Display statistics about the server: uptime, version, size of the medialib, etc
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver sync\fR 
+.PP
+.RS 4
+Force the saving of collections to the disk (otherwise only performed on shutdown)
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver shutdown\fR 
+.PP
+.RS 4
+Shutdown the server.
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.SH ALIASES
+.PP
+A list of command aliases are read from the configuration file in the section [alias]
+at runtime. The syntax of
+.B nycli
+aliases are somewhat similar to bash and other shells. An alias is defined by a list of semi-colon separated
+commands and arguments. Parameter expansion is supported (see
+.B EXPANSION
+below).
+.PP
+.TP
+The default configuration includes the following aliases:
+.PP
+.TP
+\fBaddpls\fR 
+.PP
+.RS 4
+add -f -P $@
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcurrent\fR 
+.PP
+.RS 4
+status -f $1
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver kill\fR 
+.PP
+.RS 4
+server shutdown
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBmute\fR 
+.PP
+.RS 4
+server volume 0
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBrepeat\fR 
+.PP
+.RS 4
+seek 0
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBls\fR 
+.PP
+.RS 4
+list
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBquit\fR 
+.PP
+.RS 4
+exit
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBclear\fR 
+.PP
+.RS 4
+playlist clear
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBscap\fR 
+.PP
+.RS 4
+stop ; playlist clear ; add $@ ; play
+.RE
+.PP
+.RS 4
+\-h | \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.SS EXPANSION
+.RS 4
+.B Positional Parameters
+.RE
+.RS 8
+An alias can use positional parameters, for example:
+.PP
+foo = add -f $1 $3
+.PP
+foo ctkoz.ogg and slre.ogg
+.PP
+Will result in:
+.PP
+add -f ctkoz.ogg slre.ogg
+.PP
+.RE
+.RS 4
+.B Special Parameters
+.RE
+.RS 8
+.B $@
+.RS 4
+This expands to all parameters passed to the alias.
+.RE
+.PP
+.RE
+.PP
+.SH CONFIGURATION
+.PP
+PROMPT
+.RS 4
+String to use as a prompt in
+.B INTERACTIVE MODE
+.RE
+.PP
+SERVER_AUTOSTART
+.RS 4
+Boolean, if true nycli will attempt to start \fBxmms2d\fR(1) if it's not running already.
+.RE
+.PP
+AUTO_UNIQUE_COMPLETE
+.RS 4
+Boolean
+.RE
+.PP
+PLAYLIST_MARKER
+.RS 4
+String to use to mark the current active entry in the playlist
+.RE
+.PP
+GUESS_PLS
+.RS 4
+Boolean, try to guess if the URL is a playlist and add accordingly. (Not reliable)
+.RE
+.PP
+CLASSIC_LIST
+.RS 4
+Boolean, format 
+.B list
+output similar to the classic cli.
+.RE
+.PP
+CLASSIC_LIST_FORMAT
+.RS 4
+String to format classic
+.B list
+output with.
+.RE
+.PP
+STATUS_FORMAT
+.RS 4
+String to format
+.B status
+output with.
+.RE
+.PP
+.SH FILES
+$XDG_CONFIG_HOME/xmms2/clients/nycli.conf
+.RS 4
+The configuration file for
+.B nycli
+.RE
+.SH BUGS
+Please report all bugs at http://bugs.xmms2.xmms.se
+.SH AUTHORS
+Igor Assis, Anders Waldenborg, Anthony Garcia, Sebastien Cevey, and Jonne Lehtinen
+.PP
+See the
+.B AUTHORS
+file in the XMMS2 source distribution for more info.
+.PP
+The blame for this man page is on Anthony.
+.PP
+If you contributed and feel you should be listed here please send me a mail.

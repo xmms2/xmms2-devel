@@ -19,8 +19,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline readline-ncurses'
 
-#    obj = bld.create_obj('man')
-#    obj.files = ['xmms2.1']
+    obj = bld.new_task_gen(features='man', files='nyxmms2.1', section='1')
 
 def configure(conf):
     rl_headers=["stdio.h", "readline/readline.h"]
