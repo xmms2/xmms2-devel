@@ -19,7 +19,7 @@ def build(bld):
   find.source = ['find-avahi.c']
   find.uselib = 'avahiclient'
 
-  bld.new_task_gen(feature='man', files='xmms2-mdns-avahi.1', section='1')
+  bld.new_task_gen(features='man', files='xmms2-mdns-avahi.1', section='1')
 
 def configure(conf):
   if not conf.check_cfg(package="avahi-client", uselib_store="avahiclient", args="--cflags --libs"):
