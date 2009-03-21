@@ -79,7 +79,7 @@ def build(bld):
     if env['xmms_icon']:
         prog.add_objects = 'xmms_icon'
 
-    bld.new_task_gen(feature='man', files='xmms2d.1', section='1')
+    bld.new_task_gen(features='man', files='xmms2d.1', section='1')
 
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
