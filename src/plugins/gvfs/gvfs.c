@@ -40,7 +40,8 @@ static const struct {
 } scheme_priorities[] = {
 	{ "http", 40 },
 	{ "https", 40 },
-	{ "file", 40}
+	{ "file", 40 },
+	{ "cdda", 40 }
 };
 
 static const gchar *query_attributes = G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE ","
