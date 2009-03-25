@@ -273,7 +273,12 @@ xmms_gvfs_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 	GFileInfo *info;
 	GFileEnumerator *enumerator;
 
-	file = g_file_new_for_uri (url);
+	/* Same hack as in _init */
+	if (!g_ascii_strncasecmp (url, "file://", 7)) {
+		file = g_file_new_for_path (url+7);
+	} else {
+		file = g_file_new_for_uri (url);
+	}
 	enumerator = g_file_enumerate_children (file,
 	                                        G_FILE_ATTRIBUTE_STANDARD_NAME ","
 	                                        G_FILE_ATTRIBUTE_STANDARD_TYPE ","
