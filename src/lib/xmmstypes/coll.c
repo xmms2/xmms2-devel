@@ -32,13 +32,8 @@ struct xmmsv_coll_St {
 	int ref;
 
 	xmmsv_coll_type_t type;
-
 	xmmsv_t *operands;
-	x_list_t *operand_iter_stack;
-
-	/* stored as (key1, val1, key2, val2, ...) */
 	xmmsv_t *attributes;
-	xmmsv_dict_iter_t *attributes_iter;
 
 	/* List of ids, 0-terminated. */
 	uint32_t *idlist;
@@ -87,7 +82,6 @@ xmmsv_coll_ref (xmmsv_coll_t *coll)
 xmmsv_coll_t*
 xmmsv_coll_new (xmmsv_coll_type_t type)
 {
-	xmmsv_list_iter_t *i;
 	xmmsv_coll_t *coll;
 
 	x_return_val_if_fail (type <= XMMS_COLLECTION_TYPE_LAST, NULL);
@@ -110,12 +104,8 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 
 	coll->operands = xmmsv_new_list ();
 	xmmsv_list_restrict_type (coll->operands, XMMSV_TYPE_COLL);
-	xmmsv_get_list_iter (coll->operands, &i);
-
-	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
 
 	coll->attributes = xmmsv_new_dict ();
-	xmmsv_get_dict_iter (coll->attributes, &coll->attributes_iter);
 
 	/* user must give this back */
 	xmmsv_coll_ref (coll);
@@ -137,7 +127,6 @@ xmmsv_coll_free (xmmsv_coll_t *coll)
 
 	/* Unref all the operands and attributes */
 	xmmsv_unref (coll->operands);
-	x_list_free (coll->operand_iter_stack);
 
 	xmmsv_unref (coll->attributes);
 
@@ -495,170 +484,6 @@ xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
 	return coll->idlist;
 }
 
-
-/**
- * Move the internal pointer of the operand list to the first operand.
- *
- * @param coll  The collection to consider.
- * @return 1 upon success, 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_first (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *i;
-
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-
-	i = coll->operand_iter_stack->data;
-
-	xmmsv_list_iter_first (i);
-
-	return 1;
-}
-
-/**
- * Checks if the internal pointer points to a valid operand of the list.
- *
- * @param coll  The collection to consider.
- * @return 1 if the current operand is valid, 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_valid (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *i;
-
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-
-	i = coll->operand_iter_stack->data;
-
-	return xmmsv_list_iter_valid (i);
-}
-
-/**
- * Provide a reference to the current operand in the list by changing
- * the operand parameter to point to it. Note that the refcount of the
- * operand is not modified by this operation.
- * The function returns 1 if the entry was valid, 0 otherwise.
- *
- * @param coll  The collection to consider.
- * @param operand  The current operand in the list.
- * @return 1 upon success (valid entry), 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_entry (xmmsv_coll_t *coll, xmmsv_coll_t **operand)
-{
-	xmmsv_list_iter_t *i;
-	xmmsv_t *v;
-
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-
-	i = coll->operand_iter_stack->data;
-
-	if (!xmmsv_list_iter_entry (i, &v))
-		return 0;
-
-	return xmmsv_get_coll (v, operand);
-}
-
-/**
- * Move forward the internal pointer of the operand list.
- *
- * @param coll  The collection to consider.
- * @return 1 upon success, 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_next (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *i;
-
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-
-	i = coll->operand_iter_stack->data;
-
-	if (!xmmsv_list_iter_valid (i))
-		return 0;
-
-	xmmsv_list_iter_next (i);
-	return 1;
-}
-
-/**
- * Save the position of the operand iterator, to be restored later by
- * calling #xmmsv_coll_operand_list_restore.  The pointer is saved on
- * a stack, so it can be called any number of times, as long as it is
- * restored as many times.
- * Note that the iterator is not tested for consistency before being
- * saved!
- *
- * @param coll  The collection to consider.
- * @return 1 upon success, 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_save (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *i;
-
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-
-	if (!xmmsv_get_list_iter (coll->operands, &i))
-		return 0;
-
-	coll->operand_iter_stack = x_list_prepend (coll->operand_iter_stack, i);
-
-	return 1;
-}
-
-
-/**
- * Restore the position of the operand iterator, previously saved by
- * calling #xmmsv_coll_operand_list_save.
- * Note that the iterator is not tested for consistency, so you better
- * be careful if the list of operands was manipulated since the
- * iterator was saved!
- *
- * @param coll  The collection to consider.
- * @return 1 upon success, 0 otherwise.
- */
-int
-xmmsv_coll_operand_list_restore (xmmsv_coll_t *coll)
-{
-	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->operand_iter_stack, 0);
-	x_return_val_if_fail (coll->operand_iter_stack->next, 0);
-
-	xmmsv_list_iter_explicit_destroy (coll->operand_iter_stack->data);
-	coll->operand_iter_stack = x_list_delete_link (coll->operand_iter_stack, coll->operand_iter_stack);
-
-	return 1;
-}
-
-
-/**
- * Remove all the operands.
- *
- * @param coll  The collection to consider.
- */
-void
-xmmsv_coll_operand_list_clear (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *i;
-
-	x_return_if_fail (coll);
-
-	xmmsv_list_clear (coll->operands);
-
-	if (!xmmsv_get_list_iter (coll->operands, &i))
-		return;
-
-	x_list_free (coll->operand_iter_stack);
-	coll->operand_iter_stack = x_list_prepend (NULL, i);
-}
-
 xmmsv_t *
 xmmsv_coll_operands_get (xmmsv_coll_t *coll)
 {
@@ -767,44 +592,6 @@ xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll,
 {
 	struct attr_fe_data d = {func, user_data};
 	xmmsv_dict_foreach (coll->attributes, attr_fe_func, &d);
-}
-
-void
-xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll)
-{
-	x_return_if_fail (coll);
-	xmmsv_dict_iter_first (coll->attributes_iter);
-}
-
-int
-xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll)
-{
-	x_return_val_if_fail (coll, 0);
-
-	return xmmsv_dict_iter_valid (coll->attributes_iter);
-}
-
-void
-xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, const char **k, const char **v)
-{
-	xmmsv_t *val;
-	int r;
-
-	x_return_if_fail (coll);
-
-	r = xmmsv_dict_iter_pair (coll->attributes_iter, k, &val);
-	x_return_if_fail (r);
-
-	r = xmmsv_get_string (val, v);
-	x_return_if_fail (r);
-}
-
-void
-xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll)
-{
-	x_return_if_fail (coll);
-
-	xmmsv_dict_iter_next (coll->attributes_iter);
 }
 
 /**
