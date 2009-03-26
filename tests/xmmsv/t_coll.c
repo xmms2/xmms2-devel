@@ -130,7 +130,7 @@ CASE (test_coll_operands_list_clear)
 	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (u);
 
-	xmmsv_coll_operand_list_clear (u);
+	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
 	xmmsv_coll_unref (u);
 }
@@ -159,7 +159,7 @@ CASE (test_coll_operands)
 		xmmsv_coll_unref (ops[i]);
 	}
 
-	xmmsv_coll_operand_list_clear (u);
+	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
 	xmmsv_coll_unref (u);
 }
@@ -194,7 +194,7 @@ CASE (test_coll_operands_list)
 
 	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);
 
-	xmmsv_coll_operand_list_clear (u);
+	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
 	xmmsv_coll_unref (u);
 
@@ -207,6 +207,7 @@ CASE (test_coll_attributes)
 	xmmsv_coll_t *c;
 	int cnt;
 	int sum;
+	xmmsv_dict_iter_t *it;
 
 	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
 	CU_ASSERT_PTR_NOT_NULL (c);
@@ -227,17 +228,17 @@ CASE (test_coll_attributes)
 
 	cnt = 0;
 	sum = 0;
-	xmmsv_coll_attribute_list_first (c);
-	while (xmmsv_coll_attribute_list_valid (c)) {
+	CU_ASSERT_TRUE (xmmsv_get_dict_iter (xmmsv_coll_attributes_get (c), &it));
+	for (xmmsv_dict_iter_first (it);
+	     xmmsv_dict_iter_valid (it);
+	     xmmsv_dict_iter_next (it)) {
 		const char *k;
 		const char *v;
 
-		xmmsv_coll_attribute_list_entry (c, &k, &v);
+		CU_ASSERT_TRUE (xmmsv_dict_iter_pair_string (it, &k, &v));
 		CU_ASSERT_EQUAL (k[1], v[1]);
 		sum += atoi (k + 1);
 		cnt++;
-
-		xmmsv_coll_attribute_list_next (c);
 	}
 	CU_ASSERT_EQUAL (cnt, 3);
 	CU_ASSERT_EQUAL (sum, 1+2+3);

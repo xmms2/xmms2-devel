@@ -240,6 +240,7 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist,
 {
 	gint history, upcoming, currpos, size;
 	xmmsv_coll_t *src;
+	xmmsv_t *tmp;
 
 	XMMS_DBG ("PLAYLIST: update-partyshuffle!");
 
@@ -258,13 +259,11 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist,
 		currpos = xmms_playlist_coll_get_currpos (coll);
 	}
 
-	xmmsv_coll_operand_list_save (coll);
-	xmmsv_coll_operand_list_first (coll);
-	if (!xmmsv_coll_operand_list_entry (coll, &src)) {
+	if (!xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
 		XMMS_DBG ("Cannot find party shuffle operand!");
 		return;
 	}
-	xmmsv_coll_operand_list_restore (coll);
+	xmmsv_get_coll (tmp, &src);
 
 	currpos = xmms_playlist_coll_get_currpos (coll);
 	size = xmms_playlist_coll_get_size (coll);

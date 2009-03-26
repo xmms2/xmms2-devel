@@ -260,18 +260,26 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	/* Save operands and connections (don't recurse in ref operand) */
 	newid = collid + 1;
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsv_coll_operand_list_save (coll);
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op)) {
+		xmmsv_t *tmp;
+		xmmsv_list_iter_t *iter;
+
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
+
+		for (xmmsv_list_iter_first (iter);
+		     xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			xmmsv_list_iter_entry (iter, &tmp);
+			xmmsv_get_coll (tmp, &op);
+
 			nextid = xmms_collection_dbwrite_operator (session, newid, op);
 			g_snprintf (query, sizeof (query),
 			            "INSERT INTO CollectionConnections VALUES(%d, %d)",
 			            newid, collid);
 			xmms_medialib_select (session, query, NULL);
 			newid = nextid;
-			xmmsv_coll_operand_list_next (coll);
 		}
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 	}
 
 	/* return next available id */

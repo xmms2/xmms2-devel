@@ -220,6 +220,8 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	guint *idlist;
 	gchar *attr1, *attr2, *attr3;
 	gboolean case_sens;
+	xmmsv_list_iter_t *iter;
+	xmmsv_t *tmp;
 
 	xmmsv_coll_type_t type = xmmsv_coll_get_type (coll);
 	switch (type) {
@@ -237,9 +239,11 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		i = 0;
 		query_append_string (query, "(");
 
-		xmmsv_coll_operand_list_save (coll);
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op)) {
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
+
+		for (xmmsv_list_iter_first (iter);
+		     xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
 			if (i != 0) {
 				if (type == XMMS_COLLECTION_TYPE_UNION)
 					query_append_string (query, " OR ");
@@ -248,10 +252,11 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			} else {
 				i = 1;
 			}
+			xmmsv_list_iter_entry (iter, &tmp);
+			xmmsv_get_coll (tmp, &op);
 			xmms_collection_append_to_query (dag, op, query);
-			xmmsv_coll_operand_list_next (coll);
 		}
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 
 		query_append_string (query, ")");
 		break;
@@ -406,10 +411,11 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *c
 	gchar *target_name;
 	gchar *target_ns;
 	guint  target_nsid;
+	xmmsv_t *tmp;
 
-	xmmsv_coll_operand_list_save (coll);
-	xmmsv_coll_operand_list_first (coll);
-	if (!xmmsv_coll_operand_list_entry (coll, &op)) {
+	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
+		xmmsv_get_coll (tmp, &op);
+
 		/* Ref'd coll not saved as operand, look for it */
 		if (xmmsv_coll_attribute_get (coll, "reference", &target_name) &&
 		    xmmsv_coll_attribute_get (coll, "namespace", &target_ns)) {
@@ -418,7 +424,6 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *c
 			op = xmms_collection_get_pointer (dag, target_name, target_nsid);
 		}
 	}
-	xmmsv_coll_operand_list_restore (coll);
 
 	/* Append reference operator */
 	if (op != NULL) {
@@ -435,16 +440,16 @@ query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag,
                                 xmmsv_coll_t *coll)
 {
 	xmmsv_coll_t *op;
+	xmmsv_t *tmp;
 
-	xmmsv_coll_operand_list_save (coll);
-	xmmsv_coll_operand_list_first (coll);
-	if (xmmsv_coll_operand_list_entry (coll, &op)) {
+	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
+		xmmsv_get_coll (tmp, &op);
+
 		if (!operator_is_allmedia (op)) {
 			query_append_string (query, " AND ");
 			xmms_collection_append_to_query (dag, op, query);
 		}
 	}
-	xmmsv_coll_operand_list_restore (coll);
 }
 
 /* Append a filtering clause on the field value, depending on the operator type. */

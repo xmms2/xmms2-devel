@@ -1106,16 +1106,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	xmms_collection_namespace_id_t nsid;
 
 	/* count operands */
-	xmmsv_coll_operand_list_save (coll);
-
-	xmmsv_coll_operand_list_first (coll);
-	while (xmmsv_coll_operand_list_entry (coll, &op)) {
-		num_operands++;
-		xmmsv_coll_operand_list_next (coll);
-	}
-
-	xmmsv_coll_operand_list_restore (coll);
-
+	num_operands = xmmsv_list_get_size (xmmsv_coll_operands_get (coll));
 
 	/* analyse by type */
 	type = xmmsv_coll_get_type (coll);
@@ -1173,10 +1164,9 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 		/* ensure that the operand is consistent with the reference infos */
 		if (num_operands == 1) {
-			xmmsv_coll_operand_list_save (coll);
-			xmmsv_coll_operand_list_first (coll);
-			xmmsv_coll_operand_list_entry (coll, &op);
-			xmmsv_coll_operand_list_restore (coll);
+			xmmsv_t *val;
+			xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &val);
+			xmmsv_get_coll (val, &op);
 
 			if (op != ref) {
 				return FALSE;
@@ -1261,18 +1251,24 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 	/* recurse in operands */
 	if (num_operands > 0 && type != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsv_coll_operand_list_save (coll);
+		xmmsv_list_iter_t *iter;
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
 
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op) && valid) {
+		for (xmmsv_list_iter_first (iter);
+		     valid && xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			xmmsv_t *val;
+			xmmsv_list_iter_entry (iter, &val);
+			xmmsv_get_coll (val, &op);
+
 			if (!xmms_collection_validate_recurs (dag, op, save_name,
 			                                      save_namespace)) {
 				valid = FALSE;
 			}
-			xmmsv_coll_operand_list_next (coll);
 		}
 
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 	}
 
 	return valid;
@@ -1464,17 +1460,25 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 	/* Apply the function to the operator. */
 	f (dag, coll, parent, udata);
 
-	/* Recurse into the parents (if not a reference) */
+	/* Recurse into the operands (if not a reference) */
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsv_coll_operand_list_save (coll);
+		xmmsv_list_iter_t *iter;
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
 
-		xmmsv_coll_operand_list_first (coll);
-		while (xmmsv_coll_operand_list_entry (coll, &op)) {
-			xmms_collection_apply_to_collection_recurs (dag, op, coll, f, udata);
-			xmmsv_coll_operand_list_next (coll);
+		for (xmmsv_list_iter_first (iter);
+		     xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			xmmsv_t *val;
+			xmmsv_list_iter_entry (iter, &val);
+
+			xmmsv_get_coll (val, &op);
+
+			xmms_collection_apply_to_collection_recurs (dag, op, coll, f,
+			                                            udata);
 		}
 
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 	}
 }
 
@@ -1622,15 +1626,21 @@ strip_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent
 	coll_rebind_infos_t *infos;
 	gchar *target_name = NULL;
 	gchar *target_namespace = NULL;
+	xmmsv_list_iter_t *iter;
+	xmmsv_t *tmp;
 
 	infos = (coll_rebind_infos_t*)udata;
 
-	xmmsv_coll_operand_list_save (coll);
-	xmmsv_coll_operand_list_first (coll);
-	while (xmmsv_coll_operand_list_entry (coll, &op)) {
+	xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
+	for (xmmsv_list_iter_first (iter);
+	     xmmsv_list_iter_valid (iter);
+	     xmmsv_list_iter_next (iter)) {
+
+		xmmsv_list_iter_entry (iter, &tmp);
+		xmmsv_get_coll (tmp, &op);
+
 		/* Skip if not potential reference */
 		if (xmmsv_coll_get_type (op) != XMMS_COLLECTION_TYPE_REFERENCE) {
-			xmmsv_coll_operand_list_next (coll);
 			continue;
 		}
 
@@ -1638,19 +1648,20 @@ strip_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent
 		xmmsv_coll_attribute_get (op, "namespace", &target_namespace);
 		if (strcmp (infos->name, target_name) != 0 ||
 		    strcmp (infos->namespace, target_namespace) != 0) {
-			xmmsv_coll_operand_list_next (coll);
 			continue;
 		}
 
 		/* Rebind coll to ref'd operand directly, effectively strip reference */
-		xmmsv_coll_remove_operand (op, infos->oldtarget);
+		/* FIXME: Do we really need to do this _clear? */
+		xmmsv_list_clear (xmmsv_coll_operands_get (op));
 
-		xmmsv_coll_remove_operand (coll, op);
-		xmmsv_coll_add_operand (coll, infos->oldtarget);
+		xmmsv_list_iter_remove (iter);
 
-		xmmsv_coll_operand_list_first (coll); /* Restart if oplist changed */
+		tmp = xmmsv_new_coll (infos->oldtarget);
+		xmmsv_list_iter_insert (iter, tmp);
+		xmmsv_unref (tmp);
 	}
-	xmmsv_coll_operand_list_restore (coll);
+	xmmsv_list_iter_explicit_destroy (iter);
 }
 
 /**
@@ -1671,14 +1682,14 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *par
 			check->found = TRUE;
 		} else {
 			xmmsv_coll_t *op;
-			xmmsv_coll_operand_list_save (coll);
-			xmmsv_coll_operand_list_first (coll);
-			if (xmmsv_coll_operand_list_entry (coll, &op)) {
+			xmmsv_t *tmp;
+
+			if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
+				xmmsv_get_coll (tmp, &op);
 				xmms_collection_apply_to_collection_recurs (dag, op, coll,
 				                                            check_for_reference,
 				                                            udata);
 			}
-			xmmsv_coll_operand_list_restore (coll);
 		}
 	}
 }
@@ -1755,6 +1766,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	guint32 *idlist;
 	gint i;
 	gint id;
+	xmmsv_list_iter_t *iter;
 
 	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
@@ -1772,27 +1784,37 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 	case XMMS_COLLECTION_TYPE_UNION:
 		/* if ANY matches */
-		xmmsv_coll_operand_list_save (coll);
-		xmmsv_coll_operand_list_first (coll);
-		while (!match && xmmsv_coll_operand_list_entry (coll, &op)) {
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
+
+		for (xmmsv_list_iter_first (iter);
+		     !match && xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			xmmsv_list_iter_entry (iter, &val);
+			xmmsv_get_coll (val, &op);
+
 			match = xmms_collection_media_match (dag, mediainfo, op,
 			                                     nsid, match_table);
-			xmmsv_coll_operand_list_next (coll);
 		}
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 		break;
 
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		/* if ALL match */
 		match = TRUE;
-		xmmsv_coll_operand_list_save (coll);
-		xmmsv_coll_operand_list_first (coll);
-		while (match && xmmsv_coll_operand_list_entry (coll, &op)) {
+		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
+
+		for (xmmsv_list_iter_first (iter);
+		     match && xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			xmmsv_list_iter_entry (iter, &val);
+			xmmsv_get_coll (val, &op);
+
 			match = xmms_collection_media_match (dag, mediainfo, op,
 			                                     nsid, match_table);
-			xmmsv_coll_operand_list_next (coll);
 		}
-		xmmsv_coll_operand_list_restore (coll);
+		xmmsv_list_iter_explicit_destroy (iter);
 		break;
 
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
@@ -1924,14 +1946,14 @@ xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo
                                      GHashTable *match_table)
 {
 	xmmsv_coll_t *op;
+	xmmsv_t *tmp;
 	gboolean match = FALSE;
 
-	xmmsv_coll_operand_list_save (coll);
-	xmmsv_coll_operand_list_first (coll);
-	if (xmmsv_coll_operand_list_entry (coll, &op)) {
+	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
+		xmmsv_get_coll (tmp, &op);
+
 		match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
 	}
-	xmmsv_coll_operand_list_restore (coll);
 
 	return match;
 }
