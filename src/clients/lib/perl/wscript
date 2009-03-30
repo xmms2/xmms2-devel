@@ -17,9 +17,9 @@ def build(bld):
     obj.mac_bundle = True
 
     bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Sync.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Glib.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient/Collection.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Sync.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Glib.pm')
+    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Collection.pm')
 
 def configure(conf):
     conf.check_tool('perl')
