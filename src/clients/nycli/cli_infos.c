@@ -66,7 +66,9 @@ void
 cli_infos_alias_end (cli_infos_t *infos)
 {
 	infos->alias_count--;
-	if (infos->status != CLI_ACTION_STATUS_FINISH && infos->alias_count == 0) {
+	if (infos->status != CLI_ACTION_STATUS_FINISH &&
+	    infos->status != CLI_ACTION_STATUS_REFRESH &&
+	    infos->alias_count == 0) {
 		infos->status = CLI_ACTION_STATUS_BUSY;
 	}
 	cli_infos_loop_resume (infos);
