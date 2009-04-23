@@ -840,6 +840,7 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg, xmmsv_t **val)
 		}
 
 		if (!xmms_ipc_msg_get_value_alloc (msg, &v)) {
+			free (key);
 			goto err;
 		}
 
