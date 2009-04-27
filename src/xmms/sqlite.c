@@ -37,10 +37,38 @@
 #define DB_VERSION 36
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
-const char create_Media_stm[] = "create table Media (id integer, key, value, source integer, intval integer default null)";
-const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
-const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
-const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
+
+const char *schema[] = {
+	"CREATE TABLE Media (id INTEGER, key, value, source INTEGER, "
+	                    "intval INTEGER DEFAULT NULL)",
+	"CREATE TABLE Sources (id INTEGER PRIMARY KEY AUTOINCREMENT, source)",
+
+	"CREATE TABLE CollectionAttributes (collid INTEGER, key TEXT, value TEXT)",
+	"CREATE TABLE CollectionConnections (from_id INTEGER, to_id INTEGER)",
+	"CREATE TABLE CollectionIdlists (collid INTEGER, position INTEGER, "
+	                                "mid INTEGER)",
+	"CREATE TABLE CollectionLabels (collid INTEGER, namespace INTEGER, "
+	                               "name TEXT)",
+	"CREATE TABLE CollectionOperators (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+	                                  "type INTEGER)",
+
+	"CREATE UNIQUE INDEX key_idx ON Media (id, key, source)",
+	"CREATE INDEX id_key_value_1x ON Media (id, key, value COLLATE BINARY)",
+	"CREATE INDEX id_key_value_2x ON Media (id, key, value COLLATE NOCASE)",
+	"CREATE INDEX key_value_1x ON Media (key, value COLLATE BINARY)",
+	"CREATE INDEX key_value_2x ON Media (key, value COLLATE NOCASE)",
+
+	"CREATE UNIQUE INDEX collectionconnections_idx "
+	       "ON CollectionConnections (from_id, to_id)",
+	"CREATE UNIQUE INDEX collectionattributes_idx "
+	       "ON CollectionAttributes (collid, key)",
+	"CREATE UNIQUE INDEX collectionidlists_idx "
+	       "ON CollectionIdlists (collid, position)",
+	"CREATE INDEX collectionlabels_idx ON CollectionLabels (collid)",
+
+	NULL
+};
+
 const char create_CollectionAttributes_stm[] = "create table CollectionAttributes (collid integer, key text, value text)";
 const char create_CollectionConnections_stm[] = "create table CollectionConnections (from_id integer, to_id integer)";
 const char create_CollectionIdlists_stm[] = "create table CollectionIdlists (collid integer, position integer, mid integer)";
@@ -64,14 +92,6 @@ const char fill_init_playlist_stm[] = "INSERT INTO CollectionOperators VALUES(1,
                                       "INSERT INTO CollectionLabels VALUES(1, %d, 'Default');"
                                       "INSERT INTO CollectionLabels VALUES(1, %d, '" XMMS_ACTIVE_PLAYLIST "');"
                                       "INSERT INTO CollectionIdlists VALUES(1, 1, 1);";
-
-const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
-                              "CREATE INDEX id_key_value_1x ON Media (id, key, value COLLATE BINARY);"
-                              "CREATE INDEX id_key_value_2x ON Media (id, key, value COLLATE NOCASE);"
-                              "CREATE INDEX key_value_1x ON Media (key, value COLLATE BINARY);"
-                              "CREATE INDEX key_value_2x ON Media (key, value COLLATE NOCASE);"
-                              "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
-                              "create index playlist_idx on Playlist (name);";
 
 const char create_collidx_stm[] = "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
                                   "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
@@ -307,7 +327,8 @@ xmms_sqlite_set_common_properties (sqlite3 *sql)
 	/* One minute */
 	sqlite3_busy_timeout (sql, 60000);
 
-	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
+	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL,
+	                          xmms_sqlite_integer_coll);
 }
 
 gboolean
@@ -319,6 +340,7 @@ xmms_sqlite_create (gboolean *create)
 	const gchar *dbpath;
 	gint version = 0;
 	sqlite3 *sql;
+	guint i;
 
 	*create = FALSE;
 
@@ -355,7 +377,7 @@ xmms_sqlite_create (gboolean *create)
 			}
 			g_free (old);
 
-			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+			xmms_sqlite_set_common_properties (sql);
 			*create = TRUE;
 		}
 
@@ -407,27 +429,27 @@ xmms_sqlite_create (gboolean *create)
 		 */
 		sqlite3_exec (sql, fill_stats, NULL, NULL, NULL);
 		/**
-		 * Create the rest of our tables
+		 * Create the rest of our tables, indices, views and triggers
 		 */
-		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
-		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_CollectionIdlists_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_CollectionLabels_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_CollectionOperators_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
+		for (i = 0; schema[i]; i++) {
+			sqlite3_exec (sql, schema[i], NULL, NULL, NULL);
+		}
+		/**
+		 * Add the server source
+		 */
+		sqlite3_exec (sql, "INSERT INTO Sources (source) VALUES ('server')",
+		              NULL, NULL, NULL);
 		/**
 		 * Create a default playlist
 		 */
-		xmms_sqlite_exec (sql, fill_init_playlist_stm, XMMS_COLLECTION_TYPE_IDLIST,
-		                                               XMMS_COLLECTION_NSID_PLAYLISTS,
-		                                               XMMS_COLLECTION_NSID_PLAYLISTS);
+		xmms_sqlite_exec (sql, fill_init_playlist_stm,
+		                  XMMS_COLLECTION_TYPE_IDLIST,
+		                  XMMS_COLLECTION_NSID_PLAYLISTS,
+		                  XMMS_COLLECTION_NSID_PLAYLISTS);
+		/**
+		 * Set database version
+		 */
+		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 	}
 
 	sqlite3_close (sql);
