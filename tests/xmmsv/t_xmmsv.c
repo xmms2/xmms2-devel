@@ -189,6 +189,7 @@ CASE (test_xmmsv_type_list)
 		xmmsv_unref (tmp);
 	}
 
+	/* { 20, ... 39 } */
 	CU_ASSERT_TRUE (xmmsv_list_get (value, -1, &tmp));
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
 	CU_ASSERT_EQUAL (i, 39);
@@ -206,9 +207,13 @@ CASE (test_xmmsv_type_list)
 	CU_ASSERT_TRUE (xmmsv_list_remove (value, 0));
 	CU_ASSERT_FALSE (xmmsv_list_remove (value, 1000));
 
+	/* { 21, ... 39 } */
 	CU_ASSERT_TRUE (xmmsv_list_get (value, 0, &tmp));
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
 	CU_ASSERT_EQUAL (i, 21);
+
+	CU_ASSERT_TRUE (xmmsv_list_get_int (value, 2, &i));
+	CU_ASSERT_EQUAL (i, 23);
 
 	CU_ASSERT_FALSE (xmmsv_list_get (value, 1000, &tmp));
 
@@ -217,11 +222,15 @@ CASE (test_xmmsv_type_list)
 	CU_ASSERT_FALSE (xmmsv_list_insert (value, 1000, tmp));
 	xmmsv_unref (tmp);
 
+	/* { 20, ... 39 } */
+
 	for (i = 19; i >= 10; i--) {
 		tmp = xmmsv_new_int (i);
 		CU_ASSERT_TRUE (xmmsv_list_insert (value, 0, tmp));
 		xmmsv_unref (tmp);
 	}
+
+	/* { 10, ... 39 } */
 
 	CU_ASSERT_TRUE (xmmsv_get_list_iter (value, &it));
 
@@ -231,12 +240,17 @@ CASE (test_xmmsv_type_list)
 		xmmsv_unref (tmp);
 	}
 
+	/* { 0, ... 39 } */
+
 	CU_ASSERT_FALSE (xmmsv_list_iter_seek (it, 1000));
 	CU_ASSERT_TRUE (xmmsv_list_iter_seek (it, -1));
 	CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &j));
 	CU_ASSERT_EQUAL (40 - 1, j);
 	CU_ASSERT_TRUE (xmmsv_list_iter_seek (it, 0));
+
+	xmmsv_list_iter_entry_int (it, &j);
+	CU_ASSERT_EQUAL (0, j);
 
 	for (i = 0; i < 40; i++) {
 		CU_ASSERT_TRUE (xmmsv_list_iter_entry (it, &tmp));
@@ -487,6 +501,7 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 42 }*/
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "test1", &tmp));
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &ui));
 	CU_ASSERT_EQUAL (ui, 42);
@@ -497,10 +512,12 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 666 } */
 	tmp = xmmsv_new_int (23);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test2", tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 666, test2 => 23 } */
 	CU_ASSERT_EQUAL (xmmsv_dict_entry_get_type (value, "test1"), XMMSV_TYPE_INT32);
 	CU_ASSERT_TRUE (xmmsv_dict_foreach (value, _dict_foreach, NULL));
 
@@ -513,29 +530,53 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_iter_set (it, tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 1337, test2 => 23 } */
 	CU_ASSERT_TRUE (xmmsv_dict_iter_valid (it));
+
 	CU_ASSERT_TRUE (xmmsv_dict_iter_pair (it, &key, &tmp));
 	CU_ASSERT_TRUE (key && strcmp (key, "test1") == 0);
 	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
 	CU_ASSERT_EQUAL (i, 1337);
 
+	key = NULL; i = 0;
+	CU_ASSERT_TRUE (xmmsv_dict_iter_pair_int (it, &key, &i));
+	CU_ASSERT_TRUE (key && strcmp (key, "test1") == 0);
+	CU_ASSERT_EQUAL (i, 1337);
+
+	key = NULL; i = 0;
+	CU_ASSERT_TRUE (xmmsv_dict_iter_pair_int (it, NULL, &i));
+	CU_ASSERT_EQUAL (i, 1337);
+
+	key = NULL; i = 0;
+	CU_ASSERT_TRUE (xmmsv_dict_iter_pair_int (it, &key, NULL));
+	CU_ASSERT_TRUE (key && strcmp (key, "test1") == 0);
+
 	CU_ASSERT_TRUE (xmmsv_dict_remove (value, "test1"));
 	CU_ASSERT_FALSE (xmmsv_dict_remove (value, "test1"));
+
+	/* { test2 => 23 } */
+	CU_ASSERT_TRUE (xmmsv_dict_iter_pair_int (it, &key, &i));
+	CU_ASSERT_TRUE (key && strcmp (key, "test2") == 0);
+	CU_ASSERT_EQUAL (i, 23);
 
 	CU_ASSERT_TRUE (xmmsv_dict_iter_remove (it));  /* remove "test2" */
 	CU_ASSERT_FALSE (xmmsv_dict_iter_remove (it)); /* empty! */
 
+	/* { } */
 	tmp = xmmsv_new_int (42);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 42} */
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 	CU_ASSERT_TRUE (xmmsv_dict_clear (value));
 
+	/* { } */
 	tmp = xmmsv_new_int (42);
 	CU_ASSERT_TRUE (xmmsv_dict_set (value, "test1", tmp));
 	xmmsv_unref (tmp);
 
+	/* { test1 => 42 } */
 	xmmsv_unref (value);
 
 	value = xmmsv_new_error ("oh noes");

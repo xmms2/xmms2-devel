@@ -508,8 +508,8 @@ xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 }
 
 
-/* macro-magically define legacy dict extractors */
-#define GEN_COMPAT_DICT_EXTRACTOR_FUNC(typename, type)			\
+/* macro-magically define dict extractors */
+#define GEN_DICT_EXTRACTOR_FUNC(typename, type)			\
 	int								\
 	xmmsv_dict_entry_get_##typename (xmmsv_t *val, const char *key, \
 	                                 type *r)			\
@@ -521,9 +521,63 @@ xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 		return xmmsv_get_##typename (v, r);			\
 	}
 
-GEN_COMPAT_DICT_EXTRACTOR_FUNC (string, const char *)
-GEN_COMPAT_DICT_EXTRACTOR_FUNC (int, int32_t)
-GEN_COMPAT_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+GEN_DICT_EXTRACTOR_FUNC (string, const char *)
+GEN_DICT_EXTRACTOR_FUNC (int, int32_t)
+GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define dict_iter extractors */
+#define GEN_DICT_ITER_EXTRACTOR_FUNC(typename, type) \
+	int \
+	xmmsv_dict_iter_pair_##typename (xmmsv_dict_iter_t *it, \
+	                                           const char **key, \
+	                                           type *r) \
+	{ \
+		xmmsv_t *v; \
+		if (!xmmsv_dict_iter_pair (it, key, &v)) { \
+			return 0; \
+		} \
+		if (r) { \
+			return xmmsv_get_##typename (v, r); \
+		} else { \
+			return 1; \
+		} \
+	}
+
+GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
+GEN_DICT_ITER_EXTRACTOR_FUNC (int, int32_t)
+GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define list extractors */
+#define GEN_LIST_EXTRACTOR_FUNC(typename, type) \
+	int \
+	xmmsv_list_get_##typename (xmmsv_t *val, int pos, type *r) \
+	{ \
+		xmmsv_t *v; \
+		if (!xmmsv_list_get (val, pos, &v)) { \
+			return 0; \
+		} \
+		return xmmsv_get_##typename (v, r); \
+	}
+
+GEN_LIST_EXTRACTOR_FUNC (string, const char *)
+GEN_LIST_EXTRACTOR_FUNC (int, int32_t)
+GEN_LIST_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define list_iter extractors */
+#define GEN_LIST_ITER_EXTRACTOR_FUNC(typename, type) \
+	int \
+	xmmsv_list_iter_entry_##typename (xmmsv_list_iter_t *it, type *r) \
+	{ \
+		xmmsv_t *v; \
+		if (!xmmsv_list_iter_entry (it, &v)) { \
+			return 0; \
+		} \
+		return xmmsv_get_##typename (v, r); \
+	}
+
+GEN_LIST_ITER_EXTRACTOR_FUNC (string, const char *)
+GEN_LIST_ITER_EXTRACTOR_FUNC (int, int32_t)
+GEN_LIST_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
 static int
 source_match_pattern (const char *source, const char *pattern)
