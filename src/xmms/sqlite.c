@@ -102,7 +102,7 @@ xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
 static int
 xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, const void *str2)
 {
-	guint32 a, b;
+	gint32 a, b;
 	a = strtol (str1, NULL, 10);
 	b = strtol (str2, NULL, 10);
 	if (a < b) return -1;
