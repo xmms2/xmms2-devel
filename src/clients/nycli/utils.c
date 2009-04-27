@@ -1074,19 +1074,11 @@ coll_dump (xmmsv_coll_t *coll, guint level)
 
 	case XMMS_COLLECTION_TYPE_IDLIST:
 		idlist_str = coll_idlist_to_string (coll);
-		print_info ("%sIdlist: %s", indent, idlist_str->str);
-		g_string_free (idlist_str, TRUE);
-		break;
-
-	case XMMS_COLLECTION_TYPE_QUEUE:
-		idlist_str = coll_idlist_to_string (coll);
-		print_info ("%sQueue: %s", indent, idlist_str->str);
-		g_string_free (idlist_str, TRUE);
-		break;
-
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		idlist_str = coll_idlist_to_string (coll);
-		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
+		if (!xmmsv_dict_entry_get_string (xmmsv_coll_attributes_get (coll),
+		                                  "type", &attr1)) {
+			attr1 = "list";
+		}
+		print_info ("%sIdlist (%s): %s", indent, attr1, idlist_str->str);
 		g_string_free (idlist_str, TRUE);
 		coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 		break;
@@ -1646,7 +1638,7 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
 
 void
 configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist,
-                    gint history, gint upcoming, xmmsv_coll_type_t type,
+                    gint history, gint upcoming, const gchar *typestr,
                     const gchar *input, const gchar *jumplist)
 {
 	xmmsc_result_t *saveres;
@@ -1659,10 +1651,8 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 	val = xmmsc_result_get_value (res);
 
 	if (xmmsv_get_coll (val, &coll)) {
-		if (xmmsv_coll_get_type (coll) != type) {
-			newcoll = coll_copy_retype (coll, type);
-			coll = newcoll;
-			copied = TRUE;
+		if (typestr) {
+			xmmsv_coll_attribute_set (coll, "type", typestr);
 		}
 		if (history >= 0) {
 			coll_int_attribute_set (coll, "history", history);
@@ -1689,10 +1679,6 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 	} else {
 		g_printf (_("Cannot find the playlist to configure!\n"));
 		cli_infos_loop_resume (infos);
-	}
-
-	if (copied) {
-		xmmsv_coll_unref (coll);
 	}
 
 	xmmsc_result_unref (res);
@@ -1836,7 +1822,7 @@ static void
 pl_print_config (xmmsv_coll_t *coll, const char *name)
 {
 	xmmsv_coll_t *op;
-	xmmsv_coll_type_t type;
+	gchar *type = NULL;
 	gchar *upcoming = NULL;
 	gchar *history = NULL;
 	gchar *input = NULL;
@@ -1844,7 +1830,7 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 	gchar *jumplist = NULL;
 	xmmsv_t *v;
 
-	type = xmmsv_coll_get_type (coll);
+	xmmsv_coll_attribute_get (coll, "type", &type);
 
 	xmmsv_coll_attribute_get (coll, "upcoming", &upcoming);
 	xmmsv_coll_attribute_get (coll, "history", &history);
@@ -1852,29 +1838,23 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 
 	g_printf (_("name: %s\n"), name);
 
-	switch (type) {
-	case XMMS_COLLECTION_TYPE_IDLIST:
-		g_printf (_("type: list\n"));
-		break;
-	case XMMS_COLLECTION_TYPE_QUEUE:
-		g_printf (_("type: queue\n"));
+	if (type) {
+		g_printf (_("type: %s\n"), type);
+	}
+	if (history) {
 		g_printf (_("history: %s\n"), history);
-		break;
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &v) &&
-		    xmmsv_get_coll (v, &op)) {
-			xmmsv_coll_attribute_get (op, "reference", &input);
-			xmmsv_coll_attribute_get (op, "namespace", &input_ns);
-		}
-
-		g_printf (_("type: pshuffle\n"));
-		g_printf (_("history: %s\n"), history);
+	}
+	if (upcoming) {
 		g_printf (_("upcoming: %s\n"), upcoming);
+	}
+
+	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &v) &&
+	    xmmsv_get_coll (v, &op)) {
+		/* FIXME: Operand might be something different than a reference */
+		xmmsv_coll_attribute_get (op, "reference", &input);
+		xmmsv_coll_attribute_get (op, "namespace", &input_ns);
+
 		g_printf (_("input: %s/%s\n"), input_ns, input);
-		break;
-	default:
-		g_printf (_("type: unknown!\n"));
-		break;
 	}
 	if (jumplist) {
 		g_printf (_("jumplist: %s\n"), jumplist);

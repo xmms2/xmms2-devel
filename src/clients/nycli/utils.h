@@ -66,7 +66,7 @@ void move_entries (xmmsc_result_t *matching, cli_infos_t *infos, const gchar *pl
 void remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos);
 void remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres, cli_infos_t *infos, const gchar *playlist);
 void copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist);
-void configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist, gint history, gint upcoming, xmmsc_coll_type_t type, const gchar *input, const gchar *jumplist);
+void configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist, gint history, gint upcoming, const gchar *typestr, const gchar *input, const gchar *jumplist);
 void playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist);
 gboolean playlist_exists (cli_infos_t *infos, const gchar *playlist);
 void print_padding (gint length, const gchar padchar);
