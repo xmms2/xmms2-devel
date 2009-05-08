@@ -25,6 +25,7 @@ const gchar *const default_config =
 "GUESS_PLS=false\n"
 "CLASSIC_LIST=true\n"
 "CLASSIC_LIST_FORMAT=${artist} - ${title}\n"
+"HISTORY_FILE=\n"
 "STATUS_FORMAT=${playback_status}: ${artist} - ${title}: ${playtime} of ${duration}\n\n"
 "[alias]\n\n"
 "ls = list\n"
@@ -66,6 +67,7 @@ configuration_t *
 configuration_init (const gchar *path)
 {
 	configuration_t *config;
+	gchar *history_file;
 
 	config = g_new0 (configuration_t, 1);
 
@@ -118,6 +120,16 @@ configuration_init (const gchar *path)
 		}
 	}
 
+	history_file = configuration_get_string (config, "HISTORY_FILE");
+	if (!history_file || !*history_file) {
+		gchar cfile[PATH_MAX];
+
+		xmms_usercachedir_get (cfile, PATH_MAX);
+		config->histpath = g_build_filename (cfile, HISTORY_FILE_BASE, NULL);
+	} else {
+		config->histpath = strdup (history_file);
+	}
+
 	return config;
 }
 
@@ -125,6 +137,7 @@ void
 configuration_free (configuration_t *config)
 {
 	g_free (config->path);
+	g_free (config->histpath);
 	g_key_file_free (config->file);
 	g_hash_table_destroy (config->values);
 	g_hash_table_destroy (config->aliases);

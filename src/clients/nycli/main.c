@@ -391,7 +391,9 @@ main (gint argc, gchar **argv)
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
 			loop_once (cli_infos, argc - 1, argv + 1);
 		} else {
+			read_history (cli_infos->config->histpath);
 			loop_run (cli_infos);
+			write_history (cli_infos->config->histpath);
 		}
 	}
 
