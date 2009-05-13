@@ -94,6 +94,7 @@ struct command_argument_St {
 };
 
 
+void command_run (cli_infos_t *infos, gchar *input);
 void flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
 void command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
 

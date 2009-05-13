@@ -21,30 +21,6 @@
 #include "configuration.h"
 #include "alias.h"
 
-static void alias_run (cli_infos_t *infos, gchar *alias)
-{
-	gint in_argc;
-	gchar **in_argv;
-
-	gchar *next;
-
-	if (!alias || *alias == '\0') {
-		return;
-	}
-
-	next = strchr (alias, ';');
-	*next = '\0';
-
-	g_shell_parse_argv (alias, &in_argc, &in_argv, NULL);
-
-	/* run */
-	command_dispatch (infos, in_argc, in_argv);
-
-	alias_run (infos, next + 1);
-
-	g_strfreev (in_argv);
-}
-
 static void
 free_token (gpointer data, gpointer udata)
 {
@@ -139,7 +115,7 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	cli_infos_alias_begin (infos);
-	alias_run (infos, runnable);
+	command_run (infos, runnable);
 	cli_infos_alias_end (infos);
 
 	finish:

@@ -33,6 +33,49 @@
 
 static void loop_select (cli_infos_t *infos);
 
+void
+command_run (cli_infos_t *infos, gchar *input)
+{
+	while (input && *input == ' ') ++input;
+
+	if (input == NULL) {
+		if (infos->status != CLI_ACTION_STATUS_ALIAS) {
+			/* End of stream, quit */
+			cli_infos_loop_stop (infos);
+			g_printf ("\n");
+		}
+	} else if (*input != 0) {
+		gint argc;
+		gchar **argv, *listop;
+		GError *error = NULL;
+
+		if ((listop = strchr (input, ';'))) {
+			*listop++ = '\0';
+		}
+
+		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
+			if (infos->status != CLI_ACTION_STATUS_ALIAS) {
+				add_history (input);
+			}
+			command_dispatch (infos, argc, argv);
+			g_strfreev (argv);
+			if (listop && *listop) {
+				g_printf ("\n");
+				command_run (infos, listop);
+			}
+		} else {
+			if (g_error_matches (error, G_SHELL_ERROR,
+			                     G_SHELL_ERROR_BAD_QUOTING)) {
+				g_printf (_("Error: Mismatched quote\n"));
+			} else if (g_error_matches (error, G_SHELL_ERROR,
+			                            G_SHELL_ERROR_FAILED)) {
+				g_printf (_("Error: Invalid input\n"));
+			}
+			g_error_free (error);
+			/* FIXME: Handle errors */
+		}
+	}
+}
 
 static void
 command_argument_free (void *x)

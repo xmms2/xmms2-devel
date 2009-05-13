@@ -27,34 +27,7 @@ static cli_infos_t *readline_cli_infos;
 static void
 readline_callback (gchar *input)
 {
-	while (input && *input == ' ') ++input;
-
-	if (input == NULL) {
-		/* End of stream, quit */
-		cli_infos_loop_stop (readline_cli_infos);
-		g_printf ("\n");
-	} else if (*input != 0) {
-		gint argc;
-		gchar **argv;
-		GError *error = NULL;
-
-		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
-			add_history (input);
-			command_dispatch (readline_cli_infos, argc, argv);
-			g_strfreev (argv);
-		} else {
-			if (g_error_matches (error, G_SHELL_ERROR,
-			                     G_SHELL_ERROR_BAD_QUOTING)) {
-				g_printf (_("Error: Mismatched quote\n"));
-			} else if (g_error_matches (error, G_SHELL_ERROR,
-			                            G_SHELL_ERROR_FAILED)) {
-				g_printf (_("Error: Invalid input\n"));
-			}
-			g_error_free (error);
-			/* FIXME: Handle errors */
-		}
-	}
-
+	command_run (readline_cli_infos, input);
 }
 
 static void
