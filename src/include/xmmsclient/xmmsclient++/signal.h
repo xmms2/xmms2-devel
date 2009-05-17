@@ -18,10 +18,11 @@
 #define XMMSCLIENTPP_SIGNAL_H
 
 #include <xmmsclient/xmmsclient.h>
-#include <boost/signal.hpp>
+#include <boost/function.hpp>
 #include <string>
 #include <list>
 #include <iostream>
+#include <deque>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -33,14 +34,13 @@ namespace Xmms
 		class Coll;
 	}
 
-	typedef boost::signal< bool( const std::string& ) > error_sig;
-
 	/** @class SignalInterface
 	 *  This is here only to unify all Signal classes so that they can be
 	 *  put in one list.
 	 */
 	struct SignalInterface
 	{
+		typedef std::deque< boost::function< bool( const std::string& ) > > error_sig;
 
 		public:
 			SignalInterface() {}
@@ -54,7 +54,7 @@ namespace Xmms
 	template< typename T >
 	struct Signal : public SignalInterface
 	{
-		typedef boost::signal< bool( const T& ) > signal_t;
+		typedef std::deque< boost::function< bool( T& ) > > signal_t;
 
 		error_sig error_signal;
 		signal_t signal;
@@ -67,7 +67,7 @@ namespace Xmms
 	template<>
 	struct Signal< void > : public SignalInterface
 	{
-		typedef boost::signal< bool() > signal_t;
+		typedef std::deque< boost::function< bool() > > signal_t;
 
 		error_sig error_signal;
 		signal_t signal;
@@ -199,11 +199,14 @@ namespace Xmms
 	inline bool
 	callSignal( const Signal< T >* sig, xmmsv_t*& val )
 	{
-
 		boost::scoped_ptr< T > value( extract_value< T >( val ) );
-		bool ret = sig->signal( *value );
+		bool ret = true;
+		for( typename Signal<T>::signal_t::const_iterator i = sig->signal.begin();
+		     i != sig->signal.end(); ++i )
+		{
+			ret &= (*i)(*value);
+		}
 		return ret;
-
 	}
 
 	/** Specialized version of the templated callSignal.
@@ -212,8 +215,27 @@ namespace Xmms
 	inline bool
 	callSignal( const Signal< void >* sig, xmmsv_t*& /* val */)
 	{
-		return sig->signal();
+		bool ret = true;
+		for( Signal<void>::signal_t::const_iterator i = sig->signal.begin();
+		     i != sig->signal.end(); ++i )
+		{
+			ret &= (*i)();
+		}
+		return ret;
 	}
+	inline bool
+	callError( const SignalInterface::error_sig& error_signal,
+			   const std::string& error )
+	{
+		bool ret = true;
+		for( SignalInterface::error_sig::const_iterator i = error_signal.begin();
+		     i != error_signal.end(); ++i )
+		{
+			ret &= (*i)( error );
+		}
+		return ret;
+	}
+
 
 	/** Called on the notifier udata when an xmmsc_result_t is freed.
 	 */
@@ -244,7 +266,7 @@ namespace Xmms
 
 			std::string error( buf );
 			if( !data->error_signal.empty() ) {
-				ret = data->error_signal( error );
+				ret = callError(data->error_signal, error);
 			}
 
 		}
@@ -257,7 +279,7 @@ namespace Xmms
 				catch( std::exception& e ) {
 
 					if( !data->error_signal.empty() ) {
-						ret = data->error_signal( e.what() );
+						ret = callError( data->error_signal, e.what() );
 					}
 
 				}
@@ -272,7 +294,7 @@ namespace Xmms
 		return ret;
 	}
 
-	typedef boost::signal< void() > DisconnectCallback;
+	typedef std::deque< boost::function< void() > > DisconnectCallback;
 
 	void disconnect_callback( void* userdata );
 	/** @endcond INTERNAL */

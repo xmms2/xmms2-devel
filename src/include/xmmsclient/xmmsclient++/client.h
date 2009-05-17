@@ -134,7 +134,7 @@ namespace Xmms
 			 *  @param slot A function pointer with function signature void()
 			 */
 			void
-			setDisconnectCallback( const DisconnectCallback::slot_type& slot );
+			setDisconnectCallback( const DisconnectCallback::value_type& slot );
 
 			/** Return the connection status.
 			 */

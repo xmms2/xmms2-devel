@@ -138,7 +138,7 @@ namespace Xmms
 	}
 
 	void
-	Client::setDisconnectCallback( const DisconnectCallback::slot_type& slot )
+	Client::setDisconnectCallback( const DisconnectCallback::value_type& slot )
 	{
 
 		if( !dc_ ) {
@@ -146,7 +146,7 @@ namespace Xmms
 			xmmsc_disconnect_callback_set( conn_, &disconnect_callback,
 			                               static_cast< void* >( dc_ ) );
 		}
-		dc_->connect( slot );
+		dc_->push_back( slot );
 
 	}
 

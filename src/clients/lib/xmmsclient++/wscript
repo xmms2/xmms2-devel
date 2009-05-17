@@ -25,7 +25,7 @@ def build(bld):
         xform.cpp
     """.split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'BOOST BOOST_SIGNALS socket'
+    obj.uselib = 'BOOST socket'
     obj.vnum = '3.0.0'
     tool.add_install_flag(bld, obj)
 
@@ -34,8 +34,6 @@ def configure(conf):
         return False
 
     conf.check_tool('boost')
-    if not conf.check_boost(lib='signals', kind='STATIC_BOTH'):
-        return False
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
 
