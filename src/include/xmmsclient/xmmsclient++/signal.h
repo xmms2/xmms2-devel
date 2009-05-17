@@ -18,6 +18,7 @@
 #define XMMSCLIENTPP_SIGNAL_H
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/function.hpp>
 #include <string>
 #include <list>
@@ -276,10 +277,15 @@ namespace Xmms
 				try {
 					ret = callSignal( data, val );
 				}
-				catch( std::exception& e ) {
+				catch( exception& e ) {
 
-					if( !data->error_signal.empty() ) {
-						ret = callError( data->error_signal, e.what() );
+					std::exception* ee = 0;
+					if( (ee = dynamic_cast<std::exception*>( &e )) &&
+					    !data->error_signal.empty() ) {
+						ret = callError( data->error_signal, ee->what() );
+					}
+					else {
+						throw;
 					}
 
 				}
