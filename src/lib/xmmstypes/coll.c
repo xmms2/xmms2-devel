@@ -94,6 +94,7 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 
 	if (!(coll->idlist = x_new0 (uint32_t, 1))) {
 		x_oom ();
+		free (coll);
 		return NULL;
 	}
 	coll->idlist_size = 1;
