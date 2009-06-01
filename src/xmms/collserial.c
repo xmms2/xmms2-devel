@@ -201,14 +201,14 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
-		gint id;
+		gint _id;
 		gint type;
 
 		cmdval = (xmmsv_t *) n->data;
-		id = value_get_dict_int (cmdval, "id");
+		_id = value_get_dict_int (cmdval, "id");
 		type = value_get_dict_int (cmdval, "type");
 
-		op = xmms_collection_dbread_operator (session, id, type);
+		op = xmms_collection_dbread_operator (session, _id, type);
 		xmmsv_coll_add_operand (coll, op);
 
 		xmmsv_coll_unref (op);

@@ -402,7 +402,7 @@ xmms_output_filler (void *arg)
 
 		if (!chain) {
 			xmms_medialib_entry_t entry;
-			xmms_output_song_changed_arg_t *arg;
+			xmms_output_song_changed_arg_t *hsarg;
 			xmms_medialib_session_t *session;
 
 			g_mutex_unlock (output->filler_mutex);
@@ -435,16 +435,16 @@ xmms_output_filler (void *arg)
 				continue;
 			}
 
-			arg = g_new0 (xmms_output_song_changed_arg_t, 1);
-			arg->output = output;
-			arg->chain = chain;
-			arg->flush = last_was_kill;
+			hsarg = g_new0 (xmms_output_song_changed_arg_t, 1);
+			hsarg->output = output;
+			hsarg->chain = chain;
+			hsarg->flush = last_was_kill;
 			xmms_object_ref (chain);
 
 			last_was_kill = FALSE;
 
 			g_mutex_lock (output->filler_mutex);
-			xmms_ringbuf_hotspot_set (output->filler_buffer, song_changed, song_changed_arg_free, arg);
+			xmms_ringbuf_hotspot_set (output->filler_buffer, song_changed, song_changed_arg_free, hsarg);
 		}
 
 		xmms_ringbuf_wait_free (output->filler_buffer, sizeof (buf), output->filler_mutex);
