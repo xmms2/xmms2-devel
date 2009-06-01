@@ -948,8 +948,7 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 			break;
 
 		case XMMSV_TYPE_COLL:
-			xmms_ipc_msg_get_collection_alloc (msg, &c);
-			if (!c) {
+			if (!xmms_ipc_msg_get_collection_alloc (msg, &c)) {
 				return false;
 			}
 			*val = xmmsv_new_coll (c);
