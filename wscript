@@ -279,6 +279,18 @@ def configure(conf):
         conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
 
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
+    for warning in ('no-format-extra-args',
+                    'no-format-zero-length',
+                    'format-nonliteral',
+                    'format-security',
+                    'format=2',
+                    "missing-prototypes",
+                    "strict-prototypes",
+                    "empty-body",
+                    "ignored-qualifiers",
+                    "type-limits",
+                    ):
+        conf.env["CCFLAGS"] += ["-W%s" % warning]
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
