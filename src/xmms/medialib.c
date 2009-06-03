@@ -490,8 +490,8 @@ xmms_medialib_value_cb (xmmsv_t **row, gpointer udata)
 
 xmmsv_t *
 xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
-                                            xmms_medialib_entry_t entry,
-                                            const gchar *property)
+                                        xmms_medialib_entry_t entry,
+                                        const gchar *property)
 {
 	xmmsv_t *ret = NULL;
 
