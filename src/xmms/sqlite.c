@@ -34,10 +34,10 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 35
+#define DB_VERSION 36
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
-const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
+const char create_Media_stm[] = "create table Media (id integer, key, value, source integer, intval integer default null)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
@@ -221,6 +221,41 @@ upgrade_v34_to_v35 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+xmms_sqlite_stringify (sqlite3_context *context, int args, sqlite3_value **val)
+{
+	gint i;
+	gchar buffer[32];
+
+	if (sqlite3_value_type (val[0]) == SQLITE_INTEGER) {
+		i = sqlite3_value_int (val[0]);
+		sprintf (buffer, "%d", i);
+		sqlite3_result_text (context, buffer, -1, SQLITE_TRANSIENT);
+	} else {
+		sqlite3_result_value (context, val[0]);
+	}
+}
+
+static void
+upgrade_v35_to_v36 (sqlite3 *sql)
+{
+	XMMS_DBG ("upgrade v35->v36 (save integers as strings also)");
+
+	xmms_sqlite_exec (sql, "ALTER TABLE Media "
+	                       "ADD COLUMN intval INTEGER DEFAULT NULL");
+
+	sqlite3_create_function (sql, "xmms_stringify", 1, SQLITE_UTF8, NULL,
+	                         xmms_sqlite_stringify, NULL, NULL);
+	xmms_sqlite_exec (sql, "UPDATE Media "
+	                       "SET intval = value, value = xmms_stringify (value) "
+	                       "WHERE value < ''",
+	                  NULL, NULL, NULL);
+	sqlite3_create_function (sql, "xmms_stringify", 1, SQLITE_UTF8, NULL, NULL,
+	                         NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -245,6 +280,8 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v33_to_v34 (sql);
 		case 34:
 			upgrade_v34_to_v35 (sql);
+		case 35:
+			upgrade_v35_to_v36 (sql);
 			break; /* remember to (re)move this! We want fallthrough */
 		default:
 			can_upgrade = FALSE;

@@ -55,7 +55,11 @@ typedef struct {
 	coll_query_params_t *params;
 } coll_query_t;
 
-
+typedef enum {
+	COLL_QUERY_VALUE_TYPE_STRING,
+	COLL_QUERY_VALUE_TYPE_INT,
+	COLL_QUERY_VALUE_TYPE_BOTH
+} coll_query_value_type_t;
 
 static coll_query_t* init_query (coll_query_params_t *params);
 static void add_fetch_group_aliases (coll_query_t *query, coll_query_params_t *params);
@@ -72,7 +76,7 @@ static void query_append_filter (coll_query_t *query, xmmsv_coll_type_t type, gc
 static void query_string_append_joins (gpointer key, gpointer val, gpointer udata);
 static void query_string_append_alias_list (coll_query_t *query, GString *qstring, xmmsv_t *fields);
 static void query_string_append_fetch (coll_query_t *query, GString *qstring);
-static void query_string_append_alias (GString *qstring, coll_query_alias_t *alias);
+static void query_string_append_alias (GString *qstring, coll_query_alias_t *alias, coll_query_value_type_t type);
 
 static const gchar *canonical_field_name (const gchar *field);
 static gboolean operator_is_allmedia (xmmsv_coll_t *op);
@@ -475,10 +479,12 @@ query_append_filter (coll_query_t *query, xmmsv_coll_type_t type,
 	case XMMS_COLLECTION_TYPE_EQUALS:
 	case XMMS_COLLECTION_TYPE_MATCH:
 		if (case_sens) {
-			query_string_append_alias (query->conditions, alias);
+			query_string_append_alias (query->conditions, alias,
+			                           COLL_QUERY_VALUE_TYPE_STRING);
 		} else {
 			query_append_string (query, "(");
-			query_string_append_alias (query->conditions, alias);
+			query_string_append_alias (query->conditions, alias,
+			                           COLL_QUERY_VALUE_TYPE_STRING);
 			query_append_string (query, " COLLATE NOCASE)");
 		}
 
@@ -511,7 +517,8 @@ query_append_filter (coll_query_t *query, xmmsv_coll_type_t type,
 	/* do not escape numerical values */
 	case XMMS_COLLECTION_TYPE_SMALLER:
 	case XMMS_COLLECTION_TYPE_GREATER:
-		query_string_append_alias (query->conditions, alias);
+		query_string_append_alias (query->conditions, alias,
+		                           COLL_QUERY_VALUE_TYPE_INT);
 		if (type == XMMS_COLLECTION_TYPE_SMALLER) {
 			query_append_string (query, " < ");
 		} else {
@@ -521,7 +528,8 @@ query_append_filter (coll_query_t *query, xmmsv_coll_type_t type,
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
-		query_string_append_alias (query->conditions, alias);
+		query_string_append_alias (query->conditions, alias,
+		                           COLL_QUERY_VALUE_TYPE_STRING);
 		query_append_string (query, " is not null");
 		break;
 
@@ -584,15 +592,17 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring,
 		if (canon_field != NULL) {
 			alias = query_get_alias (query, canon_field);
 			if (alias != NULL) {
-				query_string_append_alias (qstring, alias);
+				query_string_append_alias (qstring, alias,
+				                           COLL_QUERY_VALUE_TYPE_BOTH);
 			} else {
 				if (*field != '~') {
 					if (strcmp(canon_field, "id") == 0) {
 						g_string_append (qstring, "m0.id");
 					} else {
 						g_string_append_printf (qstring,
-							"(SELECT value FROM Media WHERE id = m0.id AND "
-							"key='%s')", canon_field);
+							"(SELECT ifnull (intval, value) "
+							  "FROM Media WHERE id = m0.id AND key='%s')",
+							canon_field);
 					}
 				}
 			}
@@ -631,17 +641,30 @@ query_string_append_fetch (coll_query_t *query, GString *qstring)
 			g_string_append (qstring, ", ");
 		}
 
-		query_string_append_alias (qstring, alias);
+		query_string_append_alias (qstring, alias,
+		                           COLL_QUERY_VALUE_TYPE_BOTH);
 		g_string_append_printf (qstring, " AS %s", name);
 	}
 }
 
 static void
-query_string_append_alias (GString *qstring, coll_query_alias_t *alias)
+query_string_append_alias (GString *qstring, coll_query_alias_t *alias,
+                           coll_query_value_type_t type)
 {
 	switch (alias->type) {
 	case XMMS_QUERY_ALIAS_PROP:
-		g_string_append_printf (qstring, "m%u.value", alias->id);
+		switch (type) {
+		case COLL_QUERY_VALUE_TYPE_STRING:
+			g_string_append_printf (qstring, "m%u.value", alias->id);
+			break;
+		case COLL_QUERY_VALUE_TYPE_INT:
+			g_string_append_printf (qstring, "m%u.intval", alias->id);
+			break;
+		case COLL_QUERY_VALUE_TYPE_BOTH:
+			g_string_append_printf (qstring, "IFNULL (m%u.intval, m%u.value)",
+			                        alias->id, alias->id);
+			break;
+		}
 		break;
 
 	case XMMS_QUERY_ALIAS_ID:

@@ -486,7 +486,7 @@ xmms_medialib_value_cb (xmmsv_t **row, gpointer udata)
  * @see xmms_medialib_entry_property_get_str
  */
 
-#define XMMS_MEDIALIB_RETRV_PROPERTY_SQL "select value from Media where key=%Q and id=%d order by xmms_source_pref(source, %Q) limit 1"
+#define XMMS_MEDIALIB_RETRV_PROPERTY_SQL "select ifnull (intval, value) from Media where key=%Q and id=%d order by xmms_source_pref(source, %Q) limit 1"
 
 xmmsv_t *
 xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
@@ -605,8 +605,10 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media (id, value, key, source) values (%d, %d, %Q, %d)",
-	                        entry, value, property, source);
+	                        "insert or replace into Media "
+	                        "(id, value, intval, key, source) values "
+	                        "(%d, '%d', %d, %Q, %d)",
+	                        entry, value, value, property, source);
 
 	return ret;
 
@@ -658,7 +660,7 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media (id, value, key, source) values (%d, %Q, %Q, %d)",
+	                        "insert or replace into Media (id, value, intval, key, source) values (%d, %Q, NULL, %Q, %d)",
 	                        entry, value, property, source);
 
 	return ret;
@@ -832,12 +834,16 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 	if (id) {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = %d where key='%s' and id=%d",
+		                  "update Media set value = '%d', intval = %d "
+		                  "where key='%s' and id=%d",
+		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, id);
 	} else {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = %d where key='%s'",
+		                  "update Media set value = '%d', intval = %d "
+		                  "where key='%s'",
+		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
 	}
@@ -1101,7 +1107,8 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb,
 	                             &ret,
 	                             "select s.source, m.key, "
-	                             "m.value from Media m left join "
+	                                    "ifnull (m.intval, m.value) "
+	                             "from Media m left join "
 	                             "Sources s on m.source = s.id "
 	                             "where m.id=%d",
 	                             entry);
@@ -1152,7 +1159,8 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_ent
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_tree_cb,
 	                             &ret,
 	                             "select s.source, m.key, "
-	                             "m.value from Media m left join "
+	                                     "ifnull (m.intval, m.value) "
+	                             "from Media m left join "
 	                             "Sources s on m.source = s.id "
 	                             "where m.id=%d",
 	                             entry);
@@ -1432,7 +1440,7 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 
 	xmms_sqlite_query_int (session->sql, &ret,
 	                       "select id from Media where key='%s' "
-	                       "and source=%d and value in (%d, %d) limit 1",
+	                       "and source=%d and intval in (%d, %d) limit 1",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 	                       XMMS_MEDIALIB_SOURCE_SERVER_ID,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_NEW,
@@ -1449,7 +1457,7 @@ xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
 
 	xmms_sqlite_query_int (session->sql, &ret,
 	                       "select count(id) as value from Media where "
-	                       "key='%s' and value in (%d, %d) and source=%d",
+	                       "key='%s' and intval in (%d, %d) and source=%d",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_NEW,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
