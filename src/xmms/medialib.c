@@ -243,12 +243,13 @@ xmms_medialib_source_to_id (xmms_medialib_session_t *session,
 	g_return_val_if_fail (source, 0);
 
 	xmms_sqlite_query_int (session->sql, &ret,
-	                       "select id from Sources where source=%Q",
+	                       "SELECT id FROM Sources WHERE source=%Q",
 	                       source);
 	if (ret == 0) {
-		xmms_sqlite_exec (session->sql, "insert into Sources (source) values (%Q)", source);
+		xmms_sqlite_exec (session->sql,
+		                  "INSERT INTO Sources (source) VALUES (%Q)", source);
 		xmms_sqlite_query_int (session->sql, &ret,
-		                       "select id from Sources where source=%Q",
+		                       "SELECT id FROM Sources WHERE source=%Q",
 		                       source);
 		XMMS_DBG ("Added source %s with id %d", source, ret);
 		g_mutex_lock (session->medialib->source_lock);
@@ -367,7 +368,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	session = xmms_medialib_begin_write ();
-	sqlite3_exec (session->sql, "select id, source from Sources",
+	sqlite3_exec (session->sql, "SELECT id, source FROM Sources",
 	              add_to_source, medialib->sources, NULL);
 
 	if (create) {
@@ -486,7 +487,7 @@ xmms_medialib_value_cb (xmmsv_t **row, gpointer udata)
  * @see xmms_medialib_entry_property_get_str
  */
 
-#define XMMS_MEDIALIB_RETRV_PROPERTY_SQL "select ifnull (intval, value) from Media where key=%Q and id=%d order by xmms_source_pref(source, %Q) limit 1"
+#define XMMS_MEDIALIB_RETRV_PROPERTY_SQL "SELECT IFNULL (intval, value) FROM Media WHERE key=%Q AND id=%d ORDER BY xmms_source_pref(source, %Q) LIMIT 1"
 
 xmmsv_t *
 xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
@@ -605,8 +606,8 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media "
-	                        "(id, value, intval, key, source) values "
+	                        "INSERT OR REPLACE INTO Media "
+	                        "(id, value, intval, key, source) VALUES "
 	                        "(%d, '%d', %d, %Q, %d)",
 	                        entry, value, value, property, source);
 
@@ -660,7 +661,9 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media (id, value, intval, key, source) values (%d, %Q, NULL, %Q, %d)",
+	                        "INSERT OR REPLACE INTO Media "
+	                        "(id, value, intval, key, source) VALUES "
+	                        "(%d, %Q, NULL, %Q, %d)",
 	                        entry, value, property, source);
 
 	return ret;
@@ -717,7 +720,7 @@ xmms_medialib_entry_remove (xmms_medialib_entry_t entry)
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin_write ();
-	xmms_sqlite_exec (session->sql, "delete from Media where id=%d", entry);
+	xmms_sqlite_exec (session->sql, "DELETE FROM Media WHERE id=%d", entry);
 	xmms_medialib_end (session);
 
 	/** @todo safe ? */
@@ -807,8 +810,8 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
                              xmms_medialib_entry_t entry)
 {
 	xmms_sqlite_exec (session->sql,
-	                  "delete from Media where id=%d and source=%d "
-	                  "and key not in (%Q, %Q, %Q, %Q, %Q)",
+	                  "DELETE FROM Media WHERE id=%d AND source=%d "
+	                  "AND key NOT IN (%Q, %Q, %Q, %Q, %Q)",
 	                  entry,
 	                  XMMS_MEDIALIB_SOURCE_SERVER_ID,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
@@ -818,8 +821,9 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
 
 	xmms_sqlite_exec (session->sql,
-	                  "delete from Media where id=%d and source in "
-	                  "(select id from Sources where source like 'plugin/%%' and source != 'plugin/playlist')",
+	                  "DELETE FROM Media WHERE id=%d AND source IN "
+	                  "(SELECT id FROM Sources WHERE source LIKE 'plugin/%%' "
+	                   "AND source != 'plugin/playlist')",
 	                  entry);
 
 }
@@ -834,15 +838,15 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 	if (id) {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = '%d', intval = %d "
-		                  "where key='%s' and id=%d",
+		                  "UPDATE Media SET value = '%d', intval = %d "
+		                  "WHERE key='%s' AND id=%d",
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, id);
 	} else {
 		xmms_sqlite_exec (session->sql,
-		                  "update Media set value = '%d', intval = %d "
-		                  "where key='%s'",
+		                  "UPDATE Media SET value = '%d', intval = %d "
+		                  "WHERE key='%s'",
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_STATUS_REHASH,
 		                  XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
@@ -929,10 +933,12 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
 	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
 
 	if (!xmms_sqlite_exec (session->sql,
-	                       "insert into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
+	                       "INSERT INTO Media (id, key, value, source) VALUES "
+	                                         "(%d, '%s', %Q, %d)",
 	                       id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
 	                       source)) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting url");
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "Sql error/corruption inserting url");
 		return 0;
 	}
 
@@ -962,7 +968,8 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
 
 	xmms_sqlite_query_int (session->sql, &id,
-	                       "select id as value from Media where key='%s' and value=%Q and source=%d",
+	                       "SELECT id AS value FROM Media "
+	                       "WHERE key='%s' AND value=%Q AND source=%d",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
 	                       source);
 
@@ -972,7 +979,8 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 		if (session->next_id <= 0 &&
 		    !xmms_sqlite_query_int (session->sql, &session->next_id,
 		                            "SELECT IFNULL(MAX (id),0)+1 FROM Media")) {
-			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
+			xmms_error_set (error, XMMS_ERROR_GENERIC,
+			                "SQL error/corruption selecting max(id)");
 			return 0;
 		}
 
@@ -1026,7 +1034,7 @@ xmms_medialib_entry_get_id (xmms_medialib_t *medialib, const gchar *url,
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
 
 	xmms_sqlite_query_int (session->sql, &id,
-	                       "select id as value from Media where key='%s' and value=%Q and source=%d",
+	                       "SELECT id AS value FROM Media WHERE key='%s' AND value=%Q AND source=%d",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
 	                       XMMS_MEDIALIB_SOURCE_SERVER_ID);
 	xmms_medialib_end (session);
@@ -1104,13 +1112,12 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (entry, NULL);
 
-	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb,
-	                             &ret,
-	                             "select s.source, m.key, "
-	                                    "ifnull (m.intval, m.value) "
-	                             "from Media m left join "
-	                             "Sources s on m.source = s.id "
-	                             "where m.id=%d",
+	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb, &ret,
+	                             "SELECT s.source, m.key, "
+	                                    "IFNULL (m.intval, m.value) "
+	                             "FROM Media m LEFT JOIN "
+	                             "Sources s ON m.source = s.id "
+	                             "WHERE m.id=%d",
 	                             entry);
 	if (!s || !ret) {
 		return NULL;
@@ -1158,11 +1165,11 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session, xmms_medialib_ent
 
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_tree_cb,
 	                             &ret,
-	                             "select s.source, m.key, "
-	                                     "ifnull (m.intval, m.value) "
-	                             "from Media m left join "
-	                             "Sources s on m.source = s.id "
-	                             "where m.id=%d",
+	                             "SELECT s.source, m.key, "
+	                                     "IFNULL (m.intval, m.value) "
+	                             "FROM Media m LEFT JOIN "
+	                             "Sources s ON m.source = s.id "
+	                             "WHERE m.id=%d",
 	                             entry);
 	if (!s || !ret) {
 		return NULL;
@@ -1341,8 +1348,9 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_sqlite_exec (session->sql,
-	                  "delete from Media where source=%d and "
-	                  "key='%s' and id=%d", sourceid, key, entry);
+	                  "DELETE FROM Media WHERE source=%d AND key='%s' AND "
+	                                          "id=%d",
+	                  sourceid, key, entry);
 	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
@@ -1417,7 +1425,7 @@ xmms_medialib_check_id_in_session (xmms_medialib_entry_t entry,
 	gint c = 0;
 
 	if (!xmms_sqlite_query_int (session->sql, &c,
-	                            "select count(id) from Media where id=%d",
+	                            "SELECT COUNT(id) FROM Media WHERE id=%d",
 	                            entry)) {
 		return FALSE;
 	}
@@ -1439,8 +1447,8 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 	g_return_val_if_fail (session, 0);
 
 	xmms_sqlite_query_int (session->sql, &ret,
-	                       "select id from Media where key='%s' "
-	                       "and source=%d and intval in (%d, %d) limit 1",
+	                       "SELECT id FROM Media WHERE key='%s' "
+	                       "AND source=%d AND intval IN (%d, %d) LIMIT 1",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 	                       XMMS_MEDIALIB_SOURCE_SERVER_ID,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_NEW,
@@ -1456,8 +1464,8 @@ xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
 	g_return_val_if_fail (session, 0);
 
 	xmms_sqlite_query_int (session->sql, &ret,
-	                       "select count(id) as value from Media where "
-	                       "key='%s' and intval in (%d, %d) and source=%d",
+	                       "SELECT COUNT(id) AS value FROM Media WHERE "
+	                       "key='%s' AND intval IN (%d, %d) AND source=%d",
 	                       XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_NEW,
 	                       XMMS_MEDIALIB_ENTRY_STATUS_REHASH,

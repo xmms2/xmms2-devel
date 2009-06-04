@@ -177,7 +177,7 @@ xmms_collection_gen_query (coll_query_t *query)
 	/* Append select and joins */
 	qstring = g_string_new ("SELECT DISTINCT ");
 	query_string_append_fetch (query, qstring);
-	g_string_append (qstring, " FROM Media as m0");
+	g_string_append (qstring, " FROM Media AS m0");
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* Append conditions */
@@ -558,7 +558,7 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 		}
 
 		g_string_append_printf (qstring,
-		                        " JOIN Media as m%u ON m0.id=m%u.id"
+		                        " JOIN Media AS m%u ON m0.id=m%u.id"
 		                        " AND m%u.key='%s'",
 		                        alias->id, alias->id, alias->id, field);
 	}
@@ -600,7 +600,7 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring,
 						g_string_append (qstring, "m0.id");
 					} else {
 						g_string_append_printf (qstring,
-							"(SELECT ifnull (intval, value) "
+							"(SELECT IFNULL (intval, value) "
 							  "FROM Media WHERE id = m0.id AND key='%s')",
 							canon_field);
 					}
