@@ -178,11 +178,11 @@ print_fixed_width_string (gchar *value, gint width, gint realsize,
                           column_def_align_t align, gchar padchar)
 {
 	if (align == COLUMN_DEF_ALIGN_LEFT) {
-		g_printf (value);
+		g_printf ("%s", value);
 		print_padding (width - realsize, padchar);
 	} else {
 		print_padding (width - realsize, padchar);
-		g_printf (value);
+		g_printf ("%s", value);
 	}
 }
 
@@ -200,7 +200,7 @@ print_string_using_coldef (column_display_t *disp, column_def_t *coldef,
 
 	case COLUMN_DEF_SIZE_AUTO:
 		/* Just print the string */
-		g_printf (disp->buffer);
+		g_printf ("%s", disp->buffer);
 		break;
 	}
 }
@@ -360,7 +360,7 @@ column_display_print_header (column_display_t *disp)
 	/* Display column headers */
 	for (i = 0; i < disp->cols->len; ++i) {
 		coldef = g_array_index (disp->cols, column_def_t *, i);
-		realsize = g_snprintf (disp->buffer, coldef->size + 1, coldef->name);
+		realsize = g_snprintf (disp->buffer, coldef->size + 1, "%s", coldef->name);
 		print_fixed_width_string (disp->buffer, coldef->size, realsize,
 		                          coldef->align, ' ');
 	}
@@ -524,7 +524,7 @@ column_display_render_text (column_display_t *disp, column_def_t *coldef,
 	gint realsize;
 	const gchar *sep = coldef->name;
 
-	realsize = g_printf (sep);
+	realsize = g_printf ("%s", sep);
 
 	return realsize;
 }
@@ -557,7 +557,7 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 	 * alignment and overflow termwidth if strlen(time) > coldef->size,
 	 * but it's a temporary fix to avoid displaying a wrong time.
 	 */
-	realsize = g_snprintf (disp->buffer, disp->termwidth + 1, time);
+	realsize = g_snprintf (disp->buffer, disp->termwidth + 1, "%s", time);
 	print_string_using_coldef (disp, coldef, realsize);
 
 	g_free (time);
