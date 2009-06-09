@@ -130,6 +130,8 @@ cdef extern from "xmmsc/xmmsv.h":
 	int  xmmsv_list_iter_insert (xmmsv_list_iter_t *it, xmmsv_t *val)
 	int  xmmsv_list_iter_remove (xmmsv_list_iter_t *it)
 
+	void xmmsv_list_iter_explicit_destroy (xmmsv_list_iter_t *it)
+
 	ctypedef void (*xmmsv_dict_foreach_func) (char *key, xmmsv_t *value, void *user_data)
 
 	int  xmmsv_dict_get     (xmmsv_t *dictv, char *key, xmmsv_t **val)
@@ -151,6 +153,8 @@ cdef extern from "xmmsc/xmmsv.h":
 
 	int  xmmsv_dict_iter_set    (xmmsv_dict_iter_t *it, xmmsv_t *val)
 	int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
+
+	void xmmsv_dict_iter_explicit_destroy (xmmsv_dict_iter_t *it)
 
 
 cdef extern from "xmms_configuration.h":
@@ -588,6 +592,7 @@ cdef class CollectionAttributes:
 			dct[x] = y
 
 			xmmsv_dict_iter_next(it)
+		xmmsv_dict_iter_explicit_destroy (it);
 		return dct
 
 	def __repr__(self):
@@ -963,6 +968,7 @@ cdef class XMMSValue:
 
 			ret[<char *>k] = V.value()
 			xmmsv_dict_iter_next(it)
+		xmmsv_dict_iter_explicit_destroy (it)
 		return ret
 
 	def get_propdict(self):
@@ -995,6 +1001,7 @@ cdef class XMMSValue:
 			ret.append(obj.value())
 
 			xmmsv_list_iter_next(iter)
+		xmmsv_list_iter_explicit_destroy(iter)
 		return ret
 
 	def iserror(self):
