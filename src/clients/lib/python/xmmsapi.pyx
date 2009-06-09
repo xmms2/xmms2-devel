@@ -143,6 +143,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	int  xmmsv_get_dict_iter   (xmmsv_t *val, xmmsv_dict_iter_t **it)
 
 	int  xmmsv_dict_iter_pair  (xmmsv_dict_iter_t *it, xmms_pyrex_constcharp_t *key, xmmsv_t **val)
+	int  xmmsv_dict_iter_pair_string  (xmmsv_dict_iter_t *it, xmms_pyrex_constcharpp_t key, xmms_pyrex_constcharpp_t val)
 	int  xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it)
 	void xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 	void xmmsv_dict_iter_next  (xmmsv_dict_iter_t *it)
@@ -372,10 +373,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, char *key, char *value)
 	int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, char *key)
 	int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, char *key, char **value)
-	void xmmsv_coll_attribute_list_first (xmmsv_coll_t *coll)
-	int xmmsv_coll_attribute_list_valid (xmmsv_coll_t *coll)
-	void xmmsv_coll_attribute_list_entry (xmmsv_coll_t *coll, xmms_pyrex_constcharpp_t k, xmms_pyrex_constcharpp_t v)
-	void xmmsv_coll_attribute_list_next (xmmsv_coll_t *coll)
+
+	xmmsv_t *xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
 
 #####################################################################
 
@@ -575,14 +574,20 @@ cdef class CollectionAttributes:
 		self.coll = NULL
 
 	def _py_dict(self):
+		cdef xmmsv_dict_iter_t *it
 		cdef char *x
 		cdef char *y
 		dct = {}
-		xmmsv_coll_attribute_list_first(self.coll)
-		while xmmsv_coll_attribute_list_valid(self.coll):
-			xmmsv_coll_attribute_list_entry(self.coll, <xmms_pyrex_constcharpp_t>&x, <xmms_pyrex_constcharpp_t>&y)
+
+		if not xmmsv_get_dict_iter(xmmsv_coll_attributes_get(self.coll), &it):
+			raise RuntimeError("Failed to get dict iterator")
+
+		xmmsv_dict_iter_first(it)
+		while xmmsv_dict_iter_valid(it):
+			xmmsv_dict_iter_pair_string(it, <xmms_pyrex_constcharpp_t>&x, <xmms_pyrex_constcharpp_t>&y)
 			dct[x] = y
-			xmmsv_coll_attribute_list_next(self.coll)
+
+			xmmsv_dict_iter_next(it)
 		return dct
 
 	def __repr__(self):
