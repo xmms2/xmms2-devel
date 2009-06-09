@@ -1,353 +1,617 @@
-#include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient-glib.h>
-
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2009 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
 #include <stdlib.h>
-#include <unistd.h>
+#include <gio/gio.h>
+#include <xmmsclient/xmmsclient.h>
 
-#include <glib.h>
+typedef struct updater_St {
+	xmmsc_connection_t *conn;
+	GHashTable *watchers;
+	GFile *root;
+} updater_t;
 
-#include "mlibupdater.h"
+typedef struct updater_quit_St {
+	GMainLoop *ml;
+	updater_t *updater;
+} updater_quit_t;
+
+static gboolean updater_add_watcher (updater_t *updater, GFile *root);
+static void on_directory_event (GFileMonitor *monitor, GFile *dir,
+                                GFile *other, GFileMonitorEvent event,
+                                gpointer udata);
 
 static void
-quit (void *data)
+unregister_monitor (gpointer ptr)
 {
-	GMainLoop *ml = data;
-	ERR ("xmms2d disconnected us");
-	g_main_loop_quit (ml);
+	GFileMonitor *monitor = (GFileMonitor *) ptr;
+
+	g_file_monitor_cancel (monitor);
+	g_object_unref (monitor);
+}
+
+static updater_t *
+updater_new (void)
+{
+	updater_t *updater = g_new0 (updater_t, 1);
+
+	updater->conn = xmmsc_init ("XMMS2-Medialib-Updater");
+	updater->watchers = g_hash_table_new_full(g_str_hash, g_str_equal,
+	                                          g_free, unregister_monitor);
+
+	return updater;
 }
 
 static void
-handle_file_add (xmonitor_t *mon, gchar *filename)
+updater_destroy (updater_t *updater)
 {
-	if (g_file_test (filename, G_FILE_TEST_IS_DIR)) {
-		monitor_add_dir (mon, filename);
-		mon->dir_list = g_list_append (mon->dir_list, filename);
-		DBG ("New directory: %s", filename);
-	} else if (g_file_test (filename, G_FILE_TEST_IS_REGULAR)) {
-		gchar tmp[MON_FILENAME_MAX];
-		g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
-		xmmsc_result_unref (xmmsc_medialib_add_entry (mon->conn, tmp));
-		DBG ("Adding %s to medialib!", tmp);
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->watchers);
+	g_return_if_fail (updater->conn);
+
+	g_hash_table_destroy (updater->watchers);
+	xmmsc_unref (updater->conn);
+	g_free (updater);
+}
+
+static void
+updater_quit (void *data)
+{
+	updater_quit_t *quit = (updater_quit_t *) data;
+
+	g_debug ("Shutting down!");
+
+	updater_destroy (quit->updater);
+	g_main_loop_quit (quit->ml);
+	g_free (quit);
+}
+
+static updater_quit_t *
+updater_connect (updater_t *updater, GMainLoop *ml)
+{
+	updater_quit_t *quit;
+	gchar *path;
+
+	g_return_val_if_fail (updater, NULL);
+	g_return_val_if_fail (updater->conn, NULL);
+	g_return_val_if_fail (ml, NULL);
+
+	path = getenv("XMMS_PATH");
+
+	if (!xmmsc_connect (updater->conn, path)) {
+		g_warning("Unable to connect to XMMS2");
+		return NULL;
 	}
-}
 
-static int
-handle_remove_from_mlib (xmmsv_t *v, void *userdata)
-{
-	xmonitor_t *mon = userdata;
-	xmmsc_result_t *res2;
-	xmmsv_list_iter_t *it;
+	quit = g_new0 (updater_quit_t, 1);
+	quit->updater = updater;
+	quit->ml = ml;
 
-	for (xmmsv_get_list_iter (v, &it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-		gint32 id;
-		xmmsv_t *elem;
-		if (!xmmsv_list_iter_entry (it, &elem) || !xmmsv_get_int (elem, &id)) {
-			ERR ("Failed to get entry id from hash!");
-			continue;
-		}
+	xmmsc_mainloop_gmain_init (updater->conn);
+	xmmsc_disconnect_callback_set (updater->conn, updater_quit, quit);
 
-		if (id == 0) {
-			DBG ("Entry not in db!");
-			continue;
-		}
-
-		DBG ("Removing %d", id);
-
-		res2 = xmmsc_medialib_remove_entry (mon->conn, id);
-		xmmsc_result_unref (res2);
-	}
-
-	return FALSE;
+	return quit;
 }
 
 static void
-handle_file_del (xmonitor_t *mon, gchar *filename)
+updater_clear_watchers (updater_t *updater)
 {
-	xmmsc_result_t *res;
-	xmmsv_coll_t *univ, *coll;
-	gchar tmp[MON_FILENAME_MAX];
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->watchers);
 
-	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s%%", filename);
-
-	univ = xmmsv_coll_universe ();
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
-	xmmsv_coll_add_operand (coll, univ);
-	xmmsv_coll_attribute_set (coll, "field", "url");
-	xmmsv_coll_attribute_set (coll, "value", tmp);
-
-	res = xmmsc_coll_query_ids (mon->conn, coll, NULL, 0, 0);
-
-	DBG ("remove '%s' from mlib", tmp);
-	xmmsc_result_notifier_set (res, handle_remove_from_mlib, mon);
-	xmmsc_result_unref (res);
-	xmmsv_coll_unref (coll);
-	xmmsv_coll_unref (univ);
+	g_hash_table_remove_all (updater->watchers);
 }
 
-static int
-handle_mlib_update (xmmsv_t *v, void *userdata)
-{
-	xmonitor_t *mon = userdata;
-	xmmsc_result_t *res2;
-	gint32 id;
 
-	if (!xmmsv_get_int (v, &id)) {
-		ERR ("Failed to get id for entry!");
+static void
+updater_find_sub_directories (updater_t *updater, GFile *file)
+{
+	GFileEnumerator *enumerator;
+	GFileInfo *info;
+	GError *err = NULL;
+
+	g_return_if_fail (updater);
+	g_return_if_fail (file);
+
+	enumerator = g_file_enumerate_children (file, G_FILE_ATTRIBUTE_STANDARD_NAME,
+	                                        G_FILE_QUERY_INFO_NONE, NULL, &err);
+
+	g_clear_error (&err);
+
+	while ((info = g_file_enumerator_next_file (enumerator, NULL, &err)) != NULL) {
+		const gchar *name;
+		GFile *child;
+
+		name = g_file_info_get_name (info);
+		child = g_file_get_child (file, name);
+		g_object_unref (info);
+
+		updater_add_watcher (updater, child);
+		g_object_unref (child);
+	}
+
+	g_object_unref (enumerator);
+}
+
+
+static gboolean
+updater_is_dir (GFile *file)
+{
+	GFileType type;
+
+	g_return_val_if_fail (file, FALSE);
+
+	type = g_file_query_file_type (file, G_FILE_QUERY_INFO_NONE, NULL);
+
+	if (type != G_FILE_TYPE_DIRECTORY) {
 		return FALSE;
-	}
-
-	if (id == 0) {
-		DBG ("Entry not in db!");
-		return FALSE;
-	}
-
-	res2 = xmmsc_medialib_rehash (mon->conn, id);
-	xmmsc_result_unref (res2);
-
-	return FALSE;
-}
-
-static void
-handle_file_changed (xmonitor_t *mon, gchar *filename)
-{
-	xmmsc_result_t *res;
-	gchar tmp[MON_FILENAME_MAX];
-
-	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
-
-	res = xmmsc_medialib_get_id (mon->conn, tmp);
-	xmmsc_result_notifier_set (res, handle_mlib_update, mon);
-	xmmsc_result_unref (res);
-	DBG ("update file in medialib");
-}
-
-gboolean
-s_callback (GIOChannel *s, GIOCondition cond, gpointer data)
-{
-	xmonitor_t *mon = data;
-	xevent_t event;
-
-	while (monitor_process (mon, &event)) {
-		switch (event.code) {
-			case MON_DIR_CHANGED:
-				DBG ("got changed signal for %s", event.filename);
-				handle_file_changed (mon, event.filename);
-				break;
-			case MON_DIR_DELETED:
-				handle_file_del (mon, event.filename);
-				break;
-			case MON_DIR_CREATED:
-				handle_file_add (mon, event.filename);
-				break;
-			default:
-				break;
-		}
 	}
 
 	return TRUE;
 }
 
-static void
-process_dir (xmonitor_t *mon, gchar *dirpath)
+static gboolean
+updater_add_watcher (updater_t *updater, GFile *file)
 {
-	GDir *dir;
-	const gchar *tmp;
+	GFileMonitor *monitor;
+	xmmsc_result_t *res;
+	GError *err = NULL;
+	gchar *path, *url;
+
+	g_return_val_if_fail (updater, FALSE);
+	g_return_val_if_fail (file, FALSE);
+
+	if (!updater_is_dir (file)) {
+		return FALSE;
+	}
+
+	path = g_file_get_path (file);
+
+	monitor = g_file_monitor_directory (file, G_FILE_MONITOR_NONE, NULL, &err);
+	if (err) {
+		g_printerr ("Unable to monitor '%s', %s\n", path, err->message);
+		g_error_free (err);
+		g_free (monitor);
+		g_free (path);
+		return FALSE;
+	}
+
+	g_signal_connect (monitor, "changed", (gpointer) on_directory_event, updater);
+
+	/* path ownership transfered to the hash */
+	g_hash_table_insert (updater->watchers, path, monitor);
+
+	url = g_strdup_printf ("file://%s", path);
+
+	res = xmmsc_medialib_path_import (updater->conn, url);
+	xmmsc_result_unref (res);
+
+	g_free (url);
+
+	updater_find_sub_directories (updater, file);
+
+	return TRUE;
+}
+
+static gboolean
+updater_remove_watcher (updater_t *updater, GFile *file)
+{
+	gboolean ret = TRUE;
 	gchar *path;
 
-	dir = g_dir_open (dirpath, 0, NULL);
-	if (!dir) {
-		ERR ("Error when opening %s", dirpath);
-		return;
+	g_return_if_fail (updater);
+	g_return_if_fail (file);
+
+	path = g_file_get_path (file);
+
+	if (!g_hash_table_remove (updater->watchers, path)) {
+		ret = FALSE;
 	}
 
-	while ((tmp = g_dir_read_name (dir))) {
-		path = g_strdup_printf ("%s/%s", dirpath, tmp);
-		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
-			if (!monitor_add_dir (mon, path)) {
-				ERR ("Couldn't watch directory: %s!", path);
-				g_free (path);
-				continue;
-			}
-			DBG ("Now watching dir %s", path);
-			mon->dir_list = g_list_append (mon->dir_list, path);
-			process_dir (mon, path);
-		} else {
-			g_free (path);
-		}
+	g_free (path);
+
+	return ret;
+}
+
+/**
+ * TODO: Maybe this should support colon separated dirs in the future
+ * TODO: Maybe add directories to a queue that resolves in the background
+ *       and post switch_directory we clear that queue/list and only emit
+ *       the top path? Perhaps always a good idea to always minimize the
+ *       queue on each timeout_poll?
+ */
+static gboolean
+updater_switch_directory (updater_t *updater, const gchar *path)
+{
+	GFile *file;
+
+	g_return_val_if_fail (updater, FALSE);
+	g_return_val_if_fail (updater->conn, FALSE);
+	g_return_val_if_fail (path, FALSE);
+
+	file = g_file_new_for_path (path);
+
+	g_debug ("switching directory to: %s", path);
+
+	if (!updater_is_dir (file)) {
+		g_object_unref (file);
+		return FALSE;
 	}
 
-	g_main_context_iteration (NULL, FALSE);
-	
-	g_dir_close (dir);
+	updater_clear_watchers (updater);
+	updater_add_watcher (updater, file);
+	g_object_unref (file);
+
+	return TRUE;
 }
 
 static int
-handle_addpath (xmmsv_t *v, void *data)
+updater_config_changed (xmmsv_t *value, void *udata)
 {
-	xmonitor_t *mon = data;
+	updater_t *updater = (updater_t *) udata;
+	const gchar *path;
 
-	if (!monitor_add_dir (mon, mon->watch_dir)) {
-		ERR ("Couldn't watch directory!");
+	g_return_val_if_fail (updater, FALSE);
+
+	if (xmmsv_dict_entry_get_string (value, "clients.mlibupdater.watch_dirs", &path)) {
+		updater_switch_directory (updater, path);
+	}
+
+	return TRUE;
+}
+
+static int
+updater_config_get (xmmsv_t *value, void *udata)
+{
+	updater_t *updater;
+	const gchar *path;
+
+	updater = (updater_t *) udata;
+
+	g_return_val_if_fail (updater, FALSE);
+
+	if (!xmmsv_get_string (value, &path)) {
+		g_error ("Failed to retrieve config value\n");
 		return FALSE;
 	}
-	mon->dir_list = g_list_append (mon->dir_list, mon->watch_dir);
 
-	process_dir (mon, mon->watch_dir);
+	updater_switch_directory (updater, path);
 
-	DBG ("Watching %d dirs", g_list_length (mon->dir_list));
+	return FALSE;
+}
+
+static int
+updater_config_register (xmmsv_t *value, void *udata)
+{
+	xmmsc_result_t *res;
+	const gchar *conf;
+	updater_t *updater;
+
+	updater = (updater_t *) udata;
+
+	g_return_val_if_fail (updater, FALSE);
+
+	if (!xmmsv_get_string (value, &conf)) {
+		g_error ("Failed to register config value\n");
+		return FALSE;
+	}
+
+	res = xmmsc_configval_get (updater->conn, conf);
+	xmmsc_result_notifier_set (res, updater_config_get, updater);
+	xmmsc_result_unref (res);
 
 	return FALSE;
 }
 
 static void
-do_watch_dir (xmonitor_t *mon, const gchar *dirs)
+updater_subscribe_config (updater_t *updater)
 {
 	xmmsc_result_t *res;
-	GList *n;
 
-	DBG ("We are going to watch '%s'", dirs);
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->conn);
 
-	for (n = mon->dir_list; n; n = g_list_next (n)) {
-		monitor_del_dir (mon, n->data);
-		g_free (n->data);
-	}
+	res = xmmsc_configval_register (updater->conn, "mlibupdater.watch_dirs", "");
+	xmmsc_result_notifier_set (res, updater_config_register, updater);
+	xmmsc_result_unref (res);
 
-	if (mon->dir_list) {
-		g_list_free (mon->dir_list);
-		mon->dir_list = NULL;
-	}
-
-	if (strlen (dirs) < 1) {
-		mon->watch_dir = NULL;
-		return;
-	} else {
-		mon->watch_dir = g_strdup (dirs);
-	}
-
-	/* Make sure that nothing changed while we where away! */
-	res = xmmsc_medialib_path_import (mon->conn, mon->watch_dir);
-	xmmsc_result_notifier_set (res, handle_addpath, mon);
+	res = xmmsc_broadcast_configval_changed (updater->conn);
+	xmmsc_result_notifier_set (res, updater_config_changed, updater);
 	xmmsc_result_unref (res);
 }
 
-static int
-handle_config_changed (xmmsv_t *v, void *data)
+static void
+updater_add_file (updater_t *updater, GFile *file)
 {
-	xmonitor_t *mon = data;
-	const gchar *val = NULL;
-	int s;
+	xmmsc_result_t *res;
+	gchar *path, *url;
 
-	s = xmmsv_dict_entry_get_string (v,
-	                                 "clients.mlibupdater.watch_dirs",
-	                                 &val);
-	if (s) {
-		do_watch_dir (mon, val);
-	}
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->conn);
+	g_return_if_fail (file);
 
-	return TRUE; /* keep broadcast alive */
+	path = g_file_get_path (file);
+	url = g_strdup_printf ("file://%s", path);
+	g_free (path);
+
+	res = xmmsc_medialib_add_entry (updater->conn, url);
+	xmmsc_result_unref (res);
+
+	g_free (url);
 }
 
 static int
-handle_watch_dirs (xmmsv_t *v, void *data)
+updater_remove_file_by_id (xmmsv_t *value, void *udata)
 {
-	xmonitor_t *mon = data;
-	const gchar *dirs;
+	xmmsc_result_t *res;
+	updater_t *updater;
+	int mid;
 
-	if (!xmmsv_get_string (v, &dirs)) {
-		ERR ("Couldn't get configvalue from server!");
+	updater = (updater_t *) udata;
+
+	g_return_val_if_fail (updater, FALSE);
+
+	if (!xmmsv_get_int (value, &mid)) {
+		g_error ("couldn't find this one!");
 		return FALSE;
 	}
 
-	do_watch_dir (mon, dirs);
-
-	return FALSE;
-}
-
-static int
-handle_configval (xmmsv_t *v, void *data)
-{
-	xmmsc_result_t *res2;
-	xmonitor_t *mon = data;
-	const gchar *val;
-
-	if (!xmmsv_get_string (v, &val)) {
-		ERR ("Couldn't register value in server!");
+	if (!mid) {
+		g_debug("entry not in medialib");
 		return FALSE;
 	}
 
-	res2 = xmmsc_configval_get (mon->conn, val);
-	xmmsc_result_notifier_set (res2, handle_watch_dirs, mon);
-	xmmsc_result_unref (res2);
+	res = xmmsc_medialib_remove_entry (updater->conn, mid);
+	xmmsc_result_unref (res);
 
 	return FALSE;
 }
 
 static void
-message_handler (const gchar *log_domain, GLogLevelFlags log_level,
-		 const gchar *message, gpointer user_data)
+updater_remove_file (updater_t *updater, GFile *file)
 {
+	xmmsc_result_t *res;
+	gchar *path, *url;
 
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->conn);
+	g_return_if_fail (file);
+
+	path = g_file_get_path (file);
+	url = g_strdup_printf ("file://%s", path);
+	g_free (path);
+
+	g_debug ("removing file '%s'", url);
+
+	res = xmmsc_medialib_get_id (updater->conn, url);
+	xmmsc_result_notifier_set (res, updater_remove_file_by_id, updater);
+	xmmsc_result_unref (res);
+
+	g_free (url);
 }
 
-int 
+static int
+updater_remove_directory_by_id (xmmsv_t *value, void *udata)
+{
+	xmmsv_list_iter_t *it;
+	updater_t *updater;
+
+	xmmsv_get_list_iter (value, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *item;
+
+		if (xmmsv_list_iter_entry (it, &item)) {
+			updater_remove_file_by_id (item, udata);
+		}
+
+		xmmsv_list_iter_next (it);
+	}
+}
+
+static void
+updater_remove_directory (updater_t *updater, GFile *file)
+{
+	xmmsc_result_t *res;
+	xmmsv_coll_t *univ, *coll;
+	gchar *path, *pattern, *encoded;
+
+	path = g_file_get_path (file);
+	encoded = (gchar *) _xmmsc_medialib_encode_url (path, NULL);
+	g_free (path);
+
+	pattern = g_strdup_printf ("file://%s*", encoded);
+	g_free (encoded);
+
+	univ = xmmsv_coll_universe ();
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+
+	xmmsv_coll_add_operand (coll, univ);
+	xmmsv_coll_attribute_set (coll, "field", "url");
+	xmmsv_coll_attribute_set (coll, "value", pattern);
+
+	g_debug ("remove '%s' from mlib", pattern);
+
+	res = xmmsc_coll_query_ids (updater->conn, coll, NULL, 0, 0);
+	xmmsc_result_notifier_set (res, updater_remove_directory_by_id, updater);
+	xmmsc_result_unref (res);
+
+	xmmsv_coll_unref (coll);
+	xmmsv_coll_unref (univ);
+
+	g_free (pattern);
+}
+
+static int
+updater_rehash_file_by_id (xmmsv_t *value, void *udata)
+{
+	xmmsc_result_t *res;
+	updater_t *updater;
+	int mid;
+
+	updater = (updater_t *) udata;
+
+	g_return_val_if_fail (updater, FALSE);
+
+	if (!xmmsv_get_int (value, &mid)) {
+		return FALSE;
+	}
+
+	if (!mid) {
+		g_warning ("Couldn't find requested medialib entry.");
+		return FALSE;
+	}
+
+	res = xmmsc_medialib_rehash (updater->conn, mid);
+	xmmsc_result_unref (res);
+
+	return FALSE;
+}
+
+static void
+updater_rehash_file (updater_t *updater, GFile *file)
+{
+	xmmsc_result_t *res;
+	gchar *path, *url;
+
+	g_return_if_fail (updater);
+	g_return_if_fail (updater->conn);
+	g_return_if_fail (file);
+
+	path = g_file_get_path (file);
+	url = g_strdup_printf ("file://%s", path);
+	g_free (path);
+
+	g_debug ("resolving entry '%s'", url);
+
+	res = xmmsc_medialib_get_id (updater->conn, url);
+	xmmsc_result_notifier_set (res, updater_rehash_file_by_id, updater);
+	xmmsc_result_unref (res);
+
+	g_free (url);
+}
+
+static void
+on_entity_created (updater_t *updater, GFile *entity)
+{
+	GFileType type;
+
+	g_return_if_fail (updater);
+	g_return_if_fail (entity);
+
+	type = g_file_query_file_type (entity, G_FILE_QUERY_INFO_NONE, NULL);
+	switch (type) {
+	case G_FILE_TYPE_DIRECTORY:
+		g_debug ("directory created");
+		updater_add_watcher (updater, entity);
+		break;
+	case G_FILE_TYPE_REGULAR:
+		g_debug ("file created");
+		updater_add_file (updater, entity);
+		break;
+	default:
+		g_debug ("something else created: %d", (int) type);
+		break;
+	}
+}
+
+static void
+on_entity_changed (updater_t *updater, GFile *entity)
+{
+	GFileType type;
+
+	g_return_if_fail (updater);
+	g_return_if_fail (entity);
+
+	type = g_file_query_file_type (entity, G_FILE_QUERY_INFO_NONE, NULL);
+	switch (type) {
+	case G_FILE_TYPE_REGULAR:
+		updater_rehash_file (updater, entity);
+		break;
+	default:
+		g_debug ("something else changed: %d", (int) type);
+		break;
+	}
+}
+
+static void
+on_entity_deleted (updater_t *updater, GFile *entity)
+{
+	GFileType type;
+
+	g_debug ("entity deleted");
+
+	g_return_if_fail (updater);
+	g_return_if_fail (entity);
+
+	/* There is no way of knowing if the deleted event
+	 * came from a file or a directory so lets give it
+	 * a go with both actions and see what happens.
+	 */
+	if (updater_remove_watcher (updater, entity)) {
+		updater_remove_directory (updater, entity);
+	} else {
+		updater_remove_file (updater, entity);
+	}
+}
+
+static void
+on_directory_event (GFileMonitor *monitor, GFile *entity, GFile *other,
+                    GFileMonitorEvent event, gpointer udata)
+{
+	updater_t *updater = (updater_t *) udata;
+
+	g_return_if_fail (updater);
+
+	switch (event) {
+	case G_FILE_MONITOR_EVENT_CREATED:
+		on_entity_created (updater, entity);
+		break;
+	case G_FILE_MONITOR_EVENT_CHANGED:
+		on_entity_changed (updater, entity);
+		break;
+	case G_FILE_MONITOR_EVENT_DELETED:
+		on_entity_deleted (updater, entity);
+		break;
+	default:
+		break;
+	}
+}
+
+int
 main (int argc, char **argv)
 {
-	GIOChannel *gio;
+	updater_t *updater;
 	GMainLoop *ml;
-	gchar *path;
-	gchar *tmp;
-	xmmsc_connection_t *conn;
-	xmmsc_result_t *res;
-	xmonitor_t *mon;
-	gint fd;
 
-	conn = xmmsc_init ("xmms-medialib-updater");
-	path = getenv ("XMMS_PATH");
-	if (!xmmsc_connect (conn, path)) {
-		ERR ("Could not connect to xmms2d %s", xmmsc_get_last_error (conn));
-		return EXIT_FAILURE;
-	}
+	g_type_init ();
+	g_thread_init (NULL);
 
 	ml = g_main_loop_new (NULL, FALSE);
-	xmmsc_mainloop_gmain_init (conn);
-	xmmsc_disconnect_callback_set (conn, quit, ml);
 
-	mon = g_new0 (xmonitor_t, 1);
-	fd = monitor_init (mon);
-	mon->conn = conn;
-
-	if (fd == -1) {
-		ERR ("Couldn't initalize monitor");
+	updater = updater_new ();
+	
+	if (!updater_connect (updater, ml)) {
+		updater_destroy (updater);
+		g_main_loop_unref (ml);
 		return EXIT_FAILURE;
 	}
 
-
-	tmp = getenv("XMMS_DEBUG");
-	if (!tmp) {
-		g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE | G_LOG_FLAG_RECURSION, 
-				   message_handler, NULL);
-	}
-
-	gio = g_io_channel_unix_new (fd);
-	g_io_add_watch (gio, G_IO_IN, s_callback, mon);
-
-	res = xmmsc_configval_register (conn, "mlibupdater.watch_dirs", "");
-	xmmsc_result_notifier_set (res, handle_configval, mon);
-	xmmsc_result_unref (res);
-
-	res = xmmsc_broadcast_configval_changed (conn);
-	xmmsc_result_notifier_set (res, handle_config_changed, mon);
-	xmmsc_result_unref (res);
-
+	updater_subscribe_config (updater);
+	
 	g_main_loop_run (ml);
-
+	g_main_loop_unref (ml);
+	
 	return EXIT_SUCCESS;
 }
-
