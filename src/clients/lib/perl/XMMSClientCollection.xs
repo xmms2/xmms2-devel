@@ -561,20 +561,24 @@ Get a hash of all C<%attributes> of the given collection.
 void
 xmmsv_coll_attribute_list (xmmsv_coll_t *coll)
 	PREINIT:
+		xmmsv_dict_iter_t *it;
 		const char *key;
 		const char *value;
 	PPCODE:
-		xmmsv_coll_attribute_list_first (coll);
+		xmmsv_get_dict_iter (xmmsv_coll_attributes_get (coll), &it);
 
-		while (xmmsv_coll_attribute_list_valid (coll)) {
-			xmmsv_coll_attribute_list_entry (coll, &key, &value);
+		for (xmmsv_dict_iter_first (it);
+		     xmmsv_dict_iter_valid (it);
+		     xmmsv_dict_iter_next (it)) {
+
+			xmmsv_dict_iter_pair_string (it, &key, &value);
 
 			EXTEND (sp, 2);
 			mPUSHp (key, strlen (key));
 			mPUSHp (value, strlen (value));
-
-			xmmsv_coll_attribute_list_next (coll);
 		}
+
+		xmmsv_dict_iter_explicit_destroy (it);
 
 =head2 universe
 
