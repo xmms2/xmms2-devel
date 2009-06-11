@@ -411,7 +411,7 @@ query_append_protect_string (coll_query_t *query, gchar *s)
 static void
 query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll)
 {
-	xmmsv_coll_t *op;
+	xmmsv_coll_t *op = NULL;
 	gchar *target_name;
 	gchar *target_ns;
 	guint  target_nsid;
