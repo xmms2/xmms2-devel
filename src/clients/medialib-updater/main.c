@@ -431,7 +431,7 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	encoded = (gchar *) _xmmsc_medialib_encode_url (path, NULL);
 	g_free (path);
 
-	pattern = g_strdup_printf ("file://%s*", encoded);
+	pattern = g_strdup_printf ("file://%s/*", encoded);
 	g_free (encoded);
 
 	univ = xmmsv_coll_universe ();
@@ -440,6 +440,7 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	xmmsv_coll_add_operand (coll, univ);
 	xmmsv_coll_attribute_set (coll, "field", "url");
 	xmmsv_coll_attribute_set (coll, "value", pattern);
+	xmmsv_coll_attribute_set (coll, "case-sensitive", "true");
 
 	g_debug ("remove '%s' from mlib", pattern);
 
