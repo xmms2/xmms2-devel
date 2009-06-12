@@ -38,32 +38,62 @@
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 
-const char *schema[] = {
+/* Tables and unique constraints */
+const char *tables[] = {
+	/* Media */
 	"CREATE TABLE Media (id INTEGER, key, value, source INTEGER, "
 	                    "intval INTEGER DEFAULT NULL)",
+	/* Media unique constraint */
+	"CREATE UNIQUE INDEX key_idx ON Media (id, key, source)",
+
+	/* Sources */
 	"CREATE TABLE Sources (id INTEGER PRIMARY KEY AUTOINCREMENT, source)",
 
+	/* CollectionAttributes */
 	"CREATE TABLE CollectionAttributes (collid INTEGER, key TEXT, value TEXT)",
+	/* CollectionAttributes unique constraint */
+	"CREATE UNIQUE INDEX collectionattributes_idx "
+	       "ON CollectionAttributes (collid, key)",
+
+	/* CollectionConnections */
 	"CREATE TABLE CollectionConnections (from_id INTEGER, to_id INTEGER)",
+	/* CollectionConnections unique constraint */
+	"CREATE UNIQUE INDEX collectionconnections_idx "
+	       "ON CollectionConnections (from_id, to_id)",
+
+	/* CollectionIdlists */
 	"CREATE TABLE CollectionIdlists (collid INTEGER, position INTEGER, "
 	                                "mid INTEGER)",
+	/* CollectionIdlists unique constraint */
+	"CREATE UNIQUE INDEX collectionidlists_idx "
+	       "ON CollectionIdlists (collid, position)",
+
+	/* CollectionLabels */
 	"CREATE TABLE CollectionLabels (collid INTEGER, namespace INTEGER, "
 	                               "name TEXT)",
+
+	/* CollectionOperators */
 	"CREATE TABLE CollectionOperators (id INTEGER PRIMARY KEY AUTOINCREMENT, "
 	                                  "type INTEGER)",
+	NULL
+};
 
-	"CREATE UNIQUE INDEX key_idx ON Media (id, key, source)",
+const char *views[] = {
+	NULL
+};
+
+const char *triggers[] = {
+	NULL
+};
+
+const char *indices[] = {
+	/* Media idices */
 	"CREATE INDEX id_key_value_1x ON Media (id, key, value COLLATE BINARY)",
 	"CREATE INDEX id_key_value_2x ON Media (id, key, value COLLATE NOCASE)",
 	"CREATE INDEX key_value_1x ON Media (key, value COLLATE BINARY)",
 	"CREATE INDEX key_value_2x ON Media (key, value COLLATE NOCASE)",
 
-	"CREATE UNIQUE INDEX collectionconnections_idx "
-	       "ON CollectionConnections (from_id, to_id)",
-	"CREATE UNIQUE INDEX collectionattributes_idx "
-	       "ON CollectionAttributes (collid, key)",
-	"CREATE UNIQUE INDEX collectionidlists_idx "
-	       "ON CollectionIdlists (collid, position)",
+	/* Collections DAG index */
 	"CREATE INDEX collectionlabels_idx ON CollectionLabels (collid)",
 
 	NULL
@@ -429,10 +459,28 @@ xmms_sqlite_create (gboolean *create)
 		 */
 		sqlite3_exec (sql, fill_stats, NULL, NULL, NULL);
 		/**
-		 * Create the rest of our tables, indices, views and triggers
+		 * Create the tables and unique constraints
 		 */
-		for (i = 0; schema[i]; i++) {
-			sqlite3_exec (sql, schema[i], NULL, NULL, NULL);
+		for (i = 0; tables[i]; i++) {
+			sqlite3_exec (sql, tables[i], NULL, NULL, NULL);
+		}
+		/**
+		 * Create the views
+		 */
+		for (i = 0; views[i]; i++) {
+			sqlite3_exec (sql, views[i], NULL, NULL, NULL);
+		}
+		/**
+		 * Create the triggers
+		 */
+		for (i = 0; triggers[i]; i++) {
+			sqlite3_exec (sql, triggers[i], NULL, NULL, NULL);
+		}
+		/**
+		 * Create indices
+		 */
+		for (i = 0; indices[i]; i++) {
+			sqlite3_exec (sql, indices[i], NULL, NULL, NULL);
 		}
 		/**
 		 * Add the server source
