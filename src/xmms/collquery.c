@@ -172,6 +172,17 @@ xmms_collection_gen_query (coll_query_t *query)
 	/* If no alias base yet (m0), select the default base property */
 	if (query->alias_base == NULL) {
 		query_make_alias (query, XMMS_COLLQUERY_DEFAULT_BASE, FALSE);
+	} else {
+		/* We are actually interested in the property of m0...
+		   Let's make sure it comes from a good source. */
+		if (query->conditions->len > 0) {
+			g_string_append (query->conditions, " AND ");
+		}
+		g_string_append_printf (query->conditions,
+			"xmms_source_pref (m0.source) = "
+			"(SELECT MIN (xmms_source_pref (n.source)) FROM Media AS n "
+			 "WHERE n.id = m0.id AND n.key = '%s')",
+			query->alias_base);
 	}
 
 	/* Append select and joins */
@@ -181,11 +192,7 @@ xmms_collection_gen_query (coll_query_t *query)
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* Append conditions */
-	g_string_append_printf (qstring,
-		" WHERE m0.key='%s' AND xmms_source_pref (m0.source) = "
-			"(SELECT MIN (xmms_source_pref (n.source)) FROM Media AS n "
-			 "WHERE n.id = m0.id AND n.key = '%s')",
-		query->alias_base, query->alias_base);
+	g_string_append_printf (qstring, " WHERE m0.key='%s'", query->alias_base);
 	if (query->conditions->len > 0) {
 		g_string_append_printf (qstring, " AND %s", query->conditions->str);
 	}
