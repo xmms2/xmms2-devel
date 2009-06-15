@@ -181,7 +181,11 @@ xmms_collection_gen_query (coll_query_t *query)
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* Append conditions */
-	g_string_append_printf (qstring, " WHERE m0.key='%s'", query->alias_base);
+	g_string_append_printf (qstring,
+		" WHERE m0.key='%s' AND xmms_source_pref (m0.source) = "
+			"(SELECT MIN (xmms_source_pref (n.source)) FROM Media AS n "
+			 "WHERE n.id = m0.id AND n.key = '%s')",
+		query->alias_base, query->alias_base);
 	if (query->conditions->len > 0) {
 		g_string_append_printf (qstring, " AND %s", query->conditions->str);
 	}
@@ -556,9 +560,11 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 		}
 
 		g_string_append_printf (qstring,
-		                        " JOIN Media AS m%u ON m0.id=m%u.id"
-		                        " AND m%u.key='%s'",
-		                        alias->id, alias->id, alias->id, field);
+			" JOIN Media AS m%u ON m0.id=m%u.id AND m%u.key='%s' AND"
+			" xmms_source_pref (m%u.source) = "
+				"(SELECT MIN (xmms_source_pref (n.source)) FROM Media AS n"
+				" WHERE n.id = m0.id AND n.key = '%s')",
+			alias->id, alias->id, alias->id, field, alias->id, field);
 	}
 }
 
@@ -599,8 +605,12 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring,
 					} else {
 						g_string_append_printf (qstring,
 							"(SELECT IFNULL (intval, value) "
-							  "FROM Media WHERE id = m0.id AND key='%s')",
-							canon_field);
+							 "FROM Media WHERE id = m0.id AND key='%s' AND "
+							 "xmms_source_pref (source) = "
+							  "(SELECT MIN (xmms_source_pref (n.source)) "
+							   "FROM Media AS n WHERE n.id = m0.id AND "
+							                         "n.key = '%s'))",
+							canon_field, canon_field);
 					}
 				}
 			}
