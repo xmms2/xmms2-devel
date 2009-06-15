@@ -176,28 +176,11 @@ source_match_pattern (const gchar *source, const gchar *pattern,
 	return !g_ascii_strncasecmp (pattern, source, pattern_len);
 }
 
-static void
-xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val)
+static int
+xmms_find_match_index (gint source, const gchar *pref, xmms_medialib_t *mlib)
 {
-	gint source;
-	const gchar *pref;
-	xmms_medialib_t *mlib;
 	gchar *source_name, *colon;
 	gint i = 0;
-
-	mlib = sqlite3_user_data (context);
-
-	if (sqlite3_value_type (val[0]) != SQLITE_INTEGER) {
-		sqlite3_result_error (context, "First argument to xmms_source_pref should be a integer", -1);
-		return;
-	}
-	if (sqlite3_value_type (val[1]) != SQLITE3_TEXT) {
-		sqlite3_result_error (context, "Second argument to xmms_source_pref should be a string", -1);
-		return;
-	}
-
-	source = sqlite3_value_int (val[0]);
-	pref = (const gchar *) sqlite3_value_text (val[1]);
 
 	g_mutex_lock (mlib->source_lock);
 	source_name = g_hash_table_lookup (mlib->sources, GINT_TO_POINTER (source));
@@ -213,8 +196,7 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 
 		/* check whether the substring matches */
 		if (source_match_pattern (source_name, pref, len)) {
-			sqlite3_result_int (context, i);
-			return;
+			return i;
 		}
 
 		/* prepare for next iteration */
@@ -226,7 +208,55 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 		/* if we just processed the final substring, then we're done */
 	} while (colon);
 
-	sqlite3_result_int (context, i);
+	return i;
+}
+
+static void
+xmms_sqlite_source_pref_binary (sqlite3_context *context, int args,
+                                sqlite3_value **val)
+{
+	gint source;
+	const gchar *pref;
+	xmms_medialib_t *mlib;
+
+	mlib = sqlite3_user_data (context);
+
+	if (sqlite3_value_type (val[0]) != SQLITE_INTEGER) {
+		sqlite3_result_error (context, "First argument to xmms_source_pref "
+		                               "should be a integer", -1);
+		return;
+	}
+	if (sqlite3_value_type (val[1]) != SQLITE3_TEXT) {
+		sqlite3_result_error (context, "Second argument to xmms_source_pref "
+		                               "should be a string", -1);
+		return;
+	}
+
+	source = sqlite3_value_int (val[0]);
+	pref = (const gchar *) sqlite3_value_text (val[1]);
+
+	sqlite3_result_int (context, xmms_find_match_index (source, pref, mlib));
+}
+
+static void
+xmms_sqlite_source_pref_unary (sqlite3_context *context, int args,
+                               sqlite3_value **val)
+{
+	gint source;
+	xmms_medialib_t *mlib;
+
+	mlib = sqlite3_user_data (context);
+
+	if (sqlite3_value_type (val[0]) != SQLITE_INTEGER) {
+		sqlite3_result_error (context, "First argument to xmms_source_pref "
+		                               "should be a integer", -1);
+		return;
+	}
+
+	source = sqlite3_value_int (val[0]);
+
+	sqlite3_result_int (context,
+	                    xmms_find_match_index (source, source_pref, mlib));
 }
 
 int
@@ -275,7 +305,9 @@ xmms_medialib_session_new (const char *file, int line)
 	session->sql = xmms_sqlite_open ();
 
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
-	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
+	                         session->medialib, xmms_sqlite_source_pref_binary, NULL, NULL);
+	sqlite3_create_function (session->sql, "xmms_source_pref", 1, SQLITE_UTF8,
+	                         session->medialib, xmms_sqlite_source_pref_unary, NULL, NULL);
 
 	return session;
 }
