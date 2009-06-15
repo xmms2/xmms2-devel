@@ -183,7 +183,7 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 	const gchar *pref;
 	xmms_medialib_t *mlib;
 	gchar *source_name, *colon;
-	gint i;
+	gint i = 0;
 
 	mlib = sqlite3_user_data (context);
 
@@ -217,14 +217,16 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 			return;
 		}
 
+		/* prepare for next iteration */
 		if (colon) {
 			pref = colon + 1;
 		}
+		i++;
 
 		/* if we just processed the final substring, then we're done */
 	} while (colon);
 
-	sqlite3_result_int (context, -1);
+	sqlite3_result_int (context, i);
 }
 
 int
