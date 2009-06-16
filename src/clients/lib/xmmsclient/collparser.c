@@ -835,6 +835,16 @@ coll_parse_filter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 
 	PARSER_TRY (coll_parse_unaryfilter);
 	PARSER_TRY (coll_parse_binaryfilter);
+
+	/* Recognize a seperate '*' as the universe collection */
+	/* FIXME: This should not be in this function!
+	   See bug report 2196 for explanation why it yet is here. */
+	if (tokens->type == XMMS_COLLECTION_TOKEN_PATTERN &&
+	    strcmp(tokens->string, "*") == 0) {
+		*ret = xmmsv_coll_universe ();
+		return coll_next_token (tokens);
+	}
+
 	PARSER_TRY (coll_parse_autofilter);
 
 	*ret = NULL;
