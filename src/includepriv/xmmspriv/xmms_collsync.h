@@ -20,7 +20,7 @@
 #include "xmmspriv/xmms_collection.h"
 
 void xmms_coll_sync_init (xmms_coll_dag_t *dag);
-void xmms_coll_sync_shutdown ();
-void xmms_coll_sync_schedule_sync ();
+void xmms_coll_sync_shutdown (void);
+void xmms_coll_sync_schedule_sync (void);
 
 #endif
