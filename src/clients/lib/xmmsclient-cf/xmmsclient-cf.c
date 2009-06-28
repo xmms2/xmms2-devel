@@ -17,6 +17,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "xmmsclient/xmmsclient.h"
 
+#define	XMMSC_CF_SOURCE_PRIORITY 4
+
 void
 xmmsc_io_cf_toggle_socket_flags (int toggle, void *userdata)
 {
@@ -53,7 +55,7 @@ xmmsc_io_cf_event_callback (CFSocketRef s,
 
 
 unsigned int
-xmmsc_setup_with_cf (xmmsc_connection_t *c)
+xmmsc_mainloop_cf_init (xmmsc_connection_t *c, CFRunLoopSourceRef *source)
 {
 
 	CFRunLoopRef runLoopRef = CFRunLoopGetCurrent ();
@@ -83,12 +85,21 @@ xmmsc_setup_with_cf (xmmsc_connection_t *c)
 
 
 	runLoopSourceRef = CFSocketCreateRunLoopSource (kCFAllocatorDefault,
-	                                                sockRef, 4);
+	                                                sockRef, XMMSC_CF_SOURCE_PRIORITY);
 
 	CFRunLoopAddSource (runLoopRef, runLoopSourceRef, kCFRunLoopDefaultMode);
 
 
 	xmmsc_io_need_out_callback_set (c, xmmsc_io_cf_toggle_socket_flags, sockRef);
+	*source = runLoopSourceRef;
 
 	return 1;
+}
+
+void
+xmmsc_mainloop_cf_shutdown (xmmsc_connection_t *c, CFRunLoopSourceRef source)
+{
+	CFRunLoopRef runLoopRef = CFRunLoopGetCurrent ();
+
+	CFRunLoopRemoveSource (runLoopRef, source, kCFRunLoopDefaultMode);
 }
