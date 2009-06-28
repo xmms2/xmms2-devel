@@ -491,7 +491,7 @@ int xmms_pulse_backend_get_latency (xmms_pulse *p, int *rerror)
 }
 
 
-void volume_set_cb (pa_context *c, int success, void *udata)
+static void volume_set_cb (pa_context *c, int success, void *udata)
 {
 	int *res = (int *) udata;
 	*res = success;
@@ -540,8 +540,8 @@ int xmms_pulse_backend_volume_set (xmms_pulse *p, unsigned int vol)
 }
 
 
-void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
-                   int eol, void *udata)
+static void volume_get_cb (pa_context *c, const pa_sink_input_info *i,
+                           int eol, void *udata)
 {
 	unsigned int *vol = (unsigned int *) udata;
 	double total = 0;
