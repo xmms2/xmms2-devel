@@ -14,7 +14,7 @@
 
 char *get_local_addr(int fd);
 int set_sock_nonblock(int sockfd);
-int tcp_open(); 
+int tcp_open(void); 
 int tcp_connect(int sock_fd, const char *host, unsigned int port);
 int tcp_write(int fd, const char *buf, int n);
 int tcp_read(int fd, char *buf, int n);
