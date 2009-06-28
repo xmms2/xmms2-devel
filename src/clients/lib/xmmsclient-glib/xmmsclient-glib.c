@@ -17,6 +17,7 @@
 #include <glib.h>
 
 #include "xmmsclient/xmmsclient.h"
+#include "xmmsclient/xmmsclient-glib.h"
 
 typedef struct {
 	xmmsc_connection_t *conn;
