@@ -56,7 +56,7 @@ void cleanup_udp (xmmsc_vis_udp_t *t, xmms_socket_t socket);
 gboolean write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval *time, int channels, int size, short *buf, int socket);
 
 /* provided by format.c */
-void fft_init ();
+void fft_init (void);
 short fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, int size, short *src);
 
 /* never call a fetch without a guaranteed release following! */

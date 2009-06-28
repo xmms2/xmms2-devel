@@ -35,6 +35,6 @@ int32_t xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id
 void xmms_visualization_shutdown_client (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
 
 void xmms_visualization_init (xmms_output_t *output);
-void xmms_visualization_destroy ();
+void xmms_visualization_destroy (void);
 
 #endif
