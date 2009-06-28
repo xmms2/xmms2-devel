@@ -56,7 +56,7 @@ static gboolean playlist_positions_parse_token (const gchar *expr, playlist_posi
 static gboolean playlist_positions_parse_sequence (const gchar *expr, playlist_positions_t *p);
 static gboolean playlist_positions_parse_currcontext (const gchar *expr, playlist_positions_t *p);
 static gboolean playlist_positions_parse_relsequence (const gchar *expr, playlist_positions_t *p);
-static playlist_positions_t *playlist_positions_new ();
+static playlist_positions_t *playlist_positions_new (gint currpos);
 static void playlist_positions_add_atom (playlist_positions_t *positions, gint x);
 static gboolean playlist_positions_add_interval (playlist_positions_t *positions, gint start, gint end);
 static gboolean playlist_positions_intervals_contains_atom (playlist_positions_t *positions, gint x);
