@@ -50,14 +50,14 @@ struct xmms_ipc_msg_St {
 };
 
 
-void
+static void
 xmms_ipc_append_coll_attr (const char* key, const char* value, void *userdata) {
 	xmms_ipc_msg_t *msg = (xmms_ipc_msg_t *)userdata;
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_string (msg, value);
 }
 
-void
+static void
 xmms_ipc_count_coll_attr (const char* key, const char* value, void *userdata) {
 	int *n = (int *)userdata;
 	++(*n);

@@ -26,6 +26,7 @@
 #include "xmmsc/xmmsc_sockets.h"
 #include "xmmsc/xmmsc_unistd.h"
 #include "url.h"
+#include "socket_tcp.h"
 
 static void
 xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
