@@ -28,6 +28,8 @@
 
 #include "xmms/xmms_log.h"
 
+#include "xmms/xmms_bindata.h"
+
 #include "xmmspriv/xmms_ringbuf.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_playlist.h"
