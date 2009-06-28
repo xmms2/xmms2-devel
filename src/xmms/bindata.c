@@ -125,7 +125,7 @@ xmms_bindata_destroy (xmms_object_t *obj)
 }
 
 gchar *
-xmms_bindata_calculate_md5 (const guchar *data, guint size, gchar ret[33])
+xmms_bindata_calculate_md5 (const guchar *data, gsize size, gchar ret[33])
 {
 	md5_state_t state;
 	md5_byte_t digest[16];
