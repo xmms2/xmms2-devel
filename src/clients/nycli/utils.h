@@ -68,7 +68,7 @@ void playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos, gchar *play
 gboolean playlist_exists (cli_infos_t *infos, gchar *playlist);
 void print_padding (gint length, gchar padchar);
 void print_indented (const gchar *string, guint level);
-gint find_terminal_width ();
+gint find_terminal_width (void);
 gchar *format_time (guint64 duration, gboolean use_hours);
 void enrich_mediainfo (xmmsv_t *val);
 

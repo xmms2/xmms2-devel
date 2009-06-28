@@ -27,5 +27,5 @@ void readline_init (cli_infos_t *infos);
 void readline_suspend (cli_infos_t *infos);
 void readline_resume (cli_infos_t *infos);
 void readline_status_mode (cli_infos_t *infos);
-void readline_status_mode_exit ();
-void readline_free ();
+void readline_status_mode_exit (void);
+void readline_free (void);

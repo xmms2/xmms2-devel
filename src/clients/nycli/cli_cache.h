@@ -54,7 +54,7 @@ struct cli_cache_St {
 	freshness_t freshness_active_playlist_name;
 };
 
-cli_cache_t *cli_cache_init ();
+cli_cache_t *cli_cache_init (void);
 void cli_cache_start (cli_infos_t *infos);
 gboolean cli_cache_is_fresh (cli_cache_t *cache);
 void cli_cache_refresh (cli_infos_t *infos);
