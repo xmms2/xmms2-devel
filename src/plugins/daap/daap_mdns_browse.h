@@ -26,12 +26,12 @@ typedef struct {
 } daap_mdns_server_t;
 
 gboolean
-daap_mdns_initialize ();
+daap_mdns_initialize (void);
 
 GSList *
-daap_mdns_get_server_list ();
+daap_mdns_get_server_list (void);
 
 void
-daap_mdns_destroy ();
+daap_mdns_destroy (void);
 
 #endif
