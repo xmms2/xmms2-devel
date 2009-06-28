@@ -281,6 +281,10 @@ W: http://code-monkey.de/
 P: 1024D/5E587462 E3B5 FB50 70F3 376F 53C9  9957 EADC 791F 5E58 7462
 D: Ruby bindings. Many other things all over the place.
 
+N: Dean Scarff
+E: dos@scarff.id.au
+D: Mac OS X fixes
+
 N: Georg Schild
 E: dangertools@gmail.com
 D: Java bindings
