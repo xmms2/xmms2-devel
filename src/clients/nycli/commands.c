@@ -424,7 +424,7 @@ cli_server_volume_setup (command_action_t *action)
 	                     "By default, the command applies to all audio channels. Use the --channel flag to override this behaviour."));
 }
 
-void
+static void
 fill_column_display (cli_infos_t *infos, column_display_t *disp,
                      const gchar **columns)
 {
@@ -477,7 +477,7 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 	}
 }
 
-column_display_t *
+static column_display_t *
 create_column_display (cli_infos_t *infos, command_context_t *ctx,
                        const gchar **default_columns)
 {
@@ -497,7 +497,7 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 	return coldisp;
 }
 
-column_display_t *
+static column_display_t *
 create_list_column_display (cli_infos_t *infos)
 {
 	column_display_t *coldisp;

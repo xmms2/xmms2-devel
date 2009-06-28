@@ -249,7 +249,7 @@ column_def_init_with_udata (const gchar *name, gpointer udata, guint size,
 }
 
 /* Free the contents of the column_def (NOT the column_def itself) */
-void
+static void
 column_def_free (column_def_t *coldef)
 {
 	g_free (coldef);

@@ -148,7 +148,7 @@ done (xmmsc_result_t *res, cli_infos_t *infos)
 	xmmsc_result_unref (res);
 }
 
-void
+static void
 coldisp_finalize (xmmsc_result_t *res, column_display_t *coldisp)
 {
 	column_display_print_footer (coldisp);
@@ -304,7 +304,7 @@ print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
 }
 
 /* Apply operation to an idlist */
-void
+static void
 apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 {
 	const gchar *err;
@@ -1238,7 +1238,7 @@ set_next_rel (cli_infos_t *infos, gint offset)
 
 void
 add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
-          gchar *playlist, gint pos)
+         gchar *playlist, gint pos)
 {
 	xmmsc_result_t *res;
 	xmmsv_coll_t *coll;

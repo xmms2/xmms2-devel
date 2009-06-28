@@ -24,7 +24,7 @@
 #include "command_trie.h"
 #include "alias.h"
 
-gboolean
+static gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
 	gint ret = 0;
@@ -108,7 +108,7 @@ cli_infos_loop_stop (cli_infos_t *infos)
 }
 
 /* Called on server disconnection. We can keep the loop running. */
-gint
+static gint
 cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 {
 	cli_infos_t *infos = (cli_infos_t *) userdata;

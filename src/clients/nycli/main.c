@@ -34,13 +34,13 @@
 static void loop_select (cli_infos_t *infos);
 
 
-void
+static void
 command_argument_free (void *x)
 {
 	g_free (x);
 }
 
-command_context_t *
+static command_context_t *
 command_context_init (gint argc, gchar **argv)
 {
 	command_context_t *ctx;
@@ -55,7 +55,7 @@ command_context_init (gint argc, gchar **argv)
 	return ctx;
 }
 
-void
+static void
 command_context_free (command_context_t *ctx)
 {
 	g_hash_table_destroy (ctx->flags);
@@ -64,7 +64,7 @@ command_context_free (command_context_t *ctx)
 }
 
 
-gboolean
+static gboolean
 command_runnable (cli_infos_t *infos, command_action_t *action)
 {
 	gint n = 0;
@@ -160,7 +160,7 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
  * mode, not shell mode) argv/argc.  If appropriate, it enters
  * flag_dispatch to parse program flags.
  */
-void
+static void
 command_or_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
 	/* First argument looks like a flag */
@@ -358,7 +358,7 @@ loop_select (cli_infos_t *infos)
 	}
 }
 
-void
+static void
 loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	command_or_flag_dispatch (infos, argc, argv);
@@ -369,7 +369,7 @@ loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 	}
 }
 
-void
+static void
 loop_run (cli_infos_t *infos)
 {
 	while (infos->status != CLI_ACTION_STATUS_FINISH) {
