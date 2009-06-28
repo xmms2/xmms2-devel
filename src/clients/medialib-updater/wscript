@@ -19,6 +19,9 @@ def configure(conf):
         return False
     if not conf.check_cfg(package="gthread-2.0", args="--cflags --libs"):
         return False
+
+    conf.check_cc(function_name="g_file_query_file_type", header_name="gio/gio.h", uselib="GIO-2.0")
+
     return True
 
 def set_options(opt):
