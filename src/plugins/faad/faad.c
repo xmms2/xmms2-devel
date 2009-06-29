@@ -201,16 +201,20 @@ xmms_faad_init (xmms_xform_t *xform)
 		                          data->buffer_length, &samplerate,
 		                          &channels);
 	} else if (data->filetype == FAAD_TYPE_MP4) {
-		gpointer tmpbuf;
+		const guchar *tmpbuf;
 		gssize tmpbuflen;
+		guchar *copy;
 
 		if (!xmms_xform_auxdata_get_bin (xform, "decoder_config", &tmpbuf,
 		                                 &tmpbuflen)) {
 			XMMS_DBG ("AAC decoder config data found but it's wrong type! (something broken?)");
 			goto err;
 		}
-		bytes_read = faacDecInit2 (data->decoder, tmpbuf, tmpbuflen, &samplerate,
-		                           &channels);
+
+		copy = g_memdup (tmpbuf, tmpbuflen);
+		bytes_read = faacDecInit2 (data->decoder, copy, tmpbuflen,
+		                           &samplerate, &channels);
+		g_free (copy);
 	}
 
 	if (bytes_read < 0) {
