@@ -119,7 +119,7 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	faacDecConfigurationPtr config;
 	gint bytes_read;
-	gulong samplerate;
+	guint32 samplerate;
 	guchar channels;
 
 	g_return_val_if_fail (xform, FALSE);
