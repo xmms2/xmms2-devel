@@ -333,7 +333,7 @@ DigestToString (const unsigned char *digest,
 }
 
 static void
-GenerateStatic_42 () {
+GenerateStatic_42 (void) {
 	MD5_CTX ctx;
 	unsigned char *p = staticHash_42;
 	int i;
@@ -391,7 +391,7 @@ GenerateStatic_42 () {
 	}
 }
 
-static void GenerateStatic_45 ()
+static void GenerateStatic_45 (void)
 {
 	MD5_CTX ctx;
 	unsigned char *p = staticHash_45;
