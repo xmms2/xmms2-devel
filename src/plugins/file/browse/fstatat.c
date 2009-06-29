@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <dirent.h>
 
+#include "browse.h"
+
 gboolean
 xmms_file_browse (xmms_xform_t *xform,
                   const gchar *url,

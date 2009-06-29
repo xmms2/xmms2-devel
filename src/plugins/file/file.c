@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "browse/browse.h"
+
 /* not available everywhere. */
 #if !defined(O_BINARY)
 # define O_BINARY 0
@@ -45,7 +47,6 @@ static gboolean xmms_file_init (xmms_xform_t *xform);
 static void xmms_file_destroy (xmms_xform_t *xform);
 static gint xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
 static gint64 xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
-gboolean xmms_file_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
 /*
