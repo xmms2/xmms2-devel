@@ -50,7 +50,7 @@ void set_gain(int index, int chn, float val)
   gain[index/4][chn].f[index%4] = val;
 }
 
-void clean_history()
+void clean_history(void)
 {
   int i;
 

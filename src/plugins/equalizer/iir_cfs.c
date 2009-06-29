@@ -186,7 +186,7 @@ static int find_root(double a, double b, double c, double *x0) {
 }
 
 /* Calculate all the coefficients as specified in the bands[] array */
-void calc_coeffs()
+void calc_coeffs(void)
 {
   int i, n;
   double f1, f2;

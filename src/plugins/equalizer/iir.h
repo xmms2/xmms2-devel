@@ -50,9 +50,9 @@
 /*
  * Function prototypes
  */
-void init_iir();
+void init_iir(void);
 void config_iir(int srate, int bands, int original);
-void clean_history();
+void clean_history(void);
 void set_gain(int index, int chn, float val);
 void set_preamp(int chn, float val);
 

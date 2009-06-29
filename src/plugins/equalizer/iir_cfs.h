@@ -33,6 +33,6 @@ typedef struct
 
 sIIRCoefficients* get_coeffs(int *bands, int sfreq, 
                              int use_xmms_original_freqs);
-void calc_coeffs();
+void calc_coeffs(void);
 
 #endif
