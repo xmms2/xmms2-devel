@@ -47,6 +47,8 @@ void position_jump (cli_infos_t *infos, playlist_positions_t *positions);
 void positions_remove (cli_infos_t *infos, const gchar *playlist, playlist_positions_t *positions);
 void positions_move (cli_infos_t *infos, const gchar *playlist, playlist_positions_t *positions, gint pos);
 void positions_print_info (cli_infos_t *infos, playlist_positions_t *positions);
+void positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
+                           column_display_t *coldisp, gboolean is_search);
 void configure_collection (xmmsc_result_t *res, cli_infos_t *infos, gchar *ns, gchar *name, gchar *attrname, gchar *attrvalue);
 void collection_print_config (xmmsc_result_t *res, cli_infos_t *infos, gchar *attrname);
 void coll_rename (cli_infos_t *infos, gchar *oldname, gchar *newname, xmmsc_coll_namespace_t ns, gboolean force);
@@ -71,5 +73,6 @@ void print_indented (const gchar *string, guint level);
 gint find_terminal_width (void);
 gchar *format_time (guint64 duration, gboolean use_hours);
 void enrich_mediainfo (xmmsv_t *val);
+gchar *decode_url (const gchar *string);
 
 #endif /* __UTILS_H__ */

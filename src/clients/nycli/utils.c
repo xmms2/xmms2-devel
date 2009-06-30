@@ -1593,7 +1593,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 	val = xmmsc_result_get_value (res);
 
 	if (xmmsv_get_coll (val, &coll)) {
-		if (type >= 0 && xmmsv_coll_get_type (coll) != type) {
+		if (xmmsv_coll_get_type (coll) != type) {
 			newcoll = coll_copy_retype (coll, type);
 			coll = newcoll;
 			copied = TRUE;
@@ -1880,4 +1880,49 @@ format_time (guint64 duration, gboolean use_hours)
 	}
 
 	return time;
+}
+
+gchar *
+decode_url (const gchar *string)
+{
+	gint i = 0, j = 0;
+	gchar *url;
+
+	url = g_strdup (string);
+	if (!url)
+		return NULL;
+
+	while (url[i]) {
+		guchar chr = url[i++];
+
+		if (chr == '+') {
+			chr = ' ';
+		} else if (chr == '%') {
+			gchar ts[3];
+			gchar *t;
+
+			ts[0] = url[i++];
+			if (!ts[0])
+				goto err;
+			ts[1] = url[i++];
+			if (!ts[1])
+				goto err;
+			ts[2] = '\0';
+
+			chr = strtoul (ts, &t, 16);
+
+			if (t != &ts[2])
+				goto err;
+		}
+
+		url[j++] = chr;
+	}
+
+	url[j] = '\0';
+
+	return url;
+
+ err:
+	g_free (url);
+	return NULL;
 }

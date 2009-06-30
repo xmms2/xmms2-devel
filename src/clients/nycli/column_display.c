@@ -587,7 +587,7 @@ column_display_render_format (column_display_t *disp, column_def_t *coldef,
 	const gchar *format = (const gchar *) coldef->arg.udata;
 
 	/* Format the whole string first */
-	xmmsc_entry_format (disp->buffer, disp->termwidth, format, val);
+	xmmsv_dict_format (disp->buffer, disp->termwidth, format, val);
 
 	/* then crop (crop_string uses internal buffer, so it's ok that dest=src) */
 	realsize = crop_string (disp->buffer, disp->buffer, coldef->size);
