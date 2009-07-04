@@ -415,10 +415,8 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *c
 	gchar *target_name;
 	gchar *target_ns;
 	guint  target_nsid;
-	xmmsv_t *tmp;
 
-	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &tmp)) {
-		xmmsv_get_coll (tmp, &op);
+	if (!xmmsv_list_get_coll (xmmsv_coll_operands_get (coll), 0, &op)) {
 
 		/* Ref'd coll not saved as operand, look for it */
 		if (xmmsv_coll_attribute_get (coll, "reference", &target_name) &&
