@@ -14,6 +14,8 @@
  *  Lesser General Public License for more details.
  */
 #include <stdlib.h>
+#include <string.h>
+
 #include <gio/gio.h>
 #include <xmmsclient/xmmsclient.h>
 
@@ -291,7 +293,9 @@ updater_config_changed (xmmsv_t *value, void *udata)
 	g_return_val_if_fail (updater, FALSE);
 
 	if (xmmsv_dict_entry_get_string (value, "clients.mlibupdater.watch_dirs", &path)) {
-		updater_switch_directory (updater, path);
+		if (strlen (path) > 0) {
+			updater_switch_directory (updater, path);
+		}
 	}
 
 	return TRUE;
@@ -312,7 +316,9 @@ updater_config_get (xmmsv_t *value, void *udata)
 		return FALSE;
 	}
 
-	updater_switch_directory (updater, path);
+	if (strlen (path) > 0) {
+		updater_switch_directory (updater, path);
+	}
 
 	return FALSE;
 }
