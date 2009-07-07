@@ -468,7 +468,7 @@ xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 
 		XMMS_DBG ("Magic didn't match anything...");
 		for (i = 0; i < c->dumpcount && i < c->read; i++) {
-			g_sprintf (u, "%02X ", c->buf[i]);
+			g_sprintf (u, "%02X ", (unsigned char)c->buf[i]);
 			u += 3;
 		}
 		XMMS_DBG ("%s", dump);
