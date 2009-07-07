@@ -19,6 +19,8 @@
 #include <gio/gio.h>
 #include <xmmsclient/xmmsclient.h>
 
+#include <xmms_configuration.h>
+
 typedef struct updater_St {
 	xmmsc_connection_t *conn;
 	GHashTable *watchers;
@@ -37,6 +39,10 @@ static void on_directory_event (GFileMonitor *monitor, GFile *dir,
 
 /* TODO: Remove once we depend on GLib >= 2.18 */
 #ifndef HAVE_G_FILE_QUERY_FILE_TYPE
+static GFileType
+g_file_query_file_type (GFile *file, GFileQueryInfoFlags flags,
+                        GCancellable *cancellable);
+
 GFileType
 g_file_query_file_type (GFile *file,
                         GFileQueryInfoFlags   flags,
