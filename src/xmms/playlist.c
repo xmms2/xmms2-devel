@@ -404,8 +404,8 @@ xmms_playlist_init (void)
 	                     XMMS_CMD_FUNC (rinsert));
 
 	ret->medialib = xmms_medialib_init (ret);
-	ret->mediainfordr = xmms_mediainfo_reader_start ();
 	ret->colldag = xmms_collection_init (ret);
+	ret->mediainfordr = xmms_mediainfo_reader_start ();
 
 	return ret;
 }
