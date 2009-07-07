@@ -169,7 +169,7 @@ do_scriptdir (const gchar *scriptdir)
  * if needed.
  */
 static void
-load_config ()
+load_config (void)
 {
 	gchar configdir[PATH_MAX];
 
@@ -337,8 +337,8 @@ install_scripts (const gchar *into_dir)
 /**
  * Just print version and quit
  */
-void
-print_version ()
+static void
+print_version (void)
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
 	printf ("Copyright (C) 2003-2009 XMMS2 Team\n");
@@ -424,7 +424,7 @@ main (int argc, char **argv)
 	}
 	if (showhelp) {
 #if GLIB_CHECK_VERSION(2,14,0)
-		g_print (g_option_context_get_help (context, TRUE, NULL));
+		g_print ("%s", g_option_context_get_help (context, TRUE, NULL));
 		exit (EXIT_SUCCESS);
 #else
 		g_print ("Please use --help or -? for help\n");
