@@ -553,20 +553,3 @@ xmmsc_io_disconnect (xmmsc_connection_t *c)
 /**
  * @}
  */
-
-void xmms_log_debug (const char *fmt, ...)
-{
-	char buff[1024];
-	va_list ap;
-
-	va_start (ap, fmt);
-#ifdef HAVE_VSNPRINTF
-	vsnprintf (buff, 1024, fmt, ap);
-#else
-	vsprintf (buff, fmt, ap);
-#endif
-	va_end (ap);
-
-	fprintf (stderr, "%s\n", buff);
-}
-
