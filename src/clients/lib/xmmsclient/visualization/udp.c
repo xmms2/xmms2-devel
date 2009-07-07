@@ -166,7 +166,7 @@ cleanup_udp (xmmsc_vis_udp_t *t)
 }
 
 
-int
+static int
 wait_for_socket (xmmsc_vis_udp_t *t, unsigned int blocking)
 {
 	int ret;
