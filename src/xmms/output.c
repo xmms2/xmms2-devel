@@ -55,6 +55,8 @@ static void xmms_output_client_seekms_rel (xmms_output_t *output, gint32 ms, xmm
 static void xmms_output_client_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 static void xmms_output_client_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static gint32 xmms_output_client_status (xmms_output_t *output, xmms_error_t *error);
+static gint xmms_output_client_current_id (xmms_output_t *output, xmms_error_t *error);
+static gint32 xmms_output_client_playtime (xmms_output_t *output, xmms_error_t *err);
 
 typedef enum xmms_output_filler_state_E {
 	FILLER_STOP,
@@ -638,7 +640,7 @@ xmms_output_client_status (xmms_output_t *output, xmms_error_t *error)
 	return ret;
 }
 
-gint
+static gint
 xmms_output_client_current_id (xmms_output_t *output, xmms_error_t *error)
 {
 	return output->current_entry;
@@ -727,7 +729,7 @@ xmms_output_client_volume_get (xmms_output_t *output, xmms_error_t *error)
 /**
  * Get the current playtime in milliseconds.
  */
-gint32
+static gint32
 xmms_output_client_playtime (xmms_output_t *output, xmms_error_t *error)
 {
 	guint32 ret;

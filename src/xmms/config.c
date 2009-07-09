@@ -63,6 +63,7 @@ static xmms_config_property_t *xmms_config_property_new (const gchar *name);
 static gchar *xmms_config_client_property_lookup (xmms_config_t *conf, const gchar *key, xmms_error_t *err);
 static gchar *xmms_config_client_property_register (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
 static gint compare_key (gconstpointer a, gconstpointer b, gpointer user_data);
+static void xmms_config_client_setvalue (xmms_config_t *conf, const gchar *key, const gchar *value, xmms_error_t *err);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_client_setvalue, xmms_config_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (listvalues, xmms_config_client_listvalues, xmms_config_t *, DICT, NONE, NONE);
@@ -572,7 +573,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * @param value The value to set the key to
  * @param err To be filled in if an error occurs
  */
-void
+static void
 xmms_config_client_setvalue (xmms_config_t *conf, const gchar *key, const gchar *value,
                              xmms_error_t *err)
 {

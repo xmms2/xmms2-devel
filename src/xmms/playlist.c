@@ -48,7 +48,14 @@ static void xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *p
 static GList * xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static gchar *xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
-gboolean xmms_playlist_client_remove (xmms_playlist_t *playlist, const gchar *plname, guint pos, xmms_error_t *err);
+
+static gboolean xmms_playlist_client_add_id (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *error);
+static gboolean xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname, const gchar *nurl, xmms_error_t *err);
+static gboolean xmms_playlist_client_add_idlist (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_error_t *err);
+static gboolean xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmmsv_t *order, xmms_error_t *err);
+static GTree * xmms_playlist_client_current_pos (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
+static gint xmms_playlist_client_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
+static gboolean xmms_playlist_client_remove (xmms_playlist_t *playlist, const gchar *plname, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *plcoll, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_client_move (xmms_playlist_t *playlist, const gchar *plname, guint pos, guint newpos, xmms_error_t *err);
 static gint xmms_playlist_client_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);

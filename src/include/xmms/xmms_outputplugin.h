@@ -322,15 +322,6 @@ gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
 
 /**
- * Get the current medialib id.
- *
- * @param output an output object
- * @param error an error object
- * @return the current medialib id
- */
-gint xmms_output_client_current_id (xmms_output_t *output, xmms_error_t *error);
-
-/**
  * Check if an output plugin needs format updates on each track change.
  *
  * @param plugin an output plugin object
