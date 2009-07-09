@@ -63,7 +63,7 @@ do_loop (gpointer udata)
 			g_mutex_unlock (mutex);
 
 			XMMS_DBG ("Syncing collections to database.");
-			xmms_collection_sync (dag, NULL);
+			xmms_collection_client_sync (dag, NULL);
 
 			g_mutex_lock (mutex);
 		}

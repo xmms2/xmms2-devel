@@ -127,21 +127,21 @@ static gboolean xmms_collection_media_filter_equals (xmms_coll_dag_t *dag, GHash
 static gboolean xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsv_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsv_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsv_coll_t *coll, guint nsid, GHashTable *match_table);
-static xmmsv_coll_t *xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
+static xmmsv_coll_t *xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
 
 
-XMMS_CMD_DEFINE  (collection_get, xmms_collection_get, xmms_coll_dag_t *, COLL, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_list, xmms_collection_list, xmms_coll_dag_t *, LIST, STRING, NONE);
-XMMS_CMD_DEFINE3 (collection_save, xmms_collection_save, xmms_coll_dag_t *, NONE, STRING, STRING, COLL);
-XMMS_CMD_DEFINE  (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, INT32, STRING);
-XMMS_CMD_DEFINE3 (collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_from_pls, xmms_collection_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
-XMMS_CMD_DEFINE  (collection_sync, xmms_collection_sync, xmms_coll_dag_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE  (collection_get, xmms_collection_client_get, xmms_coll_dag_t *, COLL, STRING, STRING);
+XMMS_CMD_DEFINE  (collection_list, xmms_collection_client_list, xmms_coll_dag_t *, LIST, STRING, NONE);
+XMMS_CMD_DEFINE3 (collection_save, xmms_collection_client_save, xmms_coll_dag_t *, NONE, STRING, STRING, COLL);
+XMMS_CMD_DEFINE  (collection_remove, xmms_collection_client_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
+XMMS_CMD_DEFINE  (collection_find, xmms_collection_client_find, xmms_coll_dag_t *, LIST, INT32, STRING);
+XMMS_CMD_DEFINE3 (collection_rename, xmms_collection_client_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
+XMMS_CMD_DEFINE  (collection_from_pls, xmms_collection_client_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
+XMMS_CMD_DEFINE  (collection_sync, xmms_collection_client_sync, xmms_coll_dag_t *, NONE, NONE, NONE);
 
 
-XMMS_CMD_DEFINE4 (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST);
-XMMS_CMD_DEFINE6 (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST, LIST, LIST);
+XMMS_CMD_DEFINE4 (query_ids, xmms_collection_client_query_ids, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST);
+XMMS_CMD_DEFINE6 (query_infos, xmms_collection_client_query_infos, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST, LIST, LIST);
 
 
 GTree *
@@ -334,8 +334,8 @@ add_metadata_from_tree (const gchar *key, xmmsv_t *value, gpointer user_data)
  * @returns  A idlist
  */
 static xmmsv_coll_t *
-xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *path,
-                                 xmms_error_t *err)
+xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *path,
+                                        xmms_error_t *err)
 {
 	xmms_xform_t *xform;
 	GList *lst, *n;
@@ -416,8 +416,8 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *path,
 * @returns  True on success, false otherwise.
 */
 gboolean
-xmms_collection_remove (xmms_coll_dag_t *dag, const gchar *name,
-                        const gchar *namespace, xmms_error_t *err)
+xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
+                               const gchar *namespace, xmms_error_t *err)
 {
 	guint nsid;
 	gboolean retval = FALSE;
@@ -459,8 +459,8 @@ xmms_collection_remove (xmms_coll_dag_t *dag, const gchar *name,
  * @returns  True on success, false otherwise.
  */
 gboolean
-xmms_collection_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace,
-                      xmmsv_coll_t *coll, xmms_error_t *err)
+xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace,
+                             xmmsv_coll_t *coll, xmms_error_t *err)
 {
 	xmmsv_coll_t *existing;
 	guint nsid;
@@ -543,8 +543,8 @@ xmms_collection_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *name
  * @returns  The collection structure if found, NULL otherwise.
  */
 xmmsv_coll_t *
-xmms_collection_get (xmms_coll_dag_t *dag, const gchar *name,
-                     const gchar *namespace, xmms_error_t *err)
+xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
+                            const gchar *namespace, xmms_error_t *err)
 {
 	xmmsv_coll_t *coll = NULL;
 	guint nsid;
@@ -580,7 +580,7 @@ xmms_collection_get (xmms_coll_dag_t *dag, const gchar *name,
  * @param err  If an error occurs, a message is stored in it.
  */
 void
-xmms_collection_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
+xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
 {
 	g_return_if_fail (dag);
 
@@ -602,8 +602,8 @@ xmms_collection_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
  * The entries are however referenced, and must be unreffed!
  */
 GList *
-xmms_collection_list (xmms_coll_dag_t *dag, const gchar *namespace,
-                      xmms_error_t *err)
+xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace,
+                             xmms_error_t *err)
 {
 	GList *r = NULL;
 	guint nsid;
@@ -634,8 +634,8 @@ xmms_collection_list (xmms_coll_dag_t *dag, const gchar *namespace,
  * @returns A newly allocated GList with the names of the matching collections.
  */
 GList *
-xmms_collection_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace,
-                      xmms_error_t *err)
+xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace,
+                             xmms_error_t *err)
 {
 	GHashTable *mediainfo;
 	GList *ret = NULL;
@@ -693,9 +693,9 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace,
  * @param err  If an error occurs, a message is stored in it.
  * @return True if a collection was found and renamed.
  */
-gboolean xmms_collection_rename (xmms_coll_dag_t *dag, const gchar *from_name,
-                                 const gchar *to_name, const gchar *namespace,
-                                 xmms_error_t *err)
+gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
+                                        const gchar *to_name, const gchar *namespace,
+                                        xmms_error_t *err)
 {
 	gboolean retval;
 	guint nsid;
@@ -765,9 +765,9 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, const gchar *from_name,
  * @return A list of media ids.
  */
 GList *
-xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                           guint lim_start, guint lim_len, xmmsv_t *order,
-                           xmms_error_t *err)
+xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+                                  guint lim_start, guint lim_len, xmmsv_t *order,
+                                  xmms_error_t *err)
 {
 	GList *res, *n;
 	xmmsv_t *fetch, *group, *idval;
@@ -778,7 +778,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	idval = xmmsv_new_string ("id");
 	xmmsv_list_append (fetch, idval);
 
-	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, fetch, group, err);
+	res = xmms_collection_client_query_infos (dag, coll, lim_start, lim_len, order, fetch, group, err);
 
 	/* FIXME: get an uint list directly ! (we're getting ints here actually) */
 	for (n = res; n; n = n->next) {
@@ -813,9 +813,9 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
  * @return A list of property dicts for each entry.
  */
 GList *
-xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                             guint lim_start, guint lim_len, xmmsv_t *order,
-                             xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err)
+xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+                                    guint lim_start, guint lim_len, xmmsv_t *order,
+                                    xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err)
 {
 	GList *res = NULL;
 	GString *query;
@@ -1015,7 +1015,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 	/* FIXME: Temporary hack to allow custom ordering functions */
 	xmmsv_list_append (rorder, randval);
 
-	res = xmms_collection_query_ids (dag, source, 0, 1, rorder, NULL);
+	res = xmms_collection_client_query_ids (dag, source, 0, 1, rorder, NULL);
 
 	if (res != NULL) {
 		xmmsv_t *val = (xmmsv_t *) res->data;

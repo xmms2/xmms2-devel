@@ -276,8 +276,8 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
 }
 
 GList *
-xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url,
-                   xmms_error_t *error)
+xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url,
+                          xmms_error_t *error)
 {
 	GList *list = NULL;
 	gchar *durl;
@@ -317,7 +317,7 @@ xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url,
 	return list;
 }
 
-XMMS_CMD_DEFINE (browse, xmms_xform_browse, xmms_xform_object_t *,
+XMMS_CMD_DEFINE (browse, xmms_xform_client_browse, xmms_xform_object_t *,
                  LIST, STRING, NONE);
 
 static void

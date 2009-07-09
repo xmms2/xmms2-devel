@@ -55,16 +55,16 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_
 
 xmms_coll_dag_t * xmms_collection_init (xmms_playlist_t *playlist);
 
-xmmsv_coll_t * xmms_collection_get (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
-GList * xmms_collection_list (xmms_coll_dag_t *dag, const gchar *namespace, xmms_error_t *error);
-gboolean xmms_collection_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace, xmmsv_coll_t *coll, xmms_error_t *error);
-gboolean xmms_collection_remove (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
-GList * xmms_collection_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace, xmms_error_t *error);
-gboolean xmms_collection_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
-void xmms_collection_sync (xmms_coll_dag_t *dag, xmms_error_t *error);
+xmmsv_coll_t * xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
+GList * xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace, xmms_error_t *error);
+gboolean xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace, xmmsv_coll_t *coll, xmms_error_t *error);
+gboolean xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
+GList * xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace, xmms_error_t *error);
+gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
+void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *error);
 
-GList * xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmms_error_t *err);
-GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
+GList * xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmms_error_t *err);
+GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
 
 void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
 void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);

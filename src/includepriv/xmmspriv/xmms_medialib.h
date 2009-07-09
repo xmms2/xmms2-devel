@@ -30,7 +30,7 @@ xmms_medialib_t *xmms_medialib_init (xmms_playlist_t *playlist);
 
 GList *xmms_medialib_select (xmms_medialib_session_t *, const gchar *query, xmms_error_t *error);
 GList *xmms_medialib_info_list (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err);
-GTree *xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err);
+GTree *xmms_medialib_client_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err);
 
 xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session);
 guint xmms_medialib_num_not_resolved (xmms_medialib_session_t *session);

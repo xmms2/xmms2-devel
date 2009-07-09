@@ -50,16 +50,16 @@ typedef struct xmms_playlist_St xmms_playlist_t;
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add_id (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *error);
+gboolean xmms_playlist_client_add_id (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *error);
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
-gboolean xmms_playlist_add_url (xmms_playlist_t *playlist, const gchar *plname, const gchar *nurl, xmms_error_t *err);
-gboolean xmms_playlist_add_idlist (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_error_t *err);
-gboolean xmms_playlist_add_collection (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmmsv_t *order, xmms_error_t *err);
+gboolean xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname, const gchar *nurl, xmms_error_t *err);
+gboolean xmms_playlist_client_add_idlist (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_error_t *err);
+gboolean xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmmsv_t *order, xmms_error_t *err);
 void xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, const const gchar *plname, xmmsv_coll_t *plcoll, xmms_medialib_entry_t file, xmms_error_t *err);
 GList * xmms_playlist_list (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
-GTree * xmms_playlist_current_pos (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
-gint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
+GTree * xmms_playlist_client_current_pos (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
+gint xmms_playlist_client_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 gboolean xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t entry);
 
 void xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);

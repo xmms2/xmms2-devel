@@ -45,7 +45,7 @@ const GList *xmms_xform_goal_hints_get (xmms_xform_t *xform);
 xmms_stream_type_t *xmms_xform_intype_get (xmms_xform_t *xform);
 
 void xmms_xform_outdata_type_set (xmms_xform_t *xform, xmms_stream_type_t *type);
-GList *xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
+GList *xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
 GList *xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 
 const char *xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key);

@@ -32,13 +32,13 @@
 
 static xmms_visualization_t *vis = NULL;
 
-XMMS_CMD_DEFINE (query_version, xmms_visualization_version, xmms_visualization_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (registercl, xmms_visualization_register_client, xmms_visualization_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (init_shm, xmms_visualization_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
-XMMS_CMD_DEFINE (init_udp, xmms_visualization_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
-XMMS_CMD_DEFINE3 (property_set, xmms_visualization_property_set, xmms_visualization_t *, INT32, INT32, STRING, STRING);
-XMMS_CMD_DEFINE (properties_set, xmms_visualization_properties_set, xmms_visualization_t *, INT32, INT32, DICT);
-XMMS_CMD_DEFINE (shutdown, xmms_visualization_shutdown_client, xmms_visualization_t *, NONE, INT32, NONE);
+XMMS_CMD_DEFINE (query_version, xmms_visualization_client_version, xmms_visualization_t *, INT32, NONE, NONE);
+XMMS_CMD_DEFINE (registercl, xmms_visualization_client_register, xmms_visualization_t *, INT32, NONE, NONE);
+XMMS_CMD_DEFINE (init_shm, xmms_visualization_client_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
+XMMS_CMD_DEFINE (init_udp, xmms_visualization_client_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
+XMMS_CMD_DEFINE3 (property_set, xmms_visualization_client_property_set, xmms_visualization_t *, INT32, INT32, STRING, STRING);
+XMMS_CMD_DEFINE (properties_set, xmms_visualization_client_properties_set, xmms_visualization_t *, INT32, INT32, DICT);
+XMMS_CMD_DEFINE (shutdown, xmms_visualization_client_shutdown, xmms_visualization_t *, NONE, INT32, NONE);
 
 /* create an uninitialised vis client. don't use this method without mutex! */
 int32_t
@@ -164,7 +164,7 @@ xmms_visualization_destroy ()
 }
 
 int32_t
-xmms_visualization_version (xmms_visualization_t *vis, xmms_error_t *err)
+xmms_visualization_client_version (xmms_visualization_t *vis, xmms_error_t *err)
 {
 	/* if there is a way to disable visualization support on the server side,
 	   we could return 0 here, or we could return an error? */
@@ -211,7 +211,7 @@ property_set (xmmsc_vis_properties_t *p, const gchar* key, const gchar* data)
 }
 
 int32_t
-xmms_visualization_register_client (xmms_visualization_t *vis, xmms_error_t *err)
+xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err)
 {
 	int32_t id;
 	xmms_vis_client_t *c;
@@ -233,7 +233,7 @@ xmms_visualization_register_client (xmms_visualization_t *vis, xmms_error_t *err
 
 
 int32_t
-xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, const gchar* key, const gchar* value, xmms_error_t *err)
+xmms_visualization_client_property_set (xmms_visualization_t *vis, int32_t id, const gchar* key, const gchar* value, xmms_error_t *err)
 {
 	xmms_vis_client_t *c;
 
@@ -251,7 +251,7 @@ xmms_visualization_property_set (xmms_visualization_t *vis, int32_t id, const gc
 }
 
 int32_t
-xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t* prop, xmms_error_t *err)
+xmms_visualization_client_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t* prop, xmms_error_t *err)
 {
 	xmms_vis_client_t *c;
 	xmmsv_dict_iter_t *it;
@@ -284,7 +284,7 @@ xmms_visualization_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_
 }
 
 int32_t
-xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *shmidstr, xmms_error_t *err)
+xmms_visualization_client_init_shm (xmms_visualization_t *vis, int32_t id, const char *shmidstr, xmms_error_t *err)
 {
 	int shmid;
 
@@ -298,14 +298,14 @@ xmms_visualization_init_shm (xmms_visualization_t *vis, int32_t id, const char *
 }
 
 int32_t
-xmms_visualization_init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
+xmms_visualization_client_init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 {
 	XMMS_DBG ("Trying to init udp!");
 	return init_udp (vis, id, err);
 }
 
 void
-xmms_visualization_shutdown_client (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
+xmms_visualization_client_shutdown (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 {
 	g_mutex_lock (vis->clientlock);
 	delete_client (id);
