@@ -510,7 +510,7 @@ main (int argc, char **argv)
 	                                    change_output, mainobj);
 
 	if (outname) {
-		xmms_config_client_setvalue (NULL, "output.plugin", outname, NULL);
+		xmms_config_property_set_data (cv, outname);
 	}
 
 	outname = xmms_config_property_get_string (cv);
