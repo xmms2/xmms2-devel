@@ -58,6 +58,7 @@
  */
 static void xmms_main_client_quit (xmms_object_t *object, xmms_error_t *error);
 static GTree *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
+static GList *xmms_main_client_plugin_list (xmms_object_t *main, gint32 type, xmms_error_t *err);
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
@@ -66,7 +67,7 @@ static xmms_bindata_t *bindata_obj;
 XMMS_CMD_DEFINE (quit, xmms_main_client_quit, xmms_object_t*, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (hello, xmms_main_client_hello, xmms_object_t *, NONE, INT32, STRING);
 XMMS_CMD_DEFINE (stats, xmms_main_client_stats, xmms_object_t *, DICT, NONE, NONE);
-XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, INT32, NONE);
+XMMS_CMD_DEFINE (plugin_list, xmms_main_client_plugin_list, xmms_object_t *, LIST, INT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.
@@ -120,6 +121,34 @@ xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 
 	return ret;
 }
+
+static gboolean
+xmms_main_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
+{
+	xmmsv_t *dict;
+	GList **list = data;
+
+	dict = xmmsv_build_dict (
+	        XMMSV_DICT_ENTRY_STR ("name", xmms_plugin_name_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("shortname", xmms_plugin_shortname_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("version", xmms_plugin_version_get (plugin)),
+	        XMMSV_DICT_ENTRY_STR ("description", xmms_plugin_description_get (plugin)),
+	        XMMSV_DICT_ENTRY_INT ("type", xmms_plugin_type_get (plugin)),
+	        XMMSV_DICT_END);
+
+	*list = g_list_prepend (*list, dict);
+
+	return TRUE;
+}
+
+static GList *
+xmms_main_client_plugin_list (xmms_object_t *main, gint32 type, xmms_error_t *err)
+{
+	GList *list = NULL;
+	xmms_plugin_foreach (type, xmms_main_client_list_foreach, &list);
+	return list;
+}
+
 
 /**
  * @internal Execute all programs or scripts in a directory. Used when starting

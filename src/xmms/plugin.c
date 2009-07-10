@@ -393,33 +393,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 	return TRUE;
 }
 
-static gboolean
-xmms_plugin_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
-{
-	xmmsv_t *dict;
-	GList **list = data;
-
-	dict = xmmsv_build_dict (
-	        XMMSV_DICT_ENTRY_STR ("name", xmms_plugin_name_get (plugin)),
-	        XMMSV_DICT_ENTRY_STR ("shortname", xmms_plugin_shortname_get (plugin)),
-	        XMMSV_DICT_ENTRY_STR ("version", xmms_plugin_version_get (plugin)),
-	        XMMSV_DICT_ENTRY_STR ("description", xmms_plugin_description_get (plugin)),
-	        XMMSV_DICT_ENTRY_INT ("type", xmms_plugin_type_get (plugin)),
-	        XMMSV_DICT_END);
-
-	*list = g_list_prepend (*list, dict);
-
-	return TRUE;
-}
-
-GList *
-xmms_plugin_client_list (xmms_object_t *main, gint32 type, xmms_error_t *err)
-{
-	GList *list = NULL;
-	xmms_plugin_foreach (type, xmms_plugin_client_list_foreach, &list);
-	return list;
-}
-
 /**
  * @internal Apply a function to all plugins of specified type.
  * @param[in] type The type of plugin to look for.
