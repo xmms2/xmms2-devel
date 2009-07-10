@@ -812,7 +812,7 @@ process_dir (const gchar *directory,
 {
 	GList *list;
 
-	list = xmms_xform_client_browse (NULL, directory, error);
+	list = xmms_xform_browse (directory, error);
 	if (!list) {
 		return FALSE;
 	}
