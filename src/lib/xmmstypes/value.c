@@ -525,12 +525,31 @@ GEN_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_EXTRACTOR_FUNC (int, int32_t)
 GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
+/* macro-magically define dict set functions */
+#define GEN_DICT_SET_FUNC(typename, type) \
+	int \
+	xmmsv_dict_set_##typename (xmmsv_t *dict, const char *key, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_dict_set (dict, key, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_DICT_SET_FUNC (string, const char *)
+GEN_DICT_SET_FUNC (int, int32_t)
+GEN_DICT_SET_FUNC (coll, xmmsv_coll_t *)
+
 /* macro-magically define dict_iter extractors */
 #define GEN_DICT_ITER_EXTRACTOR_FUNC(typename, type) \
 	int \
 	xmmsv_dict_iter_pair_##typename (xmmsv_dict_iter_t *it, \
-	                                           const char **key, \
-	                                           type *r) \
+	                                 const char **key, \
+	                                 type *r) \
 	{ \
 		xmmsv_t *v; \
 		if (!xmmsv_dict_iter_pair (it, key, &v)) { \
@@ -546,6 +565,25 @@ GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_ITER_EXTRACTOR_FUNC (int, int32_t)
 GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define dict_iter set functions */
+#define GEN_DICT_ITER_SET_FUNC(typename, type) \
+	int \
+	xmmsv_dict_iter_set_##typename (xmmsv_dict_iter_t *it, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_dict_iter_set (it, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_DICT_ITER_SET_FUNC (string, const char *)
+GEN_DICT_ITER_SET_FUNC (int, int32_t)
+GEN_DICT_ITER_SET_FUNC (coll, xmmsv_coll_t *)
 
 /* macro-magically define list extractors */
 #define GEN_LIST_EXTRACTOR_FUNC(typename, type) \
@@ -563,6 +601,63 @@ GEN_LIST_EXTRACTOR_FUNC (string, const char *)
 GEN_LIST_EXTRACTOR_FUNC (int, int32_t)
 GEN_LIST_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
+/* macro-magically define list set functions */
+#define GEN_LIST_SET_FUNC(typename, type) \
+	int \
+	xmmsv_list_set_##typename (xmmsv_t *list, int pos, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_list_set (list, pos, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_LIST_SET_FUNC (string, const char *)
+GEN_LIST_SET_FUNC (int, int32_t)
+GEN_LIST_SET_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define list insert functions */
+#define GEN_LIST_INSERT_FUNC(typename, type) \
+	int \
+	xmmsv_list_insert_##typename (xmmsv_t *list, int pos, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_list_insert (list, pos, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_LIST_INSERT_FUNC (string, const char *)
+GEN_LIST_INSERT_FUNC (int, int32_t)
+GEN_LIST_INSERT_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define list append functions */
+#define GEN_LIST_APPEND_FUNC(typename, type) \
+	int \
+	xmmsv_list_append_##typename (xmmsv_t *list, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_list_append (list, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_LIST_APPEND_FUNC (string, const char *)
+GEN_LIST_APPEND_FUNC (int, int32_t)
+GEN_LIST_APPEND_FUNC (coll, xmmsv_coll_t *)
+
 /* macro-magically define list_iter extractors */
 #define GEN_LIST_ITER_EXTRACTOR_FUNC(typename, type) \
 	int \
@@ -578,6 +673,25 @@ GEN_LIST_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 GEN_LIST_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_LIST_ITER_EXTRACTOR_FUNC (int, int32_t)
 GEN_LIST_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+/* macro-magically define list_iter insert functions */
+#define GEN_LIST_ITER_INSERT_FUNC(typename, type) \
+	int \
+	xmmsv_list_iter_insert_##typename (xmmsv_list_iter_t *it, type elem) \
+	{ \
+		int ret; \
+		xmmsv_t *v; \
+ \
+		v = xmmsv_new_##typename (elem); \
+		ret = xmmsv_list_iter_insert (it, v); \
+		xmmsv_unref (v); \
+ \
+		return ret; \
+	}
+
+GEN_LIST_ITER_INSERT_FUNC (string, const char *)
+GEN_LIST_ITER_INSERT_FUNC (int, int32_t)
+GEN_LIST_ITER_INSERT_FUNC (coll, xmmsv_coll_t *)
 
 static int
 source_match_pattern (const char *source, const char *pattern)
