@@ -66,6 +66,7 @@ static int xmmsv_list_resize (xmmsv_list_t *l, int newsize);
 static int _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val);
 static int _xmmsv_list_append (xmmsv_list_t *l, xmmsv_t *val);
 static int _xmmsv_list_remove (xmmsv_list_t *l, int pos);
+static int _xmmsv_list_move (xmmsv_list_t *l, int old_pos, int new_pos);
 static void _xmmsv_list_clear (xmmsv_list_t *l);
 
 static xmmsv_dict_t *xmmsv_dict_new (void);
@@ -1115,6 +1116,58 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 	return 1;
 }
 
+static int
+_xmmsv_list_move (xmmsv_list_t *l, int old_pos, int new_pos)
+{
+	xmmsv_t *v;
+	xmmsv_list_iter_t *it;
+	x_list_t *n;
+
+	if (!absolutify_and_validate_pos (&old_pos, l->size, 0)) {
+		return 0;
+	}
+	if (!absolutify_and_validate_pos (&new_pos, l->size, 0)) {
+		return 0;
+	}
+
+	v = l->list[old_pos];
+	if (old_pos < new_pos) {
+		memmove (l->list + old_pos, l->list + old_pos + 1,
+		         (new_pos - old_pos) * sizeof (xmmsv_t *));
+		l->list[new_pos] = v;
+
+		/* update iterator pos */
+		for (n = l->iterators; n; n = n->next) {
+			it = (xmmsv_list_iter_t *) n->data;
+			if (it->position >= old_pos && it->position <= new_pos) {
+				if (it->position == old_pos) {
+					it->position = new_pos;
+				} else {
+					it->position--;
+				}
+			}
+		}
+	} else {
+		memmove (l->list + new_pos + 1, l->list + new_pos,
+		         (old_pos - new_pos) * sizeof (xmmsv_t *));
+		l->list[new_pos] = v;
+
+		/* update iterator pos */
+		for (n = l->iterators; n; n = n->next) {
+			it = (xmmsv_list_iter_t *) n->data;
+			if (it->position >= new_pos && it->position <= old_pos) {
+				if (it->position == old_pos) {
+					it->position = new_pos;
+				} else {
+					it->position++;
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
 static void
 _xmmsv_list_clear (xmmsv_list_t *l)
 {
@@ -1242,6 +1295,29 @@ xmmsv_list_remove (xmmsv_t *listv, int pos)
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	return _xmmsv_list_remove (listv->value.list, pos);
+}
+
+/**
+ * Move the element from position #old to position #new.
+ *
+ * #xmmsv_list_iter_t's remain pointing at their element (which might or might
+ * not be at a different position).
+ *
+ * @param listv A #xmmsv_t containing a list
+ * @param old The original position in the list. If negative, start counting
+ *            from the end (-1 is the last element, etc.)
+ * @param new The new position in the list. If negative start counting from the
+ *            end (-1 is the last element, etc.) For the sake of counting the
+ *            element to be moved is still at its old position.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_list_move (xmmsv_t *listv, int old_pos, int new_pos)
+{
+	x_return_val_if_fail (listv, 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
+
+	return _xmmsv_list_move (listv->value.list, old_pos, new_pos);
 }
 
 /**
@@ -1571,7 +1647,6 @@ xmmsv_list_iter_remove (xmmsv_list_iter_t *it)
 
 	return _xmmsv_list_remove (it->parent, it->position);
 }
-
 
 /* Dict stuff */
 
