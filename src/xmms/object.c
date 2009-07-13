@@ -147,7 +147,7 @@ void
 xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
                         xmms_object_handler_t handler, gpointer userdata)
 {
-	GList *list = NULL, *node;
+	GList *list, *node = NULL;
 	xmms_object_handler_entry_t *entry;
 
 	g_return_if_fail (object);
