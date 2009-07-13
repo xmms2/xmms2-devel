@@ -81,9 +81,6 @@ typedef void (*xmmsv_dict_foreach_func) (const char *key, xmmsv_t *value, void *
 
 /* legacy transitional utilities */
 xmmsv_type_t xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key);
-int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r);
-int xmmsv_dict_entry_get_int (xmmsv_t *val, const char *key, int32_t *r);
-int xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **coll);
 xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
 
 int xmmsv_get_error (const xmmsv_t *val, const char **r);
@@ -141,6 +138,10 @@ int xmmsv_dict_clear (xmmsv_t *dictv);
 int xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func, void *user_data);
 int xmmsv_dict_get_size (xmmsv_t *dictv);
 int xmmsv_dict_has_key (xmmsv_t *dictv, const char *key);
+
+int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r);
+int xmmsv_dict_entry_get_int (xmmsv_t *val, const char *key, int32_t *r);
+int xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **coll);
 
 int  xmmsv_dict_iter_pair (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **val);
 int  xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it);
