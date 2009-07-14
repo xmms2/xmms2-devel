@@ -139,7 +139,28 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_RETVAL_COLL() arg->retval = xmmsv_new_coll
 #define __XMMS_CMD_DO_RETVAL_BIN() arg->retval =
 
-#define XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5, argtype6) static void \
+#define __XMMS_CMD_DO_RETTYPE_NONE() void
+#define __XMMS_CMD_DO_RETTYPE_STRING() char *
+#define __XMMS_CMD_DO_RETTYPE_INT32()  gint32
+#define __XMMS_CMD_DO_RETTYPE_COLL(a)  xmmsv_coll_t *
+#define __XMMS_CMD_DO_RETTYPE_BIN(a)   xmmsv_t *
+#define __XMMS_CMD_DO_RETTYPE_LIST(a)  GList *
+#define __XMMS_CMD_DO_RETTYPE_DICT(a)  GTree *
+
+#define __XMMS_CMD_DO_ARGTYPE_NONE 
+#define __XMMS_CMD_DO_ARGTYPE_STRING , const char *
+#define __XMMS_CMD_DO_ARGTYPE_INT32  , gint32
+#define __XMMS_CMD_DO_ARGTYPE_COLL  , xmmsv_coll_t *
+#define __XMMS_CMD_DO_ARGTYPE_BIN   , GString *
+#define __XMMS_CMD_DO_ARGTYPE_LIST  , xmmsv_t *
+#define __XMMS_CMD_DO_ARGTYPE_DICT  , xmmsv_t *
+
+
+#define XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5, argtype6) \
+\
+	static __XMMS_CMD_DO_RETTYPE_##_rettype() realfunc (argtype0 __XMMS_CMD_DO_ARGTYPE_##argtype1 __XMMS_CMD_DO_ARGTYPE_##argtype2 __XMMS_CMD_DO_ARGTYPE_##argtype3 __XMMS_CMD_DO_ARGTYPE_##argtype4 __XMMS_CMD_DO_ARGTYPE_##argtype5 __XMMS_CMD_DO_ARGTYPE_##argtype6, xmms_error_t *); \
+\
+static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \
 { \
 g_return_if_fail (XMMS_IS_OBJECT (object)); \
