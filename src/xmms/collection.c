@@ -130,12 +130,12 @@ static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHas
 
 static xmmsv_coll_t * xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
 static GList * xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace, xmms_error_t *error);
-static gboolean xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace, xmmsv_coll_t *coll, xmms_error_t *error);
-static gboolean xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
-static GList * xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace, xmms_error_t *error);
-static gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
+static void xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace, xmmsv_coll_t *coll, xmms_error_t *error);
+static void xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *collname, const gchar *namespace, xmms_error_t *error);
+static GList * xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *namespace, xmms_error_t *error);
+static void xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
 
-static GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
+static GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
 static GList * xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
 static xmmsv_coll_t *xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
 static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
@@ -426,7 +426,7 @@ xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *path,
 * @param err  If an error occurs, a message is stored in it.
 * @returns  True on success, false otherwise.
 */
-gboolean
+void
 xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
                                const gchar *namespace, xmms_error_t *err)
 {
@@ -437,7 +437,7 @@ xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
-		return FALSE;
+		return;
 	}
 
 	g_mutex_lock (dag->mutex);
@@ -457,7 +457,6 @@ xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Failed to remove this collection!");
 	}
 
-	return retval;
 }
 
 /** Save the given collection in the DAG under the given name in the given namespace.
@@ -469,7 +468,7 @@ xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
  * @param err  If an error occurs, a message is stored in it.
  * @returns  True on success, false otherwise.
  */
-gboolean
+void
 xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace,
                              xmmsv_coll_t *coll, xmms_error_t *err)
 {
@@ -481,16 +480,16 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
-		return FALSE;
+		return;
 	} else if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot save collection in all namespaces");
-		return FALSE;
+		return;
 	}
 
 	/* Validate collection structure */
 	if (!xmms_collection_validate (dag, coll, name, namespace)) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
-		return FALSE;
+		return;
 	}
 
 	g_mutex_lock (dag->mutex);
@@ -539,7 +538,6 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 		XMMS_PLAYLIST_COLLECTION_CHANGED_MSG (dag->playlist, newkey);
 	}
 
-	return TRUE;
 }
 
 
@@ -653,7 +651,7 @@ xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace,
  * @returns A newly allocated GList with the names of the matching collections.
  */
 GList *
-xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, const gchar *namespace,
+xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *namespace,
                              xmms_error_t *err)
 {
 	GHashTable *mediainfo;
@@ -712,9 +710,10 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, const gchar *names
  * @param err  If an error occurs, a message is stored in it.
  * @return True if a collection was found and renamed.
  */
-gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
-                                        const gchar *to_name, const gchar *namespace,
-                                        xmms_error_t *err)
+void
+xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
+                               const gchar *to_name, const gchar *namespace,
+                               xmms_error_t *err)
 {
 	gboolean retval;
 	guint nsid;
@@ -723,10 +722,10 @@ gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
-		return FALSE;
+		return;
 	} else if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot rename collection in all namespaces");
-		return FALSE;
+		return;
 	}
 
 	g_mutex_lock (dag->mutex);
@@ -769,7 +768,6 @@ gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_
 
 	g_mutex_unlock (dag->mutex);
 
-	return retval;
 }
 
 
@@ -840,7 +838,7 @@ xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
  */
 GList *
 xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                    guint lim_start, guint lim_len, xmmsv_t *order,
+                                    gint32 lim_start, gint32 lim_len, xmmsv_t *order,
                                     xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err)
 {
 	GList *res = NULL;

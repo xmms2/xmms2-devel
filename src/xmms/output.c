@@ -50,9 +50,9 @@ static void xmms_output_client_start (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_client_stop (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_client_pause (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_client_xform_kill (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_client_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
+static void xmms_output_client_seekms (xmms_output_t *output, gint32 ms, xmms_error_t *error);
 static void xmms_output_client_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error);
-static void xmms_output_client_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
+static void xmms_output_client_seeksamples (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static void xmms_output_client_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static gint32 xmms_output_client_status (xmms_output_t *output, xmms_error_t *error);
 static gint xmms_output_client_current_id (xmms_output_t *output, xmms_error_t *error);
@@ -66,7 +66,7 @@ typedef enum xmms_output_filler_state_E {
 	FILLER_SEEK,
 } xmms_output_filler_state_t;
 
-static void xmms_output_client_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
+static void xmms_output_client_volume_set (xmms_output_t *output, const gchar *channel, gint32 volume, xmms_error_t *error);
 static GTree *xmms_output_client_volume_get (xmms_output_t *output, xmms_error_t *error);
 static void xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state);
 static void xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state_t state);
@@ -555,7 +555,7 @@ xmms_output_client_xform_kill (xmms_output_t *output, xmms_error_t *error)
 }
 
 static void
-xmms_output_client_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
+xmms_output_client_seekms (xmms_output_t *output, gint32 ms, xmms_error_t *error)
 {
 	g_return_if_fail (output);
 	if (output->format) {
@@ -577,7 +577,7 @@ xmms_output_client_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *e
 }
 
 static void
-xmms_output_client_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error)
+xmms_output_client_seeksamples (xmms_output_t *output, gint32 samples, xmms_error_t *error)
 {
 	/* "just" tell filler */
 	xmms_output_filler_seek_state (output, samples);
@@ -648,7 +648,7 @@ xmms_output_client_current_id (xmms_output_t *output, xmms_error_t *error)
 
 static void
 xmms_output_client_volume_set (xmms_output_t *output, const gchar *channel,
-                        guint volume, xmms_error_t *error)
+                               gint32 volume, xmms_error_t *error)
 {
 
 	if (!output->plugin) {
