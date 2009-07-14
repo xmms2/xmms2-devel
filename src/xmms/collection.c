@@ -136,7 +136,9 @@ static GList * xmms_collection_client_find (xmms_coll_dag_t *dag, guint mid, con
 static gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
 
 static GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, guint lim_start, guint lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
+static GList * xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
 static xmmsv_coll_t *xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
+static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
 
 
 XMMS_CMD_DEFINE  (collection_get, xmms_collection_client_get, xmms_coll_dag_t *, COLL, STRING, STRING);
@@ -588,8 +590,9 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
  * @param dag  The collection DAG.
  * @param err  If an error occurs, a message is stored in it.
  */
+
 void
-xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
+xmms_collection_sync (xmms_coll_dag_t *dag)
 {
 	g_return_if_fail (dag);
 
@@ -598,6 +601,13 @@ xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
 	xmms_collection_dag_save (dag);
 
 	g_mutex_unlock (dag->mutex);
+}
+
+
+void
+xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
+{
+	xmms_collection_sync (dag);
 }
 
 
@@ -774,9 +784,9 @@ gboolean xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_
  * @return A list of media ids.
  */
 GList *
-xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                  guint lim_start, guint lim_len, xmmsv_t *order,
-                                  xmms_error_t *err)
+xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+                           gint32 lim_start, gint32 lim_len, xmmsv_t *order,
+                           xmms_error_t *err)
 {
 	GList *res, *n;
 	xmmsv_t *fetch, *group, *idval;
@@ -809,6 +819,13 @@ xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 }
 
 
+GList *
+xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+                                  gint32 lim_start, gint32 lim_len, xmmsv_t *order,
+                                  xmms_error_t *err)
+{
+	return xmms_collection_query_ids (dag, coll, lim_start, lim_len, order, err);
+}
 /** Find the properties of the media matched by a collection.
  *
  * @param dag  The collection DAG.
@@ -1024,7 +1041,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 	/* FIXME: Temporary hack to allow custom ordering functions */
 	xmmsv_list_append (rorder, randval);
 
-	res = xmms_collection_client_query_ids (dag, source, 0, 1, rorder, NULL);
+	res = xmms_collection_query_ids (dag, source, 0, 1, rorder, NULL);
 
 	if (res != NULL) {
 		xmmsv_t *val = (xmmsv_t *) res->data;

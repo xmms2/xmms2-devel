@@ -970,7 +970,7 @@ xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *
 {
 	GList *res;
 
-	res = xmms_collection_client_query_ids (playlist->colldag, coll, 0, 0, order, err);
+	res = xmms_collection_query_ids (playlist->colldag, coll, 0, 0, order, err);
 
 	while (res) {
 		xmmsv_t *val = (xmmsv_t*) res->data;
@@ -1142,7 +1142,7 @@ xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *pln
 {
 	GList *res;
 
-	res = xmms_collection_client_query_ids (playlist->colldag, coll, 0, 0, order, err);
+	res = xmms_collection_query_ids (playlist->colldag, coll, 0, 0, order, err);
 
 	while (res) {
 		xmmsv_t *val = (xmmsv_t*) res->data;
