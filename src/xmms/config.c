@@ -665,7 +665,7 @@ compare_key (gconstpointer a, gconstpointer b, gpointer user_data)
 }
 
 static GTree *
-create_tree ()
+create_tree (void)
 {
 	return g_tree_new_full (compare_key, NULL, g_free,
 	                        (GDestroyNotify) __int_xmms_object_unref);

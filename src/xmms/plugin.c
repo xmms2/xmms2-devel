@@ -269,7 +269,7 @@ static gboolean
 xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 {
 	xmms_plugin_t *plugin;
-	xmms_plugin_t *(*allocer) ();
+	xmms_plugin_t *(*allocer) (void);
 	gboolean (*verifier) (xmms_plugin_t *);
 	gint expected_ver;
 
