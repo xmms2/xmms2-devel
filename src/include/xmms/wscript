@@ -58,7 +58,6 @@ def configure(conf):
 
     for i in defs:
         conf.define(i, defs[i])
-    conf.write_config_header('xmms_configuration.h')
 
     Utils.pprint('Normal', "\nDefault output plugin: ", sep='')
     Utils.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])

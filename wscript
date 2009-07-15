@@ -421,6 +421,7 @@ def configure(conf):
     conf.env['NEWEST_WSCRIPT_SUBDIR'] = newest
 
     [conf.sub_config(s) for s in subdirs]
+    conf.write_config_header('xmms_configuration.h')
 
     output_plugins = [name for x,name in conf.env["XMMS_OUTPUT_PLUGINS"] if x > 0]
 
