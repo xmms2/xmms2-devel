@@ -190,7 +190,7 @@ print_entry (const gchar *key, xmmsv_t *dict, void *udata)
 	}
 }
 
-void
+static void
 print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar *fmt, ...)
 {
 	gchar buf[1024];
@@ -213,7 +213,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 	g_free (padstring);
 }
 
-gchar*
+static gchar*
 make_justified_columns_format (gint columns, const char type_first)
 {
 	int wd_id, wd_artist, wd_album, wd_title;

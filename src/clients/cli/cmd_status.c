@@ -26,7 +26,7 @@ static int handle_playtime (xmmsv_t *res, void *userdata);
 static int handle_mediainfo_update (xmmsv_t *res, void *userdata);
 static int handle_status_change (xmmsv_t *res, void *userdata);
 static int do_mediainfo (xmmsv_t *res, void *userdata);
-static void update_display ();
+static void update_display (void);
 static void quit (void *data);
 
 
@@ -204,7 +204,7 @@ handle_playtime (xmmsv_t *val, void *userdata)
 	return TRUE;
 }
 
-static void update_display ()
+static void update_display (void)
 {
 	gchar *conv;
 	gsize r, w;

@@ -128,7 +128,7 @@ parse_config (const gchar *buffer)
 
 
 static GHashTable *
-read_config ()
+read_config (void)
 {
 	GHashTable *config;
 	gchar *buffer, *file;
@@ -192,7 +192,7 @@ read_config ()
 
 
 static void
-free_config ()
+free_config (void)
 {
 	if (config) {
 		g_hash_table_destroy (config);

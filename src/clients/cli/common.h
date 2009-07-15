@@ -38,7 +38,7 @@ void print_info (const gchar *fmt, ...);
 void print_error (const gchar *fmt, ...);
 void print_hash (const gchar *key, xmmsv_t *value, void *udata);
 void print_entry (const gchar *key, xmmsv_t *value, void *udata);
-gint find_terminal_width ();
+gint find_terminal_width (void);
 void format_pretty_list (xmmsc_connection_t *conn, GList *list);
 gboolean coll_read_collname (gchar *str, gchar **name, gchar **namespace);
 char *string_escape (const char *s);

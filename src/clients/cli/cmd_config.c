@@ -97,7 +97,7 @@ cmd_config_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
-void
+static void
 get_keys (const gchar *key, xmmsv_t *value, void *user_data)
 {
 	GList **l = user_data;
@@ -112,7 +112,7 @@ get_keys (const gchar *key, xmmsv_t *value, void *user_data)
 	*l = g_list_prepend (*l, chan);
 }
 
-guint
+static guint
 volume_get (xmmsc_connection_t *conn, const gchar *name)
 {
 	xmmsc_result_t *res;

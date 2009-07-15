@@ -529,7 +529,7 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 }
 
 
-gint
+static gint
 cmp (const void *av, const void *bv)
 {
 	gint result;
