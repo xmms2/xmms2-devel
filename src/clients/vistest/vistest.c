@@ -38,7 +38,8 @@ int vis;
 short data[2];
 char buf[38+38];
 
-void draw () {
+static void
+draw (void) {
 	int i, w;
 
 	w = (int)(((double)data[0] / (double)SHRT_MAX) * 36.0);
@@ -85,7 +86,8 @@ void draw () {
 	fflush (stdout);
 }
 
-gboolean draw_gtk (gpointer stuff)
+static gboolean
+draw_gtk (gpointer stuff)
 {
 	int ret = xmmsc_visualization_chunk_get (connection, vis, data, 0, 0);
 	if (ret == 2) {
@@ -94,7 +96,8 @@ gboolean draw_gtk (gpointer stuff)
 	return (ret >= 0);
 }
 
-void shutdown_gtk (gpointer stuff)
+static void
+shutdown_gtk (gpointer stuff)
 {
 	g_main_loop_quit (mainloop);
 }

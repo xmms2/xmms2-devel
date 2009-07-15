@@ -38,7 +38,8 @@ static int height;
 
 short data[256];
 
-void draw () {
+static void
+draw (void) {
 	int i, z, val;
 	int base = SHRT_MAX / height;
 
@@ -61,7 +62,8 @@ void draw () {
 	fflush (stdout);
 }
 
-gboolean draw_gtk (gpointer stuff)
+static gboolean
+draw_gtk (gpointer stuff)
 {
 	int ret = xmmsc_visualization_chunk_get (connection, vis, data, 0, 0);
 	if (ret == 256) {
@@ -70,12 +72,13 @@ gboolean draw_gtk (gpointer stuff)
 	return (ret >= 0);
 }
 
-void shutdown_gtk (gpointer stuff)
+static void
+shutdown_gtk (gpointer stuff)
 {
 	g_main_loop_quit (mainloop);
 }
 
-void
+static void
 quit (int signum)
 {
 	printf ("\e[%dB", height/2);
@@ -88,8 +91,8 @@ quit (int signum)
 	exit (EXIT_SUCCESS);
 }
 
-void
-setup_signal ()
+static void
+setup_signal (void)
 {
 	struct sigaction siga;
 	siga.sa_handler = quit;

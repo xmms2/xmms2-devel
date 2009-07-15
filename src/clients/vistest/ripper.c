@@ -67,14 +67,14 @@ xmmsc_connection_t *x_connection;
 int x_vis;
 int intr = 0;
 
-void
+static void
 quit (int signum)
 {
 	intr = 1;
 }
 
-void
-xmms2_quit ()
+static void
+xmms2_quit (void)
 {
 	xmmsc_visualization_shutdown (x_connection, x_vis);
 	if (x_connection) {
@@ -82,7 +82,8 @@ xmms2_quit ()
 	}
 }
 
-void xmms2_init ()
+static void
+xmms2_init (void)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
@@ -137,7 +138,7 @@ void xmms2_init ()
 	atexit (xmms2_quit);
 }
 
-int main ()
+int main (int argc, char **argv)
 {
 	ogg_stream_state os; /* take physical pages, weld into a logical
 													stream of packets */
