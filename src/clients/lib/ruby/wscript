@@ -64,4 +64,4 @@ def configure(conf):
     return True
 
 def set_options(opt):
-    opt.tool_options('ruby', os.path.abspath('waftools'))
+    opt.tool_options('ruby', tdir=os.path.abspath('waftools'))
