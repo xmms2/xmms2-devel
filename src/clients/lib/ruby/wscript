@@ -17,9 +17,9 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.mac_bundle = True
 
-    bld.install_files('${LIBDIR_ruby}', 'xmmsclient.rb')
-    bld.install_files('${LIBDIR_ruby}/xmmsclient', 'sync.rb')
-    bld.install_files('${LIBDIR_ruby}/xmmsclient', 'async.rb')
+    bld.install_files('${LIBDIR_RUBY}', 'xmmsclient.rb')
+    bld.install_files('${LIBDIR_RUBY}/xmmsclient', 'sync.rb')
+    bld.install_files('${LIBDIR_RUBY}/xmmsclient', 'async.rb')
 
     # glib
     obj = bld.new_task_gen('cc', 'shlib', 'rubyext')
@@ -49,17 +49,17 @@ def configure(conf):
     if not conf.check_ruby_ext_devel():
         return False
 
-    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="ruby")
+    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="RUBY")
 
-    if not os.path.commonprefix([conf.env['ARCHDIR_ruby'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
+    if not os.path.commonprefix([conf.env['ARCHDIR_RUBY'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
         warning('default ruby archdir is not under PREFIX. specify path '
                 + 'manually using --with-ruby-archdir if you don\'t want the '
-                + 'ruby bindings to be installed to ' + conf.env['ARCHDIR_ruby'])
+                + 'ruby bindings to be installed to ' + conf.env['ARCHDIR_RUBY'])
 
-    if not os.path.commonprefix([conf.env['LIBDIR_ruby'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
+    if not os.path.commonprefix([conf.env['LIBDIR_RUBY'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
         warning('default ruby libdir is not under PREFIX. specify path '
                 + 'manually using --with-ruby-libdir if you don\'t want the '
-                + 'ruby bindings to be installed to ' + conf.env['LIBDIR_ruby'])
+                + 'ruby bindings to be installed to ' + conf.env['LIBDIR_RUBY'])
 
     return True
 

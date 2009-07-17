@@ -7,14 +7,14 @@ from TaskGen import taskgen, before, feature
 from Configure import conf
 
 @taskgen
-@before('apply_incpaths')
+@before('apply_incpaths', 'apply_type_vars', 'apply_lib_vars')
 @feature('rubyext')
 @before('apply_bundle')
 def init_rubyext(self):
-    self.default_install_path = '${ARCHDIR_ruby}'
+    self.default_install_path = '${ARCHDIR_RUBY}'
     self.uselib = self.to_list(getattr(self, 'uselib', ''))
-    if not 'ruby' in self.uselib:
-        self.uselib.append('ruby')
+    if not 'RUBY' in self.uselib:
+        self.uselib.append('RUBY')
 
 @before('apply_link')
 @feature('rubyext')
@@ -58,8 +58,12 @@ def check_ruby_ext_devel(conf):
     if not (conf.env['RUBY'] and conf.env['RUBY_VERSION']):
         return False
 
+
     ruby = conf.env['RUBY']
     version = conf.env['RUBY_VERSION']
+
+    def ruby_get_config(key):
+        return Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"" + key + "\"]'").strip()
 
     if version >= (1, 9, 0):
         ruby_h = Utils.cmd_output(ruby + " -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"rubyhdrdir\"] + \"/ruby.h\")'").strip()
@@ -73,15 +77,15 @@ def check_ruby_ext_devel(conf):
     conf.check_message('ruby', 'header file', True)
 
     archdir = Utils.cmd_output(ruby + " -rrbconfig -e 'puts \"%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'").strip()
-    conf.env["CPPPATH_ruby"] = [archdir]
-    conf.env["LINKFLAGS_ruby"] = '-L%s' % archdir
+    conf.env["CPPPATH_RUBY"] = [archdir]
+    conf.env["LINKFLAGS_RUBY"] = '-L%s' % archdir
 
     if version >= (1, 9, 0):
         incpaths = Utils.cmd_output(ruby + " -rrbconfig -e 'puts Config::CONFIG[\"rubyhdrdir\"]'").strip()
-        conf.env["CPPPATH_ruby"] += [incpaths]
+        conf.env["CPPPATH_RUBY"] += [incpaths]
 
         incpaths = Utils.cmd_output(ruby + " -rrbconfig -e 'puts File.join(Config::CONFIG[\"rubyhdrdir\"], Config::CONFIG[\"arch\"])'").strip()
-        conf.env["CPPPATH_ruby"] += [incpaths]
+        conf.env["CPPPATH_RUBY"] += [incpaths]
 
     ldflags = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LDSHARED\"]'").strip()
 
@@ -95,27 +99,33 @@ def check_ruby_ext_devel(conf):
     if len(flags) > 1 and flags[1] == "ppc":
         flags = flags[2:]
 
-    conf.env["LINKFLAGS_ruby"] += " " + " ".join(flags)
+    conf.env["LINKFLAGS_RUBY"] += " " + " ".join(flags)
 
-    ldflags = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LIBS\"]'").strip()
-    conf.env["LINKFLAGS_ruby"] += " " + ldflags
-    ldflags = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"LIBRUBYARG_SHARED\"]'").strip()
-    conf.env["LINKFLAGS_ruby"] += " " + ldflags
+    ldflags = ruby_get_config("LIBS")
+    conf.env["LINKFLAGS_RUBY"] += " " + ldflags
+    
+    ldflags = ruby_get_config("LIBRUBYARG_SHARED")
+    conf.env["LINKFLAGS_RUBY"] += " " + ldflags
 
-    cflags = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"CCDLFLAGS\"]'").strip()
-    conf.env["CCFLAGS_ruby"] = cflags
+    cflags = ruby_get_config("CCDLFLAGS")
+    conf.env["CCFLAGS_RUBY"] = cflags
 
     if Options.options.rubyarchdir:
-        conf.env["ARCHDIR_ruby"] = Options.options.rubyarchdir
+        conf.env["ARCHDIR_RUBY"] = Options.options.rubyarchdir
     else:
-        conf.env["ARCHDIR_ruby"] = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'").strip()
+        conf.env["ARCHDIR_RUBY"] = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'").strip()
 
     if Options.options.rubylibdir:
-        conf.env["LIBDIR_ruby"] = Options.options.rubylibdir
+        conf.env["LIBDIR_RUBY"] = Options.options.rubylibdir
     else:
-        conf.env["LIBDIR_ruby"] = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitelibdir\"]'").strip()
+        conf.env["LIBDIR_RUBY"] = Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitelibdir\"]'").strip()
 
     conf.env['rubyext_PATTERN'] = '%s.' + Utils.cmd_output(ruby + " -rrbconfig -e 'print Config::CONFIG[\"DLEXT\"]'").strip()
+
+    # Change some strings to a list
+    conf.env["LINKFLAGS_RUBY"] = Utils.to_list(conf.env["LINKFLAGS_RUBY"])
+    conf.env["CPPPATH_RUBY"] = Utils.to_list(conf.env["CPPPATH_RUBY"])
+    conf.env["CCFLAGS_RUBY"] = Utils.to_list(conf.env["CCFLAGS_RUBY"])
 
     return True
 
