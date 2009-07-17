@@ -28,9 +28,7 @@ def configure(conf):
         conf.env["PIXMAP_DIR"] = os.path.join(conf.env["PREFIX"], "share", "pixmaps")
 
     if not conf.env["PIXMAP_DIR"]:
-        return False
-
-    return True
+        conf.fatal("No pixmap dir")
 
 def set_options(opt):
     opt.add_option("--with-pixmap-dir", type="string", dest="pixmapdir",

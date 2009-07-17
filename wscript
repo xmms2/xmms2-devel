@@ -146,10 +146,11 @@ def _configure_optionals(conf):
 
     for o in selected_optionals:
         x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
-        if conf.sub_config(x):
+        try:
+            conf.sub_config(x)
             conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
             succeeded_optionals.add(o)
-        else:
+        except Configure.ConfigurationError:
             failed_optionals.add(o)
 
     if optionals_must_work and failed_optionals:

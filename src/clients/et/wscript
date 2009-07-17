@@ -19,10 +19,10 @@ def build(bld):
 
 def configure(conf):
     if Options.platform == "win32":
-        return False
+        conf.fatal("Not supported on Windows")
     if Options.platform == "sunos":
         if not conf.check_cc(lib="resolv", uselib_store="resolv"):
-            return False
+            conf.fatal("libresolv needed on solaris")
     return True
 
 def set_options(opt):

@@ -33,14 +33,12 @@ def build(bld):
 
 def configure(conf):
     if Options.platform == "win32":
-        return False
+        conf.fatal("visualisation clients not supported on windows")
 
     conf.check_cc(lib="m", uselib_store="math")
     conf.check_cfg(package='libvisual-0.4', uselib_store='visual', args='--cflags --libs')
     conf.check_cfg(package='sdl', uselib_store='sdl', args='--cflags --libs')
     conf.check_cfg(package='vorbisenc', uselib_store='vorbisenc', args='--cflags --libs')
-
-    return True
 
 def set_options(opt):
     pass

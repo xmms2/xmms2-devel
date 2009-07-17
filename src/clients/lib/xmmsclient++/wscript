@@ -31,16 +31,14 @@ def build(bld):
 
 def configure(conf):
     if not conf.env["CXX"]:
-        return False
+        conf.fatal("No C++ compiler installed")
 
     conf.check_tool('boost')
 
     if not conf.check_boost():
-        return False
+        conf.fatal('Could not find boost library')
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
-
-    return True
 
 def set_options(opt):
     opt.tool_options('boost')

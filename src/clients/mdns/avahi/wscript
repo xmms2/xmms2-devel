@@ -23,10 +23,9 @@ def build(bld):
 
 def configure(conf):
   if not conf.check_cfg(package="avahi-client", uselib_store="avahiclient", args="--cflags --libs"):
-    return False
+    conf.fatal("avahiclient not found")
   if not conf.check_cfg(package="avahi-glib", uselib_store="avahiglib", args="--cflags --libs"):
-    return False
-  return True
+    conf.fatal("avahiglib not found")
 
 def set_options(opt):
   pass

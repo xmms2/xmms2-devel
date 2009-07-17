@@ -44,10 +44,10 @@ def configure(conf):
     conf.check_tool("ruby", tooldir=os.path.abspath('waftools'))
 
     if not conf.check_ruby_version((1,8,0)):
-        return False
+        conf.fatal("Wrong Ruby version")
 
     if not conf.check_ruby_ext_devel():
-        return False
+        conf.fatal("Cannot compile Ruby extensions")
 
     conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="RUBY")
 

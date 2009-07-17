@@ -11,12 +11,10 @@ def build(bld):
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    conf.check_cfg(package='ecore', uselib_store='ecore', args='--cflags --libs')
-    if not conf.env["HAVE_ECORE"]:
-        return False
+    conf.check_cfg(package='ecore', uselib_store='ecore',
+                   args='--cflags --libs', mandatory=True)
 
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-ecore', '-lxmmsclient-ecore'))
-    return True
 
 def set_options(opt):
     pass

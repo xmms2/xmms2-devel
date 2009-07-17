@@ -12,8 +12,7 @@ def build(bld):
 
 def configure(conf):
     if Options.platform == 'win32':
-        return False
-    return True
+        conf.fatal("Not supported on Windows")
 
 def set_options(opt):
     pass

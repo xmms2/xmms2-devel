@@ -3,21 +3,16 @@ types_suite=["xmmsv/t_xmmsv.c", "xmmsv/t_coll.c"]
 server_suite=["server/t_streamtype.c"]
 
 def configure(conf):
-    if not conf.check_cc(header_name="CUnit/CUnit.h"):
-        return False
-    if not conf.check_cc(lib="cunit", uselib_store="cunit"):
-        return False
+    conf.check_cc(header_name="CUnit/CUnit.h", mandatory=True)
+    conf.check_cc(lib="cunit", uselib_store="cunit", mandatory=True)
 
     code = """
            static void T (void) __attribute__ ((constructor (220)));
            static void T (void) {};
     """
-    if not conf.check_cc(fragment=code, type="objects", msg="Checking for constructor attribute"):
-        return False
+    conf.check_cc(fragment=code, type="objects", msg="Checking for constructor attribute", mandatory=True)
 
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags')
-
-    return True
 
 def build(bld):
     obj = bld.new_task_gen('cc', 'program')

@@ -25,7 +25,7 @@ def configure(conf):
     conf.check_tool('perl')
 
     if not conf.check_perl_version((5,7,3)):
-        return False
+        conf.fatal("Wrong perl version")
 
     conf.check_perl_ext_devel()
 

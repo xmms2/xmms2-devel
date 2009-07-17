@@ -15,14 +15,10 @@ def build(bld):
     obj.chmod = Constants.O755
 
 def configure(conf):
-    if not conf.check_cfg(package="gio-2.0", args="--cflags --libs"):
-        return False
-    if not conf.check_cfg(package="gthread-2.0", args="--cflags --libs"):
-        return False
+    conf.check_cfg(package="gio-2.0", args="--cflags --libs", mandatory=True)
+    conf.check_cfg(package="gthread-2.0", args="--cflags --libs", mandatory=True)
 
     conf.check_cc(function_name="g_file_query_file_type", header_name="gio/gio.h", uselib="GIO-2.0")
-
-    return True
 
 def set_options(opt):
     pass
