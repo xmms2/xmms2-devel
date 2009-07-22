@@ -160,14 +160,10 @@ c_connect (int argc, VALUE *argv, VALUE self)
 	if (!NIL_P (path))
 		p = StringValuePtr (path);
 
-	if (!xmmsc_connect (xmms->real, p)) {
-		char buf[255];
-
-		snprintf (buf, sizeof (buf), "cannot connect to daemon (%s)\n",
+	if (!xmmsc_connect (xmms->real, p))
+		rb_raise (eClientError,
+		          "cannot connect to daemon (%s)",
 		          xmmsc_get_last_error (xmms->real));
-
-		rb_raise (eClientError, buf);
-	}
 
 	return self;
 }
@@ -1419,12 +1415,13 @@ parse_string_array (VALUE value)
 	int i;
 
 	if (!NIL_P (rb_check_array_type (value))) {
-		struct RArray *ary = RARRAY (value);
+		VALUE *ary = RARRAY_PTR (value);
+		int ary_len = RARRAY_LEN (value);
 
-		ret = malloc (sizeof (char *) * (ary->len + 1));
+		ret = malloc (sizeof (char *) * (ary_len + 1));
 
-		for (i = 0; i < ary->len; i++)
-			ret[i] = StringValuePtr (ary->ptr[i]);
+		for (i = 0; i < ary_len; i++)
+			ret[i] = StringValuePtr (ary[i]);
 
 		ret[i] = NULL;
 	} else {
@@ -1448,13 +1445,13 @@ parse_string_array2 (VALUE value)
 	list = xmmsv_new_list ();
 
 	if (!NIL_P (rb_check_array_type (value))) {
-		struct RArray *ary = RARRAY (value);
-		int i;
+		VALUE *ary = RARRAY_PTR (value);
+		int i, ary_len = RARRAY_LEN (value);
 
-		for (i = 0; i < ary->len; i++) {
+		for (i = 0; i < ary_len; i++) {
 			xmmsv_t *elem;
 
-			elem = xmmsv_new_string (StringValuePtr (ary->ptr[i]));
+			elem = xmmsv_new_string (StringValuePtr (ary[i]));
 			xmmsv_list_append (list, elem);
 			xmmsv_unref (elem);
 		}
