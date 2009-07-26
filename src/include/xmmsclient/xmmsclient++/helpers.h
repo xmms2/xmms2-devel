@@ -26,7 +26,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/signal.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
 
 #include <string>

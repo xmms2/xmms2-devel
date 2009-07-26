@@ -35,6 +35,9 @@ def configure(conf):
 
     conf.check_tool('boost')
 
+    if not conf.check_boost():
+        return False
+
     conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
 
     return True
