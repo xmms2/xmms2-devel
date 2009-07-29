@@ -172,7 +172,7 @@ __XMMS_CMD_INIT_ARG_##argtype5 (4) \
 __XMMS_CMD_INIT_ARG_##argtype6 (5) \
 __XMMS_CMD_DO_RETVAL_##_rettype() (realfunc ((argtype0)object __XMMS_CMD_PRINT_ARG_##argtype1(0) __XMMS_CMD_PRINT_ARG_##argtype2(1) __XMMS_CMD_PRINT_ARG_##argtype3(2) __XMMS_CMD_PRINT_ARG_##argtype4(3) __XMMS_CMD_PRINT_ARG_##argtype5(4) __XMMS_CMD_PRINT_ARG_##argtype6(5), &arg->error)); \
 } \
-xmms_object_cmd_desc_t __int_xmms_cmd_desc_##cmdid = { __int_xmms_cmd_##cmdid, XMMSV_TYPE_##_rettype, {XMMSV_TYPE_##argtype1, XMMSV_TYPE_##argtype2, XMMSV_TYPE_##argtype3, XMMSV_TYPE_##argtype4, XMMSV_TYPE_##argtype5, XMMSV_TYPE_##argtype6} }
+static xmms_object_cmd_desc_t __int_xmms_cmd_desc_##cmdid = { __int_xmms_cmd_##cmdid, XMMSV_TYPE_##_rettype, {XMMSV_TYPE_##argtype1, XMMSV_TYPE_##argtype2, XMMSV_TYPE_##argtype3, XMMSV_TYPE_##argtype4, XMMSV_TYPE_##argtype5, XMMSV_TYPE_##argtype6} }
 
 
 #define XMMS_CMD_DEFINE(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2) XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, NONE, NONE, NONE, NONE)
