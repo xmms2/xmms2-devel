@@ -4,4 +4,4 @@ def plugin_configure(conf):
     return True
 
 configure, build = plugin('diskwrite', configure=plugin_configure,
-                          output_prio=0)
+                          output_prio=5)
