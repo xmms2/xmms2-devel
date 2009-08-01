@@ -69,10 +69,7 @@ static void xmms_bindata_client_remove (xmms_bindata_t *bindata, const gchar *ha
 static GList *xmms_bindata_client_list (xmms_bindata_t *bindata, xmms_error_t *err);
 static gboolean _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err);
 
-XMMS_CMD_DEFINE (get_data, xmms_bindata_client_retrieve, xmms_bindata_t *, BIN, STRING, NONE);
-XMMS_CMD_DEFINE (add_data, xmms_bindata_client_add, xmms_bindata_t *, STRING, BIN, NONE);
-XMMS_CMD_DEFINE (remove_data, xmms_bindata_client_remove, xmms_bindata_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (list_data, xmms_bindata_client_list, xmms_bindata_t *, LIST, NONE, NONE);
+#include "bindata_ipc.c"
 
 xmms_bindata_t *
 xmms_bindata_init ()
@@ -83,23 +80,7 @@ xmms_bindata_init ()
 
 	obj = xmms_object_new (xmms_bindata_t, xmms_bindata_destroy);
 
-	xmms_object_cmd_add (XMMS_OBJECT (obj),
-	                     XMMS_IPC_CMD_ADD_DATA,
-	                     XMMS_CMD_FUNC (add_data));
-
-	xmms_object_cmd_add (XMMS_OBJECT (obj),
-	                     XMMS_IPC_CMD_REMOVE_DATA,
-	                     XMMS_CMD_FUNC (remove_data));
-
-	xmms_object_cmd_add (XMMS_OBJECT (obj),
-	                     XMMS_IPC_CMD_GET_DATA,
-	                     XMMS_CMD_FUNC (get_data));
-
-	xmms_object_cmd_add (XMMS_OBJECT (obj),
-	                     XMMS_IPC_CMD_LIST_DATA,
-	                     XMMS_CMD_FUNC (list_data));
-
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_BINDATA, XMMS_OBJECT (obj));
+	xmms_bindata_register_ipc_commands (XMMS_OBJECT (obj));
 
 	tmp = XMMS_BUILD_PATH ("bindata");
 	cv = xmms_config_property_register ("bindata.path", tmp, NULL, NULL);
@@ -121,7 +102,7 @@ xmms_bindata_init ()
 static void
 xmms_bindata_destroy (xmms_object_t *obj)
 {
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_BINDATA);
+	xmms_bindata_unregister_ipc_commands ();
 }
 
 gchar *
