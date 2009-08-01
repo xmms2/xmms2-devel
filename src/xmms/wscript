@@ -44,6 +44,21 @@ source = """
 def build(bld):
     env = bld.env
 
+    ipc_object_files = """
+        playlist
+    """.split()
+
+    for ipc_object_file in ipc_object_files:
+        python_script = ipc_object_file + '_ipc.py'
+        c_file = ipc_object_file + '_ipc.c'
+
+        bld.new_task_gen(
+            source=['../ipc.xml', python_script],
+            target=c_file,
+            rule='${PYTHON} ${SRC[1].abspath()} > ${TGT}',
+            before='cc',
+        )
+
     prog = bld.new_task_gen('cc', 'program')
     prog.target = 'xmms2d'
     prog.includes = '. ../.. ../include ../includepriv'
