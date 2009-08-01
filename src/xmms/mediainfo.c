@@ -56,6 +56,7 @@ struct xmms_mediainfo_reader_St {
 static void xmms_mediainfo_reader_stop (xmms_object_t *o);
 static gpointer xmms_mediainfo_reader_thread (gpointer data);
 
+#include "mediainfo_ipc.c"
 
 /**
   * Start a new mediainfo reader thread
@@ -69,13 +70,7 @@ xmms_mediainfo_reader_start (void)
 	mrt = xmms_object_new (xmms_mediainfo_reader_t,
 	                       xmms_mediainfo_reader_stop);
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIAINFO_READER,
-	                          XMMS_OBJECT (mrt));
-
-	xmms_ipc_broadcast_register (XMMS_OBJECT (mrt),
-	                             XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
-	xmms_ipc_signal_register (XMMS_OBJECT (mrt),
-	                          XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
+	xmms_mediainfo_reader_register_ipc_commands (XMMS_OBJECT (mrt));
 
 	mrt->mutex = g_mutex_new ();
 	mrt->cond = g_cond_new ();
@@ -99,9 +94,7 @@ xmms_mediainfo_reader_stop (xmms_object_t *o)
 	g_cond_signal (mir->cond);
 	g_mutex_unlock (mir->mutex);
 
-	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
-	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MEDIAINFO_READER);
+	xmms_mediainfo_reader_unregister_ipc_commands ();
 
 	g_thread_join (mir->thread);
 
