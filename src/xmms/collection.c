@@ -137,23 +137,11 @@ static void xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *fr
 
 static GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
 static GList * xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
-static xmmsv_coll_t *xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
+static xmmsv_coll_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
 static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
 
 
-XMMS_CMD_DEFINE  (collection_get, xmms_collection_client_get, xmms_coll_dag_t *, COLL, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_list, xmms_collection_client_list, xmms_coll_dag_t *, LIST, STRING, NONE);
-XMMS_CMD_DEFINE3 (collection_save, xmms_collection_client_save, xmms_coll_dag_t *, NONE, STRING, STRING, COLL);
-XMMS_CMD_DEFINE  (collection_remove, xmms_collection_client_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_find, xmms_collection_client_find, xmms_coll_dag_t *, LIST, INT32, STRING);
-XMMS_CMD_DEFINE3 (collection_rename, xmms_collection_client_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
-XMMS_CMD_DEFINE  (collection_from_pls, xmms_collection_client_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
-XMMS_CMD_DEFINE  (collection_sync, xmms_collection_client_sync, xmms_coll_dag_t *, NONE, NONE, NONE);
-
-
-XMMS_CMD_DEFINE4 (query_ids, xmms_collection_client_query_ids, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST);
-XMMS_CMD_DEFINE6 (query_infos, xmms_collection_client_query_infos, xmms_coll_dag_t *, LIST, COLL, INT32, INT32, LIST, LIST, LIST);
-
+#include "collection_ipc.c"
 
 GTree *
 xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
@@ -240,10 +228,7 @@ xmms_collection_init (xmms_playlist_t *playlist)
 		                                          g_free, coll_unref);
 	}
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_COLLECTION, XMMS_OBJECT (ret));
-
-	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
-	                             XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
+	xmms_collection_register_ipc_commands (XMMS_OBJECT (ret));
 
 	/* Connection coll_sync_cb to some signals */
 	xmms_object_connect (XMMS_OBJECT (ret),
@@ -263,46 +248,6 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
 	                     coll_sync_cb, ret);
 
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_GET,
-	                     XMMS_CMD_FUNC (collection_get));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_LIST,
-	                     XMMS_CMD_FUNC (collection_list));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_SAVE,
-	                     XMMS_CMD_FUNC (collection_save));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_REMOVE,
-	                     XMMS_CMD_FUNC (collection_remove));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_FIND,
-	                     XMMS_CMD_FUNC (collection_find));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_RENAME,
-	                     XMMS_CMD_FUNC (collection_rename));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_QUERY_IDS,
-	                     XMMS_CMD_FUNC (query_ids));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_QUERY_INFOS,
-	                     XMMS_CMD_FUNC (query_infos));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_IDLIST_FROM_PLS,
-	                     XMMS_CMD_FUNC (collection_from_pls));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-	                     XMMS_IPC_CMD_COLLECTION_SYNC,
-	                     XMMS_CMD_FUNC (collection_sync));
 
 	xmms_collection_dag_restore (ret);
 
@@ -345,8 +290,9 @@ add_metadata_from_tree (const gchar *key, xmmsv_t *value, gpointer user_data)
  * @returns  A idlist
  */
 static xmmsv_coll_t *
-xmms_collection_client_idlist_from_pls (xmms_coll_dag_t *dag, const gchar *path,
-                                        xmms_error_t *err)
+xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
+                                             const gchar *path,
+                                             xmms_error_t *err)
 {
 	xmms_xform_t *xform;
 	GList *lst, *n;
@@ -1079,9 +1025,7 @@ xmms_collection_destroy (xmms_object_t *object)
 		g_hash_table_destroy (dag->collrefs[i]);  /* dag is freed here */
 	}
 
-	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
-
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_COLLECTION);
+	xmms_collection_unregister_ipc_commands ();
 }
 
 /** Validate the given collection against a DAG.
