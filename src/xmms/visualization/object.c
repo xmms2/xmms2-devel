@@ -32,23 +32,16 @@
 
 static xmms_visualization_t *vis = NULL;
 
-static int32_t xmms_visualization_client_version (xmms_visualization_t *vis, xmms_error_t *err);
+static int32_t xmms_visualization_client_query_version (xmms_visualization_t *vis, xmms_error_t *err);
 static int32_t xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err);
 static int32_t xmms_visualization_client_init_shm (xmms_visualization_t *vis, int32_t id, const char *shmid, xmms_error_t *err);
 static int32_t xmms_visualization_client_init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
-static int32_t xmms_visualization_client_property_set (xmms_visualization_t *vis, int32_t id, const gchar *key, const gchar *value, xmms_error_t *err);
-static int32_t xmms_visualization_client_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t *prop, xmms_error_t *err);
+static int32_t xmms_visualization_client_set_property (xmms_visualization_t *vis, int32_t id, const gchar *key, const gchar *value, xmms_error_t *err);
+static int32_t xmms_visualization_client_set_properties (xmms_visualization_t *vis, int32_t id, xmmsv_t *prop, xmms_error_t *err);
 static void xmms_visualization_client_shutdown (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
 static void xmms_visualization_destroy (xmms_object_t *object);
 
-
-XMMS_CMD_DEFINE (query_version, xmms_visualization_client_version, xmms_visualization_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (registercl, xmms_visualization_client_register, xmms_visualization_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (init_shm, xmms_visualization_client_init_shm, xmms_visualization_t *, INT32, INT32, STRING);
-XMMS_CMD_DEFINE (init_udp, xmms_visualization_client_init_udp, xmms_visualization_t *, INT32, INT32, NONE);
-XMMS_CMD_DEFINE3 (property_set, xmms_visualization_client_property_set, xmms_visualization_t *, INT32, INT32, STRING, STRING);
-XMMS_CMD_DEFINE (properties_set, xmms_visualization_client_properties_set, xmms_visualization_t *, INT32, INT32, DICT);
-XMMS_CMD_DEFINE (shutdown, xmms_visualization_client_shutdown, xmms_visualization_t *, NONE, INT32, NONE);
+#include "visualization/object_ipc.c"
 
 /* create an uninitialised vis client. don't use this method without mutex! */
 static int32_t
@@ -126,28 +119,7 @@ xmms_visualization_new (xmms_output_t *output)
 
 	xmms_object_ref (output);
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_OBJECT (vis));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_QUERY_VERSION,
-	                     XMMS_CMD_FUNC (query_version));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_REGISTER,
-	                     XMMS_CMD_FUNC (registercl));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_INIT_SHM,
-	                     XMMS_CMD_FUNC (init_shm));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_INIT_UDP,
-	                     XMMS_CMD_FUNC (init_udp));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_PROPERTY,
-	                     XMMS_CMD_FUNC (property_set));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_PROPERTIES,
-	                     XMMS_CMD_FUNC (properties_set));
-	xmms_object_cmd_add (XMMS_OBJECT (vis),
-	                     XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN,
-	                     XMMS_CMD_FUNC (shutdown));
+	xmms_visualization_register_ipc_commands (XMMS_OBJECT (vis));
 
 	xmms_socket_invalidate (&vis->socket);
 
@@ -176,11 +148,12 @@ xmms_visualization_destroy (xmms_object_t *object)
 		g_io_channel_shutdown (vis->socketio, FALSE, NULL);
 		xmms_socket_close (vis->socket);
 	}
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_VISUALIZATION);
+
+	xmms_visualization_unregister_ipc_commands ();
 }
 
 static int32_t
-xmms_visualization_client_version (xmms_visualization_t *vis, xmms_error_t *err)
+xmms_visualization_client_query_version (xmms_visualization_t *vis, xmms_error_t *err)
 {
 	/* if there is a way to disable visualization support on the server side,
 	   we could return 0 here, or we could return an error? */
@@ -249,7 +222,7 @@ xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err
 
 
 static int32_t
-xmms_visualization_client_property_set (xmms_visualization_t *vis, int32_t id, const gchar* key, const gchar* value, xmms_error_t *err)
+xmms_visualization_client_set_property (xmms_visualization_t *vis, int32_t id, const gchar* key, const gchar* value, xmms_error_t *err)
 {
 	xmms_vis_client_t *c;
 
@@ -267,7 +240,7 @@ xmms_visualization_client_property_set (xmms_visualization_t *vis, int32_t id, c
 }
 
 static int32_t
-xmms_visualization_client_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t* prop, xmms_error_t *err)
+xmms_visualization_client_set_properties (xmms_visualization_t *vis, int32_t id, xmmsv_t* prop, xmms_error_t *err)
 {
 	xmms_vis_client_t *c;
 	xmmsv_dict_iter_t *it;

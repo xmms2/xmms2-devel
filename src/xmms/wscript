@@ -53,6 +53,7 @@ def build(bld):
         medialib
         output
         playlist
+        visualization/object
         xform
     """.split()
 
