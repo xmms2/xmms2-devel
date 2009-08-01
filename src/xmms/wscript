@@ -47,6 +47,7 @@ def build(bld):
     ipc_object_files = """
         collection
         config
+        main
         mediainfo
         medialib
         output
