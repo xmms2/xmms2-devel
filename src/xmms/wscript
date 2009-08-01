@@ -53,6 +53,7 @@ def build(bld):
         medialib
         output
         playlist
+        xform
     """.split()
 
     for ipc_object_file in ipc_object_files:

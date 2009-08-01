@@ -104,6 +104,10 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
 static void xmms_xform_destroy (xmms_object_t *object);
 static void effect_callbacks_init (void);
 
+static GList *xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
+
+#include "xform_ipc.c"
+
 void
 xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
                                           const gchar *key,
@@ -322,13 +326,11 @@ xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url,
 {
 	return xmms_xform_browse (url, error);
 }
-XMMS_CMD_DEFINE (browse, xmms_xform_client_browse, xmms_xform_object_t *,
-                 LIST, STRING, NONE);
 
 static void
 xmms_xform_object_destroy (xmms_object_t *obj)
 {
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_XFORM);
+	xmms_xform_unregister_ipc_commands ();
 }
 
 xmms_xform_object_t *
@@ -338,10 +340,7 @@ xmms_xform_object_init (void)
 
 	obj = xmms_object_new (xmms_xform_object_t, xmms_xform_object_destroy);
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_XFORM, XMMS_OBJECT (obj));
-
-	xmms_object_cmd_add (XMMS_OBJECT (obj), XMMS_IPC_CMD_BROWSE,
-	                     XMMS_CMD_FUNC (browse));
+	xmms_xform_register_ipc_commands (XMMS_OBJECT (obj));
 
 	effect_callbacks_init ();
 
