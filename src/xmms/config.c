@@ -65,10 +65,7 @@ static gchar *xmms_config_client_register_value (xmms_config_t *config, const gc
 static gint compare_key (gconstpointer a, gconstpointer b, gpointer user_data);
 static void xmms_config_client_set_value (xmms_config_t *conf, const gchar *key, const gchar *value, xmms_error_t *err);
 
-XMMS_CMD_DEFINE (setvalue, xmms_config_client_set_value, xmms_config_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE (listvalues, xmms_config_client_list_values, xmms_config_t *, DICT, NONE, NONE);
-XMMS_CMD_DEFINE (getvalue, xmms_config_client_get_value, xmms_config_t *, STRING, STRING, NONE);
-XMMS_CMD_DEFINE (regvalue, xmms_config_client_register_value, xmms_config_t *, STRING, STRING, STRING);
+#include "config_ipc.c"
 
 /**
  * @defgroup Config Config
@@ -655,8 +652,7 @@ xmms_config_destroy (xmms_object_t *object)
 
 	g_tree_destroy (config->properties);
 
-	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_CONFIG);
+	xmms_config_unregister_ipc_commands ();
 }
 
 static gint
@@ -711,9 +707,7 @@ xmms_config_init (const gchar *filename)
 	config->version = 0;
 	global_config = config;
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
-	xmms_ipc_broadcast_register (XMMS_OBJECT (config),
-	                             XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
+	xmms_config_register_ipc_commands (XMMS_OBJECT (config));
 
 	memset (&pars, 0, sizeof (pars));
 
@@ -784,19 +778,6 @@ xmms_config_init (const gchar *filename)
 		xmms_log_info ("The config file could not be parsed, reverting to default configuration..");
 		clear_config (config);
 	}
-
-	xmms_object_cmd_add (XMMS_OBJECT (config),
-	                     XMMS_IPC_CMD_SETVALUE,
-	                     XMMS_CMD_FUNC (setvalue));
-	xmms_object_cmd_add (XMMS_OBJECT (config),
-	                     XMMS_IPC_CMD_GETVALUE,
-	                     XMMS_CMD_FUNC (getvalue));
-	xmms_object_cmd_add (XMMS_OBJECT (config),
-	                     XMMS_IPC_CMD_LISTVALUES,
-	                     XMMS_CMD_FUNC (listvalues));
-	xmms_object_cmd_add (XMMS_OBJECT (config),
-	                     XMMS_IPC_CMD_REGVALUE,
-	                     XMMS_CMD_FUNC (regvalue));
 }
 
 /**

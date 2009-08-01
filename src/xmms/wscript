@@ -45,6 +45,7 @@ def build(bld):
     env = bld.env
 
     ipc_object_files = """
+        config
         playlist
     """.split()
 
