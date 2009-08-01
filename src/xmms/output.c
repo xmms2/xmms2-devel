@@ -49,9 +49,9 @@ static gpointer xmms_output_monitor_volume_thread (gpointer data);
 static void xmms_playback_client_start (xmms_output_t *output, xmms_error_t *err);
 static void xmms_playback_client_stop (xmms_output_t *output, xmms_error_t *err);
 static void xmms_playback_client_pause (xmms_output_t *output, xmms_error_t *err);
-static void xmms_playback_client_xform_kill (xmms_output_t *output, xmms_error_t *err);
-static void xmms_playback_client_seekms (xmms_output_t *output, gint32 ms, gint32 whence, xmms_error_t *error);
-static void xmms_playback_client_seeksamples (xmms_output_t *output, gint32 samples, gint32 whence, xmms_error_t *error);
+static void xmms_playback_client_tickle (xmms_output_t *output, xmms_error_t *err);
+static void xmms_playback_client_seek_ms (xmms_output_t *output, gint32 ms, gint32 whence, xmms_error_t *error);
+static void xmms_playback_client_seek_samples (xmms_output_t *output, gint32 samples, gint32 whence, xmms_error_t *error);
 static gint32 xmms_playback_client_status (xmms_output_t *output, xmms_error_t *error);
 static gint xmms_playback_client_current_id (xmms_output_t *output, xmms_error_t *error);
 static gint32 xmms_playback_client_playtime (xmms_output_t *output, xmms_error_t *err);
@@ -80,17 +80,7 @@ static void xmms_output_format_list_free_elem (gpointer data, gpointer user_data
 static void xmms_output_format_list_clear (xmms_output_t *output);
 xmms_medialib_entry_t xmms_output_current_id (xmms_output_t *output);
 
-XMMS_CMD_DEFINE (start, xmms_playback_client_start, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (stop, xmms_playback_client_stop, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (pause, xmms_playback_client_pause, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (xform_kill, xmms_playback_client_xform_kill, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (playtime, xmms_playback_client_playtime, xmms_output_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (seekms, xmms_playback_client_seekms, xmms_output_t *, NONE, INT32, INT32);
-XMMS_CMD_DEFINE (seeksamples, xmms_playback_client_seeksamples, xmms_output_t *, NONE, INT32, INT32);
-XMMS_CMD_DEFINE (output_status, xmms_playback_client_status, xmms_output_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (currentid, xmms_playback_client_current_id, xmms_output_t *, INT32, NONE, NONE);
-XMMS_CMD_DEFINE (volume_set, xmms_playback_client_volume_set, xmms_output_t *, NONE, STRING, INT32);
-XMMS_CMD_DEFINE (volume_get, xmms_playback_client_volume_get, xmms_output_t *, DICT, NONE, NONE);
+#include "output_ipc.c"
 
 /*
  * Type definitions
@@ -592,13 +582,13 @@ xmms_output_current_id (xmms_output_t *output)
  */
 /** Methods */
 static void
-xmms_playback_client_xform_kill (xmms_output_t *output, xmms_error_t *error)
+xmms_playback_client_tickle (xmms_output_t *output, xmms_error_t *error)
 {
 	xmms_output_filler_state (output, FILLER_KILL);
 }
 
 static void
-xmms_playback_client_seekms (xmms_output_t *output, gint32 ms, gint32 whence, xmms_error_t *error)
+xmms_playback_client_seek_ms (xmms_output_t *output, gint32 ms, gint32 whence, xmms_error_t *error)
 {
 	guint samples;
 
@@ -616,13 +606,13 @@ xmms_playback_client_seekms (xmms_output_t *output, gint32 ms, gint32 whence, xm
 	if (output->format) {
 		samples = xmms_sample_ms_to_samples (output->format, ms);
 
-		xmms_playback_client_seeksamples (output, samples,
-		                                  XMMS_PLAYBACK_SEEK_SET, error);
+		xmms_playback_client_seek_samples (output, samples,
+		                                   XMMS_PLAYBACK_SEEK_SET, error);
 	}
 }
 
 static void
-xmms_playback_client_seeksamples (xmms_output_t *output, gint32 samples, gint32 whence, xmms_error_t *error)
+xmms_playback_client_seek_samples (xmms_output_t *output, gint32 samples, gint32 whence, xmms_error_t *error)
 {
 	if (whence == XMMS_PLAYBACK_SEEK_CUR) {
 		g_mutex_lock (output->playtime_mutex);
@@ -689,7 +679,7 @@ xmms_playback_client_current_id (xmms_output_t *output, xmms_error_t *error)
 
 static void
 xmms_playback_client_volume_set (xmms_output_t *output, const gchar *channel,
-                               gint32 volume, xmms_error_t *error)
+                                 gint32 volume, xmms_error_t *error)
 {
 
 	if (!output->plugin) {
@@ -879,11 +869,7 @@ xmms_output_destroy (xmms_object_t *object)
 	g_cond_free (output->filler_state_cond);
 	xmms_ringbuf_destroy (output->filler_buffer);
 
-	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_PLAYBACK_VOLUME_CHANGED);
-	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
-	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID);
-	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_PLAYBACK_PLAYTIME);
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_PLAYBACK);
+	xmms_playback_unregister_ipc_commands ();
 }
 
 /**
@@ -958,56 +944,8 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	output->filler_thread = g_thread_create (xmms_output_filler, output, TRUE, NULL);
 
 	xmms_config_property_register ("output.flush_on_pause", "1", NULL, NULL);
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYBACK, XMMS_OBJECT (output));
 
-	/* Broadcasts are always transmitted to the client if he
-	 * listens to them. */
-	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-	                             XMMS_IPC_SIGNAL_PLAYBACK_VOLUME_CHANGED);
-	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-	                             XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
-	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-	                             XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID);
-
-	/* Signals are only emitted if the client has a pending question to it
-	 * after the client recivies a signal, he must ask for it again */
-	xmms_ipc_signal_register (XMMS_OBJECT (output),
-	                          XMMS_IPC_SIGNAL_PLAYBACK_PLAYTIME);
-
-
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_START,
-	                     XMMS_CMD_FUNC (start));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_STOP,
-	                     XMMS_CMD_FUNC (stop));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_PAUSE,
-	                     XMMS_CMD_FUNC (pause));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_DECODER_KILL,
-	                     XMMS_CMD_FUNC (xform_kill));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_CPLAYTIME,
-	                     XMMS_CMD_FUNC (playtime));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_SEEKMS,
-	                     XMMS_CMD_FUNC (seekms));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_SEEKSAMPLES,
-	                     XMMS_CMD_FUNC (seeksamples));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_PLAYBACK_STATUS,
-	                     XMMS_CMD_FUNC (output_status));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_CURRENTID,
-	                     XMMS_CMD_FUNC (currentid));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_VOLUME_SET,
-	                     XMMS_CMD_FUNC (volume_set));
-	xmms_object_cmd_add (XMMS_OBJECT (output),
-	                     XMMS_IPC_CMD_VOLUME_GET,
-	                     XMMS_CMD_FUNC (volume_get));
+	xmms_playback_register_ipc_commands (XMMS_OBJECT (output));
 
 	output->status = XMMS_PLAYBACK_STATUS_STOP;
 
