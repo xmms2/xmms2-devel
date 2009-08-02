@@ -114,6 +114,11 @@ xmms_pulse_new (xmms_output_t *output)
 		                             XMMS_STREAM_TYPE_END);
 		xmms_output_stream_type_add (output,
 		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
 		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_FLOAT,
 		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
 		                             XMMS_STREAM_TYPE_END);

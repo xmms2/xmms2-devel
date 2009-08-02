@@ -35,9 +35,11 @@ static struct {
                                        WORDS_BIGENDIAN is correctly
                                        defined */
 	{XMMS_SAMPLE_FORMAT_S16, PA_SAMPLE_S16LE},
+	{XMMS_SAMPLE_FORMAT_S32, PA_SAMPLE_S32LE},
 	{XMMS_SAMPLE_FORMAT_FLOAT, PA_SAMPLE_FLOAT32LE},
 #else
 	{XMMS_SAMPLE_FORMAT_S16, PA_SAMPLE_S16BE},
+	{XMMS_SAMPLE_FORMAT_S32, PA_SAMPLE_S32BE},
 	{XMMS_SAMPLE_FORMAT_FLOAT, PA_SAMPLE_FLOAT32BE},
 #endif
 };
