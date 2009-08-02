@@ -101,7 +101,9 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 
 	if (!conv->func) {
 		xmms_object_unref (conv);
-		xmms_log_error ("Can not convert between requested formats");
+		xmms_log_error ("Unable to convert from %s/%d/%d to %s/%d/%d.",
+		                xmms_sample_name_get (fformat), fsamplerate, fchannels,
+		                xmms_sample_name_get (tformat), tsamplerate, tchannels);
 		return NULL;
 	}
 
