@@ -22,6 +22,7 @@
 
 xmms_stream_type_t *xmms_stream_type_parse (va_list ap);
 gboolean xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_type_t *out_type);
+xmms_stream_type_t *xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types);
 xmms_stream_type_t *_xmms_stream_type_new (void *dumb, ...);
 
 

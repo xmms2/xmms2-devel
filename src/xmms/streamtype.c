@@ -231,6 +231,92 @@ xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_typ
 	return TRUE;
 }
 
+/**
+ * Find the best pair of formats
+ */
+xmms_stream_type_t *
+xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
+{
+	xmms_stream_type_t *best = NULL;
+	const GList *on;
+/*	gint bestscore = GINT_MAX;*/
+	gint bestscore = 100000;
+	gint format, samplerate, channels;
+	gint gformat, gsamplerate, gchannels;
+
+	format = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_FORMAT);
+	samplerate = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	channels = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_CHANNELS);
+
+	if (format == -1 || samplerate == -1 || channels == -1) {
+		xmms_log_info ("In-type lacks format, samplerate or channels");
+		return NULL;
+	}
+
+	for (on = goal_types ; on; on = g_list_next (on)) {
+		xmms_stream_type_t *goal = on->data;
+		const gchar *mime;
+		gint score = 0;
+
+		mime = xmms_stream_type_get_str (goal, XMMS_STREAM_TYPE_MIMETYPE);
+		if (strcmp (mime, "audio/pcm") != 0) {
+			continue;
+		}
+
+		gformat = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_FORMAT);
+		gsamplerate = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+		gchannels = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_CHANNELS);
+		if (gsamplerate == -1) {
+			gsamplerate = samplerate;
+		}
+		if (gformat == -1 || gchannels == -1) {
+			continue;
+		}
+
+
+		if (gchannels > channels) {
+			/* we loose no quality, just cputime */
+			score += gchannels - channels;
+		} else if (gchannels < gchannels) {
+			/* quality loss! */
+			score += 10 * (channels - gchannels);
+		}
+
+		/* the format enum should be ordered in
+		   quality order */
+		if (gformat > format) {
+			/* we loose no quality, just cputime */
+			score += gformat - format;
+		} else if (gformat < format) {
+			/* quality loss! */
+			score += 10 * (format - gformat);
+		}
+
+
+		if (gsamplerate > samplerate) {
+			/* we loose no quality, just cputime */
+			score += 2 * gsamplerate / samplerate;
+		} else if (gsamplerate < samplerate) {
+			/* quality loss! */
+			score += 20 * samplerate / gsamplerate;
+		}
+
+		if (score < bestscore) {
+			best = goal;
+			bestscore = score;
+		}
+
+	}
+
+	if (!best) {
+		xmms_log_error ("Couldn't convert sample format to any of the %d goal formats", g_list_length (goal_types));
+		return NULL;
+	}
+
+	return best;
+}
+
+
 
 /*
 	XMMS_DBG ("Looking for xform with intypes matching:");
