@@ -263,3 +263,55 @@ CASE (test_nomatch3)
 
 }
 
+static void
+destroy_list (gpointer data, gpointer user_data)
+{
+	xmms_object_t *obj = (xmms_object_t *) data;
+	xmms_object_unref (obj);
+}
+
+CASE (test_coerce)
+{
+	xmms_stream_type_t *typ, *from, *to = NULL;
+	GList *list = NULL;
+
+	from = _xmms_stream_type_new ("dummy",
+	                              XMMS_STREAM_TYPE_URL, "test://",
+	                              XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                              XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+	                              XMMS_STREAM_TYPE_FMT_CHANNELS, 2,
+	                              XMMS_STREAM_TYPE_FMT_SAMPLERATE, 88200,
+	                              XMMS_STREAM_TYPE_END);
+
+	typ = _xmms_stream_type_new ("dummy",
+	                             XMMS_STREAM_TYPE_URL, "test://",
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS, 1,
+	                             XMMS_STREAM_TYPE_END);
+	list = g_list_append (list, typ);
+
+	typ = _xmms_stream_type_new ("dummy",
+	                             XMMS_STREAM_TYPE_URL, "test://",
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS, 2,
+	                             XMMS_STREAM_TYPE_END);
+	list = g_list_append (list, typ);
+
+	to = xmms_stream_type_coerce (from, list);
+	CU_ASSERT_PTR_NOT_NULL (to);
+
+	CU_ASSERT_EQUAL (XMMS_SAMPLE_FORMAT_S32,
+	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_FORMAT));
+	CU_ASSERT_EQUAL (-1,
+	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
+	CU_ASSERT_EQUAL (2,
+	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_CHANNELS));
+
+	g_list_foreach (list, destroy_list, NULL);
+	g_list_free (list);
+
+	xmms_object_unref (from);
+}
+
