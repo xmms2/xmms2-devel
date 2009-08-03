@@ -501,3 +501,4 @@ def shutdown():
 
     if Options.options.run_tests:
         os.system(os.path.join(os.getenv('WAF_HOME'), "default/tests/test_xmmstypes"))
+        os.system(os.path.join(os.getenv('WAF_HOME'), "default/tests/test_server"))
