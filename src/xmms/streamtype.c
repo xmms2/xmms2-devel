@@ -277,7 +277,7 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 		if (gchannels > channels) {
 			/* we loose no quality, just cputime */
 			score += gchannels - channels;
-		} else if (gchannels < gchannels) {
+		} else if (gchannels < channels) {
 			/* quality loss! */
 			score += 10 * (channels - gchannels);
 		}
