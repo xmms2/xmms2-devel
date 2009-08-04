@@ -49,7 +49,8 @@ xmms_converter_plugin_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	if (!xmms_sample_converter_init (intype, to)) {
+	conv = xmms_sample_converter_init (intype, to);
+	if (!conv) {
 		return FALSE;
 	}
 
