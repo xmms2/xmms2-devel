@@ -55,6 +55,7 @@ xmms_converter_plugin_init (xmms_xform_t *xform)
 	}
 
 	xmms_xform_outdata_type_set (xform, to);
+	xmms_object_unref (to);
 
 	data = g_new0 (xmms_conv_xform_data_t, 1);
 	data->conv = conv;

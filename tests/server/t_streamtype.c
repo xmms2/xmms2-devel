@@ -313,5 +313,6 @@ CASE (test_coerce)
 	g_list_free (list);
 
 	xmms_object_unref (from);
+	xmms_object_unref (to);
 }
 

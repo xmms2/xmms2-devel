@@ -87,8 +87,9 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	tsamplerate = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 	tchannels = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
-	if (tsamplerate == -1)
-		tsamplerate = fsamplerate;
+	g_return_val_if_fail (tformat != -1, NULL);
+	g_return_val_if_fail (tchannels != -1, NULL);
+	g_return_val_if_fail (tsamplerate != -1, NULL);
 
 	conv->from = from;
 	conv->to = to;

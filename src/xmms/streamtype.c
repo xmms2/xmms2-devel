@@ -243,6 +243,7 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 	gint bestscore = 100000;
 	gint format, samplerate, channels;
 	gint gformat, gsamplerate, gchannels;
+	const gchar *gmime;
 
 	format = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_FORMAT);
 	samplerate = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
@@ -312,6 +313,23 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 		xmms_log_error ("Couldn't convert sample format to any of the %d goal formats", g_list_length (goal_types));
 		return NULL;
 	}
+
+	gmime = xmms_stream_type_get_str (best, XMMS_STREAM_TYPE_MIMETYPE);
+	gformat = xmms_stream_type_get_int (best, XMMS_STREAM_TYPE_FMT_FORMAT);
+	gchannels = xmms_stream_type_get_int (best, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	gsamplerate = xmms_stream_type_get_int (best, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+
+	/* Use the requested samplerate if target accepts any. */
+	if (gsamplerate == -1) {
+		gsamplerate = samplerate;
+	}
+
+	best = _xmms_stream_type_new ("dummy",
+	                              XMMS_STREAM_TYPE_MIMETYPE, gmime,
+	                              XMMS_STREAM_TYPE_FMT_FORMAT, gformat,
+	                              XMMS_STREAM_TYPE_FMT_CHANNELS, gchannels,
+	                              XMMS_STREAM_TYPE_FMT_SAMPLERATE, gsamplerate,
+	                              XMMS_STREAM_TYPE_END);
 
 	return best;
 }
