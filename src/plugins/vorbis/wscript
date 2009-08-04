@@ -1,8 +1,12 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_cfg(package="vorbisfile", uselib_store="vorbisfile", args="--cflags --libs"):
-        return False
-    return True
+    if conf.check_cfg(package="vorbisfile", uselib_store="vorbisfile",
+                      args="--cflags --libs"):
+        return True
+    return False
 
-configure, build = plugin('vorbis', configure=plugin_configure, source="vorbis.c", libs=["vorbisfile"])
+configure, build = plugin('vorbis',
+                          configure=plugin_configure,
+                          source="vorbis.c",
+                          libs=["vorbisfile"])
