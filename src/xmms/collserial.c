@@ -21,31 +21,112 @@
 
 #include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_utils.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_config.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 
-/* Internal helper structures */
+#define COLL_BUILD_PATH(...) g_build_filename (coll_path, __VA_ARGS__, NULL)
 
-typedef struct {
-	xmms_medialib_session_t *session;
-	guint collid;
-	xmms_collection_namespace_id_t nsid;
-} coll_dbwrite_t;
-
-
-static xmmsv_coll_t *xmms_collection_dbread_operator (xmms_medialib_session_t *session, gint id, xmmsv_coll_type_t type);
-static guint xmms_collection_dbwrite_operator (xmms_medialib_session_t *session, guint collid, xmmsv_coll_t *coll);
-
-static void dbwrite_operator (void *key, void *value, void *udata);
-static void dbwrite_coll_attributes (const char *key, xmmsv_t *value, void *udata);
-static void dbwrite_strip_tmpprops (void *key, void *value, void *udata);
-
-static gint value_get_dict_int (xmmsv_t *val, const gchar *key);
-static const gchar *value_get_dict_string (xmmsv_t *val, const gchar *key);
+/* If this is set to 1 xmms_collection_dag_save will NOT save anything.
+ * This is to prevent overwriting anything if we have trouble opening files.
+ */
+int disable_saving = 0;
+char *coll_path = NULL;
 
 
+static xmmsv_coll_t *xmms_collection_read_operator (FILE *file);
+static void xmms_collection_write_operator (xmmsv_coll_t *coll, FILE *file);
+static void write_operator (void *key, void *value, void *udata);
+static void write_coll_attributes (const char *key, xmmsv_t *value, void *udata);
 
-/** Save the collection DAG in the database.
+/*
+ * How it works:
+ * Collections are written to files in
+ * {config_dir}/collections/{namespace}/{collection_name}
+ *
+ * Collections are written like this:
+ * ( type [ "key":"value" ... ] [ id1 id2 ... ] (..) (..) .. )
+ *   type    attributes           idlist         operands
+ */
+
+
+/* Creates a directory (if it doesn't exist) and removes everything
+ * that's in it.
+ */
+static int
+create_dir (const char *path)
+{
+	GDir *dir;
+	char buffer[PATH_MAX];
+	const char *name;
+	int len;
+
+	if (g_mkdir_with_parents (path, 0755)) {
+		printf ("Could not create %s\n", path);
+		return 0;
+	}
+
+	dir = g_dir_open (path, 0, NULL);
+	len = strlen (path) + 1;
+
+	sprintf (buffer, "%s/", path);
+
+	while ((name = g_dir_read_name (dir)) != NULL) {
+		strcpy (buffer + len, name);
+		g_unlink (buffer);
+	}
+
+	g_dir_close (dir);
+
+	return 1;
+}
+
+static void
+setup_coll_path (void)
+{
+	xmms_config_property_t *coll_conf;
+	char *path, *foo, *bar, *uuid;
+	int uuid_len;
+
+	if (coll_path != NULL)
+		return;
+
+	path = XMMS_BUILD_PATH ("collections", "${uuid}");
+	coll_conf = xmms_config_property_register ("collection.directory",
+			path, NULL, NULL);
+	coll_path = strdup (xmms_config_property_get_string (coll_conf));
+	g_free (path);
+
+	uuid = xmms_medialib_uuid ();
+	uuid_len = strlen (uuid);
+
+	/* Replace all occurences of ${uuid} with the real uuid */
+	while ((foo = strstr (coll_path, "${uuid}")) != NULL) {
+		int uuid_pos = foo - coll_path;
+
+		bar = malloc (strlen (coll_path) + 1 + uuid_len - 7);
+		memcpy (bar, coll_path, uuid_pos);
+		strcpy (bar + uuid_pos, uuid);
+		strcpy (bar + uuid_pos + uuid_len, foo + 7);
+
+		free (coll_path);
+		coll_path = bar;
+	}
+
+	free (uuid);
+}
+
+
+/** Save the collection DAG to disc.
  *
  * @param dag  The collection DAG to save.
  */
@@ -53,31 +134,54 @@ void
 xmms_collection_dag_save (xmms_coll_dag_t *dag)
 {
 	gint i;
-	xmms_medialib_session_t *session;
+	char *path;
+	const char *namespace, *name;
+	FILE *file;
+	xmmsv_coll_t *coll;
 
-	session = xmms_medialib_begin_write ();
+	setup_coll_path();
 
-	/* Empty Collection* tables */
-	xmms_medialib_select (session, "DELETE FROM CollectionAttributes", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionConnections", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionIdlists", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionLabels", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionOperators", NULL);
+	if (disable_saving)
+		return;
 
 	/* Write all collections in all namespaces */
-	coll_dbwrite_t dbinfos = { session, 1, 0 }; /* ids start at 1 */
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-		dbinfos.nsid = i;
-		xmms_collection_foreach_in_namespace (dag, i, dbwrite_operator, &dbinfos);
+		namespace = xmms_collection_get_namespace_string (i);
+		path = COLL_BUILD_PATH (namespace);
+
+		if (!create_dir (path))
+			return;
+
+		g_free (path);
+
+		xmms_collection_foreach_in_namespace (dag, i, write_operator,
+				(void*)namespace);
 	}
 
-	xmms_collection_foreach_in_namespace (dag, XMMS_COLLECTION_NSID_ALL,
-	                                      dbwrite_strip_tmpprops, NULL);
+	/* We treat the _active entry a bit differently,
+	 * we simply write the name of the playlist it
+	 * points to in the file
+	 */
+	coll = xmms_collection_get_pointer (dag, XMMS_ACTIVE_PLAYLIST,
+	                                    XMMS_COLLECTION_NSID_PLAYLISTS);
+	name = xmms_collection_find_alias (dag,
+				XMMS_COLLECTION_NSID_PLAYLISTS,
+				coll, XMMS_ACTIVE_PLAYLIST);
+	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
+			XMMS_ACTIVE_PLAYLIST);
+	file = fopen (path, "w");
 
-	xmms_medialib_end (session);
+	if (file == NULL) {
+		xmms_log_error ("Could not open %s, %s", path, strerror (errno));
+	} else {
+		fprintf (file, "%s", name);
+		fclose (file);
+	}
+
+	g_free (path);
 }
 
-/** Restore the collection DAG from the database.
+/** Restore the collection DAG from disc.
  *
  * @param dag  The collection DAG to restore to.
  */
@@ -85,50 +189,71 @@ void
 xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 {
 	xmmsv_coll_t *coll = NULL;
-	xmms_medialib_session_t *session;
-	xmmsv_t *cmdval;
-	const gchar *query;
-	GList *res;
-	gint previd;
+	char *path, buffer[1024];
+	const char *label, *namespace;
+	GDir *dir;
+	FILE *file;
+	int i;
 
-	session = xmms_medialib_begin ();
+	setup_coll_path();
 
-	/* Fetch all label-coll_operator for all namespaces, register in table */
-	query = "SELECT op.id AS id, lbl.name AS label, "
-	        "       lbl.namespace AS nsid, op.type AS type "
-	        "FROM CollectionOperators AS op, CollectionLabels as lbl "
-	        "WHERE op.id=lbl.collid "
-	        "ORDER BY id";
-	res = xmms_medialib_select (session, query, NULL);
+	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
+		namespace = xmms_collection_get_namespace_string (i);
+		path = COLL_BUILD_PATH (namespace);
+		dir = g_dir_open (path, 0, NULL);
+		g_free (path);
 
-	previd = -1;
+		while (dir != NULL && (label = g_dir_read_name (dir)) != NULL) {
+			if (strcmp (label, XMMS_ACTIVE_PLAYLIST) == 0)
+				continue;
 
-	while (res) {
-		gint id, type, nsid;
-		const gchar *label;
+			path = COLL_BUILD_PATH (namespace, label);
+			file = fopen (path, "r");
 
-		cmdval = (xmmsv_t*) res->data;
-		id = value_get_dict_int (cmdval, "id");
-		type = value_get_dict_int (cmdval, "type");
-		nsid = value_get_dict_int (cmdval, "nsid");
-		label = value_get_dict_string (cmdval, "label");
+			if (file == NULL) {
+				xmms_log_error ("Could not open %s, %s. "
+					   "Collections will not be saved (to prevent overwriting something)",
+						path, strerror (errno));
+				disable_saving = 1;
+			} else {
+				coll = xmms_collection_read_operator (file);
+				fclose (file);
+				if (coll != NULL)
+					xmms_collection_dag_replace (dag, i, g_strdup (label), coll);
+			}
 
-		/* Do not duplicate operator if same id */
-		if (previd < 0 || id != previd) {
-			coll = xmms_collection_dbread_operator (session, id, type);
-			previd = id;
+			g_free (path);
 		}
-		else {
-			xmmsv_coll_ref (coll);  /* New label references the coll */
-		}
 
-		xmms_collection_dag_replace (dag, nsid, g_strdup (label), coll);
-
-		xmmsv_unref (cmdval);
-		res = g_list_delete_link (res, res);
+		if (dir != NULL)
+			g_dir_close (dir);
 	}
 
-	xmms_medialib_end (session);
+	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
+			XMMS_ACTIVE_PLAYLIST);
+	file = fopen (path, "r");
+
+	if (file == NULL) {
+		coll = xmms_collection_get_pointer (dag, "Default",
+				XMMS_COLLECTION_NSID_PLAYLISTS);
+
+		if (coll == NULL) {
+			coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+			xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
+					g_strdup ("Default"), coll);
+		}
+	} else {
+		fgets (buffer, 1024, file);
+		fclose (file);
+
+		coll = xmms_collection_get_pointer (dag, buffer,
+				XMMS_COLLECTION_NSID_PLAYLISTS);
+	}
+
+	g_free (path);
+	xmmsv_coll_ref (coll);
+	xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
+			g_strdup (XMMS_ACTIVE_PLAYLIST), coll);
 
 	/* FIXME: validate ? */
 
@@ -136,138 +261,121 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
 }
 
-/** Given a collection id, query the DB to build the corresponding
- *  collection DAG.
+/* Read an escaped string */
+static void
+read_string (FILE *file, char *buffer)
+{
+	int c;
+
+	while (isspace (c = fgetc (file)) && c != EOF);
+
+	while ((c = fgetc (file)) != '"' && c != EOF) {
+		if (c == '\\')
+			c = fgetc (file);
+
+		*buffer++ = c;
+	}
+
+	while (isspace (c = fgetc (file)) && c != EOF);
+	ungetc (c, file);
+
+	*buffer = '\0';
+}
+
+/* Read all the attributes from the file */
+static void
+read_attributes (xmmsv_coll_t *coll, FILE *file)
+{
+	char key[1024];
+	char val[1024];
+	int c;
+
+	fscanf (file, " [ ");
+
+	while ((c = getc (file)) != ']') {
+		ungetc (c, file);
+		read_string (file, key);
+		fgetc (file); /* To remove the colon separating the strings */
+		read_string (file, val);
+		xmmsv_coll_attribute_set (coll, key, val);
+	}
+}
+
+/* Read the idlist */
+static void
+read_idlist (xmmsv_coll_t *coll, FILE *file)
+{
+	int id, c;
+
+	fscanf (file, " [ ");
+
+	while ((c = getc (file)) != ']') {
+		ungetc (c, file);
+		fscanf (file, " %i ", &id);
+		xmmsv_coll_idlist_append (coll, id);
+	}
+}
+
+/** Read a collection from the file given.
  *
- * @param session  The medialib session connected to the DB.
- * @param id  The id of the collection to create.
- * @param type  The type of the collection operator.
- * @return  The created collection DAG.
+ * @param file The file to read from.
+ * @return The collection or NULL on error.
  */
 static xmmsv_coll_t *
-xmms_collection_dbread_operator (xmms_medialib_session_t *session,
-                                 gint id, xmmsv_coll_type_t type)
+xmms_collection_read_operator (FILE *file)
 {
 	xmmsv_coll_t *coll;
 	xmmsv_coll_t *op;
-	GList *res;
-	GList *n;
-	xmmsv_t *cmdval;
-	gchar query[256];
+	xmmsv_coll_type_t type;
+	int ret = fscanf (file, " ( %i ", (int*)&type);
+
+	if (ret == EOF || ret == 0)
+		return NULL;
 
 	coll = xmmsv_coll_new (type);
 
-	/* Retrieve the attributes */
-	g_snprintf (query, sizeof (query),
-	            "SELECT attr.key AS key, attr.value AS value "
-	            "FROM CollectionOperators AS op, CollectionAttributes AS attr "
-	            "WHERE op.id=%d AND attr.collid=op.id", id);
+	read_attributes (coll, file);
+	read_idlist (coll, file);
 
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-		const gchar *key, *value;
-
-		cmdval = (xmmsv_t*) n->data;
-		key = value_get_dict_string (cmdval, "key");
-		value = value_get_dict_string (cmdval, "value");
-		xmmsv_coll_attribute_set (coll, key, value);
-
-		xmmsv_unref (n->data);
-	}
-	g_list_free (res);
-
-	/* Retrieve the idlist */
-	g_snprintf (query, sizeof (query),
-	            "SELECT idl.mid AS mid "
-	            "FROM CollectionOperators AS op, CollectionIdlists AS idl "
-	            "WHERE op.id=%d AND idl.collid=op.id "
-	            "ORDER BY idl.position", id);
-
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-
-		cmdval = (xmmsv_t *) n->data;
-		xmmsv_coll_idlist_append (coll, value_get_dict_int (cmdval, "mid"));
-
-		xmmsv_unref (cmdval);
-	}
-	g_list_free (res);
-
-	/* Retrieve the operands */
-	g_snprintf (query, sizeof (query),
-	            "SELECT op.id AS id, op.type AS type "
-	            "FROM CollectionOperators AS op, CollectionConnections AS conn "
-	            "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
-
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-		gint _id;
-		gint type;
-
-		cmdval = (xmmsv_t *) n->data;
-		_id = value_get_dict_int (cmdval, "id");
-		type = value_get_dict_int (cmdval, "type");
-
-		op = xmms_collection_dbread_operator (session, _id, type);
+	while ((op = xmms_collection_read_operator (file)) != NULL) {
 		xmmsv_coll_add_operand (coll, op);
-
 		xmmsv_coll_unref (op);
-		xmmsv_unref (cmdval);
 	}
-	g_list_free (res);
+
+	fscanf (file, " ) ");
 
 	return coll;
 }
 
-/** Write the given operator to the database under the given id.
+
+/** Write the given collection to the file given.
  *
- * @param session  The medialib session connected to the DB.
- * @param collid  The id under which to save the collection.
- * @param coll  The structure of the collection to save.
- * @return  The next free collection id.
+ * @param coll The collection to write
+ * @param file The file to write to
  */
-static guint
-xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
-                                  guint collid, xmmsv_coll_t *coll)
+static void
+xmms_collection_write_operator (xmmsv_coll_t *coll, FILE *file)
 {
-	gchar query[128];
-	xmms_medialib_entry_t entry;
-	xmmsv_list_iter_t *it;
 	gint i;
+	int32_t id;
 	xmmsv_coll_t *op;
 	xmmsv_t *attrs;
-	gint newid, nextid;
-	coll_dbwrite_t dbwrite_infos = { session, collid, 0 };
 
-	/* Write operator */
-	g_snprintf (query, sizeof (query),
-	            "INSERT INTO CollectionOperators VALUES(%d, %d)",
-	            collid, xmmsv_coll_get_type (coll));
-
-	xmms_medialib_select (session, query, NULL);
+	fprintf (file, "( %i [ ", xmmsv_coll_get_type (coll));
 
 	/* Write attributes */
 	attrs = xmmsv_coll_attributes_get (coll);
-	xmmsv_dict_foreach (attrs, dbwrite_coll_attributes, &dbwrite_infos);
-	attrs = NULL; /* no unref needed. */
+	xmmsv_dict_foreach (attrs, write_coll_attributes, file);
+
+	fprintf (file, "] [ ");
 
 	/* Write idlist */
-	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
-	for (xmmsv_list_iter_first (it), i = 0;
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it), i++) {
-
-		xmmsv_list_iter_entry_int (it, &entry);
-		g_snprintf (query, sizeof (query),
-		            "INSERT INTO CollectionIdlists VALUES(%d, %d, %d)",
-		            collid, i, entry);
-
-		xmms_medialib_select (session, query, NULL);
+	for (i = 0; xmmsv_coll_idlist_get_index (coll, i, &id); i++) {
+		fprintf (file, "%i ", id);
 	}
-	xmmsv_list_iter_explicit_destroy (it);
+	fprintf (file, "] ");
 
 	/* Save operands and connections (don't recurse in ref operand) */
-	newid = collid + 1;
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
 		xmmsv_t *tmp;
 		xmmsv_list_iter_t *iter;
@@ -281,97 +389,71 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 			xmmsv_list_iter_entry (iter, &tmp);
 			xmmsv_get_coll (tmp, &op);
 
-			nextid = xmms_collection_dbwrite_operator (session, newid, op);
-			g_snprintf (query, sizeof (query),
-			            "INSERT INTO CollectionConnections VALUES(%d, %d)",
-			            newid, collid);
-			xmms_medialib_select (session, query, NULL);
-			newid = nextid;
+			xmms_collection_write_operator (op, file);
 		}
 		xmmsv_list_iter_explicit_destroy (iter);
 	}
 
-	/* return next available id */
-	return newid;
+	fprintf (file, ")");
 }
 
 /* For all label-operator pairs, write the operator and all its
- * operands to the DB recursively. */
+ * operands to the file recursively. */
 static void
-dbwrite_operator (void *key, void *value, void *udata)
+write_operator (void *key, void *value, void *udata)
 {
-	gchar *query;
-	gchar *label = key;
+	char *label = key;
+	char *namespace = udata;
+	char *path = COLL_BUILD_PATH (namespace, label);
 	xmmsv_coll_t *coll = value;
-	coll_dbwrite_t *dbinfos = udata;
-	gchar *esc_label;
-	gint serial_id;
+	FILE *file;
 
-	/* Only serialize each operator once, get previous id if exists */
-	if (!xmms_collection_get_int_attr (coll, XMMS_COLLSERIAL_ATTR_ID, &serial_id)) {
-		serial_id = dbinfos->collid;
-		dbinfos->collid = xmms_collection_dbwrite_operator (dbinfos->session,
-		                                                    dbinfos->collid, coll);
-		xmms_collection_set_int_attr (coll, XMMS_COLLSERIAL_ATTR_ID, serial_id);
+	if (strcmp (key, XMMS_ACTIVE_PLAYLIST) != 0) {
+		file = fopen (path, "w");
+
+		if (file == NULL) {
+			xmms_log_error ("Could not open %s, %s.", path, strerror (errno));
+		} else {
+			xmms_collection_write_operator (coll, file);
+			fclose (file);
+		}
 	}
 
-	esc_label = sqlite_prepare_string (label);
-	query = g_strdup_printf ("INSERT INTO CollectionLabels VALUES(%d, %d, %s)",
-	                         serial_id, dbinfos->nsid, esc_label);
-	xmms_medialib_select (dbinfos->session, query, NULL);
-
-	g_free (query);
-	g_free (esc_label);
+	g_free (path);
 }
 
-/* Write all attributes of a collection to the DB. */
+/* Write the string given to the file. Replace " with \",
+ * \ with \\ and add enclosing "'s
+ */
 static void
-dbwrite_coll_attributes (const char *key, xmmsv_t *value, void *udata)
+write_string (FILE *file, const char *str)
 {
-	gchar *query;
-	coll_dbwrite_t *dbwrite_infos = udata;
-	gchar *esc_key;
-	gchar *esc_val;
+	fputc ('"', file);
+	while (*str) {
+		switch (*str) {
+			case '\\':
+			case '"':
+				fputc ('\\', file);
+			default:
+				fputc (*str++, file);
+		}
+	}
+	fputc ('"', file);
+}
+
+/* Write the attributes to file */
+static void
+write_coll_attributes (const char *key, xmmsv_t *value, void *udata)
+{
+	FILE *file = udata;
 	const gchar *s;
 	int r;
 
 	r = xmmsv_get_string (value, &s);
 	g_return_if_fail (r);
 
-	esc_key = sqlite_prepare_string (key);
-	esc_val = sqlite_prepare_string (s);
-	query = g_strdup_printf ("INSERT INTO CollectionAttributes VALUES(%d, %s, %s)",
-	                         dbwrite_infos->collid, esc_key, esc_val);
-	xmms_medialib_select (dbwrite_infos->session, query, NULL);
-
-	g_free (query);
-	g_free (esc_key);
-	g_free (esc_val);
-}
-
-/* Remove all temp utility properties used to write collections to the DB. */
-static void
-dbwrite_strip_tmpprops (void *key, void *value, void *udata)
-{
-	xmmsv_coll_t *coll = value;
-	xmmsv_coll_attribute_remove (coll, XMMS_COLLSERIAL_ATTR_ID);
-}
-
-
-/* Extract the int value out of a xmmsv_t object. */
-static gint
-value_get_dict_int (xmmsv_t *val, const gchar *key)
-{
-	gint i;
-	xmmsv_dict_entry_get_int (val, key, &i);
-	return i;
-}
-
-/* Extract the string value out of a xmmsv_t object. */
-static const gchar *
-value_get_dict_string (xmmsv_t *val, const gchar *key)
-{
-	const gchar *s;
-	xmmsv_dict_entry_get_string (val, key, &s);
-	return s;
+	write_string (file, key);
+	fputc (':', file);
+	write_string (file, s);
+	fputc (' ', file);
 }
