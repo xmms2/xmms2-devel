@@ -366,7 +366,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		}
 
 		XMMS_DBG ("Trying to load file: %s", path);
-		module = g_module_open (path, 0);
+		module = g_module_open (path, G_MODULE_BIND_LOCAL);
 		if (!module) {
 			xmms_log_error ("Failed to open plugin %s: %s",
 			                path, g_module_error ());
