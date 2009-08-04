@@ -265,6 +265,7 @@ song_changed (void *data)
 	/* executes in the output thread; NOT the filler thread */
 	xmms_output_song_changed_arg_t *arg = (xmms_output_song_changed_arg_t *)data;
 	xmms_medialib_entry_t entry;
+	xmms_stream_type_t *type;
 
 	entry = xmms_xform_entry_get (arg->chain);
 
@@ -273,8 +274,18 @@ song_changed (void *data)
 	arg->output->played = 0;
 	arg->output->current_entry = entry;
 
-	if (!xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain))) {
-		XMMS_DBG ("Couldn't set format, stopping filler..");
+	type = xmms_xform_outtype_get (arg->chain);
+
+	if (!xmms_output_format_set (arg->output, type)) {
+		gint fmt, rate, chn;
+
+		fmt = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_FORMAT);
+		rate = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+		chn = xmms_stream_type_get_int (type, XMMS_STREAM_TYPE_FMT_CHANNELS);
+
+		XMMS_DBG ("Couldn't set format %s/%d/%d, stopping filler..",
+		          xmms_sample_name_get (fmt), rate, chn);
+
 		xmms_output_filler_state_nolock (arg->output, FILLER_STOP);
 		xmms_ringbuf_set_eos (arg->output->filler_buffer, TRUE);
 		return FALSE;
