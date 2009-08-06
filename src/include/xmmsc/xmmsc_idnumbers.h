@@ -176,7 +176,7 @@ typedef enum {
 
 /* xform methods */
 typedef enum {
-	XMMS_IPC_CMD_BROWSE = XMMS_IPC_CMD_FIRST,
+	XMMS_IPC_CMD_BROWSE = XMMS_IPC_CMD_FIRST
 } xmms_ipc_xform_cmds_t;
 
 typedef enum {
