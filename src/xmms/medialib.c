@@ -341,7 +341,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_CMD_INFO,
 	                     XMMS_CMD_FUNC (info));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_ADD_URL,
+	                     XMMS_IPC_CMD_MLIB_ADD_URL,
 	                     XMMS_CMD_FUNC (mlib_add));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_REMOVE_ID,

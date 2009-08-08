@@ -18,7 +18,7 @@
 #define __SIGNAL_XMMS_H__
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 14
+#define XMMS_IPC_PROTOCOL_VERSION 15
 
 typedef enum {
 	XMMS_IPC_OBJECT_SIGNAL,
@@ -137,7 +137,8 @@ typedef enum {
 	XMMS_IPC_CMD_PROPERTY_SET_STR,
 	XMMS_IPC_CMD_PROPERTY_SET_INT,
 	XMMS_IPC_CMD_PROPERTY_REMOVE,
-	XMMS_IPC_CMD_MOVE_URL
+	XMMS_IPC_CMD_MOVE_URL,
+	XMMS_IPC_CMD_MLIB_ADD_URL
 } xmms_ipc_medialib_cmds_t;
 
 /* Collection methods */

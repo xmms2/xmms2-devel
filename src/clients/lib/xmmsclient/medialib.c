@@ -225,7 +225,7 @@ xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	return do_methodcall (conn, XMMS_IPC_CMD_ADD_URL, url);
+	return do_methodcall (conn, XMMS_IPC_CMD_MLIB_ADD_URL, url);
 }
 
 /**
