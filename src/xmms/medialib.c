@@ -38,34 +38,21 @@
  */
 
 
-static void xmms_medialib_client_entry_remove (xmms_medialib_t *medialib, gint32 entry, xmms_error_t *error);
+static void xmms_medialib_client_remove_entry (xmms_medialib_t *medialib, gint32 entry, xmms_error_t *error);
 gchar *xmms_medialib_url_encode (const gchar *path);
 static gboolean xmms_medialib_check_id_in_session (xmms_medialib_entry_t entry, xmms_medialib_session_t *session);
 
 static void xmms_medialib_client_add_entry (xmms_medialib_t *, const gchar *, xmms_error_t *);
 static void xmms_medialib_client_move_entry (xmms_medialib_t *, gint32 entry, const gchar *, xmms_error_t *);
-static void xmms_medialib_client_path_import (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
+static void xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
 static void xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t *error);
-static void xmms_medialib_client_property_set_str (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
-static void xmms_medialib_client_property_set_str (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
-static void xmms_medialib_client_property_set_int (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, gint32 value, xmms_error_t *error);
-static void xmms_medialib_client_property_remove (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, xmms_error_t *error);
-static GTree *xmms_medialib_client_info (xmms_medialib_t *medialib, gint32 id, xmms_error_t *err);
-static gint32 xmms_medialib_client_entry_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
+static void xmms_medialib_client_set_property_string (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
+static void xmms_medialib_client_set_property_int (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, gint32 value, xmms_error_t *error);
+static void xmms_medialib_client_remove_property (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, xmms_error_t *error);
+static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 id, xmms_error_t *err);
+static gint32 xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
-
-XMMS_CMD_DEFINE (info, xmms_medialib_client_info, xmms_medialib_t *, DICT, INT32, NONE);
-XMMS_CMD_DEFINE (mlib_add, xmms_medialib_client_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_client_entry_remove, xmms_medialib_t *, NONE, INT32, NONE);
-XMMS_CMD_DEFINE (mlib_move, xmms_medialib_client_move_entry, xmms_medialib_t *, NONE, INT32, STRING);
-XMMS_CMD_DEFINE (path_import, xmms_medialib_client_path_import, xmms_medialib_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (rehash, xmms_medialib_client_rehash, xmms_medialib_t *, NONE, INT32, NONE);
-XMMS_CMD_DEFINE (get_id, xmms_medialib_client_entry_get_id, xmms_medialib_t *, INT32, STRING, NONE);
-
-XMMS_CMD_DEFINE4 (set_property_str, xmms_medialib_client_property_set_str, xmms_medialib_t *, NONE, INT32, STRING, STRING, STRING);
-XMMS_CMD_DEFINE4 (set_property_int, xmms_medialib_client_property_set_int, xmms_medialib_t *, NONE, INT32, STRING, STRING, INT32);
-
-XMMS_CMD_DEFINE3 (remove_property, xmms_medialib_client_property_remove, xmms_medialib_t *, NONE, INT32, STRING, STRING);
+#include "medialib_ipc.c"
 
 /**
  *
@@ -146,8 +133,8 @@ xmms_medialib_destroy (xmms_object_t *object)
 	g_mutex_free (mlib->source_lock);
 	g_hash_table_destroy (mlib->sources);
 	g_mutex_free (global_medialib_session_mutex);
-	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_PLAYBACK);
+
+	xmms_medialib_unregister_ipc_commands ();
 }
 
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
@@ -333,40 +320,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->playlist = playlist;
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
-	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
-	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
-
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_INFO,
-	                     XMMS_CMD_FUNC (info));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_MLIB_ADD_URL,
-	                     XMMS_CMD_FUNC (mlib_add));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_REMOVE_ID,
-	                     XMMS_CMD_FUNC (mlib_remove));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PATH_IMPORT,
-	                     XMMS_CMD_FUNC (path_import));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_REHASH,
-	                     XMMS_CMD_FUNC (rehash));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_GET_ID,
-	                     XMMS_CMD_FUNC (get_id));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PROPERTY_SET_STR,
-	                     XMMS_CMD_FUNC (set_property_str));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PROPERTY_SET_INT,
-	                     XMMS_CMD_FUNC (set_property_int));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
-	                     XMMS_CMD_FUNC (remove_property));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_MOVE_URL,
-	                     XMMS_CMD_FUNC (mlib_move));
+	xmms_medialib_register_ipc_commands (XMMS_OBJECT (medialib));
 
 	path = XMMS_BUILD_PATH ("medialib.db");
 
@@ -738,7 +692,8 @@ xmms_medialib_entry_send_added (xmms_medialib_entry_t entry)
 }
 
 static void
-xmms_medialib_client_entry_remove (xmms_medialib_t *medialib, gint32 entry, xmms_error_t *error)
+xmms_medialib_client_remove_entry (xmms_medialib_t *medialib,
+                                   gint32 entry, xmms_error_t *error)
 {
 	xmms_medialib_entry_remove (entry);
 }
@@ -954,7 +909,7 @@ xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist
 }
 
 static void
-xmms_medialib_client_path_import (xmms_medialib_t *medialib, const gchar *path,
+xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path,
                                   xmms_error_t *error)
 {
 	xmms_medialib_add_recursive (medialib, NULL, path, error);
@@ -1066,8 +1021,8 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms
 }
 
 gint32
-xmms_medialib_client_entry_get_id (xmms_medialib_t *medialib, const gchar *url,
-                                   xmms_error_t *error)
+xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url,
+                             xmms_error_t *error)
 {
 	gint32 id = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
@@ -1245,7 +1200,8 @@ xmms_medialib_info_list (xmms_medialib_t *medialib, guint32 id, xmms_error_t *er
 }
 
 static GTree *
-xmms_medialib_client_info (xmms_medialib_t *medialib, gint32 id, xmms_error_t *err)
+xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 id,
+                               xmms_error_t *err)
 {
 	xmms_medialib_session_t *session;
 	GTree *ret = NULL;
@@ -1331,9 +1287,10 @@ xmms_medialib_client_move_entry (xmms_medialib_t *medialib, gint32 entry,
 }
 
 static void
-xmms_medialib_client_property_set_str (xmms_medialib_t *medialib, gint32 entry,
-                                       const gchar *source, const gchar *key,
-                                       const gchar *value, xmms_error_t *error)
+xmms_medialib_client_set_property_string (xmms_medialib_t *medialib,
+                                          gint32 entry, const gchar *source,
+                                          const gchar *key, const gchar *value,
+                                          xmms_error_t *error)
 {
 	guint32 sourceid;
 	xmms_medialib_session_t *session;
@@ -1355,7 +1312,7 @@ xmms_medialib_client_property_set_str (xmms_medialib_t *medialib, gint32 entry,
 }
 
 static void
-xmms_medialib_client_property_set_int (xmms_medialib_t *medialib, gint32 entry,
+xmms_medialib_client_set_property_int (xmms_medialib_t *medialib, gint32 entry,
                                        const gchar *source, const gchar *key,
                                        gint32 value, xmms_error_t *error)
 {
@@ -1396,7 +1353,7 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, gint32 entry,
 }
 
 static void
-xmms_medialib_client_property_remove (xmms_medialib_t *medialib, gint32 entry,
+xmms_medialib_client_remove_property (xmms_medialib_t *medialib, gint32 entry,
                                       const gchar *source, const gchar *key,
                                       xmms_error_t *error)
 {
