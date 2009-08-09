@@ -26,7 +26,6 @@
 struct xmms_visualization_St;
 typedef struct xmms_visualization_St xmms_visualization_t;
 
-void xmms_visualization_init (xmms_output_t *output);
-void xmms_visualization_destroy (void);
+xmms_visualization_t *xmms_visualization_new (xmms_output_t *output);
 
 #endif

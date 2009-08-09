@@ -89,6 +89,7 @@ XMMS_CMD_DEFINE (plugin_list, xmms_main_client_plugin_list, xmms_object_t *, LIS
 struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output;
+	xmms_visualization_t *vis;
 	time_t starttime;
 };
 
@@ -269,7 +270,7 @@ xmms_main_destroy (xmms_object_t *object)
 
 	g_usleep (G_USEC_PER_SEC); /* wait for the output thread to end */
 
-	xmms_visualization_destroy ();
+	xmms_object_unref (mainobj->vis);
 	xmms_object_unref (mainobj->output);
 
 	xmms_object_unref (xform_obj);
@@ -554,7 +555,8 @@ main (int argc, char **argv)
 	if (!mainobj->output) {
 		xmms_log_fatal ("Failed to create output object!");
 	}
-	xmms_visualization_init (mainobj->output);
+
+	mainobj->vis = xmms_visualization_new (mainobj->output);
 
 	if (status_fd != -1) {
 		write (status_fd, "+", 1);

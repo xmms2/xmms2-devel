@@ -39,6 +39,7 @@ static int32_t xmms_visualization_client_init_udp (xmms_visualization_t *vis, in
 static int32_t xmms_visualization_client_property_set (xmms_visualization_t *vis, int32_t id, const gchar *key, const gchar *value, xmms_error_t *err);
 static int32_t xmms_visualization_client_properties_set (xmms_visualization_t *vis, int32_t id, xmmsv_t *prop, xmms_error_t *err);
 static void xmms_visualization_client_shutdown (xmms_visualization_t *vis, int32_t id, xmms_error_t *err);
+static void xmms_visualization_destroy (xmms_object_t *object);
 
 
 XMMS_CMD_DEFINE (query_version, xmms_visualization_client_version, xmms_visualization_t *, INT32, NONE, NONE);
@@ -115,13 +116,15 @@ delete_client (int32_t id)
 /**
  * Initialize the Vis module.
  */
-void
-xmms_visualization_init (xmms_output_t *output)
+xmms_visualization_t *
+xmms_visualization_new (xmms_output_t *output)
 {
 	vis = xmms_object_new (xmms_visualization_t, xmms_visualization_destroy);
 	vis->clientlock = g_mutex_new ();
 	vis->clientc = 0;
 	vis->output = output;
+
+	xmms_object_ref (output);
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_OBJECT (vis));
 	xmms_object_cmd_add (XMMS_OBJECT (vis),
@@ -147,6 +150,8 @@ xmms_visualization_init (xmms_output_t *output)
 	                     XMMS_CMD_FUNC (shutdown));
 
 	xmms_socket_invalidate (&vis->socket);
+
+	return vis;
 }
 
 /**
@@ -154,9 +159,11 @@ xmms_visualization_init (xmms_output_t *output)
  * TODO: Fill this in properly, unregister etc!
  */
 
-void
-xmms_visualization_destroy ()
+static void
+xmms_visualization_destroy (xmms_object_t *object)
 {
+	xmms_object_unref (vis->output);
+
 	/* TODO: assure that the xform is already dead! */
 	g_mutex_free (vis->clientlock);
 	xmms_log_debug ("starting cleanup of %d vis clients", vis->clientc);
