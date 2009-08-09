@@ -261,7 +261,7 @@ xmms_sqlite_source_pref_unary (sqlite3_context *context, int args,
 	                    xmms_find_match_index (source, source_pref, mlib));
 }
 
-int
+static int
 add_to_source (void *hash, int columns, char **vals, char **cols)
 {
 	int source = strtol (vals[0], NULL, 10);
@@ -1139,7 +1139,7 @@ xmms_medialib_tree_cb (xmmsv_t **row, gpointer udata)
  * make sure to free them all.
  */
 
-GList *
+static GList *
 xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_entry_t entry)
 {
 	GList *ret = NULL;
@@ -1374,7 +1374,7 @@ xmms_medialib_client_property_set_int (xmms_medialib_t *medialib, gint32 entry,
 	xmms_medialib_entry_send_update (entry);
 }
 
-void
+static void
 xmms_medialib_property_remove (xmms_medialib_t *medialib, gint32 entry,
                                const gchar *source, const gchar *key,
                                xmms_error_t *error)

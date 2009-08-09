@@ -201,7 +201,7 @@ xmms_output_stream_type_add (xmms_output_t *output, ...)
 	output->format_list = g_list_append (output->format_list, f);
 }
 
-void
+static void
 update_playtime (xmms_output_t *output, int advance)
 {
 	guint buffersize = 0;

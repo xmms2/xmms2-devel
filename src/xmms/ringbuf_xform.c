@@ -113,7 +113,7 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
-xmms_xform_t *
+static xmms_xform_t *
 xmms_ringbuf_xform_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
 {
 	xmms_xform_t *xform;

@@ -874,7 +874,7 @@ xmms_xform_shortname (xmms_xform_t *xform)
 	       : "unknown";
 }
 
-gint
+static gint
 xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz,
                       xmms_error_t *err)
 {
@@ -1464,7 +1464,7 @@ chain_setup (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
 	return last;
 }
 
-void
+static void
 chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry,
                 const gchar *url, gboolean rehashing)
 {
@@ -1478,7 +1478,7 @@ chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry,
 	g_string_free (namestr, TRUE);
 }
 
-gchar *
+static gchar *
 get_url_for_entry (xmms_medialib_entry_t entry)
 {
 	xmms_medialib_session_t *session;

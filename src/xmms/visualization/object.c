@@ -50,7 +50,7 @@ XMMS_CMD_DEFINE (properties_set, xmms_visualization_client_properties_set, xmms_
 XMMS_CMD_DEFINE (shutdown, xmms_visualization_client_shutdown, xmms_visualization_t *, NONE, INT32, NONE);
 
 /* create an uninitialised vis client. don't use this method without mutex! */
-int32_t
+static int32_t
 create_client (void)
 {
 	int32_t id;

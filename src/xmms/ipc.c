@@ -492,7 +492,7 @@ xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 /**
  * Enable IPC
  */
-gboolean
+static gboolean
 xmms_ipc_setup_server_internaly (xmms_ipc_t *ipc)
 {
 	g_mutex_lock (ipc->mutex_lock);
@@ -704,7 +704,7 @@ xmms_ipc_init (void)
 /**
  * Shutdown a IPC Server
  */
-void
+static void
 xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 {
 	GList *c;
