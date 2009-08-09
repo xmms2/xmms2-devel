@@ -38,7 +38,7 @@ cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	key = argv[2];
 
 	if (argc == 3) {
-		res = xmmsc_configval_get (conn, key);
+		res = xmmsc_config_get_value (conn, key);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 
@@ -64,7 +64,7 @@ cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("You need to specify a configkey and a value");
 	}
 
-	res = xmmsc_configval_set (conn, key, value);
+	res = xmmsc_config_set_value (conn, key, value);
 	xmmsc_result_wait (res);
 	val = xmmsc_result_get_value (res);
 
@@ -85,7 +85,7 @@ cmd_config_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsv_t *val;
 	const char *errmsg;
 
-	res = xmmsc_configval_list (conn);
+	res = xmmsc_config_list_values (conn);
 	xmmsc_result_wait (res);
 	val = xmmsc_result_get_value (res);
 

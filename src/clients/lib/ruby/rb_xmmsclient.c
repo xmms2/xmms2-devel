@@ -526,14 +526,14 @@ c_broadcast_playback_current_id (VALUE self)
 
 /*
  * call-seq:
- *  xc.broadcast_configval_changed -> result
+ *  xc.broadcast_config_value_changed -> result
  *
  * Retrieves configuration properties as a broadcast.
  */
 static VALUE
-c_broadcast_configval_changed (VALUE self)
+c_broadcast_config_value_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_configval_changed);
+	METHOD_ADD_HANDLER (broadcast_config_value_changed);
 }
 
 /*
@@ -1032,50 +1032,50 @@ c_main_stats (VALUE self)
 
 /*
  * call-seq:
- *  xc.configval_list -> result
+ *  xc.config_list_values -> result
  *
  * Retrieves a list of all config values.
  */
 static VALUE
-c_configval_list (VALUE self)
+c_config_list_values (VALUE self)
 {
-	METHOD_ADD_HANDLER (configval_list);
+	METHOD_ADD_HANDLER (config_list_values);
 }
 
 /*
  * call-seq:
- *  xc.configval_get(key) -> result
+ *  xc.config_get_value(key) -> result
  *
  * Retrieves the value of the configuration property at _key_.
  */
 static VALUE
-c_configval_get (VALUE self, VALUE key)
+c_config_get_value (VALUE self, VALUE key)
 {
-	METHOD_ADD_HANDLER_STR (configval_get, key);
+	METHOD_ADD_HANDLER_STR (config_get_value, key);
 }
 
 /*
  * call-seq:
- *  xc.configval_set(key, value) -> result
+ *  xc.config_set_value(key, value) -> result
  *
  * Sets the value of the configuration property at _key_ to _value_.
  */
 static VALUE
-c_configval_set (VALUE self, VALUE key, VALUE val)
+c_config_set_value (VALUE self, VALUE key, VALUE val)
 {
-	METHOD_ADD_HANDLER_STR_STR (configval_set, key, val);
+	METHOD_ADD_HANDLER_STR_STR (config_set_value, key, val);
 }
 
 /*
  * call-seq:
- *  xc.configval_register(key, default_value) -> result
+ *  xc.config_register_value(key, default_value) -> result
  *
  * Registers a configuration property at _key_ with the given default value.
  */
 static VALUE
-c_configval_register (VALUE self, VALUE key, VALUE defval)
+c_config_register_value (VALUE self, VALUE key, VALUE defval)
 {
-	METHOD_ADD_HANDLER_STR_STR (configval_register, key, defval);
+	METHOD_ADD_HANDLER_STR_STR (config_register_value, key, defval);
 }
 
 /*
@@ -1569,12 +1569,12 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "plugin_list", c_plugin_list, -1);
 	rb_define_method (c, "main_stats", c_main_stats, 0);
 
-	rb_define_method (c, "configval_list", c_configval_list, 0);
-	rb_define_method (c, "configval_get", c_configval_get, 1);
-	rb_define_method (c, "configval_set", c_configval_set, 2);
-	rb_define_method (c, "configval_register", c_configval_register, 2);
-	rb_define_method (c, "broadcast_configval_changed",
-	                  c_broadcast_configval_changed, 0);
+	rb_define_method (c, "config_list_values", c_config_list_values, 0);
+	rb_define_method (c, "config_get_value", c_config_get_value, 1);
+	rb_define_method (c, "config_set_value", c_config_set_value, 2);
+	rb_define_method (c, "config_register_value", c_config_register_value, 2);
+	rb_define_method (c, "broadcast_config_value_changed",
+	                  c_broadcast_config_value_changed, 0);
 
 	rb_define_method (c, "bindata_add", c_bindata_add, 1);
 	rb_define_method (c, "bindata_retrieve", c_bindata_retrieve, 1);

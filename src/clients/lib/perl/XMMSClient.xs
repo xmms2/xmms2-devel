@@ -1245,7 +1245,7 @@ xmmsc_bindata_list (c)
 
 ## Other
 
-=head2 configval_register
+=head2 config_register_value
 
 =over 4
 
@@ -1255,19 +1255,19 @@ xmmsc_bindata_list (c)
 
 =back
 
-  my $result = $conn->configval_register('myclient.stop_playback_on_quit', 0);
+  my $result = $conn->config_register_value('myclient.stop_playback_on_quit', 0);
 
 Registers a configvalue called C<$key> with a C<$default_value> in the server.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_configval_register (c, valuename, defaultvalue)
+xmmsc_config_register_value (c, valuename, defaultvalue)
 		xmmsc_connection_t *c
 		const char *valuename
 		const char *defaultvalue
 
-=head2 configval_set
+=head2 config_set_value
 
 =over 4
 
@@ -1277,19 +1277,19 @@ xmmsc_configval_register (c, valuename, defaultvalue)
 
 =back
 
-  my $result = $conn->configval_set('myclient.stop_playback_on_quit', 1);
+  my $result = $conn->config_set_value('myclient.stop_playback_on_quit', 1);
 
 Sets a configvalue called C<$key> to C<$value> in the server.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_configval_set (c, key, val)
+xmmsc_config_set_value (c, key, val)
 		xmmsc_connection_t *c
 		const char *key
 		const char *val
 
-=head2 configval_get
+=head2 config_get_value
 
 =over 4
 
@@ -1299,18 +1299,18 @@ xmmsc_configval_set (c, key, val)
 
 =back
 
-  my $result = $conn->configval_get('myclient.stop_playback_on_quit');
+  my $result = $conn->config_get_value('myclient.stop_playback_on_quit');
 
 Retrieves the value of a configvalue called C<$key> from the server.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_configval_get (c, key)
+xmmsc_config_get_value (c, key)
 		xmmsc_connection_t *c
 		const char *key
 
-=head2 configval_list
+=head2 config_list_values
 
 =over 4
 
@@ -1320,17 +1320,17 @@ xmmsc_configval_get (c, key)
 
 =back
 
-  my $result = $conn->configval_list;
+  my $result = $conn->config_list_values;
 
 Lists all configuration values.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_configval_list (c)
+xmmsc_config_list_values (c)
 		xmmsc_connection_t *c
 
-=head2 broadcast_configval_changed
+=head2 broadcast_config_value_changed
 
 =over 4
 
@@ -1340,15 +1340,15 @@ xmmsc_configval_list (c)
 
 =back
 
-  my $result = $conn->broadcast_configval_changed;
+  my $result = $conn->broadcast_config_value_changed;
 
-Requests the configval_changed broadcast. This will be called when a
+Requests the config_value_changed broadcast. This will be called when a
 configvalue has been updated.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_broadcast_configval_changed (c)
+xmmsc_broadcast_config_value_changed (c)
 		xmmsc_connection_t *c
 
 =head2 broadcast_mediainfo_reader_status

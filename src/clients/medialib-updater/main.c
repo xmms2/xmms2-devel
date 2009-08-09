@@ -339,7 +339,7 @@ updater_config_register (xmmsv_t *value, void *udata)
 		return FALSE;
 	}
 
-	res = xmmsc_configval_get (updater->conn, conf);
+	res = xmmsc_config_get_value (updater->conn, conf);
 	xmmsc_result_notifier_set (res, updater_config_get, updater);
 	xmmsc_result_unref (res);
 
@@ -354,11 +354,11 @@ updater_subscribe_config (updater_t *updater)
 	g_return_if_fail (updater);
 	g_return_if_fail (updater->conn);
 
-	res = xmmsc_configval_register (updater->conn, "mlibupdater.watch_dirs", "");
+	res = xmmsc_config_register_value (updater->conn, "mlibupdater.watch_dirs", "");
 	xmmsc_result_notifier_set (res, updater_config_register, updater);
 	xmmsc_result_unref (res);
 
-	res = xmmsc_broadcast_configval_changed (updater->conn);
+	res = xmmsc_broadcast_config_value_changed (updater->conn);
 	xmmsc_result_notifier_set (res, updater_config_changed, updater);
 	xmmsc_result_unref (res);
 }

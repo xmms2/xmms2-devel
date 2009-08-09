@@ -273,12 +273,12 @@ print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
 	xmmsv_t *val;
 
 	if (confname == NULL) {
-		res = xmmsc_configval_list (infos->sync);
+		res = xmmsc_config_list_values (infos->sync);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 		xmmsv_dict_foreach (val, print_config_entry, NULL);
 	} else {
-		res = xmmsc_configval_get (infos->sync, confname);
+		res = xmmsc_config_get_value (infos->sync, confname);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 		xmmsv_get_string (val, &confval);

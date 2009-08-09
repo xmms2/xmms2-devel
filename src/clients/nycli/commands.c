@@ -2010,7 +2010,7 @@ cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (confval) {
-		res = xmmsc_configval_set (infos->sync, confname, confval);
+		res = xmmsc_config_set_value (infos->sync, confname, confval);
 		xmmsc_result_wait (res);
 		done (res, infos);
 	} else {

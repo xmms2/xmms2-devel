@@ -38,7 +38,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_configval_register, conn_,
+		          boost::bind( xmmsc_config_register_value, conn_,
 		                       name.c_str(), defval.c_str() ) );
 		return VoidResult( res, ml_ );
 	}
@@ -49,7 +49,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_configval_set, conn_,
+		          boost::bind( xmmsc_config_set_value, conn_,
 		                       key.c_str(), value.c_str() ) );
 		return VoidResult( res, ml_ );
 	}
@@ -59,7 +59,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res = 
 		    call( connected_,
-		          boost::bind( xmmsc_configval_get, conn_, key.c_str() ) );
+		          boost::bind( xmmsc_config_get_value, conn_, key.c_str() ) );
 		return StringResult( res, ml_ );
 	}
 
@@ -67,7 +67,7 @@ namespace Xmms
 	Config::valueList() const
 	{
 		xmmsc_result_t* res = call( connected_,
-		                            boost::bind( xmmsc_configval_list, conn_ ));
+		                            boost::bind( xmmsc_config_list_values, conn_ ));
 		return DictResult( res, ml_ );
 	}
 
@@ -76,7 +76,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_broadcast_configval_changed, conn_ ) );
+		          boost::bind( xmmsc_broadcast_config_value_changed, conn_ ) );
 		return DictSignal( res, ml_ );
 	}
 

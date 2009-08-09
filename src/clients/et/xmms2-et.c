@@ -254,14 +254,14 @@ main (int argc, char **argv)
 
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_main_stats, handle_stats, NULL);
-	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_configval_changed, handle_config, NULL);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_config_value_changed, handle_config, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);
 
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_mediainfo_reader_unindexed, handle_mediainfo_reader, NULL);
 
 	{
 		xmmsc_result_t *res;
-		res = xmmsc_configval_get (conn, "output.plugin");
+		res = xmmsc_config_get_value (conn, "output.plugin");
 		xmmsc_result_notifier_set (res, handle_config_val, NULL);
 		xmmsc_result_unref (res);
 	}

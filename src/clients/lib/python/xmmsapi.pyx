@@ -289,12 +289,12 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playback_volume_get (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playback_volume_changed (xmmsc_connection_t *c)
 
-	xmmsc_result_t *xmmsc_configval_set(xmmsc_connection_t *c, char *key, char *val)
-	xmmsc_result_t *xmmsc_configval_list(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_configval_get(xmmsc_connection_t *c, char *key)
-	xmmsc_result_t *xmmsc_configval_register(xmmsc_connection_t *c, char *valuename, char *defaultvalue)
+	xmmsc_result_t *xmmsc_config_set_value(xmmsc_connection_t *c, char *key, char *val)
+	xmmsc_result_t *xmmsc_config_list_values(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_config_get_value(xmmsc_connection_t *c, char *key)
+	xmmsc_result_t *xmmsc_config_register_value(xmmsc_connection_t *c, char *valuename, char *defaultvalue)
 
-	xmmsc_result_t *xmmsc_broadcast_configval_changed(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_config_value_changed(xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_medialib_playlist_load(xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry(xmmsc_connection_t *conn, char *url)
@@ -1957,9 +1957,9 @@ cdef class XMMS:
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playlist_changed(self.conn))
 
-	def broadcast_configval_changed(self, cb = None):
+	def broadcast_config_value_changed(self, cb = None):
 		"""
-		broadcast_configval_changed(cb=None) -> XMMSResult
+		broadcast_config_value_changed(cb=None) -> XMMSResult
 
 		Set a method to handle the config value changed broadcast
 		from the XMMS2 daemon.(i.e. some configuration value has
@@ -1967,11 +1967,11 @@ cdef class XMMS:
 		value is modified.
 		@rtype: L{XMMSResult} (the modified config key and its value)
 		"""
-		return self.create_result(cb, xmmsc_broadcast_configval_changed(self.conn))
+		return self.create_result(cb, xmmsc_broadcast_config_value_changed(self.conn))
 
-	def configval_set(self, key, val, cb = None):
+	def config_set_value(self, key, val, cb = None):
 		"""
-		configval_set(key, val, cb=None) -> XMMSResult
+		config_set_value(key, val, cb=None) -> XMMSResult
 
 		Set a configuration value on the daemon, given a key.
 		@rtype: L{XMMSResult}
@@ -1979,34 +1979,34 @@ cdef class XMMS:
 		"""
 		c1 = from_unicode(key)
 		c2 = from_unicode(val)
-		return self.create_result(cb, xmmsc_configval_set(self.conn, c1, c2))
+		return self.create_result(cb, xmmsc_config_set_value(self.conn, c1, c2))
 
-	def configval_get(self, key, cb = None):
+	def config_get_value(self, key, cb = None):
 		"""
-		configval_get(key, cb=None) -> XMMSResult
+		config_get_value(key, cb=None) -> XMMSResult
 
 		Get the configuration value of a given key, from the daemon.
 		@rtype: L{XMMSResult}(String)
 		@return: The result of the operation.
 		"""
 		c = from_unicode(key)
-		return self.create_result(cb, xmmsc_configval_get(self.conn, c))
+		return self.create_result(cb, xmmsc_config_get_value(self.conn, c))
 
-	def configval_list(self, cb = None):
+	def config_list_values(self, cb = None):
 		"""
-		configval_list(cb=None) -> XMMSResult
+		config_list_values(cb=None) -> XMMSResult
 
 		Get list of configuration keys on the daemon. Use
-		L{configval_get} to retrieve the values corresponding to the
+		L{config_get_value} to retrieve the values corresponding to the
 		configuration keys.
 		@rtype: L{XMMSResult}(StringList)
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_configval_list(self.conn))
+		return self.create_result(cb, xmmsc_config_list_values(self.conn))
 
-	def configval_register(self, valuename, defaultvalue, cb = None):
+	def config_register_value(self, valuename, defaultvalue, cb = None):
 		"""
-		configval_register(valuename, defaultvalue, cb=None) -> XMMSResult
+		config_register_value(valuename, defaultvalue, cb=None) -> XMMSResult
 
 		Register a new configvalue.
 		This should be called in the initcode as XMMS2 won't allow
@@ -2016,7 +2016,7 @@ cdef class XMMS:
 		"""
 		c1 = from_unicode(valuename)
 		c2 = from_unicode(defaultvalue)
-		return self.create_result(cb, xmmsc_configval_register(self.conn, c1, c2))
+		return self.create_result(cb, xmmsc_config_register_value(self.conn, c1, c2))
 
 	def medialib_add_entry(self, file, cb = None):
 		"""

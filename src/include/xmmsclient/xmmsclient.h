@@ -143,13 +143,19 @@ xmmsc_result_t *xmmsc_signal_playback_playtime (xmmsc_connection_t *c);
  */
 
 /* commands */
-xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val);
-xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, const char *key);
-xmmsc_result_t *xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue);
+xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, const char *key) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue) XMMS_DEPRECATED;
+
+xmmsc_result_t *xmmsc_config_set_value (xmmsc_connection_t *c, const char *key, const char *val);
+xmmsc_result_t *xmmsc_config_list_values (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_config_get_value (xmmsc_connection_t *c, const char *key);
+xmmsc_result_t *xmmsc_config_register_value (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue);
 
 /* broadcasts */
-xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_broadcast_config_value_changed (xmmsc_connection_t *c);
 
 
 /*
