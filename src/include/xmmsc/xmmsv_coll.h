@@ -48,7 +48,8 @@ int xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, int32_t
 size_t xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll);
 
 xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll);
-int32_t *xmmsv_coll_get_idlist (xmmsv_coll_t *coll);
+const int32_t *xmmsv_coll_get_idlist (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+struct xmmsv_St *xmmsv_coll_idlist_get (xmmsv_coll_t *coll);
 
 void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value);
 int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key);

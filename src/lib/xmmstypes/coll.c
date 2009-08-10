@@ -34,18 +34,13 @@ struct xmmsv_coll_St {
 	xmmsv_coll_type_t type;
 	xmmsv_t *operands;
 	xmmsv_t *attributes;
+	xmmsv_t *idlist;
 
-	/* List of ids, 0-terminated. */
-	int32_t *idlist;
-	size_t idlist_size;
-	size_t idlist_allocated;
-
+	int32_t *legacy_idlist;
 };
 
 
 static void xmmsv_coll_free (xmmsv_coll_t *coll);
-
-static int xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize);
 
 
 /**
@@ -92,21 +87,18 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 		return NULL;
 	}
 
-	if (!(coll->idlist = x_new0 (int32_t, 1))) {
-		x_oom ();
-		free (coll);
-		return NULL;
-	}
-	coll->idlist_size = 1;
-	coll->idlist_allocated = 1;
-
 	coll->ref  = 0;
 	coll->type = type;
+
+	coll->idlist = xmmsv_new_list ();
+	xmmsv_list_restrict_type (coll->idlist, XMMSV_TYPE_INT32);
 
 	coll->operands = xmmsv_new_list ();
 	xmmsv_list_restrict_type (coll->operands, XMMSV_TYPE_COLL);
 
 	coll->attributes = xmmsv_new_dict ();
+
+	coll->legacy_idlist = NULL;
 
 	/* user must give this back */
 	xmmsv_coll_ref (coll);
@@ -128,10 +120,11 @@ xmmsv_coll_free (xmmsv_coll_t *coll)
 
 	/* Unref all the operands and attributes */
 	xmmsv_unref (coll->operands);
-
 	xmmsv_unref (coll->attributes);
-
-	free (coll->idlist);
+	xmmsv_unref (coll->idlist);
+	if (coll->legacy_idlist) {
+		free (coll->legacy_idlist);
+	}
 
 	free (coll);
 }
@@ -168,27 +161,11 @@ void
 xmmsv_coll_set_idlist (xmmsv_coll_t *coll, int ids[])
 {
 	unsigned int i;
-	unsigned int size = 0;
 
-	x_return_if_fail (coll);
-
-	while (ids[size] != 0) {
-		++size;
+	xmmsv_list_clear (coll->idlist);
+	for (i = 0; ids[i]; i++) {
+		xmmsv_list_append_int (coll->idlist, ids[i]);
 	}
-	++size;
-
-	free (coll->idlist);
-	if (!(coll->idlist = x_new0 (int32_t, size))) {
-		x_oom ();
-		return;
-	}
-
-	for (i = 0; i < size; ++i) {
-		coll->idlist[i] = ids[i];
-	}
-
-	coll->idlist_size = size;
-	coll->idlist_allocated = size;
 }
 
 static int
@@ -276,7 +253,7 @@ xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return xmmsv_coll_idlist_insert (coll, coll->idlist_size - 1, id);
+	return xmmsv_list_append_int (coll->idlist, id);
 }
 
 /**
@@ -289,29 +266,13 @@ xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
 int
 xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
 {
-	int i;
 	x_return_val_if_fail (coll, 0);
 
-	if (index >= coll->idlist_size) {
+	if (index > xmmsv_list_get_size (coll->idlist)) {
 		return 0;
 	}
 
-	/* We need more memory, reallocate */
-	if (coll->idlist_size == coll->idlist_allocated) {
-		int success;
-		size_t double_size = coll->idlist_allocated * 2;
-		success = xmmsv_coll_idlist_resize (coll, double_size);
-		x_return_val_if_fail (success, 0);
-	}
-
-	for (i = coll->idlist_size; i > index; i--) {
-		coll->idlist[i] = coll->idlist[i - 1];
-	}
-
-	coll->idlist[index] = id;
-	coll->idlist_size++;
-
-	return 1;
+	return xmmsv_list_insert_int (coll->idlist, index, id);
 }
 
 /**
@@ -324,29 +285,14 @@ xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
 int
 xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
 {
-	int i;
-	int32_t tmp;
-
 	x_return_val_if_fail (coll, 0);
 
-	if ((index >= coll->idlist_size - 1) || (newindex >= coll->idlist_size - 1)) {
+	if ((index >= xmmsv_list_get_size (coll->idlist)) ||
+	    (newindex >= xmmsv_list_get_size (coll->idlist))) {
 		return 0;
 	}
 
-	tmp = coll->idlist[index];
-	if (index < newindex) {
-		for (i = index; i < newindex; i++) {
-			coll->idlist[i] = coll->idlist[i + 1];
-		}
-	}
-	else if (index > newindex) {
-		for (i = index; i > newindex; i--) {
-			coll->idlist[i] = coll->idlist[i - 1];
-		}
-	}
-	coll->idlist[newindex] = tmp;
-
-	return 1;
+	return xmmsv_list_move (coll->idlist, index, newindex);
 }
 
 /**
@@ -358,27 +304,13 @@ xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int new
 int
 xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
 {
-	int i;
-	size_t half_size;
-
 	x_return_val_if_fail (coll, 0);
 
-	if (index >= coll->idlist_size - 1) {
+	if (index >= xmmsv_list_get_size (coll->idlist)) {
 		return 0;
 	}
 
-	coll->idlist_size--;
-	for (i = index; i < coll->idlist_size; i++) {
-		coll->idlist[i] = coll->idlist[i + 1];
-	}
-
-	/* Reduce memory usage by two if possible */
-	half_size = coll->idlist_allocated / 2;
-	if (coll->idlist_size <= half_size) {
-		xmmsv_coll_idlist_resize (coll, half_size);
-	}
-
-	return 1;
+	return xmmsv_list_remove (coll->idlist, index);
 }
 
 /**
@@ -389,13 +321,9 @@ xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
 int
 xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
 {
-	int empty[] = { 0 };
-
 	x_return_val_if_fail (coll, 0);
 
-	xmmsv_coll_set_idlist (coll, empty);
-
-	return 1;
+	return xmmsv_list_clear (coll->idlist);
 }
 
 /**
@@ -410,13 +338,11 @@ xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, int32_t *va
 {
 	x_return_val_if_fail (coll, 0);
 
-	if (index >= (coll->idlist_size - 1)) {
+	if (index >= xmmsv_list_get_size (coll->idlist)) {
 		return 0;
 	}
 
-	*val = coll->idlist[index];
-
-	return 1;
+	return xmmsv_list_get_int (coll->idlist, index, val);
 }
 
 /**
@@ -431,13 +357,11 @@ xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, int32_t val
 {
 	x_return_val_if_fail (coll, 0);
 
-	if (index >= (coll->idlist_size - 1)) {
+	if (index >= xmmsv_list_get_size (coll->idlist)) {
 		return 0;
 	}
 
-	coll->idlist[index] = val;
-
-	return 1;
+	return xmmsv_list_set_int (coll->idlist, index, val);
 }
 
 /**
@@ -450,7 +374,7 @@ xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return coll->idlist_size - 1;
+	return xmmsv_list_get_size (coll->idlist);
 }
 
 
@@ -474,11 +398,56 @@ xmmsv_coll_get_type (xmmsv_coll_t *coll)
  * Note that this must not be confused with the content of the
  * collection, which must be queried using xmmsc_coll_query_ids!
  *
+ * Also note that this function is deprecated (use xmmsv_coll_idlist_get
+ * instead) and that changes to the returned array will be ignored. The array
+ * is also not updated when the idlist is changed using the supplied functions.
+ * Additionally every call to this function allocates a new array, so calling
+ * it repetitively will be a performance penalty.
+ *
  * @param coll  The collection to consider.
  * @return The 0-terminated list of ids.
  */
-int32_t*
+const int32_t*
 xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
+{
+	xmmsv_list_iter_t *it;
+	unsigned int i;
+	int32_t entry;
+
+	x_return_null_if_fail (coll);
+
+	/* free and allocate a new legacy list */
+	if (coll->legacy_idlist) {
+		free (coll->legacy_idlist);
+	}
+	coll->legacy_idlist = calloc (xmmsv_coll_idlist_get_size (coll) + 1,
+	                              sizeof (int32_t));
+
+	/* copy contents to legacy list */
+	for (xmmsv_get_list_iter (coll->idlist, &it), i = 0;
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it), i++) {
+		xmmsv_list_iter_entry_int (it, &entry);
+		coll->legacy_idlist[i] = entry;
+	}
+	coll->legacy_idlist[i] = 0;
+
+	return coll->legacy_idlist;
+}
+
+/**
+ * Return the list of ids stored in the collection.
+ * This function does not increase the refcount of the list, the reference is
+ * still owned by the collection.
+ *
+ * Note that this must not be confused with the content of the collection,
+ * which must be queried using xmmsc_coll_query_ids!
+ *
+ * @param coll  The collection to consider.
+ * @return The 0-terminated list of ids.
+ */
+xmmsv_t *
+xmmsv_coll_idlist_get (xmmsv_coll_t *coll)
 {
 	x_return_null_if_fail (coll);
 
@@ -614,26 +583,3 @@ xmmsv_coll_universe ()
 }
 
 /** @} */
-
-
-
-/** @internal */
-
-
-static int
-xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize)
-{
-	int32_t *newmem;
-
-	newmem = realloc (coll->idlist, newsize * sizeof (int32_t));
-
-	if (newmem == NULL) {
-		x_oom ();
-		return 0;
-	}
-
-	coll->idlist = newmem;
-	coll->idlist_allocated = newsize;
-
-	return 1;
-}
