@@ -365,6 +365,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll)
 
 	int *xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
+	xmmsv_t *xmmsv_coll_idlist_get (xmmsv_coll_t *coll)
 	int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
 	int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
 	int xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
