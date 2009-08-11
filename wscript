@@ -486,13 +486,20 @@ def set_options(opt):
                    help="Force a specific Windows version (cross-compilation)")
     opt.add_option('--run-tests', action='store_true', default=False,
                    dest='run_tests', help="Run test suite")
+    opt.add_option('--with-ldconfig', action='store_true', default=None,
+                   dest='ldconfig', help="Run ldconfig after install even if not root")
+    opt.add_option('--without-ldconfig', action='store_false',
+                   dest='ldconfig', help="Don't run ldconfig after install")
 
     opt.sub_options("src/xmms")
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
 
 def shutdown():
-    if Options.commands['install'] and os.geteuid() == 0:
+    if Options.commands['install'] and (
+            Options.options.ldconfig or
+            (Options.options.ldconfig is None and os.geteuid() == 0)
+            ):
         ldconfig = '/sbin/ldconfig'
         if os.path.isfile(ldconfig):
             libprefix = Utils.subst_vars('${PREFIX}/lib', Build.bld.env)
