@@ -616,3 +616,97 @@ CASE (test_xmmsv_dict_format) {
 	free (buf);
 
 }
+
+CASE (test_xmmsv_list_move) {
+	xmmsv_t *l;
+	xmmsv_list_iter_t *its[5];
+	int i, entry;
+	int original[] = {0, 1, 2, 3, 4};
+	int changed[]  = {0, 2, 3, 1, 4};
+
+	l = xmmsv_new_list ();
+
+	/* Fill the list */
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_append_int (l, i));
+		CU_ASSERT_TRUE (xmmsv_get_list_iter (l, &its[i]));
+		CU_ASSERT_TRUE (xmmsv_list_iter_seek(its[i], i));
+	}
+
+	/* list now is {0, 1, 2, 3, 4} (original) */
+
+	/* Check if state is okay */
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_get_int (l, i, &entry));
+		CU_ASSERT_EQUAL (original[i], entry);
+	}
+	/* Check if iters are still pointing at their element */
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry_int (its[i], &entry));
+		CU_ASSERT_EQUAL (i, entry);
+	}
+
+	/* Do a move (old < new) */
+	CU_ASSERT_TRUE (xmmsv_list_move (l, 1, 3));
+
+	/* list now is { 0, 2, 3, 1, 4 } (changed) */
+
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_get_int (l, i, &entry));
+		CU_ASSERT_EQUAL (changed[i], entry);
+	}
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry_int (its[i], &entry));
+		CU_ASSERT_EQUAL (i, entry);
+	}
+
+	/* Move back (new < old) */
+	CU_ASSERT_TRUE (xmmsv_list_move (l, 3, 1));
+
+	/* list now is {0, 1, 2, 3, 4} (original) */
+
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_get_int (l, i, &entry));
+		CU_ASSERT_EQUAL (original[i], entry);
+	}
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry_int (its[i], &entry));
+		CU_ASSERT_EQUAL (i, entry);
+	}
+
+	/* Move nothing (new == old) */
+	CU_ASSERT_TRUE (xmmsv_list_move (l, 2, 2));
+
+	/* list now is {0, 1, 2, 3, 4} (original) */
+
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_get_int (l, i, &entry));
+		CU_ASSERT_EQUAL (original[i], entry);
+	}
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry_int (its[i], &entry));
+		CU_ASSERT_EQUAL (i, entry);
+	}
+
+	/* Can't move to inexistent position */
+	CU_ASSERT_FALSE (xmmsv_list_move (l, 0, 5));
+
+	/* Can't move from inexistent position */
+	CU_ASSERT_FALSE (xmmsv_list_move (l, 5, 0));
+
+	/* Check if counting from end works */
+	CU_ASSERT_TRUE (xmmsv_list_move (l, -4, -2));
+
+	/* list now is {0, 2, 3, 1, 4} (changed) */
+
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_get_int (l, i, &entry));
+		CU_ASSERT_EQUAL (changed[i], entry);
+	}
+	for (i = 0; i < 5; i++) {
+		CU_ASSERT_TRUE (xmmsv_list_iter_entry_int (its[i], &entry));
+		CU_ASSERT_EQUAL (i, entry);
+	}
+
+	xmmsv_unref (l);
+}
