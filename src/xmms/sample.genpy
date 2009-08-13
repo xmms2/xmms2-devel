@@ -1,5 +1,5 @@
 
-types = ['u8', 's8', 'u16', 's16', 'float']
+types = ['u8', 's8', 'u16', 's16', 's32', 'float']
 
 #should convert to and from uint16
 readwriters = """
@@ -10,17 +10,19 @@ readwriters = """
 
 #include "sample.head.c"
 
-#define READu8(a)  ((a) << 8)
-#define READs8(a)  ((a+128) << 8)
-#define READu16(a)  (a)
-#define READs16(a) ((a)+32768)
+#define READu8(a)  ((a) << 24)
+#define READs8(a)  ((a+128) << 24)
+#define READu16(a)  ((a)<<16)
+#define READs16(a) (((a)+32768)<<16)
+#define READs32(a) ((a) + 2147483648UL)
 #define READfloat(a) (((a) + 1.0)*32768.0)
 
-#define WRITEu8(a)  ((a) >> 8)
-#define WRITEs8(a)  (((a) - 32768) >> 8)
-#define WRITEu16(a) (a)
-#define WRITEs16(a) ((a) - 32768)
-#define WRITEfloat(a) ((a)/32768.0 - 1.0)
+#define WRITEu8(a)  ((a) >> 24)
+#define WRITEs8(a)  (((a) >> 24) - 128)
+#define WRITEu16(a) ((a) >> 16)
+#define WRITEs16(a) (((a) >> 16) - 32768)
+#define WRITEs32(a) ((a) - 2147483648UL)
+#define WRITEfloat(a) ((a)/2147483648.0 - 1.0)
 
 
 
@@ -40,7 +42,7 @@ resample_INCHANNELS_INTYPE_to_OUTCHANNELS_OUTTYPE (xmms_sample_converter_t *conv
 	pos = conv->offset;
 
 	while (pos < len * conv->interpolator_ratio) {
-		gint32 temp[INCHANNELS];
+		guint32 temp[INCHANNELS];
 		xmms_sampleINTYPE_t *buf1, *buf2;
 		gfloat bfrac = ((gfloat) (pos % (conv->interpolator_ratio))) / (conv->interpolator_ratio);
 		gfloat afrac = 1.0 - bfrac;
@@ -85,7 +87,7 @@ convert_INCHANNELS_INTYPE_to_OUTCHANNELS_OUTTYPE (xmms_sample_converter_t *conv,
 	/* this code doesn't look optimized,
 	but the compiler should fix that */
 	for (i = 0; i < len; i++) {
-		gint32 temp[INCHANNELS];
+		guint32 temp[INCHANNELS];
 
 		for (j = 0; j < INCHANNELS; j++) {
 			temp[j] = READINTYPE (in[j]);
