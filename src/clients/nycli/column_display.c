@@ -26,6 +26,10 @@ struct column_display_St {
 	gint termwidth;
 	gint availchars;
 	gchar *buffer;       /* Used to render strings. */
+	/* string used to highlight current track in classic list display */
+	const gchar *list_marker;
+	/* the string used if the row isn't marked with list_marker */
+	gchar *list_marker_pad;
 };
 
 struct column_def_St {
@@ -268,6 +272,7 @@ column_display_init (cli_infos_t *infos)
 	disp->termwidth = find_terminal_width ();
 	disp->availchars = 0;
 	disp->buffer = NULL;
+	disp->list_marker_pad = NULL;
 
 	return disp;
 }
@@ -333,6 +338,7 @@ column_display_free (column_display_t *disp)
 	}
 	g_array_free (disp->cols, TRUE);
 
+	g_free (disp->list_marker_pad);
 	g_free (disp->buffer);
 	g_free (disp);
 }
@@ -493,11 +499,10 @@ column_display_render_highlight (column_display_t *disp, column_def_t *coldef,
 {
 	gint realsize, highlight = GPOINTER_TO_INT(coldef->arg.udata);
 
-	/* FIXME: Make these customizable */
 	if (disp->counter == highlight) {
-		realsize = g_printf ("->");
+		realsize = g_printf ("%s", disp->list_marker);
 	} else {
-		realsize = g_printf ("  ");
+		realsize = g_printf ("%s", disp->list_marker_pad);
 	}
 
 	return realsize;
@@ -594,4 +599,35 @@ column_display_render_format (column_display_t *disp, column_def_t *coldef,
 	print_string_using_coldef (disp, coldef, realsize);
 
 	return realsize;
+}
+
+void
+column_display_set_list_marker (column_display_t *disp, const gchar *marker)
+{
+	GString *marker_pad;
+	gchar *ansi_seq, *ansi_seq_end;
+
+	disp->list_marker = marker;
+
+	marker_pad = g_string_new (marker);
+	ansi_seq = marker_pad->str;
+
+	g_free (disp->list_marker_pad);
+
+	while ((ansi_seq = strchr (ansi_seq, '\x1b'))) {
+		if (!(ansi_seq_end = strchr (ansi_seq, 'm'))) {
+			ansi_seq++;
+			continue;
+		} else {
+			g_string_erase (marker_pad, ansi_seq - marker_pad->str,
+			                ansi_seq_end - ansi_seq + 1);
+		}
+	}
+
+	g_string_truncate (marker_pad,
+	                   g_utf8_strlen (marker_pad->str, marker_pad->len));
+	/* reusing ansi_seq to keep place in marker_pad */
+	for (ansi_seq = marker_pad->str; *ansi_seq; *ansi_seq++ = ' ');
+	disp->list_marker_pad = marker_pad->str;
+	g_string_free (marker_pad, FALSE);
 }

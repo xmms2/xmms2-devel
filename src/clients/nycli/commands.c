@@ -511,6 +511,10 @@ create_list_column_display (cli_infos_t *infos)
 
 	coldisp = column_display_init (infos);
 
+	column_display_set_list_marker (coldisp,
+	                                configuration_get_string (infos->config,
+	                                                          "PLAYLIST_MARKER"));
+
 	column_display_add_special (coldisp, "",
 	                            GINT_TO_POINTER(infos->cache->currpos), 2,
 	                            COLUMN_DEF_SIZE_FIXED,
