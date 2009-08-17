@@ -54,11 +54,14 @@ section_to_hash (GKeyFile *file, gchar *section, GHashTable *hash)
 	}
 
 	for (i = 0; keys[i] != NULL; i++) {
+		gchar *uncompressed_value;
+
+		uncompressed_value = g_key_file_get_value (file, section, keys[i],
+		                                           NULL);
 		g_hash_table_insert (hash,
 		                     g_strdup (keys[i]),
-		                     g_key_file_get_value (file,
-		                                           section, keys[i],
-		                                           NULL));
+		                     g_strcompress (uncompressed_value));
+		g_free (uncompressed_value);
 	}
 	g_strfreev (keys);
 }
