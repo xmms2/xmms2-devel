@@ -427,10 +427,13 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	/* Run all notifiers and check for positive return values */
 	n = res->notifiers;
 	while (n) {
+		int keep;
+
 		next = x_list_next (n);
 		cb = n->data;
 
-		if (!cb->func (res->data, cb->user_data)) {
+		keep = cb->func (res->data, cb->user_data);
+		if (!keep || res->type == XMMSC_RESULT_CLASS_DEFAULT) {
 			xmmsc_result_notifier_delete (res, n);
 		}
 
