@@ -25,6 +25,8 @@
 #include "utils.h"
 #include "column_display.h"
 
+#include <sys/stat.h>
+
 #define COMMAND_HELP_DESCRIPTION_INDENT 2
 
 #define NULL_SUB(elem, null, notnull) (elem) == NULL ? (null) : (notnull)
@@ -1102,11 +1104,15 @@ static gboolean
 guessfile (gchar *pattern)
 {
 	char *p;
+	struct stat filestat;
+
+	/* if matches a local path, it's probably a file */
+	if (stat (pattern, &filestat) == 0 &&
+	    (S_ISREG(filestat.st_mode) || S_ISDIR(filestat.st_mode))) {
+		return TRUE;
+	}
 
 	p = strpbrk (pattern, ":/~");
-
-	/* FIXME: check for file extension? esp. if token doesn't start by "url:" */
-	/* FIXME: warning, the string contains all space-separated arguments */
 
 	if (!p) {
 		/* Doesn't contain any of the chars above, not a file? */
@@ -1180,7 +1186,16 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
-	fileargs = fileargs || plsfile || (guessfile (pattern) && !forceptrn);
+	fileargs = fileargs || plsfile;
+
+	if (!forceptrn) {
+		/* if any of the arguments is a valid path, we treat them all as files */
+		for (i = 0, count = command_arg_count (ctx); !fileargs && i < count; ++i) {
+			command_arg_string_get (ctx, i, &path);
+			fileargs = fileargs || guessfile (path);
+		}
+	}
+
 	if (fileargs) {
 		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
 			GList *files = NULL, *it;
