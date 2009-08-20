@@ -414,16 +414,13 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	cookie = xmmsc_write_msg_to_ipc (c, msg);
 
-	switch (xmms_ipc_msg_get_cmd (msg)) {
-		case XMMS_IPC_CMD_SIGNAL:
+	type = XMMSC_RESULT_CLASS_DEFAULT;
+	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL) {
+		if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
 			type = XMMSC_RESULT_CLASS_SIGNAL;
-			break;
-		case XMMS_IPC_CMD_BROADCAST:
+		} else if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
 			type = XMMSC_RESULT_CLASS_BROADCAST;
-			break;
-		default:
-			type = XMMSC_RESULT_CLASS_DEFAULT;
-			break;
+		}
 	}
 
 	return xmmsc_result_new (c, type, cookie);
