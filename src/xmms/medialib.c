@@ -147,7 +147,7 @@ xmms_medialib_destroy (xmms_object_t *object)
 	g_hash_table_destroy (mlib->sources);
 	g_mutex_free (global_medialib_session_mutex);
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_PLAYBACK);
 }
 
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
