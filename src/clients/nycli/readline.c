@@ -20,6 +20,9 @@
 #include "utils.h"
 #include "status.h"
 #include "cli_infos.h"
+#include "cmdnames.h"
+
+#include "command_trie.h"
 
 static gchar *readline_keymap;
 static cli_infos_t *readline_cli_infos;
@@ -83,6 +86,81 @@ filename_dequoting (char *text, int quote_char)
 	return unquoted;
 }
 
+
+/* Wanted behaviour (no auto-complete):
+ * x<TAB> =>
+ * <TAB> => [] / add, clear, pause, play, playlist, ...
+ *  <TAB> => [ ] / add, clear, pause, play, playlist, ...
+ * a<TAB> => [add ]
+ * p<TAB> => [p] / pause, play, playlist, etc
+ * pa<TAB> => [pause]
+ * pla<TAB> => [play] / play, playlist
+ * pla <TAB> => [pla ]
+ * play<TAB> => [play] / play, playlist
+ * playl<TAB> => [playlist ]
+ * playlist<TAB> => [playlist ]
+ * playlist <TAB> => [playlist ] / clear, config, list, sort, ...
+   playlist  <TAB> => [playlist  ] / clear, config, list, sort, ...
+ FIXME: ^^^ FAILS currently, need deeper fix in command_trie.c I think
+ * playlist c<TAB> => [playlist c] / clear, config
+ * playlist clear<TAB> => [playlist clear ]
+ * playlist clear <TAB> => [playlist clear ] / <args>
+   playlist x<TAB> => [playlist x]
+ * add <TAB> => [add ] / <args>
+ * play <TAB> => [play ] / <args>
+ * play more<TAB> => [play more] / <args>
+ * play more <TAB> => [play more ] / <args>
+ */
+
+static gchar *
+command_tab_completion (const gchar *text, gint state)
+{
+	static GList *suffixes;
+	static gint count;
+	static command_trie_match_type_t match;
+
+	/* The first time, compute the list of valid suffixes for the input */
+	if (!state) {
+		command_action_t *action;
+		gchar **args, **tokens;
+		gboolean auto_complete;
+		gchar *buffer = rl_line_buffer;
+
+		auto_complete = configuration_get_boolean (readline_cli_infos->config,
+		                                           "AUTO_UNIQUE_COMPLETE");
+		suffixes = NULL;
+		while (*buffer == ' ' && *buffer != '\0') ++buffer; /* skip initial spaces */
+		args = tokens = g_strsplit (buffer, " ", 0);
+		count = g_strv_length (tokens);
+		match = command_trie_find (readline_cli_infos->commands, &args, &count,
+		                           auto_complete, &action, &suffixes);
+		g_strfreev (tokens);
+	}
+
+	/* Return each valid suffix, one by one, on subsequent calls */
+	while (suffixes) {
+		gchar *suffix = NULL, *s;
+		gint len;
+
+		s = (gchar *) suffixes->data;
+		len = strlen (text) + strlen (s);
+
+		if (len > 0 && (count == 0 || (match == COMMAND_TRIE_MATCH_NONE && count <= 1))) {
+			suffix = (gchar *) malloc (len + 1);
+			snprintf (suffix, len + 1, "%s%s", text, s);
+		}
+
+		g_free (s);
+		suffixes = g_list_delete_link (suffixes, suffixes);
+
+		if (suffix != NULL) {
+			return suffix;
+		}
+	}
+
+	return NULL;
+}
+
 void
 readline_init (cli_infos_t *infos)
 {
@@ -98,6 +176,7 @@ readline_init (cli_infos_t *infos)
 	rl_completer_quote_characters = "\"'";
 	rl_completer_word_break_characters = " \t\n\"\'";
 	rl_char_is_quoted_p = char_is_quoted;
+	rl_completion_entry_function = command_tab_completion;
 }
 
 void

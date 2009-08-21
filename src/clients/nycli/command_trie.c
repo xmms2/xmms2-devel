@@ -16,6 +16,8 @@
 
 #include "command_trie.h"
 
+#define MAX_COMPLETION 256
+
 typedef struct command_trie_match_St command_trie_match_t;
 struct command_trie_match_St {
 	command_trie_match_type_t type;
@@ -34,6 +36,8 @@ static command_trie_t* command_trie_subtrie_insert (command_trie_t* node, gchar 
 static gboolean command_trie_action_set (command_trie_t* node, command_action_t *action);
 static gint command_trie_elem_cmp (gconstpointer elem, gconstpointer udata);
 static command_trie_t* command_trie_find_leaf (command_trie_t *trie);
+static GList* command_trie_find_completions (command_trie_t *trie);
+static GList* command_trie_find_completions_recurse (command_trie_t *trie, gchar *buf, gint offset, GList *res);
 
 
 static gint
@@ -276,15 +280,23 @@ command_trie_find_leaf (command_trie_t *trie)
 	return leaf;
 }
 
+/* Given a trie node, try to find a path to a match leaf using the
+ * given input string.
+ * If auto_complete is TRUE, the input string only needs to be a prefix
+ * to a unique path to a match leaf.
+ */
 static command_trie_t *
 command_trie_find_node (command_trie_t *trie, gchar *input,
-                        gboolean auto_complete)
+                        gboolean auto_complete, GList **completions)
 {
 	command_trie_t *node = NULL;
 	GList *l;
 
 	/* FIXME: If this happens when a parent command is given, make it nice! */
 	if (input == NULL) {
+		if (completions) {
+			*completions = command_trie_find_completions (trie);
+		}
 		return NULL;
 	}
 
@@ -295,31 +307,47 @@ command_trie_find_node (command_trie_t *trie, gchar *input,
 		} else if (auto_complete) {
 			node = command_trie_find_leaf (trie);
 		}
+		if (completions) {
+			*completions = command_trie_find_completions (trie);
+		}
 	} else {
 		/* Recurse in next trie node */
 		l = g_list_find_custom (trie->next, input, command_trie_elem_cmp);
 		if (l != NULL) {
 			node = command_trie_find_node ((command_trie_t *) l->data, input + 1,
-			                               auto_complete);
+			                               auto_complete, completions);
 		}
 	}
 
 	return node;
 }
 
+/* Given a command trie, look up the action that matches the input
+ * passed as an array of input strings (typically argv).  The input
+ * array and number of items in the array (num) are passed as
+ * pointers, such that they are updated to the position of the
+ * matched action.
+ * The matching action (if any) is stored in the action pointer, and
+ * the state of the matching is returned by the function:
+ * NONE    - command mismatch
+ * ACTION  - matched an action, arguments might remain in input
+ * SUBTRIE - matched a "parent command", with available subcommands
+ *
+ * If auto_complete is TRUE, unambiguous prefixes of commands are
+ * automatically matched.
+ *
+ * If completions is not NULL, a list of possible completions is
+ * stored in it.
+ */
 command_trie_match_type_t
 command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
-                   gboolean auto_complete, command_action_t **action)
+                   gboolean auto_complete, command_action_t **action,
+                   GList **completions)
 {
 	command_trie_t *node;
 	command_trie_match_type_t retval = COMMAND_TRIE_MATCH_NONE;
 
-	/* End recursion if no argument */
-	if (*num == 0) {
-		return retval;
-	}
-
-	if ((node = command_trie_find_node (trie, **input, auto_complete))) {
+	if ((node = command_trie_find_node (trie, **input, auto_complete, completions))) {
 		(*input) ++;
 		(*num) --;
 		if (node->match.type == COMMAND_TRIE_MATCH_ACTION) {
@@ -331,10 +359,49 @@ command_trie_find (command_trie_t *trie, gchar ***input, gint *num,
 				retval = COMMAND_TRIE_MATCH_SUBTRIE;
 			} else {
 				retval = command_trie_find (node->match.subtrie, input, num,
-				                            auto_complete, action);
+				                            auto_complete, action, completions);
 			}
 		}
 	}
 
 	return retval;
+}
+
+
+/* Find all the string paths leading to a valid matching leaf from the
+ * given trie node.
+ */
+static GList *
+command_trie_find_completions (command_trie_t *trie)
+{
+	gchar buf[MAX_COMPLETION];
+	GList *res = command_trie_find_completions_recurse (trie, buf, 0, NULL);
+	return g_list_reverse (res);
+}
+
+/* Recurse in children of the given trie node and add all paths
+ * leading to a valid matching leaf to the res list.
+ * buf is used as history of the parent string path, and offset points to
+ * the depth of the current trie node.
+ */
+static GList *
+command_trie_find_completions_recurse (command_trie_t *trie, gchar *buf,
+                                       gint offset, GList *res)
+{
+	GList *l;
+
+	/* add valid match to the list */
+	if (trie->match.type != COMMAND_TRIE_MATCH_NONE) {
+		buf[offset] = '\0';
+		res = g_list_prepend (res, g_strdup (buf));
+	}
+
+	/* recurse in all children nodes */
+	for (l = trie->next; l && offset < MAX_COMPLETION; l = g_list_next (l)) {
+		command_trie_t *t = (command_trie_t *) l->data;
+		buf[offset] = t->c;
+		res = command_trie_find_completions_recurse (t, buf, offset + 1, res);
+	}
+
+	return res;
 }

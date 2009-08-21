@@ -2279,7 +2279,7 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args,
 	                                                    "AUTO_UNIQUE_COMPLETE");
 
 	match = command_trie_find (infos->commands, &argv, &argc,
-	                           auto_complete, &action);
+	                           auto_complete, &action, NULL);
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {
