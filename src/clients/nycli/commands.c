@@ -487,6 +487,11 @@ create_column_display (cli_infos_t *infos, command_context_t *ctx,
 	column_display_t *coldisp;
 
 	coldisp = column_display_init (infos);
+
+	column_display_set_list_marker (coldisp,
+	                                configuration_get_string (infos->config,
+	                                                          "PLAYLIST_MARKER"));
+
 	command_flag_stringlist_get (ctx, "columns", &columns);
 	if (columns) {
 		fill_column_display (infos, coldisp, columns);
