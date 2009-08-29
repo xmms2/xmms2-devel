@@ -1232,6 +1232,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				}
+				pos++; /* next insert at next pos, to keep order */
 				g_free (entry->url);
 				g_free (entry);
 			}
