@@ -555,12 +555,12 @@ cdef class CollectionOperands:
 	def __iter__(self):
 		return iter(self.pylist)
 
-	def append(self, Collection op):
+	def append(self, Collection op not None):
 		"""Append an operand"""
 		xmmsv_coll_add_operand(self.coll, op.coll)
 		self.pylist.append(op)
 		
-	def remove(self, Collection op):
+	def remove(self, Collection op not None):
 		"""Remove an operand"""
 		self.pylist.remove(op)
 		xmmsv_coll_remove_operand(self.coll, op.coll)
