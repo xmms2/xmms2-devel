@@ -4,9 +4,9 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     if not conf.check_cfg(package="libavcodec", uselib_store="avcodec", args="--cflags --libs"):
         return False
-    if conf.check_cc(header_name="avcodec.h", uselib="avcodec", type="shlib"):
+    if conf.check_cc(header_name="avcodec.h", uselib="avcodec", type="cshlib"):
         return True
-    if conf.check_cc(header_name="libavcodec/avcodec.h", uselib="avcodec", type="shlib"):
+    if conf.check_cc(header_name="libavcodec/avcodec.h", uselib="avcodec", type="cshlib"):
         return True
     return False
 
