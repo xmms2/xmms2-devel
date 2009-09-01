@@ -39,6 +39,7 @@ typedef enum xmms_stream_type_key_E {
 struct xmms_stream_type_St;
 typedef struct xmms_stream_type_St xmms_stream_type_t;
 
+#define XMMS_STREAM_TYPE_PRIORITY_FALLBACK 40
 #define XMMS_STREAM_TYPE_PRIORITY_DEFAULT 50
 
 const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
