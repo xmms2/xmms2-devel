@@ -293,7 +293,7 @@ def configure(conf):
         # make a copy so it can be restored if check fails
         T = conf.env["CCFLAGS"][:]
         conf.env["CCFLAGS"] += ["-W%s" % warning]
-        if not conf.check_cc(fragment="int X;", type="objects", msg="Checking if warning '%s' is supported" % warning, mandatory=0):
+        if not conf.check_cc(fragment="int X;", type="cc", msg="Checking if warning '%s' is supported" % warning, mandatory=0):
             conf.env["CCFLAGS"] = T
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
