@@ -174,7 +174,7 @@ xmms_ipc_usocket_server_init (const xmms_url_t *url)
 	}
 
 	saddr.sun_family = AF_UNIX;
-	snprintf (saddr.sun_path, 108, "/%s", url->path);
+	snprintf (saddr.sun_path, sizeof (saddr.sun_path), "/%s", url->path);
 
 	if (access (saddr.sun_path, F_OK) == 0) {
 		if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) != -1) {
