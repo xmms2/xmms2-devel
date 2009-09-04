@@ -594,10 +594,10 @@ main (int argc, char **argv)
 		*tmp = '\0';
 	}
 
-	putenv (g_strdup_printf ("XMMS_PATH=%s", default_path));
+	g_setenv ("XMMS_PATH", default_path, TRUE);
 
 	/* Also put the full path for clients that understands */
-	putenv (g_strdup_printf ("XMMS_PATH_FULL=%s", ipcpath));
+	g_setenv("XMMS_PATH_FULL", ipcpath, TRUE);
 
 	tmp = XMMS_BUILD_PATH ("shutdown.d");
 	cv = xmms_config_property_register ("core.shutdownpath",
