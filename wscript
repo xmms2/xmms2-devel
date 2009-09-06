@@ -219,20 +219,20 @@ def _configure_plugins(conf):
 def _output_summary(enabled_plugins, disabled_plugins,
                     enabled_optionals, disabled_optionals,
                     output_plugins):
-    print("\nOptional configuration:\n======================")
-    sys.stdout.write("Enabled: ")
+    Utils.pprint('Normal', "\nOptional configuration:\n======================")
+    Utils.pprint('Normal', "Enabled: ", sep='')
     Utils.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
-    sys.stdout.write("Disabled: ")
+    Utils.pprint('Normal', "Disabled: ", sep='')
     Utils.pprint('BLUE', ", ".join(sorted(disabled_optionals)))
-    print("\nPlugins configuration:\n======================")
+    Utils.pprint('Normal', "\nPlugins configuration:\n======================")
 
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
 
-    print("Output:")
+    Utils.pprint('Normal', "Output:")
     Utils.pprint('BLUE', ", ".join(sorted(output_plugins)))
-    print("XForm/Other:")
+    Utils.pprint('Normal', "XForm/Other:")
     Utils.pprint('BLUE', ", ".join(sorted(enabled_plugins)))
-    print("Disabled:")
+    Utils.pprint('Normal', "Disabled:")
     Utils.pprint('BLUE', ", ".join(sorted(disabled_plugins)))
 
 def configure(conf):
