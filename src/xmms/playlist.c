@@ -848,6 +848,7 @@ xmms_playlist_client_insert_id (xmms_playlist_t *playlist, const gchar *plname,
 	if (!xmms_medialib_check_id (file)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "That is not a valid medialib id!");
+		return;
 	}
 
 	xmms_playlist_insert_entry (playlist, plname, pos, file, err);
