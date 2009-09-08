@@ -400,10 +400,11 @@ def configure(conf):
                     'consider installing the WSPiApi.h header for ' +
                     'compatibility. It is provided by the Platform SDK.')
 
-        conf.env['CCDEFINES_socket'] += [
+        conf.env['CCDEFINES'] += [
             '_WIN32_WINNT=0x%02x%02x' % (major, minor),
-            'HAVE_WINSOCK2', 1
+            'HAVE_WINSOCK2=1'
         ]
+        conf.env['CXXDEFINES'] = conf.env['CCDEFINES']
 
         conf.env['socket_impl'] = 'wsock32'
     # Default POSIX sockets

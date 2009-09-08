@@ -14,7 +14,7 @@ def build(bld):
     """.split()
 
     if bld.env["util_impl"] == "win32":
-        obj.source += ["utils_win32"]
+        obj.source += ["utils_win32.c"]
     else:
         obj.source += ["utils_unix.c"]
 
