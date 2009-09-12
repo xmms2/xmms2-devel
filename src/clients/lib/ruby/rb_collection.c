@@ -394,17 +394,21 @@ c_attrs_delete (VALUE self, VALUE key)
 }
 
 static void
-attr_each (const char *key, const char *value, void *udata)
+attr_each (const char *key, xmmsv_t *value, void *udata)
 {
+	const char *s;
+
+	xmmsv_get_string (value, &s);
+
 	switch (XPOINTER_TO_INT (udata)) {
 		case EACH_PAIR:
-			rb_yield_values (2, rb_str_new2 (key), rb_str_new2 (value));
+			rb_yield_values (2, rb_str_new2 (key), rb_str_new2 (s));
 			break;
 		case EACH_KEY:
 			rb_yield_values (1, rb_str_new2 (key));
 			break;
 		case EACH_VALUE:
-			rb_yield_values (1, rb_str_new2 (value));
+			rb_yield_values (1, rb_str_new2 (s));
 			break;
 	}
 }
@@ -413,13 +417,16 @@ static VALUE
 c_attrs_each (VALUE self)
 {
 	RbCollection *coll = NULL;
+	xmmsv_t *attributes;
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsc_coll_attribute_foreach (coll->real, attr_each,
-	                               XINT_TO_POINTER (EACH_PAIR));
+	attributes = xmmsv_coll_attributes_get (coll->real);
+
+	xmmsv_dict_foreach (attributes, attr_each,
+	                    XINT_TO_POINTER (EACH_PAIR));
 
 	return self;
 }
@@ -428,13 +435,16 @@ static VALUE
 c_attrs_each_key (VALUE self)
 {
 	RbCollection *coll = NULL;
+	xmmsv_t *attributes;
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsc_coll_attribute_foreach (coll->real, attr_each,
-	                               XINT_TO_POINTER (EACH_KEY));
+	attributes = xmmsv_coll_attributes_get (coll->real);
+
+	xmmsv_dict_foreach (attributes, attr_each,
+	                    XINT_TO_POINTER (EACH_KEY));
 
 	return self;
 }
@@ -443,13 +453,16 @@ static VALUE
 c_attrs_each_value (VALUE self)
 {
 	RbCollection *coll = NULL;
+	xmmsv_t *attributes;
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsc_coll_attribute_foreach (coll->real, attr_each,
-	                               XINT_TO_POINTER (EACH_VALUE));
+	attributes = xmmsv_coll_attributes_get (coll->real);
+
+	xmmsv_dict_foreach (attributes, attr_each,
+	                    XINT_TO_POINTER (EACH_VALUE));
 
 	return self;
 }
