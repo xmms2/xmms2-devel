@@ -16,7 +16,6 @@ TaskGen.declare_chain(
 	install = 'LUADIR', # env variable
 )
 
-@taskgen
 @feature('lua')
 def init_lua(self):
 	self.default_chmod = O755

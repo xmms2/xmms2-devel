@@ -8,9 +8,10 @@ these constants are somewhat public, try not to mess them
 maintainer: the version number is updated from the top-level wscript file
 """
 
-# do not touch these two lines, they are updated automatically
-HEXVERSION = 0x10502
-WAFVERSION="1.5.2"
+# do not touch these three lines, they are updated automatically
+HEXVERSION = 0x105010
+WAFVERSION="1.5.10"
+WAFREVISION = "6794M"
 ABI = 7
 
 # permissions
@@ -65,4 +66,11 @@ LOG_FORMAT = "%(asctime)s %(c1)s%(zone)s%(c2)s %(message)s"
 HOUR_FORMAT = "%H:%M:%S"
 
 TEST_OK = True
+
+CFG_FILES = 'cfg_files'
+
+# positive '->' install
+# negative '<-' uninstall
+INSTALL = 1337
+UNINSTALL = -1337
 

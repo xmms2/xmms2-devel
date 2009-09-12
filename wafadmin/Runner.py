@@ -8,8 +8,6 @@ import sys, random, time, threading, traceback
 try: from Queue import Queue
 except ImportError: from queue import Queue
 import Build, Utils, Logs, Options
-try: import pproc
-except: import subprocess as pproc
 from Logs import debug, error
 from Constants import *
 
@@ -66,9 +64,9 @@ class TaskConsumer(threading.Thread):
 			else:
 				try:
 					tsk.post_run()
-				except OSError:
-					tsk.hasrun = MISSING
-				except:
+				except Utils.WafError:
+					pass
+				except Exception:
 					tsk.err_msg = Utils.ex_stack()
 					tsk.hasrun = EXCEPTION
 				else:
@@ -89,6 +87,7 @@ class Parallel(object):
 		self.numjobs = j
 
 		self.manager = bld.task_manager
+		self.manager.current_group = 0
 
 		self.total = self.manager.total()
 
@@ -104,7 +103,6 @@ class Parallel(object):
 		self.out = Queue(0)
 
 		self.count = 0 # tasks not in the producer area
-		self.stuck = 0
 
 		self.processed = 1 # progress indicator
 
@@ -130,7 +128,7 @@ class Parallel(object):
 	def refill_task_list(self):
 		"called to set the next group of tasks"
 
-		while self.count > self.numjobs + GAP or self.count > self.maxjobs:
+		while self.count > self.numjobs + GAP or self.count >= self.maxjobs:
 			self.get_out()
 
 		while not self.outstanding:
@@ -141,7 +139,8 @@ class Parallel(object):
 				self.outstanding += self.frozen
 				self.frozen = []
 			elif not self.count:
-				(self.maxjobs, tmp) = self.manager.get_next_set()
+				(jobs, tmp) = self.manager.get_next_set()
+				if jobs != None: self.maxjobs = jobs
 				if tmp: self.outstanding += tmp
 				break
 
@@ -181,6 +180,7 @@ class Parallel(object):
 				# if the task is marked as "run", just skip it
 				self.processed += 1
 				self.manager.add_finished(tsk)
+				continue
 
 			try:
 				st = tsk.runnable_status()

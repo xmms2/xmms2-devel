@@ -18,34 +18,50 @@ def add_marshal_file(self, filename, prefix):
 	self.meths.append('process_marshal')
 	self.marshal_list.append((filename, prefix))
 
-@taskgen
 @before('apply_core')
 def process_marshal(self):
-	for filename, prefix in getattr(self, 'marshal_list', []):
-		node = self.path.find_resource(filename)
+	for f, prefix in getattr(self, 'marshal_list', []):
+		node = self.path.find_resource(f)
 
 		if not node:
-			raise Utils.WafError('file not found ' + filename)
+			raise Utils.WafError('file not found %r' % f)
 
-		# Generate the header
-		header_env = self.env.copy()
-		header_env['GLIB_GENMARSHAL_PREFIX'] = prefix
-		header_env['GLIB_GENMARSHAL_MODE'] = '--header'
-		task = self.create_task('glib_genmarshal', header_env)
-		task.set_inputs(node)
-		task.set_outputs(node.change_ext('.h'))
+		h_node = node.change_ext('.h')
+		c_node = node.change_ext('.c')
 
-		# Generate the body
-		body_env = self.env.copy()
-		body_env['GLIB_GENMARSHAL_PREFIX'] = prefix
-		body_env['GLIB_GENMARSHAL_MODE'] = '--body'
-		task = self.create_task('glib_genmarshal', body_env)
-		task.set_inputs(node)
-		task.set_outputs(node.change_ext('.c'))
-		# the c file generated will be processed too
-		outnode = node.change_ext('.c')
-		self.allnodes.append(outnode)
+		task = self.create_task('glib_genmarshal', node, [h_node, c_node])
+		task.env.GLIB_GENMARSHAL_PREFIX = prefix
+	self.allnodes.append(c_node)
 
+def genmarshal_func(self):
+
+	bld = self.inputs[0].__class__.bld
+
+	get = self.env.get_flat
+	cmd1 = "%s %s --prefix=%s --header > %s" % (
+		get('GLIB_GENMARSHAL'),
+		self.inputs[0].srcpath(self.env),
+		get('GLIB_GENMARSHAL_PREFIX'),
+		self.outputs[0].abspath(self.env)
+	)
+
+	ret = bld.exec_command(cmd1)
+	if ret: return ret
+
+	#print self.outputs[1].abspath(self.env)
+	f = open(self.outputs[1].abspath(self.env), 'wb')
+	c = '''#include "%s"\n''' % self.outputs[0].name
+	f.write(c)
+	f.close()
+
+	cmd2 = "%s %s --prefix=%s --body >> %s" % (
+		get('GLIB_GENMARSHAL'),
+		self.inputs[0].srcpath(self.env),
+		get('GLIB_GENMARSHAL_PREFIX'),
+		self.outputs[1].abspath(self.env)
+	)
+	ret = Utils.exec_command(cmd2)
+	if ret: return ret
 
 #
 # glib-mkenums
@@ -87,13 +103,12 @@ def add_enums(self, source='', target='',
 	                        'value-tail': value_tail,
 	                        'comments': comments})
 
-@taskgen
 @before('apply_core')
 def process_enums(self):
 	for enum in getattr(self, 'enums_list', []):
-		# temporary
-		env = self.env.copy()
-		task = self.create_task('glib_mkenums', env)
+		task = self.create_task('glib_mkenums')
+		env = task.env
+
 		inputs = []
 
 		# process the source
@@ -102,7 +117,7 @@ def process_enums(self):
 			raise Utils.WafError('missing source ' + str(enum))
 		source_list = [self.path.find_resource(k) for k in source_list]
 		inputs += source_list
-		env['GLIB_MKENUMS_SOURCE'] = [k.abspath(env) for k in source_list]
+		env['GLIB_MKENUMS_SOURCE'] = [k.srcpath(env) for k in source_list]
 
 		# find the target
 		if not enum['target']:
@@ -137,15 +152,11 @@ def process_enums(self):
 		task.set_inputs(inputs)
 		task.set_outputs(tgt_node)
 
-
-
-Task.simple_task_type('glib_genmarshal',
-	'${GLIB_GENMARSHAL} ${SRC} --prefix=${GLIB_GENMARSHAL_PREFIX} ${GLIB_GENMARSHAL_MODE} > ${TGT}',
-	color='BLUE', before='cc')
+Task.task_type_from_func('glib_genmarshal', func=genmarshal_func, vars=['GLIB_GENMARSHAL_PREFIX', 'GLIB_GENMARSHAL'],
+	color='BLUE', before='cc cxx')
 Task.simple_task_type('glib_mkenums',
 	'${GLIB_MKENUMS} ${GLIB_MKENUMS_OPTIONS} ${GLIB_MKENUMS_SOURCE} > ${GLIB_MKENUMS_TARGET}',
-	color='PINK', before='cc')
-
+	color='PINK', before='cc cxx')
 
 def detect(conf):
 	glib_genmarshal = conf.find_program('glib-genmarshal', var='GLIB_GENMARSHAL')

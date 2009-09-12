@@ -8,8 +8,8 @@ Custom objects:
  - copy a file somewhere else
 """
 
-import shutil, re, os, types
-import TaskGen, Node, Task, Utils, Build, pproc, Constants
+import shutil, re, os
+import TaskGen, Node, Task, Utils, Build, Constants
 from TaskGen import feature, taskgen, after, before
 from Logs import debug
 
@@ -20,7 +20,7 @@ def copy_func(tsk):
 	outfile = tsk.outputs[0].abspath(env)
 	try:
 		shutil.copy2(infile, outfile)
-	except OSError, IOError:
+	except (OSError, IOError):
 		return 1
 	else:
 		if tsk.chmod: os.chmod(outfile, tsk.chmod)
@@ -35,7 +35,6 @@ class cmd_taskgen(TaskGen.task_gen):
 	def __init__(self, *k, **kw):
 		TaskGen.task_gen.__init__(self, *k, **kw)
 
-@taskgen
 @feature('cmd')
 def apply_cmd(self):
 	"call a command everytime"
@@ -51,7 +50,6 @@ class copy_taskgen(TaskGen.task_gen):
 	def __init__(self, *k, **kw):
 		TaskGen.task_gen.__init__(self, *k, **kw)
 
-@taskgen
 @feature('copy')
 @before('apply_core')
 def apply_copy(self):
@@ -71,9 +69,7 @@ def apply_copy(self):
 		# TODO the file path may be incorrect
 		newnode = self.path.find_or_declare(target)
 
-		tsk = self.create_task('copy')
-		tsk.set_inputs(node)
-		tsk.set_outputs(newnode)
+		tsk = self.create_task('copy', node, newnode)
 		tsk.fun = self.fun
 		tsk.chmod = self.chmod
 
@@ -90,36 +86,28 @@ def subst_func(tsk):
 	infile = tsk.inputs[0].abspath(env)
 	outfile = tsk.outputs[0].abspath(env)
 
-	file = open(infile, 'r')
-	code = file.read()
-	file.close()
+	code = Utils.readf(infile)
 
 	# replace all % by %% to prevent errors by % signs in the input file while string formatting
 	code = code.replace('%', '%%')
 
 	s = m4_re.sub(r'%(\1)s', code)
 
-	dict = tsk.dict
-	if not dict:
+	di = tsk.dict or {}
+	if not di:
 		names = m4_re.findall(code)
 		for i in names:
-			if not env[i]: i = i.upper()
-			if env[i] and type(env[i]) is types.ListType :
-				dict[i] = " ".join(env[i])
-			else: dict[i] = env[i]
+			di[i] = env.get_flat(i) or env.get_flat(i.upper())
 
 	file = open(outfile, 'w')
-	file.write(s % dict)
+	file.write(s % di)
 	file.close()
 	if tsk.chmod: os.chmod(outfile, tsk.chmod)
-
-	return 0
 
 class subst_taskgen(TaskGen.task_gen):
 	def __init__(self, *k, **kw):
 		TaskGen.task_gen.__init__(self, *k, **kw)
 
-@taskgen
 @feature('subst')
 @before('apply_core')
 def apply_subst(self):
@@ -139,13 +127,19 @@ def apply_subst(self):
 		else:
 			newnode = node.change_ext('')
 
+		try:
+			self.dict = self.dict.get_merged_dict()
+		except AttributeError:
+			pass
+
 		if self.dict and not self.env['DICT_HASH']:
 			self.env = self.env.copy()
-			self.env['DICT_HASH'] = hash(str(self.dict)) # <- pretty sure it wont work (ita)
+			keys = list(self.dict.keys())
+			keys.sort()
+			lst = [self.dict[x] for x in keys]
+			self.env['DICT_HASH'] = str(Utils.h_list(lst))
 
-		tsk = self.create_task('copy')
-		tsk.set_inputs(node)
-		tsk.set_outputs(newnode)
+		tsk = self.create_task('copy', node, newnode)
 		tsk.fun = self.fun
 		tsk.dict = self.dict
 		tsk.dep_vars = ['DICT_HASH']
@@ -194,15 +188,6 @@ class output_file(cmd_arg):
 			return self.template % self.node.bldpath(env)
 
 class cmd_dir_arg(cmd_arg):
-	def __init__(self, name, template=None):
-		cmd_arg.__init__(self)
-		self.name = name
-		self.node = None
-		if template is None:
-			self.template = '%s'
-		else:
-			self.template = template
-
 	def find_node(self, base_path):
 		assert isinstance(base_path, Node.Node)
 		self.node = base_path.find_dir(self.name)
@@ -261,17 +246,17 @@ class command_output(Task.Task):
 				argv.append(arg.get_path(task.env, (task.cwd is not None)))
 
 		if task.stdin:
-			stdin = file(input_path(task.stdin, '%s'))
+			stdin = open(input_path(task.stdin, '%s'))
 		else:
 			stdin = None
 
 		if task.stdout:
-			stdout = file(output_path(task.stdout, '%s'), "w")
+			stdout = open(output_path(task.stdout, '%s'), "w")
 		else:
 			stdout = None
 
 		if task.stderr:
-			stderr = file(output_path(task.stderr, '%s'), "w")
+			stderr = open(output_path(task.stderr, '%s'), "w")
 		else:
 			stderr = None
 
@@ -286,14 +271,13 @@ class command_output(Task.Task):
 			os_env = os.environ
 		else:
 			os_env = task.os_env
-		command = pproc.Popen(argv, stdin=stdin, stdout=stdout, stderr=stderr, cwd=task.cwd, env=os_env)
+		command = Utils.pproc.Popen(argv, stdin=stdin, stdout=stdout, stderr=stderr, cwd=task.cwd, env=os_env)
 		return command.wait()
 
 class cmd_output_taskgen(TaskGen.task_gen):
 	def __init__(self, *k, **kw):
 		TaskGen.task_gen.__init__(self, *k, **kw)
 
-@taskgen
 @feature('command-output')
 def init_cmd_output(self):
 	Utils.def_attrs(self,
@@ -334,7 +318,6 @@ def init_cmd_output(self):
 		# if None, use the default environment variables unchanged
 		os_env = None)
 
-@taskgen
 @feature('command-output')
 @after('init_cmd_output')
 def apply_cmd_output(self):
@@ -371,7 +354,7 @@ use command_is_external=True''') % (self.command,)
 	if self.stdout is None:
 		stdout = None
 	else:
-		assert isinstance(self.stdout, basestring)
+		assert isinstance(self.stdout, str)
 		stdout = self.path.find_or_declare(self.stdout)
 		if stdout is None:
 			raise Utils.WafError("File %s not found" % (self.stdout,))
@@ -380,7 +363,7 @@ use command_is_external=True''') % (self.command,)
 	if self.stderr is None:
 		stderr = None
 	else:
-		assert isinstance(self.stderr, basestring)
+		assert isinstance(self.stderr, str)
 		stderr = self.path.find_or_declare(self.stderr)
 		if stderr is None:
 			raise Utils.WafError("File %s not found" % (self.stderr,))
@@ -389,7 +372,7 @@ use command_is_external=True''') % (self.command,)
 	if self.stdin is None:
 		stdin = None
 	else:
-		assert isinstance(self.stdin, basestring)
+		assert isinstance(self.stdin, str)
 		stdin = self.path.find_resource(self.stdin)
 		if stdin is None:
 			raise Utils.WafError("File %s not found" % (self.stdin,))

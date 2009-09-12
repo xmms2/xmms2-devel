@@ -63,21 +63,16 @@ def read_la_file(path):
 	file.close()
 	return dc
 
-@taskgen
 @feature("libtool")
 @after('apply_link')
 def apply_link_libtool(self):
 	if self.type != 'program':
 		linktask = self.link_task
-		latask = self.create_task('fakelibtool')
-		latask.set_inputs(linktask.outputs)
-		latask.set_outputs(linktask.outputs[0].change_ext('.la'))
-		self.latask = latask
+		self.latask = self.create_task('fakelibtool', linktask.outputs, linktask.outputs[0].change_ext('.la'))
 
-	if Options.commands['install'] or Options.commands['uninstall']:
-		Build.bld.install_files('PREFIX', 'lib', linktask.outputs[0].abspath(self.env), self.env)
+	if self.bld.is_install:
+		self.bld.install_files('${PREFIX}/lib', linktask.outputs[0], self.env)
 
-@taskgen
 @feature("libtool")
 @before('apply_core')
 def apply_libtool(self):
@@ -117,7 +112,7 @@ def apply_libtool(self):
 				continue
 			self.env.append_unique('LINKFLAGS', v)
 
-Task.task_type_from_func('fakelibtool', vars=fakelibtool_vardeps, func=fakelibtool_build, color='BLUE', after="cc_link cxx_link ar_link_static")
+Task.task_type_from_func('fakelibtool', vars=fakelibtool_vardeps, func=fakelibtool_build, color='BLUE', after="cc_link cxx_link static_link")
 
 class libtool_la_file:
 	def __init__ (self, la_filename):
@@ -244,19 +239,19 @@ class libtool_config:
 	def get_libs_only_L(self):
 		if not self.__libs: self.get_libs()
 		libs = self.__libs
-		libs = filter(lambda s: str(s).startswith('-L'), libs)
+		libs = [s for s in libs if str(s).startswith('-L')]
 		return libs
 
 	def get_libs_only_l(self):
 		if not self.__libs: self.get_libs()
 		libs = self.__libs
-		libs = filter(lambda s: str(s).startswith('-l'), libs)
+		libs = [s for s in libs if str(s).startswith('-l')]
 		return libs
 
 	def get_libs_only_other(self):
 		if not self.__libs: self.get_libs()
 		libs = self.__libs
-		libs = filter(lambda s: not (str(s).startswith('-L') or str(s).startswith('-l')), libs)
+		libs = [s for s in libs if not(str(s).startswith('-L')or str(s).startswith('-l'))]
 		return libs
 
 def useCmdLine():
@@ -307,7 +302,7 @@ nor: %prog --libs /usr/lib/libamarok.la'''
 	if len(args) != 1 and not options.versionNumber:
 		parser.error("incorrect number of arguments")
 	if options.versionNumber:
-		print "libtool-config version %s" % REVISION
+		print("libtool-config version %s" % REVISION)
 		return 0
 	ltf = libtool_config(args[0])
 	if options.debug:
@@ -323,7 +318,7 @@ nor: %prog --libs /usr/lib/libamarok.la'''
 		sys.exit(1)
 
 	def p(x):
-		print " ".join(x)
+		print(" ".join(x))
 	if options.libs: p(ltf.get_libs())
 	elif options.libs_only_l: p(ltf.get_libs_only_l())
 	elif options.libs_only_L: p(ltf.get_libs_only_L())

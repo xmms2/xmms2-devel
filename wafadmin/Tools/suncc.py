@@ -13,7 +13,7 @@ def find_scc(conf):
 	v = conf.env
 	cc = None
 	if v['CC']: cc = v['CC']
-	elif 'CC' in os.environ: cc = os.environ['CC']
+	elif 'CC' in conf.environ: cc = conf.environ['CC']
 	#if not cc: cc = conf.find_program('gcc', var='CC')
 	if not cc: cc = conf.find_program('cc', var='CC')
 	if not cc: conf.fatal('suncc was not found')
@@ -31,16 +31,16 @@ def find_scc(conf):
 def scc_common_flags(conf):
 	v = conf.env
 
-	# CPPFLAGS CCDEFINES _CCINCFLAGS _CCDEFFLAGS _LIBDIRFLAGS _LIBFLAGS
+	# CPPFLAGS CCDEFINES _CCINCFLAGS _CCDEFFLAGS
 
 	v['CC_SRC_F']            = ''
-	v['CC_TGT_F']            = '-c -o '
+	v['CC_TGT_F']            = ['-c', '-o', '']
 	v['CPPPATH_ST']          = '-I%s' # template for adding include paths
 
 	# linker
 	if not v['LINK_CC']: v['LINK_CC'] = v['CC']
 	v['CCLNK_SRC_F']         = ''
-	v['CCLNK_TGT_F']         = '-o '
+	v['CCLNK_TGT_F']         = ['-o', ''] # solaris hack, separate the -o from the target
 
 	v['LIB_ST']              = '-l%s' # template for adding libs
 	v['LIBPATH_ST']          = '-L%s' # template for adding libpaths
@@ -48,7 +48,7 @@ def scc_common_flags(conf):
 	v['STATICLIBPATH_ST']    = '-L%s'
 	v['CCDEFINES_ST']        = '-D%s'
 
-
+	v['SONAME_ST']           = '-Wl,-h -Wl,%s'
 	v['SHLIB_MARKER']        = '-Bdynamic'
 	v['STATICLIB_MARKER']    = '-Bstatic'
 
@@ -71,5 +71,6 @@ find_ar
 scc_common_flags
 cc_load_tools
 cc_add_flags
+link_add_flags
 '''
 

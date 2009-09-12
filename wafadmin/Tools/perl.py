@@ -3,7 +3,6 @@
 # andersg at 0x63.nu 2007
 
 import os
-import pproc
 import Task, Options, Utils
 from Configure import conf
 from TaskGen import extension, taskgen, feature, before
@@ -11,8 +10,7 @@ from TaskGen import extension, taskgen, feature, before
 xsubpp_str = '${PERL} ${XSUBPP} -noprototypes -typemap ${EXTUTILS_TYPEMAP} ${SRC} > ${TGT}'
 EXT_XS = ['.xs']
 
-@taskgen
-@before('apply_incpaths')
+@before('apply_incpaths', 'apply_type_vars', 'apply_lib_vars')
 @feature('perlext')
 def init_perlext(self):
 	self.uselib = self.to_list(getattr(self, 'uselib', ''))
@@ -20,17 +18,13 @@ def init_perlext(self):
 	if not 'PERLEXT' in self.uselib: self.uselib.append('PERLEXT')
 	self.env['shlib_PATTERN'] = self.env['perlext_PATTERN']
 
-
 @extension(EXT_XS)
 def xsubpp_file(self, node):
-	gentask = self.create_task('xsubpp')
-	gentask.set_inputs(node)
 	outnode = node.change_ext('.c')
-	gentask.set_outputs(outnode)
-
+	self.create_task('xsubpp', node, outnode)
 	self.allnodes.append(outnode)
 
-Task.simple_task_type('xsubpp', xsubpp_str, color='BLUE', before="cc cxx")
+Task.simple_task_type('xsubpp', xsubpp_str, color='BLUE', before='cc cxx', shell=False)
 
 @conf
 def check_perl_version(conf, minver=None):
@@ -79,7 +73,7 @@ def check_perl_module(conf, module):
 	conf.check_perl_module("Some::Module 2.92")
 	"""
 	cmd = [conf.env['PERL'], '-e', 'use %s' % module]
-	r = pproc.call(cmd, stdout=pproc.PIPE, stderr=pproc.PIPE) == 0
+	r = Utils.pproc.call(cmd, stdout=Utils.pproc.PIPE, stderr=Utils.pproc.PIPE) == 0
 	conf.check_message("perl module %s" % module, "", r)
 	return r
 
@@ -98,12 +92,15 @@ def check_perl_ext_devel(conf):
 
 	perl = conf.env['PERL']
 
-	conf.env["LINKFLAGS_PERLEXT"] = Utils.cmd_output(perl + " -MConfig -e'print $Config{lddlflags}'")
-	conf.env["CPPPATH_PERLEXT"] = Utils.cmd_output(perl + " -MConfig -e'print \"$Config{archlib}/CORE\"'")
-	conf.env["CCFLAGS_PERLEXT"] = Utils.cmd_output(perl + " -MConfig -e'print \"$Config{ccflags} $Config{cccdlflags}\"'")
+	def read_out(cmd):
+		return Utils.to_list(Utils.cmd_output(perl + cmd))
 
-	conf.env["XSUBPP"] = Utils.cmd_output(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/xsubpp$Config{exe_ext}\"'")
-	conf.env["EXTUTILS_TYPEMAP"] = Utils.cmd_output(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/typemap\"'")
+	conf.env["LINKFLAGS_PERLEXT"] = read_out(" -MConfig -e'print $Config{lddlflags}'")
+	conf.env["CPPPATH_PERLEXT"] = read_out(" -MConfig -e'print \"$Config{archlib}/CORE\"'")
+	conf.env["CCFLAGS_PERLEXT"] = read_out(" -MConfig -e'print \"$Config{ccflags} $Config{cccdlflags}\"'")
+
+	conf.env["XSUBPP"] = read_out(" -MConfig -e'print \"$Config{privlib}/ExtUtils/xsubpp$Config{exe_ext}\"'")
+	conf.env["EXTUTILS_TYPEMAP"] = read_out(" -MConfig -e'print \"$Config{privlib}/ExtUtils/typemap\"'")
 
 	if not getattr(Options.options, 'perlarchdir', None):
 		conf.env["ARCHDIR_PERL"] = Utils.cmd_output(perl + " -MConfig -e'print $Config{sitearch}'")
@@ -113,9 +110,6 @@ def check_perl_ext_devel(conf):
 	conf.env['perlext_PATTERN'] = '%s.' + Utils.cmd_output(perl + " -MConfig -e'print $Config{dlext}'")
 
 	return True
-
-def detect(conf):
-	pass
 
 def set_options(opt):
 	opt.add_option("--with-perl-binary", type="string", dest="perlbinary", help = 'Specify alternate perl binary', default=None)

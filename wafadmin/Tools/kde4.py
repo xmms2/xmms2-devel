@@ -10,23 +10,19 @@ class msgfmt_taskgen(TaskGen.task_gen):
 	def __init__(self, *k, **kw):
 		TaskGen.task_gen.__init__(self, *k, **kw)
 
-@taskgen
 @feature('msgfmt')
 def init_msgfmt(self):
 	#langs = '' # for example "foo/fr foo/br"
 	self.default_install_path = '${KDE4_LOCALE_INSTALL_DIR}'
 
-@taskgen
 @feature('msgfmt')
 @after('init_msgfmt')
 def apply_msgfmt(self):
 	for lang in self.to_list(self.langs):
 		node = self.path.find_resource(lang+'.po')
-		task = self.create_task('msgfmt')
-		task.set_inputs(node)
-		task.set_outputs(node.change_ext('.mo'))
+		task = self.create_task('msgfmt', node, node.change_ext('.mo'))
 
-		if not Options.is_install: continue
+		if not self.bld.is_install: continue
 		langname = lang.split('/')
 		langname = langname[-1]
 		task.install_path = self.install_path + os.sep + langname + os.sep + 'LC_MESSAGES'
@@ -46,9 +42,7 @@ def detect(conf):
 		except OSError: conf.fatal('could not open %s' % file)
 
 	try:
-		f = open(file, 'r')
-		txt = f.read()
-		f.close()
+		txt = Utils.readf(file)
 	except (OSError, IOError):
 		conf.fatal('could not read %s' % file)
 
@@ -76,5 +70,5 @@ def detect(conf):
 
 	conf.env['MSGFMT'] = conf.find_program('msgfmt')
 
-Task.simple_task_type('msgfmt', '${MSGFMT} ${SRC} -o ${TGT}', color='BLUE')
+Task.simple_task_type('msgfmt', '${MSGFMT} ${SRC} -o ${TGT}', color='BLUE', shell=False)
 

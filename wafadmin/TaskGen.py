@@ -21,7 +21,7 @@ Additionally, task_gen provides the method apply_core
 WARNING: subclasses must reimplement the clone method
 """
 
-import os, types, traceback, copy
+import os, traceback, copy
 import Build, Task, Utils, Logs, Options
 from Logs import debug, error, warn
 from Constants import *
@@ -36,6 +36,7 @@ typos = {
 'install_subdir':'install_path',
 'inst_var':'install_path',
 'inst_dir':'install_path',
+'feature':'features',
 }
 
 class register_obj(type):
@@ -82,13 +83,12 @@ class task_gen(object):
 	__metaclass__ = register_obj
 	mappings = {}
 	mapped = {}
-	prec = {}
-	traits = {}
+	prec = Utils.DefaultDict(list)
+	traits = Utils.DefaultDict(set)
 	classes = {}
-	idx = {}
 
 	def __init__(self, *kw, **kwargs):
-		self.prec = {}
+		self.prec = Utils.DefaultDict(list)
 		"map precedence of function names to call"
 		# so we will have to play with directed acyclic graphs
 		# detect cycles, etc
@@ -111,9 +111,6 @@ class task_gen(object):
 		self.default_chmod = O644
 		self.default_install_path = None
 
-		if Options.is_install:
-			self.inst_files = [] # lazy list of tuples representing the files to install
-
 		# kind of private, beware of what you put in it, also, the contents are consumed
 		self.allnodes = []
 
@@ -122,13 +119,15 @@ class task_gen(object):
 
 		self.path = self.bld.path # emulate chdir when reading scripts
 		self.name = '' # give a name to the target (static+shlib with the same targetname ambiguity)
-		self.bld.all_task_gen.append(self)
 
 		# provide a unique id
-		self.idx = task_gen.idx[self.path.id] = task_gen.idx.get(self.path.id, 0) + 1
+		self.idx = self.bld.idx[self.path.id] = self.bld.idx.get(self.path.id, 0) + 1
 
 		for key, val in kwargs.iteritems():
 			setattr(self, key, val)
+
+		self.bld.task_manager.add_task_gen(self)
+		self.bld.all_task_gen.append(self)
 
 	def __str__(self):
 		return ("<task_gen '%s' of type %s defined in %s>"
@@ -144,7 +143,7 @@ class task_gen(object):
 
 	def to_list(self, value):
 		"helper: returns a list"
-		if type(value) is types.StringType: return value.split()
+		if isinstance(value, str): return value.split()
 		else: return value
 
 	def apply(self):
@@ -154,7 +153,10 @@ class task_gen(object):
 		# add the methods listed in the features
 		self.features = Utils.to_list(self.features)
 		for x in self.features + ['*']:
-			keys.update(task_gen.traits.get(x, ()))
+			st = task_gen.traits[x]
+			if not st:
+				warn('feature %r does not exist - bind at least one method to it' % x)
+			keys.update(st)
 
 		# copy the precedence table
 		prec = {}
@@ -205,7 +207,11 @@ class task_gen(object):
 
 	def post(self):
 		"runs the code to create the tasks, do not subclass"
-		if not self.name: self.name = self.target
+		if not self.name:
+			if isinstance(self.target, list):
+				self.name = ' '.join(self.target)
+			else:
+				self.name = self.target
 
 		if getattr(self, 'posted', None):
 			#error("OBJECT ALREADY POSTED" + str( self))
@@ -220,8 +226,15 @@ class task_gen(object):
 			try: return task_gen.mappings[ext]
 			except KeyError: return None
 
-	def create_task(self, name, env=None):
-		task = Task.TaskBase.classes[name](env or self.env, generator=self)
+	# TODO waf 1.6: always set the environment
+	# TODO waf 1.6: create_task(self, name, inputs, outputs)
+	def create_task(self, name, src=None, tgt=None, env=None):
+		env = env or self.env
+		task = Task.TaskBase.classes[name](env.copy(), generator=self)
+		if src:
+			task.set_inputs(src)
+		if tgt:
+			task.set_outputs(tgt)
 		self.tasks.append(task)
 		return task
 
@@ -229,39 +242,44 @@ class task_gen(object):
 		return self.bld.name_to_obj(name, self.env)
 
 	def find_sources_in_dirs(self, dirnames, excludes=[], exts=[]):
-		"subclass if necessary"
-		lst = []
+		"""
+		The attributes "excludes" and "exts" must be lists to avoid the confusion
+		find_sources_in_dirs('a', 'b', 'c') <-> find_sources_in_dirs('a b c')
 
-		# validation: excludes and exts must be lists.
-		# the purpose: make sure a confused user didn't wrote
-		#  find_sources_in_dirs('a', 'b', 'c')
-		# instead of find_sources_in_dirs('a b c')
-		err_msg = "'%s' attribute must be a list.\n" \
-		"Directories should be given either as a string separated by spaces, or as a list."
-		not_a_list = lambda x: x and type(x) is not types.ListType
-		if not_a_list(excludes):
+		do not use absolute paths
+		do not use paths outside of the source tree
+		the files or folder beginning by . are not returned
+
+		# TODO: remove in Waf 1.6
+		"""
+
+		err_msg = "'%s' attribute must be a list"
+		if not isinstance(excludes, list):
 			raise Utils.WscriptError(err_msg % 'excludes')
-		if not_a_list(exts):
+		if not isinstance(exts, list):
 			raise Utils.WscriptError(err_msg % 'exts')
+
+		lst = []
 
 		#make sure dirnames is a list helps with dirnames with spaces
 		dirnames = self.to_list(dirnames)
 
-		ext_lst = exts or self.mappings.keys() + task_gen.mappings.keys()
+		ext_lst = exts or list(self.mappings.keys()) + list(task_gen.mappings.keys())
 
 		for name in dirnames:
 			anode = self.path.find_dir(name)
 
-			# validation:
-			# * don't use absolute path.
-			# * don't use paths outside the source tree.
 			if not anode or not anode.is_child_of(self.bld.srcnode):
 				raise Utils.WscriptError("Unable to use '%s' - either because it's not a relative path" \
 					 ", or it's not child of '%s'." % (name, self.bld.srcnode))
 
 			self.bld.rescan(anode)
-
 			for name in self.bld.cache_dir_contents[anode.id]:
+
+				# ignore hidden files
+				if name.startswith('.'):
+					continue
+
 				(base, ext) = os.path.splitext(name)
 				if ext in ext_lst and not name in lst and not name in excludes:
 					lst.append((anode.relpath_gen(self.path) or '.') + os.path.sep + name)
@@ -283,12 +301,10 @@ class task_gen(object):
 				setattr(newobj, x, copy.copy(getattr(self, x)))
 
 		newobj.__class__ = self.__class__
-		if type(env) is types.StringType:
+		if isinstance(env, str):
 			newobj.env = self.bld.all_envs[env].copy()
 		else:
 			newobj.env = env.copy()
-
-		self.bld.all_task_gen.append(newobj)
 
 		return newobj
 
@@ -311,10 +327,10 @@ class task_gen(object):
 
 def declare_extension(var, func):
 	try:
-		for x in var:
+		for x in Utils.to_list(var):
 			task_gen.mappings[x] = func
 	except:
-		raise Utils.WscriptError('declare extension takes either a list or a string %s' % str(var))
+		raise Utils.WscriptError('declare_extension takes either a list or a string %r' % var)
 	task_gen.mapped[func.__name__] = func
 
 def declare_order(*k):
@@ -323,19 +339,18 @@ def declare_order(*k):
 	for i in xrange(n):
 		f1 = k[i]
 		f2 = k[i+1]
-		try:
-			if not f1 in task_gen.prec[f2]: task_gen.prec[f2].append(f1)
-		except:
-			task_gen.prec[f2] = [f1]
+		if not f1 in task_gen.prec[f2]:
+			task_gen.prec[f2].append(f1)
 
-def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color='BLUE', install=0, before=[], after=[], decider=None, rule=None):
+def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color='BLUE',
+	install=0, before=[], after=[], decider=None, rule=None, scan=None):
 	"""
 	see Tools/flex.py for an example
 	while i do not like such wrappers, some people really do
 	"""
 
 	action = action or rule
-	if type(action) is types.StringType:
+	if isinstance(action, str):
 		act = Task.simple_task_type(name, action, color=color)
 	else:
 		act = Task.task_type_from_func(name, action, color=color)
@@ -343,18 +358,19 @@ def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color=
 	act.ext_out = tuple(Utils.to_list(ext_out))
 	act.before = Utils.to_list(before)
 	act.after = Utils.to_list(after)
+	act.scan = scan
 
 	def x_file(self, node):
 		if decider:
 			ext = decider(self, node)
-		elif type(ext_out) is types.StringType:
+		elif isinstance(ext_out, str):
 			ext = ext_out
 
-		if type(ext) is types.StringType:
+		if isinstance(ext, str):
 			out_source = node.change_ext(ext)
 			if reentrant:
 				self.allnodes.append(out_source)
-		elif type(ext) == types.ListType:
+		elif isinstance(ext, list):
 			out_source = [node.change_ext(x) for x in ext]
 			if reentrant:
 				for i in xrange(reentrant):
@@ -363,23 +379,16 @@ def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color=
 			# XXX: useless: it will fail on Utils.to_list above...
 			raise Utils.WafError("do not know how to process %s" % str(ext))
 
-		tsk = self.create_task(name)
-		tsk.set_inputs(node)
-		tsk.set_outputs(out_source)
+		tsk = self.create_task(name, node, out_source)
 
-		if Options.is_install and install:
+		if node.__class__.bld.is_install:
 			tsk.install = install
 
 	declare_extension(act.ext_in, x_file)
 
 def bind_feature(name, methods):
 	lst = Utils.to_list(methods)
-	try:
-		l = task_gen.traits[name]
-	except KeyError:
-		l = set()
-		task_gen.traits[name] = l
-	l.update(lst)
+	task_gen.traits[name].update(lst)
 
 """
 All the following decorators are registration decorators, i.e add an attribute to current class
@@ -389,6 +398,10 @@ For example:
    def sayHi(self):
         print("hi")
 Now taskgen.sayHi() may be called
+
+If python were really smart, it could infer itself the order of methods by looking at the
+attributes. A prerequisite for execution is to have the attribute set before.
+Intelligent compilers binding aspect-oriented programming and parallelization, what a nice topic for studies.
 """
 def taskgen(func):
 	setattr(task_gen, func.__name__, func)
@@ -397,47 +410,36 @@ def feature(*k):
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
 		for name in k:
-			try:
-				l = task_gen.traits[name]
-			except KeyError:
-				l = set()
-				task_gen.traits[name] = l
-			l.update([func.__name__])
+			task_gen.traits[name].update([func.__name__])
 		return func
 	return deco
 
 def before(*k):
 	def deco(func):
+		setattr(task_gen, func.__name__, func)
 		for fun_name in k:
-			try:
-				if not func.__name__ in task_gen.prec[fun_name]: task_gen.prec[fun_name].append(func.__name__)
-			except KeyError:
-				task_gen.prec[fun_name] = [func.__name__]
+			if not func.__name__ in task_gen.prec[fun_name]:
+				task_gen.prec[fun_name].append(func.__name__)
 		return func
 	return deco
 
 def after(*k):
 	def deco(func):
+		setattr(task_gen, func.__name__, func)
 		for fun_name in k:
-			try:
-				if not fun_name in task_gen.prec[func.__name__]: task_gen.prec[func.__name__].append(fun_name)
-			except KeyError:
-				task_gen.prec[func.__name__] = [fun_name]
+			if not fun_name in task_gen.prec[func.__name__]:
+				task_gen.prec[func.__name__].append(fun_name)
 		return func
 	return deco
 
 def extension(var):
-	if type(var) is types.ListType:
-		pass
-	elif type(var) is types.StringType:
-		var = [var]
-	else:
-		raise Utils.WafError('declare extension takes either a list or a string %s' % str(var))
-
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
-		for x in var:
-			task_gen.mappings[x] = func
+		try:
+			for x in Utils.to_list(var):
+				task_gen.mappings[x] = func
+		except:
+			raise Utils.WafError('extension takes either a list or a string %r' % var)
 		task_gen.mapped[func.__name__] = func
 		return func
 	return deco
@@ -467,8 +469,8 @@ def apply_core(self):
 		x = self.get_hook(node.suffix())
 
 		if not x:
-			raise Utils.WafError("Do not know how to process %s in %s, mappings are %s" % \
-				(str(node), str(self.__class__), str(self.__class__.mappings)))
+			raise Utils.WafError("Cannot guess how to process %s (got mappings %r in %r) -> try conf.check_tool(..)?" % \
+				(str(node), self.__class__.mappings.keys(), self.__class__))
 		x(self, node)
 feature('*')(apply_core)
 
@@ -488,8 +490,15 @@ def exec_rule(self):
 	func = self.rule
 	vars2 = []
 	if isinstance(func, str):
-		(func, vars2) = Task.compile_fun('', self.rule)
+		# use the shell by default for user-defined commands
+		(func, vars2) = Task.compile_fun('', self.rule, shell=getattr(self, 'shell', True))
+		func.code = self.rule
 	vars = getattr(self, 'vars', vars2)
+	if not vars:
+		if isinstance(self.rule, str):
+			vars = self.rule
+		else:
+			vars = Utils.h_fun(self.rule)
 
 	# create the task class
 	name = getattr(self, 'name', None) or self.target or self.rule
@@ -504,14 +513,25 @@ def exec_rule(self):
 
 	if getattr(self, 'target', None):
 		cls.quiet = True
-		tsk.outputs=[self.path.find_or_declare(x) for x in self.to_list(self.target)]
+		tsk.outputs = [self.path.find_or_declare(x) for x in self.to_list(self.target)]
 
 	if getattr(self, 'source', None):
 		cls.quiet = True
-		tsk.inputs=[self.path.find_resource(x) for x in self.to_list(self.source)]
+		tsk.inputs = []
+		for x in self.to_list(self.source):
+			y = self.path.find_resource(x)
+			if not y:
+				raise Utils.WafError('input file %r could not be found (%r)' % (x, self.path.abspath()))
+			tsk.inputs.append(y)
 
 	if getattr(self, 'always', None):
 		Task.always_run(cls)
+
+	if getattr(self, 'scan', None):
+		cls.scan = self.scan
+
+	if getattr(self, 'install_path', None):
+		tsk.install_path = self.install_path
 
 	if getattr(self, 'cwd', None):
 		tsk.cwd = self.cwd
@@ -523,4 +543,36 @@ def exec_rule(self):
 		setattr(cls, x, getattr(self, x, []))
 feature('*')(exec_rule)
 before('apply_core')(exec_rule)
+
+def sequence_order(self):
+	"""
+	add a strict sequential constraint between the tasks generated by task generators
+	it uses the fact that task generators are posted in order
+	it will not post objects which belong to other folders
+	there is also an awesome trick for executing the method in last position
+
+	to use:
+	bld.new_task_gen(features='javac seq')
+	bld.new_task_gen(features='jar seq')
+
+	to start a new sequence, set the attribute seq_start, for example:
+	obj.seq_start = True
+	"""
+	if self.meths and self.meths[-1] != 'sequence_order':
+		self.meths.append('sequence_order')
+		return
+
+	if getattr(self, 'seq_start', None):
+		return
+
+	# all the tasks previously declared must be run before these
+	if getattr(self.bld, 'prev', None):
+		self.bld.prev.post()
+		for x in self.bld.prev.tasks:
+			for y in self.tasks:
+				y.set_run_after(x)
+
+	self.bld.prev = self
+
+feature('seq')(sequence_order)
 

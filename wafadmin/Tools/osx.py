@@ -12,73 +12,11 @@ To make a bundled shared library (a .bundle), set the 'mac_bundle' attribute:
 """
 
 import os, shutil, sys, platform
-import TaskGen, Task, Build, Options
+import TaskGen, Task, Build, Options, Utils
 from TaskGen import taskgen, feature, after, before
 from Logs import error, debug
 
-if 'MACOSX_DEPLOYMENT_TARGET' not in os.environ:
-	# see issue 285
-	if sys.platform == 'darwin':
-		os.environ['MACOSX_DEPLOYMENT_TARGET'] = '.'.join(platform.mac_ver()[0].split('.')[:2])
-
-@taskgen
-@feature('cc', 'cxx')
-@after('apply_lib_vars')
-def apply_framework(self):
-	for x in self.to_list(self.env['FRAMEWORKPATH']):
-		self.env.append_unique('CXXFLAGS', x)
-		self.env.append_unique('CCFLAGS', x)
-		self.env.append_unique('LINKFLAGS', x)
-
-	for x in self.to_list(self.env['FRAMEWORK']):
-		self.env.append_unique('LINKFLAGS', x)
-
-@taskgen
-def create_task_macapp(self):
-	if 'cprogram' in self.features and self.link_task:
-		apptask = self.create_task('macapp', self.env)
-		apptask.set_inputs(self.link_task.outputs)
-		apptask.set_outputs(self.link_task.outputs[0].change_ext('.app'))
-		self.apptask = apptask
-
-@taskgen
-@after('apply_link')
-@feature('cc', 'cxx')
-def apply_link_osx(self):
-	"""Use env['MACAPP'] to force *all* executables to be transformed into Mac applications
-	or use obj.mac_app = True to build specific targets as Mac apps"""
-	if self.env['MACAPP'] or getattr(self, 'mac_app', False):
-		self.create_task_macapp()
-		name = self.link_task.outputs[0].name
-		if self.vnum: name = name.replace('.dylib', '.%s.dylib' % self.vnum)
-
-		path = os.path.join(self.env['PREFIX'], 'lib', name)
-		path = '-install_name %s' % path
-		self.env.append_value('LINKFLAGS', path)
-
-@taskgen
-@before('apply_link')
-@before('apply_lib_vars')
-@feature('cc', 'cxx')
-def apply_bundle(self):
-	"""use env['MACBUNDLE'] to force all shlibs into mac bundles
-	or use obj.mac_bundle = True for specific targets only"""
-	if not 'shlib' in self.features: return
-	if self.env['MACBUNDLE'] or getattr(self, 'mac_bundle', False):
-		self.env['shlib_PATTERN'] = self.env['macbundle_PATTERN']
-		uselib = self.uselib = self.to_list(self.uselib)
-		if not 'MACBUNDLE' in uselib: uselib.append('MACBUNDLE')
-
-@taskgen
-@after('apply_link')
-@feature('cc', 'cxx')
-def apply_bundle_remove_dynamiclib(self):
-	if not 'shlib' in self.features: return
-	if self.env['MACBUNDLE'] or getattr(self, 'mac_bundle', False):
-		self.env['LINKFLAGS'].remove('-dynamiclib')
-
-app_dirs = ['Contents', os.path.join('Contents','MacOS'), os.path.join('Contents','Resources')]
-
+# plist template
 app_info = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
@@ -98,64 +36,150 @@ app_info = '''
 </plist>
 '''
 
+# see WAF issue 285
+# and also http://trac.macports.org/ticket/17059
+@feature('cc', 'cxx')
+@before('apply_lib_vars')
+def set_macosx_deployment_target(self):
+	if self.env['MACOSX_DEPLOYMENT_TARGET']:
+		os.environ['MACOSX_DEPLOYMENT_TARGET'] = self.env['MACOSX_DEPLOYMENT_TARGET']
+	elif 'MACOSX_DEPLOYMENT_TARGET' not in os.environ:
+		if sys.platform == 'darwin':
+			os.environ['MACOSX_DEPLOYMENT_TARGET'] = '.'.join(platform.mac_ver()[0].split('.')[:2])
+
+@feature('cc', 'cxx')
+@after('apply_lib_vars')
+def apply_framework(self):
+	for x in self.to_list(self.env['FRAMEWORKPATH']):
+		frameworkpath_st = '-F%s'
+		self.env.append_unique('CXXFLAGS', frameworkpath_st % x)
+		self.env.append_unique('CCFLAGS', frameworkpath_st % x)
+		self.env.append_unique('LINKFLAGS', frameworkpath_st % x)
+
+	for x in self.to_list(self.env['FRAMEWORK']):
+		self.env.append_value('LINKFLAGS', ['-framework', x])
+
+@taskgen
+def create_bundle_dirs(self, name, out):
+	bld = self.bld
+	dir = out.parent.get_dir(name)
+
+	if not dir:
+		dir = out.__class__(name, out.parent, 1)
+		bld.rescan(dir)
+		contents = out.__class__('Contents', dir, 1)
+		bld.rescan(contents)
+		macos = out.__class__('MacOS', contents, 1)
+		bld.rescan(macos)
+	return dir
+
+def bundle_name_for_output(out):
+	name = out.name
+	k = name.rfind('.')
+	if k >= 0:
+		name = name[:k] + '.app'
+	else:
+		name = name + '.app'
+	return name
+
+@taskgen
+@after('apply_link')
+@feature('cprogram')
+def create_task_macapp(self):
+	"""Use env['MACAPP'] to force *all* executables to be transformed into Mac applications
+	or use obj.mac_app = True to build specific targets as Mac apps"""
+	if self.env['MACAPP'] or getattr(self, 'mac_app', False):
+		apptask = self.create_task('macapp')
+		apptask.set_inputs(self.link_task.outputs)
+
+		out = self.link_task.outputs[0]
+
+		name = bundle_name_for_output(out)
+		dir = self.create_bundle_dirs(name, out)
+
+		n1 = dir.find_or_declare(['Contents', 'MacOS', out.name])
+
+		apptask.set_outputs([n1])
+		apptask.chmod = 0755
+		apptask.install_path = os.path.join(self.install_path, name, 'Contents', 'MacOS')
+		self.apptask = apptask
+
+@after('apply_link')
+@feature('cprogram')
+def create_task_macplist(self):
+	"""Use env['MACAPP'] to force *all* executables to be transformed into Mac applications
+	or use obj.mac_app = True to build specific targets as Mac apps"""
+	if  self.env['MACAPP'] or getattr(self, 'mac_app', False):
+		# check if the user specified a plist before using our template
+		if not getattr(self, 'mac_plist', False):
+			self.mac_plist = app_info
+
+		plisttask = self.create_task('macplist')
+		plisttask.set_inputs(self.link_task.outputs)
+
+		out = self.link_task.outputs[0]
+		self.mac_plist = self.mac_plist % (out.name)
+
+		name = bundle_name_for_output(out)
+		dir = self.create_bundle_dirs(name, out)
+
+		n1 = dir.find_or_declare(['Contents', 'Info.plist'])
+
+		plisttask.set_outputs([n1])
+		plisttask.mac_plist = self.mac_plist
+		plisttask.install_path = os.path.join(self.install_path, name, 'Contents')
+		self.plisttask = plisttask
+
+@after('apply_link')
+@feature('cshlib')
+def apply_link_osx(self):
+	name = self.link_task.outputs[0].name
+	if getattr(self, 'vnum', None):
+		name = name.replace('.dylib', '.%s.dylib' % self.vnum)
+
+	path = os.path.join(Utils.subst_vars(self.install_path, self.env), name)
+	if '-dynamiclib' in self.env['LINKFLAGS']:
+		self.env.append_value('LINKFLAGS', '-install_name')
+		self.env.append_value('LINKFLAGS', path)
+
+@before('apply_link', 'apply_lib_vars')
+@feature('cc', 'cxx')
+def apply_bundle(self):
+	"""use env['MACBUNDLE'] to force all shlibs into mac bundles
+	or use obj.mac_bundle = True for specific targets only"""
+	if not ('cshlib' in self.features or 'shlib' in self.features): return
+	if self.env['MACBUNDLE'] or getattr(self, 'mac_bundle', False):
+		self.env['shlib_PATTERN'] = self.env['macbundle_PATTERN']
+		uselib = self.uselib = self.to_list(self.uselib)
+		if not 'MACBUNDLE' in uselib: uselib.append('MACBUNDLE')
+
+@after('apply_link')
+@feature('cshlib')
+def apply_bundle_remove_dynamiclib(self):
+	if self.env['MACBUNDLE'] or getattr(self, 'mac_bundle', False):
+		if not getattr(self, 'vnum', None):
+			try:
+				self.env['LINKFLAGS'].remove('-dynamiclib')
+			except ValueError:
+				pass
+
+# TODO REMOVE IN 1.6 (global variable)
+app_dirs = ['Contents', 'Contents/MacOS', 'Contents/Resources']
+
 def app_build(task):
-	global app_dirs
 	env = task.env
-
-	i = 0
-	for p in task.outputs:
-		srcfile = p.srcpath(env)
-
-		debug('osx: creating directories')
-		try:
-			os.mkdir(srcfile)
-			[os.makedirs(os.path.join(srcfile, d)) for d in app_dirs]
-		except (OSError, IOError):
-			pass
-
-		# copy the program to the contents dir
-		srcprg = task.inputs[i].srcpath(env)
-		dst = os.path.join(srcfile, 'Contents', 'MacOS')
-		debug('osx: copy %s to %s' % (srcprg, dst))
-		shutil.copy(srcprg, dst)
-
-		# create info.plist
-		debug('osx: generate Info.plist')
-		# TODO:  Support custom info.plist contents.
-
-		f = file(os.path.join(srcfile, "Contents", "Info.plist"), "w")
-		f.write(app_info % os.path.basename(srcprg))
-		f.close()
-
-		i += 1
+	shutil.copy2(task.inputs[0].srcpath(env), task.outputs[0].abspath(env))
 
 	return 0
 
-def install_shlib(task):
-	"""see http://code.google.com/p/waf/issues/detail?id=173"""
-	nums = task.vnum.split('.')
+def plist_build(task):
+	env = task.env
+	f = open(task.outputs[0].abspath(env), "w")
+	f.write(task.mac_plist)
+	f.close()
 
-	path = self.install_path
+	return 0
 
-	libname = task.outputs[0].name
-
-	name3 = libname.replace('.dylib', '.%s.dylib' % task.vnum)
-	name2 = libname.replace('.dylib', '.%s.dylib' % nums[0])
-	name1 = libname
-
-	filename = task.outputs[0].abspath(task.env)
-	bld = Build.bld
-	bld.install_as(path + name3, filename, env=task.env)
-	bld.symlink_as(path + name2, name3)
-	bld.symlink_as(path + name1, name3)
-
-@taskgen
-@feature('osx')
-@after('install_target_cshlib')
-def install_target_osx_cshlib(self):
-	if not Options.is_install: return
-	if getattr(self, 'vnum', '') and sys.platform != 'win32':
-		self.link_task.install = install_shlib
-
-Task.task_type_from_func('macapp', vars=[], func=app_build, after="cxx_link cc_link ar_link_static")
+Task.task_type_from_func('macapp', vars=[], func=app_build, after="cxx_link cc_link static_link")
+Task.task_type_from_func('macplist', vars=[], func=plist_build, after="cxx_link cc_link static_link")
 

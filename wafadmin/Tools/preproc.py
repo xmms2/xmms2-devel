@@ -1,13 +1,31 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Thomas Nagy, 2006-2008 (ita)
+# Thomas Nagy, 2006-2009 (ita)
 
-#C/C++ preprocessor for finding dependencies
-#TODO: more varargs, pragma once
+"""
+C/C++ preprocessor for finding dependencies
 
-import re, sys, os, string, types
-if __name__ == '__main__':
-	sys.path = ['.', '..'] + sys.path
+Reasons for using the Waf preprocessor by default
+1. Some c/c++ extensions (Qt) require a custom preprocessor for obtaining the dependencies (.moc files)
+2. Not all compilers provide .d files for obtaining the dependencies (portability)
+3. A naive file scanner will not catch the constructs such as "#include foo()"
+4. A naive file scanner will catch unnecessary dependencies (change an unused header -> recompile everything)
+
+Regarding the speed concerns:
+a. the preprocessing is performed only when files must be compiled
+b. the macros are evaluated only for #if/#elif/#include
+c. the time penalty is about 10%
+d. system headers are not scanned
+
+Now if you do not want the Waf preprocessor, the tool "gccdeps" uses the .d files produced
+during the compilation to track the dependencies (useful when used with the boost libraries).
+It only works with gcc though, and it cannot be used with Qt builds. A dumb
+file scanner will be added in the future, so we will have most bahaviours.
+"""
+# TODO: more varargs, pragma once
+# TODO: dumb file scanner tracking all includes
+
+import re, sys, os, string
 import Logs, Build, Utils
 from Logs import debug, error
 import traceback
@@ -49,16 +67,6 @@ re_lines = re.compile(\
 	'^[ \t]*(#|%:)[ \t]*(ifdef|ifndef|if|else|elif|endif|include|import|define|undef|pragma)[ \t]*(.*)\r*$',
 	re.IGNORECASE | re.MULTILINE)
 
-# Reasons for using the Waf preprocessor by default
-# 1. the preprocessing is performed once for the clean build, and each time a source file changes (fast)
-# 2. unnecessary rebuilds might occur (#include in comments)
-# 3. some includes use the preprocessor, for example #include A()
-# 4. include guards might not be taken into account, resulting in infinite loops
-# 5. the bugs in the waf preprocessor are usually fixed quickly
-#
-# if you think your project does not need it, use this regexp to catch all includes
-#re_lines = re.compile('^[ \t]*(#|%:)[ \t]*(include|import)[ \t]*(.*)\r*$', re.IGNORECASE | re.MULTILINE)
-
 re_mac = re.compile("^[a-zA-Z_]\w*")
 re_fun = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*[(]')
 re_pragma_once = re.compile('^\s*once\s*', re.IGNORECASE)
@@ -98,9 +106,7 @@ def repl(m):
 
 def filter_comments(filename):
 	# return a list of tuples : keyword, line
-	f = open(filename, "r")
-	code = f.read()
-	f.close()
+	code = Utils.readf(filename)
 	if use_trigraphs:
 		for (a, b) in trig_def: code = code.split(a).join(b)
 	code = re_nl.sub('', code)
@@ -116,8 +122,8 @@ for x in range(len(ops)):
 		prec[u] = x
 
 def reduce_nums(val_1, val_2, val_op):
+	"""apply arithmetic rules and try to return an integer result"""
 	#print val_1, val_2, val_op
-	# pass two values, return a value
 
 	# now perform the operation, make certain a and b are numeric
 	try:    a = 0 + val_1
@@ -148,125 +154,211 @@ def reduce_nums(val_1, val_2, val_op):
 	else: c = 0
 	return c
 
-def get_expr(lst, defs, ban):
-
-	if not lst: return ([], [], [])
-
+def get_num(lst):
+	if not lst: raise PreprocError("empty list for get_num")
 	(p, v) = lst[0]
-	if p == NUM:
-		return (p, v, lst[1:])
+	if p == OP:
+		if v == '(':
+			count_par = 1
+			i = 1
+			while i < len(lst):
+				(p, v) = lst[i]
 
-	elif p == STR:
-		try:
-			(p2, v2) = lst[1]
-			if p2 == STR: return (p, v+v2, lst[2:])
-		except IndexError: pass
-
-		return (p, v, lst[1:])
-
-	elif p == OP:
-		if v in ['+', '-', '!', '~', '#']:
-			(p2, v2, lst2) = get_expr(lst[1:], defs, ban)
-
-			if v == '#':
-				if p2 != IDENT: raise PreprocError("ident expected %s" % str(lst))
-				return get_expr([(STR, v2)]+lst2, defs, ban)
-
-			if p2 != NUM: raise PreprocError("num expected %s" % str(lst))
-
-			if   v == '+': return (p2, v2, lst2)
-			elif v == '-': return (p2, - int(v2), lst2)
-			elif v == '!': return (p2, int(not int(v2)), lst2)
-			elif v == '~': return (p2, ~ int(v2), lst2)
-
-			return (p2, v2, lst2)
-
-		elif v == '(':
-			count_par = 0
-			i = 0
-			for _, v in lst:
-				if v == ')':
-					count_par -= 1
-					if count_par == 0: break
-				elif v == '(': count_par += 1
+				if p == OP:
+					if v == ')':
+						count_par -= 1
+						if count_par == 0:
+							break
+					elif v == '(':
+						count_par += 1
 				i += 1
 			else:
-				raise PreprocError("rparen expected %s" % str(lst))
+				raise PreprocError("rparen expected %r" % lst)
 
-			ret = process_tokens(lst[1:i], defs, ban)
-			if len(ret) == 1:
-				(p, v) = ret[0]
-				return (p, v, lst[i+1:])
-			else:
-				#return (None, lst1, lst[i+1:])
-				raise PreprocError("cannot reduce %s" % str(lst))
+			(num, _) = get_term(lst[1:i])
+			return (num, lst[i+1:])
 
-	elif p == IDENT:
-		if len(lst)>1:
-			(p2, v2) = lst[1]
-			if v2 == "##":
-				# token pasting, reevaluate the identifier obtained
-				(p3, v3) = lst[2]
-				if p3 != IDENT and p3 != NUM and p3 != OP:
-					raise PreprocError("%s: ident expected after '##'" % str(lst))
-				return get_expr([(p, v+v3)]+lst[3:], defs, ban)
-
-		if v.lower() == 'defined':
-			(p2, v2) = lst[1]
-			off = 2
-			if v2 == '(':
-				(p2, v2) = lst[2]
-				if p2 != IDENT: raise PreprocError('expected an identifier after a "defined("')
-				(p3, v3) = lst[3]
-				if v3 != ')': raise PreprocError('expected a ")" after a "defined(x"')
-				off = 4
-			elif p2 != IDENT:
-				raise PreprocError('expected a "(" or an identifier after a defined')
-
-			x = 0
-			if v2 in defs: x = 1
-			#return get_expr([(NUM, x)] + lst[off:], defs, ban)
-			return (NUM, x, lst[off:])
-
-		elif not v in defs or v in ban:
-			if "waf_include" in ban: return (p, v, lst[1:])
-			else: return (NUM, 0, lst[1:])
-
-		# tokenize on demand
-		if type(defs[v]) is types.StringType:
-			v, k = extract_macro(defs[v])
-			defs[v] = k
-		macro_def = defs[v]
-
-		if not macro_def[0]:
-			# simple macro, substitute, and reevaluate (3: is for removing the name and the two parens)
-			lst = macro_def[1] + lst[3:]
-			return get_expr(lst, defs, ban)
+		elif v == '+':
+			return get_num(lst[1:])
+		elif v == '-':
+			num, lst = get_num(lst[1:])
+			return (reduce_nums('-1', num, '*'), lst)
+		elif v == '!':
+			num, lst = get_num(lst[1:])
+			return (int(not int(num)), lst)
+		elif v == '~':
+			return (~ int(num), lst)
 		else:
-			# collect the arguments for the funcall
-			params = []
-			i = 1
-			p2, v2 = lst[i]
-			if p2 != OP or v2 != '(': raise PreprocError("invalid function call '%s'" % v)
+			raise PreprocError("invalid op token %r for get_num" % lst)
+	elif p == NUM:
+		return v, lst[1:]
+	elif p == IDENT:
+		# all macros should have been replaced, remaining identifiers eval to 0
+		return 0, lst[1:]
+	else:
+		raise PreprocError("invalid token %r for get_num" % lst)
 
-			one_param = []
-			count_paren = 0
-			try:
-				while 1:
+def get_term(lst):
+	if not lst: raise PreprocError("empty list for get_term")
+	num, lst = get_num(lst)
+	if not lst:
+		return (num, [])
+	(p, v) = lst[0]
+	if p == OP:
+		if v == '&&' and not num:
+			return (num, [])
+		elif v == '||' and num:
+			return (num, [])
+		elif v == ',':
+			# skip
+			return get_term(lst[1:])
+		elif v == '?':
+			count_par = 0
+			i = 1
+			while i < len(lst):
+				(p, v) = lst[i]
+
+				if p == OP:
+					if v == ')':
+						count_par -= 1
+					elif v == '(':
+						count_par += 1
+					elif v == ':':
+						if count_par == 0:
+							break
+				i += 1
+			else:
+				raise PreprocError("rparen expected %r" % lst)
+
+			if int(num):
+				return get_term(lst[1:i])
+			else:
+				return get_term(lst[i+1:])
+
+		else:
+			num2, lst = get_num(lst[1:])
+
+			if not lst:
+				# no more tokens to process
+				num2 = reduce_nums(num, num2, v)
+				return get_term([(NUM, num2)] + lst)
+
+			# operator precedence
+			p2, v2 = lst[0]
+			if p2 != OP:
+				raise PreprocError("op expected %r" % lst)
+
+			if prec[v2] >= prec[v]:
+				num2 = reduce_nums(num, num2, v)
+				return get_term([(NUM, num2)] + lst)
+			else:
+				num3, lst = get_num(lst[1:])
+				num3 = reduce_nums(num2, num3, v2)
+				return get_term([(NUM, num), (p, v), (NUM, num3)] + lst)
+
+
+	raise PreprocError("cannot reduce %r" % lst)
+
+def reduce_eval(lst):
+	"""take a list of tokens and output true or false (#if/#elif conditions)"""
+	num, lst = get_term(lst)
+	return (NUM, num)
+
+def stringize(lst):
+	"""use for converting a list of tokens to a string"""
+	lst = [str(v2) for (p2, v2) in lst]
+	return "".join(lst)
+
+def paste_tokens(t1, t2):
+	"""
+	here is what we can paste:
+	 a ## b  ->  ab
+	 > ## =  ->  >=
+	 a ## 2  ->  a2
+	"""
+	p1 = None
+	if t1[0] == OP and t2[0] == OP:
+		p1 = OP
+	elif t1[0] == IDENT and (t2[0] == IDENT or t2[0] == NUM):
+		p1 = IDENT
+	elif t1[0] == NUM and t2[0] == NUM:
+		p1 = NUM
+	if not p1:
+		raise PreprocError('tokens do not make a valid paste %r and %r' % (t1, t2))
+	return (p1, t1[1] + t2[1])
+
+def reduce_tokens(lst, defs, ban=[]):
+	"""replace the tokens in lst, using the macros provided in defs, and a list of macros that cannot be re-applied"""
+	i = 0
+
+	while i < len(lst):
+		(p, v) = lst[i]
+
+		if p == IDENT and v == "defined":
+			del lst[i]
+			if i < len(lst):
+				(p2, v2) = lst[i]
+				if p2 == IDENT:
+					if v2 in defs:
+						lst[i] = (NUM, 1)
+					else:
+						lst[i] = (NUM, 0)
+				elif p2 == OP and v2 == '(':
+					del lst[i]
+					(p2, v2) = lst[i]
+					del lst[i] # remove the ident, and change the ) for the value
+					if v2 in defs:
+						lst[i] = (NUM, 1)
+					else:
+						lst[i] = (NUM, 0)
+				else:
+					raise PreprocError("invalid define expression %r" % lst)
+
+		elif p == IDENT and v in defs:
+
+			if isinstance(defs[v], str):
+				a, b = extract_macro(defs[v])
+				defs[v] = b
+			macro_def = defs[v]
+			to_add = macro_def[1]
+
+			if isinstance(macro_def[0], list):
+				# macro without arguments
+				del lst[i]
+				for x in xrange(len(to_add)):
+					lst.insert(i, to_add[x])
 					i += 1
+			else:
+				# collect the arguments for the funcall
+
+				args = []
+				del lst[i]
+
+				if i >= len(lst):
+					raise PreprocError("expected '(' after %r (got nothing)" % v)
+
+				(p2, v2) = lst[i]
+				if p2 != OP or v2 != '(':
+					raise PreprocError("expected '(' after %r" % v)
+
+				del lst[i]
+
+				one_param = []
+				count_paren = 0
+				while i < len(lst):
 					p2, v2 = lst[i]
 
+					del lst[i]
 					if p2 == OP and count_paren == 0:
 						if v2 == '(':
 							one_param.append((p2, v2))
 							count_paren += 1
 						elif v2 == ')':
-							if one_param: params.append(one_param)
-							lst = lst[i+1:]
+							if one_param: args.append(one_param)
 							break
 						elif v2 == ',':
 							if not one_param: raise PreprocError("empty param in funcall %s" % p)
-							params.append(one_param)
+							args.append(one_param)
 							one_param = []
 						else:
 							one_param.append((p2, v2))
@@ -274,99 +366,224 @@ def get_expr(lst, defs, ban):
 						one_param.append((p2, v2))
 						if   v2 == '(': count_paren += 1
 						elif v2 == ')': count_paren -= 1
-
-			except IndexError, e:
-				#raise PreprocError('invalid function call %s: missing ")"' % p)
-				raise
-
-			# substitute the arguments within the define expression
-			accu = []
-			table = macro_def[0]
-			for p2, v2 in macro_def[1]:
-				if p2 == IDENT and v2 in table: accu += params[table[v2]]
 				else:
-					if v2 == '__VA_ARGS__':
-						# first collect the tokens
-						va_toks = []
-						st = len(macro_def[0])
-						pt = len(params)
-						for x in params[pt-st+1:]:
-							va_toks.extend(x)
-							va_toks.append((OP, ','))
-						if va_toks: va_toks.pop() # extra comma
-						if len(accu)>1:
-							(p3, v3) = accu[-1]
-							(p4, v4) = accu[-2]
-							if v3 == '##':
-								# remove the token paste
-								accu.pop()
-								if v4 == ',' and pt < st:
-									# remove the comma
-									accu.pop()
-						accu += va_toks
+					raise PreprocError('malformed macro')
+
+				# substitute the arguments within the define expression
+				accu = []
+				arg_table = macro_def[0]
+				j = 0
+				while j < len(to_add):
+					(p2, v2) = to_add[j]
+
+					if p2 == OP and v2 == '#':
+						# stringize is for arguments only
+						if j+1 < len(to_add) and to_add[j+1][0] == IDENT and to_add[j+1][1] in arg_table:
+							toks = args[arg_table[to_add[j+1][1]]]
+							accu.append((STR, stringize(toks)))
+							j += 1
+						else:
+							accu.append((p2, v2))
+					elif p2 == OP and v2 == '##':
+						# token pasting, how can man invent such a complicated system?
+						if accu and j+1 < len(to_add):
+							# we have at least two tokens
+
+							t1 = accu[-1]
+
+							if to_add[j+1][0] == IDENT and to_add[j+1][1] in arg_table:
+								toks = args[arg_table[to_add[j+1][1]]]
+
+								if toks:
+									accu[-1] = paste_tokens(t1, toks[0]) #(IDENT, accu[-1][1] + toks[0][1])
+									accu.extend(toks[1:])
+								else:
+									# error, case "a##"
+									accu.append((p2, v2))
+									accu.extend(toks)
+							elif to_add[j+1][0] == IDENT and to_add[j+1][1] == '__VA_ARGS__':
+								# TODO not sure
+								# first collect the tokens
+								va_toks = []
+								st = len(macro_def[0])
+								pt = len(args)
+								for x in args[pt-st+1:]:
+									va_toks.extend(x)
+									va_toks.append((OP, ','))
+								if va_toks: va_toks.pop() # extra comma
+								if len(accu)>1:
+									(p3, v3) = accu[-1]
+									(p4, v4) = accu[-2]
+									if v3 == '##':
+										# remove the token paste
+										accu.pop()
+										if v4 == ',' and pt < st:
+											# remove the comma
+											accu.pop()
+								accu += va_toks
+							else:
+								accu[-1] = paste_tokens(t1, to_add[j+1])
+
+							j += 1
+						else:
+							# invalid paste, case    "##a" or "b##"
+							accu.append((p2, v2))
+
+					elif p2 == IDENT and v2 in arg_table:
+						toks = args[arg_table[v2]]
+						reduce_tokens(toks, defs, ban+[v])
+						accu.extend(toks)
 					else:
 						accu.append((p2, v2))
 
-			return get_expr(accu + lst, defs, ban+[v])
+					j += 1
 
-def process_tokens(lst, defs, ban):
-	accu = []
-	while lst:
-		p, v, nlst = get_expr(lst, defs, ban)
-		if p == NUM:
-			if not nlst: return [(p, v)] # finished
 
-			op1, ov1 = nlst[0]
-			if op1 != OP:
-				raise PreprocError("op expected %s" % str(lst))
+				reduce_tokens(accu, defs, ban+[v])
 
-			if ov1 == '?':
-				i = 0
-				count_par = 0
-				for _, k in nlst:
-					if   k == ')': count_par -= 1
-					elif k == '(': count_par += 1
-					elif k == ':' and count_par == 0: break
-					i += 1
-				else: raise PreprocError("ending ':' expected %s" % str(lst))
+				for x in xrange(len(accu)-1, -1, -1):
+					lst.insert(i, accu[x])
 
-				if reduce_nums(v, 0, '+'): lst = nlst[1:i]
-				else: lst = nlst[i+1:]
-				continue
+		i += 1
 
-			elif ov1 == ',':
-				lst = nlst[1:]
-				continue
-
-			p2, v2, nlst = get_expr(nlst[1:], defs, ban)
-			if p2 != NUM: raise PreprocError("num expected after op %s" % str(lst))
-			if nlst:
-				# op precedence
-				op3, ov3 = nlst[0]
-				if prec[ov3] < prec[ov1]:
-					#print "ov3", ov3, ov1
-					# as needed
-					p4, v4, nlst2 = get_expr(nlst[1:], defs, ban)
-					v5 = reduce_nums(v2, v4, ov3)
-					lst = [(p, v), (op1, ov1), (NUM, v5)] + nlst2
-					continue
-
-			# no op precedence or empty list, reduce the first tokens
-			lst = [(NUM, reduce_nums(v, v2, ov1))] + nlst
-			continue
-
-		elif p == STR:
-			if nlst: raise PreprocError("sequence must terminate with a string %s" % str(nlst))
-			return [(p, v)]
-
-		return (None, None, [])
 
 def eval_macro(lst, adefs):
-	# look at the result, and try to return a 0/1 result
-	ret = process_tokens(lst, adefs, [])
-	if not ret: raise PreprocError("missing tokens to evaluate %s" % str(lst))
-	p, v = ret[0]
+	"""reduce the tokens from the list lst, and try to return a 0/1 result"""
+	reduce_tokens(lst, adefs, [])
+	if not lst: raise PreprocError("missing tokens to evaluate")
+	(p, v) = reduce_eval(lst)
 	return int(v) != 0
+
+def extract_macro(txt):
+	"""process a macro definition from "#define f(x, y) x * y" into a function or a simple macro without arguments"""
+	t = tokenize(txt)
+	if re_fun.search(txt):
+		p, name = t[0]
+
+		p, v = t[1]
+		if p != OP: raise PreprocError("expected open parenthesis")
+
+		i = 1
+		pindex = 0
+		params = {}
+		prev = '('
+
+		while 1:
+			i += 1
+			p, v = t[i]
+
+			if prev == '(':
+				if p == IDENT:
+					params[v] = pindex
+					pindex += 1
+					prev = p
+				elif p == OP and v == ')':
+					break
+				else:
+					raise PreprocError("unexpected token (3)")
+			elif prev == IDENT:
+				if p == OP and v == ',':
+					prev = v
+				elif p == OP and v == ')':
+					break
+				else:
+					raise PreprocError("comma or ... expected")
+			elif prev == ',':
+				if p == IDENT:
+					params[v] = pindex
+					pindex += 1
+					prev = p
+				elif p == OP and v == '...':
+					raise PreprocError("not implemented (1)")
+				else:
+					raise PreprocError("comma or ... expected (2)")
+			elif prev == '...':
+				raise PreprocError("not implemented (2)")
+			else:
+				raise PreprocError("unexpected else")
+
+		#~ print (name, [params, t[i+1:]])
+		return (name, [params, t[i+1:]])
+	else:
+		(p, v) = t[0]
+		return (v, [[], t[1:]])
+
+re_include = re.compile('^\s*(<(?P<a>.*)>|"(?P<b>.*)")')
+def extract_include(txt, defs):
+	"""process a line in the form "#include foo" to return a string representing the file"""
+	m = re_include.search(txt)
+	if m:
+		if m.group('a'): return '<', m.group('a')
+		if m.group('b'): return '"', m.group('b')
+
+	# perform preprocessing and look at the result, it must match an include
+	toks = tokenize(txt)
+	reduce_tokens(toks, defs, ['waf_include'])
+
+	if not toks:
+		raise PreprocError("could not parse include %s" % txt)
+
+	if len(toks) == 1:
+		if toks[0][0] == STR:
+			return '"', toks[0][1]
+	else:
+		if toks[0][1] == '<' and toks[-1][1] == '>':
+			return stringize(toks).lstrip('<').rstrip('>')
+
+	raise PreprocError("could not parse include %s." % txt)
+
+def parse_char(txt):
+	if not txt: raise PreprocError("attempted to parse a null char")
+	if txt[0] != '\\':
+		return ord(txt)
+	c = txt[1]
+	if c == 'x':
+		if len(txt) == 4 and txt[3] in string.hexdigits: return int(txt[2:], 16)
+		return int(txt[2:], 16)
+	elif c.isdigit():
+		if c == '0' and len(txt)==2: return 0
+		for i in 3, 2, 1:
+			if len(txt) > i and txt[1:1+i].isdigit():
+				return (1+i, int(txt[1:1+i], 8))
+	else:
+		try: return chr_esc[c]
+		except KeyError: raise PreprocError("could not parse char literal '%s'" % txt)
+
+def tokenize(s):
+	"""convert a string into a list of tokens (shlex.split does not apply to c/c++/d)"""
+	ret = []
+	for match in re_clexer.finditer(s):
+		m = match.group
+		for name in tok_types:
+			v = m(name)
+			if v:
+				if name == IDENT:
+					try: v = g_optrans[v]; name = OP
+					except KeyError:
+						# c++ specific
+						if v.lower() == "true":
+							v = 1
+							name = NUM
+						elif v.lower() == "false":
+							v = 0
+							name = NUM
+				elif name == NUM:
+					if m('oct'): v = int(v, 8)
+					elif m('hex'): v = int(m('hex'), 16)
+					elif m('n0'): v = m('n0')
+					else:
+						v = m('char')
+						if v: v = parse_char(v)
+						else: v = m('n2') or m('n4')
+				elif name == OP:
+					if v == '%:': v = '#'
+					elif v == '%:%:': v = '##'
+				elif name == STR:
+					# remove the quotes around the string
+					v = v[1:-1]
+				ret.append((name, v))
+				break
+	return ret
 
 class c_parser(object):
 	def __init__(self, nodepaths=None, defines=None):
@@ -385,7 +602,6 @@ class c_parser(object):
 		self.currentnode_stack = []
 
 		self.nodepaths = nodepaths or []
-		#self.nodepaths.append(Build.bld.root.find_dir('/usr/include'))
 
 		self.nodes = []
 		self.names = []
@@ -393,13 +609,6 @@ class c_parser(object):
 		# file added
 		self.curfile = ''
 		self.ban_includes = []
-
-		# dynamic cache
-		try:
-			self.parse_cache = Build.bld.parse_cache
-		except AttributeError:
-			Build.bld.parse_cache = {}
-			self.parse_cache = Build.bld.parse_cache
 
 	def tryfind(self, filename):
 		self.curfile = filename
@@ -427,7 +636,7 @@ class c_parser(object):
 		filepath = node.abspath(self.env)
 
 		self.count_files += 1
-		if self.count_files > 30000: raise PreprocError("recursion limit exceeded, bailing out")
+		if self.count_files > 30000: raise PreprocError("recursion limit exceeded")
 		pc = self.parse_cache
 		debug('preproc: reading file %r' % filepath)
 		try:
@@ -455,6 +664,12 @@ class c_parser(object):
 
 		self.env = env
 		variant = node.variant(env)
+		bld = node.__class__.bld
+		try:
+			self.parse_cache = bld.parse_cache
+		except AttributeError:
+			bld.parse_cache = {}
+			self.parse_cache = bld.parse_cache
 
 		self.addlines(node)
 		if env['DEFLINES']:
@@ -469,8 +684,7 @@ class c_parser(object):
 				self.process_line(kind, line)
 			except Exception, e:
 				if Logs.verbose:
-					error("line parsing failed (%s): %s" % (str(e), line))
-					traceback.print_exc()
+					debug('preproc: line parsing failed (%s): %s %s' % (e, line, Utils.ex_stack()))
 
 	def process_line(self, token, line):
 		ve = Logs.verbose
@@ -533,204 +747,63 @@ class c_parser(object):
 			if re_pragma_once.search(line.lower()):
 				self.ban_includes.append(self.curfile)
 
-def extract_macro(txt):
-	t = tokenize(txt)
-	if re_fun.search(txt):
-		p, name = t[0]
+def get_deps(node, env, nodepaths=[]):
+	"""
+	Get the dependencies using a c/c++ preprocessor, this is required for finding dependencies of the kind
+	#include some_macro()
+	"""
 
-		p, v = t[1]
-		if p != OP: raise PreprocError("expected open parenthesis")
+	gruik = c_parser(nodepaths)
+	gruik.start(node, env)
+	return (gruik.nodes, gruik.names)
 
-		i = 1
-		pindex = 0
-		params = {}
-		prev = '('
+#################### dumb dependency scanner
 
-		while 1:
-			i += 1
-			p, v = t[i]
+re_inc = re.compile(\
+	'^[ \t]*(#|%:)[ \t]*(include)[ \t]*(.*)\r*$',
+	re.IGNORECASE | re.MULTILINE)
 
-			if prev == '(':
-				if p == IDENT:
-					params[v] = pindex
-					pindex += 1
-					prev = p
-				elif p == OP and v == ')':
-					break
-				else:
-					raise PreprocError("unexpected token")
-			elif prev == IDENT:
-				if p == OP and v == ',':
-					prev = v
-				elif p == OP and v == ')':
-					break
-				else:
-					raise PreprocError("comma or ... expected")
-			elif prev == ',':
-				if p == IDENT:
-					params[v] = pindex
-					pindex += 1
-					prev = p
-				elif p == OP and v == '...':
-					raise PreprocError("not implemented")
-				else:
-					raise PreprocError("comma or ... expected")
-			elif prev == '...':
-				raise PreprocError("not implemented")
-			else:
-				raise PreprocError("unexpected else")
+def lines_includes(filename):
+	code = Utils.readf(filename)
+	if use_trigraphs:
+		for (a, b) in trig_def: code = code.split(a).join(b)
+	code = re_nl.sub('', code)
+	code = re_cpp.sub(repl, code)
+	return [(m.group(2), m.group(3)) for m in re.finditer(re_inc, code)]
 
-		#~ print (name, [params, t[i+1:]])
-		return (name, [params, t[i+1:]])
-	else:
-		(p, v) = t[0]
-		return (v, [[], t[1:]])
+def get_deps_simple(node, env, nodepaths=[], defines={}):
+	"""
+	Get the dependencies by just looking recursively at the #include statements
+	"""
 
-re_include = re.compile('^\s*(<(?P<a>.*)>|"(?P<b>.*)")')
-def extract_include(txt, defs):
-	m = re_include.search(txt)
-	if m:
-		if m.group('a'): return '<', m.group('a')
-		if m.group('b'): return '"', m.group('b')
+	nodes = []
+	names = []
 
-	# perform preprocessing and look at the result, it must match an include
-	tokens = tokenize(txt)
-	tokens = process_tokens(tokens, defs, ['waf_include'])
-	p, v = tokens[0]
-	if p != STR: raise PreprocError("could not parse include %s" % txt)
-	return ('"', v)
+	def find_deps(node):
+		lst = lines_includes(node.abspath(env))
 
-def parse_char(txt):
-	if not txt: raise PreprocError("attempted to parse a null char")
-	if txt[0] != '\\':
-		return ord(txt)
-	c = txt[1]
-	if c == 'x':
-		if len(txt) == 4 and txt[3] in string.hexdigits: return int(txt[2:], 16)
-		return int(txt[2:], 16)
-	elif c.isdigit():
-		if c == '0' and len(txt)==2: return 0
-		for i in 3, 2, 1:
-			if len(txt) > i and txt[1:1+i].isdigit():
-				return (1+i, int(txt[1:1+i], 8))
-	else:
-		try: return chr_esc[c]
-		except KeyError: raise PreprocError("could not parse char literal '%s'" % txt)
-
-def tokenize(s):
-	ret = []
-	for match in re_clexer.finditer(s):
-		m = match.group
-		for name in tok_types:
-			v = m(name)
-			if v:
-				if name == IDENT:
-					try: v = g_optrans[v]; name = OP
-					except KeyError:
-						# c++ specific
-						if v.lower() == "true":
-							v = 1
-							name = NUM
-						elif v.lower() == "false":
-							v = 0
-							name = NUM
-				elif name == NUM:
-					if m('oct'): v = int(v, 8)
-					elif m('hex'): v = int(m('hex'), 16)
-					elif m('n0'): v = m('n0')
-					else:
-						v = m('char')
-						if v: v = parse_char(v)
-						else: v = m('n2') or m('n4')
-				elif name == OP:
-					if v == '%:': v='#'
-					elif v == '%:%:': v='##'
-
-				ret.append((name, v))
-				break
-	return ret
-
-# quick test #
-if __name__ == "__main__":
-	# first we need to replace a method for the command-line test - no nodes
-	def tryfind(self):
-		self.curfile = filename
-		found = 0
-		for p in self.strpaths:
-			if not p in self.pathcontents.keys():
-				self.pathcontents[p] = os.listdir(p)
-			if filename in self.pathcontents[p]:
-				#print "file %s found in path %s" % (filename, p)
-				np = os.path.join(p, filename)
-				# screw Qt two times
-				if filename[-4:] != '.moc': self.addlines(np)
-				found = 1
-	c_parser.tryfind = tryfind
-
-	def start_local(self, filename):
-		self.addlines(filename)
-		#print self.lines
-		while self.lines:
-			(kind, line) = self.lines.pop(0)
-			if kind == POPFILE:
-				self.currentnode_stack.pop()
+		for (_, line) in lst:
+			(t, filename) = extract_include(line, defines)
+			if filename in names:
 				continue
-			try:
-				self.process_line(kind, line)
-			except Exception, e:
-				if Logs.verbose:
-					error("line parsing failed (%s): %s" % (str(e), line))
-					traceback.print_exc()
-				raise e
-	c_parser.start_local = start_local
 
-	Logs.verbose = 2
-	Logs.zones = ['preproc']
-	class dum:
-		def __init__(self):
-			self.parse_cache = {}
-	Build.bld = dum()
+			if filename.endswith('.moc'):
+				names.append(filename)
 
-	try: arg = sys.argv[1]
-	except IndexError: arg = "file.c"
+			found = None
+			for n in nodepaths:
+				if found:
+					break
+				found = n.find_resource(filename)
 
-	paths = ['.']
-	f = open(arg, "r"); txt = f.read(); f.close()
+			if not found:
+				if not filename in names:
+					names.append(filename)
+			elif not found in nodes:
+				nodes.append(found)
+				find_deps(node)
 
-	m1   = [[], [(NUM, 1), (OP, '+'), (NUM, 2)]]
-	fun1 = [[(IDENT, 'x'), (IDENT, 'y')], [(IDENT, 'x'), (OP, '##'), (IDENT, 'y')]]
-	fun2 = [[(IDENT, 'x'), (IDENT, 'y')], [(IDENT, 'x'), (OP, '*'), (IDENT, 'y')]]
+	find_deps(node)
+	return (nodes, names)
 
-	def test(x):
-		y = process_tokens(tokenize(x), {'m1':m1, 'fun1':fun1, 'fun2':fun2}, [])
-		#print x, y
-
-	test("0&&2<3")
-	test("(5>1)*6")
-	test("1+2+((3+4)+5)+6==(6*7)/2==1*-1*-1")
-	test("1,2,3*9,9")
-	test("1?77:88")
-	test("0?77:88")
-	test("1?1,(0?5:9):3,4")
-	test("defined inex")
-	test("defined(inex)")
-	test("m1*3")
-	test("7*m1*3")
-	test("fun1(m,1)")
-	test("fun2(2, fun1(m, 1))")
-	#test("foo##.##h")
-
-	gruik = c_parser()
-	gruik.strpaths = paths
-	gruik.pathcontents = {}
-
-	gruik.start_local(arg)
-	print("we have found the following dependencies")
-	print(gruik.nodes)
-	print(gruik.names)
-
-	#f = open(arg, "r")
-	#txt = f.read()
-	#f.close()
-	#print tokenize(txt)
 

@@ -14,8 +14,10 @@
 #def configure(conf):
 #	# ... (e.g. conf.check_tool('g++'))
 #	conf.check_tool('boost')
-#   conf.check_boost(lib='signals filesystem', kind='STATIC_BOTH', score_version=(-1000, 1000), tag_minscore=1000)
+#   conf.check_boost(lib='signals filesystem', static='onlystatic', score_version=(-1000, 1000), tag_minscore=1000)
 #
+#def build(bld):
+#   bld.new_task_gen(source='main.c', target='bar', uselib="BOOST BOOST_SYSTEM")
 #
 #ISSUES:
 # * find_includes should be called only once!
@@ -25,6 +27,8 @@
 ## ITA: * the method get_boost_version_number does work
 ##      * the rest of the code has not really been tried
 #       * make certain a demo is provided (in demos/adv for example)
+
+# TODO: boost.py will be removed in waf 1.6
 
 import os.path, glob, types, re, sys
 import Configure, config_c, Options, Utils, Logs
@@ -47,7 +51,7 @@ STATIC_ONLYSTATIC = 'onlystatic'
 is_versiontag = re.compile('^\d+_\d+_?\d*$')
 is_threadingtag = re.compile('^mt$')
 is_abitag = re.compile('^[sgydpn]+$')
-is_toolsettag = re.compile('^(acc|borland|como|cw|dmc|darwin|gcc|hp_cxx|intel|kylix|msvc|qcc|sun|vacpp)\d*$')
+is_toolsettag = re.compile('^(acc|borland|como|cw|dmc|darwin|gcc|hp_cxx|intel|kylix|vc|mgw|qcc|sun|vacpp)\d*$')
 
 def set_options(opt):
 	opt.add_option('--boost-includes', type='string', default='', dest='boostincludes', help='path to the boost directory where the includes are e.g. /usr/local/include/boost-1_35')
@@ -195,7 +199,6 @@ def find_boost_includes(self, kw):
 			if ret != -1 and ret >= min_version and ret <= max_version and ret > version:
 				boost_path = path
 				version = ret
-				break
 	if not version:
 		self.fatal('boost headers not found! (required version min: %s max: %s)'
 			  % (kw['min_version'], kw['max_version']))
@@ -247,11 +250,17 @@ def find_boost_library(self, lib, kw):
 		(libname, file) = find_library_from_list(lib, files)
 	if libname is None and kw['static'] in [STATIC_ONLYSTATIC, STATIC_BOTH]:
 		st_env_prefix = 'STATICLIB'
-		files = libfiles(lib, v['staticlib_PATTERN'], lib_paths)
+		staticLibPattern = v['staticlib_PATTERN']
+		if self.env['CC_NAME'] == 'msvc':
+			staticLibPattern = 'lib' + staticLibPattern
+		files = libfiles(lib, staticLibPattern, lib_paths)
 		(libname, file) = find_library_from_list(lib, files)
 	if libname is not None:
-		v['LIBPATH_BOOST_' + lib.upper()] = os.path.split(file)[0]
-		v[st_env_prefix + '_BOOST_' + lib.upper()] = 'boost_'+libname
+		v['LIBPATH_BOOST_' + lib.upper()] = [os.path.split(file)[0]]
+		if self.env['CC_NAME'] == 'msvc' and os.path.splitext(file)[1] == '.lib':
+			v[st_env_prefix + '_BOOST_' + lib.upper()] = ['libboost_'+libname]
+		else:
+			v[st_env_prefix + '_BOOST_' + lib.upper()] = ['boost_'+libname]
 		return
 	self.fatal('lib boost_' + lib + ' not found!')
 
@@ -284,6 +293,8 @@ def check_boost(self, *k, **kw):
 - min_score
 	"""
 
+	if not self.env['CXX']:
+		self.fatal('load a c++ compiler tool first, for example conf.check_tool("g++")')
 	self.validate_boost(kw)
 	ret = None
 	try:
@@ -298,7 +309,7 @@ def check_boost(self, *k, **kw):
 			if Logs.verbose > 1:
 				raise
 			else:
-				self.fatal('the configuration failed (see config.log)')
+				self.fatal('the configuration failed (see %r)' % self.log.name)
 	else:
 		if 'okmsg' in kw:
 			self.check_message_2(kw.get('okmsg_includes', ret))
@@ -308,13 +319,14 @@ def check_boost(self, *k, **kw):
 		try:
 			self.find_boost_library(lib, kw)
 		except Configure.ConfigurationError, e:
+			ret = False
 			if 'errmsg' in kw:
 				self.check_message_2(kw['errmsg'], 'YELLOW')
 			if 'mandatory' in kw:
 				if Logs.verbose > 1:
 					raise
 				else:
-					self.fatal('the configuration failed (see config.log)')
+					self.fatal('the configuration failed (see %r)' % self.log.name)
 		else:
 			if 'okmsg' in kw:
 				self.check_message_2(kw['okmsg'])

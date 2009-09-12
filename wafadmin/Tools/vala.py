@@ -4,7 +4,7 @@
 
 import os.path, shutil
 import Task, Runner, Utils, Logs, Build, Node
-from TaskGen import extension
+from TaskGen import extension, after, before
 
 EXT_VALA = ['.vala', '.gs']
 
@@ -35,9 +35,16 @@ class valac_task(Task.Task):
 		features = self.generator.features
 
 		if 'cshlib' in features or 'cstaticlib' in features:
+			output_dir = self.outputs[0].bld_dir(env)
 			cmd.append('--library ' + self.target)
+			if env['VALAC_VERSION'] >= (0, 7, 0):
+				cmd.append('--header ' + os.path.join(output_dir, self.target + '.h'))
+				self.outputs.append(self.generator.path.find_or_declare(self.target + '.h'))
 			cmd.append('--basedir ' + top_src)
 			cmd.append('-d ' + top_bld)
+			if env['VALAC_VERSION'] > (0, 7, 2) and hasattr(self, 'gir'):
+				cmd.append('--gir=%s.gir' % self.gir)
+
 		else:
 			output_dir = self.outputs[0].bld_dir(env)
 			cmd.append('-d %s' % output_dir)
@@ -54,7 +61,7 @@ class valac_task(Task.Task):
 		cmd.append(" ".join(inputs))
 		result = self.generator.bld.exec_command(" ".join(cmd))
 
-		if 'cshlib' in features or 'cstaticlib' in features:
+		if not 'cprogram' in features:
 			# generate the .deps file
 			if self.packages:
 				filename = os.path.join(self.generator.path.abspath(env), "%s.deps" % self.target)
@@ -71,7 +78,18 @@ class valac_task(Task.Task):
 			self._fix_output("%s.gidl" % self.target)
 			# handle vala >= 0.3.6 who doesn't honor --directory for the generated .gir
 			self._fix_output("%s.gir" % self.target)
+			if hasattr(self, 'gir'):
+				self._fix_output("%s.gir" % self.gir)
 
+		first = None
+		for node in self.outputs:
+			if not first:
+				first = node
+			else:
+				if first.parent.id != node.parent.id:
+					# issue #483
+					if env['VALAC_VERSION'] < (0, 7, 0):
+						shutil.move(first.parent.abspath(self.env) + os.sep + node.name, node.abspath(self.env))
 		return result
 
 	def install(self):
@@ -81,6 +99,7 @@ class valac_task(Task.Task):
 		if self.attr("install_path") and ("cshlib" in features or "cstaticlib" in features):
 			headers_list = [o for o in self.outputs if o.suffix() == ".h"]
 			vapi_list = [o for o in self.outputs if (o.suffix() in (".vapi", ".deps"))]
+			gir_list = [o for o in self.outputs if o.suffix() == ".gir"]
 
 			for header in headers_list:
 				top_src = self.generator.bld.srcnode
@@ -93,10 +112,10 @@ class valac_task(Task.Task):
 						api_version = "0." + version[1]
 					else:
 						api_version = version[0] + ".0"
-				install_path = "${INCLUDEDIR}/%s-%s/%s" % (package, api_version, header.relpath_gen(top_src))
-				bld.install_as(install_path, header.abspath(self.env), self.env)
-			for vapi in vapi_list:
-				bld.install_files("${DATAROOTDIR}/vala/vapi", vapi.abspath(self.env), self.env)
+				install_path = '${INCLUDEDIR}/%s-%s/%s' % (package, api_version, header.relpath_gen(top_src))
+				bld.install_as(install_path, header, self.env)
+			bld.install_files('${DATAROOTDIR}/vala/vapi', vapi_list, self.env)
+			bld.install_files('${DATAROOTDIR}/gir-1.0', gir_list, self.env)
 
 	def _fix_output(self, output):
 		top_bld = self.generator.bld.srcnode.abspath(self.env)
@@ -114,6 +133,7 @@ def vala_file(self, node):
 	if not valatask:
 		valatask = self.create_task('valac')
 		self.valatask = valatask
+		self.includes = Utils.to_list(getattr(self, 'includes', []))
 		valatask.packages = []
 		valatask.packages_private = Utils.to_list(getattr(self, 'packages_private', []))
 		valatask.vapi_dirs = []
@@ -124,6 +144,7 @@ def vala_file(self, node):
 
 		packages = Utils.to_list(getattr(self, 'packages', []))
 		vapi_dirs = Utils.to_list(getattr(self, 'vapi_dirs', []))
+		includes =  []
 
 		if hasattr(self, 'uselib_local'):
 			local_packages = Utils.to_list(self.uselib_local)
@@ -151,6 +172,8 @@ def vala_file(self, node):
 								packages.append(package_name)
 							if package_dir not in vapi_dirs:
 								vapi_dirs.append(package_dir)
+							if package_dir not in includes:
+								includes.append(package_dir)
 
 				if hasattr(package_obj, 'uselib_local'):
 					lst = self.to_list(package_obj.uselib_local)
@@ -165,6 +188,15 @@ def vala_file(self, node):
 			except AttributeError:
 				Logs.warn("Unable to locate Vala API directory: '%s'" % vapi_dir)
 
+		self.includes.append(node.bld.srcnode.abspath())
+		self.includes.append(node.bld.srcnode.abspath(self.env))
+		for include in includes:
+			try:
+				self.includes.append(self.path.find_dir(include).abspath())
+				self.includes.append(self.path.find_dir(include).abspath(self.env))
+			except AttributeError:
+				Logs.warn("Unable to locate include directory: '%s'" % include)
+
 		if hasattr(self, 'threading'):
 			valatask.threading = self.threading
 			self.uselib = self.to_list(self.uselib)
@@ -174,6 +206,9 @@ def vala_file(self, node):
 		if hasattr(self, 'target_glib'):
 			valatask.target_glib = self.target_glib
 
+		if hasattr(self, 'gir'):
+			valatask.gir = self.gir
+
 	env = valatask.env
 
 	output_nodes = []
@@ -182,11 +217,18 @@ def vala_file(self, node):
 	output_nodes.append(c_node)
 	self.allnodes.append(c_node)
 
-	output_nodes.append(node.change_ext('.h'))
+	if env['VALAC_VERSION'] < (0, 7, 0):
+		output_nodes.append(node.change_ext('.h'))
+	else:
+		if not 'cprogram' in self.features:
+			output_nodes.append(self.path.find_or_declare('%s.h' % self.target))
 
 	if not 'cprogram' in self.features:
 		output_nodes.append(self.path.find_or_declare('%s.vapi' % self.target))
-		if env['VALAC_VERSION'] > (0, 3, 5):
+		if env['VALAC_VERSION'] > (0, 7, 2):
+			if hasattr(self, 'gir'):
+				output_nodes.append(self.path.find_or_declare('%s.gir' % self.gir))
+		elif env['VALAC_VERSION'] > (0, 3, 5):
 			output_nodes.append(self.path.find_or_declare('%s.gir' % self.target))
 		elif env['VALAC_VERSION'] > (0, 1, 7):
 			output_nodes.append(self.path.find_or_declare('%s.gidl' % self.target))

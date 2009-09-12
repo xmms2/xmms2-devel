@@ -4,9 +4,10 @@
 
 "Base for c programs/libraries"
 
+import os
 import TaskGen, Build, Utils, Task
 from Logs import debug
-import ccroot # <- do not remove
+import ccroot
 from TaskGen import feature, before, extension, after
 
 g_cc_flag_vars = [
@@ -16,10 +17,9 @@ g_cc_flag_vars = [
 
 EXT_CC = ['.c']
 
-TaskGen.bind_feature('cc', ['apply_core'])
-
 g_cc_type_vars = ['CCFLAGS', 'LINKFLAGS']
 
+# TODO remove in waf 1.6
 class cc_taskgen(ccroot.ccroot_abstract):
 	pass
 
@@ -34,7 +34,9 @@ def init_cc(self):
 		raise Utils.WafError("At least one compiler (gcc, ..) must be selected")
 
 @feature('cc')
+@after('apply_incpaths')
 def apply_obj_vars_cc(self):
+	"""after apply_incpaths for INC_PATHS"""
 	env = self.env
 	app = env.append_unique
 	cpppath_st = env['CPPPATH_ST']
@@ -50,8 +52,9 @@ def apply_obj_vars_cc(self):
 		app('_CCINCFLAGS', cpppath_st % i)
 
 @feature('cc')
+@after('apply_lib_vars')
 def apply_defines_cc(self):
-	tree = Build.bld
+	"""after uselib is set for CCDEFINES"""
 	self.defines = getattr(self, 'defines', [])
 	lst = self.to_list(self.defines) + self.to_list(self.env['CCDEFINES'])
 	milst = []
@@ -73,30 +76,25 @@ def apply_defines_cc(self):
 @extension(EXT_CC)
 def c_hook(self, node):
 	# create the compilation task: cpp or cc
-	task = self.create_task('cc')
-	try: obj_ext = self.obj_ext
-	except AttributeError: obj_ext = '_%d.o' % self.idx
+	if getattr(self, 'obj_ext', None):
+		obj_ext = self.obj_ext
+	else:
+		obj_ext = '_%d.o' % self.idx
 
-	task.defines  = self.scanner_defines
-
-	task.inputs = [node]
-	task.outputs = [node.change_ext(obj_ext)]
-	self.compiled_tasks.append(task)
+	task = self.create_task('cc', node, node.change_ext(obj_ext))
+	try:
+		self.compiled_tasks.append(task)
+	except AttributeError:
+		raise Utils.WafError('Have you forgotten to set the feature "cc" on %s?' % str(self))
 	return task
 
 cc_str = '${CC} ${CCFLAGS} ${CPPFLAGS} ${_CCINCFLAGS} ${_CCDEFFLAGS} ${CC_SRC_F}${SRC} ${CC_TGT_F}${TGT}'
-link_str = '${LINK_CC} ${CCLNK_SRC_F}${SRC} ${CCLNK_TGT_F}${TGT} ${LINKFLAGS} ${_LIBDIRFLAGS} ${_LIBFLAGS}'
-vnum_link_str = '${LINK_CC} ${CCLNK_SRC_F}${SRC} ${CCLNK_TGT_F}${TGT[1].bldpath(env)} ${LINKFLAGS} ${_LIBDIRFLAGS} ${_LIBFLAGS} && ln -sf ${TGT[1].name} ${TGT[0].bldpath(env)}'
-
-cls = Task.simple_task_type('cc', cc_str, 'GREEN', ext_out='.o', ext_in='.c')
+cls = Task.simple_task_type('cc', cc_str, 'GREEN', ext_out='.o', ext_in='.c', shell=False)
 cls.scan = ccroot.scan
 cls.vars.append('CCDEPS')
 
-cls = Task.simple_task_type('cc_link', link_str, color='YELLOW', ext_in='.o')
+link_str = '${LINK_CC} ${CCLNK_SRC_F}${SRC} ${CCLNK_TGT_F}${TGT[0].abspath(env)} ${LINKFLAGS}'
+cls = Task.simple_task_type('cc_link', link_str, color='YELLOW', ext_in='.o', ext_out='.bin', shell=False)
 cls.maxjobs = 1
-cls = Task.simple_task_type('vnum_cc_link', vnum_link_str, color='YELLOW', ext_in='.o')
-cls.maxjobs = 1
-
-
-TaskGen.declare_order('apply_incpaths', 'apply_defines_cc', 'apply_core', 'apply_lib_vars', 'apply_obj_vars_cc', 'apply_obj_vars')
+cls.install = Utils.nada
 

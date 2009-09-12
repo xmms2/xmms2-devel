@@ -42,15 +42,38 @@ The role of the Task Manager is to give the tasks in order (groups of task that 
 
 """
 
-import os, types, shutil, sys, re, random, time
+import os, shutil, sys, re, random, datetime
 from Utils import md5
 import Build, Runner, Utils, Node, Logs, Options
-from Logs import debug
+from Logs import debug, warn, error
 from Constants import *
 
 algotype = NORMAL
 #algotype = JOBCONTROL
 #algotype = MAXPARALLEL
+
+COMPILE_TEMPLATE_SHELL = '''
+def f(task):
+	env = task.env
+	wd = getattr(task, 'cwd', None)
+	p = env.get_flat
+	cmd = \'\'\' %s \'\'\' % s
+	return task.exec_command(cmd, cwd=wd)
+'''
+
+COMPILE_TEMPLATE_NOSHELL = '''
+def f(task):
+	env = task.env
+	wd = getattr(task, 'cwd', None)
+	def to_list(xx):
+		if isinstance(xx, str): return [xx]
+		return xx
+	lst = []
+	%s
+	lst = [x for x in lst if x]
+	return task.exec_command(lst, cwd=wd)
+'''
+
 
 """
 Enable different kind of dependency algorithms:
@@ -60,36 +83,13 @@ Enable different kind of dependency algorithms:
 
 In theory 1. will be faster than 2 for waf, but might be slower for builds
 The scheme 2 will not allow for running tasks one by one so it can cause disk thrashing on huge builds
-
 """
 
-FILE_DEPS = False
-def file_deps(tasks):
-	"""Infer dependencies from task input and output nodes
-	"""
-
-	v = {}
-	for x in tasks:
-		try:
-			(ins, outs) = v[x.env.variant()]
-		except KeyError:
-			ins = {}
-			outs = {}
-			v[x.env.variant()] = (ins, outs)
-
-		for a in getattr(x, 'inputs', []):
-			try: ins[a.id].append(x)
-			except KeyError: ins[a.id] = [x]
-		for a in getattr(x, 'outputs', []):
-			try: outs[a.id].append(x)
-			except KeyError: outs[a.id] = [x]
-
-	for (ins, outs) in v.values():
-		links = set(ins.iterkeys()).intersection(outs.iterkeys())
-		for k in links:
-			for a in ins[k]:
-				for b in outs[k]:
-					a.set_run_after(b)
+file_deps = Utils.nada
+"""
+Additional dependency pre-check may be added by replacing the function file_deps.
+e.g. extract_outputs, extract_deps below.
+"""
 
 class TaskManager(object):
 	"""The manager is attached to the build object, it holds a list of TaskGroup"""
@@ -97,6 +97,7 @@ class TaskManager(object):
 		self.groups = []
 		self.tasks_done = []
 		self.current_group = 0
+		self.groups_names = {}
 
 	def get_next_set(self):
 		"""return the next set of tasks to execute
@@ -105,17 +106,39 @@ class TaskManager(object):
 		while not ret and self.current_group < len(self.groups):
 			ret = self.groups[self.current_group].get_next_set()
 			if ret: return ret
-			else: self.current_group += 1
+			else:
+				self.groups[self.current_group].process_install()
+				self.current_group += 1
 		return (None, None)
 
-	def add_group(self):
-		if self.groups and not self.groups[0].tasks:
-			warn('add_group: an empty group is already present')
-		self.groups.append(TaskGroup())
+	def add_group(self, name=None, set=True):
+		#if self.groups and not self.groups[0].tasks:
+		#	error('add_group: an empty group is already present')
+		g = TaskGroup()
+
+		if name and name in self.groups_names:
+			error('add_group: name %s already present' % name)
+		self.groups_names[name] = g
+		self.groups.append(g)
+		if set:
+			self.current_group = len(self.groups) - 1
+
+	def set_group(self, idx):
+		if isinstance(idx, str):
+			g = self.groups_names[idx]
+			for x in xrange(len(self.groups)):
+				if id(g) == id(self.groups[x]):
+					self.current_group = x
+		else:
+			self.current_group = idx
+
+	def add_task_gen(self, tgen):
+		if not self.groups: self.add_group()
+		self.groups[self.current_group].tasks_gen.append(tgen)
 
 	def add_task(self, task):
 		if not self.groups: self.add_group()
-		self.groups[-1].add_task(task)
+		self.groups[self.current_group].tasks.append(task)
 
 	def total(self):
 		total = 0
@@ -127,11 +150,12 @@ class TaskManager(object):
 	def add_finished(self, tsk):
 		self.tasks_done.append(tsk)
 		bld = tsk.generator.bld
-		if Options.is_install:
+		if bld.is_install:
 			f = None
 			if 'install' in tsk.__dict__:
 				f = tsk.__dict__['install']
-				f(tsk)
+				# install=0 to prevent installation
+				if f: f(tsk)
 			else:
 				tsk.install()
 
@@ -139,11 +163,13 @@ class TaskGroup(object):
 	"the compilation of one group does not begin until the previous group has finished (in the manager)"
 	def __init__(self):
 		self.tasks = [] # this list will be consumed
+		self.tasks_gen = []
 
-		self.cstr_groups = {} # tasks having equivalent constraints
-		self.cstr_order = {} # partial order between the cstr groups
+		self.cstr_groups = Utils.DefaultDict(list) # tasks having equivalent constraints
+		self.cstr_order = Utils.DefaultDict(set) # partial order between the cstr groups
 		self.temp_tasks = [] # tasks put on hold
 		self.ready = 0
+		self.post_funs = []
 
 	def reset(self):
 		"clears the state of the object (put back the tasks into self.tasks)"
@@ -151,15 +177,18 @@ class TaskGroup(object):
 			self.tasks += self.cstr_groups[x]
 		self.tasks = self.temp_tasks + self.tasks
 		self.temp_tasks = []
-		self.cstr_groups = []
-		self.cstr_order = {}
+		self.cstr_groups = Utils.DefaultDict(list)
+		self.cstr_order = Utils.DefaultDict(set)
 		self.ready = 0
+
+	def process_install(self):
+		for (f, k, kw) in self.post_funs:
+			f(*k, **kw)
 
 	def prepare(self):
 		"prepare the scheduling"
 		self.ready = 1
-		if FILE_DEPS:
-			file_deps(self.tasks)
+		file_deps(self.tasks)
 		self.make_cstr_groups()
 		self.extract_constraints()
 
@@ -182,19 +211,13 @@ class TaskGroup(object):
 
 	def make_cstr_groups(self):
 		"unite the tasks that have similar constraints"
-		self.cstr_groups = {}
+		self.cstr_groups = Utils.DefaultDict(list)
 		for x in self.tasks:
 			h = x.hash_constraints()
-			try: self.cstr_groups[h].append(x)
-			except KeyError: self.cstr_groups[h] = [x]
-
-	def add_task(self, task):
-		try: self.tasks.append(task)
-		except KeyError: self.tasks = [task]
+			self.cstr_groups[h].append(x)
 
 	def set_order(self, a, b):
-		try: self.cstr_order[a].add(b)
-		except KeyError: self.cstr_order[a] = set([b,])
+		self.cstr_order[a].add(b)
 
 	def compare_exts(self, t1, t2):
 		"extension production"
@@ -217,11 +240,11 @@ class TaskGroup(object):
 		m = "after"
 		n = "before"
 		name = t2.__class__.__name__
-		if name in t1.attr(m, ()): return -1
-		elif name in t1.attr(n, ()): return 1
+		if name in Utils.to_list(t1.attr(m, ())): return -1
+		elif name in Utils.to_list(t1.attr(n, ())): return 1
 		name = t1.__class__.__name__
-		if name in t2.attr(m, ()): return 1
-		elif name in t2.attr(n, ()): return -1
+		if name in Utils.to_list(t2.attr(m, ())): return 1
+		elif name in Utils.to_list(t2.attr(n, ())): return -1
 		return 0
 
 	def extract_constraints(self):
@@ -242,8 +265,6 @@ class TaskGroup(object):
 					self.set_order(keys[i], keys[j])
 				elif val < 0:
 					self.set_order(keys[j], keys[i])
-
-		# TODO: extract constraints by file extensions on the actions
 
 	def tasks_in_parallel(self):
 		"(NORMAL) next list of tasks that may be executed in parallel"
@@ -312,8 +333,8 @@ class TaskGroup(object):
 				for m in self.cstr_groups[p]:
 					for n in self.cstr_groups[v]:
 						n.set_run_after(m)
-		self.cstr_order = {}
-		self.cstr_groups = {}
+		self.cstr_order = Utils.DefaultDict(set)
+		self.cstr_groups = Utils.DefaultDict(list)
 		self.done = 1
 		return self.tasks[:] # make a copy
 
@@ -371,6 +392,10 @@ class TaskBase(object):
 			return 'executing: %s\n' % self.fun.__name__
 		return self.__class__.__name__ + '\n'
 
+	def exec_command(self, *k, **kw):
+		"use this for executing commands from tasks"
+		return self.generator.bld.exec_command(*k, **kw)
+
 	def runnable_status(self):
 		"RUN_ME SKIP_ME or ASK_LATER"
 		return RUN_ME
@@ -402,8 +427,7 @@ class TaskBase(object):
 			return self.generator.bld.progress_line(self.position[0], self.position[1], col1, col2)
 
 		if Options.options.progress_bar == 2:
-			ini = self.generator.bld.ini
-			ela = time.strftime('%H:%M:%S', time.gmtime(time.time() - ini))
+			ela = Utils.get_elapsed_time(self.generator.bld.ini)
 			try:
 				ins  = ','.join([n.name for n in self.inputs])
 			except AttributeError:
@@ -438,15 +462,13 @@ class TaskBase(object):
 
 	def format_error(self):
 		"error message to display to the user (when a build fails)"
-		if getattr(self, "error_msg", None):
-			return self.error_msg
+		if getattr(self, "err_msg", None):
+			return self.err_msg
 		elif self.hasrun == CRASHED:
 			try:
 				return " -> task failed (err #%d): %r" % (self.err_code, self)
 			except AttributeError:
 				return " -> task failed: %r" % self
-		elif self.hasrun == EXCEPTION:
-			return self.err_msg
 		elif self.hasrun == MISSING:
 			return " -> missing files: %r" % self
 		else:
@@ -469,8 +491,8 @@ class TaskBase(object):
 				# if src is given, install the sources too
 				lst += [a.relpath_gen(bld.srcnode) for a in self.inputs]
 			if self.attr('filename'):
-				dir = self.install_path + self.attr('filename')
-				bld.install_as(self.install_path, lst[0], self.env, perm)
+				dir = self.install_path.rstrip(os.sep) + os.sep + self.attr('filename')
+				bld.install_as(dir, lst[0], self.env, perm)
 			else:
 				bld.install_files(self.install_path, lst, self.env, perm)
 
@@ -507,7 +529,7 @@ class Task(TaskBase):
 		tgt_str = ' '.join([a.nice_path(env) for a in self.outputs])
 		if self.outputs: sep = ' -> '
 		else: sep = ''
-		return '%s: %s%s%s\n' % (self.__class__.__name__, src_str, sep, tgt_str)
+		return '%s: %s%s%s\n' % (self.__class__.__name__.replace('_task', ''), src_str, sep, tgt_str)
 
 	def __repr__(self):
 		return "".join(['\n\t{task: ', self.__class__.__name__, " ", ",".join([x.name for x in self.inputs]), " -> ", ",".join([x.name for x in self.outputs]), '}'])
@@ -517,22 +539,26 @@ class Task(TaskBase):
 		try:
 			return self.uid
 		except AttributeError:
+			"this is not a real hot zone, but we want to avoid surprizes here"
 			m = md5()
 			up = m.update
-			up(self.env.variant())
-			for x in self.inputs + self.outputs:
-				up(x.abspath())
 			up(self.__class__.__name__)
-			up(Utils.h_fun(self.run))
+			up(self.env.variant())
+			p = None
+			for x in self.inputs + self.outputs:
+				if p != x.parent.id:
+					p = x.parent.id
+					up(x.parent.abspath())
+				up(x.name)
 			self.uid = m.digest()
 			return self.uid
 
 	def set_inputs(self, inp):
-		if type(inp) is types.ListType: self.inputs += inp
+		if isinstance(inp, list): self.inputs += inp
 		else: self.inputs.append(inp)
 
 	def set_outputs(self, out):
-		if type(out) is types.ListType: self.outputs += out
+		if isinstance(out, list): self.outputs += out
 		else: self.outputs.append(out)
 
 	def set_run_after(self, task):
@@ -543,7 +569,7 @@ class Task(TaskBase):
 
 	def add_file_dependency(self, filename):
 		"TODO user-provided file dependencies"
-		node = self.generator.bld.current.find_resource(filename)
+		node = self.generator.bld.path.find_resource(filename)
 		self.deps_nodes.append(node)
 
 	def signature(self):
@@ -576,7 +602,7 @@ class Task(TaskBase):
 
 		if self.inputs and (not self.outputs):
 			if not getattr(self.__class__, 'quiet', None):
-				warn("task is probably invalid (no inputs OR outputs): override in a Task subclass or set the attribute 'quiet' %r" % self)
+				warn("invalid task (no inputs OR outputs): override in a Task subclass or set the attribute 'quiet' %r" % self)
 
 		for t in self.run_after:
 			if not t.hasrun:
@@ -585,27 +611,14 @@ class Task(TaskBase):
 		env = self.env
 		bld = self.generator.bld
 
-		# look at the previous signature first
-		time = None
-		for node in self.outputs:
-			variant = node.variant(env)
-			try:
-				time = bld.node_sigs[variant][node.id]
-			except KeyError:
-				debug("task: task %r must run as the first node does not exist" % self)
-				time = None
-				break
-
-		# if one of the nodes does not exist, try to retrieve them from the cache
-		if time is None and self.outputs:
-			try:
-				new_sig = self.signature()
-			except KeyError:
-				debug("task: something is wrong, computing the task signature failed")
-				return RUN_ME
-
+		# first compute the signature
+		try:
+			new_sig = self.signature()
+		except KeyError:
+			debug("task: something is wrong, computing the task %r signature failed" % self)
 			return RUN_ME
 
+		# compare the signature to a signature computed previously
 		key = self.unique_id()
 		try:
 			prev_sig = bld.task_sigs[key][0]
@@ -613,8 +626,15 @@ class Task(TaskBase):
 			debug("task: task %r must run as it was never run before or the task code changed" % self)
 			return RUN_ME
 
-		#print "prev_sig is ", prev_sig
-		new_sig = self.signature()
+		# compare the signatures of the outputs
+		for node in self.outputs:
+			variant = node.variant(env)
+			try:
+				if bld.node_sigs[variant][node.id] != new_sig:
+					return RUN_ME
+			except KeyError:
+				debug("task: task %r must run as the output nodes do not exist" % self)
+				return RUN_ME
 
 		# debug if asked to
 		if Logs.verbose: self.debug_why(bld.task_sigs[key])
@@ -630,14 +650,15 @@ class Task(TaskBase):
 		sig = self.signature()
 
 		cnt = 0
+		variant = env.variant()
 		for node in self.outputs:
-			variant = node.variant(env)
-			#if node in bld.node_sigs[variant]:
-			#	print "variant is ", variant
-			#	print "self sig is ", Utils.view_sig(bld.node_sigs[variant][node])
-
 			# check if the node exists ..
-			os.stat(node.abspath(env))
+			try:
+				os.stat(node.abspath(env))
+			except OSError:
+				self.has_run = MISSING
+				self.err_msg = '-> missing file: %r' % node.abspath(env)
+				raise Utils.WafError
 
 			# important, store the signature for the next run
 			bld.node_sigs[variant][node.id] = sig
@@ -647,19 +668,19 @@ class Task(TaskBase):
 			# this is unnecessary
 			if Options.cache_global:
 				ssig = sig.encode('hex')
-				dest = os.path.join(Options.cache_global, ssig+'-'+str(cnt))
+				dest = os.path.join(Options.cache_global, '%s_%d_%s' % (ssig, cnt, node.name))
 				try: shutil.copy2(node.abspath(env), dest)
 				except IOError: warn('Could not write the file to the cache')
 				cnt += 1
 
 		bld.task_sigs[self.unique_id()] = self.cache_sig
-		self.executed=1
 
 	def can_retrieve_cache(self):
 		"""Retrieve build nodes from the cache - the file time stamps are updated
 		for cleaning the least used files from the cache dir - be careful when overridding"""
 		if not Options.cache_global: return None
 		if Options.options.nocache: return None
+		if not self.outputs: return None
 
 		env = self.env
 		sig = self.signature()
@@ -669,7 +690,7 @@ class Task(TaskBase):
 			variant = node.variant(env)
 
 			ssig = sig.encode('hex')
-			orig = os.path.join(Options.cache_global, ssig+'-'+str(cnt))
+			orig = os.path.join(Options.cache_global, '%s_%d_%s' % (ssig, cnt, node.name))
 			try:
 				shutil.copy2(orig, node.abspath(env))
 				# mark the cache file as used recently (modified)
@@ -679,8 +700,11 @@ class Task(TaskBase):
 				return None
 			else:
 				cnt += 1
-				self.generator.bld.node_sigs[variant][node.id] = sig
-				self.generator.bld.printout('restoring from cache %r\n' % node.bldpath(env))
+
+		for node in self.outputs:
+			self.generator.bld.node_sigs[variant][node.id] = sig
+			self.generator.bld.printout('restoring from cache %r\n' % node.bldpath(env))
+
 		return 1
 
 	def debug_why(self, old_sigs):
@@ -702,29 +726,21 @@ class Task(TaskBase):
 		m = md5()
 
 		# the inputs
-		for x in self.inputs:
+		for x in self.inputs + getattr(self, 'dep_nodes', []):
+			if not x.parent.id in bld.cache_scanned_folders:
+				bld.rescan(x.parent)
+
 			variant = x.variant(self.env)
 			m.update(bld.node_sigs[variant][x.id])
 
-		# additional nodes to depend on, if provided
-		for x in getattr(self, 'dep_nodes', []):
-			variant = x.variant(self.env)
-			v = bld.node_sigs[variant][x.id]
-			m.update(v)
-
 		# manual dependencies, they can slow down the builds
-		try:
+		if bld.deps_man:
 			additional_deps = bld.deps_man
-		except AttributeError:
-			pass
-		else:
 			for x in self.inputs + self.outputs:
 				try:
 					d = additional_deps[x.id]
 				except KeyError:
 					continue
-				if callable(d):
-					d = d() # dependency is a function, call it
 
 				for v in d:
 					if isinstance(v, Node.Node):
@@ -734,7 +750,14 @@ class Task(TaskBase):
 							v = bld.node_sigs[variant][v.id]
 						except KeyError: # make it fatal?
 							v = ''
+					elif hasattr(v, '__call__'):
+						v = v() # dependency is a function, call it
 					m.update(v)
+
+		for x in self.deps_nodes:
+			v = bld.node_sigs[x.variant(self.env)][x.id]
+			m.update(v)
+
 		return m.digest()
 
 	def sig_vars(self):
@@ -773,9 +796,10 @@ class Task(TaskBase):
 		prev_sigs = bld.task_sigs.get(key, ())
 		if prev_sigs:
 			try:
+				# for issue #379
 				if prev_sigs[2] == self.compute_sig_implicit_deps():
 					return prev_sigs[2]
-			except KeyError:
+			except (KeyError, OSError):
 				pass
 
 		# no previous run or the signature of the dependencies has changed, rescan the dependencies
@@ -793,7 +817,7 @@ class Task(TaskBase):
 		return sig
 
 	def compute_sig_implicit_deps(self):
-		"""it is intented for .cpp and inferred .h files
+		"""it is intended for .cpp and inferred .h files
 		there is a single list (no tree traversal)
 		this is the hot spot so ... do not touch"""
 		m = md5()
@@ -803,12 +827,14 @@ class Task(TaskBase):
 		tstamp = bld.node_sigs
 		env = self.env
 
-		for k in bld.node_deps.get(self.unique_id(), []) + self.inputs:
+		for k in bld.node_deps.get(self.unique_id(), []):
 			# unlikely but necessary if it happens
 			if not k.parent.id in bld.cache_scanned_folders:
+				# if the parent folder is removed, an OSError may be thrown
 				bld.rescan(k.parent)
 
-			if k.id & 3 == Node.FILE:
+			# if the parent folder is removed, a KeyError will be thrown
+			if k.id & 3 == 2: # Node.FILE:
 				upd(tstamp[0][k.id])
 			else:
 				upd(tstamp[env.variant()][k.id])
@@ -820,18 +846,23 @@ def funex(c):
 	exec(c, dc)
 	return dc['f']
 
-reg_act = re.compile(r"(?P<dollar>\$\$)|(?P<subst>\$\{(?P<var>\w+)(?P<code>.*?)\})", re.M)
-def compile_fun(name, line):
+reg_act = re.compile(r"(?P<backslash>\\)|(?P<dollar>\$\$)|(?P<subst>\$\{(?P<var>\w+)(?P<code>.*?)\})", re.M)
+def compile_fun_shell(name, line):
 	"""Compiles a string (once) into a function, eg:
 	simple_task_type('c++', '${CXX} -o ${TGT[0]} ${SRC} -I ${SRC[0].parent.bldpath()}')
 
 	The env variables (CXX, ..) on the task must not hold dicts (order)
 	The reserved keywords TGT and SRC represent the task input and output nodes
+
+	quick test:
+	bld.new_task_gen(source='wscript', rule='echo "foo\\${SRC[0].name}\\bar"')
 	"""
+
 	extr = []
 	def repl(match):
 		g = match.group
 		if g('dollar'): return "$"
+		elif g('backslash'): return '\\\\'
 		elif g('subst'): extr.append((g('var'), g('code'))); return "%s"
 		return None
 
@@ -853,21 +884,70 @@ def compile_fun(name, line):
 	if parm: parm = "%% (%s) " % (',\n\t\t'.join(parm))
 	else: parm = ''
 
-	c = '''
-def f(task):
-	env = task.env
-	wd = getattr(task, 'cwd', None)
-	p = env.get_flat
-	cmd = "%s" % s
-	return task.generator.bld.exec_command(cmd, cwd=wd)
-''' % (line, parm)
+	c = COMPILE_TEMPLATE_SHELL % (line, parm)
 
 	debug('action: %s' % c)
 	return (funex(c), dvars)
 
-def simple_task_type(name, line, color='GREEN', vars=[], ext_in=[], ext_out=[], before=[], after=[]):
+def compile_fun_noshell(name, line):
+
+	extr = []
+	def repl(match):
+		g = match.group
+		if g('dollar'): return "$"
+		elif g('subst'): extr.append((g('var'), g('code'))); return "<<|@|>>"
+		return None
+
+	line2 = reg_act.sub(repl, line)
+	params = line2.split('<<|@|>>')
+
+	buf = []
+	dvars = []
+	app = buf.append
+	for x in xrange(len(extr)):
+		params[x] = params[x].strip()
+		if params[x]:
+			app("lst.extend(%r)" % params[x].split())
+		(var, meth) = extr[x]
+		if var == 'SRC':
+			if meth: app('lst.append(task.inputs%s)' % meth)
+			else: app("lst.extend([a.srcpath(env) for a in task.inputs])")
+		elif var == 'TGT':
+			if meth: app('lst.append(task.outputs%s)' % meth)
+			else: app("lst.extend([a.bldpath(env) for a in task.outputs])")
+		else:
+			app('lst.extend(to_list(env[%r]))' % var)
+			if not var in dvars: dvars.append(var)
+
+	if extr:
+		if params[-1]:
+			app("lst.extend(%r)" % params[-1].split())
+
+	fun = COMPILE_TEMPLATE_NOSHELL % "\n\t".join(buf)
+	debug('action: %s' % fun)
+	return (funex(fun), dvars)
+
+def compile_fun(name, line, shell=None):
+	"commands can be launched by the shell or not"
+	if line.find('<') > 0 or line.find('>') > 0 or line.find('&&') > 0:
+		shell = True
+	#else:
+	#	shell = False
+
+	if shell is None:
+		if sys.platform == 'win32':
+			shell = False
+		else:
+			shell = True
+
+	if shell:
+		return compile_fun_shell(name, line)
+	else:
+		return compile_fun_noshell(name, line)
+
+def simple_task_type(name, line, color='GREEN', vars=[], ext_in=[], ext_out=[], before=[], after=[], shell=None):
 	"""return a new Task subclass with the function run compiled from the line given"""
-	(fun, dvars) = compile_fun(name, line)
+	(fun, dvars) = compile_fun(name, line, shell)
 	fun.code = line
 	return task_type_from_func(name, fun, vars or dvars, color, ext_in, ext_out, before, after)
 
@@ -915,4 +995,84 @@ def update_outputs(cls):
 		bld.node_sigs[self.env.variant()][self.outputs[0].id] = \
 		Utils.h_file(self.outputs[0].abspath(self.env))
 	cls.post_run = post_run
+
+def extract_outputs(tasks):
+	"""file_deps: Infer additional dependencies from task input and output nodes
+	"""
+	v = {}
+	for x in tasks:
+		try:
+			(ins, outs) = v[x.env.variant()]
+		except KeyError:
+			ins = {}
+			outs = {}
+			v[x.env.variant()] = (ins, outs)
+
+		for a in getattr(x, 'inputs', []):
+			try: ins[a.id].append(x)
+			except KeyError: ins[a.id] = [x]
+		for a in getattr(x, 'outputs', []):
+			try: outs[a.id].append(x)
+			except KeyError: outs[a.id] = [x]
+
+	for (ins, outs) in v.values():
+		links = set(ins.iterkeys()).intersection(outs.iterkeys())
+		for k in links:
+			for a in ins[k]:
+				for b in outs[k]:
+					a.set_run_after(b)
+
+def extract_deps(tasks):
+	"""file_deps: Infer additional dependencies from task input and output nodes and from implicit dependencies
+	returned by the scanners - that will only work if all tasks are created
+
+	this is aimed at people who have pathological builds and who do not care enough
+	to implement the build dependencies properly
+
+	with two loops over the list of tasks, do not expect this to be really fast
+	"""
+
+	# first reuse the function above
+	extract_outputs(tasks)
+
+	# map the output nodes to the tasks producing them
+	out_to_task = {}
+	for x in tasks:
+		v = x.env.variant()
+		try:
+			lst = x.outputs
+		except AttributeError:
+			pass
+		else:
+			for node in lst:
+				out_to_task[(v, node.id)] = x
+
+	# map the dependencies found to the tasks compiled
+	dep_to_task = {}
+	for x in tasks:
+		try:
+			x.signature()
+		except: # this is on purpose
+			pass
+
+		variant = x.env.variant()
+		key = x.unique_id()
+		for k in x.generator.bld.node_deps.get(x.unique_id(), []):
+			try: dep_to_task[(v, k.id)].append(x)
+			except KeyError: dep_to_task[(v, k.id)] = [x]
+
+	# now get the intersection
+	deps = set(dep_to_task.keys()).intersection(set(out_to_task.keys()))
+
+	# and add the dependencies from task to task
+	for idx in deps:
+		for k in dep_to_task[idx]:
+			k.set_run_after(out_to_task[idx])
+
+	# cleanup, remove the signatures
+	for x in tasks:
+		try:
+			delattr(x, 'cache_sig')
+		except AttributeError:
+			pass
 

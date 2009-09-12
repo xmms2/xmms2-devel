@@ -2,7 +2,13 @@
 # encoding: utf-8
 # Ali Sabil, 2007
 
-"""Add options for the standard GNU directories, this tool will add the options
+"""
+To use this module do not forget to call
+opt.tool_options('gnu_dirs')
+AND
+conf.check_tool('gnu_dirs')
+
+Add options for the standard GNU directories, this tool will add the options
 found in autotools, and will update the environment with the following
 installation variables:
 
@@ -29,37 +35,29 @@ installation variables:
  * PSDIR : ps documentation [DOCDIR]
 """
 
-import re
 import Utils, Options
 
 _options = [x.split(', ') for x in '''
-bindir, user executables, $(EXEC_PREFIX)/bin
-sbindir, system admin executables, $(EXEC_PREFIX)/sbin
-libexecdir, program executables, $(EXEC_PREFIX)/libexec
-sysconfdir, read-only single-machine data, $(PREFIX)/etc
-sharedstatedir, modifiable architecture-independent data, $(PREFIX)/com
-localstatedir, modifiable single-machine data, $(PREFIX)/var
-libdir, object code libraries, $(EXEC_PREFIX)/lib
-includedir, C header files, $(PREFIX)/include
+bindir, user executables, ${EXEC_PREFIX}/bin
+sbindir, system admin executables, ${EXEC_PREFIX}/sbin
+libexecdir, program executables, ${EXEC_PREFIX}/libexec
+sysconfdir, read-only single-machine data, ${PREFIX}/etc
+sharedstatedir, modifiable architecture-independent data, ${PREFIX}/com
+localstatedir, modifiable single-machine data, ${PREFIX}/var
+libdir, object code libraries, ${EXEC_PREFIX}/lib
+includedir, C header files, ${PREFIX}/include
 oldincludedir, C header files for non-gcc, /usr/include
-datarootdir, read-only arch.-independent data root, $(PREFIX)/share
-datadir, read-only architecture-independent data, $(DATAROOTDIR)
-infodir, info documentation, $(DATAROOTDIR)/info
-localedir, locale-dependent data, $(DATAROOTDIR)/locale
-mandir, man documentation, $(DATAROOTDIR)/man
-docdir, documentation root, $(DATAROOTDIR)/doc/$(PACKAGE)
-htmldir, html documentation, $(DOCDIR)
-dvidir, dvi documentation, $(DOCDIR)
-pdfdir, pdf documentation, $(DOCDIR)
-psdir, ps documentation, $(DOCDIR)
+datarootdir, read-only arch.-independent data root, ${PREFIX}/share
+datadir, read-only architecture-independent data, ${DATAROOTDIR}
+infodir, info documentation, ${DATAROOTDIR}/info
+localedir, locale-dependent data, ${DATAROOTDIR}/locale
+mandir, man documentation, ${DATAROOTDIR}/man
+docdir, documentation root, ${DATAROOTDIR}/doc/${PACKAGE}
+htmldir, html documentation, ${DOCDIR}
+dvidir, dvi documentation, ${DOCDIR}
+pdfdir, pdf documentation, ${DOCDIR}
+psdir, ps documentation, ${DOCDIR}
 '''.split('\n') if x]
-
-re_var = re.compile(r'\$\(([a-zA-Z0-9_]+)\)')
-def subst_vars(foo, vars):
-	def repl(m):
-		s = m.group(1)
-		return s and '' + vars[s] or ''
-	return re_var.sub(repl, foo)
 
 def detect(conf):
 	def get_param(varname, default):
@@ -67,7 +65,7 @@ def detect(conf):
 
 	env = conf.env
 	env['EXEC_PREFIX'] = get_param('EXEC_PREFIX', env['PREFIX'])
-	env['PACKAGE'] = Utils.g_module.APPNAME or env['PACKAGE']
+	env['PACKAGE'] = getattr(Utils.g_module, 'APPNAME', None) or env['PACKAGE']
 
 	complete = False
 	iter = 0
@@ -78,7 +76,7 @@ def detect(conf):
 			name = name.upper()
 			if not env[name]:
 				try:
-					env[name] = subst_vars(get_param(name, default), env)
+					env[name] = Utils.subst_vars(get_param(name, default), env)
 				except TypeError:
 					complete = False
 	if not complete:
@@ -99,7 +97,7 @@ def set_options(opt):
 			inst_dir.add_option(option)
 
 	inst_dir.add_option('--exec-prefix',
-		help = 'installation prefix [Default: $(PREFIX)]',
+		help = 'installation prefix [Default: ${PREFIX}]',
 		default = '',
 		dest = 'EXEC_PREFIX')
 

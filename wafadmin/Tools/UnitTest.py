@@ -18,8 +18,9 @@ In the shutdown method, add the following code:
 Each object to use as a unit test must be a program and must have X{obj.unit_test=1}
 """
 import os, sys
-import Build, TaskGen, Utils, Options, Logs
-import pproc
+import Build, TaskGen, Utils, Options, Logs, Task
+from TaskGen import before, after, feature
+from Constants import *
 
 class unit_test(object):
 	"Unit test representation"
@@ -39,7 +40,7 @@ class unit_test(object):
 		self.total_num_tests = 0	# Total amount of unit tests
 		self.max_label_length = 0	# Maximum label length (pretty-print the output)
 
-		self.unit_tests = {}		# Unit test dictionary. Key: the label (unit test filename relative
+		self.unit_tests = Utils.ordered_dict()		# Unit test dictionary. Key: the label (unit test filename relative
 						# to the build dir), value: unit test filename with absolute path
 		self.unit_test_results = {}	# Dictionary containing the unit test results.
 						# Key: the label, value: result (true = success false = failure)
@@ -59,17 +60,28 @@ class unit_test(object):
 		self.total_num_tests = 0
 		self.max_label_length = 0
 
-		self.unit_tests = {}
+		self.unit_tests = Utils.ordered_dict()
 		self.unit_test_results = {}
 		self.unit_test_erroneous = {}
+
+		ld_library_path = []
 
 		# If waf is not building, don't run anything
 		if not Options.commands[self.run_if_waf_does]: return
 
-		# Gather unit tests to call
+		# Get the paths for the shared libraries, and obtain the unit tests to execute
 		for obj in Build.bld.all_task_gen:
-			unit_test = getattr(obj,'unit_test', '')
-			if unit_test and 'program' in obj.features:
+			try:
+				link_task = obj.link_task
+			except AttributeError:
+				pass
+			else:
+				lib_path = link_task.outputs[0].parent.abspath(obj.env)
+				if lib_path not in ld_library_path:
+					ld_library_path.append(lib_path)
+
+			unit_test = getattr(obj, 'unit_test', '')
+			if unit_test and 'cprogram' in obj.features:
 				try:
 					output = obj.path
 					filename = os.path.join(output.abspath(obj.env), obj.target)
@@ -85,23 +97,37 @@ class unit_test(object):
 		count = 0
 		result = 1
 
-		for label, file_and_src in self.unit_tests.iteritems():
+		for label in self.unit_tests.allkeys:
+			file_and_src = self.unit_tests[label]
 			filename = file_and_src[0]
 			srcdir = file_and_src[1]
 			count += 1
 			line = Build.bld.progress_line(count, self.total_num_tests, Logs.colors.GREEN, Logs.colors.NORMAL)
 			if Options.options.progress_bar and line:
-				sys.stdout.write(line)
-				sys.stdout.flush()
+				sys.stderr.write(line)
+				sys.stderr.flush()
 			try:
 				kwargs = {}
+				kwargs['env'] = os.environ.copy()
 				if self.change_to_testfile_dir:
 					kwargs['cwd'] = srcdir
 				if not self.want_to_see_test_output:
-					kwargs['stdout'] = pproc.PIPE  # PIPE for ignoring output
+					kwargs['stdout'] = Utils.pproc.PIPE  # PIPE for ignoring output
 				if not self.want_to_see_test_error:
-					kwargs['stderr'] = pproc.PIPE  # PIPE for ignoring output
-				pp = pproc.Popen(filename, **kwargs)
+					kwargs['stderr'] = Utils.pproc.PIPE  # PIPE for ignoring output
+				if ld_library_path:
+					v = kwargs['env']
+					def add_path(dct, path, var):
+						dct[var] = os.pathsep.join(Utils.to_list(path) + [os.environ.get(var, '')])
+					if sys.platform == 'win32':
+						add_path(v, ld_library_path, 'PATH')
+					elif sys.platform == 'darwin':
+						add_path(v, ld_library_path, 'DYLD_LIBRARY_PATH')
+						add_path(v, ld_library_path, 'LD_LIBRARY_PATH')
+					else:
+						add_path(v, ld_library_path, 'LD_LIBRARY_PATH')
+
+				pp = Utils.pproc.Popen(filename, **kwargs)
 				pp.wait()
 
 				result = int(pp.returncode == self.returncode_ok)
@@ -131,10 +157,9 @@ class unit_test(object):
 		if self.total_num_tests == 0:
 			p('YELLOW', 'No unit tests present')
 			return
-		p('GREEN', 'Running unit tests')
-		print
 
-		for label, filename in self.unit_tests.iteritems():
+		for label in self.unit_tests.allkeys:
+			filename = self.unit_tests[label]
 			err = 0
 			result = 0
 
@@ -151,22 +176,114 @@ class unit_test(object):
 
 			line = '%s %s' % (label, '.' * n)
 
-			print line,
-			if err: p('RED', 'ERROR')
-			elif result: p('GREEN', 'OK')
-			else: p('YELLOW', 'FAILED')
+			if err: p('RED', '%sERROR' % line)
+			elif result: p('GREEN', '%sOK' % line)
+			else: p('YELLOW', '%sFAILED' % line)
 
 		percentage_ok = float(self.num_tests_ok) / float(self.total_num_tests) * 100.0
 		percentage_failed = float(self.num_tests_failed) / float(self.total_num_tests) * 100.0
 		percentage_erroneous = float(self.num_tests_err) / float(self.total_num_tests) * 100.0
 
-		print '''
+		p('NORMAL', '''
 Successful tests:      %i (%.1f%%)
 Failed tests:          %i (%.1f%%)
 Erroneous tests:       %i (%.1f%%)
 
 Total number of tests: %i
 ''' % (self.num_tests_ok, percentage_ok, self.num_tests_failed, percentage_failed,
-		self.num_tests_err, percentage_erroneous, self.total_num_tests)
+		self.num_tests_err, percentage_erroneous, self.total_num_tests))
 		p('GREEN', 'Unit tests finished')
+
+
+############################################################################################
+
+"""
+New unit test system
+
+The targets with feature 'test' are executed after they are built
+bld.new_task_gen(features='cprogram cc test', ...)
+
+To display the results:
+import UnitTest
+bld.add_post_fun(UnitTest.summary)
+"""
+
+import threading
+testlock = threading.Lock()
+
+@feature('test')
+@after('apply_link', 'vars_target_cprogram')
+def make_test(self):
+	if not 'cprogram' in self.features:
+		Logs.error('test cannot be executed %s' % self)
+		return
+
+	self.default_install_path = None
+	tsk = self.create_task('utest')
+	tsk.set_inputs(self.link_task.outputs)
+
+def exec_test(self):
+	testlock.acquire()
+	fail = False
+	try:
+		filename = self.inputs[0].abspath(self.env)
+
+		try:
+			fu = getattr(self.generator.bld, 'all_test_paths')
+		except AttributeError:
+			fu = os.environ.copy()
+			self.generator.bld.all_test_paths = fu
+
+			lst = []
+			for obj in self.generator.bld.all_task_gen:
+				link_task = getattr(obj, 'link_task', None)
+				if link_task:
+					lst.append(link_task.outputs[0].parent.abspath(obj.env))
+
+			def add_path(dct, path, var):
+				dct[var] = os.pathsep.join(Utils.to_list(path) + [os.environ.get(var, '')])
+			if sys.platform == 'win32':
+				add_path(fu, lst, 'PATH')
+			elif sys.platform == 'darwin':
+				add_path(fu, lst, 'DYLD_LIBRARY_PATH')
+				add_path(fu, lst, 'LD_LIBRARY_PATH')
+			else:
+				add_path(fu, lst, 'LD_LIBRARY_PATH')
+
+		try:
+			ret = Utils.cmd_output(filename, cwd=self.inputs[0].parent.abspath(self.env), env=fu)
+		except Exception, e:
+			fail = True
+			ret = '' + str(e)
+		else:
+			pass
+
+		stats = getattr(self.generator.bld, 'utest_results', [])
+		stats.append((filename, fail, ret))
+		self.generator.bld.utest_results = stats
+	finally:
+		testlock.release()
+
+cls = Task.task_type_from_func('utest', func=exec_test, color='RED', ext_in='.bin')
+
+old = cls.runnable_status
+def test_status(self):
+	if getattr(Options.options, 'all_tests', False):
+		return RUN_ME
+	return old(self)
+
+cls.runnable_status = test_status
+cls.quiet = 1
+
+def summary(bld):
+	lst = getattr(bld, 'utest_results', [])
+	if lst:
+		Utils.pprint('CYAN', 'execution summary')
+		for (f, fail, ret) in lst:
+			col = fail and 'RED' or 'GREEN'
+			Utils.pprint(col, (fail and 'FAIL' or 'ok') + " " + f)
+			if fail: Utils.pprint('NORMAL', ret.replace('\\n', '\n'))
+
+def set_options(opt):
+	opt.add_option('--alltests', action='store_true', default=False, help='Exec all unit tests', dest='all_tests')
 
