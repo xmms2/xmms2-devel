@@ -32,7 +32,6 @@ source = """
     segment_plugin.c
     ringbuf_xform.c
     outputplugin.c
-    strfunc.c
     bindata.c
     sample.genpy
     utils.c
