@@ -104,6 +104,7 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds)
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
 	xmms_ipc_msg_put_int32 (msg, milliseconds);
+	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_SET);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -124,8 +125,9 @@ xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
 
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS_REL);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
 	xmms_ipc_msg_put_int32 (msg, milliseconds);
+	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_CUR);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -147,6 +149,7 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples)
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
 	xmms_ipc_msg_put_int32 (msg, samples);
+	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_SET);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -167,8 +170,9 @@ xmmsc_playback_seek_samples_rel (xmmsc_connection_t *c, int samples)
 
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES_REL);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
 	xmms_ipc_msg_put_int32 (msg, samples);
+	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_CUR);
 
 	return xmmsc_send_msg (c, msg);
 }
