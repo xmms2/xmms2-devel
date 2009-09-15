@@ -5,9 +5,9 @@ def plugin_configure(conf):
         return False
 
     if conf.check_cc(lib='ossaudio', mandatory=0, uselib_store='ossaudio'):
-        conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
+        conf.define('OSS_DEFAULT_DEVICE', '/dev/audio')
     else:
-        conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
+        conf.define('OSS_DEFAULT_DEVICE', '/dev/dsp')
 
     return True
 

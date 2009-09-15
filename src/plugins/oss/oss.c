@@ -17,6 +17,7 @@
 
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
+#include "xmms_configuration.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -147,7 +148,7 @@ xmms_oss_plugin_setup (xmms_output_plugin_t *plugin)
 
 	xmms_output_plugin_config_property_register (plugin,
 	                                             "device",
-	                                             DEFAULT_DEVICE,
+	                                             OSS_DEFAULT_DEVICE,
 	                                             NULL,
 	                                             NULL);
 
