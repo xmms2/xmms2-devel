@@ -8,3 +8,4 @@ waf-lightc
 *.orig
 *.rej
 \#*\#
+TAGS
