@@ -1011,7 +1011,7 @@ cdef class XMMSValue:
 		@rtype: Boolean
 		"""
 
-		self.is_error()
+		return self.is_error()
 
 	def is_error(self):
 		"""
