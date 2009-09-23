@@ -55,7 +55,7 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 
-	res = xmmsc_plugin_list (conn, type);
+	res = xmmsc_main_list_plugins (conn, type);
 	xmmsc_result_wait (res);
 	val = xmmsc_result_get_value (res);
 

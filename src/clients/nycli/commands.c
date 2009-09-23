@@ -2128,7 +2128,7 @@ cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
-	res = xmmsc_plugin_list (infos->sync, XMMS_PLUGIN_TYPE_ALL);
+	res = xmmsc_main_list_plugins (infos->sync, XMMS_PLUGIN_TYPE_ALL);
 	xmmsc_result_wait (res);
 	list_plugins (infos, res);
 
