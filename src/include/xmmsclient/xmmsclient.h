@@ -215,8 +215,10 @@ xmmsc_result_t *xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const c
 xmmsc_result_t *xmmsc_medialib_add_entry_full (xmmsc_connection_t *conn, const char *url, xmmsv_t *args);
 xmmsc_result_t *xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, int);
-xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
-xmmsc_result_t *xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn, const char *path);
+xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn, const char *path) XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_medialib_import_path (xmmsc_connection_t *conn, const char *path);
+xmmsc_result_t *xmmsc_medialib_import_path_encoded (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url);

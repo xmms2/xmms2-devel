@@ -228,7 +228,7 @@ updater_add_watcher (updater_t *updater, GFile *file)
 
 	url = g_strdup_printf ("file://%s", path);
 
-	res = xmmsc_medialib_path_import (updater->conn, url);
+	res = xmmsc_medialib_import_path (updater->conn, url);
 	xmmsc_result_unref (res);
 
 	g_free (url);

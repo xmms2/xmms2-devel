@@ -1914,7 +1914,7 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);
 			} else {
-				res = xmmsc_medialib_path_import_encoded (infos->sync,
+				res = xmmsc_medialib_import_path_encoded (infos->sync,
 				                                          entry->url);
 				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);

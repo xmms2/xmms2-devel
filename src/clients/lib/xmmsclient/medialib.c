@@ -141,7 +141,7 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry)
 
 /**
  * Add a URL to the medialib. If you want to add mutiple files
- * you should call #xmmsc_medialib_path_import
+ * you should call #xmmsc_medialib_import_path
  * @param conn The #xmmsc_connection_t
  * @param url URL to add to the medialib.
  */
@@ -209,7 +209,7 @@ xmmsc_medialib_add_entry_full (xmmsc_connection_t *conn, const char *url, xmmsv_
 
 /**
  * Add a URL to the medialib. If you want to add mutiple files
- * you should call #xmmsc_medialib_path_import
+ * you should call #xmmsc_medialib_import_path
  *
  * same as #xmmsc_medialib_add_entry but expects a encoded URL
  * instead
@@ -236,7 +236,7 @@ xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
  * 		  include the protocol, i.e file://
  */
 xmmsc_result_t *
-xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
+xmmsc_medialib_import_path (xmmsc_connection_t *conn, const char *path)
 {
 	xmmsc_result_t *res;
 	char *enc_path;
@@ -247,11 +247,47 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
 	if (!enc_path)
 		return NULL;
 
-	res = xmmsc_medialib_path_import_encoded (conn, enc_path);
+	res = xmmsc_medialib_import_path_encoded (conn, enc_path);
 
 	free (enc_path);
 
 	return res;
+}
+
+/**
+ * Import a all files recursivly from the directory passed as argument
+ * which must already be url encoded. You probably want to use
+ * #xmmsc_medialib_import_path unless you want to add a string that
+ * comes as a result from the daemon, such as from
+ * #xmmsc_xform_media_browse
+ *
+ * @param conn #xmmsc_connection_t
+ * @param path A directory to recursive search for mediafiles, this must
+ * 		  include the protocol, i.e file://
+ */
+xmmsc_result_t *
+xmmsc_medialib_import_path_encoded (xmmsc_connection_t *conn,
+                                    const char *path)
+{
+	x_check_conn (conn, NULL);
+
+	if (!_xmmsc_medialib_verify_url (path))
+		x_api_error ("with a non encoded url", NULL);
+
+	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
+}
+
+/**
+ * Import a all files recursivly from the directory passed
+ * as argument.
+ * @param conn #xmmsc_connection_t
+ * @param path A directory to recursive search for mediafiles, this must
+ * 		  include the protocol, i.e file://
+ */
+xmmsc_result_t *
+xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
+{
+	return xmmsc_medialib_import_path (conn, path);
 }
 
 /**
@@ -269,12 +305,7 @@ xmmsc_result_t *
 xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
                                     const char *path)
 {
-	x_check_conn (conn, NULL);
-
-	if (!_xmmsc_medialib_verify_url (path))
-		x_api_error ("with a non encoded url", NULL);
-
-	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
+	return xmmsc_medialib_import_path_encoded (conn, path);
 }
 
 /**

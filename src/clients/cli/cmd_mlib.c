@@ -441,7 +441,7 @@ cmd_mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			continue;
 		}
 
-		res = xmmsc_medialib_path_import (conn, rfile);
+		res = xmmsc_medialib_import_path (conn, rfile);
 		g_free (rfile);
 
 		xmmsc_result_wait (res);
