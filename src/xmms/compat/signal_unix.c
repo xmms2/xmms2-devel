@@ -42,7 +42,7 @@ sigwaiter (gpointer data)
 	sigset_t signals;
 	int caught;
 
-	memset (&signals, 0, sizeof (sigset_t));
+	sigemptyset(&signals);
 	sigaddset (&signals, SIGINT);
 	sigaddset (&signals, SIGTERM);
 
@@ -70,7 +70,7 @@ xmms_signal_block (void)
 {
 	sigset_t signals;
 
-	memset (&signals, 0, sizeof (sigset_t));
+	sigemptyset(&signals);
 
 	sigaddset (&signals, SIGHUP);
 	sigaddset (&signals, SIGTERM);
