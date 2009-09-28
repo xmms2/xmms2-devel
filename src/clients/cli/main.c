@@ -40,7 +40,7 @@ static void cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv);
 gchar *statusformat = NULL;
 gchar *listformat = NULL;
 GHashTable *config = NULL;
-gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\nautostart=true\n";
+gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\nautostart=true\nrunnycli=false\niknowoldcliisdeprecatedandwillgoaway=false";
 
 
 /**
@@ -233,6 +233,7 @@ main (gint argc, gchar **argv)
 {
 	xmmsc_connection_t *connection;
 	gchar *path;
+	gchar *tmp;
 	gint i, ret;
 	void (*func) (xmmsc_connection_t *conn, int argc, char **argv) = NULL;
 
@@ -241,6 +242,17 @@ main (gint argc, gchar **argv)
 	config = read_config ();
 	atexit (free_config);
 
+	tmp = g_hash_table_lookup (config, "runnycli");
+	if (tmp && !strcmp (tmp, "true")) {
+		execvp ("nyxmms2", argv);
+	}
+
+	tmp = g_hash_table_lookup (config, "iknowoldcliisdeprecatedandwillgoaway");
+	if (!tmp || strcmp (tmp, "true")) {
+		fprintf (stderr, "This program is deprecated and will be replaced by nyxmms2.\n"
+			  " Consider setting runnycli to 'true' in config file to get future behaviour\n"
+			  " (or set iknowoldcliisdeprecatedandwillgoaway to 'true' to hide this warning)\n");
+	}
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
 
