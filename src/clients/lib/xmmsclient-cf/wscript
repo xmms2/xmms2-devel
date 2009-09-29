@@ -15,7 +15,7 @@ def configure(conf):
     if sys.platform != 'darwin':
         return False
 
-    conf.env['FRAMEWORK_CoreFoundation'] += ['-framework', 'CoreFoundation']
+    conf.env['FRAMEWORK_CoreFoundation'] += ['CoreFoundation']
     return True
 
 def set_options(opt):
