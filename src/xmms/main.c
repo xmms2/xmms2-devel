@@ -355,6 +355,8 @@ install_scripts (const gchar *into_dir)
 		gchar *source = g_strdup_printf ("%s/%s", path, f);
 		gchar *dest = g_strdup_printf ("%s/%s", into_dir, f);
 		if (!xmms_symlink_file (source, dest)) {
+			g_free (source);
+			g_free (dest);
 			break;
 		}
 		g_free (source);
