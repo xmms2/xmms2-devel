@@ -69,27 +69,8 @@ static const gchar * const id3_genres[] = {
         "Anime", "JPop", "Synthpop"
 };
 
-typedef struct id3v1tag_St {
-        char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
-        char title[30];
-        char artist[30];
-        char album[30];
-        char year[4];
-        union {
-                struct {
-                        char comment[30];
-                } v1_0;
-                struct {
-                        char comment[28];
-                        char __zero;
-                        unsigned char track_number;
-                } v1_1;
-        } u;
-        unsigned char genre;
-} id3v1tag_t;
-
 static void
-xmms_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
+xmms_id3v1_set (xmms_xform_t *xform, const char *key, const unsigned char *value,
                 int len, const char *encoding)
 {
 	gsize readsize,writsize;
@@ -97,18 +78,20 @@ xmms_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
 	gchar *tmp;
 
 	/* property already set? */
+	/*
 	if (xmms_xform_metadata_has_val (xform, key)) {
 		return;
 	}
+	*/
 
 	g_clear_error (&err);
 
-	tmp = g_convert (value, len, "UTF-8", encoding, &readsize, &writsize, &err);
+	tmp = g_convert ((const char *)value, len, "UTF-8", encoding, &readsize, &writsize, &err);
 	if (!tmp) {
 		/* in case of not supported encoding, we try to fallback to latin1 */
 		xmms_log_info ("Converting ID3v1 tag '%s' failed (check id3v1_encoding property): %s", key, err ? err->message : "Error not set");
 		err = NULL;
-		tmp = g_convert (value, len, "UTF-8", "ISO8859-1", &readsize, &writsize, &err);
+		tmp = g_convert ((const char *)value, len, "UTF-8", "ISO8859-1", &readsize, &writsize, &err);
 	}
 	if (tmp) {
 		g_strstrip (tmp);
@@ -123,11 +106,17 @@ static gboolean
 xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 {
 	xmms_config_property_t *config;
-	id3v1tag_t *tag = (id3v1tag_t *) buf;
 	const char *encoding;
 	const gchar *metakey;
+	xmmsv_t *bb;
+	unsigned char data[32];
 
-	if (strncmp (tag->tag, "TAG", 3) != 0) {
+	bb = xmmsv_bitbuffer_new_ro (buf, 128);
+
+	xmmsv_bitbuffer_get_data (bb, data, 3);
+
+	if (memcmp (data, "TAG", 3) != 0) {
+		xmmsv_unref (bb);
 		return FALSE;
 	}
 
@@ -137,52 +126,48 @@ xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	g_return_val_if_fail (config, FALSE);
 	encoding = xmms_config_property_get_string (config);
 
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
+	xmmsv_bitbuffer_get_data (bb, data, 30);
+	xmms_id3v1_set (xform, metakey, data, 30, encoding);
+
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST;
-	xmms_id3v1_set (xform, metakey, tag->artist,
-	                sizeof (tag->artist), encoding);
+	xmmsv_bitbuffer_get_data (bb, data, 30);
+	xmms_id3v1_set (xform, metakey, data, 30, encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM;
-	xmms_id3v1_set (xform, metakey, tag->album,
-	                sizeof (tag->album), encoding);
-
-	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
-	xmms_id3v1_set (xform, metakey, tag->title,
-	                sizeof (tag->title), encoding);
+	xmmsv_bitbuffer_get_data (bb, data, 30);
+	xmms_id3v1_set (xform, metakey, data, 30, encoding);
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR;
-	xmms_id3v1_set (xform, metakey, tag->year,
-	                sizeof (tag->year), encoding);
+	xmmsv_bitbuffer_get_data (bb, data, 4);
+	xmms_id3v1_set (xform, metakey, data, 4, encoding);
 
-	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
-	if (!xmms_xform_metadata_has_val (xform, metakey)) {
-		if (tag->genre >= G_N_ELEMENTS (id3_genres)) {
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
-			xmms_xform_metadata_set_str (xform, metakey, "Unknown");
-		} else {
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
-			xmms_xform_metadata_set_str (xform, metakey,
-			                             id3_genres[tag->genre]);
-		}
-	}
+	xmmsv_bitbuffer_get_data (bb, data, 30);
 
-	if (tag->u.v1_1.__zero == 0 && tag->u.v1_1.track_number > 0) {
-		/* V1.1 */
-		xmms_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
-		                tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment),
-		                encoding);
-
+	/* v1.1 */
+	if (data[28] == '\0' && data[29]) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
+		xmms_id3v1_set (xform, metakey, data, 28, encoding);
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
 		if (!xmms_xform_metadata_has_val (xform, metakey)) {
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
-			xmms_xform_metadata_set_int (xform, metakey,
-			                             tag->u.v1_1.track_number);
+			xmms_xform_metadata_set_int (xform, metakey, data[29]);
 		}
 	} else {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
-		xmms_id3v1_set (xform, metakey, tag->u.v1_0.comment,
-		                sizeof (tag->u.v1_0.comment), encoding);
+		xmms_id3v1_set (xform, metakey, data, 30, encoding);
 	}
 
+
+	xmmsv_bitbuffer_get_data (bb, data, 1);
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
+	if (data[0] >= G_N_ELEMENTS (id3_genres)) {
+		xmms_xform_metadata_set_str (xform, metakey, "Unknown");
+	} else {
+		xmms_xform_metadata_set_str (xform, metakey, id3_genres[data[0]]);
+	}
+
+
+	xmmsv_unref (bb);
 	return TRUE;
 }
 
