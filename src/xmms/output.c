@@ -73,9 +73,11 @@ static void xmms_volume_map_init (xmms_volume_map_t *vl);
 static void xmms_volume_map_free (xmms_volume_map_t *vl);
 static void xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst);
 static GTree *xmms_volume_map_to_dict (xmms_volume_map_t *vl);
-
 static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
 static gboolean set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin);
+
+static void xmms_output_format_list_free_elem (gpointer data, gpointer user_data);
+static void xmms_output_format_list_clear (xmms_output_t *output);
 
 XMMS_CMD_DEFINE (start, xmms_playback_client_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (stop, xmms_playback_client_stop, xmms_output_t *, NONE, NONE, NONE);
@@ -195,6 +197,32 @@ xmms_output_stream_type_add (xmms_output_t *output, ...)
 	g_return_if_fail (f);
 
 	output->format_list = g_list_append (output->format_list, f);
+}
+
+static void
+xmms_output_format_list_free_elem (gpointer data, gpointer user_data)
+{
+	xmms_stream_type_t *f;
+
+	g_return_if_fail (data);
+
+	f = data;
+
+	xmms_object_unref (f);
+}
+
+static void
+xmms_output_format_list_clear(xmms_output_t *output)
+{
+	if (output->format_list == NULL)
+		return;
+
+	g_list_foreach (output->format_list,
+	                xmms_output_format_list_free_elem,
+	                NULL);
+
+	g_list_free (output->format_list);
+	output->format_list = NULL;
 }
 
 static void
@@ -833,6 +861,7 @@ xmms_output_destroy (xmms_object_t *object)
 		xmms_output_plugin_method_destroy (output->plugin, output);
 		xmms_object_unref (output->plugin);
 	}
+	xmms_output_format_list_clear (output);
 
 	xmms_object_unref (output->playlist);
 
@@ -1058,6 +1087,7 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 		xmms_output_plugin_method_destroy (output->plugin, output);
 		output->plugin = NULL;
 	}
+	xmms_output_format_list_clear (output);
 
 	/* output->plugin needs to be set before we can call the
 	 * NEW method
