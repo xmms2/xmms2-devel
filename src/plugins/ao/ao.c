@@ -135,11 +135,13 @@ xmms_ao_new (xmms_output_t *output)
 	if (data->driver_id < 0) {
 		/* failed to find a usable audio output device */
 		xmms_log_error ("Cannot find usable audio output device!");
+		ao_shutdown ();
 		return FALSE;
 	} else {
 		ao_info *info = ao_driver_info (data->driver_id);
 		if (info->type != AO_TYPE_LIVE) {
 			xmms_log_error ("Selected driver cannot play live output");
+			ao_shutdown ();
 			return FALSE;
 		}
 		XMMS_DBG ("Using libao driver %s (%s)", info->name, info->short_name);
