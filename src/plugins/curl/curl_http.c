@@ -92,6 +92,8 @@ static gint xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len, xmms_er
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
 
+static void xmms_curl_free_data (xmms_curl_data_t *data);
+
 /*
  * Plugin header
  */
@@ -289,6 +291,8 @@ xmms_curl_init (xmms_xform_t *xform)
 	/* perform initial fill to see if it contains shoutcast metadata or not */
 	if (fill_buffer (xform, data, &error) <= 0) {
 		/* something went wrong */
+		xmms_xform_private_data_set (xform, NULL);
+		xmms_curl_free_data (data);
 		return FALSE;
 	}
 
@@ -436,16 +440,7 @@ xmms_curl_destroy (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	curl_multi_cleanup (data->curl_multi);
-	curl_easy_cleanup (data->curl_easy);
-
-	curl_slist_free_all (data->http_200_aliases);
-	curl_slist_free_all (data->http_req_headers);
-
-	g_free (data->buffer);
-
-	g_free (data->url);
-	g_free (data);
+	xmms_curl_free_data (data);
 }
 
 /*
@@ -573,6 +568,23 @@ header_handler_icy_genre (xmms_xform_t *xform,
 {
 	const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
 	xmms_xform_metadata_set_str (xform, metakey, header);
+}
+
+static void
+xmms_curl_free_data (xmms_curl_data_t *data)
+{
+	g_return_if_fail (data);
+
+	curl_multi_cleanup (data->curl_multi);
+	curl_easy_cleanup (data->curl_easy);
+
+	curl_slist_free_all (data->http_200_aliases);
+	curl_slist_free_all (data->http_req_headers);
+
+	g_free (data->buffer);
+
+	g_free (data->url);
+	g_free (data);
 }
 
 /*
