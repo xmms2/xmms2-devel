@@ -222,5 +222,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 	}
 
+	g_list_free (goal_format);
+	xmms_object_unref (f);
+
 	return NULL;
 }
