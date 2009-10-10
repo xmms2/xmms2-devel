@@ -411,7 +411,7 @@ daap_mdns_destroy ()
 }
 
 gboolean
-daap_mdns_initialize ()
+daap_mdns_setup ()
 {
 	g_mdns = g_new0 (GMDNS, 1);
 	g_mdns->mutex = g_mutex_new ();

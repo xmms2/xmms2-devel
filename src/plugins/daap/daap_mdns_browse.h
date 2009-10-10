@@ -26,7 +26,7 @@ typedef struct {
 } daap_mdns_server_t;
 
 gboolean
-daap_mdns_initialize (void);
+daap_mdns_setup (void);
 
 GSList *
 daap_mdns_get_server_list (void);

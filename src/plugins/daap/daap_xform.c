@@ -152,7 +152,9 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "daap://*",
 	                              XMMS_STREAM_TYPE_END);
 
-	daap_mdns_initialize ();
+	if (!daap_mdns_setup ()) {
+		return FALSE;
+	}
 
 	if (!login_sessions) {
 		login_sessions = g_hash_table_new (g_str_hash, g_str_equal);

@@ -199,7 +199,7 @@ daap_mdns_timeout_glib (void *userdata)
 }
 
 gboolean
-daap_mdns_initialize ()
+daap_mdns_setup ()
 {
 	const AvahiPoll *av_poll;
 
