@@ -63,7 +63,7 @@ def build(bld):
         lib = bld.new_task_gen('cc', 'shlib')
         lib.target = 'xmms2core'
         lib.source = source
-        lib.includes = '. ../include ../includepriv'
+        lib.includes = '. ../.. ../include ../includepriv'
         lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm'
         lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
 
