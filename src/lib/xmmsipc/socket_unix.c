@@ -83,7 +83,7 @@ xmms_ipc_usocket_client_init (const xmms_url_t *url)
 	}
 
 	saddr.sun_family = AF_UNIX;
-	snprintf (saddr.sun_path, 108, "/%s", url->path);
+	snprintf (saddr.sun_path, sizeof(saddr.sun_path), "/%s", url->path);
 
 	if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
