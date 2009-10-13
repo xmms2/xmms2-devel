@@ -116,6 +116,9 @@ wafadmin/libtool_config.py:
 wafadmin/pproc.py:
         Copyright (C) 2003-2004 by Peter Astrand <astrand@lysator.liu.se>
 
+waftools/ruby.py:
+        Licensed under BSD license.
+
 src/clients/nycli/:
         Licensed under GPL license.
 
