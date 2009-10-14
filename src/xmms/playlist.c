@@ -1007,7 +1007,7 @@ xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
 	}
 
 	len = xmms_playlist_coll_get_size (plcoll);
-	if (pos > len || pos < 0) {
+	if (pos > len) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC,
 		                "Could not insert entry outside of playlist!");
 		g_mutex_unlock (playlist->mutex);

@@ -312,7 +312,8 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 	}
 
 	if (!best) {
-		xmms_log_error ("Couldn't convert sample format to any of the %d goal formats", g_list_length (goal_types));
+		xmms_log_error ("Couldn't convert sample format to any of the %d goal formats",
+		                g_list_length ((GList *)goal_types));
 		return NULL;
 	}
 

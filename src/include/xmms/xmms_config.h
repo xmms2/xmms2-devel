@@ -27,6 +27,9 @@ typedef struct xmms_config_property_St xmms_config_property_t;
 
 xmms_config_property_t *xmms_config_lookup (const gchar *path);
 
+const gchar *xmms_config_property_lookup_get_string (xmms_config_t *conf,
+                                                     const gchar *key,
+                                                     xmms_error_t *err);
 const gchar *xmms_config_property_get_string (const xmms_config_property_t *prop);
 gint xmms_config_property_get_int (const xmms_config_property_t *prop);
 gfloat xmms_config_property_get_float (const xmms_config_property_t *prop);
