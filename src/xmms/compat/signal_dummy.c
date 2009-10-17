@@ -29,6 +29,11 @@ xmms_signal_block (void)
 }
 
 void
+xmms_signal_restore (void)
+{
+}
+
+void
 xmms_signal_init (xmms_object_t *obj)
 {
 }

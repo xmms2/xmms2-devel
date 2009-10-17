@@ -61,6 +61,7 @@ static GTree *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error
 static GList *xmms_main_client_plugin_list (xmms_object_t *main, gint32 type, xmms_error_t *err);
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
+static void spawn_script_setup (gpointer data);
 static xmms_xform_object_t *xform_obj;
 static xmms_bindata_t *bindata_obj;
 
@@ -181,8 +182,8 @@ do_scriptdir (const gchar *scriptdir)
 	while ((f = g_dir_read_name (dir))) {
 		argv[0] = g_strdup_printf ("%s/%s", scriptdir, f);
 		if (g_file_test (argv[0], G_FILE_TEST_IS_EXECUTABLE)) {
-			if (!g_spawn_async (g_get_home_dir (),
-			                    argv, NULL, 0, NULL, NULL, NULL, &err)) {
+			if (!g_spawn_async (g_get_home_dir (), argv, NULL, 0,
+			                    spawn_script_setup, NULL, NULL, &err)) {
 				xmms_log_error ("Could not run script '%s', error: %s",
 				                argv[0], err->message);
 			}
@@ -192,6 +193,15 @@ do_scriptdir (const gchar *scriptdir)
 
 	g_dir_close (dir);
 
+}
+
+/**
+ * @internal Setup function for processes spawned by do_scriptdir
+ */
+static void
+spawn_script_setup (gpointer data)
+{
+	xmms_signal_restore ();
 }
 
 /**
