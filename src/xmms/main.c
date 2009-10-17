@@ -158,14 +158,16 @@ xmms_main_client_plugin_list (xmms_object_t *main, gint32 type, xmms_error_t *er
  *
  * @param[in] scriptdir Directory to search for executable programs/scripts.
  * started.
+ * @param     arg1 value passed to executed scripts as argument 1. This makes
+ * it possible to handle start and stop in one script
  */
 static void
-do_scriptdir (const gchar *scriptdir)
+do_scriptdir (const gchar *scriptdir, const gchar *arg1)
 {
 	GError *err = NULL;
 	GDir *dir;
 	const gchar *f;
-	gchar *argv[2] = {NULL, NULL};
+	gchar *argv[3] = {NULL, NULL, NULL};
 
 	XMMS_DBG ("Running scripts in %s", scriptdir);
 	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
@@ -179,6 +181,7 @@ do_scriptdir (const gchar *scriptdir)
 		return;
 	}
 
+	argv[1] = g_strdup (arg1);
 	while ((f = g_dir_read_name (dir))) {
 		argv[0] = g_strdup_printf ("%s/%s", scriptdir, f);
 		if (g_file_test (argv[0], G_FILE_TEST_IS_EXECUTABLE)) {
@@ -190,6 +193,7 @@ do_scriptdir (const gchar *scriptdir)
 		}
 		g_free (argv[0]);
 	}
+	g_free (argv[1]);
 
 	g_dir_close (dir);
 
@@ -270,7 +274,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
-	do_scriptdir (xmms_config_property_get_string (cv));
+	do_scriptdir (xmms_config_property_get_string (cv), "stop");
 
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
@@ -622,7 +626,7 @@ main (int argc, char **argv)
 	g_free (tmp);
 
 	/* Startup dir */
-	do_scriptdir (xmms_config_property_get_string (cv));
+	do_scriptdir (xmms_config_property_get_string (cv), "start");
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
