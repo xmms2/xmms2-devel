@@ -100,20 +100,20 @@ vim:expandtab
 
     <!-- The type of a method's argument -->
     <xs:complexType name="argument_type">
-        <xs:choice>
-            <xs:element name="int" type="xmms:value_int"/>
-            <xs:element name="string" type="xmms:value_string"/>
-            <xs:element name="binary" type="xmms:value_binary"/>
-            <xs:element name="collection" type="xmms:value_collection"/>
-            <xs:element name="list" type="xmms:value_list"/>
-            <xs:element name="dictionary" type="xmms:value_dictionary"/>
-        </xs:choice>
+        <xs:group ref="xmms:value_types" />
     </xs:complexType>
 
     <!-- The type of a method's return value -->
     <xs:complexType name="return_value_type">
         <xs:choice>
             <xs:element name="none" type="xmms:value_none"/>
+            <xs:group ref="xmms:value_types" />
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:group name="value_types">
+        <xs:choice>
+            <xs:element name="unknown" type="xmms:value_unknown"/>
             <xs:element name="int" type="xmms:value_int"/>
             <xs:element name="string" type="xmms:value_string"/>
             <xs:element name="binary" type="xmms:value_binary"/>
@@ -121,7 +121,7 @@ vim:expandtab
             <xs:element name="list" type="xmms:value_list"/>
             <xs:element name="dictionary" type="xmms:value_dictionary"/>
         </xs:choice>
-    </xs:complexType>
+    </xs:group>
 
     <!-- Corresponds to an unknown xmmsv -->
     <xs:complexType name="value_unknown"/>
@@ -143,22 +143,10 @@ vim:expandtab
 
     <!-- Corresponds to XMMSV_TYPE_LIST -->
     <xs:complexType name="value_list">
-        <xs:choice>
-            <xs:element name="unknown" type="xmms:value_unknown"/>
-            <xs:element name="int" type="xmms:value_int"/>
-            <xs:element name="string" type="xmms:value_string"/>
-            <xs:element name="list" type="xmms:value_list"/>
-            <xs:element name="dictionary" type="xmms:value_dictionary"/>
-        </xs:choice>
+        <xs:group ref="xmms:value_types" />
     </xs:complexType>
 
     <xs:complexType name="value_dictionary">
-        <xs:choice>
-            <xs:element name="unknown" type="xmms:value_unknown"/>
-            <xs:element name="int" type="xmms:value_int"/>
-            <xs:element name="string" type="xmms:value_string"/>
-            <xs:element name="list" type="xmms:value_list"/>
-            <xs:element name="dictionary" type="xmms:value_dictionary"/>
-        </xs:choice>
+        <xs:group ref="xmms:value_types" />
     </xs:complexType>
 </xs:schema>
