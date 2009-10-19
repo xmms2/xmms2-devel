@@ -67,7 +67,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 			call( connected_,
-			      boost::bind( xmmsc_playback_seek_ms, conn_, milliseconds ) );
+			      boost::bind( xmmsc_playback_seek_ms_abs, conn_, milliseconds ) );
 		return VoidResult( res, ml_ );
 	}
 
@@ -84,7 +84,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 			call( connected_,
-			      boost::bind( xmmsc_playback_seek_samples, conn_, samples ) );
+			      boost::bind( xmmsc_playback_seek_samples_abs, conn_, samples ) );
 		return VoidResult( res, ml_ );
 	}
 

@@ -273,9 +273,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playback_start(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_pause(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_current_id(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playback_seek_ms(xmmsc_connection_t *c, unsigned int milliseconds)
+	xmmsc_result_t *xmmsc_playback_seek_ms_abs(xmmsc_connection_t *c, unsigned int milliseconds)
 	xmmsc_result_t *xmmsc_playback_seek_ms_rel(xmmsc_connection_t *c, int milliseconds)
-	xmmsc_result_t *xmmsc_playback_seek_samples(xmmsc_connection_t *c, unsigned int samples)
+	xmmsc_result_t *xmmsc_playback_seek_samples_abs(xmmsc_connection_t *c, unsigned int samples)
 	xmmsc_result_t *xmmsc_playback_seek_samples_rel(xmmsc_connection_t *c, int samples)
 	xmmsc_result_t *xmmsc_playback_playtime(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_status(xmmsc_connection_t *c)
@@ -1390,7 +1390,7 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_ms(self.conn, ms))
+		return self.create_result(cb, xmmsc_playback_seek_ms_abs(self.conn, ms))
 
 	def playback_seek_ms_rel(self, ms, cb = None):
 		"""
@@ -1412,7 +1412,7 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_samples(self.conn, samples))
+		return self.create_result(cb, xmmsc_playback_seek_samples_abs(self.conn, samples))
 
 	def playback_seek_samples_rel(self, samples, cb = None):
 		"""

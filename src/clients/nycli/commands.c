@@ -613,7 +613,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		if (t.type == COMMAND_ARG_TIME_OFFSET) {
 			res = xmmsc_playback_seek_ms_rel (infos->sync, t.value.offset * 1000);
 		} else {
-			res = xmmsc_playback_seek_ms (infos->sync, t.value.pos * 1000);
+			res = xmmsc_playback_seek_ms_abs (infos->sync, t.value.pos * 1000);
 		}
 
 		xmmsc_result_wait (res);

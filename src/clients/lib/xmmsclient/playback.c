@@ -96,7 +96,7 @@ xmmsc_playback_start (xmmsc_connection_t *c)
  */
 
 xmmsc_result_t *
-xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds)
+xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -141,7 +141,7 @@ xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
  */
 
 xmmsc_result_t *
-xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples)
+xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples)
 {
 	xmms_ipc_msg_t *msg;
 

@@ -545,7 +545,7 @@ c_broadcast_config_value_changed (VALUE self)
 static VALUE
 c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_UINT (playback_seek_ms, ms);
+	METHOD_ADD_HANDLER_UINT (playback_seek_ms_abs, ms);
 }
 
 /*
@@ -569,7 +569,7 @@ c_playback_seek_ms_rel (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_UINT (playback_seek_samples, samples);
+	METHOD_ADD_HANDLER_UINT (playback_seek_samples_abs, samples);
 }
 
  /*

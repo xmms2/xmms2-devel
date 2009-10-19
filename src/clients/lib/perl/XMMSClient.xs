@@ -1517,7 +1517,7 @@ C<$milliseconds>.
 =cut
 
 xmmsc_result_t *
-xmmsc_playback_seek_ms (c, milliseconds)
+xmmsc_playback_seek_ms_abs (c, milliseconds)
 		xmmsc_connection_t *c
 		uint32_t milliseconds
 
@@ -1560,7 +1560,7 @@ Seek to a absoulte number of C<$samples> in the current playback.
 =cut
 
 xmmsc_result_t *
-xmmsc_playback_seek_samples (c, samples)
+xmmsc_playback_seek_samples_abs (c, samples)
 		xmmsc_connection_t *c
 		uint32_t samples
 
