@@ -30,26 +30,13 @@
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsv_coll.h"
 
-
-typedef union {
-	struct {
-		uint32_t object;
-		uint32_t cmd;
-		uint32_t cookie;
-		uint32_t length;
-		uint8_t data[0];
-	} header;
-	uint8_t rawdata[0];
-} xmms_ipc_msg_data_t;
-
 struct xmms_ipc_msg_St {
-	xmms_ipc_msg_data_t *data;
-	uint32_t get_pos;
-	uint32_t size;
+	xmmsv_t *bb;
 	uint32_t xfered;
 };
 
 static void xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg, uint32_t offset, uint32_t v);
+static uint32_t xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len);
 
 static uint32_t internal_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
 static uint32_t internal_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg);
@@ -96,11 +83,11 @@ xmms_ipc_msg_t *
 xmms_ipc_msg_alloc (void)
 {
 	xmms_ipc_msg_t *msg;
+	static unsigned char empty[16] = {0,};
 
 	msg = x_new0 (xmms_ipc_msg_t, 1);
-	msg->data = malloc (XMMS_IPC_MSG_DEFAULT_SIZE);
-	memset (msg->data, 0, XMMS_IPC_MSG_HEAD_LEN);
-	msg->size = XMMS_IPC_MSG_DEFAULT_SIZE;
+	msg->bb = xmmsv_bitbuffer_new ();
+	xmmsv_bitbuffer_put_data (msg->bb, empty, 16);
 
 	return msg;
 }
@@ -123,7 +110,7 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 {
 	x_return_if_fail (msg);
 
-	free (msg->data);
+	xmmsv_unref (msg->bb);
 	free (msg);
 }
 
@@ -132,23 +119,35 @@ xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len)
 {
 	x_return_if_fail (msg);
 
-	msg->data->header.length = htonl (len);
+	xmmsv_bitbuffer_goto (msg->bb, 12*8);
+	xmmsv_bitbuffer_put_bits (msg->bb, 32, len);
+	xmmsv_bitbuffer_end (msg->bb);
 }
 
 uint32_t
 xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg)
 {
+	int len, p;
 	x_return_val_if_fail (msg, 0);
 
-	return ntohl (msg->data->header.length);
+	p = xmmsv_bitbuffer_pos (msg->bb);
+	xmmsv_bitbuffer_goto (msg->bb, 12*8);
+	xmmsv_bitbuffer_get_bits (msg->bb, 32, &len);
+	xmmsv_bitbuffer_goto (msg->bb, p);
+	return len;
 }
 
 uint32_t
 xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg)
 {
+	int obj, p;
 	x_return_val_if_fail (msg, 0);
 
-	return ntohl (msg->data->header.object);
+	p = xmmsv_bitbuffer_pos (msg->bb);
+	xmmsv_bitbuffer_goto (msg->bb, 0);
+	xmmsv_bitbuffer_get_bits (msg->bb, 32, &obj);
+	xmmsv_bitbuffer_goto (msg->bb, p);
+	return obj;
 }
 
 void
@@ -156,15 +155,22 @@ xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, uint32_t object)
 {
 	x_return_if_fail (msg);
 
-	msg->data->header.object = htonl (object);
+	xmmsv_bitbuffer_goto (msg->bb, 0);
+	xmmsv_bitbuffer_put_bits (msg->bb, 32, object);
+	xmmsv_bitbuffer_end (msg->bb);
 }
 
 uint32_t
 xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg)
 {
+	int cmd, p;
 	x_return_val_if_fail (msg, 0);
 
-	return ntohl (msg->data->header.cmd);
+	p = xmmsv_bitbuffer_pos (msg->bb);
+	xmmsv_bitbuffer_goto (msg->bb, 4 * 8);
+	xmmsv_bitbuffer_get_bits (msg->bb, 32, &cmd);
+	xmmsv_bitbuffer_goto (msg->bb, p);
+	return cmd;
 }
 
 void
@@ -172,21 +178,30 @@ xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, uint32_t cmd)
 {
 	x_return_if_fail (msg);
 
-	msg->data->header.cmd = htonl (cmd);
+	xmmsv_bitbuffer_goto (msg->bb, 4 * 8);
+	xmmsv_bitbuffer_put_bits (msg->bb, 32, cmd);
+	xmmsv_bitbuffer_end (msg->bb);
 }
 
 void
 xmms_ipc_msg_set_cookie (xmms_ipc_msg_t *msg, uint32_t cookie)
 {
-	msg->data->header.cookie = htonl (cookie);
+	xmmsv_bitbuffer_goto (msg->bb, 8 * 8);
+	xmmsv_bitbuffer_put_bits (msg->bb, 32, cookie);
+	xmmsv_bitbuffer_end (msg->bb);
 }
 
 uint32_t
 xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg)
 {
+	int cookie, p;
 	x_return_val_if_fail (msg, 0);
 
-	return ntohl (msg->data->header.cookie);
+	p = xmmsv_bitbuffer_pos (msg->bb);
+	xmmsv_bitbuffer_goto (msg->bb, 8 * 8);
+	xmmsv_bitbuffer_get_bits (msg->bb, 32, &cookie);
+	xmmsv_bitbuffer_goto (msg->bb, p);
+	return cookie;
 }
 
 /**
@@ -206,14 +221,15 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg,
 	unsigned int ret, len;
 
 	x_return_val_if_fail (msg, false);
-	x_return_val_if_fail (msg->data, false);
 	x_return_val_if_fail (transport, false);
 
-	len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;
+	xmmsv_bitbuffer_align (msg->bb);
+
+	len = xmmsv_bitbuffer_len (msg->bb) / 8;
 
 	x_return_val_if_fail (len > msg->xfered, true);
 
-	buf = (char *) (msg->data->rawdata + msg->xfered);
+	buf = (char *) (xmmsv_bitbuffer_buffer (msg->bb) + msg->xfered);
 	ret = xmms_ipc_transport_write (transport, buf, len - msg->xfered);
 
 	if (ret == SOCKET_ERROR) {
@@ -247,8 +263,8 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
                              xmms_ipc_transport_t *transport,
                              bool *disconnected)
 {
-	char *buf;
-	unsigned int ret, len;
+	char buf[512];
+	unsigned int ret, len, rlen;
 
 	x_return_val_if_fail (msg, false);
 	x_return_val_if_fail (transport, false);
@@ -259,19 +275,6 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 		if (msg->xfered >= XMMS_IPC_MSG_HEAD_LEN) {
 			len += xmms_ipc_msg_get_length (msg);
 
-			if (len > msg->size) {
-				void *newbuf;
-				newbuf = realloc (msg->data, len);
-				if (!newbuf) {
-					if (disconnected) {
-						*disconnected = true;
-					}
-					return false;
-				}
-				msg->size = len;
-				msg->data = newbuf;
-			}
-
 			if (msg->xfered == len) {
 				return true;
 			}
@@ -279,8 +282,11 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 
 		x_return_val_if_fail (msg->xfered < len, false);
 
-		buf = (char *) (msg->data->rawdata + msg->xfered);
-		ret = xmms_ipc_transport_read (transport, buf, len - msg->xfered);
+		rlen = len - msg->xfered;
+		if (rlen > sizeof (buf))
+			rlen = sizeof (buf);
+
+		ret = xmms_ipc_transport_read (transport, buf, rlen);
 
 		if (ret == SOCKET_ERROR) {
 			if (xmms_socket_error_recoverable ()) {
@@ -299,7 +305,10 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 
 			return false;
 		} else {
+			xmmsv_bitbuffer_goto (msg->bb, msg->xfered * 8);
+			xmmsv_bitbuffer_put_data (msg->bb, buf, ret);
 			msg->xfered += ret;
+			xmmsv_bitbuffer_goto (msg->bb, XMMS_IPC_MSG_HEAD_LEN * 8);
 		}
 	}
 }
@@ -307,34 +316,13 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 static uint32_t
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 {
-	uint32_t total;
+	uint32_t l;
 
-	x_return_val_if_fail (msg, -1);
+	xmmsv_bitbuffer_put_data (msg->bb, data, len);
+	l = xmmsv_bitbuffer_len (msg->bb);
+	xmms_ipc_msg_set_length (msg, l / 8 - XMMS_IPC_MSG_HEAD_LEN);
 
-	total = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN + len;
-
-	if (total > msg->size) {
-		int realloc_size = XMMS_IPC_MSG_DEFAULT_SIZE;
-
-		if (len > XMMS_IPC_MSG_DEFAULT_SIZE) {
-			realloc_size = len;
-		}
-
-		/* Realloc data portion */
-		msg->data = realloc (msg->data, msg->size + realloc_size);
-		msg->size += realloc_size;
-	}
-
-	total = xmms_ipc_msg_get_length (msg);
-	memcpy (&msg->data->header.data[total], data, len);
-	xmms_ipc_msg_set_length (msg, total + len);
-
-	/* return the offset that which we placed this value.
-	 * If this logic is changed, make sure to update
-	 * the return value of xmms_ipc_msg_put_value_data for
-	 * NONE xmmsv's, too.
-	 */
-	return total;
+	return l - len * 8;
 }
 
 static uint32_t
@@ -375,9 +363,10 @@ static void
 xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg,
                            uint32_t offset, uint32_t v)
 {
-	v = htonl (v);
 
-	memcpy (&msg->data->header.data[offset], &v, sizeof (v));
+	xmmsv_bitbuffer_goto (msg->bb, offset);
+	xmmsv_bitbuffer_put_bits (msg->bb, 32, v);
+	xmmsv_bitbuffer_end (msg->bb);
 }
 
 static uint32_t
@@ -608,16 +597,7 @@ xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, void *buf, unsigned int len)
 	if (!msg)
 		return false;
 
-	if (len > xmms_ipc_msg_get_length (msg) - msg->get_pos)
-		return false;
-
-	if (buf) {
-		memcpy (buf, &msg->data->header.data[msg->get_pos], len);
-	}
-
-	msg->get_pos += len;
-
-	return true;
+	return xmmsv_bitbuffer_get_data (msg->bb, buf, len);
 }
 
 static bool
@@ -667,9 +647,6 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 		return false;
 	}
 
-	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
-		return false;
-
 	str = x_malloc (l + 1);
 	if (!str) {
 		return false;
@@ -699,9 +676,6 @@ xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
 	if (!xmms_ipc_msg_get_uint32 (msg, &l)) {
 		return false;
 	}
-
-	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
-		return false;
 
 	b = x_malloc (l);
 	if (!b) {
