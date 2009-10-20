@@ -198,14 +198,11 @@ daap_mdns_setup ()
 	const AvahiPoll *av_poll;
 
 	GMainLoop *ml = NULL;
-
-	gboolean ok = TRUE;
 	gint errval;
 	struct timeval tv;
 	browse_callback_userdata_t *browse_userdata;
 
 	if (gl_poll) {
-		ok = FALSE;
 		goto fail;
 	}
 
@@ -223,7 +220,6 @@ daap_mdns_setup ()
 
 	client = avahi_client_new (av_poll, 0, daap_mdns_client_cb, ml, &errval);
 	if (!client) {
-		ok = FALSE;
 		goto fail;
 	}
 
@@ -235,12 +231,27 @@ daap_mdns_setup ()
 	                                     0, daap_mdns_browse_cb,
 	                                     browse_userdata);
 	if (!browser) {
-		ok = FALSE;
 		goto fail;
 	}
 
+	return TRUE;
+
 fail:
-	return ok;
+	if (ml)
+		g_main_loop_unref (ml);
+
+	if (client)
+		avahi_client_free (client);
+	client = NULL;
+	browser = NULL;
+
+	g_free (browse_userdata);
+
+	if (gl_poll)
+		avahi_glib_poll_free (gl_poll);
+	gl_poll = NULL;
+
+	return FALSE;
 }
 
 GSList *
