@@ -192,12 +192,6 @@ daap_mdns_timeout (AvahiTimeout *to, void *userdata)
 {
 }
 
-static gboolean
-daap_mdns_timeout_glib (void *userdata)
-{
-	return FALSE;
-}
-
 gboolean
 daap_mdns_setup ()
 {
@@ -226,7 +220,6 @@ daap_mdns_setup ()
 
 	avahi_elapse_time (&tv, 2000, 0);
 	av_poll->timeout_new (av_poll, &tv, daap_mdns_timeout, NULL);
-	g_timeout_add (5000, daap_mdns_timeout_glib, ml);
 
 	client = avahi_client_new (av_poll, 0, daap_mdns_client_cb, ml, &errval);
 	if (!client) {
