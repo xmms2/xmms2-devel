@@ -1969,6 +1969,12 @@ cdef class XMMS:
 		"""
 		return self.create_result(cb, xmmsc_broadcast_config_value_changed(self.conn))
 
+	def broadcast_configval_changed(self, cb = None):
+		"""
+		@deprecated
+		"""
+		return self.broadcast_config_value_changed(cb)
+
 	def config_set_value(self, key, val, cb = None):
 		"""
 		config_set_value(key, val, cb=None) -> XMMSResult
@@ -1981,6 +1987,12 @@ cdef class XMMS:
 		c2 = from_unicode(val)
 		return self.create_result(cb, xmmsc_config_set_value(self.conn, c1, c2))
 
+	def configval_set(self, key, val, cb = None):
+		"""
+		@deprecated
+		"""
+		return self.config_set_value(key, val, cb)
+
 	def config_get_value(self, key, cb = None):
 		"""
 		config_get_value(key, cb=None) -> XMMSResult
@@ -1991,6 +2003,12 @@ cdef class XMMS:
 		"""
 		c = from_unicode(key)
 		return self.create_result(cb, xmmsc_config_get_value(self.conn, c))
+
+	def configval_get(self, key, cb = None):
+		"""
+		@deprecated
+		"""
+		return self.config_get_value(key, cb)
 
 	def config_list_values(self, cb = None):
 		"""
@@ -2003,6 +2021,12 @@ cdef class XMMS:
 		@return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_config_list_values(self.conn))
+
+	def configval_list(self, cb = None):
+		"""
+		@deprecated
+		"""
+		return self.config_list_values(cb)
 
 	def config_register_value(self, valuename, defaultvalue, cb = None):
 		"""
@@ -2017,6 +2041,12 @@ cdef class XMMS:
 		c1 = from_unicode(valuename)
 		c2 = from_unicode(defaultvalue)
 		return self.create_result(cb, xmmsc_config_register_value(self.conn, c1, c2))
+
+	def configval_register(self, valuename, defaultvalue, cb = None):
+		"""
+		@deprecated
+		"""
+		return self.config_register_value(valuename, defaultvalue, cb)
 
 	def medialib_add_entry(self, file, cb = None):
 		"""
