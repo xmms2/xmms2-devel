@@ -48,6 +48,8 @@ static gboolean xmms_ices_format_set (xmms_output_t *output,
                                       const xmms_stream_type_t *format);
 static void xmms_ices_write (xmms_output_t *output, gpointer buffer,
                              gint len, xmms_error_t *err);
+static void xmms_ices_update_comment (xmms_medialib_entry_t entry,
+                                      vorbis_comment *vc);
 
 /*
  * Internal helper functions.
@@ -266,17 +268,6 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	gint rate;
 	gint channels;
 	xmms_medialib_entry_t entry;
-	xmms_medialib_session_t *session;
-
-	static const struct {
-		gchar *prop;
-		gchar *key;
-	} *pptr, props[] = {
-		{XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, "title"},
-		{XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, "artist"},
-		{XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, "album"},
-		{NULL, NULL}
-	};
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -285,24 +276,13 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	if (data->encoder)
 		xmms_ices_flush_internal (data);
 
-	/* Reset the Vorbis comment with the new track metadata. */
+	/* Set the Vorbis comment to the current track metadata. */
 	vorbis_comment_clear (&data->vc);
 	vorbis_comment_init (&data->vc);
 
 	entry = xmms_output_current_id (output, NULL);
-	session = xmms_medialib_begin ();
+	xmms_ices_update_comment (entry, &data->vc);
 
-	for (pptr = props; pptr && pptr->prop; pptr++) {
-		const gchar *tmp;
-
-		tmp = xmms_medialib_entry_property_get_str (session, entry, pptr->prop);
-		if (tmp) {
-			vorbis_comment_add_tag (&data->vc,
-			                        pptr->key, (gchar *) tmp);
-		}
-	}
-
-	xmms_medialib_end (session);
 
 	/* If there is no encoder around, we need to build one. */
 	if (!data->encoder) {
@@ -346,4 +326,37 @@ xmms_ices_write (xmms_output_t *output, gpointer buffer,
 	xmms_ices_encoder_input (data->encoder, buffer, len);
 
 	xmms_ices_send_shout (data, err);
+}
+
+static void
+xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
+{
+	xmms_medialib_session_t *session;
+
+	static const struct {
+		gchar *prop;
+		gchar *key;
+	} *pptr, props[] = {
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, "title"},
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, "artist"},
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, "album"},
+		{NULL, NULL}
+	};
+
+	vorbis_comment_clear (vc);
+	vorbis_comment_init (vc);
+
+	session = xmms_medialib_begin ();
+
+	for (pptr = props; pptr && pptr->prop; pptr++) {
+		const gchar *tmp;
+
+		tmp = xmms_medialib_entry_property_get_str (session, entry, pptr->prop);
+		if (tmp) {
+			vorbis_comment_add_tag (vc, pptr->key, (gchar *) tmp);
+		}
+	}
+
+	xmms_medialib_end (session);
+
 }
