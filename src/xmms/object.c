@@ -341,7 +341,7 @@ xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t 
 	if (object->cmds) {
 		desc = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
 
-		if (desc->func)
+		if (desc && desc->func)
 			desc->func (object, arg);
 	}
 }
