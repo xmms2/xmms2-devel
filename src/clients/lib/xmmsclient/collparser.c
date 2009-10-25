@@ -253,7 +253,7 @@ xmmsv_coll_default_parse_tokens (const char *str, const char **newpos)
 		tmp++;
 		strval = x_new0 (char, strlen (tmp) + 1);
 
-		while (escape || (*tmp != '\0' && *tmp != quote)) {
+		while (*tmp != '\0' && (escape || *tmp != quote)) {
 			if (!escape && (*tmp == '\\')) {
 				escape = 1;
 			} else {
@@ -271,14 +271,15 @@ xmmsv_coll_default_parse_tokens (const char *str, const char **newpos)
 		if (*tmp == quote) tmp++;
 
 		*newpos = tmp;
-		return coll_token_new (type, strval);
+
+		goto out;
 	}
 
 
 	i = 0;
 	type = XMMS_COLLECTION_TOKEN_INTEGER;
 	strval = x_new0 (char, strlen (tmp) + 1);
-	while (escape || (*tmp != '\0' && *tmp != ' ')) {
+	while (*tmp != '\0' && (escape || *tmp != ' ')) {
 
 		/* Control input chars, escape mechanism, etc */
 		if (!escape) {
@@ -340,6 +341,16 @@ xmmsv_coll_default_parse_tokens (const char *str, const char **newpos)
 	}
 
 	*newpos = tmp;
+
+out:
+
+	/* Did we encounter a trailing backslash? */
+	if (escape) {
+		free (strval);
+
+		return NULL;
+	}
+
 	return coll_token_new (type, strval);
 }
 
