@@ -284,6 +284,8 @@ xmms_gvfs_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 	                                        NULL,
 	                                        &err);
 
+	g_object_unref (file);
+
 	if (!enumerator) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, err->message);
 		return FALSE;
@@ -316,7 +318,6 @@ xmms_gvfs_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 		g_object_unref (info);
 	}
 
-	g_object_unref (file);
 	g_file_enumerator_close (enumerator, NULL, NULL);
 
 	return TRUE;
