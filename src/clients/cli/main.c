@@ -126,6 +126,22 @@ parse_config (const gchar *buffer)
 	return config;
 }
 
+static gchar *
+get_config_dir (void) {
+	gchar userconf[PATH_MAX];
+
+	xmmsc_userconfdir_get (userconf, PATH_MAX);
+	return g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
+}
+
+static gchar *
+get_config_path (void) {
+	gchar userconf[PATH_MAX];
+
+	xmmsc_userconfdir_get (userconf, PATH_MAX);
+	return g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", "cli.conf",
+	                     NULL);
+}
 
 static GHashTable *
 read_config (void)
@@ -136,13 +152,10 @@ read_config (void)
 	struct stat st;
 	FILE *fp;
 
-	gchar userconf[PATH_MAX];
-	xmmsc_userconfdir_get (userconf, PATH_MAX);
-	file = g_build_path (G_DIR_SEPARATOR_S, userconf,
-	                     "clients", "cli.conf", NULL);
+	file = get_config_path ();
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
-		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
+		gchar *dir = get_config_dir ();
 		g_mkdir_with_parents (dir, 0755);
 		g_free (dir);
 
@@ -184,6 +197,7 @@ read_config (void)
 
 		g_free (buffer);
 	} else {
+		g_free (file);
 		config = parse_config (defaultconfig);
 	}
 
@@ -233,7 +247,7 @@ main (gint argc, gchar **argv)
 {
 	xmmsc_connection_t *connection;
 	gchar *path;
-	gchar *tmp;
+	gchar *tmp, *tmp2;
 	gint i, ret;
 	void (*func) (xmmsc_connection_t *conn, int argc, char **argv) = NULL;
 
@@ -249,9 +263,12 @@ main (gint argc, gchar **argv)
 
 	tmp = g_hash_table_lookup (config, "iknowoldcliisdeprecatedandwillgoaway");
 	if (!tmp || strcmp (tmp, "true")) {
+		tmp2 = get_config_path ();
 		fprintf (stderr, "This program is deprecated and will be replaced by nyxmms2.\n"
 			  " Consider setting runnycli to 'true' in config file to get future behaviour\n"
-			  " (or set iknowoldcliisdeprecatedandwillgoaway to 'true' to hide this warning)\n");
+			  " (or set iknowoldcliisdeprecatedandwillgoaway to 'true' to hide this warning)\n"
+			  " The config file is located at:\n    %s\n", tmp2);
+		g_free (tmp2);
 	}
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
