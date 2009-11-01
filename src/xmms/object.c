@@ -219,8 +219,11 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data)
 	while (list2) {
 		entry = list2->data;
 
-		if (entry && entry->handler)
-			entry->handler (object, data, entry->userdata);
+		/* NULL entries may never be added to the trees. */
+		g_assert (entry);
+		g_assert (entry->handler);
+
+		entry->handler (object, data, entry->userdata);
 
 		list2 = g_list_delete_link (list2, list2);
 	}
