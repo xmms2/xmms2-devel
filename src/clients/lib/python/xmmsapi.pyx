@@ -2351,9 +2351,9 @@ cdef class XMMS:
 		
 		return self.create_result(cb, xmmsc_coll_rename(self.conn, oldnam, newnam, n))
 
-	def coll_idlist_from_playlist_file(self, path):
+	def coll_idlist_from_playlist_file(self, path, cb=None):
 		"""
-		coll_idlist_from_playlist_file(path) -> XMMSResult
+		coll_idlist_from_playlist_file(path, cb=None) -> XMMSResult
 
 		Create an idlist from a playlist.
 		@rtype: L{XMMSResult}
