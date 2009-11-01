@@ -76,8 +76,8 @@ xmms_object_cleanup (xmms_object_t *object)
 	}
 
 	if (object->cmds) {
-		/* FIXME: Shouldn't we free the commands themselves here, too?
-		 *        The old code didn't do that...
+		/* We don't need to free the commands themselves -- they are
+		 * stored in read-only memory.
 		 */
 		g_tree_destroy (object->cmds);
 	}
@@ -319,7 +319,7 @@ compare_cmd_key (gconstpointer a, gconstpointer b)
   */
 void
 xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
-                     xmms_object_cmd_desc_t *desc)
+                     const xmms_object_cmd_desc_t *desc)
 {
 	g_return_if_fail (object);
 	g_return_if_fail (desc);
@@ -327,7 +327,8 @@ xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
 	if (!object->cmds)
 		object->cmds = g_tree_new (compare_cmd_key);
 
-	g_tree_insert (object->cmds, GUINT_TO_POINTER (cmdid), desc);
+	g_tree_insert (object->cmds, GUINT_TO_POINTER (cmdid),
+	               (gpointer) desc);
 }
 
 /**
