@@ -898,7 +898,7 @@ xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val)
 {
 	int32_t type;
 
-	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *) &type)) {
+	if (!xmms_ipc_msg_get_int32 (msg, &type)) {
 		return false;
 	}
 
