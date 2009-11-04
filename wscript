@@ -289,6 +289,7 @@ def configure(conf):
                     "empty-body",
                     "ignored-qualifiers",
                     "type-limits",
+                    "write-strings",
                     ):
         # make a copy so it can be restored if check fails
         T = conf.env["CCFLAGS"][:]
