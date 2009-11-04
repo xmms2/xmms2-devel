@@ -87,12 +87,39 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
+static gboolean xmms_ipc_check_has_type (xmms_ipc_msg_t *msg, xmmsv_type_t type);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 
+static gboolean
+xmms_ipc_check_has_type (xmms_ipc_msg_t *msg, xmmsv_type_t type)
+{
+	int32_t actual_type;
+
+	/* None values aren't tagged. */
+	if (type != XMMSV_TYPE_NONE) {
+		if (!xmms_ipc_msg_get_int32 (msg, &actual_type)) {
+			XMMS_DBG ("Failed fetching the type of value of the argument "
+			          "from the IPC message!");
+
+			return FALSE;
+		}
+
+		if (actual_type != type) {
+			XMMS_DBG ("Expected type %d, got type %d\n", type, actual_type);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
 
 static gboolean
 type_and_msg_to_arg (xmmsv_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
 {
+	if (!xmms_ipc_check_has_type (msg, type)) {
+		return FALSE;
+	}
+
 	if (!xmms_ipc_msg_get_value_of_type_alloc (msg, type, &arg->values[i])) {
 		XMMS_DBG ("Failed fetching the value of the argument from the IPC message!");
 		return FALSE;
@@ -128,6 +155,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	    cmdid == XMMS_IPC_CMD_SIGNAL) {
 		gint32 signalid;
 
+		if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
+			xmms_log_error ("No type in this msg?!");
+			return;
+		}
+
 		if (!xmms_ipc_msg_get_int32 (msg, &signalid)) {
 			xmms_log_error ("No signalid in this msg?!");
 			return;
@@ -145,6 +177,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	} else if (objid == XMMS_IPC_OBJECT_SIGNAL &&
 	           cmdid == XMMS_IPC_CMD_BROADCAST) {
 		gint32 broadcastid;
+
+		if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
+			xmms_log_error ("No type in this msg?!");
+			return;
+		}
 
 		if (!xmms_ipc_msg_get_int32 (msg, &broadcastid)) {
 			xmms_log_error ("No broadcastid in this msg?!");
@@ -191,6 +228,14 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
 		if (!type_and_msg_to_arg (cmd->args[i], msg, &arg, i)) {
 			xmms_log_error ("Error parsing args");
+
+			if (objid == XMMS_IPC_OBJECT_MAIN &&
+			    cmdid == XMMS_IPC_CMD_HELLO) {
+				xmms_log_error ("Couldn't parse hello message. "
+				                "Maybe the client or libxmmsclient "
+				                "needs to be updated.");
+			}
+
 			retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
 			xmms_ipc_msg_put_string (retmsg, "Corrupt msg");
 			goto err;

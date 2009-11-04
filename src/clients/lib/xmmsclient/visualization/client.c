@@ -258,7 +258,7 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *prop
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTIES);
 	xmms_ipc_msg_put_int32 (msg, v->id);
-	xmms_ipc_msg_put_value_dict (msg, props);
+	xmms_ipc_msg_put_value (msg, props);
 	return xmmsc_send_msg (c, msg);
 }
 

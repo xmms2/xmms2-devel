@@ -231,7 +231,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_int32 (msg, limit_start);
 	xmms_ipc_msg_put_int32 (msg, limit_len);
-	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
+	xmms_ipc_msg_put_value (msg, order);
 
 	xmmsv_unref (order);
 
@@ -286,9 +286,9 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_int32 (msg, limit_start);
 	xmms_ipc_msg_put_int32 (msg, limit_len);
-	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
-	xmms_ipc_msg_put_value_list (msg, fetch); /* purposedly skip typing */
-	xmms_ipc_msg_put_value_list (msg, group); /* purposedly skip typing */
+	xmms_ipc_msg_put_value (msg, order);
+	xmms_ipc_msg_put_value (msg, fetch);
+	xmms_ipc_msg_put_value (msg, group);
 
 	xmmsv_unref (order);
 	xmmsv_unref (group);

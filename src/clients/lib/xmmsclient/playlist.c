@@ -141,7 +141,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *prope
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_value_list (msg, properties); /* purposedly skip typing */
+	xmms_ipc_msg_put_value (msg, properties);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -433,7 +433,7 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_int32 (msg, pos);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
+	xmms_ipc_msg_put_value (msg, order);
 
 	return xmmsc_send_msg (c, msg);
 
@@ -695,7 +695,7 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_collection (msg, coll);
-	xmms_ipc_msg_put_value_list (msg, order); /* purposedly skip typing */
+	xmms_ipc_msg_put_value (msg, order);
 
 	return xmmsc_send_msg (c, msg);
 
