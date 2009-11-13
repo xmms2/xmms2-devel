@@ -40,8 +40,22 @@
 #include <avahi-common/simple-watch.h>
 #include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
+#include <avahi-common/timeval.h>
 
 static AvahiSimplePoll *simple_poll = NULL;
+static int n_pending_resolvers = 0;
+
+static void timeout_callback (AvahiTimeout *t, void *userdata) {
+    const AvahiPoll *api = avahi_simple_poll_get (simple_poll);
+
+    if (n_pending_resolvers > 0) {
+        api->timeout_update (t, (struct timeval*) userdata);
+    } else {
+        avahi_free (userdata);
+        api->timeout_free (t);
+        avahi_simple_poll_quit (simple_poll);
+    }
+}
 
 static void resolve_callback(
     AvahiServiceResolver *r,
@@ -77,6 +91,7 @@ static void resolve_callback(
         }
     }
 
+    n_pending_resolvers--;
     avahi_service_resolver_free(r);
 }
 
@@ -92,6 +107,9 @@ static void browse_callback(
     void* userdata) {
     
     AvahiClient *c = userdata;
+    const AvahiPoll *api = avahi_simple_poll_get (simple_poll);
+    struct timeval *tv;
+
     assert(b);
 
     /* Called whenever a new services becomes available on the LAN or is removed from the LAN */
@@ -105,6 +123,9 @@ static void browse_callback(
             return;
 
         case AVAHI_BROWSER_NEW:
+            /* Count the pending resolvers so we know when we can quit. */
+            n_pending_resolvers++;
+
             /* We ignore the returned resolver object. In the callback
                function we free it. If the server is terminated before
                the callback function is called the server will free
@@ -122,8 +143,15 @@ static void browse_callback(
         case AVAHI_BROWSER_REMOVE:
 			break;
         case AVAHI_BROWSER_ALL_FOR_NOW:
-            avahi_simple_poll_quit(simple_poll);
-			break;
+            /* The all for now event is emitted when each published service was
+               announced by the new event (handled above). But there still might
+               be some pending resolvers, so we have to wait for the resolvers
+               to be finished, before quitting the main loop. */
+
+            tv = avahi_malloc0 (sizeof (struct timeval));
+            avahi_elapse_time (tv, 200, 0);
+            api->timeout_new (api, tv, timeout_callback, tv);
+            break;
         case AVAHI_BROWSER_CACHE_EXHAUSTED:
             break;
     }
