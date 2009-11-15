@@ -219,7 +219,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 err:
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		xmmsv_unref (arg.values[i]);
+		if (arg.values[i])
+			xmmsv_unref (arg.values[i]);
 	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
