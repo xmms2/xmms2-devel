@@ -7,6 +7,11 @@ def build(bld):
     obj.target = 'xmmsapi'
     obj.includes = '../../../.. ../../../include ../../../includepriv .'
     obj.source = ['xmmsapi.pyx']
+
+    # the generated c code will throw an estimated 1000 warnings
+    # if we compile with -Wwrite-strings. so don't.
+    obj.uselib = 'NOWRITESTRINGS'
+
     obj.uselib_local = 'xmmsclient'
     obj.install_path = "${xmmsclient_PYTHONDIR}"
     obj.mac_bundle = True

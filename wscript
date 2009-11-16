@@ -296,6 +296,10 @@ def configure(conf):
         conf.env["CCFLAGS"] += ["-W%s" % warning]
         if not conf.check_cc(fragment="int X;", type="cc", msg="Checking if warning '%s' is supported" % warning, mandatory=0):
             conf.env["CCFLAGS"] = T
+
+    if '-Wwrite-strings' in conf.env["CCFLAGS"]:
+        conf.env["CCFLAGS_NOWRITESTRINGS"] += ["-Wno-write-strings"]
+
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
