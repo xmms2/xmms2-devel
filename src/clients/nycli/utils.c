@@ -260,8 +260,9 @@ print_config_entry (const gchar *confname, xmmsv_t *val, void *udata)
 }
 
 void
-print_config (cli_infos_t *infos, xmmsc_result_t *res, gchar *confname)
+print_config (cli_infos_t *infos, gchar *confname)
 {
+	xmmsc_result_t *res;
 	const gchar *confval;
 	xmmsv_t *val;
 

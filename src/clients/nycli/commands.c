@@ -2022,7 +2022,7 @@ cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		done (res, infos);
 	} else {
-		print_config (infos, res, confname);
+		print_config (infos, confname);
 	}
 
 	return TRUE;
