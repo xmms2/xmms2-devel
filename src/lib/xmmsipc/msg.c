@@ -453,7 +453,6 @@ uint32_t
 xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v)
 {
 	uint32_t ret;
-	uint32_t u;
 	int32_t i;
 	const char *s;
 	xmmsv_coll_t *c;
@@ -910,7 +909,7 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
                                       xmmsv_t **val)
 {
 	int32_t i;
-	uint32_t len, u;
+	uint32_t len;
 	char *s;
 	xmmsv_coll_t *c;
 	unsigned char *d;
