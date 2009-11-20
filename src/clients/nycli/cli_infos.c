@@ -129,7 +129,6 @@ cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 static void
 disconnect_callback (void *userdata)
 {
-	cli_infos_t *infos = (cli_infos_t *) userdata;
 	cli_infos_disconnect_callback (NULL, userdata);
 }
 

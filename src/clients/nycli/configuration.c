@@ -41,7 +41,7 @@ const gchar *const default_config =
 /* Load a section from a keyfile to a hash-table
    (replace existing keys in the hash) */
 static void
-section_to_hash (GKeyFile *file, gchar *section, GHashTable *hash)
+section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 {
 	GError *error;
 	gchar **keys;
@@ -154,7 +154,7 @@ configuration_get_aliases (configuration_t *config)
 }
 
 gboolean
-configuration_get_boolean (configuration_t *config, gchar *key)
+configuration_get_boolean (configuration_t *config, const gchar *key)
 {
 	gchar *val;
 
@@ -170,7 +170,7 @@ configuration_get_boolean (configuration_t *config, gchar *key)
 }
 
 gchar *
-configuration_get_string (configuration_t *config, gchar *key)
+configuration_get_string (configuration_t *config, const gchar *key)
 {
 	return g_hash_table_lookup (config->values, key);
 }

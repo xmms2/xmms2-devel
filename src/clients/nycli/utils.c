@@ -148,13 +148,6 @@ done (xmmsc_result_t *res, cli_infos_t *infos)
 	xmmsc_result_unref (res);
 }
 
-static void
-coldisp_finalize (xmmsc_result_t *res, column_display_t *coldisp)
-{
-	column_display_print_footer (coldisp);
-	column_display_free (coldisp);
-}
-
 void
 tickle (xmmsc_result_t *res, cli_infos_t *infos)
 {
@@ -648,8 +641,6 @@ static void
 pos_print_row_cb (gint pos, void *userdata)
 {
 	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
-	xmmsc_result_t *infores;
-	xmmsv_t *info;
 	guint id;
 
 	if (pos >= pack->entries->len) {
@@ -763,8 +754,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
-	xmmsc_result_t *infores = NULL;
-	xmmsv_t *val, *info;
+	xmmsv_t *val;
 	GTree *list = NULL;
 
 	const gchar *err;
@@ -939,7 +929,6 @@ coll_dump (xmmsv_coll_t *coll, guint level)
 
 	gchar *attr1;
 	gchar *attr2;
-	xmmsv_coll_t *operand;
 	GString *idlist_str;
 
 	indent = g_malloc ((level * 2) + 1);
@@ -1365,8 +1354,6 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		}
 		g_tree_destroy (list);
 	}
-
-    finish:
 
 	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matching);

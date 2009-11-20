@@ -178,7 +178,7 @@ result_to_string (xmmsv_t *val, column_def_t *coldef, gchar *buffer)
 }
 
 static void
-print_fixed_width_string (gchar *value, gint width, gint realsize,
+print_fixed_width_string (const gchar *value, gint width, gint realsize,
                           column_def_align_t align, gchar padchar)
 {
 	if (align == COLUMN_DEF_ALIGN_LEFT) {
@@ -352,10 +352,10 @@ column_display_infos_get (column_display_t *disp)
 void
 column_display_print_header (column_display_t *disp)
 {
-	gint i, d;
+	gint i;
 	gint realsize;
 	column_def_t *coldef;
-	gchar *headstr;
+	const gchar *headstr;
 
 	/* Display Result head line */
 	headstr = _("--[Result]-");
@@ -404,7 +404,7 @@ column_display_print_footer_totaltime (column_display_t *disp)
 void
 column_display_prepare (column_display_t *disp)
 {
-	gint termwidth, availchars, totalchars;
+	gint availchars, totalchars;
 	gint i;
 	double ratio;
 	column_def_t *coldef;
@@ -550,7 +550,7 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 		break;
 	default:
 		/* Invalid type, don't render anything*/
-		return;
+		return 0;
 	}
 
 	time = format_time (millisecs, FALSE);

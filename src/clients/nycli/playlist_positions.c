@@ -537,7 +537,6 @@ interval_parse (const gchar *expr, gint *start, gint *end)
 static interval_vs_atom_t
 interval_atom_list_cmp (GList *intervals, GList *atoms, gboolean forward)
 {
-	interval_vs_atom_t res;
 	interval_t *ival;
 	int atom;
 

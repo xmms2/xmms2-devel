@@ -164,41 +164,6 @@ status_update_position (cli_infos_t *infos, status_entry_t *entry)
 	xmmsv_unref (p);
 }
 
-static GList *
-parse_format (const gchar *format)
-{
-	const gchar *s, *last;
-	GList *strings = NULL;
-
-	last = format;
-	while ((s = strstr (last, "${")) != NULL) {
-		/* Copy the substring before the variable */
-		if (last != s) {
-			strings = g_list_prepend (strings, g_strndup (last, s - last));
-		}
-
-		last = strchr (s, '}');
-		if (last) {
-			/* Copy the variable (as "${variable}") */
-			strings = g_list_prepend (strings, g_strndup (s, last - s));
-			last++;
-		} else {
-			/* Missing '}', keep '$' as a string and keep going */
-			strings = g_list_prepend (strings, g_strndup (s, 1));
-			last = s + 1;
-		}
-	}
-
-	/* Copy the remaining substring after the last variable */
-	if (*last != '\0') {
-		strings = g_list_prepend (strings, g_strdup (last));
-	}
-
-	strings = g_list_reverse (strings);
-
-	return strings;
-}
-
 status_entry_t *
 status_init (gchar *format, gint refresh)
 {

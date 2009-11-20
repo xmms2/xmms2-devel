@@ -146,7 +146,7 @@ command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
 /* Escape characters in toescape with escape_char.
  */
 static gchar *
-strescape (gchar *s, gchar *toescape, gchar escape_char)
+strescape (gchar *s, const gchar *toescape, gchar escape_char)
 {
 	gint len;
 	gchar *t, *r;

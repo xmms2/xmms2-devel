@@ -40,7 +40,7 @@ configuration_t* configuration_init (const gchar *path);
 void configuration_free (configuration_t *config);
 
 GHashTable* configuration_get_aliases (configuration_t *config);
-gboolean configuration_get_boolean (configuration_t *config, gchar *key);
-gchar* configuration_get_string (configuration_t *config, gchar *key);
+gboolean configuration_get_boolean (configuration_t *config, const gchar *key);
+gchar* configuration_get_string (configuration_t *config, const gchar *key);
 
 #endif /* __CONFIGURATION_H__ */

@@ -431,7 +431,7 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
                      const gchar **columns)
 {
 	gint i;
-	gchar *nextsep = NULL;
+	const gchar *nextsep = NULL;
 
 	for (i = 0; columns[i]; ++i) {
 		/* Separator between columns */
@@ -459,7 +459,7 @@ fill_column_display (cli_infos_t *infos, column_display_t *disp,
 			                            COLUMN_DEF_SIZE_FIXED,
 			                            COLUMN_DEF_ALIGN_LEFT,
 			                            column_display_render_highlight);
-			nextsep = FALSE;
+			nextsep = NULL;
 		} else if (strcmp (columns[i], "next") == 0) {
 			int currpos = infos->cache->currpos;
 			/* If no currpos, start counting from the beginning */
@@ -751,7 +751,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
 	xmmsv_coll_t *query = NULL, *filter = NULL, *pl;
-	xmmsc_result_t *res, *inres = NULL;
+	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	playlist_positions_t *positions;
 	gint pos;
