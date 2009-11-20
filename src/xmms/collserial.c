@@ -37,7 +37,7 @@ static xmmsv_coll_t *xmms_collection_dbread_operator (xmms_medialib_session_t *s
 static guint xmms_collection_dbwrite_operator (xmms_medialib_session_t *session, guint collid, xmmsv_coll_t *coll);
 
 static void dbwrite_operator (void *key, void *value, void *udata);
-static void dbwrite_coll_attributes (const char *key, const char *value, void *udata);
+static void dbwrite_coll_attributes (const char *key, xmmsv_t *value, void *udata);
 static void dbwrite_strip_tmpprops (void *key, void *value, void *udata);
 
 static gint value_get_dict_int (xmmsv_t *val, const gchar *key);
@@ -234,6 +234,7 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	guint *idlist;
 	gint i;
 	xmmsv_coll_t *op;
+	xmmsv_t *attrs;
 	gint newid, nextid;
 	coll_dbwrite_t dbwrite_infos = { session, collid, 0 };
 
@@ -245,7 +246,9 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	xmms_medialib_select (session, query, NULL);
 
 	/* Write attributes */
-	xmmsv_coll_attribute_foreach (coll, dbwrite_coll_attributes, &dbwrite_infos);
+	attrs = xmmsv_coll_attributes_get (coll);
+	xmmsv_dict_foreach (attrs, dbwrite_coll_attributes, &dbwrite_infos);
+	attrs = NULL; /* no unref needed. */
 
 	/* Write idlist */
 	idlist = xmmsv_coll_get_idlist (coll);
@@ -317,15 +320,20 @@ dbwrite_operator (void *key, void *value, void *udata)
 
 /* Write all attributes of a collection to the DB. */
 static void
-dbwrite_coll_attributes (const char *key, const char *value, void *udata)
+dbwrite_coll_attributes (const char *key, xmmsv_t *value, void *udata)
 {
 	gchar *query;
 	coll_dbwrite_t *dbwrite_infos = udata;
 	gchar *esc_key;
 	gchar *esc_val;
+	const gchar *s;
+	int r;
+
+	r = xmmsv_get_string (value, &s);
+	g_return_if_fail (r);
 
 	esc_key = sqlite_prepare_string (key);
-	esc_val = sqlite_prepare_string (value);
+	esc_val = sqlite_prepare_string (s);
 	query = g_strdup_printf ("INSERT INTO CollectionAttributes VALUES(%d, %s, %s)",
 	                         dbwrite_infos->collid, esc_key, esc_val);
 	xmms_medialib_select (dbwrite_infos->session, query, NULL);
