@@ -1513,16 +1513,19 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	gchar *playlist;
+	gboolean free_playlist = TRUE;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = infos->cache->active_playlist_name;
+		free_playlist = FALSE;
 	}
 
 	res = xmmsc_playlist_shuffle (infos->sync, playlist);
 	xmmsc_result_wait (res);
 	done (res, infos);
 
-	g_free (playlist);
+	if (free_playlist)
+		g_free (playlist);
 
 	return TRUE;
 }
