@@ -61,15 +61,22 @@ static uint32_t internal_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v
 static uint32_t internal_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v);
 
 static void
-xmms_ipc_append_coll_attr (const char* key, const char* value, void *userdata) {
+xmms_ipc_append_coll_attr (const char *key, xmmsv_t *value, void *userdata)
+{
 	xmms_ipc_msg_t *msg = (xmms_ipc_msg_t *)userdata;
+	const char *s;
+	int r;
+
+	r = xmmsv_get_string (value, &s);
+	x_return_if_fail (r);
 
 	internal_ipc_msg_put_string (msg, key);
-	internal_ipc_msg_put_string (msg, value);
+	internal_ipc_msg_put_string (msg, s);
 }
 
 static void
-xmms_ipc_count_coll_attr (const char* key, const char* value, void *userdata) {
+xmms_ipc_count_coll_attr (const char *key, xmmsv_t *value, void *userdata)
+{
 	int *n = (int *)userdata;
 	++(*n);
 }
@@ -436,7 +443,7 @@ static uint32_t
 internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *v;
+	xmmsv_t *v, *attrs;
 	int n;
 	uint32_t ret, *idlist;
 	xmmsv_coll_t *op;
@@ -449,11 +456,15 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	internal_ipc_msg_put_uint32 (msg, xmmsv_coll_get_type (coll));
 
 	/* attribute counter and values */
+	attrs = xmmsv_coll_attributes_get (coll);
 	n = 0;
-	xmmsv_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
+
+	xmmsv_dict_foreach (attrs, xmms_ipc_count_coll_attr, &n);
 	internal_ipc_msg_put_uint32 (msg, n);
 
-	xmmsv_coll_attribute_foreach (coll, xmms_ipc_append_coll_attr, msg);
+	xmmsv_dict_foreach (attrs, xmms_ipc_append_coll_attr, msg);
+
+	attrs = NULL; /* no unref needed. */
 
 	/* idlist counter and content */
 	idlist = xmmsv_coll_get_idlist (coll);
