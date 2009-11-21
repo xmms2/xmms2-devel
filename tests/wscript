@@ -10,7 +10,7 @@ def configure(conf):
            static void T (void) __attribute__ ((constructor (220)));
            static void T (void) {};
     """
-    conf.check_cc(fragment=code, type="objects", msg="Checking for constructor attribute", mandatory=True)
+    conf.check_cc(fragment=code, type="cc", msg="Checking for constructor attribute", mandatory=True)
 
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags')
 
@@ -18,7 +18,7 @@ def build(bld):
     obj = bld.new_task_gen('cc', 'program')
     obj.target = "test_xmmstypes"
     obj.source = ['runner/main.c', 'runner/valgrind.c'] + types_suite
-    obj.includes = '. runner/ ../src ../src/include'
+    obj.includes = '. ../ runner/ ../src ../src/include'
     obj.uselib_local = 'xmmstypes'
     obj.uselib = 'cunit valgrind'
     obj.install_path = None
@@ -26,7 +26,7 @@ def build(bld):
     obj = bld.new_task_gen('cc', 'program')
     obj.target = "test_server"
     obj.source = ['runner/main.c', 'runner/valgrind.c', '../src/xmms/streamtype.c', '../src/xmms/object.c'] + server_suite
-    obj.includes = '. runner/ ../src ../src/includepriv ../src/include'
+    obj.includes = '. ../ runner/ ../src ../src/includepriv ../src/include'
     obj.uselib_local = 'xmmstypes'
     obj.uselib = 'cunit valgrind glib2 gthread2'
     obj.install_path = None
