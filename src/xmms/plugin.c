@@ -273,6 +273,8 @@ xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 	gboolean (*verifier) (xmms_plugin_t *);
 	gint expected_ver;
 
+	XMMS_DBG ("Loading plugin '%s'", desc->name);
+
 	switch (desc->type) {
 	case XMMS_PLUGIN_TYPE_OUTPUT:
 		expected_ver = XMMS_OUTPUT_API_VERSION;
@@ -301,19 +303,20 @@ xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 	}
 
 	if (!xmms_plugin_setup (plugin, desc)) {
-		xmms_log_error ("Setup failed!");
+		xmms_log_error ("Setup failed for plugin '%s'!", desc->name);
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
 
 	if (!desc->setup_func (plugin)) {
-		xmms_log_error ("Setup function returned error!");
+		xmms_log_error ("Setup function failed for plugin '%s'!",
+		                desc->name);
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
 
 	if (!verifier (plugin)) {
-		xmms_log_error ("Verify failed for plugin!");
+		xmms_log_error ("Verify failed for plugin '%s'!", desc->name);
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
