@@ -88,6 +88,8 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
 static gboolean xmms_ipc_check_has_type (xmms_ipc_msg_t *msg, xmmsv_type_t type);
+static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
+static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 
 static gboolean
@@ -137,6 +139,61 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
 }
 
 static void
+xmms_ipc_register_signal (xmms_ipc_client_t *client,
+                          xmms_ipc_msg_t *msg)
+{
+	gint32 signalid;
+
+	if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
+		xmms_log_error ("No type in this msg?!");
+		return;
+	}
+
+	if (!xmms_ipc_msg_get_int32 (msg, &signalid)) {
+		xmms_log_error ("No signalid in this msg?!");
+		return;
+	}
+
+	if (signalid < 0 || signalid >= XMMS_IPC_SIGNAL_END) {
+		xmms_log_error ("Bad signal id (%d)", signalid);
+		return;
+	}
+
+	g_mutex_lock (client->lock);
+	client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
+	g_mutex_unlock (client->lock);
+}
+
+static void
+xmms_ipc_register_broadcast (xmms_ipc_client_t *client,
+                             xmms_ipc_msg_t *msg)
+{
+	gint32 broadcastid;
+
+	if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
+		xmms_log_error ("No type in this msg?!");
+		return;
+	}
+
+	if (!xmms_ipc_msg_get_int32 (msg, &broadcastid)) {
+		xmms_log_error ("No broadcastid in this msg?!");
+		return;
+	}
+
+	if (broadcastid < 0 || broadcastid >= XMMS_IPC_SIGNAL_END) {
+		xmms_log_error ("Bad broadcast id (%d)", broadcastid);
+		return;
+	}
+
+	g_mutex_lock (client->lock);
+	client->broadcasts[broadcastid] =
+		g_list_append (client->broadcasts[broadcastid],
+				GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
+
+	g_mutex_unlock (client->lock);
+}
+
+static void
 process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 {
 	xmms_object_t *object;
@@ -151,54 +208,15 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	objid = xmms_ipc_msg_get_object (msg);
 	cmdid = xmms_ipc_msg_get_cmd (msg);
 
-	if (objid == XMMS_IPC_OBJECT_SIGNAL &&
-	    cmdid == XMMS_IPC_CMD_SIGNAL) {
-		gint32 signalid;
-
-		if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
-			xmms_log_error ("No type in this msg?!");
-			return;
+	if (objid == XMMS_IPC_OBJECT_SIGNAL) {
+	    if (cmdid == XMMS_IPC_CMD_SIGNAL) {
+			xmms_ipc_register_signal (client, msg);
+		} else if (cmdid == XMMS_IPC_CMD_BROADCAST) {
+			xmms_ipc_register_broadcast (client, msg);
+		} else {
+			xmms_log_error ("Bad command id (%d) for signal object", cmdid);
 		}
 
-		if (!xmms_ipc_msg_get_int32 (msg, &signalid)) {
-			xmms_log_error ("No signalid in this msg?!");
-			return;
-		}
-
-		if (signalid < 0 || signalid >= XMMS_IPC_SIGNAL_END) {
-			xmms_log_error ("Bad signal id (%d)", signalid);
-			return;
-		}
-
-		g_mutex_lock (client->lock);
-		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
-		g_mutex_unlock (client->lock);
-		return;
-	} else if (objid == XMMS_IPC_OBJECT_SIGNAL &&
-	           cmdid == XMMS_IPC_CMD_BROADCAST) {
-		gint32 broadcastid;
-
-		if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
-			xmms_log_error ("No type in this msg?!");
-			return;
-		}
-
-		if (!xmms_ipc_msg_get_int32 (msg, &broadcastid)) {
-			xmms_log_error ("No broadcastid in this msg?!");
-			return;
-		}
-
-		if (broadcastid < 0 || broadcastid >= XMMS_IPC_SIGNAL_END) {
-			xmms_log_error ("Bad broadcast id (%d)", broadcastid);
-			return;
-		}
-
-		g_mutex_lock (client->lock);
-		client->broadcasts[broadcastid] =
-			g_list_append (client->broadcasts[broadcastid],
-			               GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
-
-		g_mutex_unlock (client->lock);
 		return;
 	}
 
