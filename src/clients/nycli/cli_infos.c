@@ -146,6 +146,11 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 	}
 
 	path = getenv ("XMMS_PATH");
+
+	if (!path) {
+		path = g_hash_table_lookup (infos->config->values, "ipcpath");
+	}
+
 	if (!xmmsc_connect (infos->conn, path)) {
 		if (!autostart) {
 			/* Failed to connect, but don't autostart */
