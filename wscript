@@ -292,11 +292,9 @@ def configure(conf):
                     "type-limits",
                     "write-strings",
                     ):
-        # make a copy so it can be restored if check fails
-        T = conf.env["CCFLAGS"][:]
-        conf.env["CCFLAGS"] += ["-W%s" % warning]
-        if not conf.check_cc(fragment="int X;", type="cc", msg="Checking if warning '%s' is supported" % warning, mandatory=0):
-            conf.env["CCFLAGS"] = T
+        warnflag = "-W%s" % warning
+        if conf.check_cc(cflags=warnflag):
+            conf.env["CCFLAGS"].append(warnflag)
 
     if '-Wwrite-strings' in conf.env["CCFLAGS"]:
         conf.env["CCFLAGS_NOWRITESTRINGS"] += ["-Wno-write-strings"]
