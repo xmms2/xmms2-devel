@@ -280,7 +280,8 @@ def configure(conf):
         conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
 
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
-    for warning in ('no-format-extra-args',
+    for warning in ('all',
+                    'no-format-extra-args',
                     'no-format-zero-length',
                     'format-nonliteral',
                     'format-security',
