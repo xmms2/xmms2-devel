@@ -104,8 +104,8 @@ xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 	static const struct {
-		char *name;
-		char *val;
+		const char *name;
+		const char *val;
 	} *pptr, ices_properties[] = {
 		{ "encodingnombr", "96000" },
 		{ "encodingminbr", "-1" },
@@ -353,8 +353,8 @@ xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 	xmms_medialib_session_t *session;
 
 	static const struct {
-		gchar *prop;
-		gchar *key;
+		const gchar *prop;
+		const gchar *key;
 	} *pptr, props[] = {
 		{XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, "title"},
 		{XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, "artist"},
