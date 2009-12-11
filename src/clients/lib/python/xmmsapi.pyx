@@ -67,6 +67,10 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_COLLECTION_CHANGED_RENAME,
 		XMMS_COLLECTION_CHANGED_REMOVE
 
+	ctypedef enum xmms_playback_seek_mode_t:
+		XMMS_PLAYBACK_SEEK_CUR,
+		XMMS_PLAYBACK_SEEK_SET
+
 cdef extern from "xmmsc/xmmsv.h":
 	ctypedef enum xmmsv_type_t:
 		XMMSV_TYPE_NONE,
@@ -200,6 +204,10 @@ VALUE_TYPE_BIN = XMMSV_TYPE_BIN
 VALUE_TYPE_LIST = XMMSV_TYPE_LIST
 VALUE_TYPE_DICT = XMMSV_TYPE_DICT
 
+PLAYBACK_SEEK_CUR = XMMS_PLAYBACK_SEEK_CUR
+PLAYBACK_SEEK_SET = XMMS_PLAYBACK_SEEK_SET
+
+
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef enum xmmsc_result_type_t:
 		XMMSC_RESULT_CLASS_DEFAULT,
@@ -273,10 +281,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playback_start(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_pause(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_current_id(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playback_seek_ms_abs(xmmsc_connection_t *c, unsigned int milliseconds)
-	xmmsc_result_t *xmmsc_playback_seek_ms_rel(xmmsc_connection_t *c, int milliseconds)
-	xmmsc_result_t *xmmsc_playback_seek_samples_abs(xmmsc_connection_t *c, unsigned int samples)
-	xmmsc_result_t *xmmsc_playback_seek_samples_rel(xmmsc_connection_t *c, int samples)
+	xmmsc_result_t *xmmsc_playback_seek_ms(xmmsc_connection_t *c, int milliseconds, xmms_playback_seek_mode_t whence)
+	xmmsc_result_t *xmmsc_playback_seek_samples(xmmsc_connection_t *c, int samples, xmms_playback_seek_mode_t whence)
 	xmmsc_result_t *xmmsc_playback_playtime(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_status(xmmsc_connection_t *c)
 
@@ -1381,19 +1387,22 @@ cdef class XMMS:
 		"""
 		return self.create_result(cb, xmmsc_playback_current_id(self.conn))
 
-	def playback_seek_ms(self, ms, cb = None):
+	def playback_seek_ms(self, ms, whence = PLAYBACK_SEEK_SET, cb = None):
 		"""
-		playback_seek_ms(ms, cb=None) -> XMMSResult
+		playback_seek_ms(ms, whence=PLAYBACK_SEEK_SET, cb=None) -> XMMSResult
 
-		Seek to an absolute time position in the current file or
-		stream in playback.
+		Seek to a time position in the current file or stream in playback.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_ms_abs(self.conn, ms))
+		if whence == PLAYBACK_SEEK_SET or whence == PLAYBACK_SEEK_CUR:
+			return self.create_result(cb, xmmsc_playback_seek_ms(self.conn, ms, whence))
+		else:
+			raise ValueError("Bad whence parameter")
 
 	def playback_seek_ms_rel(self, ms, cb = None):
 		"""
+		@deprecated
 		playback_seek_ms_rel(ms, cb=None) -> XMMSResult
 
 		Seek to a time position by the given offset in the current file or
@@ -1401,21 +1410,24 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_ms_rel(self.conn, ms))
+		return self.create_result(cb, xmmsc_playback_seek_ms(self.conn, ms, XMMS_PLAYBACK_SEEK_CUR))
 
-	def playback_seek_samples(self, samples, cb = None):
+	def playback_seek_samples(self, samples, whence=PLAYBACK_SEEK_SET, cb = None):
 		"""
 		playback_seek_samples(samples, cb=None) -> XMMSResult
 
-		Seek to an absolute number of samples in the current file or
-		stream in playback.
+		Seek to a number of samples in the current file or stream in playback.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_samples_abs(self.conn, samples))
+		if whence == PLAYBACK_SEEK_SET or whence == PLAYBACK_SEEK_CUR:
+			return self.create_result(cb, xmmsc_playback_seek_samples(self.conn, samples, whence))
+		else:
+			raise ValueError("Bad whence parameter")
 
 	def playback_seek_samples_rel(self, samples, cb = None):
 		"""
+		@deprecated
 		playback_seek_samples_rel(samples, cb=None) -> XMMSResult
 
 		Seek to a number of samples by the given offset in the
@@ -1423,7 +1435,7 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_playback_seek_samples_rel(self.conn, samples))
+		return self.create_result(cb, xmmsc_playback_seek_samples(self.conn, samples, XMMS_PLAYBACK_SEEK_CUR))
 
 	def playback_status(self, cb = None):
 		"""
