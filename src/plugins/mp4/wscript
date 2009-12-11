@@ -20,4 +20,4 @@ def plugin_build(bld, obj):
     obj.find_sources_in_dirs("mp4ff")
 
 configure, build = plugin("mp4", configure=plugin_configure, build=plugin_build,
-                          libs=["mp4", "math"])
+                          libs=["mp4", "math", "NOMISSINGPROTOTYPES"])
