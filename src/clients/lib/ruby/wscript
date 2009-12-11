@@ -15,6 +15,7 @@ def build(bld):
         rb_result.c
     """.split()
     obj.uselib_local = 'xmmsclient'
+    obj.uselib = 'NOSTRICTPROTOTYPES'
     obj.mac_bundle = True
 
     bld.install_files('${LIBDIR_RUBY}', 'xmmsclient.rb')
@@ -27,7 +28,7 @@ def build(bld):
     obj.includes = '../../../.. ../../../include ../../../includepriv'
     obj.source = ['rb_xmmsclient_glib.c']
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'glib2'
+    obj.uselib = 'glib2 NOSTRICTPROTOTYPES'
     obj.mac_bundle = True
 
     # ecore
