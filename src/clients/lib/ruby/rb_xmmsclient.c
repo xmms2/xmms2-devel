@@ -81,6 +81,8 @@ static VALUE cPlaylist;
 static VALUE eClientError, eDisconnectedError;
 static ID id_lt, id_gt;
 
+void Init_Client (VALUE);
+
 static void
 c_mark (RbXmmsClient *xmms)
 {
