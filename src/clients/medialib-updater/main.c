@@ -244,8 +244,8 @@ updater_remove_watcher (updater_t *updater, GFile *file)
 	gboolean ret = TRUE;
 	gchar *path;
 
-	g_return_if_fail (updater);
-	g_return_if_fail (file);
+	g_return_val_if_fail (updater, FALSE);
+	g_return_val_if_fail (file, FALSE);
 
 	path = g_file_get_path (file);
 
@@ -455,6 +455,7 @@ updater_remove_directory_by_id (xmmsv_t *value, void *udata)
 
 		xmmsv_list_iter_next (it);
 	}
+	return TRUE;
 }
 
 static void
