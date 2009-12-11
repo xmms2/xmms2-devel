@@ -120,10 +120,11 @@ flac_callback_read (const FLAC__StreamDecoder *flacdecoder,
 	xmms_error_t error;
 	gint ret;
 
-	g_return_val_if_fail (xform,
 #if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
+	g_return_val_if_fail (xform,
 	                      FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
 #else
+	g_return_val_if_fail (xform,
 	                      FLAC__STREAM_DECODER_READ_STATUS_ABORT);
 #endif
 
