@@ -44,7 +44,7 @@ namespace Xmms
 	DictListResult Stats::pluginList(Plugins::Type type) const
 	{
 		xmmsc_result_t* res = 
-		    call( connected_, boost::bind( xmmsc_plugin_list, conn_, type ) );
+		    call( connected_, boost::bind( xmmsc_main_list_plugins, conn_, type ) );
 		return DictListResult( res, ml_ );
 	}
 

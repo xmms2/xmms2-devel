@@ -237,7 +237,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_connect(xmmsc_connection_t *c, char *p)
 	void xmmsc_unref(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
-	xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, unsigned int type)
+	xmmsc_result_t *xmmsc_main_list_plugins (xmmsc_connection_t *c, unsigned int type)
 
 	int xmmsv_coll_parse (char *pattern, xmmsv_coll_t **coll)
 
@@ -1334,7 +1334,7 @@ cdef class XMMS:
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
-		return self.create_result(cb, xmmsc_plugin_list(self.conn, typ))
+		return self.create_result(cb, xmmsc_main_list_plugins(self.conn, typ))
 
 	def playback_start(self, cb = None):
 		"""
