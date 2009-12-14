@@ -315,12 +315,13 @@ void
 cli_pl_sort_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "order",    'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to sort by (prefix by '-' for reverse sorting)."), "prop1[,prop2...]" },
+		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
 	};
 	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-o <order>] [playlist]"),
-	                     _("Sort a playlist.  By default, sort the active playlist."));
+	                     _("[-p <playlist>] [prop1 [prop2 [...]]]"),
+	                     _("Sort a playlist by a list of properties.  By default, sort the active playlist.\n"
+						   "To sort by a property in reverse, prefix its name by a '-'."));
 }
 
 void
@@ -1536,26 +1537,25 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	xmmsv_t *orderval;
 	gchar *playlist;
-	const gchar **order = NULL;
+	gchar **order = NULL;
+	const gchar *default_order[] = { "artist", "album", "tracknr", NULL};
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
-		playlist = g_strdup (infos->cache->active_playlist_name);
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	if (!command_flag_stringlist_get (ctx, "order", &order)) {
-		/* FIXME: Default ordering */
-		g_free (playlist);
-		return FALSE;
+	if (command_arg_count (ctx) == 0) {
+		order = default_order;
+	} else {
+		order = command_argv_get (ctx);
 	}
 
-	orderval = xmmsv_make_stringlist ((gchar **)order, -1);
+	orderval = xmmsv_make_stringlist (order, -1);
 	res = xmmsc_playlist_sort (infos->sync, playlist, orderval);
 	xmmsc_result_wait (res);
 	done (res, infos);
 
 	xmmsv_unref (orderval);
-	g_free (playlist);
-	g_free (order);
 
 	return TRUE;
 }
