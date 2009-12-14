@@ -806,6 +806,7 @@ cmp_val (gconstpointer a, gconstpointer b)
 }
 
 /* code ported over from CLI's "radd" command. */
+/* note that the returned file list is reverse-sorted! */
 static gboolean
 process_dir (const gchar *directory,
              GList **ret,
@@ -937,10 +938,10 @@ xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist
 	/* We now want to iterate the list in the order in which the nodes
 	 * were added, ie in reverse order. Thankfully we stored a pointer
 	 * to the last node in the list before, which saves us an expensive
-	 * g_list_last() call now.
+	 * g_list_last() call now. Increase pos each time to retain order.
 	 */
 	for (n = first->prev; n; n = g_list_previous (n)) {
-		process_file (session, playlist, pos, n->data, error);
+		process_file (session, playlist, pos++, n->data, error);
 		g_free (n->data);
 	}
 
