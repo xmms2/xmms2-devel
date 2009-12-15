@@ -170,9 +170,9 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		if (!arg) {
 			return;
 		}
-		res = xmmsc_playback_seek_ms_rel (conn, arg);
+		res = xmmsc_playback_seek_ms (conn, arg, XMMS_PLAYBACK_SEEK_CUR);
 	} else {
-		res = xmmsc_playback_seek_ms_abs (conn, arg);
+		res = xmmsc_playback_seek_ms (conn, arg, XMMS_PLAYBACK_SEEK_SET);
 	}
 
 	xmmsc_result_wait (res);
