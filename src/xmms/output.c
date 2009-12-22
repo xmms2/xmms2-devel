@@ -78,6 +78,7 @@ static gboolean set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 
 static void xmms_output_format_list_free_elem (gpointer data, gpointer user_data);
 static void xmms_output_format_list_clear (xmms_output_t *output);
+xmms_medialib_entry_t xmms_output_current_id (xmms_output_t *output);
 
 XMMS_CMD_DEFINE (start, xmms_playback_client_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (stop, xmms_playback_client_stop, xmms_output_t *, NONE, NONE, NONE);
@@ -576,6 +577,13 @@ xmms_output_config_lookup (xmms_output_t *output, const gchar *path)
 {
 	g_return_val_if_fail (output->plugin, NULL);
 	return xmms_plugin_config_lookup ((xmms_plugin_t *)output->plugin, path);
+}
+
+xmms_medialib_entry_t
+xmms_output_current_id (xmms_output_t *output)
+{
+	g_return_val_if_fail (output, 0);
+	return output->current_entry;
 }
 
 

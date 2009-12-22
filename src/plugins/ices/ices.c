@@ -280,7 +280,7 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	vorbis_comment_clear (&data->vc);
 	vorbis_comment_init (&data->vc);
 
-	entry = xmms_output_current_id (output, NULL);
+	entry = xmms_output_current_id (output);
 	xmms_ices_update_comment (entry, &data->vc);
 
 
