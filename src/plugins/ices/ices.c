@@ -33,6 +33,8 @@ typedef struct xmms_ices_data_St {
 	shout_t *shout;
 	vorbis_comment vc;
 	encoder_state *encoder;
+	gint rate;
+	gint channels;
 } xmms_ices_data_t;
 
 /*
@@ -50,6 +52,8 @@ static void xmms_ices_write (xmms_output_t *output, gpointer buffer,
                              gint len, xmms_error_t *err);
 static void xmms_ices_update_comment (xmms_medialib_entry_t entry,
                                       vorbis_comment *vc);
+static void on_playlist_entry_changed (xmms_object_t *object, xmmsv_t *arg,
+                                       gpointer udata);
 
 /*
  * Internal helper functions.
@@ -127,7 +131,7 @@ xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
 	methods.close = xmms_ices_close;
 
 	methods.flush = xmms_ices_flush;
-	methods.format_set_always = xmms_ices_format_set;
+	methods.format_set = xmms_ices_format_set;
 	methods.write = xmms_ices_write;
 
 	xmms_output_plugin_methods_set (plugin, &methods);
@@ -189,6 +193,11 @@ xmms_ices_new (xmms_output_t *output)
 	xmms_output_private_data_set (output, data);
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, 2, 44100);
 
+	xmms_object_connect (XMMS_OBJECT (output),
+	                     XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                     on_playlist_entry_changed,
+	                     data);
+
 	return TRUE;
 }
 
@@ -199,6 +208,11 @@ xmms_ices_destroy (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
+
+	xmms_object_disconnect (XMMS_OBJECT (output),
+	                        XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                        on_playlist_entry_changed,
+	                        data);
 
 	if (data->encoder)
 		xmms_ices_encoder_fini (data->encoder);
@@ -265,8 +279,6 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 {
 	xmms_ices_data_t *data;
 	xmms_config_property_t *val;
-	gint rate;
-	gint channels;
 	xmms_medialib_entry_t entry;
 
 	g_return_val_if_fail (output, FALSE);
@@ -301,10 +313,17 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	}
 
 	/* Get this stream's data and fire up the encoder. */
-	rate = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	channels = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	data->rate = xmms_stream_type_get_int (format,
+	                                       XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	data->channels = xmms_stream_type_get_int (format,
+	                                           XMMS_STREAM_TYPE_FMT_CHANNELS);
 
-	xmms_ices_encoder_stream_change (data->encoder, rate, channels, &data->vc);
+	XMMS_DBG ("Setting format to rate: %i, channels: %i",
+	          data->rate,
+	          data->channels);
+
+	xmms_ices_encoder_stream_change (data->encoder, data->rate, data->channels,
+	                                 &data->vc);
 
 	return TRUE;
 }
@@ -358,5 +377,29 @@ xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 	}
 
 	xmms_medialib_end (session);
+
+}
+
+static void
+on_playlist_entry_changed (xmms_object_t *object, xmmsv_t *arg, gpointer udata)
+{
+	xmms_ices_data_t * data = udata;
+	xmms_medialib_entry_t entry;
+
+	if (!xmmsv_get_int (arg, &entry))
+		return;
+
+	if (data->encoder)
+		xmms_ices_flush_internal (data);
+
+	vorbis_comment_clear (&data->vc);
+	vorbis_comment_init (&data->vc);
+
+	xmms_ices_update_comment (entry, &data->vc);
+
+	XMMS_DBG ("Updating comment");
+
+	xmms_ices_encoder_stream_change (data->encoder, data->rate, data->channels,
+	                                 &data->vc);
 
 }
