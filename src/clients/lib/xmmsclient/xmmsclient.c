@@ -162,7 +162,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	x_api_error_if (!c, "with a NULL connection", false);
 
 	if (!ipcpath) {
-		if (!xmms_default_ipcpath_get (c->path, PATH_MAX)) {
+		if (!xmms_default_ipcpath_get (c->path, sizeof (c->path))) {
 			return false;
 		}
 	} else {
