@@ -33,6 +33,7 @@ CLEANUP () {
 CASE (test_xmmsv_serialize_null)
 {
 	CU_ASSERT_PTR_NULL (xmmsv_serialize (NULL));
+	CU_ASSERT_PTR_NULL (xmmsv_deserialize (NULL));
 }
 
 CASE (test_xmmsv_serialize_none)
@@ -56,7 +57,13 @@ CASE (test_xmmsv_serialize_none)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_NONE));
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_error)
@@ -64,6 +71,7 @@ CASE (test_xmmsv_serialize_error)
 	xmmsv_t *bin, *value;
 	const unsigned char *data;
 	unsigned int length;
+	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x01, /* XMMSV_TYPE_ERROR */
 		0x00, 0x00, 0x00, 0x04, /* 4 (length of following bytes) */
@@ -82,7 +90,16 @@ CASE (test_xmmsv_serialize_error)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
+
+	CU_ASSERT_TRUE (xmmsv_get_error (value, &s));
+	CU_ASSERT_STRING_EQUAL (s, "foo");
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_small_int)
@@ -90,6 +107,7 @@ CASE (test_xmmsv_serialize_small_int)
 	xmmsv_t *bin, *value;
 	const unsigned char *data;
 	unsigned int length;
+	int32_t i;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT32 */
 		0x00, 0x00, 0x00, 0x2a  /* 42 */
@@ -107,7 +125,16 @@ CASE (test_xmmsv_serialize_small_int)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
+
+	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
+	CU_ASSERT_EQUAL (i, 42);
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_large_int)
@@ -115,6 +142,7 @@ CASE (test_xmmsv_serialize_large_int)
 	xmmsv_t *bin, *value;
 	const unsigned char *data;
 	unsigned int length;
+	int32_t i;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT32 */
 		0x00, 0x00, 0x25, 0xc3  /* 9667 */
@@ -132,7 +160,16 @@ CASE (test_xmmsv_serialize_large_int)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
+
+	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
+	CU_ASSERT_EQUAL (i, 9667);
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_string)
@@ -140,6 +177,7 @@ CASE (test_xmmsv_serialize_string)
 	xmmsv_t *bin, *value;
 	const unsigned char *data;
 	unsigned int length;
+	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x03, /* XMMSV_TYPE_STRING */
 		0x00, 0x00, 0x00, 0x04, /* 4 (length of following bytes) */
@@ -158,15 +196,25 @@ CASE (test_xmmsv_serialize_string)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_STRING));
+
+	CU_ASSERT_TRUE (xmmsv_get_string (value, &s));
+	CU_ASSERT_STRING_EQUAL (s, "foo");
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_coll_match)
 {
-	xmmsv_t *bin, *value;
+	xmmsv_t *bin, *value, *tmp, *attrs, *operands;
 	xmmsv_coll_t *coll, *all_media;
 	const unsigned char *data;
 	unsigned int length;
+	char **s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x04, /* XMMSV_TYPE_COLL */
 		0x00, 0x00, 0x00, 0x06, /* XMMS_COLLECTION_TYPE_MATCH */
@@ -231,14 +279,49 @@ CASE (test_xmmsv_serialize_coll_match)
 	CU_ASSERT_EQUAL (length, sizeof (expected));
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_COLL));
+	CU_ASSERT_TRUE (xmmsv_get_coll (value, &coll));
+
+	CU_ASSERT_EQUAL (xmmsv_coll_get_type (coll), XMMS_COLLECTION_TYPE_MATCH);
+
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (coll)),
+	                 2);
+
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "field", &s));
+	CU_ASSERT_STRING_EQUAL (s, "artist");
+
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "value", &s));
+	CU_ASSERT_STRING_EQUAL (s, "*sentenced*");
+
+	operands = xmmsv_coll_operands_get (coll);
+
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (operands), 1);
+
+	CU_ASSERT_TRUE (xmmsv_list_get (operands, 0, &tmp));
+	CU_ASSERT_TRUE (xmmsv_get_coll (tmp, &all_media));
+
+	CU_ASSERT_EQUAL (xmmsv_coll_get_type (all_media),
+	                 XMMS_COLLECTION_TYPE_REFERENCE);
+
+	attrs = xmmsv_coll_attributes_get (all_media);
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (attrs), 1);
+
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (all_media, "reference", &s));
+	CU_ASSERT_STRING_EQUAL (s, "All Media");
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_bin)
 {
 	xmmsv_t *bin, *value;
-	const unsigned char *data;
-	unsigned int length;
+	const unsigned char *data, *data2;
+	unsigned int length, length2, input_length = 8;
+	const unsigned char input[] = "\x01\x02\x03\x04\x00\x01\x02\x03";
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x05, /* XMMSV_TYPE_BIN */
 		0x00, 0x00, 0x00, 0x08, /* 8 (length of following bytes) */
@@ -246,7 +329,7 @@ CASE (test_xmmsv_serialize_bin)
 		0x00, 0x01, 0x02, 0x03
 	};
 
-	value = xmmsv_new_bin ("\x01\x02\x03\x04\x00\x01\x02\x03", 8);
+	value = xmmsv_new_bin (input, input_length);
 
 	bin = xmmsv_serialize (value);
 	xmmsv_unref (value);
@@ -258,7 +341,18 @@ CASE (test_xmmsv_serialize_bin)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BIN));
+
+	CU_ASSERT_TRUE (xmmsv_get_bin (value, &data2, &length2));
+
+	CU_ASSERT_EQUAL (length2, input_length);
+	CU_ASSERT_EQUAL (memcmp (data2, input, input_length), 0);
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_list)
@@ -266,6 +360,8 @@ CASE (test_xmmsv_serialize_list)
 	xmmsv_t *bin, *value, *item;
 	const unsigned char *data;
 	unsigned int length;
+	int32_t i;
+	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x06, /* XMMSV_TYPE_LIST */
 		0x00, 0x00, 0x00, 0x02, /* 2 (number of list items) */
@@ -298,7 +394,26 @@ CASE (test_xmmsv_serialize_list)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (value), 2);
+
+	CU_ASSERT_TRUE (xmmsv_list_get (value, 0, &item));
+	CU_ASSERT_PTR_NOT_NULL (item);
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
+	CU_ASSERT_EQUAL (i, 42);
+
+	CU_ASSERT_TRUE (xmmsv_list_get (value, 1, &item));
+	CU_ASSERT_PTR_NOT_NULL (item);
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_STRING));
+	CU_ASSERT_TRUE (xmmsv_get_string (item, &s));
+	CU_ASSERT_STRING_EQUAL (s, "foo");
+
+	xmmsv_unref (value);
 }
 
 CASE (test_xmmsv_serialize_dict)
@@ -306,6 +421,7 @@ CASE (test_xmmsv_serialize_dict)
 	xmmsv_t *bin, *value, *item;
 	const unsigned char *data;
 	unsigned int length;
+	int32_t i;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x07, /* XMMSV_TYPE_DICT */
 		0x00, 0x00, 0x00, 0x02, /* 2 (number of dict items) */
@@ -343,5 +459,24 @@ CASE (test_xmmsv_serialize_dict)
 
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
+	value = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_DICT));
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (value), 2);
+
+	CU_ASSERT_TRUE (xmmsv_dict_get (value, "foo", &item));
+	CU_ASSERT_PTR_NOT_NULL (item);
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
+	CU_ASSERT_EQUAL (i, 42);
+
+	CU_ASSERT_TRUE (xmmsv_dict_get (value, "bar", &item));
+	CU_ASSERT_PTR_NOT_NULL (item);
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
+	CU_ASSERT_EQUAL (i, 9667);
+
+	xmmsv_unref (value);
 }
