@@ -87,47 +87,37 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
-static gboolean xmms_ipc_check_has_type (xmms_ipc_msg_t *msg, xmmsv_type_t type);
-static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
-static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
+static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
+static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 
 static gboolean
-xmms_ipc_check_has_type (xmms_ipc_msg_t *msg, xmmsv_type_t type)
+type_and_msg_to_arg (xmmsv_type_t expected_type, xmmsv_t *argument_list,
+                     xmms_object_cmd_arg_t *arg, gint i)
 {
-	int32_t actual_type;
+	xmmsv_t *arg_value;
+	xmmsv_type_t actual_type;
 
-	/* None values aren't tagged. */
-	if (type != XMMSV_TYPE_NONE) {
-		if (!xmms_ipc_msg_get_int32 (msg, &actual_type)) {
-			XMMS_DBG ("Failed fetching the type of value of the argument "
-			          "from the IPC message!");
-
-			return FALSE;
-		}
-
-		if (actual_type != type) {
-			XMMS_DBG ("Expected type %d, got type %d\n", type, actual_type);
-			return FALSE;
-		}
+	if (argument_list && xmmsv_list_get (argument_list, i, &arg_value)) {
+		xmmsv_ref (arg_value);
+	} else {
+		arg_value = xmmsv_new_none ();
 	}
 
-	return TRUE;
-}
+	actual_type = xmmsv_get_type (arg_value);
 
-static gboolean
-type_and_msg_to_arg (xmmsv_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
-{
-	if (!xmms_ipc_check_has_type (msg, type)) {
+	if (actual_type != expected_type) {
+		XMMS_DBG ("Expected type %i, but got type %i",
+		          expected_type, actual_type);
+
+		xmmsv_unref (arg_value);
+
 		return FALSE;
-	}
+	} else {
+		arg->values[i] = arg_value;
 
-	if (!xmms_ipc_msg_get_value_of_type_alloc (msg, type, &arg->values[i])) {
-		XMMS_DBG ("Failed fetching the value of the argument from the IPC message!");
-		return FALSE;
+		return TRUE;
 	}
-
-	return TRUE;
 }
 
 static void
@@ -140,17 +130,21 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
 
 static void
 xmms_ipc_register_signal (xmms_ipc_client_t *client,
-                          xmms_ipc_msg_t *msg)
+                          xmms_ipc_msg_t *msg, xmmsv_t *arguments)
 {
+	xmmsv_t *arg;
 	gint32 signalid;
+	int r;
 
-	if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
-		xmms_log_error ("No type in this msg?!");
+	if (!arguments || !xmmsv_list_get (arguments, 0, &arg)) {
+		xmms_log_error ("No signalid in this msg?!");
 		return;
 	}
 
-	if (!xmms_ipc_msg_get_int32 (msg, &signalid)) {
-		xmms_log_error ("No signalid in this msg?!");
+	r = xmmsv_get_int (arg, &signalid);
+
+	if (!r) {
+		xmms_log_error ("Cannot extract signal id from value");
 		return;
 	}
 
@@ -166,17 +160,21 @@ xmms_ipc_register_signal (xmms_ipc_client_t *client,
 
 static void
 xmms_ipc_register_broadcast (xmms_ipc_client_t *client,
-                             xmms_ipc_msg_t *msg)
+                             xmms_ipc_msg_t *msg, xmmsv_t *arguments)
 {
+	xmmsv_t *arg;
 	gint32 broadcastid;
+	int r;
 
-	if (!xmms_ipc_check_has_type (msg, XMMSV_TYPE_INT32)) {
-		xmms_log_error ("No type in this msg?!");
+	if (!arguments || !xmmsv_list_get (arguments, 0, &arg)) {
+		xmms_log_error ("No broadcastid in this msg?!");
 		return;
 	}
 
-	if (!xmms_ipc_msg_get_int32 (msg, &broadcastid)) {
-		xmms_log_error ("No broadcastid in this msg?!");
+	r = xmmsv_get_int (arg, &broadcastid);
+
+	if (!r) {
+		xmms_log_error ("Cannot extract broadcast id from value");
 		return;
 	}
 
@@ -200,6 +198,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	xmms_object_cmd_desc_t *cmd = NULL;
 	xmms_object_cmd_arg_t arg;
 	xmms_ipc_msg_t *retmsg;
+	xmmsv_t *error, *arguments;
 	uint32_t objid, cmdid;
 	gint i;
 
@@ -208,21 +207,28 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	objid = xmms_ipc_msg_get_object (msg);
 	cmdid = xmms_ipc_msg_get_cmd (msg);
 
-	if (objid == XMMS_IPC_OBJECT_SIGNAL) {
-	    if (cmdid == XMMS_IPC_CMD_SIGNAL) {
-			xmms_ipc_register_signal (client, msg);
-		} else if (cmdid == XMMS_IPC_CMD_BROADCAST) {
-			xmms_ipc_register_broadcast (client, msg);
-		} else {
-			xmms_log_error ("Bad command id (%d) for signal object", cmdid);
-		}
+	if (!xmms_ipc_msg_get_value (msg, &arguments)) {
+		xmms_log_error ("Cannot read command arguments. "
+		                "Ignoring command.");
 
 		return;
 	}
 
+	if (objid == XMMS_IPC_OBJECT_SIGNAL) {
+	    if (cmdid == XMMS_IPC_CMD_SIGNAL) {
+			xmms_ipc_register_signal (client, msg, arguments);
+		} else if (cmdid == XMMS_IPC_CMD_BROADCAST) {
+			xmms_ipc_register_broadcast (client, msg, arguments);
+		} else {
+			xmms_log_error ("Bad command id (%d) for signal object", cmdid);
+		}
+
+		goto out;
+	}
+
 	if (objid >= XMMS_IPC_OBJECT_END) {
 		xmms_log_error ("Bad object id (%d)", objid);
-		return;
+		goto out;
 	}
 
 	g_mutex_lock (ipc_object_pool_lock);
@@ -230,7 +236,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	g_mutex_unlock (ipc_object_pool_lock);
 	if (!object) {
 		xmms_log_error ("Object %d was not found!", objid);
-		return;
+		goto out;
 	}
 
 	if (object->cmds)
@@ -238,13 +244,13 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 	if (!cmd) {
 		xmms_log_error ("No such cmd %d on object %d", cmdid, objid);
-		return;
+		goto out;
 	}
 
 	xmms_object_cmd_arg_init (&arg);
 
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (!type_and_msg_to_arg (cmd->args[i], msg, &arg, i)) {
+		if (!type_and_msg_to_arg (cmd->args[i], arguments, &arg, i)) {
 			xmms_log_error ("Error parsing args");
 
 			if (objid == XMMS_IPC_OBJECT_MAIN &&
@@ -255,7 +261,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 			}
 
 			retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
-			xmms_ipc_msg_put_string (retmsg, "Corrupt msg");
+
+			error = xmmsv_new_error ("Corrupt msg");
+			xmms_ipc_msg_put_value (retmsg, error);
+			xmmsv_unref (error);
+
 			goto err;
 		}
 
@@ -266,11 +276,16 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {
-		/* FIXME: or we could change the client code to transform
-		 * CMD_ERROR to an error value_t. If so, don't forget to
+		/* FIXME: or we could omit setting the command to _CMD_ERROR
+		 * and let the client check whether the value it got is an
+		 * error xmmsv_t. If so, don't forget to
 		 * update the client-side of IPC too. */
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
-		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
+
+		error = xmmsv_new_error (xmms_error_message_get (&arg.error));
+		xmms_ipc_msg_put_value (retmsg, error);
+		xmmsv_unref (error);
+
 /*
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
@@ -289,6 +304,11 @@ err:
 	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);
 	g_mutex_unlock (client->lock);
+
+out:
+	if (arguments) {
+		xmmsv_unref (arguments);
+	}
 }
 
 

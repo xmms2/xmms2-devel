@@ -155,6 +155,7 @@ void
 xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res)
 {
 	xmmsc_visualization_t *v;
+	xmmsv_t *args;
 	bool ret;
 
 	v = xmmsc_result_visc_get (res);
@@ -182,8 +183,15 @@ xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res)
 			c->error = strdup ("Server doesn't support or couldn't setup UDP!");
 			v->state = VIS_ERRORED;
 			v->type = VIS_NONE;
+
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
-			xmms_ipc_msg_put_int32 (msg, v->id);
+
+			args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (v->id),
+			                         XMMSV_LIST_END);
+
+			xmms_ipc_msg_put_value (msg, args);
+			xmmsv_unref (args);
+
 			xmmsc_send_msg (c, msg);
 		} else {
 			v->state = VIS_WORKING;
@@ -228,6 +236,7 @@ xmmsc_result_t *
 xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key, const char *value)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, NULL);
@@ -235,9 +244,15 @@ xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key
 	x_api_error_if (!v, "with unregistered visualization dataset", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTY);
-	xmms_ipc_msg_put_int32 (msg, v->id);
-	xmms_ipc_msg_put_string (msg, key);
-	xmms_ipc_msg_put_string (msg, value);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (v->id),
+	                         XMMSV_LIST_ENTRY_STR (key),
+	                         XMMSV_LIST_ENTRY_STR (value),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
+
 	return xmmsc_send_msg (c, msg);
 }
 
@@ -248,6 +263,7 @@ xmmsc_result_t *
 xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *props)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, NULL);
@@ -257,8 +273,14 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *prop
 	x_api_error_if (xmmsv_get_type (props) != XMMSV_TYPE_DICT, "with property list of invalid type", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_PROPERTIES);
-	xmms_ipc_msg_put_int32 (msg, v->id);
-	xmms_ipc_msg_put_value (msg, props);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (v->id),
+	                         XMMSV_LIST_ENTRY (props),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
+
 	return xmmsc_send_msg (c, msg);
 }
 
@@ -270,6 +292,7 @@ void
 xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c,);
@@ -277,7 +300,13 @@ xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 	x_api_error_if (!v, "with unregistered visualization dataset",);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN);
-	xmms_ipc_msg_put_int32 (msg, v->id);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (v->id),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
+
 	xmmsc_send_msg (c, msg);
 
 	/* detach from shm, close socket.. */

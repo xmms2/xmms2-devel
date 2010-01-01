@@ -212,18 +212,23 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
 		/* If special error msg, extract the error and save in result */
 		char *errstr;
-		uint32_t len;
+		xmmsv_t *error;
 
-		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len)) {
-			xmmsc_result_seterror (res, "No errormsg!");
+		if (!xmms_ipc_msg_get_value (msg, &error)) {
+			xmmsc_result_seterror (res, "No error value!");
 		} else {
-			xmmsc_result_seterror (res, errstr);
-			free (errstr);
+			if (!xmmsv_get_error (error, &errstr)) {
+				xmmsc_result_seterror (res, "No error message!");
+			} else {
+				xmmsc_result_seterror (res, errstr);
+			}
+
+			xmmsv_unref (error);
 		}
 
 		res->parsed = true;
 		return true;
-	} else if (xmms_ipc_msg_get_value_alloc (msg, &res->data)) {
+	} else if (xmms_ipc_msg_get_value (msg, &res->data)) {
 		/* Expected message data retrieved! */
 		res->parsed = true;
 		return true;

@@ -100,12 +100,18 @@ xmmsc_result_t *
 xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-	xmms_ipc_msg_put_int32 (msg, milliseconds);
-	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_SET);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
+	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -124,12 +130,18 @@ xmmsc_result_t *
 xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-	xmms_ipc_msg_put_int32 (msg, milliseconds);
-	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_CUR);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
+	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -150,12 +162,18 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds,
                         xmms_playback_seek_mode_t whence)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-	xmms_ipc_msg_put_int32 (msg, milliseconds);
-	xmms_ipc_msg_put_int32 (msg, whence);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
+	                         XMMSV_LIST_ENTRY_INT (whence),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -173,12 +191,18 @@ xmmsc_result_t *
 xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-	xmms_ipc_msg_put_int32 (msg, samples);
-	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_SET);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
+	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -197,12 +221,18 @@ xmmsc_result_t *
 xmmsc_playback_seek_samples_rel (xmmsc_connection_t *c, int samples)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-	xmms_ipc_msg_put_int32 (msg, samples);
-	xmms_ipc_msg_put_int32 (msg, XMMS_PLAYBACK_SEEK_CUR);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
+	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -224,12 +254,18 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples,
                              xmms_playback_seek_mode_t whence)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-	xmms_ipc_msg_put_int32 (msg, samples);
-	xmms_ipc_msg_put_int32 (msg, whence);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
+	                         XMMSV_LIST_ENTRY_INT (whence),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -311,14 +347,20 @@ xmmsc_playback_volume_set (xmmsc_connection_t *c,
                            const char *channel, int volume)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!channel, "with a NULL channel", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK,
 	                        XMMS_IPC_CMD_VOLUME_SET);
-	xmms_ipc_msg_put_string (msg, channel);
-	xmms_ipc_msg_put_int32 (msg, volume);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (channel),
+	                         XMMSV_LIST_ENTRY_INT (volume),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }

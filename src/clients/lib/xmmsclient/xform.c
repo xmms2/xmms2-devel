@@ -61,6 +61,7 @@ xmmsc_result_t *
 xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
@@ -69,7 +70,12 @@ xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 		x_api_error ("with a non encoded url", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_XFORM, XMMS_IPC_CMD_BROWSE);
-	xmms_ipc_msg_put_string (msg, url);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (url),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }

@@ -62,13 +62,19 @@ xmmsc_config_register_value (xmmsc_connection_t *c, const char *key,
                              const char *value)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!key, "with a NULL key", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_REGVALUE);
-	xmms_ipc_msg_put_string (msg, key);
-	xmms_ipc_msg_put_string (msg, value);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (key),
+	                         XMMSV_LIST_ENTRY_STR (value),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -99,13 +105,19 @@ xmmsc_config_set_value (xmmsc_connection_t *c,
                         const char *key, const char *val)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!key, "with a NULL key", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_SETVALUE);
-	xmms_ipc_msg_put_string (msg, key);
-	xmms_ipc_msg_put_string (msg, val);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (key),
+	                         XMMSV_LIST_ENTRY_STR (val),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -133,12 +145,18 @@ xmmsc_result_t *
 xmmsc_config_get_value (xmmsc_connection_t *c, const char *key)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!key, "with a NULL key", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_GETVALUE);
-	xmms_ipc_msg_put_string (msg, key);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (key),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }

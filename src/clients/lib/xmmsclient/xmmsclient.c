@@ -124,10 +124,17 @@ static xmmsc_result_t *
 xmmsc_send_hello (xmmsc_connection_t *c)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
+	const int protocol_version = XMMS_IPC_PROTOCOL_VERSION;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO);
-	xmms_ipc_msg_put_int32 (msg, XMMS_IPC_PROTOCOL_VERSION);
-	xmms_ipc_msg_put_string (msg, c->clientname);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (protocol_version),
+	                         XMMSV_LIST_ENTRY_STR (c->clientname),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -353,9 +360,15 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, int signalid)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
+	xmmsv_t *args;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-	xmms_ipc_msg_put_int32 (msg, signalid);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	res = xmmsc_send_msg (c, msg);
 
@@ -367,10 +380,16 @@ uint32_t
 xmmsc_write_signal_msg (xmmsc_connection_t *c, int signalid)
 {
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 	uint32_t cookie;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-	xmms_ipc_msg_put_int32 (msg, signalid);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	cookie = xmmsc_write_msg_to_ipc (c, msg);
 
@@ -382,9 +401,15 @@ xmmsc_send_signal_msg (xmmsc_connection_t *c, int signalid)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
+	xmmsv_t *args;
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-	xmms_ipc_msg_put_int32 (msg, signalid);
+
+	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
+	                         XMMSV_LIST_END);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	res = xmmsc_send_msg (c, msg);
 
@@ -398,8 +423,13 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 {
 	uint32_t cookie;
 	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
 
 	msg = xmms_ipc_msg_new (object, method);
+
+	args = xmmsv_new_list ();
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
 
 	cookie = xmmsc_write_msg_to_ipc (c, msg);
 
