@@ -15,8 +15,7 @@ def configure(conf):
 
     defs = {}
 
-    defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
-                                     'lib', 'xmms2')
+    defs['PKGLIBDIR'] = os.path.join(conf.env['LIBDIR'], 'xmms2')
     defs['BINDIR']    = conf.env['BINDIR']
     defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
                                      'share', 'xmms2')
