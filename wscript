@@ -102,8 +102,8 @@ def build(bld):
                'NAME': name,
                 'LIB': lib,
              'PREFIX': bld.env['PREFIX'],
-             'BINDIR': os.path.join("${prefix}", "bin"),
-             'LIBDIR': os.path.join("${prefix}", "lib"),
+             'BINDIR': bld.env['BINDIR'],
+             'LIBDIR': bld.env['LIBDIR'],
          'INCLUDEDIR': os.path.join("${prefix}", "include", "xmms2"),
             'VERSION': bld.env["VERSION"],
         }
