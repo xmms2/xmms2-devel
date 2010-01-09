@@ -318,7 +318,7 @@ def configure(conf):
         conf.env['PKGCONFIGDIR'] = Options.options.pkgconfigdir
         print(conf.env['PKGCONFIGDIR'])
     else:
-        conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
+        conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["LIBDIR"], "pkgconfig")
 
     if Options.options.config_prefix:
         for dir in Options.options.config_prefix:
