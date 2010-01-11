@@ -922,6 +922,7 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 
 	ret = strlen (urls);
 	if (ret && urls[ret - 1] == '/') {
+		g_free (p);
 		return 1;
 	}
 	ret = 0;
