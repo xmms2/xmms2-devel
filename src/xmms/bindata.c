@@ -257,6 +257,7 @@ xmms_bindata_client_retrieve (xmms_bindata_t *bindata, const gchar *hash,
 			g_string_free (str, TRUE);
 			xmms_log_error ("Error reading bindata '%s'", hash);
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "Error reading file");
+			fclose (fp);
 			return NULL;
 		}
 		g_string_append_len (str, buf, l);
