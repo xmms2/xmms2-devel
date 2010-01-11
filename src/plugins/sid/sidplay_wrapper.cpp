@@ -166,21 +166,25 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 	}
 
 	if (!*rs) {
+		delete rs;
 		return -5;
 	}
 
 	rs->create ((wrap->player->info ()).maxsids);
 	if (!*rs) {
+		delete rs;
 		return -6;
 	}
 
 	rs->filter (false);
 	if (!*rs) {
+		delete rs;
 		return -6;
 	}
 
 	rs->sampling (44100);
 	if (!*rs) {
+		delete rs;
 		return -6;
 	}
 
