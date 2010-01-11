@@ -21,12 +21,12 @@
 
 #include <glib.h>
 #include <stdlib.h>
+#include <gme/gme.h>
 
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
-#include "gme/gme.h"
 
 #define GME_DEFAULT_SAMPLE_RATE 44100
 #define GME_DEFAULT_SONG_LENGTH 300
@@ -182,7 +182,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	xmms_gme_data_t *data;
 	gme_err_t init_error;
 	GString *file_contents; /* The raw data from the file. */
-	track_info_t metadata;
+	gme_info_t *metadata = NULL;
 	xmms_config_property_t *val;
 	int loops;
 	int maxlength;
@@ -262,24 +262,24 @@ xmms_gme_init (xmms_xform_t *xform)
 		XMMS_DBG ("Couldn't get GME track info: %s", init_error);
 		init_error = "";
 	} else {
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, metadata.song);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, metadata.author);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, metadata.game);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, metadata.comment);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, metadata.copyright);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, metadata.system);  /* I mapped genre to the system type */
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, metadata->song);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, metadata->author);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, metadata->game);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, metadata->comment);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, metadata->copyright);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, metadata->system);  /* I mapped genre to the system type */
 
 		val = xmms_xform_config_lookup (xform, "loops");
 		loops = xmms_config_property_get_int (val);
 
-		XMMS_DBG ("intro_length = %ld, loops = %d, loop_length = %ld", metadata.intro_length, loops, metadata.loop_length);
+		XMMS_DBG ("intro_length = %ld, loops = %d, loop_length = %ld", metadata->intro_length, loops, metadata->loop_length);
 
-		if (metadata.intro_length > 0) {
-			if ((loops > 0) && (metadata.loop_length > 0)) {
-				fadelen = metadata.intro_length + loops * metadata.loop_length;
+		if (metadata->intro_length > 0) {
+			if ((loops > 0) && (metadata->loop_length > 0)) {
+				fadelen = metadata->intro_length + loops * metadata->loop_length;
 				XMMS_DBG ("fadelen now = %ld", fadelen);
 			} else {
-				fadelen = metadata.length;
+				fadelen = metadata->length;
 				XMMS_DBG ("fadelen now = %ld", fadelen);
 			}
 		}
@@ -309,6 +309,7 @@ xmms_gme_init (xmms_xform_t *xform)
 	init_error = gme_start_track (data->emu, subtune);
 	if (init_error) {
 		XMMS_DBG ("gme_start_track returned an error: %s", init_error);
+		gme_free_info (metadata);
 		return FALSE;
 	}
 
@@ -318,6 +319,7 @@ xmms_gme_init (xmms_xform_t *xform)
 		gme_set_fade (data->emu, fadelen);
 	}
 
+	gme_free_info (metadata);
 	return TRUE;
 }
 
