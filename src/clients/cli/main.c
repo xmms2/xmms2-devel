@@ -192,6 +192,7 @@ read_config (void)
 			read_bytes += ret;
 			g_assert (read_bytes >= 0);
 		}
+		fclose (fp);
 
 		config = parse_config (buffer);
 
