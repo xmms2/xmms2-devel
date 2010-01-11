@@ -115,6 +115,8 @@ xmms_stream_type_parse (va_list ap)
 			break;
 		default:
 			XMMS_DBG ("UNKNOWN TYPE!!");
+			g_free (val);
+			xmms_object_unref (res);
 			return NULL;
 		}
 		res->list = g_list_append (res->list, val);
