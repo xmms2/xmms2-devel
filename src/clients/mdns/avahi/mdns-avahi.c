@@ -95,7 +95,7 @@ create_services (AvahiClient *c)
 
 	if (uname (&uts) != 0) {
 		printf ("failed to run uname()\n");
-		name = "xmms2";
+		name = g_strdup ("xmms2");
 	} else {
 		name = g_strdup (uts.nodename);
 	}
@@ -103,7 +103,9 @@ create_services (AvahiClient *c)
 	if (!group) {
 		if (!(group = avahi_entry_group_new (c, group_callback, NULL))) {
 			printf ("couldn't create new group!\n");
+			g_free (name);
 			g_main_loop_quit (ml);
+			return;
 		}
 	}
 
@@ -115,6 +117,8 @@ create_services (AvahiClient *c)
 		printf ("couldn't add entry to group: %s\n", avahi_strerror (ret));
 		g_free (name);
 		g_main_loop_quit (ml);
+		avahi_entry_group_free (group);
+		return;
 	}
 
 	g_free (name);
@@ -122,6 +126,8 @@ create_services (AvahiClient *c)
 	if ((ret = avahi_entry_group_commit (group)) < 0) {
 		printf ("couldn't commit group: %s\n", avahi_strerror (ret));
 		g_main_loop_quit (ml);
+		avahi_entry_group_free (group);
+		return;
 	}
 
 	return;
