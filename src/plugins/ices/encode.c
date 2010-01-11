@@ -123,11 +123,13 @@ xmms_ices_encoder_free (encoder_state *s)
 encoder_state *
 xmms_ices_encoder_init (int min_br, int nom_br, int max_br)
 {
-	encoder_state *s = g_new0 (encoder_state, 1);
+	encoder_state *s;
 
 	/* If none of these are set, it's obviously not supposed to be managed */
 	if (nom_br <= 0)
 		return NULL;
+
+	s = g_new0 (encoder_state, 1);
 
 	s->min_br = min_br;
 	s->nom_br = nom_br;
