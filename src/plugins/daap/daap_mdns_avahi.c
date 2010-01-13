@@ -67,7 +67,8 @@ daap_mdns_serv_remove (GSList *serv_list, gchar *addr, guint port)
 }
 
 static void
-daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
+daap_mdns_resolve_browser_new_cb (
+                      AvahiServiceResolver *resolv,
                       AvahiIfIndex iface,
                       AvahiProtocol proto,
                       AvahiResolverEvent event,
@@ -81,7 +82,6 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
                       AvahiLookupResultFlags flags,
                       void *userdata)
 {
-	gboolean *remove = userdata;
 	gchar ad[ADDR_LEN];
 	daap_mdns_server_t *server;
 
@@ -93,23 +93,56 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
 		case AVAHI_RESOLVER_FOUND:
 			avahi_address_snprint (ad, sizeof (ad), addr);
 
-			if (*remove) {
-				g_static_mutex_lock (&serv_list_mut);
-				g_server_list = daap_mdns_serv_remove (g_server_list, ad, port);
-				g_static_mutex_unlock (&serv_list_mut);
-			} else {
-				server = g_new0 (daap_mdns_server_t, 1);
-				server->server_name = g_strdup (name);
-				server->address = g_strdup (ad);
-				server->mdns_hostname = g_strdup (hostname);
-				server->port = port;
+			server = g_new0 (daap_mdns_server_t, 1);
+			server->server_name = g_strdup (name);
+			server->address = g_strdup (ad);
+			server->mdns_hostname = g_strdup (hostname);
+			server->port = port;
 
-				g_static_mutex_lock (&serv_list_mut);
-				g_server_list = g_slist_prepend (g_server_list, server);
-				g_static_mutex_unlock (&serv_list_mut);
-			}
-			g_free (remove);
+			g_static_mutex_lock (&serv_list_mut);
+			g_server_list = g_slist_prepend (g_server_list, server);
+			g_static_mutex_unlock (&serv_list_mut);
+			break;
 
+		case AVAHI_RESOLVER_FAILURE:
+			break;
+
+		default:
+			break;
+	}
+
+	avahi_service_resolver_free (resolv);
+}
+
+static void
+daap_mdns_resolve_browser_remove_cb (
+                      AvahiServiceResolver *resolv,
+                      AvahiIfIndex iface,
+                      AvahiProtocol proto,
+                      AvahiResolverEvent event,
+                      const gchar *name,
+                      const gchar *type,
+                      const gchar *domain,
+                      const gchar *hostname,
+                      const AvahiAddress *addr,
+                      guint16 port,
+                      AvahiStringList *text,
+                      AvahiLookupResultFlags flags,
+                      void *userdata)
+{
+	gchar ad[ADDR_LEN];
+
+	if (!resolv) {
+		return;
+	}
+
+	switch (event) {
+		case AVAHI_RESOLVER_FOUND:
+			avahi_address_snprint (ad, sizeof (ad), addr);
+
+			g_static_mutex_lock (&serv_list_mut);
+			g_server_list = daap_mdns_serv_remove (g_server_list, ad, port);
+			g_static_mutex_unlock (&serv_list_mut);
 			break;
 
 		case AVAHI_RESOLVER_FAILURE:
@@ -133,32 +166,23 @@ daap_mdns_browse_cb (AvahiServiceBrowser *browser,
                      AvahiLookupResultFlags flags,
                      void *userdata)
 {
-	gboolean ok = FALSE;
-	gboolean *b;
-
 	AvahiClient *client = ((browse_callback_userdata_t *) userdata)->client;
 
 	if (!browser) {
 		return;
 	}
 
-	b = g_malloc (sizeof (gboolean));
-
 	switch (event) {
 		case AVAHI_BROWSER_NEW:
-			*b = FALSE;
-			ok = (gboolean)
-			     avahi_service_resolver_new (client, iface, proto, name, type,
-			                                 domain, AVAHI_PROTO_UNSPEC, 0,
-			                                 daap_mdns_resolve_cb, b);
+			avahi_service_resolver_new (client, iface, proto, name, type,
+			                            domain, AVAHI_PROTO_UNSPEC, 0,
+			                            daap_mdns_resolve_browser_new_cb, NULL);
 			break;
 
 		case AVAHI_BROWSER_REMOVE:
-			*b = TRUE;
-			ok = (gboolean)
-			     avahi_service_resolver_new (client, iface, proto, name, type,
-			                                 domain, AVAHI_PROTO_UNSPEC, 0,
-			                                 daap_mdns_resolve_cb, b);
+			avahi_service_resolver_new (client, iface, proto, name, type,
+			                            domain, AVAHI_PROTO_UNSPEC, 0,
+			                            daap_mdns_resolve_browser_remove_cb, NULL);
 			break;
 
 		case AVAHI_BROWSER_CACHE_EXHAUSTED:
