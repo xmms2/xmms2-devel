@@ -332,6 +332,11 @@ N: Bryan Taylor
 E: bryan.a.taylor@gmail.com
 D: Various fixes
 
+N: Sergei Trofimovich
+E: slyich@gmail.com
+E: slyfox@inbox.ru
+D: Various Cleanups
+
 N: Rémi Vanicat
 E: remi.vanicat@gmail.com
 D: SQLite optimizations.
