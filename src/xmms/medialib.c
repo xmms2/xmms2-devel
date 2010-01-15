@@ -941,7 +941,9 @@ xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist
 	 * g_list_last() call now. Increase pos each time to retain order.
 	 */
 	for (n = first->prev; n; n = g_list_previous (n)) {
-		process_file (session, playlist, pos++, n->data, error);
+		process_file (session, playlist, pos, n->data, error);
+		if (pos >= 0)
+			pos++;
 		g_free (n->data);
 	}
 
