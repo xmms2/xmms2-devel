@@ -138,6 +138,10 @@ N: Daniel Kamiński
 E: maniel.rulez@gmail.com
 D: mlib remove command in cli, Ruby fixes.
 
+N: Kyle Kramer
+E: kylegkramer@gmail.com
+D: sc68 xform
+
 N: Karsten Krispin
 E: karsten@krispin.de
 D: Multiple socket support
