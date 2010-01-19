@@ -17,10 +17,8 @@ def configure(conf):
 
     defs['PKGLIBDIR'] = os.path.join(conf.env['LIBDIR'], 'xmms2')
     defs['BINDIR']    = conf.env['BINDIR']
-    defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
-                                     'share', 'xmms2')
-    defs['SCRIPTDIR'] = os.path.join(conf.env['PREFIX'],
-                                     'share', 'xmms2', 'scripts', 'startup.d')
+    defs['SHAREDDIR'] = os.path.join(conf.env.DATADIR, 'xmms2')
+    defs['SCRIPTDIR'] = os.path.join(defs['SHAREDDIR'], 'scripts', 'startup.d')
 
     defs['XMMS_VERSION'] = conf.env['VERSION']
 

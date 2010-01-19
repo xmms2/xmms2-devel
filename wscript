@@ -104,7 +104,7 @@ def build(bld):
              'PREFIX': bld.env['PREFIX'],
              'BINDIR': bld.env['BINDIR'],
              'LIBDIR': bld.env['LIBDIR'],
-         'INCLUDEDIR': os.path.join("${prefix}", "include", "xmms2"),
+         'INCLUDEDIR': os.path.join(bld.env.INCLUDEDIR, "xmms2"),
             'VERSION': bld.env["VERSION"],
         }
         obj.install_path = '${PKGCONFIGDIR}'
@@ -248,11 +248,7 @@ def configure(conf):
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
 
-    if Options.options.manualdir:
-        conf.env["MANDIR"] = Options.options.manualdir
-    else:
-        conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
-
+    conf.check_tool('gnu_dirs')
     conf.check_tool('man', tooldir=os.path.abspath('waftools'))
     conf.check_tool('misc')
     conf.check_tool('gcc')
@@ -303,16 +299,6 @@ def configure(conf):
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
-
-    if Options.options.bindir:
-        conf.env["BINDIR"] = Options.options.bindir
-    else:
-        conf.env["BINDIR"] = os.path.join(conf.env["PREFIX"], "bin")
-
-    if Options.options.libdir:
-        conf.env["LIBDIR"] = Options.options.libdir
-    else:
-        conf.env["LIBDIR"] = os.path.join(conf.env["PREFIX"], "lib")
 
     if Options.options.pkgconfigdir:
         conf.env['PKGCONFIGDIR'] = Options.options.pkgconfigdir
@@ -451,9 +437,7 @@ def _list_cb(option, opt, value, parser):
     setattr(parser.values, option.dest, vals)
 
 def set_options(opt):
-    opt.add_option('--prefix', default=Options.default_prefix, dest='prefix',
-                   help="installation prefix (configuration only) [Default: '%s']" % Options.default_prefix)
-
+    opt.tool_options('gnu_dirs')
     opt.tool_options('gcc')
 
     opt.add_option('--with-custom-version', type='string',
@@ -478,12 +462,6 @@ def set_options(opt):
                    help="Specify a directory to prepend to configuration prefix")
     opt.add_option('--without-xmms2d', action='store_true', default=False,
                    dest='without_xmms2d', help="Skip build of xmms2d")
-    opt.add_option('--with-mandir', type='string', dest='manualdir',
-                   help="Specify directory where to install man pages")
-    opt.add_option('--with-bindir', type='string', dest='bindir',
-                   help="Specify directory where to install executables")
-    opt.add_option('--with-libdir', type='string', dest='libdir',
-                   help="Specify directory where to install libraries")
     opt.add_option('--with-pkgconfigdir', type='string', dest='pkgconfigdir',
                    help="Specify directory where to install pkg-config files")
     opt.add_option('--with-target-platform', type='string',

@@ -5,7 +5,7 @@ def build(bld):
     for p in paths:
         bld.add_subdirs(p)
         f = [os.path.join(p, a) for a in os.listdir(os.path.join('src','include',p)) if a.endswith('.h')]
-        bld.install_files('${PREFIX}/include/xmms2/' +  p, " ".join(f))
+        bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', p), " ".join(f))
 
 def configure(conf):
     conf.sub_config("xmms")
