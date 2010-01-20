@@ -46,7 +46,6 @@ void xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg);
 bool xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, bool *disconnected);
 bool xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, bool *disconnected);
 
-uint32_t xmms_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg);
 uint32_t xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v);
 uint32_t xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v);
 uint32_t xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v);
@@ -54,7 +53,6 @@ uint32_t xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
 uint32_t xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll);
 uint32_t xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
 uint32_t xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t* v);
-uint32_t xmms_ipc_msg_put_value_data (xmms_ipc_msg_t *msg, xmmsv_t *v);
 
 bool xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
 bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);

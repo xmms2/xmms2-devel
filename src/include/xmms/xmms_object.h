@@ -86,8 +86,6 @@ struct xmms_object_cmd_desc_St {
 
 void xmms_object_cleanup (xmms_object_t *object);
 
-void xmms_object_parent_set (xmms_object_t *object, xmms_object_t *parent);
-
 void xmms_object_connect (xmms_object_t *object, guint32 signalid,
 			  xmms_object_handler_t handler, gpointer userdata);
 

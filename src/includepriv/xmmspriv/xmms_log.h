@@ -25,6 +25,5 @@
 void xmms_log_set_format (const gchar *format);
 void xmms_log_init (gint verbosity);
 void xmms_log_shutdown (void);
-void xmms_log_daemonize (void);
 
 #endif
