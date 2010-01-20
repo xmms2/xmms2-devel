@@ -224,7 +224,6 @@ gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
                                         int *rerror)
 {
 	pa_sample_format_t pa_format = PA_SAMPLE_INVALID;
-	pa_cvolume cvol;
 	int error = PA_ERR_INTERNAL;
 	int ret;
 	int i;
@@ -270,12 +269,9 @@ gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
 	pa_stream_set_write_callback (p->stream, stream_request_cb, p);
 	pa_stream_set_latency_update_callback (p->stream, stream_latency_update_cb, p);
 
-	pa_cvolume_set (&cvol, p->sample_spec.channels,
-	                PA_VOLUME_NORM * p->volume / 100);
-
 	ret = pa_stream_connect_playback (p->stream, sink, NULL,
 	                                  PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
-	                                  &cvol, NULL);
+	                                  NULL, NULL);
 
 	if (ret < 0) {
 		error = pa_context_errno (p->context);
