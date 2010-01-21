@@ -8,8 +8,25 @@ def plugin_configure(conf):
         return False
     if not conf.check_cc(lib="mac", uselib_store="mac"):
         return False
+    if not conf.check_cxx(lib='mac', fragment = _pointer_test):
+        return False
     return True
 
 configure, build = plugin('mac', configure=plugin_configure,
                           source=['mac.cpp', 'source_adapter.cpp'],
                           libs=["mac"], tool="cxx")
+
+
+
+_pointer_test = """
+#include <mac/All.h>
+#include <mac/MACLib.h>
+
+typedef char __CHECK__[1-2*!(  sizeof(CreateIAPEDecompressEx2 (0, -1, -1, 0)->GetInfo (APE_INFO_TAG)) >= sizeof (void *)  )];
+
+int main (int, char **)
+{
+	return 0;
+}
+
+"""
