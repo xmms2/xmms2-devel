@@ -7,5 +7,5 @@ if sys.version_info < (2,4):
     raise "Waf requires Python >= 2.4"
 
 import imp
-imp.load_source("waf","waf-light")
+imp.load_source("__main__","waf-light")
 
