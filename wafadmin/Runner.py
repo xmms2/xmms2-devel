@@ -4,7 +4,7 @@
 
 "Execute the tasks"
 
-import sys, random, time, threading, traceback
+import os, sys, random, time, threading, traceback
 try: from Queue import Queue
 except ImportError: from queue import Queue
 import Build, Utils, Logs, Options
@@ -23,11 +23,52 @@ def run(*args, **kwargs):
 		sys.excepthook(*sys.exc_info())
 threading.Thread.run = run
 
+def process_task(tsk):
+
+	m = tsk.master
+	if m.stop:
+		m.out.put(tsk)
+		return
+
+	try:
+		tsk.generator.bld.printout(tsk.display())
+		if tsk.__class__.stat: ret = tsk.__class__.stat(tsk)
+		# actual call to task's run() function
+		else: ret = tsk.call_run()
+	except Exception, e:
+		tsk.err_msg = Utils.ex_stack()
+		tsk.hasrun = EXCEPTION
+
+		# TODO cleanup
+		m.error_handler(tsk)
+		m.out.put(tsk)
+		return
+
+	if ret:
+		tsk.err_code = ret
+		tsk.hasrun = CRASHED
+	else:
+		try:
+			tsk.post_run()
+		except Utils.WafError:
+			pass
+		except Exception:
+			tsk.err_msg = Utils.ex_stack()
+			tsk.hasrun = EXCEPTION
+		else:
+			tsk.hasrun = SUCCESS
+	if tsk.hasrun != SUCCESS:
+		m.error_handler(tsk)
+
+	m.out.put(tsk)
+
 class TaskConsumer(threading.Thread):
-	def __init__(self, m):
+	ready = Queue(0)
+	consumers = []
+
+	def __init__(self):
 		threading.Thread.__init__(self)
 		self.setDaemon(1)
-		self.master = m
 		self.start()
 
 	def run(self):
@@ -37,44 +78,9 @@ class TaskConsumer(threading.Thread):
 			pass
 
 	def loop(self):
-		m = self.master
 		while 1:
-			tsk = m.ready.get()
-			if m.stop:
-				m.out.put(tsk)
-				continue
-
-			try:
-				tsk.generator.bld.printout(tsk.display())
-				if tsk.__class__.stat: ret = tsk.__class__.stat(tsk)
-				# actual call to task's run() function
-				else: ret = tsk.call_run()
-			except Exception, e:
-				tsk.err_msg = Utils.ex_stack()
-				tsk.hasrun = EXCEPTION
-
-				# TODO cleanup
-				m.error_handler(tsk)
-				m.out.put(tsk)
-				continue
-
-			if ret:
-				tsk.err_code = ret
-				tsk.hasrun = CRASHED
-			else:
-				try:
-					tsk.post_run()
-				except Utils.WafError:
-					pass
-				except Exception:
-					tsk.err_msg = Utils.ex_stack()
-					tsk.hasrun = EXCEPTION
-				else:
-					tsk.hasrun = SUCCESS
-			if tsk.hasrun != SUCCESS:
-				m.error_handler(tsk)
-
-			m.out.put(tsk)
+			tsk = TaskConsumer.ready.get()
+			process_task(tsk)
 
 class Parallel(object):
 	"""
@@ -98,15 +104,12 @@ class Parallel(object):
 		# tasks that are awaiting for another task to complete
 		self.frozen = []
 
-		# tasks waiting to be run by the consumers
-		self.ready = Queue(0)
+		# tasks returned by the consumers
 		self.out = Queue(0)
 
 		self.count = 0 # tasks not in the producer area
 
 		self.processed = 1 # progress indicator
-
-		self.consumers = None # the consumer threads, created lazily
 
 		self.stop = False # error condition to stop the build
 		self.error = False # error flag
@@ -162,6 +165,12 @@ class Parallel(object):
 	def start(self):
 		"execute the tasks"
 
+		if TaskConsumer.consumers:
+			# the worker pool is usually loaded lazily (see below)
+			# in case it is re-used with a different value of numjobs:
+			while len(TaskConsumer.consumers) < self.numjobs:
+				TaskConsumer.consumers.append(TaskConsumer())
+
 		while not self.stop:
 
 			self.refill_task_list()
@@ -185,11 +194,15 @@ class Parallel(object):
 			try:
 				st = tsk.runnable_status()
 			except Exception, e:
-				tsk.err_msg = Utils.ex_stack()
-				tsk.hasrun = EXCEPTION
 				self.processed += 1
+				if self.stop and not Options.options.keep:
+					tsk.hasrun = SKIPPED
+					self.manager.add_finished(tsk)
+					continue
 				self.error_handler(tsk)
 				self.manager.add_finished(tsk)
+				tsk.hasrun = EXCEPTION
+				tsk.err_msg = Utils.ex_stack()
 				continue
 
 			if st == ASK_LATER:
@@ -202,12 +215,16 @@ class Parallel(object):
 				# run me: put the task in ready queue
 				tsk.position = (self.processed, self.total)
 				self.count += 1
-				self.ready.put(tsk)
+				tsk.master = self
 				self.processed += 1
 
-				# create the consumer threads only if there is something to consume
-				if not self.consumers:
-					self.consumers = [TaskConsumer(self) for i in xrange(self.numjobs)]
+				if self.numjobs == 1:
+					process_task(tsk)
+				else:
+					TaskConsumer.ready.put(tsk)
+					# create the consumer threads only if there is something to consume
+					if not TaskConsumer.consumers:
+						TaskConsumer.consumers = [TaskConsumer() for i in xrange(self.numjobs)]
 
 		# self.count represents the tasks that have been made available to the consumer threads
 		# collect all the tasks after an error else the message may be incomplete

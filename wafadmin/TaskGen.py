@@ -196,13 +196,13 @@ class task_gen(object):
 		self.meths = out
 
 		# then we run the methods in order
-		debug('task_gen: posting %s %d' % (self, id(self)))
+		debug('task_gen: posting %s %d', self, id(self))
 		for x in out:
 			try:
 				v = getattr(self, x)
 			except AttributeError:
 				raise Utils.WafError("tried to retrieve %s which is not a valid method" % x)
-			debug('task_gen: -> %s (%d)' % (x, id(self)))
+			debug('task_gen: -> %s (%d)', x, id(self))
 			v()
 
 	def post(self):
@@ -216,9 +216,10 @@ class task_gen(object):
 		if getattr(self, 'posted', None):
 			#error("OBJECT ALREADY POSTED" + str( self))
 			return
+
 		self.apply()
-		debug('task_gen: posted %s' % self.name)
 		self.posted = True
+		debug('task_gen: posted %s', self.name)
 
 	def get_hook(self, ext):
 		try: return self.mappings[ext]
@@ -290,7 +291,9 @@ class task_gen(object):
 		else: self.source += lst
 
 	def clone(self, env):
-		""
+		"""when creating a clone in a task generator method, 
+		make sure to set posted=False on the clone 
+		else the other task generator will not create its tasks"""
 		newobj = task_gen(bld=self.bld)
 		for x in self.__dict__:
 			if x in ['env', 'bld']:
@@ -342,7 +345,7 @@ def declare_order(*k):
 		if not f1 in task_gen.prec[f2]:
 			task_gen.prec[f2].append(f1)
 
-def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color='BLUE',
+def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=True, color='BLUE',
 	install=0, before=[], after=[], decider=None, rule=None, scan=None):
 	"""
 	see Tools/flex.py for an example
@@ -363,7 +366,7 @@ def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color=
 	def x_file(self, node):
 		if decider:
 			ext = decider(self, node)
-		elif isinstance(ext_out, str):
+		else:
 			ext = ext_out
 
 		if isinstance(ext, str):
@@ -373,7 +376,7 @@ def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color=
 		elif isinstance(ext, list):
 			out_source = [node.change_ext(x) for x in ext]
 			if reentrant:
-				for i in xrange(reentrant):
+				for i in xrange((reentrant is True) and len(out_source) or reentrant):
 					self.allnodes.append(out_source[i])
 		else:
 			# XXX: useless: it will fail on Utils.to_list above...
@@ -385,6 +388,7 @@ def declare_chain(name='', action='', ext_in='', ext_out='', reentrant=1, color=
 			tsk.install = install
 
 	declare_extension(act.ext_in, x_file)
+	return x_file
 
 def bind_feature(name, methods):
 	lst = Utils.to_list(methods)
@@ -404,9 +408,17 @@ attributes. A prerequisite for execution is to have the attribute set before.
 Intelligent compilers binding aspect-oriented programming and parallelization, what a nice topic for studies.
 """
 def taskgen(func):
+	"""
+	register a method as a task generator method
+	"""
 	setattr(task_gen, func.__name__, func)
+	return func
 
 def feature(*k):
+	"""
+	declare a task generator method that will be executed when the
+	object attribute 'feature' contains the corresponding key(s)
+	"""
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
 		for name in k:
@@ -415,6 +427,10 @@ def feature(*k):
 	return deco
 
 def before(*k):
+	"""
+	declare a task generator method which will be executed
+	before the functions of given name(s)
+	"""
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
 		for fun_name in k:
@@ -424,6 +440,10 @@ def before(*k):
 	return deco
 
 def after(*k):
+	"""
+	declare a task generator method which will be executed
+	after the functions of given name(s)
+	"""
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
 		for fun_name in k:
@@ -433,6 +453,10 @@ def after(*k):
 	return deco
 
 def extension(var):
+	"""
+	declare a task generator method which will be invoked during
+	the processing of source files for the extension given
+	"""
 	def deco(func):
 		setattr(task_gen, func.__name__, func)
 		try:
@@ -488,24 +512,31 @@ def exec_rule(self):
 
 	# get the function and the variables
 	func = self.rule
+
 	vars2 = []
 	if isinstance(func, str):
 		# use the shell by default for user-defined commands
 		(func, vars2) = Task.compile_fun('', self.rule, shell=getattr(self, 'shell', True))
 		func.code = self.rule
-	vars = getattr(self, 'vars', vars2)
-	if not vars:
-		if isinstance(self.rule, str):
-			vars = self.rule
-		else:
-			vars = Utils.h_fun(self.rule)
 
 	# create the task class
 	name = getattr(self, 'name', None) or self.target or self.rule
-	cls = Task.task_type_from_func(name, func, vars)
+	if not isinstance(name, str):
+		name = str(self.idx)
+	cls = Task.task_type_from_func(name, func, getattr(self, 'vars', vars2))
+	cls.color = getattr(self, 'color', 'BLUE')
 
 	# now create one instance
 	tsk = self.create_task(name)
+
+	dep_vars = getattr(self, 'dep_vars', ['ruledeps'])
+	if dep_vars:
+		tsk.dep_vars = dep_vars
+	if isinstance(self.rule, str):
+		tsk.env.ruledeps = self.rule
+	else:
+		# only works if the function is in a global module such as a waf tool
+		tsk.env.ruledeps = Utils.h_fun(self.rule)
 
 	# we assume that the user knows that without inputs or outputs
 	#if not getattr(self, 'target', None) and not getattr(self, 'source', None):
@@ -524,8 +555,8 @@ def exec_rule(self):
 				raise Utils.WafError('input file %r could not be found (%r)' % (x, self.path.abspath()))
 			tsk.inputs.append(y)
 
-	if getattr(self, 'always', None):
-		Task.always_run(cls)
+	if self.allnodes:
+		tsk.inputs.extend(self.allnodes)
 
 	if getattr(self, 'scan', None):
 		cls.scan = self.scan
@@ -539,7 +570,10 @@ def exec_rule(self):
 	if getattr(self, 'on_results', None):
 		Task.update_outputs(cls)
 
-	for x in ['after', 'before']:
+	if getattr(self, 'always', None):
+		Task.always_run(cls)
+
+	for x in ['after', 'before', 'ext_in', 'ext_out']:
 		setattr(cls, x, getattr(self, x, []))
 feature('*')(exec_rule)
 before('apply_core')(exec_rule)
@@ -552,8 +586,8 @@ def sequence_order(self):
 	there is also an awesome trick for executing the method in last position
 
 	to use:
-	bld.new_task_gen(features='javac seq')
-	bld.new_task_gen(features='jar seq')
+	bld(features='javac seq')
+	bld(features='jar seq')
 
 	to start a new sequence, set the attribute seq_start, for example:
 	obj.seq_start = True

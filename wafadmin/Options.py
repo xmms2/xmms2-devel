@@ -25,10 +25,17 @@ except KeyError: cache_global = ''
 platform = Utils.unversioned_sys_platform()
 conf_file = 'conf-runs-%s-%d.pickle' % (platform, ABI)
 
+remote_repo = ['http://waf.googlecode.com/svn/']
+"""remote directory for the plugins"""
+
+
 # Such a command-line should work:  JOBS=4 PREFIX=/opt/ DESTDIR=/tmp/ahoj/ waf configure
 default_prefix = os.environ.get('PREFIX')
 if not default_prefix:
-	if platform == 'win32': default_prefix = tempfile.gettempdir()
+	if platform == 'win32':
+		d = tempfile.gettempdir()
+		default_prefix = d[0].upper() + d[1:]
+		# win32 preserves the case, but gettempdir does not
 	else: default_prefix = '/usr/local/'
 
 default_jobs = os.environ.get('JOBS', -1)
@@ -153,6 +160,12 @@ def create_parser(module=None):
 		default = default_prefix,
 		dest    = 'prefix')
 
+	gr.add_option('--download',
+		action  = 'store_true',
+		default = False,
+		help    = 'try to download the tools if missing',
+		dest    = 'download')
+
 	gr = optparse.OptionGroup(parser, 'installation options')
 	parser.add_option_group(gr)
 	gr.add_option('--destdir',
@@ -260,6 +273,8 @@ class Handler(Utils.Context):
 
 		for tool in tools:
 			tool = tool.replace('++', 'xx')
+			if tool == 'java': tool = 'javaw'
+			if tool.lower() == 'unittest': tool = 'unittestw'
 			module = Utils.load_tool(tool, path)
 			try:
 				fun = module.set_options

@@ -22,9 +22,16 @@ Note: the c/c++ related code is in the module config_c
 import os, shlex, sys, time
 try: import cPickle
 except ImportError: import pickle as cPickle
-import Environment, Utils, Options
+import Environment, Utils, Options, Logs
 from Logs import warn
 from Constants import *
+
+try:
+	from urllib import request
+except:
+	from urllib import urlopen
+else:
+	urlopen = request.urlopen
 
 conf_template = '''# project %(app)s configured on %(now)s by
 # waf %(wafver)s (abi %(abi)s, python %(pyver)x on %(systype)s)
@@ -125,7 +132,7 @@ class ConfigurationContext(Utils.Context):
 		except (OSError, IOError):
 			self.fatal('could not open %r for writing' % path)
 
-		app = getattr(Utils.g_module, 'APPNAME', '')
+		app = Utils.g_module.APPNAME
 		if app:
 			ver = getattr(Utils.g_module, 'VERSION', '')
 			if ver:
@@ -157,6 +164,7 @@ class ConfigurationContext(Utils.Context):
 		for tool in tools:
 			tool = tool.replace('++', 'xx')
 			if tool == 'java': tool = 'javaw'
+			if tool.lower() == 'unittest': tool = 'unittestw'
 			# avoid loading the same tool more than once with the same functions
 			# used by composite projects
 
@@ -165,11 +173,62 @@ class ConfigurationContext(Utils.Context):
 				continue
 			self.tool_cache.append(mag)
 
-			module = Utils.load_tool(tool, tooldir)
-			func = getattr(module, 'detect', None)
-			if func:
-				if type(func) is type(find_file): func(self)
-				else: self.eval_rules(funs or func)
+			module = None
+			try:
+				module = Utils.load_tool(tool, tooldir)
+			except Exception, e:
+				ex = e
+				if Options.options.download:
+					_3rdparty = os.path.normpath(Options.tooldir[0] + os.sep + '..' + os.sep + '3rdparty')
+
+					# try to download the tool from the repository then
+					# the default is set to false
+					for x in Utils.to_list(Options.remote_repo):
+						for sub in ['branches/waf-%s/wafadmin/3rdparty' % WAFVERSION, 'trunk/wafadmin/3rdparty']:
+							url = '/'.join((x, sub, tool + '.py'))
+							try:
+								web = urlopen(url)
+								if web.getcode() != 200:
+									continue
+							except Exception, e:
+								# on python3 urlopen throws an exception
+								continue
+							else:
+								loc = None
+								try:
+									loc = open(_3rdparty + os.sep + tool + '.py', 'wb')
+									loc.write(web.read())
+									web.close()
+								finally:
+									if loc:
+										loc.close()
+								Logs.warn('downloaded %s from %s' % (tool, url))
+								try:
+									module = Utils.load_tool(tool, tooldir)
+								except:
+									Logs.warn('module %s from %s is unusable' % (tool, url))
+									try:
+										os.unlink(_3rdparty + os.sep + tool + '.py')
+									except:
+										pass
+									continue
+						else:
+							break
+
+					if not module:
+						Logs.error('Could not load the tool %r or download a suitable replacement from the repository (sys.path %r)\n%s' % (tool, sys.path, e))
+						raise ex
+				else:
+					Logs.error('Could not load the tool %r in %r (try the --download option?):\n%s' % (tool, sys.path, e))
+					raise ex
+
+			if funs is not None:
+				self.eval_rules(funs)
+			else:
+				func = getattr(module, 'detect', None)
+				if func:
+					if type(func) is type(find_file): func(self)
+					else: self.eval_rules(func)
 
 			self.tools.append({'tool':tool, 'tooldir':tooldir, 'funs':funs})
 
@@ -232,17 +291,20 @@ class ConfigurationContext(Utils.Context):
 
 	def check_message_1(self, sr):
 		self.line_just = max(self.line_just, len(sr))
-		self.log.write(sr + '\n\n')
+		for x in ('\n', self.line_just * '-', '\n', sr, '\n'):
+			self.log.write(x)
 		Utils.pprint('NORMAL', "%s :" % sr.ljust(self.line_just), sep='')
 
 	def check_message_2(self, sr, color='GREEN'):
+		self.log.write(sr)
+		self.log.write('\n')
 		Utils.pprint(color, sr)
 
 	def check_message(self, th, msg, state, option=''):
 		sr = 'Checking for %s %s' % (th, msg)
 		self.check_message_1(sr)
 		p = self.check_message_2
-		if state: p('ok ' + option)
+		if state: p('ok ' + str(option))
 		else: p('not found', 'YELLOW')
 
 	# FIXME remove in waf 1.6
@@ -251,6 +313,47 @@ class ConfigurationContext(Utils.Context):
 		sr = 'Checking for %s %s' % (th, msg)
 		self.check_message_1(sr)
 		self.check_message_2(custom, color)
+
+	def msg(self, msg, result, color=None):
+		"""Prints a configuration message 'Checking for xxx: ok'"""
+		self.start_msg('Checking for ' + msg)
+
+		if not isinstance(color, str):
+			color = result and 'GREEN' or 'YELLOW'
+
+		self.end_msg(result, color)
+
+	def start_msg(self, msg):
+		try:
+			if self.in_msg:
+				return
+		except:
+			self.in_msg = 0
+		self.in_msg += 1
+
+		self.line_just = max(self.line_just, len(msg))
+		for x in ('\n', self.line_just * '-', '\n', msg, '\n'):
+			self.log.write(x)
+		Utils.pprint('NORMAL', "%s :" % msg.ljust(self.line_just), sep='')
+
+	def end_msg(self, result, color):
+		self.in_msg -= 1
+		if self.in_msg:
+			return
+
+		if not color:
+			color = 'GREEN'
+		if result == True:
+			msg = 'ok'
+		elif result == False:
+			msg = 'not found'
+			color = 'YELLOW'
+		else:
+			msg = str(result)
+
+		self.log.write(msg)
+		self.log.write('\n')
+		Utils.pprint(color, msg)
 
 	def find_program(self, filename, path_list=[], var=None, mandatory=False):
 		"wrapper that adds a configuration message"
@@ -268,10 +371,15 @@ class ConfigurationContext(Utils.Context):
 				ret = find_program_impl(self.env, x, path_list, var, environ=self.environ)
 				if ret: break
 
-		self.check_message('program', ','.join(filename), ret, ret)
-		self.log.write('find program=%r paths=%r var=%r -> %r\n\n' % (filename, path_list, var, ret))
-		if not ret and mandatory:
-			self.fatal('The program %r could not be found' % filename)
+		self.check_message_1('Checking for program %s' % ' or '.join(filename))
+		self.log.write('  find program=%r paths=%r var=%r\n  -> %r\n' % (filename, path_list, var, ret))
+		if ret:
+			Utils.pprint('GREEN', str(ret))
+		else:
+			Utils.pprint('YELLOW', 'not found')
+			if mandatory:
+				self.fatal('The program %r is required' % filename)
+
 		if var:
 			self.env[var] = ret
 		return ret

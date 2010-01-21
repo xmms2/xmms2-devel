@@ -130,18 +130,22 @@ try:
 
 except ImportError:
 	try:
-		from hashlib import md5
-	except ImportError:
-		from md5 import md5
+		try:
+			from hashlib import md5
+		except ImportError:
+			from md5 import md5
 
-	def h_file(filename):
-		f = open(filename, 'rb')
-		m = md5()
-		while (filename):
-			filename = f.read(100000)
-			m.update(filename)
-		f.close()
-		return m.digest()
+		def h_file(filename):
+			f = open(filename, 'rb')
+			m = md5()
+			while (filename):
+				filename = f.read(100000)
+				m.update(filename)
+			f.close()
+			return m.digest()
+	except ImportError:
+		# portability fixes may be added elsewhere (although, md5 should be everywhere by now)
+		md5 = None
 
 class ordered_dict(UserDict):
 	def __init__(self, dict = None):
@@ -184,11 +188,13 @@ if is_win32:
 			if 'stdout' not in kw:
 				kw['stdout'] = pproc.PIPE
 				kw['stderr'] = pproc.PIPE
+				kw['universal_newlines'] = True
 				proc = pproc.Popen(s,**kw)
 				(stdout, stderr) = proc.communicate()
 				Logs.info(stdout)
 				if stderr:
 					Logs.error(stderr)
+				return proc.returncode
 			else:
 				proc = pproc.Popen(s,**kw)
 				return proc.wait()
@@ -216,23 +222,25 @@ def waf_version(mini = 0x010000, maxi = 0x100000):
 
 	if min_val > ver:
 		Logs.error("waf version should be at least %s (%s found)" % (mini, ver))
-		sys.exit(0)
+		sys.exit(1)
 
 	try: max_val = maxi + 0
 	except TypeError: max_val = int(maxi.replace('.', '0'), 16)
 
 	if max_val < ver:
 		Logs.error("waf version should be at most %s (%s found)" % (maxi, ver))
-		sys.exit(0)
+		sys.exit(1)
 
 def python_24_guard():
-	if sys.hexversion<0x20400f0:
-		raise ImportError("Waf requires Python >= 2.3 but the raw source requires Python 2.4")
+	if sys.hexversion < 0x20400f0 or sys.hexversion >= 0x3000000:
+		raise ImportError("Waf requires Python >= 2.3 but the raw source requires Python 2.4, 2.5 or 2.6")
 
 def ex_stack():
 	exc_type, exc_value, tb = sys.exc_info()
-	exc_lines = traceback.format_exception(exc_type, exc_value, tb)
-	return ''.join(exc_lines)
+	if Logs.verbose > 1:
+		exc_lines = traceback.format_exception(exc_type, exc_value, tb)
+		return ''.join(exc_lines)
+	return str(exc_value)
 
 def to_list(sth):
 	if isinstance(sth, str):
@@ -262,16 +270,14 @@ def load_module(file_path, name=WSCRIPT_FILE):
 
 	module.waf_hash_val = code
 
-	module_dir = os.path.dirname(file_path)
-	sys.path.insert(0, module_dir)
+	dt = os.path.dirname(file_path)
+	sys.path.insert(0, dt)
 	try:
-		exec(code, module.__dict__)
-	except Exception, e:
-		try:
-			raise WscriptError(traceback.format_exc(), file_path)
-		except:
-			raise e
-	sys.path.remove(module_dir)
+		exec(compile(code, file_path, 'exec'), module.__dict__)
+	except Exception:
+		exc_type, exc_value, tb = sys.exc_info()
+		raise WscriptError("".join(traceback.format_exception(exc_type, exc_value, tb)), file_path)
+	sys.path.remove(dt)
 
 	g_loaded_modules[file_path] = module
 
@@ -282,6 +288,15 @@ def set_main_module(file_path):
 	global g_module
 	g_module = load_module(file_path, 'wscript_main')
 	g_module.root_path = file_path
+
+	try:
+		g_module.APPNAME
+	except:
+		g_module.APPNAME = 'noname'
+	try:
+		g_module.VERSION
+	except:
+		g_module.VERSION = '1.0'
 
 	# note: to register the module globally, use the following:
 	# sys.modules['wscript_main'] = g_module
@@ -313,7 +328,7 @@ else:
 		# we actually try the function once to see if it is suitable
 		try:
 			myfun()
-		except IOError:
+		except:
 			pass
 		else:
 			get_term_cols = myfun
@@ -397,7 +412,7 @@ def h_fun(fun):
 			pass
 		return h
 
-def pprint(col, str, label='', sep=os.linesep):
+def pprint(col, str, label='', sep='\n'):
 	"print messages in color"
 	sys.stderr.write("%s%s%s %s%s" % (Logs.colors(col), str, Logs.colors.NORMAL, label, sep))
 
@@ -459,7 +474,7 @@ def subst_vars(expr, params):
 def unversioned_sys_platform_to_binary_format(unversioned_sys_platform):
 	"infers the binary format from the unversioned_sys_platform name."
 
-	if unversioned_sys_platform in ('linux', 'freebsd', 'netbsd', 'openbsd', 'sunos'):
+	if unversioned_sys_platform in ('linux', 'freebsd', 'netbsd', 'openbsd', 'sunos', 'gnu'):
 		return 'elf'
 	elif unversioned_sys_platform == 'darwin':
 		return 'mac-o'
@@ -477,7 +492,7 @@ def unversioned_sys_platform():
 	So we remove the version from the name, except for special cases where the os has a stupid name like os2 or win32.
 	Some possible values of sys.platform are, amongst others:
 		aix3 aix4 atheos beos5 darwin freebsd2 freebsd3 freebsd4 freebsd5 freebsd6 freebsd7
-		generic irix5 irix6 linux2 mac netbsd1 next3 os2emx riscos sunos5 unixware7
+		generic gnu0 irix5 irix6 linux2 mac netbsd1 next3 os2emx riscos sunos5 unixware7
 	Investigating the python source tree may reveal more values.
 	"""
 	s = sys.platform
@@ -510,7 +525,7 @@ def detect_platform():
 	s = sys.platform
 
 	# known POSIX
-	for x in 'cygwin linux irix sunos hpux aix darwin'.split():
+	for x in 'cygwin linux irix sunos hpux aix darwin gnu'.split():
 		# sys.platform may be linux2
 		if s.find(x) >= 0:
 			return x
@@ -522,18 +537,25 @@ def detect_platform():
 	return s
 
 def load_tool(tool, tooldir=None):
+	'''
+	load_tool: import a Python module, optionally using several directories.
+	@param tool [string]: name of tool to import.
+	@param tooldir [list]: directories to look for the tool.
+	@return: the loaded module.
+
+	Warning: this function is not thread-safe: plays with sys.path,
+					 so must run in sequence.
+	'''
 	if tooldir:
 		assert isinstance(tooldir, list)
 		sys.path = tooldir + sys.path
+	else:
+		tooldir = []
 	try:
-		try:
-			return __import__(tool)
-		except ImportError, e:
-			raise WscriptError('Could not load the tool %r in %r' % (tool, sys.path))
+		return __import__(tool)
 	finally:
-		if tooldir:
-			for d in tooldir:
-				sys.path.remove(d)
+		for dt in tooldir:
+			sys.path.remove(dt)
 
 def readf(fname, m='r'):
 	"get the contents of a file, it is not used anywhere for the moment"
@@ -589,9 +611,10 @@ class Context(object):
 				nexdir = os.path.join(self.curdir, x)
 
 			base = os.path.join(nexdir, WSCRIPT_FILE)
+			file_path = base + '_' + name
 
 			try:
-				txt = readf(base + '_' + name, m='rU')
+				txt = readf(file_path, m='rU')
 			except (OSError, IOError):
 				try:
 					module = load_module(base)
@@ -616,21 +639,19 @@ class Context(object):
 			else:
 				dc = {'ctx': self}
 				if getattr(self.__class__, 'pre_recurse', None):
-					dc = self.pre_recurse(txt, base + '_' + name, nexdir)
+					dc = self.pre_recurse(txt, file_path, nexdir)
 				old = self.curdir
 				self.curdir = nexdir
 				try:
 					try:
-						exec(txt, dc)
-					except Exception, e:
-						try:
-							raise WscriptError(traceback.format_exc(), base)
-						except:
-							raise e
+						exec(compile(txt, file_path, 'exec'), dc)
+					except Exception:
+						exc_type, exc_value, tb = sys.exc_info()
+						raise WscriptError("".join(traceback.format_exception(exc_type, exc_value, tb)), base)
 				finally:
 					self.curdir = old
 				if getattr(self.__class__, 'post_recurse', None):
-					self.post_recurse(txt, base + '_' + name, nexdir)
+					self.post_recurse(txt, file_path, nexdir)
 
 if is_win32:
 	old = shutil.copy2
@@ -638,6 +659,25 @@ if is_win32:
 		old(src, dst)
 		shutil.copystat(src, src)
 	setattr(shutil, 'copy2', copy2)
+
+def zip_folder(dir, zip_file_name, prefix):
+	"""
+	prefix represents the app to add in the archive
+	"""
+	import zipfile
+	zip = zipfile.ZipFile(zip_file_name, 'w', compression=zipfile.ZIP_DEFLATED)
+	base = os.path.abspath(dir)
+
+	if prefix:
+		if prefix[-1] != os.sep:
+			prefix += os.sep
+
+	n = len(base)
+	for root, dirs, files in os.walk(base):
+		for f in files:
+			archive_name = prefix + root[n:] + os.sep + f
+			zip.write(root + os.sep + f, archive_name, zipfile.ZIP_DEFLATED)
+	zip.close()
 
 def get_elapsed_time(start):
 	"Format a time delta (datetime.timedelta) using the format DdHhMmS.MSs"

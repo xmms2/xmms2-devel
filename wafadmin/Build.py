@@ -33,11 +33,14 @@ class BuildError(Utils.WafError):
 		Utils.WafError.__init__(self, self.format_error())
 
 	def format_error(self):
-		lst = ['Build failed']
+		lst = ['Build failed:']
 		for tsk in self.tasks:
 			txt = tsk.format_error()
 			if txt: lst.append(txt)
-		return '\n'.join(lst)
+		sep = ' '
+		if len(lst) > 2:
+			sep = '\n'
+		return sep.join(lst)
 
 def group_method(fun):
 	"""
@@ -62,7 +65,8 @@ def group_method(fun):
 			m = k[0].task_manager
 			if not m.groups: m.add_group()
 			m.groups[m.current_group].post_funs.append((fun, k, kw))
-			kw['cwd'] = k[0].path
+			if not 'cwd' in kw:
+				kw['cwd'] = k[0].path
 		else:
 			fun(*k, **kw)
 	return f
@@ -269,8 +273,8 @@ class BuildContext(Utils.Context):
 				self.generator.start()
 			except KeyboardInterrupt:
 				dw()
-				if self.generator.consumers:
-					self.save()
+				# if self.generator.processed != 1: TODO
+				self.save()
 				raise
 			except Exception:
 				dw()
@@ -278,8 +282,8 @@ class BuildContext(Utils.Context):
 				raise
 			else:
 				dw()
-				if self.generator.consumers:
-					self.save()
+				#if self.generator.processed != 1: TODO
+				self.save()
 
 			if self.generator.error:
 				raise BuildError(self, self.task_manager.tasks_done)
@@ -316,6 +320,9 @@ class BuildContext(Utils.Context):
 				except OSError: pass
 
 	def new_task_gen(self, *k, **kw):
+		if self.task_gen_cache_names:
+			self.task_gen_cache_names = {}
+
 		kw['bld'] = self
 		if len(k) == 0:
 			ret = TaskGen.task_gen(*k, **kw)
@@ -327,6 +334,13 @@ class BuildContext(Utils.Context):
 				(cls_name, [x for x in TaskGen.task_gen.classes]))
 			ret = cls(*k, **kw)
 		return ret
+
+	def __call__(self, *k, **kw):
+		if self.task_gen_cache_names:
+			self.task_gen_cache_names = {}
+
+		kw['bld'] = self
+		return TaskGen.task_gen(*k, **kw)
 
 	def load_envs(self):
 		try:
@@ -384,7 +398,7 @@ class BuildContext(Utils.Context):
 				lstvariants.append(env.variant())
 		self.lst_variants = lstvariants
 
-		debug('build: list of variants is %r' % lstvariants)
+		debug('build: list of variants is %r', lstvariants)
 
 		for name in lstvariants+[0]:
 			for v in 'node_sigs cache_node_abspath'.split():
@@ -418,7 +432,7 @@ class BuildContext(Utils.Context):
 
 		if not self.srcnode:
 			self.srcnode = self.root.ensure_dir_node_from_path(srcdir)
-		debug('build: srcnode is %s and srcdir %s' % (self.srcnode.name, srcdir))
+		debug('build: srcnode is %s and srcdir %s', self.srcnode.name, srcdir)
 
 		self.path = self.srcnode
 
@@ -498,24 +512,30 @@ class BuildContext(Utils.Context):
 		lst.reverse()
 
 		# list the files in the build dirs
-		# remove the existing timestamps if the build files are removed
-		for variant in self.lst_variants:
-			sub_path = os.path.join(self.bldnode.abspath(), variant , *lst)
-			try:
+		try:
+			for variant in self.lst_variants:
+				sub_path = os.path.join(self.bldnode.abspath(), variant , *lst)
 				self.listdir_bld(src_dir_node, sub_path, variant)
-			except OSError:
-				#debug('build: osError on ' + sub_path)
-				# listdir failed, remove all sigs of nodes
-				# TODO more things to remove?
-				dict = self.node_sigs[variant]
-				for node in src_dir_node.childs.values():
-					if node.id in dict:
-						dict.__delitem__(node.id)
+		except OSError:
 
-					# avoid deleting the build dir node
-					if node.id != self.bldnode.id:
-						src_dir_node.childs.__delitem__(node.name)
-				os.makedirs(sub_path)
+			# listdir failed, remove the build node signatures for all variants
+			for node in src_dir_node.childs.values():
+				if node.id & 3 != Node.BUILD:
+					continue
+
+				for dct in self.node_sigs.values():
+					if node.id in dct:
+						dct.__delitem__(node.id)
+
+				# the policy is to avoid removing nodes representing directories
+				src_dir_node.childs.__delitem__(node.name)
+
+			for variant in self.lst_variants:
+				sub_path = os.path.join(self.bldnode.abspath(), variant , *lst)
+				try:
+					os.makedirs(sub_path)
+				except OSError:
+					pass
 
 	# ======================================= #
 	def listdir_src(self, parent_node):
@@ -599,7 +619,7 @@ class BuildContext(Utils.Context):
 
 		lst = [str(env[a]) for a in vars_lst]
 		ret = Utils.h_list(lst)
-		debug("envhash: %r %r" % (ret, lst))
+		debug('envhash: %r %r', ret, lst)
 
 		# next time
 		self.cache_sig_vars[idx] = ret
@@ -637,7 +657,11 @@ class BuildContext(Utils.Context):
 		debug('build: delayed operation TaskGen.flush() called')
 
 		if Options.options.compile_targets:
-			debug('task_gen: posting objects listed in compile_targets')
+			debug('task_gen: posting objects %r listed in compile_targets', Options.options.compile_targets)
+
+			mana = self.task_manager
+			to_post = []
+			min_grp = 0
 
 			# ensure the target names exist, fail before any post()
 			target_objects = Utils.DefaultDict(list)
@@ -645,25 +669,36 @@ class BuildContext(Utils.Context):
 				# trim target_name (handle cases when the user added spaces to targets)
 				target_name = target_name.strip()
 				for env in self.all_envs.values():
-					obj = self.name_to_obj(target_name, env)
-					if obj:
-						target_objects[target_name].append(obj)
+					tg = self.name_to_obj(target_name, env)
+					if tg:
+						target_objects[target_name].append(tg)
+
+						m = mana.group_idx(tg)
+						if m > min_grp:
+							min_grp = m
+							to_post = [tg]
+						elif m == min_grp:
+							to_post.append(tg)
+
 				if not target_name in target_objects and all:
 					raise Utils.WafError("target '%s' does not exist" % target_name)
 
-			to_compile = []
-			for x in target_objects.values():
-				for y in x:
-					to_compile.append(id(y))
+			debug('group: Forcing up to group %s for target %s', mana.group_name(min_grp), Options.options.compile_targets)
 
-			# tasks must be posted in order of declaration
-			# we merely apply a filter to discard the ones we are not interested in
-			for i in xrange(len(self.task_manager.groups)):
-				g = self.task_manager.groups[i]
-				self.task_manager.current_group = i
-				for tg in g.tasks_gen:
-					if id(tg) in to_compile:
-						tg.post()
+			# post all the task generators in previous groups
+			for i in xrange(len(mana.groups)):
+				mana.current_group = i
+				if i == min_grp:
+					break
+				g = mana.groups[i]
+				debug('group: Forcing group %s', mana.group_name(g))
+				for t in g.tasks_gen:
+					debug('group: Posting %s', t.name or t.target)
+					t.post()
+
+			# then post the task generators listed in compile_targets in the last group
+			for t in to_post:
+				t.post()
 
 		else:
 			debug('task_gen: posting objects (normal)')
@@ -682,9 +717,15 @@ class BuildContext(Utils.Context):
 			for i in xrange(len(self.task_manager.groups)):
 				g = self.task_manager.groups[i]
 				self.task_manager.current_group = i
+				if Logs.verbose:
+					groups = [x for x in self.task_manager.groups_names if id(self.task_manager.groups_names[x]) == id(g)]
+					name = groups and groups[0] or 'unnamed'
+					Logs.debug('group: group', name)
 				for tg in g.tasks_gen:
 					if not tg.path.is_child_of(ln):
 						continue
+					if Logs.verbose:
+						Logs.debug('group: %s' % tg)
 					tg.post()
 
 	def env_of_name(self, name):
@@ -769,6 +810,7 @@ class BuildContext(Utils.Context):
 						Logs.warn('could not remove %s (error code %r)' % (e.filename, e.errno))
 			return True
 
+	red = re.compile(r"^([A-Za-z]:)?[/\\\\]*")
 	def get_install_path(self, path, env=None):
 		"installation path prefixed by the destdir, the variables like in '${PREFIX}/bin' are substituted"
 		if not env: env = self.env
@@ -776,8 +818,29 @@ class BuildContext(Utils.Context):
 		path = path.replace('/', os.sep)
 		destpath = Utils.subst_vars(path, env)
 		if destdir:
-			destpath = os.path.join(destdir, destpath.lstrip(os.sep))
+			destpath = os.path.join(destdir, self.red.sub('', destpath))
 		return destpath
+
+	def install_dir(self, path, env=None):
+		"""
+		create empty folders for the installation (very rarely used)
+		"""
+		if env:
+			assert isinstance(env, Environment.Environment), "invalid parameter"
+		else:
+			env = self.env
+
+		if not path:
+			return []
+
+		destpath = self.get_install_path(path, env)
+
+		if self.is_install > 0:
+			info('* creating %s' % destpath)
+			Utils.check_dir(destpath)
+		elif self.is_install < 0:
+			info('* removing %s' % destpath)
+			self.uninstall.append(destpath + '/xxx') # yes, ugly
 
 	def install_files(self, path, files, env=None, chmod=O644, relative_trick=False, cwd=None):
 		"""To install files only after they have been built, put the calls in a method named
@@ -910,7 +973,7 @@ class BuildContext(Utils.Context):
 
 	def exec_command(self, cmd, **kw):
 		# 'runner' zone is printed out for waf -v, see wafadmin/Options.py
-		debug('runner: system command -> %s' % cmd)
+		debug('runner: system command -> %s', cmd)
 		if self.log:
 			self.log.write('%s\n' % cmd)
 			kw['log'] = self.log
@@ -962,6 +1025,7 @@ class BuildContext(Utils.Context):
 	def use_the_magic(self):
 		Task.algotype = Task.MAXPARALLEL
 		Task.file_deps = Task.extract_deps
+		self.magic = True
 
 	install_as = group_method(install_as)
 	install_files = group_method(install_files)

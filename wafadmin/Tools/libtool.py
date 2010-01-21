@@ -143,7 +143,7 @@ class libtool_la_file:
 		# Directory that this library needs to be installed in:
 		self.libdir = '/usr/lib'
 		if not self.__parse():
-			raise "file %s not found!!" %(la_filename)
+			raise ValueError("file %s not found!!" %(la_filename))
 
 	def __parse(self):
 		"Retrieve the variables from a file"
