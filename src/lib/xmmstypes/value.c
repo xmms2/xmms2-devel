@@ -2240,6 +2240,38 @@ xmmsv_build_dict (const char *firstkey, ...)
 	return res;
 }
 
+xmmsv_t *
+xmmsv_build_list (xmmsv_t *first_entry, ...)
+{
+	va_list ap;
+	xmmsv_t *val, *res;
+
+	res = xmmsv_new_list ();
+	if (!res)
+		return NULL;
+
+	va_start (ap, first_entry);
+
+	val = first_entry;
+
+	while (val) {
+		if (!xmmsv_list_append (res, val)) {
+			xmmsv_unref (res);
+			res = NULL;
+			break;
+		}
+
+		xmmsv_unref (val);
+
+		val = va_arg (ap, xmmsv_t *);
+	}
+
+	va_end (ap);
+
+	return res;
+}
+
+
 /**
  * This function will make a pretty string about the information in
  * xmmsv dict.

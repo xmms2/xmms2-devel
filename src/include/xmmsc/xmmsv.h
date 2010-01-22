@@ -201,6 +201,14 @@ static inline xmmsv_t *__xmmsv_identity_xmmsv (xmmsv_t *v) {return v;}
 #define XMMSV_DICT_END NULL
 xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
 
+#define XMMSV_LIST_ENTRY(v) __xmmsv_identity_xmmsv (v)
+#define XMMSV_LIST_ENTRY_STR(v) XMMSV_LIST_ENTRY (xmmsv_new_string (v))
+#define XMMSV_LIST_ENTRY_INT(v) XMMSV_LIST_ENTRY (xmmsv_new_int (v))
+#define XMMSV_LIST_ENTRY_COLL(v) XMMSV_LIST_ENTRY (xmmsv_new_coll (v))
+#define XMMSV_LIST_END NULL
+
+xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...);
+
 #ifdef __cplusplus
 }
 #endif
