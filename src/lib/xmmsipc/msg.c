@@ -60,6 +60,16 @@ static uint32_t internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll
 static uint32_t internal_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v);
 static uint32_t internal_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v);
 
+static bool xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
+static bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);
+static bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);
+static bool xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
+static bool xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll);
+static bool xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg, unsigned char **buf, unsigned int *len);
+
+static bool xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val);
+static bool xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type, xmmsv_t **val);
+
 static void
 xmms_ipc_append_coll_attr (const char *key, xmmsv_t *value, void *userdata)
 {
@@ -337,16 +347,6 @@ internal_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
 	return xmms_ipc_msg_put_data (msg, data, len);
 }
 
-uint32_t
-xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
-                      const unsigned char *data,
-                      unsigned int len)
-{
-	internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_BIN);
-
-	return internal_ipc_msg_put_bin (msg, data, len);
-}
-
 static uint32_t
 internal_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg)
 {
@@ -361,14 +361,6 @@ internal_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg)
 	internal_ipc_msg_put_uint32 (msg, strlen (errmsg) + 1);
 
 	return xmms_ipc_msg_put_data (msg, errmsg, strlen (errmsg) + 1);
-}
-
-uint32_t
-xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
-{
-	internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_UINT32);
-
-	return internal_ipc_msg_put_int32 (msg, v);
 }
 
 static uint32_t
@@ -396,25 +388,6 @@ internal_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
 	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
 }
 
-uint32_t
-xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
-{
-	internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_INT32);
-
-	return internal_ipc_msg_put_int32 (msg, v);
-}
-
-uint32_t
-xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v)
-{
-	/* If this function ever gets used, we probably need to do
-	 *   internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_FLOAT)
-	 */
-
-	/** @todo do we need to convert ? */
-	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
-}
-
 static uint32_t
 internal_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 {
@@ -429,14 +402,6 @@ internal_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	internal_ipc_msg_put_uint32 (msg, strlen (str) + 1);
 
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
-}
-
-uint32_t
-xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
-{
-	internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_STRING);
-
-	return internal_ipc_msg_put_string (msg, str);
 }
 
 static uint32_t
@@ -490,20 +455,15 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 			if (!xmmsv_get_coll (v, &op)) {
 				x_api_error ("Non collection operand", 0);
 			}
-			ret = xmms_ipc_msg_put_collection (msg, op);
+
+			internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_COLL);
+
+			ret = internal_ipc_msg_put_collection (msg, op);
 			xmmsv_list_iter_next (it);
 		}
 	}
 
 	return ret;
-}
-
-uint32_t
-xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
-{
-	internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_COLL);
-
-	return internal_ipc_msg_put_collection (msg, coll);
 }
 
 uint32_t
@@ -653,7 +613,7 @@ xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, void *buf, unsigned int len)
 	return true;
 }
 
-bool
+static bool
 xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf,
                               unsigned int *len)
 {
@@ -661,7 +621,7 @@ xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf,
 	return xmms_ipc_msg_get_string_alloc (msg, buf, len);
 }
 
-bool
+static bool
 xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v)
 {
 	bool ret;
@@ -675,7 +635,7 @@ xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v)
 	return ret;
 }
 
-bool
+static bool
 xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v)
 {
 	bool ret;
@@ -689,14 +649,7 @@ xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v)
 	return ret;
 }
 
-bool
-xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v)
-{
-	/** @todo do we need to convert? */
-	return xmms_ipc_msg_get_data (msg, v, sizeof (*v));
-}
-
-bool
+static bool
 xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
                                unsigned int *len)
 {
@@ -728,7 +681,7 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 	return true;
 }
 
-bool
+static bool
 xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
                             unsigned char **buf,
                             unsigned int *len)
@@ -759,37 +712,7 @@ xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
 	return true;
 }
 
-bool
-xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *buf, unsigned int maxlen)
-{
-	uint32_t len;
-
-	if (buf) {
-		buf[maxlen - 1] = '\0';
-		maxlen--;
-	}
-
-	if (!xmms_ipc_msg_get_uint32 (msg, &len)) {
-		return false;
-	}
-
-	if (!len) {
-		buf[0] = '\0';
-		return true;
-	}
-
-	if (!xmms_ipc_msg_get_data (msg, buf, MIN (maxlen, len))) {
-		return false;
-	}
-
-	if (maxlen < len) {
-		xmms_ipc_msg_get_data (msg, NULL, len - maxlen);
-	}
-
-	return true;
-}
-
-bool
+static bool
 xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll)
 {
 	unsigned int i;
@@ -952,8 +875,7 @@ err:
 	return false;
 }
 
-
-bool
+static bool
 xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val)
 {
 	int32_t type;
@@ -965,7 +887,7 @@ xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val)
 	return xmms_ipc_msg_get_value_of_type_alloc (msg, type, val);
 }
 
-bool
+static bool
 xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
                                       xmmsv_t **val)
 {
