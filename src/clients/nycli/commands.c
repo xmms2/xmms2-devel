@@ -862,7 +862,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 }
 
 static gboolean
-cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
+cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos, gboolean append)
 {
 	gboolean next;
 	gint at;
@@ -891,9 +891,11 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 		} else {
 			*pos = at - 1;  /* playlist ids start at 0 */
 		}
-	} else {
+	} else if (append) {
 		/* No flag given, just enqueue */
 		*pos = infos->cache->active_playlist->len;
+	} else {
+		return FALSE;
 	}
 
 	return TRUE;
@@ -1172,7 +1174,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	/* FIXME: pos is wrong in non-active playlists (next/offsets are invalid)! */
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
-	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+	if (!cmd_flag_pos_get (infos, ctx, &pos, TRUE)) {
 		success = FALSE;
 		goto finish;
 	}
@@ -1341,7 +1343,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		playlist = NULL;
 	}
 
-	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+	if (!cmd_flag_pos_get (infos, ctx, &pos, FALSE)) {
 		g_printf (_("Error: you must provide a position to move entries to!\n"));
 		return FALSE;
 	}
