@@ -115,23 +115,17 @@ setup_socket (xmmsc_connection_t *c, xmmsc_vis_udp_t *t, int32_t id, int32_t por
 xmmsc_result_t *
 setup_udp_prepare (xmmsc_connection_t *c, int32_t vv)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
 	xmmsc_result_t *res;
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, 0);
 	v = get_dataset (c, vv);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_INIT_UDP);
+	res = xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
+	                      XMMS_IPC_CMD_VISUALIZATION_INIT_UDP,
+	                      XMMSV_LIST_ENTRY_INT (v->id),
+	                      XMMSV_LIST_END);
 
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (v->id),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	res = xmmsc_send_msg (c, msg);
 	if (res) {
 		xmmsc_result_visc_set (res, v);
 	}

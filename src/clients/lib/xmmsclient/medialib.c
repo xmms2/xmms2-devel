@@ -36,17 +36,8 @@
 static xmmsc_result_t *
 do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, id);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (arg), XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (conn, msg);
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB, id,
+	                       XMMSV_LIST_ENTRY_STR (arg), XMMSV_LIST_END);
 }
 
 /**
@@ -115,21 +106,13 @@ xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url)
 xmmsc_result_t *
 xmmsc_medialib_move_entry (xmmsc_connection_t *conn, int entry, const char *url)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (conn, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_MOVE_URL);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (entry),
-	                         XMMSV_LIST_ENTRY_STR (url),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (conn, msg);
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_MOVE_URL,
+	                       XMMSV_LIST_ENTRY_INT (entry),
+	                       XMMSV_LIST_ENTRY_STR (url),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -140,20 +123,12 @@ xmmsc_medialib_move_entry (xmmsc_connection_t *conn, int entry, const char *url)
 xmmsc_result_t *
 xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (conn, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE_ID);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (entry),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (conn, msg);
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_REMOVE_ID,
+	                       XMMSV_LIST_ENTRY_INT (entry),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -336,21 +311,12 @@ xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
 xmmsc_result_t *
 xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (conn, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REHASH);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (id),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (conn, msg);
-
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_REHASH,
+	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -359,20 +325,10 @@ xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id)
 xmmsc_result_t *
 xmmsc_medialib_get_info (xmmsc_connection_t *c, int id)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (id),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO,
+	                       XMMSV_LIST_ENTRY_INT (id), XMMSV_LIST_END);
 }
 
 /**
@@ -430,24 +386,15 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
                                                    const char *key,
                                                    int32_t value)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
-	                        XMMS_IPC_CMD_PROPERTY_SET_INT);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (id),
-	                         XMMSV_LIST_ENTRY_STR (source),
-	                         XMMSV_LIST_ENTRY_STR (key),
-	                         XMMSV_LIST_ENTRY_INT (value),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_ENTRY_STR (source),
+	                       XMMSV_LIST_ENTRY_STR (key),
+	                       XMMSV_LIST_ENTRY_INT (value),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -480,24 +427,15 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
                                                    const char *key,
                                                    const char *value)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
-	                        XMMS_IPC_CMD_PROPERTY_SET_STR);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (id),
-	                         XMMSV_LIST_ENTRY_STR (source),
-	                         XMMSV_LIST_ENTRY_STR (key),
-	                         XMMSV_LIST_ENTRY_STR (value),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_ENTRY_STR (source),
+	                       XMMSV_LIST_ENTRY_STR (key),
+	                       XMMSV_LIST_ENTRY_STR (value),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -528,23 +466,14 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
                                                   const char *source,
                                                   const char *key)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
-	                        XMMS_IPC_CMD_PROPERTY_REMOVE);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (id),
-	                         XMMSV_LIST_ENTRY_STR (source),
-	                         XMMSV_LIST_ENTRY_STR (key),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_ENTRY_STR (source),
+	                       XMMSV_LIST_ENTRY_STR (key),
+	                       XMMSV_LIST_END);
 }
 
 /** @} */
