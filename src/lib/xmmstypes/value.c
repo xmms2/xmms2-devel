@@ -2241,16 +2241,13 @@ xmmsv_build_dict (const char *firstkey, ...)
 }
 
 xmmsv_t *
-xmmsv_build_list (xmmsv_t *first_entry, ...)
+xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap)
 {
-	va_list ap;
 	xmmsv_t *val, *res;
 
 	res = xmmsv_new_list ();
 	if (!res)
 		return NULL;
-
-	va_start (ap, first_entry);
 
 	val = first_entry;
 
@@ -2266,6 +2263,17 @@ xmmsv_build_list (xmmsv_t *first_entry, ...)
 		val = va_arg (ap, xmmsv_t *);
 	}
 
+	return res;
+}
+
+xmmsv_t *
+xmmsv_build_list (xmmsv_t *first_entry, ...)
+{
+	va_list ap;
+	xmmsv_t *res;
+
+	va_start (ap, first_entry);
+	res = xmmsv_build_list_va (first_entry, ap);
 	va_end (ap);
 
 	return res;

@@ -17,6 +17,7 @@
 #ifndef __XMMSV_H__
 #define __XMMSV_H__
 
+#include <stdarg.h>
 #include "xmmsc/xmmsc_compiler.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsv_coll.h"
@@ -208,6 +209,7 @@ xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
 #define XMMSV_LIST_END NULL
 
 xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...);
+xmmsv_t *xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap);
 
 #ifdef __cplusplus
 }
