@@ -228,6 +228,12 @@ cli_infos_init (gint argc, gchar **argv)
 
 	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;
+		/* print welcome message before initialising readline */
+		if (configuration_get_boolean (infos->config, "SHELL_START_MESSAGE")) {
+			g_printf (_("Welcome to the nyxmms2 shell!\n"));
+			g_printf (_("Type 'help' to list the available commands "
+			            "and 'exit' (or CTRL-D) to leave the shell.\n"));
+		}
 		readline_init (infos);
 	} else {
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
