@@ -1032,6 +1032,24 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 				g_free (npath);
 			}
 		}
+	} else if (s) {
+		/* Clientlib doesn't support URLs with an unencoded '*' */
+		GString *str = g_string_new (path);
+		browse_entry_t *entry = g_new0 (browse_entry_t, 1);
+
+		while ((s = strchr (str->str, '*'))) {
+			g_string_erase (str, s - str->str, 1);
+			g_string_insert (str, s - str->str, "%2a");
+		}
+
+		entry->url = str->str;
+		entry->isdir = FALSE;
+
+		g_string_free (str, FALSE);
+
+		*files = g_list_prepend (*files, entry);
+
+		return TRUE;
 	} else {
 		return FALSE;
 	}
