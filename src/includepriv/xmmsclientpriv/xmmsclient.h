@@ -65,6 +65,7 @@ xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t typ
 uint32_t xmmsc_result_cookie_get (xmmsc_result_t *result);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 
+xmmsc_result_t *xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd,  xmmsv_t *first_arg, ...);
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);

@@ -123,20 +123,12 @@ xmmsc_init (const char *clientname)
 static xmmsc_result_t *
 xmmsc_send_hello (xmmsc_connection_t *c)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
 	const int protocol_version = XMMS_IPC_PROTOCOL_VERSION;
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (protocol_version),
-	                         XMMSV_LIST_ENTRY_STR (c->clientname),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO,
+	                       XMMSV_LIST_ENTRY_INT (protocol_version),
+	                       XMMSV_LIST_ENTRY_STR (c->clientname),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -358,21 +350,9 @@ xmmsc_write_msg_to_ipc (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 xmmsc_result_t *
 xmmsc_send_broadcast_msg (xmmsc_connection_t *c, int signalid)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsc_result_t *res;
-	xmmsv_t *args;
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST,
+	                       XMMSV_LIST_ENTRY_INT (signalid),
+	                       XMMSV_LIST_END);
 }
 
 
@@ -399,19 +379,10 @@ xmmsc_write_signal_msg (xmmsc_connection_t *c, int signalid)
 xmmsc_result_t *
 xmmsc_send_signal_msg (xmmsc_connection_t *c, int signalid)
 {
-	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
-	xmmsv_t *args;
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	res = xmmsc_send_msg (c, msg);
+	res = xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL,
+	                      XMMSV_LIST_ENTRY_INT (signalid), XMMSV_LIST_END);
 
 	xmmsc_result_restartable (res, signalid);
 
@@ -454,6 +425,26 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	}
 
 	return xmmsc_result_new (c, type, cookie);
+}
+
+xmmsc_result_t *
+xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd,
+                xmmsv_t *first_arg, ...)
+{
+	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
+	va_list ap;
+
+	msg = xmms_ipc_msg_new (obj, cmd);
+
+	va_start (ap, first_arg);
+	args = xmmsv_build_list_va (first_arg, ap);
+	va_end (ap);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
+
+	return xmmsc_send_msg (c, msg);
 }
 
 /**

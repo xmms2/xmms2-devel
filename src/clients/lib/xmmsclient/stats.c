@@ -38,20 +38,10 @@
 xmmsc_result_t *
 xmmsc_main_list_plugins (xmmsc_connection_t *c, xmms_plugin_type_t type)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (type),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST,
+	                       XMMSV_LIST_ENTRY_INT (type), XMMSV_LIST_END);
 }
 
 /**

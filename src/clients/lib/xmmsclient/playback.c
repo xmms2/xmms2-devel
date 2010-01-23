@@ -99,21 +99,12 @@ xmmsc_playback_start (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
-	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS,
+	                       XMMSV_LIST_ENTRY_INT (milliseconds),
+	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -129,21 +120,12 @@ xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds)
 xmmsc_result_t *
 xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
-	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS,
+	                       XMMSV_LIST_ENTRY_INT (milliseconds),
+	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -161,21 +143,12 @@ xmmsc_result_t *
 xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds,
                         xmms_playback_seek_mode_t whence)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (milliseconds),
-	                         XMMSV_LIST_ENTRY_INT (whence),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS,
+	                       XMMSV_LIST_ENTRY_INT (milliseconds),
+	                       XMMSV_LIST_ENTRY_INT (whence),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -190,21 +163,13 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds,
 xmmsc_result_t *
 xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
-	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
+	                       XMMS_IPC_CMD_SEEKSAMPLES,
+	                       XMMSV_LIST_ENTRY_INT (samples),
+	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -220,21 +185,13 @@ xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples)
 xmmsc_result_t *
 xmmsc_playback_seek_samples_rel (xmmsc_connection_t *c, int samples)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
-	                         XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
+	                       XMMS_IPC_CMD_SEEKSAMPLES,
+	                       XMMSV_LIST_ENTRY_INT (samples),
+	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -253,21 +210,13 @@ xmmsc_result_t *
 xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples,
                              xmms_playback_seek_mode_t whence)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKSAMPLES);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (samples),
-	                         XMMSV_LIST_ENTRY_INT (whence),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
+	                       XMMS_IPC_CMD_SEEKSAMPLES,
+	                       XMMSV_LIST_ENTRY_INT (samples),
+	                       XMMSV_LIST_ENTRY_INT (whence),
+	                       XMMSV_LIST_END);
 }
 
 /**
@@ -346,23 +295,14 @@ xmmsc_result_t *
 xmmsc_playback_volume_set (xmmsc_connection_t *c,
                            const char *channel, int volume)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 	x_api_error_if (!channel, "with a NULL channel", NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYBACK,
-	                        XMMS_IPC_CMD_VOLUME_SET);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (channel),
-	                         XMMSV_LIST_ENTRY_INT (volume),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
+	                       XMMS_IPC_CMD_VOLUME_SET,
+	                       XMMSV_LIST_ENTRY_STR (channel),
+	                       XMMSV_LIST_ENTRY_INT (volume),
+	                       XMMSV_LIST_END);
 }
 
 xmmsc_result_t *

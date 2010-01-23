@@ -33,23 +33,15 @@ xmmsc_bindata_add (xmmsc_connection_t *c,
                    const unsigned char *data,
                    unsigned int len)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args, *bin;
+	xmmsc_result_t *res;
+	xmmsv_t *bin;
 
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
-	                        XMMS_IPC_CMD_ADD_DATA);
-
 	bin = xmmsv_new_bin (data, len);
 
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY (bin),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_BINDATA, XMMS_IPC_CMD_ADD_DATA,
+	                       XMMSV_LIST_ENTRY (bin), XMMSV_LIST_END);
 }
 
 /**
@@ -59,21 +51,10 @@ xmmsc_bindata_add (xmmsc_connection_t *c,
 xmmsc_result_t *
 xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
-	                        XMMS_IPC_CMD_GET_DATA);
-
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (hash),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_BINDATA, XMMS_IPC_CMD_GET_DATA,
+	                       XMMSV_LIST_ENTRY_STR (hash), XMMSV_LIST_END);
 }
 
 /**
@@ -82,20 +63,10 @@ xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash)
 xmmsc_result_t *
 xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash)
 {
-	xmms_ipc_msg_t *msg;
-	xmmsv_t *args;
-
 	x_check_conn (c, NULL);
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
-	                        XMMS_IPC_CMD_REMOVE_DATA);
 
-	args = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (hash),
-	                         XMMSV_LIST_END);
-
-	xmms_ipc_msg_put_value (msg, args);
-	xmmsv_unref (args);
-
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_BINDATA, XMMS_IPC_CMD_REMOVE_DATA,
+	                       XMMSV_LIST_ENTRY_STR (hash), XMMSV_LIST_END);
 }
 
 /**
@@ -104,11 +75,8 @@ xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash)
 xmmsc_result_t *
 xmmsc_bindata_list (xmmsc_connection_t *c)
 {
-	xmms_ipc_msg_t *msg;
-
 	x_check_conn (c, NULL);
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
-	                        XMMS_IPC_CMD_LIST_DATA);
 
-	return xmmsc_send_msg (c, msg);
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_BINDATA, XMMS_IPC_CMD_LIST_DATA,
+	                       XMMSV_LIST_END);
 }
