@@ -27,13 +27,13 @@ def configure(conf):
     conf.check_cc(header_name=rl_headers, mandatory=True)
 
     # first try just linking against libreadline
-    if conf.check_cc(lib="readline", header_name=rl_headers, function_name='rl_filename_dequoting_function', uselib_store="readline"):
+    if conf.check_cc(lib="readline", header_name=rl_headers, uselib_store="readline"):
         return
 
     # then try ncurses
     conf.check_cc(lib="ncurses", uselib_store="readline-ncurses", mandatory=True)
 
-    if conf.check_cc(lib="readline", header_name=rl_headers, function_name='rl_filename_dequoting_function', uselib_store="readline", uselib="readline-ncurses"):
+    if conf.check_cc(lib="readline", header_name=rl_headers, uselib_store="readline", uselib="readline-ncurses"):
         return
 
     # Ok, we give up..
