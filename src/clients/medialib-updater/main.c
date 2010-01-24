@@ -443,7 +443,6 @@ static int
 updater_remove_directory_by_id (xmmsv_t *value, void *udata)
 {
 	xmmsv_list_iter_t *it;
-	updater_t *updater;
 
 	xmmsv_get_list_iter (value, &it);
 	while (xmmsv_list_iter_valid (it)) {
@@ -587,8 +586,6 @@ on_entity_changed (updater_t *updater, GFile *entity)
 static void
 on_entity_deleted (updater_t *updater, GFile *entity)
 {
-	GFileType type;
-
 	g_debug ("entity deleted");
 
 	g_return_if_fail (updater);
