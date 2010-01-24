@@ -299,7 +299,7 @@ updater_config_changed (xmmsv_t *value, void *udata)
 	g_return_val_if_fail (updater, FALSE);
 
 	if (xmmsv_dict_entry_get_string (value, "clients.mlibupdater.watch_dirs", &path)) {
-		if (strlen (path) > 0) {
+		if (*path) {
 			updater_switch_directory (updater, path);
 		}
 	}
@@ -322,7 +322,7 @@ updater_config_get (xmmsv_t *value, void *udata)
 		return FALSE;
 	}
 
-	if (strlen (path) > 0) {
+	if (*path) {
 		updater_switch_directory (updater, path);
 	}
 
