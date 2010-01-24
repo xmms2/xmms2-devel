@@ -20,6 +20,25 @@
 /*
  * Type definitions
  */
+static const struct {
+	const gchar *key;
+	const gchar *value;
+} config_params[] = {
+	{"freq", "44100"},
+	{"resample", "fir"},
+	{"enable_oversampling", "1"},
+	{"enable_noise_reduction", "1"},
+	{"enable_reverb", "0"},
+	{"enable_megabass", "0"},
+	{"enable_surround", "0"},
+	{"reverb_depth", "100"},
+	{"reverb_delay", "80"},
+	{"bass_amount", "40"},
+	{"bass_range", "30"},
+	{"surround_depth", "10"},
+	{"surround_delay", "40"},
+	{"loop", "0"}
+};
 
 typedef struct xmms_modplug_data_St {
 	ModPlug_Settings settings;
@@ -36,6 +55,7 @@ static gint xmms_modplug_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len
 static void xmms_modplug_destroy (xmms_xform_t *xform);
 static gboolean xmms_modplug_init (xmms_xform_t *xform);
 /*static gboolean xmms_modplug_seek (xmms_xform_t *xform, guint samples);*/
+static void xmms_modplug_config_changed (xmms_object_t *obj, xmmsv_t *_value, gpointer udata);
 
 /*
  * Plugin header
@@ -50,6 +70,7 @@ static gboolean
 xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
+	int i;
 
 	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_modplug_init;
@@ -129,6 +150,13 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_magic_add ("32-channel Taketracker module", "audio/mod",
 	                "1080 string 32CN", NULL);
 
+	for (i = 0; i < G_N_ELEMENTS (config_params); i++) {
+		xmms_xform_plugin_config_property_register (xform_plugin,
+		                                            config_params[i].key,
+		                                            config_params[i].value,
+		                                            NULL, NULL);
+	}
+
 	return TRUE;
 }
 
@@ -136,6 +164,8 @@ static void
 xmms_modplug_destroy (xmms_xform_t *xform)
 {
 	xmms_modplug_data_t *data;
+	xmms_config_property_t *cfgv;
+	int i;
 
 	g_return_if_fail (xform);
 
@@ -147,6 +177,14 @@ xmms_modplug_destroy (xmms_xform_t *xform)
 
 	if (data->mod)
 		ModPlug_Unload (data->mod);
+
+	for (i = 0; i < G_N_ELEMENTS (config_params); i++) {
+		cfgv = xmms_xform_config_lookup (xform, config_params[i].key);
+
+		xmms_config_property_callback_remove (cfgv,
+		                                      xmms_modplug_config_changed,
+		                                      data);
+	}
 
 	g_free (data);
 
@@ -174,12 +212,28 @@ xmms_modplug_init (xmms_xform_t *xform)
 	xmms_modplug_data_t *data;
 	const gchar *metakey;
 	gint filesize;
+	xmms_config_property_t *cfgv;
+	gint i;
 
 	g_return_val_if_fail (xform, FALSE);
 
 	data = g_new0 (xmms_modplug_data_t, 1);
 
 	xmms_xform_private_data_set (xform, data);
+
+	for (i = 0; i < G_N_ELEMENTS (config_params); i++) {
+		cfgv = xmms_xform_config_lookup (xform, config_params[i].key);
+		xmms_config_property_callback_set (cfgv,
+		                                   xmms_modplug_config_changed,
+		                                   data);
+
+		xmms_modplug_config_changed (XMMS_OBJECT (cfgv), NULL, data);
+	}
+
+	/* mFrequency and mResamplingMode are set in config_changed */
+	data->settings.mChannels = 2;
+	data->settings.mBits = 16;
+	ModPlug_SetSettings (&data->settings);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -189,15 +243,8 @@ xmms_modplug_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
 	                             2,
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                             44100,
+	                             data->settings.mFrequency,
 	                             XMMS_STREAM_TYPE_END);
-
-	data->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR;
-	data->settings.mChannels = 2;
-	data->settings.mBits = 16;
-	data->settings.mFrequency = 44100;
-	/* more? */
-	ModPlug_SetSettings (&data->settings);
 
 	data->buffer = g_string_new ("");
 
@@ -245,4 +292,84 @@ xmms_modplug_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error
 	data = xmms_xform_private_data_get (xform);
 
 	return ModPlug_Read (data->mod, buf, len);
+}
+
+static void
+xmms_modplug_config_changed (xmms_object_t *obj, xmmsv_t *_value,
+                             gpointer udata)
+{
+	xmms_modplug_data_t *data = udata;
+	xmms_config_property_t *prop = (xmms_config_property_t *) obj;
+	const gchar *name;
+	const gchar *value;
+	gint intvalue;
+
+	name = xmms_config_property_get_name (prop);
+
+	if (!g_ascii_strcasecmp (name, "modplug.resample")) {
+		value = xmms_config_property_get_string (prop);
+
+		if (!g_ascii_strcasecmp (value, "fir")) {
+			data->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR;
+		} else if (!g_ascii_strcasecmp (value, "spline")) {
+			data->settings.mResamplingMode = MODPLUG_RESAMPLE_SPLINE;
+		} else if (!g_ascii_strcasecmp (value, "linear")) {
+			data->settings.mResamplingMode = MODPLUG_RESAMPLE_LINEAR;
+		} else {
+			data->settings.mResamplingMode = MODPLUG_RESAMPLE_NEAREST;
+		}
+	} else {
+		intvalue = xmms_config_property_get_int (prop);
+
+		if (!g_ascii_strcasecmp (name, "modplug.freq")) {
+			data->settings.mFrequency = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.reverb_depth")) {
+			data->settings.mReverbDepth = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.reverb_delay")) {
+			data->settings.mReverbDelay = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.bass_amount")) {
+			data->settings.mBassAmount = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.bass_range")) {
+			data->settings.mBassRange = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.surround_depth")) {
+			data->settings.mSurroundDepth = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.surround_delay")) {
+			data->settings.mSurroundDelay = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.loop")) {
+			data->settings.mLoopCount = intvalue;
+		} else if (!g_ascii_strcasecmp (name, "modplug.enable_oversampling")) {
+			if (intvalue) {
+				data->settings.mFlags |= MODPLUG_ENABLE_OVERSAMPLING;
+			} else {
+				data->settings.mFlags &= ~MODPLUG_ENABLE_OVERSAMPLING;
+			}
+		} else if (!g_ascii_strcasecmp (name,
+		                                "modplug.enable_noise_reduction")) {
+			if (intvalue) {
+				data->settings.mFlags |= MODPLUG_ENABLE_NOISE_REDUCTION;
+			} else {
+				data->settings.mFlags &= ~MODPLUG_ENABLE_NOISE_REDUCTION;
+			}
+		} else if (!g_ascii_strcasecmp (name, "modplug.enable_reverb")) {
+			if (intvalue) {
+				data->settings.mFlags |= MODPLUG_ENABLE_REVERB;
+			} else {
+				data->settings.mFlags &= ~MODPLUG_ENABLE_REVERB;
+			}
+		} else if (!g_ascii_strcasecmp (name, "modplug.enable_megabass")) {
+			if (intvalue) {
+				data->settings.mFlags |= MODPLUG_ENABLE_MEGABASS;
+			} else {
+				data->settings.mFlags &= ~MODPLUG_ENABLE_MEGABASS;
+			}
+		} else if (!g_ascii_strcasecmp (name, "modplug.enable_surround")) {
+			if (intvalue) {
+				data->settings.mFlags |= MODPLUG_ENABLE_SURROUND;
+			} else {
+				data->settings.mFlags &= ~MODPLUG_ENABLE_SURROUND;
+			}
+		}
+	}
+
+	ModPlug_SetSettings (&data->settings);
 }
