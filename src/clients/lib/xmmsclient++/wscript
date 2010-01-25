@@ -26,7 +26,7 @@ def build(bld):
     """.split()
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'BOOST socket'
-    obj.vnum = '3.0.0'
+    obj.vnum = '4.0.0'
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
