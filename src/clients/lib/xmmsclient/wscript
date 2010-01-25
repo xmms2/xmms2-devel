@@ -31,7 +31,7 @@ def build(bld):
     else:
         obj.source += ["visualization/dummy.c"]
 
-    obj.vnum = "5.0.0"
+    obj.vnum = "6.0.0"
 
     tool.add_install_flag(bld, obj)
 
