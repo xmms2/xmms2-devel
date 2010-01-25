@@ -891,10 +891,11 @@ class BuildContext(Utils.Context):
 				link = True
 			elif os.readlink(tgt) != src:
 				link = True
+
+			if link:
 				try: os.remove(tgt)
 				except OSError: pass
 
-			if link:
 				info('* symlink %s (-> %s)' % (tgt, src))
 				os.symlink(src, tgt)
 			return 0
