@@ -186,7 +186,7 @@ xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t dest
 
 #define xmms_object_ref(obj) do { \
 	if (obj && XMMS_IS_OBJECT (obj)) { \
-		XMMS_OBJECT (obj)->ref++; \
+		g_atomic_int_inc (&(XMMS_OBJECT (obj)->ref)); \
 	} \
 } while (0)
 
