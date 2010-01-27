@@ -37,6 +37,10 @@ N: Raphaël Bois
 E: vdust@free.fr
 D: Bindata bugfix.
 
+N: Romain Boissat
+E: r.boissat@gmail.com
+D: nycli documentation fix.
+
 N: Alexander Botero-Lowry
 E: alex.boterolowry@gmail.com
 D: *BSD support. Manpages. Various fixes.
