@@ -2,8 +2,9 @@ from waftools.plugin import plugin
 
 def plugin_configure(conf):
     if conf.check_cc(header_name='AudioUnit/AudioUnit.h', defines="HAVE_COREAUDIO"):
-        conf.env['LINKFLAGS_coreaudio'] = ['-framework CoreAudio', '-framework AudioUnit',
-                 '-framework CoreServices']
+        conf.env['LINKFLAGS_coreaudio'] = ['-framework', 'CoreAudio',
+                                           '-framework', 'AudioUnit',
+                                           '-framework', 'CoreServices']
         return True
     return False
 
