@@ -259,7 +259,7 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *prop
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
 	                       XMMS_IPC_CMD_VISUALIZATION_PROPERTIES,
 	                       XMMSV_LIST_ENTRY_INT (v->id),
-	                       XMMSV_LIST_ENTRY (props),
+	                       XMMSV_LIST_ENTRY (xmmsv_ref (props)),
 	                       XMMSV_LIST_END);
 }
 
