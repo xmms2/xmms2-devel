@@ -173,6 +173,11 @@ xmms_wavpack_init (xmms_xform_t *xform)
 	                                    xform, xform,
 	                                    error, OPEN_TAGS, 0);
 
+	if (!data->ctx) {
+		xmms_log_error ("Unable to open wavpack file: %s", error);
+		return FALSE;
+	}
+
 	data->channels = WavpackGetNumChannels (data->ctx);
 	data->bits_per_sample = WavpackGetBitsPerSample (data->ctx);
 	data->num_samples = WavpackGetNumSamples (data->ctx);
