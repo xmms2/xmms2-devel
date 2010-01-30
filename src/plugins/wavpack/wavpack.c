@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2006-2009 XMMS2 Team
+ *  Copyright (C) 2006-2010 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -101,6 +101,7 @@ static gint xmms_wavpack_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len
                                xmms_error_t *error);
 static void xmms_wavpack_destroy (xmms_xform_t *xform);
 
+static void xmms_wavpack_free_data (xmms_wavpack_data_t *data);
 static int32_t wavpack_read_bytes (void *id, void *data, int32_t bcount);
 static uint32_t wavpack_get_pos (void *id);
 static int wavpack_set_pos_abs (void *id, uint32_t pos);
@@ -175,6 +176,8 @@ xmms_wavpack_init (xmms_xform_t *xform)
 
 	if (!data->ctx) {
 		xmms_log_error ("Unable to open wavpack file: %s", error);
+		xmms_xform_private_data_set (xform, NULL);
+		xmms_wavpack_free_data (data);
 		return FALSE;
 	}
 
@@ -210,6 +213,8 @@ xmms_wavpack_init (xmms_xform_t *xform)
 	default:
 		xmms_log_error ("Unsupported bits-per-sample in wavpack file: %d",
 		                data->bits_per_sample);
+		xmms_xform_private_data_set (xform, NULL);
+		xmms_wavpack_free_data (data);
 		return FALSE;
 	}
 
@@ -385,11 +390,7 @@ xmms_wavpack_destroy (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	if (data->buf) {
-		g_free (data->buf);
-	}
-
-	g_free (data);
+	xmms_wavpack_free_data (data);
 }
 
 static int32_t
@@ -563,4 +564,22 @@ wavpack_can_seek (void *id)
 	ret = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &error);
 
 	return (ret != -1);
+}
+
+static void
+xmms_wavpack_free_data (xmms_wavpack_data_t *data)
+{
+	if (!data) {
+		return;
+	}
+
+	if (data->buf) {
+		g_free (data->buf);
+	}
+
+	if (data->ctx) {
+		WavpackCloseFile (data->ctx);
+	}
+
+	g_free (data);
 }
