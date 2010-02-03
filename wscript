@@ -23,7 +23,7 @@ import Build
 import Configure
 from logging import fatal, warning
 
-BASEVERSION="0.6 DrMattDestruction+WIP+TEST1"
+BASEVERSION="0.6 DrMattDestruction+WIP+TEST2"
 APPNAME='xmms2'
 
 srcdir='.'
