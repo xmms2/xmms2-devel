@@ -45,15 +45,11 @@ def build(bld):
         obj.install_path = '${ARCHDIR_RUBY}'
 
 def configure(conf):
-    conf.check_tool("ruby", tooldir=os.path.abspath('waftools'))
+    conf.check_tool("ruby")
+    conf.check_ruby_version((1,8,0))
+    conf.check_ruby_ext_devel()
 
-    if not conf.check_ruby_version((1,8,0)):
-        conf.fatal("Wrong Ruby version")
-
-    if not conf.check_ruby_ext_devel():
-        conf.fatal("Cannot compile Ruby extensions")
-
-    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="RUBY")
+    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="RUBYEXT")
 
     if not os.path.commonprefix([conf.env['ARCHDIR_RUBY'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
         warning('default ruby archdir is not under PREFIX. specify path '
