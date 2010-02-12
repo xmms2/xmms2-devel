@@ -1580,7 +1580,7 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
 void
 configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
                     gint history, gint upcoming, xmmsv_coll_type_t type,
-                    gchar *input)
+                    gchar *input, gchar *jumplist)
 {
 	xmmsc_result_t *saveres;
 	xmmsv_coll_t *coll;
@@ -1609,6 +1609,10 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 			xmmsv_list_clear (xmmsv_coll_operands_get (coll));
 			xmmsv_coll_add_operand (coll, newcoll);
 			xmmsv_coll_unref (newcoll);
+		}
+		if (jumplist) {
+			/* FIXME: Check for the existence of the target ? */
+			xmmsv_coll_attribute_set (coll, "jumplist", jumplist);
 		}
 
 		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
@@ -1770,12 +1774,14 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 	gchar *history = NULL;
 	gchar *input = NULL;
 	gchar *input_ns = NULL;
+	gchar *jumplist = NULL;
 	xmmsv_t *v;
 
 	type = xmmsv_coll_get_type (coll);
 
 	xmmsv_coll_attribute_get (coll, "upcoming", &upcoming);
 	xmmsv_coll_attribute_get (coll, "history", &history);
+	xmmsv_coll_attribute_get (coll, "jumplist", &jumplist);
 
 	g_printf (_("name: %s\n"), name);
 
@@ -1802,6 +1808,9 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 	default:
 		g_printf (_("type: unknown!\n"));
 		break;
+	}
+	if (jumplist) {
+		g_printf (_("jumplist: %s\n"), jumplist);
 	}
 }
 

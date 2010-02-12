@@ -356,10 +356,11 @@ cli_pl_config_setup (command_action_t *action)
 		{ "history", 's', 0, G_OPTION_ARG_INT, NULL, _("Size of the history of played tracks (for queue, pshuffle)."), "n" },
 		{ "upcoming",'u', 0, G_OPTION_ARG_INT, NULL, _("Number of upcoming tracks to maintain (for pshuffle)."), "n" },
 		{ "input",   'i', 0, G_OPTION_ARG_STRING, NULL, _("Input collection for the playlist (for pshuffle). Default to 'All Media'."), "coll" },
+		{ "jumplist",'j', 0, G_OPTION_ARG_STRING, NULL, _("Jump to another playlist when the end of the playlist is reached."), "playlist"},
 		{ NULL }
 	};
 	command_action_fill (action, "playlist config", &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [playlist]"),
+	                     _("[-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [-j <playlist>] [playlist]"),
 	                     _("Configure a playlist by changing its type, attributes, etc.\nBy default, configure the active playlist."));
 }
 
@@ -1659,13 +1660,14 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	gchar *playlist;
 	gint history, upcoming;
 	xmmsc_coll_type_t type;
-	gchar *typestr, *input;
+	gchar *typestr, *input, *jumplist;
 	gboolean modif = FALSE;
 
 	history = -1;
 	upcoming = -1;
 	type = -1;
 	input = NULL;
+	jumplist = NULL;
 
 	/* Convert type string to type id */
 	if (command_flag_string_get (ctx, "type", &typestr)) {
@@ -1712,6 +1714,10 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		input = "All Media";
 	}
 
+	if (command_flag_string_get (ctx, "jumplist", &jumplist)) {
+		modif = TRUE;
+	}
+
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = infos->cache->active_playlist_name;
 	}
@@ -1721,7 +1727,7 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (res);
 		configure_playlist (res, infos, playlist, history, upcoming,
-		                    type, input);
+		                    type, input, jumplist);
 	} else {
 		/* Display current config of the playlist. */
 		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
