@@ -906,7 +906,7 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val, *entry;
-	gchar *p, *path, *urls = NULL, *fullurl, *scheme;
+	gchar *p, *path, *urls = NULL, *fullurl, *scheme, *filename;
 	const gchar *cpath;
 	gint ret = 0;
 
@@ -938,6 +938,7 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 	 * scheme and path part back together
 	 */
 	path = g_path_get_dirname (urls);
+	filename = g_path_get_basename (urls);
 	fullurl = g_strconcat (scheme, urls, NULL);
 	urls = g_strconcat (scheme, path, NULL);
 	g_free (path);
@@ -950,20 +951,29 @@ url_isdir (cli_infos_t *infos, const gchar *const url)
 
 	if (!xmmsv_is_error (val)) {
 		xmmsv_list_iter_t *it;
+
+		/* the xform browsing doesn't return '.' and '..' entries, so
+		 * we check them here once we know the parent directory is
+		 * valid
+		 */
+		if (!strcmp (filename, ".") || !strcmp (filename, "..")) {
+			ret = 1;
+		}
+
 		xmmsv_get_list_iter (val, &it);
 		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_valid (it) && !ret;
 		     xmmsv_list_iter_next (it)) {
 
 			xmmsv_list_iter_entry (it, &entry);
 			xmmsv_dict_entry_get_string (entry, "path", &cpath);
 			if (!strcmp (cpath, fullurl)) {
 				xmmsv_dict_entry_get_int (entry, "isdir", &ret);
-				break;
 			}
 		}
 	}
 
+	g_free (filename);
 	g_free (fullurl);
 	g_free (urls);
 	xmmsc_result_unref (res);
