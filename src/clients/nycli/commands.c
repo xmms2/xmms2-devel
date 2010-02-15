@@ -200,16 +200,13 @@ void
 cli_search_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "playlist",   'p', 0, G_OPTION_ARG_STRING, NULL, _("Search in the given playlist."), "name" },
-		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Search in the given collection."), "name" },
 		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop1[,prop2...]" },
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop1[,prop2...]" },
 		{ NULL }
 	};
 	command_action_fill (action, "search", &cli_search, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-p <name> | -c <name>] [-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
-	                     _("Search and print all media matching the pattern. Search can be restricted\n"
-	                       "to a collection or a playlist by using the corresponding flag."));
+	                     _("[-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
+	                     _("Search and print all media matching the pattern."));
 }
 
 void
@@ -242,7 +239,7 @@ cli_add_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-f [-N] [-P]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]"),
+	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
