@@ -24,8 +24,6 @@
 #include "command_trie.h"
 #include "alias.h"
 
-static void cli_infos_loop_resume_from_alias (cli_infos_t *infos);
-
 static gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
@@ -71,10 +69,9 @@ cli_infos_alias_end (cli_infos_t *infos)
 	if (infos->status != CLI_ACTION_STATUS_FINISH &&
 	    infos->status != CLI_ACTION_STATUS_REFRESH &&
 	    infos->alias_count == 0) {
-		cli_infos_loop_resume_from_alias (infos);
-	} else {
-		cli_infos_loop_resume (infos);
+		infos->status = CLI_ACTION_STATUS_BUSY;
 	}
+	cli_infos_loop_resume (infos);
 }
 
 void
@@ -99,19 +96,6 @@ cli_infos_loop_resume (cli_infos_t *infos)
 		readline_resume (infos);
 	}
 	infos->status = CLI_ACTION_STATUS_READY;
-}
-
-static void
-cli_infos_loop_resume_from_alias (cli_infos_t *infos)
-{
-	if (infos->mode == CLI_EXECUTION_MODE_INLINE) {
-		/* We still have IO to do. */
-		infos->status = CLI_ACTION_STATUS_BUSY;
-	} else {
-		readline_resume (infos);
-
-		infos->status = CLI_ACTION_STATUS_READY;
-	}
 }
 
 void
