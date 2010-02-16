@@ -2221,9 +2221,10 @@ cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
-	if (infos->conn) {
-		res = xmmsc_quit (infos->conn);
-		xmmsc_result_unref (res);
+	if (infos->sync) {
+		res = xmmsc_quit (infos->sync);
+		xmmsc_result_wait (res);
+		done (res, infos);
 	} else {
 		return FALSE;
 	}
