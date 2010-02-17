@@ -309,9 +309,6 @@ cli_cache_start (cli_infos_t *infos)
 {
 	xmmsc_result_t *res;
 
-	/* Setup one-time value fetchers, for init */
-	cli_cache_refresh (infos);
-
 	/* Setup async listeners */
 	res = xmmsc_broadcast_playlist_current_pos (infos->conn);
 	xmmsc_result_notifier_set (res, &refresh_currpos, infos->cache);
@@ -336,6 +333,9 @@ cli_cache_start (cli_infos_t *infos)
 	res = xmmsc_broadcast_collection_changed (infos->conn);
 	xmmsc_result_notifier_set (res, &update_active_playlist_name, infos);
 	xmmsc_result_unref (res);
+
+	/* Setup one-time value fetchers, for init */
+	cli_cache_refresh (infos);
 }
 
 /** Check whether the cache is currently fresh (up-to-date). */

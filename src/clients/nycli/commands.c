@@ -65,7 +65,7 @@ CLI_SIMPLE_SETUP("pause", cli_pause,
                  NULL,
                  _("Pause playback."))
 CLI_SIMPLE_SETUP("toggle", cli_toggle, /* <<<<< */
-                 COMMAND_REQ_CONNECTION,
+                 COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
                  NULL,
                  _("Toggle playback."))
 CLI_SIMPLE_SETUP("seek", cli_seek,
