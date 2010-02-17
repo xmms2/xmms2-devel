@@ -219,6 +219,8 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->block_align = data->block_align;
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
+	data->codecctx->codec_id = codec->id;
+	data->codecctx->codec_type = codec->type;
 
 	if (avcodec_open (data->codecctx, codec) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
