@@ -92,19 +92,6 @@ xmms_ipc_msg_alloc (void)
 	return msg;
 }
 
-xmms_ipc_msg_t *
-xmms_ipc_msg_new (uint32_t object, uint32_t cmd)
-{
-	xmms_ipc_msg_t *msg;
-
-	msg = xmms_ipc_msg_alloc ();
-
-	xmms_ipc_msg_set_cmd (msg, cmd);
-	xmms_ipc_msg_set_object (msg, object);
-
-	return msg;
-}
-
 void
 xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 {
@@ -114,7 +101,7 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 	free (msg);
 }
 
-void
+static void
 xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len)
 {
 	x_return_if_fail (msg);
@@ -124,7 +111,7 @@ xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len)
 	xmmsv_bitbuffer_end (msg->bb);
 }
 
-uint32_t
+static uint32_t
 xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg)
 {
 	int len, p;
@@ -150,7 +137,7 @@ xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg)
 	return obj;
 }
 
-void
+static void
 xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, uint32_t object)
 {
 	x_return_if_fail (msg);
@@ -173,7 +160,7 @@ xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg)
 	return cmd;
 }
 
-void
+static void
 xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, uint32_t cmd)
 {
 	x_return_if_fail (msg);
@@ -203,6 +190,20 @@ xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg)
 	xmmsv_bitbuffer_goto (msg->bb, p);
 	return cookie;
 }
+
+xmms_ipc_msg_t *
+xmms_ipc_msg_new (uint32_t object, uint32_t cmd)
+{
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_alloc ();
+
+	xmms_ipc_msg_set_cmd (msg, cmd);
+	xmms_ipc_msg_set_object (msg, object);
+
+	return msg;
+}
+
 
 /**
  * Try to write message to transport. If full message isn't written
