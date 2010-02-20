@@ -20,7 +20,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c'] + types_suite
     obj.includes = '. ../ runner/ ../src ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit valgrind'
+    obj.uselib = 'cunit valgrind NOWRITESTRINGS'
     obj.install_path = None
 
     obj = bld.new_task_gen('cc', 'program')
@@ -28,7 +28,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c', '../src/xmms/streamtype.c', '../src/xmms/object.c'] + server_suite
     obj.includes = '. ../ runner/ ../src ../src/includepriv ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit valgrind glib2 gthread2'
+    obj.uselib = 'cunit valgrind glib2 gthread2 NOWRITESTRINGS'
     obj.install_path = None
 
 
