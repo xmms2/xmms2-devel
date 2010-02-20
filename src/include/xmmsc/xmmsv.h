@@ -218,7 +218,7 @@ xmmsv_t *xmmsv_bitbuffer_new (void);
 int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res);
 int xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len);
 int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d);
-int xmmsv_bitbuffer_put_data (xmmsv_t *v, unsigned char *b, int len);
+int xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len);
 int xmmsv_bitbuffer_align (xmmsv_t *v);
 int xmmsv_bitbuffer_goto (xmmsv_t *v, int pos);
 int xmmsv_bitbuffer_pos (xmmsv_t *v);

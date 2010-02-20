@@ -2610,7 +2610,7 @@ xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d)
 }
 
 int
-xmmsv_bitbuffer_put_data (xmmsv_t *v, unsigned char *b, int len)
+xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len)
 {
 	while (len) {
 		int t;
