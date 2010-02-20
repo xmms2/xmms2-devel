@@ -1750,6 +1750,7 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 
 	if (!command_arg_string_get (ctx, 0, &fullname)) {
 		g_printf (_("Error: You must provide a collection name!\n"));
+		return FALSE;
 	}
 	coll_name_split (fullname, &ns, &name);
 
