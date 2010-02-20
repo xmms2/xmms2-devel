@@ -59,8 +59,10 @@ sigwaiter (gpointer data)
 
 				xmms_object_cmd_arg_init (&arg);
 				memset (&arg, 0, sizeof (arg));
+				arg.args = xmmsv_new_list ();
 				xmms_error_reset (&arg.error);
 				xmms_object_cmd_call (obj, XMMS_IPC_CMD_QUIT, &arg);
+				xmmsv_unref (arg.args);
 				break;
 		}
 	}

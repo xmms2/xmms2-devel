@@ -91,35 +91,6 @@ static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t 
 static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 
-static gboolean
-type_and_msg_to_arg (xmmsv_type_t expected_type, xmmsv_t *argument_list,
-                     xmms_object_cmd_arg_t *arg, gint i)
-{
-	xmmsv_t *arg_value;
-	xmmsv_type_t actual_type;
-
-	if (argument_list && xmmsv_list_get (argument_list, i, &arg_value)) {
-		xmmsv_ref (arg_value);
-	} else {
-		arg_value = xmmsv_new_none ();
-	}
-
-	actual_type = xmmsv_get_type (arg_value);
-
-	if (actual_type != expected_type) {
-		XMMS_DBG ("Expected type %i, but got type %i",
-		          expected_type, actual_type);
-
-		xmmsv_unref (arg_value);
-
-		return FALSE;
-	} else {
-		arg->values[i] = arg_value;
-
-		return TRUE;
-	}
-}
-
 static void
 xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
 {
@@ -248,28 +219,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	}
 
 	xmms_object_cmd_arg_init (&arg);
-
-	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (!type_and_msg_to_arg (cmd->args[i], arguments, &arg, i)) {
-			xmms_log_error ("Error parsing args");
-
-			if (objid == XMMS_IPC_OBJECT_MAIN &&
-			    cmdid == XMMS_IPC_CMD_HELLO) {
-				xmms_log_error ("Couldn't parse hello message. "
-				                "Maybe the client or libxmmsclient "
-				                "needs to be updated.");
-			}
-
-			retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
-
-			error = xmmsv_new_error ("Corrupt msg");
-			xmms_ipc_msg_put_value (retmsg, error);
-			xmmsv_unref (error);
-
-			goto err;
-		}
-
-	}
+	arg.args = arguments;
 
 	xmms_object_cmd_call (object, cmdid, &arg);
 	if (xmms_error_isok (&arg.error)) {
@@ -296,10 +246,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		xmmsv_unref (arg.retval);
 
 err:
-	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (arg.values[i])
-			xmmsv_unref (arg.values[i]);
-	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);

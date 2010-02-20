@@ -114,19 +114,32 @@ def emit_method_define_code(object, method, c_type):
 	Indenter.printline("%s (xmms_object_t *object, xmms_object_cmd_arg_t *arg)" % method_name_to_cname (method.name))
 	Indenter.enter("{")
 
+	if method.arguments:
+		Indenter.printline("xmmsv_t *t;")
+
+	Indenter.enter("if (xmmsv_list_get_size (arg->args) != %d) {" % len(method.arguments))
+	Indenter.printline('XMMS_DBG ("Wrong number of arguments to %s (%%d)", xmmsv_list_get_size (arg->args));' % method.name)
+	Indenter.printline('return;')
+	Indenter.leave("}")
+
 	for i, a in enumerate(method.arguments):
 		Indenter.printline("%s argval%d;" % (c_type_map[a.type[0]], i))
 
 	Indenter.printline()
 
 	for i, a in enumerate(method.arguments):
+		Indenter.enter("if (!xmmsv_list_get (arg->args, %d, &t)) {" % i)
+		Indenter.printline('XMMS_DBG ("Missing arg in %s");' % method.name)
+		Indenter.printline('return;')
+		Indenter.leave("}")
+
 		if c_getter_map[a.type[0]] is None:
-			Indenter.printline("argval%d = arg->values[%d];" % (i, i))
+			Indenter.printline("argval%d = t;" % i)
 		else:
-			Indenter.printline("if (!%s (arg->values[%d], &argval%d)) {" % (c_getter_map[a.type[0]], i, i))
-			Indenter.printline('\tXMMS_DBG ("Error parsing message for %s");' % method.name)
-			Indenter.printline("\treturn;")
-			Indenter.printline("}")
+			Indenter.enter("if (!%s (t, &argval%d)) {" % (c_getter_map[a.type[0]], i))
+			Indenter.printline('XMMS_DBG ("Error parsing message for %s");' % method.name)
+			Indenter.printline("return;")
+			Indenter.leave("}")
 			
 
 	Indenter.printline()

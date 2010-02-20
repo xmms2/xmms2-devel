@@ -68,7 +68,7 @@ typedef void (*xmms_object_handler_t) (xmms_object_t *object, xmmsv_t *data, gpo
 
 #define XMMS_OBJECT_CMD_MAX_ARGS 6
 typedef struct {
-	xmmsv_t *values[XMMS_OBJECT_CMD_MAX_ARGS];
+	xmmsv_t *args; /* list */
 	xmmsv_t *retval;
 	xmms_error_t error;
 } xmms_object_cmd_arg_t;
