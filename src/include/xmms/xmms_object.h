@@ -173,11 +173,6 @@ __XMMS_CMD_DO_RETVAL_##_rettype() (realfunc ((argtype0)object __XMMS_CMD_PRINT_A
 static const xmms_object_cmd_desc_t __int_xmms_cmd_desc_##cmdid = { __int_xmms_cmd_##cmdid, XMMSV_TYPE_##_rettype, {XMMSV_TYPE_##argtype1, XMMSV_TYPE_##argtype2, XMMSV_TYPE_##argtype3, XMMSV_TYPE_##argtype4, XMMSV_TYPE_##argtype5, XMMSV_TYPE_##argtype6} }
 
 
-#define XMMS_CMD_DEFINE(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2) XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, NONE, NONE, NONE, NONE)
-#define XMMS_CMD_DEFINE3(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3) XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, NONE, NONE, NONE)
-#define XMMS_CMD_DEFINE4(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4) XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, NONE, NONE)
-#define XMMS_CMD_DEFINE5(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5) XMMS_CMD_DEFINE6(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4, argtype5, NONE)
-
 #define XMMS_CMD_FUNC(cmdid) &__int_xmms_cmd_desc_##cmdid
 
 
