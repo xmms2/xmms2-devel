@@ -319,16 +319,16 @@ compare_cmd_key (gconstpointer a, gconstpointer b)
   */
 void
 xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
-                     const xmms_object_cmd_desc_t *desc)
+                     const xmms_object_cmd_func_t func)
 {
 	g_return_if_fail (object);
-	g_return_if_fail (desc);
+	g_return_if_fail (func);
 
 	if (!object->cmds)
 		object->cmds = g_tree_new (compare_cmd_key);
 
 	g_tree_insert (object->cmds, GUINT_TO_POINTER (cmdid),
-	               (gpointer) desc);
+	               (gpointer) func);
 }
 
 /**
@@ -338,15 +338,15 @@ xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
 void
 xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg)
 {
-	xmms_object_cmd_desc_t *desc = NULL;
+	xmms_object_cmd_func_t func;
 
 	g_return_if_fail (object);
 
 	if (object->cmds) {
-		desc = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
+		func = g_tree_lookup (object->cmds, GUINT_TO_POINTER (cmdid));
 
-		if (desc && desc->func)
-			desc->func (object, arg);
+		if (func)
+			func (object, arg);
 	}
 }
 

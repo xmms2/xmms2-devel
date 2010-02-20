@@ -32,7 +32,6 @@ G_BEGIN_DECLS
 
 struct xmms_object_St;
 typedef struct xmms_object_St xmms_object_t;
-typedef struct xmms_object_cmd_desc_St xmms_object_cmd_desc_t;
 
 typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
 
@@ -75,11 +74,6 @@ typedef struct {
 
 typedef void (*xmms_object_cmd_func_t) (xmms_object_t *object, xmms_object_cmd_arg_t *arg);
 
-struct xmms_object_cmd_desc_St {
-	xmms_object_cmd_func_t func;
-	xmmsv_type_t args[XMMS_OBJECT_CMD_MAX_ARGS];
-};
-
 #define XMMS_OBJECT(p) ((xmms_object_t *)p)
 #define XMMS_IS_OBJECT(p) (XMMS_OBJECT (p)->id == XMMS_OBJECT_MID)
 
@@ -98,7 +92,7 @@ void xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 
 void xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg);
 
-void xmms_object_cmd_add (xmms_object_t *object, guint cmdid, const xmms_object_cmd_desc_t *desc);
+void xmms_object_cmd_add (xmms_object_t *object, guint cmdid, const xmms_object_cmd_func_t desc);
 
 void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg);
 

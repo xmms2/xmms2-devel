@@ -95,8 +95,6 @@ def build(object_name, c_type):
 
 def method_name_to_cname(n):
 	return "__int_xmms_cmd_%s" % n
-def method_name_to_dname(n):
-	return "__int_xmms_cmd_desc_%s" % n
 
 def emit_method_define_code(object, method, c_type):
 	full_method_name = 'xmms_%s_client_%s' % (object.name, method.name)
@@ -159,13 +157,8 @@ def emit_method_define_code(object, method, c_type):
 	Indenter.leave("}")
 
 	Indenter.printline()
-
-	Indenter.printline("static const xmms_object_cmd_desc_t %s = { %s, {%s} };" % (
-			method_name_to_dname (method.name), method_name_to_cname (method.name), ",".join(argument_types)))
-
-	Indenter.printline()
 	Indenter.printline()
 
 
 def emit_method_add_code(object, method):
-	Indenter.printline('xmms_object_cmd_add (%s_object, %i, &%s);' % (object.name, method.id, method_name_to_dname (method.name)))
+	Indenter.printline('xmms_object_cmd_add (%s_object, %i, %s);' % (object.name, method.id, method_name_to_cname (method.name)))
