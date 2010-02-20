@@ -35,17 +35,17 @@ struct xmms_ipc_msg_St {
 	uint32_t xfered;
 };
 
-static void xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg, uint32_t offset, uint32_t v);
-static uint32_t xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len);
+static void xmms_ipc_msg_store_uint32 (xmmsv_t *bb, uint32_t offset, uint32_t v);
 
-static uint32_t internal_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
-static uint32_t internal_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg);
-static uint32_t internal_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v);
-static uint32_t internal_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v);
-static uint32_t internal_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
-static uint32_t internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll);
-static uint32_t internal_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v);
-static uint32_t internal_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v);
+static uint32_t xmms_ipc_msg_put_value_bb (xmmsv_t *bb, xmmsv_t *v);
+static uint32_t internal_ipc_msg_put_bin (xmmsv_t *bb, const unsigned char *data, unsigned int len);
+static uint32_t internal_ipc_msg_put_error (xmmsv_t *bb, const char *errmsg);
+static uint32_t internal_ipc_msg_put_uint32 (xmmsv_t *bb, uint32_t v);
+static uint32_t internal_ipc_msg_put_int32 (xmmsv_t *bb, int32_t v);
+static uint32_t internal_ipc_msg_put_string (xmmsv_t *bb, const char *str);
+static uint32_t internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll);
+static uint32_t internal_ipc_msg_put_value_list (xmmsv_t *bb, xmmsv_t *v);
+static uint32_t internal_ipc_msg_put_value_dict (xmmsv_t *bb, xmmsv_t *v);
 
 static bool xmms_ipc_msg_get_error_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
 static bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);
@@ -60,15 +60,15 @@ static bool xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_typ
 static void
 xmms_ipc_append_coll_attr (const char *key, xmmsv_t *value, void *userdata)
 {
-	xmms_ipc_msg_t *msg = (xmms_ipc_msg_t *)userdata;
+	xmmsv_t *bb = (xmmsv_t *)userdata;
 	const char *s;
 	int r;
 
 	r = xmmsv_get_string (value, &s);
 	x_return_if_fail (r);
 
-	internal_ipc_msg_put_string (msg, key);
-	internal_ipc_msg_put_string (msg, s);
+	internal_ipc_msg_put_string (bb, key);
+	internal_ipc_msg_put_string (bb, s);
 }
 
 static void
@@ -102,13 +102,11 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 }
 
 static void
-xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len)
+xmms_ipc_msg_set_length (xmmsv_t *bb, uint32_t len)
 {
-	x_return_if_fail (msg);
-
-	xmmsv_bitbuffer_goto (msg->bb, 12*8);
-	xmmsv_bitbuffer_put_bits (msg->bb, 32, len);
-	xmmsv_bitbuffer_end (msg->bb);
+	xmmsv_bitbuffer_goto (bb, 12*8);
+	xmmsv_bitbuffer_put_bits (bb, 32, len);
+	xmmsv_bitbuffer_end (bb);
 }
 
 static uint32_t
@@ -315,87 +313,87 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 }
 
 static uint32_t
-xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
+xmms_ipc_msg_put_data (xmmsv_t *bb, const void *data, unsigned int len)
 {
 	uint32_t l;
 
-	xmmsv_bitbuffer_put_data (msg->bb, data, len);
-	l = xmmsv_bitbuffer_len (msg->bb);
-	xmms_ipc_msg_set_length (msg, l / 8 - XMMS_IPC_MSG_HEAD_LEN);
+	xmmsv_bitbuffer_put_data (bb, data, len);
+	l = xmmsv_bitbuffer_len (bb);
+	xmms_ipc_msg_set_length (bb, l / 8 - XMMS_IPC_MSG_HEAD_LEN);
 
 	return l - len * 8;
 }
 
 static uint32_t
-internal_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
+internal_ipc_msg_put_bin (xmmsv_t *bb,
                           const unsigned char *data,
                           unsigned int len)
 {
-	internal_ipc_msg_put_uint32 (msg, len);
+	internal_ipc_msg_put_uint32 (bb, len);
 
-	return xmms_ipc_msg_put_data (msg, data, len);
+	return xmms_ipc_msg_put_data (bb, data, len);
 }
 
 static uint32_t
-internal_ipc_msg_put_error (xmms_ipc_msg_t *msg, const char *errmsg)
+internal_ipc_msg_put_error (xmmsv_t *bb, const char *errmsg)
 {
-	if (!msg) {
+	if (!bb) {
 		return -1;
 	}
 
 	if (!errmsg) {
-		return internal_ipc_msg_put_uint32 (msg, 0);
+		return internal_ipc_msg_put_uint32 (bb, 0);
 	}
 
-	internal_ipc_msg_put_uint32 (msg, strlen (errmsg) + 1);
+	internal_ipc_msg_put_uint32 (bb, strlen (errmsg) + 1);
 
-	return xmms_ipc_msg_put_data (msg, errmsg, strlen (errmsg) + 1);
+	return xmms_ipc_msg_put_data (bb, errmsg, strlen (errmsg) + 1);
 }
 
 static uint32_t
-internal_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
+internal_ipc_msg_put_uint32 (xmmsv_t *bb, uint32_t v)
 {
 	v = htonl (v);
 
-	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
+	return xmms_ipc_msg_put_data (bb, &v, sizeof (v));
 }
 
 static void
-xmms_ipc_msg_store_uint32 (xmms_ipc_msg_t *msg,
+xmms_ipc_msg_store_uint32 (xmmsv_t *bb,
                            uint32_t offset, uint32_t v)
 {
 
-	xmmsv_bitbuffer_goto (msg->bb, offset);
-	xmmsv_bitbuffer_put_bits (msg->bb, 32, v);
-	xmmsv_bitbuffer_end (msg->bb);
+	xmmsv_bitbuffer_goto (bb, offset);
+	xmmsv_bitbuffer_put_bits (bb, 32, v);
+	xmmsv_bitbuffer_end (bb);
 }
 
 static uint32_t
-internal_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v)
+internal_ipc_msg_put_int32 (xmmsv_t *bb, int32_t v)
 {
 	v = htonl (v);
 
-	return xmms_ipc_msg_put_data (msg, &v, sizeof (v));
+	return xmms_ipc_msg_put_data (bb, &v, sizeof (v));
 }
 
 static uint32_t
-internal_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
+internal_ipc_msg_put_string (xmmsv_t *bb, const char *str)
 {
-	if (!msg) {
+	if (!bb) {
 		return -1;
 	}
 
 	if (!str) {
-		return internal_ipc_msg_put_uint32 (msg, 0);
+		return internal_ipc_msg_put_uint32 (bb, 0);
 	}
 
-	internal_ipc_msg_put_uint32 (msg, strlen (str) + 1);
+	internal_ipc_msg_put_uint32 (bb, strlen (str) + 1);
 
-	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
+	return xmms_ipc_msg_put_data (bb, str, strlen (str) + 1);
 }
 
 static uint32_t
-internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
+internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v, *attrs;
@@ -404,26 +402,26 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	int32_t entry;
 	xmmsv_coll_t *op;
 
-	if (!msg || !coll) {
+	if (!bb || !coll) {
 		return -1;
 	}
 
 	/* push type */
-	internal_ipc_msg_put_uint32 (msg, xmmsv_coll_get_type (coll));
+	internal_ipc_msg_put_uint32 (bb, xmmsv_coll_get_type (coll));
 
 	/* attribute counter and values */
 	attrs = xmmsv_coll_attributes_get (coll);
 	n = 0;
 
 	xmmsv_dict_foreach (attrs, xmms_ipc_count_coll_attr, &n);
-	internal_ipc_msg_put_uint32 (msg, n);
+	internal_ipc_msg_put_uint32 (bb, n);
 
-	xmmsv_dict_foreach (attrs, xmms_ipc_append_coll_attr, msg);
+	xmmsv_dict_foreach (attrs, xmms_ipc_append_coll_attr, bb);
 
 	attrs = NULL; /* no unref needed. */
 
 	/* idlist counter and content */
-	internal_ipc_msg_put_uint32 (msg, xmmsv_coll_idlist_get_size (coll));
+	internal_ipc_msg_put_uint32 (bb, xmmsv_coll_idlist_get_size (coll));
 
 	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
 	for (xmmsv_list_iter_first (it);
@@ -433,7 +431,7 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 		if (!xmmsv_list_iter_entry_int (it, &entry)) {
 			x_api_error ("Non integer in idlist", 0);
 		}
-		internal_ipc_msg_put_int32 (msg, entry);
+		internal_ipc_msg_put_int32 (bb, entry);
 	}
 	xmmsv_list_iter_explicit_destroy (it);
 
@@ -443,7 +441,7 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 		n = xmmsv_list_get_size (xmmsv_coll_operands_get (coll));
 	}
 
-	ret = internal_ipc_msg_put_uint32 (msg, n);
+	ret = internal_ipc_msg_put_uint32 (bb, n);
 
 	if (n > 0) {
 		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
@@ -453,9 +451,9 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 				x_api_error ("Non collection operand", 0);
 			}
 
-			internal_ipc_msg_put_int32 (msg, XMMSV_TYPE_COLL);
+			internal_ipc_msg_put_int32 (bb, XMMSV_TYPE_COLL);
 
-			ret = internal_ipc_msg_put_collection (msg, op);
+			ret = internal_ipc_msg_put_collection (bb, op);
 			xmmsv_list_iter_next (it);
 		}
 	}
@@ -466,6 +464,12 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 uint32_t
 xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 {
+	return xmms_ipc_msg_put_value_bb (msg->bb, v);
+}
+
+static uint32_t
+xmms_ipc_msg_put_value_bb (xmmsv_t *bb, xmmsv_t *v)
+{
 	uint32_t ret;
 	int32_t i;
 	const char *s;
@@ -475,7 +479,7 @@ xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 	xmmsv_type_t type;
 
 	type = xmmsv_get_type (v);
-	internal_ipc_msg_put_int32 (msg, type);
+	internal_ipc_msg_put_int32 (bb, type);
 
 	/* FIXME: what to do if value fetching fails? */
 	/* FIXME: return -1 unsigned int?? */
@@ -485,37 +489,37 @@ xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		if (!xmmsv_get_error (v, &s)) {
 			return -1;
 		}
-		ret = internal_ipc_msg_put_error (msg, s);
+		ret = internal_ipc_msg_put_error (bb, s);
 		break;
 	case XMMSV_TYPE_INT32:
 		if (!xmmsv_get_int (v, &i)) {
 			return -1;
 		}
-		ret = internal_ipc_msg_put_int32 (msg, i);
+		ret = internal_ipc_msg_put_int32 (bb, i);
 		break;
 	case XMMSV_TYPE_STRING:
 		if (!xmmsv_get_string (v, &s)) {
 			return -1;
 		}
-		ret = internal_ipc_msg_put_string (msg, s);
+		ret = internal_ipc_msg_put_string (bb, s);
 		break;
 	case XMMSV_TYPE_COLL:
 		if (!xmmsv_get_coll (v, &c)) {
 			return -1;
 		}
-		ret = internal_ipc_msg_put_collection (msg, c);
+		ret = internal_ipc_msg_put_collection (bb, c);
 		break;
 	case XMMSV_TYPE_BIN:
 		if (!xmmsv_get_bin (v, &bc, &bl)) {
 			return -1;
 		}
-		ret = internal_ipc_msg_put_bin (msg, bc, bl);
+		ret = internal_ipc_msg_put_bin (bb, bc, bl);
 		break;
 	case XMMSV_TYPE_LIST:
-		ret = internal_ipc_msg_put_value_list (msg, v);
+		ret = internal_ipc_msg_put_value_list (bb, v);
 		break;
 	case XMMSV_TYPE_DICT:
-		ret = internal_ipc_msg_put_value_dict (msg, v);
+		ret = internal_ipc_msg_put_value_dict (bb, v);
 		break;
 
 	case XMMSV_TYPE_NONE:
@@ -523,7 +527,7 @@ xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 		 * return the offset that which we placed this value.
 		 * See xmms_ipc_msg_put_data().
 		 */
-		ret = xmms_ipc_msg_get_length (msg);
+		ret = xmmsv_bitbuffer_pos (bb);
 		break;
 	default:
 		x_internal_error ("Tried to serialize value of unsupported type");
@@ -534,7 +538,7 @@ xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 }
 
 static uint32_t
-internal_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v)
+internal_ipc_msg_put_value_list (xmmsv_t *bb, xmmsv_t *v)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *entry;
@@ -545,24 +549,24 @@ internal_ipc_msg_put_value_list (xmms_ipc_msg_t *msg, xmmsv_t *v)
 	}
 
 	/* store a dummy value, store the real count once it's known */
-	offset = internal_ipc_msg_put_uint32 (msg, 0);
+	offset = internal_ipc_msg_put_uint32 (bb, 0);
 
 	count = 0;
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_list_iter_entry (it, &entry);
-		ret = xmms_ipc_msg_put_value (msg, entry);
+		ret = xmms_ipc_msg_put_value_bb (bb, entry);
 		xmmsv_list_iter_next (it);
 		count++;
 	}
 
 	/* overwrite with real size */
-	xmms_ipc_msg_store_uint32 (msg, offset, count);
+	xmms_ipc_msg_store_uint32 (bb, offset, count);
 
 	return ret;
 }
 
 static uint32_t
-internal_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v)
+internal_ipc_msg_put_value_dict (xmmsv_t *bb, xmmsv_t *v)
 {
 	xmmsv_dict_iter_t *it;
 	const char *key;
@@ -574,19 +578,19 @@ internal_ipc_msg_put_value_dict (xmms_ipc_msg_t *msg, xmmsv_t *v)
 	}
 
 	/* store a dummy value, store the real count once it's known */
-	offset = internal_ipc_msg_put_uint32 (msg, 0);
+	offset = internal_ipc_msg_put_uint32 (bb, 0);
 
 	count = 0;
 	while (xmmsv_dict_iter_valid (it)) {
 		xmmsv_dict_iter_pair (it, &key, &entry);
-		ret = internal_ipc_msg_put_string (msg, key);
-		ret = xmms_ipc_msg_put_value (msg, entry);
+		ret = internal_ipc_msg_put_string (bb, key);
+		ret = xmms_ipc_msg_put_value_bb (bb, entry);
 		xmmsv_dict_iter_next (it);
 		count++;
 	}
 
 	/* overwrite with real size */
-	xmms_ipc_msg_store_uint32 (msg, offset, count);
+	xmms_ipc_msg_store_uint32 (bb, offset, count);
 
 	return ret;
 }
