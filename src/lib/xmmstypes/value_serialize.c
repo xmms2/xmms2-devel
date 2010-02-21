@@ -677,3 +677,26 @@ xmmsv_serialize (xmmsv_t *v)
 	   but thats for later */
 	return xmmsv_new_bin (xmmsv_bitbuffer_buffer (bb), xmmsv_bitbuffer_len (bb) / 8);
 }
+
+xmmsv_t *
+xmmsv_deserialize (xmmsv_t *v)
+{
+	xmmsv_t *bb;
+	xmmsv_t *res;
+	const unsigned char *data;
+	uint32_t len;
+
+
+	if (!xmmsv_get_bin (v, &data, &len))
+		return NULL;
+
+
+	bb = xmmsv_bitbuffer_new_ro (data, len);
+
+	if (!xmmsv_bitbuffer_deserialize_value (bb, &res)) {
+		xmmsv_unref (bb);
+		return NULL;
+	}
+	xmmsv_unref (bb);
+	return res;
+}
