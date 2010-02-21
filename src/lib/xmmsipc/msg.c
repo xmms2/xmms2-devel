@@ -43,8 +43,8 @@ static bool xmms_ipc_msg_get_string_alloc (xmmsv_t *bb, char **buf, unsigned int
 static bool xmms_ipc_msg_get_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll);
 static bool xmms_ipc_msg_get_bin_alloc (xmmsv_t *bb, unsigned char **buf, unsigned int *len);
 
-static bool xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val);
-static bool xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type, xmmsv_t **val);
+static bool xmms_ipc_msg_get_value_alloc (xmmsv_t *bb, xmmsv_t **val);
+static bool xmms_ipc_msg_get_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t **val);
 
 
 xmms_ipc_msg_t *
@@ -491,7 +491,7 @@ err:
 
 
 static int
-xmmsc_deserialize_dict (xmms_ipc_msg_t *msg, xmmsv_t **val)
+xmmsc_deserialize_dict (xmmsv_t *bb, xmmsv_t **val)
 {
 	xmmsv_t *dict;
 	unsigned int len, ignore;
@@ -499,18 +499,18 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg, xmmsv_t **val)
 
 	dict = xmmsv_new_dict ();
 
-	if (!xmms_ipc_msg_get_uint32 (msg->bb, &len)) {
+	if (!xmms_ipc_msg_get_uint32 (bb, &len)) {
 		goto err;
 	}
 
 	while (len--) {
 		xmmsv_t *v;
 
-		if (!xmms_ipc_msg_get_string_alloc (msg->bb, &key, &ignore)) {
+		if (!xmms_ipc_msg_get_string_alloc (bb, &key, &ignore)) {
 			goto err;
 		}
 
-		if (!xmms_ipc_msg_get_value_alloc (msg, &v)) {
+		if (!xmms_ipc_msg_get_value_alloc (bb, &v)) {
 			free (key);
 			goto err;
 		}
@@ -531,20 +531,20 @@ err:
 }
 
 static int
-xmmsc_deserialize_list (xmms_ipc_msg_t *msg, xmmsv_t **val)
+xmmsc_deserialize_list (xmmsv_t *bb, xmmsv_t **val)
 {
 	xmmsv_t *list;
 	unsigned int len;
 
     list = xmmsv_new_list ();
 
-	if (!xmms_ipc_msg_get_uint32 (msg->bb, &len)) {
+	if (!xmms_ipc_msg_get_uint32 (bb, &len)) {
 		goto err;
 	}
 
 	while (len--) {
 		xmmsv_t *v;
-		if (xmms_ipc_msg_get_value_alloc (msg, &v)) {
+		if (xmms_ipc_msg_get_value_alloc (bb, &v)) {
 			xmmsv_list_append (list, v);
 		} else {
 			goto err;
@@ -563,19 +563,19 @@ err:
 }
 
 static bool
-xmms_ipc_msg_get_value_alloc (xmms_ipc_msg_t *msg, xmmsv_t **val)
+xmms_ipc_msg_get_value_alloc (xmmsv_t *bb, xmmsv_t **val)
 {
 	int32_t type;
 
-	if (!xmms_ipc_msg_get_int32 (msg->bb, &type)) {
+	if (!xmms_ipc_msg_get_int32 (bb, &type)) {
 		return false;
 	}
 
-	return xmms_ipc_msg_get_value_of_type_alloc (msg, type, val);
+	return xmms_ipc_msg_get_value_of_type_alloc (bb, type, val);
 }
 
 static bool
-xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
+xmms_ipc_msg_get_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
                                       xmmsv_t **val)
 {
 	int32_t i;
@@ -586,39 +586,39 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 
 	switch (type) {
 		case XMMSV_TYPE_ERROR:
-			if (!xmms_ipc_msg_get_error_alloc (msg->bb, &s, &len)) {
+			if (!xmms_ipc_msg_get_error_alloc (bb, &s, &len)) {
 				return false;
 			}
 			*val = xmmsv_new_error (s);
 			free (s);
 			break;
 		case XMMSV_TYPE_INT32:
-			if (!xmms_ipc_msg_get_int32 (msg->bb, &i)) {
+			if (!xmms_ipc_msg_get_int32 (bb, &i)) {
 				return false;
 			}
 			*val = xmmsv_new_int (i);
 			break;
 		case XMMSV_TYPE_STRING:
-			if (!xmms_ipc_msg_get_string_alloc (msg->bb, &s, &len)) {
+			if (!xmms_ipc_msg_get_string_alloc (bb, &s, &len)) {
 				return false;
 			}
 			*val = xmmsv_new_string (s);
 			free (s);
 			break;
 		case XMMSV_TYPE_DICT:
-			if (!xmmsc_deserialize_dict (msg, val)) {
+			if (!xmmsc_deserialize_dict (bb, val)) {
 				return false;
 			}
 			break;
 
 		case XMMSV_TYPE_LIST :
-			if (!xmmsc_deserialize_list (msg, val)) {
+			if (!xmmsc_deserialize_list (bb, val)) {
 				return false;
 			}
 			break;
 
 		case XMMSV_TYPE_COLL:
-			if (!xmms_ipc_msg_get_collection_alloc (msg->bb, &c)) {
+			if (!xmms_ipc_msg_get_collection_alloc (bb, &c)) {
 				return false;
 			}
 			*val = xmmsv_new_coll (c);
@@ -626,7 +626,7 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 			break;
 
 		case XMMSV_TYPE_BIN:
-			if (!xmms_ipc_msg_get_bin_alloc (msg->bb, &d, &len)) {
+			if (!xmms_ipc_msg_get_bin_alloc (bb, &d, &len)) {
 				return false;
 			}
 			*val = xmmsv_new_bin (d, len);
@@ -647,5 +647,5 @@ xmms_ipc_msg_get_value_of_type_alloc (xmms_ipc_msg_t *msg, xmmsv_type_t type,
 bool
 xmms_ipc_msg_get_value (xmms_ipc_msg_t *msg, xmmsv_t **val)
 {
-	return xmms_ipc_msg_get_value_alloc (msg, val);
+	return xmms_ipc_msg_get_value_alloc (msg->bb, val);
 }
