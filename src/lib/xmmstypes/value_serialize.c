@@ -30,6 +30,15 @@ static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_coll_t *coll);
 static bool _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v);
 static bool _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v);
 
+static bool _internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
+static bool _internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v);
+static bool _internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v);
+static bool _internal_get_from_bb_string_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
+static bool _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll);
+static bool _internal_get_from_bb_bin_alloc (xmmsv_t *bb, unsigned char **buf, unsigned int *len);
+
+static bool _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t **val);
+
 
 static void
 _internal_put_on_bb_append_coll_attr (const char *key, xmmsv_t *value, void *userdata)
@@ -54,8 +63,8 @@ _internal_put_on_bb_count_coll_attr (const char *key, xmmsv_t *value, void *user
 
 static bool
 _internal_put_on_bb_bin (xmmsv_t *bb,
-                          const unsigned char *data,
-                          unsigned int len)
+                         const unsigned char *data,
+                         unsigned int len)
 {
 	if (!xmmsv_bitbuffer_put_bits (bb, 32, len))
 		return false;
@@ -82,7 +91,7 @@ _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg)
 
 static void
 _internal_store_on_bb_uint32 (xmmsv_t *bb,
-                           uint32_t offset, uint32_t v)
+                              uint32_t offset, uint32_t v)
 {
 
 	xmmsv_bitbuffer_goto (bb, offset);
@@ -247,6 +256,330 @@ _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	return ret;
 }
 
+static bool
+_internal_get_from_bb_data (xmmsv_t *bb, void *buf, unsigned int len)
+{
+	if (!bb)
+		return false;
+
+	return xmmsv_bitbuffer_get_data (bb, buf, len);
+}
+
+static bool
+_internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf,
+                                   unsigned int *len)
+{
+	/* currently, an error is just a string, so reuse that */
+	return _internal_get_from_bb_string_alloc (bb, buf, len);
+}
+
+static bool
+_internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v)
+{
+	return xmmsv_bitbuffer_get_bits (bb, 32, v);
+}
+
+static bool
+_internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v)
+{
+	bool ret;
+	ret = _internal_get_from_bb_int32 (bb, v);
+	if (ret && *v < 0)
+		ret = false;
+	return ret;
+}
+static bool
+_internal_get_from_bb_string_alloc (xmmsv_t *bb, char **buf,
+                                    unsigned int *len)
+{
+	char *str;
+	int32_t l;
+
+	if (!_internal_get_from_bb_int32_positive (bb, &l)) {
+		return false;
+	}
+
+	str = x_malloc (l + 1);
+	if (!str) {
+		return false;
+	}
+
+	if (!_internal_get_from_bb_data (bb, str, l)) {
+		free (str);
+		return false;
+	}
+
+	str[l] = '\0';
+
+	*buf = str;
+	*len = l;
+
+	return true;
+}
+
+static bool
+_internal_get_from_bb_bin_alloc (xmmsv_t *bb,
+                                 unsigned char **buf,
+                                 unsigned int *len)
+{
+	unsigned char *b;
+	int32_t l;
+
+	if (!_internal_get_from_bb_int32_positive (bb, &l)) {
+		return false;
+	}
+
+	b = x_malloc (l);
+	if (!b) {
+		return false;
+	}
+
+	if (!_internal_get_from_bb_data (bb, b, l)) {
+		free (b);
+		return false;
+	}
+
+	*buf = b;
+	*len = l;
+
+	return true;
+}
+
+static bool
+_internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll)
+{
+	int i;
+	int32_t type;
+	int32_t n_items;
+	int id;
+	int32_t *idlist = NULL;
+	char *key, *val;
+
+	/* Get the type and create the collection */
+	if (!_internal_get_from_bb_int32_positive (bb, &type)) {
+		return false;
+	}
+
+	*coll = xmmsv_coll_new (type);
+
+	/* Get the list of attributes */
+	if (!_internal_get_from_bb_int32_positive (bb, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		unsigned int len;
+		if (!_internal_get_from_bb_string_alloc (bb, &key, &len)) {
+			goto err;
+		}
+		if (!_internal_get_from_bb_string_alloc (bb, &val, &len)) {
+			free (key);
+			goto err;
+		}
+
+		xmmsv_coll_attribute_set (*coll, key, val);
+		free (key);
+		free (val);
+	}
+
+	/* Get the idlist */
+	if (!_internal_get_from_bb_int32_positive (bb, &n_items)) {
+		goto err;
+	}
+
+	if (!(idlist = x_new (int32_t, n_items + 1))) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		if (!_internal_get_from_bb_int32 (bb, &id)) {
+			goto err;
+		}
+
+		idlist[i] = id;
+	}
+
+	idlist[i] = 0;
+	xmmsv_coll_set_idlist (*coll, idlist);
+	free (idlist);
+	idlist = NULL;
+
+	/* Get the operands */
+	if (!_internal_get_from_bb_int32_positive (bb, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		xmmsv_coll_t *operand;
+
+		if (!_internal_get_from_bb_int32_positive (bb, &type) ||
+		    type != XMMSV_TYPE_COLL ||
+		    !_internal_get_from_bb_collection_alloc (bb, &operand)) {
+			goto err;
+		}
+
+		xmmsv_coll_add_operand (*coll, operand);
+		xmmsv_coll_unref (operand);
+	}
+
+	return true;
+
+err:
+	if (idlist != NULL) {
+		free (idlist);
+	}
+
+	xmmsv_coll_unref (*coll);
+
+	return false;
+}
+
+
+static int
+xmmsc_deserialize_dict (xmmsv_t *bb, xmmsv_t **val)
+{
+	xmmsv_t *dict;
+	int32_t len;
+	unsigned int ignore;
+	char *key;
+
+	dict = xmmsv_new_dict ();
+
+	if (!_internal_get_from_bb_int32_positive (bb, &len)) {
+		goto err;
+	}
+
+	while (len--) {
+		xmmsv_t *v;
+
+		if (!_internal_get_from_bb_string_alloc (bb, &key, &ignore)) {
+			goto err;
+		}
+
+		if (!xmmsv_bitbuffer_deserialize_value (bb, &v)) {
+			free (key);
+			goto err;
+		}
+
+		xmmsv_dict_set (dict, key, v);
+		free (key);
+		xmmsv_unref (v);
+	}
+
+	*val = dict;
+
+	return true;
+
+err:
+	x_internal_error ("Message from server did not parse correctly!");
+	xmmsv_unref (dict);
+	return false;
+}
+
+static int
+xmmsc_deserialize_list (xmmsv_t *bb, xmmsv_t **val)
+{
+	xmmsv_t *list;
+	int32_t len;
+
+	list = xmmsv_new_list ();
+
+	if (!_internal_get_from_bb_int32_positive (bb, &len)) {
+		goto err;
+	}
+
+	while (len--) {
+		xmmsv_t *v;
+		if (xmmsv_bitbuffer_deserialize_value (bb, &v)) {
+			xmmsv_list_append (list, v);
+		} else {
+			goto err;
+		}
+		xmmsv_unref (v);
+	}
+
+	*val = list;
+
+	return true;
+
+err:
+	x_internal_error ("Message from server did not parse correctly!");
+	xmmsv_unref (list);
+	return false;
+}
+
+static bool
+_internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
+                                           xmmsv_t **val)
+{
+	int32_t i;
+	uint32_t len;
+	char *s;
+	xmmsv_coll_t *c;
+	unsigned char *d;
+
+	switch (type) {
+		case XMMSV_TYPE_ERROR:
+			if (!_internal_get_from_bb_error_alloc (bb, &s, &len)) {
+				return false;
+			}
+			*val = xmmsv_new_error (s);
+			free (s);
+			break;
+		case XMMSV_TYPE_INT32:
+			if (!_internal_get_from_bb_int32 (bb, &i)) {
+				return false;
+			}
+			*val = xmmsv_new_int (i);
+			break;
+		case XMMSV_TYPE_STRING:
+			if (!_internal_get_from_bb_string_alloc (bb, &s, &len)) {
+				return false;
+			}
+			*val = xmmsv_new_string (s);
+			free (s);
+			break;
+		case XMMSV_TYPE_DICT:
+			if (!xmmsc_deserialize_dict (bb, val)) {
+				return false;
+			}
+			break;
+
+		case XMMSV_TYPE_LIST :
+			if (!xmmsc_deserialize_list (bb, val)) {
+				return false;
+			}
+			break;
+
+		case XMMSV_TYPE_COLL:
+			if (!_internal_get_from_bb_collection_alloc (bb, &c)) {
+				return false;
+			}
+			*val = xmmsv_new_coll (c);
+			xmmsv_coll_unref (c);
+			break;
+
+		case XMMSV_TYPE_BIN:
+			if (!_internal_get_from_bb_bin_alloc (bb, &d, &len)) {
+				return false;
+			}
+			*val = xmmsv_new_bin (d, len);
+			free (d);
+			break;
+
+		case XMMSV_TYPE_NONE:
+			*val = xmmsv_new_none ();
+			break;
+		default:
+			x_internal_error ("Got message of unknown type!");
+			return false;
+	}
+
+	return true;
+}
+
+
+
 int
 xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 {
@@ -310,6 +643,19 @@ xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 
 	return ret;
 }
+
+int
+xmmsv_bitbuffer_deserialize_value (xmmsv_t *bb, xmmsv_t **val)
+{
+	int32_t type;
+
+	if (!_internal_get_from_bb_int32 (bb, &type)) {
+		return false;
+	}
+
+	return _internal_get_from_bb_value_of_type_alloc (bb, type, val);
+}
+
 
 xmmsv_t *
 xmmsv_serialize (xmmsv_t *v)
