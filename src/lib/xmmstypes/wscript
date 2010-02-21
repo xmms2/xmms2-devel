@@ -6,7 +6,7 @@
 
 def build(bld):
     obj = bld.new_task_gen('cc', 'staticlib')
-    obj.source = "coll.c value.c xlist.c".split()
+    obj.source = "coll.c value.c xlist.c value_serialize.c".split()
     obj.includes = '. ../../.. ../../include ../../includepriv'
     obj.target = 'xmmstypes'
     obj.install_path = 0

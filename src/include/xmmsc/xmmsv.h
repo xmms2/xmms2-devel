@@ -227,6 +227,8 @@ int xmmsv_bitbuffer_end (xmmsv_t *v);
 int xmmsv_bitbuffer_len (xmmsv_t *v);
 const unsigned char *xmmsv_bitbuffer_buffer (xmmsv_t *v);
 
+int xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v);
+
 #ifdef __cplusplus
 }
 #endif
