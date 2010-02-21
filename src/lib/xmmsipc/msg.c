@@ -102,8 +102,15 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 }
 
 static void
-xmms_ipc_msg_set_length (xmmsv_t *bb, uint32_t len)
+xmms_ipc_msg_update_length (xmmsv_t *bb)
 {
+	int len;
+
+	len = xmmsv_bitbuffer_len (bb);
+
+	len /= 8;
+	len -= XMMS_IPC_MSG_HEAD_LEN;
+
 	xmmsv_bitbuffer_goto (bb, 12*8);
 	xmmsv_bitbuffer_put_bits (bb, 32, len);
 	xmmsv_bitbuffer_end (bb);
@@ -319,7 +326,7 @@ xmms_ipc_msg_put_data (xmmsv_t *bb, const void *data, unsigned int len)
 
 	xmmsv_bitbuffer_put_data (bb, data, len);
 	l = xmmsv_bitbuffer_len (bb);
-	xmms_ipc_msg_set_length (bb, l / 8 - XMMS_IPC_MSG_HEAD_LEN);
+	xmms_ipc_msg_update_length (bb);
 
 	return l - len * 8;
 }
