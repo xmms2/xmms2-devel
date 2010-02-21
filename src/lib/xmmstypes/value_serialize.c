@@ -310,3 +310,24 @@ xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 
 	return ret;
 }
+
+xmmsv_t *
+xmmsv_serialize (xmmsv_t *v)
+{
+	xmmsv_t *bb;
+
+	if (!v)
+		return NULL;
+
+	bb = xmmsv_bitbuffer_new ();
+
+	if (!xmmsv_bitbuffer_serialize_value (bb, v)) {
+		xmmsv_unref (bb);
+		return NULL;
+	}
+
+	/* this is internally in xmmsv implementation,
+	   so we could just switch the type,
+	   but thats for later */
+	return xmmsv_new_bin (xmmsv_bitbuffer_buffer (bb), xmmsv_bitbuffer_len (bb) / 8);
+}
