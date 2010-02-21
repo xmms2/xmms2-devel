@@ -40,7 +40,6 @@ static void xmms_ipc_msg_store_uint32 (xmmsv_t *bb, uint32_t offset, uint32_t v)
 static uint32_t xmms_ipc_msg_put_value_bb (xmmsv_t *bb, xmmsv_t *v);
 static uint32_t internal_ipc_msg_put_bin (xmmsv_t *bb, const unsigned char *data, unsigned int len);
 static uint32_t internal_ipc_msg_put_error (xmmsv_t *bb, const char *errmsg);
-static uint32_t internal_ipc_msg_put_uint32 (xmmsv_t *bb, uint32_t v);
 static uint32_t internal_ipc_msg_put_int32 (xmmsv_t *bb, int32_t v);
 static uint32_t internal_ipc_msg_put_string (xmmsv_t *bb, const char *str);
 static uint32_t internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll);
@@ -320,7 +319,7 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 }
 
 static uint32_t
-xmms_ipc_msg_put_data (xmmsv_t *bb, const void *data, unsigned int len)
+internal_xmms_ipc_msg_put_data (xmmsv_t *bb, const void *data, unsigned int len)
 {
 	uint32_t l;
 
@@ -335,9 +334,9 @@ internal_ipc_msg_put_bin (xmmsv_t *bb,
                           const unsigned char *data,
                           unsigned int len)
 {
-	internal_ipc_msg_put_uint32 (bb, len);
+	xmmsv_bitbuffer_put_bits (bb, 32, len);
 
-	return xmms_ipc_msg_put_data (bb, data, len);
+	return internal_xmms_ipc_msg_put_data (bb, data, len);
 }
 
 static uint32_t
@@ -348,20 +347,12 @@ internal_ipc_msg_put_error (xmmsv_t *bb, const char *errmsg)
 	}
 
 	if (!errmsg) {
-		return internal_ipc_msg_put_uint32 (bb, 0);
+		return xmmsv_bitbuffer_put_bits (bb, 32, 0);
 	}
 
-	internal_ipc_msg_put_uint32 (bb, strlen (errmsg) + 1);
+	xmmsv_bitbuffer_put_bits (bb, 32, strlen (errmsg) + 1);
 
-	return xmms_ipc_msg_put_data (bb, errmsg, strlen (errmsg) + 1);
-}
-
-static uint32_t
-internal_ipc_msg_put_uint32 (xmmsv_t *bb, uint32_t v)
-{
-	v = htonl (v);
-
-	return xmms_ipc_msg_put_data (bb, &v, sizeof (v));
+	return internal_xmms_ipc_msg_put_data (bb, errmsg, strlen (errmsg) + 1);
 }
 
 static void
@@ -379,7 +370,7 @@ internal_ipc_msg_put_int32 (xmmsv_t *bb, int32_t v)
 {
 	v = htonl (v);
 
-	return xmms_ipc_msg_put_data (bb, &v, sizeof (v));
+	return internal_xmms_ipc_msg_put_data (bb, &v, sizeof (v));
 }
 
 static uint32_t
@@ -390,12 +381,12 @@ internal_ipc_msg_put_string (xmmsv_t *bb, const char *str)
 	}
 
 	if (!str) {
-		return internal_ipc_msg_put_uint32 (bb, 0);
+		return xmmsv_bitbuffer_put_bits (bb, 32, 0);
 	}
 
-	internal_ipc_msg_put_uint32 (bb, strlen (str) + 1);
+	xmmsv_bitbuffer_put_bits (bb, 32, strlen (str) + 1);
 
-	return xmms_ipc_msg_put_data (bb, str, strlen (str) + 1);
+	return internal_xmms_ipc_msg_put_data (bb, str, strlen (str) + 1);
 }
 
 static uint32_t
@@ -413,21 +404,21 @@ internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 	}
 
 	/* push type */
-	internal_ipc_msg_put_uint32 (bb, xmmsv_coll_get_type (coll));
+	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_coll_get_type (coll));
 
 	/* attribute counter and values */
 	attrs = xmmsv_coll_attributes_get (coll);
 	n = 0;
 
 	xmmsv_dict_foreach (attrs, xmms_ipc_count_coll_attr, &n);
-	internal_ipc_msg_put_uint32 (bb, n);
+	xmmsv_bitbuffer_put_bits (bb, 32, n);
 
 	xmmsv_dict_foreach (attrs, xmms_ipc_append_coll_attr, bb);
 
 	attrs = NULL; /* no unref needed. */
 
 	/* idlist counter and content */
-	internal_ipc_msg_put_uint32 (bb, xmmsv_coll_idlist_get_size (coll));
+	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_coll_idlist_get_size (coll));
 
 	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
 	for (xmmsv_list_iter_first (it);
@@ -437,7 +428,7 @@ internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 		if (!xmmsv_list_iter_entry_int (it, &entry)) {
 			x_api_error ("Non integer in idlist", 0);
 		}
-		internal_ipc_msg_put_int32 (bb, entry);
+		xmmsv_bitbuffer_put_bits (bb, 32, entry);
 	}
 	xmmsv_list_iter_explicit_destroy (it);
 
@@ -447,7 +438,8 @@ internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 		n = xmmsv_list_get_size (xmmsv_coll_operands_get (coll));
 	}
 
-	ret = internal_ipc_msg_put_uint32 (bb, n);
+	ret = xmmsv_bitbuffer_pos (bb);
+	xmmsv_bitbuffer_put_bits (bb, 32, 0);
 
 	if (n > 0) {
 		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
@@ -558,7 +550,8 @@ internal_ipc_msg_put_value_list (xmmsv_t *bb, xmmsv_t *v)
 	}
 
 	/* store a dummy value, store the real count once it's known */
-	offset = internal_ipc_msg_put_uint32 (bb, 0);
+	offset = xmmsv_bitbuffer_pos (bb);
+	xmmsv_bitbuffer_put_bits (bb, 32, 0);
 
 	count = 0;
 	while (xmmsv_list_iter_valid (it)) {
@@ -587,7 +580,8 @@ internal_ipc_msg_put_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	}
 
 	/* store a dummy value, store the real count once it's known */
-	offset = internal_ipc_msg_put_uint32 (bb, 0);
+	offset = xmmsv_bitbuffer_pos (bb);
+	xmmsv_bitbuffer_put_bits (bb, 32, 0);
 
 	count = 0;
 	while (xmmsv_dict_iter_valid (it)) {
