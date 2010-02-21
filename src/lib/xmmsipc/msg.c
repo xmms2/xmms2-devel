@@ -326,7 +326,6 @@ xmms_ipc_msg_put_data (xmmsv_t *bb, const void *data, unsigned int len)
 
 	xmmsv_bitbuffer_put_data (bb, data, len);
 	l = xmmsv_bitbuffer_len (bb);
-	xmms_ipc_msg_update_length (bb);
 
 	return l - len * 8;
 }
@@ -471,7 +470,10 @@ internal_ipc_msg_put_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 uint32_t
 xmms_ipc_msg_put_value (xmms_ipc_msg_t *msg, xmmsv_t *v)
 {
-	return xmms_ipc_msg_put_value_bb (msg->bb, v);
+	uint32_t res;
+	res = xmms_ipc_msg_put_value_bb (msg->bb, v);
+	xmms_ipc_msg_update_length (msg->bb);
+	return res;
 }
 
 static uint32_t
