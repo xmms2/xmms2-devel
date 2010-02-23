@@ -10,6 +10,7 @@ if sys.version_info < (2,4):
 
 import os
 import optparse
+import imp
 
 # Waf removes the current dir from the python path. We readd it to
 # import waftools stuff.
@@ -22,6 +23,7 @@ import Utils
 import Build
 import Configure
 from logging import fatal, warning
+import Constants
 
 BASEVERSION="0.7 DrNo"
 APPNAME='xmms2'
@@ -29,12 +31,21 @@ APPNAME='xmms2'
 srcdir='.'
 blddir = '_build_'
 
+_waf_mismatch_msg = \
+"You are building xmms2 with a waf version that is different from the one \n" \
+"distributed with xmms2. This is not supported by the XMMS2 Team.\n" \
+"Before reporting any errors with this setup, please rebuild XMMS2 using\n" \
+"'./waf configure build install'"
 ####
 ## Initialization
 ####
 def init():
     import gc
     gc.disable()
+
+    Constants_l = imp.load_source('Constants_tmp', os.path.join('wafadmin', 'Constants.py'))
+    if not Constants_l.HEXVERSION == Constants.HEXVERSION:
+        Utils.pprint('RED', _waf_mismatch_msg)
 
 subdirs = """
           src/lib/xmmstypes
