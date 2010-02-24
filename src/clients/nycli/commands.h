@@ -31,7 +31,7 @@ gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_toggle(cli_infos_t *infos, command_context_t *ctx); /* <<<<<< */
 gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_status (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_current (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_next (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx);
@@ -75,7 +75,7 @@ void cli_pause_setup (command_action_t *action);
 void cli_stop_setup (command_action_t *action);
 void cli_toggle_setup(command_action_t *action); /* <<<<< */
 void cli_seek_setup (command_action_t *action);
-void cli_status_setup (command_action_t *action);
+void cli_current_setup (command_action_t *action);
 void cli_prev_setup (command_action_t *action);
 void cli_next_setup (command_action_t *action);
 void cli_jump_setup (command_action_t *action);
@@ -122,7 +122,7 @@ static const command_setup_func commandlist[] =
 	cli_stop_setup,
 	cli_toggle_setup,
 	cli_seek_setup,
-	cli_status_setup,
+	cli_current_setup,
 	cli_prev_setup,
 	cli_next_setup,
 	cli_jump_setup,

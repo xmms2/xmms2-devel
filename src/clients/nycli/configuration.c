@@ -35,7 +35,7 @@ const gchar *const default_config =
 "repeat = seek 0\n"
 "mute = server volume 0\n"
 "scap = stop ; playlist clear ; add $@ ; play\n"
-"current = status -f $1\n"
+"status = current -r 1\n"
 "addpls = add -f -P $@\n";
 
 /* Load a section from a keyfile to a hash-table

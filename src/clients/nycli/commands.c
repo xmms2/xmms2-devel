@@ -271,16 +271,16 @@ cli_move_setup (command_action_t *action)
 }
 
 void
-cli_status_setup (command_action_t *action)
+cli_current_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
 		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, _("Delay between each refresh of the status. If 0, the status is only printed once (default)."), "time" },
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
 	};
-	command_action_fill (action, "status", &cli_status, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "current", &cli_current, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-r <time>] [-f <format>]"),
-	                     _("Display playback status, either continuously or once."));
+	                     _("Display current playback status, either continuously or once."));
 }
 
 void
@@ -625,7 +625,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_status (cli_infos_t *infos, command_context_t *ctx)
+cli_current (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *format;
 	gint refresh;
