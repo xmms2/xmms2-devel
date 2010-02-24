@@ -461,7 +461,7 @@ status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 		g_printf (_("\n"
 		            "   (n) next song\n"
 		            "   (p) previous song\n"
-		            "   (t) toggle playback\n"
+		            "   (SPACE) toggle playback\n"
 		            "   (ENTER) exit status mode\n\n"));
 		cli_infos_status_mode (infos, status);
 	} else {

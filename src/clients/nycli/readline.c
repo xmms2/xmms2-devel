@@ -211,7 +211,7 @@ readline_status_mode (cli_infos_t *infos)
 	rl_bind_key_in_map ('\r', rl_newline, stkmap);
 	rl_bind_key_in_map ('n', readline_status_next, stkmap);
 	rl_bind_key_in_map ('p', readline_status_prev, stkmap);
-	rl_bind_key_in_map ('t', readline_status_toggle, stkmap);
+	rl_bind_key_in_map (' ', readline_status_toggle, stkmap);
 
 	rl_set_keymap (stkmap);
 }
