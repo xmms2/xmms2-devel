@@ -28,3 +28,6 @@ from xmmsapi import COLLECTION_CHANGED_ADD
 from xmmsapi import COLLECTION_CHANGED_UPDATE
 from xmmsapi import COLLECTION_CHANGED_RENAME
 from xmmsapi import COLLECTION_CHANGED_REMOVE
+
+from xmmsapi import PLAYBACK_SEEK_SET
+from xmmsapi import PLAYBACK_SEEK_CUR
