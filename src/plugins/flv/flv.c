@@ -16,6 +16,7 @@
 
 #include <xmms/xmms_xformplugin.h>
 #include <xmms/xmms_log.h>
+#include <math.h>
 
 /* each tag has an 11 byte header
  * followed by format specific metadata
@@ -68,6 +69,8 @@ typedef struct {
 	guint32 last_datasize;
 	/* format of the audio stream */
 	guint8 format;
+	/* last string in script array */
+	guint8 *script_array_key;
 } xmms_flv_data_t;
 
 static gboolean xmms_flv_setup (xmms_xform_plugin_t *xform);
@@ -82,16 +85,31 @@ static void xmms_flv_destroy (xmms_xform_t *xform);
  */
 static gint next_audio_tag (xmms_xform_t *xform);
 
-static guint32
-get_be32 (guint8 *b)
+static gint script_parse (xmms_xform_t *xform);
+static guint8 *script_get_string (xmms_xform_t *xform);
+
+static guint16
+get_be16 (guint8 *b)
 {
-	return (b[3]) | (b[2] << 8) | (b[1] << 16) | (b[0] << 24);
+	return (guint16)(b[1]) | (b[0] << 8);
 }
 
 static guint32
 get_be24 (guint8 *b)
 {
-	return (b[2]) | (b[1] << 8) | (b[0] << 16);
+	return (guint32)get_be16 (b) << 8 | b[2];
+}
+
+static guint32
+get_be32 (guint8 *b)
+{
+	return (guint32)get_be16 (b) << 16 | (guint32)get_be16 (b + 2);
+}
+
+static guint64
+get_be64 (guint8 *b)
+{
+	return (guint64)get_be32 (b) << 32 | (guint64)get_be32 (b + 4);
 }
 
 XMMS_XFORM_PLUGIN ("flv", "FLV demuxer", XMMS_VERSION,
@@ -298,6 +316,7 @@ xmms_flv_destroy (xmms_xform_t *xform)
 {
 	xmms_flv_data_t *data;
 	data = xmms_xform_private_data_get (xform);
+	g_free (data->script_array_key);
 	g_free (data);
 }
 
@@ -342,6 +361,18 @@ next_audio_tag (xmms_xform_t *xform)
 			}
 
 			data->last_datasize = get_be24 (&header[1]);
+
+			if (header[0] == 18) {
+				XMMS_DBG ("Found script data");
+				xmms_xform_read (xform, dumb, 1, &err);
+				g_free (script_get_string (xform));
+				if (!script_parse (xform) || data->last_datasize) {
+					XMMS_DBG ("End of script data (with errors)");
+					return -1;
+				} else {
+					XMMS_DBG ("End of script data");
+				}
+			}
 		}
 
 		while (data->last_datasize) {
@@ -362,6 +393,203 @@ next_audio_tag (xmms_xform_t *xform)
 		}
 
 	} while (ret);
+
+	return ret;
+}
+
+static guint8 *script_get_string (xmms_xform_t *xform)
+{
+	guint8 *str, size[2];
+	guint16 size_n;
+	xmms_error_t err;
+
+	if (xmms_xform_read (xform, size, 2, &err) != 2) {
+		return NULL;
+	}
+
+	size_n = get_be16 (size);
+
+	/* Allocate one more char since there are some encoders
+	   that don't add a null terminator
+	*/
+	str = g_malloc0 (size_n + 1);
+
+	if (xmms_xform_read (xform, str, size_n, &err) != size_n) {
+		xmms_log_error ("Couldn't read entire string");
+	}
+
+	XMMS_DBG (" String: %s (Length: %u)", str, size_n);
+
+	return str;
+}
+
+/* Thanks ffmpeg */
+static gdouble int_to_double (guint64 v)
+{
+	if(v + v > 0xFFELLU << 52) {
+		return 0.0 / 0.0;
+	}
+	return ldexp (((v & ((1LL << 52) - 1)) + (1LL << 52)) * (v >> 63 | 1),
+	              (v >> 52 & 0x7FF) - 1075);
+}
+
+static gint script_parse (xmms_xform_t *xform)
+{
+	guint32 numt, array_length;
+	gdouble numdoublet;
+	guint8 buf[8];
+	gchar object_type;
+	gint ret = 0;
+	xmms_error_t err;
+	xmms_flv_data_t *data;
+
+	data = xmms_xform_private_data_get (xform);
+
+	if (xmms_xform_read (xform, &object_type, 1, &err) != 1) {
+		xmms_log_error ("Couldn't read object type");
+		goto script_err;
+	}
+
+	switch (object_type) {
+		case 0: /* double */
+			if (xmms_xform_read (xform, buf, 8, &err) != 8) {
+				xmms_log_error ("Couldn't read number object");
+				goto script_err;
+			}
+
+			numdoublet = int_to_double (get_be64 (buf));
+			XMMS_DBG (" Double: %f", numdoublet);
+
+			if (data->script_array_key &&
+			    !strcmp ((const char *)data->script_array_key, "duration")) {
+				xmms_xform_metadata_set_int (xform,
+				                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+				                             (gint)(numdoublet * 1000));
+			}
+			break;
+		case 1: /* uint8_t */
+			if (xmms_xform_read (xform, buf, 1, &err) != 1) {
+				xmms_log_error ("Couldn't read boolean object");
+			}
+			XMMS_DBG (" U8:     %u", buf[0]);
+			break;
+		case 4: /* movieclip path (doesn't matter to us) */
+		case 2: /* string */
+			g_free (script_get_string (xform));
+			break;
+		case 8: /* array (len can't be trusted) */
+		case 10: /* strict array (len can be trusted) */
+			if (xmms_xform_read (xform, buf, 4, &err) != 4) {
+				xmms_log_error (" Bad array length");
+				goto script_err;
+			}
+
+			array_length = get_be32 (buf);
+
+			if (object_type == 8) {
+				XMMS_DBG (" ECMA Array (Possible Length: %u)", array_length);
+
+				while (1) {
+					g_free (data->script_array_key);
+
+					data->script_array_key = script_get_string (xform);
+					if (!data->script_array_key ||
+					    !script_parse (xform) ||
+					    xmms_xform_peek (xform, buf, 3, &err) != 3) {
+						goto script_err;
+					}
+
+					if (get_be24 (buf) == 9) {
+						break;
+					}
+				}
+			} else {
+				XMMS_DBG (" Array (Length: %u)", array_length);
+
+				for (; array_length; array_length--) {
+					g_free (data->script_array_key);
+
+					data->script_array_key = script_get_string (xform);
+					if (!data->script_array_key || !script_parse (xform)) {
+						goto script_err;
+					}
+				}
+			}
+
+			if (xmms_xform_read (xform, buf, 3, &err) != 3 ||
+			    get_be24 (buf) != 9) {
+				xmms_log_error (" Array not properly terminated");
+				XMMS_DBG (" End of array (with errors)");
+				goto script_err;
+			} else {
+				XMMS_DBG (" End of array");
+			}
+			break;
+		case 3: /* Object */
+			script_parse (xform);
+			break;
+		case 7: /* uint16_t */
+			if (xmms_xform_read (xform, buf, 2, &err) != 2) {
+				xmms_log_error ("Couldn't read reference object");
+				goto script_err;
+			}
+			XMMS_DBG (" U16:    %u", get_be16 (buf));
+			break;
+		case 11: /* date object */
+		{
+			guint16 tzoffset;
+
+			/* double, epoch ts */
+			if (xmms_xform_read (xform, buf, 8, &err) != 8) {
+				xmms_log_error ("Couldn't read date object timestamp");
+				goto script_err;
+			}
+			numdoublet = int_to_double (get_be64 (buf));
+
+			/* uint16_t, tz */
+			if (xmms_xform_read (xform, buf, 2, &err) != 2) {
+				xmms_log_error ("Couldn't read date object offset");
+				goto script_err;
+			}
+			tzoffset = get_be16 (buf);
+
+			XMMS_DBG (" Date:   %f +%u", numdoublet, tzoffset);
+		}	break;
+		case 12: /* long string */
+		{
+			gchar longstr[FLV_CHUNK_SIZE];
+			gint32 rres = 0;
+
+			if (xmms_xform_read (xform, buf, 4, &err) != 4) {
+				xmms_log_error ("Couldn't read long string object length");
+				goto script_err;
+			}
+			numt = get_be32 (buf);
+
+			XMMS_DBG (" Long String (Length: %u)", numt);
+
+			while (numt) {
+				rres = xmms_xform_read (xform, longstr,
+				                        (numt > FLV_CHUNK_SIZE)?
+				                        FLV_CHUNK_SIZE : numt, &err);
+				if (rres <= 0) {
+					xmms_log_error (" Couldn't read rest of string");
+					goto script_err;
+				}
+				numt -= rres;
+			}
+		}   break;
+		default:
+			xmms_log_error (" Invalid object (%d)", object_type);
+			goto script_err;
+	}
+
+	ret = 1;
+	data->last_datasize = 0;
+
+script_err:
+	g_free (data->script_array_key);
+	data->script_array_key = NULL;
 
 	return ret;
 }
