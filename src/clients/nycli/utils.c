@@ -1829,7 +1829,11 @@ find_terminal_width ()
 	char *colstr, *endptr;
 
 	if (!isatty (STDOUT_FILENO)) {
-		columns = 0;
+#ifdef LINE_MAX
+		columns = LINE_MAX;
+#else
+		columns = 2048 /* Minimum value for LINE_MAX according to POSIX */
+#endif
 #ifdef TIOCGWINSZ
 	} else if (!ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
