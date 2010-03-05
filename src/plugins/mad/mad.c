@@ -300,15 +300,18 @@ xmms_mad_init (xmms_xform_t *xform)
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
 		xmms_xform_metadata_set_int (xform, metakey, frame.header.bitrate);
 
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+		if (!xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
+			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
 
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
-		if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
-			gint32 val;
+			if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
+				gint32 val;
 
-			val = (gint32) (filesize * (gdouble) 8000.0 / frame.header.bitrate);
+				val = (gint32) (filesize * (gdouble) 8000.0 / frame.header.bitrate);
 
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
-			xmms_xform_metadata_set_int (xform, metakey, val);
+				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
+				xmms_xform_metadata_set_int (xform, metakey, val);
+			}
 		}
 	}
 

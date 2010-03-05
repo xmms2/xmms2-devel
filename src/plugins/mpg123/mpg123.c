@@ -249,7 +249,10 @@ xmms_mpg123_init (xmms_xform_t *xform)
 
 	/* Get duration in samples, convert to ms and save to xmms2 */
 	length = mpg123_length (data->decoder);
-	if (length > 0) {
+	if (length > 0 &&
+	    !xmms_xform_metadata_get_int (xform,
+		                              XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                              &i)) {
 		length = (off_t) ((gfloat) length / data->samplerate * 1000);
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
