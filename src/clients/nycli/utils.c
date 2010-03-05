@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2007 XMMS2 Team
+ *  Copyright (C) 2003-2010 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -1830,8 +1830,10 @@ find_terminal_width ()
 
 	if (!isatty (STDOUT_FILENO)) {
 		columns = 0;
-	} else if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
+#ifdef TIOCGWINSZ
+	} else if (!ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
+#endif
 	} else {
 		colstr = getenv ("COLUMNS");
 		if (colstr != NULL) {
