@@ -146,6 +146,10 @@ N: Johannes Jordan
 E: ypnos@lanrules.de
 D: Visualization
 
+N: Brad Jorsch
+E: anomie@users.sourceforge.net
+D: Support for front picture from Vorbis.
+
 N: Daniel Kamiński
 E: maniel.rulez@gmail.com
 D: mlib remove command in cli, Ruby fixes.

@@ -27,6 +27,7 @@
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
+#include "xmms/xmms_bindata.h"
 
 #include <glib.h>
 
@@ -244,29 +245,39 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 }
 
 static void
-handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
+handle_image_comment (xmms_xform_t *xform, const gchar *encoded_value)
 {
+	gsize len;
+	guchar *value;
+
 	guint32 typ, mime_len, desc_len, img_len;
 	guchar *pos, *end, *mime_data, *img_data;
 	gchar hash[33];
+
+#if GLIB_CHECK_VERSION(2,12,0)
+	value = g_base64_decode (encoded_value, &len);
+#else
+	/* TODO: Implement/backport base64 decoding */
+	return;
+#endif
 
 	pos = value;
 	end = value + len;
 
 	if (pos + 4 > end) {
 		XMMS_DBG ("Malformed picture comment");
-		return;
+		goto finish;
 	}
 	typ = GUINT32_FROM_BE (*(guint32 *)pos);
 	if (typ != 0 && typ != 3) {
 		XMMS_DBG ("Picture type %d not handled", typ);
-		return;
+		goto finish;
 	}
 	pos += 4;
 
 	if (pos + 4 > end) {
 		XMMS_DBG ("Malformed picture comment");
-		return;
+		goto finish;
 	}
 	mime_len = GUINT32_FROM_BE (*(guint32 *)pos);
 	pos += 4;
@@ -275,7 +286,7 @@ handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
 
 	if (pos + 4 > end) {
 		XMMS_DBG ("Malformed picture comment");
-		return;
+		goto finish;
 	}
 	desc_len = GUINT32_FROM_BE (*(guint32 *)pos);
 	pos += 4;
@@ -288,7 +299,7 @@ handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
 
 	if (pos + 4 > end) {
 		XMMS_DBG ("Malformed picture comment");
-		return;
+		goto finish;
 	}
 	img_len = GUINT32_FROM_BE (*(guint32 *)pos);
 	pos += 4;
@@ -296,10 +307,10 @@ handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
 
 	if (img_data + img_len > end) {
 		XMMS_DBG ("Malformed picture comment");
-		return;
+		goto finish;
 	}
 
-	if (xmms_bindata_plugin_add ((const guchar *)img_data, img_len, hash)) {
+	if (xmms_bindata_plugin_add (img_data, img_len, hash)) {
 		const gchar *metakey;
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
@@ -307,8 +318,11 @@ handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
 
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
 		mime_data[mime_len] = '\0';
-		xmms_xform_metadata_set_str (xform, metakey, mime_data);
+		xmms_xform_metadata_set_str (xform, metakey, (gchar *)mime_data);
 	}
+
+finish:
+	g_free (value);
 }
 
 /* note that "key" is NOT NUL-terminated here,
@@ -322,10 +336,7 @@ handle_comment (xmms_xform_t *xform,
 	gint i;
 
 	if (!g_ascii_strncasecmp (key, "METADATA_BLOCK_PICTURE", key_len)) {
-		gsize dlen;
-		gchar *dvalue = g_base64_decode (value, &dlen);
-		handle_image_comment (xform, dvalue, dlen);
-		g_free (dvalue);
+		handle_image_comment (xform, value);
 		return;
 	}
 
