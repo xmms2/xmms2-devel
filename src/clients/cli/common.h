@@ -31,6 +31,8 @@ typedef struct {
 	void (*func) (xmmsc_connection_t *conn, int argc, char **argv);
 } cmds;
 
+gboolean verbose;
+
 gboolean x_realpath (const gchar *item, gchar *rpath);
 gchar *x_path2url (gchar *path);
 gchar *format_url (gchar *item, GFileTest test);

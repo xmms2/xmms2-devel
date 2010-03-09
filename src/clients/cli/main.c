@@ -254,6 +254,15 @@ main (gint argc, gchar **argv)
 
 	setlocale (LC_ALL, "");
 
+	verbose = FALSE;
+	while (argc > 1 && (!g_ascii_strcasecmp (argv[1], "-v") ||
+	                    !g_ascii_strcasecmp (argv[1], "--verbose"))) {
+		verbose = TRUE;
+		argv[1] = argv[0];
+		--argc;
+		++argv;
+	}
+
 	config = read_config ();
 	atexit (free_config);
 
