@@ -243,6 +243,74 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 }
 
+static void
+handle_image_comment (xmms_xform_t *xform, const gchar *value, gsize len)
+{
+	guint32 typ, mime_len, desc_len, img_len;
+	guchar *pos, *end, *mime_data, *img_data;
+	gchar hash[33];
+
+	pos = value;
+	end = value + len;
+
+	if (pos + 4 > end) {
+		XMMS_DBG ("Malformed picture comment");
+		return;
+	}
+	typ = GUINT32_FROM_BE (*(guint32 *)pos);
+	if (typ != 0 && typ != 3) {
+		XMMS_DBG ("Picture type %d not handled", typ);
+		return;
+	}
+	pos += 4;
+
+	if (pos + 4 > end) {
+		XMMS_DBG ("Malformed picture comment");
+		return;
+	}
+	mime_len = GUINT32_FROM_BE (*(guint32 *)pos);
+	pos += 4;
+	mime_data = pos;
+	pos += mime_len;
+
+	if (pos + 4 > end) {
+		XMMS_DBG ("Malformed picture comment");
+		return;
+	}
+	desc_len = GUINT32_FROM_BE (*(guint32 *)pos);
+	pos += 4;
+	pos += desc_len;
+
+	pos += 4; /* width */
+	pos += 4; /* height */
+	pos += 4; /* depth */
+	pos += 4; /* indexed palette length */
+
+	if (pos + 4 > end) {
+		XMMS_DBG ("Malformed picture comment");
+		return;
+	}
+	img_len = GUINT32_FROM_BE (*(guint32 *)pos);
+	pos += 4;
+	img_data = pos;
+
+	if (img_data + img_len > end) {
+		XMMS_DBG ("Malformed picture comment");
+		return;
+	}
+
+	if (xmms_bindata_plugin_add ((const guchar *)img_data, img_len, hash)) {
+		const gchar *metakey;
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
+		xmms_xform_metadata_set_str (xform, metakey, hash);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
+		mime_data[mime_len] = '\0';
+		xmms_xform_metadata_set_str (xform, metakey, mime_data);
+	}
+}
+
 /* note that "key" is NOT NUL-terminated here,
  * but "value" is.
  */
@@ -252,6 +320,14 @@ handle_comment (xmms_xform_t *xform,
                 const gchar *value)
 {
 	gint i;
+
+	if (!g_ascii_strncasecmp (key, "METADATA_BLOCK_PICTURE", key_len)) {
+		gsize dlen;
+		gchar *dvalue = g_base64_decode (value, &dlen);
+		handle_image_comment (xform, dvalue, dlen);
+		g_free (dvalue);
+		return;
+	}
 
 	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 		if (key_len != strlen (properties[i].vname))
