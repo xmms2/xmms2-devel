@@ -80,7 +80,7 @@ Display command help.
 .PP
 
 .TP
-\fBstop\fR [-n <tracks> | -t <time>]
+\fBstop\fR [\-n <tracks> | \-t <time>]
 .PP
 .RS 4
 Stop playback.
@@ -139,7 +139,7 @@ Display command help.
 .PP
 
 .TP
-\fBstatus\fR [-r <time>] [-f <format>]
+\fBstatus\fR [\-r <time>] [\-f <format>]
 .PP
 .RS 4
 Display playback status, either continuously or once.
@@ -198,7 +198,7 @@ Display command help.
 .PP
 
 .TP
-\fBjump\fR [-b] <pattern|positions>
+\fBjump\fR [\-b] <pattern|positions>
 .PP
 .RS 4
 Jump to the first media maching the pattern.
@@ -235,7 +235,7 @@ Display command help.
 .PP
 
 .TP
-\fBsearch\fR [-p <name> | -c <name>] [-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>
+\fBsearch\fR [\-p <name> | \-c <name>] [\-o <prop1[,prop2...]>] [\-l <prop1[,prop2...]>] <pattern>
 .PP
 .RS 4
 Search and print all media matching the pattern. Search can be restricted
@@ -279,7 +279,7 @@ Display command help.
 .PP
 
 .TP
-\fBlist\fR [-p <name>] [pattern]
+\fBlist\fR [\-p <name>] [pattern]
 .PP
 .RS 4
 List the contents of a playlist (the active playlist by default). If a
@@ -303,7 +303,7 @@ Display command help.
 .PP
 
 .TP
-\fBadd\fR [-f [-N] [-P]] [-p <playlist> | -c <collection>] [-n | -a <pos|offset>] [pattern | paths]
+\fBadd\fR [\-f [\-N] [\-P]] [\-p <playlist> | \-c <collection>] [\-n | \-a <pos|offset>] [pattern | paths]
 .PP
 .RS 4
 Add the matching media or files to a playlist.
@@ -320,7 +320,7 @@ Treat the arguments as file paths instead of a pattern.
 \-P | \-\-pls
 .RE
 .RS 8
-Treat the files as playlist files (implies --file.)
+Treat the files as playlist files (implies \-\-file.)
 .RE
 .PP
 .RS 4
@@ -367,7 +367,7 @@ Display command help.
 .PP
 
 .TP
-\fBremove\fR [-p <playlist>] <pattern|positions>
+\fBremove\fR [\-p <playlist>] <pattern|positions>
 .PP
 .RS 4
 Remove the matching media from a playlist.
@@ -389,7 +389,7 @@ Display command help.
 .PP
 
 .TP
-\fBmove\fR [-p <playlist>] [-n | -a <pos|offset>] <pattern|positions>
+\fBmove\fR [\-p <playlist>] [\-n | \-a <pos|offset>] <pattern|positions>
 .PP
 .RS 4
 Move entries inside a playlist.
@@ -440,7 +440,7 @@ Display command help.
 .PP
 
 .TP
-\fBhelp\fR [-a] [command]
+\fBhelp\fR [\-a] [command]
 .PP
 .RS 4
 List all commands, or help on one command.
@@ -462,7 +462,7 @@ Display command help.
 .PP
 .SH PLAYLIST COMMANDS
 .TP
-\fBplaylist list\fR [-a] [pattern]
+\fBplaylist list\fR [\-a] [pattern]
 .PP
 .RS 4
 List all playlists.
@@ -514,7 +514,7 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist create\fR [-p <playlist>] <name>
+\fBplaylist create\fR [\-p <playlist>] <name>
 .PP
 .RS 4
 Change the active playlist.
@@ -536,7 +536,7 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist rename\fR [-f] [-p <playlist>] <newname>
+\fBplaylist rename\fR [\-f] [\-p <playlist>] <newname>
 .PP
 .RS 4
 Rename a playlist.  By default, rename the active playlist.
@@ -610,7 +610,7 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist sort\fR [-o <order>] [playlist]
+\fBplaylist sort\fR [\-o <order>] [playlist]
 .PP
 .RS 4
 Sort a playlist.  By default, sort the active playlist.
@@ -632,7 +632,7 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist config\fR [-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [playlist]
+\fBplaylist config\fR [\-t <type>] [\-s <history>] [\-u <upcoming>] [\-i <coll>] [playlist]
 .PP
 .RS 4
 Configure a playlist by changing its type, attributes, etc.
@@ -721,7 +721,7 @@ Display command help.
 .PP
 
 .TP
-\fBcollection create\fR [-f] [-a | -e] [-c <collection>] <name> [pattern]
+\fBcollection create\fR [\-f] [\-a | \-e] [\-c <collection>] <name> [pattern]
 .PP
 .RS 4
 Create a new collection.
@@ -759,7 +759,7 @@ Display command help.
 .PP
 
 .TP
-\fBcollection rename\fR [-f] <oldname> <newname>
+\fBcollection rename\fR [\-f] <oldname> <newname>
 .PP
 .RS 4
 Rename a collection.
@@ -814,7 +814,7 @@ Display command help.
 .PP
 .SH SERVER COMMANDS
 .TP
-\fBserver import\fR [-N] <path>
+\fBserver import\fR [\-N] <path>
 .PP
 .RS 4
 Import new files into the media library.
@@ -901,7 +901,7 @@ Display command help.
 .PP
 
 .TP
-\fBserver property\fR [-i | -s | -D] [-S] <mid> [name [value]]
+\fBserver property\fR [\-i | \-s | \-D] [\-S] <mid> [name [value]]
 .PP
 .RS 4
 Get or set properties for a given media.
@@ -910,10 +910,10 @@ If only a name is provided, display the value of the property.
 If both a name and a value are provided, set the new value of the property.
 
 By default, set operations use client specific source and list, display operations use source-preference.
-Use the --source option to override this behaviour.
+Use the \-\-source option to override this behaviour.
 
 By default, the value will be used to determine whether it should be saved as a string or an integer.
-Use the --int or --string flag to override this behaviour.
+Use the \-\-int or \-\-string flag to override this behaviour.
 .RE
 .PP
 .RS 4
@@ -968,12 +968,12 @@ Display command help.
 .PP
 
 .TP
-\fBserver volume\fR [-c <name>] [value]
+\fBserver volume\fR [\-c <name>] [value]
 .PP
 .RS 4
 Get or set the audio volume (in a range of 0-100).
 If a value is provided, set the new value of the volume. Otherwise, display the current volume.
-By default, the command applies to all audio channels. Use the --channel flag to override this behaviour.
+By default, the command applies to all audio channels. Use the \-\-channel flag to override this behaviour.
 .RE
 .PP
 .RS 4
@@ -1053,7 +1053,7 @@ The default configuration includes the following aliases:
 \fBaddpls\fR 
 .PP
 .RS 4
-add -f -P $@
+add \-f \-P $@
 .RE
 .PP
 .RS 4
@@ -1068,7 +1068,7 @@ Display command help.
 \fBcurrent\fR 
 .PP
 .RS 4
-status -f $1
+status \-f $1
 .RE
 .PP
 .RS 4
@@ -1189,13 +1189,13 @@ Display command help.
 .RS 8
 An alias can use positional parameters, for example:
 .PP
-foo = add -f $1 $3
+foo = add \-f $1 $3
 .PP
 foo ctkoz.ogg and slre.ogg
 .PP
 Will result in:
 .PP
-add -f ctkoz.ogg slre.ogg
+add \-f ctkoz.ogg slre.ogg
 .PP
 .RE
 .RS 4
