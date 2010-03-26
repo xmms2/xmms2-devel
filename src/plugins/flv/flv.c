@@ -270,11 +270,12 @@ init_err:
 }
 
 static gint
-xmms_flv_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
+read_audio_tag_header (xmms_xform_t *xform)
 {
-	gint ret = 0, thismuch = FLV_TAG_SIZE + 1;
+	gint ret;
+	xmms_flv_data_t *data;
 	guint8 header[FLV_TAG_SIZE + 1];
-	xmms_flv_data_t *data = NULL;
+	xmms_error_t err;
 
 	data = xmms_xform_private_data_get (xform);
 
@@ -282,15 +283,63 @@ xmms_flv_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		xmms_xform_auxdata_barrier (xform);
 		ret = next_audio_tag (xform);
 		if (ret > 0) {
-			if (xmms_xform_read (xform, header, thismuch, err) == thismuch) {
+			if ((ret = xmms_xform_read (xform, header, FLV_TAG_SIZE + 1, &err)
+			     == FLV_TAG_SIZE + 1)) {
 				data->last_datasize = get_be24 (&header[1]) - 1;
 			} else {
-				xmms_log_error ("Need %d bytes", thismuch);
+				xmms_log_error ("Need %d bytes, got %d", FLV_TAG_SIZE + 1,
+				                (ret < 0)? 0 : ret);
 				return -1;
 			}
 		} else {
 			return ret;
 		}
+	}
+
+	if (data->format == CODEC_AAC) {
+		guint8 aac_type;
+
+		if (xmms_xform_read (xform, &aac_type, 1, &err) != 1) {
+			xmms_log_error ("Couldn't read AAC packet type");
+			return -1;
+		}
+		data->last_datasize--;
+
+		if (aac_type == 0) {
+			gchar buf[16];
+
+			/* Generally AudioSpecificConfig headers are no more than 4-6
+			   bytes, but check anyway */
+			if (data->last_datasize > sizeof (buf)) {
+				xmms_log_error ("Data size too large %d", data->last_datasize);
+				return -1;
+			}
+
+			if (xmms_xform_read (xform, buf, data->last_datasize, &err) !=
+			    data->last_datasize) {
+				xmms_log_error ("Couldn't read AudioSpecificConfig");
+				return -1;
+			}
+			xmms_xform_auxdata_set_bin (xform, "decoder_config", buf, data->last_datasize);
+			data->last_datasize = 0;
+
+			return read_audio_tag_header (xform);
+		}
+	}
+
+	return ret;
+}
+
+static gint
+xmms_flv_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
+{
+	gint ret = 0, thismuch = FLV_TAG_SIZE + 1;
+	xmms_flv_data_t *data = NULL;
+
+	data = xmms_xform_private_data_get (xform);
+
+	if ((ret = read_audio_tag_header (xform)) <= 0) {
+		return ret;
 	}
 
 	if (len <= data->last_datasize) {
