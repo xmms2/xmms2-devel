@@ -105,7 +105,7 @@ E: ggallino@gmail.com
 D: Equaliser fixes
 
 N: Anthony Garcia
-E: anthony@agg.homelinux.net
+E: lagg@lavabit.com
 P: 1024D/076F9E89 9467 6082 8A35 2E1E 2D6B  76C4 5E9A ED56 076F 9E89
 D: Compatibility fix to avcodec plugin, flv, various nycli contributions,
 D: various fixes, log timestamps.
