@@ -1340,8 +1340,12 @@ c_coll_query_info (int argc, VALUE *argv, VALUE self)
 	                            cfetch,
 	                            cgroup);
 	xmmsv_unref (cfetch);
-	xmmsv_unref (corder);
-	xmmsv_unref (cgroup);
+	if (corder) {
+		xmmsv_unref (corder);
+	}
+	if (cgroup) {
+		xmmsv_unref (cgroup);
+	}
 
 	METHOD_HANDLER_FOOTER
 }
