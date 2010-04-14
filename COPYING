@@ -37,12 +37,8 @@ src/plugins/mad/xing.c:
 src/plugins/mp4/mp4.c:
         Licensed under GPL license.
 
-src/plugins/mp4/mp4ff/drms*:
-        Copyright (C) 2004 VideoLAN
-        Licensed under GPL license.
-
 src/plugins/mp4/mp4ff/mp4*:
-        Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+        Code from FAAD2 is copyright (c) Nero AG, www.nero.com
         Licensed under GPL license.
 
 src/plugins/sid/*:

@@ -212,19 +212,21 @@ typedef struct
 
 static stdmeta_entry stdmetas[] = 
 {
-	{"©nam","title"},
-	{"©ART","artist"},
-	{"©wrt","writer"},
-	{"©alb","album"},
-	{"©day","date"},
-	{"©too","tool"},
-	{"©cmt","comment"},
-//	{"©gen","genre"},
+	{"\xA9" "nam","title"},
+	{"\xA9" "ART","artist"},
+	{"\xA9" "wrt","writer"},
+	{"\xA9" "alb","album"},
+	{"\xA9" "day","date"},
+	{"\xA9" "too","tool"},
+	{"\xA9" "cmt","comment"},
+//	{"\xA9" "gen","genre"},
 	{"cpil","compilation"},
 //	{"trkn","track"},
 //	{"disk","disc"},
 //	{"gnre","genre"},
 	{"covr","cover"},
+	/* added by AJS */
+	{"aART","album_artist"},
 };
 
 
@@ -265,11 +267,20 @@ static void membuffer_write_int16_tag(membuffer * buf,const char * name,uint16_t
 
 static void membuffer_write_std_tag(membuffer * buf,const char * name,const char * value)
 {
+	/* added by AJS */
+	uint32_t flags = 1;
+
+	/* special check for compilation flag */
+	if ( strcmp(name, "cpil") == 0)
+	{
+		flags = 21;
+	}
+
 	membuffer_write_int32(buf,8 /*atom header*/ + 8 /*data atom header*/ + 8 /*flags + reserved*/ + strlen(value) );
 	membuffer_write_atom_name(buf,name);
 	membuffer_write_int32(buf,8 /*data atom header*/ + 8 /*flags + reserved*/ + strlen(value));
 	membuffer_write_atom_name(buf,"data");
-	membuffer_write_int32(buf,1);//flags
+	membuffer_write_int32(buf,flags);//flags
 	membuffer_write_int32(buf,0);//reserved
 	membuffer_write_data(buf,value,strlen(value));
 }

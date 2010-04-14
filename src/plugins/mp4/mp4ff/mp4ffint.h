@@ -1,28 +1,31 @@
 /*
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
-** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
-**
+** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+**  
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
-**
+** 
 ** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-**
+** 
 ** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
+** along with this program; if not, write to the Free Software 
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
 ** Any non-GPL usage of this software or parts of this software is strictly
 ** forbidden.
 **
-** Commercial non-GPL licensing of this software is possible.
-** For more info contact Ahead Software through Mpeg4AAClicense@nero.com.
+** The "appropriate copyright message" mentioned in section 2c of the GPLv2
+** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
 **
-** $Id: mp4ffint.h,v 1.19 2005/02/01 13:15:55 menno Exp $
+** Commercial non-GPL licensing of this software is possible.
+** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
+**
+** $Id: mp4ffint.h,v 1.26 2009/01/25 20:14:34 menno Exp $
 **/
 
 #ifndef MP4FF_INTERNAL_H
@@ -35,52 +38,6 @@ extern "C" {
 #include "mp4ff_int_types.h"
 #include <stdlib.h>
 
-#if defined(_WIN32) && !defined(_WIN32_WCE)
-#define ITUNES_DRM
-
-static __inline uint32_t GetDWLE( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[3] << 24) | ((uint32_t)p[2] << 16)
-              | ((uint32_t)p[1] << 8) | p[0] );
-}
-static __inline uint32_t U32_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16)
-              | ((uint32_t)p[2] << 8) | p[3] );
-}
-static __inline uint64_t U64_AT( void const * _p )
-{
-    uint8_t * p = (uint8_t *)_p;
-    return ( ((uint64_t)p[0] << 56) | ((uint64_t)p[1] << 48)
-              | ((uint64_t)p[2] << 40) | ((uint64_t)p[3] << 32)
-              | ((uint64_t)p[4] << 24) | ((uint64_t)p[5] << 16)
-              | ((uint64_t)p[6] << 8) | p[7] );
-}
-
-#ifdef WORDS_BIGENDIAN
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)d) | ( ((uint32_t)c) << 8 ) \
-           | ( ((uint32_t)b) << 16 ) | ( ((uint32_t)a) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(b) | ( (uint16_t)(a) << 8 ) )
-
-#else
-#   define VLC_FOURCC( a, b, c, d ) \
-        ( ((uint32_t)a) | ( ((uint32_t)b) << 8 ) \
-           | ( ((uint32_t)c) << 16 ) | ( ((uint32_t)d) << 24 ) )
-#   define VLC_TWOCC( a, b ) \
-        ( (uint16_t)(a) | ( (uint16_t)(b) << 8 ) )
-#endif
-
-#define FOURCC_user VLC_FOURCC( 'u', 's', 'e', 'r' )
-#define FOURCC_key  VLC_FOURCC( 'k', 'e', 'y', ' ' )
-#define FOURCC_iviv VLC_FOURCC( 'i', 'v', 'i', 'v' )
-#define FOURCC_name VLC_FOURCC( 'n', 'a', 'm', 'e' )
-#define FOURCC_priv VLC_FOURCC( 'p', 'r', 'i', 'v' )
-
-#endif
 #define MAX_TRACKS 1024
 #define TRACK_UNKNOWN 0
 #define TRACK_AUDIO   1
@@ -119,6 +76,23 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_PRIV 154
 #define ATOM_USER 155
 #define ATOM_KEY  156
+
+#define ATOM_ALBUM_ARTIST	157
+#define ATOM_CONTENTGROUP   158
+#define ATOM_LYRICS         159
+#define ATOM_DESCRIPTION    160
+#define ATOM_NETWORK        161
+#define ATOM_SHOW           162
+#define ATOM_EPISODENAME    163
+#define ATOM_SORTTITLE      164
+#define ATOM_SORTALBUM      165
+#define ATOM_SORTARTIST     166
+#define ATOM_SORTALBUMARTIST    167
+#define ATOM_SORTWRITER     168
+#define ATOM_SORTSHOW       169
+#define ATOM_SEASON         170
+#define ATOM_EPISODE        171
+#define ATOM_PODCAST        172
 
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
@@ -234,11 +208,6 @@ typedef struct
     uint32_t timeScale;
     uint64_t duration;
 
-#ifdef ITUNES_DRM
-    /* drms */
-    void *p_drms;
-#endif
-
 } mp4ff_track_t;
 
 /* mp4 main file structure */
@@ -347,7 +316,7 @@ mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f);
 mp4ff_t *mp4ff_open_edit(mp4ff_callback_t *f);
 #endif
 void mp4ff_close(mp4ff_t *ff);
-void mp4ff_track_add(mp4ff_t *f);
+//void mp4ff_track_add(mp4ff_t *f);
 int32_t parse_sub_atoms(mp4ff_t *f, const uint64_t total_size,int meta_only);
 int32_t parse_atoms(mp4ff_t *f,int meta_only);
 
