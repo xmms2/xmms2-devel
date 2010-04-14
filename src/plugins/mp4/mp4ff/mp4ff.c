@@ -195,7 +195,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
         {
             /* moov atom is before mdat, we can stop reading when mdat is encountered */
             /* file position will stay at beginning of mdat data */
-//            break;
+            /* break; */
         }
 
         if (atom_type == ATOM_MOOV && size > header_size)

@@ -37,7 +37,7 @@
 
 
 
-static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value)
+int32_t mp4ff_tag_add_field_len(mp4ff_metadata_t *tags, const char *item, const char *value, uint32_t valuelen)
 {
     void *backup = (void *)tags->tags;
 
@@ -50,7 +50,13 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
         return 0;
     } else {
         tags->tags[tags->count].item = strdup(item);
-        tags->tags[tags->count].value = strdup(value);
+
+        /* ugly hack to make covers work */
+        tags->tags[tags->count].value = malloc(valuelen+1);
+        memcpy(tags->tags[tags->count].value, value, valuelen);
+        tags->tags[tags->count].value[valuelen] = '\0';
+
+        tags->tags[tags->count].value_length = valuelen;
 
         if (!tags->tags[tags->count].item || !tags->tags[tags->count].value)
         {
@@ -58,6 +64,7 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
             if (!tags->tags[tags->count].value) free (tags->tags[tags->count].value);
             tags->tags[tags->count].item = NULL;
             tags->tags[tags->count].value = NULL;
+            tags->tags[tags->count].value_length = 0;
             return 0;
         }
 
@@ -66,7 +73,12 @@ static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, con
     }
 }
 
-static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value)
+int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value)
+{
+    return mp4ff_tag_add_field_len(tags, item, value, strlen(value));
+}
+
+int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value)
 {
     unsigned int i;
 
@@ -78,6 +90,7 @@ static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, con
         {
 			free(tags->tags[i].value);
 			tags->tags[i].value = strdup(value);
+			tags->tags[i].value_length = strlen(value);
             return 1;
         }
     }
@@ -155,7 +168,7 @@ const char * mp4ff_meta_index_to_genre(uint32_t idx)
 }
 
 
-static int32_t TrackToString(char** str, const uint16_t track, const uint16_t totalTracks)
+int32_t TrackToString(char** str, const uint16_t track, const uint16_t totalTracks)
 {
 	char temp[32];
     sprintf(temp, "%.5u of %.5u", track, totalTracks);
@@ -163,9 +176,9 @@ static int32_t TrackToString(char** str, const uint16_t track, const uint16_t to
     return 0;
 }
 
-static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name)
+int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name)
 {
-    static char *tag_names[] = {
+    static const char *tag_names[] = {
         "unknown", "title", "artist", "writer", "album",
         "date", "tool", "comment", "genre", "track",
         "disc", "compilation", "genre", "tempo", "cover",
@@ -218,13 +231,14 @@ static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char
     return 0;
 }
 
-static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size)
+int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size)
 {
     uint8_t atom_type;
     uint8_t header_size = 0;
     uint64_t subsize, sumsize = 0;
     char * name = NULL;
 	char * data = NULL;
+	uint32_t datalen = 0;
 	uint32_t done = 0;
 
 
@@ -295,6 +309,7 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 				{
 					if (data) {free(data);data = NULL;}
 					data = mp4ff_read_string(f,(uint32_t)(subsize-(header_size+8)));
+					datalen = (uint32_t)(subsize-(header_size+8));
 				}
 			} else if (atom_type == ATOM_NAME) {
 				if (!done)
@@ -315,7 +330,7 @@ static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const
 		if (!done)
 		{
 			if (name == NULL) mp4ff_set_metadata_name(f, parent_atom_type, &name);
-			if (name) mp4ff_tag_add_field(&(f->tags), name, data);
+			if (name) mp4ff_tag_add_field_len(&(f->tags), name, data, datalen);
 		}
 
 		free(data);
@@ -344,7 +359,7 @@ int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size)
 
 /* find a metadata item by name */
 /* returns 0 if item found, 1 if no such item */
-static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value)
+int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value)
 {
     uint32_t i;
 
@@ -352,8 +367,13 @@ static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char 
     {
         if (!stricmp(f->tags.tags[i].item, item))
         {
-			*value = strdup(f->tags.tags[i].value);
-            return 1;
+            uint32_t value_length = f->tags.tags[i].value_length;
+
+             if (value_length > 0) {
+                 *value = malloc(value_length+1);
+                 memcpy(*value, f->tags.tags[i].value, value_length+1);
+                 return value_length;
+             }
         }
     }
 

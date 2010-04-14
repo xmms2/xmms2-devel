@@ -1,8 +1,7 @@
-Branched from faad2 CVS tree on 2005-07-22.
+Branched from faad2 version 2.7.
 
 Changes:
  * Change references to config.h to be conditional since we don't use config.h
- * Fix small memory leak in mp4atom.c related to GetHomeDir() function
  * Add newlines to end of files that don't have it
  * Change static functions that are used from other files to non-static
  * Harmonize the use of data blocks and convert from int8_t to uint8_t to get rid of
@@ -11,7 +10,5 @@ Changes:
    it would be possible to request freeform (mostly musicbrainz) tags
  * Make mp4ff_read_data always read the buffer full if possible
  * Add value_length variable to tag type and use it when adding new item-value pairs,
-   necessary for cover art since itss binary data and can't be handled as a string
+   necessary for cover art since it's binary data and can't be handled as a string
  * Add support for Apple Lossless audio files
- * Add support for MinGW's stdint.h by adding a check for __MINGW32__ in
-   mp4ff_int_types.h and including stdlib.h before mp4ff_int_types.h in mp4ffint.h
