@@ -3,7 +3,7 @@
 ** Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
 **
 ** This program is free software; you can redistribute it and/or modify
-** It under the terms of the GNU General Public License as published by
+** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
 **
@@ -40,7 +40,7 @@ typedef struct
     uint32_t (*read)(void *user_data, void *buffer, uint32_t length);
     uint32_t (*write)(void *udata, void *buffer, uint32_t length);
     uint32_t (*seek)(void *user_data, uint64_t position);
-    uint32_t (*truncate)(void *user_data);
+	uint32_t (*truncate)(void *user_data);
     void *user_data;
 } mp4ff_callback_t;
 
@@ -85,11 +85,9 @@ uint32_t mp4ff_get_audio_type(const mp4ff_t * f,const int32_t track);
 
 
 /* metadata */
-#ifdef USE_TAGGING
 int mp4ff_meta_get_num_items(const mp4ff_t *f);
 int mp4ff_meta_get_by_index(const mp4ff_t *f, unsigned int index,
                             char **item, char **value);
-int mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value);
 int mp4ff_meta_get_title(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_artist(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_writer(const mp4ff_t *f, char **value);
@@ -105,13 +103,13 @@ int mp4ff_meta_get_totaldiscs(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_compilation(const mp4ff_t *f, char **value);
 int mp4ff_meta_get_tempo(const mp4ff_t *f, char **value);
 int32_t mp4ff_meta_get_coverart(const mp4ff_t *f, char **value);
+#ifdef USE_TAGGING
 
 /* metadata tag structure */
 typedef struct
 {
     char *item;
     char *value;
-    uint32_t value_length;
 } mp4ff_tag_t;
 
 /* metadata list structure */
@@ -131,4 +129,3 @@ int32_t mp4ff_meta_update(mp4ff_callback_t *f,const mp4ff_metadata_t * data);
 #endif /* __cplusplus */
 
 #endif
-

@@ -100,7 +100,7 @@ void mp4ff_close(mp4ff_t *ff)
     if (ff) free(ff);
 }
 
-void mp4ff_track_add(mp4ff_t *f)
+static void mp4ff_track_add(mp4ff_t *f)
 {
     f->total_tracks++;
 
@@ -194,7 +194,7 @@ int32_t parse_atoms(mp4ff_t *f,int meta_only)
         {
             /* moov atom is before mdat, we can stop reading when mdat is encountered */
             /* file position will stay at beginning of mdat data */
-            /* break; */
+//            break;
         }
 
         if (atom_type == ATOM_MOOV && size > header_size)
@@ -351,7 +351,7 @@ int32_t mp4ff_get_sample_duration(const mp4ff_t *f, const int32_t track, const i
 int64_t mp4ff_get_sample_position(const mp4ff_t *f, const int32_t track, const int32_t sample)
 {
     int32_t i, co = 0;
-    int64_t acc = 0;
+	int64_t acc = 0;
 
     for (i = 0; i < f->track[track]->stts_entry_count; i++)
     {

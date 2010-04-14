@@ -26,11 +26,9 @@
 **/
 
 #include <stdlib.h>
-#ifdef HAVE_CONFIG_H
+#ifndef _WIN32
 #include "config.h"
-#endif
-
-#ifdef _WIN32
+#else
 #include <tchar.h>
 #ifdef ITUNES_DRM
 #include <shlobj.h>
@@ -48,7 +46,7 @@
 #include "drms.h"
 
 /* parse atom header size */
-int32_t mp4ff_atom_get_size(const uint8_t *data)
+static int32_t mp4ff_atom_get_size(const int8_t *data)
 {
     uint32_t result;
     uint32_t a, b, c, d;
@@ -65,8 +63,8 @@ int32_t mp4ff_atom_get_size(const uint8_t *data)
 }
 
 /* comnapre 2 atom names, returns 1 for equal, 0 for unequal */
-int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
-                           const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2)
+static int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
+                                  const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2)
 {
     if (a1 == a2 && b1 == b2 && c1 == c2 && d1 == d2)
         return 1;
@@ -74,8 +72,8 @@ int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, co
         return 0;
 }
 
-uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
-                                const int8_t c, const int8_t d)
+static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
+                                       const int8_t c, const int8_t d)
 {
     if (a == 'm')
     {
@@ -194,8 +192,6 @@ uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b,
         return ATOM_USER;
     else if (mp4ff_atom_compare(a,b,c,d, 'k','e','y',' '))
         return ATOM_KEY;
-    else if (mp4ff_atom_compare(a,b,c,d, 'a','l','a','c'))
-        return ATOM_ALAC;
     else
         return ATOM_UNKNOWN;
 }
@@ -205,7 +201,7 @@ uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_
 {
     uint64_t size;
     int32_t ret;
-    uint8_t atom_header[8];
+    int8_t atom_header[8];
 
     ret = mp4ff_read_data(f, atom_header, 8);
     if (ret != 8)
@@ -228,7 +224,7 @@ uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_
     return size;
 }
 
-int32_t mp4ff_read_stsz(mp4ff_t *f)
+static int32_t mp4ff_read_stsz(mp4ff_t *f)
 {
     mp4ff_read_char(f); /* version */
     mp4ff_read_int24(f); /* flags */
@@ -250,7 +246,7 @@ int32_t mp4ff_read_stsz(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_esds(mp4ff_t *f)
+static int32_t mp4ff_read_esds(mp4ff_t *f)
 {
     uint8_t tag;
     uint32_t temp;
@@ -312,7 +308,7 @@ int32_t mp4ff_read_esds(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_mp4a(mp4ff_t *f)
+static int32_t mp4ff_read_mp4a(mp4ff_t *f)
 {
     uint64_t size;
     int32_t i;
@@ -344,46 +340,6 @@ int32_t mp4ff_read_mp4a(mp4ff_t *f)
         mp4ff_read_esds(f);
     }
 
-    return 0;
-}
-
-int32_t mp4ff_read_alac(mp4ff_t *f)
-{
-    mp4ff_track_t *current_track = f->track[f->total_tracks - 1];
-
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-    mp4ff_read_int32(f);
-
-    current_track->decoderConfigLen = 36;
-    if (current_track->decoderConfig)
-        free(current_track->decoderConfig);
-    current_track->decoderConfig = calloc(1, current_track->decoderConfigLen);
-    
-    if (current_track->decoderConfig)
-    {
-        mp4ff_read_data(f, current_track->decoderConfig,
-                        current_track->decoderConfigLen);
-    } else {
-        current_track->decoderConfigLen = 0;
-    }
-
-    current_track->channelCount = current_track->decoderConfig[21];
-    current_track->avgBitrate = (current_track->decoderConfig[28] << 24) |
-                                (current_track->decoderConfig[29] << 16) |
-                                (current_track->decoderConfig[30] << 8) |
-                                current_track->decoderConfig[31];
-    current_track->sampleRate = (current_track->decoderConfig[32] << 24) |
-                                (current_track->decoderConfig[33] << 16) |
-                                (current_track->decoderConfig[34] << 8) |
-                                current_track->decoderConfig[35];
-    current_track->audioType = 0xff;
-
-    /* will skip the remainder of the atom */
     return 0;
 }
 
@@ -463,11 +419,8 @@ static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
     int32_t i;
     uint8_t atom_type = 0;
     uint8_t header_size = 0;
-    char *home_dir;
 
-    home_dir = GetHomeDir();
-    f->track[f->total_tracks - 1]->p_drms = drms_alloc( home_dir );
-    free(home_dir);
+    f->track[f->total_tracks - 1]->p_drms = drms_alloc( GetHomeDir() );
 
     for (i = 0; i < 6; i++)
     {
@@ -507,7 +460,7 @@ static int32_t mp4ff_read_drms(mp4ff_t *f, uint64_t skip)
 static int32_t mp4ff_read_frma(mp4ff_t *f)
 {
     uint8_t atom_type;
-    uint8_t type[4];
+    int8_t type[4];
 
     mp4ff_read_data(f, type, 4);
 
@@ -535,7 +488,7 @@ static int32_t mp4ff_read_name(mp4ff_t *f, uint64_t size)
     if (f->track[f->total_tracks - 1]->p_drms != NULL)
     {
         drms_init(f->track[f->total_tracks - 1]->p_drms,
-            FOURCC_name, data, strlen((char *)data) );
+            FOURCC_name, data, strlen(data) );
     }
 
     if (data)
@@ -613,7 +566,7 @@ static int32_t mp4ff_read_key(mp4ff_t *f, uint64_t size)
 }
 #endif
 
-int32_t mp4ff_read_stsd(mp4ff_t *f)
+static int32_t mp4ff_read_stsd(mp4ff_t *f)
 {
     int32_t i;
     uint8_t header_size = 0;
@@ -635,9 +588,6 @@ int32_t mp4ff_read_stsd(mp4ff_t *f)
         {
             f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
             mp4ff_read_mp4a(f);
-        } else if (atom_type == ATOM_ALAC) {
-            f->track[f->total_tracks - 1]->type = TRACK_AUDIO;
-            mp4ff_read_alac(f);
         } else if (atom_type == ATOM_MP4V) {
             f->track[f->total_tracks - 1]->type = TRACK_VIDEO;
         } else if (atom_type == ATOM_MP4S) {
@@ -658,7 +608,7 @@ int32_t mp4ff_read_stsd(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stsc(mp4ff_t *f)
+static int32_t mp4ff_read_stsc(mp4ff_t *f)
 {
     int32_t i;
 
@@ -683,7 +633,7 @@ int32_t mp4ff_read_stsc(mp4ff_t *f)
     return 0;
 }
 
-int32_t mp4ff_read_stco(mp4ff_t *f)
+static int32_t mp4ff_read_stco(mp4ff_t *f)
 {
     int32_t i;
 
@@ -734,7 +684,7 @@ static int32_t mp4ff_read_ctts(mp4ff_t *f)
     }
 }
 
-int32_t mp4ff_read_stts(mp4ff_t *f)
+static int32_t mp4ff_read_stts(mp4ff_t *f)
 {
     int32_t i;
     mp4ff_track_t * p_track = f->track[f->total_tracks - 1];
@@ -867,7 +817,7 @@ static int32_t mp4ff_read_mdhd(mp4ff_t *f)
     return 1;
 }
 #ifdef USE_TAGGING
-int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
+static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size)
 {
     uint64_t subsize, sumsize = 0;
     uint8_t atom_type;

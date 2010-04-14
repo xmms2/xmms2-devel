@@ -24,7 +24,7 @@
 
 #include <stdlib.h>                                      /* malloc(), free() */
 
-#ifdef HAVE_CONFIG_H
+#ifndef _WIN32
 #include "config.h"
 #endif
 #include "mp4ffint.h"
@@ -42,10 +42,6 @@
 
 #ifdef HAVE_ERRNO_H
 #   include <errno.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#   include <string.h>
 #endif
 
 #ifdef _WIN32
@@ -303,7 +299,7 @@ int drms_init( void *_p_drms, uint32_t i_type,
             break;
 
         case FOURCC_name:
-            p_drms->p_name = (uint8_t *) strdup( (char *) p_info );
+            p_drms->p_name = strdup( p_info );
 
             if( p_drms->p_name == NULL )
             {
@@ -323,7 +319,7 @@ int drms_init( void *_p_drms, uint32_t i_type,
             }
 
             InitMD5( &md5 );
-            AddMD5( &md5, p_drms->p_name, strlen( (char *) p_drms->p_name ) );
+            AddMD5( &md5, p_drms->p_name, strlen( p_drms->p_name ) );
             AddMD5( &md5, p_drms->p_iviv, 16 );
             EndMD5( &md5 );
 
@@ -779,14 +775,14 @@ static int GetSystemKey( uint32_t *p_sys_key, uint32_t b_ipod )
     /* Combine our system info hash with additional secret data. The resulting
      * MD5 hash will be our system key. */
     InitMD5( &md5 );
-    AddMD5( &md5, (uint8_t *)p_secret1, 8 );
+    AddMD5( &md5, p_secret1, 8 );
 
     if( !b_ipod )
     {
         AddMD5( &md5, (uint8_t *)p_system_hash, 6 );
         AddMD5( &md5, (uint8_t *)p_system_hash, 6 );
         AddMD5( &md5, (uint8_t *)p_system_hash, 6 );
-        AddMD5( &md5, (uint8_t *)p_secret2, 8 );
+        AddMD5( &md5, p_secret2, 8 );
     }
     else
     {

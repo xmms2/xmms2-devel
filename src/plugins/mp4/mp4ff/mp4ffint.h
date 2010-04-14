@@ -32,10 +32,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <stdlib.h>
 #include "mp4ff_int_types.h"
+#include <stdlib.h>
 
-#ifdef ITUNES_DRM
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+#define ITUNES_DRM
+
 static __inline uint32_t GetDWLE( void const * _p )
 {
     uint8_t * p = (uint8_t *)_p;
@@ -118,8 +120,6 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_USER 155
 #define ATOM_KEY  156
 
-#define ATOM_ALAC 192
-
 #define ATOM_UNKNOWN 255
 #define ATOM_FREE ATOM_UNKNOWN
 #define ATOM_SKIP ATOM_UNKNOWN
@@ -152,7 +152,7 @@ static __inline uint64_t U64_AT( void const * _p )
 #define ATOM_SCHI 25
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"   
+#include "../../config.h"   
 #endif
 
 #if !(defined(_WIN32) || defined(_WIN32_WCE))
@@ -178,7 +178,6 @@ typedef struct
 {
     char *item;
     char *value;
-    uint32_t value_length;
 } mp4ff_tag_t;
 
 /* metadata list structure */
@@ -273,8 +272,8 @@ typedef struct
 
 
 /* mp4util.c */
-int32_t mp4ff_read_data(mp4ff_t *f, uint8_t *data, uint32_t size);
-int32_t mp4ff_write_data(mp4ff_t *f, uint8_t *data, uint32_t size);
+int32_t mp4ff_read_data(mp4ff_t *f, int8_t *data, uint32_t size);
+int32_t mp4ff_write_data(mp4ff_t *f, int8_t *data, uint32_t size);
 uint64_t mp4ff_read_int64(mp4ff_t *f);
 uint32_t mp4ff_read_int32(mp4ff_t *f);
 uint32_t mp4ff_read_int24(mp4ff_t *f);
@@ -288,41 +287,40 @@ int32_t mp4ff_truncate(mp4ff_t * f);
 char * mp4ff_read_string(mp4ff_t * f,uint32_t length);
 
 /* mp4atom.c */
-int32_t mp4ff_atom_get_size(const uint8_t *data);
-int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
-                           const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2);
-uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b, const int8_t c, const int8_t d);
+static int32_t mp4ff_atom_get_size(const int8_t *data);
+static int32_t mp4ff_atom_compare(const int8_t a1, const int8_t b1, const int8_t c1, const int8_t d1,
+                                  const int8_t a2, const int8_t b2, const int8_t c2, const int8_t d2);
+static uint8_t mp4ff_atom_name_to_type(const int8_t a, const int8_t b, const int8_t c, const int8_t d);
 uint64_t mp4ff_atom_read_header(mp4ff_t *f, uint8_t *atom_type, uint8_t *header_size);
-int32_t mp4ff_read_stsz(mp4ff_t *f);
-int32_t mp4ff_read_esds(mp4ff_t *f);
-int32_t mp4ff_read_mp4a(mp4ff_t *f);
-int32_t mp4ff_read_alac(mp4ff_t *f);
-int32_t mp4ff_read_stsd(mp4ff_t *f);
-int32_t mp4ff_read_stsc(mp4ff_t *f);
-int32_t mp4ff_read_stco(mp4ff_t *f);
-int32_t mp4ff_read_stts(mp4ff_t *f);
+static int32_t mp4ff_read_stsz(mp4ff_t *f);
+static int32_t mp4ff_read_esds(mp4ff_t *f);
+static int32_t mp4ff_read_mp4a(mp4ff_t *f);
+static int32_t mp4ff_read_stsd(mp4ff_t *f);
+static int32_t mp4ff_read_stsc(mp4ff_t *f);
+static int32_t mp4ff_read_stco(mp4ff_t *f);
+static int32_t mp4ff_read_stts(mp4ff_t *f);
 #ifdef USE_TAGGING
-int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
+static int32_t mp4ff_read_meta(mp4ff_t *f, const uint64_t size);
 #endif
 int32_t mp4ff_atom_read(mp4ff_t *f, const int32_t size, const uint8_t atom_type);
 
 /* mp4sample.c */
-int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
-                              int32_t *chunk_sample, int32_t *chunk);
-int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
-int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
-                                const int32_t chunk_sample, const int32_t sample);
-int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
+static int32_t mp4ff_chunk_of_sample(const mp4ff_t *f, const int32_t track, const int32_t sample,
+                                     int32_t *chunk_sample, int32_t *chunk);
+static int32_t mp4ff_chunk_to_offset(const mp4ff_t *f, const int32_t track, const int32_t chunk);
+static int32_t mp4ff_sample_range_size(const mp4ff_t *f, const int32_t track,
+                                       const int32_t chunk_sample, const int32_t sample);
+static int32_t mp4ff_sample_to_offset(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_audio_frame_size(const mp4ff_t *f, const int32_t track, const int32_t sample);
 int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t sample);
 
 #ifdef USE_TAGGING
 /* mp4meta.c */
-int32_t mp4ff_tag_add_field_len(mp4ff_metadata_t *tags, const char *item, const char *value, uint32_t valuelen);
-int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
-int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
-int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
-int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
+static int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
+static int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
+static int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);
+static int32_t mp4ff_parse_tag(mp4ff_t *f, const uint8_t parent_atom_type, const int32_t size);
+static int32_t mp4ff_meta_find_by_name(const mp4ff_t *f, const char *item, char **value);
 int32_t mp4ff_parse_metadata(mp4ff_t *f, const int32_t size);
 int32_t mp4ff_tag_delete(mp4ff_metadata_t *tags);
 int32_t mp4ff_meta_get_num_items(const mp4ff_t *f);
