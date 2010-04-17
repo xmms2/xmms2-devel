@@ -134,7 +134,7 @@ static GString *
 coll_idlist_to_string (xmmsv_coll_t *coll)
 {
 	gint i;
-	guint *idlist;
+	gint32 *idlist;
 	GString *s;
 
 	s = g_string_new ("(");

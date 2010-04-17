@@ -851,7 +851,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 		idlistsize = xmmsv_coll_idlist_get_size (coll);
 		for (i = 0; i < idlistsize; i++) {
-			guint id;
+			gint32 id;
 			xmmsv_coll_idlist_get_index (coll, i, &id);
 			xmmsv_coll_idlist_append (newcoll, id);
 		}
