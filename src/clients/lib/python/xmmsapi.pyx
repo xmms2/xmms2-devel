@@ -18,6 +18,8 @@ cdef extern from "xmms_pyrex_hacks.h":
 		pass
 	ctypedef struct xmms_pyrex_constucharpp_t:
 		pass
+	ctypedef struct xmms_pyrex_constintp_t:
+		pass
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmmsv_coll_type_t:
@@ -364,7 +366,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsv_coll_t *xmmsv_coll_universe ()
 	xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll)
 
-	int *xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
+	xmms_pyrex_constintp_t *xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
 	xmmsv_t *xmmsv_coll_idlist_get (xmmsv_coll_t *coll)
 	int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
 	int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)

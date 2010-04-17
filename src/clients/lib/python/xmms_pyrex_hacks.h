@@ -11,6 +11,7 @@
 typedef const char *xmms_pyrex_constcharp_t;
 typedef const char **xmms_pyrex_constcharpp_t;
 typedef const unsigned char **xmms_pyrex_constucharpp_t;
+typedef const int *xmms_pyrex_constintp_t;
 
 #endif
 
