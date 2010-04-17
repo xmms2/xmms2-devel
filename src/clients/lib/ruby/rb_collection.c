@@ -215,7 +215,7 @@ c_coll_idlist_get (VALUE self)
 {
 	int i;
 	VALUE ary = rb_ary_new ();
-	int32_t *ret = NULL;
+	const int32_t *ret = NULL;
 
 	COLL_METHOD_ADD_HANDLER_RET (get_idlist)
 
