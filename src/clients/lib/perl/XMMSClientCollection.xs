@@ -126,9 +126,9 @@ xmmsv_coll_set_idlist (coll, ...)
 		xmmsv_coll_t *coll
 	PREINIT:
 		int i;
-		unsigned int *ids;
+		int *ids;
 	INIT:
-		ids = (unsigned int *)malloc (sizeof (unsigned int) * items);
+		ids = (int *)malloc (sizeof (int) * items);
 
 		for (i = 0; i < items - 1; i++) {
 			ids[i] = SvUV (ST (i + 1));
@@ -312,7 +312,7 @@ Retrieves the value at the given C<$index> in the idlist.
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, OUTLIST uint32_t val)
+xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, OUTLIST int32_t val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 
@@ -343,7 +343,7 @@ int
 xmmsv_coll_idlist_set_index (coll, index, val)
 		xmmsv_coll_t *coll
 		unsigned int index
-		uint32_t val
+		int32_t val
 	PREINIT:
 		size_t idlist_len;
 	INIT:
@@ -416,7 +416,7 @@ void
 xmmsv_coll_get_idlist (coll)
 		xmmsv_coll_t *coll
 	PREINIT:
-		uint32_t *ret;
+		int32_t *ret;
 		size_t size;
 		unsigned int i = 0;
 	PPCODE:
