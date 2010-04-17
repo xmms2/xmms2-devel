@@ -67,7 +67,7 @@ static void destroy_query (coll_query_t* query);
 static GString* xmms_collection_gen_query (coll_query_t *query);
 static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, coll_query_t *query);
 
-static void query_append_uint (coll_query_t *query, guint i);
+static void query_append_int (coll_query_t *query, gint i);
 static void query_append_string (coll_query_t *query, const gchar *s);
 static void query_append_protect_string (coll_query_t *query, gchar *s);
 static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsv_coll_t *coll);
@@ -232,7 +232,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 {
 	gint i;
 	xmmsv_coll_t *op;
-	guint *idlist;
+	xmms_medialib_entry_t *idlist;
 	gchar *attr1, *attr2, *attr3;
 	gboolean case_sens;
 	xmmsv_list_iter_t *iter;
@@ -307,7 +307,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			if (i != 0) {
 				query_append_string (query, ",");
 			}
-			query_append_uint (query, idlist[i]);
+			query_append_int (query, idlist[i]);
 		}
 		query_append_string (query, ")");
 		break;
@@ -398,9 +398,9 @@ operator_is_allmedia (xmmsv_coll_t *op)
 }
 
 static void
-query_append_uint (coll_query_t *query, guint i)
+query_append_int (coll_query_t *query, gint i)
 {
-	g_string_append_printf (query->conditions, "%u", i);
+	g_string_append_printf (query->conditions, "%d", i);
 }
 
 static void

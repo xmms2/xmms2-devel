@@ -62,7 +62,7 @@ void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
 xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
 
 
-GTree *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, guint32 id, const gchar *plname);
+GTree *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, xmms_medialib_entry_t id, const gchar *plname);
 void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict);
 
 #define XMMS_PLAYLIST_COLLECTION_CHANGED_MSG(playlist, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_UPDATE, 0, name))

@@ -231,7 +231,7 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
                                   guint collid, xmmsv_coll_t *coll)
 {
 	gchar query[128];
-	guint *idlist;
+	xmms_medialib_entry_t *idlist;
 	gint i;
 	xmmsv_coll_t *op;
 	xmmsv_t *attrs;

@@ -418,9 +418,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	}
 
 	if (currpos < size) {
-		guint *idlist;
-		idlist = xmmsv_coll_get_idlist (plcoll);
-		ent = idlist[currpos];
+		xmmsv_coll_idlist_get_index (plcoll, currpos, &ent);
 	} else {
 		ent = 0;
 	}
@@ -542,7 +540,7 @@ xmms_playlist_client_load (xmms_playlist_t *playlist, const gchar *name, xmms_er
 static inline void
 swap_entries (xmmsv_coll_t *coll, gint i, gint j)
 {
-	guint32 tmp, tmp2;
+	xmms_medialib_entry_t tmp, tmp2;
 
 	xmmsv_coll_idlist_get_index (coll, i, &tmp);
 	xmmsv_coll_idlist_get_index (coll, j, &tmp2);
@@ -643,7 +641,8 @@ static void
 remove_from_playlist (gpointer key, gpointer value, gpointer udata)
 {
 	playlist_remove_info_t *rminfo = (playlist_remove_info_t *) udata;
-	guint32 i, val;
+	guint32 i;
+	xmms_medialib_entry_t val;
 	gint size;
 	xmmsv_coll_t *plcoll = (xmmsv_coll_t *) value;
 
@@ -721,7 +720,7 @@ xmms_playlist_client_move_entry (xmms_playlist_t *playlist,
                                  gint32 newpos, xmms_error_t *err)
 {
 	GTree *dict;
-	guint32 id;
+	xmms_medialib_entry_t id;
 	gint currpos, size;
 	gint64 ipos, inewpos;
 	xmmsv_coll_t *plcoll;
@@ -1004,7 +1003,7 @@ xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
                                  const gchar *plname,
                                  xmmsv_coll_t *coll, xmms_error_t *err)
 {
-	uint32_t *idlist;
+	xmms_medialib_entry_t *idlist;
 
 	for (idlist = xmmsv_coll_get_idlist (coll); *idlist; idlist++) {
 		if (!xmms_medialib_check_id (*idlist)) {
@@ -1123,8 +1122,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
                                        xmms_error_t *err)
 {
 	gint size;
-	guint mid;
-	guint *idlist;
+	xmms_medialib_entry_t mid;
 	xmmsv_coll_t *plcoll;
 	char *jumplist;
 
@@ -1162,8 +1160,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 		return 0;
 	}
 
-	idlist = xmmsv_coll_get_idlist (plcoll);
-	mid = idlist[pos];
+	xmmsv_coll_idlist_get_index (plcoll, pos, &mid);
 
 	return mid;
 }
@@ -1172,7 +1169,7 @@ gint
 xmms_playlist_client_set_next (xmms_playlist_t *playlist, gint32 pos,
                                xmms_error_t *err)
 {
-	guint mid;
+	xmms_medialib_entry_t mid;
 	g_return_val_if_fail (playlist, FALSE);
 
 	g_mutex_lock (playlist->mutex);
@@ -1187,7 +1184,7 @@ xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32 pos,
                                    xmms_error_t *err)
 {
 	gint currpos, newpos;
-	guint mid = 0;
+	xmms_medialib_entry_t mid = 0;
 	xmmsv_coll_t *plcoll;
 
 	g_return_val_if_fail (playlist, FALSE);
@@ -1224,7 +1221,7 @@ xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32 pos,
 }
 
 typedef struct {
-	guint id;
+	xmms_medialib_entry_t id;
 	guint position;
 	GList *val;  /* List of (xmmsv_t *) prop values */
 	gboolean current;
@@ -1498,7 +1495,7 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 {
 	GList *entries = NULL;
 	xmmsv_coll_t *plcoll;
-	guint *idlist;
+	xmms_medialib_entry_t *idlist;
 	gint i;
 
 	g_return_val_if_fail (playlist, NULL);
@@ -1626,7 +1623,7 @@ xmms_playlist_coll_get_size (xmmsv_coll_t *plcoll)
 GTree *
 xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
                                xmms_playlist_changed_actions_t type,
-                               guint32 id, const gchar *plname)
+                               xmms_medialib_entry_t id, const gchar *plname)
 {
 	GTree *dict;
 	const gchar *tmp;
