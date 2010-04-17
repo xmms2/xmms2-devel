@@ -256,7 +256,7 @@ CASE (test_coll_attributes)
 CASE (test_coll_idlist)
 {
 	xmmsv_coll_t *c;
-	uint32_t v;
+	int32_t v;
 	int i;
 
 	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
