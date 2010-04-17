@@ -885,7 +885,7 @@ static GString *
 coll_idlist_to_string (xmmsv_coll_t *coll)
 {
 	gint i;
-	guint *idlist;
+	gint32 *idlist;
 	GString *s;
 
 	s = g_string_new ("(");
@@ -1734,7 +1734,7 @@ coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t type)
 	xmmsv_coll_t *copy;
 	gint idlistsize;
 	gint i;
-	guint id;
+	gint32 id;
 
 	copy = xmmsv_coll_new (type);
 
