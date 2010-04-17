@@ -1003,7 +1003,7 @@ xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
                                  const gchar *plname,
                                  xmmsv_coll_t *coll, xmms_error_t *err)
 {
-	xmms_medialib_entry_t *idlist;
+	const xmms_medialib_entry_t *idlist;
 
 	for (idlist = xmmsv_coll_get_idlist (coll); *idlist; idlist++) {
 		if (!xmms_medialib_check_id (*idlist)) {
@@ -1495,7 +1495,7 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 {
 	GList *entries = NULL;
 	xmmsv_coll_t *plcoll;
-	xmms_medialib_entry_t *idlist;
+	const xmms_medialib_entry_t *idlist;
 	gint i;
 
 	g_return_val_if_fail (playlist, NULL);

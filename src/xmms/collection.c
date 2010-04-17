@@ -1731,7 +1731,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	xmmsv_coll_t *op;
 	gchar *attr1 = NULL, *attr2 = NULL;
 	xmmsv_t *val;
-	xmms_medialib_entry_t *idlist;
+	const xmms_medialib_entry_t *idlist;
 	gint i;
 	xmms_medialib_entry_t id;
 	xmmsv_list_iter_t *iter;

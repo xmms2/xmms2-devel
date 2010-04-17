@@ -232,7 +232,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 {
 	gint i;
 	xmmsv_coll_t *op;
-	xmms_medialib_entry_t *idlist;
+	const xmms_medialib_entry_t *idlist;
 	gchar *attr1, *attr2, *attr3;
 	gboolean case_sens;
 	xmmsv_list_iter_t *iter;
