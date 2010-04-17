@@ -410,7 +410,8 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v, *attrs;
 	int n;
-	int32_t ret, *idlist;
+	uint32_t ret;
+	const int32_t *idlist;
 	xmmsv_coll_t *op;
 
 	if (!msg || !coll) {
