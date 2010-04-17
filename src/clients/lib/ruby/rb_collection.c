@@ -215,12 +215,12 @@ c_coll_idlist_get (VALUE self)
 {
 	int i;
 	VALUE ary = rb_ary_new ();
-	uint32_t *ret = NULL;
+	int32_t *ret = NULL;
 
 	COLL_METHOD_ADD_HANDLER_RET (get_idlist)
 
 	for (i = 0; ret[i]; i++)
-		rb_ary_push (ary, UINT2NUM (ret[i]));
+		rb_ary_push (ary, INT2NUM (ret[i]));
 
 	return ary;
 }
@@ -234,7 +234,7 @@ static VALUE
 c_coll_idlist_set (VALUE self, VALUE ids)
 {
 	int i;
-	unsigned int *ary = NULL;
+	int *ary = NULL;
 	VALUE *rb_ary;
 	int rb_ary_len;
 
@@ -244,10 +244,10 @@ c_coll_idlist_set (VALUE self, VALUE ids)
 	rb_ary = RARRAY_PTR (ids);
 	rb_ary_len = RARRAY_LEN (ids);
 
-	ary = malloc (sizeof (unsigned int *) * (rb_ary_len + 1));
+	ary = malloc (sizeof (int *) * (rb_ary_len + 1));
 
 	for (i = 0; i < rb_ary_len; i++)
-		ary[i] = NUM2UINT (rb_ary[i]);
+		ary[i] = NUM2INT (rb_ary[i]);
 
 	ary[i] = 0;
 
