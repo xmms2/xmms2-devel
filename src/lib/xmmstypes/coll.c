@@ -36,7 +36,7 @@ struct xmmsv_coll_St {
 	xmmsv_t *attributes;
 
 	/* List of ids, 0-terminated. */
-	uint32_t *idlist;
+	int32_t *idlist;
 	size_t idlist_size;
 	size_t idlist_allocated;
 
@@ -92,7 +92,7 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 		return NULL;
 	}
 
-	if (!(coll->idlist = x_new0 (uint32_t, 1))) {
+	if (!(coll->idlist = x_new0 (int32_t, 1))) {
 		x_oom ();
 		free (coll);
 		return NULL;
@@ -165,7 +165,7 @@ xmmsv_coll_unref (xmmsv_coll_t *coll)
  * @param ids  the 0-terminated list of ids to store in the collection.
  */
 void
-xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
+xmmsv_coll_set_idlist (xmmsv_coll_t *coll, int ids[])
 {
 	unsigned int i;
 	unsigned int size = 0;
@@ -178,7 +178,7 @@ xmmsv_coll_set_idlist (xmmsv_coll_t *coll, unsigned int ids[])
 	++size;
 
 	free (coll->idlist);
-	if (!(coll->idlist = x_new0 (uint32_t, size))) {
+	if (!(coll->idlist = x_new0 (int32_t, size))) {
 		x_oom ();
 		return;
 	}
@@ -272,7 +272,7 @@ xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id)
+xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -287,7 +287,7 @@ xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, unsigned int id)
+xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
 {
 	int i;
 	x_return_val_if_fail (coll, 0);
@@ -325,7 +325,7 @@ int
 xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
 {
 	int i;
-	uint32_t tmp;
+	int32_t tmp;
 
 	x_return_val_if_fail (coll, 0);
 
@@ -389,7 +389,7 @@ xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
 int
 xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
 {
-	unsigned int empty[] = { 0 };
+	int empty[] = { 0 };
 
 	x_return_val_if_fail (coll, 0);
 
@@ -406,7 +406,7 @@ xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, uint32_t *val)
+xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, int32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -427,7 +427,7 @@ xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, uint32_t *v
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, uint32_t val)
+xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, int32_t val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -477,7 +477,7 @@ xmmsv_coll_get_type (xmmsv_coll_t *coll)
  * @param coll  The collection to consider.
  * @return The 0-terminated list of ids.
  */
-uint32_t*
+int32_t*
 xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
 {
 	x_return_null_if_fail (coll);
@@ -623,9 +623,9 @@ xmmsv_coll_universe ()
 static int
 xmmsv_coll_idlist_resize (xmmsv_coll_t *coll, size_t newsize)
 {
-	uint32_t *newmem;
+	int32_t *newmem;
 
-	newmem = realloc (coll->idlist, newsize * sizeof (uint32_t));
+	newmem = realloc (coll->idlist, newsize * sizeof (int32_t));
 
 	if (newmem == NULL) {
 		x_oom ();

@@ -410,7 +410,7 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v, *attrs;
 	int n;
-	uint32_t ret, *idlist;
+	int32_t ret, *idlist;
 	xmmsv_coll_t *op;
 
 	if (!msg || !coll) {
@@ -437,7 +437,7 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 
 	internal_ipc_msg_put_uint32 (msg, n);
 	for (n = 0; idlist[n] != 0; n++) {
-		internal_ipc_msg_put_uint32 (msg, idlist[n]);
+		internal_ipc_msg_put_int32 (msg, idlist[n]);
 	}
 
 	/* operands counter and objects */
@@ -718,8 +718,8 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll)
 	unsigned int i;
 	unsigned int type;
 	unsigned int n_items;
-	unsigned int id;
-	uint32_t *idlist = NULL;
+	int id;
+	int32_t *idlist = NULL;
 	char *key, *val;
 
 	/* Get the type and create the collection */
@@ -754,12 +754,12 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsv_coll_t **coll)
 		goto err;
 	}
 
-	if (!(idlist = x_new (uint32_t, n_items + 1))) {
+	if (!(idlist = x_new (int32_t, n_items + 1))) {
 		goto err;
 	}
 
 	for (i = 0; i < n_items; i++) {
-		if (!xmms_ipc_msg_get_uint32 (msg, &id)) {
+		if (!xmms_ipc_msg_get_int32 (msg, &id)) {
 			goto err;
 		}
 
