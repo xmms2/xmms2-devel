@@ -125,8 +125,8 @@ namespace Xmms
 				virtual void setOperand( Coll& operand );
 				virtual CollPtr getOperand() const;
 
-				virtual void append( unsigned int id );
-				virtual void insert( unsigned int id, unsigned int index );
+				virtual void append( int id );
+				virtual void insert( unsigned int index, int id);
 				virtual void move( unsigned int index,
 				                   unsigned int newindex );
 				virtual void remove( unsigned int index );
@@ -157,8 +157,8 @@ namespace Xmms
 				Coll( const Coll& src );
 				Coll operator=( const Coll& src );
 
-				void setIndex( unsigned int index, unsigned int value );
-				unsigned int getIndex( unsigned int index ) const;
+				void setIndex( unsigned int index, int value );
+				int getIndex( unsigned int index ) const;
 
 				xmmsv_coll_t* coll_;
 
@@ -467,8 +467,8 @@ namespace Xmms
 				Idlist();
 				~Idlist();
 
-				void append( unsigned int id );
-				void insert( unsigned int id, unsigned int index );
+				void append( int id );
+				void insert( unsigned int index, int id);
 				void move( unsigned int index, unsigned int newindex );
 				void remove( unsigned int index );
 				void clear();
@@ -588,12 +588,12 @@ namespace Xmms
 		 *
 		 *  This class should not be instanciated by users of the library.
 		 */
-		class IdlistElement : public AbstractElement< unsigned int, unsigned int >
+		class IdlistElement : public AbstractElement< unsigned int, int >
 		{
 			public:
 				~IdlistElement();
-				operator unsigned int() const;
-				unsigned int operator=( unsigned int value );
+				operator int() const;
+				int operator=( int value );
 
 			private:
 				friend class Idlist;

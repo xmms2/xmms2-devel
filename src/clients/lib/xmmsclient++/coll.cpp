@@ -111,7 +111,7 @@ namespace Xmms
 		}
 	}
 
-	void Coll::setIndex( unsigned int index, unsigned int value )
+	void Coll::setIndex( unsigned int index, int value )
 	{
 		if( !xmmsv_coll_idlist_set_index( coll_, index, value ) ) {
 			std::stringstream err;
@@ -120,9 +120,9 @@ namespace Xmms
 		}
 	}
 
-	unsigned int Coll::getIndex( unsigned int index ) const
+	int Coll::getIndex( unsigned int index ) const
 	{
-		unsigned int value;
+		int value;
 		if( !xmmsv_coll_idlist_get_index( coll_, index, &value ) ) {
 			std::stringstream err;
 			err << "Index out of idlist: "  << index;
@@ -152,11 +152,11 @@ namespace Xmms
 		throw collection_type_error( "Wrong type" );
 	}
 
-	void Coll::append( unsigned int ) {
+	void Coll::append( int ) {
 		throw collection_type_error( "Wrong type" );
 	}
 
-	void Coll::insert( unsigned int, unsigned int ) {
+	void Coll::insert( unsigned int, int ) {
 		throw collection_type_error( "Wrong type" );
 	}
 
@@ -518,7 +518,7 @@ namespace Xmms
 	}
 
 
-	void Idlist::append( unsigned int id )
+	void Idlist::append( int id )
 	{
 		if( !xmmsv_coll_idlist_append( coll_, id ) ) {
 			std::stringstream err;
@@ -527,7 +527,7 @@ namespace Xmms
 		}
 	}
 
-	void Idlist::insert( unsigned int index, unsigned int id )
+	void Idlist::insert( unsigned int index, int id )
 	{
 		if( !xmmsv_coll_idlist_insert( coll_, index, id ) ) {
 			std::stringstream err;
@@ -579,13 +579,13 @@ namespace Xmms
 	}
 
 	IdlistElement::IdlistElement( Coll& coll, unsigned int index )
-		: AbstractElement< unsigned int, unsigned int >( coll, index )
+		: AbstractElement< unsigned int, int >( coll, index )
 	{
 	}
 
 	IdlistElement::IdlistElement( const Coll& coll, unsigned int index )
-		: AbstractElement< unsigned int, unsigned int >( const_cast< Coll& >( coll ),
-	                                                     index )
+		: AbstractElement< unsigned int, int >( const_cast< Coll& >( coll ),
+		                                        index )
 	{
 	}
 
@@ -593,13 +593,13 @@ namespace Xmms
 	{
 	}
 
-	IdlistElement::operator unsigned int() const
+	IdlistElement::operator int() const
 	{
 		return coll_.getIndex( index_ );
 	}
 
-	unsigned int
-	IdlistElement::operator=( unsigned int value )
+	int
+	IdlistElement::operator=( int value )
 	{
 		coll_.setIndex( index_, value );
 		return value;
