@@ -364,14 +364,14 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsv_coll_t *xmmsv_coll_universe ()
 	xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll)
 
-	unsigned int *xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
-	int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, unsigned int id)
-	int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, unsigned int id)
+	int *xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
+	int xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
+	int xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
 	int xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
 	int xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
 	int xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
-	int xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, unsigned int *val)
-	int xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, unsigned int val)
+	int xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, int *val)
+	int xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, int val)
 	int xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
 
 
@@ -486,7 +486,7 @@ cdef class CollectionIDList:
 
 	def list(self):
 		"""Returns a _COPY_ of the idlist as an ordinary list"""
-		cdef unsigned int x
+		cdef int x
 		cdef int l
 		cdef int i
 		l = xmmsv_coll_idlist_get_size(self.coll)
@@ -528,7 +528,7 @@ cdef class CollectionIDList:
 		self.remove(i)
 
 	def __getitem__(self, int i):
-		cdef unsigned int x
+		cdef int x
 		if i < 0:
 			i = len(self) + i
 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
