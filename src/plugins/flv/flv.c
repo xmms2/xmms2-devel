@@ -17,8 +17,6 @@
 #include <xmms/xmms_xformplugin.h>
 #include <xmms/xmms_log.h>
 
-#define FLV_HDR_SIZE 9
-#define HAS_AUDIO 0x04
 /* each tag has an 11 byte header
  * followed by format specific metadata
  * a/v tags have a one byte header containing codecs
@@ -26,6 +24,8 @@
  */
 #define FLV_TAG_SIZE 11
 #define FLV_CHUNK_SIZE 4096
+#define FLV_HEADER_SIZE 9
+#define FLV_HAS_AUDIO 0x04
 
 typedef enum {
 	/* Only u8 bit samples since
@@ -134,25 +134,25 @@ xmms_flv_init (xmms_xform_t *xform)
 	flvdata = g_new0 (xmms_flv_data_t, 1);
 	xmms_xform_private_data_set (xform, flvdata);
 
-	readret = xmms_xform_read (xform, header, FLV_HDR_SIZE, &err);
-	if (readret != FLV_HDR_SIZE) {
+	readret = xmms_xform_read (xform, header, FLV_HEADER_SIZE, &err);
+	if (readret != FLV_HEADER_SIZE) {
 		xmms_log_error ("Header read error");
 		goto init_err;
 	}
 
-	if ((header[4] & HAS_AUDIO) != HAS_AUDIO) {
+	if ((header[4] & FLV_HAS_AUDIO) != FLV_HAS_AUDIO) {
 		xmms_log_error ("FLV has no audio stream");
 		goto init_err;
 	}
 
-	dataoffset = get_be32 (&header[5]) - FLV_HDR_SIZE;
+	dataoffset = get_be32 (&header[5]) - FLV_HEADER_SIZE;
 	/* there might be something between the header and
 	 * tag body eventually
 	 */
 	while (dataoffset) {
 		readret = xmms_xform_read (xform, header,
-		                           (dataoffset < FLV_HDR_SIZE)?
-		                           dataoffset : FLV_HDR_SIZE, &err);
+		                           (dataoffset < FLV_HEADER_SIZE)?
+		                           dataoffset : FLV_HEADER_SIZE, &err);
 		if (readret <= 0) {
 			xmms_log_error ("Error reading header:tag body gap");
 			goto init_err;
