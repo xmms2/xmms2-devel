@@ -416,7 +416,7 @@ void
 xmmsv_coll_get_idlist (coll)
 		xmmsv_coll_t *coll
 	PREINIT:
-		int32_t *ret;
+		const int32_t *ret;
 		size_t size;
 		unsigned int i = 0;
 	PPCODE:
