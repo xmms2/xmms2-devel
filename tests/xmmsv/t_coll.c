@@ -271,7 +271,9 @@ CASE (test_coll_idlist)
 	}
 
 	CU_ASSERT_FALSE (xmmsv_coll_idlist_get_index (c, 100, &v));
-	CU_ASSERT_FALSE (xmmsv_coll_idlist_get_index (c, -1, &v));
+
+	CU_ASSERT_TRUE (xmmsv_coll_idlist_get_index (c, -1, &v));
+	CU_ASSERT_EQUAL (99, (int)v);
 
 	CU_ASSERT_EQUAL (xmmsv_coll_idlist_get_size (c), 100);
 
