@@ -885,19 +885,29 @@ print_info (const gchar *fmt, ...)
 static GString *
 coll_idlist_to_string (xmmsv_coll_t *coll)
 {
-	gint i;
-	const gint32 *idlist;
+	xmmsv_list_iter_t *it;
+	gint32 entry;
+	gboolean first = TRUE;
 	GString *s;
 
 	s = g_string_new ("(");
 
-	idlist = xmmsc_coll_get_idlist (coll);
-	for (i = 0; idlist[i] != 0; ++i) {
-		if (i > 0) {
+	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
+		if (first) {
+			first = FALSE;
+		} else {
 			g_string_append (s, ", ");
 		}
-		g_string_append_printf (s, "%d", idlist[i]);
+
+		xmmsv_list_iter_entry_int (it, &entry);
+		g_string_append_printf (s, "%d", entry);
 	}
+	xmmsv_list_iter_explicit_destroy (it);
+
 	g_string_append_c (s, ')');
 
 	return s;
