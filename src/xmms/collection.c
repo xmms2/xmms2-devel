@@ -1731,9 +1731,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	xmmsv_coll_t *op;
 	gchar *attr1 = NULL, *attr2 = NULL;
 	xmmsv_t *val;
-	const xmms_medialib_entry_t *idlist;
-	gint i;
-	xmms_medialib_entry_t id;
+	xmms_medialib_entry_t entry, id;
 	xmmsv_list_iter_t *iter;
 
 	switch (xmmsv_coll_get_type (coll)) {
@@ -1823,14 +1821,19 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		val = g_hash_table_lookup (mediainfo, "id");
 		if (val != NULL) {
 			xmmsv_get_int (val, &id);
-			idlist = xmmsv_coll_get_idlist (coll);
-			for (i = 0; idlist[i] != 0; i++) {
-				/* stop if mid in the list */
-				if (idlist[i] == id) {
+
+			xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &iter);
+			for (xmmsv_list_iter_first (iter);
+			     xmmsv_list_iter_valid (iter);
+			     xmmsv_list_iter_next (iter)) {
+
+				xmmsv_list_iter_entry_int (iter, &entry);
+				if (entry == id) {
 					match = TRUE;
 					break;
 				}
 			}
+			xmmsv_list_iter_explicit_destroy (iter);
 		}
 		break;
 

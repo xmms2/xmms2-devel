@@ -231,7 +231,8 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
                                   guint collid, xmmsv_coll_t *coll)
 {
 	gchar query[128];
-	const xmms_medialib_entry_t *idlist;
+	xmms_medialib_entry_t entry;
+	xmmsv_list_iter_t *it;
 	gint i;
 	xmmsv_coll_t *op;
 	xmmsv_t *attrs;
@@ -251,14 +252,19 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	attrs = NULL; /* no unref needed. */
 
 	/* Write idlist */
-	idlist = xmmsv_coll_get_idlist (coll);
-	for (i = 0; idlist[i] != 0; i++) {
+	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
+	for (xmmsv_list_iter_first (it), i = 0;
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it), i++) {
+
+		xmmsv_list_iter_entry_int (it, &entry);
 		g_snprintf (query, sizeof (query),
 		            "INSERT INTO CollectionIdlists VALUES(%d, %d, %d)",
-		            collid, i, idlist[i]);
+		            collid, i, entry);
 
 		xmms_medialib_select (session, query, NULL);
 	}
+	xmmsv_list_iter_explicit_destroy (it);
 
 	/* Save operands and connections (don't recurse in ref operand) */
 	newid = collid + 1;

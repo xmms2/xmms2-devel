@@ -1003,19 +1003,31 @@ xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
                                  const gchar *plname,
                                  xmmsv_coll_t *coll, xmms_error_t *err)
 {
-	const xmms_medialib_entry_t *idlist;
+	xmms_medialib_entry_t entry;
+	xmmsv_list_iter_t *it;
 
-	for (idlist = xmmsv_coll_get_idlist (coll); *idlist; idlist++) {
-		if (!xmms_medialib_check_id (*idlist)) {
+	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
+		xmmsv_list_iter_entry_int (it, &entry);
+		if (!xmms_medialib_check_id (entry)) {
 			xmms_error_set (err, XMMS_ERROR_NOENT,
 			                "Idlist contains invalid medialib id!");
+			xmmsv_list_iter_explicit_destroy (it);
 			return;
 		}
 	}
 
-	for (idlist = xmmsv_coll_get_idlist (coll); *idlist; idlist++) {
-		xmms_playlist_add_entry (playlist, plname, *idlist, err);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
+		xmmsv_list_iter_entry_int (it, &entry);
+		xmms_playlist_add_entry (playlist, plname, entry, err);
 	}
+	xmmsv_list_iter_explicit_destroy (it);
 
 }
 
@@ -1495,8 +1507,8 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 {
 	GList *entries = NULL;
 	xmmsv_coll_t *plcoll;
-	const xmms_medialib_entry_t *idlist;
-	gint i;
+	xmms_medialib_entry_t entry;
+	xmmsv_list_iter_t *it;
 
 	g_return_val_if_fail (playlist, NULL);
 
@@ -1508,11 +1520,15 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 		return NULL;
 	}
 
-	idlist = xmmsv_coll_get_idlist (plcoll);
+	xmmsv_get_list_iter (xmmsv_coll_idlist_get (plcoll), &it);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
 
-	for (i = 0; idlist[i] != 0; i++) {
-		entries = g_list_prepend (entries, xmmsv_new_int (idlist[i]));
+		xmmsv_list_iter_entry_int (it, &entry);
+		entries = g_list_prepend (entries, xmmsv_new_int (entry));
 	}
+	xmmsv_list_iter_explicit_destroy (it);
 
 	g_mutex_unlock (playlist->mutex);
 

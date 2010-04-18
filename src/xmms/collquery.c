@@ -230,13 +230,13 @@ static void
 xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                                  coll_query_t *query)
 {
-	gint i;
 	xmmsv_coll_t *op;
-	const xmms_medialib_entry_t *idlist;
+	xmms_medialib_entry_t entry;
 	gchar *attr1, *attr2, *attr3;
 	gboolean case_sens;
 	xmmsv_list_iter_t *iter;
 	xmmsv_t *tmp;
+	gboolean first;
 
 	xmmsv_coll_type_t type = xmmsv_coll_get_type (coll);
 	switch (type) {
@@ -251,7 +251,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 	case XMMS_COLLECTION_TYPE_UNION:
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
-		i = 0;
+		first = TRUE;
 		query_append_string (query, "(");
 
 		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &iter);
@@ -259,13 +259,13 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		for (xmmsv_list_iter_first (iter);
 		     xmmsv_list_iter_valid (iter);
 		     xmmsv_list_iter_next (iter)) {
-			if (i != 0) {
+			if (first) {
+				first = FALSE;
+			} else {
 				if (type == XMMS_COLLECTION_TYPE_UNION)
 					query_append_string (query, " OR ");
 				else
 					query_append_string (query, " AND ");
-			} else {
-				i = 1;
 			}
 			xmmsv_list_iter_entry (iter, &tmp);
 			xmmsv_get_coll (tmp, &op);
@@ -301,14 +301,25 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_QUEUE:
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		idlist = xmmsv_coll_get_idlist (coll);
+		first = TRUE;
 		query_append_string (query, "m0.id IN (");
-		for (i = 0; idlist[i] != 0; ++i) {
-			if (i != 0) {
+
+		xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &iter);
+		for (xmmsv_list_iter_first (iter);
+		     xmmsv_list_iter_valid (iter);
+		     xmmsv_list_iter_next (iter)) {
+
+			if (first) {
+				first = FALSE;
+			} else {
 				query_append_string (query, ",");
 			}
-			query_append_int (query, idlist[i]);
+
+			xmmsv_list_iter_entry_int (iter, &entry);
+			query_append_int (query, entry);
 		}
+		xmmsv_list_iter_explicit_destroy (iter);
+
 		query_append_string (query, ")");
 		break;
 
