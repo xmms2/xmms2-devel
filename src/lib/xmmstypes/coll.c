@@ -264,13 +264,9 @@ xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
+xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, int index, int id)
 {
 	x_return_val_if_fail (coll, 0);
-
-	if (index > xmmsv_list_get_size (coll->idlist)) {
-		return 0;
-	}
 
 	return xmmsv_list_insert_int (coll->idlist, index, id);
 }
@@ -283,14 +279,9 @@ xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, unsigned int index, int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int newindex)
+xmmsv_coll_idlist_move (xmmsv_coll_t *coll, int index, int newindex)
 {
 	x_return_val_if_fail (coll, 0);
-
-	if ((index >= xmmsv_list_get_size (coll->idlist)) ||
-	    (newindex >= xmmsv_list_get_size (coll->idlist))) {
-		return 0;
-	}
 
 	return xmmsv_list_move (coll->idlist, index, newindex);
 }
@@ -302,13 +293,9 @@ xmmsv_coll_idlist_move (xmmsv_coll_t *coll, unsigned int index, unsigned int new
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, unsigned int index)
+xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, int index)
 {
 	x_return_val_if_fail (coll, 0);
-
-	if (index >= xmmsv_list_get_size (coll->idlist)) {
-		return 0;
-	}
 
 	return xmmsv_list_remove (coll->idlist, index);
 }
@@ -334,13 +321,9 @@ xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, int32_t *val)
+xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, int index, int32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
-
-	if (index >= xmmsv_list_get_size (coll->idlist)) {
-		return 0;
-	}
 
 	return xmmsv_list_get_int (coll->idlist, index, val);
 }
@@ -353,13 +336,9 @@ xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, int32_t *va
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, unsigned int index, int32_t val)
+xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, int index, int32_t val)
 {
 	x_return_val_if_fail (coll, 0);
-
-	if (index >= xmmsv_list_get_size (coll->idlist)) {
-		return 0;
-	}
 
 	return xmmsv_list_set_int (coll->idlist, index, val);
 }
