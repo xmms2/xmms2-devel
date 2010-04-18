@@ -41,12 +41,12 @@
 #define COLL_METHOD_ADD_HANDLER_RET(action) \
 	COLL_METHOD_HANDLER_HEADER \
 \
-	ret = xmmsc_coll_##action (coll->real); \
+	ret = xmmsv_coll_##action (coll->real); \
 
 #define COLL_METHOD_ADD_HANDLER_UINT(action, arg1) \
 	COLL_METHOD_HANDLER_HEADER \
 \
-	xmmsc_coll_##action (coll->real, check_uint32 (arg1)); \
+	xmmsv_coll_##action (coll->real, check_uint32 (arg1)); \
 
 typedef struct {
 	VALUE attributes;
@@ -213,14 +213,22 @@ c_coll_operands (VALUE self)
 static VALUE
 c_coll_idlist_get (VALUE self)
 {
-	int i;
 	VALUE ary = rb_ary_new ();
-	const int32_t *ret = NULL;
+	xmmsv_t *ret = NULL;
+	xmmsv_list_iter_t *it = NULL;
+	int32_t entry;
 
-	COLL_METHOD_ADD_HANDLER_RET (get_idlist)
+	COLL_METHOD_ADD_HANDLER_RET (idlist_get)
 
-	for (i = 0; ret[i]; i++)
-		rb_ary_push (ary, INT2NUM (ret[i]));
+	xmmsv_get_list_iter (ret, &it);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
+		xmmsv_list_iter_entry_int (it, &entry);
+		rb_ary_push (ary, INT2NUM (entry));
+	}
+	xmmsv_list_iter_explicit_destroy (it);
 
 	return ary;
 }
