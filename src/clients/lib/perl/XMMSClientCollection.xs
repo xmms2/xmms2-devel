@@ -416,22 +416,22 @@ void
 xmmsv_coll_get_idlist (coll)
 		xmmsv_coll_t *coll
 	PREINIT:
-		const int32_t *ret;
-		size_t size;
-		unsigned int i = 0;
+		xmmsv_list_iter_t *it;
+		int32_t entry;
 	PPCODE:
-		ret = xmmsv_coll_get_idlist (coll);
-
-		if (ret == NULL)
+		if (!xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it))
 			XSRETURN_UNDEF;
 
-		size = xmmsv_coll_idlist_get_size (coll);
-		EXTEND (sp, size);
+		EXTEND (sp, xmmsv_coll_idlist_get_size (coll));
 
-		while (ret[i] != 0) {
-			PUSHs (sv_2mortal (newSVuv (ret[i])));
-			++i;
+		for (xmmsv_list_iter_first (it);
+		     xmmsv_list_iter_valid (it);
+		     xmmsv_list_iter_next (it)) {
+
+			xmmsv_list_iter_entry_int (it, &entry);
+			PUSHs (sv_2mortal (newSVuv (entry)));
 		}
+		xmmsv_list_iter_explicit_destroy (it);
 
 =head2 operands
 
