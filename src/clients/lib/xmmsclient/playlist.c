@@ -244,7 +244,7 @@ xmmsc_playlist_rinsert (xmmsc_connection_t *c, const char *playlist, int pos, co
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, NULL);
+	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
 		return NULL;
 
@@ -338,7 +338,7 @@ xmmsc_playlist_insert_full (xmmsc_connection_t *c, const char *playlist, int pos
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, args);
+	enc_url = xmmsc_medialib_encode_url_full (url, args);
 	if (!enc_url)
 		return NULL;
 
@@ -470,7 +470,7 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *ur
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, NULL);
+	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
 		return NULL;
 
@@ -561,7 +561,7 @@ xmmsc_playlist_add_full (xmmsc_connection_t *c, const char *playlist, const char
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, args);
+	enc_url = xmmsc_medialib_encode_url_full (url, args);
 	if (!enc_url)
 		return NULL;
 

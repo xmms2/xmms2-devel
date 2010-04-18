@@ -67,6 +67,11 @@ xmmsc_result_t *xmmsc_broadcast_quit (xmmsc_connection_t *c);
 const char *xmmsc_userconfdir_get (char *buf, int len);
 
 
+/* Encoding of urls */
+char *xmmsc_medialib_encode_url_full (const char *url, xmmsv_t *args);
+char *xmmsc_medialib_encode_url (const char *url);
+
+
 /*
  * PLAYLIST ************************************************
  */

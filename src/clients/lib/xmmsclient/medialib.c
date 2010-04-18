@@ -68,7 +68,7 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 	char *enc_url;
 	x_check_conn (conn, NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, NULL);
+	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
 		return NULL;
 
@@ -188,7 +188,7 @@ xmmsc_medialib_add_entry_full (xmmsc_connection_t *conn, const char *url, xmmsv_
 
 	x_check_conn (conn, NULL);
 
-	enc_url = _xmmsc_medialib_encode_url (url, args);
+	enc_url = xmmsc_medialib_encode_url_full (url, args);
 	if (!enc_url)
 		return NULL;
 
@@ -235,7 +235,7 @@ xmmsc_medialib_import_path (xmmsc_connection_t *conn, const char *path)
 
 	x_check_conn (conn, NULL);
 
-	enc_path = _xmmsc_medialib_encode_url (path, NULL);
+	enc_path = xmmsc_medialib_encode_url (path);
 	if (!enc_path)
 		return NULL;
 
@@ -560,8 +560,17 @@ _sum_len_string_dict (const char *key, xmmsv_t *val, void *userdata)
 	}
 }
 
+/**
+ * Encodes an url with arguments stored in dict args.
+ *
+ * The encoded url is allocated using malloc and has to be freed by the user.
+ *
+ * @param url The url to encode.
+ * @param args The dict with arguments, or NULL.
+ * @return The encoded url
+ */
 char *
-_xmmsc_medialib_encode_url (const char *url, xmmsv_t *args)
+xmmsc_medialib_encode_url_full (const char *url, xmmsv_t *args)
 {
 	static const char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0, extra = 0, l;
@@ -623,4 +632,18 @@ _xmmsc_medialib_encode_url (const char *url, xmmsv_t *args)
 	res[j] = '\0';
 
 	return res;
+}
+
+/**
+ * Encodes an url.
+ *
+ * The encoded url is allocated using malloc and has to be freed by the user.
+ *
+ * @param url The url to encode.
+ * @return The encoded url
+ */
+char *
+xmmsc_medialib_encode_url (const char *url)
+{
+	return xmmsc_medialib_encode_url_full (url, NULL);
 }

@@ -73,7 +73,6 @@ xmmsc_result_t *xmmsc_send_broadcast_msg (xmmsc_connection_t *c, int signalid);
 xmmsc_result_t *xmmsc_send_signal_msg (xmmsc_connection_t *c, int signalid);
 uint32_t xmmsc_write_signal_msg (xmmsc_connection_t *c, int signalid);
 char *_xmmsc_medialib_encode_url_old (const char *url, int narg, const char **args);
-char *_xmmsc_medialib_encode_url (const char *url, xmmsv_t *args);
 int _xmmsc_medialib_verify_url (const char *url);
 
 void xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid);
