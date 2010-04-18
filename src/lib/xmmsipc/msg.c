@@ -411,7 +411,7 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	xmmsv_t *v, *attrs;
 	int n;
 	uint32_t ret;
-	const int32_t *idlist;
+	int32_t entry;
 	xmmsv_coll_t *op;
 
 	if (!msg || !coll) {
@@ -433,13 +433,19 @@ internal_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsv_coll_t *coll)
 	attrs = NULL; /* no unref needed. */
 
 	/* idlist counter and content */
-	idlist = xmmsv_coll_get_idlist (coll);
-	for (n = 0; idlist[n] != 0; n++) { }
+	internal_ipc_msg_put_uint32 (msg, xmmsv_coll_idlist_get_size (coll));
 
-	internal_ipc_msg_put_uint32 (msg, n);
-	for (n = 0; idlist[n] != 0; n++) {
-		internal_ipc_msg_put_int32 (msg, idlist[n]);
+	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
+	for (xmmsv_list_iter_first (it);
+	     xmmsv_list_iter_valid (it);
+	     xmmsv_list_iter_next (it)) {
+
+		if (!xmmsv_list_iter_entry_int (it, &entry)) {
+			x_api_error ("Non integer in idlist", 0);
+		}
+		internal_ipc_msg_put_int32 (msg, entry);
 	}
+	xmmsv_list_iter_explicit_destroy (it);
 
 	/* operands counter and objects */
 	n = 0;
