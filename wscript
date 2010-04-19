@@ -265,12 +265,6 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('g++')
 
-    try:
-        conf.check_tool('winres')
-        conf.env['WINRCFLAGS'] = '-I' + os.path.abspath('pixmaps')
-        conf.env['xmms_icon'] = True
-    except Configure.ConfigurationError:
-        conf.env['xmms_icon'] = False
 
     if Options.options.target_platform:
         Options.platform = Options.options.target_platform
@@ -411,6 +405,17 @@ def configure(conf):
     # Default POSIX sockets
     else:
         conf.env['socket_impl'] = 'posix'
+
+    # platform does not support icons ...
+    conf.env['xmms_icon'] = False
+    # ... unless we target on windows
+    if Options.platform == 'win32':
+        try:
+            conf.check_tool('winres')
+            conf.env['WINRCFLAGS'] = '-I' + os.path.abspath('pixmaps')
+            conf.env['xmms_icon'] = True
+        except Configure.ConfigurationError:
+            pass
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
