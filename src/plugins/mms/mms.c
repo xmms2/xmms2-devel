@@ -17,7 +17,7 @@
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 
-#include <libmms/mms.h>
+#include <libmms/mmsx.h>
 #include <errno.h>
 
 
@@ -25,7 +25,7 @@
  * Type definitions
  */
 typedef struct {
-	mms_t *handle;
+	mmsx_t *handle;
 } xmms_mms_data_t;
 
 
@@ -94,7 +94,7 @@ xmms_mms_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_mms_data_t, 1);
 
 	/* Last param is bandwidth. Should be configurable. */
-	data->handle = mms_connect (NULL, NULL, url, 128 * 1024);
+	data->handle = mmsx_connect (NULL, NULL, url, 128 * 1024);
 
 	if (data->handle) {
 		xmms_xform_outdata_type_add (xform, XMMS_STREAM_TYPE_MIMETYPE,
@@ -119,7 +119,7 @@ xmms_mms_destroy (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	if (data->handle) {
-		mms_close (data->handle);
+		mmsx_close (data->handle);
 	}
 
 	g_free (data);
@@ -140,7 +140,7 @@ xmms_mms_read (xmms_xform_t *xform, void *buffer, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	ret = mms_read (NULL, data->handle, buffer, len);
+	ret = mmsx_read (NULL, data->handle, buffer, len);
 	if (ret < 0) {
 		xmms_log_error ("errno(%d) %s", errno, strerror (errno));
 		xmms_error_set (error, XMMS_ERROR_GENERIC, strerror (errno));
