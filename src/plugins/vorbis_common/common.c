@@ -254,6 +254,8 @@ handle_comment (xmms_xform_t *xform,
 	gint i;
 
 	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		if (key_len != strlen (properties[i].vname))
+			continue;
 		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
 		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
 			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
