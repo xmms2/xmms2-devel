@@ -281,24 +281,23 @@ def configure(conf):
         conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
 
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
-    for warning in ('all',
-                    'no-format-extra-args',
-                    'no-format-zero-length',
-                    'format-nonliteral',
-                    'format-security',
-                    'format=2',
-                    "missing-prototypes",
-                    "strict-prototypes",
-                    "empty-body",
-                    "ignored-qualifiers",
-                    "type-limits",
-                    "write-strings",
-                    ):
-        warnflag = "-W%s" % warning
+    for name in ('all',
+                 'no-format-extra-args',
+                 'no-format-zero-length',
+                 'format-nonliteral',
+                 'format-security',
+                 'format=2',
+                 "missing-prototypes",
+                 "strict-prototypes",
+                 "empty-body",
+                 "ignored-qualifiers",
+                 "type-limits",
+                 "write-strings"):
+        warnflag = "-W%s" % name
         if conf.check_cc(cflags=warnflag):
             conf.env["CCFLAGS"].append(warnflag)
             # autogenerate uselib definitions to disable warnings
-            conf.env["CCFLAGS_NO%s" % warning.replace("-","").upper()] = ["-Wno-%s" % warning]
+            conf.env["CCFLAGS_NO%s" % name.replace("-","").upper()] = ["-Wno-%s" % name]
 
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
