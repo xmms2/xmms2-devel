@@ -5,6 +5,7 @@ server_suite=["server/t_streamtype.c"]
 def configure(conf):
     conf.check_cc(header_name="CUnit/CUnit.h", mandatory=True)
     conf.check_cc(lib="cunit", uselib_store="cunit", mandatory=True)
+    conf.check_cc(lib="ncurses", uselib_store="ncurses")
 
     code = """
            static void T (void) __attribute__ ((constructor (220)));
@@ -20,7 +21,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c'] + types_suite
     obj.includes = '. ../ runner/ ../src ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit valgrind NOWRITESTRINGS'
+    obj.uselib = 'cunit ncurses valgrind NOWRITESTRINGS'
     obj.install_path = None
 
     obj = bld.new_task_gen('cc', 'program')
@@ -28,7 +29,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c', '../src/xmms/streamtype.c', '../src/xmms/object.c'] + server_suite
     obj.includes = '. ../ runner/ ../src ../src/includepriv ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit valgrind glib2 gthread2 NOWRITESTRINGS'
+    obj.uselib = 'cunit ncurses valgrind glib2 gthread2 NOWRITESTRINGS'
     obj.install_path = None
 
 
