@@ -1036,6 +1036,61 @@ Display command help.
 .RE
 .PP
 
+.SH PATTERN
+Pattern are used to search song in the medialib, 
+.PP
+.TP
+<property>\fB:\fR<string>
+.PP
+.RS 4
+match song whose property match string
+.RE
+
+.TP
+<property><op><num>
+.PP
+.RS 4
+op can be \fB<\fR, \fB<=\fR, \fB>\fR or \fB>=\fR, the pattern will
+match song whose <property> is a numerical value smaller, smaller or equal, bigger, bigger or equal than num
+.RE
+
+.TP
+\fB+\fR<property>
+.PP
+.RS 4
+match song whose property is set to some value
+.RE
+
+.TP
+<pattern> <pattern>
+.TP
+<pattern> AND <pattern>
+.PP
+.RS 4
+match song that are matched par both pattern
+.RE
+
+.TP
+<pattern> OR <pattern>
+.PP
+.RS 4
+match song that are matched by at least one of the two pattern
+.RE
+
+.TP
+( <pattern> )
+.PP
+.RS 4
+match song matched by the pattern, used for grouping
+.RE
+
+.TP
+<string>
+.PP
+.RS 4
+match song whose artist, title or album match the string
+.RE
+
 .SH ALIASES
 .PP
 A list of command aliases are read from the configuration file in the section [alias]
