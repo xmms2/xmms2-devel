@@ -138,7 +138,7 @@ xmms_flv_init (xmms_xform_t *xform)
 		readret = xmms_xform_read (xform, header,
 		                           (dataoffset < FLV_HDR_SIZE)?
 		                           dataoffset : FLV_HDR_SIZE, &err);
-		if (readret == -1) {
+		if (readret <= 0) {
 			xmms_log_error ("Error reading header:tag body gap");
 			return FALSE;
 		}
