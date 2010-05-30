@@ -698,12 +698,13 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
-	xmmsv_t *orderval;
+	xmmsv_t *orderval, *fetchval;
 
 	gboolean retval = TRUE;
 
 	column_display_t *coldisp;
 	const gchar **order = NULL;
+	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
 
 	/* FIXME: Support arguments -p and -c */
@@ -712,16 +713,25 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		coldisp = create_column_display (infos, ctx, default_columns);
 		command_flag_stringlist_get (ctx, "order", &order);
 
+		command_flag_stringlist_get (ctx, "columns", &columns);
+		if (columns) {
+			fetchval = xmmsv_make_stringlist ((gchar **)columns, -1);
+		} else {
+			fetchval = xmmsv_make_stringlist ((gchar **)default_columns, -1);
+		}
+
 		orderval = xmmsv_make_stringlist ((gchar **)order, -1);
-		res = xmmsc_coll_query_ids (infos->sync, query, orderval, 0, 0);
+		res = xmmsc_coll_query_infos (infos->sync, query, orderval, 0, 0, fetchval, NULL);
 		xmmsc_result_wait (res);
 
-		list_print_row (res, NULL, coldisp, TRUE);
+		list_print_row (res, NULL, coldisp, TRUE, TRUE);
 
 		xmmsv_unref (orderval);
+		xmmsv_unref (fetchval);
 		xmmsc_coll_unref (query);
 
 		g_free (order);
+		g_free (columns);
 	} else {
 		retval = FALSE;
 	}
@@ -793,7 +803,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	if (filter_by_pos) {
 		positions_print_list (res, positions, coldisp, new_list);
 	} else {
-		list_print_row (res, filter, coldisp, new_list);
+		list_print_row (res, filter, coldisp, new_list, FALSE);
 	}
 
 	if (filter != NULL) {

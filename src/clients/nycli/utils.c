@@ -819,7 +819,8 @@ matching_ids_tree (xmmsc_result_t *matching)
 
 void
 list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
-                column_display_t *coldisp, gboolean is_search)
+                column_display_t *coldisp, gboolean is_search,
+				gboolean result_is_infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
@@ -853,10 +854,17 @@ list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
 		while (xmmsv_list_iter_valid (it)) {
 			xmmsv_t *entry;
 			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_int (entry, &id) &&
-			    (!list || g_tree_lookup (list, &id) != NULL)) {
-				column_display_set_position (coldisp, i);
-				id_coldisp_print_info (infos, coldisp, id);
+
+			column_display_set_position (coldisp, i);
+
+			if (result_is_infos) {
+				enrich_mediainfo (entry);
+				column_display_print (coldisp, entry);
+			} else {
+				if (xmmsv_get_int (entry, &id) &&
+					(!list || g_tree_lookup (list, &id) != NULL)) {
+					id_coldisp_print_info (infos, coldisp, id);
+				}
 			}
 			xmmsv_list_iter_next (it);
 			i++;
