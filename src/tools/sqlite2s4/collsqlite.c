@@ -1,0 +1,179 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2009 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+#include "xmmspriv/xmms_collection.h"
+#include <sqlite3.h>
+#include <string.h>
+#include <stdlib.h>
+#include <glib.h>
+
+struct db_info {
+	sqlite3 *db;
+	GHashTable **ht;
+	xmmsv_coll_t *coll;
+};
+
+void collection_restore (sqlite3 *db, GHashTable **ht);
+static xmmsv_coll_t *xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_t type);
+
+static int
+restore_callback (void *userdata, int columns, char **col_strs, char **col_names)
+{
+	struct db_info *info = userdata;
+	static gint previd = -1;
+	gint id, type, nsid, i;
+	const gchar *label;
+	static xmmsv_coll_t *coll = NULL;
+
+	for (i = 0; i < columns; i++) {
+		if (!strcmp (col_names[i], "id")) {
+			id = atoi (col_strs[i]);
+		} else if (!strcmp (col_names[i], "type")) {
+			type = atoi (col_strs[i]);
+		} else if (!strcmp (col_names[i], "nsid")) {
+			nsid = atoi (col_strs[i]);
+		} else if (!strcmp (col_names[i], "label")) {
+			label = col_strs[i];
+		}
+	}
+
+	/* Do not duplicate operator if same id */
+	if (previd < 0 || id != previd) {
+		coll = xmms_collection_dbread_operator (info, id, type);
+		previd = id;
+	}
+	else {
+		xmmsv_coll_ref (coll);  /* New label references the coll */
+	}
+
+	g_hash_table_replace (info->ht[nsid], g_strdup (label), coll);
+
+	return 0;
+}
+
+void
+collection_restore (sqlite3 *db, GHashTable **ht)
+{
+	const gchar *query;
+	struct db_info info;
+
+	info.db = db;
+	info.ht = ht;
+
+	/* Fetch all label-coll_operator for all namespaces, register in table */
+	query = "SELECT op.id AS id, lbl.name AS label, "
+	        "       lbl.namespace AS nsid, op.type AS type "
+	        "FROM CollectionOperators AS op, CollectionLabels as lbl "
+	        "WHERE op.id=lbl.collid "
+	        "ORDER BY id";
+	sqlite3_exec (db, query, restore_callback, &info, NULL);
+}
+
+static int
+attribute_callback (void *userdata, int cols, char **col_strs, char **col_names)
+{
+	xmmsv_coll_t *coll = userdata;
+	const gchar *key, *value;
+	int i;
+
+	for (i = 0; i < cols; i++) {
+		if (!strcmp (col_names[i], "key")) {
+			key = col_strs[i];
+		} else if (!strcmp (col_names[i], "value")) {
+			value = col_strs[i];
+		}
+	}
+	xmmsv_coll_attribute_set (coll, key, value);
+
+	return 0;
+}
+static int
+idlist_callback (void *userdata, int cols, char **col_strs, char **col_names)
+{
+	xmmsv_coll_t *coll = userdata;
+	int i;
+
+	for (i = 0; i < cols; i++) {
+		if (!strcmp (col_names[i], "mid")) {
+			xmmsv_coll_idlist_append (coll, atoi (col_strs[i]));
+		}
+	}
+
+	return 0;
+}
+static int
+operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
+{
+	struct db_info *info = userdata;
+	xmmsv_coll_t *coll = info->coll;
+	xmmsv_coll_t *op;
+	int i;
+	gint id;
+	gint type;
+
+	for (i = 0; i < cols; i++) {
+		if (!strcmp (col_names[i], "id")) {
+			id = atoi (col_strs[i]);
+		} else if (!strcmp (col_names[i], "type")) {
+			type = atoi (col_strs[i]);
+		}
+	}
+
+
+	op = xmms_collection_dbread_operator (info, id, type);
+	xmmsv_coll_add_operand (coll, op);
+	xmmsv_coll_unref (op);
+
+	return 0;
+}
+
+static xmmsv_coll_t *
+xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_t type)
+{
+	xmmsv_coll_t *coll;
+	gchar query[256];
+
+	coll = xmmsv_coll_new (type);
+
+	/* Retrieve the attributes */
+	g_snprintf (query, sizeof (query),
+	            "SELECT attr.key AS key, attr.value AS value "
+	            "FROM CollectionOperators AS op, CollectionAttributes AS attr "
+	            "WHERE op.id=%d AND attr.collid=op.id", id);
+
+	sqlite3_exec (info->db, query, attribute_callback, coll, NULL);
+
+	/* Retrieve the idlist */
+	g_snprintf (query, sizeof (query),
+	            "SELECT idl.mid AS mid "
+	            "FROM CollectionOperators AS op, CollectionIdlists AS idl "
+	            "WHERE op.id=%d AND idl.collid=op.id "
+	            "ORDER BY idl.position", id);
+
+	sqlite3_exec (info->db, query, idlist_callback, coll, NULL);
+
+	/* Retrieve the operands */
+	g_snprintf (query, sizeof (query),
+	            "SELECT op.id AS id, op.type AS type "
+	            "FROM CollectionOperators AS op, CollectionConnections AS conn "
+	            "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
+
+	info->coll = coll;
+	sqlite3_exec (info->db, query, operator_callback, info, NULL);
+
+	return coll;
+}

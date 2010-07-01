@@ -1,0 +1,22 @@
+sqlite2s4_source = """
+    main.c
+    sqlite.c
+    collsqlite.c
+    colls4.c
+""".split()
+
+def build(bld):
+    bld(features = 'c cprogram',
+        target = 'sqlite2s4',
+        source = sqlite2s4_source,
+        includes = '. ../../include ../../includepriv',
+        use = 's4 xmmstypes',
+        uselib = 'glib2 gthread2 sqlite3'
+        )
+
+def configure(conf):
+    conf.check_cfg(package='sqlite3', atleast_version='3.5',
+            uselib_store='sqlite3', args='--cflags --libs')
+
+def options(o):
+    pass

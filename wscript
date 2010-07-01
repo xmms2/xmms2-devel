@@ -66,6 +66,7 @@ src/clients/lib/xmmsclient
 src/clients/lib/xmmsclient-glib
 src/include
 src/includepriv
+src/tools/sqlite2s4
 """.split()
 
 optional_subdirs = """
