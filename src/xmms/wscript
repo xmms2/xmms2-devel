@@ -16,7 +16,6 @@ source = """
     output.c
     playlist.c
     collection.c
-    collquery.c
     collserial.c
     collsync.c
     ipc.c

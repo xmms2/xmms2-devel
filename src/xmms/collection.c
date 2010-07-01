@@ -28,11 +28,11 @@
 
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_collquery.h"
 #include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
+#include "xmmspriv/xmms_medialib.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
@@ -77,9 +77,8 @@ typedef enum {
 } coll_find_state_t;
 
 typedef struct add_metadata_from_tree_user_data_St {
-	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
-	guint src;
+	const gchar* src;
 } add_metadata_from_tree_user_data_t;
 
 static GList *global_stream_type;
@@ -135,8 +134,7 @@ static void xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *co
 static GList * xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *namespace, xmms_error_t *error);
 static void xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
 
-static GList * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
-static GList * xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
+static xmmsv_t * xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_t *fetch, xmms_error_t *err);
 static xmmsv_coll_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
 static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
 
@@ -268,14 +266,14 @@ add_metadata_from_tree (const gchar *key, xmmsv_t *value, gpointer user_data)
 	if (xmmsv_get_type (value) == XMMSV_TYPE_INT32) {
 		gint iv;
 		xmmsv_get_int (value, &iv);
-		xmms_medialib_entry_property_set_int_source (ud->session, ud->entry,
+		xmms_medialib_entry_property_set_int_source (ud->entry,
 		                                             key,
 		                                             iv,
 		                                             ud->src);
 	} else if (xmmsv_get_type (value) == XMMSV_TYPE_STRING) {
 		const gchar *sv;
 		xmmsv_get_string (value, &sv);
-		xmms_medialib_entry_property_set_str_source (ud->session, ud->entry,
+		xmms_medialib_entry_property_set_str_source (ud->entry,
 		                                             key,
 		                                             sv,
 		                                             ud->src);
@@ -297,8 +295,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	xmms_xform_t *xform;
 	GList *lst, *n;
 	xmmsv_coll_t *coll;
-	xmms_medialib_session_t *session;
-	guint src;
+	const gchar* src;
 	const gchar *buf;
 
 	/* we don't want any effects for playlist, so just report we're rehashing */
@@ -316,8 +313,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	}
 
 	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-	session = xmms_medialib_begin_write ();
-	src = xmms_medialib_source_to_id (session, "plugin/playlist");
+	src = "plugin/playlist";
 
 	n = lst;
 	while (n) {
@@ -334,13 +330,12 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 
 		xmmsv_get_string (b, &buf);
-		entry = xmms_medialib_entry_new_encoded (session, buf, err);
+		entry = xmms_medialib_entry_new_encoded (buf, err);
 		xmmsv_dict_remove (a, "realpath");
 		xmmsv_dict_remove (a, "path");
 
 		if (entry) {
 			add_metadata_from_tree_user_data_t udata;
-			udata.session = session;
 			udata.entry = entry;
 			udata.src = src;
 
@@ -356,7 +351,6 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		n = g_list_delete_link (n, n);
 	}
 
-	xmms_medialib_end (session);
 	xmms_object_unref (xform);
 
 	return coll;
@@ -716,7 +710,6 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 
 }
 
-
 /** Find the ids of the media matched by a collection.
  *
  * @param dag  The collection DAG.
@@ -727,89 +720,37 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
  * @param err  If an error occurs, a message is stored in it.
  * @return A list of media ids.
  */
-GList *
+xmmsv_t *
 xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                            gint32 lim_start, gint32 lim_len, xmmsv_t *order,
                            xmms_error_t *err)
 {
-	GList *res, *n;
-	xmmsv_t *fetch, *group, *idval;
+	xmmsv_t *ret;
+	static xmmsv_t *fetch_spec = NULL;
+	xmmsv_coll_t *coll2, *coll3;
 
-	/* no grouping, fetch only id */
-	group = xmmsv_new_list ();
-	fetch = xmmsv_new_list ();
-	idval = xmmsv_new_string ("id");
-	xmmsv_list_append (fetch, idval);
+	/* Creates the fetchspec to use */
+	fetch_spec = xmmsv_build_cluster_list (
+			xmmsv_new_string ("id"),
+			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
 
-	res = xmms_collection_client_query_infos (dag, coll, lim_start, lim_len, order, fetch, group, err);
+	coll2 = xmmsv_coll_add_order_operators (coll, order);
+	coll3 = xmmsv_coll_add_limit_operator (coll2, lim_start, lim_len);
 
-	/* FIXME: get an uint list directly ! (we're getting ints here actually) */
-	for (n = res; n; n = n->next) {
-		xmms_medialib_entry_t id;
-		xmmsv_t *id_val, *cmdval = n->data;
+	ret = xmms_collection_client_query (dag, coll3, fetch_spec, err);
 
-		xmmsv_dict_get (cmdval, "id", &id_val);
-		xmmsv_get_int (id_val, &id);
-		n->data = xmmsv_new_int (id);
+	xmmsv_unref (fetch_spec);
+	xmmsv_coll_unref (coll2);
+	xmmsv_coll_unref (coll3);
 
-		xmmsv_unref (cmdval);
-	}
-
-	xmmsv_unref (group);
-	xmmsv_unref (fetch);
-	xmmsv_unref (idval);
-
-	return res;
+	return ret;
 }
 
-
-GList *
-xmms_collection_client_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                  gint32 lim_start, gint32 lim_len, xmmsv_t *order,
-                                  xmms_error_t *err)
+xmmsv_t *
+xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+		xmmsv_t *fetch, xmms_error_t *err)
 {
-	return xmms_collection_query_ids (dag, coll, lim_start, lim_len, order, err);
-}
-/** Find the properties of the media matched by a collection.
- *
- * @param dag  The collection DAG.
- * @param coll  The collection used to match media.
- * @param lim_start  The beginning index of the LIMIT statement (0 to disable).
- * @param lim_len  The number of entries of the LIMIT statement (0 to disable).
- * @param order  The list of properties to order by, prefix by '-' to invert (empty to disable).
- * @param fetch  The list of properties to be retrieved.
- * @param group  The list of properties to group by (empty to disable).
- * @param err  If an error occurs, a message is stored in it.
- * @return A list of property dicts for each entry.
- */
-GList *
-xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                    gint32 lim_start, gint32 lim_len, xmmsv_t *order,
-                                    xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err)
-{
-	GList *res = NULL;
-	GString *query;
-
-	/* check that fetch is not empty */
-	if (xmmsv_list_get_size (fetch) == 0) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "fetch list must not be empty!");
-		return NULL;
-	}
-
-	/* check for invalid property strings */
-	if (!check_string_list (order)) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "invalid order list!");
-		return NULL;
-	}
-	if (!check_string_list (fetch)) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "invalid fetch list!");
-		return NULL;
-	}
-	if (!check_string_list (group)) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "invalid group list!");
-		return NULL;
-	}
-
+	xmmsv_t *ret;
 	/* validate the collection to query */
 	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
 		if (err) {
@@ -819,22 +760,11 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	}
 
 	g_mutex_lock (dag->mutex);
-
-	query = xmms_collection_get_query (dag, coll, lim_start, lim_len,
-	                                   order, fetch, group);
-
+	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
+	ret = xmms_medialib_query (coll, fetch, err);
 	g_mutex_unlock (dag->mutex);
 
-	XMMS_DBG ("COLLECTIONS: query_infos with %s", query->str);
-
-	/* Run the query */
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
-	res = xmms_medialib_select (session, query->str, err);
-	xmms_medialib_end (session);
-
-	g_string_free (query, TRUE);
-
-	return res;
+	return ret;
 }
 
 /**
@@ -977,27 +907,14 @@ xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
 xmms_medialib_entry_t
 xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 {
-	GList *res;
-	xmms_medialib_entry_t mid = 0;
-	xmmsv_t *rorder = xmmsv_new_list ();
-	xmmsv_t *randval = xmmsv_new_string ("~RANDOM()");
+	xmms_medialib_entry_t ret;
 
-	/* FIXME: Temporary hack to allow custom ordering functions */
-	xmmsv_list_append (rorder, randval);
+	g_mutex_lock (dag->mutex);
+	xmms_collection_apply_to_collection (dag, source, bind_all_references, NULL);
+	ret = xmms_medialib_query_random_id (source);
+	g_mutex_unlock (dag->mutex);
 
-	res = xmms_collection_query_ids (dag, source, 0, 1, rorder, NULL);
-
-	if (res != NULL) {
-		xmmsv_t *val = (xmmsv_t *) res->data;
-		xmmsv_get_int (val, &mid);
-		xmmsv_unref (val);
-		g_list_free (res);
-	}
-
-	xmmsv_unref (rorder);
-	xmmsv_unref (randval);
-
-	return mid;
+	return ret;
 }
 
 /** @} */

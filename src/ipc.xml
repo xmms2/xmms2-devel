@@ -1481,7 +1481,7 @@ vim:expandtab
         </method>
 
         <method>
-            <name>query_ids</name>
+            <name>query</name>
             <documentation>FIXME.</documentation>
 
             <argument>
@@ -1490,122 +1490,25 @@ vim:expandtab
 
                 <type>
                     <collection />
-                </type>
-            </argument>
-
-            <argument>
-                <name>lim_start</name>
-                <documentation>FIXME.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>lim_len</name>
-                <documentation>FIXME.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>order</name>
-                <documentation>The list of properties to order by.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
-                </type>
-            </argument>
-
-            <return_value>
-                <documentation>The retrieved medialib entry ids.</documentation>
-
-                <type>
-                    <list>
-                        <int />
-                    </list>
-                </type>
-            </return_value>
-        </method>
-
-        <method>
-            <name>query_infos</name>
-            <documentation>FIXME.</documentation>
-
-            <argument>
-                <name>collection</name>
-                <documentation>FIXME.</documentation>
-
-                <type>
-                    <collection />
-                </type>
-            </argument>
-
-            <argument>
-                <name>lim_start</name>
-                <documentation>FIXME.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>lim_len</name>
-                <documentation>FIXME.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>order</name>
-                <documentation>The list of properties to order by.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
                 </type>
             </argument>
 
             <argument>
                 <name>fetch</name>
-                <documentation>The list of properties to be retrieved (may not be empty).</documentation>
+                <documentation>Specifies what to fetch.</documentation>
 
                 <type>
-                    <list>
-                        <string />
-                    </list>
-                </type>
-            </argument>
-
-            <argument>
-                <name>group</name>
-                <documentation>The list of properties to group by.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
+                    <dictionary>
+                    </dictionary>
                 </type>
             </argument>
 
             <return_value>
-                <documentation>FIXME.</documentation>
+                <documentation>A return value as requested by fetch.</documentation>
 
                 <type>
-                    <list>
-                        <dictionary>
-                            <unknown />
-                        </dictionary>
-                    </list>
+                    <xmmsv>
+                    </xmmsv>
                 </type>
             </return_value>
         </method>
