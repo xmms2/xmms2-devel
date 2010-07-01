@@ -22,6 +22,7 @@
 #include <glib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "xmmsc/xmmsc_util.h"
 #include "xmms/xmms_util.h"
@@ -150,4 +151,26 @@ gint
 xmms_natcmp (const gchar *str1, const gchar *str2)
 {
 	return xmms_natcmp_len (str1, -1, str2, -1);
+}
+
+/**
+ * Check if a string is a number, if it is save it in val
+ *
+ * @param str The str to check
+ * @param val A pointer to where we want the number to be saved
+ * @return TRUE if the str is a number, FALSE otherwise
+ */
+gboolean
+xmms_is_int (const gchar *str, int *val)
+{
+	gboolean ret = FALSE;
+	gchar *end;
+
+	if (!isspace (*str)) {
+		*val = strtol (str, &end, 10);
+		if (*end == '\0')
+			ret = TRUE;
+	}
+
+	return ret;
 }
