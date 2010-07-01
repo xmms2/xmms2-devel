@@ -10,7 +10,6 @@ from waflib import Options, Logs, Errors
 source = """
     config.c
     mediainfo.c
-    sqlite.c
     medialib.c
     object.c
     error.c
@@ -204,8 +203,6 @@ def configure(conf):
             uselib_store='gmodule2', args='--cflags --libs')
     conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0',
             uselib_store='gthread2', args='--cflags --libs')
-    conf.check_cfg(package='sqlite3', atleast_version='3.5',
-            uselib_store='sqlite3', args='--cflags --libs')
 
     # Check for the sin function in the math lib
     conf.check_cc(lib='m', function_name='sin', header_name='math.h',

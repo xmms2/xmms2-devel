@@ -40,7 +40,6 @@
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_bindata.h"
 #include "xmmspriv/xmms_utils.h"
@@ -398,7 +397,6 @@ print_version (void)
 	        glib_major_version,
 	        glib_minor_version,
 	        glib_micro_version);
-	xmms_sqlite_print_version ();
 
 	exit (EXIT_SUCCESS);
 }
