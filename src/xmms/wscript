@@ -79,8 +79,8 @@ def build(bld):
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind',
-        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
+        uselib = 'glib2 gmodule2 gthread2 statfs socket shm valgrind',
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4'
     )
 
     objects = []
@@ -91,7 +91,7 @@ def build(bld):
         target = 'xmms2d',
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'math glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind',
+        uselib = 'math glib2 gmodule2 gthread2 statfs socket shm valgrind s4',
         use = 'xmms2core',
         add_objects = objects
     )

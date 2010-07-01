@@ -84,26 +84,20 @@
 G_BEGIN_DECLS
 
 typedef gint32 xmms_medialib_entry_t;
-typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
-xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms_error_t *error);
+xmms_medialib_entry_t xmms_medialib_entry_new (const char *url, xmms_error_t *error);
 
-xmmsv_t *xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
-gchar *xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
-gint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
-gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
-gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value);
+xmmsv_t *xmms_medialib_entry_property_get_value (xmms_medialib_entry_t entry, const gchar *property);
+gchar *xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *property);
+gint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
+gboolean xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
+gboolean xmms_medialib_entry_property_set_int (xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_added (xmms_medialib_entry_t entry);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
 gchar *xmms_medialib_url_encode (const gchar *path);
 
-#define xmms_medialib_begin() _xmms_medialib_begin(FALSE, __FILE__, __LINE__)
-#define xmms_medialib_begin_write() _xmms_medialib_begin(TRUE, __FILE__, __LINE__)
 
-xmms_medialib_session_t * _xmms_medialib_begin (gboolean write, const char *file, int line);
-void xmms_medialib_end (xmms_medialib_session_t *session);
-
-#define xmms_medialib_entry_status_set(session, e, st) xmms_medialib_entry_property_set_int_source(session, e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, 1) /** @todo: hardcoded server id might be bad? */
+#define xmms_medialib_entry_status_set(e, st) xmms_medialib_entry_property_set_int_source(e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, "server") /** @todo: hardcoded server id might be bad? */
 
 G_END_DECLS
 
