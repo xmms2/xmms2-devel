@@ -593,9 +593,8 @@ xmms_xform_metadata_get_str (xmms_xform_t *xform, const char *key,
 }
 
 typedef struct {
-	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
-	guint32 source;
+	gchar *source;
 } metadata_festate_t;
 
 static void
@@ -608,16 +607,14 @@ add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 	if (xmmsv_get_type (value) == XMMSV_TYPE_STRING) {
 		const gchar *s;
 		xmmsv_get_string (value, &s);
-		xmms_medialib_entry_property_set_str_source (st->session,
-		                                             st->entry,
+		xmms_medialib_entry_property_set_str_source (st->entry,
 		                                             key,
 		                                             s,
 		                                             st->source);
 	} else if (xmmsv_get_type (value) == XMMSV_TYPE_INT32) {
 		gint i;
 		xmmsv_get_int (value, &i);
-		xmms_medialib_entry_property_set_int_source (st->session,
-		                                             st->entry,
+		xmms_medialib_entry_property_set_int_source (st->entry,
 		                                             key,
 		                                             i,
 		                                             st->source);
@@ -636,8 +633,9 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 	g_snprintf (src, sizeof (src), "plugin/%s",
 	            xmms_xform_shortname (xform));
 
-	info->source = xmms_medialib_source_to_id (info->session, src);
+	info->source = src;
 	g_hash_table_foreach (xform->metadata, add_metadatum, info);
+	info->source = NULL;
 
 	xform->metadata_changed = FALSE;
 }
@@ -673,10 +671,8 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean reh
 	GTimeVal now;
 
 	info.entry = start->entry;
-	info.session = xmms_medialib_begin_write ();
 
-	times_played = xmms_medialib_entry_property_get_int (info.session,
-	                                                     info.entry,
+	times_played = xmms_medialib_entry_property_get_int (info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
 
 	/* times_played == -1 if we haven't played this entry yet. so after initial
@@ -686,34 +682,32 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr, gboolean reh
 		times_played = 0;
 	}
 
-	last_started = xmms_medialib_entry_property_get_int (info.session,
-	                                                     info.entry,
+	last_started = xmms_medialib_entry_property_get_int (info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
 
-	xmms_medialib_entry_cleanup (info.session, info.entry);
+	xmms_medialib_entry_cleanup (info.entry);
 
 	xmms_xform_metadata_collect_r (start, &info, namestr);
 
-	xmms_medialib_entry_property_set_str (info.session, info.entry,
+	xmms_medialib_entry_property_set_str (info.entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN,
 	                                      namestr->str);
 
-	xmms_medialib_entry_property_set_int (info.session, info.entry,
+	xmms_medialib_entry_property_set_int (info.entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED,
 	                                      times_played + (rehashing ? 0 : 1));
 
 	if (!rehashing || (rehashing && last_started)) {
 		g_get_current_time (&now);
 
-		xmms_medialib_entry_property_set_int (info.session, info.entry,
+		xmms_medialib_entry_property_set_int (info.entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED,
 		                                      (rehashing ? last_started : now.tv_sec));
 	}
 
-	xmms_medialib_entry_status_set (info.session, info.entry,
+	xmms_medialib_entry_status_set (info.entry,
 	                                XMMS_MEDIALIB_ENTRY_STATUS_OK);
 
-	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
 }
 
@@ -723,11 +717,9 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 	metadata_festate_t info;
 
 	info.entry = xform->entry;
-	info.session = xmms_medialib_begin_write ();
 
 	xmms_xform_metadata_collect_one (xform, &info);
 
-	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
 }
 
@@ -1369,13 +1361,10 @@ chain_finalize (xmms_xform_t *xform, xmms_medialib_entry_t entry,
 static gchar *
 get_url_for_entry (xmms_medialib_entry_t entry)
 {
-	xmms_medialib_session_t *session;
 	gchar *url = NULL;
 
-	session = xmms_medialib_begin ();
-	url = xmms_medialib_entry_property_get_str (session, entry,
+	url = xmms_medialib_entry_property_get_str (entry,
 	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	xmms_medialib_end (session);
 
 	if (!url) {
 		xmms_log_error ("Couldn't get url for entry (%d)", entry);
