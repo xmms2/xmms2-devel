@@ -295,7 +295,6 @@ xmms_ices_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	entry = xmms_output_current_id (output);
 	xmms_ices_update_comment (entry, &data->vc);
 
-
 	/* If there is no encoder around, we need to build one. */
 	if (!data->encoder) {
 		int minbr, nombr, maxbr;
@@ -350,8 +349,6 @@ xmms_ices_write (xmms_output_t *output, gpointer buffer,
 static void
 xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 {
-	xmms_medialib_session_t *session;
-
 	static const struct {
 		const gchar *prop;
 		const gchar *key;
@@ -365,18 +362,14 @@ xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 	vorbis_comment_clear (vc);
 	vorbis_comment_init (vc);
 
-	session = xmms_medialib_begin ();
-
 	for (pptr = props; pptr && pptr->prop; pptr++) {
 		const gchar *tmp;
 
-		tmp = xmms_medialib_entry_property_get_str (session, entry, pptr->prop);
+		tmp = xmms_medialib_entry_property_get_str (entry, pptr->prop);
 		if (tmp) {
 			vorbis_comment_add_tag (vc, pptr->key, (gchar *) tmp);
 		}
 	}
-
-	xmms_medialib_end (session);
 
 }
 

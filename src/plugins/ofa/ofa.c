@@ -103,7 +103,6 @@ xmms_ofa_init (xmms_xform_t *xform)
 {
 	xmms_ofa_data_t *data;
 	xmms_medialib_entry_t entry;
-	xmms_medialib_session_t *session;
 	GError *error = NULL;
 	char *fp;
 
@@ -127,8 +126,7 @@ xmms_ofa_init (xmms_xform_t *xform)
 	data->buf = g_malloc (data->bytes_to_read);
 	entry = xmms_xform_entry_get (xform);
 
-	session = xmms_medialib_begin ();
-	fp = xmms_medialib_entry_property_get_str (session, entry, "ofa_fingerprint");
+	fp = xmms_medialib_entry_property_get_str (entry, "ofa_fingerprint");
 	if (fp) {
 		XMMS_DBG ("Entry already has ofa_fingerprint, not recalculating");
 		/* keep it! */
@@ -137,7 +135,6 @@ xmms_ofa_init (xmms_xform_t *xform)
 	} else {
 		data->run_ofa = TRUE;
 	}
-	xmms_medialib_end (session);
 
 	xmms_xform_private_data_set (xform, data);
 
