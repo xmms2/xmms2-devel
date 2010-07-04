@@ -1674,17 +1674,175 @@ xmmsv_list_iter_remove (xmmsv_list_iter_t *it)
 
 /* Dict stuff */
 
+typedef struct {
+	uint32_t hash;
+	char *str;
+	xmmsv_t *value;
+} xmmsv_dict_data_t;
+
 struct xmmsv_dict_St {
-	/* dict implemented as a flat [key1, val1, key2, val2, ...] list */
-	xmmsv_list_t *flatlist;
+	int elems;
+	int size;
+	xmmsv_dict_data_t *data;
+
 	x_list_t *iterators;
 };
 
 struct xmmsv_dict_iter_St {
-	/* iterator of the contained flatlist */
-	xmmsv_list_iter_t *lit;
+	int pos;
 	xmmsv_dict_t *parent;
 };
+
+#define HASH_MASK(table) ((1 << (table)->size) - 1)
+#define HASH_FILL_LIM 7
+#define DELETED_STR ((char*)-1)
+#define DICT_INIT_DATA(s) {.hash = xmmsv_dict_hash (s, strlen (s)), .str = (char*)s}
+#define START_SIZE 2
+
+/* MurmurHash2, by Austin Appleby */
+static uint32_t
+xmmsv_dict_hash (const void *key, int len)
+{
+	/* 'm' and 'r' are mixing constants generated offline.
+	 * They're not really 'magic', they just happen to work well.
+	 */
+	const uint32_t seed = 0x12345678;
+	const uint32_t m = 0x5bd1e995;
+	const int r = 24;
+
+	/* Initialize the hash to a 'random' value */
+	uint32_t h = seed ^ len;
+
+	/* Mix 4 bytes at a time into the hash */
+	const unsigned char * data = (const unsigned char *)key;
+
+	while(len >= 4)
+	{
+		uint32_t k = *(uint32_t *)data;
+
+		k *= m;
+		k ^= k >> r;
+		k *= m;
+
+		h *= m;
+		h ^= k;
+
+		data += 4;
+		len -= 4;
+	}
+
+	/* Handle the last few bytes of the input array */
+	switch(len)
+	{
+	case 3: h ^= data[2] << 16;
+	case 2: h ^= data[1] << 8;
+	case 1: h ^= data[0];
+	        h *= m;
+	};
+
+	/* Do a few final mixes of the hash to ensure the last few
+	 * bytes are well-incorporated.
+	 */
+	h ^= h >> 13;
+	h *= m;
+	h ^= h >> 15;
+
+	return h;
+}
+
+/* Searches the hash table for an entry matching the hash and string in data.
+ * It will save the found position in pos.
+ * If a deleted position was found before the key, it will be saved in deleted
+ * Returns 1 if the entry was found, 0 otherwise
+ */
+static int
+xmmsv_dict_search (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int *pos, int *deleted)
+{
+	int bucket = data.hash & HASH_MASK (dict);
+	int stop = bucket;
+	int size = 1 << dict->size;
+
+	*deleted = -1;
+
+	while (dict->data[bucket].str != NULL) {
+		/* If this is a free entry we save it in the free pointer */
+		if (dict->data[bucket].str == DELETED_STR) {
+		   if (*deleted == -1) {
+			   *deleted = bucket;
+		   }
+		/* If we found the entry we save it in the pos pointer */
+		} else if (dict->data[bucket].hash == data.hash
+				&& strcmp (dict->data[bucket].str, data.str) == 0) {
+			*pos = bucket;
+			return 1;
+		}
+
+		/* If we hit the end we roll around */
+		if (++bucket >= size)
+			bucket = 0;
+		/* If we have checked the whole table we exit */
+		if (bucket == stop)
+			break;
+	}
+
+	/* Save the position to the first free entry
+	 * (or the start bucket if we made it the whole way around
+	 * without finding the entry and without finding any empty
+	 * entries, but in that case free is set, since there have to
+	 * be atleast 1 deleted or empty entry in the table)
+	 */
+	*pos = bucket;
+	return 0;
+}
+
+/* Inserts data into the hash table */
+static void
+xmmsv_dict_insert (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int alloc)
+{
+	int pos, deleted;
+
+	if (xmmsv_dict_search (dict, data, &pos, &deleted)) {
+		/* If the key already exists we change the data*/
+		xmmsv_unref (dict->data[pos].value);
+		dict->data[pos].value = data.value;
+	} else {
+		/* Otherwise we insert a new entry */
+		if (alloc)
+			data.str = strdup (data.str);
+		dict->elems++;
+		/* If we found a deleted entry before an empty one we use the free entry */
+		if (deleted != -1) {
+			dict->data[deleted] = data;
+		} else {
+			dict->data[pos] = data;
+		}
+	}
+}
+
+/* Resizes the hash table by creating a new data table
+ * twice the size of the old one
+ */
+static void
+xmmsv_dict_resize (xmmsv_dict_t *dict)
+{
+	int i;
+	xmmsv_dict_data_t *old_data;
+
+	/* Double the table size */
+	dict->size++;
+	dict->elems = 0;
+	old_data = dict->data;
+	dict->data = x_new0 (xmmsv_dict_data_t, 1 << dict->size);
+
+	/* Insert all the entries in the old table into the new one */
+	for (i = 0; i < (1 << (dict->size - 1)); i++) {
+		if (old_data[i].str != NULL) {
+			xmmsv_dict_insert (dict, old_data[i], 0);
+		}
+	}
+
+	free (old_data);
+}
 
 static xmmsv_dict_t *
 xmmsv_dict_new (void)
@@ -1697,7 +1855,14 @@ xmmsv_dict_new (void)
 		return NULL;
 	}
 
-	dict->flatlist = xmmsv_list_new ();
+	dict->size = 2;
+	dict->data = x_new0 (xmmsv_dict_data_t, (1 << dict->size));
+
+	if (!dict->data) {
+		x_oom ();
+		free (dict);
+		return NULL;
+	}
 
 	return dict;
 }
@@ -1706,6 +1871,7 @@ static void
 xmmsv_dict_free (xmmsv_dict_t *dict)
 {
 	xmmsv_dict_iter_t *it;
+	int i;
 
 	/* free iterators */
 	while (dict->iterators) {
@@ -1713,8 +1879,16 @@ xmmsv_dict_free (xmmsv_dict_t *dict)
 		xmmsv_dict_iter_free (it);
 	}
 
-	xmmsv_list_free (dict->flatlist);
-
+	for (i = (1 << dict->size) - 1; i >= 0; i--) {
+		if (dict->data[i].str != NULL) {
+			if (dict->data[i].str != DELETED_STR) {
+				free (dict->data[i].str);
+				xmmsv_unref (dict->data[i].value);
+			}
+			dict->data[i].str = NULL;
+		}
+	}
+	free (dict->data);
 	free (dict);
 }
 
@@ -1732,24 +1906,32 @@ xmmsv_dict_free (xmmsv_dict_t *dict)
 int
 xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 {
-	xmmsv_dict_iter_t *it;
-	int ret = 1;
+	xmmsv_dict_t *dict;
+	int ret = 0;
+	int pos, deleted;
 
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (dictv, 0);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
-	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	if (!xmmsv_dict_iter_find (it, key)) {
-		ret = 0;
+	xmmsv_dict_data_t data = DICT_INIT_DATA (key);
+	dict = dictv->value.dict;
+
+	if (xmmsv_dict_search (dict, data, &pos, &deleted)) {
+		/* If there was a deleted entry before the one we found
+		 * we can optimize a little by moving the entry to the
+		 * deleted slot (and thus closer to the actual bucket it
+		 * belongs to)
+		 */
+		if (deleted != -1) {
+			dict->data[deleted] = dict->data[pos];
+			dict->data[pos].str = DELETED_STR;
+		}
+		if (val != NULL) {
+			*val = dict->data[pos].value;
+		}
+		ret = 1;
 	}
-
-	/* If found, return value and success */
-	if (ret && val) {
-		xmmsv_dict_iter_pair (it, NULL, val);
-	}
-
-	xmmsv_dict_iter_free (it);
 
 	return ret;
 }
@@ -1767,42 +1949,24 @@ xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 int
 xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 {
-	xmmsv_dict_iter_t *it;
-	int ret;
+	xmmsv_dict_t *dict;
+	int ret = 1;
 
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (val, 0);
 	x_return_val_if_fail (dictv, 0);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
-	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	/* if key already present, replace value */
-	if (xmmsv_dict_iter_find (it, key)) {
-		ret = xmmsv_dict_iter_set (it, val);
+	xmmsv_dict_data_t data = DICT_INIT_DATA (key);
+	data.value = xmmsv_ref (val);
+	dict = dictv->value.dict;
 
-	/* else, insert a new key-value pair */
-	} else {
-		xmmsv_t *keyval;
-
-		keyval = xmmsv_new_string (key);
-
-		ret = xmmsv_list_iter_insert (it->lit, keyval);
-		if (ret) {
-			xmmsv_list_iter_next (it->lit);
-			ret = xmmsv_list_iter_insert (it->lit, val);
-			if (!ret) {
-				/* we added the key, but we couldn't add the value.
-				 * we remove the key again to put the dictionary back
-				 * in a consistent state.
-				 */
-				it->lit->position--;
-				xmmsv_list_iter_remove (it->lit);
-			}
-		}
-		xmmsv_unref (keyval);
+	/* Resize if fill is too high */
+	if (((dict->elems * 10) >> dict->size) > HASH_FILL_LIM) {
+		xmmsv_dict_resize (dict);
 	}
 
-	xmmsv_dict_iter_free (it);
+	xmmsv_dict_insert (dict, data, 1);
 
 	return ret;
 }
@@ -1818,23 +1982,25 @@ xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 int
 xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 {
-	xmmsv_dict_iter_t *it;
-	int ret = 1;
+	xmmsv_dict_t *dict;
+	int pos, deleted;
+	int ret = 0;
 
 	x_return_val_if_fail (key, 0);
 	x_return_val_if_fail (dictv, 0);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
-	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	if (!xmmsv_dict_iter_find (it, key)) {
-		ret = 0;
-	} else {
-		ret = xmmsv_list_iter_remove (it->lit) &&
-		      xmmsv_list_iter_remove (it->lit);
-		/* FIXME: cleanup if only the first fails */
+	xmmsv_dict_data_t data = DICT_INIT_DATA (key);
+	dict = dictv->value.dict;
+
+	/* If we find the entry we free the string and mark it as deleted */
+	if (xmmsv_dict_search (dict, data, &pos, &deleted)) {
+		free ((void*)dict->data[pos].str);
+		dict->data[pos].str = DELETED_STR;
+		xmmsv_unref (dict->data[pos].value);
+		dict->elems--;
+		ret = 1;
 	}
-
-	xmmsv_dict_iter_free (it);
 
 	return ret;
 }
@@ -1848,10 +2014,23 @@ xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 int
 xmmsv_dict_clear (xmmsv_t *dictv)
 {
+	int i;
+	xmmsv_dict_t *dict;
+
 	x_return_val_if_fail (dictv, 0);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 
-	_xmmsv_list_clear (dictv->value.dict->flatlist);
+	dict = dictv->value.dict;
+
+	for (i = (1 << dict->size) - 1; i >= 0; i--) {
+		if (dict->data[i].str != NULL) {
+			if (dict->data[i].str != DELETED_STR) {
+				free (dict->data[i].str);
+				xmmsv_unref (dict->data[i].value);
+			}
+			dict->data[i].str = NULL;
+		}
+	}
 
 	return 1;
 }
@@ -1900,7 +2079,7 @@ xmmsv_dict_get_size (xmmsv_t *dictv)
 	x_return_val_if_fail (dictv, -1);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), -1);
 
-	return dictv->value.dict->flatlist->size / 2;
+	return dictv->value.dict->elems;
 }
 
 static xmmsv_dict_iter_t *
@@ -1914,8 +2093,8 @@ xmmsv_dict_iter_new (xmmsv_dict_t *d)
 		return NULL;
 	}
 
-	it->lit = xmmsv_list_iter_new (d->flatlist);
 	it->parent = d;
+	xmmsv_dict_iter_first (it);
 
 	/* register iterator into parent */
 	d->iterators = x_list_prepend (d->iterators, it);
@@ -1926,8 +2105,6 @@ xmmsv_dict_iter_new (xmmsv_dict_t *d)
 static void
 xmmsv_dict_iter_free (xmmsv_dict_iter_t *it)
 {
-	/* we don't free the parent list iter, already managed by the flatlist */
-
 	/* unref iterator from dict and free it */
 	it->parent->iterators = x_list_remove (it->parent->iterators, it);
 	free (it);
@@ -1964,27 +2141,17 @@ int
 xmmsv_dict_iter_pair (xmmsv_dict_iter_t *it, const char **key,
                       xmmsv_t **val)
 {
-	unsigned int orig;
-	xmmsv_t *v;
-
 	if (!xmmsv_dict_iter_valid (it)) {
 		return 0;
 	}
 
-	/* FIXME: avoid leaking abstraction! */
-	orig = it->lit->position;
-
 	if (key) {
-		xmmsv_list_iter_entry (it->lit, &v);
-		xmmsv_get_string (v, key);
+		*key = it->parent->data[it->pos].str;
 	}
 
 	if (val) {
-		xmmsv_list_iter_next (it->lit);
-		xmmsv_list_iter_entry (it->lit, val);
+		*val = it->parent->data[it->pos].value;
 	}
-
-	it->lit->position = orig;
 
 	return 1;
 }
@@ -1998,7 +2165,9 @@ xmmsv_dict_iter_pair (xmmsv_dict_iter_t *it, const char **key,
 int
 xmmsv_dict_iter_valid (xmmsv_dict_iter_t *it)
 {
-	return it && xmmsv_list_iter_valid (it->lit);
+	return it && (it->pos < (1 << it->parent->size))
+		&& it->parent->data[it->pos].str != NULL
+		&& it->parent->data[it->pos].str != DELETED_STR;
 }
 
 /**
@@ -2011,8 +2180,11 @@ void
 xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 {
 	x_return_if_fail (it);
+	xmmsv_dict_t *d = it->parent;
 
-	xmmsv_list_iter_first (it->lit);
+	for (it->pos = 0
+			; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
+			; it->pos++);
 }
 
 /**
@@ -2025,10 +2197,11 @@ void
 xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 {
 	x_return_if_fail (it);
+	xmmsv_dict_t *d = it->parent;
 
-	/* skip a pair */
-	xmmsv_list_iter_next (it->lit);
-	xmmsv_list_iter_next (it->lit);
+	for (it->pos++
+			; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
+			; it->pos++);
 }
 
 /**
@@ -2043,63 +2216,18 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 int
 xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 {
-	xmmsv_t *val;
-	const char *k;
-	int s, dict_size, cmp, left, right;
+	x_return_val_if_fail (xmmsv_dict_iter_valid (it), 0);
 
-	x_return_val_if_fail (it, 0);
-	x_return_val_if_fail (key, 0);
+	xmmsv_dict_iter_first (it);
 
-	/* how many key-value pairs does this dictionary contain? */
-	dict_size = it->parent->flatlist->size / 2;
+	for (xmmsv_dict_iter_first (it)
+			; xmmsv_dict_iter_valid (it)
+			; xmmsv_dict_iter_next (it)) {
+		const char *s;
 
-	/* if it's empty, point the iterator at the beginning of
-	 * the list and report failure.
-	 */
-	if (!dict_size) {
-		xmmsv_list_iter_seek (it->lit, 0);
-
-		return 0;
-	}
-
-	/* perform binary search for the given key */
-	left = 0;
-	right = dict_size - 1;
-
-	while (left <= right) {
-		int mid = left + ((right - left) / 2);
-
-		/* jump to the middle of the current search area */
-		xmmsv_list_iter_seek (it->lit, mid * 2);
-		xmmsv_list_iter_entry (it->lit, &val);
-
-		/* get the key at this slot */
-		s = xmmsv_get_string (val, &k);
-		x_return_val_if_fail (s, 0);
-
-		/* and compare it to the given key */
-		cmp = strcmp (k, key);
-
-		/* hooray, we found the key. */
-		if (cmp == 0)
+		xmmsv_dict_iter_pair (it, &s, NULL);
+		if (strcmp (s, key) == 0)
 			return 1;
-
-		/* go on searching the left or the right hand side. */
-		if (cmp < 0) {
-			left = mid + 1;
-		} else {
-			right = mid - 1;
-		}
-	}
-
-	/* if we get down here, we failed to find the key
-	 * in the dictionary.
-	 * now, move the iterator so that it points to the slot
-	 * where the key would be inserted.
-	 */
-	if (cmp < 0) {
-		xmmsv_list_iter_next (it->lit);
-		xmmsv_list_iter_next (it->lit);
 	}
 
 	return 0;
@@ -2116,22 +2244,11 @@ xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 int
 xmmsv_dict_iter_set (xmmsv_dict_iter_t *it, xmmsv_t *val)
 {
-	unsigned int orig;
-	int ret;
-
 	x_return_val_if_fail (xmmsv_dict_iter_valid (it), 0);
 
-	/* FIXME: avoid leaking abstraction! */
-	orig = it->lit->position;
+	it->parent->data[it->pos].value = xmmsv_ref (val);
 
-	xmmsv_list_iter_next (it->lit);
-	xmmsv_list_iter_remove (it->lit);
-	ret = xmmsv_list_iter_insert (it->lit, val);
-	/* FIXME: check remove success, swap operations? */
-
-	it->lit->position = orig;
-
-	return ret;
+	return 1;
 }
 
 /**
@@ -2143,13 +2260,12 @@ xmmsv_dict_iter_set (xmmsv_dict_iter_t *it, xmmsv_t *val)
 int
 xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
 {
-	int ret = 0;
+	x_return_val_if_fail (xmmsv_dict_iter_valid (it), 0);
 
-	ret = xmmsv_list_iter_remove (it->lit) &&
-	      xmmsv_list_iter_remove (it->lit);
-	/* FIXME: cleanup if only the first fails */
+	it->parent->data[it->pos].str = DELETED_STR;
+	xmmsv_dict_iter_next (it);
 
-	return ret;
+	return 1;
 }
 
 

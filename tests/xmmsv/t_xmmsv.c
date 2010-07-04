@@ -555,6 +555,8 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_FALSE (xmmsv_dict_remove (value, "test1"));
 
 	/* { test2 => 23 } */
+	xmmsv_dict_iter_first (it); /* We have to reset the iterator after modifying
+								   the dict with xmmsv_dict_remove */
 	CU_ASSERT_TRUE (xmmsv_dict_iter_pair_int (it, &key, &i));
 	CU_ASSERT_TRUE (key && strcmp (key, "test2") == 0);
 	CU_ASSERT_EQUAL (i, 23);
