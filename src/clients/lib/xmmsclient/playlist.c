@@ -86,6 +86,7 @@ xmmsc_playlist_create (xmmsc_connection_t *c, const char *playlist)
 	x_api_error_if (!playlist, "playlist name cannot be NULL", NULL);
 
 	plcoll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_attribute_set (plcoll, "type", "list");
 	res = xmmsc_coll_save (c, plcoll, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 
 	xmmsv_coll_unref (plcoll);
