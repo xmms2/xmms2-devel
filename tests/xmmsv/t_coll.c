@@ -55,44 +55,14 @@ CASE (test_coll_simple_types)
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_COMPLEMENT);
 	xmmsv_coll_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_HAS);
+	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
 	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_HAS);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_MATCH);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_SMALLER);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_SMALLER);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_GREATER);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_GREATER);
+	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_FILTER);
 	xmmsv_coll_unref (c);
 
 	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_IDLIST);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_QUEUE);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_QUEUE);
-	xmmsv_coll_unref (c);
-
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_PARTYSHUFFLE);
-	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_PARTYSHUFFLE);
 	xmmsv_coll_unref (c);
 
 	c = xmmsv_coll_new (1000);
@@ -114,10 +84,8 @@ CASE (test_coll_universe)
 	c = xmmsv_coll_universe ();
 	CU_ASSERT_PTR_NOT_NULL (c);
 
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_REFERENCE);
+	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_UNIVERSE);
 
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "reference", &am));
-	CU_ASSERT_STRING_EQUAL (am, "All Media");
 	xmmsv_coll_unref (c);
 }
 
