@@ -159,17 +159,15 @@ on_playlist_updated (xmms_object_t *object, const gchar *plname)
 		return;
 	} else {
 		/* Run the update function if appropriate */
-		switch (xmmsv_coll_get_type (plcoll)) {
-		case XMMS_COLLECTION_TYPE_QUEUE:
-			xmms_playlist_update_queue (playlist, plname, plcoll);
-			break;
+		char *type;
 
-		case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-			xmms_playlist_update_partyshuffle (playlist, plname, plcoll);
-			break;
-
-		default:
-			break;
+		if (xmmsv_coll_attribute_get (plcoll, "type", &type)) {
+			/* TODO: Service client should be notified here */
+			if (strcmp (type, "queue") == 0) {
+				xmms_playlist_update_queue (playlist, plname, plcoll);
+			} else if (strcmp (type, "pshuffle") == 0) {
+				xmms_playlist_update_partyshuffle (playlist, plname, plcoll);
+			}
 		}
 	}
 }
