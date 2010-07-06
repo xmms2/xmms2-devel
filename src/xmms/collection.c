@@ -1046,9 +1046,7 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	if (save_namespace != NULL &&
 	    strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		/* only accept idlists */
-		if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST &&
-		    xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_QUEUE &&
-		    xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+		if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST) {
 			return FALSE;
 		}
 	}
@@ -1157,54 +1155,96 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		}
 		break;
 
-	case XMMS_COLLECTION_TYPE_HAS:
-		/* one operand */
-		if (num_operands != 1) {
+	case XMMS_COLLECTION_TYPE_FILTER:
+		if (!xmmsv_coll_attribute_get (coll, "operation", &attr)) {
 			return FALSE;
 		}
 
-		/* "field" attribute */
-		/* with valid value */
-		if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
-			return FALSE;
-		}
-		break;
+		if (strcmp (attr, "has") == 0) {
+			/* one operand */
+			if (num_operands != 1) {
+				return FALSE;
+			}
 
-	case XMMS_COLLECTION_TYPE_EQUALS:
-	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_SMALLER:
-	case XMMS_COLLECTION_TYPE_GREATER:
-		/* one operand */
-		if (num_operands != 1) {
-			return FALSE;
+		} else if (strcmp (attr, "=") == 0
+				|| strcmp (attr, "<") == 0
+				|| strcmp (attr, ">") == 0
+				|| strcmp (attr, "match") == 0) {
+			/* one operand */
+			if (num_operands != 1) {
+				return FALSE;
+			}
+
+			if (!xmmsv_coll_attribute_get (coll, "value", &attr)) {
+				return FALSE;
+			}
 		}
 
-		/* "field"/"value" attributes */
-		/* with valid values */
-		if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
-			return FALSE;
-		}
-		/* FIXME: valid fields?
-		else if (...) {
-			return FALSE;
-		}
-		*/
-
-		if (!xmmsv_coll_attribute_get (coll, "value", &attr)) {
-			return FALSE;
+		/* check that type equals "id", "value"
+		 * or not set (defaults to "value") */
+		if (xmmsv_coll_attribute_get (coll, "type", &attr)) {
+			if (strcmp (attr, "id") && strcmp (attr, "value")) {
+				return FALSE;
+			}
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_IDLIST:
-	case XMMS_COLLECTION_TYPE_QUEUE:
-		/* no operand */
+		if (!xmmsv_coll_attribute_get (coll, "type", &attr)) {
+			attr = (char*)"list";
+		}
+
+		if (strcmp (attr, "list") == 0 || strcmp (attr, "queue") == 0) {
+			/* no operand */
+			if (num_operands > 0) {
+				return FALSE;
+			}
+		} else if (strcmp (attr, "pshuffle") == 0) {
+			if (num_operands != 1) {
+				return FALSE;
+			}
+		} else {
+			return FALSE;
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_UNIVERSE:
+		/* No operands */
 		if (num_operands > 0) {
 			return FALSE;
 		}
 		break;
 
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		/* one operand */
+	case XMMS_COLLECTION_TYPE_ORDER:
+		/* One operand */
+		if (num_operands != 1) {
+			return FALSE;
+		}
+
+		if (xmmsv_coll_attribute_get (coll, "order", &attr) &&
+				strcmp (attr, "ASC") != 0 &&
+				strcmp (attr, "DESC") != 0) {
+			return FALSE;
+		}
+
+		if (!xmmsv_coll_attribute_get (coll, "type", &attr) ||
+				strcmp (attr, "value") == 0) {
+			/* If it's a sorting on values we need a field to sort on */
+			if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
+				return FALSE;
+			}
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_LIMIT:
+		/* One operand */
+		if (num_operands != 1) {
+			return FALSE;
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_MEDIASET:
+		/* One operand */
 		if (num_operands != 1) {
 			return FALSE;
 		}
@@ -1789,34 +1829,29 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		                                              nsid, match_table);
 		break;
 
-	case XMMS_COLLECTION_TYPE_HAS:
-		match = xmms_collection_media_filter_has (dag, mediainfo, coll,
-		                                          nsid, match_table);
-		break;
+	case XMMS_COLLECTION_TYPE_FILTER:
+		if (!xmmsv_coll_attribute_get (coll, "operation", &attr1))
+			break;
 
-	case XMMS_COLLECTION_TYPE_EQUALS:
-		match = xmms_collection_media_filter_equals (dag, mediainfo, coll,
-		                                            nsid, match_table);
-		break;
-
-	case XMMS_COLLECTION_TYPE_MATCH:
-		match = xmms_collection_media_filter_match (dag, mediainfo, coll,
-		                                               nsid, match_table);
-		break;
-
-	case XMMS_COLLECTION_TYPE_SMALLER:
-		match = xmms_collection_media_filter_smaller (dag, mediainfo, coll,
-		                                              nsid, match_table);
-		break;
-
-	case XMMS_COLLECTION_TYPE_GREATER:
-		match = xmms_collection_media_filter_greater (dag, mediainfo, coll,
-		                                              nsid, match_table);
+		if (strcmp (attr1, "has")) {
+			match = xmms_collection_media_filter_has (dag, mediainfo, coll,
+													  nsid, match_table);
+		} else if (strcmp (attr1, "=")) {
+			match = xmms_collection_media_filter_equals (dag, mediainfo, coll,
+														nsid, match_table);
+		} else if (strcmp (attr1, "match")) {
+			match = xmms_collection_media_filter_match (dag, mediainfo, coll,
+														   nsid, match_table);
+		} else if (strcmp (attr1, "<")) {
+			match = xmms_collection_media_filter_smaller (dag, mediainfo, coll,
+														  nsid, match_table);
+		} else if (strcmp (attr1, ">")) {
+			match = xmms_collection_media_filter_greater (dag, mediainfo, coll,
+														  nsid, match_table);
+		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_IDLIST:
-	case XMMS_COLLECTION_TYPE_QUEUE:
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
 		/* check if id in idlist */
 		val = g_hash_table_lookup (mediainfo, "id");
 		if (val != NULL) {
