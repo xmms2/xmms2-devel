@@ -467,28 +467,6 @@ coll_parse_prepare (xmmsv_coll_token_t *tokens)
 			}
 			break;
 
-		case XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ:
-		case XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ:
-			/* Transform '<=', '>=' into '<', '>' */
-			if (curr->type == XMMS_COLLECTION_TOKEN_INTEGER) {
-				char *newstr;
-				if (prev->type == XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ)
-					newstr = string_intadd (curr->string, -1);
-				else
-					newstr = string_intadd (curr->string, 1);
-
-				if (newstr != NULL) {
-					if (prev->type == XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ)
-						prev->type = XMMS_COLLECTION_TOKEN_OPFIL_GREATER;
-					else
-						prev->type = XMMS_COLLECTION_TOKEN_OPFIL_SMALLER;
-
-					free (curr->string);
-					curr->string = newstr;
-				}
-			}
-			break;
-
 		default:
 			break;
 		}
@@ -938,6 +916,20 @@ coll_parse_binaryfilter (xmmsv_coll_token_t *tokens, xmmsv_coll_t **ret)
 
 		case XMMS_COLLECTION_TOKEN_OPFIL_GREATER:
 			operation = ">";
+			if (operand->type == XMMS_COLLECTION_TOKEN_INTEGER) {
+				strval = operand->string;
+			}
+			break;
+
+		case XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ:
+			operation = "<=";
+			if (operand->type == XMMS_COLLECTION_TOKEN_INTEGER) {
+				strval = operand->string;
+			}
+			break;
+
+		case XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ:
+			operation = ">=";
 			if (operand->type == XMMS_COLLECTION_TOKEN_INTEGER) {
 				strval = operand->string;
 			}
