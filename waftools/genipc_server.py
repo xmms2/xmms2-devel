@@ -4,15 +4,6 @@ import genipc
 from indenter import Indenter
 
 #dictionary mapping of types in the xml to C type aliases
-c_map = {
-	'int': 'XMMSV_TYPE_INT32',
-	'string': 'XMMSV_TYPE_STRING',
-	'list': 'XMMSV_TYPE_LIST',
-	'dictionary': 'XMMSV_TYPE_DICT',
-	'collection': 'XMMSV_TYPE_COLL',
-	'binary': 'XMMSV_TYPE_BIN',
-}
-
 c_type_map = {
 	'string': 'const char *',
 	'int': 'gint32',
@@ -20,6 +11,7 @@ c_type_map = {
 	'binary':'GString *',
 	'list':'xmmsv_t *',
 	'dictionary':'xmmsv_t *',
+	'xmmsv' : 'xmmsv_t *',
 }
 
 c_getter_map = {
@@ -29,6 +21,7 @@ c_getter_map = {
 	'dictionary': None,
 	'collection': 'xmmsv_get_coll',
 	'binary': 'xmms_bin_to_gstring',
+	'xmmsv' : None,
 }
 
 c_creator_map = {
@@ -38,6 +31,7 @@ c_creator_map = {
 	'dictionary': 'xmms_convert_and_kill_dict',
 	'collection': 'xmmsv_new_coll',
 	'binary': None,
+	'xmmsv' : None,
 }
 
 
@@ -98,11 +92,6 @@ def method_name_to_cname(n):
 
 def emit_method_define_code(object, method, c_type):
 	full_method_name = 'xmms_%s_client_%s' % (object.name, method.name)
-
-	argument_types = [c_map[a.type[0]] for a in method.arguments]
-
-	while len(argument_types) < 6:
-		argument_types.append('XMMSV_TYPE_NONE')
 
 	# output a prototype
 	#static __XMMS_CMD_DO_RETTYPE_##_rettype() realfunc (argtype0 __XMMS_CMD_DO_ARGTYPE_##argtype1 __XMMS_CMD_DO_ARGTYPE_##argtype2 __XMMS_CMD_DO_ARGTYPE_##argtype3 __XMMS_CMD_DO_ARGTYPE_##argtype4 __XMMS_CMD_DO_ARGTYPE_##argtype5 __XMMS_CMD_DO_ARGTYPE_##argtype6, xmms_error_t *); \
