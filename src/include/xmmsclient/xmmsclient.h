@@ -274,6 +274,7 @@ xmmsc_result_t* xmmsc_coll_sync (xmmsc_connection_t *conn);
 
 xmmsc_result_t* xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *order, int limit_start, int limit_len);
 xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *order, int limit_start, int limit_len, xmmsv_t *fetch, xmmsv_t *group);
+xmmsc_result_t* xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *fetch);
 
 /* string-to-collection parser */
 typedef enum {

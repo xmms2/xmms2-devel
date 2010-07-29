@@ -201,23 +201,25 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                       xmmsv_t *order, int limit_start,
                       int limit_len)
 {
-	x_check_conn (conn, NULL);
-	x_api_error_if (!coll, "with a NULL collection", NULL);
+	xmmsc_result_t *ret;
+	xmmsv_t *fetch_spec;
+	xmmsv_coll_t *coll2, *coll3;
 
-	/* default to empty ordering */
-	if (!order) {
-		order = xmmsv_new_list ();
-	} else {
-		xmmsv_ref (order);
-	}
+	/* Creates the fetchspec to use */
+	fetch_spec = xmmsv_build_cluster_list (
+			xmmsv_new_string ("id"),
+			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
 
-	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_QUERY_IDS,
-	                       XMMSV_LIST_ENTRY_COLL (coll),
-	                       XMMSV_LIST_ENTRY_INT (limit_start),
-	                       XMMSV_LIST_ENTRY_INT (limit_len),
-	                       XMMSV_LIST_ENTRY (order),
-	                       XMMSV_LIST_END);
+	coll2 = xmmsv_coll_add_order_operators (coll, order);
+	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
+
+	ret = xmmsc_coll_query (conn, coll3, fetch_spec);
+
+	xmmsv_unref (fetch_spec);
+	xmmsv_coll_unref (coll2);
+	xmmsv_coll_unref (coll3);
+
+	return ret;
 }
 
 /**
@@ -244,32 +246,79 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                         int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
+	xmmsc_result_t *ret;
+	xmmsv_t *fetch_spec, *org_dict;
+	xmmsv_coll_t *coll2, *coll3;
+	int i;
+	const char *str;
+
+	/* check that fetch is not empty */
+	x_api_error_if (xmmsv_list_get_size (fetch) == 0, "with an empty fetch list", NULL);
+	/* check for invalid property strings */
+	x_api_error_if (!xmmsv_list_has_type (fetch, XMMSV_TYPE_STRING),
+			"with an invalid fetch list", NULL);
+	x_api_error_if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING),
+			"with an invalid group list", NULL);
+	x_api_error_if (order != NULL && !xmmsv_list_has_type (order, XMMSV_TYPE_STRING),
+			"with an invalid order list", NULL);
+
+	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
+		group = xmmsv_new_string ("id");
+	} else {
+		group = xmmsv_ref (group);
+	}
+
+	org_dict = xmmsv_build_empty_organize ();
+	for (i = 0; xmmsv_list_get_string (fetch, i, &str); i++) {
+		xmmsv_t *meta;
+
+		if (strcmp (str, "id") == 0) {
+			meta = xmmsv_build_metadata (NULL,
+					xmmsv_new_string ("id"), "first", NULL);
+		} else {
+			meta = xmmsv_build_metadata (xmmsv_new_string (str),
+					xmmsv_new_string ("value"), "first", NULL);
+		}
+
+		xmmsv_dict_set (org_dict, str, meta);
+		xmmsv_unref (meta);
+	}
+
+	fetch_spec = xmmsv_build_cluster_list (group, org_dict);
+
+	coll2 = xmmsv_coll_add_order_operators (coll, order);
+	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
+	ret = xmmsc_coll_query (conn, coll3, fetch_spec);
+
+	xmmsv_coll_unref (coll2);
+	xmmsv_coll_unref (coll3);
+	xmmsv_unref (fetch_spec);
+
+	return ret;
+}
+
+/**
+ * Finds all media in the collection and fetches it as specified in fetch.
+ *
+ * For a description of the different collection operators and the
+ * fetch specification look at http://xmms2.org/wiki/Collections_2.0
+ *
+ * @param conn  The connection to the server.
+ * @param coll  The collection used to query.
+ * @param fetch The fetch specification.
+ * @return An xmmsv_t with the structure specified in fetch.
+ */
+xmmsc_result_t*
+xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *fetch)
+{
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
-	x_api_error_if (!fetch, "with a NULL fetch list", NULL);
-
-	/* default to empty ordering */
-	if (!order) {
-		order = xmmsv_new_list ();
-	} else {
-		xmmsv_ref (order);
-	}
-
-	/* default to empty grouping */
-	if (!group) {
-		group = xmmsv_new_list ();
-	} else {
-		xmmsv_ref (group);
-	}
+	x_api_error_if (!fetch, "with a NULL fetch specification", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_QUERY_INFOS,
+	                       XMMS_IPC_CMD_QUERY,
 	                       XMMSV_LIST_ENTRY_COLL (coll),
-	                       XMMSV_LIST_ENTRY_INT (limit_start),
-	                       XMMSV_LIST_ENTRY_INT (limit_len),
-	                       XMMSV_LIST_ENTRY (order),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
-	                       XMMSV_LIST_ENTRY (group),
 	                       XMMSV_LIST_END);
 }
 
