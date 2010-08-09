@@ -527,6 +527,7 @@ coll_parse_sequence (xmmsv_coll_token_t *tokens, const char *field,
 {
 	char *start, *end, *seq, *num;
 	xmmsv_coll_t *coll, *parent;
+	int id = strcmp (field, "id") == 0;
 
 	if (!tokens || (tokens->type != XMMS_COLLECTION_TOKEN_INTEGER &&
 	                tokens->type != XMMS_COLLECTION_TOKEN_SEQUENCE)) {
@@ -562,7 +563,11 @@ coll_parse_sequence (xmmsv_coll_token_t *tokens, const char *field,
 				num = string_intadd (buf, -1);
 				coll_from = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
 				xmmsv_coll_attribute_set (coll_from, "operation", ">");
-				xmmsv_coll_attribute_set (coll_from, "field", field);
+				if (id) {
+					xmmsv_coll_attribute_set (coll_from, "type", "id");
+				} else {
+					xmmsv_coll_attribute_set (coll_from, "field", field);
+				}
 				xmmsv_coll_attribute_set (coll_from, "value", num);
 				coll_append_universe (coll_from);
 				free (buf);
@@ -574,9 +579,13 @@ coll_parse_sequence (xmmsv_coll_token_t *tokens, const char *field,
 			if (len_to > 0) {
 				buf = string_substr (seq + 1, end);
 				num = string_intadd (buf, 1);
-				coll_from = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-				xmmsv_coll_attribute_set (coll_from, "operation", "<");
-				xmmsv_coll_attribute_set (coll_to, "field", field);
+				coll_to = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+				xmmsv_coll_attribute_set (coll_to, "operation", "<");
+				if (id) {
+					xmmsv_coll_attribute_set (coll_to, "type", "id");
+				} else {
+					xmmsv_coll_attribute_set (coll_to, "field", field);
+				}
 				xmmsv_coll_attribute_set (coll_to, "value", num);
 				xmmsv_coll_add_operand (coll_to, coll_from);
 				xmmsv_coll_unref (coll_from);
@@ -593,7 +602,11 @@ coll_parse_sequence (xmmsv_coll_token_t *tokens, const char *field,
 			num = string_substr (start, end);
 			coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
 			xmmsv_coll_attribute_set (coll, "operation", "=");
-			xmmsv_coll_attribute_set (coll, "field", field);
+			if (id) {
+				xmmsv_coll_attribute_set (coll, "type", "id");
+			} else {
+				xmmsv_coll_attribute_set (coll, "field", field);
+			}
 			xmmsv_coll_attribute_set (coll, "value", num);
 			coll_append_universe (coll);
 			free (num);
