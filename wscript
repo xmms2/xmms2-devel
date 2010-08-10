@@ -61,6 +61,7 @@ src/lib/xmmssocket
 src/lib/xmmsipc
 src/lib/xmmsutils
 src/lib/xmmsvisualization
+src/lib/s4/src/lib/
 src/clients/lib/xmmsclient
 src/clients/lib/xmmsclient-glib
 src/include
@@ -81,6 +82,7 @@ src/clients/lib/xmmsclient-cf
 src/clients/lib/python
 src/clients/lib/perl
 src/clients/lib/ruby
+src/lib/s4/src/tools/s4
 tests
 pixmaps
 """.split()

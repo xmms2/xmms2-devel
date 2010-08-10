@@ -1,3 +1,6 @@
 [submodule "doc/tutorial"]
 	path = doc/tutorial
 	url = git://git.xmms.se/xmms2/xmms2-tutorial.git
+[submodule "src/lib/s4"]
+	path = src/lib/s4
+	url = git://git.xmms.se/xmms2/s4.git
