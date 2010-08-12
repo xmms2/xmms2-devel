@@ -2234,17 +2234,14 @@ err:
 }
 
 xmmsv_t *
-xmmsv_build_dict (const char *firstkey, ...)
+xmmsv_build_dict_va (const char *firstkey, va_list ap)
 {
-	va_list ap;
 	const char *key;
 	xmmsv_t *val, *res;
 
 	res = xmmsv_new_dict ();
 	if (!res)
 		return NULL;
-
-	va_start (ap, firstkey);
 
 	key = firstkey;
 	do {
@@ -2259,6 +2256,17 @@ xmmsv_build_dict (const char *firstkey, ...)
 		key = va_arg (ap, const char *);
 	} while (key);
 
+	return res;
+}
+
+xmmsv_t *
+xmmsv_build_dict (const char *firstkey, ...)
+{
+	va_list ap;
+	xmmsv_t *res;
+
+	va_start (ap, firstkey);
+	res = xmmsv_build_dict_va (firstkey, ap);
 	va_end (ap);
 
 	return res;
@@ -2303,6 +2311,141 @@ xmmsv_build_list (xmmsv_t *first_entry, ...)
 	return res;
 }
 
+xmmsv_t *xmmsv_build_empty_organize (void)
+{
+	xmmsv_t *res = xmmsv_new_dict ();
+
+	if (res != NULL)
+		xmmsv_dict_set_string (res, "_type", "organize");
+
+	return res;
+}
+
+/**
+ * Creates an organize fetch specification that may be passed to xmmsc_coll_query.
+ * It takes a variable number of (key, data) pairs, where key is a const char*
+ * and data is an xmmsv_t*. Terminate with a NULL.
+ *
+ * @return An organize fetch specification
+ */
+xmmsv_t *
+xmmsv_build_organize (const char *first_key, ...)
+{
+	va_list ap;
+	xmmsv_t *res;
+
+	va_start (ap, first_key);
+	res = xmmsv_build_dict_va (first_key, ap);
+	va_end (ap);
+
+	if (res != NULL)
+		xmmsv_dict_set_string (res, "_type", "organize");
+
+	return res;
+}
+
+/**
+ * Creates a metadata fetch specification.
+ *
+ * @param keys A list of keys to fetch, or NULL to fetch everything
+ * @param get A list of what to get ("id", "key", "value", "source")
+ * @param aggregate The aggregation function to use
+ * @param sourcepref A list of sources, first one has the highest priority
+ * @return A metadata fetch specification
+ */
+xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref)
+{
+	xmmsv_t *res = xmmsv_new_dict ();
+	if (res == NULL)
+		return NULL;
+
+	xmmsv_dict_set_string (res, "_type", "metadata");
+
+	if (keys != NULL) {
+		xmmsv_dict_set (res, "keys", keys);
+		xmmsv_unref (keys);
+	}
+	if (get != NULL) {
+		xmmsv_dict_set (res, "get", get);
+		xmmsv_unref (get);
+	}
+	if (sourcepref != NULL) {
+		xmmsv_dict_set (res, "source-preference", sourcepref);
+		xmmsv_unref (sourcepref);
+	}
+	if (aggregate != NULL) {
+		xmmsv_dict_set_string (res, "aggregate", aggregate);
+	}
+
+	return res;
+}
+
+/**
+ * Creates a cluster-list fetch specification.
+ *
+ * @param cluster_by A list of attributes to cluster by
+ * @param cluster_data The fetch specifcation to use when filling the list
+ * @return A cluster-list fetch specification
+ */
+xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
+{
+	xmmsv_t *res = xmmsv_new_dict ();
+	if (res == NULL)
+		return NULL;
+
+	xmmsv_dict_set_string (res, "_type", "cluster-list");
+
+	if (cluster_by != NULL) {
+		xmmsv_dict_set (res, "cluster-by", cluster_by);
+		xmmsv_unref (cluster_by);
+	}
+	if (cluster_data != NULL) {
+		xmmsv_dict_set (res, "data", cluster_data);
+		xmmsv_unref (cluster_data);
+	}
+
+	return res;
+}
+
+/**
+ * Creates a cluster-dict fetch specification.
+ *
+ * @param cluster_by A list of attributes to cluster by
+ * @param cluster_data The fetch specifcation to use when filling the list
+ * @return A cluster-list fetch specification
+ */
+xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
+{
+	xmmsv_t *res = xmmsv_new_dict ();
+	if (res == NULL)
+		return NULL;
+
+	xmmsv_dict_set_string (res, "_type", "cluster-dict");
+
+	if (cluster_by != NULL) {
+		xmmsv_dict_set (res, "cluster-by", cluster_by);
+		xmmsv_unref (cluster_by);
+	}
+	if (cluster_data != NULL) {
+		xmmsv_dict_set (res, "data", cluster_data);
+		xmmsv_unref (cluster_data);
+	}
+
+	return res;
+}
+
+/**
+ * Creates a count fetch specification
+ *
+ * @return A new count fetch specification
+ */
+xmmsv_t *xmmsv_build_count ()
+{
+	xmmsv_t *res = xmmsv_new_dict ();
+
+	xmmsv_dict_set_string (res, "_type", "count");
+	return res;
+}
 
 /**
  * This function will make a pretty string about the information in
