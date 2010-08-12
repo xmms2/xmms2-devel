@@ -58,7 +58,6 @@ xmmsv_t *xmms_convert_and_kill_bin (GString *gs);
 
 int xmms_bin_to_gstring (xmmsv_t *value, GString **gs);
 int dummy_identity (xmmsv_t *value, xmmsv_t **arg);
-gboolean check_string_list (xmmsv_t *list);
 
 
 /** @} */

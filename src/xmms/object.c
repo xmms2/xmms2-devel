@@ -462,28 +462,6 @@ dummy_identity (xmmsv_t *value, xmmsv_t **arg)
 	return 1;
 }
 
-/**
- * Checks that the list only contains string values.
- */
-gboolean
-check_string_list (xmmsv_t *list)
-{
-	xmmsv_t *valstr;
-	xmmsv_list_iter_t *it;
-
-	for (xmmsv_get_list_iter (list, &it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-		xmmsv_list_iter_entry (it, &valstr);
-		if (xmmsv_get_type (valstr) != XMMSV_TYPE_STRING) {
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-
 void
 __int_xmms_object_unref (xmms_object_t *object)
 {
