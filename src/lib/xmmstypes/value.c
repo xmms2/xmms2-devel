@@ -1412,13 +1412,33 @@ xmmsv_list_get_size (xmmsv_t *listv)
 int
 xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
 {
+	x_return_val_if_fail (xmmsv_list_has_type (listv, type), 0);
+	x_return_val_if_fail (!listv->value.list->restricted, 0);
+
+	listv->value.list->restricted = true;
+	listv->value.list->restricttype = type;
+
+	return 1;
+}
+
+/**
+ * Checks if all elements in the list has the given type
+ *
+ * @param listv The list to check
+ * @param type The type to check for
+ * @return non-zero if all elements in the list has the type, 0 otherwise
+ */
+int
+xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
+{
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v;
 
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
-	x_return_val_if_fail (!listv->value.list->restricted, 0);
+	if (listv->value.list->restricted)
+		return listv->value.list->restricttype == type;
 
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
 	while (xmmsv_list_iter_valid (it)) {
@@ -1429,12 +1449,8 @@ xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
 
 	xmmsv_list_iter_free (it);
 
-	listv->value.list->restricted = true;
-	listv->value.list->restricttype = type;
-
 	return 1;
 }
-
 
 static xmmsv_list_iter_t *
 xmmsv_list_iter_new (xmmsv_list_t *l)

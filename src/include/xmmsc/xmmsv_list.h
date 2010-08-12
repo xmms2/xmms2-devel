@@ -41,6 +41,7 @@ int xmmsv_list_move (xmmsv_t *listv, int old_pos, int new_pos);
 int xmmsv_list_clear (xmmsv_t *listv);
 int xmmsv_list_get_size (xmmsv_t *listv);
 int xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type);
+int xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type);
 
 int xmmsv_list_get_string (xmmsv_t *v, int pos, const char **val);
 int xmmsv_list_get_int (xmmsv_t *v, int pos, int32_t *val);
