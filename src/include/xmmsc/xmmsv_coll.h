@@ -66,6 +66,7 @@ xmmsv_coll_t *xmmsv_coll_universe (void);
 
 xmmsv_coll_t *xmmsv_coll_add_order_operator (xmmsv_coll_t *coll, const char *key);
 xmmsv_coll_t *xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, struct xmmsv_St *order);
+xmmsv_coll_t *xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len);
 
 
 /* compability */

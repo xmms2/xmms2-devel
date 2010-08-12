@@ -641,4 +641,37 @@ xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
 	return current;
 }
 
+/**
+ * Returns a collection with a LIMIT operator added
+ *
+ * @param coll The collection to add the limit operator to
+ * @param lim_start The index of the first element to include, or 0 to disable
+ * @param lim_len The length of the interval, or 0 to disable
+ * @return A new collection with LIMIT operator added
+ */
+xmmsv_coll_t *
+xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
+{
+	xmmsv_coll_t *ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_LIMIT);
+	char str[12];
+
+	if (lim_start == 0 && lim_len == 0) {
+		return xmmsv_coll_ref (coll);
+	}
+
+	xmmsv_coll_add_operand (ret, coll);
+
+	if (lim_start != 0) {
+		sprintf (str, "%i", lim_start);
+		xmmsv_coll_attribute_set (ret, "start", str);
+	}
+
+	if (lim_len != 0) {
+		sprintf (str, "%i", lim_len);
+		xmmsv_coll_attribute_set (ret, "length", str);
+	}
+
+	return ret;
+}
+
 /** @} */
