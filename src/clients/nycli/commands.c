@@ -711,7 +711,16 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		coldisp = create_column_display (infos, ctx, default_columns);
-		command_flag_stringlist_get (ctx, "order", &order);
+		if (!command_flag_stringlist_get (ctx, "order", &order)) {
+			orderval = xmmsv_build_list (
+					XMMSV_LIST_ENTRY_STR ("artist"),
+					XMMSV_LIST_ENTRY_STR ("album"),
+					XMMSV_LIST_ENTRY_STR ("partofset"),
+					XMMSV_LIST_ENTRY_STR ("tracknr"),
+					XMMSV_LIST_END);
+		} else {
+			orderval = xmmsv_make_stringlist ((gchar **)order, -1);
+		}
 
 		command_flag_stringlist_get (ctx, "columns", &columns);
 		if (columns) {
@@ -720,7 +729,6 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 			fetchval = xmmsv_make_stringlist ((gchar **)default_columns, -1);
 		}
 
-		orderval = xmmsv_make_stringlist ((gchar **)order, -1);
 		res = xmmsc_coll_query_infos (infos->sync, query, orderval, 0, 0, fetchval, NULL);
 		xmmsc_result_wait (res);
 
