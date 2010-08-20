@@ -1743,7 +1743,7 @@ xmms_medialib_query_recurs (xmmsv_coll_t *coll, fetch_info_t *fetch,
 			xmmsv_t *child_order = xmmsv_new_list ();
 			const s4_resultrow_t *row;
 			const s4_result_t *result;
-			const s4_resultset_t *set;
+			s4_resultset_t *set;
 			int32_t ival;
 			GHashTable *id_table = g_hash_table_new (NULL, NULL);
 
