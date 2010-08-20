@@ -2191,7 +2191,7 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 	case AGGREGATE_AVG:
 		avg_data = data;
 		if (avg_data != NULL) {
-			ret = xmmsv_new_int (avg_data->sum / avg_data->n);
+			ret = xmmsv_new_int (avg_data->n ? avg_data->sum / avg_data->n : 0);
 		}
 		break;
 	}
