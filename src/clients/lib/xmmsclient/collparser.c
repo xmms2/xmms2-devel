@@ -988,7 +988,7 @@ coll_parse_autofilter (xmmsv_coll_token_t *token, xmmsv_coll_t **ret)
 		if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
 			operation = "match";
 		else
-			operation = "=";
+			operation = "token";
 	}
 
 	strval = coll_parse_strval (token);
