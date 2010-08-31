@@ -1653,7 +1653,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 {
 	xmmsc_result_t *saveres;
 	xmmsv_coll_t *coll;
-	xmmsv_coll_t *newcoll;
+	xmmsv_coll_t *newcoll = NULL;
 	xmmsv_t *val;
 
 	gboolean copied = FALSE;
@@ -1673,6 +1673,12 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 		if (input) {
 			/* Replace previous operand. */
 			newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
+		} else if (typestr && strcmp (typestr, "pshuffle") == 0 &&
+		           xmmsv_list_get_size (xmmsv_coll_operands_get (coll)) == 0) {
+			newcoll = xmmsv_coll_universe ();
+		}
+
+		if (newcoll) {
 			xmmsv_list_clear (xmmsv_coll_operands_get (coll));
 			xmmsv_coll_add_operand (coll, newcoll);
 			xmmsv_coll_unref (newcoll);
