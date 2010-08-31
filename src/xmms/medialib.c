@@ -1415,6 +1415,8 @@ static int has_order (xmmsv_coll_t *coll)
 	int i;
 
 	switch (xmmsv_coll_get_type (coll)) {
+		/* Filter keeps the ordering of the operand */
+	case XMMS_COLLECTION_TYPE_FILTER:
 		/* Intersection is orderded if the first operand is ordeed */
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		xmmsv_list_get_coll (operands, 0, &c);
@@ -1441,7 +1443,6 @@ static int has_order (xmmsv_coll_t *coll)
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 	case XMMS_COLLECTION_TYPE_UNIVERSE:
 	case XMMS_COLLECTION_TYPE_MEDIASET:
-	case XMMS_COLLECTION_TYPE_FILTER:
 		break;
 	}
 
