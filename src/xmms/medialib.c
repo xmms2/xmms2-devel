@@ -1588,16 +1588,22 @@ xmms_medialib_query_recurs (xmmsv_coll_t *coll, fetch_info_t *fetch,
 			s4_cmp_mode_t cmp_mode;
 			int32_t ival;
 			int flags = 0;
+			char *tmp;
 
-			if (!xmmsv_coll_attribute_get (coll, "type", &key)
-					|| strcmp (key, "value") == 0) {
+			if (!xmmsv_coll_attribute_get (coll, "type", &tmp)
+					|| strcmp (tmp, "value") == 0) {
 				/* If 'field' is not set, match against every key */
 				if (!xmmsv_coll_attribute_get (coll, "field", &key)) {
 					key = NULL;
 				}
-			} else if (strcmp (key, "id") == 0) {
+			} else if (strcmp (tmp, "id") == 0) {
 				key = (char*)"song_id";
 				flags = S4_COND_PARENT;
+			} else {
+				xmms_log_error ("FILTER with invalid \"type\"-attribute."
+				                "This is probably a bug.");
+				/* set key to something safe */
+				key = NULL;
 			}
 
 			if (!xmmsv_coll_attribute_get (coll, "operation", &val)
