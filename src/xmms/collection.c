@@ -87,8 +87,8 @@ static GList *global_stream_type;
 
 static void xmms_collection_destroy (xmms_object_t *object);
 
-static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace);
-static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace);
+static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
+static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
 static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid);
 
 static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *tg_name, const gchar *tg_ns);
@@ -399,6 +399,8 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	guint nsid;
 	const gchar *alias;
 	gchar *newkey = NULL;
+	const gchar *valerr = "Invalid collection: unknown reason. This is "
+	                      "probably a bug in xmms2d.";
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -410,8 +412,8 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	}
 
 	/* Validate collection structure */
-	if (!xmms_collection_validate (dag, coll, name, namespace)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+	if (!xmms_collection_validate (dag, coll, name, namespace, &valerr)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, valerr);
 		return;
 	}
 
@@ -742,10 +744,13 @@ xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                               xmmsv_t *fetch, xmms_error_t *err)
 {
 	xmmsv_t *ret;
+	const gchar *valerr = "Invalid collection: unknown reason. This is "
+	                      "probably a bug in xmms2d.";
+
 	/* validate the collection to query */
-	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
+	if (!xmms_collection_validate (dag, coll, NULL, NULL, &valerr)) {
 		if (err) {
-			xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+			xmms_error_set (err, XMMS_ERROR_INVAL, valerr);
 		}
 		return NULL;
 	}
@@ -948,20 +953,29 @@ xmms_collection_destroy (xmms_object_t *object)
  */
 static gboolean
 xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                          const gchar *save_name, const gchar *save_namespace)
+                          const gchar *save_name, const gchar *save_namespace,
+                          const gchar **err)
 {
+	const gchar *backuperr;
+
+	/* Save us some NULL checking */
+	if (!err) {
+		err = &backuperr;
+	}
+
 	/* Special validation checks for the Playlists namespace */
 	if (save_namespace != NULL &&
 	    strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		/* only accept idlists */
 		if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST) {
+			*err = "non-IDLIST in namespace Playlists.";
 			return FALSE;
 		}
 	}
 
-	/* Standard checking of the whole coll DAG */
+	/* Standard checking of this collection */
 	return xmms_collection_validate_recurs (dag, coll, save_name,
-	                                        save_namespace);
+	                                        save_namespace, err);
 }
 
 /**
@@ -970,7 +984,9 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
  */
 static gboolean
 xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                 const gchar *save_name, const gchar *save_namespace)
+                                 const gchar *save_name,
+                                 const gchar *save_namespace,
+                                 const gchar **err)
 {
 	guint num_operands = 0;
 	xmmsv_coll_t *op, *ref;
@@ -988,22 +1004,29 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		/* zero or one (bound in DAG) operand */
 		if (num_operands > 1) {
+			*err = "Invalid collection: REFERENCE with more than one operand.";
 			return FALSE;
 		}
 
 		/* check if referenced collection exists */
 		xmmsv_coll_attribute_get (coll, "reference", &attr);
 		if (attr == NULL) {
+			*err = "Invalid collection: REFERENCE without \"reference\"-"
+			      "attribute.";
 			return FALSE;
 		} else if (strcmp (attr, "All Media") != 0) {
 			xmmsv_coll_attribute_get (coll, "namespace", &attr2);
 
 			if (attr2 == NULL) {
+				*err = "Invalid collection: REFERENCE without \"namespace\"-"
+				      "attribute.";
 				return FALSE;
 			}
 
 			nsid = xmms_collection_get_namespace_id (attr2);
 			if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+				*err = "Invalid collection: REFERENCE with invalid "
+				      "\"namespace\"-attribute.";
 				return FALSE;
 			}
 
@@ -1011,6 +1034,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			ref = xmms_collection_get_pointer (dag, attr, nsid);
 			if (ref == NULL) {
 				g_mutex_unlock (dag->mutex);
+				*err = "Invalid collection: REFERENCE refers to inexistent "
+				       "collection.";
 				return FALSE;
 			}
 
@@ -1020,12 +1045,17 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 				    strcmp (attr2, save_namespace) == 0) {
 
 					g_mutex_unlock (dag->mutex);
+					*err = "Invalid collection: cycle detected: REFERENCE "
+					       "refers to intended name and namespace.";
 					return FALSE;
 
 				/* check if the referenced coll references this one (loop!) */
 				} else if (xmms_collection_has_reference_to (dag, ref, save_name,
 				                                             save_namespace)) {
 					g_mutex_unlock (dag->mutex);
+					*err = "Invalid collection: cycle detected: REFERENCE "
+					       "refers to collection that (possibly indirectly) "
+					       "refers to intended name and namespace.";
 					return FALSE;
 				}
 			}
@@ -1043,6 +1073,10 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			xmmsv_get_coll (val, &op);
 
 			if (op != ref) {
+				*err = "Invalid collection: REFERENCE refers to other "
+				       "collection than its operand. This is probably a bug in "
+				       "xmms2d.";
+				xmms_log_error ("%s", *err);
 				return FALSE;
 			}
 		}
@@ -1052,6 +1086,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		/* need operand(s) */
 		if (num_operands == 0) {
+			*err = "Invalid collection: UNION or INTERSECTION with zero "
+			       "operands.";
 			return FALSE;
 		}
 		break;
@@ -1059,6 +1095,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		/* one operand */
 		if (num_operands != 1) {
+			*err = "Invalid collection: COMPLEMENT with fewer or more than one "
+			       "operand.";
 			return FALSE;
 		}
 		break;
@@ -1066,11 +1104,13 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_FILTER:
 		/* one operand */
 		if (num_operands != 1) {
+			*err = "Invalid collection: FILTER with fewer or more than one "
+			       "operand.";
 			return FALSE;
 		}
 
 		if (!xmmsv_coll_attribute_get (coll, "operation", &attr)) {
-			attr = XMMS_COLLECTION_FILTER_EQUAL;
+			attr = (gchar *)XMMS_COLLECTION_FILTER_EQUAL;
 		}
 
 		if (strcmp (attr, XMMS_COLLECTION_FILTER_EQUAL) == 0
@@ -1083,9 +1123,13 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		 || strcmp (attr, XMMS_COLLECTION_FILTER_MATCH) == 0) {
 
 			if (!xmmsv_coll_attribute_get (coll, "value", &attr)) {
+				*err = "Invalid collection: non-HAS FILTER without \"value\"-"
+				       "attribute.";
 				return FALSE;
 			}
 		} else if (strcmp (attr, XMMS_COLLECTION_FILTER_HAS) != 0) {
+			*err = "Invalid collection: FILTER with invalid \"operation\"-"
+			       "attribute.";
 			return FALSE;
 		}
 
@@ -1093,6 +1137,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		 * or not set (defaults to "value") */
 		if (xmmsv_coll_attribute_get (coll, "type", &attr)) {
 			if (strcmp (attr, "id") && strcmp (attr, "value")) {
+				*err = "Invalid collection: FILTER with invalid \"type\"-"
+				       "attribute.";
 				return FALSE;
 			}
 		}
@@ -1106,13 +1152,19 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		if (strcmp (attr, "list") == 0 || strcmp (attr, "queue") == 0) {
 			/* no operand */
 			if (num_operands > 0) {
+				*err = "Invalid collection: list- or queue-IDLIST with "
+				       "operand(s)";
 				return FALSE;
 			}
 		} else if (strcmp (attr, "pshuffle") == 0) {
 			if (num_operands != 1) {
+				*err = "Invalid collection: pshuffle-IDLIST with fewer or more "
+				       "than one operand.";
 				return FALSE;
 			}
 		} else {
+			*err = "Invalid collection: IDLIST with invalid \"type\"-"
+			       "attribute.";
 			return FALSE;
 		}
 		break;
@@ -1120,6 +1172,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_UNIVERSE:
 		/* No operands */
 		if (num_operands > 0) {
+			*err = "Invalid collection: UNIVERSE with operand(s).";
 			return FALSE;
 		}
 		break;
@@ -1127,12 +1180,16 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_ORDER:
 		/* One operand */
 		if (num_operands != 1) {
+			*err = "Invalid collection: ORDER with fewer or more than one "
+			       "operand.";
 			return FALSE;
 		}
 
 		if (xmmsv_coll_attribute_get (coll, "order", &attr)
 		    && strcmp (attr, "ASC") != 0
 		    && strcmp (attr, "DESC") != 0) {
+			*err = "Invalid collection: ORDER with invalid \"order\"-"
+			       "attribute.";
 			return FALSE;
 		}
 
@@ -1140,6 +1197,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		    || strcmp (attr, "value") == 0) {
 			/* If it's a sorting on values we need a field to sort on */
 			if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
+				*err = "Invalid collection: ORDER without required \"field\"-"
+				       "attribute";
 				return FALSE;
 			}
 		}
@@ -1148,6 +1207,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_LIMIT:
 		/* One operand */
 		if (num_operands != 1) {
+			*err = "Invalid collection: LIMIT with fewer or more than one "
+			       "operand.";
 			return FALSE;
 		}
 		break;
@@ -1155,12 +1216,15 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	case XMMS_COLLECTION_TYPE_MEDIASET:
 		/* One operand */
 		if (num_operands != 1) {
+			*err = "Invalid collection: MEDIASET with fewer or more than one "
+			       "operand.";
 			return FALSE;
 		}
 		break;
 
 	/* invalid type */
 	default:
+		*err = "Invalid collection: operator with invalid type.";
 		return FALSE;
 		break;
 	}
@@ -1180,7 +1244,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			xmmsv_get_coll (val, &op);
 
 			if (!xmms_collection_validate_recurs (dag, op, save_name,
-			                                      save_namespace)) {
+			                                      save_namespace, err)) {
 				valid = FALSE;
 			}
 		}
