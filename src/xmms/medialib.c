@@ -1871,7 +1871,6 @@ typedef struct fetch_spec_St {
 	} type;
 	union {
 		struct {
-			const char **cluster_by;
 			int cluster_count;
 			int *cols;
 			struct fetch_spec_St *data;
@@ -2253,11 +2252,13 @@ cluster_set (s4_resultset_t *set, fetch_spec_t *spec, int return_hashtable)
 			const char *value = "(No value)"; /* Used to represent NULL */
 			int32_t ival;
 
-			/* If the value to cluster by is a string we save the pointer
-			 * of it into value (this works because there are no duplicate
-			 * strings in S4), otherwise we write the integer to value
+			/* If col == -1 we use the row number as the value
+			 * Otherwise we fetch the column value (if there is one)
 			 */
-			if (s4_resultrow_get_col (row, col, &res)) {
+			if (col == -1) {
+				sprintf (buf, "%i", i);
+				value = buf;
+			} else if (s4_resultrow_get_col (row, col, &res)) {
 				const s4_val_t *val = s4_result_get_val (res);
 				if (!s4_val_get_str (val, &value)) {
 					s4_val_get_int (val, &ival);
@@ -2360,6 +2361,16 @@ resultset_to_xmmsv (s4_resultset_t *set, fetch_spec_t *spec)
 	}
 
 	return ret;
+}
+
+static int
+get_cluster_column (fetch_info_t *info, xmmsv_t *val, const char *str)
+{
+	if (strcmp (str, "_row") == 0) {
+		return -1;
+	} else {
+		return fetchinfo_add_key (info, val, str, default_sp);
+	}
 }
 
 /* Converts a fetch specification in xmmsv_t form into a fetch_spec_t structure */
@@ -2481,28 +2492,20 @@ fetch_to_spec (xmmsv_t *fetch, fetch_info_t *info, int *invalid)
 			if (xmmsv_dict_get (fetch, "cluster-by", &val)) {
 				if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 					ret->data.cluster.cluster_count = xmmsv_list_get_size (val);
-					ret->data.cluster.cluster_by = malloc (
-							sizeof (const char *) * ret->data.cluster.cluster_count);
 					ret->data.cluster.cols = malloc (
 							sizeof (int) * ret->data.cluster.cluster_count);
 					for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-						ret->data.cluster.cluster_by[i] = str;
-						ret->data.cluster.cols[i] = fetchinfo_add_key (info, val, str, default_sp);
+						ret->data.cluster.cols[i] = get_cluster_column (info, val, str);
 					}
 				} else if (xmmsv_get_string (val, &str)) {
 					ret->data.cluster.cluster_count = 1;
-					ret->data.cluster.cluster_by = malloc (
-							sizeof (const char *) * ret->data.cluster.cluster_count);
-					ret->data.cluster.cols = malloc (
-							sizeof (int) * ret->data.cluster.cluster_count);
-					ret->data.cluster.cluster_by[0] = str;
-					ret->data.cluster.cols[0] = fetchinfo_add_key (info, val, str, default_sp);
+					ret->data.cluster.cols = malloc (sizeof (int));
+					ret->data.cluster.cols[0] = get_cluster_column (info, val, str);
 				}
 			} else {
 				XMMS_DBG ("Required field 'cluster-by' not set in %s", type);
 				*invalid = 1;
 				/* Allocate dummy memory so fetch_spec_free don't crash */
-				ret->data.cluster.cluster_by = malloc (1);
 				ret->data.cluster.cols = malloc (1);
 			}
 			if (xmmsv_dict_get (fetch, "data", &val)) {
@@ -2577,7 +2580,6 @@ fetch_spec_free (fetch_spec_t *spec)
 	case FETCH_CLUSTER_DICT:
 	case FETCH_CLUSTER_LIST:
 		free (spec->data.cluster.cols);
-		free (spec->data.cluster.cluster_by);
 		fetch_spec_free (spec->data.cluster.data);
 		break;
 	case FETCH_ORGANIZE:
