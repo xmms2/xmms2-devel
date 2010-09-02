@@ -1812,7 +1812,7 @@ xmms_medialib_query_random_id (xmmsv_coll_t *coll)
 
 	xmmsv_list_append_string (get_list, "id");
 
-	xmmsv_dict_set_string (fetch_spec, "_type", "metadata");
+	xmmsv_dict_set_string (fetch_spec, "type", "metadata");
 	xmmsv_dict_set_string (fetch_spec, "aggregate", "random");
 	xmmsv_dict_set (fetch_spec, "get", get_list);
 
@@ -2396,7 +2396,7 @@ fetch_to_spec (xmmsv_t *fetch, fetch_info_t *info, int *invalid)
 	case XMMSV_TYPE_DICT:
 	{
 		const char *type;
-		if (!xmmsv_dict_entry_get_string (fetch, "_type", &type)) {
+		if (!xmmsv_dict_entry_get_string (fetch, "type", &type)) {
 			type = "metadata";
 		}
 
@@ -2531,31 +2531,35 @@ fetch_to_spec (xmmsv_t *fetch, fetch_info_t *info, int *invalid)
 				ret->type = FETCH_CLUSTER_DICT;
 			}
 		} else if (strcmp (type, "organize") == 0) {
-			xmmsv_dict_iter_t *it;
-			xmmsv_get_dict_iter (fetch, &it);
 
 			ret->type = FETCH_ORGANIZE;
 
-			for (ret->data.organize.count = -1 /* We do not want to count "_type" */
-					; xmmsv_dict_iter_valid (it)
-					; ret->data.organize.count++, xmmsv_dict_iter_next (it));
+			if (xmmsv_dict_get (fetch, "data", &val)) {
+				xmmsv_dict_iter_t *it;
+				xmmsv_get_dict_iter (val, &it);
 
-			ret->data.organize.keys = malloc (sizeof (const char *) * ret->data.organize.count);
-			ret->data.organize.data = malloc (sizeof (fetch_spec_t *) * ret->data.organize.count);
+				for (ret->data.organize.count = 0
+						; xmmsv_dict_iter_valid (it)
+						; ret->data.organize.count++, xmmsv_dict_iter_next (it));
 
-			for (i = 0, xmmsv_dict_iter_first (it)
-					; xmmsv_dict_iter_valid (it)
-					; xmmsv_dict_iter_next (it)) {
-				xmmsv_dict_iter_pair (it, &str, &val);
 
-				if (strcmp (str, "_type") != 0) {
+				ret->data.organize.keys = malloc (sizeof (const char *) * ret->data.organize.count);
+				ret->data.organize.data = malloc (sizeof (fetch_spec_t *) * ret->data.organize.count);
+
+				for (i = 0, xmmsv_dict_iter_first (it)
+						; xmmsv_dict_iter_valid (it)
+						; xmmsv_dict_iter_next (it), i++) {
+					xmmsv_dict_iter_pair (it, &str, &val);
+
 					ret->data.organize.keys[i] = str;
 					ret->data.organize.data[i] = fetch_to_spec (val, info, invalid);
-					i++;
 				}
-			}
 
-			xmmsv_dict_iter_explicit_destroy (it);
+				xmmsv_dict_iter_explicit_destroy (it);
+			} else {
+				XMMS_DBG ("Required field 'data' not set in %s", type);
+				*invalid = 1;
+			}
 		} else if (strcmp (type, "count") == 0) {
 			ret->type = FETCH_COUNT;
 		} else {
