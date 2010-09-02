@@ -245,6 +245,16 @@ typedef const char* xmmsv_coll_namespace_t;
 
 #define XMMS_ACTIVE_PLAYLIST "_active"
 
+#define XMMS_COLLECTION_FILTER_EQUAL     "="
+#define XMMS_COLLECTION_FILTER_NOTEQUAL  "!="
+#define XMMS_COLLECTION_FILTER_LESS      "<"
+#define XMMS_COLLECTION_FILTER_LESSEQ    "<="
+#define XMMS_COLLECTION_FILTER_GREATER   ">"
+#define XMMS_COLLECTION_FILTER_GREATEREQ ">="
+#define XMMS_COLLECTION_FILTER_HAS       "has"
+#define XMMS_COLLECTION_FILTER_TOKEN     "token"
+#define XMMS_COLLECTION_FILTER_MATCH     "match"
+
 /* Default source preferences for accessing "propdicts" (decl. in value.c) */
 extern const char *default_source_pref[];
 

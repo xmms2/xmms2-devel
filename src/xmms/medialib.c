@@ -1600,23 +1600,24 @@ xmms_medialib_query_recurs (xmmsv_coll_t *coll, fetch_info_t *fetch,
 				flags = S4_COND_PARENT;
 			}
 
-			if (!xmmsv_coll_attribute_get (coll, "operation", &val) || strcmp (val, "=") == 0) {
+			if (!xmmsv_coll_attribute_get (coll, "operation", &val)
+					|| strcmp (val, XMMS_COLLECTION_FILTER_EQUAL) == 0) {
 				type = S4_FILTER_EQUAL;
-			} else if (strcmp (val, "<") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_LESS) == 0) {
 				type = S4_FILTER_SMALLER;
-			} else if (strcmp (val, ">") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_GREATER) == 0) {
 				type = S4_FILTER_GREATER;
-			} else if (strcmp (val, "match") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_MATCH) == 0) {
 				type = S4_FILTER_MATCH;
-			} else if (strcmp (val, "has") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_HAS) == 0) {
 				type = S4_FILTER_EXISTS;
-			} else if (strcmp (val, "<=") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_LESSEQ) == 0) {
 				type = S4_FILTER_SMALLEREQ;
-			} else if (strcmp (val, ">=") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_GREATEREQ) == 0) {
 				type = S4_FILTER_GREATEREQ;
-			} else if (strcmp (val, "!=") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0) {
 				type = S4_FILTER_NOTEQUAL;
-			} else if (strcmp (val, "token") == 0) {
+			} else if (strcmp (val, XMMS_COLLECTION_FILTER_TOKEN) == 0) {
 				type = S4_FILTER_TOKEN;
 			} else { /* Unknown operation, default to equal */
 				type = S4_FILTER_EQUAL;

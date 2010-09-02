@@ -600,7 +600,7 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *name
 	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, match_table);
 
 	filter_coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (filter_coll, "operation", "=");
+	xmmsv_coll_attribute_set (filter_coll, "operation", XMMS_COLLECTION_FILTER_EQUAL);
 
 	/* While not all collections have been checked, check next */
 	while (g_hash_table_find (match_table, find_unchecked, &open_name) != NULL) {
@@ -1067,16 +1067,20 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			return FALSE;
 		}
 
-		if (strcmp (attr, "has") == 0) {
+		if (strcmp (attr, XMMS_COLLECTION_FILTER_HAS) == 0) {
 			/* one operand */
 			if (num_operands != 1) {
 				return FALSE;
 			}
 
-		} else if (strcmp (attr, "=") == 0
-				|| strcmp (attr, "<") == 0
-				|| strcmp (attr, ">") == 0
-				|| strcmp (attr, "match") == 0) {
+		} else if (strcmp (attr, XMMS_COLLECTION_FILTER_EQUAL) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_LESS) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_LESSEQ) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_GREATER) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_GREATEREQ) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_TOKEN) == 0
+				|| strcmp (attr, XMMS_COLLECTION_FILTER_MATCH) == 0) {
 			/* one operand */
 			if (num_operands != 1) {
 				return FALSE;
