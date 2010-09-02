@@ -207,7 +207,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 	/* Creates the fetchspec to use */
 	fetch_spec = xmmsv_build_cluster_list (
-			xmmsv_new_string ("id"),
+			xmmsv_new_string ("_row"),
 			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
@@ -263,7 +263,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 			"with an invalid order list", NULL);
 
 	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
-		group = xmmsv_new_string ("id");
+		group = xmmsv_new_string ("_row");
 	} else {
 		group = xmmsv_ref (group);
 	}
