@@ -2427,35 +2427,25 @@ xmmsv_build_list (xmmsv_t *first_entry, ...)
 	return res;
 }
 
-xmmsv_t *xmmsv_build_empty_organize (void)
-{
-	xmmsv_t *res = xmmsv_new_dict ();
-
-	if (res != NULL)
-		xmmsv_dict_set_string (res, "_type", "organize");
-
-	return res;
-}
-
 /**
  * Creates an organize fetch specification that may be passed to xmmsc_coll_query.
- * It takes a variable number of (key, data) pairs, where key is a const char*
- * and data is an xmmsv_t*. Terminate with a NULL.
+ * It takes a dict with key-value pairs where the values are fetch specifications.
  *
  * @return An organize fetch specification
  */
 xmmsv_t *
-xmmsv_build_organize (const char *first_key, ...)
+xmmsv_build_organize (xmmsv_t *data)
 {
-	va_list ap;
 	xmmsv_t *res;
 
-	va_start (ap, first_key);
-	res = xmmsv_build_dict_va (first_key, ap);
-	va_end (ap);
+	x_return_val_if_fail (data != NULL, NULL);
+	res = xmmsv_new_dict ();
 
-	if (res != NULL)
-		xmmsv_dict_set_string (res, "_type", "organize");
+	if (res != NULL) {
+		xmmsv_dict_set_string (res, "type", "organize");
+		xmmsv_dict_set (res, "data", data);
+		xmmsv_unref (data);
+	}
 
 	return res;
 }
@@ -2475,7 +2465,7 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregat
 	if (res == NULL)
 		return NULL;
 
-	xmmsv_dict_set_string (res, "_type", "metadata");
+	xmmsv_dict_set_string (res, "type", "metadata");
 
 	if (keys != NULL) {
 		xmmsv_dict_set (res, "keys", keys);
@@ -2509,7 +2499,7 @@ xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
 	if (res == NULL)
 		return NULL;
 
-	xmmsv_dict_set_string (res, "_type", "cluster-list");
+	xmmsv_dict_set_string (res, "type", "cluster-list");
 
 	if (cluster_by != NULL) {
 		xmmsv_dict_set (res, "cluster-by", cluster_by);
@@ -2536,7 +2526,7 @@ xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
 	if (res == NULL)
 		return NULL;
 
-	xmmsv_dict_set_string (res, "_type", "cluster-dict");
+	xmmsv_dict_set_string (res, "type", "cluster-dict");
 
 	if (cluster_by != NULL) {
 		xmmsv_dict_set (res, "cluster-by", cluster_by);
@@ -2559,7 +2549,7 @@ xmmsv_t *xmmsv_build_count ()
 {
 	xmmsv_t *res = xmmsv_new_dict ();
 
-	xmmsv_dict_set_string (res, "_type", "count");
+	xmmsv_dict_set_string (res, "type", "count");
 	return res;
 }
 
