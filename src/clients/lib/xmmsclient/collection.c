@@ -247,7 +247,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                         xmmsv_t *group)
 {
 	xmmsc_result_t *ret;
-	xmmsv_t *fetch_spec, *org_dict;
+	xmmsv_t *fetch_spec, *org_dict, *org_data;
 	xmmsv_coll_t *coll2, *coll3;
 	int i;
 	const char *str;
@@ -268,7 +268,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 		group = xmmsv_ref (group);
 	}
 
-	org_dict = xmmsv_build_empty_organize ();
+	org_data = xmmsv_new_dict ();
 	for (i = 0; xmmsv_list_get_string (fetch, i, &str); i++) {
 		xmmsv_t *meta;
 
@@ -280,9 +280,10 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 					xmmsv_new_string ("value"), "first", NULL);
 		}
 
-		xmmsv_dict_set (org_dict, str, meta);
+		xmmsv_dict_set (org_data, str, meta);
 		xmmsv_unref (meta);
 	}
+	org_dict = xmmsv_build_organize (org_data);
 
 	fetch_spec = xmmsv_build_cluster_list (group, org_dict);
 
