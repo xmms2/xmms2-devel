@@ -1625,7 +1625,9 @@ xmms_medialib_query_recurs (xmmsv_coll_t *coll, fetch_info_t *fetch,
 				type = S4_FILTER_NOTEQUAL;
 			} else if (strcmp (val, XMMS_COLLECTION_FILTER_TOKEN) == 0) {
 				type = S4_FILTER_TOKEN;
-			} else { /* Unknown operation, default to equal */
+			} else { /* Unknown operation, warn and default to equal */
+				xmms_log_error ("FILTER with unknown \"operation\"-attribute. "
+				                "This is probably a bug.");
 				type = S4_FILTER_EQUAL;
 			}
 

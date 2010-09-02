@@ -1063,32 +1063,29 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		break;
 
 	case XMMS_COLLECTION_TYPE_FILTER:
-		if (!xmmsv_coll_attribute_get (coll, "operation", &attr)) {
+		/* one operand */
+		if (num_operands != 1) {
 			return FALSE;
 		}
 
-		if (strcmp (attr, XMMS_COLLECTION_FILTER_HAS) == 0) {
-			/* one operand */
-			if (num_operands != 1) {
-				return FALSE;
-			}
+		if (!xmmsv_coll_attribute_get (coll, "operation", &attr)) {
+			attr = XMMS_COLLECTION_FILTER_EQUAL;
+		}
 
-		} else if (strcmp (attr, XMMS_COLLECTION_FILTER_EQUAL) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_LESS) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_LESSEQ) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_GREATER) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_GREATEREQ) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_TOKEN) == 0
-				|| strcmp (attr, XMMS_COLLECTION_FILTER_MATCH) == 0) {
-			/* one operand */
-			if (num_operands != 1) {
-				return FALSE;
-			}
+		if (strcmp (attr, XMMS_COLLECTION_FILTER_EQUAL) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_LESS) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_LESSEQ) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_GREATER) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_GREATEREQ) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_TOKEN) == 0
+		 || strcmp (attr, XMMS_COLLECTION_FILTER_MATCH) == 0) {
 
 			if (!xmmsv_coll_attribute_get (coll, "value", &attr)) {
 				return FALSE;
 			}
+		} else if (strcmp (attr, XMMS_COLLECTION_FILTER_HAS) != 0) {
+			return FALSE;
 		}
 
 		/* check that type equals "id", "value"
