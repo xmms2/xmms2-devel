@@ -78,9 +78,16 @@ xmms_signal_block (void)
 	sigaddset (&signals, SIGHUP);
 	sigaddset (&signals, SIGTERM);
 	sigaddset (&signals, SIGINT);
-	sigaddset (&signals, SIGPIPE);
 
 	pthread_sigmask (SIG_BLOCK, &signals, &osignals);
+
+	/* Thanks to bug #8533731 in CoreServices on Mac OS X, calling
+	 * FindComponent/AudioComponentNext in the CoreAudio output
+	 * plugin will cause SIGPIPE to be unblocked. To solve this
+	 * we have to fend off SIGPIPE here instead of via sigmask.
+	 * Doesn't affect the behavior on other platforms.
+	 */
+	signal (SIGPIPE, SIG_BLOCK);
 }
 
 void
