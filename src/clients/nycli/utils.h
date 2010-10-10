@@ -74,5 +74,6 @@ gint find_terminal_width (void);
 gchar *format_time (guint64 duration, gboolean use_hours);
 void enrich_mediainfo (xmmsv_t *val);
 gchar *decode_url (const gchar *string);
+gchar *format_url (const gchar *path, GFileTest test);
 
 #endif /* __UTILS_H__ */

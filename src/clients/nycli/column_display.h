@@ -21,11 +21,6 @@
 
 #include <glib.h>
 #include <glib/gprintf.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "main.h"
 

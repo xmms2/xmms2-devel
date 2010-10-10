@@ -1068,33 +1068,6 @@ matching_browse (cli_infos_t *infos, const gchar *done,
 	return TRUE;
 }
 
-/* Transform a path (possibly absolute or relative) into a valid XMMS2
- * path with protocol prefix. The resulting string must be freed
- * manually.
- */
-static gchar *
-make_valid_url (gchar *path)
-{
-	gchar *p;
-	gchar *url;
-	gchar *pwd;
-
-	/* Check if path matches "^[a-z]+://" */
-	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
-	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
-		url = g_strdup (path);
-	} else if (*path == '/') {
-		/* Absolute url, just prepend file:// protocol */
-		url = g_strconcat ("file://", path, NULL);
-	} else {
-		/* Relative url, prepend file:// protocol and PWD */
-		pwd = getenv ("PWD");
-		url = g_strconcat ("file://", pwd, "/", path, NULL);
-	}
-
-	return url;
-}
-
 static gchar *
 encode_url (gchar *url)
 {
@@ -1238,7 +1211,12 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			gchar *vpath, *enc;
 
 			command_arg_string_get (ctx, i, &path);
-			vpath = make_valid_url (path);
+			vpath = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
+			if (vpath == NULL) {
+				g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
+				continue;
+			}
+
 			enc = encode_url (vpath);
 			matching_browse (infos, "", enc, -1, &files);
 
@@ -1932,7 +1910,12 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		gchar *vpath, *enc;
 
 		command_arg_string_get (ctx, i, &path);
-		vpath = make_valid_url (path);
+		vpath = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
+		if (vpath == NULL) {
+			g_printf (_ ("Warning: Skipping invalid url: '%s'"), path);
+			continue;
+		}
+
 		enc = encode_url (vpath);
 		matching_browse (infos, "", enc, -1, &files);
 

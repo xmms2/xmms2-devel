@@ -1,3 +1,5 @@
+import Options
+
 def build(bld):
     obj = bld.new_task_gen('cc', 'program')
     obj.target = 'nyxmms2'
@@ -15,6 +17,9 @@ def build(bld):
                     column_display.c
                     readline.c
                     playlist_positions.c""".split()
+
+    obj.source.append('compat_%s.c' % bld.env['cli_compat_impl'])
+
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline readline-ncurses'
@@ -22,6 +27,11 @@ def build(bld):
     obj = bld.new_task_gen(features='man', files='nyxmms2.1', section='1')
 
 def configure(conf):
+    if Options.platform == 'win32':
+        conf.env['cli_compat_impl'] = 'win32'
+    else:
+        conf.env['cli_compat_impl'] = 'unix'
+
     rl_headers=["stdio.h", "readline/readline.h"]
 
     conf.check_cc(header_name=rl_headers, mandatory=True)

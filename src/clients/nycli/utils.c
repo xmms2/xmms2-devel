@@ -16,6 +16,7 @@
 
 #include "utils.h"
 #include "status.h"
+#include "compat.h"
 
 #include "cli_infos.h"
 #include "cli_cache.h"
@@ -1820,39 +1821,6 @@ print_indented (const gchar *string, guint level)
 	}
 }
 
-/* FIXME: not portable? */
-gint
-find_terminal_width ()
-{
-	gint columns;
-	struct winsize ws;
-	char *colstr, *endptr;
-
-	if (!isatty (STDOUT_FILENO)) {
-#ifdef LINE_MAX
-		columns = LINE_MAX;
-#else
-		columns = 2048 /* Minimum value for LINE_MAX according to POSIX */
-#endif
-#ifdef TIOCGWINSZ
-	} else if (!ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
-		columns = ws.ws_col;
-#endif
-	} else {
-		colstr = getenv ("COLUMNS");
-		if (colstr != NULL) {
-			columns = strtol (colstr, &endptr, 10);
-		}
-	}
-
-	/* Default to 80 columns */
-	if (columns <= 0) {
-		columns = 80;
-	}
-
-	return columns;
-}
-
 /* Returned string must be freed by the caller */
 gchar *
 format_time (guint64 duration, gboolean use_hours)
@@ -1919,4 +1887,36 @@ decode_url (const gchar *string)
  err:
 	g_free (url);
 	return NULL;
+}
+
+/* Transform a path (possibly absolute or relative) into a valid XMMS2
+ * path with protocol prefix. The resulting string must be freed
+ * manually.
+ */
+gchar *
+format_url (const gchar *path, GFileTest test)
+{
+	gchar rpath[PATH_MAX];
+	const gchar *p;
+	gchar *url;
+
+	/* Check if path matches "^[a-z]+://" */
+	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
+	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
+		url = g_strdup (path);
+	} else {
+		/* OK, so this is NOT an valid URL */
+
+		if (!x_realpath (path, rpath)) {
+			return NULL;
+		}
+
+		if (!g_file_test (rpath, test)) {
+			return NULL;
+		}
+
+		url = g_strconcat ("file://", rpath, NULL);
+	}
+
+	return x_path2url (url);
 }
