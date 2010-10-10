@@ -1,3 +1,4 @@
+#define _GNU_SOURCE /* semtimedop is a GNU extension */
 #include "common.h"
 
 #include <sys/shm.h>
