@@ -1037,28 +1037,28 @@ Display command help.
 .PP
 
 .SH PATTERN
-Pattern are used to search song in the medialib, 
+Patterns are used to search for songs in the media library, some of these patterns may require escaping (with '\\') depending on what shell is used.
 .PP
 .TP
 <property>\fB:\fR<string>
 .PP
 .RS 4
-match song whose property match string
+Match songs whose property match the string.
 .RE
 
 .TP
-<property><op><num>
+<property><operation><number>
 .PP
 .RS 4
-op can be \fB<\fR, \fB<=\fR, \fB>\fR or \fB>=\fR, the pattern will
-match song whose <property> is a numerical value smaller, smaller or equal, bigger, bigger or equal than num
+The operation can be \fB<\fR, \fB<=\fR, \fB>\fR or \fB>=\fR, the pattern will
+match songs whose property is a numerical value smaller, smaller or equal, bigger, bigger or equal in comparison to the number.
 .RE
 
 .TP
 \fB+\fR<property>
 .PP
 .RS 4
-match song whose property is set to some value
+Match songs which has the property.
 .RE
 
 .TP
@@ -1067,35 +1067,35 @@ match song whose property is set to some value
 <pattern> AND <pattern>
 .PP
 .RS 4
-match song that are matched par both pattern
+Match songs that are matched by both patterns.
 .RE
 
 .TP
 <pattern> OR <pattern>
 .PP
 .RS 4
-match song that are matched by at least one of the two pattern
+Match songs that are matched by at least one of the two pattern.
 .RE
 
 .TP
 ( <pattern> )
 .PP
 .RS 4
-match song matched by the pattern, used for grouping
+Match songs matched by the pattern, used for grouping AND and OR matches.
 .RE
 
 .TP
 <string>
 .PP
 .RS 4
-match song whose artist, title or album match the string
+Match songs whose artist, title or album match the string.
 .RE
 
 .TP
 #<number>
 .PP
 .RS 4
-match a specific medialib id
+Match a specific media library id.
 .RE
 
 .SH ALIASES
