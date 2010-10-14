@@ -185,9 +185,63 @@ xmms_ca_render_cb (void *inRefCon,
 }
 
 static gboolean
-xmms_ca_format_set (xmms_output_t *output,
-                    const xmms_stream_type_t *stype)
+xmms_ca_format_set (xmms_output_t *output, const xmms_stream_type_t *stype)
 {
+	AudioStreamBasicDescription fmt;
+	xmms_ca_data_t *data;
+	OSStatus res;
+	guint flags;
+
+	data = xmms_output_private_data_get (output);
+
+	fmt.mFormatID = kAudioFormatLinearPCM;
+	fmt.mFramesPerPacket = 1;
+
+	fmt.mSampleRate = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	fmt.mChannelsPerFrame = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS);
+
+	flags = kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+
+	switch (xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_FORMAT)) {
+		case XMMS_SAMPLE_FORMAT_S8:
+		case XMMS_SAMPLE_FORMAT_S16:
+		case XMMS_SAMPLE_FORMAT_S32:
+			fmt.mFormatFlags = flags | kAudioFormatFlagIsSignedInteger;
+			break;
+		default:
+			fmt.mFormatFlags = flags;
+			break;
+	}
+
+	switch (xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_FORMAT)) {
+		case XMMS_SAMPLE_FORMAT_S8:
+		case XMMS_SAMPLE_FORMAT_U8:
+			fmt.mBitsPerChannel = 8;
+			break;
+		case XMMS_SAMPLE_FORMAT_S16:
+		case XMMS_SAMPLE_FORMAT_U16:
+			fmt.mBitsPerChannel = 16;
+			break;
+		case XMMS_SAMPLE_FORMAT_S32:
+		case XMMS_SAMPLE_FORMAT_U32:
+			fmt.mBitsPerChannel = 32;
+			break;
+		default:
+			xmms_log_error ("Unknown sample format.");
+			return FALSE;
+	}
+
+	fmt.mBytesPerFrame = fmt.mBitsPerChannel * fmt.mChannelsPerFrame / 8;
+	fmt.mBytesPerPacket = fmt.mBytesPerFrame * fmt.mFramesPerPacket;
+
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
+	                            kAudioUnitScope_Input, 0, &fmt,
+	                            sizeof (AudioStreamBasicDescription));
+	if (res) {
+		xmms_log_error ("Failed to set stream type!");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -199,10 +253,10 @@ xmms_ca_new (xmms_output_t *output)
 	OSStatus res;
 	ComponentDescription desc;
 	AURenderCallbackStruct input;
-	AudioStreamBasicDescription format;
 	Component comp;
 	AudioDeviceID device = 0;
 	UInt32 size = sizeof (device);
+	gint i;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -240,23 +294,6 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
-	format.mSampleRate = 44100.0;
-	format.mFormatID = kAudioFormatLinearPCM;
-	format.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
-	format.mBytesPerPacket = 4;
-	format.mFramesPerPacket = 1;
-	format.mBytesPerFrame = 4;
-	format.mChannelsPerFrame = 2;
-	format.mBitsPerChannel = 16;
-
-	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
-	                            kAudioUnitScope_Input, 0, &format,
-	                            sizeof (AudioStreamBasicDescription));
-	if (res) {
-		xmms_log_error ("Failed to set format");
-		return FALSE;
-	}
-
 	res = AudioUnitInitialize (data->au);
 	if (res) {
 		xmms_log_error ("Audio Unit wouldn't initialize!");
@@ -279,11 +316,27 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
-	/* static for now */
-	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
 	data->running = FALSE;
 	xmms_output_private_data_set (output, data);
+
+	for (i = 1; i <= 2; i++) {
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_U8,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S16,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+		xmms_output_stream_type_add (output,
+		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
+		                             XMMS_STREAM_TYPE_END);
+	}
 
 	return TRUE;
 }
