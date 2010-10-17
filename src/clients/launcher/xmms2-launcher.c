@@ -39,10 +39,18 @@
 static char startup_msg[] = "\n--- Starting new xmms2d ---\n";
 
 void get_options (int *, char ***);
+void empty_log_handler (const gchar *, GLogLevelFlags, const gchar *, gpointer);
 void simple_log_handler (const gchar *, GLogLevelFlags, const gchar *, gpointer);
 
 const gchar *logfile = NULL;
 const gchar *pidfile = NULL;
+
+void empty_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
+                        const gchar *message, gpointer user_data) {
+	if (log_level & (G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION)) {
+		exit (1);
+	}
+}
 
 void simple_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
                          const gchar *message, gpointer user_data) {
@@ -63,11 +71,13 @@ void simple_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 void get_options (int *argc, char ***argv) {
+	gboolean verbose = FALSE;
 	GError *error = NULL;
 	GOptionContext* context = NULL;
 	GOptionEntry opts[] = {
 		{"logfile", 'l', 0, G_OPTION_ARG_FILENAME, &logfile, "Redirect logs to <file>", "<file>"},
 		{"pidfile", 'P', 0, G_OPTION_ARG_FILENAME, &pidfile, "Save xmms2d pid in <file>", "<file>"},
+		{"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Make xmms2-launcher verbose", NULL},
 		{NULL}
 	};
 	int i, j;
@@ -81,6 +91,13 @@ void get_options (int *argc, char ***argv) {
 		g_clear_error (&error);
 	}
 	g_option_context_free (context);
+
+	/* process verbose */
+	if (!verbose) {
+		g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO
+		                         | G_LOG_LEVEL_DEBUG,
+		                   empty_log_handler, NULL);
+	}
 
 	/* Remove first "--" from argv */
 	for (i = 0; i < *argc; i++) {
