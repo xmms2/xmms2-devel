@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2009 XMMS2 Team
+ *  Copyright (C) 2003-2010 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 static sigset_t osignals;
+static void (*opipesig)(int);
 
 static gpointer
 sigwaiter (gpointer data)
@@ -87,12 +88,13 @@ xmms_signal_block (void)
 	 * we have to fend off SIGPIPE here instead of via sigmask.
 	 * Doesn't affect the behavior on other platforms.
 	 */
-	signal (SIGPIPE, SIG_BLOCK);
+	opipesig = signal (SIGPIPE, SIG_BLOCK);
 }
 
 void
 xmms_signal_restore (void)
 {
+	signal (SIGPIPE, opipesig);
 	pthread_sigmask (SIG_SETMASK, &osignals, NULL);
 }
 
