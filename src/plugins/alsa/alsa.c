@@ -251,6 +251,11 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 		return;
 	}
 
+	err = snd_pcm_hw_params_set_rate_resample (pcm, params, 0);
+	if (err < 0) {
+		xmms_log_error ("Could not disable ALSA resampling, your CPU will burn.");
+	}
+
 	/* Set the interleaved read/write format */
 	err = snd_pcm_hw_params_set_access (pcm, params,
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
