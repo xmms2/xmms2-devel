@@ -1259,7 +1259,7 @@ xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
 
 	/* Let the collection code do the sorting for us */
 	tmp = xmms_collection_query_ids (playlist->colldag, plcoll, 0, 0,
-			properties, err);
+	                                 properties, err);
 
 	if (tmp == NULL) {
 		g_mutex_unlock (playlist->mutex);
