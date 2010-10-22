@@ -202,13 +202,12 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                       int limit_len)
 {
 	xmmsc_result_t *ret;
-	xmmsv_t *fetch_spec;
+	xmmsv_t *fetch_spec, *meta;
 	xmmsv_coll_t *coll2, *coll3;
 
 	/* Creates the fetchspec to use */
-	fetch_spec = xmmsv_build_cluster_list (
-			xmmsv_new_string ("_row"),
-			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
+	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
+	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("_row"), meta);
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
 	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
@@ -253,14 +252,15 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	const char *str;
 
 	/* check that fetch is not empty */
-	x_api_error_if (xmmsv_list_get_size (fetch) == 0, "with an empty fetch list", NULL);
+	x_api_error_if (xmmsv_list_get_size (fetch) == 0,
+	                "with an empty fetch list", NULL);
 	/* check for invalid property strings */
 	x_api_error_if (!xmmsv_list_has_type (fetch, XMMSV_TYPE_STRING),
-			"with an invalid fetch list", NULL);
+	                "with an invalid fetch list", NULL);
 	x_api_error_if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING),
-			"with an invalid group list", NULL);
+	                "with an invalid group list", NULL);
 	x_api_error_if (order != NULL && !xmmsv_list_has_type (order, XMMSV_TYPE_STRING),
-			"with an invalid order list", NULL);
+	                "with an invalid order list", NULL);
 
 	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
 		group = xmmsv_new_string ("_row");
@@ -274,10 +274,12 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 		if (strcmp (str, "id") == 0) {
 			meta = xmmsv_build_metadata (NULL,
-					xmmsv_new_string ("id"), "first", NULL);
+			                             xmmsv_new_string ("id"),
+			                             "first", NULL);
 		} else {
 			meta = xmmsv_build_metadata (xmmsv_new_string (str),
-					xmmsv_new_string ("value"), "first", NULL);
+			                             xmmsv_new_string ("value"),
+			                             "first", NULL);
 		}
 
 		xmmsv_dict_set (org_data, str, meta);
