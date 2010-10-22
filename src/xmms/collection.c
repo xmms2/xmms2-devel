@@ -720,16 +720,17 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	xmmsv_coll_t *coll2, *coll3;
 
 	/* Creates the fetchspec to use */
-	fetch_spec = xmmsv_build_cluster_list (
-			xmmsv_new_string ("_row"),
-			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
+	if (fetch_spec == NULL) {
+		xmmsv_t *meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"),
+		                                      "first", NULL);
+		fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("_row"), meta);
+	}
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
 	coll3 = xmmsv_coll_add_limit_operator (coll2, lim_start, lim_len);
 
 	ret = xmms_collection_client_query (dag, coll3, fetch_spec, err);
 
-	xmmsv_unref (fetch_spec);
 	xmmsv_coll_unref (coll2);
 	xmmsv_coll_unref (coll3);
 
@@ -738,7 +739,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 xmmsv_t *
 xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-		xmmsv_t *fetch, xmms_error_t *err)
+                              xmmsv_t *fetch, xmms_error_t *err)
 {
 	xmmsv_t *ret;
 	/* validate the collection to query */
@@ -1129,14 +1130,14 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			return FALSE;
 		}
 
-		if (xmmsv_coll_attribute_get (coll, "order", &attr) &&
-				strcmp (attr, "ASC") != 0 &&
-				strcmp (attr, "DESC") != 0) {
+		if (xmmsv_coll_attribute_get (coll, "order", &attr)
+		    && strcmp (attr, "ASC") != 0
+		    && strcmp (attr, "DESC") != 0) {
 			return FALSE;
 		}
 
-		if (!xmmsv_coll_attribute_get (coll, "type", &attr) ||
-				strcmp (attr, "value") == 0) {
+		if (!xmmsv_coll_attribute_get (coll, "type", &attr)
+		    || strcmp (attr, "value") == 0) {
 			/* If it's a sorting on values we need a field to sort on */
 			if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
 				return FALSE;
