@@ -102,7 +102,7 @@ setup_coll_path (void)
 
 	path = XMMS_BUILD_PATH ("collections", "${uuid}");
 	coll_conf = xmms_config_property_register ("collection.directory",
-			path, NULL, NULL);
+	                                           path, NULL, NULL);
 	coll_path = strdup (xmms_config_property_get_string (coll_conf));
 	g_free (path);
 
@@ -139,7 +139,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 	FILE *file;
 	xmmsv_coll_t *coll;
 
-	setup_coll_path();
+	setup_coll_path ();
 
 	if (disable_saving)
 		return;
@@ -155,7 +155,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 		g_free (path);
 
 		xmms_collection_foreach_in_namespace (dag, i, write_operator,
-				(void*)namespace);
+		                                      (void*)namespace);
 	}
 
 	/* We treat the _active entry a bit differently,
@@ -165,10 +165,10 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 	coll = xmms_collection_get_pointer (dag, XMMS_ACTIVE_PLAYLIST,
 	                                    XMMS_COLLECTION_NSID_PLAYLISTS);
 	name = xmms_collection_find_alias (dag,
-				XMMS_COLLECTION_NSID_PLAYLISTS,
-				coll, XMMS_ACTIVE_PLAYLIST);
+	                                   XMMS_COLLECTION_NSID_PLAYLISTS,
+	                                   coll, XMMS_ACTIVE_PLAYLIST);
 	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
-			XMMS_ACTIVE_PLAYLIST);
+	                        XMMS_ACTIVE_PLAYLIST);
 	file = fopen (path, "w");
 
 	if (file == NULL) {
@@ -195,7 +195,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	FILE *file;
 	int i;
 
-	setup_coll_path();
+	setup_coll_path ();
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		namespace = xmms_collection_get_namespace_string (i);
@@ -212,8 +212,8 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 
 			if (file == NULL) {
 				xmms_log_error ("Could not open %s, %s. "
-					   "Collections will not be saved (to prevent overwriting something)",
-						path, strerror (errno));
+				                "Collections will not be saved (to prevent overwriting something)",
+				                path, strerror (errno));
 				disable_saving = 1;
 			} else {
 				coll = xmms_collection_read_operator (file);
@@ -230,30 +230,30 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	}
 
 	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
-			XMMS_ACTIVE_PLAYLIST);
+	                        XMMS_ACTIVE_PLAYLIST);
 	file = fopen (path, "r");
 
 	if (file == NULL) {
 		coll = xmms_collection_get_pointer (dag, "Default",
-				XMMS_COLLECTION_NSID_PLAYLISTS);
+		                                    XMMS_COLLECTION_NSID_PLAYLISTS);
 
 		if (coll == NULL) {
 			coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 			xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
-					g_strdup ("Default"), coll);
+			                             g_strdup ("Default"), coll);
 		}
 	} else {
 		fgets (buffer, 1024, file);
 		fclose (file);
 
 		coll = xmms_collection_get_pointer (dag, buffer,
-				XMMS_COLLECTION_NSID_PLAYLISTS);
+		                                    XMMS_COLLECTION_NSID_PLAYLISTS);
 	}
 
 	g_free (path);
 	xmmsv_coll_ref (coll);
 	xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
-			g_strdup (XMMS_ACTIVE_PLAYLIST), coll);
+	                             g_strdup (XMMS_ACTIVE_PLAYLIST), coll);
 
 	/* FIXME: validate ? */
 
