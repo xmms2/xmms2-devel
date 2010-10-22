@@ -1716,7 +1716,7 @@ xmmsv_dict_hash (const void *key, int len)
 	/* Mix 4 bytes at a time into the hash */
 	const unsigned char * data = (const unsigned char *)key;
 
-	while(len >= 4)
+	while (len >= 4)
 	{
 		uint32_t k = *(uint32_t *)data;
 
@@ -1732,7 +1732,7 @@ xmmsv_dict_hash (const void *key, int len)
 	}
 
 	/* Handle the last few bytes of the input array */
-	switch(len)
+	switch (len)
 	{
 	case 3: h ^= data[2] << 16;
 	case 2: h ^= data[1] << 8;
@@ -1772,7 +1772,7 @@ xmmsv_dict_search (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int *pos, int *de
 		   }
 		/* If we found the entry we save it in the pos pointer */
 		} else if (dict->data[bucket].hash == data.hash
-				&& strcmp (dict->data[bucket].str, data.str) == 0) {
+		           && strcmp (dict->data[bucket].str, data.str) == 0) {
 			*pos = bucket;
 			return 1;
 		}
@@ -2183,8 +2183,8 @@ xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 	xmmsv_dict_t *d = it->parent;
 
 	for (it->pos = 0
-			; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
-			; it->pos++);
+	     ; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
+	     ; it->pos++);
 }
 
 /**
@@ -2200,8 +2200,8 @@ xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 	xmmsv_dict_t *d = it->parent;
 
 	for (it->pos++
-			; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
-			; it->pos++);
+	     ; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
+	     ; it->pos++);
 }
 
 /**
@@ -2221,8 +2221,8 @@ xmmsv_dict_iter_find (xmmsv_dict_iter_t *it, const char *key)
 	xmmsv_dict_iter_first (it);
 
 	for (xmmsv_dict_iter_first (it)
-			; xmmsv_dict_iter_valid (it)
-			; xmmsv_dict_iter_next (it)) {
+	     ; xmmsv_dict_iter_valid (it)
+	     ; xmmsv_dict_iter_next (it)) {
 		const char *s;
 
 		xmmsv_dict_iter_pair (it, &s, NULL);
