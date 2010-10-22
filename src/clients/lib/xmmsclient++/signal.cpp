@@ -75,39 +75,68 @@ namespace Xmms
 				temp = new Coll::Complement( coll );
 				break;
 			}
-			case XMMS_COLLECTION_TYPE_HAS: {
-				temp = new Coll::Has( coll );
+			case XMMS_COLLECTION_TYPE_EQUALS: {
+				temp = new Coll::Equals( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_NOTEQUAL: {
+				temp = new Coll::NotEquals( coll );
 				break;
 			}
 			case XMMS_COLLECTION_TYPE_SMALLER: {
 				temp = new Coll::Smaller( coll );
 				break;
 			}
+			case XMMS_COLLECTION_TYPE_SMALLEREQ: {
+				temp = new Coll::SmallerEqual( coll );
+				break;
+			}
 			case XMMS_COLLECTION_TYPE_GREATER: {
 				temp = new Coll::Greater( coll );
 				break;
 			}
-			case XMMS_COLLECTION_TYPE_EQUALS: {
-				temp = new Coll::Equals( coll );
+			case XMMS_COLLECTION_TYPE_GREATEREQ: {
+				temp = new Coll::GreaterEqual( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_HAS: {
+				temp = new Coll::Has( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_TOKEN: {
+				temp = new Coll::Token( coll );
 				break;
 			}
 			case XMMS_COLLECTION_TYPE_MATCH: {
 				temp = new Coll::Match( coll );
 				break;
 			}
+			case XMMS_COLLECTION_TYPE_ORDER: {
+				temp = new Coll::Order( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_LIMIT: {
+				temp = new Coll::Limit( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_MEDIASET: {
+				temp = new Coll::Mediaset( coll );
+				break;
+			}
 			case XMMS_COLLECTION_TYPE_IDLIST: {
-				temp = new Coll::Idlist( coll );
-				break;
-			}
-			case XMMS_COLLECTION_TYPE_QUEUE: {
-				temp = new Coll::Queue( coll );
-				break;
-			}
-			case XMMS_COLLECTION_TYPE_PARTYSHUFFLE: {
-				temp = new Coll::PartyShuffle( coll );
-				break;
-			}
+				char *type = NULL;
 
+				if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
+					temp = new Coll::Idlist( coll );
+				} else if (!strcmp(type, "queue")) {
+					temp = new Coll::Queue( coll );
+				} else if (!strcmp(type, "partyshuffle")) {
+					temp = new Coll::PartyShuffle( coll );
+				} else {
+					temp = new Coll::Idlist( coll );
+				}
+				break;
+			}
 		}
 
 		return temp;

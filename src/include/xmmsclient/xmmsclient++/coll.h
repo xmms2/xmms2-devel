@@ -24,7 +24,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace Xmms 
+namespace Xmms
 {
 
 	class Collection;
@@ -44,14 +44,19 @@ namespace Xmms
 		const Type UNION        = XMMS_COLLECTION_TYPE_UNION;
 		const Type INTERSECTION = XMMS_COLLECTION_TYPE_INTERSECTION;
 		const Type COMPLEMENT   = XMMS_COLLECTION_TYPE_COMPLEMENT;
-		const Type HAS          = XMMS_COLLECTION_TYPE_HAS;
 		const Type EQUALS       = XMMS_COLLECTION_TYPE_EQUALS;
-		const Type MATCH        = XMMS_COLLECTION_TYPE_MATCH;
+		const Type NOTEQUAL     = XMMS_COLLECTION_TYPE_NOTEQUAL;
 		const Type SMALLER      = XMMS_COLLECTION_TYPE_SMALLER;
+		const Type SMALLEREQ    = XMMS_COLLECTION_TYPE_SMALLEREQ;
 		const Type GREATER      = XMMS_COLLECTION_TYPE_GREATER;
+		const Type GREATEREQ    = XMMS_COLLECTION_TYPE_GREATEREQ;
+		const Type HAS          = XMMS_COLLECTION_TYPE_HAS;
+		const Type TOKEN        = XMMS_COLLECTION_TYPE_TOKEN;
+		const Type MATCH        = XMMS_COLLECTION_TYPE_MATCH;
+		const Type ORDER        = XMMS_COLLECTION_TYPE_ORDER;
+		const Type LIMIT        = XMMS_COLLECTION_TYPE_LIMIT;
+		const Type MEDIASET     = XMMS_COLLECTION_TYPE_MEDIASET;
 		const Type IDLIST       = XMMS_COLLECTION_TYPE_IDLIST;
-		const Type QUEUE        = XMMS_COLLECTION_TYPE_QUEUE;
-		const Type PARTYSHUFFLE = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
 
 		class OperandIterator;
 		class IdlistElement;
@@ -205,15 +210,13 @@ namespace Xmms
 		{
 			protected:
 				Filter( xmmsv_coll_t* coll );
-				Filter( Type type );
-				Filter( Type type, Coll& operand );
-				Filter( Type type, Coll& operand, const std::string& field);
-				Filter( Type type,
-				        Coll& operand,
+				Filter( Type operation );
+				Filter( Type operation, Coll& operand );
+				Filter( Type operation, Coll& operand, const std::string& field);
+				Filter( Type operation, Coll& operand,
 				        const std::string& field,
 				        const std::string& value );
-				Filter( Type type,
-				        Coll& operand,
+				Filter( Type operation, Coll& operand,
 				        const std::string& field,
 				        const std::string& value,
 				        bool case_sensitive );
@@ -375,6 +378,26 @@ namespace Xmms
 				~Smaller();
 		};
 
+		class SmallerEqual : public Filter
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+
+			protected:
+				SmallerEqual( xmmsv_coll_t* coll );
+
+			public:
+				SmallerEqual();
+				SmallerEqual(Coll& operand);
+				SmallerEqual(Coll& operand, const std::string& field);
+				SmallerEqual(Coll& operand,
+				             const std::string& field,
+				             const std::string& value);
+				~SmallerEqual();
+		};
+
 		class Greater : public Filter
 		{
 			friend class ::Xmms::Collection;
@@ -393,6 +416,26 @@ namespace Xmms
 				        const std::string& field,
 				        const std::string& value);
 				~Greater();
+		};
+
+		class GreaterEqual : public Filter
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+
+			protected:
+				GreaterEqual( xmmsv_coll_t* coll );
+
+			public:
+				GreaterEqual();
+				GreaterEqual(Coll& operand);
+				GreaterEqual(Coll& operand, const std::string& field);
+				GreaterEqual(Coll& operand,
+				             const std::string& field,
+				             const std::string& value);
+				~GreaterEqual();
 		};
 
 		class Equals : public Filter
@@ -416,6 +459,27 @@ namespace Xmms
 				~Equals();
 		};
 
+		class NotEquals : public Filter
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+
+			protected:
+				NotEquals( xmmsv_coll_t* coll );
+
+			public:
+				NotEquals();
+				NotEquals(Coll& operand);
+				NotEquals(Coll& operand, const std::string& field);
+				NotEquals(Coll& operand,
+				          const std::string& field,
+				          const std::string& value,
+				          bool case_sensitive = false);
+				~NotEquals();
+		};
+
 		class Match : public Filter
 		{
 			friend class ::Xmms::Collection;
@@ -437,8 +501,94 @@ namespace Xmms
 				~Match();
 		};
 
+		class Token : public Filter
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
-        /** An Idlist collection operator.
+			protected:
+				Token( xmmsv_coll_t* coll );
+
+			public:
+				Token();
+				Token(Coll& operand);
+				Token(Coll& operand, const std::string& field);
+				Token(Coll& operand,
+				      const std::string& field,
+				      const std::string& value,
+				      bool case_sensitive = false);
+				~Token();
+		};
+
+		/** TODO: DOCUMENT ME
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: 1.
+		 */
+		class Order : public Unary
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+
+			protected:
+				Order( xmmsv_coll_t* coll );
+
+			public:
+				Order();
+				Order( std::string& field, bool sort_asc );
+				Order( Coll& operand );
+				Order( Coll& operand, std::string& field, bool sort_asc );
+				~Order();
+		};
+
+		/** TODO: DOCUMENT ME
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: 1.
+		 */
+		class Limit : public Unary
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+
+			protected:
+				Limit( xmmsv_coll_t* coll );
+
+			public:
+				Limit();
+				Limit( Coll& operand );
+				Limit( Coll& operand, int start, int length );
+				~Limit();
+		};
+
+		/** TODO: DOCUMENT ME
+		 *
+		 *  Used attributes: none.
+		 *
+		 *  Operand: 1.
+		 */
+		class Mediaset : public Unary
+		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+
+			protected:
+				Mediaset( xmmsv_coll_t* coll );
+
+			public:
+				Mediaset();
+				Mediaset( Coll& operand );
+				~Mediaset();
+		};
+
+		/** An Idlist collection operator.
 		 *
 		 *  Used attributes: none.
 		 *
@@ -461,7 +611,7 @@ namespace Xmms
 
 			protected:
 				Idlist( xmmsv_coll_t* coll );
-				Idlist( Type type );
+				Idlist( const std::string& type );
 
 			public:
 				Idlist();
@@ -481,7 +631,7 @@ namespace Xmms
 		};
 
 
-        /** A Queue collection operator.
+		/** A Queue collection operator.
 		 *
 		 *  Used attributes:
 		 *  - history: if used as a playlist, determines how many
@@ -504,8 +654,8 @@ namespace Xmms
 
 			protected:
 				Queue( xmmsv_coll_t* coll );
-				Queue( Type type );
-				Queue( Type type, unsigned int history );
+				Queue( const std::string& type );
+				Queue( const std::string& type, unsigned int history );
 
 			public:
 				Queue();
@@ -513,8 +663,7 @@ namespace Xmms
 				~Queue();
 		};
 
-
-        /** A PartyShuffle collection operator.
+		/** A PartyShuffle collection operator.
 		 *
 		 *  Used attributes:
 		 *  - history: if used as a playlist, determines how many
@@ -524,7 +673,7 @@ namespace Xmms
 		 *              number of incoming entries (if fewer, new entries
 		 *              are randomly fetched from the operand collection).
 		 * - jumplist: optionally, the name of a playlist to jump to
-         *             once the PartyShuffle is done playing.
+		 *             once the PartyShuffle is done playing.
 		 *
 		 *  Operand: 1, the input collection to randomly fetch media from.
 		 *
@@ -552,7 +701,6 @@ namespace Xmms
 				void removeOperand();
 				CollPtr getOperand() const;
 		};
-
 
 
 		class OperandIterator

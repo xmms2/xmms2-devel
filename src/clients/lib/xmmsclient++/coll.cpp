@@ -39,7 +39,7 @@ namespace Xmms
 			throw std::runtime_error( "Failed to create a Coll object" );
 		}
 	}
-	
+
 	Coll::Coll( xmmsv_coll_t *coll )
 		: coll_( coll )
 	{
@@ -282,38 +282,38 @@ namespace Xmms
 	{
 	}
 
-	Filter::Filter( Type type )
-		: Unary ( type )
+	Filter::Filter( Type operation )
+		: Unary ( operation )
 	{
 	}
 
-	Filter::Filter( Type type, Coll& operand )
-		: Unary ( type, operand )
+	Filter::Filter( Type operation, Coll& operand )
+		: Unary ( operation, operand )
 	{
 	}
 
-	Filter::Filter( Type type, Coll& operand, const string& field )
-		: Unary ( type, operand )
+	Filter::Filter( Type operation, Coll& operand, const string& field )
+		: Unary ( operation, operand )
 	{
 		setAttribute( "field", field );
 	}
 
-	Filter::Filter( Type type,
+	Filter::Filter( Type operation,
 	                Coll& operand,
 	                const string& field,
 	                const string& value )
-		: Unary ( type, operand )
+		: Unary ( operation, operand )
 	{
 		setAttribute( "field", field );
 		setAttribute( "value", value );
 	}
 
-	Filter::Filter( Type type,
+	Filter::Filter( Type operation,
 	                Coll& operand,
 	                const string& field,
 	                const string& value,
 	                bool case_sensitive )
-		: Unary ( type, operand )
+		: Unary ( operation, operand )
 	{
 		setAttribute( "field", field );
 		setAttribute( "value", value );
@@ -396,6 +396,20 @@ namespace Xmms
 		: Filter( SMALLER, operand, field, value ) {}
 	Smaller::~Smaller() {}
 
+	SmallerEqual::SmallerEqual()
+		: Filter( SMALLEREQ ) {}
+	SmallerEqual::SmallerEqual( xmmsv_coll_t* coll )
+		: Filter( coll ) {}
+	SmallerEqual::SmallerEqual( Coll& operand )
+		: Filter( SMALLEREQ, operand ) {}
+	SmallerEqual::SmallerEqual( Coll& operand, const string& field )
+		: Filter( SMALLEREQ, operand, field ) {}
+	SmallerEqual::SmallerEqual( Coll& operand,
+	                            const string& field,
+	                            const string& value )
+		: Filter( SMALLEREQ, operand, field, value ) {}
+	SmallerEqual::~SmallerEqual() {}
+
 	Greater::Greater()
 		: Filter( GREATER ) {}
 	Greater::Greater( xmmsv_coll_t* coll )
@@ -410,6 +424,20 @@ namespace Xmms
 		: Filter( GREATER, operand, field, value ) {}
 	Greater::~Greater() {}
 
+	GreaterEqual::GreaterEqual()
+		: Filter( GREATEREQ ) {}
+	GreaterEqual::GreaterEqual( xmmsv_coll_t* coll )
+		: Filter( coll ) {}
+	GreaterEqual::GreaterEqual( Coll& operand )
+		: Filter( GREATEREQ, operand ) {}
+	GreaterEqual::GreaterEqual( Coll& operand, const string& field )
+		: Filter( GREATEREQ, operand, field ) {}
+	GreaterEqual::GreaterEqual( Coll& operand,
+	                            const string& field,
+	                            const string& value )
+		: Filter( GREATEREQ, operand, field, value ) {}
+	GreaterEqual::~GreaterEqual() {}
+
 	Equals::Equals()
 		: Filter( EQUALS ) {}
 	Equals::Equals( xmmsv_coll_t* coll )
@@ -422,9 +450,24 @@ namespace Xmms
 	              const string& field,
 	              const string& value,
 	              bool case_sensitive )
-		: Filter( EQUALS,
-	              operand, field, value, case_sensitive ) {}
+		: Filter( EQUALS, operand, field, value, case_sensitive ) {}
 	Equals::~Equals() {}
+
+	NotEquals::NotEquals()
+		: Filter( NOTEQUAL ) {}
+	NotEquals::NotEquals( xmmsv_coll_t* coll )
+		: Filter( coll ) {}
+	NotEquals::NotEquals( Coll& operand )
+		: Filter( NOTEQUAL, operand ) {}
+	NotEquals::NotEquals( Coll& operand, const string& field )
+		: Filter( NOTEQUAL, operand, field ) {}
+	NotEquals::NotEquals( Coll& operand,
+	                const string& field,
+	                const string& value,
+	                bool case_sensitive )
+		: Filter( NOTEQUAL,
+		          operand, field, value, case_sensitive ) {}
+	NotEquals::~NotEquals() {}
 
 	Match::Match()
 		: Filter( MATCH ) {}
@@ -442,21 +485,98 @@ namespace Xmms
 	              operand, field, value, case_sensitive ) {}
 	Match::~Match() {}
 
+	Token::Token()
+			: Filter( TOKEN ) {}
+	Token::Token( xmmsv_coll_t* coll )
+			: Filter( coll ) {}
+	Token::Token( Coll& operand )
+			: Filter( TOKEN, operand ) {}
+	Token::Token( Coll& operand, const string& field )
+			: Filter( TOKEN, operand, field ) {}
+	Token::Token( Coll& operand,
+		              const string& field,
+		              const string& value,
+		              bool case_sensitive )
+			: Filter( TOKEN,
+			          operand, field, value, case_sensitive ) {}
+	Token::~Token() {}
+
+	Order::Order()
+		: Unary( ORDER )
+	{
+		setAttribute( "type", "random" );
+	}
+	Order::Order( Coll& operand )
+		: Unary( ORDER, operand )
+	{
+		setAttribute( "type", "random" );
+	}
+	Order::Order( string& field, bool is_asc )
+		: Unary( ORDER )
+	{
+		setAttribute( "type", "value" );
+		setAttribute( "field", field );
+		if( !is_asc ) {
+			setAttribute( "order", "DESC" );
+		}
+	}
+	Order::Order( Coll& operand, string& field, bool is_asc )
+		: Unary( ORDER, operand )
+	{
+		setAttribute( "type", "value" );
+		setAttribute( "field", field );
+		if( !is_asc ) {
+			setAttribute( "order", "DESC" );
+		}
+	}
+	Order::Order( xmmsv_coll_t* coll )
+		: Unary( coll ) {}
+	Order::~Order() {}
+
+	Limit::Limit()
+		: Unary( LIMIT ) {}
+	Limit::Limit( Coll& operand )
+		: Unary( LIMIT, operand ) {}
+	Limit::Limit( Coll& operand, int start, int length)
+		: Unary( LIMIT, operand )
+	{
+		std::stringstream _start;
+		std::stringstream _length;
+
+		_start << start;
+		_length << length;
+
+		setAttribute( "start", _start.str() );
+		setAttribute( "length", _length.str() );
+	}
+	Limit::Limit( xmmsv_coll_t* coll )
+		: Unary( coll ) {}
+	Limit::~Limit() {}
+
+	Mediaset::Mediaset()
+			: Unary( MEDIASET ) {}
+	Mediaset::Mediaset( Coll& operand )
+			: Unary( MEDIASET, operand ) {}
+	Mediaset::Mediaset( xmmsv_coll_t* coll )
+			: Unary( coll ) {}
+	Mediaset::~Mediaset() {}
 
 	Idlist::Idlist( xmmsv_coll_t* coll )
 		: Coll( coll )
 	{
 	}
-	Idlist::Idlist( Type type )
-		: Coll( type )
+	Idlist::Idlist( const string& type )
+		: Coll( IDLIST )
 	{
+		setAttribute( "type", type );
 	}
 	Idlist::Idlist()
 		: Coll( IDLIST )
 	{
+		setAttribute( "type", "list" );
 	}
 
-	/* FIXME: copies 
+	/* FIXME: copies
 	Idlist::Idlist( const Idlist& src )
 		: coll_( src.coll_ )
 	{
@@ -478,19 +598,19 @@ namespace Xmms
 
 	Queue::Queue( xmmsv_coll_t* coll )
 		: Idlist( coll ) {}
-	Queue::Queue( Type type )
+	Queue::Queue( const string& type )
 		: Idlist( type ) {}
-	Queue::Queue( Type type, unsigned int history )
+	Queue::Queue( const string& type, unsigned int history )
 		: Idlist( type )
 	{
 		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
 	Queue::Queue()
-		: Idlist( QUEUE )
+		: Idlist( "queue" )
 	{
 	}
 	Queue::Queue( unsigned int history )
-		: Idlist( QUEUE )
+		: Idlist( "queue" )
 	{
 		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
@@ -501,22 +621,21 @@ namespace Xmms
 	PartyShuffle::PartyShuffle( xmmsv_coll_t* coll )
 		: Queue( coll ) {}
 	PartyShuffle::PartyShuffle()
-		: Queue( PARTYSHUFFLE )
+		: Queue( "partyshuffle" )
 	{
 	}
 	PartyShuffle::PartyShuffle( unsigned int history )
-		: Queue( PARTYSHUFFLE, history )
+		: Queue( "partyshuffle", history )
 	{
 	}
 	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
-		: Queue( PARTYSHUFFLE, history )
+		: Queue( "partyshuffle", history )
 	{
 		setAttribute( "upcoming", boost::lexical_cast<string>( upcoming ) );
 	}
 	PartyShuffle::~PartyShuffle()
 	{
 	}
-
 
 	void Idlist::append( int id )
 	{
@@ -605,7 +724,6 @@ namespace Xmms
 		return value;
 	}
 
-
 	void PartyShuffle::setOperand( Coll& operand )
 	{
 		removeOperand();
@@ -617,7 +735,7 @@ namespace Xmms
 		try {
 			xmmsv_coll_remove_operand( coll_, (*getOperand()).getColl() );
 		}
-		/* don't throw an error if none */
+		// don't throw an error if none
 		catch (...) {}
 	}
 
@@ -635,7 +753,6 @@ namespace Xmms
 
 		return CollResult::createColl( op );
 	}
-
 
 
 	OperandIterator::OperandIterator( Coll& coll )

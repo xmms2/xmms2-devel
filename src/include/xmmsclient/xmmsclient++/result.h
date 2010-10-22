@@ -213,7 +213,7 @@ namespace Xmms
 	template< typename T >
 	class SignalAdapter : public AdapterBase< T >
 	{
-		
+
 		public:
 			SignalAdapter( xmmsc_result_t* res, MainloopInterface*& ml )
 				: AdapterBase<T>( res, ml )
@@ -411,39 +411,68 @@ namespace Xmms
 						collptr.reset( new Coll::Complement( coll ) );
 						break;
 					}
-					case XMMS_COLLECTION_TYPE_HAS: {
-						collptr.reset( new Coll::Has( coll ) );
+					case XMMS_COLLECTION_TYPE_EQUALS: {
+						collptr.reset( new Coll::Equals( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_NOTEQUAL: {
+						collptr.reset( new Coll::NotEquals( coll ) );
 						break;
 					}
 					case XMMS_COLLECTION_TYPE_SMALLER: {
 						collptr.reset( new Coll::Smaller( coll ) );
 						break;
 					}
+					case XMMS_COLLECTION_TYPE_SMALLEREQ: {
+						collptr.reset( new Coll::SmallerEqual( coll ) );
+						break;
+					}
 					case XMMS_COLLECTION_TYPE_GREATER: {
 						collptr.reset( new Coll::Greater( coll ) );
 						break;
 					}
-					case XMMS_COLLECTION_TYPE_EQUALS: {
-						collptr.reset( new Coll::Equals( coll ) );
+					case XMMS_COLLECTION_TYPE_GREATEREQ: {
+						collptr.reset( new Coll::GreaterEqual( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_HAS: {
+						collptr.reset( new Coll::Has( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_TOKEN: {
+						collptr.reset( new Coll::Token( coll ) );
 						break;
 					}
 					case XMMS_COLLECTION_TYPE_MATCH: {
 						collptr.reset( new Coll::Match( coll ) );
 						break;
 					}
+					case XMMS_COLLECTION_TYPE_ORDER: {
+						collptr.reset( new Coll::Order( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_LIMIT: {
+						collptr.reset( new Coll::Limit( coll ) );
+						break;
+					}
+					case XMMS_COLLECTION_TYPE_MEDIASET: {
+						collptr.reset( new Coll::Mediaset( coll ) );
+						break;
+					}
 					case XMMS_COLLECTION_TYPE_IDLIST: {
-						collptr.reset( new Coll::Idlist( coll ) );
-						break;
-					}
-					case XMMS_COLLECTION_TYPE_QUEUE: {
-						collptr.reset( new Coll::Queue( coll ) );
-						break;
-					}
-					case XMMS_COLLECTION_TYPE_PARTYSHUFFLE: {
-						collptr.reset( new Coll::PartyShuffle( coll ) );
-						break;
-					}
+						char *type = NULL;
 
+						if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
+							collptr.reset( new Coll::Idlist( coll ) );
+						} else if (!strcmp(type, "queue")) {
+							collptr.reset( new Coll::Queue( coll ) );
+						} else if (!strcmp(type, "partyshuffle")) {
+							collptr.reset( new Coll::PartyShuffle( coll ) );
+						} else {
+							collptr.reset( new Coll::Idlist( coll ) );
+						}
+						break;
+					}
 				}
 
 				return collptr;
