@@ -27,8 +27,119 @@ struct db_info {
 	xmmsv_coll_t *coll;
 };
 
+typedef enum {
+	XMMS_COLLECTION1_TYPE_REFERENCE,
+	XMMS_COLLECTION1_TYPE_UNION,
+	XMMS_COLLECTION1_TYPE_INTERSECTION,
+	XMMS_COLLECTION1_TYPE_COMPLEMENT,
+	XMMS_COLLECTION1_TYPE_HAS,
+	XMMS_COLLECTION1_TYPE_EQUALS,
+	XMMS_COLLECTION1_TYPE_MATCH,
+	XMMS_COLLECTION1_TYPE_SMALLER,
+	XMMS_COLLECTION1_TYPE_GREATER,
+	XMMS_COLLECTION1_TYPE_IDLIST,
+	XMMS_COLLECTION1_TYPE_QUEUE,
+	XMMS_COLLECTION1_TYPE_PARTYSHUFFLE,
+	XMMS_COLLECTION1_TYPE_LAST = XMMS_COLLECTION1_TYPE_PARTYSHUFFLE
+} xmmsv_coll1_type_t;
+
 void collection_restore (sqlite3 *db, GHashTable **ht);
-static xmmsv_coll_t *xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_t type);
+static xmmsv_coll_t *xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type);
+
+/* Creates a coll2 collection from a coll1 type */
+static xmmsv_coll_t*
+create_coll (xmmsv_coll1_type_t type)
+{
+	xmmsv_coll_t *ret;
+	xmmsv_coll_type_t new_type;
+	const char *filter_op = NULL;
+	const char *idlist_type = NULL;
+
+	switch (type) {
+	case XMMS_COLLECTION1_TYPE_REFERENCE:
+		new_type = XMMS_COLLECTION_TYPE_REFERENCE;
+		break;
+	case XMMS_COLLECTION1_TYPE_UNION:
+		new_type = XMMS_COLLECTION_TYPE_UNION;
+		break;
+	case XMMS_COLLECTION1_TYPE_INTERSECTION:
+		new_type = XMMS_COLLECTION_TYPE_INTERSECTION;
+		break;
+	case XMMS_COLLECTION1_TYPE_COMPLEMENT:
+		new_type = XMMS_COLLECTION_TYPE_COMPLEMENT;
+		break;
+
+	case XMMS_COLLECTION1_TYPE_HAS:
+		filter_op = "has";
+		break;
+	case XMMS_COLLECTION1_TYPE_EQUALS:
+		filter_op = "=";
+		break;
+	case XMMS_COLLECTION1_TYPE_MATCH:
+		filter_op = "match";
+		break;
+	case XMMS_COLLECTION1_TYPE_SMALLER:
+		filter_op = "<";
+		break;
+	case XMMS_COLLECTION1_TYPE_GREATER:
+		filter_op = ">";
+		break;
+
+	case XMMS_COLLECTION1_TYPE_IDLIST:
+		idlist_type = "list";
+		break;
+	case XMMS_COLLECTION1_TYPE_QUEUE:
+		idlist_type = "queue";
+		break;
+	case XMMS_COLLECTION1_TYPE_PARTYSHUFFLE:
+		idlist_type = "pshuffle";
+		break;
+	}
+
+	if (filter_op != NULL) {
+		ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+		xmmsv_coll_attribute_set (ret, "operation", filter_op);
+	} else if (idlist_type != NULL) {
+		ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+		xmmsv_coll_attribute_set (ret, "type", idlist_type);
+	} else {
+		ret = xmmsv_coll_new (new_type);
+	}
+
+	return ret;
+}
+
+/* Augment the collection with new attributes needed for coll2 */
+static xmmsv_coll_t*
+augment_coll (xmmsv_coll_t *coll)
+{
+	xmmsv_coll_t *ret = coll;
+	char *key;
+
+	switch (xmmsv_coll_get_type (coll)) {
+	case XMMS_COLLECTION_TYPE_FILTER:
+		if (xmmsv_coll_attribute_get (coll, "field", &key)
+		    && strcmp (key, "id") == 0) {
+			xmmsv_coll_attribute_set (coll, "type", "id");
+		} else {
+			xmmsv_coll_attribute_set (coll, "type", "value");
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_REFERENCE:
+		if (xmmsv_coll_attribute_get (coll, "reference", &key)
+		    && strcmp (key, "All Media") == 0) {
+			ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+			xmmsv_coll_unref (coll);
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
 
 static int
 restore_callback (void *userdata, int columns, char **col_strs, char **col_names)
@@ -53,7 +164,7 @@ restore_callback (void *userdata, int columns, char **col_strs, char **col_names
 
 	/* Do not duplicate operator if same id */
 	if (previd < 0 || id != previd) {
-		coll = xmms_collection_dbread_operator (info, id, type);
+		coll = xmms_collection_dbread_operator (info->db, id, type);
 		previd = id;
 	}
 	else {
@@ -134,7 +245,7 @@ operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
 	}
 
 
-	op = xmms_collection_dbread_operator (info, id, type);
+	op = xmms_collection_dbread_operator (info->db, id, type);
 	xmmsv_coll_add_operand (coll, op);
 	xmmsv_coll_unref (op);
 
@@ -142,12 +253,13 @@ operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
 }
 
 static xmmsv_coll_t *
-xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_t type)
+xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type)
 {
 	xmmsv_coll_t *coll;
 	gchar query[256];
+	struct db_info info;
 
-	coll = xmmsv_coll_new (type);
+	coll = create_coll (type);
 
 	/* Retrieve the attributes */
 	g_snprintf (query, sizeof (query),
@@ -155,7 +267,7 @@ xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_
 	            "FROM CollectionOperators AS op, CollectionAttributes AS attr "
 	            "WHERE op.id=%d AND attr.collid=op.id", id);
 
-	sqlite3_exec (info->db, query, attribute_callback, coll, NULL);
+	sqlite3_exec (db, query, attribute_callback, coll, NULL);
 
 	/* Retrieve the idlist */
 	g_snprintf (query, sizeof (query),
@@ -164,7 +276,7 @@ xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_
 	            "WHERE op.id=%d AND idl.collid=op.id "
 	            "ORDER BY idl.position", id);
 
-	sqlite3_exec (info->db, query, idlist_callback, coll, NULL);
+	sqlite3_exec (db, query, idlist_callback, coll, NULL);
 
 	/* Retrieve the operands */
 	g_snprintf (query, sizeof (query),
@@ -172,8 +284,9 @@ xmms_collection_dbread_operator (struct db_info *info, gint id, xmmsv_coll_type_
 	            "FROM CollectionOperators AS op, CollectionConnections AS conn "
 	            "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
 
-	info->coll = coll;
-	sqlite3_exec (info->db, query, operator_callback, info, NULL);
+	info.db = db;
+	info.coll = coll;
+	sqlite3_exec (db, query, operator_callback, &info, NULL);
 
-	return coll;
+	return augment_coll (coll);
 }
