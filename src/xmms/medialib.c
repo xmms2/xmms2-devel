@@ -2067,6 +2067,9 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 		case AGGREGATE_MIN:
 			if (strval == NULL && (cur == NULL
 			                       || (xmmsv_get_int (cur, &oldval) && oldval > ival))) {
+				if (cur != NULL) {
+					xmmsv_unref (cur);
+				}
 				cur = xmmsv_new_int (ival);
 				new_val = 1;
 			}
@@ -2075,6 +2078,9 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 		case AGGREGATE_MAX:
 			if (strval == NULL && (cur == NULL
 			                       || (xmmsv_get_int (cur, &oldval) && oldval < ival))) {
+				if (cur != NULL) {
+					xmmsv_unref (cur);
+				}
 				cur = xmmsv_new_int (ival);
 				new_val = 1;
 			}
