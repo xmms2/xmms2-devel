@@ -146,8 +146,9 @@ on_playlist_r_one_changed (xmms_object_t *object, xmmsv_t *_data,
 static void
 on_playlist_updated (xmms_object_t *object, const gchar *plname)
 {
-	xmmsv_coll_t *plcoll;
 	xmms_playlist_t *playlist = (xmms_playlist_t*)object;
+	xmmsv_coll_t *plcoll;
+	gchar *type;
 
 	/* Already in an update process, quit */
 	if (playlist->update_flag) {
@@ -157,18 +158,18 @@ on_playlist_updated (xmms_object_t *object, const gchar *plname)
 	plcoll = xmms_playlist_get_coll (playlist, plname, NULL);
 	if (plcoll == NULL) {
 		return;
-	} else {
-		/* Run the update function if appropriate */
-		char *type;
+	}
 
-		if (xmmsv_coll_attribute_get (plcoll, "type", &type)) {
-			/* TODO: Service client should be notified here */
-			if (strcmp (type, "queue") == 0) {
-				xmms_playlist_update_queue (playlist, plname, plcoll);
-			} else if (strcmp (type, "pshuffle") == 0) {
-				xmms_playlist_update_partyshuffle (playlist, plname, plcoll);
-			}
-		}
+	if (!xmmsv_coll_attribute_get (plcoll, "type", &type)) {
+		return;
+	}
+
+	/* Run the update function if appropriate */
+	/* TODO: Service client should be notified here */
+	if (strcmp (type, "queue") == 0) {
+		xmms_playlist_update_queue (playlist, plname, plcoll);
+	} else if (strcmp (type, "pshuffle") == 0) {
+		xmms_playlist_update_partyshuffle (playlist, plname, plcoll);
 	}
 }
 
