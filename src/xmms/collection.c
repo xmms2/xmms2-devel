@@ -721,7 +721,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 	/* Creates the fetchspec to use */
 	fetch_spec = xmmsv_build_cluster_list (
-			xmmsv_new_string ("id"),
+			xmmsv_new_string ("_row"),
 			xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL));
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
