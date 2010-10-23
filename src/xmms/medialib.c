@@ -1918,6 +1918,11 @@ typedef struct {
 	int n;
 } random_data_t;
 
+typedef struct {
+	GHashTable *ht;
+	xmmsv_t *list;
+} list_data_t;
+
 /* Converts an S4 result (a column) into an xmmsv values */
 static void *
 result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
@@ -2016,18 +2021,18 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 		{
 			xmmsv_t *val;
 			void *key;
-			GHashTable *table;
+			list_data_t *data;
 
 			if (cur == NULL) {
-				table = g_hash_table_new_full (NULL, NULL, NULL,
-				                               (GDestroyNotify)xmmsv_unref);
-				cur = xmmsv_new_bin ((unsigned char*)&table, sizeof (GHashTable*));
+				list_data_t init = {
+					.ht = g_hash_table_new (NULL, NULL),
+					.list = xmmsv_new_list ()};
+				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (list_data_t));
 				new_val = 1;
-			} else {
-				GHashTable **tmp;
-				xmmsv_get_bin (cur, (const unsigned char**)&tmp, &len);
-				table = *tmp;
 			}
+
+			xmmsv_get_bin (cur, (const unsigned char**)&data, &len);
+
 			if (strval != NULL) {
 				val = xmmsv_new_string (strval);
 				key = (void*)strval;
@@ -2035,7 +2040,12 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 				val = xmmsv_new_int (ival);
 				key = GINT_TO_POINTER (ival);
 			}
-			g_hash_table_insert (table, key, val);
+
+			if (g_hash_table_lookup (data->ht, key) == NULL) {
+				g_hash_table_insert (data->ht, key, val);
+				xmmsv_list_append (data->list, val);
+			}
+			xmmsv_unref (val);
 			break;
 		}
 
@@ -2132,11 +2142,10 @@ static xmmsv_t *
 aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 {
 	void *data = NULL;
-	xmmsv_t *ret = NULL, *val;
+	xmmsv_t *ret = NULL;
 	avg_data_t *avg_data;
 	random_data_t *random_data;
-	GHashTable **table;
-	GHashTableIter iter;
+	list_data_t *list_data;
 	unsigned int len;
 
 	if (value != NULL && xmmsv_is_type (value, XMMSV_TYPE_BIN))
@@ -2158,17 +2167,9 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 		break;
 
 	case AGGREGATE_LIST:
-		table = data;
-		if (table != NULL) {
-			g_hash_table_iter_init (&iter, *table);
-			ret = xmmsv_new_list ();
-
-			while (g_hash_table_iter_next (&iter, NULL, (void**)&val)) {
-				xmmsv_list_append (ret, val);
-			}
-
-			g_hash_table_destroy (*table);
-		}
+		list_data = data;
+		g_hash_table_destroy (list_data->ht);
+		ret = list_data->list;
 		break;
 
 	case AGGREGATE_AVG:
