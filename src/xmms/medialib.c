@@ -52,6 +52,8 @@ static void xmms_medialib_client_remove_property (xmms_medialib_t *medialib, gin
 static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 id, xmms_error_t *err);
 static gint32 xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
+static s4_t *xmms_medialib_database_open (const gchar *config_path, const gchar *indices[]);
+
 #include "medialib_ipc.c"
 
 /**
@@ -148,10 +150,14 @@ find_highest_id (void)
 xmms_medialib_t *
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
+	xmms_config_property_t *cfg;
+	const gchar *indices[] = {
+		XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
+		XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+		NULL
+	};
+	const gchar *medialib_path;
 	gchar *path;
-	const gchar *conf_path;
-	const char *indices[] = {XMMS_MEDIALIB_ENTRY_PROPERTY_URL, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, NULL};
-	xmms_config_property_t *cp, *conv_conf, *coll_conf;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->playlist = playlist;
@@ -159,90 +165,124 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_medialib_register_ipc_commands (XMMS_OBJECT (medialib));
 
 	path = XMMS_BUILD_PATH ("medialib.s4");
-	cp = xmms_config_property_register ("medialib.path", path, NULL, NULL);
-	conv_conf = xmms_config_property_register ("sqlite2s4.path", "sqlite2s4", NULL, NULL);
-	coll_conf = xmms_config_property_register ("collection.directory",
-	                                           XMMS_BUILD_PATH ("collections", "${uuid}"), NULL, NULL);
+	cfg = xmms_config_property_register ("medialib.path", path, NULL, NULL);
 	g_free (path);
 
-	conf_path = xmms_config_property_get_string (cp);
-	medialib->s4 = s4_open (conf_path, indices, 0);
+	path = XMMS_BUILD_PATH ("collections", "${uuid}");
+	xmms_config_property_register ("collection.directory", path, NULL, NULL);
+	g_free (path);
 
-	/* Could not open the S4 database */
-	if (medialib->s4 == NULL) {
-		int err = s4_errno ();
-		/* Wrong magic number, maybe we stumbled upon an old sqlite database?
-		 * We'll try to convert it
-		 */
-		if (err == S4E_MAGIC) {
-			gchar *std_out, *std_err, *cmdline;
-			gint exit_status, i;
-			GError *error;
+	xmms_config_property_register ("sqlite2s4.path", "sqlite2s4", NULL, NULL);
 
-			path = NULL;
-
-			/* Replace old suffix with .s4 */
-			for (i = strlen (conf_path) - 1; path == NULL && i >= 0; i--) {
-				switch (conf_path[i]) {
-					/* A slash before a dot, we found no suffix */
-					case '/':
-					case '\\':
-						i = -1;
-						break;
-					/* A dot means we found the start of the suffix */
-					case '.':
-						path = malloc (i + 4);
-						/* Copy everything before the suffix */
-						memcpy (path, conf_path, i);
-						/* And append .s4 */
-						memcpy (path + i, ".s4", 4);
-						break;
-				}
-			}
-			/* If we found no suffix we simply append .s4 */
-			if (path == NULL) {
-				path = g_strconcat (conf_path, ".s4", NULL);
-			}
-
-			cmdline = g_strjoin (" ", xmms_config_property_get_string (conv_conf),
-			                     conf_path, path, xmms_config_property_get_string (coll_conf), NULL);
-
-			XMMS_DBG ("Trying to run sqlite2s4, command line %s", cmdline);
-
-			if (!g_spawn_command_line_sync (cmdline, &std_out, &std_err, &exit_status, &error) ||
-			    exit_status) {
-				xmms_log_fatal ("Could not run \"%s\", try to run it manually", cmdline);
-			}
-
-			g_free (cmdline);
-
-			medialib->s4 = s4_open (path, indices, 0);
-
-			/* Now we give up */
-			if (medialib->s4 == NULL) {
-				xmms_log_fatal ("Could not open the S4 database");
-			} else {
-				/* Move the sqlite database */
-				gchar *new_path = g_strconcat (conf_path, ".obsolete", NULL);
-				g_rename (conf_path, new_path);
-				g_free (new_path);
-
-				/* Update the config path */
-				xmms_config_property_set_data (cp, path);
-			}
-
-			g_free (path);
-		} else {
-			/* TODO: Cleaner exit? */
-			xmms_log_fatal ("Could not open the S4 database");
-		}
-	}
+	medialib_path = xmms_config_property_get_string (cfg);
+	medialib->s4 = xmms_medialib_database_open (medialib_path, indices);
 
 	default_sp = s4_sourcepref_create (source_pref);
 
 	medialib->next_id = find_highest_id () + 1;
 
 	return medialib;
+}
+
+/**
+ * Extracts the file name of the old media library
+ * and replaces its suffix with .s4
+ */
+static gchar *
+xmms_medialib_database_converted_name (const gchar *conf_path)
+{
+	gchar *filename, *dirname, *dot, *converted_name, *fullpath;
+
+	dirname = g_path_get_dirname (conf_path);
+	filename = g_path_get_basename (conf_path);
+
+	/* nuke the suffix */
+	dot = g_strrstr (filename, ".");
+	if (dot != NULL) {
+		*dot = '\0';
+	}
+
+	converted_name = g_strconcat (filename, ".s4", NULL);
+
+	fullpath = g_build_path (G_DIR_SEPARATOR_S, dirname,
+	                         converted_name, NULL);
+
+	g_free (converted_name);
+	g_free (filename);
+	g_free (dirname);
+
+	return fullpath;
+}
+
+static s4_t *
+xmms_medialib_database_convert (const gchar *database_name,
+                                const gchar *indices[])
+{
+	const gchar *coll_conf, *conv_conf;
+	gchar *cmdline, *new_name, *obsolete_name;
+	xmms_config_property_t *cfg;
+	gint exit_status;
+	s4_t *s4;
+
+	cfg = xmms_config_lookup ("collection.directory");
+	coll_conf = xmms_config_property_get_string (cfg);
+
+	cfg = xmms_config_lookup ("sqlite2s4.path");
+	conv_conf = xmms_config_property_get_string (cfg);
+
+	new_name = xmms_medialib_database_converted_name (database_name);
+
+	cmdline = g_strjoin (" ", conv_conf, database_name,
+	                     new_name, coll_conf, NULL);
+
+	xmms_log_info ("Attempting to migrate database to new format.");
+
+	if (!g_spawn_command_line_sync (cmdline, NULL, NULL, &exit_status, NULL) || exit_status) {
+		xmms_log_fatal ("Could not run \"%s\", try to run it manually", cmdline);
+	}
+
+	g_free (cmdline);
+
+	s4 = s4_open (new_name, indices, 0);
+	/* Now we give up */
+	if (s4 == NULL) {
+		xmms_log_fatal ("Could not open the S4 database");
+	}
+
+	xmms_log_info ("Migration successful.");
+
+	/* Move the sqlite database */
+	obsolete_name = g_strconcat (database_name, ".obsolete", NULL);
+	g_rename (database_name, obsolete_name);
+	g_free (obsolete_name);
+
+	/* Update the config path */
+	cfg = xmms_config_lookup ("medialib.path");
+	xmms_config_property_set_data (cfg, new_name);
+
+	g_free (new_name);
+
+	return s4;
+}
+
+static s4_t *
+xmms_medialib_database_open (const gchar *database_name,
+                             const gchar *indices[])
+{
+	s4_t *s4;
+
+	s4 = s4_open (database_name, indices, 0);
+	if (s4 != NULL) {
+		return s4;
+	}
+
+	if (s4_errno () != S4E_MAGIC) {
+		/* The database was a S4 database, but still couldn't be opened. */
+		xmms_log_fatal ("Could not open the S4 database");
+	}
+
+	/* Seems like we've found a SQLite database, lets convert it. */
+	return xmms_medialib_database_convert (database_name, indices);
 }
 
 char *
