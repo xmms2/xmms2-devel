@@ -300,6 +300,10 @@ def configure(conf):
     flags.disable_c_warning('format-extra-args')
     flags.disable_c_warning('format-zero-length')
 
+    flags.enable_feature('diagnostics-show-option')
+
+    flags.enable_c_error('implicit-function-declaration')
+
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 
