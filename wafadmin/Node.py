@@ -623,7 +623,9 @@ class Node(object):
 
 		def ant_iter(nodi, maxdepth=25, pats=[]):
 			nodi.__class__.bld.rescan(nodi)
-			for name in nodi.__class__.bld.cache_dir_contents[nodi.id]:
+			tmp = list(nodi.__class__.bld.cache_dir_contents[nodi.id])
+			tmp.sort()
+			for name in tmp:
 				npats = accept(name, pats)
 				if npats and npats[0]:
 					accepted = [] in npats[0]

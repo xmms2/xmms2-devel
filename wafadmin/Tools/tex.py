@@ -9,7 +9,7 @@ import Utils, TaskGen, Task, Runner, Build
 from TaskGen import feature, before
 from Logs import error, warn, debug
 
-re_tex = re.compile(r'\\(?P<type>include|input|import|bringin){(?P<file>[^{}]*)}', re.M)
+re_tex = re.compile(r'\\(?P<type>include|input|import|bringin|lstinputlisting){(?P<file>[^{}]*)}', re.M)
 def scan(self):
 	node = self.inputs[0]
 	env = self.env
@@ -64,11 +64,13 @@ def tex_build(task, command='LATEX'):
 	node = task.inputs[0]
 	reldir  = node.bld_dir(env)
 
-	lst = []
-	for c in Utils.split_path(reldir):
-		if c: lst.append('..')
-	srcfile = os.path.join(*(lst + [node.srcpath(env)]))
-	sr2 = os.path.join(*(lst + [node.parent.srcpath(env)]))
+	#lst = []
+	#for c in Utils.split_path(reldir):
+	#	if c: lst.append('..')
+	#srcfile = os.path.join(*(lst + [node.srcpath(env)]))
+	#sr2 = os.path.join(*(lst + [node.parent.srcpath(env)]))
+	srcfile = node.abspath(env)
+	sr2 = node.parent.abspath() + os.pathsep + node.parent.abspath(env) + os.pathsep
 
 	aux_node = node.change_ext('.aux')
 	idx_node = node.change_ext('.idx')
@@ -82,7 +84,7 @@ def tex_build(task, command='LATEX'):
 
 	warn('first pass on %s' % command)
 
-	task.env.env = {'TEXINPUTS': sr2 + os.pathsep}
+	task.env.env = {'TEXINPUTS': sr2}
 	task.env.SRCFILE = srcfile
 	ret = fun(task)
 	if ret:
@@ -100,7 +102,7 @@ def tex_build(task, command='LATEX'):
 		if fo:
 			warn('calling bibtex')
 
-			task.env.env = {'BIBINPUTS': sr2 + os.pathsep, 'BSTINPUTS': sr2 + os.pathsep}
+			task.env.env = {'BIBINPUTS': sr2, 'BSTINPUTS': sr2}
 			task.env.SRCFILE = docuname
 			ret = bibtex_fun(task)
 			if ret:

@@ -705,3 +705,22 @@ if os.name == 'java':
 	except NotImplementedError:
 		gc.disable = gc.enable
 
+def run_once(fun):
+	"""
+	decorator, make a function cache its results, use like this:
+
+	@run_once
+	def foo(k):
+		return 345*2343
+	"""
+	cache = {}
+	def wrap(k):
+		try:
+			return cache[k]
+		except KeyError:
+			ret = fun(k)
+			cache[k] = ret
+			return ret
+	wrap.__cache__ = cache
+	return wrap
+

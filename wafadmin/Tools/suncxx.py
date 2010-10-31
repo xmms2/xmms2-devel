@@ -71,5 +71,5 @@ find_ar
 sxx_common_flags
 cxx_load_tools
 cxx_add_flags
+link_add_flags
 '''
-

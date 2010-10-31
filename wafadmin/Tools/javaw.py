@@ -104,7 +104,7 @@ def apply_java(self):
 	src_nodes = [x for x in srcdir_node.ant_glob(self.source_re, flat=False)]
 	bld_nodes = [x.change_ext('.class') for x in src_nodes]
 
-	self.env['OUTDIR'] = [srcdir_node.abspath(self.env)]
+	self.env['OUTDIR'] = [srcdir_node.bldpath(self.env)]
 
 	tsk = self.create_task('javac')
 	tsk.set_inputs(src_nodes)
@@ -159,6 +159,7 @@ def post_run_javac(self):
 	for x in to_add:
 		self.outputs.append(inner[x])
 
+	self.cached = True # disable the cache here - inner classes are a problem
 	return Task.Task.post_run(self)
 cls.post_run = post_run_javac
 

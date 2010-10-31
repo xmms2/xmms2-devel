@@ -36,7 +36,7 @@ class PreprocError(Utils.WafError):
 POPFILE = '-'
 
 
-recursion_limit = 100
+recursion_limit = 5000
 "do not loop too much on header inclusion"
 
 go_absolute = 0
@@ -75,8 +75,8 @@ re_mac = re.compile("^[a-zA-Z_]\w*")
 re_fun = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*[(]')
 re_pragma_once = re.compile('^\s*once\s*', re.IGNORECASE)
 re_nl = re.compile('\\\\\r*\n', re.MULTILINE)
-re_cpp = re.compile(\
-	r"""(/\*[^*]*\*+([^/*][^*]*\*+)*/)|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)""",
+re_cpp = re.compile(
+	r"""(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)|//[^\n]*|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|.[^/"'\\]*)""",
 	re.MULTILINE)
 trig_def = [('??'+a, b) for a, b in zip("=-/!'()<>", r'#~\|^[]{}')]
 chr_esc = {'0':0, 'a':7, 'b':8, 't':9, 'n':10, 'f':11, 'v':12, 'r':13, '\\':92, "'":39}
@@ -102,10 +102,11 @@ undefined = 'u'
 skipped   = 's'
 
 def repl(m):
-	s = m.group(1)
-	if s is not None: return ' '
-	s = m.group(3)
-	if s is None: return ''
+	if m.group(1):
+		return ' '
+	s = m.group(2)
+	if s is None:
+		return ''
 	return s
 
 def filter_comments(filename):
@@ -553,6 +554,7 @@ def parse_char(txt):
 		try: return chr_esc[c]
 		except KeyError: raise PreprocError("could not parse char literal '%s'" % txt)
 
+@Utils.run_once
 def tokenize(s):
 	"""convert a string into a list of tokens (shlex.split does not apply to c/c++/d)"""
 	ret = []
@@ -589,6 +591,10 @@ def tokenize(s):
 				break
 	return ret
 
+@Utils.run_once
+def define_name(line):
+	return re_mac.match(line).group(0)
+
 class c_parser(object):
 	def __init__(self, nodepaths=None, defines=None):
 		#self.lines = txt.split('\n')
@@ -612,26 +618,40 @@ class c_parser(object):
 
 		# file added
 		self.curfile = ''
-		self.ban_includes = []
+		self.ban_includes = set([])
+
+	def cached_find_resource(self, node, filename):
+		try:
+			nd = node.bld.cache_nd
+		except:
+			nd = node.bld.cache_nd = {}
+
+		tup = (node.id, filename)
+		try:
+			return nd[tup]
+		except KeyError:
+			ret = node.find_resource(filename)
+			nd[tup] = ret
+			return ret
 
 	def tryfind(self, filename):
 		self.curfile = filename
 
 		# for msvc it should be a for loop on the whole stack
-		found = self.currentnode_stack[-1].find_resource(filename)
+		found = self.cached_find_resource(self.currentnode_stack[-1], filename)
 
 		for n in self.nodepaths:
 			if found:
 				break
-			found = n.find_resource(filename)
+			found = self.cached_find_resource(n, filename)
 
-		if not found:
-			if not filename in self.names:
-				self.names.append(filename)
-		else:
+		if found:
 			self.nodes.append(found)
 			if filename[-4:] != '.moc':
 				self.addlines(found)
+		else:
+			if not filename in self.names:
+				self.names.append(filename)
 		return found
 
 	def addlines(self, node):
@@ -648,14 +668,15 @@ class c_parser(object):
 		except KeyError:
 			pass
 		else:
-			self.lines = lns + self.lines
+			self.lines.extend(lns)
 			return
 
 		try:
 			lines = filter_comments(filepath)
 			lines.append((POPFILE, ''))
+			lines.reverse()
 			pc[filepath] = lines # cache the lines filtered
-			self.lines = lines + self.lines
+			self.lines.extend(lines)
 		except IOError:
 			raise PreprocError("could not read the file %s" % filepath)
 		except Exception:
@@ -677,10 +698,12 @@ class c_parser(object):
 
 		self.addlines(node)
 		if env['DEFLINES']:
-			self.lines = [('define', x) for x in env['DEFLINES']] + self.lines
+			lst = [('define', x) for x in env['DEFLINES']]
+			lst.reverse()
+			self.lines.extend(lst)
 
 		while self.lines:
-			(kind, line) = self.lines.pop(0)
+			(kind, line) = self.lines.pop()
 			if kind == POPFILE:
 				self.currentnode_stack.pop()
 				continue
@@ -691,6 +714,9 @@ class c_parser(object):
 					debug('preproc: line parsing failed (%s): %s %s', e, line, Utils.ex_stack())
 
 	def process_line(self, token, line):
+		"""
+		WARNING: a new state must be added for if* because the endif
+		"""
 		ve = Logs.verbose
 		if ve: debug('preproc: line is %s - %s state is %s', token, line, self.state)
 		state = self.state
@@ -711,17 +737,17 @@ class c_parser(object):
 			if ret: state[-1] = accepted
 			else: state[-1] = ignored
 		elif token == 'ifdef':
-			m = re_mac.search(line)
+			m = re_mac.match(line)
 			if m and m.group(0) in self.defs: state[-1] = accepted
 			else: state[-1] = ignored
 		elif token == 'ifndef':
-			m = re_mac.search(line)
+			m = re_mac.match(line)
 			if m and m.group(0) in self.defs: state[-1] = ignored
 			else: state[-1] = accepted
 		elif token == 'include' or token == 'import':
 			(kind, inc) = extract_include(line, self.defs)
 			if inc in self.ban_includes: return
-			if token == 'import': self.ban_includes.append(inc)
+			if token == 'import': self.ban_includes.add(inc)
 			if ve: debug('preproc: include found %s    (%s) ', inc, kind)
 			if kind == '"' or not strict_quotes:
 				self.tryfind(inc)
@@ -735,21 +761,18 @@ class c_parser(object):
 			if state[-1] == accepted: state[-1] = skipped
 			elif state[-1] == ignored: state[-1] = accepted
 		elif token == 'define':
-			m = re_mac.search(line)
-			if m:
-				name = m.group(0)
-				if ve: debug('preproc: define %s   %s', name, line)
-				self.defs[name] = line
-			else:
+			try:
+				self.defs[define_name(line)] = line
+			except:
 				raise PreprocError("invalid define line %s" % line)
 		elif token == 'undef':
-			m = re_mac.search(line)
+			m = re_mac.match(line)
 			if m and m.group(0) in self.defs:
 				self.defs.__delitem__(m.group(0))
 				#print "undef %s" % name
 		elif token == 'pragma':
-			if re_pragma_once.search(line.lower()):
-				self.ban_includes.append(self.curfile)
+			if re_pragma_once.match(line.lower()):
+				self.ban_includes.add(self.curfile)
 
 def get_deps(node, env, nodepaths=[]):
 	"""

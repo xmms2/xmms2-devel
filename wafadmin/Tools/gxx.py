@@ -129,4 +129,5 @@ def detect(conf):
 	conf.gxx_modifier_platform()
 	conf.cxx_load_tools()
 	conf.cxx_add_flags()
+	conf.link_add_flags()
 

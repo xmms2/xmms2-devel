@@ -128,7 +128,7 @@ class unit_test(object):
 						add_path(v, ld_library_path, 'LD_LIBRARY_PATH')
 
 				pp = Utils.pproc.Popen(filename, **kwargs)
-				pp.wait()
+				(out, err) = pp.communicate() # uh, and the output is ignored?? - fortunately this is going to disappear
 
 				result = int(pp.returncode == self.returncode_ok)
 
@@ -281,9 +281,10 @@ cls = Task.task_type_from_func('utest', func=exec_test, color='PINK', ext_in='.b
 
 old = cls.runnable_status
 def test_status(self):
-	if getattr(Options.options, 'all_tests', False):
+	ret = old(self)
+	if ret == SKIP_ME and getattr(Options.options, 'all_tests', False):
 		return RUN_ME
-	return old(self)
+	return ret
 
 cls.runnable_status = test_status
 cls.quiet = 1

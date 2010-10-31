@@ -87,7 +87,7 @@ def apply_goinc(self):
 					'(required by %r)' % (lib_name, self.name))
 		obj.post()
 		self.go_compile_task.set_run_after(obj.go_package_task)
-		self.go_compile_task.deps_nodes.extend(obj.go_package_task.outputs)
+		self.go_compile_task.dep_nodes.extend(obj.go_package_task.outputs)
 		self.env.append_unique('GOCFLAGS', '-I' + obj.path.abspath(obj.env))
 		self.env.append_unique('GOLFLAGS', '-L' + obj.path.abspath(obj.env))
 
@@ -98,7 +98,7 @@ def apply_gopackage(self):
 			self.go_compile_task.outputs[0],
 			self.path.find_or_declare(self.target + self.env.GO_PACK_EXTENSION))
 	self.go_package_task.set_run_after(self.go_compile_task)
-	self.go_package_task.deps_nodes.extend(self.go_compile_task.outputs)
+	self.go_package_task.dep_nodes.extend(self.go_compile_task.outputs)
 
 @feature('goprogram')
 @after('apply_goinc')
@@ -107,5 +107,5 @@ def apply_golink(self):
 			self.go_compile_task.outputs[0],
 			self.path.find_or_declare(self.target))
 	self.go_link_task.set_run_after(self.go_compile_task)
-	self.go_link_task.deps_nodes.extend(self.go_compile_task.outputs)
+	self.go_link_task.dep_nodes.extend(self.go_compile_task.outputs)
 

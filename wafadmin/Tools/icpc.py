@@ -31,4 +31,5 @@ gxx_common_flags
 gxx_modifier_platform
 cxx_load_tools
 cxx_add_flags
+link_add_flags
 '''

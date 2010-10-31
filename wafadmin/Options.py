@@ -148,12 +148,12 @@ def create_parser(module=None):
 	gr.add_option('-b', '--blddir',
 		action  = 'store',
 		default = '',
-		help    = 'build dir for the project (configuration)',
+		help    = 'out dir for the project (configuration)',
 		dest    = 'blddir')
 	gr.add_option('-s', '--srcdir',
 		action  = 'store',
 		default = '',
-		help    = 'src dir for the project (configuration)',
+		help    = 'top dir for the project (configuration)',
 		dest    = 'srcdir')
 	gr.add_option('--prefix',
 		help    = 'installation prefix (configuration) [default: %r]' % default_prefix,
