@@ -10,6 +10,10 @@ server_suite = """
 server/t_streamtype.c
 """.split()
 
+mlib_suite = """
+server/t_medialib.c
+""".split()
+
 test_xmmstypes_src = """
 runner/main.c
 runner/valgrind.c
@@ -22,6 +26,15 @@ runner/valgrind.c
 ../src/xmms/object.c
 """.split() + server_suite
 
+mlib_ipc = """
+medialib_ipc
+config_ipc
+visualisation/object_ipc
+""".split()
+test_mlib_src = """
+runner/main.c
+runner/valgrind.c
+""".split() + mlib_suite
 
 def configure(conf):
     conf.load("unittest", tooldir="waftools")
@@ -58,6 +71,21 @@ def build(bld):
         install_path = None
         )
 
+    for n in mlib_ipc:
+        bld(rule = "${PYTHON} ${SRC[1].abspath()} > ${TGT}",
+            target = n + ".c",
+            source = ["../src/ipc.xml", "../src/xmms/"+n+".py"],
+            before = "c"
+            )
+
+    bld(features = "c cprogram",
+        target = "test_medialib",
+        source = test_mlib_src,
+        includes = '. .. runner ../src ../src/includepriv ../src/include',
+        use = "xmmsipc xmmssocket xmmstypes xmmsutils s4",
+        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+        install_path = None
+        )
 
 def options(o):
     o.load("unittest", tooldir="waftools")
