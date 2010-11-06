@@ -438,6 +438,7 @@ xmms_medialib_entry_property_set_source (xmms_medialib_entry_t id_num,
 		s4_del (medialib->s4, "song_id", id_val, key, s4_result_get_val (res), source);
 
 	s4_resultset_free (set);
+	s4_sourcepref_unref (sp);
 
 	s4_add (medialib->s4, "song_id", id_val, key, new_prop, source);
 	s4_val_free (id_val);
@@ -1104,6 +1105,7 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 id_num,
 		s4_del (medialib->s4, "song_id", id_val, key, s4_result_get_val (res), source);
 
 	s4_resultset_free (set);
+	s4_sourcepref_unref (sp);
 
 	xmms_medialib_entry_send_update (id_num);
 }
