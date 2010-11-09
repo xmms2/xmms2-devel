@@ -41,26 +41,34 @@ find_terminal_width (void)
 	struct winsize ws;
 	char *colstr, *endptr;
 
-	if (!isatty (STDOUT_FILENO)) {
-#ifdef LINE_MAX
-		columns = LINE_MAX;
-#else
-		columns = 2048 /* Minimum value for LINE_MAX according to POSIX */
-#endif
+	columns = -1;
+
+	/* Try to get size from terminal */
 #ifdef TIOCGWINSZ
-	} else if (!ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
+	if (isatty (STDOUT_FILENO) && !ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
+	}
 #endif
-	} else {
+
+	/* If failed, try to use environment variable */
+	if (columns <= 0) {
 		colstr = getenv ("COLUMNS");
 		if (colstr != NULL) {
 			columns = strtol (colstr, &endptr, 10);
 		}
 	}
 
-	/* Default to 80 columns */
+	/* Otherwise, use LINE_MAX or 80 column default */
 	if (columns <= 0) {
-		columns = 80;
+		if (!isatty (STDOUT_FILENO)) {
+#ifdef LINE_MAX
+			columns = LINE_MAX;
+#else
+			columns = 2048; /* Minimum value for LINE_MAX according to POSIX */
+#endif
+		} else {
+			columns = 80;
+		}
 	}
 
 	return columns;
