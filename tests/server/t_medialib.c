@@ -16,8 +16,18 @@ static void xmms_dump (xmmsv_t *value);
 		xmmsv_t *item; \
 		gint val; \
 		CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (list)) \
-			xmmsv_list_get (list, pos, &item); \
+		xmmsv_list_get (list, pos, &item); \
 		xmmsv_get_int (item, &val); \
+		CU_ASSERT_EQUAL (expected, val); \
+	} while (0);
+
+#define CU_ASSERT_LIST_DICT_INT_EQUAL(list, pos, key, expected) do { \
+		xmmsv_t *item; \
+		gint val; \
+		CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (list)) \
+		xmmsv_list_get (list, pos, &item); \
+		CU_ASSERT_EQUAL (XMMSV_TYPE_DICT, xmmsv_get_type (item)) \
+		xmmsv_dict_entry_get_int (item, key, &val); \
 		CU_ASSERT_EQUAL (expected, val); \
 	} while (0);
 
@@ -70,14 +80,61 @@ CASE (test_query_ids_order_by_id)
 	CU_ASSERT_LIST_INT_EQUAL (result, 1, 1);
 	CU_ASSERT_LIST_INT_EQUAL (result, 2, 2);
 
-	xmms_dump (result);
-	xmms_dump (spec);
-
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 	xmmsv_coll_unref (ordered);
 	xmmsv_coll_unref (universe);
 }
+
+CASE (test_query_infos_order_by_tracknr)
+{
+	xmmsv_coll_t *universe, *ordered, *limited;
+	xmmsv_t *meta, *org_data, *org_dict, *spec, *result, *group_by;
+	xmms_error_t err;
+
+	xmms_error_reset (&err);
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer"); // selecting this one
+	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder"); // selecting this one
+
+	universe = xmmsv_coll_universe ();
+	ordered = xmmsv_coll_add_order_operator (universe, "tracknr");
+	/* TODO: limit doesn't seem to be 0-indexed, correct? */
+	limited = xmmsv_coll_add_limit_operator (ordered, 2, 2);
+
+	group_by = xmmsv_new_string ("title");
+
+	org_data = xmmsv_new_dict ();
+
+	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
+	xmmsv_dict_set (org_data, "id", meta);
+	xmmsv_unref (meta);
+
+	meta = xmmsv_build_metadata (xmmsv_new_string ("title"), xmmsv_new_string ("value"), "first", NULL);
+	xmmsv_dict_set (org_data, "title", meta);
+	xmmsv_unref (meta);
+
+	meta = xmmsv_build_metadata (xmmsv_new_string ("tracknr"), xmmsv_new_string ("value"), "first", NULL);
+	xmmsv_dict_set (org_data, "tracknr", meta);
+	xmmsv_unref (meta);
+
+	org_dict = xmmsv_build_organize (org_data);
+	spec = xmmsv_build_cluster_list (group_by, org_dict);
+
+	result = xmms_medialib_query (limited, spec, &err);
+
+	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 0, "tracknr", 2);
+	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 1, "tracknr", 3);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
+	xmmsv_coll_unref (limited);
+	xmmsv_coll_unref (ordered);
+	xmmsv_coll_unref (universe);
+}
+
 
 static void
 _xmms_dump_indent (gint indent)
