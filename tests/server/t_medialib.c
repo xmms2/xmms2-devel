@@ -192,7 +192,24 @@ CASE (test_query_aggregate_sum)
 }
 
 
+CASE (test_entry_property_get_value)
+{
+	xmmsv_t *result;
+	gint tracknr;
 
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+
+	result = xmms_medialib_entry_property_get_value (1, "tracknr");
+
+	xmmsv_get_int (result, &tracknr);
+	CU_ASSERT_EQUAL (4, tracknr);
+
+	xmmsv_unref (result);
+
+	result = xmms_medialib_entry_property_get_value (2, "tracknr");
+	CU_ASSERT_EQUAL (NULL, result);
+}
 
 static void
 _xmms_dump_indent (gint indent)
