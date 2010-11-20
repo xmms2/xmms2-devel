@@ -39,8 +39,10 @@ void xcu_post_case (const char *name);
 	}								\
 	static void __testcase_wrapper_##name (void) {			\
 		if (xcu_pre_case (ST (name))) {				\
-			__testcase_##name ();				\
-			xcu_post_case (ST (name));			\
+			__testsuite_setup ();					\
+			__testcase_##name ();					\
+			__testsuite_cleanup ();					\
+			xcu_post_case (ST (name));				\
 		}							\
 	}								\
 	static void __testcase_##name (void)
@@ -51,10 +53,8 @@ void xcu_post_case (const char *name);
 	static int __testsuite_cleanup (void);				\
 	static void __testsuite_init (void) __attribute__ ((constructor (210))); \
 	static void __testsuite_init (void) {				\
-		__this_suite = CU_add_suite (ST (name),			\
-					     __testsuite_setup,		\
-					     __testsuite_cleanup);	\
-	}								\
+		__this_suite = CU_add_suite (ST (name), NULL, NULL); \
+	} \
 	static int __testsuite_setup (void)
 
 #define CLEANUP(name) \
