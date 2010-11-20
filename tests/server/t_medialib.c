@@ -192,11 +192,12 @@ CASE (test_query_aggregate_sum)
 }
 
 
-CASE (test_entry_property_get_value)
+CASE (test_entry_property_get)
 {
 	xmmsv_t *result;
 	gint tracknr;
 	const gchar *title;
+	gchar *string;
 
 	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
@@ -213,6 +214,23 @@ CASE (test_entry_property_get_value)
 
 	result = xmms_medialib_entry_property_get_value (1337, "tracknr");
 	CU_ASSERT_EQUAL (NULL, result);
+
+	string = xmms_medialib_entry_property_get_str (0, "title");
+	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", string);
+	g_free (string);
+
+	string = xmms_medialib_entry_property_get_str (1, "tracknr");
+	CU_ASSERT_STRING_EQUAL ("4", string);
+	g_free (string);
+
+	string = xmms_medialib_entry_property_get_str (1337, "monkey");
+	CU_ASSERT_EQUAL (NULL, string);
+
+	tracknr = xmms_medialib_entry_property_get_int (1, "tracknr");
+	CU_ASSERT_EQUAL (4, tracknr);
+
+	tracknr = xmms_medialib_entry_property_get_int (1337, "tracknr");
+	CU_ASSERT_EQUAL (-1, tracknr);
 
 	result = xmms_medialib_entry_property_get_value (1337, "id");
 	CU_ASSERT_EQUAL (NULL, result);
