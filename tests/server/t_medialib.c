@@ -205,7 +205,21 @@ _xmms_dump_indent (gint indent)
 static void
 _xmms_dump (xmmsv_t *value, gint indent)
 {
-	gint type = xmmsv_get_type (value);
+	gint type;
+
+	if (value == NULL) {
+		printf ("xmmsv_t is NULL!\n");
+		return;
+	}
+
+	if (xmmsv_is_error (value)) {
+		const gchar *message;
+		xmmsv_get_error (value, &message);
+		printf ("error: %s\n", message);
+		return;
+	}
+
+	type = xmmsv_get_type (value);
 
 	switch (type) {
 	case XMMSV_TYPE_INT32: {
