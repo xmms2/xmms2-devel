@@ -2094,13 +2094,13 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 		case AGGREGATE_SUM:
 			if (strval != NULL)
 				ival = 0;
-			if (cur == NULL) {
-				oldval = 0;
-			} else {
+			if (cur != NULL) {
 				xmmsv_get_int (cur, &oldval);
+				xmmsv_unref (cur);
+			} else {
+				oldval = 0;
 			}
 			ival += oldval;
-			xmmsv_unref (cur);
 			cur = xmmsv_new_int (ival);
 			new_val = 1;
 			break;
