@@ -136,6 +136,36 @@ CASE (test_query_infos_order_by_tracknr)
 }
 
 
+CASE (test_query_count_all)
+{
+	xmmsv_coll_t *universe;
+	xmmsv_t *spec, *result;
+	xmms_error_t err;
+	gint count;
+
+	xmms_error_reset (&err);
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer");
+	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+
+	universe = xmmsv_coll_universe ();
+
+	spec = xmmsv_build_count ();
+	result = xmms_medialib_query (universe, spec, &err);
+
+	xmmsv_get_int (result, &count);
+
+	CU_ASSERT_EQUAL (4, count);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
+	xmmsv_coll_unref (universe);
+}
+
+
+
 static void
 _xmms_dump_indent (gint indent)
 {
