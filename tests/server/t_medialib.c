@@ -101,8 +101,7 @@ CASE (test_query_infos_order_by_tracknr)
 
 	universe = xmmsv_coll_universe ();
 	ordered = xmmsv_coll_add_order_operator (universe, "tracknr");
-	/* TODO: limit doesn't seem to be 0-indexed, correct? */
-	limited = xmmsv_coll_add_limit_operator (ordered, 2, 2);
+	limited = xmmsv_coll_add_limit_operator (ordered, 1, 2);
 
 	group_by = xmmsv_new_string ("title");
 
