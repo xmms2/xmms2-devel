@@ -196,18 +196,22 @@ CASE (test_entry_property_get_value)
 {
 	xmmsv_t *result;
 	gint tracknr;
+	const gchar *title;
 
 	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	result = xmms_medialib_entry_property_get_value (1, "tracknr");
-
 	xmmsv_get_int (result, &tracknr);
 	CU_ASSERT_EQUAL (4, tracknr);
-
 	xmmsv_unref (result);
 
-	result = xmms_medialib_entry_property_get_value (2, "tracknr");
+	result = xmms_medialib_entry_property_get_value (0, "title");
+	xmmsv_get_string (result, &title);
+	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", title);
+	xmmsv_unref (result);
+
+	result = xmms_medialib_entry_property_get_value (1337, "tracknr");
 	CU_ASSERT_EQUAL (NULL, result);
 }
 
