@@ -213,6 +213,9 @@ CASE (test_entry_property_get_value)
 
 	result = xmms_medialib_entry_property_get_value (1337, "tracknr");
 	CU_ASSERT_EQUAL (NULL, result);
+
+	result = xmms_medialib_entry_property_get_value (1337, "id");
+	CU_ASSERT_EQUAL (NULL, result);
 }
 
 static void
