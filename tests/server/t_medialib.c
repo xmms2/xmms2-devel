@@ -386,10 +386,13 @@ static void
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
 {
 	xmms_medialib_entry_t entry;
+	xmms_error_t err;
 	gchar *path;
 
+	xmms_error_reset (&err);
+
 	path = g_strconcat (artist, album, title, NULL);
-	entry = xmms_medialib_entry_new_encoded (path, NULL);
+	entry = xmms_medialib_entry_new (path, &err);
 
 	xmms_medialib_entry_property_set_int (entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
