@@ -236,6 +236,21 @@ CASE (test_entry_property_get)
 	CU_ASSERT_PTR_NULL (result);
 }
 
+CASE (test_entry_remove)
+{
+	xmmsv_t *result;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	result = xmms_medialib_entry_property_get_value (0, "tracknr");
+	CU_ASSERT_PTR_NOT_NULL (result);
+	xmmsv_unref (result);
+
+	xmms_medialib_entry_remove (0);
+	result = xmms_medialib_entry_property_get_value (0, "tracknr");
+	CU_ASSERT_PTR_NULL (result);
+}
+
 static void
 _xmms_dump_indent (gint indent)
 {
