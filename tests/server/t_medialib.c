@@ -247,8 +247,42 @@ CASE (test_entry_remove)
 	xmmsv_unref (result);
 
 	xmms_medialib_entry_remove (0);
+
 	result = xmms_medialib_entry_property_get_value (0, "tracknr");
 	CU_ASSERT_PTR_NULL (result);
+}
+
+CASE (test_entry_cleanup)
+{
+	xmmsv_coll_t *universe;
+	xmmsv_t *spec, *result;
+	xmms_error_t err;
+	gint count;
+
+	xmms_error_reset (&err);
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	xmms_medialib_entry_cleanup (0);
+
+	result = xmms_medialib_entry_property_get_value (0, "tracknr");
+	CU_ASSERT_PTR_NULL (result);
+
+	/* Should be cleaned up to check with _get_value once
+	 * it actually checks the db when getting value by id.
+	 */
+	universe = xmmsv_coll_universe ();
+
+	spec = xmmsv_build_count ();
+	result = xmms_medialib_query (universe, spec, &err);
+
+	xmmsv_get_int (result, &count);
+
+	CU_ASSERT_EQUAL (1, count);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
+	xmmsv_coll_unref (universe);
 }
 
 static void
