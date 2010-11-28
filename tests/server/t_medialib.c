@@ -191,6 +191,85 @@ CASE (test_query_aggregate_sum)
 	xmmsv_coll_unref (universe);
 }
 
+CASE (test_query_ordered_union)
+{
+	xmmsv_coll_t *universe, *first, *ordered_first, *second, *ordered_second, *union_, *ordered_union;
+	xmmsv_t *spec, *result, *org_dict, *group_by, *org_data, *meta;
+	xmms_error_t err;
+	gint i;
+
+	xmms_error_reset (&err);
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer");
+	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+
+	xmms_mock_entry (1, "Vibrasphere", "Lungs for Life", "Decade");
+	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
+	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
+
+	universe = xmmsv_coll_universe ();
+
+	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	xmmsv_coll_attribute_set (first, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	xmmsv_coll_attribute_set (first, "field", "artist");
+	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
+	xmmsv_coll_add_operand (first, universe);
+
+	ordered_first = xmmsv_coll_add_order_operator (first, "tracknr");
+	xmmsv_coll_unref (first);
+
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	xmmsv_coll_attribute_set (second, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	xmmsv_coll_attribute_set (second, "field", "artist");
+	xmmsv_coll_attribute_set (second, "value", "Red Fang");
+	xmmsv_coll_add_operand (second, universe);
+
+	ordered_second = xmmsv_coll_add_order_operator (second, "tracknr");
+	xmmsv_coll_unref (second);
+
+	union_ = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+
+	xmmsv_coll_add_operand (union_, ordered_first);
+	xmmsv_coll_unref (ordered_first);
+
+	xmmsv_coll_add_operand (union_, ordered_second);
+	xmmsv_coll_unref (ordered_second);
+
+	xmmsv_coll_unref (universe);
+
+	ordered_union = xmmsv_coll_add_order_operator (union_, "id");
+	xmmsv_coll_unref (union_);
+
+	group_by = xmmsv_new_string ("title");
+
+	org_data = xmmsv_new_dict ();
+
+	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
+	xmmsv_dict_set (org_data, "id", meta);
+	xmmsv_unref (meta);
+
+	meta = xmmsv_build_metadata (xmmsv_new_string ("title"), xmmsv_new_string ("value"), "first", NULL);
+	xmmsv_dict_set (org_data, "title", meta);
+	xmmsv_unref (meta);
+
+	meta = xmmsv_build_metadata (xmmsv_new_string ("tracknr"), xmmsv_new_string ("value"), "first", NULL);
+	xmmsv_dict_set (org_data, "tracknr", meta);
+	xmmsv_unref (meta);
+
+	org_dict = xmmsv_build_organize (org_data);
+	spec = xmmsv_build_cluster_list (group_by, org_dict);
+
+	result = xmms_medialib_query (ordered_union, spec, &err);
+
+	for (i = 0; i < 7; i++)
+		CU_ASSERT_LIST_DICT_INT_EQUAL (result, i, "id", i);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
+	xmmsv_coll_unref (ordered_union);
+}
 
 CASE (test_entry_property_get)
 {
