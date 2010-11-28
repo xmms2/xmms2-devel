@@ -287,6 +287,23 @@ CASE (test_entry_cleanup)
 	xmmsv_coll_unref (universe);
 }
 
+CASE (test_not_resolved)
+{
+	xmms_medialib_entry_t entry;
+	guint count;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	count = xmms_medialib_num_not_resolved ();
+
+	CU_ASSERT_EQUAL (2, count);
+
+	entry = xmms_medialib_entry_not_resolved_get ();
+	CU_ASSERT (entry == 0 || entry == 1);
+}
+
+
 static void
 _xmms_dump_indent (gint indent)
 {
@@ -408,6 +425,9 @@ xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gc
 	xmms_medialib_entry_property_set_str (entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 	                                      title);
+	xmms_medialib_entry_property_set_int (entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+	                                      XMMS_MEDIALIB_ENTRY_STATUS_NEW);
 
 	g_free (path);
 }
