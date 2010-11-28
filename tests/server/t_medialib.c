@@ -382,6 +382,21 @@ CASE (test_not_resolved)
 	CU_ASSERT (entry == 0 || entry == 1);
 }
 
+CASE (test_query_random_id)
+{
+	xmms_medialib_entry_t entry;
+	xmmsv_coll_t *universe;
+	guint count;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	universe = xmmsv_coll_universe ();
+	entry = xmms_medialib_query_random_id (universe);
+
+	CU_ASSERT (entry == 0 || entry == 1);
+}
+
 
 static void
 _xmms_dump_indent (gint indent)
