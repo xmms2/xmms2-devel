@@ -1454,11 +1454,12 @@ static int is_universe (xmmsv_coll_t *coll)
 }
 
 /* Returns non-zero if the collection has an ordering, 0 otherwise */
-static int has_order (xmmsv_coll_t *coll)
+static gboolean
+has_order (xmmsv_coll_t *coll)
 {
 	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *c;
-	int i;
+	gint i;
 
 	switch (xmmsv_coll_get_type (coll)) {
 		/* Filter keeps the ordering of the operand */
@@ -1472,14 +1473,14 @@ static int has_order (xmmsv_coll_t *coll)
 	case XMMS_COLLECTION_TYPE_UNION:
 		for (i = 0; xmmsv_list_get_coll (operands, i, &c); i++) {
 			if (!has_order (c))
-				return 0;
+				return FALSE;
 		}
 
 		/* These are always ordered */
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_ORDER:
 	case XMMS_COLLECTION_TYPE_LIMIT:
-		return 1;
+		return TRUE;
 
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		if (!is_universe (coll)) {
@@ -1492,7 +1493,7 @@ static int has_order (xmmsv_coll_t *coll)
 		break;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 /**
