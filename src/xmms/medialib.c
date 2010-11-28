@@ -1783,6 +1783,7 @@ xmms_medialib_query_recurs (xmmsv_coll_t *coll, fetch_info_t *fetch,
 			xmmsv_list_get_coll (operands, 0, &c);
 			set = xmms_medialib_query_recurs (c, fetch, child_order, cond, 1);
 			xmmsv_unref (child_order);
+			s4_cond_free (*cond);
 
 			child_order = xmmsv_new_list ();
 
