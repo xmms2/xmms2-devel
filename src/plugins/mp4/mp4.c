@@ -348,6 +348,7 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
 			xmms_xform_metadata_set_str (xform, metakey, "image/jpeg");
 		}
+		g_free (metabuf);
 	}
 
 	/* MusicBrainz tag support */
