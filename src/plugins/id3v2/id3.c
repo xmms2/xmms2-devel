@@ -262,7 +262,12 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	val = convert_id3_text (tmp, &buf[1], len - 1, NULL);
 	if (!val)
 		return;
-	res = sscanf (val, "(%u)", &genre_id);
+
+	if (head->ver >= 4) {
+		res = sscanf (val, "%u", &genre_id);
+	} else {
+		res = sscanf (val, "(%u)", &genre_id);
+	}
 
 	if (res > 0 && genre_id < G_N_ELEMENTS (id3_genres)) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
