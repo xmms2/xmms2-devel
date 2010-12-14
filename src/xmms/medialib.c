@@ -1153,6 +1153,43 @@ xmms_medialib_check_id (xmms_medialib_entry_t id)
  * Get the next unresolved entry. Used by the mediainfo reader..
  */
 
+static s4_resultset_t *
+not_resolved_set (void)
+{
+	s4_condition_t *cond1, *cond2, *cond;
+	s4_fetchspec_t *spec;
+	s4_resultset_t *ret;
+	s4_val_t *v1, *v2;
+
+	v1 = s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+	v2 = s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
+
+	cond1 = s4_cond_new_filter (S4_FILTER_EQUAL,
+	                            XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+	                            v1, default_sp, S4_CMP_CASELESS, 0);
+	cond2 = s4_cond_new_filter (S4_FILTER_EQUAL,
+	                            XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+	                            v2, default_sp, S4_CMP_CASELESS, 0);
+
+	cond = s4_cond_new_combiner (S4_COMBINE_OR);
+	s4_cond_add_operand (cond, cond1);
+	s4_cond_add_operand (cond, cond2);
+
+	spec = s4_fetchspec_create ();
+	s4_fetchspec_add (spec, "song_id", default_sp, S4_FETCH_PARENT);
+
+	ret = s4_query (medialib->s4, spec, cond);
+
+	s4_fetchspec_free (spec);
+	s4_cond_free (cond);
+	s4_cond_free (cond1);
+	s4_cond_free (cond2);
+	s4_val_free (v1);
+	s4_val_free (v2);
+
+	return ret;
+}
+
 xmms_medialib_entry_t
 xmms_medialib_entry_not_resolved_get (void)
 {
@@ -1160,9 +1197,7 @@ xmms_medialib_entry_not_resolved_get (void)
 	s4_resultset_t *set;
 	const s4_result_t *res;
 
-	set = xmms_medialib_filter (XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
-	                            s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_NEW),
-	                            0, default_sp, "song_id", S4_FETCH_PARENT);
+	set = not_resolved_set ();
 	res = s4_resultset_get_result (set, 0, 0);
 
 	if (res != NULL)
@@ -1179,10 +1214,7 @@ xmms_medialib_num_not_resolved (void)
 	gint ret = 0;
 	s4_resultset_t *set;
 
-	set = xmms_medialib_filter (XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
-	                            s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_NEW),
-	                            0, default_sp, "song_id", S4_FETCH_PARENT);
-
+	set = not_resolved_set ();
 	ret = s4_resultset_get_rowcount (set);
 	s4_resultset_free (set);
 
