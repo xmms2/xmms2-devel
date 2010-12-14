@@ -417,7 +417,6 @@ main (int argc, char **argv)
 	gboolean verbose = FALSE;
 	gboolean quiet = FALSE;
 	gboolean version = FALSE;
-	gboolean nologging = FALSE;
 	gboolean runasroot = FALSE;
 	gboolean showhelp = FALSE;
 	const gchar *outname = NULL;
@@ -436,7 +435,6 @@ main (int argc, char **argv)
 		{"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Increase verbosity", NULL},
 		{"quiet", 'q', 0, G_OPTION_ARG_NONE, &quiet, "Decrease verbosity", NULL},
 		{"version", 'V', 0, G_OPTION_ARG_NONE, &version, "Print version", NULL},
-		{"no-logging", 'n', 0, G_OPTION_ARG_NONE, &nologging, "Disable logging", NULL},
 		{"output", 'o', 0, G_OPTION_ARG_STRING, &outname, "Use 'x' as output plugin", "<x>"},
 		{"ipc-socket", 'i', 0, G_OPTION_ARG_FILENAME, &ipcpath, "Listen to socket 'url'", "<url>"},
 		{"plugindir", 'p', 0, G_OPTION_ARG_FILENAME, &ppath, "Search for plugins in directory 'foo'", "<foo>"},
