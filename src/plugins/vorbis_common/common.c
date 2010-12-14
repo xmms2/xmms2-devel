@@ -244,6 +244,15 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 }
 
+static guint32
+decode_uint32 (guchar **pos)
+{
+	guint32 value;
+	memcpy (&value, *pos, sizeof (guint32));
+	(*pos) += sizeof (guint32);
+	return GUINT32_FROM_BE (value);
+}
+
 static void
 handle_image_comment (xmms_xform_t *xform, const gchar *encoded_value)
 {
@@ -264,45 +273,45 @@ handle_image_comment (xmms_xform_t *xform, const gchar *encoded_value)
 	pos = value;
 	end = value + len;
 
-	if (pos + 4 > end) {
+	if (pos + sizeof (guint32) > end) {
 		XMMS_DBG ("Malformed picture comment");
 		goto finish;
 	}
-	typ = GUINT32_FROM_BE (*(guint32 *)pos);
+
+	typ = decode_uint32 (&pos);
 	if (typ != 0 && typ != 3) {
 		XMMS_DBG ("Picture type %d not handled", typ);
 		goto finish;
 	}
-	pos += 4;
 
-	if (pos + 4 > end) {
+	if (pos + sizeof (guint32) > end) {
 		XMMS_DBG ("Malformed picture comment");
 		goto finish;
 	}
-	mime_len = GUINT32_FROM_BE (*(guint32 *)pos);
-	pos += 4;
+
+	mime_len = decode_uint32 (&pos);
 	mime_data = pos;
 	pos += mime_len;
 
-	if (pos + 4 > end) {
+	if (pos + sizeof (guint32) > end) {
 		XMMS_DBG ("Malformed picture comment");
 		goto finish;
 	}
-	desc_len = GUINT32_FROM_BE (*(guint32 *)pos);
-	pos += 4;
+
+	desc_len = decode_uint32 (&pos);
 	pos += desc_len;
 
-	pos += 4; /* width */
-	pos += 4; /* height */
-	pos += 4; /* depth */
-	pos += 4; /* indexed palette length */
+	decode_uint32 (&pos); /* width */
+	decode_uint32 (&pos); /* height */
+	decode_uint32 (&pos); /* depth */
+	decode_uint32 (&pos); /* indexed palette length */
 
-	if (pos + 4 > end) {
+	if (pos + sizeof (guint32) > end) {
 		XMMS_DBG ("Malformed picture comment");
 		goto finish;
 	}
-	img_len = GUINT32_FROM_BE (*(guint32 *)pos);
-	pos += 4;
+
+	img_len = decode_uint32 (&pos);
 	img_data = pos;
 
 	if (img_data + img_len > end) {
