@@ -1,4 +1,4 @@
-.\" 
+.\"
 .\" XMMS2 - The next generation of the XMMS music player.
 .\"
 .\" xmms2d.1 - xmms2d (xmms2 daemon) man page
@@ -16,7 +16,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,144 +27,162 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .TH XMMS2D 1
 .SH NAME
 xmms2d \- XMMS2 daemon which handles the playback of music and storage of music metadata
 .SH SYNOPSIS
-.I xmms2d
-[
-.B -vqn
-] [
-.B -? / --help
-] [
-.B -V / --version
-] [
-.B -p
-plugin_path /
-.B --plugindir=
-plugin_path
-] [
-.B -o
-output_plugin /
-.B --output=
-output_plugin
-] [
-.B -c 
-path_to_config_file /
-.B --conf=
-path_to_config_file
-] [
-.B -s 
-fd /
-.B --status-fd=
-fd
-]
+.B xmms2d
+.RB [\| \-v \||\| \-q \|]
+.RB [\| \-p
+.IR dir \|]
+.RB [\| \-o
+.IR plugin \|]
+.RB [\| \-i
+.IR url \|]
+.RB [\| -c
+.IR file \|]
+.RB [\| -s
+.IR fd \|]
+.RB [\| --yes-run-as-root \|]
+.br
+.B xmms2d -?
+.br
+.B xmms2d -V
 .SH DESCRIPTION
-.B XMMS2 
-is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organise your music.
+XMMS2 is a redesign of the XMMS (http://legacy.xmms2.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organise your music.
 .PP
-.I xmms2d
-is the daemon through which 
-.B XMMS2
-clients playback and manage music. A client library provided allows third parties to easily write
-.B XMMS2
-clients, especially using the Python and Ruby bindings.
+.B xmms2d
+is the daemon through which XMMS2 clients playback and manage music. A client library provided allows third parties to easily write XMMS2 clients, especially using the Python and Ruby bindings.
 .PP
-.I xmms2d
-uses a three part method to playback music. Music is accessed from disk or network using a transport plugin, the data is then passed on to a decoder plugin which decodes the audio into a form that can be played back by an output plugin.  
-.PP
-.I xmms2d 
-includes command line options to change the way in which the daemon functions. 
+.B xmms2d
+uses a three part method to playback music. Music is accessed from disk or network using a transport plugin, the data is then passed on to a decoder plugin which decodes the audio into a form that can be played back by an output plugin. 
+.SH OPTIONS
+.SS General options
 .TP
-.BR
-These options are currently recognised: 
+.B \-v, \-\-verbose
+Increase verbosity.
 .TP
-.I -v 
-Increases the vebosity of
-.I xmms2d
+.B \-q, \-\-quiet
+Decrease verbosity.
 .TP
-.I -q
-Decrease the verbosity of
-.I xmms2d
+.BI \-p\  dir ,\ \-\-plugindir= dir
+Use plugin directory
+.IR dir .
 .TP
-.I -V | --version 
-Returns the 
-.B XMMS2
-version
+.BI \-o\  plugin ,\ \-\-output= plugin
+Use output plugin
+.IR plugin .
 .TP
-.I -? | --help
-Displays basic help information for
-.I xmms2d
+.BI \-i\  url ,\ --ipc-socket= url
+Listen to socket at
+.IR url .
+Multiple sockets can be specified seperated by
+.BR ; -characters.
+See section
+.BR IPC\ SOCKET .
 .TP
-.I -n | --no-logging
-Disables logging
+.BI \-c\  file ,\ \-\-conf= file
+Use configuration file
+.IR file .
 .TP
-.I -o output_plugin | --output=output_plugin
-Specifies a different output plugin to use in place of the default
+.BI \-s\  fd ,\ \-\-status-fd= fd
+Write to filedescriptor
+.I fd
+when started. This can be used to wait until inter-process communication (IPC) is up, as for instance
+.BR xmms2-launcher (1)
+does.
 .TP
-.I -p plugin_path | --plugindir=plugin_path
-Specifies a different plugin directory path than the default
+.B \-\-yes\-run\-as\-root
+Allow
+.B xmms2d
+to be run as root.
+.SS Getting help
 .TP
-.I -c path_to_config_file | --conf=path_to_config_file
-Specifies a path to an alternative configuration file
+.B \-h, \-?, \-\-help
+Display basic help information and exit.
 .TP
-.I -s fd | --status-fd=fd
-Specifies a file descriptor to write to when started
+.B \-V, \-\-version
+Display version information.
 .SH "IPC SOCKET"
-.B XMMS2
-clients uses IPC sockets to communicate with
-.I xmms2d. 
-These IPC sockets are specified in a URL based format with three possible transport methods: unix, tcp, and tcp6. 
+XMMS2 clients use IPC sockets to communicate with
+.BR xmms2d .
+These IPC sockets are specified in an URL based format with three possible transport methods: unix, tcp, and tcp6.
 .PP
-The TCP methods allow clients to connect over IPv4 and IPv6 to 
-.I xmms2d
-and therefore allow remote control of 
-.B XMMS2.
-.TP
-A typical IPC socket path using TCP would be: 
-.B tcp://127.0.0.1:9667 
+The TCP methods allow clients to connect over IPv4 and IPv6 to
+.B xmms2d
+and therefore allow remote control of XMMS2. A typical IPC socket url using TCP is
+.IR tcp://127.0.0.1:9667 .
 .PP
-The UNIX transport method is for local clients only and creates a file through which 
-.B XMMS2
-clients can access 
-.I xmms2d.
-.TP
-A typical IPC socket path using the UNIX transport would be:
-.B unix:///tmp/xmms-ipc-foobar 
+The UNIX transport method is for local clients only and creates a file through which XMMS2 clients can access
+.BR xmms2d .
+A typical IPC socket path using the UNIX transport is
+.IR unix:///tmp/xmms-ipc-foobar .
 .SH FILES
+Below
+.I CONFDIR
+is
+.I $XDG_CONFIG_HOME/xmms2
+on UNIX if the
+.BR XDG_CONFIG_HOME -environment
+variable is set. Otherwise it is
+.I $HOME/.config/xmms2
+(UNIX except Darwin), or
+.I $HOME/Library/xmms2
+(Darwin).
+On Win32 it is
+.IR %APPDATA%/xmms2 .
 .TP
-.I $HOME/.config/xmms2/medialib.db or $XDG_CONFIG_HOME/xmms2/medialib.db
-An sqlite3 database that includes information about each song that has been added to the 
-.B XMMS2
-media library
+.IR CONFDIR/xmms2.conf
+An XML formatted configuration file that allows changing the settings of
+.BR xmms2d .
 .TP
-.I $HOME/.config/xmms2/xmms2.conf or $XDG_CONFIG_HOME/xmms2/xmms2.conf
-An XML formatted configuration file that allows you to change the default settings of
-.I xmms2d
+.IR CONFDIR/startup.d/
+A directory populated with programs that are run when
+.B xmms2d
+is executed.
+An alternative location can be specified in the configuration file.
 .TP
-.I $HOME/.config/xmms2/startup.d or $XDG_CONFIG_HOME/xmms2/startup.d
-A directory populated with programs that run when 
-.I xmms2d
-is executed
+.IR CONFDIR/shutdown.d/
+A directory populated with programs that are run when
+.B xmms2d
+is shutdown correctly.
+An alternative location can be specified in the configuration file.
 .TP
-.I $HOME/.config/xmms2/shutdown.d or $XDG_CONFIG_HOME/xmms2/shutdown.d
-A directory populated with programs that run when
-.I xmms2d
-is shutdown correctly
+.IR CONFDIR/medialib.db
+An
+.BR sqlite3 (1)
+database that includes information about each song that has been added the the XMMS2 media library.
+An alternative location can be specified in the configuration file.
+.TP
+.IR CONFDIR/bindata/
+A directory that contains files with binary data entrusted to the XMMS2 media library, such as cover art.
+An alternative location can be specified in the configuration file.
 .TP
 .I /tmp/xmms-ipc-USER
-The typical location for the UNIX IPC Socket. USER is the name of the user that executed 
-.I xmms2d.
-.SH ENVIRONMENTAL VARIABLES
+The typical location for the UNIX IPC Socket. Here
+.I USER
+is the name of the user that executed
+.BR xmms2d .
+.SH ENVIRONMENT
 .TP
-.I XDG_CONFIG_HOME
-The path where the xmms2 configuration files and resources are located
+.B XDG_CONFIG_HOME
+The path where the XMMS2 configuration files and resources are located.
+.TP
+.B XMMS_PATH
+The url of the first socket that
+.B xmms2d
+listens to. This environment variable is set for programs in the startup and shutdown directories.
+.TP
+.B XMMS_PATH_FULL
+A
+.BR ; -seperated
+list of paths to which
+.B xmms2d
+listens. This environment variable is set for programs in the startup and shutdown directories.
 .SH SEE ALSO
-xmms2(1), xmms2-launcher(1), http://xmms2.xmms.org
+.BR xmms2 (1),\  xmms2-launcher (1),\  http://xmms2.org/ .
 .SH HISTORY
-The
-.B XMMS2
-Project was started by Tobias Rundström and Anders Gustafsson. It is developed with their lead by a small group of contributers from all over the world.
+The XMMS2 Project was started by Tobias Rundström and Anders Waldenborg. It is developed by a small group of contributers from all over the world.
 .SH AUTHOR
-This manual page was written by Alexander Botero-Lowry <alex@foxybanana.com>
+This manual page was originally written by Alexander Botero-Lowry <alex@foxybanana.com>. It was reformatted and slightly extended by Erik Massop <e.massop@hccnet.nl>.
