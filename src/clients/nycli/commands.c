@@ -858,12 +858,87 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	return TRUE;
 }
 
+static xmmsv_coll_t *
+get_coll (cli_infos_t *infos, gchar *name, xmmsv_coll_namespace_t ns) {
+	xmmsc_result_t *res;
+	xmmsv_coll_t *coll;
+
+	res = xmmsc_coll_get (infos->sync, name, ns);
+	xmmsc_result_wait (res);
+
+	if (!xmmsv_get_coll (xmmsc_result_get_value (res), &coll)) {
+		g_printf (_("Error: Could not retrieve collection %s.\n"), name);
+		coll = NULL;
+	} else {
+		xmmsv_coll_ref (coll);
+	}
+	xmmsc_result_unref (res);
+
+	return coll;
+}
+
+/* Get current position in @playlist or in active playlist if
+   @playlist == NULL. */
 static gboolean
-cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
+playlist_currpos_get (cli_infos_t *infos, gchar *playlist, gint *pos)
+{
+	xmmsv_coll_t *coll;
+	const gchar *str;
+
+	if (playlist) {
+		/* FIXME: Getting the whole playlist is a bit of overkill (at least
+		          linear in the size of the playlist.), but I am not aware of a
+		          more efficient IPC-method. */
+		if ((coll = get_coll (infos, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
+			if (xmmsv_dict_entry_get_string (xmmsv_coll_attributes_get (coll),
+		                                     "position", &str)) {
+				*pos = strtol (str, NULL, 10);
+			} else {
+				*pos = -1;
+			}
+			xmmsv_coll_unref (coll);
+		} else {
+			return FALSE;
+		}
+	} else {
+		*pos = infos->cache->currpos;
+	}
+
+	return TRUE;
+}
+
+/* Get length of @playlist or of active playlist if @playlist == NULL. */
+static gboolean
+playlist_length_get (cli_infos_t *infos, gchar *playlist, gint *len)
+{
+	xmmsv_coll_t *coll;
+
+	if (playlist) {
+		/* FIXME: Getting the whole playlist is a bit of overkill (at least
+		          linear in the size of the playlist.), but I am not aware of a
+		          more efficient IPC-method. */
+		if ((coll = get_coll (infos, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
+			*len = xmmsv_coll_idlist_get_size (coll);
+			xmmsv_coll_unref (coll);
+		} else {
+			return FALSE;
+		}
+	} else {
+		*len = infos->cache->active_playlist->len;
+	}
+
+	return TRUE;
+}
+
+
+static gboolean
+cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
+                           gint *pos, gchar *playlist)
 {
 	gboolean next;
 	gint at;
 	gboolean at_isset;
+	gint tmp;
 
 	command_flag_boolean_get (ctx, "next", &next);
 	at_isset = command_flag_int_get (ctx, "at", &at);
@@ -872,8 +947,9 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 		g_printf (_("Error: --next and --at are mutually exclusive!\n"));
 		return FALSE;
 	} else if (next) {
-		if (infos->cache->currpos >= 0) {
-			*pos = infos->cache->currpos + 1;
+		playlist_currpos_get (infos, playlist, &tmp);
+		if (tmp >= 0) {
+			*pos = tmp + 1;
 		} else {
 			g_printf (_("Error: --next cannot be used if there is no "
 			            "active track!\n"));
@@ -882,7 +958,11 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 	} else if (at_isset) {
 		/* FIXME: handle relative values ? */
 		/* beware: int vs uint */
-		if (at == 0 || (at > 0 && at > infos->cache->active_playlist->len + 1)) {
+		if (!playlist_length_get (infos, playlist, &tmp)) {
+			return FALSE;
+		}
+
+		if (at == 0 || (at > 0 && at > tmp + 1)) {
 			g_printf (_("Error: specified position is outside the playlist!\n"));
 			return FALSE;
 		} else {
@@ -894,6 +974,12 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 	}
 
 	return TRUE;
+}
+
+static gboolean
+cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
+{
+	return cmd_flag_pos_get_playlist (infos, ctx, pos, NULL);
 }
 
 /* Check if url is a dir, used if matching_browse arg isn't a pattern
@@ -1164,15 +1250,17 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 --at  Add media at a given position in the playlist, or at a given offset from the current track.
 */
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
-		playlist = XMMS_ACTIVE_PLAYLIST;
-	}
-
-	/* FIXME: pos is wrong in non-active playlists (next/offsets are invalid)! */
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
-	if (!cmd_flag_pos_get (infos, ctx, &pos)) {
-		/* append by default */
-		pos = infos->cache->active_playlist->len;
+	if (command_flag_string_get (ctx, "playlist", &playlist)) {
+		if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
+			/* append by default */
+			playlist_length_get (infos, playlist, &pos);
+		}
+	} else {
+		if (!cmd_flag_pos_get (infos, ctx, &pos)) {
+			playlist_length_get (infos, NULL, &pos);
+		}
+		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
 	command_flag_boolean_get (ctx, "pattern", &forceptrn);
