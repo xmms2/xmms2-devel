@@ -150,7 +150,6 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 static command_context_t *
 init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 {
-	/* FIXME: look at the error! */
 	command_context_t *ctx;
 	GOptionContext *context;
 	GError *error = NULL;
@@ -196,6 +195,27 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 	g_option_context_free (context);
 
+	if (error) {
+		g_printf (_("Error: %s\n"), error->message);
+		g_error_free (error);
+		command_context_free (ctx);
+		return NULL;
+	}
+
+	/* strip -- */
+	/* FIXME: We do not parse options elsewhere, do we? */
+	for (i = 0; i < ctx->argc; i++) {
+		if (strcmp (ctx->argv[i], "--") == 0) {
+			break;
+		}
+	}
+	if (i != ctx->argc) {
+		for (i+1; i < ctx->argc; i++) {
+			argv[i-1] = argv[i];
+		}
+		ctx->argc--;
+	}
+
 	return ctx;
 }
 
@@ -236,6 +256,11 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 	 * command utils. */
 	ctx = init_context_from_args (flagdefs, in_argc + 1, in_argv - 1);
+
+	if (!ctx) {
+		/* An error message has already been printed, so we just return. */
+		return;
+	}
 
 	if (command_flag_boolean_get (ctx, "help", &check) && check) {
 		if (ctx->argc > 1) {
@@ -297,22 +322,24 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 		 * command utils. */
 		ctx = init_context_from_args (action->argdefs, argc + 1, argv - 1);
-		ctx->name = g_strdup (action->name);
 
-		if (command_flag_boolean_get (ctx, "help", &help) && help) {
-			/* Help flag passed, bypass action and show help */
-			/* FIXME(g): select aliasnames list if it's an alias */
-			help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
-		} else if (command_runnable (infos, action)) {
-			/* All fine, run the command */
-			cli_infos_loop_suspend (infos);
-			need_io = action->callback (infos, ctx);
-			if (!need_io) {
-				cli_infos_loop_resume (infos);
+		if (ctx) {
+			if (command_flag_boolean_get (ctx, "help", &help) && help) {
+				/* Help flag passed, bypass action and show help */
+				/* FIXME(g): select aliasnames list if it's an alias */
+				help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
+			} else if (command_runnable (infos, action)) {
+				/* All fine, run the command */
+				ctx->name = g_strdup (action->name);
+				cli_infos_loop_suspend (infos);
+				need_io = action->callback (infos, ctx);
+				if (!need_io) {
+					cli_infos_loop_resume (infos);
+				}
 			}
-		}
 
-		command_context_free (ctx);
+			command_context_free (ctx);
+		}
 	} else {
 		/* Call help to print the "no such command" error */
 		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
