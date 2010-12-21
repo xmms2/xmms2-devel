@@ -393,6 +393,7 @@ CASE (test_query_random_id)
 
 	universe = xmmsv_coll_universe ();
 	entry = xmms_medialib_query_random_id (universe);
+	xmmsv_coll_unref (universe);
 
 	CU_ASSERT (entry == 0 || entry == 1);
 }
