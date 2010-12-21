@@ -110,7 +110,7 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 		val_val = s4_val_new_string (val);
 	}
 
-	s4_add (s4, "song_id", id_val, key, val_val, src);
+	s4_add (s4, NULL, "song_id", id_val, key, val_val, src);
 
 	s4_val_free (val_val);
 	s4_val_free (id_val);
