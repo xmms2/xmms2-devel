@@ -78,6 +78,7 @@ typedef enum {
 
 typedef struct add_metadata_from_tree_user_data_St {
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	const gchar* src;
 } add_metadata_from_tree_user_data_t;
 
@@ -179,6 +180,7 @@ struct xmms_coll_dag_St {
 
 	GMutex *mutex;
 
+	xmms_medialib_t *medialib;
 };
 
 static void
@@ -201,6 +203,7 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->playlist = playlist;
+	ret->medialib = NULL;
 
 	xmms_coll_sync_init (ret);
 
@@ -241,6 +244,12 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	return ret;
 }
 
+xmms_medialib_t *
+xmms_collection_get_medialib (xmms_coll_dag_t *dag)
+{
+	return dag->medialib;
+}
+
 static void
 add_metadata_from_tree (const gchar *key, xmmsv_t *value, gpointer user_data)
 {
@@ -249,14 +258,16 @@ add_metadata_from_tree (const gchar *key, xmmsv_t *value, gpointer user_data)
 	if (xmmsv_get_type (value) == XMMSV_TYPE_INT32) {
 		gint iv;
 		xmmsv_get_int (value, &iv);
-		xmms_medialib_entry_property_set_int_source (ud->entry,
+		xmms_medialib_entry_property_set_int_source (ud->session,
+		                                             ud->entry,
 		                                             key,
 		                                             iv,
 		                                             ud->src);
 	} else if (xmmsv_get_type (value) == XMMSV_TYPE_STRING) {
 		const gchar *sv;
 		xmmsv_get_string (value, &sv);
-		xmms_medialib_entry_property_set_str_source (ud->entry,
+		xmms_medialib_entry_property_set_str_source (ud->session,
+		                                             ud->entry,
 		                                             key,
 		                                             sv,
 		                                             ud->src);
@@ -313,14 +324,17 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 
 		xmmsv_get_string (b, &buf);
-		entry = xmms_medialib_entry_new_encoded (buf, err);
 		xmmsv_dict_remove (a, "realpath");
 		xmmsv_dict_remove (a, "path");
+
+		MEDIALIB_BEGIN (dag->medialib);
+		entry = xmms_medialib_entry_new_encoded (session, buf, err);
 
 		if (entry) {
 			add_metadata_from_tree_user_data_t udata;
 			udata.entry = entry;
 			udata.src = src;
+			udata.session = session;
 
 			xmmsv_dict_foreach(a, add_metadata_from_tree, &udata);
 
@@ -329,6 +343,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 			xmmsv_get_string (b, &buf);
 			xmms_log_error ("couldn't add %s to collection!", buf);
 		}
+		MEDIALIB_COMMIT ();
 
 		xmmsv_unref (a);
 		n = g_list_delete_link (n, n);
@@ -757,7 +772,7 @@ xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 	g_mutex_lock (dag->mutex);
 	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
-	ret = xmms_medialib_query (coll, fetch, err);
+	MEDIALIB_SESSION (dag->medialib, ret = xmms_medialib_query (session, coll, fetch, err));
 	g_mutex_unlock (dag->mutex);
 
 	return ret;
@@ -907,7 +922,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 
 	g_mutex_lock (dag->mutex);
 	xmms_collection_apply_to_collection (dag, source, bind_all_references, NULL);
-	ret = xmms_medialib_query_random_id (source);
+	MEDIALIB_SESSION (dag->medialib,  ret = xmms_medialib_query_random_id (session, source));
 	g_mutex_unlock (dag->mutex);
 
 	return ret;

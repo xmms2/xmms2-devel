@@ -54,6 +54,7 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_
  */
 
 xmms_coll_dag_t * xmms_collection_init (xmms_playlist_t *playlist);
+xmms_medialib_t * xmms_collection_get_medialib (xmms_coll_dag_t *dag);
 
 void xmms_collection_sync (xmms_coll_dag_t *dag);
 xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
