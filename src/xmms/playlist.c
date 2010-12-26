@@ -798,7 +798,8 @@ xmms_playlist_client_insert_url (xmms_playlist_t *playlist, const gchar *plname,
 {
 	xmms_medialib_entry_t entry = 0;
 
-	entry = xmms_medialib_entry_new_encoded (url, err);
+	MEDIALIB_SESSION (playlist->medialib,
+	                  entry = xmms_medialib_entry_new_encoded (session, url, err));
 
 	if (!entry) {
 		return;
@@ -842,7 +843,11 @@ xmms_playlist_client_insert_id (xmms_playlist_t *playlist, const gchar *plname,
                                 gint32 pos, xmms_medialib_entry_t file,
                                 xmms_error_t *err)
 {
-	if (!xmms_medialib_check_id (file)) {
+	gboolean valid;
+
+	MEDIALIB_SESSION (playlist->medialib, valid = xmms_medialib_check_id (session, file));
+
+	if (!valid) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "That is not a valid medialib id!");
 		return;
@@ -935,7 +940,8 @@ xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname,
 {
 	xmms_medialib_entry_t entry = 0;
 
-	entry = xmms_medialib_entry_new_encoded (nurl, err);
+	MEDIALIB_SESSION (playlist->medialib,
+	                  entry = xmms_medialib_entry_new_encoded (session, nurl, err));
 
 	if (entry) {
 		xmms_playlist_add_entry (playlist, plname, entry, err);
@@ -980,7 +986,11 @@ void
 xmms_playlist_client_add_id (xmms_playlist_t *playlist, const gchar *plname,
                              xmms_medialib_entry_t file, xmms_error_t *err)
 {
-	if (!xmms_medialib_check_id (file)) {
+	gboolean valid;
+
+	MEDIALIB_SESSION (playlist->medialib, valid = xmms_medialib_check_id (session, file));
+
+	if (!valid) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "That is not a valid medialib id!");
 		return;
@@ -996,6 +1006,8 @@ xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
 {
 	xmms_medialib_entry_t entry;
 	xmmsv_list_iter_t *it;
+	gboolean valid;
+
 
 	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
 	for (xmmsv_list_iter_first (it);
@@ -1003,7 +1015,10 @@ xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
 	     xmmsv_list_iter_next (it)) {
 
 		xmmsv_list_iter_entry_int (it, &entry);
-		if (!xmms_medialib_check_id (entry)) {
+		MEDIALIB_SESSION (playlist->medialib,
+		                  valid = xmms_medialib_check_id (session, entry));
+
+		if (!valid) {
 			xmms_error_set (err, XMMS_ERROR_NOENT,
 			                "Idlist contains invalid medialib id!");
 			xmmsv_list_iter_explicit_destroy (it);
