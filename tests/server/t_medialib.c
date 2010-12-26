@@ -408,6 +408,40 @@ CASE (test_query_random_id)
 	CU_ASSERT (entry == 0 || entry == 1);
 }
 
+CASE (test_session)
+{
+	xmmsv_t *result, *spec;
+	gint tracknr;
+	xmms_medialib_session_t *session;
+	xmmsv_coll_t *universe;
+	xmms_error_t err;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+
+	session = xmms_medialib_begin (medialib);
+	xmms_medialib_entry_remove (session, 0);
+	xmms_medialib_abort (session);
+
+	SESSION (result = xmms_medialib_entry_property_get_value (session, 0, "tracknr"));
+	xmmsv_get_int (result, &tracknr);
+	CU_ASSERT_EQUAL (1, tracknr);
+	xmmsv_unref (result);
+
+	SESSION (xmms_medialib_entry_remove (session, 0));
+	SESSION (result = xmms_medialib_entry_property_get_value (session, 0, "tracknr"));
+	CU_ASSERT_PTR_NULL (result);
+
+	universe = xmmsv_coll_universe ();
+	spec = xmmsv_build_count ();
+
+	session = xmms_medialib_begin (medialib);
+	result = xmms_medialib_query (session, universe, spec, &err);
+	xmms_medialib_abort (session);
+
+	xmmsv_coll_unref (universe);
+	xmmsv_unref (spec);
+}
 
 static void
 _xmms_dump_indent (gint indent)
