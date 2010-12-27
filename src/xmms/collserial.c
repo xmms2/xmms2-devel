@@ -91,7 +91,7 @@ create_dir (const char *path)
 }
 
 static void
-setup_coll_path (void)
+setup_coll_path (xmms_coll_dag_t *dag)
 {
 	xmms_config_property_t *coll_conf;
 	char *path, *foo, *bar, *uuid;
@@ -106,7 +106,7 @@ setup_coll_path (void)
 	coll_path = strdup (xmms_config_property_get_string (coll_conf));
 	g_free (path);
 
-	uuid = xmms_medialib_uuid ();
+	uuid = xmms_medialib_uuid (xmms_collection_get_medialib (dag));
 	uuid_len = strlen (uuid);
 
 	/* Replace all occurences of ${uuid} with the real uuid */
@@ -139,7 +139,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 	FILE *file;
 	xmmsv_coll_t *coll;
 
-	setup_coll_path ();
+	setup_coll_path (dag);
 
 	if (disable_saving)
 		return;
@@ -195,7 +195,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	FILE *file;
 	int i;
 
-	setup_coll_path ();
+	setup_coll_path (dag);
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		namespace = xmms_collection_get_namespace_string (i);
