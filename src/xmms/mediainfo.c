@@ -147,12 +147,15 @@ xmms_mediainfo_reader_thread (gpointer data)
 		xmmsc_medialib_entry_status_t prev_status;
 		guint lmod = 0;
 		xmms_medialib_entry_t entry;
+		xmms_medialib_session_t *session;
 		xmms_xform_t *xform;
 
-		entry = xmms_medialib_entry_not_resolved_get ();
+		session = xmms_medialib_begin (NULL);
+		entry = xmms_medialib_entry_not_resolved_get (session);
 		XMMS_DBG ("got %d as not resolved", entry);
 
 		if (!entry) {
+			xmms_medialib_abort (session);
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 			                    XMMSV_TYPE_INT32,
@@ -171,42 +174,40 @@ xmms_mediainfo_reader_thread (gpointer data)
 			continue;
 		}
 
-		prev_status = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
-		xmms_medialib_entry_status_set (entry, XMMS_MEDIALIB_ENTRY_STATUS_RESOLVING);
+		prev_status = xmms_medialib_entry_property_get_int (session, entry,
+		                                                    XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
 
-		lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+		lmod = xmms_medialib_entry_property_get_int (session, entry,
+		                                             XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
 			                    XMMSV_TYPE_INT32,
-			                    xmms_medialib_num_not_resolved ());
+			                    xmms_medialib_num_not_resolved (session));
 			num = 10;
 		} else {
 			num--;
 		}
 
-		xform = xmms_xform_chain_setup (entry, goal_format, TRUE);
+		xform = xmms_xform_chain_setup_session (session, entry, goal_format, TRUE);
 
 		if (!xform) {
 			if (prev_status == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
-				xmms_medialib_entry_remove (entry);
+				xmms_medialib_entry_remove (session, entry);
 			} else {
-				xmms_medialib_entry_status_set (entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
-				xmms_medialib_entry_send_update (entry);
+				xmms_medialib_entry_status_set (session, entry,
+				                                XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
 			}
-			continue;
+		} else {
+			xmms_object_unref (xform);
+			g_get_current_time (&timeval);
+
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
+			                                      timeval.tv_sec);
 		}
-
-		xmms_object_unref (xform);
-		g_get_current_time (&timeval);
-
-		xmms_medialib_entry_status_set (entry, XMMS_MEDIALIB_ENTRY_STATUS_OK);
-		xmms_medialib_entry_property_set_int (entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
-		                                      timeval.tv_sec);
-		xmms_medialib_entry_send_update (entry);
-
+		xmms_medialib_commit (session);
 	}
 
 	g_list_free (goal_format);
