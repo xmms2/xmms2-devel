@@ -306,6 +306,7 @@ xmms_tta_seek (xmms_xform_t *xform, gint64 samples,
 
 	/* update the index of the next frame after successful seek */
 	data->nextframe = idx;
+	data->next_boundary = 0;
 
 	return (data->nextframe * data->framelen);
 }
