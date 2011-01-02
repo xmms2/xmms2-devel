@@ -1,0 +1,8 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    if conf.check_cfg(package="fluidsynth", uselib_store="fluidsynth", args="--cflags --libs"):
+        return True
+    return False
+
+configure, build = plugin("fluidsynth", configure=plugin_configure, libs=["fluidsynth"])

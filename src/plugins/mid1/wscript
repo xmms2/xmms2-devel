@@ -1,0 +1,6 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    return True
+
+configure, build = plugin("mid1", configure=plugin_configure)

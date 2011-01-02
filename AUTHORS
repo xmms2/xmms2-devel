@@ -251,6 +251,7 @@ D: Jack output plugin.
 N: Adam Nielsen
 E: a.nielsen@shikadi.net
 D: ModPlug configuration.
+D: FluidSynth plugin and .mid player
 
 N: Thomas Nilsson
 E: thomas@xmms.org
