@@ -267,6 +267,7 @@ xmms_tta_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 	}
 
 	data->next_boundary -= ret;
+	data->next_boundary = 0;
 
 	return size;
 }
