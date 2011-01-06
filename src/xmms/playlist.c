@@ -344,8 +344,8 @@ xmms_playlist_advance_do (xmms_playlist_t *playlist)
 		if (currpos == size && !playlist->repeat_all &&
 		    xmmsv_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
-			xmms_collection_set_int_attr (plcoll, "position", 0);
-			XMMS_PLAYLIST_CURRPOS_MSG (0, XMMS_ACTIVE_PLAYLIST);
+			xmms_collection_set_int_attr (plcoll, "position", -1);
+			XMMS_PLAYLIST_CURRPOS_MSG (-1, XMMS_ACTIVE_PLAYLIST);
 
 			xmms_playlist_client_load (buffer, jumplist, &err);
 			if (xmms_error_isok (&err)) {
