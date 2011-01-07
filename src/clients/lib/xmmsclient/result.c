@@ -450,9 +450,9 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		xmmsc_result_restart (res);
 	}
 
-	if (res->type == XMMSC_RESULT_CLASS_BROADCAST) {
-		/* We keep the results alive with broadcasts, but we
-		   just renew the value because it went out of scope.
+	if (res->type != XMMSC_RESULT_CLASS_DEFAULT) {
+		/* We keep the results alive with signals and broadcasts,
+		   but we just renew the value because it went out of scope.
 		   (freeing the payload, forget about it) */
 		xmmsv_unref (res->data);
 		res->data = NULL;
