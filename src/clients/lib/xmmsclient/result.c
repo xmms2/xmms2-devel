@@ -33,6 +33,7 @@
 static void xmmsc_result_restart (xmmsc_result_t *res);
 static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
 static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
+static void xmmsc_result_notifier_delete_all (xmmsc_result_t *res);
 
 typedef struct xmmsc_result_callback_St {
 	xmmsc_result_notifier_t func;
@@ -137,8 +138,6 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
-	x_list_t *n, *next;
-
 	x_return_if_fail (res);
 
 	/* Free memory! */
@@ -151,12 +150,7 @@ xmmsc_result_free (xmmsc_result_t *res)
 		xmmsv_unref (res->data);
 	}
 
-	n = res->notifiers;
-	while (n) {
-		next = x_list_next (n);
-		xmmsc_result_notifier_delete (res, n);
-		n = next;
-	}
+	xmmsc_result_notifier_delete_all (res);
 
 	free (res);
 }
@@ -174,7 +168,7 @@ xmmsc_result_get_class (xmmsc_result_t *res)
 }
 
 /**
- * Disconnect a signal or a broadcast.
+ * Disconnect all notifiers for a signal or a broadcast result.
  * @param res The result to disconnect, must be of class signal or broadcast.
  */
 void
@@ -185,7 +179,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
 	switch (res->type) {
 		case XMMSC_RESULT_CLASS_SIGNAL:
 		case XMMSC_RESULT_CLASS_BROADCAST:
-			xmmsc_result_unref (res);
+			xmmsc_result_notifier_delete_all (res);
 			break;
 		default:
 			x_api_error_if (1, "invalid result type",);
@@ -536,4 +530,19 @@ xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node)
 		cb->free_func (cb->user_data);
 	}
 	xmmsc_result_notifier_remove (res, node);
+}
+
+/* Dereference all notifiers from a result and delete their udata. */
+static void
+xmmsc_result_notifier_delete_all (xmmsc_result_t *res)
+{
+	x_list_t *n = res->notifiers;
+
+	while (n) {
+		x_list_t *next = x_list_next (n);
+		xmmsc_result_notifier_delete (res, n);
+		n = next;
+	}
+
+	res->notifiers = NULL;
 }
