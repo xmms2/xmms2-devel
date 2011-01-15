@@ -23,6 +23,7 @@ typedef struct {
 	xmmsc_connection_t *conn;
 	GIOChannel *iochan;
 	gboolean write_pending;
+	guint source_id;
 } xmmsc_glib_watch_t;
 
 static gboolean
@@ -80,14 +81,14 @@ xmmsc_mainloop_gmain_init (xmmsc_connection_t *c)
 	fd = xmmsc_io_fd_get (c);
 
 	watch = g_new0 (xmmsc_glib_watch_t, 1);
-	watch->conn = c;
+	watch->conn = xmmsc_ref (c);
 	watch->iochan = g_io_channel_unix_new (fd);
 
 	xmmsc_io_need_out_callback_set (c, xmmsc_mainloop_need_out_cb, watch);
-	g_io_add_watch (watch->iochan,
-	                G_IO_IN | G_IO_ERR | G_IO_HUP,
-	                xmmsc_glib_read_cb,
-	                watch);
+	watch->source_id = g_io_add_watch (watch->iochan,
+	                                   G_IO_IN | G_IO_ERR | G_IO_HUP,
+	                                   xmmsc_glib_read_cb,
+	                                   watch);
 	g_io_channel_unref (watch->iochan);
 
 	if (xmmsc_io_want_out (c)) {
@@ -100,5 +101,12 @@ xmmsc_mainloop_gmain_init (xmmsc_connection_t *c)
 void
 xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *c, void *data)
 {
-	g_free (data);
+	g_return_if_fail (data != NULL);
+
+	xmmsc_glib_watch_t *watch = (xmmsc_glib_watch_t *) data;
+
+	g_source_remove (watch->source_id);
+	xmmsc_unref (watch->conn);
+
+	g_free (watch);
 }
