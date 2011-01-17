@@ -38,14 +38,12 @@
 
 static char startup_msg[] = "\n--- Starting new xmms2d ---\n";
 
-int
-main (int argc, char **argv)
-{
-	pid_t pid;
-	int i, fd, max_fd;
-	int pipefd[2];
-	const gchar *logfile = NULL;
-	const gchar *pidfile = NULL;
+void get_options (int *, char ***);
+
+const gchar *logfile = NULL;
+const gchar *pidfile = NULL;
+
+void get_options (int *argc, char ***argv) {
 	GError *error = NULL;
 	GOptionContext* context = NULL;
 	GOptionEntry opts[] = {
@@ -54,20 +52,17 @@ main (int argc, char **argv)
 		{NULL}
 	};
 
-	context = g_option_context_new ("- XMMS2 launcher");
+	/* get options */
+	context = g_option_context_new ("[XMMSD_OPTION] ... - XMMS2 launcher");
 	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, opts, NULL);
-	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+	if (!g_option_context_parse (context, argc, argv, &error)) {
 		g_print ("xmms2-launcher: %s\n", error->message);
 		g_clear_error (&error);
 	}
 	g_option_context_free (context);
 
-	if (pipe (&pipefd[0]) == -1) {
-		perror ("pipe");
-		exit (1);
-	}
-	
+	/* Prepare logfile */
 	if (!logfile) {
 		char cache[PATH_MAX];
 		xmms_usercachedir_get (cache, PATH_MAX);
@@ -76,6 +71,22 @@ main (int argc, char **argv)
 			g_mkdir_with_parents (cache, 0755);
 		}
 	}
+}
+
+int
+main (int argc, char **argv)
+{
+	pid_t pid;
+	int i, fd, max_fd;
+	int pipefd[2];
+
+	get_options (&argc, &argv);
+
+	if (pipe (&pipefd[0]) == -1) {
+		perror ("pipe");
+		exit (1);
+	}
+
 	g_print ("Log output will be stored in %s\n", logfile);
 
 	pid = fork ();
