@@ -130,14 +130,17 @@ main (int argc, char **argv)
 	if (!pid) {
 		char *args[32];
 		char buf[32];
-		int i;
-		args[0] = BINDIR "/xmms2d";
+		int i, j = 0;
+
+		args[j++] = BINDIR "/xmms2d";
+
 		snprintf (buf, 32, "--status-fd=%d", pipefd[1]);
-		args[1] = buf;
-		for (i = 1; i < argc && i < 30; i++) {
-			args[i + 1] = argv[i];
+		args[j++] = buf;
+
+		for (i = 1; i < argc && j < 31; i++) {
+			args[j++] = argv[i];
 		}
-		args[i + 1] = NULL;
+		args[j] = NULL;
 
 		execvp (args[0], args);
 		exit (1);
