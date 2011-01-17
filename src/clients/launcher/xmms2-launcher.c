@@ -70,9 +70,10 @@ void get_options (int *argc, char ***argv) {
 		{"pidfile", 'P', 0, G_OPTION_ARG_FILENAME, &pidfile, "Save xmms2d pid in <file>", "<file>"},
 		{NULL}
 	};
+	int i, j;
 
 	/* get options */
-	context = g_option_context_new ("[XMMSD_OPTION] ... - XMMS2 launcher");
+	context = g_option_context_new ("[--] [XMMSD_OPTION] ... - XMMS2 launcher");
 	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, opts, NULL);
 	if (!g_option_context_parse (context, argc, argv, &error)) {
@@ -80,6 +81,17 @@ void get_options (int *argc, char ***argv) {
 		g_clear_error (&error);
 	}
 	g_option_context_free (context);
+
+	/* Remove first "--" from argv */
+	for (i = 0; i < *argc; i++) {
+		if (strcmp ((*argv)[i], "--") == 0) {
+			(*argc)--;
+			for (j = i; j < *argc; j++) {
+				(*argv)[j] = (*argv)[j+1];
+			}
+			break;
+		}
+	}
 
 	/* Prepare logfile */
 	if (!logfile) {
