@@ -110,6 +110,10 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              NULL);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/amf",
+	                              NULL);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/umx",
 	                              NULL);
 
@@ -121,6 +125,8 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string IMPM", NULL);
 	xmms_magic_add ("MED module", "audio/med",
 	                "0 string MMD", NULL);
+	xmms_magic_add ("AMF module", "audio/amf",
+	                "0 string AMF", NULL);
 
 	/* http://www.unrealwiki.com/wiki/Package_File_Format */
 	xmms_magic_add ("Unreal Engine package", "audio/umx",
