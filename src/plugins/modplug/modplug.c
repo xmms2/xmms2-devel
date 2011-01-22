@@ -54,7 +54,7 @@ static gboolean xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_modplug_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_modplug_destroy (xmms_xform_t *xform);
 static gboolean xmms_modplug_init (xmms_xform_t *xform);
-/*static gboolean xmms_modplug_seek (xmms_xform_t *xform, guint samples);*/
+static gint64 xmms_modplug_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *error);
 static void xmms_modplug_config_changed (xmms_object_t *obj, xmmsv_t *_value, gpointer udata);
 
 /*
@@ -76,9 +76,7 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_modplug_init;
 	methods.destroy = xmms_modplug_destroy;
 	methods.read = xmms_modplug_read;
-	/*
-	  methods.seek
-	*/
+	methods.seek = xmms_modplug_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -196,21 +194,22 @@ xmms_modplug_destroy (xmms_xform_t *xform)
 
 }
 
-#if 0
-static gboolean
-xmms_modplug_seek (xmms_xform_t *xform, guint samples)
+static gint64
+xmms_modplug_seek (xmms_xform_t *xform, gint64 samples,
+                xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
 	xmms_modplug_data_t *data;
 
-	g_return_val_if_fail (xform, FALSE);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (samples >= 0, -1);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 
 	data = xmms_xform_private_data_get (xform);
 
 	ModPlug_Seek (data->mod, (int) ((gdouble)1000 * samples / 44100));
 
-	return TRUE;
+	return samples;
 }
-#endif
 
 static gboolean
 xmms_modplug_init (xmms_xform_t *xform)

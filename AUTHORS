@@ -324,6 +324,10 @@ N: Auke Schrijnen
 E: auke@schrijnen.nl
 D: Windows diskwrite and Win2k fixes
 
+N: Benjamin Schmitz
+E: vortex@wolpzone.de
+D: modplug fixes
+
 N: Tim Schumacher
 E: tim@we-are-teh-b.org
 D: Windows CLI terminal width fix
