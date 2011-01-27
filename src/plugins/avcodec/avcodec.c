@@ -121,6 +121,7 @@ xmms_avcodec_destroy (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	avcodec_close (data->codecctx);
+	av_free (data->codecctx);
 
 	g_string_free (data->outbuf, TRUE);
 	g_free (data->buffer);
@@ -144,6 +145,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->outbuf = g_string_new (NULL);
 	data->buffer = g_malloc (AVCODEC_BUFFER_SIZE);
 	data->buffer_size = AVCODEC_BUFFER_SIZE;
+	data->codecctx = NULL;
 
 	xmms_xform_private_data_set (xform, data);
 
@@ -259,6 +261,9 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	return TRUE;
 
 err:
+	if (data->codecctx) {
+		av_free (data->codecctx);
+	}
 	g_string_free (data->outbuf, TRUE);
 	g_free (data->extradata);
 	g_free (data);
