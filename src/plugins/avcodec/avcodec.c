@@ -211,7 +211,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		}
 	}
 
-	data->codecctx = g_new0 (AVCodecContext, 1);
+	data->codecctx = avcodec_alloc_context ();
 	data->codecctx->sample_rate = data->samplerate;
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
