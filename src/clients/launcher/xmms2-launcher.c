@@ -76,7 +76,7 @@ void get_options (int *argc, char ***argv) {
 	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, opts, NULL);
 	if (!g_option_context_parse (context, argc, argv, &error)) {
-		g_warning ("%s", error->message);
+		g_critical ("%s", error->message);
 		g_clear_error (&error);
 	}
 	g_option_context_free (context);
