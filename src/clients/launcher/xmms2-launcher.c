@@ -39,9 +39,28 @@
 static char startup_msg[] = "\n--- Starting new xmms2d ---\n";
 
 void get_options (int *, char ***);
+void simple_log_handler (const gchar *, GLogLevelFlags, const gchar *, gpointer);
 
 const gchar *logfile = NULL;
 const gchar *pidfile = NULL;
+
+void simple_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
+                         const gchar *message, gpointer user_data) {
+	if (log_level & G_LOG_FLAG_RECURSION) {
+		exit (1);
+	}
+
+	if (log_level & (G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO |
+	                 G_LOG_LEVEL_MESSAGE)) {
+		g_print ("%s\n", message);
+	} else {
+		g_printerr ("xmms2-launcher: %s\n", message);
+	}
+
+	if (log_level & G_LOG_FLAG_FATAL) {
+		exit (1);
+	}
+}
 
 void get_options (int *argc, char ***argv) {
 	GError *error = NULL;
@@ -57,7 +76,7 @@ void get_options (int *argc, char ***argv) {
 	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, opts, NULL);
 	if (!g_option_context_parse (context, argc, argv, &error)) {
-		g_print ("xmms2-launcher: %s\n", error->message);
+		g_warning ("%s", error->message);
 		g_clear_error (&error);
 	}
 	g_option_context_free (context);
@@ -80,14 +99,16 @@ main (int argc, char **argv)
 	int i, fd, max_fd;
 	int pipefd[2];
 
+	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_CRITICAL | G_LOG_FATAL_MASK);
+	g_log_set_default_handler (simple_log_handler, NULL);
+
 	get_options (&argc, &argv);
 
 	if (pipe (&pipefd[0]) == -1) {
-		perror ("pipe");
-		exit (1);
+		g_critical ("pipe: %s", g_strerror (errno));
 	}
 
-	g_print ("Log output will be stored in %s\n", logfile);
+	g_message ("Log output will be stored in %s.", logfile);
 
 	pid = fork ();
 	if (pid) {
@@ -101,12 +122,11 @@ main (int argc, char **argv)
 				break;
 		}
 		if (res == -1)
-			perror ("read");
+			g_warning ("read: %s", g_strerror (errno));
 		if (res == 0) {
-			printf ("startup failed!\n");
-			exit (1);
+			g_critical ("startup of xmms2d failed!");
 		}
-		printf("xmms2 started\n");
+		g_message ("xmms2d started.");
 		exit(0);
 	}
 
