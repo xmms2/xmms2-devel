@@ -140,3 +140,7 @@ src/plugins/samba/samba.c
 
 src/plugins/faad/faad.c
         Licensed under the GPL
+
+src/plugins/id3v2/id3.c
+	Licensed under a BSD 3-Clause license
+
