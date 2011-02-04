@@ -140,38 +140,55 @@ static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
                              s4_sourcepref_t *prefs, xmms_error_t *err)
 {
-	xmms_fetch_spec_t *ret;
+	xmmsv_t *cluster_by, *cluster_data;
+	xmms_fetch_spec_t *spec;
 	const gchar *str;
-	xmmsv_t *val;
-	gint i = 0;
+	gint i;
 
-	ret = g_new0 (xmms_fetch_spec_t, 1);
+	if (!xmmsv_dict_get (fetch, "cluster-by", &cluster_by)) {
+		const gchar *message = "Required field 'cluster-by' not set in cluster.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
 
-	if (xmmsv_dict_get (fetch, "cluster-by", &val)) {
-		if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-			ret->data.cluster.cluster_count = xmmsv_list_get_size (val);
-			ret->data.cluster.cols = g_new (int, ret->data.cluster.cluster_count);
-			for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-				ret->data.cluster.cols[i] = get_cluster_column (info, val, str, prefs);
-			}
-		} else if (xmmsv_get_string (val, &str)) {
-			ret->data.cluster.cluster_count = 1;
-			ret->data.cluster.cols = g_new (int, 1);
-			ret->data.cluster.cols[0] = get_cluster_column (info, val, str, prefs);
+	if (!xmmsv_is_type (cluster_by, XMMSV_TYPE_LIST) &&
+	    !xmmsv_is_type (cluster_by, XMMSV_TYPE_STRING)) {
+		const gchar *message = "Field 'cluster-by' in cluster must be a list or string.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
+	if (!xmmsv_dict_get (fetch, "data", &cluster_data)) {
+		const gchar *message = "Required field 'data' not set in cluster.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
+	if (!xmmsv_is_type (cluster_data, XMMSV_TYPE_DICT)) {
+		const gchar *message = "Field 'data' in cluster must be a dict.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
+	spec = g_new0 (xmms_fetch_spec_t, 1);
+
+	if (xmmsv_is_type (cluster_by, XMMSV_TYPE_LIST)) {
+		spec->data.cluster.cluster_count = xmmsv_list_get_size (cluster_by);
+		spec->data.cluster.cols = g_new0 (int, spec->data.cluster.cluster_count);
+		for (i = 0; xmmsv_list_get_string (cluster_by, i, &str); i++) {
+			spec->data.cluster.cols[i] = get_cluster_column (info, cluster_by, str, prefs);
 		}
 	} else {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'cluster-by' not set in cluster");
-		/* Allocate dummy memory so fetch_spec_free don't crash */
-		ret->data.cluster.cols = g_new (int, 1);
-	}
-	if (xmmsv_dict_get (fetch, "data", &val)) {
-		ret->data.cluster.data = xmms_fetch_spec_new (val, info, prefs, err);
-	} else {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'data' not set in cluster");
-		ret->data.cluster.data = NULL;
+		/* TODO: Should this really be allowed? Will be abstracted in bindings anyway */
+		xmmsv_get_string (cluster_by, &str);
+		spec->data.cluster.cluster_count = 1;
+		spec->data.cluster.cols = g_new0 (int, 1);
+		spec->data.cluster.cols[0] = get_cluster_column (info, cluster_by, str, prefs);
 	}
 
-	return ret;
+	spec->data.cluster.data = xmms_fetch_spec_new (cluster_data, info, prefs, err);
+
+	return spec;
 }
 
 static xmms_fetch_spec_t *
