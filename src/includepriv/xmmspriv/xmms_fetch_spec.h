@@ -21,6 +21,7 @@
 #include "xmmspriv/xmms_fetch_info.h"
 #include "xmmsc/xmmsv_coll.h"
 #include "xmmsc/xmmsv.h"
+#include "xmms/xmms_error.h"
 
 typedef enum {
 	AGGREGATE_FIRST,
@@ -69,7 +70,7 @@ struct xmms_fetch_spec_St {
 };
 
 
-xmms_fetch_spec_t *xmms_fetch_spec_new (xmmsv_t *fetch, xmms_fetch_info_t *info, s4_sourcepref_t *prefs, int *invalid);
+xmms_fetch_spec_t *xmms_fetch_spec_new (xmmsv_t *fetch, xmms_fetch_info_t *info, s4_sourcepref_t *prefs, xmms_error_t *err);
 void xmms_fetch_spec_free (xmms_fetch_spec_t *spec);
 
 #endif

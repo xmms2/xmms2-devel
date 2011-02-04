@@ -30,7 +30,7 @@ get_cluster_column (xmms_fetch_info_t *info, xmmsv_t *val,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                              s4_sourcepref_t *prefs, int *invalid)
+                              s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 	s4_sourcepref_t *sp;
@@ -127,8 +127,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	} else if (strcmp (str, "avg") == 0) {
 		ret->data.metadata.aggr_func = AGGREGATE_AVG;
 	} else { /* Unknown aggregation function */
-		XMMS_DBG ("Unknown aggregation function: %s", str);
-		*invalid = 1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Unknown aggregation function.");
 	}
 
 	s4_sourcepref_unref (sp);
@@ -139,7 +138,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                             s4_sourcepref_t *prefs, int *invalid)
+                             s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 	const gchar *str;
@@ -161,16 +160,14 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 			ret->data.cluster.cols[0] = get_cluster_column (info, val, str, prefs);
 		}
 	} else {
-		XMMS_DBG ("Required field 'cluster-by' not set in cluster");
-		*invalid = 1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'cluster-by' not set in cluster");
 		/* Allocate dummy memory so fetch_spec_free don't crash */
 		ret->data.cluster.cols = g_new (int, 1);
 	}
 	if (xmmsv_dict_get (fetch, "data", &val)) {
-		ret->data.cluster.data = xmms_fetch_spec_new (val, info, prefs, invalid);
+		ret->data.cluster.data = xmms_fetch_spec_new (val, info, prefs, err);
 	} else {
-		XMMS_DBG ("Required field 'data' not set in cluster");
-		*invalid = 1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'data' not set in cluster");
 		ret->data.cluster.data = NULL;
 	}
 
@@ -179,11 +176,11 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster_list (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                                  s4_sourcepref_t *prefs, int *invalid)
+                                  s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 
-	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, invalid);
+	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
 	ret->type = FETCH_CLUSTER_LIST;
 
 	return ret;
@@ -192,11 +189,11 @@ xmms_fetch_spec_new_cluster_list (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster_dict (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                                  s4_sourcepref_t *prefs, int *invalid)
+                                  s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 
-	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, invalid);
+	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
 	ret->type = FETCH_CLUSTER_DICT;
 
 	return ret;
@@ -205,7 +202,7 @@ xmms_fetch_spec_new_cluster_dict (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                              s4_sourcepref_t *prefs, int *invalid)
+                              s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 	const gchar *str;
@@ -234,13 +231,12 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 			xmmsv_dict_iter_pair (it, &str, &val);
 
 			ret->data.organize.keys[i] = str;
-			ret->data.organize.data[i] = xmms_fetch_spec_new (val, info, prefs, invalid);
+			ret->data.organize.data[i] = xmms_fetch_spec_new (val, info, prefs, err);
 		}
 
 		xmmsv_dict_iter_explicit_destroy (it);
 	} else {
-		XMMS_DBG ("Required field 'data' not set in organize");
-		*invalid = 1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'data' not set in organize");
 	}
 
 	return ret;
@@ -248,7 +244,7 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_count (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                           s4_sourcepref_t *prefs, int *invalid)
+                           s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmms_fetch_spec_t *ret;
 
@@ -266,33 +262,32 @@ xmms_fetch_spec_new_count (xmmsv_t *fetch, xmms_fetch_info_t *info,
  */
 xmms_fetch_spec_t *
 xmms_fetch_spec_new (xmmsv_t *fetch, xmms_fetch_info_t *info,
-                     s4_sourcepref_t *prefs, int *invalid)
+                     s4_sourcepref_t *prefs, xmms_error_t *err)
 {
+	const char *type;
+
 	if (xmmsv_get_type (fetch) != XMMSV_TYPE_DICT) {
-		XMMS_DBG ("Invalid fetch specification: not a dict");
-		*invalid = 1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "A fetch specification must be a dict.");
 		return NULL;
 	}
 
-	const char *type;
 	if (!xmmsv_dict_entry_get_string (fetch, "type", &type)) {
 		type = "metadata";
 	}
 
 	if (strcmp (type, "metadata") == 0) {
-		return xmms_fetch_spec_new_metadata (fetch, info, prefs, invalid);
+		return xmms_fetch_spec_new_metadata (fetch, info, prefs, err);
 	} else if (strcmp (type, "cluster-list") == 0) {
-		return xmms_fetch_spec_new_cluster_list (fetch, info, prefs, invalid);
+		return xmms_fetch_spec_new_cluster_list (fetch, info, prefs, err);
 	} else if (strcmp (type, "cluster-dict") == 0) {
-		return xmms_fetch_spec_new_cluster_dict (fetch, info, prefs, invalid);
+		return xmms_fetch_spec_new_cluster_dict (fetch, info, prefs, err);
 	} else if (strcmp (type, "organize") == 0) {
-		return xmms_fetch_spec_new_organize (fetch, info, prefs, invalid);
+		return xmms_fetch_spec_new_organize (fetch, info, prefs, err);
 	} else if (strcmp (type, "count") == 0) {
-		return xmms_fetch_spec_new_count (fetch, info, prefs, invalid);
-	} else {
-		XMMS_DBG ("Type %s not recognized.", type);
-		*invalid = 1;
+		return xmms_fetch_spec_new_count (fetch, info, prefs, err);
 	}
+
+	xmms_error_set (err, XMMS_ERROR_INVAL, "Unknown fetch type.");
 
 	return NULL;
 }
