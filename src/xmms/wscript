@@ -11,6 +11,8 @@ source = """
     config.c
     mediainfo.c
     medialib.c
+    fetchspec.c
+    fetchinfo.c
     object.c
     error.c
     output.c

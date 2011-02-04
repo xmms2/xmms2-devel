@@ -23,7 +23,7 @@
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
-#include "s4.h"
+
 
 #include <string.h>
 #include <stdlib.h>
@@ -32,6 +32,11 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <time.h>
+
+#include "xmmspriv/xmms_fetch_info.h"
+#include "xmmspriv/xmms_fetch_spec.h"
+#include "s4.h"
+
 
 /**
  * @file
@@ -1402,51 +1407,6 @@ xmms_medialib_url_encode (const gchar *path)
 	return res;
 }
 
-typedef struct {
-	s4_fetchspec_t *fs;
-	GHashTable *ft;
-} fetch_info_t;
-
-static int
-fetchinfo_add_key (fetch_info_t *info, void *object, const char *key, s4_sourcepref_t *sp)
-{
-	int index;
-	int null = 0;
-
-	if (key != NULL && strcmp (key, "id") == 0)
-		return 0;
-
-	GHashTable *obj_table = g_hash_table_lookup (info->ft, object);
-
-	if (key == NULL) {
-		key = "__NULL__";
-		null = 1;
-	}
-
-	if (obj_table == NULL) {
-		obj_table = g_hash_table_new (g_str_hash, g_str_equal);
-		g_hash_table_insert (info->ft, object, obj_table);
-	}
-
-	if ((index = GPOINTER_TO_INT (g_hash_table_lookup (obj_table, key))) == 0) {
-		index = s4_fetchspec_size (info->fs);
-		g_hash_table_insert (obj_table, (void*)key, GINT_TO_POINTER (index));
-		if (null)
-			key = NULL;
-		s4_fetchspec_add (info->fs, key, sp, S4_FETCH_DATA);
-	}
-
-	return index;
-}
-
-static int
-fetchinfo_get_index (fetch_info_t *info, void *object, const char *key)
-{
-	GHashTable *obj_table = g_hash_table_lookup (info->ft, object);
-	if (key == NULL)
-		key = "__NULL__";
-	return GPOINTER_TO_INT (g_hash_table_lookup (obj_table, key));
-}
 
 /* A filter matching everything */
 static int universe_filter (void)
@@ -1515,7 +1475,7 @@ xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
  * @return The set (or a new set) with the correct ordering
  */
 static s4_resultset_t *
-xmms_medialib_result_sort (s4_resultset_t *set, fetch_info_t *fetch_info, xmmsv_t *order)
+xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, xmmsv_t *order)
 {
 	int *s4_order = malloc (sizeof (int) * (xmmsv_list_get_size (order) + 1));
 	int i, j, stop;
@@ -1546,7 +1506,7 @@ xmms_medialib_result_sort (s4_resultset_t *set, fetch_info_t *fetch_info, xmmsv_
 			} else if (strcmp (str, "__ ID __") == 0) {
 				s4_order[j] = 1;
 			} else {
-				s4_order[j] = fetchinfo_get_index (fetch_info, NULL, str) + 1;
+				s4_order[j] = xmms_fetch_info_get_index (fetch_info, NULL, str) + 1;
 			}
 
 			if (neg) {
@@ -1646,7 +1606,7 @@ has_order (xmmsv_coll_t *coll)
  */
 static s4_resultset_t*
 xmms_medialib_query_recurs (xmms_medialib_session_t *session,
-                            xmmsv_coll_t *coll, fetch_info_t *fetch,
+                            xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
                             xmmsv_t *order, s4_condition_t **cond, int return_result)
 {
 	s4_resultset_t *res = NULL;
@@ -1883,7 +1843,7 @@ xmms_medialib_query_recurs (xmms_medialib_session_t *session,
 						val = (char*)"__ ID __";
 					} else {
 						xmmsv_coll_attribute_get (coll, "field", &val);
-						fetchinfo_add_key (fetch, NULL, val, default_sp);
+						xmms_fetch_info_add_key (fetch, NULL, val, default_sp);
 					}
 
 					if (!xmmsv_coll_attribute_get (coll, "order", &key)
@@ -2048,49 +2008,6 @@ convert_ghashtable_to_xmmsv (GHashTable *table, int depth, void_to_xmmsv_t func,
 	}
 }
 
-typedef enum {
-	AGGREGATE_FIRST,
-	AGGREGATE_SUM,
-	AGGREGATE_MAX,
-	AGGREGATE_MIN,
-	AGGREGATE_LIST,
-	AGGREGATE_RANDOM,
-	AGGREGATE_AVG
-} aggregate_function_t;
-
-typedef struct fetch_spec_St {
-	enum {
-		FETCH_CLUSTER_LIST,
-		FETCH_CLUSTER_DICT,
-		FETCH_ORGANIZE,
-		FETCH_METADATA,
-		FETCH_COUNT
-	} type;
-	union {
-		struct {
-			int cluster_count;
-			int *cols;
-			struct fetch_spec_St *data;
-		} cluster;
-		struct {
-			enum {
-				METADATA_ID,
-				METADATA_KEY,
-				METADATA_VALUE,
-				METADATA_SOURCE
-			} get[5];
-			int get_size;
-			int col_count;
-			int *cols;
-			aggregate_function_t aggr_func;
-		} metadata;
-		struct {
-			int count;
-			const char **keys;
-			struct fetch_spec_St **data;
-		} organize;
-	} data;
-} fetch_spec_t;
 
 typedef struct {
 	int64_t sum;
@@ -2110,7 +2027,7 @@ typedef struct {
 /* Converts an S4 result (a column) into an xmmsv values */
 static void *
 result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
-                 fetch_spec_t *spec)
+                 xmms_fetch_spec_t *spec)
 {
 	int32_t i;
 	xmmsv_t *dict, *cur;
@@ -2402,7 +2319,7 @@ aggregate_result (xmmsv_t *val, int depth, aggregate_function_t aggr_func)
 
 /* Converts an S4 resultset to an xmmsv using the fetch specification */
 static xmmsv_t *
-metadata_to_xmmsv (s4_resultset_t *set, fetch_spec_t *spec)
+metadata_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 {
 	xmmsv_t *ret = NULL;
 	const s4_resultrow_t *row;
@@ -2429,7 +2346,7 @@ metadata_to_xmmsv (s4_resultset_t *set, fetch_spec_t *spec)
  * the same values for the cluster attributes
  */
 static void *
-cluster_set (s4_resultset_t *set, fetch_spec_t *spec, int return_hashtable)
+cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, int return_hashtable)
 {
 	int i, j, levels = spec->data.cluster.cluster_count;
 	s4_resultset_t *cluster;
@@ -2519,7 +2436,7 @@ cluster_set (s4_resultset_t *set, fetch_spec_t *spec, int return_hashtable)
 
 /* Converts an S4 resultset into an xmmsv_t, based on the fetch specification */
 static xmmsv_t *
-resultset_to_xmmsv (s4_resultset_t *set, fetch_spec_t *spec)
+resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 {
 	xmmsv_t *val, *ret = NULL;
 	GList *sets;
@@ -2574,243 +2491,7 @@ resultset_to_xmmsv (s4_resultset_t *set, fetch_spec_t *spec)
 	return ret;
 }
 
-static int
-get_cluster_column (fetch_info_t *info, xmmsv_t *val, const char *str)
-{
-	if (strcmp (str, "_row") == 0) {
-		return -1;
-	} else {
-		return fetchinfo_add_key (info, val, str, default_sp);
-	}
-}
 
-/* Converts a fetch specification in xmmsv_t form into a fetch_spec_t structure */
-static fetch_spec_t *
-fetch_to_spec (xmmsv_t *fetch, fetch_info_t *info, int *invalid)
-{
-	xmmsv_t *val;
-	const char *str;
-	int i, id_only = 0;
-	fetch_spec_t *ret = malloc (sizeof (fetch_spec_t));
-	s4_sourcepref_t *sp;
-
-	switch (xmmsv_get_type (fetch)) {
-	case XMMSV_TYPE_DICT:
-	{
-		const char *type;
-		if (!xmmsv_dict_entry_get_string (fetch, "type", &type)) {
-			type = "metadata";
-		}
-
-		if (strcmp (type, "metadata") == 0) {
-			ret->type = FETCH_METADATA;
-
-			if (xmmsv_dict_get (fetch, "get", &val)) {
-				if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-					for (i = 0; i < 4 && xmmsv_list_get_string (val, i, &str); i++) {
-						if (strcmp (str, "id") == 0) {
-							ret->data.metadata.get[i] = METADATA_ID;
-						} else if (strcmp (str, "key") == 0) {
-							ret->data.metadata.get[i] = METADATA_KEY;
-						} else if (strcmp (str, "value") == 0) {
-							ret->data.metadata.get[i] = METADATA_VALUE;
-						} else if (strcmp (str, "source") == 0) {
-							ret->data.metadata.get[i] = METADATA_SOURCE;
-						}
-					}
-				} else  if (xmmsv_get_string (val, &str)) {
-					if (strcmp (str, "id") == 0) {
-						ret->data.metadata.get[0] = METADATA_ID;
-					} else if (strcmp (str, "key") == 0) {
-						ret->data.metadata.get[0] = METADATA_KEY;
-					} else if (strcmp (str, "value") == 0) {
-						ret->data.metadata.get[0] = METADATA_VALUE;
-					} else if (strcmp (str, "source") == 0) {
-						ret->data.metadata.get[0] = METADATA_SOURCE;
-					}
-					i = 1;
-				}
-
-				ret->data.metadata.get_size = i;
-				if (i == 1 && ret->data.metadata.get[0] == METADATA_ID)
-					id_only = 1;
-			} else {
-				ret->data.metadata.get_size = 1;
-				ret->data.metadata.get[0] = METADATA_VALUE;
-			}
-
-			if (xmmsv_dict_get (fetch, "source-preference", &val)) {
-				const char **strs =
-					malloc (sizeof (const char*) * (xmmsv_list_get_size (val) + 1));
-
-				for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-					strs[i] = str;
-				}
-				strs[i] = NULL;
-				sp = s4_sourcepref_create (strs);
-				free (strs);
-			} else {
-				sp = s4_sourcepref_ref (default_sp);
-			}
-			if (id_only) {
-				ret->data.metadata.col_count = 1;
-				ret->data.metadata.cols = malloc (sizeof (int) * ret->data.metadata.col_count);
-				ret->data.metadata.cols[0] = 0;
-			} else if (xmmsv_dict_get (fetch, "keys", &val)) {
-				if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-					ret->data.metadata.col_count = xmmsv_list_get_size (val);
-					ret->data.metadata.cols = malloc (sizeof (int) * ret->data.metadata.col_count);
-					for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-						ret->data.metadata.cols[i] =
-							fetchinfo_add_key (info, fetch, str, sp);
-					}
-				} else if (xmmsv_get_string (val, &str)) {
-					ret->data.metadata.col_count = 1;
-					ret->data.metadata.cols = malloc (sizeof (int));
-					ret->data.metadata.cols[0] = fetchinfo_add_key (info, fetch, str, sp);
-				}
-			} else {
-				ret->data.metadata.col_count = 1;
-				ret->data.metadata.cols = malloc (sizeof (int) * ret->data.metadata.col_count);
-				ret->data.metadata.cols[0] = fetchinfo_add_key (info, fetch, NULL, sp);
-			}
-			if (!xmmsv_dict_entry_get_string (fetch, "aggregate", &str)) {
-				/* Default to first as the aggregation function */
-				str = "first";
-			}
-			if (strcmp (str, "first") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_FIRST;
-			} else if (strcmp (str, "sum") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_SUM;
-			} else if (strcmp (str, "max") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_MAX;
-			} else if (strcmp (str, "min") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_MIN;
-			} else if (strcmp (str, "list") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_LIST;
-			} else if (strcmp (str, "random") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_RANDOM;
-			} else if (strcmp (str, "avg") == 0) {
-				ret->data.metadata.aggr_func = AGGREGATE_AVG;
-			} else { /* Unknown aggregation function */
-				XMMS_DBG ("Unknown aggregation function: %s", str);
-				*invalid = 1;
-			}
-
-			s4_sourcepref_unref (sp);
-		} else if (strcmp (type, "cluster-list") == 0
-		           || strcmp (type, "cluster-dict") == 0) {
-			if (xmmsv_dict_get (fetch, "cluster-by", &val)) {
-				if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-					ret->data.cluster.cluster_count = xmmsv_list_get_size (val);
-					ret->data.cluster.cols =
-						malloc (sizeof (int) * ret->data.cluster.cluster_count);
-					for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-						ret->data.cluster.cols[i] = get_cluster_column (info, val, str);
-					}
-				} else if (xmmsv_get_string (val, &str)) {
-					ret->data.cluster.cluster_count = 1;
-					ret->data.cluster.cols = malloc (sizeof (int));
-					ret->data.cluster.cols[0] = get_cluster_column (info, val, str);
-				}
-			} else {
-				XMMS_DBG ("Required field 'cluster-by' not set in %s", type);
-				*invalid = 1;
-				/* Allocate dummy memory so fetch_spec_free don't crash */
-				ret->data.cluster.cols = malloc (1);
-			}
-			if (xmmsv_dict_get (fetch, "data", &val)) {
-				ret->data.cluster.data = fetch_to_spec (val, info, invalid);
-			} else {
-				XMMS_DBG ("Required field 'data' not set in %s", type);
-				*invalid = 1;
-				ret->data.cluster.data = NULL;
-			}
-
-			if (strcmp (type, "cluster-list") == 0) {
-				ret->type = FETCH_CLUSTER_LIST;
-			} else {
-				ret->type = FETCH_CLUSTER_DICT;
-			}
-		} else if (strcmp (type, "organize") == 0) {
-
-			ret->type = FETCH_ORGANIZE;
-
-			if (xmmsv_dict_get (fetch, "data", &val)) {
-				xmmsv_dict_iter_t *it;
-				xmmsv_get_dict_iter (val, &it);
-
-				for (ret->data.organize.count = 0
-				     ; xmmsv_dict_iter_valid (it)
-				     ; ret->data.organize.count++, xmmsv_dict_iter_next (it));
-
-
-				ret->data.organize.keys = malloc (sizeof (const char *) * ret->data.organize.count);
-				ret->data.organize.data = malloc (sizeof (fetch_spec_t *) * ret->data.organize.count);
-
-				for (i = 0, xmmsv_dict_iter_first (it)
-				     ; xmmsv_dict_iter_valid (it)
-				     ; xmmsv_dict_iter_next (it), i++) {
-					xmmsv_dict_iter_pair (it, &str, &val);
-
-					ret->data.organize.keys[i] = str;
-					ret->data.organize.data[i] = fetch_to_spec (val, info, invalid);
-				}
-
-				xmmsv_dict_iter_explicit_destroy (it);
-			} else {
-				XMMS_DBG ("Required field 'data' not set in %s", type);
-				*invalid = 1;
-			}
-		} else if (strcmp (type, "count") == 0) {
-			ret->type = FETCH_COUNT;
-		} else {
-			XMMS_DBG ("Type %s not recognized.", type);
-			*invalid = 1;
-			ret->type = FETCH_COUNT;
-		}
-		break;
-	}
-	default:
-		*invalid = 1;
-		XMMS_DBG ("Invalid fetch specification: not a dict");
-		ret->type = FETCH_COUNT;
-		break;
-	}
-
-	return ret;
-}
-
-static void
-fetch_spec_free (fetch_spec_t *spec)
-{
-	int i;
-	if (spec == NULL)
-		return;
-
-	switch (spec->type) {
-	case FETCH_METADATA:
-		free (spec->data.metadata.cols);
-		break;
-	case FETCH_CLUSTER_DICT:
-	case FETCH_CLUSTER_LIST:
-		free (spec->data.cluster.cols);
-		fetch_spec_free (spec->data.cluster.data);
-		break;
-	case FETCH_ORGANIZE:
-		for (i = 0; i < spec->data.organize.count; i++) {
-			fetch_spec_free (spec->data.organize.data[i]);
-		}
-
-		free (spec->data.organize.keys);
-		free (spec->data.organize.data);
-		break;
-	case FETCH_COUNT: /* Nothing to free */
-		break;
-	}
-
-	free (spec);
-}
 
 /**
  * Queries the medialib and returns an xmmsv_t with the info requested
@@ -2826,19 +2507,15 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 	s4_resultset_t *set;
 	s4_condition_t *cond;
 	xmmsv_t *order, *ret;
-	fetch_info_t info;
-	fetch_spec_t *spec;
+	xmms_fetch_info_t *info;
+	xmms_fetch_spec_t *spec;
 	int fetch_invalid = 0;
 
-	info.fs = s4_fetchspec_create ();
-	info.ft = g_hash_table_new_full (g_direct_hash, g_direct_equal,
-	                                 NULL, (GDestroyNotify)g_hash_table_destroy);
-	s4_fetchspec_add (info.fs, "song_id", default_sp, S4_FETCH_PARENT);
-
-	spec = fetch_to_spec (fetch, &info, &fetch_invalid);
+	info = xmms_fetch_info_new (default_sp);
+	spec = xmms_fetch_spec_new (fetch, info, default_sp, &fetch_invalid);
 
 	if (spec == NULL || fetch_invalid) {
-		fetch_spec_free (spec);
+		xmms_fetch_spec_free (spec);
 		if (err != NULL) {
 			xmms_error_set (err, XMMS_ERROR_INVAL, "invalid fetch specification");
 		}
@@ -2847,14 +2524,13 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 
 	order = xmmsv_new_list ();
 
-	set = xmms_medialib_query_recurs (session, coll, &info, order, &cond, 1);
+	set = xmms_medialib_query_recurs (session, coll, info, order, &cond, 1);
 	ret = resultset_to_xmmsv (set, spec);
 	s4_resultset_free (set);
 	s4_cond_free (cond);
-	s4_fetchspec_free (info.fs);
-	g_hash_table_destroy (info.ft);
+
 	xmmsv_unref (order);
-	fetch_spec_free (spec);
+	xmms_fetch_spec_free (spec);
 
 	xmmsv_list_append (session->vals, ret);
 

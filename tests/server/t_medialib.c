@@ -7,6 +7,8 @@
 #include "../src/xmms/object.c"
 #include "../src/xmms/config.c"
 #include "../src/xmms/medialib.c"
+#include "../src/xmms/fetchinfo.c"
+#include "../src/xmms/fetchspec.c"
 
 static void xmms_mock_entry (gint tracknr, const gchar *artist,
                              const gchar *album, const gchar *title);
