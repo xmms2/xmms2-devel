@@ -216,11 +216,7 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		xmmsv_dict_iter_t *it;
 		xmmsv_get_dict_iter (val, &it);
 
-		for (ret->data.organize.count = 0
-			     ; xmmsv_dict_iter_valid (it)
-			     ; ret->data.organize.count++, xmmsv_dict_iter_next (it));
-
-
+		ret->data.organize.count = xmmsv_dict_get_size (val);
 		ret->data.organize.keys = g_new (char *, ret->data.organize.count);
 		ret->data.organize.data = g_new (xmms_fetch_spec_t, ret->data.organize.count);
 
