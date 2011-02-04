@@ -31,16 +31,21 @@ namespace Xmms
 	Listener::Listener( const Listener& src )
 		: ListenerInterface(), conn_( src.conn_ )
 	{
+		xmmsc_ref( conn_ );
 	}
 
 	Listener& Listener::operator=( const Listener& src )
 	{
+		if (conn_ != NULL)
+			xmmsc_unref( conn_ );
 		conn_ = src.conn_;
+		xmmsc_ref( conn_ );
 		return *this;
 	}
 
 	Listener::~Listener()
 	{
+		xmmsc_unref (conn_);
 	}
 
 	int32_t
@@ -76,6 +81,7 @@ namespace Xmms
 	Listener::Listener( xmmsc_connection_t*& conn ) :
 		conn_( conn )
 	{
+		xmmsc_ref (conn);
 	}
 
 }
