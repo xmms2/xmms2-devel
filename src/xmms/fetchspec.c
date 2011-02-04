@@ -204,38 +204,47 @@ static xmms_fetch_spec_t *
 xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
                               s4_sourcepref_t *prefs, xmms_error_t *err)
 {
-	xmms_fetch_spec_t *ret;
-	const gchar *str;
-	xmmsv_t *val;
-	gint i = 0;
+	xmms_fetch_spec_t *spec;
+	xmmsv_dict_iter_t *it;
+	xmmsv_t *org_data;
+	gint org_idx;
 
-	ret = g_new0 (xmms_fetch_spec_t, 1);
-	ret->type = FETCH_ORGANIZE;
-
-	if (xmmsv_dict_get (fetch, "data", &val)) {
-		xmmsv_dict_iter_t *it;
-		xmmsv_get_dict_iter (val, &it);
-
-		ret->data.organize.count = xmmsv_dict_get_size (val);
-		ret->data.organize.keys = g_new (char *, ret->data.organize.count);
-		ret->data.organize.data = g_new (xmms_fetch_spec_t, ret->data.organize.count);
-
-		for (i = 0, xmmsv_dict_iter_first (it)
-			     ; xmmsv_dict_iter_valid (it)
-			     ; xmmsv_dict_iter_next (it), i++) {
-
-			xmmsv_dict_iter_pair (it, &str, &val);
-
-			ret->data.organize.keys[i] = str;
-			ret->data.organize.data[i] = xmms_fetch_spec_new (val, info, prefs, err);
-		}
-
-		xmmsv_dict_iter_explicit_destroy (it);
-	} else {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'data' not set in organize");
+	if (!xmmsv_dict_get (fetch, "data", &org_data)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Required field 'data' not set in organize.");
+		return NULL;
 	}
 
-	return ret;
+	if (xmmsv_get_type (org_data) != XMMSV_TYPE_DICT) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Field 'data' in organize must be a dict.");
+		return NULL;
+	}
+
+	spec = g_new0 (xmms_fetch_spec_t, 1);
+	spec->type = FETCH_ORGANIZE;
+
+	spec->data.organize.count = xmmsv_dict_get_size (org_data);
+	spec->data.organize.keys = g_new0 (char *, spec->data.organize.count);
+	spec->data.organize.data = g_new0 (xmms_fetch_spec_t, spec->data.organize.count);
+
+	org_idx = 0;
+	xmmsv_get_dict_iter (org_data, &it);
+	while (xmmsv_dict_iter_valid (it)) {
+		const gchar *str;
+		xmmsv_t *entry;
+
+		xmmsv_dict_iter_pair (it, &str, &entry);
+
+		/* TODO: error handling when xmms_fetch_spec_new returns NULL */
+		spec->data.organize.keys[org_idx] = str;
+		spec->data.organize.data[org_idx] = xmms_fetch_spec_new (entry, info,
+		                                                         prefs, err);
+
+		org_idx++;
+		xmmsv_dict_iter_next (it);
+	}
+	xmmsv_dict_iter_explicit_destroy (it);
+
+	return spec;
 }
 
 static xmms_fetch_spec_t *
