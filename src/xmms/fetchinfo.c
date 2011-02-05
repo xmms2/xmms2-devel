@@ -26,7 +26,7 @@ xmms_fetch_info_new (s4_sourcepref_t *prefs)
 	info->ft = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL,
 	                                  (GDestroyNotify) g_hash_table_destroy);
 
-	/* TODO: why song id here?? */
+	/* We always need the media library id for all entries */
 	s4_fetchspec_add (info->fs, "song_id", prefs, S4_FETCH_PARENT);
 
 	return info;
