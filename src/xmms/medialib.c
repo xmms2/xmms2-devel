@@ -1527,19 +1527,20 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 /* Check if a collection is the universe
  * TODO: Move it to the xmmstypes lib?
  */
-static int is_universe (xmmsv_coll_t *coll)
+static gboolean
+is_universe (xmmsv_coll_t *coll)
 {
 	char *target_name;
-	int ret = 0;
+	gboolean ret = FALSE;
 
 	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_UNIVERSE:
-		ret = 1;
+		ret = TRUE;
 		break;
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		if (xmmsv_coll_attribute_get (coll, "reference", &target_name)
 		    && strcmp (target_name, "All Media") == 0)
-			ret = 1;
+			ret = TRUE;
 		break;
 	default:
 		break;
