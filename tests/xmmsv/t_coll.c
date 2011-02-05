@@ -55,9 +55,9 @@ CASE (test_coll_simple_types)
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_COMPLEMENT);
 	xmmsv_coll_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	CU_ASSERT_PTR_NOT_NULL (c);
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_FILTER);
+	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_unref (c);
 
 	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);

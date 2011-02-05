@@ -616,8 +616,7 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *name
 	match_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, match_table);
 
-	filter_coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (filter_coll, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	filter_coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 
 	/* While not all collections have been checked, check next */
 	while (g_hash_table_find (match_table, find_unchecked, &open_name) != NULL) {
@@ -1116,7 +1115,15 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		}
 		break;
 
-	case XMMS_COLLECTION_TYPE_FILTER:
+	case XMMS_COLLECTION_TYPE_HAS:
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_TOKEN:
+	case XMMS_COLLECTION_TYPE_EQUALS:
+	case XMMS_COLLECTION_TYPE_NOTEQUAL:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_SMALLEREQ:
+	case XMMS_COLLECTION_TYPE_GREATER:
+	case XMMS_COLLECTION_TYPE_GREATEREQ:
 		/* one operand */
 		if (num_operands != 1) {
 			*err = "Invalid collection: FILTER with fewer or more than one "
@@ -1124,26 +1131,10 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			return FALSE;
 		}
 
-		if (!xmmsv_coll_attribute_get (coll, "operation", &attr)) {
-			attr = (gchar *)XMMS_COLLECTION_FILTER_EQUAL;
-		}
+		if (type != XMMS_COLLECTION_TYPE_HAS &&
+		    !xmmsv_coll_attribute_get (coll, "value", &attr)) {
 
-		if (strcmp (attr, XMMS_COLLECTION_FILTER_EQUAL) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_LESS) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_LESSEQ) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_GREATER) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_GREATEREQ) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_TOKEN) == 0
-		 || strcmp (attr, XMMS_COLLECTION_FILTER_MATCH) == 0) {
-
-			if (!xmmsv_coll_attribute_get (coll, "value", &attr)) {
-				*err = "Invalid collection: non-HAS FILTER without \"value\"-"
-				       "attribute.";
-				return FALSE;
-			}
-		} else if (strcmp (attr, XMMS_COLLECTION_FILTER_HAS) != 0) {
-			*err = "Invalid collection: FILTER with invalid \"operation\"-"
+			*err = "Invalid collection: non-HAS FILTER without \"value\"-"
 			       "attribute.";
 			return FALSE;
 		}

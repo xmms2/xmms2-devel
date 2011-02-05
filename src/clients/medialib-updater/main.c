@@ -504,10 +504,9 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	g_free (encoded);
 
 	univ = xmmsv_coll_universe ();
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
 
 	xmmsv_coll_add_operand (coll, univ);
-	xmmsv_coll_attribute_set (coll, "operation", XMMS_COLLECTION_FILTER_MATCH);
 	xmmsv_coll_attribute_set (coll, "field", "url");
 	xmmsv_coll_attribute_set (coll, "value", pattern);
 	xmmsv_coll_attribute_set (coll, "case-sensitive", "true");

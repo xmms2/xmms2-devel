@@ -52,7 +52,6 @@ create_coll (xmmsv_coll1_type_t type)
 {
 	xmmsv_coll_t *ret;
 	xmmsv_coll_type_t new_type;
-	const char *filter_op = NULL;
 	const char *idlist_type = NULL;
 
 	switch (type) {
@@ -70,19 +69,19 @@ create_coll (xmmsv_coll1_type_t type)
 		break;
 
 	case XMMS_COLLECTION1_TYPE_HAS:
-		filter_op = "has";
+		new_type = XMMS_COLLECTION_TYPE_HAS;
 		break;
 	case XMMS_COLLECTION1_TYPE_EQUALS:
-		filter_op = "=";
+		new_type = XMMS_COLLECTION_TYPE_EQUALS;
 		break;
 	case XMMS_COLLECTION1_TYPE_MATCH:
-		filter_op = "match";
+		new_type = XMMS_COLLECTION_TYPE_MATCH;
 		break;
 	case XMMS_COLLECTION1_TYPE_SMALLER:
-		filter_op = "<";
+		new_type = XMMS_COLLECTION_TYPE_SMALLER;
 		break;
 	case XMMS_COLLECTION1_TYPE_GREATER:
-		filter_op = ">";
+		new_type = XMMS_COLLECTION_TYPE_GREATER;
 		break;
 
 	case XMMS_COLLECTION1_TYPE_IDLIST:
@@ -96,10 +95,7 @@ create_coll (xmmsv_coll1_type_t type)
 		break;
 	}
 
-	if (filter_op != NULL) {
-		ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-		xmmsv_coll_attribute_set (ret, "operation", filter_op);
-	} else if (idlist_type != NULL) {
+	if (idlist_type != NULL) {
 		ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 		xmmsv_coll_attribute_set (ret, "type", idlist_type);
 	} else {
@@ -117,7 +113,15 @@ augment_coll (xmmsv_coll_t *coll)
 	char *key;
 
 	switch (xmmsv_coll_get_type (coll)) {
-	case XMMS_COLLECTION_TYPE_FILTER:
+	case XMMS_COLLECTION_TYPE_HAS:
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_TOKEN:
+	case XMMS_COLLECTION_TYPE_EQUALS:
+	case XMMS_COLLECTION_TYPE_NOTEQUAL:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_SMALLEREQ:
+	case XMMS_COLLECTION_TYPE_GREATER:
+	case XMMS_COLLECTION_TYPE_GREATEREQ:
 		if (xmmsv_coll_attribute_get (coll, "field", &key)
 		    && strcmp (key, "id") == 0) {
 			xmmsv_coll_attribute_set (coll, "type", "id");

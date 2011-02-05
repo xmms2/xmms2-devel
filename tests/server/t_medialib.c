@@ -223,8 +223,7 @@ CASE (test_query_ordered_union)
 
 	universe = xmmsv_coll_universe ();
 
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (first, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (first, "field", "artist");
 	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
 	xmmsv_coll_add_operand (first, universe);
@@ -232,8 +231,7 @@ CASE (test_query_ordered_union)
 	ordered_first = xmmsv_coll_add_order_operator (first, "tracknr");
 	xmmsv_coll_unref (first);
 
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (second, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (second, "field", "artist");
 	xmmsv_coll_attribute_set (second, "value", "Red Fang");
 	xmmsv_coll_add_operand (second, universe);
@@ -299,14 +297,12 @@ CASE (test_query_intersection)
 
 	universe = xmmsv_coll_universe ();
 
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (first, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (first, "field", "artist");
 	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
 	xmmsv_coll_add_operand (first, universe);
 
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (second, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (second, "field", "tracknr");
 	xmmsv_coll_attribute_set (second, "value", "1");
 	xmmsv_coll_add_operand (second, universe);
@@ -358,14 +354,12 @@ CASE (test_query_complement)
 
 	universe = xmmsv_coll_universe ();
 
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (first, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (first, "field", "artist");
 	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
 	xmmsv_coll_add_operand (first, universe);
 
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
-	xmmsv_coll_attribute_set (second, "operation", XMMS_COLLECTION_FILTER_LESS);
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
 	xmmsv_coll_attribute_set (second, "field", "tracknr");
 	xmmsv_coll_attribute_set (second, "value", "3");
 	xmmsv_coll_add_operand (second, universe);

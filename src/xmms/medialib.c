@@ -1559,7 +1559,15 @@ has_order (xmmsv_coll_t *coll)
 
 	switch (xmmsv_coll_get_type (coll)) {
 		/* Filter keeps the ordering of the operand */
-	case XMMS_COLLECTION_TYPE_FILTER:
+	case XMMS_COLLECTION_TYPE_HAS:
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_TOKEN:
+	case XMMS_COLLECTION_TYPE_EQUALS:
+	case XMMS_COLLECTION_TYPE_NOTEQUAL:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_SMALLEREQ:
+	case XMMS_COLLECTION_TYPE_GREATER:
+	case XMMS_COLLECTION_TYPE_GREATEREQ:
 		/* Intersection is orderded if the first operand is ordeed */
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		xmmsv_list_get_coll (operands, 0, &c);
@@ -1660,29 +1668,28 @@ filter_condition (xmms_medialib_session_t *session,
 		key = NULL;
 	}
 
-	if (!xmmsv_coll_attribute_get (coll, "operation", &val)
-	    || strcmp (val, XMMS_COLLECTION_FILTER_EQUAL) == 0) {
-		type = S4_FILTER_EQUAL;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_LESS) == 0) {
-		type = S4_FILTER_SMALLER;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_GREATER) == 0) {
-		type = S4_FILTER_GREATER;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_MATCH) == 0) {
-		type = S4_FILTER_MATCH;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_HAS) == 0) {
-		type = S4_FILTER_EXISTS;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_LESSEQ) == 0) {
-		type = S4_FILTER_SMALLEREQ;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_GREATEREQ) == 0) {
-		type = S4_FILTER_GREATEREQ;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_NOTEQUAL) == 0) {
-		type = S4_FILTER_NOTEQUAL;
-	} else if (strcmp (val, XMMS_COLLECTION_FILTER_TOKEN) == 0) {
-		type = S4_FILTER_TOKEN;
-	} else { /* Unknown operation, warn and default to equal */
-		xmms_log_error ("FILTER with unknown \"operation\"-attribute. "
-		                "This is probably a bug.");
-		type = S4_FILTER_EQUAL;
+
+	switch (xmmsv_coll_get_type (coll)) {
+		case XMMS_COLLECTION_TYPE_HAS:
+			type = S4_FILTER_EXISTS; break;
+		case XMMS_COLLECTION_TYPE_MATCH:
+			type = S4_FILTER_MATCH; break;
+		case XMMS_COLLECTION_TYPE_TOKEN:
+			type = S4_FILTER_TOKEN; break;
+		case XMMS_COLLECTION_TYPE_EQUALS:
+			type = S4_FILTER_EQUAL; break;
+		case XMMS_COLLECTION_TYPE_NOTEQUAL:
+			type = S4_FILTER_NOTEQUAL; break;
+		case XMMS_COLLECTION_TYPE_SMALLER:
+			type = S4_FILTER_SMALLER; break;
+		case XMMS_COLLECTION_TYPE_SMALLEREQ:
+			type = S4_FILTER_SMALLEREQ; break;
+		case XMMS_COLLECTION_TYPE_GREATER:
+			type = S4_FILTER_GREATER; break;
+		case XMMS_COLLECTION_TYPE_GREATEREQ:
+			type = S4_FILTER_GREATEREQ; break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "value", &val)) {
@@ -1985,7 +1992,15 @@ collection_to_condition (xmms_medialib_session_t *session,
 	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		return complement_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_FILTER:
+	case XMMS_COLLECTION_TYPE_HAS:
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_TOKEN:
+	case XMMS_COLLECTION_TYPE_EQUALS:
+	case XMMS_COLLECTION_TYPE_NOTEQUAL:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_SMALLEREQ:
+	case XMMS_COLLECTION_TYPE_GREATER:
+	case XMMS_COLLECTION_TYPE_GREATEREQ:
 		return filter_condition (session, coll, fetch, order);
 	case XMMS_COLLECTION_TYPE_IDLIST:
 		return idlist_condition (session, coll, fetch, order);

@@ -1070,8 +1070,40 @@ coll_dump (xmmsv_coll_t *coll, guint level)
 		type = "Complement";
 		break;
 
-	case XMMS_COLLECTION_TYPE_FILTER:
-		type = "Filter";
+	case XMMS_COLLECTION_TYPE_HAS:
+		type = "Has";
+		break;
+
+	case XMMS_COLLECTION_TYPE_MATCH:
+		type = "Match";
+		break;
+
+	case XMMS_COLLECTION_TYPE_TOKEN:
+		type = "Token";
+		break;
+
+	case XMMS_COLLECTION_TYPE_EQUALS:
+		type = "Equals";
+		break;
+
+	case XMMS_COLLECTION_TYPE_NOTEQUAL:
+		type = "Not-equal";
+		break;
+
+	case XMMS_COLLECTION_TYPE_SMALLER:
+		type = "Smaller";
+		break;
+
+	case XMMS_COLLECTION_TYPE_SMALLEREQ:
+		type = "Smaller-equal";
+		break;
+
+	case XMMS_COLLECTION_TYPE_GREATER:
+		type = "Greater";
+		break;
+
+	case XMMS_COLLECTION_TYPE_GREATEREQ:
+		type = "Greater-equal";
 		break;
 
 	case XMMS_COLLECTION_TYPE_IDLIST:
