@@ -1599,6 +1599,14 @@ static s4_resultset_t *xmms_medialib_query_recurs (xmms_medialib_session_t *sess
                                                    xmmsv_coll_t *coll,
                                                    xmms_fetch_info_t *fetch,
                                                    xmmsv_t *order);
+static s4_condition_t *
+create_idlist_filter (GHashTable *id_table)
+{
+	return s4_cond_new_custom_filter (idlist_filter, id_table,
+	                                  (free_func_t)g_hash_table_destroy,
+	                                  "song_id", default_sp, 0, S4_COND_PARENT);
+}
+
 
 static s4_condition_t *
 complement_condition (xmms_medialib_session_t *session,
@@ -1744,7 +1752,6 @@ idlist_condition (xmms_medialib_session_t *session,
 	GHashTable *id_table = g_hash_table_new (NULL, NULL);
 	int i;
 	int32_t ival;
-	s4_condition_t *cond;
 
 	if (order != NULL) {
 		xmmsv_list_append (order, xmmsv_coll_idlist_get (coll));
@@ -1754,11 +1761,7 @@ idlist_condition (xmms_medialib_session_t *session,
 		g_hash_table_insert (id_table, GINT_TO_POINTER (ival), GINT_TO_POINTER (1));
 	}
 
-	cond = s4_cond_new_custom_filter (idlist_filter, id_table,
-	                                  (free_func_t)g_hash_table_destroy,
-	                                  "song_id", default_sp, 0, S4_COND_PARENT);
-
-	return cond;
+	return create_idlist_filter (id_table);
 }
 
 static s4_condition_t *
@@ -1801,7 +1804,6 @@ limit_condition (xmms_medialib_session_t *session,
 	GHashTable *id_table = g_hash_table_new (NULL, NULL);
 	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *operand;
-	s4_condition_t *cond;
 
 	if (xmmsv_coll_attribute_get (coll, "start", &key)) {
 		start = atoi (key);
@@ -1830,12 +1832,9 @@ limit_condition (xmms_medialib_session_t *session,
 		xmmsv_list_append (order, child_order);
 	}
 
-	cond = s4_cond_new_custom_filter (idlist_filter, id_table,
-	                                  (free_func_t)g_hash_table_destroy,
-	                                  "song_id", default_sp, 0, S4_COND_PARENT);
 	xmmsv_unref (child_order);
 
-	return cond;
+	return create_idlist_filter (id_table);
 }
 
 static s4_condition_t *
@@ -1944,9 +1943,7 @@ union_condition (xmms_medialib_session_t *session,
 	if (concat) {
 		xmmsv_list_append (order, id_list);
 		xmmsv_unref (id_list);
-		cond = s4_cond_new_custom_filter (idlist_filter, id_table,
-		                                  (free_func_t)g_hash_table_destroy,
-		                                  "song_id", default_sp, 0, S4_COND_PARENT);
+		cond = create_idlist_filter (id_table);
 	}
 
 	return cond;
