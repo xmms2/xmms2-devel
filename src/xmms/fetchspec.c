@@ -257,8 +257,8 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	spec->type = FETCH_ORGANIZE;
 
 	spec->data.organize.count = xmmsv_dict_get_size (org_data);
-	spec->data.organize.keys = g_new0 (char *, spec->data.organize.count);
-	spec->data.organize.data = g_new0 (xmms_fetch_spec_t, spec->data.organize.count);
+	spec->data.organize.keys = g_new0 (const char *, spec->data.organize.count);
+	spec->data.organize.data = g_new0 (xmms_fetch_spec_t *, spec->data.organize.count);
 
 	org_idx = 0;
 	xmmsv_get_dict_iter (org_data, &it);
