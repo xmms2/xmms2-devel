@@ -342,6 +342,70 @@ CASE (test_query_intersection)
 	xmmsv_coll_unref (intersection);
 }
 
+CASE (test_query_complement)
+{
+	xmmsv_coll_t *universe, *first, *second, *not_first, *not_second;
+	xmmsv_t *spec, *result, *org_dict, *group_by, *org_data, *meta;
+	xmms_error_t err;
+
+	xmms_error_reset (&err);
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	xmms_mock_entry (1, "Vibrasphere", "Lungs for Life", "Decade");
+	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
+	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
+
+	universe = xmmsv_coll_universe ();
+
+	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	xmmsv_coll_attribute_set (first, "operation", XMMS_COLLECTION_FILTER_EQUAL);
+	xmmsv_coll_attribute_set (first, "field", "artist");
+	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
+	xmmsv_coll_add_operand (first, universe);
+
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_FILTER);
+	xmmsv_coll_attribute_set (second, "operation", XMMS_COLLECTION_FILTER_LESS);
+	xmmsv_coll_attribute_set (second, "field", "tracknr");
+	xmmsv_coll_attribute_set (second, "value", "3");
+	xmmsv_coll_add_operand (second, universe);
+
+	not_first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+	xmmsv_coll_add_operand (not_first, first);
+	xmmsv_coll_unref (first);
+
+	not_second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+	xmmsv_coll_add_operand (not_second, second);
+	xmmsv_coll_unref (second);
+
+	xmmsv_coll_unref (universe);
+
+	group_by = xmmsv_new_string ("id");
+
+	org_data = xmmsv_new_dict ();
+
+	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
+	xmmsv_dict_set (org_data, "id", meta);
+	xmmsv_unref (meta);
+
+	org_dict = xmmsv_build_organize (org_data);
+	spec = xmmsv_build_cluster_list (group_by, org_dict);
+
+	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, not_first, spec, &err));
+
+	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 0, "id", 0);
+	xmmsv_unref (result);
+
+	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, not_second, spec, &err));
+
+	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 0, "id", 3);
+	xmmsv_unref (result);
+
+	xmmsv_unref (spec);
+	xmmsv_coll_unref (not_first);
+	xmmsv_coll_unref (not_second);
+}
+
 CASE (test_entry_property_get)
 {
 	xmmsv_t *result;
