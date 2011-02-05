@@ -28,6 +28,48 @@ get_cluster_column (xmms_fetch_info_t *info, xmmsv_t *val,
 	return xmms_fetch_info_add_key (info, val, str, prefs);
 }
 
+static int
+metadata_value_from_string (const gchar *name)
+{
+	if (strcmp (name, "id") == 0) {
+		return METADATA_ID;
+	} else if (strcmp (name, "key") == 0) {
+		return METADATA_KEY;
+	} else if (strcmp (name, "value") == 0) {
+		return METADATA_VALUE;
+	} else if (strcmp (name, "source") == 0) {
+		return METADATA_SOURCE;
+	}
+
+	/* TODO: implement error handling */
+
+	return -1;
+}
+
+static int
+aggregate_value_from_string (const gchar *name)
+{
+	if (strcmp (name, "first") == 0) {
+		return AGGREGATE_FIRST;
+	} else if (strcmp (name, "sum") == 0) {
+		return AGGREGATE_SUM;
+	} else if (strcmp (name, "max") == 0) {
+		return AGGREGATE_MAX;
+	} else if (strcmp (name, "min") == 0) {
+		return AGGREGATE_MIN;
+	} else if (strcmp (name, "list") == 0) {
+		return AGGREGATE_LIST;
+	} else if (strcmp (name, "random") == 0) {
+		return AGGREGATE_RANDOM;
+	} else if (strcmp (name, "avg") == 0) {
+		return AGGREGATE_AVG;
+	}
+
+	/* TODO: implement error handling */
+
+	return -1;
+}
+
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
                               s4_sourcepref_t *prefs, xmms_error_t *err)
@@ -44,26 +86,10 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	if (xmmsv_dict_get (fetch, "get", &val)) {
 		if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
 			for (i = 0; i < 4 && xmmsv_list_get_string (val, i, &str); i++) {
-				if (strcmp (str, "id") == 0) {
-					ret->data.metadata.get[i] = METADATA_ID;
-				} else if (strcmp (str, "key") == 0) {
-					ret->data.metadata.get[i] = METADATA_KEY;
-				} else if (strcmp (str, "value") == 0) {
-					ret->data.metadata.get[i] = METADATA_VALUE;
-				} else if (strcmp (str, "source") == 0) {
-					ret->data.metadata.get[i] = METADATA_SOURCE;
-				}
+				ret->data.metadata.get[i] = metadata_value_from_string (str);
 			}
 		} else  if (xmmsv_get_string (val, &str)) {
-			if (strcmp (str, "id") == 0) {
-				ret->data.metadata.get[0] = METADATA_ID;
-			} else if (strcmp (str, "key") == 0) {
-				ret->data.metadata.get[0] = METADATA_KEY;
-			} else if (strcmp (str, "value") == 0) {
-				ret->data.metadata.get[0] = METADATA_VALUE;
-			} else if (strcmp (str, "source") == 0) {
-				ret->data.metadata.get[0] = METADATA_SOURCE;
-			}
+			ret->data.metadata.get[0] = metadata_value_from_string (str);
 			i = 1;
 		}
 
@@ -87,6 +113,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	} else {
 		sp = s4_sourcepref_ref (prefs);
 	}
+
 	if (id_only) {
 		ret->data.metadata.col_count = 1;
 		ret->data.metadata.cols = g_new (int, ret->data.metadata.col_count);
@@ -102,39 +129,28 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 			ret->data.metadata.col_count = 1;
 			ret->data.metadata.cols = g_new (int, 1);
 			ret->data.metadata.cols[0] = xmms_fetch_info_add_key (info, fetch, str, sp);
+		} else {
+			/* TODO: whaaaaat? */
 		}
 	} else {
+		/* TODO: What does this do? */
 		ret->data.metadata.col_count = 1;
 		ret->data.metadata.cols = g_new (int, ret->data.metadata.col_count);
 		ret->data.metadata.cols[0] = xmms_fetch_info_add_key (info, fetch, NULL, sp);
 	}
+
+
 	if (!xmmsv_dict_entry_get_string (fetch, "aggregate", &str)) {
 		/* Default to first as the aggregation function */
 		str = "first";
 	}
-	if (strcmp (str, "first") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_FIRST;
-	} else if (strcmp (str, "sum") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_SUM;
-	} else if (strcmp (str, "max") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_MAX;
-	} else if (strcmp (str, "min") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_MIN;
-	} else if (strcmp (str, "list") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_LIST;
-	} else if (strcmp (str, "random") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_RANDOM;
-	} else if (strcmp (str, "avg") == 0) {
-		ret->data.metadata.aggr_func = AGGREGATE_AVG;
-	} else { /* Unknown aggregation function */
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Unknown aggregation function.");
-	}
+
+	ret->data.metadata.aggr_func = aggregate_value_from_string (str);
 
 	s4_sourcepref_unref (sp);
 
 	return ret;
 }
-
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
