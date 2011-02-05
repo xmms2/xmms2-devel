@@ -2466,7 +2466,7 @@ metadata_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 static void *
 cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, int return_hashtable)
 {
-	int i, j, levels = spec->data.cluster.cluster_count;
+	int i, j, levels = 1;
 	s4_resultset_t *cluster;
 	const s4_resultrow_t *row;
 	const s4_result_t *res;
@@ -2489,14 +2489,14 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, int return_hashtable)
 	for (i = 0; s4_resultset_get_row (set, i, &row); i++) {
 		cur_table = root_table;
 		for (j = 0; j < levels; j++) {
-			int col = spec->data.cluster.cols[j];
+			int col = spec->data.cluster.column;
 			const char *value = "(No value)"; /* Used to represent NULL */
 			int32_t ival;
 
 			/* If col == -1 we use the row number as the value
 			 * Otherwise we fetch the column value (if there is one)
 			 */
-			if (col == -1) {
+			if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
 				sprintf (buf, "%i", i);
 				value = buf;
 			} else if (s4_resultrow_get_col (row, col, &res)) {
@@ -2598,7 +2598,7 @@ resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 
 	case FETCH_CLUSTER_DICT:
 		set_table = cluster_set (set, spec, 1);
-		ret = convert_ghashtable_to_xmmsv (set_table, spec->data.cluster.cluster_count,
+		ret = convert_ghashtable_to_xmmsv (set_table, 1,
 		                                   (void_to_xmmsv_t)resultset_to_xmmsv,
 		                                   spec->data.cluster.data);
 

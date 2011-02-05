@@ -46,8 +46,12 @@ struct xmms_fetch_spec_St {
 	} type;
 	union {
 		struct {
-			int cluster_count;
-			int *cols;
+			enum {
+				CLUSTER_BY_ID,
+				CLUSTER_BY_POSITION,
+				CLUSTER_BY_VALUE,
+			} type;
+			int column;
 			xmms_fetch_spec_t *data;
 		} cluster;
 		struct {

@@ -19,16 +19,6 @@
 #include <string.h>
 
 static int
-get_cluster_column (xmms_fetch_info_t *info, xmmsv_t *val,
-                    const char *str, s4_sourcepref_t *prefs)
-{
-	/* TODO: this is a hack, _row o_O */
-	if (strcmp (str, "_row") == 0)
-		return -1;
-	return xmms_fetch_info_add_key (info, val, str, prefs);
-}
-
-static int
 metadata_value_from_string (const gchar *name)
 {
 	if (strcmp (name, "id") == 0) {
@@ -154,26 +144,38 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	return ret;
 }
 
+/**
+ * Decodes a cluster fetch specification from a dictionary.
+ * The 'cluster-by' must be one of 'id', 'position' or 'value'. If set
+ * to 'value', then an additional 'cluster-field' will be used to specify
+ * which meta data attribute to cluster on.
+ */
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
                              s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	xmmsv_t *cluster_by, *cluster_data;
-	xmms_fetch_spec_t *spec;
-	const gchar *str;
-	gint i;
+	xmms_fetch_spec_t *data, *spec = NULL;
+	const gchar *type = NULL;
+	const gchar *field = NULL;
 
 	if (!xmmsv_dict_get (fetch, "cluster-by", &cluster_by)) {
-		const gchar *message = "Required field 'cluster-by' not set in cluster.";
+		cluster_by = xmmsv_new_string ("value");
+		xmmsv_dict_set (fetch, "cluster-by", cluster_by);
+	}
+
+	if (!xmmsv_dict_entry_get_string (fetch, "cluster-by", &type)) {
+		const gchar *message = "'cluster-by' must be a string.";
 		xmms_error_set (err, XMMS_ERROR_INVAL, message);
 		return NULL;
 	}
 
-	if (!xmmsv_is_type (cluster_by, XMMSV_TYPE_LIST) &&
-	    !xmmsv_is_type (cluster_by, XMMSV_TYPE_STRING)) {
-		const gchar *message = "Field 'cluster-by' in cluster must be a list or string.";
-		xmms_error_set (err, XMMS_ERROR_INVAL, message);
-		return NULL;
+	if (xmmsv_get_string (cluster_by, &type) && strcmp (type, "value") == 0) {
+		if (!xmmsv_dict_entry_get_string (fetch, "cluster-field", &field)) {
+			const gchar *message = "'cluster-field' must  if 'cluster-by' is 'value'.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			return NULL;
+		}
 	}
 
 	if (!xmmsv_dict_get (fetch, "data", &cluster_data)) {
@@ -182,29 +184,24 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
-	if (!xmmsv_is_type (cluster_data, XMMSV_TYPE_DICT)) {
-		const gchar *message = "Field 'data' in cluster must be a dict.";
-		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+	data = xmms_fetch_spec_new (cluster_data, info, prefs, err);
+	if (xmms_error_iserror (err)) {
 		return NULL;
 	}
 
 	spec = g_new0 (xmms_fetch_spec_t, 1);
+	spec->data.cluster.data = data;
 
-	if (xmmsv_is_type (cluster_by, XMMSV_TYPE_LIST)) {
-		spec->data.cluster.cluster_count = xmmsv_list_get_size (cluster_by);
-		spec->data.cluster.cols = g_new0 (int, spec->data.cluster.cluster_count);
-		for (i = 0; xmmsv_list_get_string (cluster_by, i, &str); i++) {
-			spec->data.cluster.cols[i] = get_cluster_column (info, cluster_by, str, prefs);
-		}
+	if (strcmp (type, "position") == 0) {
+		spec->data.cluster.type = CLUSTER_BY_POSITION;
+	} else if (strcmp (type, "id") == 0) {
+		/* Media library id is always found at the first column */
+		spec->data.cluster.column = 0;
+		spec->data.cluster.type = CLUSTER_BY_ID;
 	} else {
-		/* TODO: Should this really be allowed? Will be abstracted in bindings anyway */
-		xmmsv_get_string (cluster_by, &str);
-		spec->data.cluster.cluster_count = 1;
-		spec->data.cluster.cols = g_new0 (int, 1);
-		spec->data.cluster.cols[0] = get_cluster_column (info, cluster_by, str, prefs);
+		spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_by, field, prefs);
+		spec->data.cluster.type = CLUSTER_BY_VALUE;
 	}
-
-	spec->data.cluster.data = xmms_fetch_spec_new (cluster_data, info, prefs, err);
 
 	return spec;
 }
@@ -346,7 +343,6 @@ xmms_fetch_spec_free (xmms_fetch_spec_t *spec)
 		break;
 	case FETCH_CLUSTER_DICT:
 	case FETCH_CLUSTER_LIST:
-		g_free (spec->data.cluster.cols);
 		xmms_fetch_spec_free (spec->data.cluster.data);
 		break;
 	case FETCH_ORGANIZE:
