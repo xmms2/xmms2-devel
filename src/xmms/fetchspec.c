@@ -210,12 +210,13 @@ static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster_list (xmmsv_t *fetch, xmms_fetch_info_t *info,
                                   s4_sourcepref_t *prefs, xmms_error_t *err)
 {
-	xmms_fetch_spec_t *ret;
+	xmms_fetch_spec_t *spec;
 
-	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
-	ret->type = FETCH_CLUSTER_LIST;
+	spec = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
+	if (spec != NULL)
+		spec->type = FETCH_CLUSTER_LIST;
 
-	return ret;
+	return spec;
 }
 
 
@@ -223,12 +224,13 @@ static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster_dict (xmmsv_t *fetch, xmms_fetch_info_t *info,
                                   s4_sourcepref_t *prefs, xmms_error_t *err)
 {
-	xmms_fetch_spec_t *ret;
+	xmms_fetch_spec_t *spec;
 
-	ret = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
-	ret->type = FETCH_CLUSTER_DICT;
+	spec = xmms_fetch_spec_new_cluster (fetch, info, prefs, err);
+	if (spec != NULL)
+		spec->type = FETCH_CLUSTER_DICT;
 
-	return ret;
+	return spec;
 }
 
 
