@@ -2023,7 +2023,7 @@ typedef struct {
 typedef struct {
 	GHashTable *ht;
 	xmmsv_t *list;
-} list_data_t;
+} set_data_t;
 
 /* Converts an S4 result (a column) into an xmmsv values */
 static void *
@@ -2120,16 +2120,28 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 			break;
 
 		case AGGREGATE_LIST:
+			if (cur == NULL) {
+				cur = xmmsv_new_list ();
+				new_val = 1;
+			}
+			if (strval != NULL) {
+				xmmsv_list_append_string (cur, strval);
+			} else {
+				xmmsv_list_append_int (cur, ival);
+			}
+			break;
+
+		case AGGREGATE_SET:
 		{
 			xmmsv_t *val;
 			void *key;
-			list_data_t *data;
+			set_data_t *data;
 
 			if (cur == NULL) {
-				list_data_t init = {
+				set_data_t init = {
 					.ht = g_hash_table_new (NULL, NULL),
 					.list = xmmsv_new_list ()};
-				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (list_data_t));
+				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (set_data_t));
 				new_val = 1;
 			}
 
@@ -2253,7 +2265,7 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 	xmmsv_t *ret = NULL;
 	avg_data_t *avg_data;
 	random_data_t *random_data;
-	list_data_t *list_data;
+	set_data_t *set_data;
 	unsigned int len;
 
 	if (value != NULL && xmmsv_is_type (value, XMMSV_TYPE_BIN))
@@ -2264,6 +2276,7 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 	case AGGREGATE_MIN:
 	case AGGREGATE_MAX:
 	case AGGREGATE_SUM:
+	case AGGREGATE_LIST:
 		ret = xmmsv_ref (value);
 		break;
 
@@ -2274,10 +2287,10 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 		}
 		break;
 
-	case AGGREGATE_LIST:
-		list_data = data;
-		g_hash_table_destroy (list_data->ht);
-		ret = list_data->list;
+	case AGGREGATE_SET:
+		set_data = data;
+		g_hash_table_destroy (set_data->ht);
+		ret = set_data->list;
 		break;
 
 	case AGGREGATE_AVG:

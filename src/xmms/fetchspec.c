@@ -59,6 +59,8 @@ aggregate_value_from_string (const gchar *name)
 		return AGGREGATE_MIN;
 	} else if (strcmp (name, "list") == 0) {
 		return AGGREGATE_LIST;
+	} else if (strcmp (name, "set") == 0) {
+		return AGGREGATE_SET;
 	} else if (strcmp (name, "random") == 0) {
 		return AGGREGATE_RANDOM;
 	} else if (strcmp (name, "avg") == 0) {
