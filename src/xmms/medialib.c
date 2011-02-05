@@ -2635,9 +2635,6 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 
 	if (spec == NULL || fetch_invalid) {
 		xmms_fetch_spec_free (spec);
-		if (err != NULL) {
-			xmms_error_set (err, XMMS_ERROR_INVAL, "invalid fetch specification");
-		}
 		return NULL;
 	}
 
