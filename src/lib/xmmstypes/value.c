@@ -1672,6 +1672,49 @@ xmmsv_list_iter_remove (xmmsv_list_iter_t *it)
 	return _xmmsv_list_remove (it->parent, it->position);
 }
 
+static int
+_xmmsv_list_flatten (xmmsv_t *list, xmmsv_t *result, int depth)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *val;
+	int ret = 1;
+
+	x_return_val_if_fail (xmmsv_is_list (list), 0);
+
+	for (xmmsv_get_list_iter (list, &it);
+	     xmmsv_list_iter_entry (it, &val) && ret;
+	     xmmsv_list_iter_next (it)) {
+		if (depth == 0) {
+			xmmsv_list_append (result, val);
+		} else {
+			ret = _xmmsv_list_flatten (val, result, depth - 1);
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * Flattens a list of lists.
+ *
+ * @param list The list to flatten
+ * @param depth The level of lists to flatten.
+ * @return A new flattened list, or NULL on error.
+ */
+xmmsv_t *
+xmmsv_list_flatten (xmmsv_t *list, int depth)
+{
+	x_return_val_if_fail (list, NULL);
+	xmmsv_t *result = xmmsv_new_list ();
+
+	if (!_xmmsv_list_flatten (list, result, depth)) {
+		xmmsv_unref (result);
+		return NULL;
+	}
+
+	return result;
+}
+
 /* Dict stuff */
 
 typedef struct {

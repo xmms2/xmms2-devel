@@ -59,6 +59,8 @@ int xmmsv_list_append_string (xmmsv_t *v, const char *val);
 int xmmsv_list_append_int (xmmsv_t *v, int32_t val);
 int xmmsv_list_append_coll (xmmsv_t *v, xmmsv_coll_t *val);
 
+xmmsv_t *xmmsv_list_flatten (xmmsv_t *list, int depth);
+
 /**
  * @defgroup ListIterType Iteration
  * @{
