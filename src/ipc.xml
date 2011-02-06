@@ -1581,11 +1581,15 @@ vim:expandtab
                 <documentation>FIXME.</documentation>
 
                 <type>
+                    <xmmsv>
+                    </xmmsv>
+                    <!--
                     <list>
                         <dictionary>
                             <unknown />
                         </dictionary>
                     </list>
+                    -->
                 </type>
             </return_value>
         </method>
