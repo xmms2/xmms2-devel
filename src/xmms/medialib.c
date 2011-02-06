@@ -2043,7 +2043,10 @@ xmms_medialib_query_recurs (xmms_medialib_session_t *session,
 
 	s4_cond_free (cond);
 
-	return xmms_medialib_result_sort (ret, fetch, order);
+	ret = xmms_medialib_result_sort (ret, fetch, order);
+	xmmsv_unref (order);
+
+	return ret;
 }
 
 
