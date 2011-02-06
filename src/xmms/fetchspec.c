@@ -264,15 +264,21 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	org_idx = 0;
 	xmmsv_get_dict_iter (org_data, &it);
 	while (xmmsv_dict_iter_valid (it)) {
+		xmms_fetch_spec_t *orgee;
 		const gchar *str;
 		xmmsv_t *entry;
 
 		xmmsv_dict_iter_pair (it, &str, &entry);
 
-		/* TODO: error handling when xmms_fetch_spec_new returns NULL */
+		orgee = xmms_fetch_spec_new (entry, info, prefs, err);
+		if (xmms_error_iserror (err)) {
+			xmms_fetch_spec_free (spec);
+			spec = NULL;
+			break;
+		}
+
 		spec->data.organize.keys[org_idx] = str;
-		spec->data.organize.data[org_idx] = xmms_fetch_spec_new (entry, info,
-		                                                         prefs, err);
+		spec->data.organize.data[org_idx] = orgee;
 
 		org_idx++;
 		xmmsv_dict_iter_next (it);
