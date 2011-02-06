@@ -1679,7 +1679,7 @@ _xmmsv_list_flatten (xmmsv_t *list, xmmsv_t *result, int depth)
 	xmmsv_t *val;
 	int ret = 1;
 
-	x_return_val_if_fail (xmmsv_is_list (list), 0);
+	x_return_val_if_fail (xmmsv_is_type (list, XMMSV_TYPE_LIST), 0);
 
 	for (xmmsv_get_list_iter (list, &it);
 	     xmmsv_list_iter_entry (it, &val) && ret;
