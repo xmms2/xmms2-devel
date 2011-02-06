@@ -154,7 +154,7 @@ static xmms_fetch_spec_t *
 xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
                              s4_sourcepref_t *prefs, xmms_error_t *err)
 {
-	xmmsv_t *cluster_by, *cluster_data;
+	xmmsv_t *cluster_by, *cluster_field, *cluster_data;
 	xmms_fetch_spec_t *data, *spec = NULL;
 	const gchar *type = NULL;
 	const gchar *field = NULL;
@@ -199,7 +199,8 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		spec->data.cluster.column = 0;
 		spec->data.cluster.type = CLUSTER_BY_ID;
 	} else {
-		spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_by, field, prefs);
+		xmmsv_dict_get (fetch, "cluster-field", &cluster_field);
+		spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_field, field, prefs);
 		spec->data.cluster.type = CLUSTER_BY_VALUE;
 	}
 

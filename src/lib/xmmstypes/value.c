@@ -2536,7 +2536,7 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregat
  * @param cluster_data The fetch specifcation to use when filling the list
  * @return A cluster-list fetch specification
  */
-xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
+xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data)
 {
 	xmmsv_t *res = xmmsv_new_dict ();
 	if (res == NULL)
@@ -2548,6 +2548,12 @@ xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
 		xmmsv_dict_set (res, "cluster-by", cluster_by);
 		xmmsv_unref (cluster_by);
 	}
+
+	if (cluster_field != NULL) {
+		xmmsv_dict_set (res, "cluster-field", cluster_field);
+		xmmsv_unref (cluster_field);
+	}
+
 	if (cluster_data != NULL) {
 		xmmsv_dict_set (res, "data", cluster_data);
 		xmmsv_unref (cluster_data);
@@ -2563,7 +2569,7 @@ xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
  * @param cluster_data The fetch specifcation to use when filling the list
  * @return A cluster-list fetch specification
  */
-xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
+xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data)
 {
 	xmmsv_t *res = xmmsv_new_dict ();
 	if (res == NULL)
@@ -2575,6 +2581,13 @@ xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_data)
 		xmmsv_dict_set (res, "cluster-by", cluster_by);
 		xmmsv_unref (cluster_by);
 	}
+
+
+	if (cluster_field != NULL) {
+		xmmsv_dict_set (res, "cluster-field", cluster_field);
+		xmmsv_unref (cluster_field);
+	}
+
 	if (cluster_data != NULL) {
 		xmmsv_dict_set (res, "data", cluster_data);
 		xmmsv_unref (cluster_data);

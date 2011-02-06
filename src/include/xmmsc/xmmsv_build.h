@@ -52,8 +52,8 @@ xmmsv_t *xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap);
 xmmsv_t *xmmsv_build_empty_organize (void);
 xmmsv_t *xmmsv_build_organize (xmmsv_t *data);
 xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref);
-xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_data);
-xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_data);
+xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data);
+xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data);
 xmmsv_t *xmmsv_build_count (void);
 /** @} */
 

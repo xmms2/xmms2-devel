@@ -2460,96 +2460,80 @@ metadata_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 	return ret;
 }
 
+
 /* Divides an S4 set into a list of smaller sets with
  * the same values for the cluster attributes
  */
-static void *
-cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, int return_hashtable)
+static void
+cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, GHashTable *table, GList **list)
 {
-	int i, j, levels = 1;
-	s4_resultset_t *cluster;
 	const s4_resultrow_t *row;
-	const s4_result_t *res;
-	GHashTable *cur_table, *root_table;
-	GList *list = NULL;
-	char buf[12];
-
-	/* Create a hash table for hash tables if we group on more than one attribute */
-	if (levels > 1) {
-		root_table = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                    free, (GDestroyNotify)g_hash_table_destroy);
-	} else {
-		root_table = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                    free, (return_hashtable)?(GDestroyNotify)s4_resultset_free:NULL);
-	}
+	gint position;
 
 	/* Run through all the rows in the result set.
 	 * Uses a hash table to find the correct cluster to put the row in
 	 */
-	for (i = 0; s4_resultset_get_row (set, i, &row); i++) {
-		cur_table = root_table;
-		for (j = 0; j < levels; j++) {
-			int col = spec->data.cluster.column;
-			const char *value = "(No value)"; /* Used to represent NULL */
-			int32_t ival;
+	for (position = 0; s4_resultset_get_row (set, position, &row); position++) {
+		s4_resultset_t *cluster;
+		const gchar *value = "(No value)"; /* Used to represent NULL */
+		gchar buf[12];
 
-			/* If col == -1 we use the row number as the value
-			 * Otherwise we fetch the column value (if there is one)
-			 */
-			if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
-				sprintf (buf, "%i", i);
-				value = buf;
-			} else if (s4_resultrow_get_col (row, col, &res)) {
-				const s4_val_t *val = s4_result_get_val (res);
-				if (!s4_val_get_str (val, &value)) {
-					s4_val_get_int (val, &ival);
-					sprintf (buf, "%i", ival);
-					value = buf;
-				}
+		if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
+			g_snprintf (buf, sizeof (buf), "%i", position);
+			value = buf;
+		} else {
+			const s4_result_t *res;
+
+			if (!s4_resultrow_get_col (row, spec->data.cluster.column, &res)) {
+				xmms_log_error ("Trying to cluster a non-existing column!");
+				continue;
 			}
 
-			/* If we have more keys to cluster by after this
-			 * we lookup the hash table for that key
-			 */
-			if (j < (levels - 1)) {
-				GHashTable *next_table = g_hash_table_lookup (cur_table, value);
-				if (next_table == NULL) {
-					if (j < (levels - 2)) {
-						next_table =
-							g_hash_table_new_full (g_str_hash, g_str_equal,
-							                       free, (GDestroyNotify)g_hash_table_destroy);
-					} else {
-						next_table =
-							g_hash_table_new_full (g_str_hash, g_str_equal,
-							                       free, (return_hashtable)
-							                       ?(GDestroyNotify)s4_resultset_free
-							                       :NULL);
-					}
-					g_hash_table_insert (cur_table, strdup (value), next_table);
-				}
-				cur_table = next_table;
-			} else {
-				/* This is the last key to cluster by, we find the cluster
-				 * and insert the row
-				 */
-				cluster = g_hash_table_lookup (cur_table, value);
-				if (cluster == NULL) {
-					cluster = s4_resultset_create (s4_resultset_get_colcount (set));
-					g_hash_table_insert (cur_table, strdup (value), cluster);
-					list = g_list_prepend (list, cluster);
-				}
-				s4_resultset_add_row (cluster, row);
+			const s4_val_t *val = s4_result_get_val (res);
+			if (!s4_val_get_str (val, &value)) {
+				gint32 ival;
+				s4_val_get_int (val, &ival);
+				g_snprintf (buf, sizeof (buf), "%i", ival);
+				value = buf;
 			}
 		}
-	}
 
-	if (return_hashtable) {
-		g_list_free (list);
-		return root_table;
-	} else {
-		g_hash_table_destroy (root_table);
-		return g_list_reverse (list);
+		cluster = g_hash_table_lookup (table, value);
+		if (cluster == NULL) {
+			cluster = s4_resultset_create (s4_resultset_get_colcount (set));
+			g_hash_table_insert (table, g_strdup (value), cluster);
+			*list = g_list_prepend (*list, cluster);
+		}
+		s4_resultset_add_row (cluster, row);
 	}
+}
+
+static GList *
+cluster_list (s4_resultset_t *set, xmms_fetch_spec_t *spec)
+{
+	GHashTable *table;
+	GList *list = NULL;
+
+	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	cluster_set (set, spec, table, &list);
+	g_hash_table_destroy (table);
+
+	return g_list_reverse (list);
+}
+
+static GHashTable *
+cluster_dict (s4_resultset_t *set, xmms_fetch_spec_t *spec)
+{
+	GHashTable *table;
+	GList *list = NULL;
+
+	table = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                               g_free, (GDestroyNotify) s4_resultset_free);
+
+	cluster_set (set, spec, table, &list);
+	g_list_free (list);
+
+	return table;
 }
 
 /* Converts an S4 resultset into an xmmsv_t, based on the fetch specification */
@@ -2582,7 +2566,7 @@ resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 		break;
 
 	case FETCH_CLUSTER_LIST:
-		sets = cluster_set (set, spec, 0);
+		sets = cluster_list (set, spec);
 		ret = xmmsv_new_list ();
 		for (; sets != NULL; sets = g_list_delete_link (sets, sets)) {
 			set = sets->data;
@@ -2597,7 +2581,7 @@ resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 		break;
 
 	case FETCH_CLUSTER_DICT:
-		set_table = cluster_set (set, spec, 1);
+		set_table = cluster_dict (set, spec);
 		ret = convert_ghashtable_to_xmmsv (set_table, 1,
 		                                   (void_to_xmmsv_t)resultset_to_xmmsv,
 		                                   spec->data.cluster.data);

@@ -732,15 +732,11 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                            xmms_error_t *err)
 {
 	xmmsv_t *ret;
-	static xmmsv_t *fetch_spec = NULL;
+	xmmsv_t *fetch_spec = NULL;
 	xmmsv_coll_t *coll2, *coll3;
 
-	/* Creates the fetchspec to use */
-	if (fetch_spec == NULL) {
-		xmmsv_t *meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"),
-		                                      "first", NULL);
-		fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("_row"), meta);
-	}
+	xmmsv_t *meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
+	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("id"), NULL, meta);
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
 	coll3 = xmmsv_coll_add_limit_operator (coll2, lim_start, lim_len);

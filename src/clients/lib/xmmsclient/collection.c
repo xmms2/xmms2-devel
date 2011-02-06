@@ -207,7 +207,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 	/* Creates the fetchspec to use */
 	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("_row"), meta);
+	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("position"), NULL, meta);
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
 	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
@@ -248,6 +248,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	xmmsc_result_t *ret;
 	xmmsv_t *fetch_spec, *org_dict, *org_data;
 	xmmsv_coll_t *coll2, *coll3;
+	xmmsv_list_iter_t *it;
 	int i;
 	const char *str;
 
@@ -263,7 +264,8 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	                "with an invalid order list", NULL);
 
 	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
-		group = xmmsv_new_string ("_row");
+		group = xmmsv_new_list ();
+		xmmsv_list_append (group, xmmsv_new_string ("position"));
 	} else {
 		group = xmmsv_ref (group);
 	}
@@ -287,7 +289,32 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	}
 	org_dict = xmmsv_build_organize (org_data);
 
-	fetch_spec = xmmsv_build_cluster_list (group, org_dict);
+	fetch_spec = org_dict;
+
+	xmmsv_get_list_iter (group, &it);
+	xmmsv_list_iter_last (it);
+
+	while (xmmsv_list_iter_valid (it)) {
+		const char *value;
+		xmmsv_t *entry;
+		xmmsv_t *cluster_by, *cluster_field = NULL;
+
+		xmmsv_list_iter_entry (it, &entry);
+		xmmsv_get_string (entry, &value);
+
+		if (strcmp (value, "position") == 0) {
+			cluster_by = entry;
+		} else if (strcmp (value, "id") == 0) {
+			cluster_by = entry;
+		} else {
+			cluster_by = xmmsv_new_string ("value");
+			cluster_field = entry;
+		}
+
+		fetch_spec = xmmsv_build_cluster_list (cluster_by, cluster_field, fetch_spec);
+
+		xmmsv_list_iter_prev (it);
+	}
 
 	coll2 = xmmsv_coll_add_order_operators (coll, order);
 	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
