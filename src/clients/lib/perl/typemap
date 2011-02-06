@@ -88,23 +88,35 @@ XMMSV_COLL_TYPE_T
 		else if ($var == XMMS_COLLECTION_TYPE_EQUALS) {
 			sv_setpv ($arg, \"equals\");
 		}
+		else if ($var == XMMS_COLLECTION_TYPE_NOTEQUAL) {
+			sv_setpv ($arg, \"notequal\");
+		}
 		else if ($var == XMMS_COLLECTION_TYPE_MATCH) {
 			sv_setpv ($arg, \"match\");
 		}
 		else if ($var == XMMS_COLLECTION_TYPE_SMALLER) {
 			sv_setpv ($arg, \"smaller\");
 		}
+		else if ($var == XMMS_COLLECTION_TYPE_SMALLEREQ) {
+			sv_setpv ($arg, \"smallereq\");
+		}
 		else if ($var == XMMS_COLLECTION_TYPE_GREATER) {
 			sv_setpv ($arg, \"greater\");
 		}
+		else if ($var == XMMS_COLLECTION_TYPE_GREATEREQ) {
+			sv_setpv ($arg, \"greatereq\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_ORDER) {
+			sv_setpv ($arg, \"order\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_LIMIT) {
+			sv_setpv ($arg, \"limit\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_MEDIASET) {
+			sv_setpv ($arg, \"mediaset\");
+		}
 		else if ($var == XMMS_COLLECTION_TYPE_IDLIST) {
 			sv_setpv ($arg, \"idlist\");
-		}
-		else if ($var == XMMS_COLLECTION_TYPE_QUEUE) {
-			sv_setpv ($arg, \"queue\");
-		}
-		else if ($var == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
-			sv_setpv ($arg, \"partyshuffle\");
 		}
 		else {
 			croak (\"unknown XMMSV_COLL_TYPE_T\");
@@ -176,23 +188,35 @@ XMMSV_COLL_TYPE_T
 		else if (strcmp (coll_type, \"equals\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_EQUALS;
 		}
+		else if (strcmp (coll_type, \"notequal\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_NOTEQUAL;
+		}
 		else if (strcmp (coll_type, \"match\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_MATCH;
 		}
 		else if (strcmp (coll_type, \"smaller\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_SMALLER;
 		}
+		else if (strcmp (coll_type, \"smallereq\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_SMALLEREQ;
+		}
 		else if (strcmp (coll_type, \"greater\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_GREATER;
 		}
+		else if (strcmp (coll_type, \"greatereq\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_GREATEREQ;
+		}
+		else if (strcmp (coll_type, \"order\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_ORDER;
+		}
+		else if (strcmp (coll_type, \"limit\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_LIMIT;
+		}
+		else if (strcmp (coll_type, \"mediaset\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_MEDIASET;
+		}
 		else if (strcmp (coll_type, \"idlist\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_IDLIST;
-		}
-		else if (strcmp (coll_type, \"queue\") == 0) {
-			$var = XMMS_COLLECTION_TYPE_QUEUE;
-		}
-		else if (strcmp (coll_type, \"partyshuffle\") == 0) {
-			$var = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
 		}
 		else {
 			croak (\"unknown XMMSV_COLL_TYPE_T: %s\", coll_type);

@@ -385,8 +385,8 @@ xmmsv_coll_idlist_get_size (coll)
   my $type = $coll->get_type;
 
 Return the type of the collection. Valid types are "reference", "union",
-"intersection", "complement", "has", "equals", "match", "smaller", "greater",
-"idlist", "queue", "partyshuffle".
+"intersection", "complement", "has", "equals", "notequal", "match", "smaller",
+"smallereq", "greater", "greatereq", "order", "limit", "mediaset", "idlist"
 
 =cut
 
