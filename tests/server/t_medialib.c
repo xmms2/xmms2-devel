@@ -359,7 +359,7 @@ CASE (test_query_complement)
 	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
 	xmmsv_coll_add_operand (first, universe);
 
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
+	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_SMALLER);
 	xmmsv_coll_attribute_set (second, "field", "tracknr");
 	xmmsv_coll_attribute_set (second, "value", "3");
 	xmmsv_coll_add_operand (second, universe);
