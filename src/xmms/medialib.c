@@ -1598,8 +1598,8 @@ static s4_condition_t *collection_to_condition (xmms_medialib_session_t *session
                                                 xmmsv_t *order);
 static s4_resultset_t *xmms_medialib_query_recurs (xmms_medialib_session_t *session,
                                                    xmmsv_coll_t *coll,
-                                                   xmms_fetch_info_t *fetch,
-                                                   xmmsv_t *order);
+                                                   xmms_fetch_info_t *fetch);
+
 static s4_condition_t *
 create_idlist_filter (GHashTable *id_table)
 {
@@ -1607,7 +1607,6 @@ create_idlist_filter (GHashTable *id_table)
 	                                  (free_func_t)g_hash_table_destroy,
 	                                  "song_id", default_sp, 0, S4_COND_PARENT);
 }
-
 
 static s4_condition_t *
 complement_condition (xmms_medialib_session_t *session,
@@ -1814,10 +1813,7 @@ limit_condition (xmms_medialib_session_t *session,
 	}
 
 	xmmsv_list_get_coll (operands, 0, &operand);
-	set = xmms_medialib_query_recurs (session, operand, fetch, child_order);
-	xmmsv_unref (child_order);
-
-	child_order = xmmsv_new_list ();
+	set = xmms_medialib_query_recurs (session, operand, fetch);
 
 	for (; start < stop && s4_resultset_get_row (set, start, &row); start++) {
 		s4_resultrow_get_col (row, 0, &result);
@@ -1849,6 +1845,7 @@ mediaset_condition (xmms_medialib_session_t *session,
 	xmmsv_list_get_coll (operands, 0, &operand);
 	return collection_to_condition (session, operand, fetch, NULL);
 }
+
 static s4_condition_t *
 order_condition (xmms_medialib_session_t *session,
                  xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
@@ -1885,6 +1882,7 @@ order_condition (xmms_medialib_session_t *session,
 	xmmsv_list_get_coll (operands, 0, &operand);
 	return collection_to_condition (session, operand, fetch, order);
 }
+
 static s4_condition_t *
 union_condition (xmms_medialib_session_t *session,
                  xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
@@ -1895,7 +1893,7 @@ union_condition (xmms_medialib_session_t *session,
 	GHashTable *id_table;
 	s4_resultset_t *set;
 	s4_condition_t *cond;
-	xmmsv_coll_t *c;
+	xmmsv_coll_t *operand;
 	int i;
 	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 
@@ -1905,19 +1903,17 @@ union_condition (xmms_medialib_session_t *session,
 		cond = s4_cond_new_combiner (S4_COMBINE_OR);
 	}
 
-	for (i = 0; xmmsv_list_get_coll (operands, i, &c); i++) {
+	for (i = 0; xmmsv_list_get_coll (operands, i, &operand); i++) {
 		s4_condition_t *op_cond;
 
 		/* If this is a concatenation we have to do a query for every operand */
 		if (concat) {
-			xmmsv_t *child_order = xmmsv_new_list ();
 			const s4_resultrow_t *row;
 			const s4_result_t *result;
 			int j;
 
-			/* Query the operand and sort it */
-			set = xmms_medialib_query_recurs (session, c, fetch, child_order);
-			set = xmms_medialib_result_sort (set, fetch, child_order);
+			/* Query the operand */
+			set = xmms_medialib_query_recurs (session, operand, fetch);
 
 			/* Append the IDs to the id_list */
 			for (j = 0; s4_resultset_get_row (set, j, &row); j++) {
@@ -1931,11 +1927,9 @@ union_condition (xmms_medialib_session_t *session,
 			}
 
 			s4_resultset_free (set);
-
-			xmmsv_unref (child_order);
 		} else { /* If this is not a concat, just a simple union,
 		            we add the operand to the condition */
-			op_cond = collection_to_condition (session, c, fetch, NULL);
+			op_cond = collection_to_condition (session, operand, fetch, NULL);
 			s4_cond_add_operand (cond, op_cond);
 			s4_cond_unref (op_cond);
 		}
@@ -1949,6 +1943,7 @@ union_condition (xmms_medialib_session_t *session,
 
 	return cond;
 }
+
 static s4_condition_t *
 universe_condition (xmms_medialib_session_t *session,
                     xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
@@ -1957,6 +1952,7 @@ universe_condition (xmms_medialib_session_t *session,
 	return s4_cond_new_custom_filter ((filter_function_t)universe_filter, NULL, NULL,
 	                                  "song_id", NULL, S4_CMP_BINARY, S4_COND_PARENT);
 }
+
 static s4_condition_t *
 reference_condition (xmms_medialib_session_t *session,
                      xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
@@ -1972,6 +1968,15 @@ reference_condition (xmms_medialib_session_t *session,
 	}
 }
 
+/**
+ * Convert an xmms2 collection to an S4 condition.
+ *
+ * @param coll The collection to convert
+ * @param fetch Information on what S4 fetches
+ * @param order xmmsv_t list that will be filled in with order information
+ * as the function recurses.
+ * @return A new S4 condition. Must be freed with s4_cond_free
+ */
 static s4_condition_t *
 collection_to_condition (xmms_medialib_session_t *session,
                          xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
@@ -2004,11 +2009,20 @@ collection_to_condition (xmms_medialib_session_t *session,
 	}
 }
 
+/**
+ * Internal function that does the actual querying.
+ *
+ * @param coll The collection to use when querying
+ * @param fetch Information on what is being fetched
+ * @return An S4 resultset correspoding to the entires in the
+ * medialib matching the collection.
+ * Must be free with s4_resultset_free
+ */
 static s4_resultset_t *
 xmms_medialib_query_recurs (xmms_medialib_session_t *session,
-                            xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                            xmmsv_t *order)
+                            xmmsv_coll_t *coll, xmms_fetch_info_t *fetch)
 {
+	xmmsv_t *order = xmmsv_new_list ();
 	s4_condition_t *cond = collection_to_condition (session, coll, fetch, order);
 	s4_resultset_t *ret = s4_query (NULL, session->trans, fetch->fs, cond);
 
@@ -2614,7 +2628,7 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 
 	order = xmmsv_new_list ();
 
-	set = xmms_medialib_query_recurs (session, coll, info, order);
+	set = xmms_medialib_query_recurs (session, coll, info);
 	ret = resultset_to_xmmsv (set, spec);
 	s4_resultset_free (set);
 
