@@ -713,7 +713,6 @@ CASE (test_xmmsv_list_move) {
 	xmmsv_unref (l);
 }
 
-
 CASE (test_xmmsv_type_bitbuffer_one_bit)
 {
 	xmmsv_t *value;
@@ -885,4 +884,60 @@ CASE (test_xmmsv_type_bitbuffer_ro)
 	CU_ASSERT_EQUAL (0x122334, r);
 
 	xmmsv_unref (value);
+}
+
+CASE (test_xmmsv_list_flatten) {
+	xmmsv_t *list, *flat, *tmp;
+	int l1[] = {0, 1, 2, 3};
+	int l2[] = {4, 5, 6, 7};
+	int i;
+	int32_t ival;
+
+	/* Create a list of two lists */
+	list = xmmsv_new_list ();
+
+	tmp = xmmsv_new_list ();
+	for (i = 0; i < 4; i++) {
+		xmmsv_list_append_int (tmp, l1[i]);
+	}
+	xmmsv_list_append (list, tmp);
+	xmmsv_unref (tmp);
+
+	tmp = xmmsv_new_list ();
+	for (i = 0; i < 4; i++) {
+		xmmsv_list_append_int (tmp, l2[i]);
+	}
+	xmmsv_list_append (list, tmp);
+	xmmsv_unref (tmp);
+
+	flat = xmmsv_list_flatten (list, 1);
+	CU_ASSERT_PTR_NOT_NULL (flat);
+	for (i = 0; i < 8; i++) {
+		CU_ASSERT (xmmsv_list_get_int (flat, i, &ival));
+		if (i < 4) {
+			CU_ASSERT (ival == l1[i]);
+		} else {
+			CU_ASSERT (ival == l2[i - 4]);
+		}
+	}
+	xmmsv_unref (flat);
+
+	flat = xmmsv_list_flatten (list, 2);
+	CU_ASSERT_PTR_NULL (flat);
+
+	tmp = xmmsv_new_list ();
+	xmmsv_list_append (tmp, list);
+	flat = xmmsv_list_flatten (tmp, 2);
+	CU_ASSERT_PTR_NOT_NULL (flat);
+	for (i = 0; i < 8; i++) {
+		CU_ASSERT (xmmsv_list_get_int (flat, i, &ival));
+		if (i < 4) {
+			CU_ASSERT (ival == l1[i]);
+		} else {
+			CU_ASSERT (ival == l2[i - 4]);
+		}
+	}
+	xmmsv_unref (flat);
+	xmmsv_unref (tmp);
+	xmmsv_unref (list);
 }
