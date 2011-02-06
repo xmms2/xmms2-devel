@@ -245,86 +245,33 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                         int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
-	xmmsc_result_t *ret;
-	xmmsv_t *fetch_spec, *org_dict, *org_data;
-	xmmsv_coll_t *coll2, *coll3;
-	xmmsv_list_iter_t *it;
-	int i;
-	const char *str;
+	x_check_conn (conn, NULL);
+	x_api_error_if (!coll, "with a NULL collection", NULL);
+	x_api_error_if (!fetch, "with a NULL fetch list", NULL);
 
-	/* check that fetch is not empty */
-	x_api_error_if (xmmsv_list_get_size (fetch) == 0,
-	                "with an empty fetch list", NULL);
-	/* check for invalid property strings */
-	x_api_error_if (!xmmsv_list_has_type (fetch, XMMSV_TYPE_STRING),
-	                "with an invalid fetch list", NULL);
-	x_api_error_if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING),
-	                "with an invalid group list", NULL);
-	x_api_error_if (order != NULL && !xmmsv_list_has_type (order, XMMSV_TYPE_STRING),
-	                "with an invalid order list", NULL);
-
-	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
-		group = xmmsv_new_list ();
-		xmmsv_list_append (group, xmmsv_new_string ("position"));
+	/* default to empty ordering */
+	if (!order) {
+		order = xmmsv_new_list ();
 	} else {
-		group = xmmsv_ref (group);
+		xmmsv_ref (order);
 	}
 
-	org_data = xmmsv_new_dict ();
-	for (i = 0; xmmsv_list_get_string (fetch, i, &str); i++) {
-		xmmsv_t *meta;
-
-		if (strcmp (str, "id") == 0) {
-			meta = xmmsv_build_metadata (NULL,
-			                             xmmsv_new_string ("id"),
-			                             "first", NULL);
-		} else {
-			meta = xmmsv_build_metadata (xmmsv_new_string (str),
-			                             xmmsv_new_string ("value"),
-			                             "first", NULL);
-		}
-
-		xmmsv_dict_set (org_data, str, meta);
-		xmmsv_unref (meta);
-	}
-	org_dict = xmmsv_build_organize (org_data);
-
-	fetch_spec = org_dict;
-
-	xmmsv_get_list_iter (group, &it);
-	xmmsv_list_iter_last (it);
-
-	while (xmmsv_list_iter_valid (it)) {
-		const char *value;
-		xmmsv_t *entry;
-		xmmsv_t *cluster_by, *cluster_field = NULL;
-
-		xmmsv_list_iter_entry (it, &entry);
-		xmmsv_get_string (entry, &value);
-
-		if (strcmp (value, "position") == 0) {
-			cluster_by = entry;
-		} else if (strcmp (value, "id") == 0) {
-			cluster_by = entry;
-		} else {
-			cluster_by = xmmsv_new_string ("value");
-			cluster_field = entry;
-		}
-
-		fetch_spec = xmmsv_build_cluster_list (cluster_by, cluster_field, fetch_spec);
-
-		xmmsv_list_iter_prev (it);
+	/* default to empty grouping */
+	if (!group) {
+		group = xmmsv_new_list ();
+	} else {
+		xmmsv_ref (group);
 	}
 
-	coll2 = xmmsv_coll_add_order_operators (coll, order);
-	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
-	ret = xmmsc_coll_query (conn, coll3, fetch_spec);
-
-	xmmsv_coll_unref (coll2);
-	xmmsv_coll_unref (coll3);
-	xmmsv_unref (fetch_spec);
-
-	return ret;
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
+	                       XMMS_IPC_CMD_QUERY_INFOS,
+	                       XMMSV_LIST_ENTRY_COLL (coll),
+	                       XMMSV_LIST_ENTRY_INT (limit_start),
+	                       XMMSV_LIST_ENTRY_INT (limit_len),
+	                       XMMSV_LIST_ENTRY (order),
+	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
+	                       XMMSV_LIST_ENTRY (group),
+	                       XMMSV_LIST_END);
 }
 
 /**

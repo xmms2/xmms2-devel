@@ -1514,6 +1514,83 @@ vim:expandtab
         </method>
 
         <method>
+            <name>query_infos</name>
+            <documentation>FIXME.</documentation>
+
+            <argument>
+                <name>collection</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <collection />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_start</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>lim_len</name>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>order</name>
+                <documentation>The list of properties to order by.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <argument>
+                <name>fetch</name>
+                <documentation>The list of properties to be retrieved (may not be empty).</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <argument>
+                <name>group</name>
+                <documentation>The list of properties to group by.</documentation>
+
+                <type>
+                    <list>
+                        <string />
+                    </list>
+                </type>
+            </argument>
+
+            <return_value>
+                <documentation>FIXME.</documentation>
+
+                <type>
+                    <list>
+                        <dictionary>
+                            <unknown />
+                        </dictionary>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <method>
             <name>idlist_from_playlist</name>
             <documentation>FIXME.</documentation>
 
