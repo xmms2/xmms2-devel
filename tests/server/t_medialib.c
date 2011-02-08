@@ -10,6 +10,8 @@
 #include "../src/xmms/fetchinfo.c"
 #include "../src/xmms/fetchspec.c"
 
+#include "utils/jsonism.h"
+
 static void xmms_mock_entry (gint tracknr, const gchar *artist,
                              const gchar *album, const gchar *title);
 static void xmms_dump (xmmsv_t *value);
@@ -71,7 +73,7 @@ medialib_query (xmmsv_coll_t *coll, xmmsv_t *spec, xmms_error_t *err)
 CASE (test_query_ids_order_by_id)
 {
 	xmmsv_coll_t *universe, *ordered;
-	xmmsv_t *meta, *spec, *result;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -83,8 +85,14 @@ CASE (test_query_ids_order_by_id)
 	universe = xmmsv_coll_universe ();
 	ordered = xmmsv_coll_add_order_operator (universe, "id");
 
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	spec = xmmsv_build_cluster_list (xmmsv_new_string ("position"), NULL, meta);
+	spec = parse_jsonism ("{                           " \
+	                      "  'type': 'cluster-list',   " \
+	                      "  'cluster-by': 'position', " \
+	                      "  'data': {                 " \
+	                      "    'type': 'metadata',     " \
+	                      "    'get': ['id']           " \
+	                      "  }                         " \
+	                      "}                           ");
 
 	result = medialib_query (ordered, spec, &err);
 
@@ -102,7 +110,7 @@ CASE (test_query_ids_order_by_id)
 CASE (test_cluster_dict)
 {
 	xmmsv_coll_t *universe;
-	xmmsv_t *meta, *spec, *result;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -117,12 +125,16 @@ CASE (test_cluster_dict)
 
 	universe = xmmsv_coll_universe ();
 
-	meta = xmmsv_build_metadata (xmmsv_new_string ("title"),
-	                             xmmsv_new_string ("value"),
-	                             "first", NULL);
-	spec = xmmsv_build_cluster_dict (xmmsv_new_string ("value"),
-	                                 xmmsv_new_string ("title"),
-	                                 meta);
+	spec = parse_jsonism ("{                           " \
+	                      "  'type': 'cluster-dict',   " \
+	                      "  'cluster-by': 'value',    " \
+	                      "  'cluster-field': 'title', " \
+	                      "  'data': {                 " \
+	                      "    'type': 'metadata',     " \
+	                      "    'keys': ['title'],      " \
+	                      "    'get': ['value']        " \
+	                      "  }                         " \
+	                      "}                           ");
 
 	result = medialib_query (universe, spec, &err);
 
@@ -144,7 +156,7 @@ CASE (test_cluster_dict)
 CASE (test_query_infos_order_by_tracknr)
 {
 	xmmsv_coll_t *universe, *ordered, *limited;
-	xmmsv_t *meta, *org_data, *org_dict, *spec, *result;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -158,24 +170,33 @@ CASE (test_query_infos_order_by_tracknr)
 	ordered = xmmsv_coll_add_order_operator (universe, "tracknr");
 	limited = xmmsv_coll_add_limit_operator (ordered, 1, 2);
 
-	org_data = xmmsv_new_dict ();
-
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	xmmsv_dict_set (org_data, "id", meta);
-	xmmsv_unref (meta);
-
-	meta = xmmsv_build_metadata (xmmsv_new_string ("title"), xmmsv_new_string ("value"), "first", NULL);
-	xmmsv_dict_set (org_data, "title", meta);
-	xmmsv_unref (meta);
-
-	meta = xmmsv_build_metadata (xmmsv_new_string ("tracknr"), xmmsv_new_string ("value"), "first", NULL);
-	xmmsv_dict_set (org_data, "tracknr", meta);
-	xmmsv_unref (meta);
-
-	org_dict = xmmsv_build_organize (org_data);
-	spec = xmmsv_build_cluster_list (xmmsv_new_string ("value"),
-	                                 xmmsv_new_string ("title"),
-	                                 org_dict);
+	spec = parse_jsonism ("{                             " \
+	                      "  'type': 'cluster-list',     " \
+	                      "  'cluster-field': 'title',   " \
+	                      "  'cluster-by': 'value',      " \
+	                      "  'data': {                   " \
+	                      "    'type': 'organize',       " \
+	                      "    'data': {                 " \
+	                      "      'id': {                 " \
+	                      "        'type': 'metadata',   " \
+	                      "        'get': 'id',          " \
+	                      "        'aggregate': 'first'  " \
+	                      "      },                      " \
+	                      "     'tracknr': {             " \
+	                      "        'type': 'metadata',   " \
+	                      "        'keys': 'tracknr',    " \
+	                      "        'get': 'value',       " \
+	                      "        'aggregate': 'first'  " \
+	                      "      },                      " \
+	                      "      'title': {              " \
+	                      "        'type': 'metadata',   " \
+	                      "        'keys': 'title',      " \
+	                      "        'get': 'value',       " \
+	                      "        'aggregate': 'first'  " \
+	                      "      }                       " \
+	                      "    }                         " \
+	                      "  }                           " \
+	                      "}                             ");
 
 	result = medialib_query (limited, spec, &err);
 
@@ -206,7 +227,7 @@ CASE (test_query_count_all)
 
 	universe = xmmsv_coll_universe ();
 
-	spec = xmmsv_build_count ();
+	spec = parse_jsonism ("{ 'type': 'count' }");
 	result = medialib_query (universe, spec, &err);
 
 	xmmsv_get_int (result, &count);
@@ -234,7 +255,13 @@ CASE (test_query_aggregate_sum)
 
 	universe = xmmsv_coll_universe ();
 
-	spec = xmmsv_build_metadata (xmmsv_new_string ("tracknr"), xmmsv_new_string ("value"), "sum", NULL);
+	spec = parse_jsonism ("{                     " \
+	                      "  'type': 'metadata', " \
+	                      "  'keys': 'tracknr',  " \
+	                      "  'get': 'value',     " \
+	                      "  'aggregate': 'sum'  " \
+	                      "}                     ");
+
 	result = medialib_query (universe, spec, &err);
 
 	xmmsv_get_int (result, &count);
@@ -249,7 +276,7 @@ CASE (test_query_aggregate_sum)
 CASE (test_query_ordered_union)
 {
 	xmmsv_coll_t *universe, *first, *ordered_first, *second, *ordered_second, *union_, *ordered_union;
-	xmmsv_t *spec, *result, *org_dict, *org_data, *meta;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
 	gint i;
 
@@ -295,28 +322,33 @@ CASE (test_query_ordered_union)
 	ordered_union = xmmsv_coll_add_order_operator (union_, "id");
 	xmmsv_coll_unref (union_);
 
-	org_data = xmmsv_new_dict ();
-
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	xmmsv_dict_set (org_data, "id", meta);
-	xmmsv_unref (meta);
-
-	meta = xmmsv_build_metadata (xmmsv_new_string ("title"),
-	                             xmmsv_new_string ("value"),
-	                             "first", NULL);
-	xmmsv_dict_set (org_data, "title", meta);
-	xmmsv_unref (meta);
-
-	meta = xmmsv_build_metadata (xmmsv_new_string ("tracknr"),
-	                             xmmsv_new_string ("value"),
-	                             "first", NULL);
-	xmmsv_dict_set (org_data, "tracknr", meta);
-	xmmsv_unref (meta);
-
-	org_dict = xmmsv_build_organize (org_data);
-	spec = xmmsv_build_cluster_list (xmmsv_new_string ("value"),
-	                                 xmmsv_new_string ("title"),
-	                                 org_dict);
+	spec = parse_jsonism ("{                              " \
+	                      "  'type': 'cluster-list',      " \
+	                      "  'cluster-by': 'value',       " \
+	                      "  'cluster-field': 'title',    " \
+	                      "  'data': {                    " \
+	                      "    'type': 'organize',        " \
+	                      "    'data': {                  " \
+	                      "      'id': {                  " \
+	                      "        'type': 'metadata',    " \
+	                      "        'get': 'id',           " \
+	                      "        'aggregate': 'first'   " \
+	                      "      },                       " \
+	                      "      'tracknr': {             " \
+	                      "        'type': 'metadata',    " \
+	                      "        'keys': 'tracknr',     " \
+	                      "        'get': 'value',        " \
+	                      "        'aggregate': 'first'   " \
+	                      "      },                       " \
+	                      "      'title': {               " \
+	                      "        'type': 'metadata',    " \
+	                      "        'keys': 'title',       " \
+	                      "        'get': 'value',        " \
+	                      "        'aggregate': 'first'   " \
+	                      "      }                        " \
+	                      "    }                          " \
+	                      "  }                            " \
+	                      "}                              ");
 
 	result = medialib_query (ordered_union, spec, &err);
 
@@ -331,7 +363,7 @@ CASE (test_query_ordered_union)
 CASE (test_query_intersection)
 {
 	xmmsv_coll_t *universe, *first, *second, *intersection;
-	xmmsv_t *spec, *result, *org_dict, *org_data, *meta;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -364,14 +396,20 @@ CASE (test_query_intersection)
 
 	xmmsv_coll_unref (universe);
 
-	org_data = xmmsv_new_dict ();
-
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	xmmsv_dict_set (org_data, "id", meta);
-	xmmsv_unref (meta);
-
-	org_dict = xmmsv_build_organize (org_data);
-	spec = xmmsv_build_cluster_list (xmmsv_new_string ("id"), NULL, org_dict);
+	spec = parse_jsonism ("{                             " \
+	                      "  'type': 'cluster-list',     " \
+	                      "  'cluster-by': 'id',         " \
+	                      "  'data': {                   " \
+	                      "    'type': 'organize',       " \
+	                      "    'data': {                 " \
+	                      "      'id': {                 " \
+	                      "        'get': 'id',          " \
+	                      "        'type': 'metadata',   " \
+	                      "        'aggregate': 'first'  " \
+	                      "      }                       " \
+	                      "    }                         " \
+	                      "  }                           " \
+	                      "}                             ");
 
 	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, intersection, spec, &err));
 
@@ -385,9 +423,8 @@ CASE (test_query_intersection)
 CASE (test_query_complement)
 {
 	xmmsv_coll_t *universe, *first, *second, *not_first, *not_second;
-	xmmsv_t *spec, *result, *org_dict, *org_data, *meta;
+	xmmsv_t *spec, *result;
 	xmms_error_t err;
-
 
 	xmms_error_reset (&err);
 
@@ -419,14 +456,20 @@ CASE (test_query_complement)
 
 	xmmsv_coll_unref (universe);
 
-	org_data = xmmsv_new_dict ();
-
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	xmmsv_dict_set (org_data, "id", meta);
-	xmmsv_unref (meta);
-
-	org_dict = xmmsv_build_organize (org_data);
-	spec = xmmsv_build_cluster_list (xmmsv_new_string ("id"), NULL, org_dict);
+	spec = parse_jsonism ("{                              " \
+	                      "  'type': 'cluster-list',      " \
+	                      "  'cluster-by': 'id',          " \
+	                      "  'data': {                    " \
+	                      "    'type': 'organize',        " \
+	                      "    'data': {                  " \
+	                      "      'id': {                  " \
+	                      "        'type': 'metadata',    " \
+	                      "        'get': 'id',           " \
+	                      "        'aggregate': 'first'   " \
+	                      "      }                        " \
+	                      "    }                          " \
+	                      "  }                            " \
+	                      "}                              ");
 
 	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, not_first, spec, &err));
 
@@ -526,7 +569,7 @@ CASE (test_entry_cleanup)
 	 */
 	universe = xmmsv_coll_universe ();
 
-	spec = xmmsv_build_count ();
+	spec = parse_jsonism ("{ 'type': 'count' }");
 	result = medialib_query (universe, spec, &err);
 
 	xmmsv_get_int (result, &count);
@@ -594,7 +637,7 @@ CASE (test_session)
 	CU_ASSERT_PTR_NULL (result);
 
 	universe = xmmsv_coll_universe ();
-	spec = xmmsv_build_count ();
+	spec = parse_jsonism ("{ 'type': 'count' }");
 
 	session = xmms_medialib_begin (medialib);
 	result = xmms_medialib_query (session, universe, spec, &err);
@@ -609,7 +652,7 @@ _xmms_dump_indent (gint indent)
 {
 	gint i;
 	for (i = 0; i < indent; i++)
-		printf (" ");
+		printf ("  ");
 }
 
 static void
@@ -641,7 +684,7 @@ _xmms_dump (xmmsv_t *value, gint indent)
 	case XMMSV_TYPE_STRING: {
 		const gchar *val;
 		xmmsv_get_string (value, &val);
-		printf ("%s", val);
+		printf ("'%s'", val);
 		break;
 	}
 	case XMMSV_TYPE_LIST: {
@@ -676,7 +719,7 @@ _xmms_dump (xmmsv_t *value, gint indent)
 			xmmsv_dict_iter_pair (iter, &key, &item);
 
 			_xmms_dump_indent (indent + 1);
-			printf ("%s: ", key);
+			printf ("'%s': ", key);
 			_xmms_dump (item, indent + 1);
 
 			xmmsv_dict_iter_next (iter);
