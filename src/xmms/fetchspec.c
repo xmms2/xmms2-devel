@@ -18,49 +18,270 @@
 #include "xmms/xmms_log.h"
 #include <string.h>
 
-static int
-metadata_value_from_string (const gchar *name)
+static gboolean
+metadata_value_from_string (const gchar *name, guint32 *value)
 {
-	if (strcmp (name, "id") == 0) {
-		return METADATA_ID;
+	if (name == NULL) {
+		return FALSE;
+	} else if (strcmp (name, "id") == 0) {
+		*value = METADATA_ID;
 	} else if (strcmp (name, "key") == 0) {
-		return METADATA_KEY;
+		*value = METADATA_KEY;
 	} else if (strcmp (name, "value") == 0) {
-		return METADATA_VALUE;
+		*value = METADATA_VALUE;
 	} else if (strcmp (name, "source") == 0) {
-		return METADATA_SOURCE;
+		*value = METADATA_SOURCE;
+	} else {
+		return FALSE;
 	}
 
-	/* TODO: implement error handling */
-
-	return -1;
+	return TRUE;
 }
 
-static int
-aggregate_value_from_string (const gchar *name)
+static gboolean
+aggregate_value_from_string (const gchar *name, guint32 *value)
 {
-	if (strcmp (name, "first") == 0) {
-		return AGGREGATE_FIRST;
+	if (name == NULL) {
+		return FALSE;
+	} else if (strcmp (name, "first") == 0) {
+		*value = AGGREGATE_FIRST;
 	} else if (strcmp (name, "sum") == 0) {
-		return AGGREGATE_SUM;
+		*value = AGGREGATE_SUM;
 	} else if (strcmp (name, "max") == 0) {
-		return AGGREGATE_MAX;
+		*value = AGGREGATE_MAX;
 	} else if (strcmp (name, "min") == 0) {
-		return AGGREGATE_MIN;
+		*value = AGGREGATE_MIN;
 	} else if (strcmp (name, "list") == 0) {
-		return AGGREGATE_LIST;
+		*value = AGGREGATE_LIST;
 	} else if (strcmp (name, "set") == 0) {
-		return AGGREGATE_SET;
+		*value = AGGREGATE_SET;
 	} else if (strcmp (name, "random") == 0) {
-		return AGGREGATE_RANDOM;
+		*value = AGGREGATE_RANDOM;
 	} else if (strcmp (name, "avg") == 0) {
-		return AGGREGATE_AVG;
+		*value = AGGREGATE_AVG;
+	} else {
+		return FALSE;
 	}
 
-	/* TODO: implement error handling */
-
-	return -1;
+	return TRUE;
 }
+
+/**
+ * Sanitize the 'get' property of a 'metadata' fetch specification.
+ */
+static xmmsv_t *
+normalize_metadata_get (xmmsv_t *fetch, xmms_error_t *err)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *get, *list;
+	guint32 values;
+
+	if (!xmmsv_dict_get (fetch, "get", &get)) {
+		get = xmmsv_new_list ();
+		xmmsv_list_append_string (get, "value");
+		xmmsv_unref (get);
+	} else {
+		xmmsv_ref (get);
+	}
+
+	/* Check if 'get' is a string, if so then wrap it in list. */
+	if (xmmsv_get_type (get) != XMMSV_TYPE_LIST) {
+		xmmsv_t *string;
+
+		if (xmmsv_get_type (get) != XMMSV_TYPE_STRING) {
+			const gchar *message = "'get' must be a string, or a list of strings.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			xmmsv_unref (get);
+			return NULL;
+		}
+
+		string = get;
+
+		get = xmmsv_new_list ();
+		xmmsv_list_append (get, string);
+		xmmsv_unref (string);
+	}
+
+	if (xmmsv_list_get_size (get) < 1) {
+		const gchar *message = "'get' must be a string, or a non-empty list of strings.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		xmmsv_unref (get);
+		return NULL;
+	}
+
+	list = xmmsv_new_list ();
+	values = 0;
+
+	/* Scan for duplicates or invalid values */
+	xmmsv_get_list_iter (get, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		const gchar *value = NULL;
+		guint32 get_as_int, mask;
+
+		xmmsv_list_iter_entry_string (it, &value);
+
+		if (!metadata_value_from_string (value, &get_as_int)) {
+			const gchar *message = "'get' entries must be 'id', 'key', 'value' or 'source'.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			xmmsv_unref (list);
+			xmmsv_unref (get);
+			return NULL;
+		}
+
+		mask = 1 << (get_as_int + 1);
+		if (values & mask) {
+			const gchar *message = "'get' entries must be unique.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			xmmsv_unref (list);
+			xmmsv_unref (get);
+			return NULL;
+		}
+
+		values &= mask;
+
+		xmmsv_list_append_int (list, get_as_int);
+
+		xmmsv_list_iter_next (it);
+	}
+
+	xmmsv_unref (get);
+
+	return list;
+}
+
+static xmmsv_t *
+normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
+{
+	gpointer SENTINEL = GINT_TO_POINTER (0x31337);
+	GHashTable *table;
+
+	xmmsv_list_iter_t *it;
+	xmmsv_t *keys;
+
+	if (!xmmsv_dict_get (fetch, "keys", &keys)) {
+		keys = xmmsv_new_list ();
+		xmmsv_list_append_string (keys, "id");
+	} else {
+		xmmsv_ref (keys);
+	}
+
+	/* Check if 'get' is a string, if so then wrap it in list. */
+	if (xmmsv_get_type (keys) != XMMSV_TYPE_LIST) {
+		xmmsv_t *string;
+
+		if (xmmsv_get_type (keys) != XMMSV_TYPE_STRING) {
+			const gchar *message = "'keys' must be a string, or a list of strings.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			xmmsv_unref (keys);
+			return NULL;
+		}
+
+		string = keys;
+
+		keys = xmmsv_new_list ();
+		xmmsv_list_append (keys, string);
+		xmmsv_unref (string);
+	}
+
+	if (xmmsv_list_get_size (keys) < 1) {
+		const gchar *message = "'keys' must be a string, or a non-empty list of strings.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		xmmsv_unref (keys);
+		return NULL;
+	}
+
+	table = g_hash_table_new (g_str_hash, g_str_equal);
+
+	xmmsv_get_list_iter (keys, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		const gchar *value = NULL;
+
+		if (!xmmsv_list_iter_entry_string (it, &value)) {
+			const gchar *message = "'keys' entries must be of string type.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			g_hash_table_unref (table);
+			xmmsv_unref (keys);
+			return NULL;
+		}
+
+		if (g_hash_table_lookup (table, (gpointer) value) == SENTINEL) {
+			const gchar *message = "'keys' entries must be unique.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			g_hash_table_unref (table);
+			xmmsv_unref (keys);
+			return NULL;
+		}
+
+		g_hash_table_insert (table, (gpointer) value, SENTINEL);
+
+		xmmsv_list_iter_next (it);
+	}
+
+	g_hash_table_unref (table);
+
+	return keys;
+}
+
+
+static s4_sourcepref_t *
+normalize_metadata_prefs (xmmsv_t *fetch, s4_sourcepref_t *prefs, xmms_error_t *err)
+{
+	s4_sourcepref_t *sp;
+	xmmsv_list_iter_t *it;
+	const char **strv;
+	const gchar *str;
+	xmmsv_t *list;
+	gint length, idx;
+
+	if (!xmmsv_dict_get (fetch, "source-preference", &list)) {
+		return s4_sourcepref_ref (prefs);
+	}
+
+	length = xmmsv_list_get_size (list);
+	strv = g_new0 (const char *, length + 1);
+
+	idx = 0;
+
+	xmmsv_get_list_iter (list, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		if (!xmmsv_list_iter_entry_string (it, &str)) {
+			const gchar *message = "'source-preference' must be a list of strings.";
+			xmms_error_set (err, XMMS_ERROR_INVAL, message);
+			g_free (strv);
+			return NULL;
+		}
+
+		strv[idx++] = str;
+
+		xmmsv_list_iter_next (it);
+	}
+
+	sp = s4_sourcepref_create (strv);
+	g_free (strv);
+
+	return sp;
+}
+
+static gint
+normalize_aggregate_function (xmmsv_t *fetch, xmms_error_t *err)
+{
+	const gchar *name;
+	guint32 aggregate;
+
+	/* Default to first as the aggregation function */
+	if (!xmmsv_dict_entry_get_string (fetch, "aggregate", &name)) {
+		name = "first";
+	}
+
+	if (!aggregate_value_from_string (name, &aggregate)) {
+		const gchar *message = "'aggregate' must be 'first', 'sum', 'max', 'min', 'list', 'set', 'random', or 'avg'";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return -1;
+	}
+
+	return aggregate;
+}
+
 
 static xmms_fetch_spec_t *
 xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
@@ -68,78 +289,61 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 {
 	xmms_fetch_spec_t *ret;
 	s4_sourcepref_t *sp;
-	const gchar *str;
-	xmmsv_t *val;
-	gint i, id_only = 0;
+	const gchar *key;
+	xmmsv_t *gets, *keys;
+	gint i, size, aggregate, get;
+
+	gets = normalize_metadata_get (fetch, err);
+	if (xmms_error_iserror (err)) {
+		return NULL;
+	}
+
+	keys = normalize_metadata_keys (fetch, err);
+	if (xmms_error_iserror (err)) {
+		xmmsv_unref (gets);
+		return NULL;
+	}
+
+	aggregate = normalize_aggregate_function (fetch, err);
+	if (xmms_error_iserror (err)) {
+		xmmsv_unref (keys);
+		xmmsv_unref (gets);
+		return NULL;
+	}
+
+	sp = normalize_metadata_prefs (fetch, prefs, err);
+	if (xmms_error_iserror (err)) {
+		xmmsv_unref (keys);
+		xmmsv_unref (gets);
+		return NULL;
+	}
 
 	ret = g_new0 (xmms_fetch_spec_t, 1);
 	ret->type = FETCH_METADATA;
+	ret->data.metadata.aggr_func = aggregate;
 
-	if (xmmsv_dict_get (fetch, "get", &val)) {
-		if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-			for (i = 0; i < 4 && xmmsv_list_get_string (val, i, &str); i++) {
-				ret->data.metadata.get[i] = metadata_value_from_string (str);
-			}
-		} else  if (xmmsv_get_string (val, &str)) {
-			ret->data.metadata.get[0] = metadata_value_from_string (str);
-			i = 1;
-		}
-
-		ret->data.metadata.get_size = i;
-		if (i == 1 && ret->data.metadata.get[0] == METADATA_ID)
-			id_only = 1;
-	} else {
-		ret->data.metadata.get_size = 1;
-		ret->data.metadata.get[0] = METADATA_VALUE;
+	for (i = 0; i < 4 && xmmsv_list_get_int (gets, i, &get); i++) {
+		ret->data.metadata.get[i] = get;
 	}
+	ret->data.metadata.get_size = i;
 
-	if (xmmsv_dict_get (fetch, "source-preference", &val)) {
-		const char **strs = g_new (const char *, xmmsv_list_get_size (val) + 1);
-
-		for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-			strs[i] = str;
-		}
-		strs[i] = NULL;
-		sp = s4_sourcepref_create (strs);
-		g_free (strs);
-	} else {
-		sp = s4_sourcepref_ref (prefs);
-	}
-
-	if (id_only) {
-		ret->data.metadata.col_count = 1;
-		ret->data.metadata.cols = g_new (int, ret->data.metadata.col_count);
-		ret->data.metadata.cols[0] = 0;
-	} else if (xmmsv_dict_get (fetch, "keys", &val)) {
-		if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-			ret->data.metadata.col_count = xmmsv_list_get_size (val);
-			ret->data.metadata.cols = g_new (int, ret->data.metadata.col_count);
-			for (i = 0; xmmsv_list_get_string (val, i, &str); i++) {
-				ret->data.metadata.cols[i] = xmms_fetch_info_add_key (info, fetch, str, sp);
-			}
-		} else if (xmmsv_get_string (val, &str)) {
-			ret->data.metadata.col_count = 1;
-			ret->data.metadata.cols = g_new (int, 1);
-			ret->data.metadata.cols[0] = xmms_fetch_info_add_key (info, fetch, str, sp);
-		} else {
-			/* TODO: whaaaaat? */
+	size = xmmsv_list_get_size (keys);
+	if (size > 0) {
+		ret->data.metadata.col_count = size;
+		ret->data.metadata.cols = g_new (gint32, size);
+		for (i = 0; xmmsv_list_get_string (keys, i, &key); i++) {
+			ret->data.metadata.cols[i] = xmms_fetch_info_add_key (info, fetch, key, sp);
 		}
 	} else {
-		/* TODO: What does this do? */
-		ret->data.metadata.col_count = 1;
-		ret->data.metadata.cols = g_new (int, ret->data.metadata.col_count);
-		ret->data.metadata.cols[0] = xmms_fetch_info_add_key (info, fetch, NULL, sp);
+		/* No fields requested, fetching all available */
+		ret->data.metadata.col_count = size;
+		ret->data.metadata.cols = g_new (gint32, 1);
+		xmms_fetch_info_add_key (info, fetch, NULL, sp);
 	}
-
-
-	if (!xmmsv_dict_entry_get_string (fetch, "aggregate", &str)) {
-		/* Default to first as the aggregation function */
-		str = "first";
-	}
-
-	ret->data.metadata.aggr_func = aggregate_value_from_string (str);
 
 	s4_sourcepref_unref (sp);
+	xmmsv_unref (keys);
+	xmmsv_unref (gets);
 
 	return ret;
 }
