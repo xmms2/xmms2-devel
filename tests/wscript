@@ -1,5 +1,9 @@
 #encoding: utf-8
 
+testutils_src = """
+utils/jsonism.c
+""".split()
+
 types_suite = """
 xmmsv/t_xmmsv.c
 xmmsv/t_xmmsv_serialization.c
@@ -51,8 +55,14 @@ def configure(conf):
 
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
 
-
 def build(bld):
+    bld(features = "c cstlib",
+        target = "testutils",
+        source = testutils_src,
+        include = ". ../src/include",
+        install_path = None
+        )
+
     bld(features = 'c cprogram test',
         target = 'test_xmmstypes',
         source = test_xmmstypes_src,
@@ -82,7 +92,7 @@ def build(bld):
         target = "test_medialib",
         source = test_mlib_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmmsipc xmmssocket xmmstypes xmmsutils s4",
+        use = "xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
         install_path = None
         )
