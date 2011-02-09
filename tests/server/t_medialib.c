@@ -110,7 +110,7 @@ CASE (test_query_ids_order_by_id)
 CASE (test_cluster_dict)
 {
 	xmmsv_coll_t *universe;
-	xmmsv_t *spec, *result;
+	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -128,25 +128,34 @@ CASE (test_cluster_dict)
 	spec = parse_jsonism ("{                           " \
 	                      "  'type': 'cluster-dict',   " \
 	                      "  'cluster-by': 'value',    " \
-	                      "  'cluster-field': 'title', " \
+	                      "  'cluster-field': 'album', " \
 	                      "  'data': {                 " \
 	                      "    'type': 'metadata',     " \
 	                      "    'keys': ['title'],      " \
-	                      "    'get': ['value']        " \
+	                      "    'get': ['value'],       " \
+	                      "    'aggregate': 'list'     " \
 	                      "  }                         " \
 	                      "}                           ");
 
 	result = medialib_query (universe, spec, &err);
 
-	xmms_dump (result);
+	expected = parse_jsonism ("{                                  " \
+	                          "  'Red Fang': [                    " \
+	                          "    'Prehistoric Dog',             " \
+	                          "    'Reverse Thunder',             " \
+	                          "    'Humans Remain Human Remains', " \
+	                          "    'Night Destroyer'              " \
+	                          "  ],                               " \
+	                          "  'Lungs for Life': [              " \
+	                          "    'Decade',                      " \
+	                          "    'Ensueno (Morning mix)',       " \
+	                          "    'Breathing Place'              " \
+	                          "  ]                                " \
+	                          "}                                  ");
 
-	/*
-	CU_ASSERT_LIST_DICT_INT_EQUAL (result,
-	CU_ASSERT_LIST_INT_EQUAL (result, 0, 0);
-	CU_ASSERT_LIST_INT_EQUAL (result, 1, 1);
-	CU_ASSERT_LIST_INT_EQUAL (result, 2, 2);
-	*/
+	CU_ASSERT_TRUE (xmmsv_compare (result, expected));
 
+	xmmsv_unref (expected);
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 	xmmsv_coll_unref (universe);
