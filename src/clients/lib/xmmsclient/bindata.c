@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2009 XMMS2 Team
+ *  Copyright (C) 2003-2011 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -33,7 +33,6 @@ xmmsc_bindata_add (xmmsc_connection_t *c,
                    const unsigned char *data,
                    unsigned int len)
 {
-	xmmsc_result_t *res;
 	xmmsv_t *bin;
 
 	x_check_conn (c, NULL);

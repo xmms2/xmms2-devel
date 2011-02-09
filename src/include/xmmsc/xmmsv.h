@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2009 XMMS2 Team
+ *  Copyright (C) 2003-2011 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -58,7 +58,7 @@ xmmsv_t *xmmsv_new_error (const char *errstr); /* FIXME: err id? */
 xmmsv_t *xmmsv_new_int (int32_t i);
 xmmsv_t *xmmsv_new_string (const char *s);
 xmmsv_t *xmmsv_new_coll (xmmsv_coll_t *coll);
-xmmsv_t *xmmsv_new_bin (unsigned char *data, unsigned int len);
+xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len);
 
 xmmsv_t *xmmsv_new_list (void);
 xmmsv_t *xmmsv_new_dict (void);

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2009 XMMS2 Team
+ *  Copyright (C) 2003-2011 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -78,7 +78,6 @@ print_hash (const gchar *key, xmmsv_t *value, void *udata)
 {
 	xmmsv_type_t value_type;
 	const char *string_val;
-	unsigned int uint_val;
 	int int_val;
 
 	value_type = xmmsv_get_type (value);

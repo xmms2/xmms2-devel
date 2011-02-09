@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2009 XMMS2 Team
+ *  Copyright (C) 2003-2011 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -220,7 +220,7 @@ xmmsv_new_coll (xmmsv_coll_t *c)
  * #xmmsv_unref.
  */
 xmmsv_t *
-xmmsv_new_bin (unsigned char *data, unsigned int len)
+xmmsv_new_bin (const unsigned char *data, unsigned int len)
 {
 	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_BIN);
 
