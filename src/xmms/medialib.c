@@ -2621,6 +2621,7 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 
 	if (spec == NULL || fetch_invalid) {
 		xmms_fetch_spec_free (spec);
+		xmms_fetch_info_free (info);
 		return NULL;
 	}
 
