@@ -19,8 +19,22 @@
 
 #include "value_utils.h"
 
+static int _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered);
+
 int
 xmmsv_compare (xmmsv_t *a, xmmsv_t *b)
+{
+	return _xmmsv_compare (a, b, 1);
+}
+
+int
+xmmsv_compare_unordered (xmmsv_t *a, xmmsv_t *b)
+{
+	return _xmmsv_compare (a, b, 0);
+}
+
+static int
+_xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 {
 	int type;
 
@@ -67,7 +81,7 @@ xmmsv_compare (xmmsv_t *a, xmmsv_t *b)
 			if (!xmmsv_dict_get (b, key, &eb))
 				return 0;
 
-			if (!xmmsv_compare (ea, eb))
+			if (!_xmmsv_compare (ea, eb, ordered))
 				return 0;
 
 			xmmsv_dict_iter_next (it);
@@ -76,7 +90,7 @@ xmmsv_compare (xmmsv_t *a, xmmsv_t *b)
 		break;
 	}
 	case XMMSV_TYPE_LIST: {
-		int size, i;
+		int size, i, j;
 
 		size = xmmsv_list_get_size (a);
 		if (size != xmmsv_list_get_size (b))
@@ -88,8 +102,22 @@ xmmsv_compare (xmmsv_t *a, xmmsv_t *b)
 			if (!xmmsv_list_get (a, i, &ea) || !xmmsv_list_get (b, i, &eb))
 				return 0;
 
-			if (!xmmsv_compare (ea, eb))
-				return 0;
+			if (ordered) {
+				if (!_xmmsv_compare (ea, eb, ordered))
+					return 0;
+			} else {
+				int match = 0;
+				for (j = 0; j < size; j++) {
+					if (!xmmsv_list_get (b, j, &eb))
+						return 0;
+					if (_xmmsv_compare (ea, eb, ordered)) {
+						match = 1;
+						break;
+					}
+				}
+				if (!match)
+					return 0;
+			}
 		}
 
 		break;

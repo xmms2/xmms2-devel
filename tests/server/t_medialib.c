@@ -153,7 +153,7 @@ CASE (test_cluster_dict)
 	                            "  ]                                " \
 	                            "}                                  ");
 
-	CU_ASSERT_TRUE (xmmsv_compare (result, expected));
+	CU_ASSERT_TRUE (xmmsv_compare_unordered (result, expected));
 
 	xmmsv_unref (expected);
 	xmmsv_unref (spec);

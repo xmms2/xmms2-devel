@@ -19,6 +19,7 @@
 #include "xmmsc/xmmsv.h"
 
 int xmmsv_compare (xmmsv_t *a, xmmsv_t *b);
+int xmmsv_compare_unordered (xmmsv_t *a, xmmsv_t *b);
 void xmmsv_dump (xmmsv_t *value);
 
 #endif
