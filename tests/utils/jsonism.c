@@ -15,10 +15,10 @@
  */
 
 /* psuedo grammar
- * START :: DICT
+ * START :: ENTRY
  * DICT :: '{' DICT_ENTRY? (',' DICT_ENTRY)* '}'
  * DICT_ENTRY :: STRING ':' ENTRY
- * LIST :: '[' LIST_ENTRY? (',' ENTRY)* ']'
+ * LIST :: '[' ENTRY? (',' ENTRY)* ']'
  * ENTRY :: STRING | NUMBER | LIST | DICT
  * STRING :: '\'' [a-zA-Z0-9]* '\''
  * NUMBER :: [0-9]+
@@ -140,7 +140,7 @@ xmmsv_from_json (const char *spec)
 	char *data, *ptr;
 	ptr = data = strdup (spec);
 	eat (&ptr, ' ');
-	xmmsv_t *value = parse_dict (&ptr);
+	xmmsv_t *value = parse_entry (&ptr);
 	free (data);
 	return value;
 }
