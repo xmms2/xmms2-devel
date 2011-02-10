@@ -50,7 +50,10 @@ parse_number (char **ptr)
 	assert (**ptr >= '0' && **ptr <= '9');
 	for (end = *ptr; *end >= '0' && *end <= '9'; end++);
 	char *number = strndup (*ptr, end - *ptr);
-	xmmsv_t *value = xmmsv_new_string (number);
+	char *endptr = NULL;
+	int ival = strtol (number, &endptr, 10);
+	assert (endptr != number && *endptr == '\0');
+	xmmsv_t *value = xmmsv_new_int (ival);
 	free (number);
 	*ptr = end;
 	return value;
