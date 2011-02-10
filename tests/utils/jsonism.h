@@ -16,6 +16,6 @@
 #ifndef __JSONISM_H__
 #define __JSONISM_H__
 
-xmmsv_t *parse_jsonism (const char *spec);
+xmmsv_t *xmmsv_from_json (const char *spec);
 
 #endif

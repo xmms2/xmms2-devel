@@ -135,7 +135,7 @@ parse_dict (char **ptr)
 }
 
 xmmsv_t *
-parse_jsonism (const char *spec)
+xmmsv_from_json (const char *spec)
 {
 	char *data, *ptr;
 	ptr = data = strdup (spec);
