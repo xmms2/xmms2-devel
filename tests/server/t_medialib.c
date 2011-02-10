@@ -73,7 +73,7 @@ medialib_query (xmmsv_coll_t *coll, xmmsv_t *spec, xmms_error_t *err)
 CASE (test_query_ids_order_by_id)
 {
 	xmmsv_coll_t *universe, *ordered;
-	xmmsv_t *spec, *result;
+	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -96,12 +96,13 @@ CASE (test_query_ids_order_by_id)
 
 	result = medialib_query (ordered, spec, &err);
 
-	CU_ASSERT_LIST_INT_EQUAL (result, 0, 0);
-	CU_ASSERT_LIST_INT_EQUAL (result, 1, 1);
-	CU_ASSERT_LIST_INT_EQUAL (result, 2, 2);
+	expected = xmmsv_from_json ("[0, 1, 2]");
+
+	CU_ASSERT_TRUE (xmmsv_compare (result, expected));
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
+	xmmsv_unref (expected);
 	xmmsv_coll_unref (ordered);
 	xmmsv_coll_unref (universe);
 }
@@ -165,7 +166,7 @@ CASE (test_cluster_dict)
 CASE (test_query_infos_order_by_tracknr)
 {
 	xmmsv_coll_t *universe, *ordered, *limited;
-	xmmsv_t *spec, *result;
+	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -209,11 +210,14 @@ CASE (test_query_infos_order_by_tracknr)
 
 	result = medialib_query (limited, spec, &err);
 
-	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 0, "tracknr", 2);
-	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 1, "tracknr", 3);
+	expected = xmmsv_from_json ("[{ 'id': 3, 'tracknr': 2, 'title': 'Reverse Thunder' }," \
+	                            " { 'id': 2, 'tracknr': 3, 'title': 'Night Destroyer' }]");
+
+	CU_ASSERT_TRUE (xmmsv_compare (result, expected));
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
+	xmmsv_unref (expected);
 	xmmsv_coll_unref (limited);
 	xmmsv_coll_unref (ordered);
 	xmmsv_coll_unref (universe);
@@ -285,9 +289,8 @@ CASE (test_query_aggregate_sum)
 CASE (test_query_ordered_union)
 {
 	xmmsv_coll_t *universe, *first, *ordered_first, *second, *ordered_second, *union_, *ordered_union;
-	xmmsv_t *spec, *result;
+	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
-	gint i;
 
 	xmms_error_reset (&err);
 
@@ -361,11 +364,19 @@ CASE (test_query_ordered_union)
 
 	result = medialib_query (ordered_union, spec, &err);
 
-	for (i = 0; i < 7; i++)
-		CU_ASSERT_LIST_DICT_INT_EQUAL (result, i, "id", i);
+	expected = xmmsv_from_json ("[{ 'id': 0, 'tracknr': 1, 'title': 'Prehistoric Dog' },             " \
+	                            " { 'id': 1, 'tracknr': 2, 'title': 'Reverse Thunder' },             " \
+	                            " { 'id': 2, 'tracknr': 3, 'title': 'Night Destroyer' },             " \
+	                            " { 'id': 3, 'tracknr': 4, 'title': 'Humans Remain Human Remains' }, " \
+	                            " { 'id': 4, 'tracknr': 1, 'title': 'Decade' },                      " \
+	                            " { 'id': 5, 'tracknr': 2, 'title': 'Breathing Place' },             " \
+	                            " { 'id': 6, 'tracknr': 3, 'title': 'Ensueno (Morning mix)'}]        ");
+
+	CU_ASSERT_TRUE (xmmsv_compare (result, expected));
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
+	xmmsv_unref (expected);
 	xmmsv_coll_unref (ordered_union);
 }
 
