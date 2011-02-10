@@ -11,10 +11,10 @@
 #include "../src/xmms/fetchspec.c"
 
 #include "utils/jsonism.h"
+#include "utils/value_utils.h"
 
 static void xmms_mock_entry (gint tracknr, const gchar *artist,
                              const gchar *album, const gchar *title);
-static void xmms_dump (xmmsv_t *value);
 
 #define CU_ASSERT_LIST_INT_EQUAL(list, pos, expected) do { \
 		xmmsv_t *item; \
@@ -654,103 +654,6 @@ CASE (test_session)
 
 	xmmsv_coll_unref (universe);
 	xmmsv_unref (spec);
-}
-
-static void
-_xmms_dump_indent (gint indent)
-{
-	gint i;
-	for (i = 0; i < indent; i++)
-		printf ("  ");
-}
-
-static void
-_xmms_dump (xmmsv_t *value, gint indent)
-{
-	gint type;
-
-	if (value == NULL) {
-		printf ("xmmsv_t is NULL!\n");
-		return;
-	}
-
-	if (xmmsv_is_error (value)) {
-		const gchar *message;
-		xmmsv_get_error (value, &message);
-		printf ("error: %s\n", message);
-		return;
-	}
-
-	type = xmmsv_get_type (value);
-
-	switch (type) {
-	case XMMSV_TYPE_INT32: {
-		gint val;
-		xmmsv_get_int (value, &val);
-		printf ("%d", val);
-		break;
-	}
-	case XMMSV_TYPE_STRING: {
-		const gchar *val;
-		xmmsv_get_string (value, &val);
-		printf ("'%s'", val);
-		break;
-	}
-	case XMMSV_TYPE_LIST: {
-		xmmsv_list_iter_t *iter;
-		xmmsv_get_list_iter (value, &iter);
-
-		printf ("[");
-		while (xmmsv_list_iter_valid (iter)) {
-			xmmsv_t *item;
-
-			xmmsv_list_iter_entry (iter, &item);
-
-			_xmms_dump (item, indent + 1);
-
-			xmmsv_list_iter_next (iter);
-			if (xmmsv_list_iter_valid (iter))
-				printf (", ");
-		}
-		printf ("]");
-		break;
-	}
-	case XMMSV_TYPE_DICT: {
-		xmmsv_dict_iter_t *iter;
-
-		xmmsv_get_dict_iter (value, &iter);
-
-		printf ("{\n");
-		while (xmmsv_dict_iter_valid (iter)) {
-			const gchar *key;
-			xmmsv_t *item;
-
-			xmmsv_dict_iter_pair (iter, &key, &item);
-
-			_xmms_dump_indent (indent + 1);
-			printf ("'%s': ", key);
-			_xmms_dump (item, indent + 1);
-
-			xmmsv_dict_iter_next (iter);
-			if (xmmsv_dict_iter_valid (iter))
-				printf (", ");
-			printf ("\n");
-		}
-		_xmms_dump_indent (indent);
-		printf ("}");
-
-		break;
-	}
-	default:
-		printf ("invalid type: %d\n", type);
-	}
-}
-
-static void
-xmms_dump (xmmsv_t *value)
-{
-	_xmms_dump (value, 0);
-	printf ("\n");
 }
 
 static void

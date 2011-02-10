@@ -2,6 +2,7 @@
 
 testutils_src = """
 utils/jsonism.c
+utils/value_utils.c
 """.split()
 
 types_suite = """
