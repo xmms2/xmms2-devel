@@ -134,7 +134,7 @@ CASE (test_cluster_dict)
 		"  'cluster-field': 'album', " \
 		"  'data': {                 " \
 		"    'type': 'metadata',     " \
-		"    'keys': ['title'],      " \
+		"    'fields': ['title'],    " \
 		"    'get': ['value'],       " \
 		"    'aggregate': 'list'     " \
 		"  }                         " \
@@ -186,8 +186,8 @@ CASE (test_query_infos_order_by_tracknr)
 	spec = xmmsv_from_json (\
 		"{                             " \
 		"  'type': 'cluster-list',     " \
-		"  'cluster-field': 'title',   " \
 		"  'cluster-by': 'value',      " \
+		"  'cluster-field': 'title',   " \
 		"  'data': {                   " \
 		"    'type': 'organize',       " \
 		"    'data': {                 " \
@@ -198,13 +198,13 @@ CASE (test_query_infos_order_by_tracknr)
 		"      },                      " \
 		"     'tracknr': {             " \
 		"        'type': 'metadata',   " \
-		"        'keys': ['tracknr'],  " \
+		"        'fields': ['tracknr']," \
 		"        'get': ['value'],     " \
 		"        'aggregate': 'first'  " \
 		"      },                      " \
 		"      'title': {              " \
 		"        'type': 'metadata',   " \
-		"        'keys': ['title'],    " \
+		"        'fields': ['title'],  " \
 		"        'get': ['value'],     " \
 		"        'aggregate': 'first'  " \
 		"      }                       " \
@@ -273,12 +273,12 @@ CASE (test_query_aggregate_sum)
 	universe = xmmsv_coll_universe ();
 
 	spec = xmmsv_from_json (\
-		"{                     " \
-		"  'type': 'metadata', " \
-		"  'keys': ['tracknr']," \
-		"  'get': ['value'],   " \
-		"  'aggregate': 'sum'  " \
-		"}                     ");
+		"{                       " \
+		"  'type': 'metadata',   " \
+		"  'fields': ['tracknr']," \
+		"  'get': ['value'],     " \
+		"  'aggregate': 'sum'    " \
+		"}                       ");
 
 	result = medialib_query (universe, spec, &err);
 
@@ -354,13 +354,13 @@ CASE (test_query_ordered_union)
 		"      },                       " \
 		"      'tracknr': {             " \
 		"        'type': 'metadata',    " \
-		"        'keys': ['tracknr'],   " \
+		"        'fields': ['tracknr'], " \
 		"        'get': ['value'],      " \
 		"        'aggregate': 'first'   " \
 		"      },                       " \
 		"      'title': {               " \
 		"        'type': 'metadata',    " \
-		"        'keys': ['title'],     " \
+		"        'fields': ['title'],   " \
 		"        'get': ['value'],      " \
 		"        'aggregate': 'first'   " \
 		"      }                        " \

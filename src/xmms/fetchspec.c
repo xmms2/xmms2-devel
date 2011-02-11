@@ -120,45 +120,45 @@ normalize_metadata_get (xmmsv_t *fetch, xmms_error_t *err)
 }
 
 static xmmsv_t *
-normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
+normalize_metadata_fields (xmmsv_t *fetch, xmms_error_t *err)
 {
 	gpointer SENTINEL = GINT_TO_POINTER (0x31337);
 	GHashTable *table;
 
 	xmmsv_list_iter_t *it;
-	xmmsv_t *keys;
+	xmmsv_t *fields;
 
-	if (!xmmsv_dict_get (fetch, "keys", &keys)) {
-		/* No keys means that we should fetch all keys */
+	if (!xmmsv_dict_get (fetch, "fields", &fields)) {
+		/* No fields means that we should fetch all fields */
 		return NULL;
 	}
 
-	if (xmmsv_get_type (keys) != XMMSV_TYPE_LIST) {
-		const gchar *message = "'keys' must be a list of strings.";
+	if (xmmsv_get_type (fields) != XMMSV_TYPE_LIST) {
+		const gchar *message = "'fields' must be a list of strings.";
 		xmms_error_set (err, XMMS_ERROR_INVAL, message);
 		return NULL;
 	}
 
-	if (xmmsv_list_get_size (keys) < 1) {
-		/* No keys means that we should fetch all keys */
+	if (xmmsv_list_get_size (fields) < 1) {
+		/* No fields means that we should fetch all fields */
 		return NULL;
 	}
 
 	table = g_hash_table_new (g_str_hash, g_str_equal);
 
-	xmmsv_get_list_iter (keys, &it);
+	xmmsv_get_list_iter (fields, &it);
 	while (xmmsv_list_iter_valid (it)) {
 		const gchar *value = NULL;
 
 		if (!xmmsv_list_iter_entry_string (it, &value)) {
-			const gchar *message = "'keys' entries must be of string type.";
+			const gchar *message = "'fields' entries must be of string type.";
 			xmms_error_set (err, XMMS_ERROR_INVAL, message);
 			g_hash_table_unref (table);
 			return NULL;
 		}
 
 		if (g_hash_table_lookup (table, (gpointer) value) == SENTINEL) {
-			const gchar *message = "'keys' entries must be unique.";
+			const gchar *message = "'fields' entries must be unique.";
 			xmms_error_set (err, XMMS_ERROR_INVAL, message);
 			g_hash_table_unref (table);
 			return NULL;
@@ -171,7 +171,7 @@ normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
 
 	g_hash_table_unref (table);
 
-	return keys;
+	return fields;
 }
 
 
@@ -242,7 +242,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	xmms_fetch_spec_t *ret = NULL;
 	s4_sourcepref_t *sp;
 	const gchar *key;
-	xmmsv_t *gets, *keys;
+	xmmsv_t *gets, *fields;
 	gint i, size, aggregate, get;
 
 	aggregate = normalize_aggregate_function (fetch, err);
@@ -250,7 +250,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
-	keys = normalize_metadata_keys (fetch, err);
+	fields = normalize_metadata_fields (fetch, err);
 	if (xmms_error_iserror (err)) {
 		return NULL;
 	}
@@ -275,11 +275,11 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	}
 	ret->data.metadata.get_size = i;
 
-	if (keys != NULL) {
-		size = xmmsv_list_get_size (keys);
+	if (fields != NULL) {
+		size = xmmsv_list_get_size (fields);
 		ret->data.metadata.col_count = size;
 		ret->data.metadata.cols = g_new (gint32, size);
-		for (i = 0; xmmsv_list_get_string (keys, i, &key); i++) {
+		for (i = 0; xmmsv_list_get_string (fields, i, &key); i++) {
 			ret->data.metadata.cols[i] = xmms_fetch_info_add_key (info, fetch, key, sp);
 		}
 	} else {
