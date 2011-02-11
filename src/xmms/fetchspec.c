@@ -129,9 +129,8 @@ normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
 	xmmsv_t *keys;
 
 	if (!xmmsv_dict_get (fetch, "keys", &keys)) {
-		xmmsv_t *list = xmmsv_new_list ();
-		xmmsv_list_append_string (list, "id");
-		return list;
+		/* No keys means that we should fetch all keys */
+		return NULL;
 	}
 
 	if (xmmsv_get_type (keys) != XMMSV_TYPE_LIST) {
@@ -141,9 +140,8 @@ normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
 	}
 
 	if (xmmsv_list_get_size (keys) < 1) {
-		xmmsv_t *list = xmmsv_new_list ();
-		xmmsv_list_append_string (list, "id");
-		return list;
+		/* No keys means that we should fetch all keys */
+		return NULL;
 	}
 
 	table = g_hash_table_new (g_str_hash, g_str_equal);
@@ -173,7 +171,7 @@ normalize_metadata_keys (xmmsv_t *fetch, xmms_error_t *err)
 
 	g_hash_table_unref (table);
 
-	return xmmsv_ref (keys);
+	return keys;
 }
 
 
@@ -259,13 +257,11 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 	gets = normalize_metadata_get (fetch, err);
 	if (xmms_error_iserror (err)) {
-		xmmsv_unref (keys);
 		return NULL;
 	}
 
 	sp = normalize_metadata_prefs (fetch, prefs, err);
 	if (xmms_error_iserror (err)) {
-		xmmsv_unref (keys);
 		xmmsv_unref (gets);
 		return NULL;
 	}
@@ -288,14 +284,13 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		}
 	} else {
 		/* No fields requested, fetching all available */
-		ret->data.metadata.col_count = size;
-		ret->data.metadata.cols = g_new (gint32, 1);
+		ret->data.metadata.col_count = 1;
+		ret->data.metadata.cols = g_new0 (gint32, 1);
 		xmms_fetch_info_add_key (info, fetch, NULL, sp);
 	}
 
 	s4_sourcepref_unref (sp);
 	xmmsv_unref (gets);
-	xmmsv_unref (keys);
 
 	return ret;
 }
