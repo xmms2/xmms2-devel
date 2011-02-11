@@ -189,7 +189,17 @@ normalize_metadata_prefs (xmmsv_t *fetch, s4_sourcepref_t *prefs, xmms_error_t *
 		return s4_sourcepref_ref (prefs);
 	}
 
+	if (xmmsv_get_type (list) != XMMSV_TYPE_LIST) {
+		const gchar *message = "'source-preference' must be a list of strings.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
 	length = xmmsv_list_get_size (list);
+	if (length == 0) {
+		return s4_sourcepref_ref (prefs);
+	}
+
 	strv = g_new0 (const char *, length + 1);
 
 	idx = 0;
