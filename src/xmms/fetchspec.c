@@ -296,7 +296,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		/* No fields requested, fetching all available */
 		ret->data.metadata.col_count = 1;
 		ret->data.metadata.cols = g_new0 (gint32, 1);
-		ret->data.metadata.cols[i] = xmms_fetch_info_add_key (info, fetch, NULL, sp);
+		ret->data.metadata.cols[0] = xmms_fetch_info_add_key (info, fetch, NULL, sp);
 	}
 
 	s4_sourcepref_unref (sp);
