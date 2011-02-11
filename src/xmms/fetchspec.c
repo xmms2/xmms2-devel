@@ -110,7 +110,7 @@ normalize_metadata_get (xmmsv_t *fetch, xmms_error_t *err)
 			return NULL;
 		}
 
-		values &= mask;
+		values |= mask;
 
 		xmmsv_list_append_int (list, get_as_int);
 		xmmsv_list_iter_next (it);
