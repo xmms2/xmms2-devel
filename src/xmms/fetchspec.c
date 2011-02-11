@@ -25,7 +25,7 @@ metadata_value_from_string (const gchar *name, guint32 *value)
 		return FALSE;
 	} else if (strcmp (name, "id") == 0) {
 		*value = METADATA_ID;
-	} else if (strcmp (name, "key") == 0) {
+	} else if (strcmp (name, "field") == 0) {
 		*value = METADATA_KEY;
 	} else if (strcmp (name, "value") == 0) {
 		*value = METADATA_VALUE;
@@ -96,7 +96,7 @@ normalize_metadata_get (xmmsv_t *fetch, xmms_error_t *err)
 		xmmsv_list_iter_entry_string (it, &value);
 
 		if (!metadata_value_from_string (value, &get_as_int)) {
-			const gchar *message = "'get' entries must be 'id', 'key', 'value' or 'source'.";
+			const gchar *message = "'get' entries must be 'id', 'field', 'value' or 'source'.";
 			xmms_error_set (err, XMMS_ERROR_INVAL, message);
 			xmmsv_unref (list);
 			return NULL;
