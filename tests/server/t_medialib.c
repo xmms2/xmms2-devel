@@ -193,19 +193,19 @@ CASE (test_query_infos_order_by_tracknr)
 		"    'data': {                 " \
 		"      'id': {                 " \
 		"        'type': 'metadata',   " \
-		"        'get': 'id',          " \
+		"        'get': ['id'],        " \
 		"        'aggregate': 'first'  " \
 		"      },                      " \
 		"     'tracknr': {             " \
 		"        'type': 'metadata',   " \
-		"        'keys': 'tracknr',    " \
-		"        'get': 'value',       " \
+		"        'keys': ['tracknr'],  " \
+		"        'get': ['value'],     " \
 		"        'aggregate': 'first'  " \
 		"      },                      " \
 		"      'title': {              " \
 		"        'type': 'metadata',   " \
-		"        'keys': 'title',      " \
-		"        'get': 'value',       " \
+		"        'keys': ['title'],    " \
+		"        'get': ['value'],     " \
 		"        'aggregate': 'first'  " \
 		"      }                       " \
 		"    }                         " \
@@ -275,8 +275,8 @@ CASE (test_query_aggregate_sum)
 	spec = xmmsv_from_json (\
 		"{                     " \
 		"  'type': 'metadata', " \
-		"  'keys': 'tracknr',  " \
-		"  'get': 'value',     " \
+		"  'keys': ['tracknr']," \
+		"  'get': ['value'],   " \
 		"  'aggregate': 'sum'  " \
 		"}                     ");
 
@@ -349,19 +349,19 @@ CASE (test_query_ordered_union)
 		"    'data': {                  " \
 		"      'id': {                  " \
 		"        'type': 'metadata',    " \
-		"        'get': 'id',           " \
+		"        'get': ['id'],         " \
 		"        'aggregate': 'first'   " \
 		"      },                       " \
 		"      'tracknr': {             " \
 		"        'type': 'metadata',    " \
-		"        'keys': 'tracknr',     " \
-		"        'get': 'value',        " \
+		"        'keys': ['tracknr'],   " \
+		"        'get': ['value'],      " \
 		"        'aggregate': 'first'   " \
 		"      },                       " \
 		"      'title': {               " \
 		"        'type': 'metadata',    " \
-		"        'keys': 'title',       " \
-		"        'get': 'value',        " \
+		"        'keys': ['title'],     " \
+		"        'get': ['value'],      " \
 		"        'aggregate': 'first'   " \
 		"      }                        " \
 		"    }                          " \
@@ -431,7 +431,7 @@ CASE (test_query_intersection)
 		"    'type': 'organize',       " \
 		"    'data': {                 " \
 		"      'id': {                 " \
-		"        'get': 'id',          " \
+		"        'get': ['id'],        " \
 		"        'type': 'metadata',   " \
 		"        'aggregate': 'first'  " \
 		"      }                       " \
@@ -493,7 +493,7 @@ CASE (test_query_complement)
 		"    'data': {                  " \
 		"      'id': {                  " \
 		"        'type': 'metadata',    " \
-		"        'get': 'id',           " \
+		"        'get': ['id'],         " \
 		"        'aggregate': 'first'   " \
 		"      }                        " \
 		"    }                          " \
