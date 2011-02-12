@@ -1613,7 +1613,7 @@ create_idlist_filter (GHashTable *id_table)
 {
 	return s4_cond_new_custom_filter (idlist_filter, id_table,
 	                                  (free_func_t)g_hash_table_destroy,
-	                                  "song_id", default_sp, 0, S4_COND_PARENT);
+	                                  "song_id", default_sp, 0, 0, S4_COND_PARENT);
 }
 
 static s4_condition_t *
@@ -1957,7 +1957,7 @@ universe_condition (xmms_medialib_session_t *session,
                     xmmsv_t *order)
 {
 	return s4_cond_new_custom_filter ((filter_function_t)universe_filter, NULL, NULL,
-	                                  "song_id", NULL, S4_CMP_BINARY, S4_COND_PARENT);
+	                                  "song_id", NULL, S4_CMP_BINARY, 0, S4_COND_PARENT);
 }
 
 static s4_condition_t *
