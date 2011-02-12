@@ -2511,10 +2511,20 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregat
 	xmmsv_dict_set_string (res, "type", "metadata");
 
 	if (keys != NULL) {
+		if (xmmsv_get_type (keys) == XMMSV_TYPE_STRING) {
+			xmmsv_t *list = xmmsv_new_list ();
+			xmmsv_list_append (list, keys);
+			keys = list;
+		}
 		xmmsv_dict_set (res, "keys", keys);
 		xmmsv_unref (keys);
 	}
 	if (get != NULL) {
+		if (xmmsv_get_type (get) == XMMSV_TYPE_STRING) {
+			xmmsv_t *list = xmmsv_new_list ();
+			xmmsv_list_append (list, get);
+			get = list;
+		}
 		xmmsv_dict_set (res, "get", get);
 		xmmsv_unref (get);
 	}
