@@ -81,7 +81,6 @@ struct xmms_medialib_St {
 	xmms_object_t object;
 
 	s4_t *s4;
-	int32_t next_id;
 	/** The current playlist */
 	xmms_playlist_t *playlist;
 };
@@ -222,33 +221,6 @@ xmms_medialib_destroy (xmms_object_t *object)
 
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
 
-static int32_t
-find_highest_id (xmms_medialib_t *medialib)
-{
-	xmmsv_coll_t *coll = xmmsv_coll_universe ();
-	xmmsv_t *fetch = xmmsv_new_dict ();
-	xmmsv_t *id;
-	int32_t ret;
-
-	xmmsv_dict_set_string (fetch, "aggregate", "max");
-	xmmsv_dict_set_string (fetch, "get", "id");
-
-	SESSION (id = xmms_medialib_query (session, coll, fetch, NULL));
-
-	if (!xmmsv_get_int (id, &ret)) {
-		ret = 0;
-	}
-
-	if (id != NULL) {
-		xmmsv_unref (id);
-	}
-
-	xmmsv_unref (fetch);
-	xmmsv_coll_unref (coll);
-
-	return ret;
-}
-
 /**
  * Initialize the medialib and open the database file.
  *
@@ -287,8 +259,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	medialib->s4 = xmms_medialib_database_open (medialib_path, indices);
 
 	default_sp = s4_sourcepref_create (source_pref);
-
-	medialib->next_id = find_highest_id (medialib) + 1;
 
 	return medialib;
 }
@@ -658,13 +628,42 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 }
 
 
+/* A filter to find the highest id. It always returns -1, thus the
+ * search algorithm will ultimately end up passing it the highest value.
+ */
+static int
+highest_id_filter (const s4_val_t *value, s4_condition_t *cond)
+{
+	int32_t *i = s4_cond_get_funcdata (cond);
+	int32_t ival;
+
+	if (s4_val_get_int (value, &ival)) {
+		*i = ival;
+	}
+
+	return -1;
+}
+
 /**
  * Return a fresh unused medialib id.
  */
 static int32_t
 xmms_medialib_get_new_id (xmms_medialib_session_t *session)
 {
-	return session->medialib->next_id++;
+	int32_t highest = -1;
+	s4_fetchspec_t *fs;
+	s4_condition_t *cond;
+	s4_resultset_t *set;
+
+	fs = s4_fetchspec_create ();
+	cond = s4_cond_new_custom_filter (highest_id_filter, &highest, NULL,
+	                                  "song_id", default_sp, 0, 1, S4_COND_PARENT);
+	set = s4_query (NULL, session->trans, fs, cond);
+	s4_resultset_free (set);
+	s4_cond_free (cond);
+	s4_fetchspec_free (fs);
+
+	return highest + 1;
 }
 
 
