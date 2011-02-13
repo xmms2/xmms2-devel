@@ -12,6 +12,7 @@
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
+#include "utils/coll_utils.h"
 
 static void xmms_mock_entry (gint tracknr, const gchar *artist,
                              const gchar *album, const gchar *title);
@@ -72,7 +73,7 @@ medialib_query (xmmsv_coll_t *coll, xmmsv_t *spec, xmms_error_t *err)
 
 CASE (test_query_ids_order_by_id)
 {
-	xmmsv_coll_t *universe, *ordered;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
@@ -82,8 +83,13 @@ CASE (test_query_ids_order_by_id)
 	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
 	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
 
-	universe = xmmsv_coll_universe ();
-	ordered = xmmsv_coll_add_order_operator (universe, "id");
+	coll = xmmsv_coll_from_string (
+		"{                                     " \
+		"  'type': 'order',                    " \
+		"  'attributes': { 'type': 'id' },     " \
+		"  'operands': [{ 'type': 'universe' } " \
+		"  ]                                   " \
+		"}                                     ");
 
 	spec = xmmsv_from_json (\
 		"{                           " \
@@ -95,7 +101,7 @@ CASE (test_query_ids_order_by_id)
 		"  }                         " \
 		"}                           ");
 
-	result = medialib_query (ordered, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	expected = xmmsv_from_json ("[0, 1, 2]");
 
@@ -104,14 +110,13 @@ CASE (test_query_ids_order_by_id)
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
-	xmmsv_coll_unref (ordered);
-	xmmsv_coll_unref (universe);
+	xmmsv_coll_unref (coll);
 }
 
 
 CASE (test_cluster_dict)
 {
-	xmmsv_coll_t *universe;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
@@ -125,7 +130,7 @@ CASE (test_cluster_dict)
 	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer"); // selecting this one
 	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder"); // selecting this one
 
-	universe = xmmsv_coll_universe ();
+	coll = xmmsv_coll_from_string ("{ 'type': 'universe' }");
 
 	spec = xmmsv_from_json (\
 		"{                           " \
@@ -140,7 +145,7 @@ CASE (test_cluster_dict)
 		"  }                         " \
 		"}                           ");
 
-	result = medialib_query (universe, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	expected = xmmsv_from_json (\
 		"{                                  " \
@@ -162,13 +167,13 @@ CASE (test_cluster_dict)
 	xmmsv_unref (expected);
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_coll_unref (coll);
 }
 
 
 CASE (test_query_infos_order_by_tracknr)
 {
-	xmmsv_coll_t *universe, *ordered, *limited;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
@@ -179,9 +184,22 @@ CASE (test_query_infos_order_by_tracknr)
 	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer"); // selecting this one
 	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder"); // selecting this one
 
-	universe = xmmsv_coll_universe ();
-	ordered = xmmsv_coll_add_order_operator (universe, "tracknr");
-	limited = xmmsv_coll_add_limit_operator (ordered, 1, 2);
+	coll = xmmsv_coll_from_string (
+		"{                                      " \
+		"  'type': 'limit',                     " \
+		"  'attributes': {                      " \
+		"    'start': '1',                      " \
+		"    'length': '2'                      " \
+		"  },                                   " \
+		"  'operands': [{                       " \
+		"    'type': 'order',                   " \
+		"    'attributes': {                    " \
+		"      'type': 'value',                 " \
+		"      'field': 'tracknr'               " \
+		"    },                                 " \
+		"    'operands': [{'type': 'universe'}] " \
+		"  }]                                   " \
+		"}                                      ");
 
 	spec = xmmsv_from_json (\
 		"{                             " \
@@ -212,7 +230,7 @@ CASE (test_query_infos_order_by_tracknr)
 		"  }                           " \
 		"}                             ");
 
-	result = medialib_query (limited, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	expected = xmmsv_from_json ("[{ 'id': 3, 'tracknr': 2, 'title': 'Reverse Thunder' }," \
 	                            " { 'id': 2, 'tracknr': 3, 'title': 'Night Destroyer' }]");
@@ -222,15 +240,13 @@ CASE (test_query_infos_order_by_tracknr)
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
-	xmmsv_coll_unref (limited);
-	xmmsv_coll_unref (ordered);
-	xmmsv_coll_unref (universe);
+	xmmsv_coll_unref (coll);
 }
 
 
 CASE (test_query_count_all)
 {
-	xmmsv_coll_t *universe;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result;
 	xmms_error_t err;
 	gint count;
@@ -242,10 +258,10 @@ CASE (test_query_count_all)
 	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer");
 	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
-	universe = xmmsv_coll_universe ();
+	coll = xmmsv_coll_from_string ("{ 'type': 'universe' }");
 
 	spec = xmmsv_from_json ("{ 'type': 'count' }");
-	result = medialib_query (universe, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	xmmsv_get_int (result, &count);
 
@@ -253,12 +269,12 @@ CASE (test_query_count_all)
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_coll_unref (coll);
 }
 
 CASE (test_query_aggregate_sum)
 {
-	xmmsv_coll_t *universe;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result;
 	xmms_error_t err;
 	gint count;
@@ -270,7 +286,7 @@ CASE (test_query_aggregate_sum)
 	xmms_mock_entry (3, "Red Fang", "Red Fang", "Night Destroyer");
 	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
-	universe = xmmsv_coll_universe ();
+	coll = xmmsv_coll_from_string ("{ 'type': 'universe' }");
 
 	spec = xmmsv_from_json (\
 		"{                       " \
@@ -280,7 +296,7 @@ CASE (test_query_aggregate_sum)
 		"  'aggregate': 'sum'    " \
 		"}                       ");
 
-	result = medialib_query (universe, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	xmmsv_get_int (result, &count);
 
@@ -288,12 +304,12 @@ CASE (test_query_aggregate_sum)
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_coll_unref (coll);
 }
 
 CASE (test_query_ordered_union)
 {
-	xmmsv_coll_t *universe, *first, *ordered_first, *second, *ordered_second, *union_, *ordered_union;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result, *expected;
 	xmms_error_t err;
 
@@ -308,36 +324,48 @@ CASE (test_query_ordered_union)
 	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
 	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
 
-	universe = xmmsv_coll_universe ();
-
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (first, "field", "artist");
-	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
-	xmmsv_coll_add_operand (first, universe);
-
-	ordered_first = xmmsv_coll_add_order_operator (first, "tracknr");
-	xmmsv_coll_unref (first);
-
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (second, "field", "artist");
-	xmmsv_coll_attribute_set (second, "value", "Red Fang");
-	xmmsv_coll_add_operand (second, universe);
-
-	ordered_second = xmmsv_coll_add_order_operator (second, "tracknr");
-	xmmsv_coll_unref (second);
-
-	union_ = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
-
-	xmmsv_coll_add_operand (union_, ordered_first);
-	xmmsv_coll_unref (ordered_first);
-
-	xmmsv_coll_add_operand (union_, ordered_second);
-	xmmsv_coll_unref (ordered_second);
-
-	xmmsv_coll_unref (universe);
-
-	ordered_union = xmmsv_coll_add_order_operator (union_, "id");
-	xmmsv_coll_unref (union_);
+	coll = xmmsv_coll_from_string (
+		"{                                              " \
+		"  'type': 'order',                             " \
+		"  'attributes': { 'type': 'id' },              " \
+		"  'operands': [{                               " \
+		"    'type': 'union',                           " \
+		"    'operands': [                              " \
+		"      {                                        " \
+		"        'type': 'order',                       " \
+		"        'attributes': {                        " \
+		"          'type': 'value',                     " \
+		"          'field': 'tracknr'                   " \
+		"        },                                     " \
+		"        'operands': [{                         " \
+		"          'type': 'equals',                    " \
+		"          'attributes': {                      " \
+		"            'type': 'value',                   " \
+		"            'field': 'artist',                 " \
+		"            'value': 'Vibrasphere'             " \
+		"          },                                   " \
+		"          'operands': [{ 'type': 'universe' }] " \
+		"        }]                                     " \
+		"      },                                       " \
+		"      {                                        " \
+		"        'type': 'order',                       " \
+		"        'attributes': {                        " \
+		"          'type': 'value',                     " \
+		"          'field': 'tracknr'                   " \
+		"        },                                     " \
+		"        'operands': [{                         " \
+		"          'type': 'equals',                    " \
+		"          'attributes': {                      " \
+		"            'type': 'value',                   " \
+		"            'field': 'artist',                 " \
+		"            'value': 'Red Fang'                " \
+		"          },                                   " \
+		"          'operands': [{ 'type': 'universe' }] " \
+		"        }]                                     " \
+		"      }                                        " \
+		"    ]                                          " \
+		"  }]                                           " \
+		"}                                              ");
 
 	spec = xmmsv_from_json (\
 		"{                              " \
@@ -368,7 +396,7 @@ CASE (test_query_ordered_union)
 		"  }                            " \
 		"}                              ");
 
-	result = medialib_query (ordered_union, spec, &err);
+	result = medialib_query (coll, spec, &err);
 
 	expected = xmmsv_from_json (\
 		"[{ 'id': 0, 'tracknr': 1, 'title': 'Prehistoric Dog' },             " \
@@ -384,12 +412,12 @@ CASE (test_query_ordered_union)
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
-	xmmsv_coll_unref (ordered_union);
+	xmmsv_coll_unref (coll);
 }
 
 CASE (test_query_intersection)
 {
-	xmmsv_coll_t *universe, *first, *second, *intersection;
+	xmmsv_coll_t *coll;
 	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
@@ -401,27 +429,30 @@ CASE (test_query_intersection)
 	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
 	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
 
-	universe = xmmsv_coll_universe ();
-
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (first, "field", "artist");
-	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
-	xmmsv_coll_add_operand (first, universe);
-
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (second, "field", "tracknr");
-	xmmsv_coll_attribute_set (second, "value", "1");
-	xmmsv_coll_add_operand (second, universe);
-
-	intersection = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
-
-	xmmsv_coll_add_operand (intersection, first);
-	xmmsv_coll_unref (first);
-
-	xmmsv_coll_add_operand (intersection, second);
-	xmmsv_coll_unref (second);
-
-	xmmsv_coll_unref (universe);
+	coll = xmmsv_coll_from_string (
+		"{                                          " \
+		"  'type': 'intersection',                  " \
+		"  'operands': [                            " \
+		"    {                                      " \
+		"      'type': 'equals',                    " \
+		"      'attributes': {                      " \
+		"        'type': 'value',                   " \
+		"        'field': 'artist',                 " \
+		"        'value': 'Vibrasphere'             " \
+		"      },                                   " \
+		"      'operands': [{ 'type': 'universe' }] " \
+		"    },                                     " \
+		"    {                                      " \
+		"      'type': 'equals',                    " \
+		"      'attributes': {                      " \
+		"        'type': 'value',                   " \
+		"        'field': 'tracknr',                " \
+		"        'value': '1'                       " \
+		"      },                                   " \
+		"      'operands': [{ 'type': 'universe' }] " \
+		"    }                                      " \
+		"  ]                                        " \
+		"}                                          ");
 
 	spec = xmmsv_from_json (\
 		"{                             " \
@@ -439,18 +470,18 @@ CASE (test_query_intersection)
 		"  }                           " \
 		"}                             ");
 
-	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, intersection, spec, &err));
+	MEDIALIB_SESSION (medialib, result = xmms_medialib_query (session, coll, spec, &err));
 
 	CU_ASSERT_LIST_DICT_INT_EQUAL (result, 0, "id", 1);
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
-	xmmsv_coll_unref (intersection);
+	xmmsv_coll_unref (coll);
 }
 
 CASE (test_query_complement)
 {
-	xmmsv_coll_t *universe, *first, *second, *not_first, *not_second;
+	xmmsv_coll_t *not_first, *not_second;
 	xmmsv_t *spec, *result;
 	xmms_error_t err;
 
@@ -462,27 +493,33 @@ CASE (test_query_complement)
 	xmms_mock_entry (2, "Vibrasphere", "Lungs for Life", "Breathing Place");
 	xmms_mock_entry (3, "Vibrasphere", "Lungs for Life", "Ensueno (Morning mix)");
 
-	universe = xmmsv_coll_universe ();
+	not_first = xmmsv_coll_from_string (
+		"{                                        " \
+		"  'type': 'complement',                  " \
+		"  'operands': [{                         " \
+		"    'type': 'equals',                    " \
+		"    'attributes': {                      " \
+		"      'type': 'value',                   " \
+		"      'field': 'artist',                 " \
+		"      'value': 'Vibrasphere'             " \
+		"    }                                    " \
+		"    'operands': [{ 'type': 'universe' }] " \
+		"  }]                                     " \
+		"}                                        ");
 
-	first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (first, "field", "artist");
-	xmmsv_coll_attribute_set (first, "value", "Vibrasphere");
-	xmmsv_coll_add_operand (first, universe);
-
-	second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_SMALLER);
-	xmmsv_coll_attribute_set (second, "field", "tracknr");
-	xmmsv_coll_attribute_set (second, "value", "3");
-	xmmsv_coll_add_operand (second, universe);
-
-	not_first = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsv_coll_add_operand (not_first, first);
-	xmmsv_coll_unref (first);
-
-	not_second = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsv_coll_add_operand (not_second, second);
-	xmmsv_coll_unref (second);
-
-	xmmsv_coll_unref (universe);
+	not_second = xmmsv_coll_from_string (
+		"{                                        " \
+		"  'type': 'complement',                  " \
+		"  'operands': [{                         " \
+		"    'type': 'smaller',                   " \
+		"    'attributes': {                      " \
+		"      'type': 'value',                   " \
+		"      'field': 'tracknr',                " \
+		"      'value': '3'                       " \
+		"    }                                    " \
+		"    'operands': [{ 'type': 'universe' }] " \
+		"  }]                                     " \
+		"}                                        ");
 
 	spec = xmmsv_from_json (\
 		"{                              " \
