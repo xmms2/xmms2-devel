@@ -1196,7 +1196,7 @@ static gint
 xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32 pos,
                                    xmms_error_t *err)
 {
-	gint currpos, newpos;
+	gint currpos, newpos, size;
 	xmms_medialib_entry_t mid = 0;
 	xmmsv_coll_t *plcoll;
 
@@ -1209,10 +1209,14 @@ xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32 pos,
 		currpos = xmms_playlist_coll_get_currpos (plcoll);
 
 		if (playlist->repeat_all) {
-			newpos = (pos+currpos) % (gint)xmmsv_coll_idlist_get_size (plcoll);
+			newpos = pos + currpos;
+			size = (gint) xmmsv_coll_idlist_get_size (plcoll);
 
-			if (newpos < 0) {
-				newpos += xmmsv_coll_idlist_get_size (plcoll);
+			if (size > 0) {
+				newpos %= size;
+				if (newpos < 0) {
+					newpos += size;
+				}
 			}
 
 			mid = xmms_playlist_set_current_position_do (playlist, newpos, err);
