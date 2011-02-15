@@ -93,7 +93,13 @@ configuration_init (const gchar *path)
 	                                         g_free, g_free);
 
 	if (!g_file_test (config->path, G_FILE_TEST_EXISTS)) {
+		gchar *dir;
+
 		g_fprintf (stderr, "Creating %s...\n", config->path);
+
+		dir = g_path_get_dirname (config->path);
+		g_mkdir_with_parents (dir, 0755);
+		g_free (dir);
 
 		if (!g_file_set_contents (config->path, default_config,
 		                          strlen (default_config), NULL)) {
