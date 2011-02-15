@@ -92,6 +92,10 @@ N: Franz Endstrasser
 E: franz.endstrasser@gmail.com
 D: Java bindings
 
+N: Uli Franke
+E: cls@nebadje.org
+D: Libsndfile x-form, 24/32 bit and float support for wave x-form.
+
 N: Thomas Frauendorfer
 E: Thomas.Frauendorfer@googlemail.com
 P: 1024D/50817EB1 A1A5 77A8 54C3 0B8D 8A4C  749A C49E 18C3 5081 7EB1
