@@ -306,6 +306,7 @@ xmms_sndfile_init (xmms_xform_t *xform)
 		sf_error_str (NULL, errstr, sizeof (errstr));
 		xmms_log_error ("libsndfile: sf_open_virtual failed with \"%s\".",
 		                errstr);
+		g_free (data);
 		return FALSE;
 	}
 
