@@ -75,6 +75,7 @@ def build(bld):
     prog.source.append("compat/signal_%s.c" % env['compat_impl'])
     prog.source.append("compat/symlink_%s.c" % env['compat_impl'])
     prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
+    prog.source.append("compat/thread_name_%s.c" % env['thread_name_impl'])
 
     source.append("compat/localtime_%s.c" % env["localtime_impl"])
     source.append("compat/statfs_%s.c" % env["statfs_impl"])
@@ -135,6 +136,12 @@ def configure(conf):
             conf.env['statfs_impl'] = 'bsd'
     else:
         conf.env['statfs_impl'] = 'dummy'
+
+    conf.env['thread_name_impl'] = 'dummy'
+    if conf.check(header_name='sys/prctl.h'):
+        prctl_fragment = '#include <sys/prctl.h>\n int main() { return prctl(PR_SET_NAME, (unsigned long) "test", 0, 0, 0); }'
+        if conf.check_cc(fragment=prctl_fragment, msg="Checking for prctl(PR_SET_NAME)"):
+            conf.env['thread_name_impl'] = 'prctl'
 
     # Add Darwin stuff
     if Options.platform == 'darwin':
