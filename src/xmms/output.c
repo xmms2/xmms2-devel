@@ -29,6 +29,7 @@
 #include "xmmspriv/xmms_sample.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_outputplugin.h"
+#include "xmmspriv/xmms_thread_name.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_object.h"
@@ -376,6 +377,8 @@ xmms_output_filler (void *arg)
 	gint ret;
 
 	xmms_error_reset (&err);
+
+	xmms_set_thread_name ("x2 out filler");
 
 	g_mutex_lock (output->filler_mutex);
 	while (output->filler_state != FILLER_QUIT) {
@@ -1172,6 +1175,8 @@ xmms_output_monitor_volume_thread (gpointer data)
 	if (!xmms_output_plugin_method_volume_get_available (output->plugin)) {
 		return NULL;
 	}
+
+	xmms_set_thread_name ("x2 volume mon");
 
 	xmms_volume_map_init (&old);
 	xmms_volume_map_init (&cur);

@@ -35,6 +35,7 @@
 #include "xmmspriv/xmms_signal.h"
 #include "xmmspriv/xmms_symlink.h"
 #include "xmmspriv/xmms_checkroot.h"
+#include "xmmspriv/xmms_thread_name.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
@@ -607,6 +608,8 @@ main (int argc, char **argv)
 
 	/* Startup dir */
 	do_scriptdir (xmms_config_property_get_string (cv), "start");
+
+	xmms_set_thread_name ("x2 main");
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 

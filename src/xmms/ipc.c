@@ -19,6 +19,7 @@
 
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_config.h"
+#include "xmmspriv/xmms_thread_name.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 
@@ -345,6 +346,8 @@ xmms_ipc_client_thread (gpointer data)
 {
 	xmms_ipc_client_t *client = data;
 	GSource *source;
+
+	xmms_set_thread_name ("x2 client");
 
 	source = g_io_create_watch (client->iochan, G_IO_IN | G_IO_ERR | G_IO_HUP);
 	g_source_set_callback (source,

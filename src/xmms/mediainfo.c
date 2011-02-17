@@ -29,6 +29,7 @@
 #include "xmmspriv/xmms_mediainfo.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_xform.h"
+#include "xmmspriv/xmms_thread_name.h"
 
 
 #include <glib.h>
@@ -125,6 +126,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 	GTimeVal timeval;
 	xmms_stream_type_t *f;
 	guint num = 0;
+
+	xmms_set_thread_name ("x2 media info");
 
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 

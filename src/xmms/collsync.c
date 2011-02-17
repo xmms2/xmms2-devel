@@ -21,6 +21,7 @@
  */
 
 #include "xmmspriv/xmms_collsync.h"
+#include "xmmspriv/xmms_thread_name.h"
 #include "xmms/xmms_log.h"
 #include <glib.h>
 
@@ -39,6 +40,8 @@ do_loop (gpointer udata)
 {
 	xmms_coll_dag_t *dag = udata;
 	GTimeVal time;
+
+	xmms_set_thread_name ("x2 coll sync");
 
 	g_mutex_lock (mutex);
 

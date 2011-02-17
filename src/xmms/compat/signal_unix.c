@@ -23,6 +23,7 @@
 
 
 #include "xmmspriv/xmms_signal.h"
+#include "xmmspriv/xmms_thread_name.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_object.h"
 
@@ -42,6 +43,8 @@ sigwaiter (gpointer data)
 	xmms_object_cmd_arg_t arg;
 	sigset_t signals;
 	int caught;
+
+	xmms_set_thread_name ("x2 sig waiter");
 
 	sigemptyset(&signals);
 	sigaddset (&signals, SIGINT);
