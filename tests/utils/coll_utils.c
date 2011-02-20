@@ -44,6 +44,15 @@ xmmsv_coll_from_string (const char *data)
 	return collection;
 }
 
+/**
+ * Build a collection from an already parsed dictionary
+ */
+xmmsv_coll_t *
+xmmsv_coll_from_dict (xmmsv_t *data)
+{
+	return parse_collection (data);
+}
+
 static int
 collection_type_from_string (const char *name, xmmsv_coll_type_t *type)
 {
