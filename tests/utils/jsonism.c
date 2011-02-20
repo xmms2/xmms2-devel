@@ -43,6 +43,17 @@ eat (char **p, char c)
 	assert (*p != NULL);
 }
 
+static void
+munch (char **p, char c)
+{
+	while (*p && (**p == ' ' || **p == '\n' || **p == '\r' || **p == '\t')) (*p)++;
+	assert (*p != NULL);
+	while (*p && **p == c) (*p)++;
+	assert (*p != NULL);
+	while (*p && (**p == ' ' || **p == '\n' || **p == '\r' || **p == '\t')) (*p)++;
+	assert (*p != NULL);
+}
+
 static xmmsv_t *
 parse_number (char **ptr)
 {
@@ -76,15 +87,15 @@ parse_entry (char **ptr)
 static xmmsv_t *
 parse_list (char **ptr)
 {
-	eat (ptr, '['); eat (ptr, ' ');
+	munch (ptr, '[');
 	xmmsv_t *list = xmmsv_new_list ();
 	while (**ptr != ']') {
 		xmmsv_t *entry = parse_entry (ptr);
 		xmmsv_list_append (list, entry);
 		xmmsv_unref (entry);
-		eat (ptr, ' '); eat (ptr, ','); eat (ptr, ' ');
+		munch (ptr, ',');
 	};
-	eat (ptr, ']');
+	munch (ptr, ']');
 	return list;
 }
 
@@ -117,7 +128,7 @@ parse_dict_entry (char **ptr, xmmsv_t *dict)
 	xmmsv_t *value;
 	char *key;
 	key = parse_cstring (ptr);
-	eat (ptr, ' '); eat (ptr, ':'); eat (ptr, ' ');
+	munch (ptr, ':');
 	value = parse_entry (ptr);
 	xmmsv_dict_set (dict, key, value);
 	xmmsv_unref (value);
@@ -127,13 +138,13 @@ parse_dict_entry (char **ptr, xmmsv_t *dict)
 static xmmsv_t *
 parse_dict (char **ptr)
 {
-	eat (ptr, '{'); eat (ptr, ' ');
+	munch (ptr, '{');
 	xmmsv_t *dict = xmmsv_new_dict ();
 	while (**ptr != '}') {
 		parse_dict_entry (ptr, dict);
-		eat (ptr, ' '); eat (ptr, ','); eat (ptr, ' ');
+		munch (ptr, ',');
 	};
-	eat (ptr, '}');
+	munch (ptr, '}');
 	return dict;
 }
 
