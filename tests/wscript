@@ -42,6 +42,10 @@ runner/main.c
 runner/valgrind.c
 """.split() + mlib_suite
 
+mlib_runner_src = """
+server/medialib-runner.c
+""".split()
+
 def configure(conf):
     conf.load("unittest", tooldir="waftools")
 
@@ -96,6 +100,15 @@ def build(bld):
         includes = '. .. runner ../src ../src/includepriv ../src/include',
         use = "xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+        install_path = None
+        )
+
+    bld(features = "c cprogram",
+        target = "medialib-runner",
+        source = mlib_runner_src,
+        includes = '. .. runner ../src ../src/includepriv ../src/include',
+        use = "xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+        uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
         install_path = None
         )
 
