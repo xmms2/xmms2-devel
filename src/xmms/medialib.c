@@ -1890,64 +1890,94 @@ order_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-union_condition (xmms_medialib_session_t *session,
-                 xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                 xmmsv_t *order)
+union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                         xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	int concat = has_order (coll) && order != NULL;
-	xmmsv_t *id_list = concat ? xmmsv_new_list () : NULL;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *operands, *id_list;
 	GHashTable *id_table;
-	s4_resultset_t *set;
-	s4_condition_t *cond;
-	xmmsv_coll_t *operand;
-	int i;
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 
-	if (concat) {
-		id_table = g_hash_table_new (NULL, NULL);
-	} else {
-		cond = s4_cond_new_combiner (S4_COMBINE_OR);
-	}
+	id_list = xmmsv_new_list ();
+	id_table = g_hash_table_new (NULL, NULL);
+	operands = xmmsv_coll_operands_get (coll);
 
-	for (i = 0; xmmsv_list_get_coll (operands, i, &operand); i++) {
-		s4_condition_t *op_cond;
+	xmmsv_get_list_iter (operands, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		const s4_resultrow_t *row;
+		s4_resultset_t *set;
+		xmmsv_coll_t *operand;
+		gint j;
 
-		/* If this is a concatenation we have to do a query for every operand */
-		if (concat) {
-			const s4_resultrow_t *row;
+		xmmsv_list_iter_entry_coll (it, &operand);
+
+		/* Query the operand */
+		set = xmms_medialib_query_recurs (session, operand, fetch);
+
+		/* Append the IDs to the id_list */
+		for (j = 0; s4_resultset_get_row (set, j, &row); j++) {
 			const s4_result_t *result;
-			int j;
+			gint32 value;
 
-			/* Query the operand */
-			set = xmms_medialib_query_recurs (session, operand, fetch);
+			if (!s4_resultrow_get_col (row, 0, &result))
+			    continue;
 
-			/* Append the IDs to the id_list */
-			for (j = 0; s4_resultset_get_row (set, j, &row); j++) {
-				int32_t ival;
+			if (!s4_val_get_int (s4_result_get_val (result), &value))
+				continue;
 
-				if (s4_resultrow_get_col (row, 0, &result)
-				    && s4_val_get_int (s4_result_get_val (result), &ival)) {
-					xmmsv_list_append_int (id_list, ival);
-					g_hash_table_insert (id_table, GINT_TO_POINTER (ival), GINT_TO_POINTER (1));
-				}
-			}
+			xmmsv_list_append_int (id_list, value);
 
-			s4_resultset_free (set);
-		} else { /* If this is not a concat, just a simple union,
-		            we add the operand to the condition */
-			op_cond = collection_to_condition (session, operand, fetch, NULL);
-			s4_cond_add_operand (cond, op_cond);
-			s4_cond_unref (op_cond);
+			g_hash_table_insert (id_table,
+			                     GINT_TO_POINTER (value),
+			                     GINT_TO_POINTER (1));
 		}
+
+		s4_resultset_free (set);
+
+		xmmsv_list_iter_next (it);
 	}
 
-	if (concat) {
-		xmmsv_list_append (order, id_list);
-		xmmsv_unref (id_list);
-		cond = create_idlist_filter (id_table);
+	xmmsv_list_append (order, id_list);
+	xmmsv_unref (id_list);
+
+	return create_idlist_filter (id_table);
+}
+
+static s4_condition_t *
+union_unordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                           xmms_fetch_info_t *fetch)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *operands;
+	s4_condition_t *cond;
+
+	cond = s4_cond_new_combiner (S4_COMBINE_OR);
+	operands = xmmsv_coll_operands_get (coll);
+
+	xmmsv_get_list_iter (operands, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		s4_condition_t *op_cond;
+		xmmsv_coll_t *operand;
+
+		xmmsv_list_iter_entry_coll (it, &operand);
+
+		op_cond = collection_to_condition (session, operand, fetch, NULL);
+		s4_cond_add_operand (cond, op_cond);
+		s4_cond_unref (op_cond);
+
+		xmmsv_list_iter_next (it);
 	}
 
 	return cond;
+}
+
+
+static s4_condition_t *
+union_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                 xmms_fetch_info_t *fetch, xmmsv_t *order)
+{
+	if (order != NULL && has_order (coll))
+		return union_ordered_condition (session, coll, fetch, order);
+	return union_unordered_condition (session, coll, fetch);
 }
 
 static s4_condition_t *
