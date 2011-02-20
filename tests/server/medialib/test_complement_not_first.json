@@ -1,0 +1,37 @@
+{
+    'medialib': [
+        { 'tracknr': 1, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Prehistoric Dog' },
+        { 'tracknr': 1, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Decade' },
+        { 'tracknr': 2, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Breathing Place' },
+        { 'tracknr': 3, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Ensueno (Morning mix)' }
+    ],
+    'collection': {
+        'type': 'complement',
+        'operands': [{
+            'type': 'equals',
+            'attributes': {
+                'type': 'value',
+                'field': 'artist',
+                'value': 'Vibrasphere'
+            }
+            'operands': [{ 'type': 'universe' }]
+        }]
+    },
+    'specification': {
+        'type': 'cluster-list',
+        'cluster-by': 'id',
+        'data': {
+            'type': 'organize',
+            'data': {
+                'id': {
+                    'get': ['id'],
+                    'type': 'metadata',
+                    'aggregate': 'first'
+                }
+            }
+        }
+    },
+    'expected': {
+        'result': [ { 'id': 0 } ]
+    }
+}
