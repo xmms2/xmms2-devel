@@ -2507,20 +2507,14 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, GHashTable *table, GL
 	 */
 	for (position = 0; s4_resultset_get_row (set, position, &row); position++) {
 		s4_resultset_t *cluster;
+		const s4_result_t *res;
 		const gchar *value = "(No value)"; /* Used to represent NULL */
 		gchar buf[12];
 
 		if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
 			g_snprintf (buf, sizeof (buf), "%i", position);
 			value = buf;
-		} else {
-			const s4_result_t *res;
-
-			if (!s4_resultrow_get_col (row, spec->data.cluster.column, &res)) {
-				xmms_log_error ("Trying to cluster a non-existing column!");
-				continue;
-			}
-
+		} else if (s4_resultrow_get_col (row, spec->data.cluster.column, &res)) {
 			const s4_val_t *val = s4_result_get_val (res);
 			if (!s4_val_get_str (val, &value)) {
 				gint32 ival;
