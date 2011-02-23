@@ -10,11 +10,11 @@ readwriters = """
 
 #include "sample.head.c"
 
-#define READu8(a)  ((a) << 24)
-#define READs8(a)  ((a+128) << 24)
-#define READu16(a)  ((a)<<16)
-#define READs16(a) (((a)+32768)<<16)
-#define READs32(a) ((a) + 2147483648UL)
+#define READu8(a)  (((guint32)((a)               )) << 24)
+#define READs8(a)  (((guint32)((a) +          128)) << 24)
+#define READu16(a) (((guint32)((a)               )) << 16)
+#define READs16(a) (((guint32)((a) +        32768)) << 16)
+#define READs32(a) (((guint32)((a) + 2147483648UL))      )
 #define READfloat(a) (((a) + 1.0)*2147483648UL)
 
 #define WRITEu8(a)  ((a) >> 24)
