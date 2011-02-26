@@ -357,7 +357,7 @@ static void
 parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 {
 	GOptionContext *context;
-	const gchar *variant;
+	const gchar *variant = "unittest";
 	GError *error = NULL;
 
 	args->database_dir = "tests/server/databases";
