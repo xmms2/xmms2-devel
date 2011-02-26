@@ -703,7 +703,7 @@ xmms_playback_client_volume_set (xmms_output_t *output, const gchar *channel,
 		return;
 	}
 
-	if (volume > 100) {
+	if (volume > 100 || volume < 0) {
 		xmms_error_set (error, XMMS_ERROR_INVAL, "volume out of range");
 		return;
 	}
