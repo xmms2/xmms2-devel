@@ -2307,8 +2307,12 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 
 	gchar *channel;
 	gint volume;
+	gchar *volstr;
+	bool relative_vol;
 
 	if (!command_flag_string_get (ctx, "channel", &channel)) {
+        /* FIXME when -c and a negative value is given together, this will
+         * brutally fail and both channel and volume will be NULL/0. */
 		channel = NULL;
 	}
 
@@ -2317,7 +2321,14 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		print_volume (res, infos, channel);
 	} else {
-		set_volume (infos, channel, volume);
+		if (command_arg_string_get (ctx, 0, &volstr)) {
+			relative_vol = volstr[0] == '+' || volume < 0;
+		}
+		if (relative_vol) {
+			adjust_volume (infos, channel, volume);
+		} else {
+			set_volume (infos, channel, volume);
+		}
 	}
 
 	return TRUE;

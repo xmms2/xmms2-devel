@@ -419,6 +419,67 @@ dict_keys (const gchar *key, xmmsv_t *val, void *udata)
 }
 
 void
+adjust_volume (cli_infos_t *infos, gchar *channel, gint relative)
+{
+	xmmsc_result_t *res;
+	xmmsc_result_t *innerres;
+	xmmsv_t *val;
+	xmmsv_t *innerval;
+	xmmsv_dict_iter_t *it;
+	gchar *innerchan;
+	const gchar *err;
+
+	gint volume;
+
+	res = xmmsc_playback_volume_get (infos->sync);
+	xmmsc_result_wait (res);
+	val = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_error (val, &err)) {
+		g_printf (_("Server error: %s\n"), err);
+
+		xmmsc_result_unref (res);
+		cli_infos_loop_resume (infos);
+
+		return;
+	}
+
+	for (xmmsv_get_dict_iter (val, &it);
+	     xmmsv_dict_iter_valid (it);
+	     xmmsv_dict_iter_next (it)) {
+		xmmsv_dict_iter_pair_int (it, &innerchan, &volume);
+
+		if (channel && strcmp (channel, innerchan)) {
+			continue;
+		}
+
+		volume += relative;
+		if (volume > 100) {
+			volume = 100;
+		} else if (volume < 0) {
+			volume = 0;
+		}
+
+		innerres = xmmsc_playback_volume_set (infos->sync, innerchan, volume);
+		xmmsc_result_wait (innerres);
+		innerval = xmmsc_result_get_value (innerres);
+		if (xmmsv_get_error (innerval, &err)) {
+			g_printf (_("Server error: %s\n"), err);
+
+			xmmsc_result_unref (res);
+			xmmsc_result_unref (innerres);
+			cli_infos_loop_resume (infos);
+			return;
+		}
+		xmmsc_result_unref (innerres);
+	}
+
+	xmmsc_result_unref (res);
+
+	cli_infos_loop_resume (infos);
+}
+
+void
 set_volume (cli_infos_t *infos, gchar *channel, gint volume)
 {
 	xmmsc_result_t *res;
