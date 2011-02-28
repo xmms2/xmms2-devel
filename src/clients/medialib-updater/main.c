@@ -83,8 +83,8 @@ updater_new (void)
 	updater_t *updater = g_new0 (updater_t, 1);
 
 	updater->conn = xmmsc_init ("XMMS2-Medialib-Updater");
-	updater->watchers = g_hash_table_new_full(g_str_hash, g_str_equal,
-	                                          g_free, unregister_monitor);
+	updater->watchers = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                           g_free, unregister_monitor);
 
 	return updater;
 }
@@ -126,10 +126,10 @@ updater_connect (updater_t *updater, GMainLoop *ml)
 	g_return_val_if_fail (updater->conn, NULL);
 	g_return_val_if_fail (ml, NULL);
 
-	path = getenv("XMMS_PATH");
+	path = getenv ("XMMS_PATH");
 
 	if (!xmmsc_connect (updater->conn, path)) {
-		g_warning("Unable to connect to XMMS2");
+		g_warning ("Unable to connect to XMMS2");
 		return NULL;
 	}
 
@@ -411,7 +411,7 @@ updater_remove_file_by_id (xmmsv_t *value, void *udata)
 	}
 
 	if (!mid) {
-		g_debug("entry not in medialib");
+		g_debug ("entry not in medialib");
 		return FALSE;
 	}
 
@@ -642,7 +642,7 @@ main (int argc, char **argv)
 	ml = g_main_loop_new (NULL, FALSE);
 
 	updater = updater_new ();
-	
+
 	if (!updater_connect (updater, ml)) {
 		updater_destroy (updater);
 		g_main_loop_unref (ml);
@@ -650,9 +650,9 @@ main (int argc, char **argv)
 	}
 
 	updater_subscribe_config (updater);
-	
+
 	g_main_loop_run (ml);
 	g_main_loop_unref (ml);
-	
+
 	return EXIT_SUCCESS;
 }
