@@ -31,6 +31,7 @@ typedef struct updater_St {
 typedef struct updater_quit_St {
 	GMainLoop *ml;
 	updater_t *updater;
+	void *source;
 } updater_quit_t;
 
 static gboolean updater_add_watcher (updater_t *updater, GFile *root);
@@ -107,6 +108,9 @@ updater_quit (void *data)
 
 	g_debug ("Shutting down!");
 
+	xmmsc_mainloop_gmain_shutdown (quit->updater->conn,
+	                               quit->source);
+
 	updater_destroy (quit->updater);
 	g_main_loop_quit (quit->ml);
 	g_free (quit);
@@ -132,8 +136,8 @@ updater_connect (updater_t *updater, GMainLoop *ml)
 	quit = g_new0 (updater_quit_t, 1);
 	quit->updater = updater;
 	quit->ml = ml;
+	quit->source = xmmsc_mainloop_gmain_init (updater->conn);
 
-	xmmsc_mainloop_gmain_init (updater->conn);
 	xmmsc_disconnect_callback_set (updater->conn, updater_quit, quit);
 
 	return quit;
