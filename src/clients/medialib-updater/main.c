@@ -18,6 +18,7 @@
 
 #include <gio/gio.h>
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-glib.h>
 
 #include <xmms_configuration.h>
 
