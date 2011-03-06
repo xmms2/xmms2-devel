@@ -25,6 +25,7 @@
 #include "../src/xmms/medialib.c"
 #include "../src/xmms/fetchinfo.c"
 #include "../src/xmms/fetchspec.c"
+#include "../src/xmms/compat/thread_name_dummy.c"
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
