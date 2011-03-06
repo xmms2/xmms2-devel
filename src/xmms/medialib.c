@@ -161,51 +161,58 @@ xmms_medialib_begin (xmms_medialib_t *mlib)
 }
 
 static void
-xmms_medialib_session_free (xmms_medialib_session_t *session, gboolean free_vals)
+xmms_medialib_session_free (xmms_medialib_session_t *session)
 {
-	int i;
-	xmmsv_t *val;
-
-	if (free_vals) {
-		for (i = 0; xmmsv_list_get (session->vals, i, &val); i++)
-			xmmsv_unref (val);
-	}
-
 	xmmsv_unref (session->changed);
 	xmmsv_unref (session->added);
 	xmmsv_unref (session->vals);
 
-	free (session);
+	g_free (session);
 }
+
+static void
+xmms_medialib_session_free_full (xmms_medialib_session_t *session)
+{
+	xmmsv_t *val;
+	gint i;
+
+	for (i = 0; xmmsv_list_get (session->vals, i, &val); i++)
+		xmmsv_unref (val);
+
+	xmms_medialib_session_free (session);
+}
+
 
 gboolean
 xmms_medialib_commit (xmms_medialib_session_t *session)
 {
-	gboolean ret = s4_commit (session->trans);
-	gboolean free_vals = TRUE;
-	int i;
-	int32_t ival;
+	gboolean ret;
+	gint32 i, ival;
 
-	if (ret) {
-		for (i = 0; xmmsv_list_get_int (session->changed, i, &ival); i++) {
-			xmms_medialib_entry_send_update (session->medialib, ival);
-		}
-		for (i = 0; xmmsv_list_get_int (session->added, i, &ival); i++) {
-			xmms_medialib_entry_send_added (session->medialib, ival);
-		}
-
-		free_vals = FALSE;
+	ret = s4_commit (session->trans);
+	if (!ret) {
+		xmms_medialib_session_free_full (session);
+		return FALSE;
 	}
 
-	xmms_medialib_session_free (session, free_vals);
-	return ret;
+	for (i = 0; xmmsv_list_get_int (session->changed, i, &ival); i++) {
+		xmms_medialib_entry_send_update (session->medialib, ival);
+	}
+
+	for (i = 0; xmmsv_list_get_int (session->added, i, &ival); i++) {
+		xmms_medialib_entry_send_added (session->medialib, ival);
+	}
+
+	xmms_medialib_session_free (session);
+
+	return TRUE;
 }
 
 void
 xmms_medialib_abort (xmms_medialib_session_t *session)
 {
 	s4_abort (session->trans);
-	xmms_medialib_session_free (session, TRUE);
+	xmms_medialib_session_free_full (session);
 }
 
 static void
