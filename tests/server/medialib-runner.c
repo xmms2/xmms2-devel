@@ -222,6 +222,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 
 	medialib = xmms_object_new (xmms_medialib_t, NULL);
 	medialib->s4 = s4_open (NULL, NULL, S4_MEMORY);
+	medialib->default_sp = s4_sourcepref_create (source_pref);
 
 	populate_medialib (medialib, content);
 
@@ -251,6 +252,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmmsv_unref (ret);
 
 	s4_close (medialib->s4);
+	s4_sourcepref_unref (medialib->default_sp);
 	xmms_object_unref (medialib);
 }
 
@@ -339,10 +341,12 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases)
 			g_print ("Could not open database: %s (%d)\n", filename, s4_errno ());
 			exit (EXIT_FAILURE);
 		}
+		medialib->default_sp = s4_sourcepref_create (source_pref);
 
 		run_tests (medialib, testcases, run_performance_test);
 
 		s4_close (medialib->s4);
+		s4_sourcepref_unref (medialib->default_sp);
 		xmms_object_unref (medialib);
 		xmmsv_list_iter_next (it);
 	}
@@ -428,9 +432,6 @@ main (gint argc, gchar **argv)
 	g_debug ("Testcase directory: %s", args.testcase_dir);
 
 	testcases = scan_directory (args.testcase_dir, filter_testcase);
-
-	/* initialize the global source preferences */
-	default_sp = s4_sourcepref_create (source_pref);
 
 	if (args.variant == PERFORMANCE) {
 		g_print (" - Running Performance Test -\n");

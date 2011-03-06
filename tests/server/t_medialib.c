@@ -45,17 +45,16 @@ SETUP (mlib) {
 		NULL
 	};
 
-	/* initialize the global source preferences */
-	default_sp = s4_sourcepref_create (source_pref);
-
 	/* initialize the global medialib */
 	medialib = xmms_object_new (xmms_medialib_t, NULL);
 	medialib->s4 = s4_open (NULL, indices, S4_MEMORY);
+	medialib->default_sp = s4_sourcepref_create (source_pref);
+
 	return 0;
 }
 
 CLEANUP () {
-	s4_sourcepref_unref (default_sp);
+	s4_sourcepref_unref (medialib->default_sp);
 	s4_close (medialib->s4);
 	xmms_object_unref (medialib);
 	return 0;
