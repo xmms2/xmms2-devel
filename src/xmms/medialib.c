@@ -58,6 +58,7 @@ static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 i
 static gint32 xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
 static s4_t *xmms_medialib_database_open (const gchar *config_path, const gchar *indices[]);
+static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_session_t *session, guint32 id, const gchar *url, xmms_error_t *error);
 
 #include "medialib_ipc.c"
 
@@ -104,7 +105,7 @@ struct xmms_medialib_session_St {
   */
 static xmms_medialib_t *medialib;
 
-static const char *source_pref[] = {
+static const gchar *source_pref[] = {
 	"server",
 	"client/*",
 	"plugin/playlist",
@@ -218,7 +219,7 @@ xmms_medialib_abort (xmms_medialib_session_t *session)
 static void
 xmms_medialib_destroy (xmms_object_t *object)
 {
-	xmms_medialib_t *mlib = (xmms_medialib_t *)object;
+	xmms_medialib_t *mlib = (xmms_medialib_t *) object;
 
 	s4_sourcepref_unref (mlib->default_sp);
 	s4_close (mlib->s4);
@@ -384,15 +385,20 @@ xmms_medialib_uuid (xmms_medialib_t *mlib)
 
 static s4_resultset_t *
 xmms_medialib_filter (xmms_medialib_session_t *session,
-                      const char *filter_key, s4_val_t *filter_val,
-                      int filter_flags, s4_sourcepref_t *sourcepref,
-                      const char *fetch_key, int fetch_flags)
+                      const gchar *filter_key, s4_val_t *filter_val,
+                      gint filter_flags, s4_sourcepref_t *sourcepref,
+                      const gchar *fetch_key, gint fetch_flags)
 {
-	s4_condition_t *cond = s4_cond_new_filter (S4_FILTER_EQUAL, filter_key, filter_val,
-	                                           sourcepref, S4_CMP_CASELESS, filter_flags);
-	s4_fetchspec_t *spec = s4_fetchspec_create ();
+	s4_condition_t *cond;
+	s4_fetchspec_t *spec;
+	s4_resultset_t *ret;
+
+	cond = s4_cond_new_filter (S4_FILTER_EQUAL, filter_key, filter_val,
+	                           sourcepref, S4_CMP_CASELESS, filter_flags);
+
+	spec = s4_fetchspec_create ();
 	s4_fetchspec_add (spec, fetch_key, sourcepref, fetch_flags);
-	s4_resultset_t *ret = s4_query (NULL, session->trans, spec, cond);
+	ret = s4_query (NULL, session->trans, spec, cond);
 
 	s4_cond_free (cond);
 	s4_fetchspec_free (spec);
@@ -415,15 +421,18 @@ xmms_medialib_entry_property_get (xmms_medialib_session_t *session,
 		ret = ival;
 	} else {
 		s4_sourcepref_t *sourcepref;
+		const s4_result_t *res;
+		s4_resultset_t *set;
 
 		sourcepref = xmms_medialib_get_source_preference (session);
 
-		s4_resultset_t *set = xmms_medialib_filter (session, "song_id", ival, S4_COND_PARENT,
-		                                            sourcepref, property, S4_FETCH_DATA);
-		const s4_result_t *res = s4_resultset_get_result (set, 0, 0);
+		set = xmms_medialib_filter (session, "song_id", ival, S4_COND_PARENT,
+		                            sourcepref, property, S4_FETCH_DATA);
 
-		if (res != NULL)
+		res = s4_resultset_get_result (set, 0, 0);
+		if (res != NULL) {
 			ret = s4_val_copy (s4_result_get_val (res));
+		}
 
 		s4_resultset_free (set);
 	}
@@ -445,17 +454,18 @@ xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
 {
 	xmmsv_t *ret = NULL;
 	s4_val_t *prop;
-	const char *s;
-	int32_t i;
+	const gchar *s;
+	gint32 i;
 
 	prop = xmms_medialib_entry_property_get (session, id_num, property);
 	if (prop == NULL)
 		return NULL;
 
-	if (s4_val_get_str (prop, &s))
+	if (s4_val_get_str (prop, &s)) {
 		ret = xmmsv_new_string (s);
-	else if (s4_val_get_int (prop, &i))
+	} else if (s4_val_get_int (prop, &i)) {
 		ret = xmmsv_new_int (i);
+	}
 
 	s4_val_free (prop);
 
@@ -479,17 +489,18 @@ xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
 {
 	gchar *ret = NULL;
 	s4_val_t *prop;
-	const char *s;
-	int32_t i;
+	const gchar *s;
+	gint32 i;
 
 	prop = xmms_medialib_entry_property_get (session, id_num, property);
 	if (prop == NULL)
 		return NULL;
 
-	if (s4_val_get_int (prop, &i))
+	if (s4_val_get_int (prop, &i)) {
 		ret = g_strdup_printf ("%i", i);
-	else if (s4_val_get_str (prop, &s))
+	} else if (s4_val_get_str (prop, &s)) {
 		ret = g_strdup (s);
+	}
 
 	s4_val_free (prop);
 
@@ -514,11 +525,13 @@ xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
 	s4_val_t *prop;
 
 	prop = xmms_medialib_entry_property_get (session, id_num, property);
-	if (prop == NULL)
+	if (prop == NULL) {
 		return -1;
+	}
 
-	if (!s4_val_get_int (prop, &ret))
+	if (!s4_val_get_int (prop, &ret)) {
 		ret = -1;
+	}
 
 	s4_val_free (prop);
 
@@ -528,18 +541,26 @@ xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
 static gboolean
 xmms_medialib_entry_property_set_source (xmms_medialib_session_t *session,
                                          xmms_medialib_entry_t id_num,
-                                         const char *key, s4_val_t *new_prop,
+                                         const gchar *key, s4_val_t *new_prop,
                                          const gchar *source)
 {
-	const char *sources[2] = {source, NULL};
-	s4_sourcepref_t *sp = s4_sourcepref_create (sources);
-	s4_resultset_t *set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
-	                                            S4_COND_PARENT, sp, key, S4_FETCH_DATA);
-	s4_val_t *id_val = s4_val_new_int (id_num);
-	const s4_result_t *res = s4_resultset_get_result (set, 0, 0);
+	const gchar *sources[2] = { source, NULL };
+	s4_sourcepref_t *sp;
+	s4_resultset_t *set;
+	s4_val_t *id_val;
+	const s4_result_t *res;
 
-	if (res != NULL)
-		s4_del (NULL, session->trans, "song_id", id_val, key, s4_result_get_val (res), source);
+	id_val = s4_val_new_int (id_num);
+	sp = s4_sourcepref_create (sources);
+
+	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
+	                            S4_COND_PARENT, sp, key, S4_FETCH_DATA);
+
+	res = s4_resultset_get_result (set, 0, 0);
+	if (res != NULL) {
+		s4_del (NULL, session->trans, "song_id", id_val,
+		        key, s4_result_get_val (res), source);
+	}
 
 	s4_resultset_free (set);
 	s4_sourcepref_unref (sp);
@@ -622,7 +643,7 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 {
 	gboolean ret;
 	s4_val_t *prop;
-	int ival;
+	gint ival;
 
 	g_return_val_if_fail (property, FALSE);
 
@@ -636,7 +657,9 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 	} else {
 		prop = s4_val_new_string (value);
 	}
+
 	ret = xmms_medialib_entry_property_set_source (session, id_num, property, prop, source);
+
 	s4_val_free (prop);
 
 	return ret;
@@ -647,11 +670,11 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 /* A filter to find the highest id. It always returns -1, thus the
  * search algorithm will ultimately end up passing it the highest value.
  */
-static int
+static gint
 highest_id_filter (const s4_val_t *value, s4_condition_t *cond)
 {
-	int32_t *i = s4_cond_get_funcdata (cond);
-	int32_t ival;
+	gint32 *i = s4_cond_get_funcdata (cond);
+	gint32 ival;
 
 	if (s4_val_get_int (value, &ival)) {
 		*i = ival;
@@ -666,7 +689,7 @@ highest_id_filter (const s4_val_t *value, s4_condition_t *cond)
 static int32_t
 xmms_medialib_get_new_id (xmms_medialib_session_t *session)
 {
-	int32_t highest = -1;
+	gint32 highest = -1;
 	s4_fetchspec_t *fs;
 	s4_condition_t *cond;
 	s4_resultset_t *set;
@@ -678,6 +701,7 @@ xmms_medialib_get_new_id (xmms_medialib_session_t *session)
 	cond = s4_cond_new_custom_filter (highest_id_filter, &highest, NULL,
 	                                  "song_id", sourcepref, 0, 1, S4_COND_PARENT);
 	set = s4_query (NULL, session->trans, fs, cond);
+
 	s4_resultset_free (set);
 	s4_cond_free (cond);
 	s4_fetchspec_free (fs);
@@ -705,7 +729,7 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 {
 	s4_resultset_t *set;
 	s4_val_t *id_val;
-	int i;
+	gint i;
 
 	id_val = s4_val_new_int (id_num);
 	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
@@ -715,7 +739,7 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 		const s4_result_t *res = s4_resultset_get_result (set, i, 0);
 
 		for (; res != NULL; res = s4_result_next (res)) {
-			const char *src = s4_result_get_src (res);
+			const gchar *src = s4_result_get_src (res);
 
 			s4_del (NULL, session->trans, "song_id", id_val, s4_result_get_key (res),
 			        s4_result_get_val (res), src);
@@ -728,7 +752,6 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 	xmms_playlist_remove_by_entry (session->medialib->playlist, id_num);
 }
 
-static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_session_t *session, guint32 id, const char *url, xmms_error_t *error);
 
 static void
 process_file (xmms_medialib_session_t *session,
@@ -813,7 +836,7 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 {
 	s4_resultset_t *set;
 	s4_val_t *id_val;
-	int i;
+	gint i;
 
 	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
 	                            S4_COND_PARENT, NULL, NULL, S4_FETCH_DATA);
@@ -855,7 +878,7 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t 
 	} else {
 		s4_sourcepref_t *sourcepref;
 		s4_resultset_t *set;
-		int i;
+		gint i;
 
 		sourcepref = xmms_medialib_get_source_preference (session);
 
@@ -864,8 +887,9 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t 
 		                            sourcepref, "song_id", S4_FETCH_PARENT);
 
 		for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
-			const s4_result_t *res = s4_resultset_get_result (set, i, 0);
+			const s4_result_t *res;
 
+			res = s4_resultset_get_result (set, i, 0);
 			for (; res != NULL; res = s4_result_next (res)) {
 				s4_val_get_int (s4_result_get_val (res), &id);
 				xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
@@ -950,8 +974,9 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
 {
 	xmms_mediainfo_reader_t *mr;
 
-	if (!xmms_medialib_entry_property_set_str (session, id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url))
+	if (!xmms_medialib_entry_property_set_str (session, id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url)) {
 		return 0;
+	}
 
 	xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_NEW);
 	mr = xmms_playlist_mediainfo_reader_get (session->medialib->playlist);
@@ -968,17 +993,19 @@ static xmms_medialib_entry_t
 xmms_medialib_get_id (xmms_medialib_session_t *session, const char *url, xmms_error_t *error)
 {
 	s4_sourcepref_t *sourcepref;
+	s4_resultset_t *set;
+	const s4_result_t *res;
 	gint32 id = 0;
 
 	sourcepref = xmms_medialib_get_source_preference (session);
 
-	s4_resultset_t *set = xmms_medialib_filter (session, XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
+	set = xmms_medialib_filter (session, XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
 	                                           s4_val_new_string (url), 0, sourcepref,
 	                                           "song_id", S4_FETCH_PARENT);
-	const s4_result_t *res = s4_resultset_get_result (set, 0, 0);
-
-	if (res != NULL)
+	res = s4_resultset_get_result (set, 0, 0);
+	if (res != NULL) {
 		s4_val_get_int (s4_result_get_val (res), &id);
+	}
 
 	s4_resultset_free (set);
 
@@ -987,7 +1014,7 @@ xmms_medialib_get_id (xmms_medialib_session_t *session, const char *url, xmms_er
 
 xmms_medialib_entry_t
 xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
-                                 const char *url, xmms_error_t *error)
+                                 const gchar *url, xmms_error_t *error)
 {
 	guint ret = 0;
 
@@ -998,8 +1025,9 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 	if (ret == 0) {
 		ret = xmms_medialib_get_new_id (session);
 
-		if (!xmms_medialib_entry_new_insert (session, ret, url, error))
+		if (!xmms_medialib_entry_new_insert (session, ret, url, error)) {
 			return 0;
+		}
 
 		xmmsv_list_append_int (session->added, ret);
 	}
@@ -1029,8 +1057,9 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session,
 	xmms_medialib_entry_t res;
 
 	enc_url = xmms_medialib_url_encode (url);
-	if (!enc_url)
+	if (!enc_url) {
 		return 0;
+	}
 
 	res = xmms_medialib_entry_new_encoded (session, enc_url, error);
 
@@ -1056,8 +1085,9 @@ xmms_medialib_tree_add_tuple (GTree *tree, const char *key,
 {
 	xmmsv_t *keytreeval;
 
-	if (key == NULL || source == NULL || value == NULL)
+	if (key == NULL || source == NULL || value == NULL) {
 		return;
+	}
 
 	/* Find (or insert) subtree matching the prop key */
 	keytreeval = (xmmsv_t *) g_tree_lookup (tree, key);
@@ -1085,10 +1115,10 @@ static GTree *
 xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
                              xmms_medialib_entry_t id_num)
 {
-	GTree *ret;
-	xmmsv_t *v_entry;
 	s4_resultset_t *set;
-	int i;
+	xmmsv_t *v_entry;
+	GTree *ret;
+	gint i;
 
 	g_return_val_if_fail (id_num, NULL);
 
@@ -1103,20 +1133,23 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	                       (GDestroyNotify) xmmsv_unref);
 
 	for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
-		const s4_result_t *res = s4_resultset_get_result (set, 0, 0);
+		const s4_result_t *res;
 
+		res = s4_resultset_get_result (set, 0, 0);
 		while (res != NULL) {
-			const s4_val_t *val = s4_result_get_val (res);
-			int32_t i;
+			const s4_val_t *val;
 			const char *s;
+			gint32 i;
 
+			val = s4_result_get_val (res);
 			if (s4_val_get_str (val, &s)) {
 				v_entry = xmmsv_new_string (s);
 			} else if (s4_val_get_int (val, &i)) {
 				v_entry = xmmsv_new_int (i);
 			}
 
-			xmms_medialib_tree_add_tuple (ret, s4_result_get_key (res), s4_result_get_src (res), v_entry);
+			xmms_medialib_tree_add_tuple (ret, s4_result_get_key (res),
+			                              s4_result_get_src (res), v_entry);
 			xmmsv_unref (v_entry);
 
 			res = s4_result_next (res);
@@ -1230,15 +1263,22 @@ xmms_medialib_property_remove (xmms_medialib_session_t *session, guint32 id_num,
                                const gchar *source, const gchar *key,
                                xmms_error_t *error)
 {
-	s4_val_t *id_val = s4_val_new_int (id_num);
-	const char *sources[2] = {source, NULL};
-	s4_sourcepref_t *sp = s4_sourcepref_create (sources);
-	s4_resultset_t *set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
-	                                            S4_COND_PARENT, sp, key, S4_FETCH_DATA);
-	const s4_result_t *res = s4_resultset_get_result (set, 0, 0);
+	s4_val_t *id_val;
+	const char *sources[2] = { source, NULL };
+	s4_sourcepref_t *sp;
+	s4_resultset_t *set;
+	const s4_result_t *res;
 
-	if (res != NULL)
-		s4_del (NULL, session->trans, "song_id", id_val, key, s4_result_get_val (res), source);
+	id_val = s4_val_new_int (id_num);
+	sp = s4_sourcepref_create (sources);
+	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
+	                            S4_COND_PARENT, sp, key, S4_FETCH_DATA);
+
+	res = s4_resultset_get_result (set, 0, 0);
+	if (res != NULL) {
+		s4_del (NULL, session->trans, "song_id", id_val,
+		        key,  s4_result_get_val (res), source);
+	}
 
 	s4_resultset_free (set);
 	s4_sourcepref_unref (sp);
@@ -1269,11 +1309,12 @@ gboolean
 xmms_medialib_check_id (xmms_medialib_session_t *session,
                         xmms_medialib_entry_t id)
 {
-	xmmsv_t *val = xmms_medialib_entry_property_get_value (session, id,
-	                                                       XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	xmmsv_t *val;
 
-	if (val == NULL)
+	val = xmms_medialib_entry_property_get_value (session, id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	if (val == NULL) {
 		return FALSE;
+	}
 
 	xmmsv_unref (val);
 
@@ -1329,15 +1370,16 @@ not_resolved_set (xmms_medialib_session_t *session)
 xmms_medialib_entry_t
 xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 {
-	gint32 ret = 0;
-	s4_resultset_t *set;
 	const s4_result_t *res;
+	s4_resultset_t *set;
+	gint32 ret = 0;
 
 	set = not_resolved_set (session);
 	res = s4_resultset_get_result (set, 0, 0);
 
-	if (res != NULL)
+	if (res != NULL) {
 		s4_val_get_int (s4_result_get_val (res), &ret);
+	}
 
 	s4_resultset_free (set);
 
@@ -1347,8 +1389,8 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 guint
 xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
 {
-	gint ret = 0;
 	s4_resultset_t *set;
+	gint ret = 0;
 
 	set = not_resolved_set (session);
 	ret = s4_resultset_get_rowcount (set);
@@ -1359,14 +1401,14 @@ xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
 
 
 gboolean
-xmms_medialib_decode_url (char *url)
+xmms_medialib_decode_url (gchar *url)
 {
-	int i = 0, j = 0;
+	gint i = 0, j = 0;
 
 	g_return_val_if_fail (url, TRUE);
 
 	while (url[i]) {
-		unsigned char chr = url[i++];
+		guchar chr = url[i++];
 
 		if (chr == '+') {
 			url[j++] = ' ';
@@ -1411,11 +1453,12 @@ xmms_medialib_url_encode (const gchar *path)
 {
 	static gchar hex[16] = "0123456789abcdef";
 	gchar *res;
-	int i = 0, j = 0;
+	gint i = 0, j = 0;
 
 	res = g_malloc (strlen (path) * 3 + 1);
-	if (!res)
+	if (!res) {
 		return NULL;
+	}
 
 	while (path[i]) {
 		guchar chr = path[i++];
@@ -1437,7 +1480,8 @@ xmms_medialib_url_encode (const gchar *path)
 
 
 /* A filter matching everything */
-static int universe_filter (void)
+static gint
+universe_filter (void)
 {
 	return 0;
 }
@@ -1445,13 +1489,17 @@ static int universe_filter (void)
 /* A filter for idlists. Checks if the value given (id number)
  * is in the hash table
  */
-static int idlist_filter (const s4_val_t *value, s4_condition_t *cond)
+static gint
+idlist_filter (const s4_val_t *value, s4_condition_t *cond)
 {
-	int32_t ival;
-	GHashTable *id_table = s4_cond_get_funcdata (cond);
+	GHashTable *id_table;
+	gint32 ival;
 
-	if (!s4_val_get_int (value, &ival))
+	if (!s4_val_get_int (value, &ival)) {
 		return 1;
+	}
+
+	id_table = s4_cond_get_funcdata (cond);
 
 	return g_hash_table_lookup (id_table, GINT_TO_POINTER (ival)) == NULL;
 }
@@ -1467,28 +1515,33 @@ static int idlist_filter (const s4_val_t *value, s4_condition_t *cond)
 static s4_resultset_t *
 xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
 {
-	int i;
 	const s4_resultrow_t *row;
 	const s4_result_t *result;
-	int32_t ival;
-	GHashTable *row_table = g_hash_table_new (NULL, NULL);
-	s4_resultset_t *ret = s4_resultset_create (s4_resultset_get_colcount (set));
+	GHashTable *row_table;
+	s4_resultset_t *ret;
+	gint32 ival, i;
+
+	row_table = g_hash_table_new (NULL, NULL);
 
 	for (i = 0; s4_resultset_get_row (set, i, &row); i++) {
 		if (s4_resultrow_get_col (row, 0, &result)
 		    && s4_val_get_int (s4_result_get_val (result), &ival)) {
-			g_hash_table_insert (row_table, GINT_TO_POINTER (ival), (void*)row);
+			g_hash_table_insert (row_table, GINT_TO_POINTER (ival), (void *) row);
 		}
 	}
 
+	ret = s4_resultset_create (s4_resultset_get_colcount (set));
+
 	for (i = 0; xmmsv_list_get_int (idlist, i, &ival); i++) {
 		row = g_hash_table_lookup (row_table, GINT_TO_POINTER (ival));
-		if (row != NULL)
+		if (row != NULL) {
 			s4_resultset_add_row (ret, row);
+		}
 	}
 
 	g_hash_table_destroy (row_table);
 	s4_resultset_free (set);
+
 	return ret;
 }
 
@@ -1505,11 +1558,12 @@ xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
 static s4_resultset_t *
 xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, xmmsv_t *order)
 {
-	int *s4_order = malloc (sizeof (int) * (xmmsv_list_get_size (order) + 1));
-	int i, j, stop;
+	const gchar *str;
+	gint i, j, stop;
+	gint *s4_order;
 	xmmsv_t *val;
-	const char *str;
 
+	s4_order = g_new0 (int, xmmsv_list_get_size (order) + 1);
 
 	/* Find the first idlist-order operand */
 	for (i = 0; xmmsv_list_get (order, i, &val); i++) {
@@ -1523,7 +1577,7 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 
 	for (i = 0, j = 0; i < stop; i++) {
 		if (xmmsv_list_get_string (order, i, &str)) {
-			int neg = (*str == '-')?1:0;
+			gint neg = (*str == '-')?1:0;
 			str += neg;
 
 			if (strcmp (str, "__ RANDOM __") == 0) {
@@ -1545,10 +1599,12 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 	}
 	s4_order[j] = 0;
 
-	if (j > 0)
+	if (j > 0) {
 		s4_resultset_sort (set, s4_order);
+	}
 
-	free (s4_order);
+	g_free (s4_order);
+
 	return set;
 }
 
@@ -1558,20 +1614,20 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 static gboolean
 is_universe (xmmsv_coll_t *coll)
 {
-	char *target_name;
+	gchar *target_name;
 	gboolean ret = FALSE;
 
 	switch (xmmsv_coll_get_type (coll)) {
-	case XMMS_COLLECTION_TYPE_UNIVERSE:
-		ret = TRUE;
-		break;
-	case XMMS_COLLECTION_TYPE_REFERENCE:
-		if (xmmsv_coll_attribute_get (coll, "reference", &target_name)
-		    && strcmp (target_name, "All Media") == 0)
+		case XMMS_COLLECTION_TYPE_UNIVERSE:
 			ret = TRUE;
-		break;
-	default:
-		break;
+			break;
+		case XMMS_COLLECTION_TYPE_REFERENCE:
+			if (xmmsv_coll_attribute_get (coll, "reference", &target_name)
+			    && strcmp (target_name, "All Media") == 0)
+				ret = TRUE;
+			break;
+		default:
+			break;
 	}
 
 	return ret;
@@ -1587,42 +1643,42 @@ has_order (xmmsv_coll_t *coll)
 
 	switch (xmmsv_coll_get_type (coll)) {
 		/* Filter keeps the ordering of the operand */
-	case XMMS_COLLECTION_TYPE_HAS:
-	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_TOKEN:
-	case XMMS_COLLECTION_TYPE_EQUALS:
-	case XMMS_COLLECTION_TYPE_NOTEQUAL:
-	case XMMS_COLLECTION_TYPE_SMALLER:
-	case XMMS_COLLECTION_TYPE_SMALLEREQ:
-	case XMMS_COLLECTION_TYPE_GREATER:
-	case XMMS_COLLECTION_TYPE_GREATEREQ:
-		/* Intersection is orderded if the first operand is ordeed */
-	case XMMS_COLLECTION_TYPE_INTERSECTION:
-		xmmsv_list_get_coll (operands, 0, &c);
-		return has_order (c);
-
-		/* Union is ordered if all operands are ordered (concat) */
-	case XMMS_COLLECTION_TYPE_UNION:
-		for (i = 0; xmmsv_list_get_coll (operands, i, &c); i++) {
-			if (!has_order (c))
-				return FALSE;
-		}
-
-		/* These are always ordered */
-	case XMMS_COLLECTION_TYPE_IDLIST:
-	case XMMS_COLLECTION_TYPE_ORDER:
-	case XMMS_COLLECTION_TYPE_LIMIT:
-		return TRUE;
-
-	case XMMS_COLLECTION_TYPE_REFERENCE:
-		if (!is_universe (coll)) {
+		case XMMS_COLLECTION_TYPE_HAS:
+		case XMMS_COLLECTION_TYPE_MATCH:
+		case XMMS_COLLECTION_TYPE_TOKEN:
+		case XMMS_COLLECTION_TYPE_EQUALS:
+		case XMMS_COLLECTION_TYPE_NOTEQUAL:
+		case XMMS_COLLECTION_TYPE_SMALLER:
+		case XMMS_COLLECTION_TYPE_SMALLEREQ:
+		case XMMS_COLLECTION_TYPE_GREATER:
+		case XMMS_COLLECTION_TYPE_GREATEREQ:
+			/* Intersection is orderded if the first operand is ordeed */
+		case XMMS_COLLECTION_TYPE_INTERSECTION:
 			xmmsv_list_get_coll (operands, 0, &c);
 			return has_order (c);
-		}
-	case XMMS_COLLECTION_TYPE_COMPLEMENT:
-	case XMMS_COLLECTION_TYPE_UNIVERSE:
-	case XMMS_COLLECTION_TYPE_MEDIASET:
-		break;
+
+			/* Union is ordered if all operands are ordered (concat) */
+		case XMMS_COLLECTION_TYPE_UNION:
+			for (i = 0; xmmsv_list_get_coll (operands, i, &c); i++) {
+				if (!has_order (c))
+					return FALSE;
+			}
+
+			/* These are always ordered */
+		case XMMS_COLLECTION_TYPE_IDLIST:
+		case XMMS_COLLECTION_TYPE_ORDER:
+		case XMMS_COLLECTION_TYPE_LIMIT:
+			return TRUE;
+
+		case XMMS_COLLECTION_TYPE_REFERENCE:
+				if (!is_universe (coll)) {
+				xmmsv_list_get_coll (operands, 0, &c);
+				return has_order (c);
+			}
+		case XMMS_COLLECTION_TYPE_COMPLEMENT:
+		case XMMS_COLLECTION_TYPE_UNIVERSE:
+		case XMMS_COLLECTION_TYPE_MEDIASET:
+			break;
 	}
 
 	return FALSE;
@@ -1649,14 +1705,16 @@ create_idlist_filter (xmms_medialib_session_t *session, GHashTable *id_table)
 }
 
 static s4_condition_t *
-complement_condition (xmms_medialib_session_t *session,
-                      xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                      xmmsv_t *order)
+complement_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                      xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	s4_condition_t *cond = s4_cond_new_combiner (S4_COMBINE_NOT);
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *operand;
+	xmmsv_t *operands;
+	s4_condition_t *cond;
 
+	cond = s4_cond_new_combiner (S4_COMBINE_NOT);
+
+	operands = xmmsv_coll_operands_get (coll);
 	if (xmmsv_list_get_coll (operands, 0, &operand)) {
 		s4_condition_t *operand_cond;
 		operand_cond = collection_to_condition (session, operand, fetch, order);
@@ -1675,11 +1733,9 @@ filter_condition (xmms_medialib_session_t *session,
 	s4_filter_type_t type;
 	s4_sourcepref_t *sp, *_default_sp;
 	s4_cmp_mode_t cmp_mode;
-	int32_t ival;
-	int flags = 0;
-	char *tmp;
-	char *key, *val;
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
+	gint32 ival, flags = 0;
+	gchar *tmp, *key, *val;
+	xmmsv_t *operands;
 	xmmsv_coll_t *operand;
 	s4_condition_t *cond;
 	s4_val_t *sval;
@@ -1693,7 +1749,7 @@ filter_condition (xmms_medialib_session_t *session,
 			key = NULL;
 		}
 	} else if (strcmp (tmp, "id") == 0) {
-		key = (char*)"song_id";
+		key = (gchar *) "song_id";
 		flags = S4_COND_PARENT;
 	} else {
 		xmms_log_error ("FILTER with invalid \"type\"-attribute."
@@ -1701,7 +1757,6 @@ filter_condition (xmms_medialib_session_t *session,
 		/* set key to something safe */
 		key = NULL;
 	}
-
 
 	switch (xmmsv_coll_get_type (coll)) {
 		case XMMS_COLLECTION_TYPE_HAS:
@@ -1738,13 +1793,15 @@ filter_condition (xmms_medialib_session_t *session,
 		/* For <, <=, >= and > we default to natcoll,
 		 * so that strings will order correctly
 		 * */
-		if (type == S4_FILTER_SMALLER
-		    || type == S4_FILTER_GREATER
-		    || type == S4_FILTER_SMALLEREQ
-		    || type == S4_FILTER_GREATEREQ) {
-			cmp_mode = S4_CMP_COLLATE;
-		} else {
-			cmp_mode = S4_CMP_CASELESS;
+		switch (type) {
+			case S4_FILTER_SMALLER:
+			case S4_FILTER_GREATER:
+			case S4_FILTER_SMALLEREQ:
+			case S4_FILTER_GREATEREQ:
+				cmp_mode = S4_CMP_COLLATE;
+				break;
+			default:
+				cmp_mode = S4_CMP_CASELESS;
 		}
 	} else if (strcmp (val, "NOCASE") == 0) {
 		cmp_mode = S4_CMP_CASELESS;
@@ -1757,20 +1814,24 @@ filter_condition (xmms_medialib_session_t *session,
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "source-preference", &val)) {
-		char **prefs = g_strsplit (val, ":", -1);
-		sp = s4_sourcepref_create ((const char**)prefs);
+		gchar **prefs;
+
+		prefs = g_strsplit (val, ":", -1);
+		sp = s4_sourcepref_create ((const gchar **) prefs);
 		g_strfreev (prefs);
 	}
 
 	cond = s4_cond_new_filter (type, key, sval, sp, cmp_mode, flags);
 
-	if (sval != NULL)
+	if (sval != NULL) {
 		s4_val_free (sval);
+	}
 
 	if (sp != _default_sp) {
 		s4_sourcepref_unref (sp);
 	}
 
+	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
 	if (!is_universe (operand)) {
 		s4_condition_t *op_cond = cond;
@@ -1790,13 +1851,14 @@ idlist_condition (xmms_medialib_session_t *session,
                   xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
                   xmmsv_t *order)
 {
-	GHashTable *id_table = g_hash_table_new (NULL, NULL);
-	int i;
-	int32_t ival;
+	GHashTable *id_table;
+	gint32 i, ival;
 
 	if (order != NULL) {
 		xmmsv_list_append (order, xmmsv_coll_idlist_get (coll));
 	}
+
+	id_table = g_hash_table_new (NULL, NULL);
 
 	for (i = 0; xmmsv_coll_idlist_get_index (coll, i, &ival); i++) {
 		g_hash_table_insert (id_table, GINT_TO_POINTER (ival), GINT_TO_POINTER (1));
@@ -1806,14 +1868,16 @@ idlist_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-intersection_condition (xmms_medialib_session_t *session,
-                        xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                        xmmsv_t *order)
+intersection_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                        xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	int i;
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
-	s4_condition_t *cond = s4_cond_new_combiner (S4_COMBINE_AND);
+	s4_condition_t *cond;
 	xmmsv_coll_t *operand;
+	xmmsv_t *operands;
+	gint i;
+
+	operands = xmmsv_coll_operands_get (coll);
+	cond = s4_cond_new_combiner (S4_COMBINE_AND);
 
 	for (i = 0; xmmsv_list_get_coll (operands, i, &operand); i++) {
 		s4_condition_t *op_cond;
@@ -1831,30 +1895,38 @@ intersection_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-limit_condition (xmms_medialib_session_t *session,
-                 xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                 xmmsv_t *order)
+limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                 xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	unsigned int start = 0, stop = UINT_MAX;
-	xmmsv_t *child_order = xmmsv_new_list ();
 	const s4_resultrow_t *row;
 	const s4_result_t *result;
-	char *key;
 	s4_resultset_t *set;
-	int32_t ival;
-	GHashTable *id_table = g_hash_table_new (NULL, NULL);
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *operand;
+	xmmsv_t *operands, *child_order;
+	GHashTable *id_table;
+	gint32 ival;
+	guint start, stop;
+	gchar *key;
 
 	if (xmmsv_coll_attribute_get (coll, "start", &key)) {
 		start = atoi (key);
-	}
-	if (xmmsv_coll_attribute_get (coll, "length", &key)) {
-		stop = atoi (key) + start;
+	} else {
+		start = 0;
 	}
 
+	if (xmmsv_coll_attribute_get (coll, "length", &key)) {
+		stop = atoi (key) + start;
+	} else {
+		stop = UINT_MAX;
+	}
+
+	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
+
 	set = xmms_medialib_query_recurs (session, operand, fetch);
+
+	child_order = xmmsv_new_list ();
+	id_table = g_hash_table_new (NULL, NULL);
 
 	for (; start < stop && s4_resultset_get_row (set, start, &row); start++) {
 		s4_resultrow_get_col (row, 0, &result);
@@ -1876,9 +1948,8 @@ limit_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-mediaset_condition (xmms_medialib_session_t *session,
-                    xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                    xmmsv_t *order)
+mediaset_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                    xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *operand;
@@ -1888,23 +1959,22 @@ mediaset_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-order_condition (xmms_medialib_session_t *session,
-                 xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                 xmmsv_t *order)
+order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                 xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	char *key, *val;
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
 	xmmsv_coll_t *operand;
+	xmmsv_t *operands;
+	gchar *key, *val;
 
 	if (order != NULL) {
 		if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
-			key = (char*)"value";
+			key = (gchar *) "value";
 		}
 		if (strcmp (key, "random") == 0) {
 			xmmsv_list_append_string (order, "__ RANDOM __");
 		} else {
 			if (strcmp (key, "id") == 0) {
-				val = (char*)"__ ID __";
+				val = (gchar *) "__ ID __";
 			} else {
 				s4_sourcepref_t *sourcepref;
 
@@ -1924,7 +1994,10 @@ order_condition (xmms_medialib_session_t *session,
 			}
 		}
 	}
+
+	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
+
 	return collection_to_condition (session, operand, fetch, order);
 }
 
@@ -2014,33 +2087,34 @@ static s4_condition_t *
 union_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	if (order != NULL && has_order (coll))
+	if (order != NULL && has_order (coll)) {
 		return union_ordered_condition (session, coll, fetch, order);
+	}
 	return union_unordered_condition (session, coll, fetch);
 }
 
 static s4_condition_t *
-universe_condition (xmms_medialib_session_t *session,
-                    xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                    xmmsv_t *order)
+universe_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                    xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	return s4_cond_new_custom_filter ((filter_function_t)universe_filter, NULL, NULL,
+	return s4_cond_new_custom_filter ((filter_function_t) universe_filter, NULL, NULL,
 	                                  "song_id", NULL, S4_CMP_BINARY, 0, S4_COND_PARENT);
 }
 
 static s4_condition_t *
-reference_condition (xmms_medialib_session_t *session,
-                     xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                     xmmsv_t *order)
+reference_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                     xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
+	xmmsv_t *operands;
 
 	if (is_universe (coll)) {
 		return universe_condition (session, coll, fetch, order);
-	} else {
-		xmmsv_list_get_coll (operands, 0, &coll);
-		return collection_to_condition  (session, coll, fetch, order);
 	}
+
+	operands = xmmsv_coll_operands_get (coll);
+	xmmsv_list_get_coll (operands, 0, &coll);
+
+	return collection_to_condition  (session, coll, fetch, order);
 }
 
 /**
@@ -2053,42 +2127,41 @@ reference_condition (xmms_medialib_session_t *session,
  * @return A new S4 condition. Must be freed with s4_cond_free
  */
 static s4_condition_t *
-collection_to_condition (xmms_medialib_session_t *session,
-                         xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
-                         xmmsv_t *order)
+collection_to_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                         xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	switch (xmmsv_coll_get_type (coll)) {
-	case XMMS_COLLECTION_TYPE_COMPLEMENT:
-		return complement_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_HAS:
-	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_TOKEN:
-	case XMMS_COLLECTION_TYPE_EQUALS:
-	case XMMS_COLLECTION_TYPE_NOTEQUAL:
-	case XMMS_COLLECTION_TYPE_SMALLER:
-	case XMMS_COLLECTION_TYPE_SMALLEREQ:
-	case XMMS_COLLECTION_TYPE_GREATER:
-	case XMMS_COLLECTION_TYPE_GREATEREQ:
-		return filter_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_IDLIST:
-		return idlist_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_INTERSECTION:
-		return intersection_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_LIMIT:
-		return limit_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_MEDIASET:
-		return mediaset_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_ORDER:
-		return order_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_REFERENCE:
-		return reference_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_UNION:
-		return union_condition (session, coll, fetch, order);
-	case XMMS_COLLECTION_TYPE_UNIVERSE:
-		return universe_condition (session, coll, fetch, order);
-	default:
-		/* ??? */
-		return NULL;
+		case XMMS_COLLECTION_TYPE_COMPLEMENT:
+			return complement_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_HAS:
+		case XMMS_COLLECTION_TYPE_MATCH:
+		case XMMS_COLLECTION_TYPE_TOKEN:
+		case XMMS_COLLECTION_TYPE_EQUALS:
+		case XMMS_COLLECTION_TYPE_NOTEQUAL:
+		case XMMS_COLLECTION_TYPE_SMALLER:
+		case XMMS_COLLECTION_TYPE_SMALLEREQ:
+		case XMMS_COLLECTION_TYPE_GREATER:
+		case XMMS_COLLECTION_TYPE_GREATEREQ:
+			return filter_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_IDLIST:
+			return idlist_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_INTERSECTION:
+			return intersection_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_LIMIT:
+			return limit_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_MEDIASET:
+			return mediaset_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_ORDER:
+			return order_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_REFERENCE:
+			return reference_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_UNION:
+			return union_condition (session, coll, fetch, order);
+		case XMMS_COLLECTION_TYPE_UNIVERSE:
+			return universe_condition (session, coll, fetch, order);
+		default:
+			/* ??? */
+			return NULL;
 	}
 }
 
@@ -2105,13 +2178,18 @@ static s4_resultset_t *
 xmms_medialib_query_recurs (xmms_medialib_session_t *session,
                             xmmsv_coll_t *coll, xmms_fetch_info_t *fetch)
 {
-	xmmsv_t *order = xmmsv_new_list ();
-	s4_condition_t *cond = collection_to_condition (session, coll, fetch, order);
-	s4_resultset_t *ret = s4_query (NULL, session->trans, fetch->fs, cond);
+	s4_condition_t *cond;
+	s4_resultset_t *ret;
+	xmmsv_t *order;
 
+	order = xmmsv_new_list ();
+
+	cond = collection_to_condition (session, coll, fetch, order);
+	ret = s4_query (NULL, session->trans, fetch->fs, cond);
 	s4_cond_free (cond);
 
 	ret = xmms_medialib_result_sort (ret, fetch, order);
+
 	xmmsv_unref (order);
 
 	return ret;
@@ -2128,14 +2206,14 @@ xmms_medialib_entry_t
 xmms_medialib_query_random_id (xmms_medialib_session_t *session,
                                xmmsv_coll_t *coll)
 {
-	xmmsv_t *fetch_spec = xmmsv_new_dict ();
-	xmmsv_t *get_list = xmmsv_new_list ();
-	xmmsv_t *res;
+	xmmsv_t *fetch_spec, *get_list, *res;
 	xmms_medialib_entry_t ret;
 	xmms_error_t err;
 
+	get_list = xmmsv_new_list ();
 	xmmsv_list_append_string (get_list, "id");
 
+	fetch_spec = xmmsv_new_dict ();
 	xmmsv_dict_set_string (fetch_spec, "type", "metadata");
 	xmmsv_dict_set_string (fetch_spec, "aggregate", "random");
 	xmmsv_dict_set (fetch_spec, "get", get_list);
@@ -2153,46 +2231,53 @@ xmms_medialib_query_random_id (xmms_medialib_session_t *session,
 typedef xmmsv_t *(*void_to_xmmsv_t)(void *value, void *userdata);
 
 static xmmsv_t *
-convert_ghashtable_to_xmmsv (GHashTable *table, int depth, void_to_xmmsv_t func, void *userdata)
+convert_ghashtable_to_xmmsv (GHashTable *table, gint depth,
+                             void_to_xmmsv_t func, void *userdata)
 {
+	GHashTableIter iter;
+	const gchar *key;
+	xmmsv_t *ret;
+	gint keys = 0;
+	void *val;
+
 	if (depth == 0) {
-		return func ((void*)table, userdata);
-	} else {
-		xmmsv_t *xval, *ret = xmmsv_new_dict ();
-		void *val;
-		const char *key;
-		int keys = 0;
-		GHashTableIter iter;
-
-		g_hash_table_iter_init (&iter, table);
-
-		while (g_hash_table_iter_next (&iter, (void**)&key, &val)) {
-			if (val != NULL) {
-				xval = convert_ghashtable_to_xmmsv (val, depth - 1, func, userdata);
-				xmmsv_dict_set (ret, key, xval);
-				xmmsv_unref (xval);
-				keys++;
-			}
-		}
-
-		if (keys == 0) {
-			xmmsv_unref (ret);
-			ret = NULL;
-		}
-
-		return ret;
+		return func ((void *) table, userdata);
 	}
+
+
+	g_hash_table_iter_init (&iter, table);
+
+	ret = xmmsv_new_dict ();
+	while (g_hash_table_iter_next (&iter, (gpointer *) &key, &val)) {
+		xmmsv_t *xval;
+
+		if (val == NULL) {
+			continue;
+		}
+
+		xval = convert_ghashtable_to_xmmsv (val, depth - 1, func, userdata);
+		xmmsv_dict_set (ret, key, xval);
+		xmmsv_unref (xval);
+		keys++;
+	}
+
+	if (keys == 0) {
+		xmmsv_unref (ret);
+		ret = NULL;
+	}
+
+	return ret;
 }
 
 
 typedef struct {
-	int64_t sum;
-	int n;
+	gint64 sum;
+	gint n;
 } avg_data_t;
 
 typedef struct {
 	xmmsv_t *data;
-	int n;
+	gint n;
 } random_data_t;
 
 typedef struct {
@@ -2202,17 +2287,17 @@ typedef struct {
 
 /* Converts an S4 result (a column) into an xmmsv values */
 static void *
-result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
+result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
                  xmms_fetch_spec_t *spec)
 {
-	int32_t i;
-	xmmsv_t *dict, *cur;
-	const char *strval, *key = NULL;
-	char buf[12]; /* Big enough to hold 2^32 with minus sign */
-	int32_t ival, oldval;
 	const s4_val_t *val;
-	unsigned int len;
-	int new_val;
+	xmmsv_t *dict, *cur;
+	const gchar *strval, *key = NULL;
+	gint32 i, ival, oldval, new_val;
+	guint len;
+
+	/* Big enough to hold 2^32 with minus sign */
+	gchar buf[12];
 
 	/* Loop through all the values the column has */
 	while (res != NULL) {
@@ -2226,24 +2311,24 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 			 * or ival if it is an integer
 			 */
 			switch (spec->data.metadata.get[i]) {
-			case METADATA_KEY:
-				strval = s4_result_get_key (res);
-				break;
-			case METADATA_SOURCE:
-				strval = s4_result_get_src (res);
-				if (strval == NULL)
-					strval = "server";
-				break;
-			case METADATA_ID:
-				ival = id;
-				break;
-			case METADATA_VALUE:
-				val = s4_result_get_val (res);
+				case METADATA_KEY:
+					strval = s4_result_get_key (res);
+					break;
+				case METADATA_SOURCE:
+					strval = s4_result_get_src (res);
+					if (strval == NULL)
+						strval = "server";
+					break;
+				case METADATA_ID:
+					ival = id;
+					break;
+				case METADATA_VALUE:
+					val = s4_result_get_val (res);
 
-				if (!s4_val_get_int (val, &ival)) {
-					s4_val_get_str (val, &strval);
-				}
-				break;
+					if (!s4_val_get_int (val, &ival)) {
+						s4_val_get_str (val, &strval);
+					}
+					break;
 			}
 
 			/* If this is not the last property to get we use this property
@@ -2283,139 +2368,136 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 		new_val = 0;
 
 		switch (spec->data.metadata.aggr_func) {
-		case AGGREGATE_FIRST:
-			if (cur == NULL) {
+			case AGGREGATE_FIRST: {
+				if (cur == NULL) {
+					if (strval != NULL) {
+						cur = xmmsv_new_string (strval);
+					} else {
+						cur = xmmsv_new_int (ival);
+					}
+					new_val = 1;
+				}
+				break;
+			}
+			case AGGREGATE_LIST: {
+				if (cur == NULL) {
+					cur = xmmsv_new_list ();
+					new_val = 1;
+				}
 				if (strval != NULL) {
-					cur = xmmsv_new_string (strval);
+					xmmsv_list_append_string (cur, strval);
 				} else {
+					xmmsv_list_append_int (cur, ival);
+				}
+				break;
+			}
+			case AGGREGATE_SET: {
+				set_data_t *data;
+				xmmsv_t *val;
+				void *key;
+
+				if (cur == NULL) {
+					set_data_t init = {
+						.ht = g_hash_table_new (NULL, NULL),
+						.list = xmmsv_new_list ()
+					};
+					cur = xmmsv_new_bin ((guchar *) &init, sizeof (set_data_t));
+					new_val = 1;
+				}
+
+				xmmsv_get_bin (cur, (const guchar **) &data, &len);
+
+				if (strval != NULL) {
+					val = xmmsv_new_string (strval);
+					key = (void *) strval;
+				} else {
+					val = xmmsv_new_int (ival);
+					key = GINT_TO_POINTER (ival);
+				}
+
+				if (g_hash_table_lookup (data->ht, key) == NULL) {
+					g_hash_table_insert (data->ht, key, val);
+					xmmsv_list_append (data->list, val);
+				}
+				xmmsv_unref (val);
+				break;
+			}
+			case AGGREGATE_SUM: {
+				if (strval != NULL) {
+					ival = 0;
+				}
+
+				if (cur != NULL) {
+					xmmsv_get_int (cur, &oldval);
+					xmmsv_unref (cur);
+				} else {
+					oldval = 0;
+				}
+
+				ival += oldval;
+				cur = xmmsv_new_int (ival);
+				new_val = 1;
+				break;
+			}
+			case AGGREGATE_MIN: {
+				if (strval == NULL && (cur == NULL || (xmmsv_get_int (cur, &oldval) && oldval > ival))) {
+					if (cur != NULL) {
+						xmmsv_unref (cur);
+					}
 					cur = xmmsv_new_int (ival);
+					new_val = 1;
 				}
-				new_val = 1;
+				break;
 			}
-			break;
-
-		case AGGREGATE_LIST:
-			if (cur == NULL) {
-				cur = xmmsv_new_list ();
-				new_val = 1;
-			}
-			if (strval != NULL) {
-				xmmsv_list_append_string (cur, strval);
-			} else {
-				xmmsv_list_append_int (cur, ival);
-			}
-			break;
-
-		case AGGREGATE_SET:
-		{
-			xmmsv_t *val;
-			void *key;
-			set_data_t *data;
-
-			if (cur == NULL) {
-				set_data_t init = {
-					.ht = g_hash_table_new (NULL, NULL),
-					.list = xmmsv_new_list ()};
-				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (set_data_t));
-				new_val = 1;
-			}
-
-			xmmsv_get_bin (cur, (const unsigned char**)&data, &len);
-
-			if (strval != NULL) {
-				val = xmmsv_new_string (strval);
-				key = (void*)strval;
-			} else {
-				val = xmmsv_new_int (ival);
-				key = GINT_TO_POINTER (ival);
-			}
-
-			if (g_hash_table_lookup (data->ht, key) == NULL) {
-				g_hash_table_insert (data->ht, key, val);
-				xmmsv_list_append (data->list, val);
-			}
-			xmmsv_unref (val);
-			break;
-		}
-
-		case AGGREGATE_SUM:
-			if (strval != NULL)
-				ival = 0;
-			if (cur != NULL) {
-				xmmsv_get_int (cur, &oldval);
-				xmmsv_unref (cur);
-			} else {
-				oldval = 0;
-			}
-			ival += oldval;
-			cur = xmmsv_new_int (ival);
-			new_val = 1;
-			break;
-
-
-		case AGGREGATE_MIN:
-			if (strval == NULL && (cur == NULL
-			                       || (xmmsv_get_int (cur, &oldval) && oldval > ival))) {
-				if (cur != NULL) {
-					xmmsv_unref (cur);
+			case AGGREGATE_MAX: {
+				if (strval == NULL && (cur == NULL || (xmmsv_get_int (cur, &oldval) && oldval < ival))) {
+					if (cur != NULL) {
+						xmmsv_unref (cur);
+					}
+					cur = xmmsv_new_int (ival);
+					new_val = 1;
 				}
-				cur = xmmsv_new_int (ival);
-				new_val = 1;
+				break;
 			}
-			break;
+			case AGGREGATE_RANDOM: {
+				random_data_t *data;
 
-		case AGGREGATE_MAX:
-			if (strval == NULL && (cur == NULL
-			                       || (xmmsv_get_int (cur, &oldval) && oldval < ival))) {
-				if (cur != NULL) {
-					xmmsv_unref (cur);
+				if (cur == NULL) {
+					random_data_t init = { 0 };
+					cur = xmmsv_new_bin ((guchar *) &init, sizeof (random_data_t));
+					new_val = 1;
 				}
-				cur = xmmsv_new_int (ival);
-				new_val = 1;
-			}
-			break;
 
-		case AGGREGATE_RANDOM:
-		{
-			random_data_t *data;
+				xmmsv_get_bin (cur, (const guchar **) &data, &len);
 
-			if (cur == NULL) {
-				random_data_t init = { .n = 0, .data = NULL };
-				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (random_data_t));
-				new_val = 1;
-			}
-
-			xmmsv_get_bin (cur, (const unsigned char**)&data, &len);
-
-			data->n++;
-			if (g_random_int_range (0, data->n) == 0) {
-				xmmsv_unref (data->data);
-				if (strval != NULL) {
-					data->data = xmmsv_new_string (strval);
-				} else {
-					data->data = xmmsv_new_int (ival);
-				}
-			}
-			break;
-		}
-		case AGGREGATE_AVG:
-		{
-			avg_data_t *data;
-
-			if (cur == NULL) {
-				avg_data_t init = {.n = 0, .sum = 0 };
-				cur = xmmsv_new_bin ((unsigned char*)&init, sizeof (avg_data_t));
-				new_val = 1;
-			}
-
-			xmmsv_get_bin (cur, (const unsigned char**)&data, &len);
-
-			if (strval == NULL) {
 				data->n++;
-				data->sum += ival;
+				if (g_random_int_range (0, data->n) == 0) {
+					xmmsv_unref (data->data);
+					if (strval != NULL) {
+						data->data = xmmsv_new_string (strval);
+					} else {
+						data->data = xmmsv_new_int (ival);
+					}
+				}
+				break;
 			}
-			break;
-		}
+			case AGGREGATE_AVG: {
+				avg_data_t *data;
+
+				if (cur == NULL) {
+					avg_data_t init = { 0 };
+					cur = xmmsv_new_bin ((guchar *) &init, sizeof (avg_data_t));
+					new_val = 1;
+				}
+
+				xmmsv_get_bin (cur, (const guchar **) &data, &len);
+
+				if (strval == NULL) {
+					data->n++;
+					data->sum += ival;
+				}
+				break;
+			}
 		}
 
 		/* Update the previous dict (if there is one) */
@@ -2436,44 +2518,44 @@ result_to_xmmsv (xmmsv_t *ret, int32_t id, const s4_result_t *res,
 static xmmsv_t *
 aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 {
-	void *data = NULL;
-	xmmsv_t *ret = NULL;
-	avg_data_t *avg_data;
-	random_data_t *random_data;
-	set_data_t *set_data;
-	unsigned int len;
+	const random_data_t *random_data;
+	const avg_data_t *avg_data;
+	const set_data_t *set_data;
+	gconstpointer data;
+	xmmsv_t *ret;
+	guint len;
+
+	ret = NULL;
+	data = NULL;
 
 	if (value != NULL && xmmsv_is_type (value, XMMSV_TYPE_BIN))
-		xmmsv_get_bin (value, (const unsigned char**)&data, &len);
+		xmmsv_get_bin (value, (const guchar **) &data, &len);
 
-	switch (aggr_func) {
-	case AGGREGATE_FIRST:
-	case AGGREGATE_MIN:
-	case AGGREGATE_MAX:
-	case AGGREGATE_SUM:
-	case AGGREGATE_LIST:
-		ret = xmmsv_ref (value);
-		break;
-
-	case AGGREGATE_RANDOM:
-		random_data = data;
-		if (random_data != NULL) {
-			ret = random_data->data;
-		}
-		break;
-
-	case AGGREGATE_SET:
-		set_data = data;
-		g_hash_table_destroy (set_data->ht);
-		ret = set_data->list;
-		break;
-
-	case AGGREGATE_AVG:
-		avg_data = data;
-		if (avg_data != NULL) {
-			ret = xmmsv_new_int (avg_data->n ? avg_data->sum / avg_data->n : 0);
-		}
-		break;
+		switch (aggr_func) {
+			case AGGREGATE_FIRST:
+			case AGGREGATE_MIN:
+			case AGGREGATE_MAX:
+			case AGGREGATE_SUM:
+			case AGGREGATE_LIST:
+				ret = xmmsv_ref (value);
+				break;
+			case AGGREGATE_RANDOM:
+				random_data = data;
+				if (random_data != NULL) {
+					ret = random_data->data;
+				}
+				break;
+			case AGGREGATE_SET:
+				set_data = data;
+				g_hash_table_destroy (set_data->ht);
+				ret = set_data->list;
+				break;
+			case AGGREGATE_AVG:
+				avg_data = data;
+				if (avg_data != NULL) {
+					ret = xmmsv_new_int (avg_data->n ? avg_data->sum / avg_data->n : 0);
+				}
+				break;
 	}
 
 	xmmsv_unref (value);
@@ -2483,7 +2565,7 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 
 /* Applies an aggregation function to the leafs in an xmmsv dict tree */
 static xmmsv_t *
-aggregate_result (xmmsv_t *val, int depth, aggregate_function_t aggr_func)
+aggregate_result (xmmsv_t *val, gint depth, aggregate_function_t aggr_func)
 {
 	if (val == NULL) {
 		return NULL;
@@ -2510,25 +2592,26 @@ aggregate_result (xmmsv_t *val, int depth, aggregate_function_t aggr_func)
 static xmmsv_t *
 metadata_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 {
-	xmmsv_t *ret = NULL;
 	const s4_resultrow_t *row;
-	const s4_result_t *res;
-	int i, j;
+	xmmsv_t *ret = NULL;
+	gint i;
 
 	/* Loop over the rows in the resultset */
 	for (i = 0; s4_resultset_get_row (set, i, &row); i++) {
-		int32_t id;
+		gint32 id, j;
+
 		s4_val_get_int (s4_result_get_val (s4_resultset_get_result (set, i, 0)), &id);
 		for (j = 0; j < spec->data.metadata.col_count; j++) {
+			const s4_result_t *res;
+
 			if (s4_resultrow_get_col (row, spec->data.metadata.cols[j], &res)) {
 				ret = result_to_xmmsv (ret, id, res, spec);
 			}
 		}
 	}
 
-	ret = aggregate_result (ret, spec->data.metadata.get_size - 1, spec->data.metadata.aggr_func);
-
-	return ret;
+	return aggregate_result (ret, spec->data.metadata.get_size - 1,
+	                         spec->data.metadata.aggr_func);
 }
 
 
@@ -2536,7 +2619,8 @@ metadata_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
  * the same values for the cluster attributes
  */
 static void
-cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec, GHashTable *table, GList **list)
+cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec,
+             GHashTable *table, GList **list)
 {
 	const s4_resultrow_t *row;
 	gint position;
@@ -2605,54 +2689,51 @@ cluster_dict (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 static xmmsv_t *
 resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 {
-	xmmsv_t *val, *ret = NULL;
-	GList *sets;
 	GHashTable *set_table;
-	int i;
+	GList *sets;
+	xmmsv_t *val, *ret = NULL;
+	gint i;
 
 	switch (spec->type) {
-	case FETCH_COUNT:
-		ret = xmmsv_new_int (s4_resultset_get_rowcount (set));
-		break;
-	case FETCH_METADATA:
-		ret = metadata_to_xmmsv (set, spec);
-		break;
+		case FETCH_COUNT:
+			ret = xmmsv_new_int (s4_resultset_get_rowcount (set));
+			break;
+		case FETCH_METADATA:
+			ret = metadata_to_xmmsv (set, spec);
+			break;
+		case FETCH_ORGANIZE:
+			ret = xmmsv_new_dict ();
 
-	case FETCH_ORGANIZE:
-		ret = xmmsv_new_dict ();
-
-		for (i = 0; i < spec->data.organize.count; i++) {
-			val = resultset_to_xmmsv (set, spec->data.organize.data[i]);
-			if (val != NULL) {
-				xmmsv_dict_set (ret, spec->data.organize.keys[i], val);
-				xmmsv_unref (val);
+			for (i = 0; i < spec->data.organize.count; i++) {
+				val = resultset_to_xmmsv (set, spec->data.organize.data[i]);
+				if (val != NULL) {
+					xmmsv_dict_set (ret, spec->data.organize.keys[i], val);
+					xmmsv_unref (val);
+				}
 			}
-		}
-		break;
+			break;
+		case FETCH_CLUSTER_LIST:
+			sets = cluster_list (set, spec);
+			ret = xmmsv_new_list ();
+			for (; sets != NULL; sets = g_list_delete_link (sets, sets)) {
+				set = sets->data;
 
-	case FETCH_CLUSTER_LIST:
-		sets = cluster_list (set, spec);
-		ret = xmmsv_new_list ();
-		for (; sets != NULL; sets = g_list_delete_link (sets, sets)) {
-			set = sets->data;
-
-			val = resultset_to_xmmsv (set, spec->data.cluster.data);
-			if (val != NULL) {
-				xmmsv_list_append (ret, val);
-				xmmsv_unref (val);
+				val = resultset_to_xmmsv (set, spec->data.cluster.data);
+				if (val != NULL) {
+					xmmsv_list_append (ret, val);
+					xmmsv_unref (val);
+				}
+				s4_resultset_free (set);
 			}
-			s4_resultset_free (set);
-		}
-		break;
+			break;
+		case FETCH_CLUSTER_DICT:
+			set_table = cluster_dict (set, spec);
+			ret = convert_ghashtable_to_xmmsv (set_table, 1,
+			                                   (void_to_xmmsv_t) resultset_to_xmmsv,
+			                                   spec->data.cluster.data);
 
-	case FETCH_CLUSTER_DICT:
-		set_table = cluster_dict (set, spec);
-		ret = convert_ghashtable_to_xmmsv (set_table, 1,
-		                                   (void_to_xmmsv_t)resultset_to_xmmsv,
-		                                   spec->data.cluster.data);
-
-		g_hash_table_destroy (set_table);
-		break;
+			g_hash_table_destroy (set_table);
+			break;
 	}
 
 	return ret;
@@ -2668,15 +2749,14 @@ resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
  * @return An xmmsv_t with the structure requested in fetch
  */
 xmmsv_t *
-xmms_medialib_query (xmms_medialib_session_t *session,
-                                   xmmsv_coll_t *coll, xmmsv_t *fetch, xmms_error_t *err)
+xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+                     xmmsv_t *fetch, xmms_error_t *err)
 {
 	s4_sourcepref_t *sourcepref;
 	s4_resultset_t *set;
 	xmmsv_t *order, *ret;
 	xmms_fetch_info_t *info;
 	xmms_fetch_spec_t *spec;
-	int fetch_invalid = 0;
 
 	xmms_error_reset (err);
 
@@ -2685,7 +2765,7 @@ xmms_medialib_query (xmms_medialib_session_t *session,
 	info = xmms_fetch_info_new (sourcepref);
 	spec = xmms_fetch_spec_new (fetch, info, sourcepref, err);
 
-	if (spec == NULL || fetch_invalid) {
+	if (spec == NULL) {
 		xmms_fetch_spec_free (spec);
 		xmms_fetch_info_free (info);
 		return NULL;
