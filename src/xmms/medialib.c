@@ -838,39 +838,46 @@ process_dir (const gchar *directory,
 
 void
 xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
-                             xmms_medialib_entry_t id_num)
+                             xmms_medialib_entry_t entry)
 {
 	s4_resultset_t *set;
-	s4_val_t *id_val;
+	s4_val_t *song_id;
 	gint i;
 
-	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
+	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (entry),
 	                            S4_COND_PARENT, NULL, NULL, S4_FETCH_DATA);
-	id_val = s4_val_new_int (id_num);
+
+	song_id = s4_val_new_int (entry);
 
 	for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
-		const s4_result_t *res = s4_resultset_get_result (set, i, 0);
+		const s4_result_t *res;
 
-		for (; res != NULL; res = s4_result_next (res)) {
-			const char *src = s4_result_get_src (res);
-			const char *key = s4_result_get_key (res);
+		res = s4_resultset_get_result (set, i, 0);
+		while (res != NULL) {
+			const gchar *src = s4_result_get_src (res);
+			const gchar *key = s4_result_get_key (res);
+
 			if (strcmp (XMMS_MEDIALIB_SOURCE_SERVER, src) == 0) {
 				if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_URL) &&
 				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED) &&
 				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) &&
 				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD) &&
-				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED))
-					s4_del (NULL, session->trans, "song_id", id_val, key,
-					        s4_result_get_val (res), src);
-			} else if (strncmp (src, "plugin/", 7) == 0
-			           && strcmp (src, "plugin/playlist") != 0) {
-				s4_del (NULL, session->trans, "song_id", id_val, key,
-				        s4_result_get_val (res), src);
+				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED)) {
+					s4_del (NULL, session->trans, "song_id", song_id,
+					        key, s4_result_get_val (res), src);
+				}
+			} else if (strncmp (src, "plugin/", 7) == 0 &&
+			           strcmp (src, "plugin/playlist") != 0) {
+				s4_del (NULL, session->trans, "song_id", song_id,
+				        key, s4_result_get_val (res), src);
 			}
+
+			res = s4_result_next (res);
 		}
 	}
+
 	s4_resultset_free (set);
-	s4_val_free (id_val);
+	s4_val_free (song_id);
 }
 
 static void
