@@ -2567,22 +2567,29 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 static xmmsv_t *
 aggregate_result (xmmsv_t *val, gint depth, aggregate_function_t aggr_func)
 {
+	xmmsv_dict_iter_t *it;
+
 	if (val == NULL) {
 		return NULL;
-	} else if (depth > 0) {
-		/* If it's a dict we call this function recursively on all its values */
-		xmmsv_dict_iter_t *it;
-		xmmsv_get_dict_iter (val, &it);
+	}
 
-		for (; xmmsv_dict_iter_valid (it); xmmsv_dict_iter_next (it)) {
-			xmmsv_t *val;
-			xmmsv_dict_iter_pair (it, NULL, &val);
-			val = aggregate_result (val, depth - 1, aggr_func);
-			xmmsv_dict_iter_set (it, val);
-			xmmsv_unref (val);
-		}
-	} else {
-		val = aggregate_data (val, aggr_func);
+	if (depth == 0) {
+		return aggregate_data (val, aggr_func);
+	}
+
+	/* If it's a dict we call this function recursively on all its values */
+	xmmsv_get_dict_iter (val, &it);
+
+	while (xmmsv_dict_iter_valid (it)) {
+		xmmsv_t *entry;
+
+		xmmsv_dict_iter_pair (it, NULL, &entry);
+
+		entry = aggregate_result (entry, depth - 1, aggr_func);
+		xmmsv_dict_iter_set (it, entry);
+		xmmsv_unref (entry);
+
+		xmmsv_dict_iter_next (it);
 	}
 
 	return val;
