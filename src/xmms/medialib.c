@@ -412,30 +412,32 @@ xmms_medialib_entry_property_get (xmms_medialib_session_t *session,
                                   xmms_medialib_entry_t id_num,
                                   const gchar *property)
 {
+	s4_sourcepref_t *sourcepref;
+	const s4_result_t *res;
+	s4_resultset_t *set;
 	s4_val_t *ret = NULL;
-	s4_val_t *ival = s4_val_new_int (id_num);
+	s4_val_t *song_id;
 
 	g_return_val_if_fail (property, NULL);
 
-	if (!strcmp (property, XMMS_MEDIALIB_ENTRY_PROPERTY_ID)) {
-		ret = ival;
-	} else {
-		s4_sourcepref_t *sourcepref;
-		const s4_result_t *res;
-		s4_resultset_t *set;
+	song_id = s4_val_new_int (id_num);
 
-		sourcepref = xmms_medialib_get_source_preference (session);
-
-		set = xmms_medialib_filter (session, "song_id", ival, S4_COND_PARENT,
-		                            sourcepref, property, S4_FETCH_DATA);
-
-		res = s4_resultset_get_result (set, 0, 0);
-		if (res != NULL) {
-			ret = s4_val_copy (s4_result_get_val (res));
-		}
-
-		s4_resultset_free (set);
+	if (strcmp (property, XMMS_MEDIALIB_ENTRY_PROPERTY_ID) == 0) {
+		/* only resolving attributes other than 'id' */
+		return song_id;
 	}
+
+	sourcepref = xmms_medialib_get_source_preference (session);
+
+	set = xmms_medialib_filter (session, "song_id", song_id, S4_COND_PARENT,
+	                            sourcepref, property, S4_FETCH_DATA);
+
+	res = s4_resultset_get_result (set, 0, 0);
+	if (res != NULL) {
+		ret = s4_val_copy (s4_result_get_val (res));
+	}
+
+	s4_resultset_free (set);
 
 	return ret;
 }
