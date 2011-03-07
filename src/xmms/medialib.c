@@ -724,31 +724,35 @@ xmms_medialib_client_remove_entry (xmms_medialib_t *medialib,
  *
  * @param id_num Entry to remove
  */
-
 void
 xmms_medialib_entry_remove (xmms_medialib_session_t *session,
                             xmms_medialib_entry_t id_num)
 {
 	s4_resultset_t *set;
-	s4_val_t *id_val;
+	s4_val_t *song_id;
 	gint i;
 
-	id_val = s4_val_new_int (id_num);
+	song_id = s4_val_new_int (id_num);
+
 	set = xmms_medialib_filter (session, "song_id", s4_val_new_int (id_num),
 	                            S4_COND_PARENT, NULL, NULL, S4_FETCH_DATA);
 
 	for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
-		const s4_result_t *res = s4_resultset_get_result (set, i, 0);
+		const s4_result_t *res;
 
-		for (; res != NULL; res = s4_result_next (res)) {
-			const gchar *src = s4_result_get_src (res);
+		res = s4_resultset_get_result (set, i, 0);
+		while (res != NULL) {
+			s4_del (NULL, session->trans, "song_id", song_id,
+			        s4_result_get_key (res),
+			        s4_result_get_val (res),
+			        s4_result_get_src (res));
 
-			s4_del (NULL, session->trans, "song_id", id_val, s4_result_get_key (res),
-			        s4_result_get_val (res), src);
+			res = s4_result_next (res);
 		}
 	}
+
 	s4_resultset_free (set);
-	s4_val_free (id_val);
+	s4_val_free (song_id);
 
 	/** @todo safe ? */
 	xmms_playlist_remove_by_entry (session->medialib->playlist, id_num);
