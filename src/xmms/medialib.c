@@ -2235,33 +2235,31 @@ convert_ghashtable_to_xmmsv (GHashTable *table, gint depth,
                              void_to_xmmsv_t func, void *userdata)
 {
 	GHashTableIter iter;
+	GHashTable *value;
 	const gchar *key;
 	xmmsv_t *ret;
-	gint keys = 0;
-	void *val;
 
 	if (depth == 0) {
 		return func ((void *) table, userdata);
 	}
 
-
 	g_hash_table_iter_init (&iter, table);
 
 	ret = xmmsv_new_dict ();
-	while (g_hash_table_iter_next (&iter, (gpointer *) &key, &val)) {
-		xmmsv_t *xval;
 
-		if (val == NULL) {
+	while (g_hash_table_iter_next (&iter, (gpointer *) &key, (gpointer *) &value)) {
+		xmmsv_t *xvalue;
+
+		if (value == NULL) {
 			continue;
 		}
 
-		xval = convert_ghashtable_to_xmmsv (val, depth - 1, func, userdata);
-		xmmsv_dict_set (ret, key, xval);
-		xmmsv_unref (xval);
-		keys++;
+		xvalue = convert_ghashtable_to_xmmsv (value, depth - 1, func, userdata);
+		xmmsv_dict_set (ret, key, xvalue);
+		xmmsv_unref (xvalue);
 	}
 
-	if (keys == 0) {
+	if (xmmsv_dict_get_size (ret) == 0) {
 		xmmsv_unref (ret);
 		ret = NULL;
 	}
