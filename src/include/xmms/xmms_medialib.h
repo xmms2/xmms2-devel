@@ -84,37 +84,6 @@
 G_BEGIN_DECLS
 
 typedef gint32 xmms_medialib_entry_t;
-typedef struct xmms_medialib_St xmms_medialib_t;
-typedef struct xmms_medialib_session_St xmms_medialib_session_t;
-
-#define MEDIALIB_SESSION(mlib, x) {\
-		xmms_medialib_session_t *session;\
-		do {\
-			session = xmms_medialib_begin (mlib);\
-			x; \
-		} while (!xmms_medialib_commit (session));\
-	}
-
-#define MEDIALIB_BEGIN(mlib) {\
-		xmms_medialib_session_t *session;\
-		do { \
-			session = xmms_medialib_begin (mlib);
-#define MEDIALIB_COMMIT() } while (!xmms_medialib_commit (session));}
-
-xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *s, const char *url, xmms_error_t *error);
-
-xmmsv_t *xmms_medialib_entry_property_get_value (xmms_medialib_session_t *s, xmms_medialib_entry_t entry, const gchar *property);
-gchar *xmms_medialib_entry_property_get_str (xmms_medialib_session_t *s, xmms_medialib_entry_t entry, const gchar *property);
-gint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *s, xmms_medialib_entry_t entry, const gchar *property);
-gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *s, xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
-gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *s, xmms_medialib_entry_t entry, const gchar *property, gint value);
-gchar *xmms_medialib_url_encode (const gchar *path);
-xmms_medialib_session_t *xmms_medialib_begin (xmms_medialib_t *mlib);
-gboolean xmms_medialib_commit (xmms_medialib_session_t *session);
-void xmms_medialib_abort (xmms_medialib_session_t *session);
-
-
-#define xmms_medialib_entry_status_set(s, e, st) xmms_medialib_entry_property_set_int_source(s, e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, "server") /** @todo: hardcoded server id might be bad? */
 
 G_END_DECLS
 

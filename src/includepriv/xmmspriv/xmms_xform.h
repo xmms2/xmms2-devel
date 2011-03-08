@@ -18,7 +18,7 @@
 #define __XMMS_PRIV_XFORM_H__
 
 #include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_medialib.h"
+#include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_plugin.h"
 
