@@ -179,6 +179,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
 	switch (res->type) {
 		case XMMSC_RESULT_CLASS_SIGNAL:
 		case XMMSC_RESULT_CLASS_BROADCAST:
+		case XMMSC_RESULT_CLASS_DEFAULT:
 			xmmsc_result_notifier_delete_all (res);
 			break;
 		default:
