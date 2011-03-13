@@ -141,10 +141,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 	x_return_if_fail (res);
 
 	/* Free memory! */
-
-	xmmsc_ipc_result_unregister (res->ipc, res);
-
-	xmmsc_unref (res->c);
+	if (res->ipc) {
+		xmmsc_ipc_result_unregister (res->ipc, res);
+	}
 
 	if (res->data) {
 		xmmsv_unref (res->data);
@@ -321,6 +320,7 @@ xmmsc_result_notifier_set_full (xmmsc_result_t *res, xmmsc_result_notifier_t fun
 	xmmsc_result_callback_t *cb;
 
 	x_return_if_fail (res);
+	x_return_if_fail (res->ipc);
 	x_return_if_fail (func);
 
 	/* The pending call takes one ref */
@@ -342,6 +342,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
 {
 	const char *err = NULL;
 	x_return_if_fail (res);
+	x_return_if_fail (res->ipc);
 
 	while (!res->parsed && !(err = xmmsc_ipc_error_get (res->ipc))) {
 		xmmsc_ipc_wait_for_event (res->ipc, 5);
@@ -474,7 +475,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 		return NULL;
 	}
 
-	res->c = xmmsc_ref (c);
+	res->c = c;
 
 	res->data = NULL;
 	res->type = type;
@@ -492,6 +493,12 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 	return res;
 }
 
+void
+xmmsc_result_clear_weakrefs (xmmsc_result_t *result)
+{
+	result->c = NULL;
+	result->ipc = NULL;
+}
 
 static xmmsc_result_callback_t *
 xmmsc_result_callback_new (xmmsc_result_notifier_t f, void *udata,

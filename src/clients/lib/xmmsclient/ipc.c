@@ -252,6 +252,7 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 
 		if (xmmsc_result_cookie_get (res) == xmmsc_result_cookie_get (tmp)) {
 			ipc->results_list = x_list_delete_link (ipc->results_list, n);
+			xmmsc_result_clear_weakrefs (res);
 			break;
 		}
 	}
@@ -323,8 +324,15 @@ xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cookie)
 void
 xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 {
+	x_list_t *n;
+
 	if (!ipc)
 		return;
+
+	for (n = ipc->results_list; n; n = x_list_next (n)) {
+		xmmsc_result_t *tmp = n->data;
+		xmmsc_result_clear_weakrefs (tmp);
+	}
 
 	x_list_free (ipc->results_list);
 	if (ipc->transport) {

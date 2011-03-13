@@ -52,6 +52,10 @@ xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, uint32_t cookie);
 void xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
 void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout);
 
+/* FIXME: The proper place would be in a new header
+ * xmmsclientpriv/xmmsclient_result.h  */
+void xmmsc_result_clear_weakrefs (xmmsc_result_t *result);
+
 int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc);
 int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc);
 int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc);
