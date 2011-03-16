@@ -2496,13 +2496,13 @@ xmmsv_build_organize (xmmsv_t *data)
 /**
  * Creates a metadata fetch specification.
  *
- * @param keys A list of keys to fetch, or NULL to fetch everything
+ * @param fields A list of fields to fetch, or NULL to fetch everything
  * @param get A list of what to get ("id", "key", "value", "source")
  * @param aggregate The aggregation function to use
  * @param sourcepref A list of sources, first one has the highest priority
  * @return A metadata fetch specification
  */
-xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref)
+xmmsv_t *xmmsv_build_metadata (xmmsv_t *fields, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref)
 {
 	xmmsv_t *res = xmmsv_new_dict ();
 	if (res == NULL)
@@ -2510,14 +2510,14 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregat
 
 	xmmsv_dict_set_string (res, "type", "metadata");
 
-	if (keys != NULL) {
-		if (xmmsv_get_type (keys) == XMMSV_TYPE_STRING) {
+	if (fields != NULL) {
+		if (xmmsv_get_type (fields) == XMMSV_TYPE_STRING) {
 			xmmsv_t *list = xmmsv_new_list ();
-			xmmsv_list_append (list, keys);
-			keys = list;
+			xmmsv_list_append (list, fields);
+			fields = list;
 		}
-		xmmsv_dict_set (res, "keys", keys);
-		xmmsv_unref (keys);
+		xmmsv_dict_set (res, "fields", fields);
+		xmmsv_unref (fields);
 	}
 	if (get != NULL) {
 		if (xmmsv_get_type (get) == XMMSV_TYPE_STRING) {
