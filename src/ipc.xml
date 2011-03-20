@@ -1655,39 +1655,6 @@ vim:expandtab
     </object>
 
     <object>
-        <name>mediainfo_reader</name>
-
-        <broadcast>
-            <id>12</id>
-            <name>status</name>
-            <documentation>This broadcast is triggered when the status of the mediainfo reader changes.</documentation>
-
-            <return_value>
-                <documentation>The current status of the mediainfo reader.</documentation>
-
-                <type>
-                    <!-- FIXME: link to enum mediainfo_reader_status -->
-                    <int />
-                </type>
-            </return_value>
-        </broadcast>
-
-        <signal>
-            <id>13</id>
-            <name>unindexed</name>
-            <documentation>Emits the number of unresolved medialib entries.</documentation>
-
-            <return_value>
-                <documentation>The number of unresolved medialib entries.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </return_value>
-        </signal>
-    </object>
-
-    <object>
         <name>visualization</name>
 
         <method>
@@ -1855,6 +1822,39 @@ vim:expandtab
                 </type>
             </argument>
         </method>
+    </object>
+
+    <object>
+        <name>mediainfo_reader</name>
+
+        <broadcast>
+            <id>12</id>
+            <name>status</name>
+            <documentation>This broadcast is triggered when the status of the mediainfo reader changes.</documentation>
+
+            <return_value>
+                <documentation>The current status of the mediainfo reader.</documentation>
+
+                <type>
+                    <!-- FIXME: link to enum mediainfo_reader_status -->
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <signal>
+            <id>13</id>
+            <name>unindexed</name>
+            <documentation>Emits the number of unresolved medialib entries.</documentation>
+
+            <return_value>
+                <documentation>The number of unresolved medialib entries.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </signal>
     </object>
 
     <object>
