@@ -2,7 +2,17 @@ import Configure
 from logging import warning
 import os
 
-def build(bld):
+def build_precompiled(bld):
+    for t in ['xmmsvalue', 'xmmsapi']:
+        bld(features = 'cc cshlib pyext',
+            source = t+'.c',
+            target = t,
+            uselib_local = 'xmmsclient',
+            includes = '../../../.. ../../../include ../../../includepriv',
+            install_path = '${xmmsclient_PYTHONDIR}',
+            mac_bundle = True)
+
+def build_cython(bld):
     for t in ['xmmsvalue', 'xmmsapi']:
         bld(features = 'cython cc cshlib pyext',
             source = t+'.pyx',
@@ -12,6 +22,12 @@ def build(bld):
             install_path = '${xmmsclient_PYTHONDIR}',
             mac_bundle = True,
             cython_includes = 'cython_include')
+
+def build(bld):
+    if bld.env['USE_PRECOMPILED']:
+        build_precompiled(bld)
+    else:
+        build_cython(bld)
 
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
@@ -40,10 +56,8 @@ def configure(conf):
               + conf.env['PYTHONDIR'])
 
     conf.check_tool('cython', tooldir=os.path.abspath('waftools'))
-    if not conf.env['CYTHON']:
-        conf.fatal("cython not found")
-
-    conf.check_cython_version(minver='0.13', mandatory=True) # Required for embedded functions
+    if not conf.env['CYTHON'] or not conf.check_cython_version(minver='0.13'):
+        conf.env['USE_PRECOMPILED'] = True
 
 def set_options(opt):
     pass
