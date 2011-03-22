@@ -204,9 +204,8 @@ static gboolean
 updater_add_watcher (updater_t *updater, GFile *file)
 {
 	GFileMonitor *monitor;
-	xmmsc_result_t *res;
 	GError *err = NULL;
-	gchar *path, *url;
+	gchar *path;
 
 	g_return_val_if_fail (updater, FALSE);
 	g_return_val_if_fail (file, FALSE);
@@ -231,14 +230,32 @@ updater_add_watcher (updater_t *updater, GFile *file)
 	/* path ownership transfered to the hash */
 	g_hash_table_insert (updater->watchers, path, monitor);
 
+	updater_find_sub_directories (updater, file);
+
+	return TRUE;
+}
+
+static gboolean
+updater_add_watcher_and_import (updater_t *updater, GFile *file)
+{
+	xmmsc_result_t *res;
+	gchar *url, *path;
+
+	g_return_val_if_fail (updater, FALSE);
+	g_return_val_if_fail (file, FALSE);
+
+	if (!updater_add_watcher (updater, file)) {
+		return FALSE;
+	}
+
+	path = g_file_get_path (file);
 	url = g_strdup_printf ("file://%s", path);
+	g_free (path);
 
 	res = xmmsc_medialib_import_path (updater->conn, url);
 	xmmsc_result_unref (res);
 
 	g_free (url);
-
-	updater_find_sub_directories (updater, file);
 
 	return TRUE;
 }
@@ -265,10 +282,6 @@ updater_remove_watcher (updater_t *updater, GFile *file)
 
 /**
  * TODO: Maybe this should support colon separated dirs in the future
- * TODO: Maybe add directories to a queue that resolves in the background
- *       and post switch_directory we clear that queue/list and only emit
- *       the top path? Perhaps always a good idea to always minimize the
- *       queue on each timeout_poll?
  */
 static gboolean
 updater_switch_directory (updater_t *updater, const gchar *path)
@@ -289,7 +302,7 @@ updater_switch_directory (updater_t *updater, const gchar *path)
 	}
 
 	updater_clear_watchers (updater);
-	updater_add_watcher (updater, file);
+	updater_add_watcher_and_import (updater, file);
 	g_object_unref (file);
 
 	return TRUE;
@@ -563,7 +576,7 @@ on_entity_created (updater_t *updater, GFile *entity)
 	switch (type) {
 	case G_FILE_TYPE_DIRECTORY:
 		g_debug ("directory created");
-		updater_add_watcher (updater, entity);
+		updater_add_watcher_and_import (updater, entity);
 		break;
 	case G_FILE_TYPE_REGULAR:
 		g_debug ("file created");
