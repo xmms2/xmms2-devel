@@ -361,11 +361,17 @@ static void
 updater_subscribe_config (updater_t *updater)
 {
 	xmmsc_result_t *res;
+	const gchar *default_directory;
 
 	g_return_if_fail (updater);
 	g_return_if_fail (updater->conn);
 
-	res = xmmsc_config_register_value (updater->conn, "mlibupdater.watch_dirs", "");
+	default_directory = g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+
+	res = xmmsc_config_register_value (updater->conn,
+	                                   "mlibupdater.watch_dirs",
+	                                   default_directory);
+
 	xmmsc_result_notifier_set (res, updater_config_register, updater);
 	xmmsc_result_unref (res);
 
