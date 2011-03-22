@@ -34,9 +34,8 @@ E: bjernstad@gmail.com
 D: PythonAPI fixes.
 
 N: Raphaël Bois
-E: vdust@free.fr
 E: virtualdust@gmail.com
-D: Bindata bugfix.
+D: Port of python bindings to Cython. Various fixes.
 
 N: Romain Boissat
 E: r.boissat@gmail.com
