@@ -23,10 +23,10 @@ class XMMSSync:
             self.__xmms = xmmsapi.XMMS(clientname)
         else:
             self.__xmms = xmms
-            
+
     def __getattr__(self, name):
         attr = getattr(self.__xmms, name)
-        if callable(attr):
+        if hasattr(attr, '__call__'):
             def _(*args, **kwargs):
                 ret = attr(*args, **kwargs)
                 if isinstance(ret, xmmsapi.XMMSResult):

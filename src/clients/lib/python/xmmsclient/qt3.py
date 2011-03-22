@@ -10,7 +10,7 @@ class XMMSConnector(qt.QObject):
 		self.rsock = qt.QSocketNotifier(fd, qt.QSocketNotifier.Read, self)
 		self.connect(self.rsock, qt.SIGNAL("activated(int)"), self.do_read)
 		self.rsock.setEnabled(False)
-		
+
 		self.wsock = qt.QSocketNotifier(fd, qt.QSocketNotifier.Write, self)
 		self.connect(self.wsock, qt.SIGNAL("activated(int)"), self.do_write)
 		self.wsock.setEnabled(False)
@@ -23,7 +23,7 @@ class XMMSConnector(qt.QObject):
 
 	def toggle_read(self, bool):
 		self.rsock.setEnabled(bool)
-	
+
 	def toggle_write(self, bool):
 		self.wsock.setEnabled(bool)
 
@@ -32,4 +32,4 @@ class XMMSConnector(qt.QObject):
 
 	def do_write(self, i):
 		self.xmms.ioout()
-	
+

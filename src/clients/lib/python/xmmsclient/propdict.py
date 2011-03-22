@@ -1,3 +1,10 @@
+#Py3k compat
+try:
+	a = basestring
+	del a
+except NameError:
+	basestring = str
+
 class PropDict(dict):
     def __init__(self, srcs):
         dict.__init__(self)
@@ -33,7 +40,7 @@ class PropDict(dict):
                     return t
                 except KeyError:
                     pass
-            raise KeyError, item
+            raise KeyError(item)
         return dict.__getitem__(self, item)
 
     def get(self, item, default=None):
@@ -41,7 +48,7 @@ class PropDict(dict):
             return self[item]
         except KeyError:
             return default
-    
+
     def _get_sources(self):
         return self._sources
     def _set_sources(self, val):

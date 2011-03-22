@@ -3,18 +3,15 @@ from logging import warning
 import os
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'shlib', 'pyext')
-    obj.target = 'xmmsapi'
-    obj.includes = '../../../.. ../../../include ../../../includepriv .'
-    obj.source = ['xmmsapi.pyx']
-
-    # the generated c code will throw an estimated 1000 warnings
-    # if we compile with -Wwrite-strings. so don't.
-    obj.uselib = 'NOWRITESTRINGS'
-
-    obj.uselib_local = 'xmmsclient'
-    obj.install_path = "${xmmsclient_PYTHONDIR}"
-    obj.mac_bundle = True
+    for t in ['xmmsvalue', 'xmmsapi']:
+        bld(features = 'cython cc cshlib pyext',
+            source = t+'.pyx',
+            target = t,
+            uselib_local = 'xmmsclient',
+            includes = '../../../.. ../../../include ../../../includepriv',
+            install_path = '${xmmsclient_PYTHONDIR}',
+            mac_bundle = True,
+            cython_includes = 'cython_include')
 
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
@@ -23,6 +20,7 @@ def build(bld):
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/collections.py')
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/glib.py')
     bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/qt3.py')
+    # TODO: Distribute .pxd files
 
 def configure(conf):
     conf.check_tool('python')
@@ -35,15 +33,17 @@ def configure(conf):
     conf.env['xmmsclient_PYTHONDIR'] = conf.env['PYTHONDIR'] + '/xmmsclient'
 
     prefix = os.path.commonprefix([conf.env['PYTHONDIR'], conf.env['PREFIX']])
-    if not (isinstance(prefix, basestring) or prefix.startswith(conf.env['PREFIX'])):
+    if not prefix:
         warning('default python libdir is not under PREFIX. specify path '
               + 'manually using the PYTHONDIR environment variable if you '
               + 'don\'t want the python bindings to be installed to '
               + conf.env['PYTHONDIR'])
 
-    conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
-    if not conf.env['PYREX']:
-        conf.fatal("pyrexc not found")
+    conf.check_tool('cython', tooldir=os.path.abspath('waftools'))
+    if not conf.env['CYTHON']:
+        conf.fatal("cython not found")
+
+    conf.check_cython_version(minver='0.13', mandatory=True) # Required for embedded functions
 
 def set_options(opt):
     pass
