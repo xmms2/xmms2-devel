@@ -14,6 +14,8 @@
  *  General Public License for more details.
  */
 
+#include <errno.h>
+
 #include "configuration.h"
 
 const gchar *const default_config =
@@ -71,6 +73,7 @@ configuration_init (const gchar *path)
 {
 	configuration_t *config;
 	gchar *history_file;
+	GError *error = NULL;
 
 	config = g_new0 (configuration_t, 1);
 
@@ -98,13 +101,24 @@ configuration_init (const gchar *path)
 		g_fprintf (stderr, "Creating %s...\n", config->path);
 
 		dir = g_path_get_dirname (config->path);
-		g_mkdir_with_parents (dir, 0755);
-		g_free (dir);
+		if (g_mkdir_with_parents (dir, 0755) == -1) {
+			g_fprintf (stderr,
+			           "Error: Can't create directory %s! %s.\n",
+			           dir, g_strerror (errno));
+		} else {
+			if (!g_file_set_contents (config->path, default_config,
+			                          strlen (default_config), &error)) {
+				g_fprintf (stderr,
+				           "%s.\n"
+				           "Error: Can't create configuration file!\n",
+				           error->message);
 
-		if (!g_file_set_contents (config->path, default_config,
-		                          strlen (default_config), NULL)) {
-			g_fprintf (stderr, "Error: Can't create configuration file!\n");
+				g_error_free (error);
+				error = NULL;
+			}
 		}
+
+		g_free (dir);
 	}
 
 	/* load the defaults */
