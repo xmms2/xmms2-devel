@@ -219,12 +219,15 @@ cli_infos_init (gint argc, gchar **argv)
 {
 	cli_infos_t *infos;
 	alias_define_t *aliaslist;
+	gchar *filename;
 	gint i;
 
 	infos = g_new0 (cli_infos_t, 1);
 
 	/* readline_init needs PROMPT */
-	infos->config = configuration_init (NULL);
+	filename = configuration_get_filename ();
+	infos->config = configuration_init (filename);
+	g_free (filename);
 
 	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;

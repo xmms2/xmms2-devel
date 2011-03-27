@@ -14,8 +14,6 @@
  *  General Public License for more details.
  */
 
-#include <errno.h>
-
 #include "configuration.h"
 
 const gchar *const default_config =
@@ -40,8 +38,6 @@ const gchar *const default_config =
 "status = current -r 1\n"
 "addpls = add -f -P $@\n";
 
-/* Load a section from a keyfile to a hash-table
-   (replace existing keys in the hash) */
 static void
 section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 {
@@ -49,100 +45,139 @@ section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 	gchar **keys;
 	gint i;
 
-	error = NULL;
 	keys = g_key_file_get_keys (file, section, NULL, &error);
-	if (error) {
-		g_printf ("Error: Couldn't load configuration section %s!\n", section);
-	}
 
 	for (i = 0; keys[i] != NULL; i++) {
-		gchar *uncompressed_value;
+		gchar *value;
 
-		uncompressed_value = g_key_file_get_value (file, section, keys[i],
-		                                           NULL);
-		g_hash_table_insert (hash,
-		                     g_strdup (keys[i]),
-		                     g_strcompress (uncompressed_value));
-		g_free (uncompressed_value);
+		value = g_key_file_get_value (file, section, keys[i], NULL);
+		g_hash_table_insert (hash, g_strdup (keys[i]), g_strcompress (value));
+		g_free (value);
 	}
 	g_strfreev (keys);
 }
 
+static gboolean
+configuration_create (const gchar *path)
+{
+	GError *error;
+	gchar *dir;
+	gint err;
+
+	dir = g_path_get_dirname (path);
+	err = g_mkdir_with_parents (dir, 0755);
+	g_free (dir);
+
+	if (err < 0) {
+		g_fprintf (stderr, "Error: Can't create directory for configuration file '%s'. (%s)\n",
+		           path, g_strerror (errno));
+		return FALSE;
+	}
+
+	if (!g_file_set_contents (path, default_config, -1, &error)) {
+		g_fprintf (stderr, "Error: Can't create configuration file '%s'. ('%s')\n",
+		           path, error->message);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
+ * Merge one GKeyFile into another.
+ */
+static void
+configuration_merge (GKeyFile *to, GKeyFile *from)
+{
+	gchar **groups, **keys, *value;
+	gint i, j;
+
+	groups = g_key_file_get_groups (from, NULL);
+
+	for (i = 0; groups[i] != NULL; i++) {
+		keys = g_key_file_get_keys (from, groups[i], NULL, NULL);
+		for (j = 0; keys[j] != NULL; j++) {
+			value = g_key_file_get_value (from, groups[i], keys[j], NULL);
+			g_key_file_set_value (to, groups[i], keys[j], value);
+			g_free (value);
+		}
+		g_strfreev (keys);
+	}
+
+	g_strfreev (groups);
+}
+
+/**
+ * Load configuration.
+ */
+static GKeyFile *
+configuration_load (const gchar *path)
+{
+	GKeyFile *keyfile, *custom;
+	GError *error;
+
+	keyfile = g_key_file_new ();
+	custom = g_key_file_new ();
+
+	/* load the defaults */
+	g_key_file_load_from_data (keyfile, default_config, -1,
+	                           G_KEY_FILE_NONE, NULL);
+
+	/* create a default config file if missing */
+	if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
+		configuration_create (path);
+	}
+
+	/* try loading the config file */
+	if (!g_key_file_load_from_file (custom, path, G_KEY_FILE_NONE, &error)) {
+		g_printf ("Error: Couldn't load configuration file. (%s)\n",
+		          error->message);
+	} else {
+		configuration_merge (keyfile, custom);
+	}
+
+	g_key_file_free (custom);
+
+	return keyfile;
+}
+
+gchar *
+configuration_get_filename (void)
+{
+	gchar *filename, *dir;
+
+	dir = g_new0 (gchar, XMMS_PATH_MAX);
+	xmmsc_userconfdir_get (dir, XMMS_PATH_MAX);
+	filename = g_build_path (G_DIR_SEPARATOR_S, dir, "clients",
+	                         "nycli.conf", NULL);
+	g_free (dir);
+
+	return filename;
+}
+
 configuration_t *
-configuration_init (const gchar *path)
+configuration_init (const gchar *filename)
 {
 	configuration_t *config;
 	gchar *history_file;
-	GError *error = NULL;
+	GKeyFile *keyfile;
 
 	config = g_new0 (configuration_t, 1);
-
-	if (path == NULL) {
-		char *dir;
-		dir = g_new0 (char, XMMS_PATH_MAX);
-		xmmsc_userconfdir_get (dir, XMMS_PATH_MAX);
-		config->path = g_strdup_printf ("%s/clients/nycli.conf", dir);
-		g_free (dir);
-	} else {
-		config->path = g_strdup (path);
-	}
 
 	/* init hash */
 	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                        g_free, g_free);
-
-	/* no aliases initially */
+	/* init aliases */
 	config->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free, g_free);
 
-	if (!g_file_test (config->path, G_FILE_TEST_EXISTS)) {
-		gchar *dir;
+	keyfile = configuration_load (filename);
+	section_to_hash (keyfile, "main", config->values);
+	section_to_hash (keyfile, "alias", config->aliases);
+	g_key_file_free (keyfile);
 
-		g_fprintf (stderr, "Creating %s...\n", config->path);
-
-		dir = g_path_get_dirname (config->path);
-		if (g_mkdir_with_parents (dir, 0755) == -1) {
-			g_fprintf (stderr,
-			           "Error: Can't create directory %s! %s.\n",
-			           dir, g_strerror (errno));
-		} else {
-			if (!g_file_set_contents (config->path, default_config,
-			                          strlen (default_config), &error)) {
-				g_fprintf (stderr,
-				           "%s.\n"
-				           "Error: Can't create configuration file!\n",
-				           error->message);
-
-				g_error_free (error);
-				error = NULL;
-			}
-		}
-
-		g_free (dir);
-	}
-
-	/* load the defaults */
-	config->file = g_key_file_new ();
-	g_key_file_load_from_data (config->file, default_config,
-	                           strlen (default_config), G_KEY_FILE_NONE,
-	                           NULL);
-	section_to_hash (config->file, "main", config->values);
-	g_key_file_free (config->file);
-
-	config->file = g_key_file_new ();
-	if (g_file_test (config->path, G_FILE_TEST_EXISTS)) {
-		if (!g_key_file_load_from_file (config->file, config->path,
-		                                G_KEY_FILE_NONE, NULL)) {
-			g_printf ("Error: Couldn't load configuration file!\n");
-		} else {
-			/* load keys to hash table overriding default values */
-			section_to_hash (config->file, "main", config->values);
-
-			/* load aliases */
-			section_to_hash (config->file, "alias", config->aliases);
-		}
-	}
-
+	/* load history */
 	history_file = configuration_get_string (config, "HISTORY_FILE");
 	if (!history_file || !*history_file) {
 		gchar cfile[PATH_MAX];
@@ -159,11 +194,9 @@ configuration_init (const gchar *path)
 void
 configuration_free (configuration_t *config)
 {
-	g_free (config->path);
-	g_free (config->histpath);
-	g_key_file_free (config->file);
 	g_hash_table_destroy (config->values);
 	g_hash_table_destroy (config->aliases);
+	g_free (config->histpath);
 	g_free (config);
 }
 

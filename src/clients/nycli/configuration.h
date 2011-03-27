@@ -29,13 +29,12 @@
 #define HISTORY_FILE_BASE "nyxmms2_history"
 
 struct configuration_St {
-	gchar *path;
 	gchar *histpath;
-	GKeyFile *file;
 	GHashTable *values;
 	GHashTable *aliases;
 };
 
+gchar *configuration_get_filename (void);
 configuration_t* configuration_init (const gchar *path);
 void configuration_free (configuration_t *config);
 
