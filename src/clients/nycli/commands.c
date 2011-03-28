@@ -227,7 +227,6 @@ void
 cli_add_setup (command_action_t *action)
 {
 	/* FIXME: support collection ? */
-	/* FIXME: allow ordering ? */
 	const argument_t flags[] = {
 		{ "file", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Treat the arguments as file paths instead of a pattern."), "path" },
 		{ "pls", 'P', 0, G_OPTION_ARG_NONE, NULL, _("Treat the files as playlist files (implies --file.)"), "path" },
@@ -236,10 +235,11 @@ cli_add_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
+		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified proprieties."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths]"),
+	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o [prop1 [prop2 [...]]]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -1231,9 +1231,12 @@ gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
+	gchar *sortby = NULL;
+	gchar **properties;
 	gchar *playlist;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	xmmsv_t *order = NULL;
 	gint pos;
 	gchar *path;
 	gboolean fileargs;
@@ -1249,6 +1252,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 --playlist  Add to the given playlist.
 --next  Add after the current track.
 --at  Add media at a given position in the playlist, or at a given offset from the current track.
+--order Order media matched by pattern.
 */
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
@@ -1269,6 +1273,14 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	command_flag_boolean_get (ctx, "file", &fileargs);
 	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
+
+	command_flag_string_get (ctx, "order", &sortby);
+	if (sortby) {
+		properties = g_strsplit (sortby, " ", MAX_STRINGLIST_TOKENS);
+		order = xmmsv_make_stringlist (properties, -1);
+
+		g_strfreev (properties);
+	}
 
 	if (forceptrn && (plsfile || fileargs)) {
 		g_printf (_("Error: --pattern is mutually exclusive with "
@@ -1354,7 +1366,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			success = FALSE;
 			goto finish;
 		} else {
-			res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
+			res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
 			xmmsc_result_wait (res);
 			add_list (res, infos, playlist, pos);
 			xmmsc_coll_unref (query);
@@ -1362,6 +1374,10 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	finish:
+
+	if (order) {
+		xmmsv_unref (order);
+	}
 
 	g_free (pattern);
 
