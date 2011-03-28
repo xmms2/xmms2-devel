@@ -21,7 +21,7 @@
 gboolean
 x_realpath (const gchar *item, gchar *rpath)
 {
-	return (GetFullPathNameA (item, PATH_MAX, rpath, NULL) > PATH_MAX);
+	return (GetFullPathNameA (item, XMMS_PATH_MAX, rpath, NULL) > XMMS_PATH_MAX);
 }
 
 gchar *

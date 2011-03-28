@@ -185,9 +185,9 @@ configuration_init (const gchar *filename)
 	/* load history */
 	history_file = configuration_get_string (config, "HISTORY_FILE");
 	if (!*history_file) {
-		gchar cfile[PATH_MAX], *key, *value;
+		gchar cfile[XMMS_PATH_MAX], *key, *value;
 
-		xmms_usercachedir_get (cfile, PATH_MAX);
+		xmms_usercachedir_get (cfile, XMMS_PATH_MAX);
 
 		key = g_strdup ("HISTORY_FILE");
 		value = g_build_filename (cfile, "nyxmms2_history", NULL);

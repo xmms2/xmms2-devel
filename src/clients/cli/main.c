@@ -128,17 +128,17 @@ parse_config (const gchar *buffer)
 
 static gchar *
 get_config_dir (void) {
-	gchar userconf[PATH_MAX];
+	gchar userconf[XMMS_PATH_MAX];
 
-	xmmsc_userconfdir_get (userconf, PATH_MAX);
+	xmmsc_userconfdir_get (userconf, XMMS_PATH_MAX);
 	return g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
 }
 
 static gchar *
 get_config_path (void) {
-	gchar userconf[PATH_MAX];
+	gchar userconf[XMMS_PATH_MAX];
 
-	xmmsc_userconfdir_get (userconf, PATH_MAX);
+	xmmsc_userconfdir_get (userconf, XMMS_PATH_MAX);
 	return g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", "cli.conf",
 	                     NULL);
 }

@@ -20,7 +20,7 @@
 gchar *
 format_url (gchar *item, GFileTest test)
 {
-	gchar *url, rpath[PATH_MAX], *p;
+	gchar *url, rpath[XMMS_PATH_MAX], *p;
 
 	p = strchr (item, ':');
 	if (!(p && p[1] == '/' && p[2] == '/')) {

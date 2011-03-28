@@ -33,9 +33,9 @@ static VALUE
 m_userconfdir_get (VALUE self)
 {
 	const char *p;
-	char path[PATH_MAX];
+	char path[XMMS_PATH_MAX];
 
-	p = xmmsc_userconfdir_get (path, PATH_MAX);
+	p = xmmsc_userconfdir_get (path, XMMS_PATH_MAX);
 
 	return p ? rb_str_new2 (p) : Qnil;
 }

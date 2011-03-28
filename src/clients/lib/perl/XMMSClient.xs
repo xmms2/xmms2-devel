@@ -1408,9 +1408,9 @@ Get the absolute path to the user config dir.
 const char *
 xmmsc_userconfdir_get (class)
 	PREINIT:
-		char path[PATH_MAX];
+		char path[XMMS_PATH_MAX];
 	CODE:
-		RETVAL = xmmsc_userconfdir_get (path, PATH_MAX);
+		RETVAL = xmmsc_userconfdir_get (path, XMMS_PATH_MAX);
 	OUTPUT:
 		RETVAL
 

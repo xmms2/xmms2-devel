@@ -213,7 +213,7 @@ spawn_script_setup (gpointer data)
 static void
 load_config (void)
 {
-	gchar configdir[PATH_MAX];
+	gchar configdir[XMMS_PATH_MAX];
 
 	if (!conffile) {
 		conffile = XMMS_BUILD_PATH ("xmms2.conf");
@@ -347,7 +347,7 @@ install_scripts (const gchar *into_dir)
 {
 	GDir *dir;
 	GError *err = NULL;
-	gchar path[PATH_MAX];
+	gchar path[XMMS_PATH_MAX];
 	const gchar *f;
 	gchar *s;
 
@@ -357,7 +357,7 @@ install_scripts (const gchar *into_dir)
 
 	s++;
 
-	g_snprintf (path, PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
+	g_snprintf (path, XMMS_PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
 	xmms_log_info ("Installing scripts from %s", path);
 	dir = g_dir_open (path, 0, &err);
 	if (!dir) {

@@ -60,7 +60,7 @@ xdg_dir_get (const char *env, const char *default_dir, char *buf, int len)
 /**
  * Get the absolute path to the user cache dir.
  * @param buf a char buffer
- * @param len the lenght of buf (PATH_MAX is a good choice)
+ * @param len the lenght of buf (XMMS_PATH_MAX is a good choice)
  * @return A pointer to buf, or NULL if an error occurred.
 **/
 const char *
@@ -73,7 +73,7 @@ xmms_usercachedir_get (char *buf, int len)
  * Get the absolute path to the user config dir.
  *
  * @param buf A char buffer
- * @param len The length of buf (PATH_MAX is a good choice)
+ * @param len The length of buf (XMMS_PATH_MAX is a good choice)
  * @return A pointer to buf, or NULL if an error occurred.
  */
 const char *
@@ -86,7 +86,7 @@ xmms_userconfdir_get (char *buf, int len)
  * Get the fallback connection path (if XMMS_PATH is not accessible)
  *
  * @param buf A char buffer
- * @param len The length of buf (PATH_MAX is a good choice)
+ * @param len The length of buf (XMMS_PATH_MAX is a good choice)
  * @return A pointer to buf, or NULL if an error occured.
  */
 const char *

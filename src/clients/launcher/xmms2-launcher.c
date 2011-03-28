@@ -112,8 +112,8 @@ void get_options (int *argc, char ***argv) {
 
 	/* Prepare logfile */
 	if (!logfile) {
-		char cache[PATH_MAX];
-		xmms_usercachedir_get (cache, PATH_MAX);
+		char cache[XMMS_PATH_MAX];
+		xmms_usercachedir_get (cache, XMMS_PATH_MAX);
 		logfile = g_build_filename (cache, "xmms2d.log", NULL);
 		if (!g_file_test (cache, G_FILE_TEST_IS_DIR)) {
 			g_mkdir_with_parents (cache, 0755);

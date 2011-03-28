@@ -313,7 +313,7 @@ xmmsc_broadcast_quit (xmmsc_connection_t *c)
  * Get the absolute path to the user config dir.
  *
  * @param buf A char buffer
- * @param len The length of buf (PATH_MAX is a good choice)
+ * @param len The length of buf (XMMS_PATH_MAX is a good choice)
  * @return A pointer to buf, or NULL if an error occurred.
  */
 const char *

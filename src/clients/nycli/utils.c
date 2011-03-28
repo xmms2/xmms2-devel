@@ -1915,7 +1915,7 @@ decode_url (const gchar *string)
 gchar *
 format_url (const gchar *path, GFileTest test)
 {
-	gchar rpath[PATH_MAX];
+	gchar rpath[XMMS_PATH_MAX];
 	const gchar *p;
 	gchar *url;
 
