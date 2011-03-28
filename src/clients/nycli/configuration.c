@@ -179,13 +179,15 @@ configuration_init (const gchar *filename)
 
 	/* load history */
 	history_file = configuration_get_string (config, "HISTORY_FILE");
-	if (!history_file || !*history_file) {
-		gchar cfile[PATH_MAX];
+	if (!*history_file) {
+		gchar cfile[PATH_MAX], *key, *value;
 
 		xmms_usercachedir_get (cfile, PATH_MAX);
-		config->histpath = g_build_filename (cfile, HISTORY_FILE_BASE, NULL);
-	} else {
-		config->histpath = strdup (history_file);
+
+		key = g_strdup ("HISTORY_FILE");
+		value = g_build_filename (cfile, "nyxmms2_history", NULL);
+
+		g_hash_table_replace (config->values, key, value);
 	}
 
 	return config;
@@ -196,7 +198,6 @@ configuration_free (configuration_t *config)
 {
 	g_hash_table_destroy (config->values);
 	g_hash_table_destroy (config->aliases);
-	g_free (config->histpath);
 	g_free (config);
 }
 

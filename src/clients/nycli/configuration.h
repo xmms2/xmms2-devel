@@ -25,11 +25,7 @@
 
 #include "main.h"
 
-/* This is the basename of the default history file */
-#define HISTORY_FILE_BASE "nyxmms2_history"
-
 struct configuration_St {
-	gchar *histpath;
 	GHashTable *values;
 	GHashTable *aliases;
 };

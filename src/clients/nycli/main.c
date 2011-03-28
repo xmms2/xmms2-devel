@@ -434,9 +434,14 @@ main (gint argc, gchar **argv)
 		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
 			loop_once (cli_infos, argc - 1, argv + 1);
 		} else {
-			read_history (cli_infos->config->histpath);
+			gchar *filename;
+
+			filename = configuration_get_string (cli_infos->config,
+			                                     "HISTORY_FILE");
+
+			read_history (filename);
 			loop_run (cli_infos);
-			write_history (cli_infos->config->histpath);
+			write_history (filename);
 		}
 	}
 
