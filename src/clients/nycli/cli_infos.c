@@ -145,7 +145,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 		return FALSE;
 	}
 
-	path = g_hash_table_lookup (infos->config->values, "ipcpath");
+	path = configuration_get_string (infos->config, "ipcpath");
 
 	if (!xmmsc_connect (infos->conn, path)) {
 		if (!autostart) {

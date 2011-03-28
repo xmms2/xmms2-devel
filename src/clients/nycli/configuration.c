@@ -38,6 +38,11 @@ const gchar *const default_config =
 "status = current -r 1\n"
 "addpls = add -f -P $@\n";
 
+struct configuration_St {
+	GHashTable *values;
+	GHashTable *aliases;
+};
+
 static void
 section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 {

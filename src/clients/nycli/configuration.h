@@ -25,11 +25,6 @@
 
 #include "main.h"
 
-struct configuration_St {
-	GHashTable *values;
-	GHashTable *aliases;
-};
-
 gchar *configuration_get_filename (void);
 configuration_t* configuration_init (const gchar *path);
 void configuration_free (configuration_t *config);
