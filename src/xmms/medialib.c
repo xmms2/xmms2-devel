@@ -1810,6 +1810,8 @@ filter_condition (xmms_medialib_session_t *session,
 		} else {
 			sval = s4_val_new_string (val);
 		}
+	} else {
+		sval = NULL;
 	}
 
 	if (!xmmsv_coll_attribute_get (coll, "collation", &val)) {
