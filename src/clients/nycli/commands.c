@@ -123,6 +123,10 @@ CLI_SIMPLE_SETUP("collection config", cli_coll_config,
                    "If no attribute name is provided, list all attributes.\n"
                    "If only an attribute name is provided, display the value of the attribute.\n"
                    "If both attribute name and value are provided, set the new value of the attribute."))
+CLI_SIMPLE_SETUP("server browse", cli_server_browse,
+                 COMMAND_REQ_CONNECTION,
+                 _("<url>"),
+                 _("Browse a resource location."))
 CLI_SIMPLE_SETUP("server remove", cli_server_remove,
                  COMMAND_REQ_CONNECTION,
                  _("<pattern>"),
@@ -2058,6 +2062,61 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	return retval;
+}
+
+gboolean
+cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
+{
+	xmmsv_list_iter_t *it;
+	xmmsc_result_t *res;
+	xmmsv_t *value;
+	const gchar *message;
+	gchar *url;
+
+	if (!command_arg_string_get (ctx, 0, &url)) {
+		return FALSE;
+	}
+
+	res = xmmsc_xform_media_browse (infos->sync, url);
+	xmmsc_result_wait (res);
+
+	value = xmmsc_result_get_value (res);
+
+	if (xmmsv_get_error (value, &message)) {
+		g_printf (_("Server error: %s\n"), message);
+		xmmsc_result_unref (res);
+		return FALSE;
+	}
+
+	xmmsv_get_list_iter (value, &it);
+
+	while (xmmsv_list_iter_valid (it)) {
+		const gchar *path;
+		xmmsv_t *dict;
+		gboolean isdir;
+
+		xmmsv_list_iter_entry (it, &dict);
+
+		/* Use realpath instead of path, good for playlists */
+		if (!xmmsv_dict_entry_get_string (dict, "realpath", &path)) {
+			if (!xmmsv_dict_entry_get_string (dict, "path", &path)) {
+				/* broken data */
+				continue;
+			}
+		}
+
+		/* Append trailing slash to indicate directory */
+		xmmsv_dict_entry_get_int (dict, "isdir", &isdir);
+
+		g_print ("%s%c\n", path, isdir ? '/' : ' ');
+
+		xmmsv_list_iter_next (it);
+	}
+
+	cli_infos_loop_resume (infos);
+	xmmsc_result_unref (res);
+
+	return TRUE;
 }
 
 gboolean

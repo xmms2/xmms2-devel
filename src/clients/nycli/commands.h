@@ -59,6 +59,7 @@ gboolean cli_coll_create (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_coll_rename (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_coll_remove (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_coll_config (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_server_browse (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_server_import (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_server_remove (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_server_rehash (cli_infos_t *infos, command_context_t *ctx);
@@ -102,6 +103,7 @@ void cli_coll_create_setup (command_action_t *action);
 void cli_coll_rename_setup (command_action_t *action);
 void cli_coll_remove_setup (command_action_t *action);
 void cli_coll_config_setup (command_action_t *action);
+void cli_server_browse_setup (command_action_t *action);
 void cli_server_import_setup (command_action_t *action);
 void cli_server_remove_setup (command_action_t *action);
 void cli_server_rehash_setup (command_action_t *action);
@@ -149,6 +151,7 @@ static const command_setup_func commandlist[] =
 	cli_coll_rename_setup,
 	cli_coll_remove_setup,
 	cli_coll_config_setup,
+	cli_server_browse_setup,
 	cli_server_import_setup,
 	cli_server_remove_setup,
 	cli_server_rehash_setup,
