@@ -342,6 +342,10 @@ updater_config_get (xmmsv_t *value, void *udata)
 
 	if (*path) {
 		updater_switch_directory (updater, path);
+	} else {
+		g_message ("Please register a directory with the command:");
+		g_message ("\tnyxmms2 server config"
+		           "clients.mlibupdater.watch_dirs /path/to/directory");
 	}
 
 	return FALSE;
@@ -380,6 +384,10 @@ updater_subscribe_config (updater_t *updater)
 	g_return_if_fail (updater->conn);
 
 	default_directory = g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+
+	if (!default_directory) {
+		default_directory = "";
+	}
 
 	res = xmmsc_config_register_value (updater->conn,
 	                                   "mlibupdater.watch_dirs",
