@@ -253,6 +253,10 @@ N: Heikki Orsila
 E: heikki.orsila@iki.fi
 D: Cleanups.
 
+N: Juan Antonio Osorio
+E: jaosorior@gmail.com
+D: Patch to mlib-updater
+
 N: Mohsin Patel
 E: mohsin.patel@gmail.com
 D: airplay output plugin (Summer of code 2006)
