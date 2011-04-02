@@ -26,6 +26,7 @@
  *  Defines
  */
 #define BUFFER_TIME        500000
+#define MAX_CHANNELS       8
 
 /*
  * Type definitions
@@ -217,7 +218,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 	snd_pcm_nonblock (data->pcm, 0);
 
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
-		for (j = 1; j < 3; j++) {
+		for (j = 1; j <= MAX_CHANNELS; j++) {
 			for (k = 0; k < G_N_ELEMENTS (rates); k++) {
 				xmms_alsa_probe_mode (output, data->pcm,
 				                      formats[i].alsa_fmt,
