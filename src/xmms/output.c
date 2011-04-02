@@ -521,7 +521,7 @@ xmms_output_filler (void *arg)
 gint
 xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 {
-	gint ret, used, size;
+	gint ret;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -530,15 +530,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	g_return_val_if_fail (buffer, -1);
 
 	g_mutex_lock (output->filler_mutex);
-
-	used = xmms_ringbuf_bytes_used (output->filler_buffer);
-	size = xmms_ringbuf_size (output->filler_buffer);
-
-	/* Issue a full refill of the buffer if empty */
-	xmms_ringbuf_wait_used (output->filler_buffer,
-	                        (used == 0) ? size : len,
-	                        output->filler_mutex);
-
+	xmms_ringbuf_wait_used (output->filler_buffer, len, output->filler_mutex);
 	ret = xmms_ringbuf_read (output->filler_buffer, buffer, len);
 	if (ret == 0 && xmms_ringbuf_iseos (output->filler_buffer)) {
 		xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
