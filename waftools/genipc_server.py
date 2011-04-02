@@ -117,6 +117,7 @@ def emit_method_define_code(object, method, c_type):
 
 	Indenter.enter("if (xmmsv_list_get_size (arg->args) != %d) {" % len(method.arguments))
 	Indenter.printline('XMMS_DBG ("Wrong number of arguments to %s (%%d)", xmmsv_list_get_size (arg->args));' % method.name)
+	Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Wrong number of arguments to %s");' % method.name)
 	Indenter.printline('return;')
 	Indenter.leave("}")
 
@@ -127,7 +128,8 @@ def emit_method_define_code(object, method, c_type):
 
 	for i, a in enumerate(method.arguments):
 		Indenter.enter("if (!xmmsv_list_get (arg->args, %d, &t)) {" % i)
-		Indenter.printline('XMMS_DBG ("Missing arg in %s");' % method.name)
+		Indenter.printline('XMMS_DBG ("Missing arg %d in %s");' % (i, method.name))
+		Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Missing arg %d in %s");' % (i, method.name))
 		Indenter.printline('return;')
 		Indenter.leave("}")
 
@@ -135,7 +137,8 @@ def emit_method_define_code(object, method, c_type):
 			Indenter.printline("argval%d = t;" % i)
 		else:
 			Indenter.enter("if (!%s (t, &argval%d)) {" % (c_getter_map[a.type[0]], i))
-			Indenter.printline('XMMS_DBG ("Error parsing message for %s");' % method.name)
+			Indenter.printline('XMMS_DBG ("Error parsing arg %d in %s");' % (i, method.name))
+			Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Error parsing arg %d in %s");' % (i, method.name))
 			Indenter.printline("return;")
 			Indenter.leave("}")
 			
