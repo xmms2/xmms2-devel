@@ -94,35 +94,29 @@ static gboolean
 xmms_pulse_new (xmms_output_t *output)
 {
 	xmms_pulse_data_t *data;
-	gint i;
 
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_pulse_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
 	xmms_output_private_data_set (output, data);
-	for (i = 1; i <= 2; i++) {
-		xmms_output_stream_type_add (output,
-		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
-		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_U8,
-		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
-		                             XMMS_STREAM_TYPE_END);
-		xmms_output_stream_type_add (output,
-		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
-		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S16,
-		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
-		                             XMMS_STREAM_TYPE_END);
-		xmms_output_stream_type_add (output,
-		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
-		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
-		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
-		                             XMMS_STREAM_TYPE_END);
-		xmms_output_stream_type_add (output,
-		                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
-		                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_FLOAT,
-		                             XMMS_STREAM_TYPE_FMT_CHANNELS, i,
-		                             XMMS_STREAM_TYPE_END);
-	}
+
+	xmms_output_stream_type_add (output,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_U8,
+	                             XMMS_STREAM_TYPE_END);
+	xmms_output_stream_type_add (output,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S16,
+	                             XMMS_STREAM_TYPE_END);
+	xmms_output_stream_type_add (output,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_S32,
+	                             XMMS_STREAM_TYPE_END);
+	xmms_output_stream_type_add (output,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, XMMS_SAMPLE_FORMAT_FLOAT,
+	                             XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }
