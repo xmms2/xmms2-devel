@@ -16,6 +16,7 @@
 
 #include "column_display.h"
 #include "utils.h"
+#include "string.h"
 
 struct column_display_St {
 	guint num_cols;
