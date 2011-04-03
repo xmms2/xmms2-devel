@@ -819,69 +819,16 @@ Display command help.
 .PP
 
 .SH SERVER COMMANDS
-.TP
-\fBserver import\fR [\-N] <path>
-.PP
-.RS 4
-Import new files into the media library.
-By default, directories are imported recursively.
-.RE
-.PP
-.RS 4
-\-N | \-\-non-recursive
-.RE
-.RS 8
-Do not import directories recursively.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver\fR 
+\fBserver\fR
 .PP
 .RS 4
 No description
 .RE
 .PP
 .RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver remove\fR <pattern>
-.PP
-.RS 4
-Remove the matching media from the media library.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver rehash\fR [pattern]
-.PP
-.RS 4
-Rehash the media matched by the pattern,
-or the whole media library if no pattern is provided
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -899,7 +846,7 @@ If both name and a value are provided, set the new content of the configuration 
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -907,7 +854,45 @@ Display command help.
 .PP
 
 .TP
-\fBserver property\fR [\-i | \-s | \-D] [\-S] <mid> [name [value]]
+\fBserver import\fR [\-N] <path>
+.PP
+.RS 4
+Import new files into the media library.
+By default, directories are imported recursively.
+.RE
+.PP
+.RS 4
+\-N, \-\-non-recursive
+.RE
+.RS 8
+Do not import directories recursively.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver plugins\fR
+.PP
+.RS 4
+List the plugins loaded in the server.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver property\fR [\-i, \-s, \-D] [\-S] <mid> [name [value]]
 .PP
 .RS 4
 Get or set properties for a given media.
@@ -923,35 +908,35 @@ Use the \-\-int or \-\-string flag to override this behaviour.
 .RE
 .PP
 .RS 4
-\-i | \-\-int
+\-i, \-\-int
 .RE
 .RS 8
 Force the value to be treated as integer.
 .RE
 .PP
 .RS 4
-\-s | \-\-string
+\-s, \-\-string
 .RE
 .RS 8
 Force the value to be treated as a string.
 .RE
 .PP
 .RS 4
-\-D | \-\-delete
+\-D, \-\-delete
 .RE
 .RS 8
 Delete the selected property.
 .RE
 .PP
 .RS 4
-\-S | \-\-source
+\-S, \-\-source
 .RE
 .RS 8
 Property source.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -959,14 +944,75 @@ Display command help.
 .PP
 
 .TP
-\fBserver plugins\fR 
+\fBserver rehash\fR [pattern]
 .PP
 .RS 4
-List the plugins loaded in the server.
+Rehash the media matched by the pattern,
+or the whole media library if no pattern is provided
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver remove\fR <pattern>
+.PP
+.RS 4
+Remove the matching media from the media library.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver shutdown\fR
+.PP
+.RS 4
+Shutdown the server.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver stats\fR
+.PP
+.RS 4
+Display statistics about the server: uptime, version, size of the medialib, etc
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBserver sync\fR
+.PP
+.RS 4
+Force the saving of collections to the disk (otherwise only performed on shutdown)
+.RE
+.PP
+.RS 4
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -983,59 +1029,14 @@ By default, the command applies to all audio channels. Use the \-\-channel flag 
 .RE
 .PP
 .RS 4
-\-c | \-\-channel
+\-c, \-\-channel
 .RE
 .RS 8
 Get or set the volume only for one channel.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver stats\fR 
-.PP
-.RS 4
-Display statistics about the server: uptime, version, size of the medialib, etc
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver sync\fR 
-.PP
-.RS 4
-Force the saving of collections to the disk (otherwise only performed on shutdown)
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver shutdown\fR 
-.PP
-.RS 4
-Shutdown the server.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -1118,14 +1119,14 @@ below).
 The default configuration includes the following aliases:
 .PP
 .TP
-\fBaddpls\fR 
+\fBaddpls\fR
 .PP
 .RS 4
 add \-f \-P $@
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -1133,104 +1134,14 @@ Display command help.
 .PP
 
 .TP
-\fBcurrent\fR 
-.PP
-.RS 4
-status \-f $1
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBserver kill\fR 
-.PP
-.RS 4
-server shutdown
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBmute\fR 
-.PP
-.RS 4
-server volume 0
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBrepeat\fR 
-.PP
-.RS 4
-seek 0
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBls\fR 
-.PP
-.RS 4
-list
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBquit\fR 
-.PP
-.RS 4
-exit
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBclear\fR 
+\fBclear\fR
 .PP
 .RS 4
 playlist clear
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -1238,23 +1149,112 @@ Display command help.
 .PP
 
 .TP
-\fBscap\fR 
+\fBcurrent\fR
+.PP
+.RS 4
+status \-f $1
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBls\fR
+.PP
+.RS 4
+list
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBmute\fR
+.PP
+.RS 4
+server volume 0
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBquit\fR
+.PP
+.RS 4
+exit
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBrepeat\fR
+.PP
+.RS 4
+seek 0
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBscap\fR
 .PP
 .RS 4
 stop ; playlist clear ; add $@ ; play
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
 .RE
-.SS EXPANSION
+
+.TP
+\fBserver kill\fR
+.PP
 .RS 4
-.B Positional Parameters
+server shutdown
+.RE
+.PP
+.RS 4
+\-h, \-\-help
 .RE
 .RS 8
+Display command help.
+.RE
+.PP
+
+.SS Expansion
+.B Positional Parameters
+.RS 4
 An alias can use positional parameters, for example:
 .PP
 foo = add \-f $1 $3
@@ -1266,10 +1266,8 @@ Will result in:
 add \-f ctkoz.ogg slre.ogg
 .PP
 .RE
-.RS 4
 .B Special Parameters
-.RE
-.RS 8
+.RS 4
 .B $@
 .RS 4
 This expands to all parameters passed to the alias.
