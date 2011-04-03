@@ -49,15 +49,65 @@ features a powerful shell-like environment via readline that allows the user to
 enter commands at a prompt and have the usual cool features such as pathname expansion
 and line editing.
 .SH GENERAL COMMANDS
+
 .TP
-\fBplay\fR 
+\fBadd\fR [\-f [\-N] [\-P]] [\-p <playlist>, \-c <collection>] [\-n, \-a <pos|offset>] [pattern, paths]
 .PP
 .RS 4
-Start playback.
+Add the matching media or files to a playlist.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-f, \-\-file
+.RE
+.RS 8
+Treat the arguments as file paths instead of a pattern.
+.RE
+.PP
+.RS 4
+\-P, \-\-pls
+.RE
+.RS 8
+Treat the files as playlist files (implies \-\-file.)
+.RE
+.PP
+.RS 4
+\-t, \-\-pattern
+.RE
+.RS 8
+Force treating arguments as pattern.
+.RE
+.PP
+.RS 4
+\-N, \-\-non-recursive
+.RE
+.RS 8
+Do not add directories recursively.
+.RE
+.PP
+.RS 4
+\-p, \-\-playlist
+.RE
+.RS 8
+Add to the given playlist.
+.RE
+.PP
+.RS 4
+\-n, \-\-next
+.RE
+.RS 8
+Add after the current track.
+.RE
+.PP
+.RS 4
+\-a, \-\-at
+.RE
+.RS 8
+Add media at a given position in the playlist, or at a given offset from the current track.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -65,14 +115,14 @@ Display command help.
 .PP
 
 .TP
-\fBpause\fR 
+\fBexit\fR
 .PP
 .RS 4
-Pause playback.
+Exit the shell-like interface.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -80,139 +130,21 @@ Display command help.
 .PP
 
 .TP
-\fBstop\fR [\-n <tracks> | \-t <time>]
+\fBhelp\fR [\-a] [command]
 .PP
 .RS 4
-Stop playback.
+List all commands, or help on one command.
 .RE
 .PP
 .RS 4
-\-n | \-\-tracks
+\-a, \-\-alias
 .RE
 .RS 8
-Number of tracks after which to stop playback.
+List aliases, or alias definition.
 .RE
 .PP
 .RS 4
-\-t | \-\-time
-.RE
-.RS 8
-Duration after which to stop playback.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBtoggle\fR 
-.PP
-.RS 4
-Toggle playback.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBseek\fR <time|offset>
-.PP
-.RS 4
-Seek to a relative or absolute position.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBstatus\fR [\-r <time>] [\-f <format>]
-.PP
-.RS 4
-Display playback status, either continuously or once.
-.RE
-.PP
-.RS 4
-\-r | \-\-refresh
-.RE
-.RS 8
-Delay between each refresh of the status. If 0, the status is only printed once (default).
-.RE
-.PP
-.RS 4
-\-f | \-\-format
-.RE
-.RS 8
-Format string used to display status.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBprev\fR [offset]
-.PP
-.RS 4
-Jump to previous song.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBnext\fR [offset]
-.PP
-.RS 4
-Jump to next song.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBjump\fR [\-b] <pattern|positions>
-.PP
-.RS 4
-Jump to the first media maching the pattern.
-.RE
-.PP
-.RS 4
-\-b | \-\-backward
-.RE
-.RS 8
-Jump backward to the first media matching the pattern
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -227,7 +159,7 @@ Display all the properties for all media matching the pattern.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -235,43 +167,21 @@ Display command help.
 .PP
 
 .TP
-\fBsearch\fR [\-p <name> | \-c <name>] [\-o <prop1[,prop2...]>] [\-l <prop1[,prop2...]>] <pattern>
+\fBjump\fR [\-b] <pattern|positions>
 .PP
 .RS 4
-Search and print all media matching the pattern. Search can be restricted
-to a collection or a playlist by using the corresponding flag.
+Jump to the first media maching the pattern.
 .RE
 .PP
 .RS 4
-\-p | \-\-playlist
+\-b, \-\-backward
 .RE
 .RS 8
-Search in the given playlist.
+Jump backward to the first media matching the pattern
 .RE
 .PP
 .RS 4
-\-c | \-\-collection
-.RE
-.RS 8
-Search in the given collection.
-.RE
-.PP
-.RS 4
-\-o | \-\-order
-.RE
-.RS 8
-List of properties to order by (prefix by '-' for reverse ordering).
-.RE
-.PP
-.RS 4
-\-l | \-\-columns
-.RE
-.RS 8
-List of properties to use as columns.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -288,14 +198,14 @@ media are displayed.
 .RE
 .PP
 .RS 4
-\-p | \-\-playlist
+\-p, \-\-playlist
 .RE
 .RS 8
 List the given playlist.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -303,63 +213,95 @@ Display command help.
 .PP
 
 .TP
-\fBadd\fR [\-f [\-N] [\-P]] [\-p <playlist> | \-c <collection>] [\-n | \-a <pos|offset>] [pattern | paths]
+\fBmove\fR [\-p <playlist>] [\-n, \-a <pos|offset>] <pattern|positions>
 .PP
 .RS 4
-Add the matching media or files to a playlist.
+Move entries inside a playlist.
 .RE
 .PP
 .RS 4
-\-f | \-\-file
+\-p, \-\-playlist
 .RE
 .RS 8
-Treat the arguments as file paths instead of a pattern.
+Playlist to act on.
 .RE
 .PP
 .RS 4
-\-P | \-\-pls
+\-n, \-\-next
 .RE
 .RS 8
-Treat the files as playlist files (implies \-\-file.)
+Move the matching tracks after the current track.
 .RE
 .PP
 .RS 4
-\-t | \-\-pattern
+\-a, \-\-at
 .RE
 .RS 8
-Force treating arguments as pattern.
+Move the matching tracks by an offset or to a position.
 .RE
 .PP
 .RS 4
-\-N | \-\-non-recursive
+\-h, \-\-help
 .RE
 .RS 8
-Do not add directories recursively.
+Display command help.
+.RE
+.PP
+
+.TP
+\fBnext\fR [offset]
+.PP
+.RS 4
+Jump to next song.
 .RE
 .PP
 .RS 4
-\-p | \-\-playlist
+\-h, \-\-help
 .RE
 .RS 8
-Add to the given playlist.
+Display command help.
+.RE
+.PP
+
+.TP
+\fBpause\fR
+.PP
+.RS 4
+Pause playback.
 .RE
 .PP
 .RS 4
-\-n | \-\-next
+\-h, \-\-help
 .RE
 .RS 8
-Add after the current track.
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplay\fR
+.PP
+.RS 4
+Start playback.
 .RE
 .PP
 .RS 4
-\-a | \-\-at
+\-h, \-\-help
 .RE
 .RS 8
-Add media at a given position in the playlist, or at a given offset from the current track.
+Display command help.
+.RE
+.PP
+
+.TP
+\fBprev\fR [offset]
+.PP
+.RS 4
+Jump to previous song.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -374,14 +316,14 @@ Remove the matching media from a playlist.
 .RE
 .PP
 .RS 4
-\-p | \-\-playlist
+\-p, \-\-playlist
 .RE
 .RS 8
 Remove from the given playlist, instead of the active playlist.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -389,35 +331,28 @@ Display command help.
 .PP
 
 .TP
-\fBmove\fR [\-p <playlist>] [\-n | \-a <pos|offset>] <pattern|positions>
+\fBstatus\fR [\-r <time>] [\-f <format>]
 .PP
 .RS 4
-Move entries inside a playlist.
+Display playback status, either continuously or once.
 .RE
 .PP
 .RS 4
-\-p | \-\-playlist
+\-r, \-\-refresh
 .RE
 .RS 8
-Playlist to act on.
+Delay between each refresh of the status. If 0, the status is only printed once (default).
 .RE
 .PP
 .RS 4
-\-n | \-\-next
+\-f, \-\-format
 .RE
 .RS 8
-Move the matching tracks after the current track.
+Format string used to display status.
 .RE
 .PP
 .RS 4
-\-a | \-\-at
-.RE
-.RS 8
-Move the matching tracks by an offset or to a position.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -425,14 +360,43 @@ Display command help.
 .PP
 
 .TP
-\fBexit\fR 
+\fBsearch\fR [\-p <name>, \-c <name>] [\-o <prop1[,prop2...]>] [\-l <prop1[,prop2...]>] <pattern>
 .PP
 .RS 4
-Exit the shell-like interface.
+Search and print all media matching the pattern. Search can be restricted
+to a collection or a playlist by using the corresponding flag.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-p, \-\-playlist
+.RE
+.RS 8
+Search in the given playlist.
+.RE
+.PP
+.RS 4
+\-c, \-\-collection
+.RE
+.RS 8
+Search in the given collection.
+.RE
+.PP
+.RS 4
+\-o, \-\-order
+.RE
+.RS 8
+List of properties to order by (prefix by '-' for reverse ordering).
+.RE
+.PP
+.RS 4
+\-l, \-\-columns
+.RE
+.RS 8
+List of properties to use as columns.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -440,26 +404,64 @@ Display command help.
 .PP
 
 .TP
-\fBhelp\fR [\-a] [command]
+\fBseek\fR <time|offset>
 .PP
 .RS 4
-List all commands, or help on one command.
+Seek to a relative or absolute position.
 .RE
 .PP
 .RS 4
-\-a | \-\-alias
-.RE
-.RS 8
-List aliases, or alias definition.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
 .RE
 .PP
+
+.TP
+\fBstop\fR [\-n <tracks>, \-t <time>]
+.PP
+.RS 4
+Stop playback.
+.RE
+.PP
+.RS 4
+\-n, \-\-tracks
+.RE
+.RS 8
+Number of tracks after which to stop playback.
+.RE
+.PP
+.RS 4
+\-t, \-\-time
+.RE
+.RS 8
+Duration after which to stop playback.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBtoggle\fR
+.PP
+.RS 4
+Toggle playback.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
 .SH PLAYLIST COMMANDS
 .TP
 \fBplaylist list\fR [\-a] [pattern]
