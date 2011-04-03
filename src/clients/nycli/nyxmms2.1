@@ -463,118 +463,16 @@ Display command help.
 .PP
 
 .SH PLAYLIST COMMANDS
-.TP
-\fBplaylist list\fR [\-a] [pattern]
-.PP
-.RS 4
-List all playlists.
-.RE
-.PP
-.RS 4
-\-a | \-\-all
-.RE
-.RS 8
-Include hidden playlists.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist\fR 
+\fBplaylist\fR
 .PP
 .RS 4
 No description
 .RE
 .PP
 .RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist switch\fR <playlist>
-.PP
-.RS 4
-Change the active playlist.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist create\fR [\-p <playlist>] <name>
-.PP
-.RS 4
-Change the active playlist.
-.RE
-.PP
-.RS 4
-\-p | \-\-playlist
-.RE
-.RS 8
-Copy the content of the playlist into the new playlist.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist rename\fR [\-f] [\-p <playlist>] <newname>
-.PP
-.RS 4
-Rename a playlist.  By default, rename the active playlist.
-.RE
-.PP
-.RS 4
-\-f | \-\-force
-.RE
-.RS 8
-Force the rename of the collection, overwrite an existing collection if needed.
-.RE
-.PP
-.RS 4
-\-p | \-\-playlist
-.RE
-.RS 8
-Rename the given playlist.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist remove\fR <playlist>
-.PP
-.RS 4
-Remove the given playlist.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -589,44 +487,7 @@ Clear a playlist.  By default, clear the active playlist.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist shuffle\fR [playlist]
-.PP
-.RS 4
-Shuffle a playlist.  By default, shuffle the active playlist.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist sort\fR [\-o <order>] [playlist]
-.PP
-.RS 4
-Sort a playlist.  By default, sort the active playlist.
-.RE
-.PP
-.RS 4
-\-o | \-\-order
-.RE
-.RS 8
-List of properties to sort by (prefix by '-' for reverse sorting).
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -642,40 +503,181 @@ By default, configure the active playlist.
 .RE
 .PP
 .RS 4
-\-t | \-\-type
+\-t, \-\-type
 .RE
 .RS 8
 Change the type of the playlist: list, queue, pshuffle.
 .RE
 .PP
 .RS 4
-\-s | \-\-history
+\-s, \-\-history
 .RE
 .RS 8
 Size of the history of played tracks (for queue, pshuffle).
 .RE
 .PP
 .RS 4
-\-u | \-\-upcoming
+\-u, \-\-upcoming
 .RE
 .RS 8
 Number of upcoming tracks to maintain (for pshuffle).
 .RE
 .PP
 .RS 4
-\-i | \-\-input
+\-i, \-\-input
 .RE
 .RS 8
 Input collection for the playlist (for pshuffle). Default to 'All Media'.
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
 .RE
 .PP
+
+.TP
+\fBplaylist create\fR [\-p <playlist>] <name>
+.PP
+.RS 4
+Change the active playlist.
+.RE
+.PP
+.RS 4
+\-p, \-\-playlist
+.RE
+.RS 8
+Copy the content of the playlist into the new playlist.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist list\fR [\-a] [pattern]
+.PP
+.RS 4
+List all playlists.
+.RE
+.PP
+.RS 4
+\-a, \-\-all
+.RE
+.RS 8
+Include hidden playlists.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist remove\fR <playlist>
+.PP
+.RS 4
+Remove the given playlist.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist rename\fR [\-f] [\-p <playlist>] <newname>
+.PP
+.RS 4
+Rename a playlist.  By default, rename the active playlist.
+.RE
+.PP
+.RS 4
+\-f, \-\-force
+.RE
+.RS 8
+Force the rename of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-p, \-\-playlist
+.RE
+.RS 8
+Rename the given playlist.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist shuffle\fR [playlist]
+.PP
+.RS 4
+Shuffle a playlist.  By default, shuffle the active playlist.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist sort\fR [\-o <order>] [playlist]
+.PP
+.RS 4
+Sort a playlist.  By default, sort the active playlist.
+.RE
+.PP
+.RS 4
+\-o, \-\-order
+.RE
+.RS 8
+List of properties to sort by (prefix by '-' for reverse sorting).
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBplaylist switch\fR <playlist>
+.PP
+.RS 4
+Change the active playlist.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
 .SH COLLECTION COMMANDS
 .TP
 \fBcollection list\fR 
