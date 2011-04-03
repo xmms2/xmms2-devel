@@ -1279,44 +1279,15 @@ This expands to all parameters passed to the alias.
 .PP
 All control characters are interpreted as expected, including ANSI escape sequences.
 .PP
-PROMPT
-.RS 4
-String to use as a prompt in
-.B INTERACTIVE MODE
-.RE
-.PP
-SHELL_START_MESSAGE
-.RS 4
-Boolean, if true,
-.B nycli
-will display a greeting message and basic help when started in
-.B INTERACTIVE MODE
-.RE
-.PP
-SERVER_AUTOSTART
-.RS 4
-Boolean, if true nycli will attempt to start \fBxmms2d\fR(1) if it's not running already.
-.RE
-.PP
 AUTO_UNIQUE_COMPLETE
 .RS 4
 Boolean, complete an abbreviation of a command and it's arguments. For example: `serv vol 42' will
 complete to `server volume 42'. (Note: Abbreviations must be non-ambiguous)
 .RE
 .PP
-PLAYLIST_MARKER
-.RS 4
-String to use to mark the current active entry in the playlist
-.RE
-.PP
-GUESS_PLS
-.RS 4
-Boolean, try to guess if the URL is a playlist and add accordingly. (Not reliable)
-.RE
-.PP
 CLASSIC_LIST
 .RS 4
-Boolean, format 
+Boolean, format
 .B list
 output similar to the classic cli.
 .RE
@@ -1328,11 +1299,9 @@ String to format classic
 output with.
 .RE
 .PP
-STATUS_FORMAT
+GUESS_PLS
 .RS 4
-String to format
-.B status
-output with.
+Boolean, try to guess if the URL is a playlist and add accordingly. (Not reliable)
 .RE
 .PP
 HISTORY_FILE
@@ -1340,6 +1309,36 @@ HISTORY_FILE
 File to save command history to.
 .RE
 .PP
+PLAYLIST_MARKER
+.RS 4
+String to use to mark the current active entry in the playlist
+.RE
+.PP
+PROMPT
+.RS 4
+String to use as a prompt in
+.B INTERACTIVE MODE
+.RE
+.PP
+SERVER_AUTOSTART
+.RS 4
+Boolean, if true nycli will attempt to start \fBxmms2d\fR(1) if it's not running already.
+.RE
+.PP
+SHELL_START_MESSAGE
+.RS 4
+Boolean, if true,
+.B nycli
+will display a greeting message and basic help when started in
+.B INTERACTIVE MODE
+.RE
+.PP
+STATUS_FORMAT
+.RS 4
+String to format
+.B status
+output with.
+.RE
 .SH FILES
 $XDG_CONFIG_HOME/xmms2/clients/nycli.conf
 .RS 4
