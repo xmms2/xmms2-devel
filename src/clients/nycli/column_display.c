@@ -545,6 +545,8 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 	gchar *time;
 	const gchar *propname = (const gchar *) coldef->arg.udata;
 
+	millisecs = 0;
+
 	switch (xmmsv_dict_entry_get_type (val, propname)) {
 	case XMMSV_TYPE_INT32:
 		xmmsv_dict_entry_get_int (val, propname, &millisecs);
