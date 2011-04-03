@@ -679,20 +679,6 @@ Display command help.
 .PP
 
 .SH COLLECTION COMMANDS
-.TP
-\fBcollection list\fR 
-.PP
-.RS 4
-List all collections.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBcollection\fR 
@@ -702,97 +688,7 @@ No description
 .RE
 .PP
 .RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBcollection show\fR <collection>
-.PP
-.RS 4
-Display a human-readable description of a collection.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBcollection create\fR [\-f] [\-a | \-e] [\-c <collection>] <name> [pattern]
-.PP
-.RS 4
-Create a new collection.
-If pattern is provided, it is used to define the collection.
-Otherwise, the new collection contains the whole media library.
-.RE
-.PP
-.RS 4
-\-f | \-\-force
-.RE
-.RS 8
-Force creating of the collection, overwrite an existing collection if needed.
-.RE
-.PP
-.RS 4
-\-c | \-\-collection
-.RE
-.RS 8
-Copy an existing collection to the new one.
-.RE
-.PP
-.RS 4
-\-e | \-\-empty
-.RE
-.RS 8
-Initialize an empty collection.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBcollection rename\fR [\-f] <oldname> <newname>
-.PP
-.RS 4
-Rename a collection.
-.RE
-.PP
-.RS 4
-\-f | \-\-force
-.RE
-.RS 8
-Force renaming of the collection, overwrite an existing collection if needed.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBcollection remove\fR <collection>
-.PP
-.RS 4
-Remove a collection.
-.RE
-.PP
-.RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
@@ -810,12 +706,118 @@ If both attribute name and value are provided, set the new value of the attribut
 .RE
 .PP
 .RS 4
-\-h | \-\-help
+\-h, \-\-help
 .RE
 .RS 8
 Display command help.
 .RE
 .PP
+
+.TP
+\fBcollection create\fR [\-f] [\-a, \-e] [\-c <collection>] <name> [pattern]
+.PP
+.RS 4
+Create a new collection.
+If pattern is provided, it is used to define the collection.
+Otherwise, the new collection contains the whole media library.
+.RE
+.PP
+.RS 4
+\-f, \-\-force
+.RE
+.RS 8
+Force creating of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-c, \-\-collection
+.RE
+.RS 8
+Copy an existing collection to the new one.
+.RE
+.PP
+.RS 4
+\-e, \-\-empty
+.RE
+.RS 8
+Initialize an empty collection.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection list\fR
+.PP
+.RS 4
+List all collections.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection show\fR <collection>
+.PP
+.RS 4
+Display a human-readable description of a collection.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection remove\fR <collection>
+.PP
+.RS 4
+Remove a collection.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
+.TP
+\fBcollection rename\fR [\-f] <oldname> <newname>
+.PP
+.RS 4
+Rename a collection.
+.RE
+.PP
+.RS 4
+\-f, \-\-force
+.RE
+.RS 8
+Force renaming of the collection, overwrite an existing collection if needed.
+.RE
+.PP
+.RS 4
+\-h, \-\-help
+.RE
+.RS 8
+Display command help.
+.RE
+.PP
+
 .SH SERVER COMMANDS
 .TP
 \fBserver import\fR [\-N] <path>
