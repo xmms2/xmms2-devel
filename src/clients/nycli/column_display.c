@@ -541,7 +541,7 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
                             xmmsv_t *val)
 {
 	gint realsize;
-	guint millisecs;
+	gint millisecs;
 	gchar *time;
 	const gchar *propname = (const gchar *) coldef->arg.udata;
 
@@ -554,7 +554,7 @@ column_display_render_time (column_display_t *disp, column_def_t *coldef,
 		return 0;
 	}
 
-	time = format_time (millisecs, FALSE);
+	time = format_time ((guint64) MAX (0, millisecs), FALSE);
 
 	/* We recopy the string to crop it if needed */
 /* 	realsize = g_snprintf (disp->buffer, coldef->size + 1, time); */
