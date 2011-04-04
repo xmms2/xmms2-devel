@@ -783,10 +783,16 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *p
+		cdef xmmsv_t *order_val
+		cdef XmmsResult res
+
 		if order is None:
 			order = []
 		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, p, pos, coll.coll, create_native_value(order)))
+		order_val = create_native_value(order)
+		res = self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, p, pos, coll.coll, order_val))
+		xmmsv_unref(order_val)
+		return res
 
 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):
 		"""
@@ -868,12 +874,16 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *p
-		p = check_playlist(playlist)
+		cdef xmmsv_t *order_val
+		cdef XmmsResult res
 
+		p = check_playlist(playlist)
 		if order is None:
 			order = []
-
-		return self.create_result(cb, xmmsc_playlist_add_collection(self.conn, p, coll.coll, create_native_value(order)))
+		order_val = create_native_value(order)
+		res = self.create_result(cb, xmmsc_playlist_add_collection(self.conn, p, coll.coll, order_val))
+		xmmsv_unref(order_val)
+		return res
 
 	cpdef XmmsResult playlist_remove_entry(self, int id, playlist = None, cb = None):
 		"""
@@ -923,8 +933,14 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *p
+		cdef xmmsv_t *props_val
+		cdef XmmsResult res
+
 		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_sort(self.conn, p, create_native_value(props)))
+		props_val = create_native_value(props)
+		res = self.create_result(cb, xmmsc_playlist_sort(self.conn, p, props_val))
+		xmmsv_unref(props_val)
+		return res
 
 	cpdef XmmsResult playlist_set_next_rel(self, int position, cb = None):
 		"""
@@ -1445,10 +1461,15 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
+		cdef xmmsv_t *order_val
+		cdef XmmsResult res
+
 		if order is None:
 			order = []
-
-		return self.create_result(cb, xmmsc_coll_query_ids(self.conn, coll.coll, create_native_value(order), start, leng))
+		order_val = create_native_value(order)
+		res = self.create_result(cb, xmmsc_coll_query_ids(self.conn, coll.coll, order_val, start, leng))
+		xmmsv_unref(order_val)
+		return res
 
 	cpdef XmmsResult coll_query_infos(self, Collection coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
@@ -1458,12 +1479,23 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
+		cdef xmmsv_t *order_val
+		cdef xmmsv_t *fields_val
+		cdef xmmsv_t *groupby_val
+		cdef XmmsResult res
+
 		if order is None:
 			order = []
 		if groupby is None:
 			groupby = []
-
-		return self.create_result(cb, xmmsc_coll_query_infos(self.conn, coll.coll, create_native_value(order), start, leng, create_native_value(fields), create_native_value(groupby)))
+		order_val = create_native_value(order)
+		fields_val = create_native_value(fields)
+		groupby_val = create_native_value(groupby)
+		res = self.create_result(cb, xmmsc_coll_query_infos(self.conn, coll.coll, order_val, start, leng, fields_val, groupby_val))
+		xmmsv_unref(order_val)
+		xmmsv_unref(fields_val)
+		xmmsv_unref(groupby_val)
+		return res
 
 	cpdef XmmsResult bindata_add(self, data, cb=None):
 		"""
