@@ -21,6 +21,7 @@ def build_cython(bld):
             includes = '../../../.. ../../../include ../../../includepriv',
             install_path = '${xmmsclient_PYTHONDIR}',
             mac_bundle = True,
+            no_timestamp = True,
             cython_includes = 'cython_include')
 
 def build(bld):
