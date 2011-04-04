@@ -57,21 +57,59 @@ def scan_deps(task):
 				deps.append(_d)
 	return (deps, [])
 
+def cython_run(task):
+	pargs = [task.env['CYTHON']]
+	pargs.extend(task.env['_CYTHON_INCFLAGS'])
+	pargs.extend(['-o', task.outputs[0].bldpath(task.env), task.inputs[0].srcpath(task.env)])
+	r = task.exec_command(pargs, cwd=getattr(task, 'cwd', None))
+
+	if r or not task.env['CYTHON_NO_TIMESTAMP']:
+		return r
+
+	# strip timestamp
+	src_file = task.outputs[0].bldpath(task.env)
+	copy_file = src_file+'.cytmp'
+	src = None
+	copy = None
+	try:
+		src = open(src_file, 'rb')
+		copy = open(copy_file, 'wb')
+		i = 0
+		for l in src:
+			if i == 0:
+				l = re.sub(' on .* \\*/', ' */', l)
+			# TODO: strip all comment lines
+			copy.write(l)
+	finally:
+		if src:
+			src.close()
+		if copy:
+			copy.close()
+	try:
+		os.remove(src_file)
+	except OSError:
+		pass
+	except IOError:
+		pass
+	else:
+		os.rename(copy_file, src_file)
+	return 0
+
 f = TaskGen.declare_chain(
 		name = 'cythonc',
-		action = '${CYTHON} ${_CYTHON_INCFLAGS} -o ${TGT} ${SRC}',
+		action = cython_run,
 		ext_in = '.pyx',
 		ext_out = '.c',
 		reentrant = True,
-		after='apply_cython_flags',
+		after='apply_cython_extra',
 		scan=scan_deps)
-#TODO: Add scan=scan_deps to look for .pxd dependencies (to allow smart build)
 
 @TaskGen.feature('cython')
 @TaskGen.before('apply_core')
 def default_cython(self):
 	Utils.def_attrs(self,
-			cython_includes = '')
+			cython_includes = '',
+			no_timestamp = False)
 
 @TaskGen.feature('cython')
 @TaskGen.after('apply_core')
@@ -98,6 +136,12 @@ def apply_cython_flags(self):
 		self.env.append_unique('_CYTHON_INCFLAGS', INC_FMT % i.srcpath(self.env))
 	for i in self.env['CYTHONPATH']:
 		self.env.append_unique('_CYTHON_INCFLAGS', INC_FMT % i)
+
+@TaskGen.feature('cython')
+@TaskGen.after('apply_cython_flags')
+def apply_cython_extra(self):
+	self.env['CYTHON_NO_TIMESTAMP'] = self.no_timestamp
+
 
 cython_ver_re = re.compile('Cython version ([0-9.]+)')
 def check_cython_version(self, version=None, minver=None, maxver=None, mandatory=False):
