@@ -2782,7 +2782,6 @@ xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 {
 	s4_sourcepref_t *sourcepref;
 	s4_resultset_t *set;
-	xmmsv_t *order, *ret;
 	xmms_fetch_info_t *info;
 	xmms_fetch_spec_t *spec;
 
@@ -2799,13 +2798,10 @@ xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 		return NULL;
 	}
 
-	order = xmmsv_new_list ();
-
 	set = xmms_medialib_query_recurs (session, coll, info);
 	ret = resultset_to_xmmsv (set, spec);
 	s4_resultset_free (set);
 
-	xmmsv_unref (order);
 	xmms_fetch_spec_free (spec);
 	xmms_fetch_info_free (info);
 
