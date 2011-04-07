@@ -2007,7 +2007,7 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 				xmms_fetch_info_add_key (fetch, NULL, val, sourcepref);
 			}
 
-			if (!xmmsv_coll_attribute_get (coll, "order", &key)
+			if (!xmmsv_coll_attribute_get (coll, "direction", &key)
 			    || strcmp (key, "ASC") == 0) {
 				xmmsv_list_append_string (order, val);
 			} else if (strcmp (key, "DESC") == 0) {

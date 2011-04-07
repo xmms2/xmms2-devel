@@ -1281,7 +1281,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			return FALSE;
 		}
 
-		if (xmmsv_coll_attribute_get (coll, "order", &attr)
+		if (xmmsv_coll_attribute_get (coll, "direction", &attr)
 		    && strcmp (attr, "ASC") != 0
 		    && strcmp (attr, "DESC") != 0) {
 			*err = "Invalid collection: ORDER with invalid \"order\"-"
