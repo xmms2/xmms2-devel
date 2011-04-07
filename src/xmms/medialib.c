@@ -1877,9 +1877,7 @@ idlist_condition (xmms_medialib_session_t *session,
 	GHashTable *id_table;
 	gint32 i, ival;
 
-	if (order != NULL) {
-		xmmsv_list_append (order, xmmsv_coll_idlist_get (coll));
-	}
+	xmmsv_list_append (order, xmmsv_coll_idlist_get (coll));
 
 	id_table = g_hash_table_new (NULL, NULL);
 
@@ -1961,9 +1959,7 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 
 	s4_resultset_free (set);
 
-	if (order != NULL) {
-		xmmsv_list_append (order, child_order);
-	}
+	xmmsv_list_append (order, child_order);
 
 	xmmsv_unref (child_order);
 
@@ -1981,6 +1977,13 @@ mediaset_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return collection_to_condition (session, operand, fetch, NULL);
 }
 
+enum xmms_sort_type_t {
+	SORT_TYPE_ID,
+	SORT_TYPE_VALUE,
+	SORT_TYPE_RANDOM,
+	SORT_TYPE_LIST
+};
+
 static s4_condition_t *
 order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
@@ -1989,32 +1992,30 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	xmmsv_t *operands;
 	gchar *key, *val;
 
-	if (order != NULL) {
-		if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
-			key = (gchar *) "value";
-		}
-		if (strcmp (key, "random") == 0) {
-			xmmsv_list_append_string (order, "__ RANDOM __");
+	if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
+		key = (gchar *) "value";
+	}
+	if (strcmp (key, "random") == 0) {
+		xmmsv_list_append_string (order, "__ RANDOM __");
+	} else {
+		if (strcmp (key, "id") == 0) {
+			val = (gchar *) "__ ID __";
 		} else {
-			if (strcmp (key, "id") == 0) {
-				val = (gchar *) "__ ID __";
-			} else {
-				s4_sourcepref_t *sourcepref;
+			s4_sourcepref_t *sourcepref;
 
-				sourcepref = xmms_medialib_get_source_preference (session);
+			sourcepref = xmms_medialib_get_source_preference (session);
 
-				xmmsv_coll_attribute_get (coll, "field", &val);
-				xmms_fetch_info_add_key (fetch, NULL, val, sourcepref);
-			}
+			xmmsv_coll_attribute_get (coll, "field", &val);
+			xmms_fetch_info_add_key (fetch, NULL, val, sourcepref);
+		}
 
-			if (!xmmsv_coll_attribute_get (coll, "direction", &key)
-			    || strcmp (key, "ASC") == 0) {
-				xmmsv_list_append_string (order, val);
-			} else if (strcmp (key, "DESC") == 0) {
-				val = g_strconcat ("-", val, NULL);
-				xmmsv_list_append_string (order, val);
-				g_free (val);
-			}
+		if (!xmmsv_coll_attribute_get (coll, "direction", &key)
+		    || strcmp (key, "ASC") == 0) {
+			xmmsv_list_append_string (order, val);
+		} else if (strcmp (key, "DESC") == 0) {
+			val = g_strconcat ("-", val, NULL);
+			xmmsv_list_append_string (order, val);
+			g_free (val);
 		}
 	}
 
@@ -2110,7 +2111,7 @@ static s4_condition_t *
 union_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	if (order != NULL && has_order (coll)) {
+	if (has_order (coll)) {
 		return union_ordered_condition (session, coll, fetch, order);
 	}
 	return union_unordered_condition (session, coll, fetch);
@@ -2782,6 +2783,7 @@ xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 {
 	s4_sourcepref_t *sourcepref;
 	s4_resultset_t *set;
+	xmmsv_t *ret;
 	xmms_fetch_info_t *info;
 	xmms_fetch_spec_t *spec;
 
