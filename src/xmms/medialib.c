@@ -1592,6 +1592,18 @@ xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
 	return ret;
 }
 
+typedef enum xmms_sort_type_St {
+	SORT_TYPE_ID,
+	SORT_TYPE_VALUE,
+	SORT_TYPE_RANDOM,
+	SORT_TYPE_LIST
+} xmms_sort_type_t;
+
+typedef enum xmms_sort_direction_St {
+	SORT_DIRECTION_ASCENDING,
+	SORT_DIRECTION_DESCENDING
+} xmms_sort_direction_t;
+
 /**
  * Sorts a resultset
  *
@@ -1605,45 +1617,49 @@ xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
 static s4_resultset_t *
 xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, xmmsv_t *order)
 {
-	const gchar *str;
-	gint i, j, stop;
+	gint i, j, stop, size, direction, type;
 	gint *s4_order;
 	xmmsv_t *val;
 
-	s4_order = g_new0 (int, xmmsv_list_get_size (order) + 1);
+	size = xmmsv_list_get_size (order);
+	s4_order = g_new0 (int, size + 1);
 
 	/* Find the first idlist-order operand */
 	for (i = 0; xmmsv_list_get (order, i, &val); i++) {
-		if (xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-			set = xmms_medialib_result_sort_idlist (set, val);
+		xmmsv_dict_entry_get_int (val, "type", &type);
+		if (type == SORT_TYPE_LIST) {
+			xmmsv_t *idlist;
+			xmmsv_dict_get (val, "list", &idlist);
+			set = xmms_medialib_result_sort_idlist (set, idlist);
 			break;
 		}
 	}
 	/* We will only order by the operands before the idlist */
 	stop = i;
 
-	for (i = 0, j = 0; i < stop; i++) {
-		if (xmmsv_list_get_string (order, i, &str)) {
-			gint neg = (*str == '-')?1:0;
-			str += neg;
+	for (i = 0, j = 0; i < stop && xmmsv_list_get (order, i, &val); i++) {
+		xmmsv_dict_entry_get_int (val, "type", &type);
 
-			if (strcmp (str, "__ RANDOM __") == 0) {
-				if (i == 0) {
-					s4_resultset_shuffle (set);
-				}
-				break;
-			} else if (strcmp (str, "__ ID __") == 0) {
-				s4_order[j] = 1;
-			} else {
-				s4_order[j] = xmms_fetch_info_get_index (fetch_info, NULL, str) + 1;
+		if (type == SORT_TYPE_RANDOM) {
+			if (i == 0) {
+				s4_resultset_shuffle (set);
 			}
+			break;
+		} else {
+			gint field;
+			xmmsv_dict_entry_get_int (val, "field", &field);
+			s4_order[j] = field + 1;
+		}
 
-			if (neg) {
+		if (xmmsv_dict_entry_get_int (val, "direction", &direction)) {
+			if (direction == SORT_DIRECTION_DESCENDING) {
 				s4_order[j] = -s4_order[j];
 			}
-			j++;
 		}
+
+		j++;
 	}
+
 	s4_order[j] = 0;
 
 	if (j > 0) {
@@ -1902,8 +1918,16 @@ idlist_condition (xmms_medialib_session_t *session,
 {
 	GHashTable *id_table;
 	gint32 i, ival;
+	xmmsv_t *child_order, *idlist;
 
-	xmmsv_list_append (order, xmmsv_coll_idlist_get (coll));
+	idlist = xmmsv_coll_idlist_get (coll);
+
+	child_order = xmmsv_new_dict ();
+	xmmsv_dict_set_int (child_order, "type", SORT_TYPE_LIST);
+	xmmsv_dict_set (child_order, "list", idlist);
+
+	xmmsv_list_append (order, child_order);
+	xmmsv_unref (child_order);
 
 	id_table = g_hash_table_new (NULL, NULL);
 
@@ -1949,7 +1973,7 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	const s4_result_t *result;
 	s4_resultset_t *set;
 	xmmsv_coll_t *operand;
-	xmmsv_t *operands, *child_order;
+	xmmsv_t *operands, *id_list, *child_order;
 	GHashTable *id_table;
 	gint32 ival;
 	guint start, stop;
@@ -1972,21 +1996,34 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 
 	set = xmms_medialib_query_recurs (session, operand, fetch);
 
-	child_order = xmmsv_new_list ();
+	id_list = xmmsv_new_list ();
 	id_table = g_hash_table_new (NULL, NULL);
 
 	for (; start < stop && s4_resultset_get_row (set, start, &row); start++) {
-		s4_resultrow_get_col (row, 0, &result);
-		if (result != NULL && s4_val_get_int (s4_result_get_val (result), &ival)) {
-			g_hash_table_insert (id_table, GINT_TO_POINTER (ival), GINT_TO_POINTER (1));
-			xmmsv_list_append_int (child_order, ival);
+		if (!s4_resultrow_get_col (row, 0, &result)) {
+			continue;
 		}
+
+		if (!s4_val_get_int (s4_result_get_val (result), &ival)) {
+			continue;
+		}
+
+		xmmsv_list_append_int (id_list, ival);
+
+		g_hash_table_insert (id_table,
+		                     GINT_TO_POINTER (ival),
+		                     GINT_TO_POINTER (1));
 	}
 
 	s4_resultset_free (set);
 
-	xmmsv_list_append (order, child_order);
+	/* Need ordering for correct windowing */
+	child_order = xmmsv_new_dict ();
+	xmmsv_dict_set_int (child_order, "type", SORT_TYPE_LIST);
+	xmmsv_dict_set (child_order, "list", id_list);
+	xmmsv_unref (id_list);
 
+	xmmsv_list_append (order, child_order);
 	xmmsv_unref (child_order);
 
 	return create_idlist_filter (session, id_table);
@@ -2003,47 +2040,52 @@ mediaset_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return collection_to_condition (session, operand, fetch, NULL);
 }
 
-enum xmms_sort_type_t {
-	SORT_TYPE_ID,
-	SORT_TYPE_VALUE,
-	SORT_TYPE_RANDOM,
-	SORT_TYPE_LIST
-};
 
+/**
+ * Add a dict to the sort list:
+ * { "type": (ID|VALUE|RANDOM|LIST), "field": ..., "direction": ... }
+ */
 static s4_condition_t *
 order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
+	s4_sourcepref_t *sourcepref;
 	xmmsv_coll_t *operand;
-	xmmsv_t *operands;
-	gchar *key, *val;
+	xmmsv_t *operands, *entry;
+	gchar *key, *value;
+	gint field;
+
+	entry = xmmsv_new_dict ();
+
+	sourcepref = xmms_medialib_get_source_preference (session);
 
 	if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
 		key = (gchar *) "value";
 	}
+
 	if (strcmp (key, "random") == 0) {
-		xmmsv_list_append_string (order, "__ RANDOM __");
+		xmmsv_dict_set_int (entry, "type", SORT_TYPE_RANDOM);
+	} else if (strcmp (key, "id") == 0) {
+		field = xmms_fetch_info_add_key (fetch, NULL, "id", sourcepref);
+		xmmsv_dict_set_int (entry, "type", SORT_TYPE_ID);
+		xmmsv_dict_set_int (entry, "field", field);
 	} else {
-		if (strcmp (key, "id") == 0) {
-			val = (gchar *) "__ ID __";
-		} else {
-			s4_sourcepref_t *sourcepref;
-
-			sourcepref = xmms_medialib_get_source_preference (session);
-
-			xmmsv_coll_attribute_get (coll, "field", &val);
-			xmms_fetch_info_add_key (fetch, NULL, val, sourcepref);
-		}
-
-		if (!xmmsv_coll_attribute_get (coll, "direction", &key)
-		    || strcmp (key, "ASC") == 0) {
-			xmmsv_list_append_string (order, val);
-		} else if (strcmp (key, "DESC") == 0) {
-			val = g_strconcat ("-", val, NULL);
-			xmmsv_list_append_string (order, val);
-			g_free (val);
-		}
+		xmmsv_coll_attribute_get (coll, "field", &value);
+		field = xmms_fetch_info_add_key (fetch, NULL, value, sourcepref);
+		xmmsv_dict_set_int (entry, "type", SORT_TYPE_VALUE);
+		xmmsv_dict_set_int (entry, "field", field);
 	}
+
+	if (!xmmsv_coll_attribute_get (coll, "direction", &key)) {
+		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_ASCENDING);
+	} else if (strcmp (key, "ASC") == 0) {
+		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_ASCENDING);
+	} else {
+		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_DESCENDING);
+	}
+
+	xmmsv_list_append (order, entry);
+	xmmsv_unref (entry);
 
 	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
@@ -2056,7 +2098,7 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                          xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *operands, *id_list;
+	xmmsv_t *operands, *id_list, *entry;
 	GHashTable *id_table;
 
 	id_list = xmmsv_new_list ();
@@ -2098,8 +2140,13 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 		xmmsv_list_iter_next (it);
 	}
 
-	xmmsv_list_append (order, id_list);
+	entry = xmmsv_new_dict ();
+	xmmsv_dict_set_int (entry, "type", SORT_TYPE_LIST);
+	xmmsv_dict_set (entry, "list", id_list);
 	xmmsv_unref (id_list);
+
+	xmmsv_list_append (order, entry);
+	xmmsv_unref (entry);
 
 	return create_idlist_filter (session, id_table);
 }
