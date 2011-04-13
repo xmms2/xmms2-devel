@@ -46,7 +46,7 @@ struct configuration_St {
 static void
 section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 {
-	GError *error;
+	GError *error = NULL;
 	gchar **keys;
 	gint i;
 
@@ -65,7 +65,7 @@ section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 static gboolean
 configuration_create (const gchar *path)
 {
-	GError *error;
+	GError *error = NULL;
 	gchar *dir;
 	gint err;
 
@@ -120,7 +120,7 @@ static GKeyFile *
 configuration_load (const gchar *path)
 {
 	GKeyFile *keyfile, *custom;
-	GError *error;
+	GError *error = NULL;
 
 	keyfile = g_key_file_new ();
 	custom = g_key_file_new ();
