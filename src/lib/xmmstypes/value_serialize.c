@@ -21,7 +21,6 @@
 #include "xmmsc/xmmsv.h"
 #include "xmmsclientpriv/xmmsclient_util.h"
 
-static void _internal_store_on_bb_uint32 (xmmsv_t *bb, uint32_t offset, uint32_t v);
 static bool _internal_put_on_bb_bin (xmmsv_t *bb, const unsigned char *data, unsigned int len);
 static bool _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg);
 static bool _internal_put_on_bb_int32 (xmmsv_t *bb, int32_t v);
@@ -87,16 +86,6 @@ _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg)
 		return false;
 
 	return xmmsv_bitbuffer_put_data (bb, (const unsigned char *) errmsg, strlen (errmsg) + 1);
-}
-
-static void
-_internal_store_on_bb_uint32 (xmmsv_t *bb,
-                              uint32_t offset, uint32_t v)
-{
-
-	xmmsv_bitbuffer_goto (bb, offset);
-	xmmsv_bitbuffer_put_bits (bb, 32, v);
-	xmmsv_bitbuffer_end (bb);
 }
 
 static bool
@@ -220,7 +209,7 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 	}
 
 	/* overwrite with real size */
-	_internal_store_on_bb_uint32 (bb, offset, count);
+	xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
 
 	return ret;
 }
@@ -251,7 +240,7 @@ _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	}
 
 	/* overwrite with real size */
-	_internal_store_on_bb_uint32 (bb, offset, count);
+	xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
 
 	return ret;
 }

@@ -2610,6 +2610,18 @@ xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d)
 }
 
 int
+xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset)
+{
+	int prevpos;
+	prevpos = xmmsv_bitbuffer_pos (v);
+	if (!xmmsv_bitbuffer_goto (v, offset))
+		return 0;
+	if (!xmmsv_bitbuffer_put_bits (v, bits, d))
+		return 0;
+	xmmsv_bitbuffer_goto (v, prevpos);
+}
+
+int
 xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len)
 {
 	while (len) {
