@@ -158,6 +158,7 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_retrieve(self, hash, cb=*)
 	cpdef XmmsResult bindata_remove(self, hash, cb=*)
 	cpdef XmmsResult bindata_list(self, cb=*)
+	cpdef XmmsResult stats(self, cb=*)
 
 cdef class XmmsLoop(XmmsApi):
 	cdef bint do_loop

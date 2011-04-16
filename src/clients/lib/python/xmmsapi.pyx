@@ -1562,6 +1562,16 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_bindata_list(self.conn))
 
+	cpdef XmmsResult stats(self, cb=None):
+		"""
+		stats(cb=None) -> XmmsResult
+
+		Get statistics informations from the server
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		return self.create_result(cb, xmmsc_main_stats(self.conn))
+
 
 
 class XmmsDisconnectException(Exception):
