@@ -133,6 +133,7 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult config_register_value(self, valuename, defaultvalue, cb=*)
 	cpdef XmmsResult medialib_add_entry(self, path, cb=*, encoded=*)
 	cpdef XmmsResult medialib_remove_entry(self, int id, cb=*)
+	cpdef XmmsResult medialib_move_entry(self, int id, url, cb=*, encoded=*)
 	cpdef XmmsResult medialib_get_info(self, int id, cb=*)
 	cpdef XmmsResult medialib_rehash(self, int id=*, cb=*)
 	cpdef XmmsResult medialib_get_id(self, url, cb=*, encoded=*)

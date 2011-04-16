@@ -1173,6 +1173,25 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_medialib_remove_entry(self.conn, id))
 
+	cpdef XmmsResult medialib_move_entry(self, int id,  url, cb = None, encoded = False):
+		"""
+		medialib_move_entry(id, url, cb=None, encoded=False) -> XmmsResult
+
+		Set a new url for an entry in the medialib.
+		@rtype: L{XmmsResult}
+		@return The result of the operation.
+		"""
+		cdef char *u
+
+		if encoded:
+			try:
+				from urllib import unquote_plus
+			except ImportError: #Py3k
+				from urllib.parse import unquote_plus
+			url = unquote_plus(url)
+		u = to_charp(from_unicode(url))
+		return self.create_result(cb, xmmsc_medialib_move_entry(self.conn, id, u))
+
 	cpdef XmmsResult medialib_get_info(self, int id, cb = None):
 		"""
 		medialib_get_info(id, cb=None) -> XmmsResult
