@@ -29,8 +29,6 @@
 
 #include "libsmbclient.h"
 
-extern int errno;
-
 /*
  * libsmbclient is not threadsafe.
  */
