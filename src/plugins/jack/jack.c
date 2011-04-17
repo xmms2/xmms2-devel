@@ -81,6 +81,9 @@ xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)
 
 	xmms_output_plugin_methods_set (plugin, &methods);
 
+	xmms_output_plugin_config_property_register (plugin, "clientname", "XMMS2",
+	                                             NULL, NULL);
+
 	jack_set_error_function (xmms_jack_error);
 
 	return TRUE;
@@ -96,8 +99,13 @@ static gboolean
 xmms_jack_connect (xmms_output_t *output, xmms_jack_data_t *data)
 {
 	int i;
+	const xmms_config_property_t *cv;
+	const gchar *clientname;
 
-	data->jack = jack_client_new ("XMMS2");
+	cv = xmms_output_config_lookup (output, "clientname");
+	clientname = xmms_config_property_get_string (cv);
+
+	data->jack = jack_client_open (clientname, JackNullOption, NULL);
 	if (!data->jack) {
 		return FALSE;
 	}
