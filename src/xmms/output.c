@@ -558,6 +558,12 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	return ret;
 }
 
+gint
+xmms_output_bytes_available (xmms_output_t *output)
+{
+	return xmms_ringbuf_bytes_used (output->filler_buffer);
+}
+
 xmms_config_property_t *
 xmms_output_config_property_register (xmms_output_t *output, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata)
 {

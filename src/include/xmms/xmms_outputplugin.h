@@ -311,6 +311,20 @@ void xmms_output_stream_type_add (xmms_output_t *output, ...);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 
 /**
+ * Gets Number of available bytes in the output buffer
+ *
+ * This is typically used when the output plugin is event driven, and is
+ * then used when the status is set to playing, and the output needs more
+ * data from xmms2 to write to the soundcard.
+ *
+ * @param output an output object
+ * @param buffer a buffer to store the read data in
+ * @param len the number of bytes to read
+ * @return the number of bytes read
+ */
+gint xmms_output_bytes_available (xmms_output_t *output);
+
+/**
  * Set an error.
  *
  * When an error occurs in an asynchronous function, the error can be
