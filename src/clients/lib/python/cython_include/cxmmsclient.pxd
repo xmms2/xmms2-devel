@@ -46,6 +46,10 @@ cdef extern from "xmmsc/xmmsv.h":
 	ctypedef struct xmmsv_t
 	ctypedef struct xmmsv_coll_t
 
+cdef extern from "xmmsc/xmmsc_visualization.h":
+	cdef enum:
+		XMMSC_VISUALIZATION_WINDOW_SIZE
+
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef struct xmmsc_connection_t
 	ctypedef struct xmmsc_result_t
@@ -162,7 +166,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	# Visualization
 	xmmsc_result_t *xmmsc_visualization_version      (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_visualization_init         (xmmsc_connection_t *c)
-	bint            xmmsc_visualization_init_handle  (xmmsc_result_t *res)
+	int             xmmsc_visualization_init_handle  (xmmsc_result_t *res)
 	xmmsc_result_t *xmmsc_visualization_start        (xmmsc_connection_t *c, int vv)
 	void            xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res)
 	bint            xmmsc_visualization_started      (xmmsc_connection_t *c, int vv)

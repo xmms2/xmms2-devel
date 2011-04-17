@@ -3,6 +3,8 @@ Python bindings for XMMS2.
 """
 
 # CImports
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from cpython.bytes cimport PyBytes_FromStringAndSize
 from xmmsutils cimport from_unicode, to_charp
 from cxmmsvalue cimport *
 from cxmmsclient cimport *
@@ -241,6 +243,127 @@ cdef class XmmsResult:
 		return self.xmmsvalue().value()
 
 
+cdef class XmmsVisResult(XmmsResult):
+	#cdef XmmsValue _val
+	#cdef VisResultCommand command
+	#cdef xmmsc_connection_t *conn
+
+	def __cinit__(self):
+		self.command = VIS_RESULT_CMD_NONE
+		self.conn = NULL
+
+	def __dealloc__(self):
+		if self.conn != NULL:
+			xmmsc_unref(self.conn)
+			self.conn = NULL
+
+	cdef set_command(self, VisResultCommand cmd, xmmsc_connection_t *conn):
+		self.command = cmd
+		if self.conn != NULL:
+			xmmsc_unref(self.conn)
+			self.conn = NULL
+		if conn != NULL:
+			self.conn = xmmsc_ref(conn)
+
+	cdef retrieve_error(self):
+		cdef xmmsv_t *errval
+		xval = XmmsResult.xmmsvalue(self)
+		if xval.is_error():
+			self._val = xval
+		else:
+			self._val = XmmsValue()
+			errval = xmmsv_new_error("Failed to initialize visualization")
+			self._val.set_value(errval)
+			xmmsv_unref(errval)
+
+	cdef _init_xmmsvalue(self):
+		if self._val is None:
+			if self.res == NULL:
+				raise RuntimeError("Uninitialized result")
+			hid = xmmsc_visualization_init_handle(self.res)
+			if hid == -1:
+				self.retrieve_error()
+			else:
+				self._val = XmmsValue(pyval=hid)
+		return self._val
+
+	cdef _start_xmmsvalue(self):
+		if self._val is None:
+			if self.res == NULL:
+				raise RuntimeError("Uninitialized result")
+			xval = XmmsResult.xmmsvalue(self)
+			if xval.is_error():
+				self._val = xval
+			elif self.conn == NULL:
+				raise RuntimeError("Internal connection reference not set")
+			else:
+				xmmsc_visualization_start_handle(self.conn, self.res)
+				self._val = XmmsValue(pyval=None)
+		return self._val
+
+	cpdef xmmsvalue(self):
+		if self.command == VIS_RESULT_CMD_INIT:
+			return self._init_xmmsvalue()
+		elif self.command == VIS_RESULT_CMD_START:
+			return self._start_xmmsvalue()
+		else:
+			# XXX Raise an exception ?
+			return XmmsResult.xmmsvalue(self)
+
+cdef class XmmsVisChunk:
+	#cdef short *data
+	#cdef int sample_count
+
+	def __cinit__(self):
+		self.data = NULL
+		self.sample_count = 0
+
+	def __dealloc__(self):
+		if self.data != NULL:
+			PyMem_Free(self.data)
+
+	cdef set_data(self, short *data, int sample_count):
+		if self.data != NULL:
+			PyMem_Free(self.data)
+			self.sample_count = 0
+		self.data = <short *>PyMem_Malloc(sizeof (short) * sample_count)
+		if self.data == NULL:
+			raise RuntimeError("Failed to initialize chunk data")
+		for i in range(sample_count):
+			self.data[i] = data[i]
+		self.sample_count = sample_count
+
+	def __len__(self):
+		return self.sample_count
+
+	cpdef get_buffer(self):
+		"""
+		get_buffer() -> bytes (str in python 2.x)
+
+		Get the chunk buffer
+		@rtype: L{bytes}
+		@return chunk data as a string
+		"""
+		if self.data == NULL:
+			raise RuntimeError("chunk data not initialized")
+		return PyBytes_FromStringAndSize(<char *>self.data, sizeof (short) * self.sample_count)
+
+	cpdef get_data(self):
+		"""
+		get_data() -> list
+
+		Get chunk data as a list.
+		@rtype: L{list}
+		@return A list of int
+		"""
+		if self.data == NULL:
+			raise RuntimeError("chunk data not initialized")
+		return [<int>self.data[i] for i in range(self.sample_count)]
+
+class VisualizationError(Exception):
+	pass
+
+
 cdef void python_need_out_fun(int i, void *obj):
 	cdef object o
 	o = <object> obj
@@ -422,16 +545,24 @@ cdef class XmmsCore:
 	def is_connected(self):
 		return self.isconnected != 0
 
-	cdef XmmsResult create_result(self, cb, xmmsc_result_t *res):
+	cdef XmmsResult _create_result(self, cb, xmmsc_result_t *res, Cls):
 		cdef XmmsResult ret
 		if res == NULL:
 			raise RuntimeError("xmmsc_result_t couldn't be allocated")
-		ret = XmmsResult()
+		ret = Cls()
 		ret.set_sourcepref(self.source_preference)
 		ret.set_result(res)
 		if cb is not None:
 			ret.set_callback(self.result_tracker, cb) # property that setup all.
 		return ret
+
+	cdef XmmsResult create_result(self, cb, xmmsc_result_t *res):
+		return self._create_result(cb, res, XmmsResult)
+
+	cdef XmmsResult create_vis_result(self, cb, xmmsc_result_t *res, VisResultCommand cmd):
+		cdef XmmsVisResult vres = self._create_result(cb, res, XmmsVisResult)
+		vres.set_command(cmd, self.conn)
+		return vres
 
 
 cdef class XmmsApi(XmmsCore):
@@ -1571,6 +1702,117 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_main_stats(self.conn))
+
+	cpdef XmmsResult visualization_version(self, cb=None):
+		"""
+		xmmsc_visualization_version(cb=None) -> XmmsResult
+
+		Get the version of the visualization plugin installed on the server.
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		return self.create_result(cb, xmmsc_visualization_version(self.conn))
+
+	cpdef XmmsResult visualization_init(self, cb=None):
+		"""
+		xmmsc_visualization_init(cb=None) -> XmmsResult
+
+		Get a new visualization handle.
+		@rtype: L{XmmsResult}
+		@return: The result of the operation
+		"""
+		return self.create_vis_result(cb, xmmsc_visualization_init(self.conn), VIS_RESULT_CMD_INIT)
+
+	cpdef XmmsResult visualization_start(self, int handle, cb=None):
+		"""
+		xmmsc_visualization_start(handle, cb=None) -> XmmsResult
+
+		Starts the visualization.
+		@rtype: L{XmmsResult}
+		@return: The result of the operation
+		"""
+		return self.create_vis_result(cb, xmmsc_visualization_start(self.conn, handle), VIS_RESULT_CMD_START)
+
+	cpdef bint visualization_started(self, int handle):
+		"""
+		xmmsc_visualization_started(handle) -> bool
+
+		Whether the visualization is started or not.
+		@rtype: L{bool}
+		@return: True if the visualization is started, False otherwise.
+		"""
+		return xmmsc_visualization_started(self.conn, handle)
+
+	cpdef bint visualization_errored(self, int handle):
+		"""
+		xmmsc_visualization_errored(handle) -> bool
+
+		Whether the visualization got an error.
+		@rtype: L{bool}
+		@return: True if the visualization got an error, False otherwise.
+		"""
+		return xmmsc_visualization_errored(self.conn, handle)
+
+	cpdef XmmsResult visualization_property_set(self, int handle, key, value, cb=None):
+		"""
+		xmmsc_visualization_property_set(handle, key, value, cb=None) -> XmmsResult
+
+		Set a visualization's property.
+		@rtype: L{bool}
+		@return: The result of the operation
+		"""
+		cdef char *k
+		cdef char *v
+
+		k = to_charp(from_unicode(key))
+		v = to_charp(from_unicode(value))
+		return self.create_result(cb, xmmsc_visualization_property_set(self.conn, handle, k, v))
+
+	cpdef XmmsResult visualization_properties_set(self, int handle, props={}, cb=None):
+		"""
+		xmmsc_visualization_properties_set(handle, props={}, cb=None) -> XmmsResult
+
+		Set visualization's properties.
+		@rtype: L{bool}
+		@return: The result of the operation
+		"""
+		cdef xmmsv_t *_props
+		cdef XmmsResult res
+
+		_props = create_native_value(props)
+		res = self.create_result(cb, xmmsc_visualization_properties_set(self.conn, handle, _props))
+		xmmsv_unref(_props)
+		return res
+
+	cpdef XmmsVisChunk visualization_chunk_get(self, int handle, int drawtime=0, bint blocking=False):
+		"""
+		xmmsv_visualization_chunk_get(handle, drawtime=0, blocking=False)
+
+		Fetches the next available data chunk
+		@rtype: L{XmmsVisChunk}
+		@return: Visualization chunk.
+		"""
+		cdef short *buf
+		cdef int size
+		cdef XmmsVisChunk chunk
+
+		buf = <short *>PyMem_Malloc(2 * XMMSC_VISUALIZATION_WINDOW_SIZE * sizeof (short))
+		size = xmmsc_visualization_chunk_get (self.conn, handle, buf, drawtime, blocking)
+		if size < 0:
+			PyMem_Free(buf)
+			raise VisualizationError("Unrecoverable error in visualization")
+		chunk = XmmsVisChunk()
+		chunk.set_data(buf, size)
+		PyMem_Free(buf)
+		return chunk
+
+	cpdef visualization_shutdown(self, int handle):
+		"""
+		xmmsc_visualization_shutdown(handle) -> None
+
+		Shutdown and destroy a visualization. After this, handle is no longer valid.
+		"""
+		xmmsc_visualization_shutdown(self.conn, handle)
 
 
 

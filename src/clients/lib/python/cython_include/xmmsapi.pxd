@@ -1,4 +1,4 @@
-from xmmsvalue cimport Collection
+from xmmsvalue cimport Collection, XmmsValue
 from cxmmsvalue cimport *
 from cxmmsclient cimport *
 
@@ -56,6 +56,31 @@ cdef class XmmsResult:
 	cpdef _value(self)
 	cpdef value(self)
 
+ctypedef int VisResultCommand
+cdef enum:
+	VIS_RESULT_CMD_NONE = 0
+	VIS_RESULT_CMD_INIT = 1
+	VIS_RESULT_CMD_START = 2
+
+cdef class XmmsVisResult(XmmsResult):
+	cdef XmmsValue _val
+	cdef VisResultCommand command
+	cdef xmmsc_connection_t *conn
+
+	cdef set_command(self, VisResultCommand cmd, xmmsc_connection_t *conn)
+	cdef retrieve_error(self)
+	cdef _init_xmmsvalue(self)
+	cdef _start_xmmsvalue(self)
+	cpdef xmmsvalue(self)
+
+cdef class XmmsVisChunk:
+	cdef short *data
+	cdef int sample_count
+
+	cdef set_data(self, short *data, int sample_count)
+	cpdef get_buffer(self)
+	cpdef get_data(self)
+
 cdef class XmmsCore:
 	cdef xmmsc_connection_t *conn
 	cdef int isconnected
@@ -77,7 +102,9 @@ cdef class XmmsCore:
 	cpdef set_need_out_fun(self, fun)
 	cpdef get_fd(self)
 	cpdef connect(self, path=*, disconnect_func=*)
+	cdef XmmsResult _create_result(self, cb, xmmsc_result_t *res, Cls)
 	cdef XmmsResult create_result(self, cb, xmmsc_result_t *res)
+	cdef XmmsResult create_vis_result(self, cb, xmmsc_result_t *res, VisResultCommand cmd)
 
 cdef void python_need_out_fun(int i, void *obj)
 cdef void python_disconnect_fun(void *obj)
@@ -159,6 +186,15 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_remove(self, hash, cb=*)
 	cpdef XmmsResult bindata_list(self, cb=*)
 	cpdef XmmsResult stats(self, cb=*)
+	cpdef XmmsResult visualization_version(self, cb=*)
+	cpdef XmmsResult visualization_init(self, cb=*)
+	cpdef XmmsResult visualization_start(self, int handle, cb=*)
+	cpdef bint visualization_started(self, int handle)
+	cpdef bint visualization_errored(self, int handle)
+	cpdef XmmsResult visualization_property_set(self, int handle, key, value, cb=*)
+	cpdef XmmsResult visualization_properties_set(self, int handle, props=*, cb=*)
+	cpdef XmmsVisChunk visualization_chunk_get(self, int handle, int drawtime=*, bint blocking=*)
+	cpdef visualization_shutdown(self, int handle)
 
 cdef class XmmsLoop(XmmsApi):
 	cdef bint do_loop
