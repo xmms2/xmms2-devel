@@ -1,6 +1,6 @@
-.\" nycli - The New Korving CLI
+.\" xmms2 - The official XMMS2 command line interface
 .\"
-.\" nyxmms2.1 - The nycli man page
+.\" xmms2.1 - The xmms2 man page
 .\"
 .\" Copyright (C) 2009 Anthony Garcia
 .\"
@@ -26,25 +26,25 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.TH NYXMMS2 1
+.TH XMMS2 1
 .SH NAME
-nycli \- New Korving CLI
+xmms2 \- The official XMMS2 command line interface
 .SH SYNOPSIS
-.B nyxmms2
+.B xmms2
 [command]
 [arguments]
 .SH DESCRIPTION
-.B nycli
+.B xmms2
 is the new official CLI XMMS2 client, replacing \fBxmms2\fR(1).
 .SH INVOCATION
 .SS INLINE MODE
 If
-.B nycli
+.B xmms2
 is passed a command as an argument, that command will be interpreted and
-.B nycli
+.B xmms2
 will exit after it is finished.
 .SS INTERACTIVE MODE
-.B nycli
+.B xmms2
 features a powerful shell-like environment via readline that allows the user to
 enter commands at a prompt and have the usual cool features such as pathname expansion
 and line editing.
@@ -661,7 +661,7 @@ Display command help.
 .SH COLLECTION COMMANDS
 
 .TP
-\fBcollection\fR 
+\fBcollection\fR
 .PP
 .RS 4
 No description
@@ -1089,7 +1089,7 @@ Match a specific media library id.
 .PP
 A list of command aliases are read from the configuration file in the section [alias]
 at runtime. The syntax of
-.B nycli
+.B xmms2
 aliases are somewhat similar to bash and other shells. An alias is defined by a list of semi-colon separated
 commands and arguments. Parameter expansion is supported (see
 .B EXPANSION
@@ -1302,13 +1302,13 @@ String to use as a prompt in
 .PP
 SERVER_AUTOSTART
 .RS 4
-Boolean, if true nycli will attempt to start \fBxmms2d\fR(1) if it's not running already.
+Boolean, if true xmms2 will attempt to start \fBxmms2d\fR(1) if it's not running already.
 .RE
 .PP
 SHELL_START_MESSAGE
 .RS 4
 Boolean, if true,
-.B nycli
+.B xmms2
 will display a greeting message and basic help when started in
 .B INTERACTIVE MODE
 .RE
@@ -1329,7 +1329,7 @@ Default command history file if HISTORY_FILE is unset.
 $XDG_CONFIG_HOME/xmms2/clients/nycli.conf
 .RS 4
 The configuration file for
-.B nycli
+.B xmms2
 .RE
 .SH BUGS
 Please report all bugs at http://bugs.xmms2.xmms.se
