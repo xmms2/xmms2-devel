@@ -300,6 +300,10 @@ E: nerochiaro@neuros.us
 W: http://nerochiaro.net
 D: Neuros OSD support and related fixes.
 
+N: David Richards
+E: rawdod@gmail.com
+D: jack fixes, output
+
 N: Alexander Rigbo
 E: alex@rigbo.se
 D: Various fixes. Sorting on integers.
