@@ -40,6 +40,7 @@ typedef struct xmms_jack_data_St {
 	gint chunksiz;
 	gboolean error;
 	gboolean running;
+	guint underruns;
 } xmms_jack_data_t;
 
 
@@ -116,7 +117,7 @@ xmms_jack_connect (xmms_output_t *output, xmms_jack_data_t *data)
 
 	for (i = 0; i < CHANNELS; i++) {
 		gchar name[16];
-		g_snprintf (name, sizeof (name), "out_%d", i);
+		g_snprintf (name, sizeof (name), "out_%d", i + 1);
 		data->ports[i] = jack_port_register (data->jack, name,
 		                                     JACK_DEFAULT_AUDIO_TYPE,
 		                                     (JackPortIsOutput |
@@ -143,6 +144,8 @@ xmms_jack_new (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_jack_data_t, 1);
+
+	data->underruns = 0;
 
 	xmms_output_private_data_set (output, data);
 
@@ -254,7 +257,7 @@ xmms_jack_process (jack_nframes_t frames, void *arg)
 	xmms_output_t *output = (xmms_output_t*) arg;
 	xmms_jack_data_t *data;
 	xmms_samplefloat_t *buf[CHANNELS];
-	xmms_samplefloat_t tbuf[CHANNELS*1024];
+	xmms_samplefloat_t tbuf[CHANNELS*4096];
 	gint i, j, res, toread;
 
 	g_return_val_if_fail (output, -1);
@@ -269,16 +272,28 @@ xmms_jack_process (jack_nframes_t frames, void *arg)
 
 	if (data->running) {
 		while (toread) {
-			gint t;
+			gint t, avail;
 
 			t = MIN (toread * CHANNELS * sizeof (xmms_samplefloat_t),
 			         sizeof (tbuf));
 
+			avail = xmms_output_bytes_available (output);
+
+			if (avail < t) {
+				data->underruns++;
+				XMMS_DBG ("jack output underun number %d! Not enough bytes available. Wanted: %d Available: %d", data->underruns, t, avail);
+				break;
+			}
+
 			res = xmms_output_read (output, (gchar *)tbuf, t);
 
 			if (res <= 0) {
-				XMMS_DBG ("output_read returned %d", res);
+				XMMS_DBG ("Output read returned %d unexpectedly", res);
 				break;
+			}
+
+			if (res < t) {
+				XMMS_DBG ("Less bytes read than expected. (Probably a ringbuffer hotspot)");
 			}
 
 			res /= CHANNELS * sizeof (xmms_samplefloat_t);
