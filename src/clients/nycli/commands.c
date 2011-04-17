@@ -2395,7 +2395,7 @@ static void
 help_list_commands (GList *names,
                     const gchar *sing, const gchar *plur, const gchar *det)
 {
-	g_printf (_("usage: nyxmms2 <%s> [args]\n\n"), sing);
+	g_printf (_("usage: xmms2 <%s> [args]\n\n"), sing);
 	g_printf (_("Available %s:\n"), plur);
 	g_list_foreach (cmdnames_find (names, NULL),
 	                help_short_command, NULL);
@@ -2408,7 +2408,7 @@ help_list_subcommands (GList *names, gchar *cmd,
                        const gchar *sing, const gchar *plur, const gchar *det)
 {
 	gchar **cmdv = g_strsplit (cmd, " ", 0);
-	g_printf (_("usage: nyxmms2 %s <sub%s> [args]\n\n"), cmd, sing);
+	g_printf (_("usage: xmms2 %s <sub%s> [args]\n\n"), cmd, sing);
 	g_printf (_("Available '%s' sub%s:\n"), cmd, plur);
 	g_list_foreach (cmdnames_find (names, cmdv),
 	                help_short_command, NULL);
