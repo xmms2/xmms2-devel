@@ -265,6 +265,10 @@ N: Lucas Adam M Paul
 E: reilithion@gmail.com
 D: GME plugin
 
+N: Timo Paulssen
+E: timonator@perpetuum-immobile.de
+D: minor nycli changes
+
 N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
