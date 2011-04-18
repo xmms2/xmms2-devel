@@ -310,7 +310,7 @@ cli_pl_sort_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <playlist>] [prop1 [prop2 [...]]]"),
+	                     _("[-p <playlist>] [prop] ..."),
 	                     _("Sort a playlist by a list of properties.  By default, sort the active playlist.\n"
 						   "To sort by a property in reverse, prefix its name by a '-'."));
 }

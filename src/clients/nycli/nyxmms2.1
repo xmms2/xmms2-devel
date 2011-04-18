@@ -628,17 +628,11 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist sort\fR [\-o <order>] [playlist]
+\fBplaylist sort\fR [\-p playlist] [prop] ...
 .PP
 .RS 4
-Sort a playlist.  By default, sort the active playlist.
-.RE
-.PP
-.RS 4
-\-o, \-\-order
-.RE
-.RS 8
-List of properties to sort by (prefix by '-' for reverse sorting).
+Sort a playlist. By default, sort the active playlist. Prefix properties by '-'
+for reverse sorting.
 .RE
 .PP
 .RS 4
@@ -646,6 +640,13 @@ List of properties to sort by (prefix by '-' for reverse sorting).
 .RE
 .RS 8
 Display command help.
+.RE
+.PP
+.RS 4
+\-p, \-\-playlist
+.RE
+.RS 8
+Rename the given playlist.
 .RE
 .PP
 
