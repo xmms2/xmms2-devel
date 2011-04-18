@@ -749,15 +749,14 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	/* Default to active playlist (from cache) */
 	command_flag_string_get (ctx, "playlist", &playlist);
-	if (!playlist
-	    || strcmp (playlist, infos->cache->active_playlist_name) == 0) {
-		/* FIXME: Optim by reading data from cache */
+
+	if (!playlist_currpos_get (infos, playlist, &pos)) {
+		g_printf (_("Error: failed to get current position in playlist.\n"));
+		return FALSE;
+	}
+
+	if (!playlist) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
-		pos = infos->cache->currpos;
-	} else {
-		/* currpos is 1 for non-active playlists
-		   FIXME: always true? */
-		pos = 1;
 	}
 
 	/* Filter by positions */
