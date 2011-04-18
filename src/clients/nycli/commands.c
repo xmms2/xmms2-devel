@@ -68,6 +68,10 @@ CLI_SIMPLE_SETUP("toggle", cli_toggle, /* <<<<< */
                  COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE,
                  NULL,
                  _("Toggle playback."))
+CLI_SIMPLE_SETUP("stop", cli_stop,
+                 COMMAND_REQ_CONNECTION,
+                 NULL,
+                 _("Stop playback."))
 CLI_SIMPLE_SETUP("seek", cli_seek,
                  COMMAND_REQ_CONNECTION,
                  _("<time|offset>"),
@@ -172,19 +176,6 @@ cli_help_setup (command_action_t *action)
 	command_action_fill (action, "help", &cli_help, COMMAND_REQ_NONE, flags,
 	                     _("[-a] [command]"),
 	                     _("List all commands, or help on one command."));
-}
-
-void
-cli_stop_setup (command_action_t *action)
-{
-	const argument_t flags[] = {
-		{ "tracks", 'n', 0, G_OPTION_ARG_INT, NULL, _("Number of tracks after which to stop playback."), "tracks" },
-		{ "time",   't', 0, G_OPTION_ARG_INT, NULL, _("Duration after which to stop playback."), "time" },
-		{ NULL }
-	};
-	command_action_fill (action, "stop", &cli_stop, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-n <tracks> | -t <time>]"),
-	                     "Stop playback.");
 }
 
 void
@@ -588,15 +579,6 @@ gboolean
 cli_stop (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gint n;
-
-	/* FIXME: Support those flags */
-	if (command_flag_int_get (ctx, "tracks", &n) && n != 0) {
-		g_printf (_("--tracks flag not supported yet!\n"));
-	}
-	if (command_flag_int_get (ctx, "time", &n) && n != 0) {
-		g_printf (_("--time flag not supported yet!\n"));
-	}
 
 	res = xmmsc_playback_stop (infos->sync);
 	xmmsc_result_wait (res);
