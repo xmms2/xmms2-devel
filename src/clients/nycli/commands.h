@@ -145,7 +145,7 @@ static const command_setup_func commandlist[] =
 	cli_pl_shuffle_setup,
 	cli_pl_sort_setup,
 	cli_pl_config_setup,
-    cli_coll_list_setup,
+	cli_coll_list_setup,
 	cli_coll_show_setup,
 	cli_coll_create_setup,
 	cli_coll_rename_setup,
