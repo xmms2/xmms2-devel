@@ -210,7 +210,7 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 		}
 	}
 	if (i != ctx->argc) {
-		for (i+1; i < ctx->argc; i++) {
+		for (i++; i < ctx->argc; i++) {
 			argv[i-1] = argv[i];
 		}
 		ctx->argc--;
