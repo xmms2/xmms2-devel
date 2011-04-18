@@ -80,7 +80,12 @@ command_run (cli_infos_t *infos, gchar *input)
 static void
 command_argument_free (void *x)
 {
-	g_free (x);
+	command_argument_t *arg = (command_argument_t *)x;
+
+	if (arg->type == COMMAND_ARGUMENT_TYPE_STRING && arg->value.vstring) {
+		g_free (arg->value.vstring);
+	}
+	g_free (arg);
 }
 
 static command_context_t *
