@@ -160,7 +160,6 @@ CLI_SIMPLE_SETUP("server shutdown", cli_server_shutdown,
                  NULL,
                  _("Shutdown the server."))
 
-/* FIXME: Add all playlist commands */
 /* FIXME: macro for setup with flags (+ use ##x for f/f_setup?) */
 
 void
