@@ -49,6 +49,9 @@ struct browse_entry_St {
 	gint isdir;
 };
 
+static gboolean playlist_currpos_get (cli_infos_t *, gchar *, gint *);
+static gboolean playlist_length_get (cli_infos_t *, gchar *, gint *);
+
 /* Setup commands */
 
 #define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
