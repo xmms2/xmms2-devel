@@ -369,7 +369,7 @@ cli_pl_list_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-a] [pattern]"),
+	                     _("[-a]"),
 	                     _("List all playlists."));
 }
 
