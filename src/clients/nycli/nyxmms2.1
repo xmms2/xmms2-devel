@@ -481,7 +481,7 @@ Display command help.
 .PP
 
 .TP
-\fBplaylist config\fR [\-t <type>] [\-s <history>] [\-u <upcoming>] [\-i <coll>] [playlist]
+\fBplaylist config\fR [\-t <type>] [\-s <history>] [\-u <upcoming>] [\-i <coll>] [-j <playlist>] [playlist]
 .PP
 .RS 4
 Configure a playlist by changing its type, attributes, etc.
@@ -514,6 +514,13 @@ Number of upcoming tracks to maintain (for pshuffle).
 .RE
 .RS 8
 Input collection for the playlist (for pshuffle). Default to 'All Media'.
+.RE
+.PP
+.RS 4
+\-j, \-\-jumplist
+.RE
+.RS 8
+Jump to another playlist when the end of the playlist is reached.
 .RE
 .PP
 .RS 4
