@@ -284,6 +284,10 @@ def configure(conf):
     conf.env.append_unique("CCFLAGS", ["-g", "-O0"])
     conf.env.append_unique("CXXFLAGS", ["-g", "-O0"])
 
+    if Options.options.with_profiling:
+        conf.env.append_unique("CCFLAGS", ["--coverage"])
+        conf.env.append_unique("LINKFLAGS", ["--coverage"])
+
     flags = compiler_flags(conf)
 
     flags.enable_c_warning('all')
@@ -487,6 +491,8 @@ def set_options(opt):
                    help="Force a target platform (cross-compilation)")
     opt.add_option('--with-windows-version', type='string', dest='winver',
                    help="Force a specific Windows version (cross-compilation)")
+    opt.add_option('--with-profiling', action="store_true", default=False,
+                   dest='with_profiling', help="Enable profiling")
     opt.add_option('--run-tests', action='store_true', default=False,
                    dest='run_tests', help="Run test suite")
     opt.add_option('--with-ldconfig', action='store_true', default=None,
