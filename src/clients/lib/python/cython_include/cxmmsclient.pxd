@@ -222,6 +222,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_coll_sync   (xmmsc_connection_t *c)
 
+	xmmsc_result_t *xmmsc_coll_query       (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *fetch)
 	xmmsc_result_t *xmmsc_coll_query_ids   (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len)
 	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len,  xmmsv_t *fetch, xmmsv_t *group)
 

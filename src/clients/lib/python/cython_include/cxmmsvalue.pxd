@@ -6,17 +6,23 @@ cdef extern from *:
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmmsv_coll_type_t:
 		XMMS_COLLECTION_TYPE_REFERENCE
+		XMMS_COLLECTION_TYPE_UNIVERSE
 		XMMS_COLLECTION_TYPE_UNION
 		XMMS_COLLECTION_TYPE_INTERSECTION
 		XMMS_COLLECTION_TYPE_COMPLEMENT
 		XMMS_COLLECTION_TYPE_HAS
-		XMMS_COLLECTION_TYPE_EQUALS
 		XMMS_COLLECTION_TYPE_MATCH
+		XMMS_COLLECTION_TYPE_TOKEN
+		XMMS_COLLECTION_TYPE_EQUALS
+		XMMS_COLLECTION_TYPE_NOTEQUAL
 		XMMS_COLLECTION_TYPE_SMALLER
+		XMMS_COLLECTION_TYPE_SMALLEREQ
 		XMMS_COLLECTION_TYPE_GREATER
+		XMMS_COLLECTION_TYPE_GREATEREQ
+		XMMS_COLLECTION_TYPE_ORDER
+		XMMS_COLLECTION_TYPE_LIMIT
+		XMMS_COLLECTION_TYPE_MEDIASET
 		XMMS_COLLECTION_TYPE_IDLIST
-		XMMS_COLLECTION_TYPE_QUEUE
-		XMMS_COLLECTION_TYPE_PARTYSHUFFLE
 
 	ctypedef char *xmmsv_coll_namespace_t
 	# XXX Trick cython compiler which doesn't deal well with extern
@@ -91,6 +97,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	bint xmmsv_list_foreach  (xmmsv_t *listv, xmmsv_list_foreach_func func, void* user_data)
 	int  xmmsv_list_get_size (xmmsv_t *listv)
 	bint xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
+	bint xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 
 	bint xmmsv_list_get_string (xmmsv_t *v, int pos, const_char **val)
 	bint xmmsv_list_get_int    (xmmsv_t *v, int pos, int *val)
@@ -196,6 +203,10 @@ cdef extern from "xmmsc/xmmsv.h":
 	xmmsv_t *xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
 
 	xmmsv_coll_t *xmmsv_coll_universe ()
+
+	xmmsv_coll_t *xmmsv_coll_add_order_operator  (xmmsv_coll_t *coll, const_char *key)
+	xmmsv_coll_t *xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
+	xmmsv_coll_t *xmmsv_coll_add_limit_operator  (xmmsv_coll_t *coll, int lim_start, int lim_len)
 
 
 cdef extern from "xmmsclient/xmmsclient.h":

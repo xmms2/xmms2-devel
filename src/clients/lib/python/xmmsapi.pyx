@@ -1569,6 +1569,19 @@ cdef class XmmsApi(XmmsCore):
 		p = from_unicode(path)
 		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, <char *>p))
 
+	cpdef XmmsResult coll_query(self, Collection coll, fetch, cb=None):
+		"""
+		coll_query(coll, fetch, cb=None) -> XmmsResult
+
+		Retrive a list of ids of the media matching the collection
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *fetch_val
+		fetch_val = create_native_value(fetch)
+		res = self.create_result(cb, xmmsc_coll_query(self.conn, coll.coll, fetch_val))
+		return res
+
 	cpdef XmmsResult coll_query_ids(self, Collection coll, start=0, leng=0, order=None, cb=None):
 		"""
 		coll_query_ids(coll, start=0, leng=0, order=None, cb=None) -> XmmsResult

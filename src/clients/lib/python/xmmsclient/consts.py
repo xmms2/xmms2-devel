@@ -9,17 +9,24 @@ from xmmsvalue import VALUE_TYPE_LIST
 from xmmsvalue import VALUE_TYPE_DICT
 
 from xmmsvalue import COLLECTION_TYPE_REFERENCE
+from xmmsvalue import COLLECTION_TYPE_UNIVERSE
 from xmmsvalue import COLLECTION_TYPE_UNION
 from xmmsvalue import COLLECTION_TYPE_INTERSECTION
 from xmmsvalue import COLLECTION_TYPE_COMPLEMENT
 from xmmsvalue import COLLECTION_TYPE_HAS
 from xmmsvalue import COLLECTION_TYPE_MATCH
+from xmmsvalue import COLLECTION_TYPE_TOKEN
 from xmmsvalue import COLLECTION_TYPE_EQUALS
+from xmmsvalue import COLLECTION_TYPE_NOTEQUAL
 from xmmsvalue import COLLECTION_TYPE_SMALLER
+from xmmsvalue import COLLECTION_TYPE_SMALLEREQ
 from xmmsvalue import COLLECTION_TYPE_GREATER
+from xmmsvalue import COLLECTION_TYPE_GREATEREQ
+from xmmsvalue import COLLECTION_TYPE_ORDER
+from xmmsvalue import COLLECTION_TYPE_LIMIT
+from xmmsvalue import COLLECTION_TYPE_MEDIASET
 from xmmsvalue import COLLECTION_TYPE_IDLIST
-from xmmsvalue import COLLECTION_TYPE_QUEUE
-from xmmsvalue import COLLECTION_TYPE_PARTYSHUFFLE
+
 
 from xmmsapi import PLAYBACK_STATUS_STOP
 from xmmsapi import PLAYBACK_STATUS_PLAY

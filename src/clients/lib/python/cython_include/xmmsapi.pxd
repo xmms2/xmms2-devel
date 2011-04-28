@@ -172,6 +172,7 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_remove(self, name, ns=*, cb=*)
 	cpdef XmmsResult coll_rename(self, oldname, newname, ns=*, cb=*)
 	cpdef XmmsResult coll_idlist_from_playlist_file(self, path, cb=*)
+	cpdef XmmsResult coll_query(self, Collection coll, fetch, cb=*)
 	cpdef XmmsResult coll_query_ids(self, Collection coll, start=*, leng=*, order=*, cb=*)
 	cpdef XmmsResult coll_query_infos(self, Collection coll, fields, start=*, leng=*, order=*, groupby=*, cb=*)
 	cpdef XmmsResult bindata_add(self, data, cb=*)
