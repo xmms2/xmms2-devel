@@ -15,7 +15,7 @@ def build(bld):
         rb_result.c
     """.split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'NOSTRICTPROTOTYPES'
+    obj.uselib = 'DISABLE_STRICTPROTOTYPES'
     obj.mac_bundle = True
     obj.install_path = '${ARCHDIR_RUBY}'
 
@@ -29,7 +29,7 @@ def build(bld):
     obj.includes = '../../../.. ../../../include ../../../includepriv'
     obj.source = ['rb_xmmsclient_glib.c']
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'glib2 NOSTRICTPROTOTYPES'
+    obj.uselib = 'glib2 DISABLE_STRICTPROTOTYPES'
     obj.mac_bundle = True
     obj.install_path = '${ARCHDIR_RUBY}'
 

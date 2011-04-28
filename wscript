@@ -17,6 +17,7 @@ import imp
 sys.path.insert(0,os.getcwd())
 
 from waftools import gittools
+from waftools.compiler_flags import compiler_flags
 
 import Options
 import Utils
@@ -247,6 +248,7 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Utils.pprint('Normal', "Disabled:")
     Utils.pprint('BLUE', ", ".join(sorted(disabled_plugins)))
 
+
 def configure(conf):
     if os.environ.has_key('PKG_CONFIG_PREFIX'):
         prefix = os.environ['PKG_CONFIG_PREFIX']
@@ -265,7 +267,6 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('g++')
 
-
     if Options.options.target_platform:
         Options.platform = Options.options.target_platform
 
@@ -280,26 +281,25 @@ def configure(conf):
         conf.check_message("uncommitted changes", "", bool(changed))
         conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
 
-    conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
-    for name in ('all',
-                 'no-format-extra-args',
-                 'no-format-zero-length',
-                 'format-nonliteral',
-                 'format-security',
-                 'format=2',
-                 "missing-prototypes",
-                 "strict-prototypes",
-                 "empty-body",
-                 "ignored-qualifiers",
-                 "type-limits",
-                 "write-strings"):
-        warnflag = "-W%s" % name
-        if conf.check_cc(cflags=warnflag):
-            conf.env["CCFLAGS"].append(warnflag)
-            # autogenerate uselib definitions to disable warnings
-            conf.env["CCFLAGS_NO%s" % name.replace("-","").upper()] = ["-Wno-%s" % name]
+    conf.env.append_unique("CCFLAGS", ["-g", "-O0"])
+    conf.env.append_unique("CXXFLAGS", ["-g", "-O0"])
 
-    conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
+    flags = compiler_flags(conf)
+
+    flags.enable_c_warning('all')
+    flags.enable_c_warning('empty-body')
+    flags.enable_c_warning('format=2')
+    flags.enable_c_warning('format-nonliteral')
+    flags.enable_c_warning('format-security')
+    flags.enable_c_warning('ignored-qualifiers')
+    flags.enable_c_warning('missing-prototypes')
+    flags.enable_c_warning('strict-prototypes')
+    flags.enable_c_warning('type-limits')
+    flags.enable_c_warning('write-strings')
+
+    flags.disable_c_warning('format-extra-args')
+    flags.disable_c_warning('format-zero-length')
+
     conf.env['XMMS_PKGCONF_FILES'] = []
     conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
 

@@ -21,7 +21,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c'] + types_suite
     obj.includes = '. ../ runner/ ../src ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit ncurses valgrind NOWRITESTRINGS'
+    obj.uselib = 'cunit ncurses valgrind DISABLE_WRITESTRINGS'
     obj.install_path = None
 
     obj = bld.new_task_gen('cc', 'program')
@@ -29,7 +29,7 @@ def build(bld):
     obj.source = ['runner/main.c', 'runner/valgrind.c', '../src/xmms/streamtype.c', '../src/xmms/object.c'] + server_suite
     obj.includes = '. ../ runner/ ../src ../src/includepriv ../src/include'
     obj.uselib_local = 'xmmstypes'
-    obj.uselib = 'cunit ncurses valgrind glib2 gthread2 NOWRITESTRINGS'
+    obj.uselib = 'cunit ncurses valgrind glib2 gthread2 DISABLE_WRITESTRINGS'
     obj.install_path = None
 
 
