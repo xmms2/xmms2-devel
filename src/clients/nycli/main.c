@@ -304,8 +304,10 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	gboolean auto_complete;
 
 	/* The arguments will be updated by command_trie_find. */
+	in_argv = g_memdup (in_argv, sizeof (gchar *) * in_argc);
 	argc = in_argc;
 	argv = in_argv;
+
 	auto_complete = configuration_get_boolean (infos->config,
 	                                           "AUTO_UNIQUE_COMPLETE");
 	match = command_trie_find (infos->commands, &argv, &argc,
@@ -344,6 +346,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		/* Call help to print the "no such command" error */
 		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
+
+	g_free (in_argv);
 }
 
 static void
