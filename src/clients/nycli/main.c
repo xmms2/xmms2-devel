@@ -64,15 +64,8 @@ command_run (cli_infos_t *infos, gchar *input)
 				command_run (infos, listop);
 			}
 		} else {
-			if (g_error_matches (error, G_SHELL_ERROR,
-			                     G_SHELL_ERROR_BAD_QUOTING)) {
-				g_printf (_("Error: Mismatched quote\n"));
-			} else if (g_error_matches (error, G_SHELL_ERROR,
-			                            G_SHELL_ERROR_FAILED)) {
-				g_printf (_("Error: Invalid input\n"));
-			}
+			g_printf (_("Error: %s\n"), error->message);
 			g_error_free (error);
-			/* FIXME: Handle errors */
 		}
 	}
 }
