@@ -191,6 +191,7 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 
 	context = g_option_context_new (NULL);
 	g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
+	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, argdefs, NULL);
 	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
 	g_option_context_free (context);
@@ -202,11 +203,18 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 		return NULL;
 	}
 
-	/* strip -- */
+	/* strip --, check for unknown options before it */
 	/* FIXME: We do not parse options elsewhere, do we? */
 	for (i = 0; i < ctx->argc; i++) {
 		if (strcmp (ctx->argv[i], "--") == 0) {
 			break;
+		}
+		if (ctx->argv[i][0] == '-' && ctx->argv[i][1] != '\0' &&
+		    !(ctx->argv[i][1] >= '0' && ctx->argv[i][1] <= '9')) {
+
+			g_printf (_("Error: Unknown option '%s'\n"), ctx->argv[i]);
+			command_context_free (ctx);
+			return NULL;
 		}
 	}
 	if (i != ctx->argc) {
