@@ -440,6 +440,12 @@ set_volume (cli_infos_t *infos, gchar *channel, gint volume)
 	for (it = g_list_first (channels); it != NULL; it = g_list_next (it)) {
 		res = xmmsc_playback_volume_set (infos->sync, it->data, volume);
 		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			const char *err;
+
+			xmmsv_get_error (xmmsc_result_get_value (res), &err);
+			g_printf (_("Server error: %s\n"), err);
+		}
 		xmmsc_result_unref (res);
 
 		/* free channel string */
