@@ -27,6 +27,7 @@ source = """
     magic.c
     ringbuf.c
     xform.c
+    xform_plugin.c
     streamtype.c
     converter_plugin.c
     segment_plugin.c

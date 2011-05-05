@@ -26,6 +26,7 @@
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_utils.h"
+#include "xmmspriv/xmms_xform_plugin.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_object.h"
@@ -83,13 +84,6 @@ typedef struct xmms_xform_hotspot_St {
 
 #define READ_CHUNK 4096
 
-struct xmms_xform_plugin_St {
-	xmms_plugin_t plugin;
-
-	xmms_xform_methods_t methods;
-
-	GList *in_types;
-};
 
 xmms_xform_t *xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
                                GList *goal_hints);
@@ -265,8 +259,8 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
 {
 	GList *list = NULL;
 
-	if (xform->plugin->methods.browse) {
-		if (!xform->plugin->methods.browse (xform, url, error)) {
+	if (xmms_xform_plugin_can_browse (xform->plugin)) {
+		if (!xmms_xform_plugin_browse (xform->plugin, xform, url, error)) {
 			return NULL;
 		}
 		list = xform->browse_list;
@@ -355,8 +349,10 @@ xmms_xform_destroy (xmms_object_t *object)
 	XMMS_DBG ("Freeing xform '%s'", xmms_xform_shortname (xform));
 
 	/* The 'destroy' method is not mandatory */
-	if (xform->plugin && xform->plugin->methods.destroy && xform->inited) {
-		xform->plugin->methods.destroy (xform);
+	if (xform->plugin && xform->inited) {
+		if (xmms_xform_plugin_can_destroy (xform->plugin)) {
+			xmms_xform_plugin_destroy (xform->plugin, xform);
+		}
 	}
 
 	g_hash_table_destroy (xform->metadata);
@@ -404,7 +400,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 	xform->hotspots = g_queue_new ();
 
 	if (plugin && entry) {
-		if (!plugin->methods.init (xform)) {
+		if (!xmms_xform_plugin_init (xform->plugin, xform)) {
 			xmms_object_unref (xform);
 			return NULL;
 		}
@@ -885,9 +881,9 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz,
 			xform->buffer = g_realloc (xform->buffer, xform->buffersize);
 		}
 
-		res = xform->plugin->methods.read (xform,
-		                                   &xform->buffer[xform->buffered],
-		                                   READ_CHUNK, err);
+		res = xmms_xform_plugin_read (xform->plugin, xform,
+		                              &xform->buffer[xform->buffered],
+		                              READ_CHUNK, err);
 
 		if (res < -1) {
 			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN",
@@ -983,7 +979,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
 	while (read < siz) {
 		gint res;
 
-		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
+		res = xmms_xform_plugin_read (xform->plugin, xform, buf + read, siz - read, err);
 		if (xform->metadata_collected && xform->metadata_changed)
 			xmms_xform_metadata_update (xform);
 
@@ -1032,7 +1028,7 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset,
 		return -1;
 	}
 
-	if (!xform->plugin->methods.seek) {
+	if (!xmms_xform_plugin_can_seek (xform->plugin)) {
 		XMMS_DBG ("Seek not implemented in '%s'", xmms_xform_shortname (xform));
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Seek not implemented");
 		return -1;
@@ -1042,7 +1038,7 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset,
 		offset -= xform->buffered;
 	}
 
-	res = xform->plugin->methods.seek (xform, offset, whence, err);
+	res = xmms_xform_plugin_seek (xform->plugin, xform, offset, whence, err);
 	if (res != -1) {
 		xmms_xform_hotspot_t *hs;
 
@@ -1143,112 +1139,6 @@ xmms_xform_get_url (xmms_xform_t *xform)
 	return url;
 }
 
-static void
-xmms_xform_plugin_destroy (xmms_object_t *obj)
-{
-	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *)obj;
-
-	while (plugin->in_types) {
-		xmms_object_unref (plugin->in_types->data);
-
-		plugin->in_types = g_list_delete_link (plugin->in_types,
-		                                       plugin->in_types);
-	}
-
-	xmms_plugin_destroy ((xmms_plugin_t *)obj);
-}
-
-xmms_plugin_t *
-xmms_xform_plugin_new (void)
-{
-	xmms_xform_plugin_t *res;
-
-	res = xmms_object_new (xmms_xform_plugin_t, xmms_xform_plugin_destroy);
-
-	return (xmms_plugin_t *)res;
-}
-
-void
-xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin,
-                               xmms_xform_methods_t *methods)
-{
-
-	g_return_if_fail (plugin);
-	g_return_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_XFORM);
-
-	XMMS_DBG ("Registering xform '%s'",
-	          xmms_plugin_shortname_get ((xmms_plugin_t *) plugin));
-
-	memcpy (&plugin->methods, methods, sizeof (xmms_xform_methods_t));
-}
-
-gboolean
-xmms_xform_plugin_verify (xmms_plugin_t *_plugin)
-{
-	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *) _plugin;
-
-	g_return_val_if_fail (plugin, FALSE);
-	g_return_val_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_XFORM, FALSE);
-
-	/* more checks */
-
-	return TRUE;
-}
-
-void
-xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
-{
-	xmms_stream_type_t *t;
-	va_list ap;
-	gchar *config_key, config_value[32];
-	gint priority;
-
-	va_start (ap, plugin);
-	t = xmms_stream_type_parse (ap);
-	va_end (ap);
-
-	config_key = g_strconcat ("priority.",
-	                          xmms_stream_type_get_str (t, XMMS_STREAM_TYPE_NAME),
-	                          NULL);
-	priority = xmms_stream_type_get_int (t, XMMS_STREAM_TYPE_PRIORITY);
-	g_snprintf (config_value, sizeof (config_value), "%d", priority);
-	xmms_xform_plugin_config_property_register (plugin, config_key,
-	                                            config_value, NULL, NULL);
-	g_free (config_key);
-
-	plugin->in_types = g_list_prepend (plugin->in_types, t);
-}
-
-static gboolean
-xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st,
-                            gint *priority)
-{
-	GList *t;
-
-	for (t = plugin->in_types; t; t = g_list_next (t)) {
-		if (xmms_stream_type_match (t->data, st)) {
-			if (priority) {
-				gchar *config_key;
-				xmms_config_property_t *conf_priority;
-
-				config_key = g_strconcat ("priority.",
-				                          xmms_stream_type_get_str (t->data, XMMS_STREAM_TYPE_NAME),
-				                          NULL);
-				conf_priority = xmms_plugin_config_lookup ((xmms_plugin_t *)plugin,
-				                                           config_key);
-				g_free (config_key);
-
-				if (conf_priority) {
-					*priority = xmms_config_property_get_int (conf_priority);
-				} else {
-					*priority = XMMS_STREAM_TYPE_PRIORITY_DEFAULT;
-				}
-			}
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
 
 typedef struct match_state_St {
 	xmms_xform_plugin_t *match;
@@ -1265,10 +1155,12 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 
 	g_assert (_plugin->type == XMMS_PLUGIN_TYPE_XFORM);
 
+	/*
 	if (!plugin->in_types) {
 		XMMS_DBG ("Skipping plugin '%s'", xmms_plugin_shortname_get (_plugin));
 		return TRUE;
 	}
+	*/
 
 	XMMS_DBG ("Trying plugin '%s'", xmms_plugin_shortname_get (_plugin));
 	if (xmms_xform_plugin_supports (plugin, state->out_type, &priority)) {
@@ -1557,20 +1449,6 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url,
 
 	chain_finalize (last, entry, url, rehash);
 	return last;
-}
-
-xmms_config_property_t *
-xmms_xform_plugin_config_property_register (xmms_xform_plugin_t *xform_plugin,
-                                            const gchar *name,
-                                            const gchar *default_value,
-                                            xmms_object_handler_t cb,
-                                            gpointer userdata)
-{
-	xmms_plugin_t *plugin = (xmms_plugin_t *) xform_plugin;
-
-	return xmms_plugin_config_property_register (plugin, name,
-	                                             default_value,
-	                                             cb, userdata);
 }
 
 xmms_config_property_t *
