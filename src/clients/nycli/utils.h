@@ -35,6 +35,7 @@ void print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id, gchar *s
 void remove_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void rehash_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel);
+void adjust_volume (cli_infos_t *infos, gchar *channel, gint relative);
 void set_volume (cli_infos_t *infos, gchar *channel, gint volume);
 void status_mode (cli_infos_t *infos, gchar *format, gint refresh);
 void list_print_info (xmmsc_result_t *res, cli_infos_t *infos);

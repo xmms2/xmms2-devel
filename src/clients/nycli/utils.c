@@ -421,12 +421,10 @@ dict_keys (const gchar *key, xmmsv_t *val, void *udata)
 void
 adjust_volume (cli_infos_t *infos, gchar *channel, gint relative)
 {
-	xmmsc_result_t *res;
-	xmmsc_result_t *innerres;
-	xmmsv_t *val;
-	xmmsv_t *innerval;
+	xmmsc_result_t *res, *innerres;
+	xmmsv_t *val,  *innerval;
 	xmmsv_dict_iter_t *it;
-	gchar *innerchan;
+	const gchar *innerchan;
 	const gchar *err;
 
 	gint volume;
@@ -449,7 +447,7 @@ adjust_volume (cli_infos_t *infos, gchar *channel, gint relative)
 	     xmmsv_dict_iter_next (it)) {
 		xmmsv_dict_iter_pair_int (it, &innerchan, &volume);
 
-		if (channel && strcmp (channel, innerchan)) {
+		if (channel && strcmp (channel, innerchan) != 0) {
 			continue;
 		}
 

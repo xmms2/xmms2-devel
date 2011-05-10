@@ -2311,8 +2311,6 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 	bool relative_vol;
 
 	if (!command_flag_string_get (ctx, "channel", &channel)) {
-        /* FIXME when -c and a negative value is given together, this will
-         * brutally fail and both channel and volume will be NULL/0. */
 		channel = NULL;
 	}
 
@@ -2322,7 +2320,7 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 		print_volume (res, infos, channel);
 	} else {
 		if (command_arg_string_get (ctx, 0, &volstr)) {
-			relative_vol = volstr[0] == '+' || volume < 0;
+			relative_vol = (volstr[0] == '+') || volume < 0;
 		}
 		if (relative_vol) {
 			adjust_volume (infos, channel, volume);
