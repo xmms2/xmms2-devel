@@ -107,7 +107,8 @@ struct xmms_medialib_session_St {
   */
 static xmms_medialib_t *medialib;
 
-static const char source_pref[] = "server:client/*:plugin/id3v2:plugin/*";
+static const char source_pref[] =
+	"server:client/*:plugin/playlist:plugin/id3v2:plugin/segment:plugin/*";
 
 /**
   * This is only used if we are using a older version of sqlite.
