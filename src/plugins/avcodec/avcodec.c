@@ -64,7 +64,6 @@ typedef struct {
 	AVCodecContext *codecctx;
 
 	guchar *buffer;
-	guchar *buffer_pos;
 	guint buffer_length;
 	guint buffer_size;
 	gboolean no_demuxer;
@@ -115,6 +114,10 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_magic_add ("Shorten header", "audio/x-ffmpeg-shorten",
 	                "0 string ajkg", NULL);
+	xmms_magic_add ("A/52 (AC-3) header", "audio/x-ffmpeg-ac3",
+	                "0 beshort 0x0b77", NULL);
+	xmms_magic_add ("DTS header", "audio/x-ffmpeg-dca",
+	                "0 belong 0x7ffe8001", NULL); 
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -215,7 +218,9 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		 * demuxer so they will be handled slightly differently... */
 		if (!strcmp (data->codec_id, "shorten") ||
 		    !strcmp (data->codec_id, "adpcm_swf") ||
-		    !strcmp (data->codec_id, "pcm_s16le")) {
+		    !strcmp (data->codec_id, "pcm_s16le") ||
+		    !strcmp (data->codec_id, "ac3") ||
+		    !strcmp (data->codec_id, "dca")) {
 			/* number 1024 taken from libavformat raw.c RAW_PACKET_SIZE */
 			data->extradata = g_malloc0 (1024);
 			data->extradata_size = 1024;
@@ -302,12 +307,12 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		AVPacket packet;
 		av_init_packet (&packet);
 
-		if (data->buffer_length == 0) {
+		if (data->no_demuxer || data->buffer_length == 0) {
 			gint read_total;
 
 			bytes_read = xmms_xform_read (xform,
-			                              (gchar *) data->buffer,
-			                              data->buffer_size,
+			                              (gchar *) (data->buffer + data->buffer_length),
+			                              data->buffer_size - data->buffer_length,
 			                              error);
 
 			if (bytes_read < 0) {
@@ -350,25 +355,35 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 				}
 			}
 
-			/* Reset the buffer position to beginning and update length */
-			data->buffer_pos = data->buffer;
-			data->buffer_length = read_total;
+			/* Update the buffer length */
+			data->buffer_length += read_total;
 		}
 
-		packet.data = data->buffer_pos;
+		packet.data = data->buffer;
 		packet.size = data->buffer_length;
 
 		outbufsize = sizeof (outbuf);
 		bytes_read = avcodec_decode_audio3 (data->codecctx, (short *) outbuf,
 		                                    &outbufsize, &packet);
 
+		/* The DTS decoder of ffmpeg is buggy and always returns
+		 * the input buffer length, get frame length from header */
+		if (!strcmp (data->codec_id, "dca") && bytes_read > 0) {
+			bytes_read = ((int)data->buffer[5] << 12) |
+			             ((int)data->buffer[6] << 4) |
+			             ((int)data->buffer[7] >> 4);
+			bytes_read = (bytes_read & 0x3fff) + 1;
+		}
+
 		if (bytes_read < 0 || bytes_read > data->buffer_length) {
 			XMMS_DBG ("Error decoding data!");
 			return -1;
+		} else if (bytes_read != data->buffer_length) {
+			g_memmove (data->buffer,
+			           data->buffer + bytes_read,
+			           data->buffer_length - bytes_read);
+			data->buffer_length -= bytes_read;
 		}
-
-		data->buffer_pos += bytes_read;
-		data->buffer_length -= bytes_read;
 
 		if (outbufsize > 0) {
 			g_string_append_len (data->outbuf, outbuf, outbufsize);
