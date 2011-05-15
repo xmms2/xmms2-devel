@@ -217,6 +217,56 @@ void xmms_pulse_backend_free (xmms_pulse *p)
 }
 
 
+static pa_channel_map *
+xmms_pulse_backend_default_channel_map (pa_channel_map *m, int channels)
+{
+	assert(m);
+	assert(channels > 0);
+	assert(channels <= PA_CHANNELS_MAX);
+
+	pa_channel_map_init(m);
+
+	m->channels = (uint8_t) channels;
+	switch (channels) {
+		case 4:
+			m->map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+			m->map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+			m->map[2] = PA_CHANNEL_POSITION_REAR_LEFT;
+			m->map[3] = PA_CHANNEL_POSITION_REAR_RIGHT;
+			return m;
+		case 5:
+			m->map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+			m->map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+			m->map[2] = PA_CHANNEL_POSITION_FRONT_CENTER;
+			m->map[3] = PA_CHANNEL_POSITION_REAR_LEFT;
+			m->map[4] = PA_CHANNEL_POSITION_REAR_RIGHT;
+			return m;
+		case 7:
+			m->map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+			m->map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+			m->map[2] = PA_CHANNEL_POSITION_FRONT_CENTER;
+			m->map[3] = PA_CHANNEL_POSITION_LFE;
+			m->map[4] = PA_CHANNEL_POSITION_REAR_LEFT;
+			m->map[5] = PA_CHANNEL_POSITION_REAR_RIGHT;
+			m->map[6] = PA_CHANNEL_POSITION_REAR_CENTER;
+			return m;
+		case 8:
+			m->map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+			m->map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+			m->map[2] = PA_CHANNEL_POSITION_FRONT_CENTER;
+			m->map[3] = PA_CHANNEL_POSITION_LFE;
+			m->map[4] = PA_CHANNEL_POSITION_REAR_LEFT;
+			m->map[5] = PA_CHANNEL_POSITION_REAR_RIGHT;
+			m->map[6] = PA_CHANNEL_POSITION_SIDE_LEFT;
+			m->map[7] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+			return m;
+		default:
+			return pa_channel_map_init_auto (m, channels,
+			                                 PA_CHANNEL_MAP_WAVEEX);
+	}
+}
+
+
 gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
                                         const char *sink,
                                         xmms_sample_format_t format,
@@ -256,7 +306,7 @@ gboolean xmms_pulse_backend_set_stream (xmms_pulse *p, const char *stream_name,
 	p->sample_spec.format = pa_format;
 	p->sample_spec.rate = samplerate;
 	p->sample_spec.channels = channels;
-	pa_channel_map_init_auto (&p->channel_map, channels, PA_CHANNEL_MAP_DEFAULT);
+	xmms_pulse_backend_default_channel_map (&p->channel_map, channels);
 
 	/* Create and set up the new stream. */
 	p->stream = pa_stream_new (p->context, stream_name, &p->sample_spec, &p->channel_map);
