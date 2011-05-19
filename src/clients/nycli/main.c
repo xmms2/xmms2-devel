@@ -144,6 +144,9 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
  * argument values.
  * Note: The lib doesn't like argv starting with a flag, so keep a
  * token before that to avoid problems.
+ *
+ * The passed argv should be an array of length argc+1. (So that a terminating
+ * NULL-pointer can be added in argv[argc].)
  */
 static command_context_t *
 init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
@@ -222,6 +225,8 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 		ctx->argc--;
 	}
 
+	/* Some functions rely on NULL-termination. */
+	ctx->argv[ctx->argc] = NULL;
 	return ctx;
 }
 
@@ -305,17 +310,24 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	command_action_t *action;
 	command_trie_match_type_t match;
 	gint argc;
+	gchar *tmp_argv[in_argc+1];
 	gchar **argv;
 
 	gboolean auto_complete;
 
-	/* The arguments will be updated by command_trie_find. */
-	in_argv = g_memdup (in_argv, sizeof (gchar *) * in_argc);
+	/* The arguments will be updated by command_trie_find and
+	 * init_context_from_args, so we make a copy. */
+	memcpy (tmp_argv, in_argv, in_argc * sizeof (gchar *));
+	tmp_argv[in_argc] = NULL;
+
 	argc = in_argc;
-	argv = in_argv;
+	argv = tmp_argv;
 
 	auto_complete = configuration_get_boolean (infos->config,
 	                                           "AUTO_UNIQUE_COMPLETE");
+
+	/* This updates argv and argc so that they start at the first non-command
+	 * token. */
 	match = command_trie_find (infos->commands, &argv, &argc,
 	                           auto_complete, &action, NULL);
 
@@ -352,8 +364,6 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		/* Call help to print the "no such command" error */
 		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
-
-	g_free (in_argv);
 }
 
 static void
