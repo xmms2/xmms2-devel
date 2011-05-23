@@ -141,6 +141,7 @@ configuration_load (const gchar *path)
 	if (!g_key_file_load_from_file (custom, path, G_KEY_FILE_NONE, &error)) {
 		g_printf ("Error: Couldn't load configuration file. (%s)\n",
 		          error->message);
+		g_error_free (error);
 	} else {
 		configuration_merge (keyfile, custom);
 	}
