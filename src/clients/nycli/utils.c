@@ -1920,9 +1920,12 @@ format_time (guint64 duration, gboolean use_hours)
 	if (use_hours) {
 		hour = min / 60;
 		min = min % 60;
-		time = g_strdup_printf ("%llu:%02llu:%02llu", hour, min, sec);
+		time = g_strdup_printf ("%" G_GUINT64_FORMAT \
+		                        ":%02" G_GUINT64_FORMAT \
+		                        ":%02" G_GUINT64_FORMAT, hour, min, sec);
 	} else {
-		time = g_strdup_printf ("%02llu:%02llu", min, sec);
+		time = g_strdup_printf ("%02" G_GUINT64_FORMAT \
+		                        ":%02" G_GUINT64_FORMAT, min, sec);
 	}
 
 	return time;
