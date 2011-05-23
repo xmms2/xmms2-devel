@@ -23,7 +23,6 @@
 
 static xmmsv_t *xmms_create_xmmsv_list (GList *list);
 static xmmsv_t *xmms_create_xmmsv_dict (GTree *dict);
-static xmmsv_t *xmms_create_xmmsv_bin (GString *gs);
 static void create_xmmsv_list_foreach (gpointer data, gpointer userdata);
 static gboolean create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata);
 
