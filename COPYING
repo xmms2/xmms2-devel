@@ -24,7 +24,7 @@ manpages (src/clients/et/xmms2-et.1,
           src/clients/launcher/xmms2-launcher.1,
           src/clients/mdns/avahi/xmms2-mdns-avahi.1,
           src/xmms/xmms2d.1
-          src/clients/nycli/nyxmms2.1):
+          src/clients/nycli/xmms2.1):
         Licensed under BSD license
 
 src/plugins/mad/*.[ch]:

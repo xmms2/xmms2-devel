@@ -2,7 +2,7 @@ import Options
 
 def build(bld):
     obj = bld.new_task_gen('cc', 'program')
-    obj.target = 'nyxmms2'
+    obj.target = 'xmms2'
     obj.source = """main.c
                     cli_infos.c
                     cli_cache.c
@@ -24,7 +24,9 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'glib2 readline readline-ncurses'
 
-    obj = bld.new_task_gen(features='man', files='nyxmms2.1', section='1')
+    obj = bld.new_task_gen(features='man', files='xmms2.1', section='1')
+
+    bld.symlink_as('${PREFIX}/bin/nyxmms2', 'xmms2')
 
 def configure(conf):
     if Options.platform == 'win32':
@@ -47,7 +49,7 @@ def configure(conf):
         return
 
     # Ok, we give up..
-    conf.fatal("Cannot build nycli")
+    conf.fatal("Cannot build the xmms2 cli")
 
 def set_options(opt):
     pass
