@@ -20,7 +20,7 @@ COPYING.GPL
 README, INSTALL:
         Licensed under GFDL without unmodifiable sections.
 
-manpages (src/clients/cli/xmms2.1, src/clients/et/xmms2-et.1,
+manpages (src/clients/et/xmms2-et.1,
           src/clients/launcher/xmms2-launcher.1,
           src/clients/mdns/avahi/xmms2-mdns-avahi.1,
           src/xmms/xmms2d.1

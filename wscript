@@ -60,8 +60,7 @@ subdirs = """
           src/includepriv
           """.split()
 
-optional_subdirs = ["src/clients/cli",
-                    "src/clients/nycli",
+optional_subdirs = ["src/clients/nycli",
                     "src/clients/launcher",
                     "src/clients/et",
                     "src/clients/mdns/dns_sd",
