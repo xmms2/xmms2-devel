@@ -52,6 +52,9 @@ section_to_hash (GKeyFile *file, const gchar *section, GHashTable *hash)
 
 	keys = g_key_file_get_keys (file, section, NULL, &error);
 
+	/* Only asserts with broken hard coded configuration file. */
+	g_assert (error == NULL);
+
 	for (i = 0; keys[i] != NULL; i++) {
 		gchar *value;
 
