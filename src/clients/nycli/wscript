@@ -9,11 +9,11 @@ def build(bld):
                     command_trie.c
                     commands.c
                     command_utils.c
-		    cmdnames.c
-		    configuration.c
-		    status.c		    
-		    utils.c
-		    alias.c
+                    cmdnames.c
+                    configuration.c
+                    status.c
+                    utils.c
+                    alias.c
                     column_display.c
                     readline.c
                     playlist_positions.c""".split()
