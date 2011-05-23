@@ -16,6 +16,7 @@
 
 #include <xcu.h>
 #include "xmms_configuration.h"
+#include "xcu_valgrind.h"
 
 #if defined(HAVE_VALGRIND) && HAVE_VALGRIND == 1
 
