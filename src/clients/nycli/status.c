@@ -165,7 +165,7 @@ status_update_position (cli_infos_t *infos, status_entry_t *entry)
 }
 
 status_entry_t *
-status_init (gchar *format, gint refresh)
+status_init (const gchar *format, gint refresh)
 {
 	status_entry_t *entry;
 

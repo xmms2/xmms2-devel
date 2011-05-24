@@ -30,7 +30,7 @@ static xmmsv_coll_t *coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t typ
 
 static void pl_print_config (xmmsv_coll_t *coll, const char *name);
 
-static void id_print_info (xmmsc_result_t *res, guint id, gchar *source);
+static void id_print_info (xmmsc_result_t *res, guint id, const gchar *source);
 
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
@@ -261,7 +261,7 @@ print_config_entry (const gchar *confname, xmmsv_t *val, void *udata)
 }
 
 void
-print_config (cli_infos_t *infos, gchar *confname)
+print_config (cli_infos_t *infos, const gchar *confname)
 {
 	xmmsc_result_t *res;
 	const gchar *confval;
@@ -287,7 +287,7 @@ print_config (cli_infos_t *infos, gchar *confname)
 
 void
 print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
-                gchar *source, gchar *property)
+                const gchar *source, const gchar *property)
 {
 	if (property == NULL) {
 		id_print_info (res, id, source);
@@ -382,7 +382,7 @@ rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
 static void
 print_volume_entry (const gchar *key, xmmsv_t *val, void *udata)
 {
-	gchar *channel = udata;
+	const gchar *channel = udata;
 	gint32 value;
 
 	if (!udata || !strcmp (key, channel)) {
@@ -392,7 +392,7 @@ print_volume_entry (const gchar *key, xmmsv_t *val, void *udata)
 }
 
 void
-print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel)
+print_volume (xmmsc_result_t *res, cli_infos_t *infos, const gchar *channel)
 {
 	xmmsv_t *val;
 	const gchar *err;
@@ -400,7 +400,7 @@ print_volume (xmmsc_result_t *res, cli_infos_t *infos, gchar *channel)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_dict_foreach (val, print_volume_entry, channel);
+		xmmsv_dict_foreach (val, print_volume_entry, (void *) channel);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -419,7 +419,7 @@ dict_keys (const gchar *key, xmmsv_t *val, void *udata)
 }
 
 void
-adjust_volume (cli_infos_t *infos, gchar *channel, gint relative)
+adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 {
 	xmmsc_result_t *res, *innerres;
 	xmmsv_t *val,  *innerval;
@@ -478,7 +478,7 @@ adjust_volume (cli_infos_t *infos, gchar *channel, gint relative)
 }
 
 void
-set_volume (cli_infos_t *infos, gchar *channel, gint volume)
+set_volume (cli_infos_t *infos, const gchar *channel, gint volume)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
@@ -517,7 +517,7 @@ set_volume (cli_infos_t *infos, gchar *channel, gint volume)
 }
 
 void
-status_mode (cli_infos_t *infos, gchar *format, gint refresh)
+status_mode (cli_infos_t *infos, const gchar *format, gint refresh)
 {
 	status_entry_t *status;
 
@@ -539,7 +539,7 @@ status_mode (cli_infos_t *infos, gchar *format, gint refresh)
 }
 
 static void
-id_print_info (xmmsc_result_t *res, guint id, gchar *source)
+id_print_info (xmmsc_result_t *res, guint id, const gchar *source)
 {
 	xmmsv_t *val;
 	const gchar *err;
@@ -547,7 +547,7 @@ id_print_info (xmmsc_result_t *res, guint id, gchar *source)
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_dict_foreach (val, propdict_dump, source);
+		xmmsv_dict_foreach (val, propdict_dump, (void *) source);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -638,7 +638,7 @@ enrich_mediainfo (xmmsv_t *val)
 		/* First decode the URL encoding */
 		xmmsv_t *tmp, *v, *urlv;
 		gchar *url = NULL;
-		gchar *filename = NULL;
+		const gchar *filename = NULL;
 		const unsigned char *burl;
 		unsigned int blen;
 
@@ -883,7 +883,7 @@ finish:
 }
 
 void
-coll_rename (cli_infos_t *infos, gchar *oldname, gchar *newname,
+coll_rename (cli_infos_t *infos, const gchar *oldname, const gchar *newname,
              xmmsc_coll_namespace_t ns, gboolean force)
 {
 	xmmsc_result_t *res;
@@ -902,7 +902,7 @@ coll_rename (cli_infos_t *infos, gchar *oldname, gchar *newname,
 
 void
 coll_save (cli_infos_t *infos, xmmsv_coll_t *coll,
-           xmmsc_coll_namespace_t ns, gchar *name, gboolean force)
+           xmmsc_coll_namespace_t ns, const gchar *name, gboolean force)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *val;
@@ -1118,7 +1118,7 @@ coll_show (cli_infos_t *infos, xmmsc_result_t *res)
 
 static void
 print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
-                        gchar *mark, gboolean all)
+                        const gchar *mark, gboolean all)
 {
 	const gchar *s, *err;
 	xmmsv_t *val;
@@ -1304,7 +1304,7 @@ set_next_rel (cli_infos_t *infos, gint offset)
 
 void
 add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
-         gchar *playlist, gint pos)
+         const gchar *playlist, gint pos)
 {
 	xmmsc_result_t *res;
 	xmmsv_coll_t *coll;
@@ -1327,7 +1327,7 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
 
 void
 add_list (xmmsc_result_t *matching, cli_infos_t *infos,
-          gchar *playlist, gint pos)
+          const gchar *playlist, gint pos)
 
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
@@ -1373,7 +1373,7 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 
 void
 move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
-              gchar *playlist, gint pos)
+              const gchar *playlist, gint pos)
 {
 	xmmsc_result_t *movres, *lisres;
 	guint curr;
@@ -1531,7 +1531,7 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 
 void
 remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
-                cli_infos_t *infos, gchar *playlist)
+                cli_infos_t *infos, const gchar *playlist)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	xmmsc_result_t *rmres;
@@ -1600,7 +1600,7 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 }
 
 void
-copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
+copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist)
 {
 	xmmsc_result_t *saveres;
 	xmmsv_coll_t *coll;
@@ -1623,8 +1623,8 @@ copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist)
 }
 
 void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
-                           gchar *ns, gchar *name,
-                           gchar *attrname, gchar *attrvalue)
+                           const gchar *ns, const gchar *name,
+                           const gchar *attrname, const gchar *attrvalue)
 {
 	xmmsv_coll_t *coll;
 	xmmsv_t *val;
@@ -1643,9 +1643,9 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
 }
 
 void
-configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
+configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist,
                     gint history, gint upcoming, xmmsv_coll_type_t type,
-                    gchar *input, gchar *jumplist)
+                    const gchar *input, const gchar *jumplist)
 {
 	xmmsc_result_t *saveres;
 	xmmsv_coll_t *coll;
@@ -1698,7 +1698,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, gchar *playlist,
 
 void
 collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
-                         gchar *attrname)
+                         const gchar *attrname)
 {
 	xmmsv_coll_t *coll;
 	gchar *attrvalue;
@@ -1728,7 +1728,7 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 
 void
 playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
-                       gchar *playlist)
+                       const gchar *playlist)
 {
 	xmmsv_coll_t *coll;
 	xmmsv_t *val;
@@ -1747,7 +1747,7 @@ playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 }
 
 gboolean
-playlist_exists (cli_infos_t *infos, gchar *playlist)
+playlist_exists (cli_infos_t *infos, const gchar *playlist)
 {
 	gboolean retval = FALSE;
 	xmmsc_result_t *res;
@@ -1880,7 +1880,7 @@ pl_print_config (xmmsv_coll_t *coll, const char *name)
 }
 
 void
-print_padding (gint length, gchar padchar)
+print_padding (gint length, const gchar padchar)
 {
 	while (length-- > 0) {
 		g_printf ("%c", padchar);

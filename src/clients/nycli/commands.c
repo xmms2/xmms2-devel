@@ -49,8 +49,8 @@ struct browse_entry_St {
 	gint isdir;
 };
 
-static gboolean playlist_currpos_get (cli_infos_t *, gchar *, gint *);
-static gboolean playlist_length_get (cli_infos_t *, gchar *, gint *);
+static gboolean playlist_currpos_get (cli_infos_t *, const gchar *, gint *);
+static gboolean playlist_length_get (cli_infos_t *, const gchar *, gint *);
 
 /* Setup commands */
 
@@ -542,7 +542,7 @@ create_list_column_display (cli_infos_t *infos)
 
 	/* FIXME: if time takes 6 chars, the display will exceed termwidth.. */
 	column_display_add_separator (coldisp, " (");
-	column_display_add_special (coldisp, "duration", "duration", 5,
+	column_display_add_special (coldisp, "duration", (gpointer) "duration", 5,
 	                            COLUMN_DEF_SIZE_FIXED,
 	                            COLUMN_DEF_ALIGN_LEFT,
 	                            column_display_render_time);
@@ -616,7 +616,7 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_current (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *format;
+	const gchar *format;
 	gint refresh;
 
 	if (!command_flag_int_get (ctx, "refresh", &refresh)) {
@@ -742,7 +742,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	column_display_t *coldisp;
 	playlist_positions_t *positions;
 	gint pos;
-	gchar *playlist = NULL;
+	const gchar *playlist = NULL;
 	gboolean new_list, filter_by_pos = FALSE;
 	const gchar *default_columns[] = { "curr", "pos", "id", "artist", "album",
 	                                   "title", NULL };
@@ -847,7 +847,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 }
 
 static xmmsv_coll_t *
-get_coll (cli_infos_t *infos, gchar *name, xmmsv_coll_namespace_t ns) {
+get_coll (cli_infos_t *infos, const gchar *name, xmmsv_coll_namespace_t ns) {
 	xmmsc_result_t *res;
 	xmmsv_coll_t *coll;
 
@@ -868,7 +868,7 @@ get_coll (cli_infos_t *infos, gchar *name, xmmsv_coll_namespace_t ns) {
 /* Get current position in @playlist or in active playlist if
    @playlist == NULL. */
 static gboolean
-playlist_currpos_get (cli_infos_t *infos, gchar *playlist, gint *pos)
+playlist_currpos_get (cli_infos_t *infos, const gchar *playlist, gint *pos)
 {
 	xmmsv_coll_t *coll;
 	const gchar *str;
@@ -897,7 +897,7 @@ playlist_currpos_get (cli_infos_t *infos, gchar *playlist, gint *pos)
 
 /* Get length of @playlist or of active playlist if @playlist == NULL. */
 static gboolean
-playlist_length_get (cli_infos_t *infos, gchar *playlist, gint *len)
+playlist_length_get (cli_infos_t *infos, const gchar *playlist, gint *len)
 {
 	xmmsv_coll_t *coll;
 
@@ -921,7 +921,7 @@ playlist_length_get (cli_infos_t *infos, gchar *playlist, gint *len)
 
 static gboolean
 cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
-                           gint *pos, gchar *playlist)
+                           gint *pos, const gchar *playlist)
 {
 	gboolean next;
 	gint at;
@@ -1184,7 +1184,7 @@ guesspls (cli_infos_t *infos, gchar *url)
 }
 
 static gboolean
-guessfile (gchar *pattern)
+guessfile (const gchar *pattern)
 {
 	char *p;
 	struct stat filestat;
@@ -1218,14 +1218,14 @@ gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
-	gchar *sortby = NULL;
+	const gchar *sortby = NULL;
 	gchar **properties;
-	gchar *playlist;
+	const gchar *playlist;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 	xmmsv_t *order = NULL;
 	gint pos;
-	gchar *path;
+	const gchar *path;
 	gboolean fileargs;
 	gboolean norecurs;
 	gboolean plsfile;
@@ -1374,7 +1374,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *playlist = NULL;
+	const gchar *playlist = NULL;
 	gboolean retval = TRUE;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
@@ -1426,7 +1426,7 @@ Valid options:
 gboolean
 cli_move (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *playlist;
+	const gchar *playlist;
 	gint pos;
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
@@ -1501,7 +1501,8 @@ gboolean
 cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gchar *newplaylist, *copy;
+	gchar *newplaylist;
+	const gchar *copy;
 
 	if (!command_arg_longstring_get (ctx, 0, &newplaylist)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
@@ -1536,7 +1537,8 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 {
 /* 	xmmsc_result_t *res; */
 	gboolean force;
-	gchar *oldname, *newname;
+	const gchar *oldname;
+	gchar *newname;
 
 	if (!command_flag_boolean_get (ctx, "force", &force)) {
 		force = FALSE;
@@ -1632,7 +1634,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	xmmsv_t *orderval;
-	gchar *playlist;
+	const gchar *playlist;
 	gchar **order = NULL;
 	const gchar *default_order[] = { "artist", "album", "tracknr", NULL};
 
@@ -1663,8 +1665,8 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	gchar *playlist;
 	gint history, upcoming;
 	xmmsc_coll_type_t type;
-	gchar *typestr, *input, *jumplist;
 	gboolean modif = FALSE;
+	const gchar *input, *jumplist, *typestr;
 
 	history = -1;
 	upcoming = -1;
@@ -1747,7 +1749,7 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 
 /* Strings must be free manually */
 static void
-coll_name_split (gchar *str, gchar **ns, gchar **name)
+coll_name_split (const gchar *str, gchar **ns, gchar **name)
 {
 	gchar **v;
 
@@ -1809,8 +1811,9 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_coll_t *coll;
 	xmmsc_result_t *res = NULL;
 
-	gchar *collection, *fullname, *ns, *name, *pattern = NULL;
+	gchar *ns, *name, *pattern = NULL;
 	gboolean force, empty, coll_isset, retval = TRUE;
+	const gchar *collection, *fullname;
 
 	command_flag_boolean_get (ctx, "empty", &empty);
 	coll_isset = command_flag_string_get (ctx, "collection", &collection);
@@ -1894,7 +1897,8 @@ gboolean
 cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 {
 	gboolean retval, force;
-	gchar *oldname, *newname, *from_ns, *to_ns, *from_name, *to_name;
+	gchar *from_ns, *to_ns, *from_name, *to_name;
+	const gchar *oldname, *newname;
 
 	if (!command_flag_boolean_get (ctx, "force", &force)) {
 		force = FALSE;
@@ -1957,7 +1961,8 @@ gboolean
 cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gchar *collection, *name, *ns, *attrname, *attrvalue;
+	gchar *name, *ns;
+	const gchar *collection, *attrname, *attrvalue;
 
 	if (!command_arg_string_get (ctx, 0, &collection)) {
 		g_printf (_("Error: you must provide a collection!\n"));
@@ -1994,7 +1999,7 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 
 	gint i, count;
-	gchar *path;
+	const gchar *path;
 	gboolean norecurs;
 	gboolean retval = TRUE;
 
@@ -2053,8 +2058,7 @@ cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
 	xmmsv_list_iter_t *it;
 	xmmsc_result_t *res;
 	xmmsv_t *value;
-	const gchar *message;
-	gchar *url;
+	const gchar *message, *url;
 
 	if (!command_arg_string_get (ctx, 0, &url)) {
 		return FALSE;
@@ -2170,7 +2174,7 @@ gboolean
 cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	gchar *confname, *confval;
+	const gchar *confname, *confval;
 
 	if (!command_arg_string_get (ctx, 0, &confname)) {
 		confname = NULL;
@@ -2196,8 +2200,9 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 
 	gint mid;
-	gchar *propname, *propval, *src;
-	gboolean delete, fint, fstring, nosrc, retval = TRUE;
+	gchar *default_source = NULL;
+	gboolean delete, fint, fstring, retval = TRUE;
+	const gchar *source, *propname, *propval;
 
 	delete = fint = fstring = FALSE;
 
@@ -2220,12 +2225,10 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	if (!command_flag_string_get (ctx, "source", &src)) {
-		src = g_strdup_printf ("client/%s", CLI_CLIENTNAME);
-		nosrc = TRUE;
-	} else {
-		src = g_strdup (src);
-		nosrc = FALSE;
+	default_source = g_strdup_printf ("client/%s", CLI_CLIENTNAME);
+
+	if (!command_flag_string_get (ctx, "source", &source)) {
+		source = default_source;
 	}
 
 	if (!command_arg_string_get (ctx, 1, &propname)) {
@@ -2243,7 +2246,7 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		}
 		res = xmmsc_medialib_entry_property_remove_with_source (infos->sync,
 		                                                        mid,
-		                                                        src,
+		                                                        source,
 		                                                        propname);
 		xmmsc_result_wait (res);
 		done (res, infos);
@@ -2251,7 +2254,9 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_medialib_get_info (infos->sync, mid);
 		xmmsc_result_wait (res);
 		/* use source-preference when printing and user hasn't set --source */
-		print_property (infos, res, mid, nosrc ? NULL : src, propname);
+		print_property (infos, res, mid,
+		                source == default_source ? NULL : source,
+		                propname);
 	} else {
 		gint value;
 		gboolean cons;
@@ -2267,13 +2272,13 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		if (fint) {
 			res = xmmsc_medialib_entry_property_set_int_with_source (infos->sync,
 			                                                         mid,
-			                                                         src,
+			                                                         source,
 			                                                         propname,
 			                                                         value);
 		} else {
 			res = xmmsc_medialib_entry_property_set_str_with_source (infos->sync,
 			                                                         mid,
-			                                                         src,
+			                                                         source,
 			                                                         propname,
 			                                                         propval);
 		}
@@ -2282,8 +2287,8 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		done (res, infos);
 	}
 
-    finish:
-	g_free (src);
+finish:
+	g_free (default_source);
 
 	return retval;
 }
@@ -2305,9 +2310,9 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 
-	gchar *channel;
+	const gchar *channel;
 	gint volume;
-	gchar *volstr;
+	const gchar *volstr;
 	bool relative_vol;
 
 	if (!command_flag_string_get (ctx, "channel", &channel)) {
@@ -2528,7 +2533,7 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 	if (num_args == 0) {
 		help_list (names, NULL, cmdtype);
 	} else {
-		help_command (infos, names, command_argv_get (ctx), num_args, cmdtype);
+		help_command (infos, names, ctx->argv, num_args, cmdtype);
 	}
 
 	/* No data pending */

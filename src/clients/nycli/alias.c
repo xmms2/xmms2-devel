@@ -28,7 +28,7 @@ free_token (gpointer data, gpointer udata)
 }
 
 static gboolean
-runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnable)
+runnable_alias (gchar *def, gint argc, gchar **argv, const gchar *line, gchar **runnable)
 {
 	gint k, len;
 	gchar **subst;
@@ -42,11 +42,11 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 	len = g_list_length (tokens);
 
 	subst = g_new0 (gchar *, len + 2);
-	subst[len] = ";";
-	subst[len+1] = NULL;
+	subst[len] = (gchar *) ";";
+	subst[len + 1] = NULL;
 
 	if (!line) {
-		line = "";
+		line = (gchar *) "";
 	}
 
 	k = 0;
@@ -67,7 +67,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 				goto finish;
 			}
 			if (i == 0) {
-				subst[k] = line;
+				subst[k] = (gchar *) line;
 			} else {
 				subst[k] = argv[i - 1];
 			}
@@ -80,8 +80,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, gchar *line, gchar **runnab
 	/* put ';' to make parsing simple */
 	*runnable = g_strjoinv (" ", subst);
 
-	finish:
-
+finish:
 	/* free tokens */
 	g_list_foreach (tokens, free_token, NULL);
 	g_list_free (tokens);

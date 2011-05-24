@@ -52,7 +52,7 @@ command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
 }
 
 gboolean
-command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
+command_flag_string_get (command_context_t *ctx, const gchar *name, const gchar **v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
@@ -71,7 +71,7 @@ command_flag_string_get (command_context_t *ctx, const gchar *name, gchar **v)
 gboolean
 command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v)
 {
-	gchar *full;
+	const gchar *full;
 	gboolean retval = FALSE;
 
 	if (command_flag_string_get (ctx, name, &full) && full) {
@@ -115,7 +115,7 @@ command_arg_int_get (command_context_t *ctx, gint at, gint *v)
 }
 
 gboolean
-command_arg_string_get (command_context_t *ctx, gint at, gchar **v)
+command_arg_string_get (command_context_t *ctx, gint at, const gchar **v)
 {
 	gboolean retval = FALSE;
 
@@ -202,11 +202,11 @@ command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gchar **v)
 }
 
 static guint
-parse_time_sep (gchar *s, gchar **endptr)
+parse_time_sep (const gchar *s, gchar **endptr)
 {
 	gint i;
 	guint v;
-	gchar *t;
+	const gchar *t;
 
 	v = 0;
 	t = s;
@@ -225,8 +225,8 @@ parse_time_sep (gchar *s, gchar **endptr)
  * e1: ([0-9]*(hour|h|min|m|sec|s))*
  *
  * RFC: Be more restrictive?
- *   
- *    Actually it accepts expressions like: 
+ *
+ *    Actually it accepts expressions like:
  *         1hour2min1hour1s for 2hour2min1s
  *         1min2hour7sec for 2hour1min7sec
  *
@@ -272,30 +272,34 @@ gboolean
 command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 {
 	gboolean retval = FALSE;
-	gchar *s, *endptr;
+	const gchar *s;
+	gchar *endptr;
 
 	const gchar *separators[] = {"hour", "h", "min", "m", "sec", "s", NULL};
 	const gint multipliers[] = {3600, 3600, 60, 60, 1, 1};
 
 	if (at < command_arg_count (ctx) && command_arg_string_get (ctx, at, &s)) {
-		if (*s == '+' || *s == '-') {
+		gchar *time_arg = g_strdup (s);
+		if (*time_arg == '+' || *time_arg == '-') {
 			v->type = COMMAND_ARG_TIME_OFFSET;
 			/* v->value.offset = strtol (s, &endptr, 10); */
-			v->value.offset = parse_time (s+1, &endptr, multipliers, separators);
-			if (*s == '-') {
+			v->value.offset = parse_time (time_arg + 1, &endptr, multipliers, separators);
+			if (*time_arg == '-') {
 				v->value.offset = -v->value.offset;
 			}
 		} else {
 			/* FIXME: always signed long int anyway? */
 			v->type = COMMAND_ARG_TIME_POSITION;
 			/* v->value.pos = strtol (s, &endptr, 10); */
-			v->value.pos = parse_time (s, &endptr, multipliers, separators);
+			v->value.pos = parse_time (time_arg, &endptr, multipliers, separators);
 		}
 
 		/* FIXME: We can have cleverer parsing for '2:17' or '3min' etc */
 		if (*endptr == '\0') {
 			retval = TRUE;
 		}
+
+		g_free (time_arg);
 	}
 
 	return retval;
