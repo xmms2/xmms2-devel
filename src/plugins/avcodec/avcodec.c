@@ -44,6 +44,24 @@
 # define CONTEXT_BPS(codecctx) (codecctx)->bits_per_coded_sample
 #endif
 
+/* Before 52.23 AVPacket was defined in avformat.h which we
+ * do not want to depend on, so we define part of it manually
+ * on versions smaller than 52.23 (this makes me cry) */
+#if LIBAVCODEC_VERSION_INT < 0x341700
+typedef struct AVPacket {
+        uint8_t *data;
+        int size;
+} AVPacket;
+#endif
+
+/* Same thing as above for av_init_packet and version 52.25 */
+#if LIBAVCODEC_VERSION_INT < 0x341900
+# define av_init_packet(pkt) do { \
+    (pkt)->data = NULL; \
+    (pkt)->size = 0; \
+  } while(0)
+#endif
+
 /* Map avcodec_decode_audio3 into the deprecated version
  * avcodec_decode_audio2 in versions earlier than 52.26 */
 #if LIBAVCODEC_VERSION_INT < 0x341a00
