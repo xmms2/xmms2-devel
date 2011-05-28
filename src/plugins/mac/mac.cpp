@@ -278,9 +278,10 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 	xmms_xform_metadata_set_int (xform, name, data->p_decompress->GetInfo (APE_INFO_FORMAT_FLAGS));
 
 	/* Average Bitrate */
+	/* mac library returns bits per millisecond(!), thus '*1000' */
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             data->p_decompress->GetInfo (APE_INFO_AVERAGE_BITRATE));
+	                             data->p_decompress->GetInfo (APE_INFO_AVERAGE_BITRATE) * 1000);
 }
 
 static gint
