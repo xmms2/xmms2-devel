@@ -32,11 +32,6 @@ COLLECTION_TYPE_PARTYSHUFFLE = XMMS_COLLECTION_TYPE_PARTYSHUFFLE
 
 from propdict import PropDict # xmmsclient.propdict
 
-# Trick to identify when an argument that can be anything (even None) is not
-# provided in the call (used in CollectionAttributes.get())
-cdef object NoDefault
-NoDefault=object()
-
 
 cdef xmmsv_t *create_native_value(value) except NULL:
 	cdef xmmsv_t *ret=NULL
@@ -460,14 +455,11 @@ cdef class CollectionAttributes(CollectionRef):
 	def __setitem__(self, name, value):
 		xmmsv_coll_attribute_set(self.coll, to_charp(from_unicode(name)), to_charp(from_unicode(value)))
 
-	def get(self, name, default=NoDefault):
+	def get(self, name, default=None):
 		try:
 			return self[name]
 		except KeyError:
-			if default is NoDefault:
-				raise
-			else:
-				return default
+			return default
 
 	cpdef clear(self):
 		for k in self.keys():
