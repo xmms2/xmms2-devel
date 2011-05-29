@@ -24,6 +24,7 @@
 #include "configuration.h"
 #include "utils.h"
 #include "column_display.h"
+#include "matching_browse.h"
 
 #include <sys/stat.h>
 
@@ -42,12 +43,6 @@
                      ((a) == '*') || \
                      ((a) == '?'))
 
-
-typedef struct browse_entry_St browse_entry_t;
-struct browse_entry_St {
-	gchar *url;
-	gint isdir;
-};
 
 static gboolean playlist_currpos_get (cli_infos_t *, const gchar *, gint *);
 static gboolean playlist_length_get (cli_infos_t *, const gchar *, gint *);
@@ -970,178 +965,6 @@ cmd_flag_pos_get (cli_infos_t *infos, command_context_t *ctx, gint *pos)
 	return cmd_flag_pos_get_playlist (infos, ctx, pos, NULL);
 }
 
-/* Check if url is a dir, used if matching_browse arg isn't a pattern
-   (should have a better way) */
-static gint
-url_isdir (cli_infos_t *infos, const gchar *const url)
-{
-	xmmsc_result_t *res;
-	xmmsv_t *val, *entry;
-	gchar *p, *path, *urls = NULL, *fullurl, *scheme, *filename;
-	const gchar *cpath;
-	gint ret = 0;
-
-	p = g_strdup (url);
-
-	if ((urls = strstr (p, "://"))) {
-		urls += 3;
-	} else {
-		/* Expects a scheme */
-		g_free (p);
-		return 0;
-	}
-
-	ret = strlen (urls);
-	if (ret && urls[ret - 1] == '/') {
-		g_free (p);
-		return 1;
-	}
-	ret = 0;
-
-	for (path = urls + strlen (urls) - 1; path != urls && *path == '/'; --path) {
-		*path = '\0';
-	}
-	scheme = g_strndup (p, urls - p);
-
-	/* g_path_get_dirname has no notion of URLs, so
-	 * split the scheme part and work with the filename
-	 * part, remove the basename then concatenate the
-	 * scheme and path part back together
-	 */
-	path = g_path_get_dirname (urls);
-	filename = g_path_get_basename (urls);
-	fullurl = g_strconcat (scheme, urls, NULL);
-	urls = g_strconcat (scheme, path, NULL);
-	g_free (path);
-	g_free (scheme);
-	g_free (p);
-
-	res = xmmsc_xform_media_browse_encoded (infos->sync, urls);
-	xmmsc_result_wait (res);
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_is_error (val)) {
-		xmmsv_list_iter_t *it;
-
-		/* the xform browsing doesn't return '.' and '..' entries, so
-		 * we check them here once we know the parent directory is
-		 * valid
-		 */
-		if (!strcmp (filename, ".") || !strcmp (filename, "..")) {
-			ret = 1;
-		}
-
-		xmmsv_get_list_iter (val, &it);
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it) && !ret;
-		     xmmsv_list_iter_next (it)) {
-
-			xmmsv_list_iter_entry (it, &entry);
-			xmmsv_dict_entry_get_string (entry, "path", &cpath);
-			if (!strcmp (cpath, fullurl)) {
-				xmmsv_dict_entry_get_int (entry, "isdir", &ret);
-			}
-		}
-	}
-
-	g_free (filename);
-	g_free (fullurl);
-	g_free (urls);
-	xmmsc_result_unref (res);
-
-	return ret;
-}
-
-static gboolean
-matching_browse (cli_infos_t *infos, const gchar *done,
-                 gchar *path, gint isdir, GList **files)
-{
-	xmmsc_result_t *res;
-	xmmsv_t *val;
-
-	GPatternSpec *spec;
-	gchar *s, *dir, *pattern, *nslash, *pslash;
-
-	if ((s = strpbrk (path, "*?")) == NULL) {
-		browse_entry_t *entry = g_new0 (browse_entry_t, 1);
-
-		if (isdir < 0) {
-			isdir = url_isdir (infos, path);
-			done = path;
-		}
-
-		entry->url = g_strdup (done);
-		entry->isdir = isdir;
-		*files = g_list_prepend (*files, entry);
-
-		return TRUE;
-	}
-
-	pslash = s;
-	while (pslash != path && *pslash != '/') pslash--;;
-	dir = g_strndup (path, pslash-path+1);
-
-	res = xmmsc_xform_media_browse_encoded (infos->sync, dir);
-	xmmsc_result_wait (res);
-	val = xmmsc_result_get_value (res);
-
-	nslash = strchr (s, '/');
-	nslash = (nslash == NULL) ? s + strlen (s) : nslash;
-	pattern = g_strndup (path, nslash-path);
-	spec = g_pattern_spec_new (pattern);
-
-	/* Find matching entries */
-	if (!xmmsv_is_error (val)) {
-		xmmsv_list_iter_t *it;
-		xmmsv_get_list_iter (val, &it);
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-			const gchar *file;
-			xmmsv_t *entry;
-			gint isdir;
-
-			xmmsv_list_iter_entry (it, &entry);
-
-			xmmsv_dict_entry_get_string (entry, "path", &file);
-			xmmsv_dict_entry_get_int (entry, "isdir", &isdir);
-			if (g_pattern_match_string (spec, file)) {
-				gchar *npath = g_strconcat (file, nslash, NULL);
-				matching_browse (infos, file, npath, isdir, files);
-				g_free (npath);
-			}
-		}
-	} else if (s) {
-		/* Clientlib doesn't support URLs with an unencoded '*' */
-		GString *str = g_string_new (path);
-		browse_entry_t *entry = g_new0 (browse_entry_t, 1);
-
-		while ((s = strchr (str->str, '*'))) {
-			g_string_erase (str, s - str->str, 1);
-			g_string_insert (str, s - str->str, "%2a");
-		}
-
-		entry->url = str->str;
-		entry->isdir = FALSE;
-
-		g_string_free (str, FALSE);
-
-		*files = g_list_prepend (*files, entry);
-
-		return TRUE;
-	} else {
-		return FALSE;
-	}
-
-	xmmsc_result_unref (res);
-
-	g_free (dir);
-	g_free (pattern);
-	g_pattern_spec_free (spec);
-
-	return TRUE;
-}
-
 static gchar *
 encode_url (gchar *url)
 {
@@ -1170,7 +993,7 @@ encode_url (gchar *url)
 }
 
 static gboolean
-guesspls (cli_infos_t *infos, gchar *url)
+guesspls (cli_infos_t *infos, const gchar *url)
 {
 	if (!configuration_get_boolean (infos->config, "GUESS_PLS")) {
 		return FALSE;
@@ -1306,38 +1129,41 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			}
 
 			enc = encode_url (vpath);
-			matching_browse (infos, "", enc, -1, &files);
+			files = matching_browse (infos->sync, enc);
 
 			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
 				browse_entry_t *entry = it->data;
-				if (plsfile || guesspls (infos, entry->url)) {
+				const gchar *url;
+				gboolean is_directory;
+
+				browse_entry_get (entry, &url, &is_directory);
+
+				if (plsfile || guesspls (infos, url)) {
 					xmmsc_result_t *plsres;
-					gchar *decoded = decode_url (entry->url);
+					gchar *decoded = decode_url (url);
 
 					plsres = xmmsc_coll_idlist_from_playlist_file (infos->sync,
 					                                               decoded);
 					xmmsc_result_wait (plsres);
 					add_pls (plsres, infos, playlist, pos);
 					g_free (decoded);
-				} else if (norecurs || !entry->isdir) {
+				} else if (norecurs || !is_directory) {
 					res = xmmsc_playlist_insert_encoded (infos->sync, playlist,
-					                                     pos, entry->url);
+					                                     pos, url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				} else {
 					res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist,
-					                                      pos, entry->url);
+					                                      pos, url);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 				}
 				pos++; /* next insert at next pos, to keep order */
-				g_free (entry->url);
-				g_free (entry);
 			}
 
 			g_free (enc);
 			g_free (vpath);
-			g_list_free (files);
+			g_list_free_full (files, (GDestroyNotify) browse_entry_free);
 		}
 		cli_infos_loop_resume (infos);
 	} else {
@@ -2019,28 +1845,32 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		}
 
 		enc = encode_url (vpath);
-		matching_browse (infos, "", enc, -1, &files);
+		files = matching_browse (infos->sync, enc);
 
 		for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
 			browse_entry_t *entry = it->data;
-			if (norecurs || !entry->isdir) {
+			const gchar *url;
+			gboolean is_directory;
+
+			browse_entry_get (entry, &url, &is_directory);
+
+			if (norecurs || !is_directory) {
 				res = xmmsc_medialib_add_entry_encoded (infos->sync,
-				                                        entry->url);
+				                                        url);
 				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);
 			} else {
 				res = xmmsc_medialib_import_path_encoded (infos->sync,
-				                                          entry->url);
+				                                          url);
 				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);
 			}
-			g_free (entry->url);
-			g_free (entry);
+
 		}
 
 		g_free (enc);
 		g_free (vpath);
-		g_list_free (files);
+		g_list_free_full (files, (GDestroyNotify) browse_entry_free);
 		cli_infos_loop_resume (infos);
 	}
 
