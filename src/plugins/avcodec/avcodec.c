@@ -350,8 +350,9 @@ xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 			g_memmove (data->buffer,
 			           data->buffer + bytes_read,
 			           data->buffer_length - bytes_read);
-			data->buffer_length -= bytes_read;
 		}
+
+		data->buffer_length -= bytes_read;
 
 		if (outbufsize > 0) {
 			g_string_append_len (data->outbuf, outbuf, outbufsize);
