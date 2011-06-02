@@ -1159,11 +1159,13 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					xmmsc_result_unref (res);
 				}
 				pos++; /* next insert at next pos, to keep order */
+
+				browse_entry_free (entry);
 			}
 
 			g_free (enc);
 			g_free (vpath);
-			g_list_free_full (files, (GDestroyNotify) browse_entry_free);
+			g_list_free (files);
 		}
 		cli_infos_loop_resume (infos);
 	} else {
@@ -1866,11 +1868,12 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 				xmmsc_result_unref (res);
 			}
 
+			browse_entry_free (entry);
 		}
 
 		g_free (enc);
 		g_free (vpath);
-		g_list_free_full (files, (GDestroyNotify) browse_entry_free);
+		g_list_free (files);
 		cli_infos_loop_resume (infos);
 	}
 
