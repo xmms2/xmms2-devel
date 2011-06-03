@@ -67,6 +67,8 @@ typedef void (*xmms_object_handler_t) (xmms_object_t *object, xmmsv_t *data, gpo
 typedef struct {
 	xmmsv_t *args; /* list */
 	xmmsv_t *retval;
+	uint32_t cookie;
+	gint32 client;
 	xmms_error_t error;
 } xmms_object_cmd_arg_t;
 

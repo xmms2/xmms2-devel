@@ -85,6 +85,13 @@ class IpcMethod(NamedElement, DocumentedElement):
 		self.arguments = []
 		self.return_value = None
 
+		# Store attributes for this method as boolean object attributes
+		for attr in ('noreply', 'need_cookie', 'need_client'):
+			val = xml_element.attributes.get(attr, False)
+			if val:
+				val = (val.value == "true")
+			setattr(self, attr, val)
+
 		argument_elements = xml_element.getElementsByTagName('argument')
 
 		for argument_element in argument_elements:

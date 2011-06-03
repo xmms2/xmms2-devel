@@ -158,8 +158,20 @@ def emit_method_define_code(object, method, c_type):
 
 	Indenter.printline()
 
-	args = "".join([("argval%d, " % i) for i in  range(len(method.arguments))])
-	funccall = "%s ((%s) object, %s&arg->error)" % (full_method_name, c_type, args)
+	# Assemble a list of arguments for the function call
+	args = []
+
+	args.append("(%s) object" % c_type)
+	args.extend("argval%d" % i for i in range(len(method.arguments)))
+
+	if method.need_client:
+		args.append("arg->client")
+	if method.need_cookie:
+		args.append("arg->cookie")
+
+	args.append("&arg->error")
+
+	funccall = "%s (%s)" % (full_method_name, ", ".join(args))
 	if method.return_value:
 		if c_creator_map[method.return_value.type[0]] is None:
 			Indenter.printline("arg->retval = %s;" % (funccall))
@@ -173,7 +185,10 @@ def emit_method_define_code(object, method, c_type):
 				Indenter.printline("arg->retval = %s (%s);" % (c_creator_map[method.return_value.type[0]], funccall))
 	else:
 		Indenter.printline("%s;" % funccall)
-		Indenter.printline("arg->retval = xmmsv_new_none ();")
+		if method.noreply:
+			Indenter.printline("arg->retval = NULL;")
+		else:
+			Indenter.printline("arg->retval = xmmsv_new_none ();")
 
 
 	Indenter.leave("}")

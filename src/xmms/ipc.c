@@ -219,6 +219,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 	xmms_object_cmd_call (object, cmdid, &arg);
 	if (xmms_error_isok (&arg.error)) {
+		if (!arg.retval) {
+			/* Skip reply if method is a noreply and didn't fail */
+			goto out;
+		}
+
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {

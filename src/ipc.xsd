@@ -54,6 +54,15 @@ vim:expandtab
             <!-- Methods may optionally have a return value -->
             <xs:element name="return_value" type="xmms:return_value" minOccurs="0"/>
         </xs:sequence>
+
+        <!-- Methods may optionally not send a reply to the client -->
+        <xs:attribute name="noreply" type="xs:boolean"/>
+
+        <!-- Methods may optionally receive the cookie for the call -->
+        <xs:attribute name="need_cookie" type="xs:boolean"/>
+
+        <!-- Methods may optionally receive the calling client id -->
+        <xs:attribute name="need_client" type="xs:boolean"/>
     </xs:complexType>
 
     <!-- An object's broadcast or signal -->
