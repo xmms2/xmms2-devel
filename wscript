@@ -340,6 +340,7 @@ def configure(conf):
 
     # Add some specific OSX things
     if Options.platform == 'darwin':
+        conf.check_tool("osx")
         conf.env["LINKFLAGS"] += ['-multiply_defined suppress']
         conf.env["explicit_install_name"] = True
     else:
