@@ -304,7 +304,7 @@ CASE (test_coerce)
 
 	CU_ASSERT_EQUAL (XMMS_SAMPLE_FORMAT_S32,
 	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_FORMAT));
-	CU_ASSERT_EQUAL (-1,
+	CU_ASSERT_EQUAL (88200,
 	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
 	CU_ASSERT_EQUAL (2,
 	                 xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_CHANNELS));
