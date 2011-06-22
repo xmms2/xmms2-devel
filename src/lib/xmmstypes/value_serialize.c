@@ -86,7 +86,7 @@ _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg)
 	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (errmsg) + 1))
 		return false;
 
-	return xmmsv_bitbuffer_put_data (bb, errmsg, strlen (errmsg) + 1);
+	return xmmsv_bitbuffer_put_data (bb, (const unsigned char *) errmsg, strlen (errmsg) + 1);
 }
 
 static void
@@ -119,7 +119,7 @@ _internal_put_on_bb_string (xmmsv_t *bb, const char *str)
 	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (str) + 1))
 		return false;
 
-	return xmmsv_bitbuffer_put_data (bb, str, strlen (str) + 1);
+	return xmmsv_bitbuffer_put_data (bb, (const unsigned char *) str, strlen (str) + 1);
 }
 
 static bool
