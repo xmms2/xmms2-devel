@@ -2,6 +2,7 @@
 #define __XMMS_UTILS_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "xmmsc/xmmsc_stdbool.h"
 
