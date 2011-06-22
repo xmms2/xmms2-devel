@@ -1,7 +1,7 @@
 /** @file karaoke.c
  *  Voice removal effect plugin
  *
- *  Copyright (C) 2008-2009 XMMS2 Team
+ *  Copyright (C) 2008-2011 XMMS2 Team
  *
  *  Heavily based on DeFX plugin created for XMMS:
  *  DeFX Copyright (C) 2002 Franco Catrin L. <ancelot@directo.cl>

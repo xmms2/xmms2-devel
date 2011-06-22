@@ -1,5 +1,5 @@
 /*  flv - A demuxer plugin for XMMS2
- *  Copyright (C) 2008-2009 XMMS2 Team and Anthony Garcia
+ *  Copyright (C) 2008-2011 XMMS2 Team and Anthony Garcia
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

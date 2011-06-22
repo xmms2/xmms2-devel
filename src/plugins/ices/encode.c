@@ -13,7 +13,7 @@
 
 /*
  * Modifications for xmms2
- * Copyright (C) 2003-2009 XMMS2 Team
+ * Copyright (C) 2003-2011 XMMS2 Team
  */
 
 #ifdef HAVE_CONFIG_H
