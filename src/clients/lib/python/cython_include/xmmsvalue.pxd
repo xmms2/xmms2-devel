@@ -4,6 +4,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	ctypedef struct xmmsv_t
 	ctypedef struct xmmsv_coll_t
 	ctypedef struct xmmsv_dict_iter_t
+	ctypedef struct xmmsv_list_iter_t
 
 cdef class XmmsValue:
 	cdef object sourcepref
@@ -21,9 +22,21 @@ cdef class XmmsValue:
 	cpdef get_bin(self)
 	cpdef get_coll(self)
 	cpdef get_dict(self)
+	cpdef get_dict_iter(self)
 	cpdef get_propdict(self)
 	cpdef get_list(self)
+	cpdef get_list_iter(self)
 	cpdef value(self)
+
+cdef class XmmsListIter:
+	cdef object sourcepref
+	cdef xmmsv_t *val
+	cdef xmmsv_list_iter_t *it
+
+cdef class XmmsDictIter:
+	cdef object sourcepref
+	cdef xmmsv_t *val
+	cdef xmmsv_dict_iter_t *it
 
 cdef class CollectionRef:
 	cdef xmmsv_coll_t *coll

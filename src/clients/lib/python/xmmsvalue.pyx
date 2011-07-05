@@ -178,62 +178,35 @@ cdef class XmmsValue:
 		"""
 		@return: A dictionary containing media info.
 		"""
-		cdef xmmsv_dict_iter_t *it = NULL
-		cdef char *k = NULL
-		cdef xmmsv_t *v = NULL
-		cdef XmmsValue V
-		ret = {}
+		return dict([(k, v.value()) for k,v in self.get_dict_iter()])
 
-		if not xmmsv_get_dict_iter(self.val, &it):
-			if self.get_type() != XMMSV_TYPE_DICT:
-				raise ValueError("Failed to retrieve value")
-			else:
-				raise RuntimeError("Failed to get dict iterator")
-
-		while xmmsv_dict_iter_valid(it):
-			xmmsv_dict_iter_pair(it, <const_char **>&k, &v)
-			V = XmmsValue(self.sourcepref)
-			V.set_value(v)
-			ret[k] = V.value()
-			xmmsv_dict_iter_next(it)
-		xmmsv_dict_iter_explicit_destroy (it)
-		return ret
+	cpdef get_dict_iter(self):
+		"""
+		@return: An iterator on dict items ((key, value) pairs).
+		"""
+		return XmmsDictIter(self)
 
 	cpdef get_propdict(self):
 		"""
 		@return: A source dict.
 		"""
 		ret = PropDict(self.sourcepref)
-		for key, values in self.get_dict().iteritems():
-			for source, value in values.iteritems():
-				ret[(source, key)] = value
+		for key, values in self.get_dict_iter():
+			for source, value in values.get_dict_iter():
+				ret[(source, key)] = value.value()
 		return ret
 
 	cpdef get_list(self):
 		"""
 		@return: A list of dicts from the result structure.
 		"""
-		cdef xmmsv_list_iter_t *it = NULL
-		cdef xmmsv_t *val = NULL
-		cdef XmmsValue V
+		return [v.value() for v in self.get_list_iter()]
 
-		ret = []
-
-		if not xmmsv_get_list_iter(self.val, &it):
-			if self.get_type() != XMMSV_TYPE_LIST:
-				raise ValueError("Failed to retrieve value")
-			else:
-				raise RuntimeError("Failed to get dict iterator")
-
-		while xmmsv_list_iter_valid(it):
-			xmmsv_list_iter_entry(it, &val)
-			V = XmmsValue(self.sourcepref)
-			V.set_value(val)
-			ret.append(V.value())
-
-			xmmsv_list_iter_next(it)
-		xmmsv_list_iter_explicit_destroy(it)
-		return ret
+	cpdef get_list_iter(self):
+		"""
+		@return: An iterator on a list.
+		"""
+		return XmmsListIter(self)
 
 	cpdef value(self):
 		"""
@@ -263,6 +236,91 @@ cdef class XmmsValue:
 			return self.get_dict()
 		else:
 			raise TypeError("Unknown value type from the server: %d" % vtype)
+
+
+cdef class XmmsListIter:
+	#cdef object sourcepref
+	#cdef xmmsv_t *val
+	#cdef xmmsv_list_iter_t *it
+
+	def __cinit__(self):
+		self.val = NULL
+		self.it = NULL
+	
+	def __dealloc__(self):
+		if self.it != NULL:
+			xmmsv_list_iter_explicit_destroy(self.it)
+		if self.val != NULL:
+			xmmsv_unref(self.val)
+
+	def __init__(self, XmmsValue value):
+		if value.get_type() != XMMSV_TYPE_LIST:
+			raise TypeError("The value is not a list.")
+		self.val = xmmsv_ref(value.val)
+		if not xmmsv_get_list_iter(self.val, &self.it):
+			raise RuntimeError("Failed to initialize the iterator.")
+		self.sourcepref = value.sourcepref
+
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		cdef xmmsv_t *val = NULL
+		cdef XmmsValue v
+
+		if not xmmsv_list_iter_valid(self.it):
+			raise StopIteration()
+
+		if not xmmsv_list_iter_entry(self.it, &val):
+			raise RuntimeError("Failed to retrieve list entry.")
+		v = XmmsValue(self.sourcepref)
+		v.set_value(val)
+
+		xmmsv_list_iter_next(self.it)
+		return v
+
+
+cdef class XmmsDictIter:
+	#cdef object sourcepref
+	#cdef xmmsv_t *val
+	#cdef xmmsv_dict_iter_t *it
+
+	def __cinit__(self):
+		self.val = NULL
+		self.it = NULL
+
+	def __dealloc__(self):
+		if self.it != NULL:
+			xmmsv_dict_iter_explicit_destroy(self.it)
+		if self.val != NULL:
+			xmmsv_unref(self.val)
+
+	def __init__(self, XmmsValue value):
+		if value.get_type() != XMMSV_TYPE_DICT:
+			raise TypeError("The value is not a dict.")
+		self.val = xmmsv_ref(value.val)
+		if not xmmsv_get_dict_iter(self.val, &self.it):
+			raise RuntimeError("Failed to initialize the iterator.")
+		self.sourcepref = value.sourcepref
+	
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		cdef char *key = NULL
+		cdef xmmsv_t *val = NULL
+		cdef XmmsValue v
+
+		if not xmmsv_dict_iter_valid(self.it):
+			raise StopIteration()
+
+		if not xmmsv_dict_iter_pair(self.it, <const_char **>&key, &val):
+			raise RuntimeError("Failed to retrieve dict item")
+		v = XmmsValue(self.sourcepref)
+		v.set_value(val)
+
+		xmmsv_dict_iter_next(self.it)
+		return (to_unicode(key), v)
 
 
 cdef class CollectionRef:
