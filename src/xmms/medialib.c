@@ -836,6 +836,40 @@ process_dir (const gchar *directory,
 	return TRUE;
 }
 
+/**
+ * Check if a (source, key) tuple can be derived from a re-scan of the media.
+ *
+ * This is used to protect data that comes when importing attributes
+ * from a playlist, or attributes set by a client.
+ */
+static gboolean
+entry_attribute_is_derived (const gchar *source, const gchar *key)
+{
+	if (strcmp (XMMS_MEDIALIB_SOURCE_SERVER, source) == 0) {
+		if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_URL) == 0)
+			return FALSE;
+		if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED) == 0)
+			return FALSE;
+		if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == 0)
+			return FALSE;
+		if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD) == 0)
+			return FALSE;
+		if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED) == 0)
+			return FALSE;
+		return TRUE;
+	}
+
+	if (strncmp (source, "plugin/", 7) == 0) {
+		if (strcmp (source, "plugin/playlist") == 0) {
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
 void
 xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
                              xmms_medialib_entry_t entry)
@@ -858,17 +892,7 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 			const gchar *src = s4_result_get_src (res);
 			const gchar *key = s4_result_get_key (res);
 
-			if (strcmp (XMMS_MEDIALIB_SOURCE_SERVER, src) == 0) {
-				if (strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_URL) &&
-				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED) &&
-				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) &&
-				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD) &&
-				    strcmp (key, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED)) {
-					s4_del (NULL, session->trans, "song_id", song_id,
-					        key, s4_result_get_val (res), src);
-				}
-			} else if (strncmp (src, "plugin/", 7) == 0 &&
-			           strcmp (src, "plugin/playlist") != 0) {
+			if (entry_attribute_is_derived (src, key)) {
 				s4_del (NULL, session->trans, "song_id", song_id,
 				        key, s4_result_get_val (res), src);
 			}
