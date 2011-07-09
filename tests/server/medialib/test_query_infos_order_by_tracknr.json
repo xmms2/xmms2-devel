@@ -1,9 +1,9 @@
 {
     'medialib': [
+        { 'tracknr': 2, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Reverse Thunder' },
         { 'tracknr': 1, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Prehistoric Dog' },
         { 'tracknr': 4, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Humans Remain Human Remains' },
-        { 'tracknr': 3, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Night Destroyer' },
-        { 'tracknr': 2, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Reverse Thunder' }
+        { 'tracknr': 3, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Night Destroyer' }
     ],
     'collection': {
         'type': 'limit',
@@ -49,8 +49,8 @@
     },
     'expected': {
         'result': [
-            { 'id': 3, 'tracknr': 2, 'title': 'Reverse Thunder' },
-            { 'id': 2, 'tracknr': 3, 'title': 'Night Destroyer' }
+            { 'id': 0, 'tracknr': 2, 'title': 'Reverse Thunder' },
+            { 'id': 3, 'tracknr': 3, 'title': 'Night Destroyer' }
         ],
         'ordered': 1
     }
