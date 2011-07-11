@@ -16,11 +16,16 @@ def build(bld):
     else:
         source.extend(['utils_unix.c'])
 
+    if bld.env.HAVE_VALGRIND:
+        source.extend(['stacktrace.c'])
+    else:
+        source.extend(['stacktrace_dummy.c'])
+
     bld(features = 'c cstlib',
         target = 'xmmsutils',
         source = source,
         includes = '. ../../.. ../../include',
-        uselib = 'rt',
+        uselib = 'rt valgrind',
         install_path = None
         )
 

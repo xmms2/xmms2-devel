@@ -432,6 +432,10 @@ int main() { return 0; }
     conf.check_cfg(package='glib-2.0', atleat_version='2.8.0',
             uselib_store='glib2', args='--cflags --libs')
 
+    # Valgrind can be used for debugging here and there, so lets check
+    # it at top-level so each consumer don't have to bother.
+    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags')
+
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
 

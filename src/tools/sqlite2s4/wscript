@@ -10,7 +10,7 @@ def build(bld):
         target = 'sqlite2s4',
         source = sqlite2s4_source,
         includes = '. ../../include ../../includepriv',
-        use = 's4 xmmstypes',
+        use = 's4 xmmstypes xmmsutils',
         uselib = 'glib2 gthread2 sqlite3'
         )
 
