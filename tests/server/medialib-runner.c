@@ -365,22 +365,22 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 
 	const GOptionEntry options[] = {
 		{
-			"variant", 'v', G_OPTION_FLAG_OPTIONAL_ARG,
+			"variant", 'v', 0,
 			G_OPTION_ARG_STRING, &variant,
 			"'performance' or 'unittest' (default).", "<variant>"
 		},
 		{
-			"medialib-directory", 'm', G_OPTION_FLAG_OPTIONAL_ARG | G_OPTION_FLAG_FILENAME,
+			"medialib-directory", 'm', 0,
 			G_OPTION_ARG_FILENAME, &args->database_dir,
 			"Scan <directory> for media libraries.", "<directory>"
 		},
 		{
-			"testcase-directory", 't', G_OPTION_FLAG_OPTIONAL_ARG | G_OPTION_FLAG_FILENAME,
+			"testcase-directory", 't', 0,
 			G_OPTION_ARG_FILENAME, &args->testcase_dir,
 			"Scan <directory> for test cases.", "<directory>"
 		},
 		{
-			"debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
+			"debug", 'd', 0,
 			G_OPTION_ARG_NONE, &args->debug,
 			"Enable debug logging.", NULL
 		},
