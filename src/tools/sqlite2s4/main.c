@@ -87,6 +87,7 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 	int id, src_id, i;
 	char *key, *val, *src;
 	s4_val_t *id_val, *val_val;
+	s4_transaction_t *trans;
 
 	for (i = 0; i < argc; i++) {
 		if (!strcmp ("id", col[i])) {
@@ -110,7 +111,9 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 		val_val = s4_val_new_string (val);
 	}
 
-	s4_add (s4, NULL, "song_id", id_val, key, val_val, src);
+	trans = s4_begin (s4, 0);
+	s4_add (trans, "song_id", id_val, key, val_val, src);
+	s4_commit (trans);
 
 	s4_val_free (val_val);
 	s4_val_free (id_val);
