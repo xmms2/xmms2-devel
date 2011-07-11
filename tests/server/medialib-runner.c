@@ -35,13 +35,18 @@ typedef void (*xmms_directory_predicate)(const gchar *filename, xmmsv_t *list);
 
 typedef void (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
                                     xmmsv_t *content, xmmsv_coll_t *coll,
-                                    xmmsv_t *specification, xmmsv_t *expected);
+                                    xmmsv_t *specification, xmmsv_t *expected,
+                                    gint format, const gchar *datasetname);
 
 typedef struct xmms_test_args_St {
 	enum {
 		PERFORMANCE,
 		UNITTEST
 	} variant;
+	enum {
+		FORMAT_PRETTY,
+		FORMAT_CSV
+	} format;
 	const gchar *database_dir;
 	const gchar *testcase_dir;
 	gboolean debug;
@@ -212,7 +217,8 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
  */
 static void
 run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
-               xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected)
+               xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+               gint format)
 {
 	gboolean matches, ordered = FALSE;
 	xmmsv_t *ret, *value;
@@ -238,14 +244,24 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	}
 
 	if (matches) {
-		g_print ("............................................................ Success!");
-		g_print ("\r%s \n", name);
+		if (format == FORMAT_CSV) {
+			g_print ("\"%s\", 1\n", name);
+		} else {
+			g_print ("............................................................ Success!");
+			g_print ("\r%s \n", name);
+		}
+
 	} else {
-		g_print ("............................................................ Failure!");
-		g_print ("\r%s \n", name);
-		g_print ("The result: ");
+		if (format == FORMAT_CSV) {
+			g_print ("\"%s\", 0\n", name);
+		} else {
+			g_print ("............................................................ Failure!");
+			g_print ("\r%s \n", name);
+		}
+
+		g_printerr ("The result: ");
 		xmmsv_dump (ret);
-		g_print ("Does not equal: ");
+		g_printerr ("Does not equal: ");
 		xmmsv_dump (value);
 	}
 
@@ -262,7 +278,8 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
  */
 static void
 run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *content,
-                      xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected)
+                      xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+                      gint format, const gchar *datasetname)
 {
 	xmms_error_t err;
 	GTimeVal t0, t1;
@@ -275,12 +292,21 @@ run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *con
 
 	duration = (guint64)((t1.tv_sec - t0.tv_sec) * G_USEC_PER_SEC) + (t1.tv_usec - t0.tv_usec);
 
-	g_print ("* Test %s\n", name);
+	if (format == FORMAT_PRETTY)
+		g_print ("* Test %s\n", name);
 
 	if (xmms_error_iserror (&err)) {
-		g_print ("   - Query failed: %s\n", xmms_error_message_get (&err));
+		if (format == FORMAT_CSV) {
+			g_print ("\"%s\",\"%s\",0,0\n", datasetname, name);
+		} else {
+			g_print ("   - Query failed: %s\n", xmms_error_message_get (&err));
+		}
 	} else {
-		g_print ("   - Time elapsed: %.3fms\n", duration / 1000.0);
+		if (format == FORMAT_CSV) {
+			g_print ("\"%s\",\"%s\",1,%" G_GUINT64_FORMAT "\n", datasetname, name, duration);
+		} else {
+			g_print ("   - Time elapsed: %.3fms\n", duration / 1000.0);
+		}
 	}
 
 	xmmsv_unref (ret);
@@ -288,7 +314,8 @@ run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *con
 
 
 static void
-run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate predicate)
+run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate predicate,
+           gint format, const gchar *datasetname)
 {
 	xmmsv_list_iter_t *it;
 
@@ -310,7 +337,8 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
 
 		xmmsv_get_coll (holder, &coll);
 
-		predicate (medialib, name, content, coll, specification, expected);
+		predicate (medialib, name, content, coll, specification,
+		           expected, format, datasetname);
 
 		xmmsv_list_iter_next (it);
 	}
@@ -318,7 +346,7 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
 
 
 static void
-run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases)
+run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 {
 	xmmsv_list_iter_t *it;
 	const gchar *indices[] = {
@@ -333,7 +361,8 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases)
 
 		xmmsv_list_iter_entry_string (it, &filename);
 
-		g_print ("Running suite with: %s\n", filename);
+		if (format == FORMAT_PRETTY)
+			g_print ("Running suite with: %s\n", filename);
 
 		medialib = xmms_object_new (xmms_medialib_t, NULL);
 		medialib->s4 = s4_open (filename, indices, 0);
@@ -343,7 +372,7 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases)
 		}
 		medialib->default_sp = s4_sourcepref_create (source_pref);
 
-		run_tests (medialib, testcases, run_performance_test);
+		run_tests (medialib, testcases, run_performance_test, format, filename);
 
 		s4_close (medialib->s4);
 		s4_sourcepref_unref (medialib->default_sp);
@@ -358,6 +387,7 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 {
 	GOptionContext *context;
 	const gchar *variant = "unittest";
+	const gchar *format = "pretty";
 	GError *error = NULL;
 
 	args->database_dir = "tests/server/databases";
@@ -368,6 +398,11 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 			"variant", 'v', 0,
 			G_OPTION_ARG_STRING, &variant,
 			"'performance' or 'unittest' (default).", "<variant>"
+		},
+		{
+			"format", 'f', 0,
+			G_OPTION_ARG_STRING, &format,
+			"'csv' or 'pretty' (default).", "<format>"
 		},
 		{
 			"medialib-directory", 'm', 0,
@@ -405,6 +440,12 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 		args->variant = UNITTEST;
 	}
 
+	if (strcmp (format, "pretty") == 0) {
+		args->format = FORMAT_PRETTY;
+	} else {
+		args->format = FORMAT_CSV;
+	}
+
 	g_option_context_free (context);
 }
 
@@ -428,19 +469,27 @@ main (gint argc, gchar **argv)
 	g_log_set_default_handler (simple_log_handler, (gpointer) &args);
 
 	g_debug ("Test variant: %s", args.variant == UNITTEST ? "unit test" : "performance test");
+	g_debug ("Output format: %s", args.format == FORMAT_PRETTY ? "pretty" : "csv");
 	g_debug ("Database directory: %s", args.database_dir);
 	g_debug ("Testcase directory: %s", args.testcase_dir);
 
 	testcases = scan_directory (args.testcase_dir, filter_testcase);
 
 	if (args.variant == PERFORMANCE) {
-		g_print (" - Running Performance Test -\n");
+		if (args.format == FORMAT_CSV)
+			g_print ("\"dataset\",\"test\",\"success\",\"duration\"\n");
+		else
+			g_print (" - Running Performance Test -\n");
+
 		databases = scan_directory (args.database_dir, filter_databases);
-		run_performance_tests (databases, testcases);
+		run_performance_tests (databases, testcases, args.format);
 		xmmsv_unref (databases);
 	} else {
-		g_print (" - Running Unit Test -\n");
-		run_tests (NULL, testcases, run_unit_test);
+		if (args.format == FORMAT_CSV)
+			g_print ("\"test\",\"success\"\n");
+		else
+			g_print (" - Running Unit Test -\n");
+		run_tests (NULL, testcases, run_unit_test, args.format, NULL);
 	}
 
 	xmmsv_unref (testcases);
