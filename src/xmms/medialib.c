@@ -1788,116 +1788,126 @@ complement_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return cond;
 }
 
+static s4_filter_type_t
+filter_type_from_collection (xmmsv_coll_t *coll)
+{
+	xmmsv_coll_type_t type = xmmsv_coll_get_type (coll);
+
+	switch (type) {
+		case XMMS_COLLECTION_TYPE_HAS:
+			return S4_FILTER_EXISTS;
+		case XMMS_COLLECTION_TYPE_MATCH:
+			return S4_FILTER_MATCH;
+		case XMMS_COLLECTION_TYPE_TOKEN:
+			return S4_FILTER_TOKEN;
+		case XMMS_COLLECTION_TYPE_EQUALS:
+			return S4_FILTER_EQUAL;
+		case XMMS_COLLECTION_TYPE_NOTEQUAL:
+			return S4_FILTER_NOTEQUAL;
+		case XMMS_COLLECTION_TYPE_SMALLER:
+			return S4_FILTER_SMALLER;
+		case XMMS_COLLECTION_TYPE_SMALLEREQ:
+			return S4_FILTER_SMALLEREQ;
+		case XMMS_COLLECTION_TYPE_GREATER:
+			return S4_FILTER_GREATER;
+		case XMMS_COLLECTION_TYPE_GREATEREQ:
+			return S4_FILTER_GREATEREQ;
+		default:
+			g_assert_not_reached ();
+	}
+}
+
+static void
+get_filter_type_and_compare_mode (xmmsv_coll_t *coll,
+                                  s4_filter_type_t *type,
+                                  s4_cmp_mode_t *cmp_mode)
+{
+	gchar *value;
+
+	*type = filter_type_from_collection (coll);
+
+	if (!xmmsv_coll_attribute_get (coll, "collation", &value)) {
+		/* For <, <=, >= and > we default to natcoll,
+		 * so that strings will order correctly
+		 */
+		switch (*type) {
+			case S4_FILTER_SMALLER:
+			case S4_FILTER_GREATER:
+			case S4_FILTER_SMALLEREQ:
+			case S4_FILTER_GREATEREQ:
+				*cmp_mode = S4_CMP_COLLATE;
+				break;
+			default:
+				*cmp_mode = S4_CMP_CASELESS;
+		}
+	} else if (strcmp (value, "NOCASE") == 0) {
+		*cmp_mode = S4_CMP_CASELESS;
+	} else if (strcmp (value, "BINARY") == 0) {
+		*cmp_mode = S4_CMP_BINARY;
+	} else if (strcmp (value, "NATCOLL") == 0) {
+		*cmp_mode = S4_CMP_COLLATE;
+	} else {
+		/* Programming error, too weak validation. */
+		g_assert_not_reached ();
+	}
+}
+
 static s4_condition_t *
 filter_condition (xmms_medialib_session_t *session,
                   xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
                   xmmsv_t *order)
 {
+	s4_sourcepref_t *sp;
 	s4_filter_type_t type;
-	s4_sourcepref_t *sp, *_default_sp;
 	s4_cmp_mode_t cmp_mode;
 	gint32 ival, flags = 0;
-	gchar *tmp, *key, *val;
+	gchar *filter_type, *key, *val;
 	xmmsv_t *operands;
 	xmmsv_coll_t *operand;
 	s4_condition_t *cond;
-	s4_val_t *sval;
+	s4_val_t *value = NULL;
 
-	_default_sp = sp = xmms_medialib_get_source_preference (session);
-
-	if (!xmmsv_coll_attribute_get (coll, "type", &tmp)
-	    || strcmp (tmp, "value") == 0) {
+	if (!xmmsv_coll_attribute_get (coll, "type", &filter_type) || strcmp (filter_type, "value") == 0) {
 		/* If 'field' is not set, match against every key */
 		if (!xmmsv_coll_attribute_get (coll, "field", &key)) {
 			key = NULL;
 		}
-	} else if (strcmp (tmp, "id") == 0) {
+	} else {
 		key = (gchar *) "song_id";
 		flags = S4_COND_PARENT;
-	} else {
-		xmms_log_error ("FILTER with invalid \"type\"-attribute."
-		                "This is probably a bug.");
-		/* set key to something safe */
-		key = NULL;
-	}
-
-	switch (xmmsv_coll_get_type (coll)) {
-		case XMMS_COLLECTION_TYPE_HAS:
-			type = S4_FILTER_EXISTS; break;
-		case XMMS_COLLECTION_TYPE_MATCH:
-			type = S4_FILTER_MATCH; break;
-		case XMMS_COLLECTION_TYPE_TOKEN:
-			type = S4_FILTER_TOKEN; break;
-		case XMMS_COLLECTION_TYPE_EQUALS:
-			type = S4_FILTER_EQUAL; break;
-		case XMMS_COLLECTION_TYPE_NOTEQUAL:
-			type = S4_FILTER_NOTEQUAL; break;
-		case XMMS_COLLECTION_TYPE_SMALLER:
-			type = S4_FILTER_SMALLER; break;
-		case XMMS_COLLECTION_TYPE_SMALLEREQ:
-			type = S4_FILTER_SMALLEREQ; break;
-		case XMMS_COLLECTION_TYPE_GREATER:
-			type = S4_FILTER_GREATER; break;
-		case XMMS_COLLECTION_TYPE_GREATEREQ:
-			type = S4_FILTER_GREATEREQ; break;
-		default:
-			g_assert_not_reached ();
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "value", &val)) {
 		if (xmms_is_int (val, &ival)) {
-			sval = s4_val_new_int (ival);
+			value = s4_val_new_int (ival);
 		} else {
-			sval = s4_val_new_string (val);
+			value = s4_val_new_string (val);
 		}
-	} else {
-		sval = NULL;
-	}
-
-	if (!xmmsv_coll_attribute_get (coll, "collation", &val)) {
-		/* For <, <=, >= and > we default to natcoll,
-		 * so that strings will order correctly
-		 * */
-		switch (type) {
-			case S4_FILTER_SMALLER:
-			case S4_FILTER_GREATER:
-			case S4_FILTER_SMALLEREQ:
-			case S4_FILTER_GREATEREQ:
-				cmp_mode = S4_CMP_COLLATE;
-				break;
-			default:
-				cmp_mode = S4_CMP_CASELESS;
-		}
-	} else if (strcmp (val, "NOCASE") == 0) {
-		cmp_mode = S4_CMP_CASELESS;
-	} else if (strcmp (val, "BINARY") == 0) {
-		cmp_mode = S4_CMP_BINARY;
-	} else if (strcmp (val, "NATCOLL") == 0) {
-		cmp_mode = S4_CMP_COLLATE;
-	} else { /* Unknown collation, fall back to caseless matching */
-		cmp_mode = S4_CMP_CASELESS;
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "source-preference", &val)) {
 		gchar **prefs;
-
 		prefs = g_strsplit (val, ":", -1);
 		sp = s4_sourcepref_create ((const gchar **) prefs);
 		g_strfreev (prefs);
+	} else {
+		sp = xmms_medialib_get_source_preference (session);
+		s4_sourcepref_ref (sp);
 	}
 
-	cond = s4_cond_new_filter (type, key, sval, sp, cmp_mode, flags);
+	get_filter_type_and_compare_mode (coll, &type, &cmp_mode);
 
-	if (sval != NULL) {
-		s4_val_free (sval);
+	cond = s4_cond_new_filter (type, key, value, sp, cmp_mode, flags);
+
+	if (value != NULL) {
+		s4_val_free (value);
 	}
 
-	if (sp != _default_sp) {
-		s4_sourcepref_unref (sp);
-	}
+	s4_sourcepref_unref (sp);
 
 	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
+
 	if (!is_universe (operand)) {
 		s4_condition_t *op_cond = cond;
 		cond = s4_cond_new_combiner (S4_COMBINE_AND);
