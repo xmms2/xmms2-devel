@@ -98,7 +98,7 @@ CASE (test_entry_property_get)
 	g_free (string);
 
 	SESSION (string = xmms_medialib_entry_property_get_str (session, 1, "tracknr"));
-	CU_ASSERT_STRING_EQUAL ("4", string);
+	CU_ASSERT_PTR_NULL (string);
 	g_free (string);
 
 	SESSION (string = xmms_medialib_entry_property_get_str (session, 1337, "monkey"));

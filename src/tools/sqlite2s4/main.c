@@ -39,7 +39,7 @@ xmms_is_int (const gchar *str, int *val)
 	gboolean ret = FALSE;
 	gchar *end;
 
-	if (!isspace (*str)) {
+	if (str != NULL && !isspace (*str)) {
 		*val = strtol (str, &end, 10);
 		if (*end == '\0')
 			ret = TRUE;
@@ -84,10 +84,12 @@ s4_t *s4;
 static int media_callback (void *u, int argc, char *argv[], char *col[])
 {
 	GTree *sources = u;
-	int id, src_id, i;
-	char *key, *val, *src;
+	int id, src_id, i, intval;
+	char *key, *val, *intrepr, *src;
 	s4_val_t *id_val, *val_val;
 	s4_transaction_t *trans;
+
+	intrepr = val = NULL;
 
 	for (i = 0; i < argc; i++) {
 		if (!strcmp ("id", col[i])) {
@@ -96,6 +98,8 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 			key = argv[i];
 		} else if (!strcmp ("value", col[i])) {
 			val = argv[i];
+		} else if (!strcmp ("intval", col[i])) {
+			intrepr = argv[i];
 		} else if (!strcmp ("source", col[i])) {
 			src_id = atoi (argv[i]);
 		}
@@ -105,8 +109,8 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 
 	id_val = s4_val_new_int (id);
 
-	if (xmms_is_int (val, &i)) {
-		val_val = s4_val_new_int (i);
+	if (xmms_is_int (intrepr, &intval)) {
+		val_val = s4_val_new_int (intval);
 	} else {
 		val_val = s4_val_new_string (val);
 	}
@@ -162,7 +166,7 @@ int main (int argc, char *argv[])
 	ret = sqlite3_exec (db, "select id,source from Sources;",
 			source_callback, sources, &errmsg);
 
-	ret = sqlite3_exec (db, "select id,key,value,source from Media;",
+	ret = sqlite3_exec (db, "select id,key,value,intval,source from Media;",
 			media_callback, sources, &errmsg);
 
 

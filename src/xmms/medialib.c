@@ -477,7 +477,7 @@ xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
 /**
  * Retrieve a property from an entry.
  *
- * @param id_num Entry to query.
+ * @param entry Entry to query.
  * @param property The property to extract. Strings passed should
  * be defined in medialib.h
  *
@@ -486,27 +486,20 @@ xmms_medialib_entry_property_get_value (xmms_medialib_session_t *session,
 
 gchar *
 xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
-                                      xmms_medialib_entry_t id_num,
+                                      xmms_medialib_entry_t entry,
                                       const gchar *property)
 {
-	gchar *ret = NULL;
-	s4_val_t *prop;
-	const gchar *s;
-	gint32 i;
+	const gchar *string;
+	gchar *result = NULL;
+	s4_val_t *value;
 
-	prop = xmms_medialib_entry_property_get (session, id_num, property);
-	if (prop == NULL)
-		return NULL;
-
-	if (s4_val_get_int (prop, &i)) {
-		ret = g_strdup_printf ("%i", i);
-	} else if (s4_val_get_str (prop, &s)) {
-		ret = g_strdup (s);
+	value = xmms_medialib_entry_property_get (session, entry, property);
+	if (value != NULL && s4_val_get_str (value, &string)) {
+		result = g_strdup (string);
 	}
+	s4_val_free (value);
 
-	s4_val_free (prop);
-
-	return ret;
+	return result;
 }
 
 /**
@@ -610,8 +603,8 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 
 	prop = s4_val_new_int (value);
 	ret = xmms_medialib_entry_property_set_source (session, id_num, property, prop, source);
-
 	s4_val_free (prop);
+
 	return ret;
 }
 
@@ -645,7 +638,6 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 {
 	gboolean ret;
 	s4_val_t *prop;
-	gint ival;
 
 	g_return_val_if_fail (property, FALSE);
 
@@ -654,14 +646,8 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 		return FALSE;
 	}
 
-	if (xmms_is_int (value, &ival)) {
-		prop = s4_val_new_int (ival);
-	} else {
-		prop = s4_val_new_string (value);
-	}
-
+	prop = s4_val_new_string (value);
 	ret = xmms_medialib_entry_property_set_source (session, id_num, property, prop, source);
-
 	s4_val_free (prop);
 
 	return ret;
