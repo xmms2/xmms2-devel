@@ -2332,20 +2332,15 @@ xmms_medialib_query_random_id (xmms_medialib_session_t *session,
 	return ret;
 }
 
-typedef xmmsv_t *(*void_to_xmmsv_t)(void *value, void *userdata);
+static xmmsv_t *resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec);
 
 static xmmsv_t *
-convert_ghashtable_to_xmmsv (GHashTable *table, gint depth,
-                             void_to_xmmsv_t func, void *userdata)
+convert_ghashtable_to_xmmsv (GHashTable *table, xmms_fetch_spec_t *spec)
 {
 	GHashTableIter iter;
-	GHashTable *value;
+	s4_resultset_t *value;
 	const gchar *key;
 	xmmsv_t *ret;
-
-	if (depth == 0) {
-		return func ((void *) table, userdata);
-	}
 
 	g_hash_table_iter_init (&iter, table);
 
@@ -2358,7 +2353,7 @@ convert_ghashtable_to_xmmsv (GHashTable *table, gint depth,
 			continue;
 		}
 
-		xvalue = convert_ghashtable_to_xmmsv (value, depth - 1, func, userdata);
+		xvalue = resultset_to_xmmsv (value, spec);
 		xmmsv_dict_set (ret, key, xvalue);
 		xmmsv_unref (xvalue);
 	}
@@ -2837,9 +2832,7 @@ resultset_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 			break;
 		case FETCH_CLUSTER_DICT:
 			set_table = cluster_dict (set, spec);
-			ret = convert_ghashtable_to_xmmsv (set_table, 1,
-			                                   (void_to_xmmsv_t) resultset_to_xmmsv,
-			                                   spec->data.cluster.data);
+			ret = convert_ghashtable_to_xmmsv (set_table, spec->data.cluster.data);
 
 			g_hash_table_destroy (set_table);
 			break;
