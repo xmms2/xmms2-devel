@@ -7,6 +7,7 @@
 #include "../src/xmms/object.c"
 #include "../src/xmms/config.c"
 #include "../src/xmms/medialib.c"
+#include "../src/xmms/medialib_query_result.c"
 #include "../src/xmms/fetchinfo.c"
 #include "../src/xmms/fetchspec.c"
 #include "../src/xmms/compat/thread_name_dummy.c"

@@ -62,6 +62,7 @@ src/lib/xmmsipc
 src/lib/xmmsutils
 src/lib/xmmsvisualization
 src/lib/s4/src/lib/
+src/lib/s4/tests
 src/clients/lib/xmmsclient
 src/clients/lib/xmmsclient-glib
 src/include
@@ -303,8 +304,8 @@ def configure(conf):
 
     if conf.options.with_profiling:
         conf.env.with_profiling = True
-        conf.env.append_unique('CFLAGS', ['--coverage'])
-        conf.env.append_unique('LINKFLAGS', ['--coverage'])
+        conf.env.append_unique('CFLAGS', ['--coverage', '-pg'])
+        conf.env.append_unique('LINKFLAGS', ['--coverage', '-pg'])
 
     flags = compiler_flags(conf)
 
