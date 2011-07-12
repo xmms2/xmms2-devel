@@ -2172,17 +2172,6 @@ union_unordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return cond;
 }
 
-
-static s4_condition_t *
-union_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
-                 xmms_fetch_info_t *fetch, xmmsv_t *order)
-{
-	if (has_order (coll)) {
-		return union_ordered_condition (session, coll, fetch, order);
-	}
-	return union_unordered_condition (session, coll, fetch);
-}
-
 static s4_condition_t *
 universe_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                     xmms_fetch_info_t *fetch, xmmsv_t *order)
@@ -2246,7 +2235,10 @@ collection_to_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 		case XMMS_COLLECTION_TYPE_REFERENCE:
 			return reference_condition (session, coll, fetch, order);
 		case XMMS_COLLECTION_TYPE_UNION:
-			return union_condition (session, coll, fetch, order);
+			if (has_order (coll)) {
+				return union_ordered_condition (session, coll, fetch, order);
+			}
+			return union_unordered_condition (session, coll, fetch);
 		case XMMS_COLLECTION_TYPE_UNIVERSE:
 			return universe_condition (session, coll, fetch, order);
 		default:
