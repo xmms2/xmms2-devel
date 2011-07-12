@@ -82,7 +82,7 @@ def build(bld):
         target = 'test_server',
         source = test_server_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = 'xmmstypes xmmsutils',
+        use = 'xmmstypes xmmsutils s4',
         uselib = 'cunit ncurses valgrind glib2 gthread2 DISABLE_WRITESTRINGS',
         install_path = None
         )
