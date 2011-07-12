@@ -38,48 +38,243 @@ typedef struct {
 	xmmsv_t *list;
 } set_data_t;
 
+static gboolean
+aggregate_first (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	if (*current != NULL) {
+		return FALSE;
+	}
+
+	if (str_value != NULL) {
+		*current = xmmsv_new_string (str_value);
+	} else {
+		*current = xmmsv_new_int (int_value);
+	}
+
+	return TRUE;
+}
+
+static gboolean
+aggregate_list (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gboolean created = FALSE;
+
+	if (*current == NULL) {
+		*current = xmmsv_new_list ();
+		created = TRUE;
+	}
+
+	if (str_value != NULL) {
+		xmmsv_list_append_string (*current, str_value);
+	} else {
+		xmmsv_list_append_int (*current, int_value);
+	}
+
+	return created;
+}
+
+static gboolean
+aggregate_set (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gboolean created = FALSE;
+	set_data_t *data;
+	xmmsv_t *value;
+	gpointer key;
+	guint length;
+
+	if (*current == NULL) {
+		set_data_t init = {
+			.ht = g_hash_table_new (NULL, NULL),
+			.list = xmmsv_new_list ()
+		};
+		*current = xmmsv_new_bin ((guchar *) &init, sizeof (set_data_t));
+		created = TRUE;
+	}
+
+	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+
+	if (str_value != NULL) {
+		value = xmmsv_new_string (str_value);
+		key = (gpointer) str_value;
+	} else {
+		value = xmmsv_new_int (int_value);
+		key = GINT_TO_POINTER (int_value);
+	}
+
+	if (g_hash_table_lookup (data->ht, key) == NULL) {
+		g_hash_table_insert (data->ht, key, value);
+		xmmsv_list_append (data->list, value);
+	}
+
+	xmmsv_unref (value);
+
+	return created;
+}
+
+static gboolean
+aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gint old_value = 0;
+
+	if (str_value != NULL) {
+		/* 'sum' only applies to numbers */
+		return FALSE;
+	}
+
+	if (*current != NULL) {
+		xmmsv_get_int (*current, &old_value);
+		xmmsv_unref (*current);
+	}
+
+	*current = xmmsv_new_int (old_value + int_value);
+
+	return TRUE;
+}
+
+static gboolean
+aggregate_min (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gint old_value;
+
+	if (str_value != NULL) {
+		/* 'min' only applies to numbers */
+		return FALSE;
+	}
+
+	if (*current == NULL) {
+		*current = xmmsv_new_int (int_value);
+		return TRUE;
+	}
+
+	xmmsv_get_int (*current, &old_value);
+
+	if (old_value > int_value) {
+		xmmsv_unref (*current);
+		*current = xmmsv_new_int (int_value);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static gboolean
+aggregate_max (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gint old_value;
+
+	if (str_value != NULL) {
+		/* 'max' only applies to numbers */
+		return FALSE;
+	}
+
+	if (*current == NULL) {
+		*current = xmmsv_new_int (int_value);
+		return TRUE;
+	}
+
+	xmmsv_get_int (*current, &old_value);
+
+	if (old_value > int_value) {
+		xmmsv_unref (*current);
+		*current = xmmsv_new_int (int_value);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static gboolean
+aggregate_random (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gboolean created = FALSE;
+	random_data_t *data;
+	guint length;
+
+	if (*current == NULL) {
+		random_data_t init = { 0 };
+		*current = xmmsv_new_bin ((guchar *) &init, sizeof (random_data_t));
+		created = TRUE;
+	}
+
+	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+
+	data->n++;
+
+	if (g_random_int_range (0, data->n) == 0) {
+		xmmsv_unref (data->data);
+		if (str_value != NULL) {
+			data->data = xmmsv_new_string (str_value);
+		} else {
+			data->data = xmmsv_new_int (int_value);
+		}
+	}
+
+	return created;
+}
+
+static gboolean
+aggregate_average (xmmsv_t **current, gint int_value, const gchar *str_value)
+{
+	gboolean created = FALSE;
+	avg_data_t *data;
+	guint length;
+
+	if (*current == NULL) {
+		avg_data_t init = { 0 };
+		*current = xmmsv_new_bin ((guchar *) &init, sizeof (avg_data_t));
+		created = TRUE;
+	}
+
+	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+
+	if (str_value == NULL) {
+		data->n++;
+		data->sum += int_value;
+	}
+
+	return created;
+}
+
 /* Converts an S4 result (a column) into an xmmsv values */
 static void *
 result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
                  xmms_fetch_spec_t *spec)
 {
 	const s4_val_t *val;
-	xmmsv_t *dict, *cur;
-	const gchar *strval, *key = NULL;
-	gint32 i, ival, oldval, new_val;
-	guint len;
-
-	/* Big enough to hold 2^32 with minus sign */
-	gchar buf[12];
+	xmmsv_t *dict, *current;
+	const gchar *str_value, *key = NULL;
+	gint32 i, int_value;
+	gboolean changed;
 
 	/* Loop through all the values the column has */
 	while (res != NULL) {
 		dict = ret;
-		cur = ret;
+		current = ret;
 
 		/* Loop through the list of what to get ("key", "source", ..) */
 		for (i = 0; i < spec->data.metadata.get_size; i++) {
-			strval = NULL;
-			/* Fill strval with the correct value if it is a string
-			 * or ival if it is an integer
+			str_value = NULL;
+
+			/* Fill str_value with the correct value if it is a string
+			 * or int_value if it is an integer
 			 */
 			switch (spec->data.metadata.get[i]) {
 				case METADATA_KEY:
-					strval = s4_result_get_key (res);
+					str_value = s4_result_get_key (res);
 					break;
 				case METADATA_SOURCE:
-					strval = s4_result_get_src (res);
-					if (strval == NULL)
-						strval = "server";
+					str_value = s4_result_get_src (res);
+					if (str_value == NULL)
+						str_value = "server";
 					break;
 				case METADATA_ID:
-					ival = id;
+					int_value = id;
 					break;
 				case METADATA_VALUE:
 					val = s4_result_get_val (res);
 
-					if (!s4_val_get_int (val, &ival)) {
-						s4_val_get_str (val, &strval);
+					if (!s4_val_get_int (val, &int_value)) {
+						s4_val_get_str (val, &str_value);
 					}
 					break;
 			}
@@ -89,11 +284,13 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 			 */
 			if (i < (spec->data.metadata.get_size - 1)) {
 				/* Convert integers to strings */
-				if (strval == NULL) {
-					g_sprintf (buf, "%i", ival);
+				if (str_value == NULL) {
+					/* Big enough to hold 2^32 with minus sign */
+					gchar buf[12];
+					g_sprintf (buf, "%i", int_value);
 					key = buf;
 				} else {
-					key = strval;
+					key = str_value;
 				}
 
 				/* Make sure the root dict exists */
@@ -104,161 +301,55 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 				/* If this dict contains dicts we have to create a new
 				 * dict if one does not exists for the key yet
 				 */
-				if (!xmmsv_dict_get (dict, key, &cur))
-					cur = NULL;
+				if (!xmmsv_dict_get (dict, key, &current))
+					current = NULL;
 
 				if (i < (spec->data.metadata.get_size - 2)) {
-					if (cur == NULL) {
-						cur = xmmsv_new_dict ();
-						xmmsv_dict_set (dict, key, cur);
-						xmmsv_unref (cur);
+					if (current == NULL) {
+						current = xmmsv_new_dict ();
+						xmmsv_dict_set (dict, key, current);
+						xmmsv_unref (current);
 					}
-					dict = cur;
+					dict = current;
 				}
 			}
 		}
 
-		new_val = 0;
+		changed = 0;
 
 		switch (spec->data.metadata.aggr_func) {
-			case AGGREGATE_FIRST: {
-				if (cur == NULL) {
-					if (strval != NULL) {
-						cur = xmmsv_new_string (strval);
-					} else {
-						cur = xmmsv_new_int (ival);
-					}
-					new_val = 1;
-				}
+			case AGGREGATE_FIRST:
+				changed = aggregate_first (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_LIST: {
-				if (cur == NULL) {
-					cur = xmmsv_new_list ();
-					new_val = 1;
-				}
-				if (strval != NULL) {
-					xmmsv_list_append_string (cur, strval);
-				} else {
-					xmmsv_list_append_int (cur, ival);
-				}
+			case AGGREGATE_LIST:
+				changed = aggregate_list (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_SET: {
-				set_data_t *data;
-				xmmsv_t *val;
-				void *key;
-
-				if (cur == NULL) {
-					set_data_t init = {
-						.ht = g_hash_table_new (NULL, NULL),
-						.list = xmmsv_new_list ()
-					};
-					cur = xmmsv_new_bin ((guchar *) &init, sizeof (set_data_t));
-					new_val = 1;
-				}
-
-				xmmsv_get_bin (cur, (const guchar **) &data, &len);
-
-				if (strval != NULL) {
-					val = xmmsv_new_string (strval);
-					key = (void *) strval;
-				} else {
-					val = xmmsv_new_int (ival);
-					key = GINT_TO_POINTER (ival);
-				}
-
-				if (g_hash_table_lookup (data->ht, key) == NULL) {
-					g_hash_table_insert (data->ht, key, val);
-					xmmsv_list_append (data->list, val);
-				}
-				xmmsv_unref (val);
+			case AGGREGATE_SET:
+				changed = aggregate_set (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_SUM: {
-				if (strval != NULL) {
-					ival = 0;
-				}
-
-				if (cur != NULL) {
-					xmmsv_get_int (cur, &oldval);
-					xmmsv_unref (cur);
-				} else {
-					oldval = 0;
-				}
-
-				ival += oldval;
-				cur = xmmsv_new_int (ival);
-				new_val = 1;
+			case AGGREGATE_SUM:
+				changed = aggregate_sum (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_MIN: {
-				if (strval == NULL && (cur == NULL || (xmmsv_get_int (cur, &oldval) && oldval > ival))) {
-					if (cur != NULL) {
-						xmmsv_unref (cur);
-					}
-					cur = xmmsv_new_int (ival);
-					new_val = 1;
-				}
+			case AGGREGATE_MIN:
+				changed = aggregate_min (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_MAX: {
-				if (strval == NULL && (cur == NULL || (xmmsv_get_int (cur, &oldval) && oldval < ival))) {
-					if (cur != NULL) {
-						xmmsv_unref (cur);
-					}
-					cur = xmmsv_new_int (ival);
-					new_val = 1;
-				}
+			case AGGREGATE_MAX:
+				changed = aggregate_max (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_RANDOM: {
-				random_data_t *data;
-
-				if (cur == NULL) {
-					random_data_t init = { 0 };
-					cur = xmmsv_new_bin ((guchar *) &init, sizeof (random_data_t));
-					new_val = 1;
-				}
-
-				xmmsv_get_bin (cur, (const guchar **) &data, &len);
-
-				data->n++;
-				if (g_random_int_range (0, data->n) == 0) {
-					xmmsv_unref (data->data);
-					if (strval != NULL) {
-						data->data = xmmsv_new_string (strval);
-					} else {
-						data->data = xmmsv_new_int (ival);
-					}
-				}
+			case AGGREGATE_RANDOM:
+				changed = aggregate_random (&current, int_value, str_value);
 				break;
-			}
-			case AGGREGATE_AVG: {
-				avg_data_t *data;
-
-				if (cur == NULL) {
-					avg_data_t init = { 0 };
-					cur = xmmsv_new_bin ((guchar *) &init, sizeof (avg_data_t));
-					new_val = 1;
-				}
-
-				xmmsv_get_bin (cur, (const guchar **) &data, &len);
-
-				if (strval == NULL) {
-					data->n++;
-					data->sum += ival;
-				}
+			case AGGREGATE_AVG:
+				changed = aggregate_average (&current, int_value, str_value);
 				break;
-			}
 		}
 
 		/* Update the previous dict (if there is one) */
-		if (i > 1 && new_val) {
-			xmmsv_dict_set (dict, key, cur);
-			xmmsv_unref (cur);
-		} else if (new_val) {
-			ret = cur;
+		if (i > 1 && changed) {
+			xmmsv_dict_set (dict, key, current);
+			xmmsv_unref (current);
+		} else if (changed) {
+			ret = current;
 		}
 
 		res = s4_result_next (res);
