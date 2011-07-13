@@ -25,6 +25,7 @@
 #include "../src/xmms/medialib.c"
 #include "../src/xmms/medialib_query.c"
 #include "../src/xmms/medialib_query_result.c"
+#include "../src/xmms/medialib_session.c"
 #include "../src/xmms/fetchinfo.c"
 #include "../src/xmms/fetchspec.c"
 #include "../src/xmms/compat/thread_name_dummy.c"

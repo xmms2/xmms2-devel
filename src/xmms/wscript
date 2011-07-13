@@ -13,6 +13,7 @@ source = """
     medialib.c
     medialib_query.c
     medialib_query_result.c
+    medialib_session.c
     fetchspec.c
     fetchinfo.c
     object.c

@@ -9,6 +9,7 @@
 #include "../src/xmms/medialib.c"
 #include "../src/xmms/medialib_query.c"
 #include "../src/xmms/medialib_query_result.c"
+#include "../src/xmms/medialib_session.c"
 #include "../src/xmms/fetchinfo.c"
 #include "../src/xmms/fetchspec.c"
 #include "../src/xmms/compat/thread_name_dummy.c"
@@ -209,9 +210,9 @@ CASE (test_session)
 	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
-	session = xmms_medialib_begin (medialib);
+	session = xmms_medialib_session_begin (medialib);
 	xmms_medialib_entry_remove (session, 0);
-	xmms_medialib_abort (session);
+	xmms_medialib_session_abort (session);
 
 	SESSION (result = xmms_medialib_entry_property_get_value (session, 0, "tracknr"));
 	xmmsv_get_int (result, &tracknr);
@@ -225,9 +226,9 @@ CASE (test_session)
 	universe = xmmsv_coll_universe ();
 	spec = xmmsv_from_json ("{ 'type': 'count' }");
 
-	session = xmms_medialib_begin (medialib);
+	session = xmms_medialib_session_begin (medialib);
 	result = xmms_medialib_query (session, universe, spec, &err);
-	xmms_medialib_abort (session);
+	xmms_medialib_session_abort (session);
 
 	xmmsv_coll_unref (universe);
 	xmmsv_unref (spec);

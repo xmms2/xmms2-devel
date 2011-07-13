@@ -265,12 +265,18 @@ static s4_condition_t *
 create_idlist_filter (xmms_medialib_session_t *session, GHashTable *id_table)
 {
 	s4_sourcepref_t *sourcepref;
+	s4_condition_t *condition;
 
-	sourcepref = xmms_medialib_get_source_preference (session);
+	sourcepref = xmms_medialib_session_get_source_preferences (session);
 
-	return s4_cond_new_custom_filter (idlist_filter, id_table,
-	                                  (free_func_t)g_hash_table_destroy,
-	                                  "song_id", sourcepref, 0, 0, S4_COND_PARENT);
+	condition = s4_cond_new_custom_filter (idlist_filter, id_table,
+	                                       (free_func_t) g_hash_table_destroy,
+	                                       "song_id", sourcepref, 0, 0,
+	                                       S4_COND_PARENT);
+
+	s4_sourcepref_unref (sourcepref);
+
+	return condition;
 }
 
 static s4_condition_t *
@@ -397,8 +403,7 @@ filter_condition (xmms_medialib_session_t *session,
 		sp = s4_sourcepref_create ((const gchar **) prefs);
 		g_strfreev (prefs);
 	} else {
-		sp = xmms_medialib_get_source_preference (session);
-		s4_sourcepref_ref (sp);
+		sp = xmms_medialib_session_get_source_preferences (session);
 	}
 
 	get_filter_type_and_compare_mode (coll, &type, &cmp_mode);
@@ -570,11 +575,11 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 
 	entry = xmmsv_new_dict ();
 
-	sourcepref = xmms_medialib_get_source_preference (session);
-
 	if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
 		key = (gchar *) "value";
 	}
+
+	sourcepref = xmms_medialib_session_get_source_preferences (session);
 
 	if (strcmp (key, "random") == 0) {
 		xmmsv_dict_set_int (entry, "type", SORT_TYPE_RANDOM);
@@ -588,6 +593,8 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 		xmmsv_dict_set_int (entry, "type", SORT_TYPE_VALUE);
 		xmmsv_dict_set_int (entry, "field", field);
 	}
+
+	s4_sourcepref_unref (sourcepref);
 
 	if (!xmmsv_coll_attribute_get (coll, "direction", &key)) {
 		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_ASCENDING);

@@ -150,12 +150,12 @@ xmms_mediainfo_reader_thread (gpointer data)
 		xmms_medialib_session_t *session;
 		xmms_xform_t *xform;
 
-		session = xmms_medialib_begin (NULL);
+		session = xmms_medialib_session_begin (NULL);
 		entry = xmms_medialib_entry_not_resolved_get (session);
 		XMMS_DBG ("got %d as not resolved", entry);
 
 		if (!entry) {
-			xmms_medialib_abort (session);
+			xmms_medialib_session_abort (session);
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 			                    XMMSV_TYPE_INT32,
@@ -207,7 +207,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 			                                      timeval.tv_sec);
 		}
-		xmms_medialib_commit (session);
+		xmms_medialib_session_commit (session);
 	}
 
 	g_list_free (goal_format);

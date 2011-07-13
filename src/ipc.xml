@@ -106,7 +106,7 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>11</id>
+            <id>12</id>
             <name>quit</name>
             <documentation>This broadcast is triggered when the daemon is shutting down.</documentation>
 
@@ -1300,6 +1300,20 @@ vim:expandtab
                 </type>
             </return_value>
         </broadcast>
+
+        <broadcast>
+          <id>10</id>
+          <name>entry_removed</name>
+          <documentation>This broadcast is triggered when a medialib entry is removed.</documentation>
+
+          <return_value>
+            <documentation>The changed entry's ID.</documentation>
+
+            <type>
+              <int />
+            </type>
+          </return_value>
+        </broadcast>
     </object>
 
     <object>
@@ -1622,7 +1636,7 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>10</id>
+            <id>11</id>
             <name>changed</name>
             <documentation>This broadcast is triggered when a collection is changed.</documentation>
 
@@ -1812,7 +1826,7 @@ vim:expandtab
         <name>mediainfo_reader</name>
 
         <broadcast>
-            <id>12</id>
+            <id>13</id>
             <name>status</name>
             <documentation>This broadcast is triggered when the status of the mediainfo reader changes.</documentation>
 
@@ -1827,7 +1841,7 @@ vim:expandtab
         </broadcast>
 
         <signal>
-            <id>13</id>
+            <id>14</id>
             <name>unindexed</name>
             <documentation>Emits the number of unresolved medialib entries.</documentation>
 
