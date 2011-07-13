@@ -289,6 +289,13 @@ CASE (test_metadata_fetch_spec)
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 
+	/* valid 'fields' content */
+	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': ['artist', 'title'], 'get': ['value'] }");
+	result = medialib_query (universe, spec, &err);
+	CU_ASSERT_PTR_NOT_NULL (result);
+	CU_ASSERT_FALSE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
 
 	/* duplicate 'fields' content */
 	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': ['a', 'a'], 'get': ['value'] }");
@@ -349,6 +356,90 @@ CASE (test_metadata_fetch_spec)
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
+
+	xmmsv_coll_unref (universe);
+}
+
+CASE (test_cluster_dict_and_list_fetch_spec)
+{
+	xmmsv_coll_t *universe;
+	xmmsv_t *spec, *result;
+	xmms_error_t err;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	universe = xmmsv_coll_universe ();
+
+	/* missing 'cluster-by' parameter, defaults to 'value' */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-field': 'artist', 'data': { 'type': 'count' } }");
+	result = medialib_query (universe, spec, &err);
+	CU_ASSERT_PTR_NOT_NULL (result);
+	CU_ASSERT_FALSE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
+
+	/* invalid 'cluster-by' entry */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': ['crap'] }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* invalid 'cluster-by' entry */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': 'value', 'data': { 'type': 'count' } }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* missing 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-field': 'artist' }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* bogous 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-list', 'cluster-field': 'artist', 'data': { 'type': 'sausage' } }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	xmmsv_coll_unref (universe);
+}
+
+CASE (test_organize_fetch_spec)
+{
+	xmmsv_coll_t *universe;
+	xmmsv_t *spec, *result;
+	xmms_error_t err;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	universe = xmmsv_coll_universe ();
+
+	/* missing 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'organize' }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* wrong type for 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': [] }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* bogous 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': { 'korv': { 'type': 'sausage' } } }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* valid 'data' entry */
+	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': { 'count': { 'type': 'count' } } }");
+	result = medialib_query (universe, spec, &err);
+	CU_ASSERT_PTR_NOT_NULL (result);
+	CU_ASSERT_FALSE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+	xmmsv_unref (result);
 
 	xmmsv_coll_unref (universe);
 }
