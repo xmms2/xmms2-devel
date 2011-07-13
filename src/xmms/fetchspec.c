@@ -323,6 +323,7 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	if (!xmmsv_dict_get (fetch, "cluster-by", &cluster_by)) {
 		cluster_by = xmmsv_new_string ("value");
 		xmmsv_dict_set (fetch, "cluster-by", cluster_by);
+		xmmsv_unref (cluster_by);
 	}
 
 	if (!xmmsv_dict_entry_get_string (fetch, "cluster-by", &type)) {
