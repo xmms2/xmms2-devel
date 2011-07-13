@@ -604,9 +604,6 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 
 	s4_resultset_free (set);
 	s4_val_free (song_id);
-
-	/** @todo safe ? */
-	xmms_playlist_remove_by_entry (medialib->playlist, entry);
 }
 
 

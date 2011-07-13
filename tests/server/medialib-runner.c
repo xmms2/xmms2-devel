@@ -511,13 +511,6 @@ main (gint argc, gchar **argv)
 
 
 /* START: Stub some crap so we don't have to pull in the whole daemon */
-gboolean
-xmms_playlist_remove_by_entry (xmms_playlist_t *playlist,
-                               xmms_medialib_entry_t entry)
-{
-	return TRUE;
-}
-
 void
 xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
                             guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err)

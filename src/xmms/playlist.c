@@ -269,6 +269,52 @@ xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist,
 	playlist->update_flag = FALSE;
 }
 
+typedef struct {
+	xmms_playlist_t *pls;
+	xmms_medialib_entry_t entry;
+} playlist_remove_context_t;
+
+static void
+remove_from_playlist (gpointer key, gpointer value, gpointer udata)
+{
+	playlist_remove_context_t *ctx = (playlist_remove_context_t *) udata;
+	xmmsv_coll_t *coll = (xmmsv_coll_t *) value;
+	const gchar *name = (const gchar *) key;
+
+	xmms_medialib_entry_t val;
+	guint32 i;
+
+	for (i = 0; xmmsv_coll_idlist_get_index (coll, i, &val); i++) {
+		if (val == ctx->entry) {
+			XMMS_DBG ("removing entry on pos %d in %s", i, name);
+			xmms_playlist_remove_unlocked (ctx->pls, name, coll, i, NULL);
+			i--; /* reset it */
+		}
+	}
+}
+
+static void
+on_medialib_entry_removed (xmms_object_t *object, xmmsv_t *val, gpointer udata)
+{
+	xmms_playlist_t *playlist = (xmms_playlist_t *) udata;
+	playlist_remove_context_t ctx;
+	gint entry;
+
+	g_return_if_fail (playlist);
+	g_return_if_fail (xmmsv_get_int (val, &entry));
+
+	ctx.pls = playlist;
+	ctx.entry = entry;
+
+	g_mutex_lock (playlist->mutex);
+
+	xmms_collection_foreach_in_namespace (playlist->colldag,
+	                                      XMMS_COLLECTION_NSID_PLAYLISTS,
+	                                      remove_from_playlist, &ctx);
+
+	g_mutex_unlock (playlist->mutex);
+}
+
 /**
  * Initializes a new xmms_playlist_t.
  */
@@ -305,6 +351,11 @@ xmms_playlist_init (void)
 	ret->medialib = xmms_medialib_init (ret);
 	ret->colldag = xmms_collection_init (ret);
 	ret->mediainfordr = xmms_mediainfo_reader_start ();
+
+
+	xmms_object_connect (XMMS_OBJECT (ret->medialib),
+	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
+	                     on_medialib_entry_removed, ret);
 
 	return ret;
 }
@@ -627,61 +678,6 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 		xmms_collection_set_int_attr (plcoll, "position", currpos);
 		XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 	}
-
-	return TRUE;
-}
-
-typedef struct {
-	xmms_playlist_t *pls;
-	xmms_medialib_entry_t entry;
-} playlist_remove_info_t;
-
-static void
-remove_from_playlist (gpointer key, gpointer value, gpointer udata)
-{
-	playlist_remove_info_t *rminfo = (playlist_remove_info_t *) udata;
-	guint32 i;
-	xmms_medialib_entry_t val;
-	gint size;
-	xmmsv_coll_t *plcoll = (xmmsv_coll_t *) value;
-
-	size = xmms_playlist_coll_get_size (plcoll);
-	for (i = 0; i < size; i++) {
-		if (xmmsv_coll_idlist_get_index (plcoll, i, &val) && val == rminfo->entry) {
-			XMMS_DBG ("removing entry on pos %d in %s", i, (gchar *)key);
-			xmms_playlist_remove_unlocked (rminfo->pls, (gchar *)key, plcoll, i, NULL);
-			i--; /* reset it */
-		}
-	}
-}
-
-
-
-/**
- * Remove all additions of entry in the playlist
- *
- * @param playlist the playlist to remove entries from
- * @param entry the playlist entry to remove
- *
- * @sa xmms_playlist_remove
- */
-gboolean
-xmms_playlist_remove_by_entry (xmms_playlist_t *playlist,
-                               xmms_medialib_entry_t entry)
-{
-	playlist_remove_info_t rminfo;
-	g_return_val_if_fail (playlist, FALSE);
-
-	g_mutex_lock (playlist->mutex);
-
-	rminfo.pls = playlist;
-	rminfo.entry = entry;
-
-	xmms_collection_foreach_in_namespace (playlist->colldag,
-	                                      XMMS_COLLECTION_NSID_PLAYLISTS,
-	                                      remove_from_playlist, &rminfo);
-
-	g_mutex_unlock (playlist->mutex);
 
 	return TRUE;
 }
@@ -1372,6 +1368,10 @@ xmms_playlist_destroy (xmms_object_t *object)
 	xmms_config_property_callback_remove (val, on_playlist_r_one_changed, playlist);
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_callback_remove (val, on_playlist_r_all_changed, playlist);
+
+	xmms_object_disconnect (XMMS_OBJECT (playlist->medialib),
+	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
+	                        on_medialib_entry_removed, playlist);
 
 	xmms_object_unref (playlist->colldag);
 	xmms_object_unref (playlist->mediainfordr);
