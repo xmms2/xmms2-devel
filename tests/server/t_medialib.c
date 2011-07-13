@@ -384,8 +384,14 @@ CASE (test_cluster_dict_and_list_fetch_spec)
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
-	/* invalid 'cluster-by' entry */
+	/* invalid 'cluster-by' entry, missing 'cluster-field' */
 	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': 'value', 'data': { 'type': 'count' } }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
+	/* bogous 'cluster-by' entry */
+	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': 'sausage', 'data': { 'type': 'count' } }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);

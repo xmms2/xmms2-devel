@@ -305,6 +305,24 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	return ret;
 }
 
+static gboolean
+cluster_by_from_string (const gchar *name, guint32 *value)
+{
+	if (name == NULL) {
+		return FALSE;
+	} else if (strcmp (name, "id") == 0) {
+		*value = CLUSTER_BY_ID;
+	} else if (strcmp (name, "position") == 0) {
+		*value = CLUSTER_BY_POSITION;
+	} else if (strcmp (name, "value") == 0) {
+		*value = CLUSTER_BY_VALUE;
+	} else {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 /**
  * Decodes a cluster fetch specification from a dictionary.
  * The 'cluster-by' must be one of 'id', 'position' or 'value'. If set
@@ -317,8 +335,9 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 {
 	xmmsv_t *cluster_by, *cluster_field, *cluster_data;
 	xmms_fetch_spec_t *data, *spec = NULL;
-	const gchar *type = NULL;
+	const gchar *value = NULL;
 	const gchar *field = NULL;
+	gint cluster_type;
 
 	if (!xmmsv_dict_get (fetch, "cluster-by", &cluster_by)) {
 		cluster_by = xmmsv_new_string ("value");
@@ -326,13 +345,21 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		xmmsv_unref (cluster_by);
 	}
 
-	if (!xmmsv_dict_entry_get_string (fetch, "cluster-by", &type)) {
+	if (!xmmsv_dict_entry_get_string (fetch, "cluster-by", &value)) {
 		const gchar *message = "'cluster-by' must be a string.";
 		xmms_error_set (err, XMMS_ERROR_INVAL, message);
 		return NULL;
 	}
 
-	if (xmmsv_get_string (cluster_by, &type) && strcmp (type, "value") == 0) {
+	xmmsv_get_string (cluster_by, &value);
+
+	if (!cluster_by_from_string (value, &cluster_type)) {
+		const gchar *message = "'cluster-by' must be 'id', 'position', or 'value'.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
+	if (cluster_type == CLUSTER_BY_VALUE) {
 		if (!xmmsv_dict_entry_get_string (fetch, "cluster-field", &field)) {
 			const gchar *message = "'cluster-field' must  if 'cluster-by' is 'value'.";
 			xmms_error_set (err, XMMS_ERROR_INVAL, message);
@@ -353,17 +380,18 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 	spec = g_new0 (xmms_fetch_spec_t, 1);
 	spec->data.cluster.data = data;
+	spec->data.cluster.type = cluster_type;
 
-	if (strcmp (type, "position") == 0) {
-		spec->data.cluster.type = CLUSTER_BY_POSITION;
-	} else if (strcmp (type, "id") == 0) {
-		/* Media library id is always found at the first column */
-		spec->data.cluster.column = 0;
-		spec->data.cluster.type = CLUSTER_BY_ID;
-	} else {
-		xmmsv_dict_get (fetch, "cluster-field", &cluster_field);
-		spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_field, field, prefs);
-		spec->data.cluster.type = CLUSTER_BY_VALUE;
+	switch (spec->data.cluster.type) {
+		case CLUSTER_BY_ID:
+			/* Media library id is always found at the first column */
+			spec->data.cluster.column = 0;
+			break;
+		case CLUSTER_BY_VALUE:
+			xmmsv_dict_get (fetch, "cluster-field", &cluster_field);
+			spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_field,
+			                                                     field, prefs);
+			break;
 	}
 
 	return spec;
