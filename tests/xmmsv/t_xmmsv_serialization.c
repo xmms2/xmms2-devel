@@ -241,21 +241,11 @@ CASE (test_xmmsv_serialize_coll_match)
 		0x00, 0x00, 0x00, 0x01, /* number of operands */
 
 		0x00, 0x00, 0x00, 0x04, /* operand[0]: type XMMSV_TYPE_COLL */
-		0x00, 0x00, 0x00, 0x00, /* operand[0]: coll type (_REFERENCE) */
-		0x00, 0x00, 0x00, 0x01, /* number of attributes*/
+		0x00, 0x00, 0x00, 0x01, /* operand[0]: coll type (_UNIVERSE) */
 
-		0x00, 0x00, 0x00, 0x0a, /* attr[0] key length */
-		0x72, 0x65, 0x66, 0x65, /* attr[0] key "refe" */
-		0x72, 0x65, 0x6e, 0x63, /*             "renc" */
-		0x65, 0x00,             /*             "e\0"  */
-
-		0x00, 0x00, 0x00, 0x0a, /* attr[0] value length */
-		0x41, 0x6c, 0x6c, 0x20, /* attr[0] value "All " */
-		0x4d, 0x65, 0x64, 0x69, /*               "Medi" */
-		0x61, 0x00,             /*               "a\0"  */
-
+		0x00, 0x00, 0x00, 0x00, /* number of attributes*/
 		0x00, 0x00, 0x00, 0x00, /* number of idlist entries */
-		0x00, 0x00, 0x00, 0x00  /* number of operands */
+		0x00, 0x00, 0x00, 0x00, /* number of operands */
 	};
 
 	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
@@ -305,13 +295,10 @@ CASE (test_xmmsv_serialize_coll_match)
 	CU_ASSERT_TRUE (xmmsv_get_coll (tmp, &all_media));
 
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (all_media),
-	                 XMMS_COLLECTION_TYPE_REFERENCE);
+	                 XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	attrs = xmmsv_coll_attributes_get (all_media);
-	CU_ASSERT_EQUAL (xmmsv_dict_get_size (attrs), 1);
-
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (all_media, "reference", &s));
-	CU_ASSERT_STRING_EQUAL (s, "All Media");
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (attrs), 0);
 
 	xmmsv_unref (value);
 }
@@ -426,17 +413,17 @@ CASE (test_xmmsv_serialize_dict)
 		0x00, 0x00, 0x00, 0x07, /* XMMSV_TYPE_DICT */
 		0x00, 0x00, 0x00, 0x02, /* 2 (number of dict items) */
 
-		0x00, 0x00, 0x00, 0x04, /* key[0]: 4 (length of following bytes) */
-		0x62, 0x61, 0x72, 0x00, /* key[0]: "bar\0" */
-
-		0x00, 0x00, 0x00, 0x02, /* value[0]: XMMSV_TYPE_INT32 */
-		0x00, 0x00, 0x25, 0xc3, /* value[0]: 9667 */
-
 		0x00, 0x00, 0x00, 0x04, /* key[1]: 4 (length of following bytes) */
 		0x66, 0x6f, 0x6f, 0x00, /* key[1]: "foo\0" */
 
 		0x00, 0x00, 0x00, 0x02, /* value[1]: XMMSV_TYPE_INT32 */
-		0x00, 0x00, 0x00, 0x2a  /* value[1]: 42 */
+		0x00, 0x00, 0x00, 0x2a,  /* value[1]: 42 */
+
+		0x00, 0x00, 0x00, 0x04, /* key[0]: 4 (length of following bytes) */
+		0x62, 0x61, 0x72, 0x00, /* key[0]: "bar\0" */
+
+		0x00, 0x00, 0x00, 0x02, /* value[0]: XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x25, 0xc3  /* value[0]: 9667 */
 	};
 
 	value = xmmsv_new_dict ();
