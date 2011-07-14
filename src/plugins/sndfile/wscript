@@ -1,9 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_cfg(package="sndfile", uselib_store="sndfile", args="--cflags --libs"):
-        return True
-    return False
+    conf.check_cfg(package="sndfile", uselib_store="sndfile",
+            args="--cflags --libs")
 
 configure, build = plugin("sndfile", configure=plugin_configure,
                           libs=["sndfile"])

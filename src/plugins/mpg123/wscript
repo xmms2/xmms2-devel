@@ -1,19 +1,22 @@
+from waflib import Errors
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_cfg(package="libmpg123", atleast_version="1.5.1", uselib_store="mpg123", args="--cflags --libs"):
-        return False
+    conf.check_cfg(package="libmpg123", atleast_version="1.5.1",
+            uselib_store="mpg123", args="--cflags --libs")
 
-    if not conf.check_cc(header_name='mpg123.h', uselib='mpg123',
+    try:
+        conf.check_cc(header_name='mpg123.h', uselib='mpg123',
                          errmsg='failed',
-                         msg='Testing mpg123 with default off_t'):
+                         msg='Testing mpg123 with default off_t')
+    except Errors.ConfigurationError:
         # ask python for lfs flags, this fails on Windows and Mac OS
-        # windows needs some special care, and Mac OS X alwas uses 64 bit for
+        # windows needs some special care, and Mac OS X always uses 64 bit for
         # off_t so we shouldn't be here anyway
-        
-        import os
+
         try:
-            lfsflags = os.confstr (os.confstr_names['CS_LFS_CFLAGS']).split () 
+            import os
+            lfsflags = os.confstr(os.confstr_names['CS_LFS_CFLAGS']).split()
         # If os.confstr of 'CS_LFS_CFLAGS' is not supported, try with some
         # default values
         except KeyError:
@@ -22,13 +25,9 @@ def plugin_configure(conf):
         except AttributeError:
             # Windows ends up here
             lfsflags = ['-D_LARGEFILE_SOURCE', '-D_FILE_OFFSET_BITS=64']
-        if not conf.check_cc(header_name='mpg123.h', uselib='mpg123',
-                         cflags=lfsflags, errmsg='failed',
-                         msg='Testing mpg123 with large off_t'):
-            return False
-        conf.env['CCFLAGS_mpg123'] += lfsflags
+        conf.check_cc(header_name='mpg123.h', uselib='mpg123',
+                      cflags=lfsflags, errmsg='failed',
+                      msg='Testing mpg123 with large off_t')
+        conf.env.append_value('CFLAGS_mpg123', lfsflags)
 
-    return True
-
-configure, build = plugin("mpg123", configure=plugin_configure,
-                          source=["mpg123.c", "id3v1.c"], libs=["mpg123"])
+configure, build = plugin("mpg123", configure=plugin_configure, libs=["mpg123"])

@@ -2,37 +2,35 @@
 # common tasks carried out by plugins in order to configure and build
 # themselves.
 
+from waflib.Errors import ConfigurationError
+
 def plugin(name, source=None, configure=False, build=False,
            build_replace=False, libs=[],
-           tool='cc', broken=False, output_prio=None):
+           tool='c', broken=False, output_prio=None):
     def stock_configure(conf):
         if broken:
-            conf.check_message_custom('%s plugin' % name, '',
-                                      'disabled (broken)')
+            conf.msg('%s plugin' % name, 'disabled (broken)', color='RED')
             return
-        if configure and not configure(conf):
-            return
-        conf.env.append_value('XMMS_PLUGINS_ENABLED', name)
+
+        if configure:
+            configure(conf)
+
+        conf.env.XMMS_PLUGINS_ENABLED.append(name)
         if output_prio:
-            conf.env.append_value('XMMS_OUTPUT_PLUGINS', (output_prio, name))
+            conf.env.XMMS_OUTPUT_PLUGINS.append((output_prio, name))
 
     def stock_build(bld):
-        obj = bld.new_task_gen(tool, 'shlib')
-        obj.target = 'xmms_%s' % name
-        obj.includes = '../../.. ../../include'
-        obj.mac_bundle = True
-
-        if source:
-            obj.source = source
-        else:
-            obj.source = ['%s.c' % name]
-
-        obj.uselib = ['glib2'] + libs
-
-        if bld.env['xmms_shared_library']:
-            obj.uselib_local = 'xmms2core'
-
-        obj.install_path = '${PLUGINDIR}'
+        pat = tool=='c' and '*.c' or '*.cpp'
+        obj = bld(
+            features = '%(tool)s %(tool)sshlib' % dict(tool=tool),
+            target = 'xmms_%s' % name,
+            source = source or bld.path.ant_glob(pat),
+            includes = '../../.. ../../include',
+            uselib = ['glib2'] + libs,
+            use = bld.env.xmms_shared_library and 'xmms2core' or '',
+            install_path = '${PLUGINDIR}',
+            mac_bundle = bld.env.mac_bundle_enabled,
+        )
 
         if build:
             build(bld, obj)

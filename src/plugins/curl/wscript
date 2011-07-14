@@ -1,17 +1,23 @@
+from waflib import Errors
 from waftools.plugin import plugin
 
+source = """
+curl_http.c
+""".split()
+
 def plugin_configure(conf):
-    if not conf.check_cfg(package="libcurl", args="--cflags --libs", uselib_store="curl"):
-        if not conf.check_cfg(path="curl-config", package="", uselib_store="curl", args="--cflags --libs"):
-            return False
+    try:
+        conf.check_cfg(package="libcurl", uselib_store="curl",
+                args="--cflags --libs")
+    except Errors.ConfigurationError:
+        conf.check_cfg(path="curl-config", package="", uselib_store="curl",
+                args="--cflags --libs")
 
     # This is a function this plugin uses and that was added to curl in
     # version 7.12.0. We cannot check for the curl version as curl-config
     # did not support version tests before version 7.15.0
-    if not conf.check_cc(function_name="curl_multi_strerror", header_name="curl/curl.h", uselib="curl"):
-        return False
-
-    return True
+    conf.check_cc(function_name="curl_multi_strerror",
+            header_name="curl/curl.h", uselib="curl")
 
 configure, build = plugin('curl', configure=plugin_configure,
-                          source=["curl_http.c"], libs=["socket", "curl"])
+                          source=source, libs=["socket", "curl"])

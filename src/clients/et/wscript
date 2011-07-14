@@ -1,29 +1,35 @@
-import Constants
-import Options
+from waflib import Utils, Options
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'program')
-    obj.target = 'xmms2-et'
-    obj.source = ['xmms2-et.c']
-    obj.includes = '. ../../.. ../../include'
-    obj.uselib = 'glib2 socket resolv'
-    obj.uselib_local = 'xmmsclient-glib xmmsclient'
+    bld(features = 'c cprogram',
+        target = 'xmms2-et',
+        source = ['xmms2-et.c'],
+        includes = '. ../../.. ../../include',
+        uselib = 'glib2 socket resolv',
+        use = 'xmmsclient-glib xmmsclient'
+        )
 
-    obj = bld.new_task_gen('subst')
-    obj.source = 'xmms2-et-launcher.sh.in'
-    obj.dict = {'PRG_PATH' : bld.env['BINDIR']}
-    obj.install_path = '${SCRIPTDIR}'
-    obj.chmod = Constants.O755
+    bld(features = 'subst',
+        target = 'xmms2-et-launcher.sh',
+        source = 'xmms2-et-launcher.sh.in',
+        install_path = '${SCRIPTDIR}',
+        chmod = Utils.O755,
+        PRG_PATH = bld.env.BINDIR
+        )
 
-    bld.new_task_gen(features='man', files='xmms2-et.1', section='1')
+    bld(features='man',
+        files='xmms2-et.1',
+        section='1'
+        )
+
 
 def configure(conf):
     if Options.platform == "win32":
         conf.fatal("Not supported on Windows")
-    if Options.platform == "sunos":
-        if not conf.check_cc(lib="resolv", uselib_store="resolv"):
-            conf.fatal("libresolv needed on solaris")
+    elif Options.platform == "sunos":
+        conf.check_cc(lib="resolv", uselib_store="resolv", mandatory=True)
     return True
 
-def set_options(opt):
+
+def options(opt):
     pass

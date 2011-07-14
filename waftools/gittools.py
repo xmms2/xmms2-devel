@@ -16,7 +16,7 @@ def git_info():
     if os.getuid() == os.stat(".git/index").st_uid:
         os.system('git update-index --refresh >/dev/null')
     else:
-        print "NOT updating git cache, local changes might not be detected"
+        print("NOT updating git cache, local changes might not be detected")
     changed = bool(os.popen('git diff-index -r HEAD').read())
     return commithash[:8], changed
 

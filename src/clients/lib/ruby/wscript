@@ -1,67 +1,73 @@
-import Utils
 import os
-import Options
-from logging import warning
+from waflib import Options, Utils, Logs
 
 def build(bld):
-    obj = bld.new_task_gen(features = 'cc cshlib rubyext')
-    obj.target = 'xmmsclient_ext'
-    obj.includes = '../../../.. ../../../include ../../../includepriv'
-    obj.source = """
-        rb_xmmsclient_main.c
-        rb_xmmsclient.c
-        rb_playlist.c
-        rb_collection.c
-        rb_result.c
+    source = """
+    rb_xmmsclient_main.c
+    rb_xmmsclient.c
+    rb_playlist.c
+    rb_collection.c
+    rb_result.c
     """.split()
-    obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'DISABLE_STRICTPROTOTYPES'
-    obj.mac_bundle = True
-    obj.install_path = '${ARCHDIR_RUBY}'
+
+    bld(features = 'c cshlib rubyext',
+        target = 'xmmsclient_ext',
+        source = source,
+        uselib = 'DISABLE_STRICTPROTOTYPES',
+        use = 'xmmsclient',
+        includes = '../../../.. ../../../include ../../../includepriv',
+        install_path = '${ARCHDIR_RUBY}',
+        mac_bundle = bld.env.mac_bundle_enabled
+        )
 
     bld.install_files('${LIBDIR_RUBY}', 'xmmsclient.rb')
     bld.install_files('${LIBDIR_RUBY}/xmmsclient', 'sync.rb')
     bld.install_files('${LIBDIR_RUBY}/xmmsclient', 'async.rb')
 
     # glib
-    obj = bld.new_task_gen(features = 'cc cshlib rubyext')
-    obj.target = 'xmmsclient_glib'
-    obj.includes = '../../../.. ../../../include ../../../includepriv'
-    obj.source = ['rb_xmmsclient_glib.c']
-    obj.uselib_local = 'xmmsclient-glib xmmsclient'
-    obj.uselib = 'glib2 DISABLE_STRICTPROTOTYPES'
-    obj.mac_bundle = True
-    obj.install_path = '${ARCHDIR_RUBY}'
+    bld(features = 'c cshlib rubyext',
+        target = 'xmmsclient_glib',
+        source = 'rb_xmmsclient_glib.c',
+        uselib = 'glib2 DISABLE_STRICTPROTOTYPES',
+        use = 'xmmsclient-glib xmmsclient',
+        includes = '../../../.. ../../../include ../../../includepriv',
+        install_path = '${ARCHDIR_RUBY}',
+        mac_bundle = bld.env.mac_bundle_enabled
+        )
 
     # ecore
-    if 'src/clients/lib/xmmsclient-ecore' in bld.env['XMMS_OPTIONAL_BUILD']:
-        obj = bld.new_task_gen(features = 'cc cshlib rubyext')
-        obj.target = 'xmmsclient_ecore'
-        obj.includes = '../../../.. ../../../include ../../../includepriv'
-        obj.source = ['rb_xmmsclient_ecore.c']
-        obj.uselib_local = 'xmmsclient-ecore xmmsclient'
-        obj.uselib = 'ecore'
-        obj.mac_bundle = True
-        obj.install_path = '${ARCHDIR_RUBY}'
+    if 'src/clients/lib/xmmsclient-ecore' in bld.env.XMMS_OPTIONAL_BUILD:
+        bld(features = 'c cshlib rubyext',
+            target = 'xmmsclient_ecore',
+            source = 'rb_xmmsclient_ecore.c',
+            uselib = 'ecore DISABLE_STRICTPROTOTYPES',
+            use = 'xmmsclient-ecore xmmsclient',
+            includes = '../../../.. ../../../include ../../../includepriv',
+            install_path = '${ARCHDIR_RUBY}',
+            mac_bundle = bld.env.mac_bundle_enabled
+            )
 
 def configure(conf):
     conf.check_tool("ruby")
     conf.check_ruby_version((1,8,0))
     conf.check_ruby_ext_devel()
 
-    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h", uselib="RUBYEXT")
+    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h",
+            uselib="RUBYEXT", mandatory=False)
 
-    if not os.path.commonprefix([conf.env['ARCHDIR_RUBY'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
-        warning('default ruby archdir is not under PREFIX. specify path '
-                + 'manually using --with-ruby-archdir if you don\'t want the '
-                + 'ruby bindings to be installed to ' + conf.env['ARCHDIR_RUBY'])
+    prefix = os.path.commonprefix([conf.env.ARCHDIR_RUBY, conf.env.PREFIX])
+    if prefix != conf.env.PREFIX:
+        Logs.warn("Default ruby archdir is not under PREFIX. Specify path "
+                  "manually using --with-ruby-archdir if you don't want the "
+                  "ruby bindings to be installed to %s" % conf.env.ARCHDIR_RUBY)
 
-    if not os.path.commonprefix([conf.env['LIBDIR_RUBY'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
-        warning('default ruby libdir is not under PREFIX. specify path '
-                + 'manually using --with-ruby-libdir if you don\'t want the '
-                + 'ruby bindings to be installed to ' + conf.env['LIBDIR_RUBY'])
+    prefix = os.path.commonprefix([conf.env.LIBDIR_RUBY, conf.env.PREFIX])
+    if prefix != conf.env.PREFIX:
+        Logs.warn("Default ruby libdir is not under PREFIX. Specify path "
+                  "manually using --with-ruby-libdir if you don't want the "
+                  "ruby bindings to be installed to %s" % conf.env.ARCHDIR_RUBY)
 
     return True
 
-def set_options(opt):
+def options(opt):
     opt.tool_options('ruby', tdir=os.path.abspath('waftools'))

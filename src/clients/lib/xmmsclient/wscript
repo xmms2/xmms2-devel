@@ -1,48 +1,51 @@
+from waflib import Logs
 from waftools import tool
-from logging import warning
 
 def build(bld):
-    obj = bld.new_task_gen("cc", "shlib")
-    obj.target = "xmmsclient"
-    obj.includes = "../../../.. ../../../include ../../../includepriv"
-    obj.source = """
-        collection.c
-        collparser.c
-        bindata.c
-        config.c
-        ipc.c
-        medialib.c
-        playback.c
-        playlist.c
-        result.c
-        stats.c
-        xmmsclient.c
-        xform.c
-        xqueue.c
-        visualization/client.c
-        visualization/udp.c
+    source = """
+    collection.c
+    collparser.c
+    bindata.c
+    config.c
+    ipc.c
+    medialib.c
+    playback.c
+    playlist.c
+    result.c
+    stats.c
+    xmmsclient.c
+    xform.c
+    xqueue.c
+    visualization/client.c
+    visualization/udp.c
     """.split()
 
-    obj.uselib_local = ["xmmsipc", "xmmssocket", "xmmsutils", "xmmstypes", "xmmsvisualization"]
-    obj.uselib = ["socket", "time"]
-
-    if bld.env['HAVE_SEMTIMEDOP']:
-        obj.source += ["visualization/unixshm.c"]
+    if bld.env.HAVE_SEMTIMEDOP:
+        source.extend(["visualization/unixshm.c"])
     else:
-        obj.source += ["visualization/dummy.c"]
+        source.extend(["visualization/dummy.c"])
 
-    obj.vnum = "6.0.0"
+    obj = bld(features = 'c cshlib',
+        target = 'xmmsclient',
+        includes = '../../../.. ../../../include ../../../includepriv',
+        source = source,
+        uselib = 'socket time',
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization',
+        vnum = '6.0.0'
+        )
 
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    conf.env.append_value("XMMS_PKGCONF_FILES", ("xmms2-client", "-lxmmsclient"))
+    conf.env.XMMS_PKGCONF_FILES.append(("xmms2-client", "-lxmmsclient"))
 
-    conf.check_cc(function_name="semtimedop", header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"], defines=["_GNU_SOURCE=1"])
-    if not conf.env["HAVE_SEMTIMEDOP"]:
-        warning("Compiling visualization without shm support!")
+    conf.check_cc(function_name="semtimedop",
+            header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"],
+            defines=["_GNU_SOURCE=1"], mandatory=False)
+    if not conf.env.HAVE_SEMTIMEDOP:
+        Logs.warn("Compiling visualization without shm support!")
 
     return True
 
-def set_options(opt):
+def options(opt):
     pass

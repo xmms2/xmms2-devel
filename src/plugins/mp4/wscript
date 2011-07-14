@@ -1,10 +1,12 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    conf.env['CCDEFINES_mp4'] = ['USE_TAGGING']
+    conf.check_cc(lib="m", uselib_store="math")
+
+    conf.env.DEFINES_mp4 = ['USE_TAGGING']
     # to use iTunes DRM change this to true
     if False:
-        conf.env['CCDEFINES_mp4'] += [
+        conf.env.DEFINES_mp4 += [
             "ITUNES_DRM",
             "HAVE_SYS_STAT_H",
             "HAVE_ERRNO_H",
@@ -12,12 +14,8 @@ def plugin_configure(conf):
             "HAVE_STRING_H"
         ]
 
-    if not conf.check_cc(lib="m", uselib_store="math"):
-        return False
-    return True
-
 def plugin_build(bld, obj):
-    obj.find_sources_in_dirs("mp4ff")
+    obj.source.extend(bld.path.ant_glob("mp4ff/*.c"))
 
 configure, build = plugin("mp4", configure=plugin_configure, build=plugin_build,
                           libs=["mp4", "math", "DISABLE_MISSINGPROTOTYPES"])

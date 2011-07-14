@@ -1,18 +1,21 @@
 from waftools import tool
 def build(bld):
-    lib = bld.new_task_gen('cxx', 'shlib')
-    lib.target = 'xmmsclient++-glib'
-    lib.source = 'xmmsclient++-glib.cpp'
-    lib.uselib = 'glib2'
-    lib.uselib_local = 'xmmsclient xmmsclient-glib'
-    lib.includes = '../../../.. ../../../include ../../../includepriv'
-    lib.vnum = '1.0.0'
-    tool.add_install_flag(bld, lib)
+    obj = bld(features = 'cxx cxxshlib',
+        target = 'xmmsclient++-glib',
+        source = 'xmmsclient++-glib.cpp',
+        uselib = 'glib2',
+        use = 'xmmsclient xmmsclient-glib',
+        includes = '../../../.. ../../../include ../../../includepriv',
+        vnum = '1.0.0'
+        )
+
+    tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    if not conf.env["CXX"]:
+    if not conf.env.CXX:
         conf.fatal("No C++ compiler found")
-    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-cpp-glib', '-lxmmsclient-glib -lxmmsclient++-glib'))
+    conf.env.XMMS_PKGCONF_FILES.append(
+            ('xmms2-client-cpp-glib', '-lxmmsclient-glib -lxmmsclient++-glib'))
 
-def set_options(env):
+def options(env):
     pass

@@ -1,15 +1,13 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_cfg(package="shout", args="--cflags --libs", uselib_store="shout"):
-        return False
-    if not conf.check_cfg(package="ogg", args="--cflags --libs", uselib_store="ogg"):
-        return False
-    if not conf.check_cfg(package="vorbisenc", args="--cflags --libs", uselib_store="vorbisenc"):
-        return False
-    return True
+    conf.check_cfg(package="shout", args="--cflags --libs",
+            uselib_store="shout")
+    conf.check_cfg(package="ogg", args="--cflags --libs",
+            uselib_store="ogg")
+    conf.check_cfg(package="vorbisenc", args="--cflags --libs",
+            uselib_store="vorbisenc")
 
 configure, build = plugin('ices', configure=plugin_configure,
-                          source=['ices.c', 'encode.c'],
                           libs=["shout", "vorbisenc", "ogg", "socket"],
                           output_prio=10)

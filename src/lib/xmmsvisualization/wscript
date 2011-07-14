@@ -5,20 +5,26 @@
 #
 
 def build(bld):
-    obj = bld.new_task_gen("cc", "staticlib")
-    obj.source = """
-        timestamp.c
-        udp.c
+    source = """
+    timestamp.c
+    udp.c
     """.split()
-    obj.includes = ". ../../.. ../../include"
-    obj.target = "xmmsvisualization"
-    obj.uselib = ["math"]
-    obj.install_path = 0
+
+    bld(features = 'c cstlib',
+        target = 'xmmsvisualization',
+        source = source,
+        includes = '. ../../.. ../../include',
+        uselib = 'math',
+        install_path = None
+        )
+
 
 def configure(conf):
     # Check for the modf function in the math lib
-    conf.check_cc(function_name="modf", header_name="math.h", lib="m", uselib_store="math", mandatory=1)
+    conf.check_cc(function_name="modf", header_name="math.h",
+            lib="m", uselib_store="math")
     return True
 
-def set_options(opt):
+
+def options(opt):
     pass

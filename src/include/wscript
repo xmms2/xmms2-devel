@@ -1,16 +1,25 @@
 import os
 
 def build(bld):
-    paths = ['xmms', 'xmmsc', 'xmmsclient', 'xmmsclient/xmmsclient++']
-    for p in paths:
-        bld.add_subdirs(p)
-        f = [os.path.join(p, a) for a in os.listdir(os.path.join('src','include',p)) if a.endswith('.h')]
-        bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', p), " ".join(f))
+    # FIXME: This is a test that should work.
+    for d in bld.path.ant_glob('**', dir=True, src=False):
+        rpath = d.path_from(bld.path)
+        bld.recurse(rpath)
+        f = d.ant_glob('*.h')
+        if f:
+            bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', rpath), f)
+
+    #paths = ['xmms', 'xmmsc', 'xmmsclient', 'xmmsclient/xmmsclient++']
+    #for p in paths:
+        #bld.add_subdirs(p)
+        #lst = os.listdir(os.path.join('src', 'include', p))
+        #f = [os.path.join(p, a) for a in lst if a.endswith('.h')]
+        #bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', p), " ".join(f))
 
 def configure(conf):
     conf.sub_config("xmms")
 
     return True
 
-def set_options(env):
+def options(env):
     pass

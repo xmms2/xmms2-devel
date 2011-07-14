@@ -1,10 +1,13 @@
+from waflib import Errors
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_cfg(package="modplug", uselib_store="modplug", args="--cflags --libs"):
-        return True
-    if conf.check_cfg(package="libmodplug", uselib_store="modplug", args="--cflags --libs"):
-        return True
-    return False
+    try:
+        conf.check_cfg(package="modplug", uselib_store="modplug",
+                args="--cflags --libs")
+    except Errors.ConfigurationError:
+        conf.check_cfg(package="libmodplug", uselib_store="modplug",
+                args="--cflags --libs")
 
-configure, build = plugin("modplug", configure=plugin_configure, libs=["modplug"])
+configure, build = plugin("modplug", configure=plugin_configure,
+        libs=["modplug"])

@@ -5,14 +5,24 @@
 #
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'staticlib')
-    obj.source = "coll.c value.c xlist.c value_serialize.c".split()
-    obj.includes = '. ../../.. ../../include ../../includepriv'
-    obj.target = 'xmmstypes'
-    obj.install_path = 0
+    source = """
+    coll.c
+    value.c
+    xlist.c
+    value_serialize.c
+    """.split()
+
+    bld(features = 'c cstlib',
+        target = 'xmmstypes',
+        source = source,
+        includes = '. ../../.. ../../include ../../includepriv',
+        install_path = None
+        )
+
 
 def configure(conf):
     return True
 
-def set_options(opt):
+
+def options(opt):
     pass

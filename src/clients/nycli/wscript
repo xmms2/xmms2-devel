@@ -1,56 +1,68 @@
-import Options
+from waflib import Options, Errors
+
+source = """
+main.c
+cli_infos.c
+cli_cache.c
+command_trie.c
+commands.c
+matching_browse.c
+command_utils.c
+cmdnames.c
+configuration.c
+status.c
+utils.c
+alias.c
+column_display.c
+readline.c
+playlist_positions.c
+""".split()
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'program')
-    obj.target = 'xmms2'
-    obj.source = """main.c
-                    cli_infos.c
-                    cli_cache.c
-                    command_trie.c
-                    commands.c
-                    matching_browse.c
-                    command_utils.c
-                    cmdnames.c
-                    configuration.c
-                    status.c
-                    utils.c
-                    alias.c
-                    column_display.c
-                    readline.c
-                    playlist_positions.c""".split()
+    source.append('compat_%s.c' % bld.env.CLI_COMPAT_IMPL)
 
-    obj.source.append('compat_%s.c' % bld.env['cli_compat_impl'])
+    bld(features = 'c cprogram',
+        target = 'xmms2',
+        source = source,
+        includes = '. ../../include',
+        uselib = 'glib2 readline readline_ncurses',
+        use = 'xmmsclient'
+        )
 
-    obj.includes = '. ../../include'
-    obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'glib2 readline readline-ncurses'
-
-    obj = bld.new_task_gen(features='man', files='xmms2.1', section='1')
+    bld(features = 'man',
+        files = 'xmms2.1',
+        section = '1'
+        )
 
     bld.symlink_as('${PREFIX}/bin/nyxmms2', 'xmms2')
 
+
 def configure(conf):
     if Options.platform == 'win32':
-        conf.env['cli_compat_impl'] = 'win32'
+        conf.env.CLI_COMPAT_IMPL = 'win32'
     else:
-        conf.env['cli_compat_impl'] = 'unix'
+        conf.env.CLI_COMPAT_IMPL = 'unix'
 
     rl_headers=["stdio.h", "readline/readline.h"]
 
-    conf.check_cc(header_name=rl_headers, mandatory=True)
+    conf.check_cc(header_name=rl_headers)
 
     # first try just linking against libreadline
-    if conf.check_cc(lib="readline", header_name=rl_headers, function_name='rl_filename_dequoting_function', uselib_store="readline", uselib="glib2"):
+    try:
+        conf.check_cc(lib="readline", header_name=rl_headers,
+                function_name='rl_filename_dequoting_function',
+                uselib_store="readline", uselib="glib2")
+    except Errors.ConfigurationError:
+        pass
+    else:
         return
 
     # then try ncurses
-    conf.check_cc(lib="ncurses", uselib_store="readline-ncurses", mandatory=True)
+    conf.check_cc(lib="ncurses", uselib_store="readline_ncurses")
+    conf.check_cc(lib="readline", header_name=rl_headers,
+            function_name='rl_filename_dequoting_function',
+            uselib_store="readline", uselib="glib2 readline_ncurses")
 
-    if conf.check_cc(lib="readline", header_name=rl_headers, function_name='rl_filename_dequoting_function', uselib_store="readline", uselib="glib2 readline-ncurses"):
-        return
 
-    # Ok, we give up..
-    conf.fatal("Cannot build the xmms2 cli")
-
-def set_options(opt):
+def options(opt):
     pass

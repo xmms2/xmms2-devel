@@ -5,8 +5,7 @@
 #
 
 import os
-import Options
-from logging import warning
+from waflib import Options, Logs, Errors
 
 source = """
     config.c
@@ -42,139 +41,202 @@ source = """
     visualization/xform.c
 """.split()
 
+ipc_object_files = """
+    bindata
+    collection
+    config
+    main
+    mediainfo
+    medialib
+    output
+    playlist
+    visualization/object
+    xform
+""".split()
+
 def build(bld):
-    env = bld.env
-
-    ipc_object_files = """
-        bindata
-        collection
-        config
-        main
-        mediainfo
-        medialib
-        output
-        playlist
-        visualization/object
-        xform
-    """.split()
-
     for ipc_object_file in ipc_object_files:
         python_script = ipc_object_file + '_ipc.py'
         c_file = ipc_object_file + '_ipc.c'
 
-        bld.new_task_gen(
-            source=['../ipc.xml', python_script],
+        bld(source=['../ipc.xml', python_script],
             target=c_file,
             rule='${PYTHON} ${SRC[1].abspath()} > ${TGT}',
-            before='cc',
+            before='c'
         )
 
-    prog = bld.new_task_gen('cc', 'program')
-    prog.target = 'xmms2d'
-    prog.includes = '. ../.. ../include ../includepriv'
-    prog.source = ["main.c"]
-    prog.source.append("compat/signal_%s.c" % env['compat_impl'])
-    prog.source.append("compat/symlink_%s.c" % env['compat_impl'])
-    prog.source.append("compat/checkroot_%s.c" % env['compat_impl'])
-    prog.source.append("compat/thread_name_%s.c" % env['thread_name_impl'])
+    source.extend([
+        "compat/localtime_%s.c" % bld.env.localtime_impl,
+        "compat/statfs_%s.c" % bld.env.statfs_impl,
+        "compat/signal_%s.c" % bld.env.compat_impl,
+        "compat/symlink_%s.c" % bld.env.compat_impl,
+        "compat/checkroot_%s.c" % bld.env.compat_impl,
+        "compat/thread_name_%s.c" % bld.env.thread_name_impl,
+        "visualization/%s.c" % bld.env.visualization_impl
+    ])
 
-    source.append("compat/localtime_%s.c" % env["localtime_impl"])
-    source.append("compat/statfs_%s.c" % env["statfs_impl"])
-    if bld.env['HAVE_SEMCTL']:
-        source.append("visualization/unixshm.c")
+    bld(features='c ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
+        target = 'xmms2core',
+        source = source,
+        includes = '. ../.. ../include ../includepriv',
+        uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind',
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
+    )
+
+    objects = []
+    if bld.env.xmms_icon:
+        objects += ['xmms_icon']
+
+    bld(features = 'c cprogram',
+        target = 'xmms2d',
+        source = 'main.c',
+        includes = '. ../.. ../include ../includepriv',
+        uselib = 'math glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind',
+        use = 'xmms2core',
+        add_objects = objects
+    )
+
+    bld(features = 'man',
+        files = 'xmms2d.1',
+        section = '1'
+    )
+
+
+## Code fragments for configuration
+statfs_fragment = """
+#include <sys/param.h>
+#include <sys/mount.h>
+int main() {
+    struct statfs foo;
+    return 0;
+}
+"""
+prctl_fragment = """
+#include <sys/prctl.h>
+int main() {
+  return prctl(PR_SET_NAME, (unsigned long) "test", 0, 0, 0);
+}
+"""
+semun_fragment = """
+#include <time.h>
+#include <sys/sem.h>
+int main() {
+  union semun foo;
+  return 0;
+}
+"""
+
+def get_statfs_impl(conf):
+    # Detect the type of stat call used
+    if Options.platform == 'win32':
+        return 'dummy'
     else:
-        source.append("visualization/dummy.c")
+        try:
+            conf.check(header_name='sys/vfs.h')
+        except Errors.ConfigurationError:
+            try:
+                conf.check(header_name='sys/param.h')
+            except Errors.ConfigurationError:
+                return 'dummy'
+            else:
+                try:
+                    conf.check_cc(fragment=statfs_fragment,
+                                  uselib_store="statfs",
+                                  msg="Checking for struct statfs")
+                except Errors.ConfigurationError:
+                    return 'netbsd'
+                else:
+                    return 'bsd'
+        else:
+            if Options.platform == 'sunos':
+                return 'solaris'
+            else:
+                return 'linux'
 
-    if env['xmms_shared_library']:
-        lib = bld.new_task_gen('cc', 'shlib')
-        lib.target = 'xmms2core'
-        lib.source = source
-        lib.includes = '. ../.. ../include ../includepriv'
-        lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm'
-        lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
-
-        prog.uselib_local = 'xmms2core'
+# Get the implementation variant for the localtime_r function.
+def get_localtime_impl(conf):
+    try:
+        conf.check_cc(function_name='localtime_r', header_name='time.h')
+    except Errors.ConfigurationError:
+        return 'dummy'
     else:
-        prog.source += source
-        prog.uselib_local = ''
+        return 'unix'
 
-    prog.uselib_local += ' xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'
-    prog.uselib = 'math glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind'
+# Get the implementation variant for changing thread name.
+def get_thread_name_impl(conf):
+    try:
+        conf.check(header_name='sys/prctl.h')
+        conf.check_cc(fragment=prctl_fragment,
+                      msg="Checking for prctl(PR_SET_NAME)")
+    except Errors.ConfigurationError:
+        return 'dummy'
+    else:
+        return 'prctl'
 
-    if env['xmms_icon']:
-        prog.add_objects = 'xmms_icon'
+# Get the implementation variant for signals, symlinks and uid check.
+def get_compat_impl(conf):
+    if Options.platform == 'win32':
+        return 'dummy'
+    else:
+        return 'unix'
 
-    bld.new_task_gen(features='man', files='xmms2d.1', section='1')
+def get_visualization_impl(conf):
+    if conf.options.without_unixshmserver:
+        return 'dummy'
+
+    conf.check_cc(function_name='semctl',
+                  header_name=['sys/types.h','sys/ipc.h','sys/sem.h'],
+                  mandatory=False)
+    try:
+        conf.check_cc(fragment=semun_fragment, uselib_store="semun",
+                      msg = "Checking for union semun")
+    except Errors.ConfigurationError:
+        conf.env.append_value('DEFINES_shm', "_SEM_SEMUN_UNDEFINED")
+
+    if conf.env.HAVE_SEMCTL:
+        return 'unixshm'
+
+    return 'dummy'
 
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
-    conf.check_cfg(package='gmodule-2.0', atleast_version='2.6.0', uselib_store='gmodule2', args='--cflags --libs')
-    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0', uselib_store='gthread2', args='--cflags --libs')
-    conf.check_cfg(package='sqlite3', atleast_version='3.5', uselib_store='sqlite3', args='--cflags --libs', mandatory=1)
+
+    conf.check_cfg(package='gmodule-2.0', atleast_version='2.6.0',
+            uselib_store='gmodule2', args='--cflags --libs')
+    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0',
+            uselib_store='gthread2', args='--cflags --libs')
+    conf.check_cfg(package='sqlite3', atleast_version='3.5',
+            uselib_store='sqlite3', args='--cflags --libs')
 
     # Check for the sin function in the math lib
-    conf.check_cc(lib='m', function_name='sin', header_name=['math.h'], uselib_store="math", mandatory=1)
+    conf.check_cc(lib='m', function_name='sin', header_name='math.h',
+                  uselib_store="math")
 
-    # Check if localtime_r exists
-    if conf.check_cc(function_name='localtime_r', header_name=['time.h']):
-        conf.env['localtime_impl'] = 'unix'
-    else:
-        conf.env['localtime_impl'] = 'dummy'
+    conf.env.compat_impl = get_compat_impl(conf)
+    conf.env.statfs_impl = get_statfs_impl(conf)
+    conf.env.localtime_impl = get_localtime_impl(conf)
+    conf.env.thread_name_impl = get_thread_name_impl(conf)
+    conf.env.visualization_impl = get_visualization_impl(conf)
 
-    # Detect the type of stat call used
-    if Options.platform == 'win32':
-        conf.env['statfs_impl'] = 'dummy'
-    elif conf.check(header_name='sys/vfs.h'):
-        if Options.platform == 'sunos':
-            conf.env['statfs_impl'] = 'solaris'
-        else:
-            conf.env['statfs_impl'] = 'linux'
-    elif conf.check(header_name='sys/param.h'):
-        statfs_fragment = "#include <sys/param.h> \n#include <sys/mount.h> \nint main() { struct statfs foo; return 0; }\n"
-        if not conf.check_cc(fragment=statfs_fragment, uselib_store="statfs", msg="Checking for struct statfs"):
-            conf.env['statfs_impl'] = 'netbsd'
-        else:
-            conf.env['statfs_impl'] = 'bsd'
-    else:
-        conf.env['statfs_impl'] = 'dummy'
-
-    conf.env['thread_name_impl'] = 'dummy'
-    if conf.check(header_name='sys/prctl.h'):
-        prctl_fragment = '#include <sys/prctl.h>\n int main() { return prctl(PR_SET_NAME, (unsigned long) "test", 0, 0, 0); }'
-        if conf.check_cc(fragment=prctl_fragment, msg="Checking for prctl(PR_SET_NAME)"):
-            conf.env['thread_name_impl'] = 'prctl'
+    if conf.env.visualization_impl == 'dummy':
+        Logs.warn("Compiling visualization without shm support")
 
     # Add Darwin stuff
     if Options.platform == 'darwin':
-        conf.env['LINKFLAGS'] += ['-framework', 'CoreFoundation']
-        conf.env['CCDEFINES'] += ['USE_BUNDLES']
+        conf.env.append_value('LINKFLAGS', ['-framework', 'CoreFoundation'])
+        conf.env.append_value('DEFINES', 'USE_BUNDLES')
 
-    if Options.platform == 'win32':
-        conf.env['xmms_shared_library'] = True
-    else:
-        conf.env['xmms_shared_library'] = False
+    conf.env.xmms_shared_library = (Options.platform == 'win32')
 
-    if Options.platform == 'win32':
-        conf.env['compat_impl'] = 'dummy'
-    else:
-        conf.env['compat_impl'] = 'unix'
+    conf.env.XMMS_PKGCONF_FILES.append(('xmms2-plugin', ''))
 
-    if not Options.options.without_unixshmserver:
-        conf.check_cc(function_name='semctl', header_name=['sys/types.h','sys/ipc.h','sys/sem.h'])
-        semun_fragment = "#include <time.h>\n#include <sys/sem.h>\n int main() { union semun foo; return 0; }\n"
-        if not conf.check_cc(fragment=semun_fragment, uselib_store="semun", msg="Checking for union semun"):
-            conf.env["CCDEFINES_shm"] += ["_SEM_SEMUN_UNDEFINED"]
-
-    if not conf.env['HAVE_SEMCTL']:
-        warning("Compiling visualization without shm support")
-
-    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-plugin', ''))
-
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags')
+    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags',
+                   mandatory=False)
 
     return True
 
-def set_options(opt):
+
+def options(opt):
     opt.add_option('--disable-shmvis-server', action='store_true',
                    dest='without_unixshmserver', default=False,
                    help="Disable shared memory support for visualization")

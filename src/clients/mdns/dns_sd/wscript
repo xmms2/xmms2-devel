@@ -1,24 +1,34 @@
-import Constants
-import Options
+from waflib import Utils, Options
 
 def build(bld):
-  obj = bld.new_task_gen('cc', 'program')
-  obj.target = 'xmms2-mdns-dnssd'
-  obj.source = ['mdns-dnssd.c']
-  obj.includes = '. ../../../.. ../../../include'
-  obj.uselib = 'glib2 dnssd'
-  obj.uselib_local = 'xmmsclient-glib xmmsclient'
+    bld(features = 'c cprogram',
+        target = 'xmms2-mdns-dnssd',
+        source = ['mdns-dnssd.c'],
+        includes = '. ../../../.. ../../../include',
+        uselib = 'glib2 dnssd',
+        use = 'xmmsclient-glib xmmsclient'
+        )
 
-  obj = bld.new_task_gen('subst')
-  obj.source = 'xmms2-mdns-launcher.sh.in'
-  obj.dict = {'PRG_PATH' : bld.env['BINDIR']}
-  obj.install_path = '${SCRIPTDIR}'
-  obj.chmod = Constants.O755
+    bld(features = 'subst',
+        target = 'xmms2-mdns-launcher.sh',
+        source = 'xmms2-mdns-launcher.sh.in',
+        install_path = '${SCRIPTDIR}',
+        chmod = Utils.O755,
+        PRG_PATH = bld.env.BINDIR
+        )
+
 
 def configure(conf):
   if Options.platform == "darwin":
     return
-  conf.check_cc(lib="dns_sd", header_name="dns_sd.h", function_name="DNSServiceRegister", uselib_store="dnssd", mandatory=True)
 
-def set_options(opt):
+  conf.check_cc(
+          lib="dns_sd",
+          header_name="dns_sd.h",
+          function_name="DNSServiceRegister",
+          uselib_store="dnssd"
+          )
+
+
+def options(opt):
   pass

@@ -25,8 +25,6 @@ class Indenter:
 	# print the given string including a trailing newline
 	@classmethod
 	def printline(cls, s = ''):
-		if not s:
-			print ''
-		else:
-			sys.stdout.write('\t' * cls.indent)
-			print s
+		if s:
+			cls.printx(s)
+		print('')

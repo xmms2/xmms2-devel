@@ -1,20 +1,21 @@
 from waftools import tool
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'shlib')
-    obj.target = 'xmmsclient-ecore'
-    obj.includes = '../../../.. ../../../include'
-    obj.source = 'xmmsclient-ecore.c'
-    obj.uselib = 'ecore'
-    obj.uselib_local = 'xmmsclient'
-    obj.vnum = '1.0.0'
+    obj = bld(features = 'c cshlib',
+        target = 'xmmsclient-ecore',
+        source = 'xmmsclient-ecore.c',
+        includes = '../../../.. ../../../include',
+        uselib = 'ecore',
+        use = 'xmmsclient',
+        vnum = '1.0.0'
+        )
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
     conf.check_cfg(package='ecore', uselib_store='ecore',
-                   args='--cflags --libs', mandatory=True)
+                   args='--cflags --libs')
 
-    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-ecore', '-lxmmsclient-ecore'))
+    conf.env.XMMS_PKGCONF_FILES.append(('xmms2-client-ecore', '-lxmmsclient-ecore'))
 
-def set_options(opt):
+def options(opt):
     pass

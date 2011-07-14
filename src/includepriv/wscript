@@ -1,6 +1,6 @@
 def configure(conf):
     return True
-def set_options(conf):
+def options(conf):
     pass
 def build(bld):
     bld.add_subdirs("xmmspriv")

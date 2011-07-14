@@ -1,10 +1,8 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_cfg(package="speex", uselib_store="speex", args="--cflags --libs"):
-        return False
-    if not conf.check_cfg(package="ogg", uselib_store="ogg", args="--cflags --libs"):
-        return False
-    return True
+    conf.check_cfg(package="speex", uselib_store="speex", args="--cflags --libs")
+    conf.check_cfg(package="ogg", uselib_store="ogg", args="--cflags --libs")
 
-configure, build = plugin("speex", configure=plugin_configure, libs=["speex", "ogg"])
+configure, build = plugin("speex", configure=plugin_configure,
+        libs=["speex", "ogg"])

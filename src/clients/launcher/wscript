@@ -1,18 +1,22 @@
 import Options
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'program')
-    obj.target = 'xmms2-launcher'
-    obj.source = ['xmms2-launcher.c']
-    obj.includes = '../../.. ../../include'
-    obj.uselib = 'glib2'
-    obj.uselib_local = 'xmmsutils'
+    bld(features = 'c cprogram',
+        target = 'xmms2-launcher',
+        source = ['xmms2-launcher.c'],
+        includes = '../../.. ../../include',
+        uselib = 'glib2',
+        use = 'xmmsutils'
+        )
 
-    obj = bld.new_task_gen(features='man', files='xmms2-launcher.1', section='1')
+    bld(features='man',
+        files='xmms2-launcher.1',
+        section='1'
+        )
 
 def configure(conf):
     if Options.platform == 'win32':
         conf.fatal("Not supported on Windows")
 
-def set_options(opt):
+def options(opt):
     pass

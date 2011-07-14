@@ -154,10 +154,10 @@ def get_channelconv(numin, numout, t):
 		for a in range(numout):
 			out += "\t\tout[%d] = WRITE%s(temp[%d]);\n" % (a,t,a)
 	elif numin == 1 and numout == 2:
-       		out += "\t\tout[0] = WRITE%s(temp[0]);\n" % t
-       		out += "\t\tout[1] = WRITE%s(temp[0]);\n" % t
+		out += "\t\tout[0] = WRITE%s(temp[0]);\n" % t
+		out += "\t\tout[1] = WRITE%s(temp[0]);\n" % t
 	elif numin == 2 and numout == 1:
-       		out += "\t\tout[0] = WRITE%s((temp[0] + temp[1])/2);\n" % t
+		out += "\t\tout[0] = WRITE%s((temp[0] + temp[1])/2);\n" % t
 	else:
 		raise RuntimeError("go implement channelconversion from %d to %d channels" % (numin, numout))
 	return out
@@ -194,14 +194,14 @@ def make_conv(fields, curr):
 		#	return ""
 
 		out=resamplingcode
-		for key,val in curr.iteritems():
-			out = re.sub(key,str(val),out)
+		for key in curr:
+			out = re.sub(key,str(curr[key]),out)
 
 		out = re.sub("CONVERTER",
-			     get_channelconv(curr['INCHANNELS'],
-					     curr['OUTCHANNELS'],
-					     curr['OUTTYPE']),
-			     out)
+				get_channelconv(curr['INCHANNELS'],
+				curr['OUTCHANNELS'],
+				curr['OUTTYPE']),
+				out)
 		
 		return out
 
@@ -236,19 +236,19 @@ def make_switch(fields, curr):
 			val += indent + "case XMMS_SAMPLE_FORMAT_%s:\n" % a.upper()
 		else:
 			val += indent + "case %s:\n" % a
-       		val += make_switch(fields[1:], t)
+		val += make_switch(fields[1:], t)
 	val += indent + "}\n"
 	return val
 
-print readwriters
-print make_conv(data.keys(),{})
+print(readwriters)
+print(make_conv([k for k in data.keys()],{}))
 
-print "static xmms_sample_conv_func_t"
-print "xmms_sample_conv_get (guint inchannels, xmms_sample_format_t intype,"
-print "                      guint outchannels, xmms_sample_format_t outtype,"
-print "                      gboolean resample)"
-print "{"
-print make_switch(data.keys(),{})
-print "\treturn NULL;"
-print "}"
+print("static xmms_sample_conv_func_t")
+print("xmms_sample_conv_get (guint inchannels, xmms_sample_format_t intype,")
+print("                      guint outchannels, xmms_sample_format_t outtype,")
+print("                      gboolean resample)")
+print("{")
+print(make_switch([k for k in data.keys()],{}))
+print("\treturn NULL;")
+print("}")
 

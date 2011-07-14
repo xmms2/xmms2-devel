@@ -1,65 +1,124 @@
-import Configure
-from logging import warning
+from waflib import Logs, Errors
 import os
+
+CYTHON_PRECOMPILED_VERSION = (0,14,1)
+
+def copy_cython(task):
+    """Copy generated cython file from build tree to source tree.
+    Also strip the timestamp from the first line comment.
+    """
+    import re
+    node = task.inputs[0]
+    orig_file = node.get_bldnode().abspath()
+    copy_file = node.get_srcnode().abspath()
+    orig = None
+    copy = None
+    try:
+        orig = open(orig_file, 'rb')
+        copy = open(copy_file, 'wb')
+        i = 0
+        for l in orig:
+            if i == 0:
+                l = re.sub(' on .* \\*/', ' */', l)
+            # TODO: strip all comment lines
+            copy.write(l)
+    finally:
+        if orig:
+            orig.close()
+        if copy:
+            copy.close()
+
 
 def build_precompiled(bld):
     for t in ['xmmsvalue', 'xmmsapi']:
-        bld(features = 'cc cshlib pyext',
+        bld(features = 'c cshlib pyext',
             source = t+'.c',
             target = t,
-            uselib_local = 'xmmsclient',
+            use = 'xmmsclient',
             includes = '../../../.. ../../../include ../../../includepriv',
             install_path = '${xmmsclient_PYTHONDIR}',
-            mac_bundle = True)
+            mac_bundle = bld.env.mac_bundle_enabled
+            )
 
 def build_cython(bld):
     for t in ['xmmsvalue', 'xmmsapi']:
-        bld(features = 'cython cc cshlib pyext',
+        bld(features = 'c cshlib pyext',
+            name = 'gen_'+t,
             source = t+'.pyx',
             target = t,
-            uselib_local = 'xmmsclient',
+            use = 'xmmsclient',
             includes = '../../../.. ../../../include ../../../includepriv',
             install_path = '${xmmsclient_PYTHONDIR}',
-            mac_bundle = True,
-            no_timestamp = True,
-            cython_includes = 'cython_include')
+            mac_bundle = bld.env.mac_bundle_enabled,
+            cython_includes = ['cython_include']
+            )
+
+        # Copy generated file in source tree.
+        if bld.options.cython_copy == 'iknowwhatiamdoing':
+            bld(rule = copy_cython,
+                source = t+'.c',
+                after = 'gen_'+t)
 
 def build(bld):
-    if bld.env['USE_PRECOMPILED']:
+    if bld.env.xmmspython_USE_PRECOMPILED:
         build_precompiled(bld)
     else:
         build_cython(bld)
 
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/propdict.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/consts.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/collections.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/glib.py')
-    bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/qt3.py')
+    pure_files = bld.path.ant_glob('xmmsclient/*.py')
+
+    bld.install_files('${xmmsclient_PYTHONDIR}', pure_files)
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/propdict.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/consts.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/collections.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/glib.py')
+    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/qt3.py')
     # TODO: Distribute .pxd files
 
 def configure(conf):
     conf.check_tool('python')
-    if not conf.env['PYTHON']:
+    if not conf.env.PYTHON:
         conf.fatal("python not found")
 
     conf.check_python_version()
     conf.check_python_headers()
 
-    conf.env['xmmsclient_PYTHONDIR'] = conf.env['PYTHONDIR'] + '/xmmsclient'
+    conf.env.xmmsclient_PYTHONDIR = os.path.join(conf.env.PYTHONDIR, 'xmmsclient')
 
-    prefix = os.path.commonprefix([conf.env['PYTHONDIR'], conf.env['PREFIX']])
-    if not prefix:
-        warning('default python libdir is not under PREFIX. specify path '
-              + 'manually using the PYTHONDIR environment variable if you '
-              + 'don\'t want the python bindings to be installed to '
-              + conf.env['PYTHONDIR'])
+    prefix = os.path.commonprefix([conf.env.PYTHONDIR, conf.env.PREFIX])
+    if prefix != conf.env.PREFIX:
+        Logs.warn("Default python libdir is not under PREFIX. Specify path "
+                  "manually using the PYTHONDIR environment variable if you "
+                  "don't want the python bindings to be installed to %s"
+                  % conf.env.PYTHONDIR)
 
-    conf.check_tool('cython', tooldir=os.path.abspath('waftools'))
-    if not conf.env['CYTHON'] or not conf.check_cython_version(minver='0.13'):
-        conf.env['USE_PRECOMPILED'] = True
+    conf.env.xmmspython_USE_PRECOMPILED = True
+    if not conf.options.no_cython:
+        try:
+            conf.load('cython cython_extra', tooldir = os.path.abspath('waftools'))
+            conf.check_cython_version(minver = '0.13')
+        except Errors.ConfigurationError:
+            pass
+        else:
+            conf.env.xmmspython_USE_PRECOMPILED = not conf.env.CYTHON
 
-def set_options(opt):
-    pass
+    if not conf.env.xmmspython_USE_PRECOMPILED and \
+            conf.env.CYTHON_VERSION < CYTHON_PRECOMPILED_VERSION:
+        Logs.warn("Your version of cython is older than the one used to "
+                  "generate precompiled files. If you did not edit cython "
+                  "files, you should consider reconfiguring with --no-cython")
 
+def options(opt):
+    opt.tool_options('cython', tooldir = os.path.abspath('waftools'))
+    opt.add_option('--no-cython', action="store_true",
+            dest="no_cython", default=False,
+            help="Use precompiled cython files even if cython is installed on "
+                 "the system.")
+    opt.add_option('--cython-copy-files', type="string",
+            dest="cython_copy", default="",
+            help="Copy generated files in the source tree. "
+                 "Works only with the 'build' command. "
+                 "Must have the value 'iknowwhatiamdoing' to work. "
+                 "Use this option only if you are a maintainer.")

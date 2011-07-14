@@ -1,9 +1,7 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_cfg(package="alsa", uselib_store="alsa", args="--cflags --libs"):
-        return True
-    return False
+    conf.check_cfg(package="alsa", uselib_store="alsa", args="--cflags --libs")
 
 configure, build = plugin("alsa", configure=plugin_configure,
                           libs=["alsa"], output_prio=40)

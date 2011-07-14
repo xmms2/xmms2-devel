@@ -1,35 +1,38 @@
 from waftools.plugin import plugin
 from os.path import realpath
 
+source = """
+sid.c
+sidplay_wrapper.cpp
+md5.cpp
+""".split()
+
 def plugin_configure(conf):
-    if not conf.env["CXX"]:
-        return False
+    if not conf.env.CXX:
+        return
 
-    if not conf.check_cfg(package="libsidplay2", args="--cflags --libs", uselib_store="sidplay"):
-        return False
-
-    if not conf.check_cxx(lib="sidplay2", uselib_store="sidplay"):
-        return False
+    conf.check_cfg(package="libsidplay2", args="--cflags --libs",
+            uselib_store="sidplay")
+    conf.check_cxx(lib="sidplay2", uselib_store="sidplay")
 
     # extract what's inside builders pkg-config variable
-    builders = conf.check_cfg(package="libsidplay2", args="--variable=builders").strip()
+    builders = conf.check_cfg(package="libsidplay2",
+            args="--variable=builders").strip()
 
     # It looks funny that this is LIBPATH_sidplay but it is correct
     # since we explcitly set the path to builders for resid it will
     # find resid in the list even though we still need to -rpath it.
-    if not realpath(builders) in [realpath(i) for i in conf.env['LIBPATH_sidplay']]:
-        conf.env['LINKFLAGS_resid'] = ["-Wl,-rpath=%s" % builders]
-        conf.env["LIBPATH_resid"] = [builders]
+    if not realpath(builders) in [realpath(i) for i in conf.env.LIBPATH_sidplay]:
+        conf.env.LINKFLAGS_resid = ["-Wl,-rpath=%s" % builders]
+        conf.env.LIBPATH_resid = [builders]
 
-    if not conf.check_cxx(lib="resid-builder", header_name="sidplay/builders/resid.h", uselib_store="resid", uselib="resid"):
-        return False
-
-    return True
+    conf.check_cxx(lib="resid-builder", header_name="sidplay/builders/resid.h",
+            uselib_store="resid", uselib="resid")
 
 def plugin_build(bld, obj):
     # TODO: Why don't we build everything with g++ instead?
-    obj.mappings['.cpp'] = obj.__class__.mappings['.c']
+    #obj.mappings['.cpp'] = obj.__class__.mappings['.c']
+    pass
 
 configure, build = plugin('sid', configure=plugin_configure, build=plugin_build,
-                          source=["sid.c", "sidplay_wrapper.cpp", "md5.cpp"],
-                          libs=["sidplay", "resid"])
+                          source=source, libs=["sidplay", "resid"], tool='cxx')

@@ -1,200 +1,124 @@
+#! /usr/bin/env python
 # encoding: utf-8
+# Thomas Nagy, 2010
 
-import Utils, Logs
-import Configure
-import TaskGen, Task
-import re, os
+import re
 
-#Task.simple_task_type('cythonc', '${CYTHON} ${CYTHON_INCS} -q -o ${TGT} ${SRC}', color='BLUE', before='cc')
+import waflib
+import waflib.Logs as _msg
+from waflib import Task
+from waflib.TaskGen import extension, feature, before_method, after_method
 
-#Strip comments and strings (in case cimports appear in a multiline string)
-strip_re=re.compile('#[^\r\n]*|"""(?:[^"\\\\]|\\\\.|"(?!""))*"""|\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"')
-cimport_re=re.compile('^cimport[ \t]+(?P<cimport>.*)$|^from[ \t]+(?P<from>.*)[ \t]+cimport[ \t]+.*$')
+cy_api_pat = re.compile(r'\s*?cdef\s*?(public|api)\w*')
+re_cyt = re.compile('import\\s(\\w+)\\s*$', re.M)
 
-def extract_deps(node, env):
-	cython_inc_dirs = [node.parent]
-	cython_inc_dirs += env['CYTHON_INC_PATHS']
-	c = node.read(env)
-	c = strip_re.sub('', c)
-	c = c.replace(';', '\n') # regexp requires only one instruction per line.
-	raw_deps = set()
-	for l in map(lambda a: a.strip(), c.split('\n')):
-		if not l:
-			continue
-		m = cimport_re.match(l)
-		if m:
-			d = m.groupdict()
-			s = ((d['cimport'] or "") + (d['from'] or "")).strip()
-			if s:
-				raw_deps.update(map(lambda a: a.strip(), s.split(',')))
-	deps = []
-	for rd in map(lambda l: l.split('.'), raw_deps):
-		for inc in cython_inc_dirs:
-			path = rd[:]
-			path[-1] = path[-1]+'.pxd'
-			dnode = inc.find_resource(path)
-			if not dnode: #Maybe a directory with a __init__.pxd file.
-				path = rd[:] + ['__init__.pxd']
-				dnode = inc.find_resource(path)
-			if dnode:
-				if not dnode in deps:
-					deps.append(dnode)
-				break
-	return deps
-
-def scan_deps(task):
+@extension('.pyx')
+def add_cython_file(self, node):
 	"""
-	Scan pyx and pxd files for dependencies.
-	Adds dependencies only for local headers.
+	Process a *.pyx* file given in the list of source files. No additional
+	feature is required::
+
+		def build(bld):
+			bld(features='c cshlib pyext', source='main.c foo.pyx', target='app')
 	"""
-	deps = []
-	scan = task.inputs[:]
-	while scan:
-		ds = extract_deps(scan.pop(), task.env)
-		for _d in ds:
-			if not _d in deps:
-				scan.append(_d)
-				deps.append(_d)
-	return (deps, [])
+	ext = '.c'
+	if 'cxx' in self.features:
+		self.env.append_unique('CYTHONFLAGS', '--cplus')
+		ext = '.cc'
+	for inc in getattr(self, 'cython_includes', []):
+		d = self.path.find_dir(inc)
+		self.env.append_unique('CYTHONFLAGS', '-I'+d.get_src().abspath())
+		self.env.append_unique('CYTHONFLAGS', '-I'+d.get_bld().abspath())
+	tsk = self.create_task('cython', node, node.change_ext(ext).get_bld())
+	self.source += tsk.outputs
 
-def cython_run(task):
-	pargs = [task.env['CYTHON']]
-	pargs.extend(task.env['_CYTHON_INCFLAGS'])
-	pargs.extend(['-o', task.outputs[0].bldpath(task.env), task.inputs[0].srcpath(task.env)])
-	r = task.exec_command(pargs, cwd=getattr(task, 'cwd', None))
+class cython(Task.Task):
+	run_str = '${CYTHON} ${CYTHONFLAGS} -o ${TGT[0].abspath()} ${SRC}'
+	color   = 'BLUE'
 
-	if r or not task.env['CYTHON_NO_TIMESTAMP']:
-		return r
-
-	# strip timestamp
-	src_file = task.outputs[0].bldpath(task.env)
-	copy_file = src_file+'.cytmp'
-	src = None
-	copy = None
-	try:
-		src = open(src_file, 'rb')
-		copy = open(copy_file, 'wb')
-		i = 0
-		for l in src:
-			if i == 0:
-				l = re.sub(' on .* \\*/', ' */', l)
-			# TODO: strip all comment lines
-			copy.write(l)
-	finally:
-		if src:
-			src.close()
-		if copy:
-			copy.close()
-	try:
-		os.remove(src_file)
-	except OSError:
-		pass
-	except IOError:
-		pass
-	else:
-		os.rename(copy_file, src_file)
-	return 0
-
-f = TaskGen.declare_chain(
-		name = 'cythonc',
-		action = cython_run,
-		ext_in = '.pyx',
-		ext_out = '.c',
-		reentrant = True,
-		after='apply_cython_extra',
-		scan=scan_deps)
-
-@TaskGen.feature('cython')
-@TaskGen.before('apply_core')
-def default_cython(self):
-	Utils.def_attrs(self,
-			cython_includes = '',
-			no_timestamp = False)
-
-@TaskGen.feature('cython')
-@TaskGen.after('apply_core')
-def apply_cython_incpaths(self):
-	"""Used to build _CYTHONINCFLAGS, and the dependencies scanner (when ready).
+	vars    = ['INCLUDES']
 	"""
-	for path in self.to_list(self.cython_includes):
-		if os.path.isabs(path):
-			self.env.append_value('CYTHONPATH', path)
-		else:
-			node = self.path.find_dir(path)
-			if node:
-				self.env.append_value('CYTHON_INC_PATHS', node)
+	Rebuild whenever the INCLUDES change. The variables such as CYTHONFLAGS will be appended
+	by the metaclass.
+	"""
 
-	# XXX broken for pathes with spaces. Must escape \ and " and add double quotes.
-	self.env['CYTHON_INCS'] = " ".join(map(lambda s: "-I"+s, self.env['CYTHON_PATHS']))
+	ext_out = ['.h']
+	"""
+	The creation of a .h file is known only after the build has begun, so it is not
+	possible to compute a build order just by looking at the task inputs/outputs.
+	"""
 
-@TaskGen.feature('cython')
-@TaskGen.after('apply_cython_incpaths')
-def apply_cython_flags(self):
-	INC_FMT='-I%s'
-	for i in self.env['CYTHON_INC_PATHS']:
-		self.env.append_unique('_CYTHON_INCFLAGS', INC_FMT % i.bldpath(self.env))
-		self.env.append_unique('_CYTHON_INCFLAGS', INC_FMT % i.srcpath(self.env))
-	for i in self.env['CYTHONPATH']:
-		self.env.append_unique('_CYTHON_INCFLAGS', INC_FMT % i)
+	def runnable_status(self):
+		"""
+		Perform a double-check to add the headers created by cython
+		to the output nodes. The scanner is executed only when the cython task
+		must be executed (optimization).
+		"""
+		ret = super(cython, self).runnable_status()
+		if ret == Task.ASK_LATER:
+			return ret
+		for x in self.generator.bld.raw_deps[self.uid()]:
+			if x.startswith('header:'):
+				self.outputs.append(self.inputs[0].parent.find_or_declare(x.replace('header:', '')))
+		return super(cython, self).runnable_status()
 
-@TaskGen.feature('cython')
-@TaskGen.after('apply_cython_flags')
-def apply_cython_extra(self):
-	self.env['CYTHON_NO_TIMESTAMP'] = self.no_timestamp
+	def scan(self):
+		"""
+		Return the dependent files (.pxd) by looking in the include folders.
+		Put the headers to generate in the custom list "bld.raw_deps".
+		To inspect the scanne results use::
 
+			$ waf clean build --zones=deps
+		"""
+		txt = self.inputs[0].read()
 
-cython_ver_re = re.compile('Cython version ([0-9.]+)')
-def check_cython_version(self, version=None, minver=None, maxver=None, mandatory=False):
-	log_s = []
-	if version:
-		log_s.append("version=%r"%version)
-		minver=version
-		maxver=version
-	else:
-		if minver:
-			log_s.append("minver=%r"%minver)
-		if maxver:
-			log_s.append("maxver=%r"%maxver)
-	if isinstance(minver, str):
-		minver = minver.split('.')
-	if isinstance(maxver, str):
-		maxver = maxver.split('.')
-	if minver:
-		minver = tuple(map(int, minver))
-	if maxver:
-		maxver = tuple(map(int, maxver))
+		mods = []
+		for m in re_cyt.finditer(txt):
+			mods.append(m.group(1))
 
-	o = Utils.cmd_output('%s -V 2>&1' % self.env['CYTHON']).strip()
-	m = cython_ver_re.match(o)
-	self.check_message_1('Checking for cython version')
-	if not m:
-		if mandatory:
-			self.fatal("Can't parse cython version")
-		else:
-			Utils.pprint('YELLOW', 'No version found')
-			check = False
-	else:
-		v = m.group(1)
-		ver = tuple(map(int, v.split('.')))
-		check = (not minver or minver <= ver) and (not maxver or maxver >= ver)
-		self.log.write('  cython %s\n  -> %r\n' % (" ".join(log_s), v))
-		if check:
-			Utils.pprint('GREEN', v)
-			self.env['CYTHON_VERSION'] = ver
-		else:
-			Utils.pprint('YELLOW', 'wrong version %s' % v)
-			if mandatory:
-				self.fatal('failed (%s)' % m.group(1))
-	return check
+		_msg.debug("cython: mods %r" % mods)
+		incs = getattr(self.generator, 'cython_includes', [])
+		incs = [self.generator.path.find_dir(x) for x in incs]
+		incs.append(self.inputs[0].parent)
 
-def detect(conf):
-	cython = conf.find_program('cython', var='CYTHON')
-	if not cython:
-		return False
-	# Register version checking method in configure class.
-	Configure.conf(check_cython_version)
-	conf.env['CYTHON_EXT'] = ['.pyx']
-	return True
+		found = []
+		missing = []
+		for x in mods:
+			for y in incs:
+				k = y.find_resource(x + '.pxd')
+				if k:
+					found.append(k)
+					break
+			else:
+				missing.append(x)
+		_msg.debug("cython: found %r" % found)
 
-def set_options(opt):
-	pass
+		# Now the .h created - store them in bld.raw_deps for later use
+		has_api = False
+		has_public = False
+		for l in txt.splitlines():
+			if cy_api_pat.match(l):
+				if ' api ' in l:
+					has_api = True
+				if ' public ' in l:
+					has_public = True
+		name = self.inputs[0].name.replace('.pyx', '')
+		if has_api:
+			missing.append('header:%s_api.h' % name)
+		if has_public:
+			missing.append('header:%s.h' % name)
+
+		return (found, missing)
+
+def options(ctx):
+	ctx.add_option('--cython-flags', action='store', default='', help='space separated list of flags to pass to cython')
+
+def configure(ctx):
+	if not ctx.env.CC and not ctx.env.CXX:
+		ctx.fatal('Load a C/C++ compiler first')
+	if not ctx.env.PYTHON:
+		ctx.fatal('Load the python tool first!')
+	ctx.find_program('cython', var='CYTHON')
+	if ctx.options.cython_flags:
+		ctx.env.CYTHONFLAGS = ctx.options.cython_flags
+

@@ -1,19 +1,21 @@
 from waftools import tool
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'shlib')
-    obj.target = 'xmmsclient-glib'
-    obj.includes = '../../../.. ../../../include'
-    obj.source = 'xmmsclient-glib.c'
-    obj.uselib = 'glib2'
-    obj.uselib_local = 'xmmsclient'
-    obj.vnum = '1.0.0'
+    obj = bld(features='c cshlib',
+        target = 'xmmsclient-glib',
+        includes = '../../../.. ../../../include',
+        source = 'xmmsclient-glib.c',
+        uselib = 'glib2',
+        use = 'xmmsclient',
+        vnum = '1.0.0'
+        )
+
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    conf.env.append_value('XMMS_PKGCONF_FILES', ('xmms2-client-glib', '-lxmmsclient-glib'))
+    conf.env.XMMS_PKGCONF_FILES.append(('xmms2-client-glib', '-lxmmsclient-glib'))
 
     return True
 
-def set_options(opt):
+def options(opt):
     pass

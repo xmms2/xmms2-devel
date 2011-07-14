@@ -1,3 +1,3 @@
 from waftools.plugin import plugin
 
-configure, build = plugin('apefile', source=['apefile.c'])
+configure, build = plugin('apefile')

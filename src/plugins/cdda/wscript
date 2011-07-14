@@ -3,17 +3,10 @@ from waftools.plugin import plugin
 import Options
 
 def plugin_configure(conf):
-    if not conf.check_cfg(package="libcdio_cdda", args="--cflags --libs", uselib_store="cdda"):
-        return False
-
-    if not conf.check_cfg(package="libdiscid", args="--cflags --libs", uselib_store="discid"):
-        return False
-
+    conf.check_cfg(package="libcdio_cdda", args="--cflags --libs", uselib_store="cdda")
+    conf.check_cfg(package="libdiscid", args="--cflags --libs", uselib_store="discid")
     if Options.platform == "win32":
-        if not conf.check_cc(lib="winmm", uselib_store="winmm", args="--cflags --libs"):
-            return False
-
-    return True
+        conf.check_cc(lib="winmm", uselib_store="winmm", args="--cflags --libs")
 
 configure, build = plugin("cdda", configure=plugin_configure,
                           libs=["cdda", "discid", "winmm"])

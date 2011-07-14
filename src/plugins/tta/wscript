@@ -1,3 +1,3 @@
 from waftools.plugin import plugin
 
-configure, build = plugin('tta', source=['tta.c'])
+configure, build = plugin('tta')

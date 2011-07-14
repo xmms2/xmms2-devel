@@ -1,6 +1,6 @@
 from waftools.plugin import plugin
 
 def plugin_build(bld, obj):
-    obj.find_sources_in_dirs("libasf")
+    obj.source.extend(bld.path.ant_glob('libasf/*.c'))
 
 configure, build = plugin("asf", build=plugin_build, libs=["asf"])

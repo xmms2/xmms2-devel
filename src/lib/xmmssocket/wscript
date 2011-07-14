@@ -5,23 +5,26 @@
 #
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'staticlib')
-    obj.source = """
-        socket_common.c
+    source = """
+    socket_common.c
     """.split()
-
-    if bld.env["socket_impl"] == "wsock32":
-        obj.source += ["socket_win32.c"]
+    if bld.env.socket_impl == 'wsock32':
+        source.extend(['socket_win32.c'])
     else:
-        obj.source += ["socket_unix.c"]
+        source.extend(['socket_unix.c'])
 
-    obj.includes='. ../../.. ../../include'
-    obj.uselib='socket'
-    obj.target='xmmssocket'
-    obj.install_path = 0
+    bld(features = 'c cstlib',
+        target = 'xmmssocket',
+        source = source,
+        includes = '. ../../.. ../../include',
+        uselib = 'socket',
+        install_path = None
+        )
+
 
 def configure(conf):
     return True
 
-def set_options(opt):
+
+def options(opt):
     pass

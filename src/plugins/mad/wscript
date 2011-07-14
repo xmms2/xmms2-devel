@@ -1,14 +1,12 @@
+from waflib import Errors
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_cfg(package="mad", uselib_store="mad", args="--cflags --libs"):
-        return True
-    if not conf.check_cc(header_name="mad.h"):
-        return False
-    if not conf.check_cc(lib="mad", uselib_store="mad"):
-        return False
-    return True
+    try:
+        conf.check_cfg(package="mad", uselib_store="mad",
+                args="--cflags --libs")
+    except Errors.ConfigurationError:
+        conf.check_cc(header_name="mad.h")
+        conf.check_cc(lib="mad", uselib_store="mad")
 
-configure, build = plugin('mad', configure=plugin_configure,
-                          source=['mad.c', 'xing.c', 'id3v1.c'],
-                          libs=["mad"])
+configure, build = plugin('mad', configure=plugin_configure, libs=["mad"])

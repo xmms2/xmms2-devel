@@ -1,9 +1,14 @@
 from waftools.plugin import plugin
 
+source = """
+eq.c
+iir.c
+iir_cfs.c
+iir_fpu.c
+""".split()
+
 def plugin_configure(conf):
-    if not conf.check_cc(lib="m", uselib_store="math"):
-        return False
-    return True
+    conf.check_cc(lib="m", uselib_store="math")
 
 configure, build = plugin("equalizer", configure=plugin_configure, libs=["math"],
-                          source=["eq.c", "iir.c", "iir_cfs.c", "iir_fpu.c"])
+                          source=source)

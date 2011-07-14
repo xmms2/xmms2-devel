@@ -1,8 +1,6 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if conf.check_cfg(package="libofa", uselib_store="ofa", args="--cflags --libs"):
-        return True
-    return False
+    conf.check_cfg(package="libofa", uselib_store="ofa", args="--cflags --libs")
 
 configure, build = plugin('ofa', configure=plugin_configure, libs=["ofa"])

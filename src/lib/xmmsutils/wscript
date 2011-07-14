@@ -4,37 +4,39 @@
 # Copyright (C) 2006-2011 XMMS2 Team
 #
 
-import Options
+from waflib import Options, Logs, Errors
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'staticlib')
-    obj.source = """
-        strlist.c
-        utils.c
+    source = """
+    strlist.c
+    utils.c
     """.split()
-
-    if bld.env["util_impl"] == "win32":
-        obj.source += ["utils_win32.c"]
+    if bld.env.util_impl == 'win32':
+        source.extend(['utils_win32.c'])
     else:
-        obj.source += ["utils_unix.c"]
+        source.extend(['utils_unix.c'])
 
-    obj.includes = '. ../../.. ../../include'
-    obj.uselib = 'rt'
-    obj.target = 'xmmsutils'
-    obj.install_path = 0
+    bld(features = 'c cstlib',
+        target = 'xmmsutils',
+        source = source,
+        includes = '. ../../.. ../../include',
+        uselib = 'rt',
+        install_path = None
+        )
+
 
 def configure(conf):
     if Options.platform == 'win32':
-        conf.env['util_impl'] = 'win32'
+        conf.env.util_impl = 'win32'
     else:
-        conf.env['util_impl'] = 'unix'
-        if not conf.check_cc(function_name="nanosleep", header_name="time.h"):
-            # nanosleep is in librt on Solaris 10
-            if not conf.check_cc(function_name="nanosleep", header_name="time.h",
-                                 lib="rt", uselib_store="rt"):
-                return False
-
+        conf.env.util_impl = 'unix'
+        try:
+            conf.check_cc(function_name="nanosleep", header_name="time.h")
+        except Errors.ConfigurationError:
+            conf.check_cc(function_name="nanosleep", header_name="time.h",
+                    lib="rt", uselib_store="rt")
     return True
 
-def set_options(opt):
+
+def options(opt):
     pass

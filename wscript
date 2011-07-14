@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2011 XMMS2 Team
+# Copyright (C) 2006-2001 XMMS2 Team
 #
 
 import sys
@@ -9,73 +9,71 @@ if sys.version_info < (2,4):
     raise RuntimeError("Python 2.4 or newer is required")
 
 import os
-import optparse
-import imp
 
-# Waf removes the current dir from the python path. We readd it to
-# import waftools stuff.
-sys.path.insert(0,os.getcwd())
+# Waf removes the current dir from the python path. We readd it to import waf
+# tools stuff.
+sys.path.insert(0, os.getcwd())
 
-from waftools import gittools
+from waflib import Options, Utils, Errors, Logs
+
 from waftools.compiler_flags import compiler_flags
-
-import Options
-import Utils
-import Build
-import Configure
-from logging import fatal, warning
-import Constants
+from waftools import gittools
 
 BASEVERSION="0.7 DrNo"
 APPNAME='xmms2'
 
-srcdir='.'
-blddir = '_build_'
+top = '.'
+out = '_build_'
 
-_waf_mismatch_msg = \
-"You are building xmms2 with a waf version that is different from the one \n" \
-"distributed with xmms2. This is not supported by the XMMS2 Team.\n" \
-"Before reporting any errors with this setup, please rebuild XMMS2 using\n" \
-"'./waf configure build install'"
+_waf_hexversion = 0x01060600
+_waf_mismatch_msg = """
+You are building xmms2 with a waf version that is different from the one
+distributed with xmms2. This is not supported by the XMMS2 Team. Before
+reporting any errors with this setup, please rebuild XMMS2 using './waf
+configure build install'
+"""
+
 ####
 ## Initialization
 ####
-def init():
+def init(ctx):
     import gc
     gc.disable()
 
-    Constants_l = imp.load_source('Constants_tmp', os.path.join('wafadmin', 'Constants.py'))
-    if not Constants_l.HEXVERSION == Constants.HEXVERSION:
-        Utils.pprint('RED', _waf_mismatch_msg)
+    from waflib import Context
+    if _waf_hexversion != Context.HEXVERSION:
+        Logs.warn(_waf_mismatch_msg)
 
 subdirs = """
-          src/lib/xmmstypes
-          src/lib/xmmssocket
-          src/lib/xmmsipc
-          src/lib/xmmsutils
-          src/lib/xmmsvisualization
-          src/clients/lib/xmmsclient
-          src/clients/lib/xmmsclient-glib
-          src/include
-          src/includepriv
-          """.split()
+src/lib/xmmstypes
+src/lib/xmmssocket
+src/lib/xmmsipc
+src/lib/xmmsutils
+src/lib/xmmsvisualization
+src/clients/lib/xmmsclient
+src/clients/lib/xmmsclient-glib
+src/include
+src/includepriv
+""".split()
 
-optional_subdirs = ["src/clients/nycli",
-                    "src/clients/launcher",
-                    "src/clients/et",
-                    "src/clients/mdns/dns_sd",
-                    "src/clients/mdns/avahi",
-                    "src/clients/medialib-updater",
-                    "src/clients/vistest",
-                    "src/clients/lib/xmmsclient-ecore",
-                    "src/clients/lib/xmmsclient++",
-                    "src/clients/lib/xmmsclient++-glib",
-                    "src/clients/lib/xmmsclient-cf",
-                    "src/clients/lib/python",
-                    "src/clients/lib/perl",
-                    "src/clients/lib/ruby",
-                    "tests",
-                    "pixmaps"]
+optional_subdirs = """
+src/clients/nycli
+src/clients/launcher
+src/clients/et
+src/clients/mdns/dns_sd
+src/clients/mdns/avahi
+src/clients/medialib-updater
+src/clients/vistest
+src/clients/lib/xmmsclient-ecore
+src/clients/lib/xmmsclient++
+src/clients/lib/xmmsclient++-glib
+src/clients/lib/xmmsclient-cf
+src/clients/lib/python
+src/clients/lib/perl
+src/clients/lib/ruby
+tests
+pixmaps
+""".split()
 
 def is_plugin(x):
     return os.path.exists(os.path.join("src/plugins", x, "wscript"))
@@ -83,44 +81,47 @@ def is_plugin(x):
 all_optionals = set(os.path.basename(o) for o in optional_subdirs)
 all_plugins = set(p for p in os.listdir("src/plugins") if is_plugin(p))
 
+def get_newest(*dirs):
+    m = 0
+    for d in dirs:
+        m = max([m]+[os.stat(os.path.join(sd, "wscript")).st_mtime for sd in d])
+    return m
+
 ####
 ## Build
 ####
 def build(bld):
-    if bld.env["BUILD_XMMS2D"]:
+    if bld.env.BUILD_XMMS2D:
         subdirs.append("src/xmms")
 
-    newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
-    if bld.env['NEWEST_WSCRIPT_SUBDIR'] and newest > bld.env['NEWEST_WSCRIPT_SUBDIR']:
-        fatal("You need to run waf configure")
-        raise SystemExit
+    plugins = bld.env.XMMS_PLUGINS_ENABLED
+    plugindirs = ["src/plugins/%s" % plugin for plugin in plugins]
+    optionaldirs = bld.env.XMMS_OPTIONAL_BUILD
 
-    # Process subfolders
+    newest = get_newest(subdirs, plugindirs, optionaldirs)
+    if bld.env.NEWEST_WSCRIPT_SUBDIR and newest > bld.env.NEWEST_WSCRIPT_SUBDIR:
+        bld.fatal("You need to run waf configure")
+        raise SystemExit()
+
     bld.add_subdirs(subdirs)
+    bld.add_subdirs(plugindirs)
+    bld.add_subdirs(optionaldirs)
 
-    # Build configured plugins
-    plugins = bld.env['XMMS_PLUGINS_ENABLED']
-    bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
+    for name, lib in bld.env.XMMS_PKGCONF_FILES:
+        bld(features = 'subst',
+            source = 'xmms2.pc.in',
+            target = name + '.pc',
+            install_path = '${PKGCONFIGDIR}',
+            NAME = name,
+            LIB = lib+' ', # Avoid error in waf 1.6 if lib == ''
+            PREFIX = bld.env.PREFIX,
+            BINDIR = bld.env.BINDIR,
+            LIBDIR = bld.env.LIBDIR,
+            INCLUDEDIR = os.path.join(bld.env.INCLUDEDIR, "xmms2"),
+            VERSION = bld.env.VERSION
+            )
 
-    # Build the clients
-    bld.add_subdirs(bld.env['XMMS_OPTIONAL_BUILD'])
-
-    for name, lib in bld.env['XMMS_PKGCONF_FILES']:
-        obj = bld.new_task_gen('subst')
-        obj.source = 'xmms2.pc.in'
-        obj.target = name + '.pc'
-        obj.dict = {
-               'NAME': name,
-                'LIB': lib,
-             'PREFIX': bld.env['PREFIX'],
-             'BINDIR': bld.env['BINDIR'],
-             'LIBDIR': bld.env['LIBDIR'],
-         'INCLUDEDIR': os.path.join(bld.env.INCLUDEDIR, "xmms2"),
-            'VERSION': bld.env["VERSION"],
-        }
-        obj.install_path = '${PKGCONFIGDIR}'
-
-    bld.install_files('${SHAREDDIR}', 'mind.in.a.box-lament_snipplet.ogg')
+    bld.install_files('${SHAREDDIR}', "mind.in.a.box-lament_snipplet.ogg")
 
 
 ####
@@ -131,21 +132,21 @@ def _configure_optionals(conf):
     def _check_exist(optionals, msg):
         unknown_optionals = optionals.difference(all_optionals)
         if unknown_optionals:
-            fatal(msg % {'unknown_optionals': ', '.join(unknown_optionals)})
-            raise SystemExit(1)
+            conf.fatal(msg%dict(unknown_optionals=', '.join(unknown_optionals)))
+            raise SystemExit()
         return optionals
 
-    conf.env['XMMS_OPTIONAL_BUILD'] = []
+    conf.env.XMMS_OPTIONAL_BUILD = []
 
-    if Options.options.enable_optionals != None:
-        selected_optionals = _check_exist(set(Options.options.enable_optionals),
-                                           "The following optional(s) were requested, "
-                                           "but don't exist: %(unknown_optionals)s")
+    if conf.options.enable_optionals is not None:
+        selected_optionals = _check_exist(set(conf.options.enable_optionals),
+                "The following optional(s) were requested, "
+                "but don't exist: %(unknown_optionals)s")
         optionals_must_work = True
-    elif Options.options.disable_optionals != None:
-        disabled_optionals = _check_exist(set(Options.options.disable_optionals),
-                                          "The following optional(s) were disabled, "
-                                          "but don't exist: %(unknown_optionals)s")
+    elif conf.options.disable_optionals is not None:
+        disabled_optionals = _check_exist(set(conf.options.disable_optionals),
+                "The following optional(s) were disabled, "
+                "but don't exist: %(unknown_optionals)s")
         selected_optionals = all_optionals.difference(disabled_optionals)
         optionals_must_work = False
     else:
@@ -161,12 +162,12 @@ def _configure_optionals(conf):
             conf.sub_config(x)
             conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
             succeeded_optionals.add(o)
-        except Configure.ConfigurationError:
+        except Errors.ConfigurationError:
             failed_optionals.add(o)
 
     if optionals_must_work and failed_optionals:
-        fatal("The following required optional(s) failed to configure: "
-              "%s" % ', '.join(failed_optionals))
+        conf.fatal("The following required optional(s) failed to configure: %s"
+                % ', '.join(failed_optionals))
         raise SystemExit(1)
 
     disabled_optionals = set(all_optionals)
@@ -175,89 +176,94 @@ def _configure_optionals(conf):
     return succeeded_optionals, disabled_optionals
 
 def _configure_plugins(conf):
-    """Process all xmms2d plugins"""
+    """Process ll xmms2d plugins"""
     def _check_exist(plugins, msg):
         unknown_plugins = plugins.difference(all_plugins)
         if unknown_plugins:
-            fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
+            conf.fatal(msg%dict(unknown_plugins=', '.join(unknown_plugins)))
             raise SystemExit(1)
         return plugins
 
-    conf.env['XMMS_PLUGINS_ENABLED'] = []
+    conf.env.XMMS_PLUGINS_ENABLED = []
 
-    # If an explicit list was provided, only try to process that
-    if Options.options.enable_plugins != None:
-        selected_plugins = _check_exist(set(Options.options.enable_plugins),
-                                        "The following plugin(s) were requested, "
-                                        "but don't exist: %(unknown_plugins)s")
+    if conf.options.enable_plugins is not None:
+        selected_plugins = _check_exist(set(conf.options.enable_plugins),
+                "The following plugin(s) were requested, "
+                "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
-    # If a disable list was provided, we try all plugins except for those.
-    elif Options.options.disable_plugins != None:
-        disabled_plugins = _check_exist(set(Options.options.disable_plugins),
-                                        "The following plugins(s) were disabled, "
-                                        "but don't exist: %(unknown_plugins)s")
+    elif conf.options.disable_plugins is not None:
+        disabled_plugins = _check_exist(set(conf.options.disable_plugins),
+                "The following plugin(s) were disabled, "
+                "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
         plugins_must_work = False
-    # If we don't have the daemon we don't build plugins.
-    elif Options.options.without_xmms2d:
+    elif conf.options.without_xmms2d:
         disabled_plugins = all_plugins
         selected_plugins = set()
         plugins_must_work = False
-    # Else, we try all plugins.
     else:
         selected_plugins = all_plugins
         disabled_plugins = set()
         plugins_must_work = False
 
-
     for plugin in selected_plugins:
-        conf.sub_config("src/plugins/%s" % plugin)
-        if (not conf.env["XMMS_PLUGINS_ENABLED"] or
-            (len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0 and
-            conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin)):
+        try:
+            conf.sub_config("src/plugins/%s" % plugin)
+            if (not conf.env.XMMS_PLUGINS_ENABLED or
+                    (len(conf.env.XMMS_PLUGINS_ENABLED) > 0 and
+                        conf.env.XMMS_PLUGINS_ENABLED[-1] != plugin)):
+                disabled_plugins.add(plugin)
+        except Errors.ConfigurationError:
             disabled_plugins.add(plugin)
 
-    # If something failed and we don't tolerate failure...
     if plugins_must_work:
         broken_plugins = selected_plugins.intersection(disabled_plugins)
         if broken_plugins:
-            fatal("The following required plugin(s) failed to configure: "
-                  "%s" % ', '.join(broken_plugins))
+            conf.fatal("The following required plugin(s) failed to configure: "
+                    "%s" % ', '.join(broken_plugins))
             raise SystemExit(1)
 
-    return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
+    return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins
 
 def _output_summary(enabled_plugins, disabled_plugins,
                     enabled_optionals, disabled_optionals,
                     output_plugins):
-    Utils.pprint('Normal', "\nOptional configuration:\n======================")
-    Utils.pprint('Normal', "Enabled: ", sep='')
-    Utils.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
-    Utils.pprint('Normal', "Disabled: ", sep='')
-    Utils.pprint('BLUE', ", ".join(sorted(disabled_optionals)))
-    Utils.pprint('Normal', "\nPlugins configuration:\n======================")
-
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
+    Logs.pprint('Normal', "\n")
 
-    Utils.pprint('Normal', "Output:")
-    Utils.pprint('BLUE', ", ".join(sorted(output_plugins)))
-    Utils.pprint('Normal', "XForm/Other:")
-    Utils.pprint('BLUE', ", ".join(sorted(enabled_plugins)))
-    Utils.pprint('Normal', "Disabled:")
-    Utils.pprint('BLUE', ", ".join(sorted(disabled_plugins)))
+    Logs.pprint('Normal', "Optional configuration:\n"
+                          "=======================")
+    Logs.pprint('Normal', "Enabled: ", sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
+    Logs.pprint('Normal', "Disabled: ", sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(disabled_optionals)))
 
+    Logs.pprint('Normal', "Plugins configuration:\n"
+                          "======================")
+    Logs.pprint('Normal', 'Output: ', sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(output_plugins)))
+    Logs.pprint('Normal', 'XForm/Other: ', sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(enabled_plugins)))
+    Logs.pprint('Normal', 'Disabled: ', sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(disabled_plugins)))
 
 def configure(conf):
-    if os.environ.has_key('PKG_CONFIG_PREFIX'):
+    has_platform_support = os.name in ('nt', 'posix')
+    conf.msg('Platform code for %s' % os.name, has_platform_support)
+    if not has_platform_support:
+        conf.fatal('xmms2 only has platform support for Windows and POSIX operating systems.')
+        raise SystemExit(1)
+
+    if 'PKG_CONFIG_PREFIX' in os.environ:
         prefix = os.environ['PKG_CONFIG_PREFIX']
         if not os.path.isabs(prefix):
-            prefix = os.path.abspath(prefix)
-        conf.env['PKG_CONFIG_DEFINES'] = {'prefix':prefix}
+            pretix = os.path.abspath(prefix)
+        conf.env.PKG_CONFIG_DEFINES = dict(prefix=prefix)
 
-    conf.env["BUILD_XMMS2D"] = False
-    if not Options.options.without_xmms2d == True:
-        conf.env["BUILD_XMMS2D"] = True
+    conf.env.BUILD_XMMS2D = False
+    if not conf.options.without_xmms2d:
+        conf.env.BUILD_XMMS2D = True
         subdirs.insert(0, "src/xmms")
 
     conf.check_tool('gnu_dirs')
@@ -266,26 +272,24 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('g++')
 
-    if Options.options.target_platform:
-        Options.platform = Options.options.target_platform
+    if conf.options.target_platform:
+        Options.platform = conf.options.target_platform
 
     nam,changed = gittools.get_info()
-    conf.check_message("git commit id", "", True, nam)
-    if Options.options.customversion:
-        conf.env["VERSION"] = BASEVERSION + " (%s + %s)" % (nam, Options.options.customversion)
+    conf.msg("git commit id", nam)
+    if conf.options.customversion:
+        conf.env.VERSION = "%s (%s + %s)" % (BASEVERSION, nam, conf.options.customversion)
     else:
-        dirty=""
-        if changed:
-            dirty="-dirty"
-        conf.check_message("uncommitted changes", "", bool(changed))
-        conf.env["VERSION"] = BASEVERSION + " (git commit: %s%s)" % (nam, dirty)
+        dirty = changed and "-dirty" or ""
+        conf.msg("uncommited changed", changed and "yes" or "no")
+        conf.env.VERSION = "%s (git commit: %s%s)" % (BASEVERSION, nam, dirty)
 
-    conf.env.append_unique("CCFLAGS", ["-g", "-O0"])
-    conf.env.append_unique("CXXFLAGS", ["-g", "-O0"])
+    conf.env.append_unique('CFLAGS', ['-g', '-O0'])
+    conf.env.append_unique('CXXFLAGS', ['-g', '-O0'])
 
-    if Options.options.with_profiling:
-        conf.env.append_unique("CCFLAGS", ["--coverage"])
-        conf.env.append_unique("LINKFLAGS", ["--coverage"])
+    if conf.options.with_profiling:
+        conf.env.append_unique('CFLAGS', ['--coverage'])
+        conf.env.append_unique('LINKFLAGS', ['--coverage'])
 
     flags = compiler_flags(conf)
 
@@ -307,158 +311,146 @@ def configure(conf):
 
     flags.enable_c_error('implicit-function-declaration')
 
-    conf.env['XMMS_PKGCONF_FILES'] = []
-    conf.env['XMMS_OUTPUT_PLUGINS'] = [(-1, "NONE")]
+    conf.env.XMMS_PKGCONF_FILES = []
+    conf.env.XMMS_OUTPUT_PLUGINS = [(-1, "NONE")]
 
-    if Options.options.pkgconfigdir:
-        conf.env['PKGCONFIGDIR'] = Options.options.pkgconfigdir
-        print(conf.env['PKGCONFIGDIR'])
+    if conf.options.pkgconfigdir:
+        conf.env.PKGCONFIGDIR = conf.options.pkgconfigdir
+        Logs.pprint('Normal', conf.env.PKGCONFIGDIR) #XXX What is it ?
     else:
-        conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["LIBDIR"], "pkgconfig")
+        conf.env.PKGCONFIGDIR = os.path.join(conf.env.LIBDIR, 'pkgconfig')
 
-    if Options.options.config_prefix:
-        for dir in Options.options.config_prefix:
-            if not os.path.isabs(dir):
-                dir = os.path.abspath(dir)
-            conf.env.prepend_value("LIBPATH", os.path.join(dir, "lib"))
-            conf.env.prepend_value("CPPPATH", os.path.join(dir, "include"))
+    if conf.options.config_prefix:
+        for d in conf.options.config_prefix:
+            if not os.path.isabs(d):
+                d = os.path.abspath(d)
+            conf.env.prepend_value('LIBPATH', os.path.join(d, 'lib'))
+            conf.env.prepend_value('CPPPATH', os.path.join(d, 'include'))
 
-    # Our static libraries may link to dynamic libraries
     if Options.platform != 'win32':
-        conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
+        conf.env.append_unique('CFLAGS_cstlib', ['-fPIC', '-DPIC'])
+        conf.env.append_unique('CPPFLAGS_cxxshlib', ['-fPIC', '-DPIC'])
     else:
         # As we have to change target platform after the tools
         # have been loaded there are a few variables that needs
         # to be initiated if building for win32.
 
-        # Make sure we don't have -fPIC and/or -DPIC in our CCFLAGS
-        conf.env["shlib_CCFLAGS"] = []
+        # Make sure we don't have -fPIC and/or -DPIC in our CFLAGS
+        conf.env.CFLAGS_cshlib = []
+        conf.env.CXXFLAGS_cxxshlib = []
 
         # Setup various prefixes
-        conf.env["shlib_PATTERN"] = 'lib%s.dll'
-        conf.env['program_PATTERN'] = '%s.exe'
+        conf.env.cshlib_PATTERN = 'lib%s.dll'
+        conf.env.cprogram_PATTERN = '%s.exe'
 
-    # Add some specific OSX things
     if Options.platform == 'darwin':
-        conf.check_tool("osx")
-        conf.env["LINKFLAGS"] += ['-multiply_defined suppress']
-        conf.env["explicit_install_name"] = True
+        conf.env.append_value('LINKFLAGS', '-multiply_defined_suppress')
+        conf.env.explicit_install_name = True
     else:
-        conf.env["explicit_install_name"] = False
+        conf.env.explicit_install_name = False
 
-    # Check for support for the generic platform
-    has_platform_support = os.name in ('nt', 'posix')
-    conf.check_message("platform code for", os.name, has_platform_support)
-    if not has_platform_support:
-        fatal("xmms2 only has platform support for Windows "
-              "and POSIX operating systems.")
-        raise SystemExit(1)
-
-    # Check sunOS socket support
     if Options.platform == 'sunos':
         conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
-        if not conf.env["HAVE_SOCKET"]:
-            fatal("xmms2 requires libsocket on Solaris.")
+        if not conf.env.HAVE_SOCKET:
+            conf.fatal("xmms2 requires libsocket on Solaris.")
             raise SystemExit(1)
-        conf.env.append_unique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
-        conf.env.append_unique('CCFLAGS', '-D_REENTRANT')
-        conf.env.append_unique('CCFLAGS', '-std=gnu99')
-        conf.env['socket_impl'] = 'socket'
-    # Check win32 (winsock2) socket support
+        conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
+        conf.env.append_unique('CFLAGS', '-D_REENTRANT')
+        conf.env.append_unique('CFLAGS', '-std=gnu99')
+        conf.env.socket_impl = 'socket'
     elif Options.platform == 'win32':
-        if Options.options.winver:
+        if conf.options.winver:
             major, minor = [int(x) for x in Options.options.winver.split('.')]
         else:
             try:
-                major, minor = sys.getwindowsversion()[:2]
-            except AttributeError, e:
-                warning('No Windows version found and no version set. ' +
-                        'Defaulting to 5.1 (XP). You will not be able ' +
-                        'to use this build of XMMS2 on older Windows ' +
-                        'versions.')
+                majot, minor = sys.getwindowsversion()[:2]
+            except AttributeError:
+                Logs.warn("No Windows version found and no version set. "
+                          "Defaulting to 5.1 (XP). You will not be able to use "
+                          "this build of XMMS2 on older Windows versions.")
                 major, minor = (5, 1)
         need_wspiapi = True
-        if (major >= 5 and minor >= 1):
+        if ((major, minor) >= (5, 1)):
             need_wspiapi = False
 
-        conf.check_cc(lib="wsock32", uselib_store="socket", mandatory=1)
-        conf.check_cc(lib="ws2_32", uselib_store="socket", mandatory=1)
-        conf.check_cc(header_name="windows.h", uselib="socket", mandatory=1)
-        conf.check_cc(header_name="ws2tcpip.h", uselib="socket", mandatory=1)
-        conf.check_cc(header_name="winsock2.h", uselib="socket", mandatory=1)
+        # check_cc is mandatory by default.
+        for lib in 'wsock32 ws2_32'.split():
+            conf.check_cc(lib=lib, uselib_store="socket")
+        for hdr in 'windows.h ws2tcpip.h winsock2.h'.split():
+            conf.check_cc(header_name=hdr, uselib="socket")
         code = """
-            #include <ws2tcpip.h>
-            #include <wspiapi.h>
+#include <ws2tcpip.h>
+#include <wspiapi.h>
 
-            int main() {
-                return 0;
-            }
-        """
+int main() { return 0; }
+"""
         if not conf.check_cc(header_name="wspiapi.h", fragment=code,
-                             uselib="socket", mandatory=need_wspiapi):
-            warning('This XMMS2 will only run on Windows XP and newer ' +
-                    'machines. If you are planning to use XMMS2 on older ' +
-                    'versions of Windows or are packaging a binary, please ' +
-                    'consider installing the WSPiApi.h header for ' +
+                uselib="socket", mandatory=need_wspiapi):
+            Logs.warn('This XMMS2 will only run on Windows XP and newer '
+                    'machines. If you are planning to use XMMS2 on older '
+                    'versions of Windows or are packaging a binary, please '
+                    'consider installing the WSPiApi.h header for '
                     'compatibility. It is provided by the Platform SDK.')
-
-        conf.env['CCDEFINES'] += [
-            '_WIN32_WINNT=0x%02x%02x' % (major, minor),
-            'HAVE_WINSOCK2=1'
-        ]
-        conf.env['CXXDEFINES'] = conf.env['CCDEFINES']
-
-        conf.env['socket_impl'] = 'wsock32'
-    # Default POSIX sockets
+        conf.env.DEFINES += [
+                '_WIN32_WINNT=0x%02x%02x' % (major, minor),
+                'HAVE_WINSOCK2=1'
+                ]
+        conf.env.socket_impl = 'wsock32'
     else:
-        conf.env['socket_impl'] = 'posix'
+        conf.env.socket_impl = 'posix'
 
-    # platform does not support icons ...
-    conf.env['xmms_icon'] = False
-    # ... unless we target on windows
+    conf.env.xmms_icon = False
     if Options.platform == 'win32':
         try:
             conf.check_tool('winres')
-            conf.env['WINRCFLAGS'] = '-I' + os.path.abspath('pixmaps')
-            conf.env['xmms_icon'] = True
-        except Configure.ConfigurationError:
+        except Errors.ConfigurationError:
             pass
+        else:
+            conf.env.WINRCFLAGS = '-I%s' % os.path.abspath('pixmaps')
+            conf.env.xmms_icon = True
 
-    # Glib is required by everyone, so check for it here and let them
-    # assume its presence.
-    conf.check_cfg(package='glib-2.0', atleast_version='2.8.0', uselib_store='glib2', args='--cflags --libs', mandatory=1)
+    # TaskGen.mac_bundle option seems to be no longer silently ignored
+    # if gcc -bundle option is not available.
+    # TODO: Add --no-mac-bundle in options ?
+    conf.env.mac_bundle_enabled = Options.platform == 'darwin'
+
+    conf.check_cfg(package='glib-2.0', atleat_version='2.8.0',
+            uselib_store='glib2', args='--cflags --libs')
 
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
 
-    newest = max([os.stat(os.path.join(sd, "wscript")).st_mtime for sd in subdirs])
-    conf.env['NEWEST_WSCRIPT_SUBDIR'] = newest
+    plugins = conf.env.XMMS_PLUGINS_ENABLED
+    plugindirs = ["src/plugins/%s" % plugin for plugin in plugins]
+    optionaldirs = conf.env.XMMS_OPTIONAL_BUILD
+    newest = get_newest(subdirs, plugindirs, optionaldirs)
+    conf.env.NEWEST_WSCRIPT_SUBDIR = newest
 
     [conf.sub_config(s) for s in subdirs]
     conf.write_config_header('xmms_configuration.h')
 
-    output_plugins = [name for x,name in conf.env["XMMS_OUTPUT_PLUGINS"] if x > 0]
+    output_plugins = [name for x, name in conf.env.XMMS_OUTPUT_PLUGINS if x > 0]
 
-    _output_summary(enabled_plugins, disabled_plugins,
-                    enabled_optionals, disabled_optionals,
-                    output_plugins)
+    _output_summary(
+            enabled_plugins, disabled_plugins,
+            enabled_optionals, disabled_optionals,
+            output_plugins)
 
     return True
-
 
 ####
 ## Options
 ####
 def _list_cb(option, opt, value, parser):
     """Callback that lets you specify lists of targets."""
-    vals = value.split(',')
+    vals = value.replace(' ','').split(',')
     if vals == ['']:
         vals = []
     if getattr(parser.values, option.dest):
         vals += getattr(parser.values, option.dest)
     setattr(parser.values, option.dest, vals)
 
-def set_options(opt):
+def options(opt):
     opt.tool_options('gnu_dirs')
     opt.tool_options('gcc')
 
@@ -504,17 +496,20 @@ def set_options(opt):
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
 
-def shutdown():
-    if Options.commands['install'] and (
-            Options.options.ldconfig or
-            (Options.options.ldconfig is None and os.geteuid() == 0)
+def shutdown(ctx):
+    if 'install' in Options.commands and (
+            ctx.options.ldconfig or
+            (ctx.options.ldconfig is None and os.geteuid() == 0)
             ):
         ldconfig = '/sbin/ldconfig'
         if os.path.isfile(ldconfig):
-            libprefix = Utils.subst_vars('${PREFIX}/lib', Build.bld.env)
-            try: Utils.cmd_output(ldconfig + ' ' + libprefix)
-            except: pass
+            libprefix = Utils.subst_vars('${PREFIX]/lib', ctx.env)
+            try:
+                import subprocess
+                subprocess.check_output(['ldconfig', 'libprefix'])
+            except:
+                pass
 
-    if Options.options.run_tests:
+    if ctx.options.run_tests:
         os.system(os.path.join(blddir, "default/tests/test_xmmstypes"))
         os.system(os.path.join(blddir, "default/tests/test_server"))

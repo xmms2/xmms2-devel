@@ -1,38 +1,47 @@
 import os
-from logging import warning
+from waflib import Logs
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'shlib', 'perlext')
-    obj.target = 'XMMSClient'
-    obj.includes = '. ../../../.. ../../../include ../../../includepriv'
-    obj.source = """
-        perl_xmmsclient.c
-        XMMSClient.xs
-        XMMSClientPlaylist.xs
-        XMMSClientCollection.xs
-        XMMSClientResult.xs
+    source = """
+    perl_xmmsclient.c
+    XMMSClient.xs
+    XMMSClientPlaylist.xs
+    XMMSClientCollection.xs
+    XMMSClientResult.xs
     """.split()
-    obj.uselib_local = 'xmmsclient'
-    obj.install_path = "${INSTALLDIR_PERL_AUTO}"
-    obj.mac_bundle = True
+
+    bld(features = 'c cshlib perlext',
+        target = 'XMMSClient',
+        includes = '. ../../../.. ../../../include ../../../includepriv',
+        source = source,
+        use = 'xmmsclient',
+        install_path = '${INSTALLDIR_PERL_AUTO}',
+        mac_bundle = bld.env.mac_bundle_enabled
+        )
 
     bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Sync.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Glib.pm')
-    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', 'pm/XMMSClient/Collection.pm')
+    files = """
+    pm/XMMSClient/Sync.pm
+    pm/XMMSClient/Glib.pm
+    pm/XMMSClient/Collection.pm
+    """.split()
+    bld.install_files('${INSTALLDIR_PERL_LIB}/XMMSClient', files)
+
 
 def configure(conf):
     conf.check_tool('perl')
     conf.check_perl_version((5,7,3))
     conf.check_perl_ext_devel()
 
-    if not os.path.commonprefix([conf.env['ARCHDIR_PERL'], conf.env['PREFIX']]).startswith(conf.env['PREFIX']):
-        warning('default perl libdir is not under PREFIX. specify path '
-                + 'manually using --with-perl-archdir if you don\'t want the '
-                + 'perl bindings to be installed to ' + conf.env['ARCHDIR_PERL'])
+    if not os.path.commonprefix([conf.env.ARCHDIR_PERL, conf.env.PREFIX]).startswith(conf.env.PREFIX):
+        Logs.warn("Default perl libdir is not under PREFIX. specify the path "
+                  "manually using --with-perl-archdir if you don't want the "
+                  "perl bindings to be installed to " + conf.env.ARCHDIR_PERL)
 
-    conf.env['INSTALLDIR_PERL_AUTO'] = os.path.join(conf.env['ARCHDIR_PERL'], "auto", "Audio", "XMMSClient")
-    conf.env['INSTALLDIR_PERL_LIB'] = os.path.join(conf.env['ARCHDIR_PERL'], "Audio")
+    conf.env.INSTALLDIR_PERL_AUTO = os.path.join(
+            conf.env.ARCHDIR_PERL, 'auto', 'Audio', 'XmmsClient')
+    conf.env.INSTALLDIR_PERL_LIB = os.path.join(conf.env.ARCHDIR_PERL, "Audio")
 
-def set_options(opt):
+
+def options(opt):
     opt.tool_options('perl')

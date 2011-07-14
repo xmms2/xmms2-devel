@@ -1,5 +1,4 @@
 import os
-import Options
 
 def build(bld):
     if bld.env['xmms_icon']:
@@ -22,14 +21,14 @@ def build(bld):
         bld.install_files("${PIXMAP_DIR}", image)
 
 def configure(conf):
-    if Options.options.pixmapdir is not None:
-        conf.env.PIXMAP_DIR = Options.options.pixmapdir
+    if conf.options.pixmapdir is not None:
+        conf.env.PIXMAP_DIR = conf.options.pixmapdir
     else:
         conf.env.PIXMAP_DIR = os.path.join(conf.env.DATAROOTDIR, "pixmaps")
 
-    if not conf.env["PIXMAP_DIR"]:
-        conf.fatal("No pixmap dir")
+    if not conf.env.PIXMAP_DIR:
+        conf.fatal("No pixmap directory (try --with-pixmap-dir)")
 
-def set_options(opt):
+def options(opt):
     opt.add_option("--with-pixmap-dir", type="string", dest="pixmapdir",
                    help="Specify directory where to install pixmaps")

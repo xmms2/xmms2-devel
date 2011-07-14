@@ -2,21 +2,21 @@ from waftools import tool
 import sys
 
 def build(bld):
-    obj = bld.new_task_gen('cc', 'shlib')
-    obj.target = 'xmmsclient-cf'
-    obj.includes = '../../../.. ../../../include'
-    obj.source = 'xmmsclient-cf.c'
-    obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'CoreFoundation'
-    obj.vnum = '1.0.0'
+    obj = bld(features = 'c cshlib',
+        target = 'xmmsclient-cf',
+        includes = '../../../.. ../../../include',
+        source = 'xmmsclient-cf.c',
+        use = 'xmmsclient CoreFoundation',
+        vnum = '1.0.0'
+        )
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
     if sys.platform != 'darwin':
         conf.fatal("Not supported on this platform")
 
-    conf.env['FRAMEWORK_CoreFoundation'] += ['CoreFoundation']
+    conf.env.FRAMEWORK_CoreFoundation = ['CoreFoundation']
     return True
 
-def set_options(opt):
+def options(opt):
     pass
