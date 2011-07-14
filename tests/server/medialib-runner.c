@@ -516,16 +516,5 @@ xmms_xform_browse (const gchar *url, xmms_error_t *error)
 {
 	return NULL;
 }
-
-xmms_mediainfo_reader_t *
-xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
-{
-	return NULL;
-};
-
-void
-xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
-{
-}
 /* END */
 

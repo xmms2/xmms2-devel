@@ -25,13 +25,12 @@
 typedef struct xmms_medialib_St xmms_medialib_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
-#include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_fetch_info.h"
 #include "xmmspriv/xmms_fetch_spec.h"
 #include <s4.h>
 
-xmms_medialib_t *xmms_medialib_init (xmms_playlist_t *playlist);
+xmms_medialib_t *xmms_medialib_init (void);
 s4_t *xmms_medialib_get_database_backend (xmms_medialib_t *medialib);
 s4_sourcepref_t *xmms_medialib_get_source_preferences (xmms_medialib_t *medialib);
 char *xmms_medialib_uuid (xmms_medialib_t *mlib);

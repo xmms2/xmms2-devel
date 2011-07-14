@@ -106,8 +106,6 @@ struct xmms_playlist_St {
 
 	GMutex *mutex;
 
-	xmms_mediainfo_reader_t *mediainfordr;
-
 	gboolean update_flag;
 	xmms_medialib_t *medialib;
 };
@@ -319,7 +317,7 @@ on_medialib_entry_removed (xmms_object_t *object, xmmsv_t *val, gpointer udata)
  * Initializes a new xmms_playlist_t.
  */
 xmms_playlist_t *
-xmms_playlist_init (void)
+xmms_playlist_init (xmms_medialib_t *medialib)
 {
 	xmms_playlist_t *ret;
 	xmms_config_property_t *val;
@@ -348,10 +346,9 @@ xmms_playlist_init (void)
 	                     on_playlist_updated_pos, ret);
 
 
-	ret->medialib = xmms_medialib_init (ret);
+	xmms_object_ref (medialib);
+	ret->medialib = medialib;
 	ret->colldag = xmms_collection_init (ret);
-	ret->mediainfordr = xmms_mediainfo_reader_start ();
-
 
 	xmms_object_connect (XMMS_OBJECT (ret->medialib),
 	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
@@ -1373,15 +1370,6 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 	return entries;
 }
 
-/** returns pointer to mediainfo reader. */
-xmms_mediainfo_reader_t *
-xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
-{
-	g_return_val_if_fail (playlist, NULL);
-
-	return playlist->mediainfordr;
-}
-
 /** @} */
 
 /** Free the playlist and other memory in the xmms_playlist_t
@@ -1408,7 +1396,6 @@ xmms_playlist_destroy (xmms_object_t *object)
 	                        on_medialib_entry_removed, playlist);
 
 	xmms_object_unref (playlist->colldag);
-	xmms_object_unref (playlist->mediainfordr);
 	xmms_object_unref (playlist->medialib);
 
 	g_mutex_free (playlist->mutex);

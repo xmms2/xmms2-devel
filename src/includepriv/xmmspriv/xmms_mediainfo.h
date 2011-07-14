@@ -20,9 +20,11 @@
 #ifndef __XMMS_MEDIAINFO_H__
 #define __XMMS_MEDIAINFO_H__
 
+#include "xmmspriv/xmms_medialib.h"
+
 typedef struct xmms_mediainfo_reader_St xmms_mediainfo_reader_t;
 
-xmms_mediainfo_reader_t * xmms_mediainfo_reader_start (void);
+xmms_mediainfo_reader_t * xmms_mediainfo_reader_start (xmms_medialib_t *medialib);
 void xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr);
 
 #endif /* __XMMS_MEDIAINFO_H__ */

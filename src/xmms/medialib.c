@@ -80,10 +80,7 @@ static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_sessi
  */
 struct xmms_medialib_St {
 	xmms_object_t object;
-
 	s4_t *s4;
-	/** The current playlist */
-	xmms_playlist_t *playlist;
 	s4_sourcepref_t *default_sp;
 };
 
@@ -124,12 +121,11 @@ xmms_medialib_destroy (xmms_object_t *object)
 /**
  * Initialize the medialib and open the database file.
  *
- * @param playlist the current playlist pointer
  * @returns TRUE if successful and FALSE if there was a problem
  */
 
 xmms_medialib_t *
-xmms_medialib_init (xmms_playlist_t *playlist)
+xmms_medialib_init (void)
 {
 	xmms_config_property_t *cfg;
 	const gchar *indices[] = {
@@ -141,7 +137,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	gchar *path;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
-	medialib->playlist = playlist;
 
 	xmms_medialib_register_ipc_commands (XMMS_OBJECT (medialib));
 
@@ -679,8 +674,6 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 static void
 xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t *error)
 {
-	xmms_mediainfo_reader_t *mr;
-
 	MEDIALIB_BEGIN (medialib);
 	if (id) {
 		xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
@@ -711,10 +704,6 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t 
 		s4_resultset_free (set);
 	}
 	MEDIALIB_COMMIT ();
-
-	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
-	xmms_mediainfo_reader_wakeup (mr);
-
 }
 
 static gint
@@ -841,24 +830,19 @@ xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path,
 	xmmsv_coll_unref (xmms_medialib_add_recursive (medialib, path, error));
 }
 
-static xmms_medialib_entry_t
+static gboolean
 xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
                                 guint32 id,
                                 const char *url,
                                 xmms_error_t *error)
 {
-	xmms_mediainfo_reader_t *mr;
-
 	if (!xmms_medialib_entry_property_set_str (session, id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url)) {
-		return 0;
+		return FALSE;
 	}
 
 	xmms_medialib_entry_status_set (session, id, XMMS_MEDIALIB_ENTRY_STATUS_NEW);
-	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
-	xmms_mediainfo_reader_wakeup (mr);
 
-	return 1;
-
+	return TRUE;
 }
 
 /**

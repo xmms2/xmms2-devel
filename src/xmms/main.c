@@ -37,6 +37,7 @@
 #include "xmmspriv/xmms_checkroot.h"
 #include "xmmspriv/xmms_thread_name.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_mediainfo.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_log.h"
@@ -411,7 +412,9 @@ main (int argc, char **argv)
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	int loglevel = 1;
+	xmms_medialib_t *medialib;
 	xmms_playlist_t *playlist;
+	xmms_mediainfo_reader_t *mediainfo_reader;
 	gchar default_path[XMMS_PATH_MAX + 16], *tmp;
 	gboolean verbose = FALSE;
 	gboolean quiet = FALSE;
@@ -540,7 +543,9 @@ main (int argc, char **argv)
 		return 1;
 	}
 
-	playlist = xmms_playlist_init ();
+	medialib = xmms_medialib_init ();
+	mediainfo_reader = xmms_mediainfo_reader_start (medialib);
+	playlist = xmms_playlist_init (medialib);
 	xform_obj = xmms_xform_object_init ();
 	bindata_obj = xmms_bindata_init ();
 

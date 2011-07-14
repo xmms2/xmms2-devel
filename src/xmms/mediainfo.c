@@ -52,6 +52,8 @@ struct xmms_mediainfo_reader_St {
 	GCond *cond;
 
 	gboolean running;
+
+	xmms_medialib_t *medialib;
 };
 
 static void xmms_mediainfo_reader_stop (xmms_object_t *o);
@@ -59,12 +61,18 @@ static gpointer xmms_mediainfo_reader_thread (gpointer data);
 
 #include "mediainfo_ipc.c"
 
-/**
-  * Start a new mediainfo reader thread
-  */
+static void
+on_medialib_entry_added (xmms_object_t *object, xmmsv_t *val, gpointer udata)
+{
+	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) udata;
+	xmms_mediainfo_reader_wakeup (mrt);
+}
 
+/**
+ * Start the mediainfo reader thread
+ */
 xmms_mediainfo_reader_t *
-xmms_mediainfo_reader_start (void)
+xmms_mediainfo_reader_start (xmms_medialib_t *medialib)
 {
 	xmms_mediainfo_reader_t *mrt;
 
@@ -78,13 +86,20 @@ xmms_mediainfo_reader_start (void)
 	mrt->running = TRUE;
 	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, TRUE, NULL);
 
+	xmms_object_ref (medialib);
+	mrt->medialib = medialib;
+
+
+	xmms_object_connect (XMMS_OBJECT (mrt->medialib),
+	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
+	                     on_medialib_entry_added, mrt);
+
 	return mrt;
 }
 
 /**
   * Kill the mediainfo reader thread
   */
-
 static void
 xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
@@ -101,6 +116,13 @@ xmms_mediainfo_reader_stop (xmms_object_t *o)
 
 	g_cond_free (mir->cond);
 	g_mutex_free (mir->mutex);
+
+
+	xmms_object_disconnect (XMMS_OBJECT (mir->medialib),
+	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
+	                        on_medialib_entry_added, mir);
+
+	xmms_object_unref (mir->medialib);
 }
 
 /**
@@ -150,7 +172,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		xmms_medialib_session_t *session;
 		xmms_xform_t *xform;
 
-		session = xmms_medialib_session_begin (NULL);
+		session = xmms_medialib_session_begin (mrt->medialib);
 		entry = xmms_medialib_entry_not_resolved_get (session);
 		XMMS_DBG ("got %d as not resolved", entry);
 

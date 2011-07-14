@@ -41,14 +41,14 @@ struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
 #include "xmms/xmms_error.h"
-#include "xmms/xmms_medialib.h"
+#include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_mediainfo.h"
 
 /*
  * Public functions
  */
 
-xmms_playlist_t * xmms_playlist_init (void);
+xmms_playlist_t * xmms_playlist_init (xmms_medialib_t *medialib);
 
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
@@ -57,9 +57,6 @@ GList * xmms_playlist_list (xmms_playlist_t *playlist, const gchar *plname, xmms
 
 void xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
 void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
-
-xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
-
 
 GTree *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, xmms_medialib_entry_t id, const gchar *plname);
 void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict);
