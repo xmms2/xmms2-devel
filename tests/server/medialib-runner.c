@@ -511,18 +511,6 @@ main (gint argc, gchar **argv)
 
 
 /* START: Stub some crap so we don't have to pull in the whole daemon */
-void
-xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
-                            guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err)
-{
-}
-
-void
-xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname,
-                         xmms_medialib_entry_t file, xmms_error_t *err)
-{
-}
-
 GList *
 xmms_xform_browse (const gchar *url, xmms_error_t *error)
 {

@@ -819,10 +819,28 @@ static void
 xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar *plname, gint32 pos,
                               const gchar *path, xmms_error_t *err)
 {
-	/* we actually just call the medialib function, but keep
-	 * the ipc method here for not confusing users / developers
-	 */
-	xmms_medialib_insert_recursive (playlist->medialib, plname, pos, path, err);
+	xmmsv_coll_t *idlist;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *list;
+
+	idlist = xmms_medialib_add_recursive (playlist->medialib, path, err);
+	list = xmmsv_coll_idlist_get (idlist);
+
+	xmmsv_get_list_iter (list, &it);
+	xmmsv_list_iter_last (it);
+	while (xmmsv_list_iter_valid (it)) {
+		xmms_medialib_entry_t entry;
+		xmmsv_t *value;
+
+		xmmsv_list_iter_entry (it, &value);
+		xmmsv_get_int (value, &entry);
+
+		xmms_playlist_insert_entry (playlist, plname, pos, entry, err);
+
+		xmmsv_list_iter_prev (it);
+	}
+
+	xmmsv_coll_unref (idlist);
 }
 
 /**
@@ -959,10 +977,26 @@ static void
 xmms_playlist_client_radd (xmms_playlist_t *playlist, const gchar *plname,
                            const gchar *path, xmms_error_t *err)
 {
-	/* we actually just call the medialib function, but keep
-	 * the ipc method here for not confusing users / developers
-	 */
-	xmms_medialib_add_recursive (playlist->medialib, plname, path, err);
+	xmmsv_coll_t *idlist;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *list;
+
+	idlist = xmms_medialib_add_recursive (playlist->medialib, path, err);
+	list = xmmsv_coll_idlist_get (idlist);
+
+	xmmsv_get_list_iter (list, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		xmms_medialib_entry_t entry;
+		xmmsv_t *value;
+
+		xmmsv_list_iter_entry (it, &value);
+		xmmsv_get_int (value, &entry);
+
+		xmms_playlist_add_entry (playlist, plname, entry, err);
+
+		xmmsv_list_iter_next (it);
+	}
+	xmmsv_coll_unref (idlist);
 }
 
 /** Adds a xmms_medialib_entry to the playlist.

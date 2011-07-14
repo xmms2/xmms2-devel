@@ -60,8 +60,7 @@ gboolean xmms_medialib_decode_url (char *url);
 
 gboolean xmms_medialib_check_id (xmms_medialib_session_t *s, xmms_medialib_entry_t entry);
 
-void xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *playlist, const gchar *path, xmms_error_t *error);
-void xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist, gint32 pos, const gchar *path, xmms_error_t *error);
+xmmsv_coll_t *xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
 
 xmms_medialib_entry_t xmms_medialib_query_random_id (xmms_medialib_session_t *s, xmmsv_coll_t *coll);
 

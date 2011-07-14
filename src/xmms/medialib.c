@@ -606,84 +606,6 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 	s4_val_free (song_id);
 }
 
-
-static void
-process_file (xmms_medialib_session_t *session,
-              const gchar *playlist,
-              gint32 pos,
-              const gchar *path,
-              xmms_error_t *error)
-{
-	xmms_medialib_entry_t entry;
-
-	entry = xmms_medialib_entry_new_encoded (session, path, error);
-
-	if (entry && playlist != NULL) {
-		if (pos >= 0) {
-			xmms_playlist_insert_entry (medialib->playlist,
-			                            playlist, pos, entry, error);
-		} else {
-			xmms_playlist_add_entry (medialib->playlist,
-			                         playlist, entry, error);
-		}
-	}
-}
-
-static gint
-cmp_val (gconstpointer a, gconstpointer b)
-{
-	xmmsv_t *v1, *v2;
-	const gchar *s1, *s2;
-	v1 = (xmmsv_t *) a;
-	v2 = (xmmsv_t *) b;
-	if (xmmsv_get_type (v1) != XMMSV_TYPE_DICT)
-		return 0;
-	if (xmmsv_get_type (v2) != XMMSV_TYPE_DICT)
-		return 0;
-
-	xmmsv_dict_entry_get_string (v1, "path", &s1);
-	xmmsv_dict_entry_get_string (v2, "path", &s2);
-
-	return strcmp (s1, s2);
-}
-
-/* code ported over from CLI's "radd" command. */
-/* note that the returned file list is reverse-sorted! */
-static gboolean
-process_dir (const gchar *directory,
-             GList **ret,
-             xmms_error_t *error)
-{
-	GList *list;
-
-	list = xmms_xform_browse (directory, error);
-	if (!list) {
-		return FALSE;
-	}
-
-	list = g_list_sort (list, cmp_val);
-
-	while (list) {
-		xmmsv_t *val = list->data;
-		const gchar *str;
-		gint isdir;
-
-		xmmsv_dict_entry_get_string (val, "path", &str);
-		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
-
-		if (isdir == 1) {
-			process_dir (str, ret, error);
-		} else {
-			*ret = g_list_prepend (*ret, g_strdup (str));
-		}
-
-		xmmsv_unref (val);
-		list = g_list_delete_link (list, list);
-	}
-
-	return TRUE;
-}
-
 /**
  * Check if a (source, key) tuple can be derived from a re-scan of the media.
  *
@@ -795,32 +717,86 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib, gint32 id, xmms_error_t 
 
 }
 
-/* Recursively add entries under the given path to the medialib,
- * optionally adding them to a playlist if the playlist argument is
- * not NULL.
- */
-void
-xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *playlist,
-                             const gchar *path, xmms_error_t *error)
+static gint
+compare_browse_results (gconstpointer a, gconstpointer b)
 {
-	/* Just called insert with negative pos to append */
-	xmms_medialib_insert_recursive (medialib, playlist, -1, path, error);
+	const gchar *s1, *s2;
+	xmmsv_t *v1, *v2;
+
+	v1 = (xmmsv_t *) a;
+	v2 = (xmmsv_t *) b;
+
+	if (xmmsv_get_type (v1) != XMMSV_TYPE_DICT)
+		return 0;
+
+	if (xmmsv_get_type (v2) != XMMSV_TYPE_DICT)
+		return 0;
+
+	xmmsv_dict_entry_get_string (v1, "path", &s1);
+	xmmsv_dict_entry_get_string (v2, "path", &s2);
+
+	return strcmp (s1, s2);
 }
 
-/* Recursively adding entries under the given path to the medialib,
- * optionally insert them into a playlist at a given position if the
- * playlist argument is not NULL. If the position is negative, entries
- * are appended to the playlist.
+/**
+ * Recursively scan a directory for media files.
+ *
+ * @return a reverse sorted list of encoded urls
  */
-void
-xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist,
-                                gint32 pos, const gchar *path,
-                                xmms_error_t *error)
+static gboolean
+process_dir (const gchar *directory, GList **ret,
+             xmms_error_t *error)
 {
+	GList *list;
+
+	list = xmms_xform_browse (directory, error);
+	if (!list) {
+		return FALSE;
+	}
+
+	list = g_list_sort (list, compare_browse_results);
+
+	while (list) {
+		xmmsv_t *val = list->data;
+		const gchar *str;
+		gint isdir;
+
+		xmmsv_dict_entry_get_string (val, "path", &str);
+		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
+
+		if (isdir == 1) {
+			process_dir (str, ret, error);
+		} else {
+			*ret = g_list_prepend (*ret, g_strdup (str));
+		}
+
+		xmmsv_unref (val);
+		list = g_list_delete_link (list, list);
+	}
+
+	return TRUE;
+}
+
+/**
+ * Recursively add files under a path to the media library.
+ *
+ * @param medialib the medialib object
+ * @param path the directory to scan for files
+ * @param error If an error occurs, it will be stored in there.
+ *
+ * @return an IDLIST collection with the added entries
+ */
+xmmsv_coll_t *
+xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path,
+                             xmms_error_t *error)
+{
+	xmmsv_coll_t *entries;
 	GList *first, *list = NULL, *n;
 
-	g_return_if_fail (medialib);
-	g_return_if_fail (path);
+	entries = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+
+	g_return_val_if_fail (medialib, entries);
+	g_return_val_if_fail (path, entries);
 
 	/* Allocate our first list node manually here. The following call
 	 * to process_dir() will prepend all other nodes, so afterwards
@@ -838,22 +814,31 @@ xmms_medialib_insert_recursive (xmms_medialib_t *medialib, const gchar *playlist
 	 * g_list_last() call now. Increase pos each time to retain order.
 	 */
 	for (n = first->prev; n; n = g_list_previous (n)) {
-		SESSION (process_file (session, playlist, pos, n->data, error));
-		if (pos >= 0)
-			pos++;
+		xmms_medialib_entry_t entry;
+		const gchar *url = n->data;
+
+		SESSION (entry = xmms_medialib_entry_new_encoded (session, url, error));
+		if (!entry) {
+			continue;
+		}
+
+		xmmsv_coll_idlist_append (entries, entry);
+
 		g_free (n->data);
 	}
 
 	g_list_free (list);
 
 	XMMS_DBG ("and we are done!");
+
+	return entries;
 }
 
 static void
 xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path,
                                   xmms_error_t *error)
 {
-	xmms_medialib_add_recursive (medialib, NULL, path, error);
+	xmmsv_coll_unref (xmms_medialib_add_recursive (medialib, path, error));
 }
 
 static xmms_medialib_entry_t
