@@ -84,16 +84,6 @@ struct xmms_medialib_St {
 	s4_sourcepref_t *default_sp;
 };
 
-
-/**
-  * Ok, so the functions are written with reentrency in mind, but
-  * we choose to have a global medialib object here. It will be
-  * much easier, and I don't see the real use of multiple medialibs
-  * right now. This could be changed by removing this global one
-  * and altering the function callers...
-  */
-static xmms_medialib_t *medialib;
-
 static const gchar *source_pref[] = {
 	"server",
 	"client/*",
@@ -128,13 +118,15 @@ xmms_medialib_t *
 xmms_medialib_init (void)
 {
 	xmms_config_property_t *cfg;
+	xmms_medialib_t *medialib;
+	const gchar *medialib_path;
+	gchar *path;
+
 	const gchar *indices[] = {
 		XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
 		XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
 		NULL
 	};
-	const gchar *medialib_path;
-	gchar *path;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 
@@ -271,7 +263,7 @@ xmms_medialib_database_open (const gchar *database_name,
 }
 
 char *
-xmms_medialib_uuid (xmms_medialib_t *mlib)
+xmms_medialib_uuid (xmms_medialib_t *medialib)
 {
 	return s4_get_uuid_string (medialib->s4);
 }

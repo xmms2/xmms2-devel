@@ -568,7 +568,7 @@ main (int argc, char **argv)
 		                "output.plugin config variable to something useful");
 	}
 
-	mainobj->output = xmms_output_new (o_plugin, playlist);
+	mainobj->output = xmms_output_new (o_plugin, playlist, medialib);
 	if (!mainobj->output) {
 		xmms_log_fatal ("Failed to create output object!");
 	}

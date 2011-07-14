@@ -348,7 +348,7 @@ xmms_playlist_init (xmms_medialib_t *medialib)
 
 	xmms_object_ref (medialib);
 	ret->medialib = medialib;
-	ret->colldag = xmms_collection_init (ret);
+	ret->colldag = xmms_collection_init (ret, medialib);
 
 	xmms_object_connect (XMMS_OBJECT (ret->medialib),
 	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,

@@ -226,6 +226,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	gboolean matches, ordered = FALSE;
 	xmmsv_t *ret, *value;
 	xmms_error_t err;
+	xmms_medialib_t *medialib;
 
 	g_debug ("Running test: %s", name);
 
@@ -360,6 +361,7 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 
 	xmmsv_get_list_iter (databases, &it);
 	while (xmmsv_list_iter_valid (it)) {
+		xmms_medialib_t *medialib;
 		const gchar *filename;
 
 		xmmsv_list_iter_entry_string (it, &filename);

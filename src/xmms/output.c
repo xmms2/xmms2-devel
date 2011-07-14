@@ -131,6 +131,7 @@ struct xmms_output_St {
 	guint status;
 
 	xmms_playlist_t *playlist;
+	xmms_medialib_t *medialib;
 
 	/** Supported formats */
 	GList *format_list;
@@ -445,9 +446,9 @@ xmms_output_filler (void *arg)
 				continue;
 			}
 
-			chain = xmms_xform_chain_setup (entry, output->format_list, FALSE);
+			chain = xmms_xform_chain_setup (output->medialib, entry, output->format_list, FALSE);
 			if (!chain) {
-				MEDIALIB_BEGIN (NULL);
+				MEDIALIB_BEGIN (output->medialib);
 				if (xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
 					xmms_medialib_entry_remove (session, entry);
 				} else {
@@ -922,7 +923,7 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_output_plugin_t *new_plug
  * Allocate a new #xmms_output_t
  */
 xmms_output_t *
-xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
+xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist, xmms_medialib_t *medialib)
 {
 	xmms_output_t *output;
 	xmms_config_property_t *prop;
@@ -935,6 +936,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
 
 	output->playlist = playlist;
+	output->medialib = medialib;
 
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();

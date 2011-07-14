@@ -1,6 +1,6 @@
 
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_ringbuf.h"
 #include "xmmspriv/xmms_xform.h"
 
@@ -114,11 +114,11 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 }
 
 static xmms_xform_t *
-xmms_ringbuf_xform_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
+xmms_ringbuf_xform_new (xmms_xform_t *prev, xmms_medialib_t *medialib, xmms_medialib_entry_t entry, GList *gt)
 {
 	xmms_xform_t *xform;
 
-	xform = xmms_xform_new (ringbuf_plugin, prev, entry, gt);
+	xform = xmms_xform_new (ringbuf_plugin, prev, medialib, entry, gt);
 
 	return xform;
 }

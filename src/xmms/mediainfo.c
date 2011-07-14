@@ -212,7 +212,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 			num--;
 		}
 
-		xform = xmms_xform_chain_setup_session (session, entry, goal_format, TRUE);
+		xform = xmms_xform_chain_setup_session (mrt->medialib, session, entry,
+		                                        goal_format, TRUE);
 
 		if (!xform) {
 			if (prev_status == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {

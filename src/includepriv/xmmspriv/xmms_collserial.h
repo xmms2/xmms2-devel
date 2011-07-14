@@ -39,8 +39,7 @@
  * Public functions
  */
 
-void xmms_collection_dag_restore (xmms_coll_dag_t *dag);
-void xmms_collection_dag_save (xmms_coll_dag_t *dag);
-
+void xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid);
+void xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid);
 
 #endif

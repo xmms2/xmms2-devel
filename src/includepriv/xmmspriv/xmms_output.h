@@ -29,7 +29,7 @@
  */
 
 
-xmms_output_t *xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist);
+xmms_output_t *xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist, xmms_medialib_t *medialib);
 
 void xmms_output_flush (xmms_output_t *output);
 

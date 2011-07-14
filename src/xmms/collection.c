@@ -195,16 +195,17 @@ coll_sync_cb (xmms_object_t *object, xmmsv_t *val, gpointer udata)
  * @returns  The newly allocated collection DAG.
  */
 xmms_coll_dag_t *
-xmms_collection_init (xmms_playlist_t *playlist)
+xmms_collection_init (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
 {
-	gint i;
-	xmms_coll_dag_t *ret;
 	xmms_stream_type_t *f;
+	xmms_coll_dag_t *ret;
+	gchar *uuid;
+	gint i;
 
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->playlist = playlist;
-	ret->medialib = NULL;
+	ret->medialib = medialib;
 
 	xmms_coll_sync_init (ret);
 
@@ -234,7 +235,9 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	                     coll_sync_cb, ret);
 
 
-	xmms_collection_dag_restore (ret);
+	uuid = xmms_medialib_uuid (medialib);
+	xmms_collection_dag_restore (ret, uuid);
+	g_free (uuid);
 
 	f = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
 	                           XMMS_STREAM_TYPE_MIMETYPE,
@@ -243,12 +246,6 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	global_stream_type = g_list_prepend (NULL, f);
 
 	return ret;
-}
-
-xmms_medialib_t *
-xmms_collection_get_medialib (xmms_coll_dag_t *dag)
-{
-	return dag->medialib;
 }
 
 static void
@@ -294,7 +291,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	const gchar *buf;
 
 	/* we don't want any effects for playlist, so just report we're rehashing */
-	xform = xmms_xform_chain_setup_url (0, path, global_stream_type, TRUE);
+	xform = xmms_xform_chain_setup_url (dag->medialib, 0, path, global_stream_type, TRUE);
 
 	if (!xform) {
 		xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "We can't handle this type of playlist or URL");
@@ -533,13 +530,17 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 void
 xmms_collection_sync (xmms_coll_dag_t *dag)
 {
+	gchar *uuid;
+
 	g_return_if_fail (dag);
 
+	uuid = xmms_medialib_uuid (dag->medialib);
+
 	g_mutex_lock (dag->mutex);
-
-	xmms_collection_dag_save (dag);
-
+	xmms_collection_dag_save (dag, uuid);
 	g_mutex_unlock (dag->mutex);
+
+	g_free (uuid);
 }
 
 
@@ -1028,13 +1029,17 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 static void
 xmms_collection_destroy (xmms_object_t *object)
 {
-	gint i;
 	xmms_coll_dag_t *dag = (xmms_coll_dag_t *)object;
+	gchar *uuid;
+	gint i;
 
 	g_return_if_fail (dag);
 
 	xmms_coll_sync_shutdown ();
-	xmms_collection_dag_save (dag);
+
+	uuid = xmms_medialib_uuid (dag->medialib);
+	xmms_collection_dag_save (dag, uuid);
+	g_free (uuid);
 
 	g_mutex_free (dag->mutex);
 

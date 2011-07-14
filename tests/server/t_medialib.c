@@ -40,6 +40,8 @@ static void xmms_mock_entry (gint tracknr, const gchar *artist,
 		CU_ASSERT_EQUAL (expected, val); \
 	} while (0);
 
+static xmms_medialib_t *medialib;
+
 SETUP (mlib) {
 	g_thread_init (0);
 	const gchar *indices[] = {
