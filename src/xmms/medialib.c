@@ -727,8 +727,8 @@ compare_browse_results (gconstpointer a, gconstpointer b)
  * @return a reverse sorted list of encoded urls
  */
 static gboolean
-process_dir (const gchar *directory, GList **ret,
-             xmms_error_t *error)
+process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
+             const gchar *directory, xmms_error_t *error)
 {
 	GList *list;
 
@@ -748,9 +748,13 @@ process_dir (const gchar *directory, GList **ret,
 		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
 
 		if (isdir == 1) {
-			process_dir (str, ret, error);
+			process_dir (medialib, entries, str, error);
 		} else {
-			*ret = g_list_prepend (*ret, g_strdup (str));
+			xmms_medialib_entry_t entry;
+			SESSION (entry = xmms_medialib_entry_new_encoded (session, str, error));
+			if (entry) {
+				xmmsv_coll_idlist_append (entries, entry);
+			}
 		}
 
 		xmmsv_unref (val);
@@ -774,45 +778,13 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path,
                              xmms_error_t *error)
 {
 	xmmsv_coll_t *entries;
-	GList *first, *list = NULL, *n;
 
 	entries = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 
 	g_return_val_if_fail (medialib, entries);
 	g_return_val_if_fail (path, entries);
 
-	/* Allocate our first list node manually here. The following call
-	 * to process_dir() will prepend all other nodes, so afterwards
-	 * "first" will point to the last node of the list... see below.
-	 */
-	first = list = g_list_alloc ();
-
-	process_dir (path, &list, error);
-
-	XMMS_DBG ("taking the transaction!");
-
-	/* We now want to iterate the list in the order in which the nodes
-	 * were added, ie in reverse order. Thankfully we stored a pointer
-	 * to the last node in the list before, which saves us an expensive
-	 * g_list_last() call now. Increase pos each time to retain order.
-	 */
-	for (n = first->prev; n; n = g_list_previous (n)) {
-		xmms_medialib_entry_t entry;
-		const gchar *url = n->data;
-
-		SESSION (entry = xmms_medialib_entry_new_encoded (session, url, error));
-		if (!entry) {
-			continue;
-		}
-
-		xmmsv_coll_idlist_append (entries, entry);
-
-		g_free (n->data);
-	}
-
-	g_list_free (list);
-
-	XMMS_DBG ("and we are done!");
+	process_dir (medialib, entries, path, error);
 
 	return entries;
 }
