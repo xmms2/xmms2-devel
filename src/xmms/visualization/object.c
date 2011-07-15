@@ -134,6 +134,8 @@ xmms_visualization_new (xmms_output_t *output)
 static void
 xmms_visualization_destroy (xmms_object_t *object)
 {
+	XMMS_DBG ("Deactivating visualization object.");
+
 	xmms_object_unref (vis->output);
 
 	/* TODO: assure that the xform is already dead! */

@@ -63,8 +63,6 @@ static GList *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, x
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static void spawn_script_setup (gpointer data);
-static xmms_xform_object_t *xform_obj;
-static xmms_bindata_t *bindata_obj;
 
 #include "main_ipc.c"
 
@@ -87,8 +85,13 @@ static xmms_bindata_t *bindata_obj;
  */
 struct xmms_main_St {
 	xmms_object_t object;
-	xmms_output_t *output;
-	xmms_visualization_t *vis;
+	xmms_output_t *output_object;
+	xmms_bindata_t *bindata_object;
+	xmms_medialib_t *medialib_object;
+	xmms_playlist_t *playlist_object;
+	xmms_xform_object_t *xform_object;
+	xmms_mediainfo_reader_t *mediainfo_object;
+	xmms_visualization_t *visualization_object;
 	time_t starttime;
 };
 
@@ -243,7 +246,7 @@ change_output (xmms_object_t *object, xmmsv_t *_data, gpointer userdata)
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
 	const gchar *outname;
 
-	if (!mainobj->output)
+	if (!mainobj->output_object)
 		return;
 
 	outname = xmms_config_property_get_string ((xmms_config_property_t *) object);
@@ -254,7 +257,7 @@ change_output (xmms_object_t *object, xmmsv_t *_data, gpointer userdata)
 	if (!plugin) {
 		xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something useful");
 	} else {
-		if (!xmms_output_plugin_switch (mainobj->output, plugin)) {
+		if (!xmms_output_plugin_switch (mainobj->output_object, plugin)) {
 			xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something useful");
 		}
 	}
@@ -277,16 +280,19 @@ xmms_main_destroy (xmms_object_t *object)
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
 	arg.args = xmmsv_new_list ();
-	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output),
+	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output_object),
 	                      XMMS_IPC_CMD_STOP, &arg);
 	xmmsv_unref (arg.args);
 
 	g_usleep (G_USEC_PER_SEC); /* wait for the output thread to end */
 
-	xmms_object_unref (mainobj->vis);
-	xmms_object_unref (mainobj->output);
-
-	xmms_object_unref (xform_obj);
+	xmms_object_unref (mainobj->output_object);
+	xmms_object_unref (mainobj->bindata_object);
+	xmms_object_unref (mainobj->medialib_object);
+	xmms_object_unref (mainobj->playlist_object);
+	xmms_object_unref (mainobj->xform_object);
+	xmms_object_unref (mainobj->mediainfo_object);
+	xmms_object_unref (mainobj->visualization_object);
 
 	xmms_config_save ();
 
@@ -412,9 +418,6 @@ main (int argc, char **argv)
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	int loglevel = 1;
-	xmms_medialib_t *medialib;
-	xmms_playlist_t *playlist;
-	xmms_mediainfo_reader_t *mediainfo_reader;
 	gchar default_path[XMMS_PATH_MAX + 16], *tmp;
 	gboolean verbose = FALSE;
 	gboolean quiet = FALSE;
@@ -543,13 +546,14 @@ main (int argc, char **argv)
 		return 1;
 	}
 
-	medialib = xmms_medialib_init ();
-	mediainfo_reader = xmms_mediainfo_reader_start (medialib);
-	playlist = xmms_playlist_init (medialib);
-	xform_obj = xmms_xform_object_init ();
-	bindata_obj = xmms_bindata_init ();
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
+
+	mainobj->medialib_object = xmms_medialib_init ();
+	mainobj->mediainfo_object = xmms_mediainfo_reader_start (mainobj->medialib_object);
+	mainobj->playlist_object = xmms_playlist_init (mainobj->medialib_object);
+	mainobj->xform_object = xmms_xform_object_init ();
+	mainobj->bindata_object = xmms_bindata_init ();
 
 	/* find output plugin. */
 	cv = xmms_config_property_register ("output.plugin",
@@ -562,18 +566,20 @@ main (int argc, char **argv)
 
 	outname = xmms_config_property_get_string (cv);
 	xmms_log_info ("Using output plugin: %s", outname);
-	o_plugin = (xmms_output_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+	o_plugin = (xmms_output_plugin_t *) xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 	if (!o_plugin) {
 		xmms_log_error ("Baaaaad output plugin, try to change the"
 		                "output.plugin config variable to something useful");
 	}
 
-	mainobj->output = xmms_output_new (o_plugin, playlist, medialib);
-	if (!mainobj->output) {
+	mainobj->output_object = xmms_output_new (o_plugin,
+	                                          mainobj->playlist_object,
+	                                          mainobj->medialib_object);
+	if (!mainobj->output_object) {
 		xmms_log_fatal ("Failed to create output object!");
 	}
 
-	mainobj->vis = xmms_visualization_new (mainobj->output);
+	mainobj->visualization_object = xmms_visualization_new (mainobj->output_object);
 
 	if (status_fd != -1) {
 		write (status_fd, "+", 1);

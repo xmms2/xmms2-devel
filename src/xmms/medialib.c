@@ -100,6 +100,8 @@ xmms_medialib_destroy (xmms_object_t *object)
 {
 	xmms_medialib_t *mlib = (xmms_medialib_t *) object;
 
+	XMMS_DBG ("Deactivating medialib object.");
+
 	s4_sourcepref_unref (mlib->default_sp);
 	s4_close (mlib->s4);
 

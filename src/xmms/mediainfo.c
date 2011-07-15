@@ -105,6 +105,8 @@ xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
 	xmms_mediainfo_reader_t *mir = (xmms_mediainfo_reader_t *) o;
 
+	XMMS_DBG ("Deactivating mediainfo object.");
+
 	g_mutex_lock (mir->mutex);
 	mir->running = FALSE;
 	g_cond_signal (mir->cond);

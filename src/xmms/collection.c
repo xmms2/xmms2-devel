@@ -1033,6 +1033,8 @@ xmms_collection_destroy (xmms_object_t *object)
 	gchar *uuid;
 	gint i;
 
+	XMMS_DBG ("Deactivating collection object.");
+
 	g_return_if_fail (dag);
 
 	xmms_coll_sync_shutdown ();

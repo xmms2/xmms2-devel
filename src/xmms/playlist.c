@@ -345,7 +345,6 @@ xmms_playlist_init (xmms_medialib_t *medialib)
 	                     XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
 	                     on_playlist_updated_pos, ret);
 
-
 	xmms_object_ref (medialib);
 	ret->medialib = medialib;
 	ret->colldag = xmms_collection_init (ret, medialib);
@@ -1381,10 +1380,11 @@ static void
 xmms_playlist_destroy (xmms_object_t *object)
 {
 	xmms_config_property_t *val;
-	xmms_playlist_t *playlist = (xmms_playlist_t *)object;
+	xmms_playlist_t *playlist = (xmms_playlist_t *) object;
+
+	XMMS_DBG ("Deactivating playlist object");
 
 	g_return_if_fail (playlist);
-
 
 	val = xmms_config_lookup ("playlist.repeat_one");
 	xmms_config_property_callback_remove (val, on_playlist_r_one_changed, playlist);

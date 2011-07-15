@@ -648,6 +648,8 @@ xmms_config_destroy (xmms_object_t *object)
 {
 	xmms_config_t *config = (xmms_config_t *)object;
 
+	XMMS_DBG ("Deactivating config object.");
+
 	g_mutex_free (config->mutex);
 
 	g_tree_destroy (config->properties);

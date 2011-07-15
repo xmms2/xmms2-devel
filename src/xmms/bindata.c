@@ -102,6 +102,8 @@ xmms_bindata_init ()
 static void
 xmms_bindata_destroy (xmms_object_t *obj)
 {
+	XMMS_DBG ("Deactivating bindata object.");
+
 	xmms_bindata_unregister_ipc_commands ();
 }
 

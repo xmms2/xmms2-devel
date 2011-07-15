@@ -853,6 +853,8 @@ xmms_output_destroy (xmms_object_t *object)
 {
 	xmms_output_t *output = (xmms_output_t *)object;
 
+	XMMS_DBG ("Deactivating output object.");
+
 	output->monitor_volume_running = FALSE;
 	if (output->monitor_volume_thread) {
 		g_thread_join (output->monitor_volume_thread);
