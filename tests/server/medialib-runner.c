@@ -34,7 +34,7 @@
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
 
-typedef void (*xmms_directory_predicate)(const gchar *filename, xmmsv_t *list);
+typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
 
 typedef void (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
                                     xmmsv_t *content, xmmsv_coll_t *coll,
@@ -50,8 +50,8 @@ typedef struct xmms_test_args_St {
 		FORMAT_PRETTY,
 		FORMAT_CSV
 	} format;
-	const gchar *database_dir;
-	const gchar *testcase_dir;
+	const gchar *database_path;
+	const gchar *testcase_path;
 	gboolean debug;
 } xmms_test_args_t;
 
@@ -83,31 +83,36 @@ simple_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 static xmmsv_t *
-scan_directory (const gchar *directory, xmms_directory_predicate predicate)
+scan_path (const gchar *path, xmms_path_predicate predicate)
 {
 	const gchar *filename;
 	xmmsv_t *list;
 	GDir *dir;
 
-	g_debug ("Scanning directory: %s", directory);
+	g_debug ("Scanning path: %s", path);
 
 	list = xmmsv_new_list ();
 
-	dir = g_dir_open (directory, 0, NULL);
+	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
+		predicate (path, list);
+		return list;
+	}
+
+	dir = g_dir_open (path, 0, NULL);
 	if (dir == NULL) {
-		g_print ("Could not open directory: %s\n", directory);
+		g_print ("Could not open directory: %s\n", path);
 		exit (EXIT_FAILURE);
 	}
 
 	while ((filename = g_dir_read_name (dir)) != NULL) {
-		gchar *path;
+		gchar *filepath;
 
-		path = g_build_filename (directory, filename, NULL);
+		filepath = g_build_filename (path, filename, NULL);
 
-		g_debug ("Found file: %s", path);
-		predicate (path, list);
+		g_debug ("Found file: %s", filepath);
+		predicate (filepath, list);
 
-		g_free (path);
+		g_free (filepath);
 	}
 
 	g_dir_close (dir);
@@ -221,7 +226,7 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 static void
 run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
                xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
-               gint format)
+               gint format, const gchar *datasetname)
 {
 	gboolean matches, ordered = FALSE;
 	xmmsv_t *ret, *value;
@@ -395,8 +400,8 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 	const gchar *format = "pretty";
 	GError *error = NULL;
 
-	args->database_dir = "tests/server/databases";
-	args->testcase_dir = "tests/server/medialib";
+	args->database_path = "tests/server/databases";
+	args->testcase_path = "tests/server/medialib";
 
 	const GOptionEntry options[] = {
 		{
@@ -410,14 +415,14 @@ parse_command_line (gint argc, gchar **argv, xmms_test_args_t *args)
 			"'csv' or 'pretty' (default).", "<format>"
 		},
 		{
-			"medialib-directory", 'm', 0,
-			G_OPTION_ARG_FILENAME, &args->database_dir,
-			"Scan <directory> for media libraries.", "<directory>"
+			"medialib-path", 'm', 0,
+			G_OPTION_ARG_FILENAME, &args->database_path,
+			"Scan <path> for 1..n media libraries.", "<path>"
 		},
 		{
-			"testcase-directory", 't', 0,
-			G_OPTION_ARG_FILENAME, &args->testcase_dir,
-			"Scan <directory> for test cases.", "<directory>"
+			"testcase-path", 't', 0,
+			G_OPTION_ARG_FILENAME, &args->testcase_path,
+			"Scan <path> for 1..n test cases.", "<path>"
 		},
 		{
 			"debug", 'd', 0,
@@ -475,10 +480,10 @@ main (gint argc, gchar **argv)
 
 	g_debug ("Test variant: %s", args.variant == UNITTEST ? "unit test" : "performance test");
 	g_debug ("Output format: %s", args.format == FORMAT_PRETTY ? "pretty" : "csv");
-	g_debug ("Database directory: %s", args.database_dir);
-	g_debug ("Testcase directory: %s", args.testcase_dir);
+	g_debug ("Database path: %s", args.database_path);
+	g_debug ("Testcase path: %s", args.testcase_path);
 
-	testcases = scan_directory (args.testcase_dir, filter_testcase);
+	testcases = scan_path (args.testcase_path, filter_testcase);
 
 	if (args.variant == PERFORMANCE) {
 		if (args.format == FORMAT_CSV)
@@ -486,7 +491,7 @@ main (gint argc, gchar **argv)
 		else
 			g_print (" - Running Performance Test -\n");
 
-		databases = scan_directory (args.database_dir, filter_databases);
+		databases = scan_path (args.database_path, filter_databases);
 		run_performance_tests (databases, testcases, args.format);
 		xmmsv_unref (databases);
 	} else {
