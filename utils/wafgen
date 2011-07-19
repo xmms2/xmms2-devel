@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Copyright (C) 2011, Raphaël Bois
+#
+# Redistribution   and  use in  source  and  binary  forms,  with  or  without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions  in  binary form  must reproduce  the above  copyright
+#       notice, this list  of conditions and  the following  disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither   the  name  of the   copyright   holders  nor  the  names  of
+#       contributors may be used  to endorse or promote  products derived from
+#       this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT  HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR  IMPLIED WARRANTIES,  INCLUDING, BUT  NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF  MERCHANTABILITY AND FITNESS  FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN  NO EVENT SHALL THE  COPYRIGHT HOLDERS  BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL,  SPECIAL, EXEMPLARY,  OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS  INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY,  WHETHER IN CONTRACT,  STRICT LIABILITY, OR TORT
+# (INCLUDING  NEGLIGENCE OR  OTHERWISE) ARISING  IN ANY WAY OUT  OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+topdir="$(pwd)"
+
+error() {
+  #args: [msg [exit_status]]
+  [[ -n "${1:-}" ]] && echo "${1:-}" >&2
+  exit ${2:-1}
+}
+clean_waf() {
+  #args: [exit_status]
+
+  rm -rf _waf_build_
+  exit ${1:0}
+}
+validate_waf() {
+  #args: file checksum
+
+  echo "Calculating checksum..."
+  local _sha1=$(sha1sum "$1" | cut -d ' ' -f1) || error
+  [[ "$_sha1" == "$2" ]] || error "Checksum mismatch !"
+}
+gen_waf() {
+  #args: url [checksum [build_args ...]]
+  local _url="${1:-}"
+  local _checksum="${2:-}"
+  shift 2
+
+  local _wfile=waf.tar.bz2
+
+  rm -rf _waf_build_ || error #In case a previous build failed.
+  mkdir -p _waf_build_ || error
+  cd _waf_build_ || error
+  wget -O "$_wfile" "$_url" || error
+  [[ -n "$_checksum" ]] && validate_waf "$_wfile" "$_checksum"
+  tar xjf "$_wfile" || error
+  cd waf*/ || error
+  { ./configure && ./waf "$@" ; } || error
+  cp waf "$topdir" || error
+}
+
+_conf="$(dirname "$0")/wafgen.conf"
+[ -f "$_conf" ] || error "'$_conf' doesn't exist."
+. "$_conf"
+
+[[ -z "${waf_version:-}" ]] && error "WAF version is missing. "
+[[ -z "${waf_sha1:-}" ]] && echo "Warning: No checksum provided." >&2
+waf_extras="--tools=${waf_extras:-}"
+
+url="http://waf.googlecode.com/files/waf-${waf_version}.tar.bz2"
+
+( gen_waf "$url" "$waf_sha1" "$waf_extras" ) && clean_waf
