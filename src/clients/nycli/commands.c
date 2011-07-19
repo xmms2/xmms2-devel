@@ -227,11 +227,11 @@ cli_add_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
-		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified proprieties."), NULL },
+		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o [prop1 [prop2 [...]]]"),
+	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -1086,7 +1086,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	command_flag_string_get (ctx, "order", &sortby);
 	if (sortby) {
-		properties = g_strsplit (sortby, " ", MAX_STRINGLIST_TOKENS);
+		properties = g_strsplit (sortby, ",", MAX_STRINGLIST_TOKENS);
 		order = xmmsv_make_stringlist (properties, -1);
 
 		g_strfreev (properties);
