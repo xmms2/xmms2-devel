@@ -25,95 +25,198 @@
 #include "xmms/xmms_log.h"
 #include <glib.h>
 
-static GThread *thread;
-static GMutex *mutex;
-static GCond *cond;
-static gboolean want_sync = FALSE;
-static gboolean keep_running = TRUE;
+static void xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val, gpointer udata);
+static gpointer xmms_coll_sync_loop (gpointer udata);
+static void xmms_coll_sync_destroy (xmms_object_t *object);
+
+static void xmms_coll_sync_start (xmms_coll_sync_t *sync);
+static void xmms_coll_sync_stop (xmms_coll_sync_t *sync);
+
+struct xmms_coll_sync_St {
+	xmms_object_t object;
+
+	xmms_coll_dag_t *dag;
+	xmms_playlist_t *playlist;
+
+	GThread *thread;
+	GMutex *mutex;
+	GCond *cond;
+
+	gboolean want_sync;
+	gboolean keep_running;
+};
+
+/**
+ * Get the collection-to-database-synchronization thread running.
+ */
+xmms_coll_sync_t *
+xmms_coll_sync_init (xmms_coll_dag_t *dag, xmms_playlist_t *playlist)
+{
+	xmms_coll_sync_t *sync;
+
+	sync = xmms_object_new (xmms_coll_sync_t, xmms_coll_sync_destroy);
+
+	sync->cond = g_cond_new ();
+	sync->mutex = g_mutex_new ();
+
+	xmms_object_ref (dag);
+	sync->dag = dag;
+
+	xmms_object_ref (playlist);
+	sync->playlist = playlist;
+
+	/* Connection coll_sync_cb to some signals */
+	xmms_object_connect (XMMS_OBJECT (dag),
+	                     XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                     xmms_coll_sync_schedule_sync, sync);
+
+	/* FIXME: These signals should trigger COLLECTION_CHANGED */
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                     xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+	                     xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_connect (XMMS_OBJECT (playlist),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
+	                     xmms_coll_sync_schedule_sync, sync);
+
+	xmms_coll_sync_start (sync);
+
+	return sync;
+}
+
+/**
+ * Shutdown the collection-to-database-synchronization thread.
+ */
+static void
+xmms_coll_sync_destroy (xmms_object_t *object)
+{
+	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) object;
+
+	g_return_if_fail (sync);
+
+	XMMS_DBG ("Deactivating collection synchronizer object.");
+
+	xmms_coll_sync_stop (sync);
+
+	g_mutex_free (sync->mutex);
+	g_cond_free (sync->cond);
+
+	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
+	                        XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                        xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
+	                        XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+	                        xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
+	                        XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
+	                        xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_disconnect (XMMS_OBJECT (sync->dag),
+	                        XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                        xmms_coll_sync_schedule_sync, sync);
+
+	xmms_object_unref (sync->playlist);
+	xmms_object_unref (sync->dag);
+}
+
+static void
+xmms_coll_sync_start (xmms_coll_sync_t *sync)
+{
+	g_return_if_fail (sync);
+	g_return_if_fail (sync->thread == NULL);
+
+	sync->want_sync = FALSE;
+	sync->keep_running = TRUE;
+	sync->thread = g_thread_create (xmms_coll_sync_loop, sync, TRUE, NULL);
+}
+
+
+/**
+ * Signal the sync loop to exit and join the sync thread.
+ */
+static void
+xmms_coll_sync_stop (xmms_coll_sync_t *sync)
+{
+	g_return_if_fail (sync);
+	g_return_if_fail (sync->thread != NULL);
+
+	g_mutex_lock (sync->mutex);
+
+	sync->keep_running = FALSE;
+	g_cond_signal (sync->cond);
+
+	g_mutex_unlock (sync->mutex);
+
+	g_thread_join (sync->thread);
+
+	sync->thread = NULL;
+}
+
+/**
+ * Schedule a collection-to-database-synchronization in 10 seconds.
+ */
+static void
+xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val,
+                              gpointer udata)
+{
+	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
+
+	g_return_if_fail (sync);
+
+	g_mutex_lock (sync->mutex);
+	sync->want_sync = TRUE;
+	g_cond_signal (sync->cond);
+	g_mutex_unlock (sync->mutex);
+}
 
 /**
  * Wait until no collections have changed for 10 seconds, then sync.
  * @internal
  */
 static gpointer
-do_loop (gpointer udata)
+xmms_coll_sync_loop (gpointer udata)
 {
-	xmms_coll_dag_t *dag = udata;
+	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
 	GTimeVal time;
 
 	xmms_set_thread_name ("x2 coll sync");
 
-	g_mutex_lock (mutex);
+	g_mutex_lock (sync->mutex);
 
-	while (keep_running) {
-		if (!want_sync) {
-			g_cond_wait (cond, mutex);
+	while (sync->keep_running) {
+		if (!sync->want_sync) {
+			g_cond_wait (sync->cond, sync->mutex);
 		}
 
 		/* Wait until no requests have been filed for 10 seconds. */
-		while (keep_running && want_sync) {
-			want_sync = FALSE;
+		while (sync->keep_running && sync->want_sync) {
+			sync->want_sync = FALSE;
 
 			g_get_current_time (&time);
 			g_time_val_add (&time, 10000000);
 
-			g_cond_timed_wait (cond, mutex, &time);
+			g_cond_timed_wait (sync->cond, sync->mutex, &time);
 		}
 
-		if (keep_running) {
+		if (sync->keep_running) {
 			/* The dag might be locked when calling schedule_sync, so we need to
 			 * unlock to avoid deadlocks */
-			g_mutex_unlock (mutex);
+			g_mutex_unlock (sync->mutex);
 
 			XMMS_DBG ("Syncing collections to database.");
-			xmms_collection_sync (dag);
+			xmms_collection_sync (sync->dag);
 
-			g_mutex_lock (mutex);
+			g_mutex_lock (sync->mutex);
 		}
 	}
 
-	g_mutex_unlock (mutex);
+	g_mutex_unlock (sync->mutex);
 
 	return NULL;
-}
-
-/**
- * Get the collection-to-database-synchronization thread running.
- */
-void
-xmms_coll_sync_init (xmms_coll_dag_t *dag)
-{
-	cond = g_cond_new ();
-	mutex = g_mutex_new ();
-
-	thread = g_thread_create (do_loop, dag, TRUE, NULL);
-}
-
-/**
- * Shutdown the collection-to-database-synchronization thread.
- */
-void
-xmms_coll_sync_shutdown ()
-{
-	g_mutex_lock (mutex);
-	keep_running = FALSE;
-	g_cond_signal (cond);
-	g_mutex_unlock (mutex);
-
-	g_thread_join (thread);
-
-	g_mutex_free (mutex);
-	g_cond_free (cond);
-}
-
-/**
- * Schedule a collection-to-database-synchronization in 10 seconds.
- */
-void
-xmms_coll_sync_schedule_sync ()
-{
-	g_mutex_lock (mutex);
-	want_sync = TRUE;
-	g_cond_signal (cond);
-	g_mutex_unlock (mutex);
 }

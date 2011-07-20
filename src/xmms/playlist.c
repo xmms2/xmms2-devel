@@ -79,7 +79,10 @@ static void xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, const 
 static void xmms_playlist_register_ipc_commands (xmms_object_t *playlist_object);
 
 static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, GTree *dict);
-static GTree * xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
+static GTree *xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, guint32 pos, const gchar *plname);
+
+static void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict);
+static GTree *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, xmms_medialib_entry_t id, const gchar *plname);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
 #define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, xmms_playlist_current_pos_msg_new (playlist, pos, name))
@@ -313,11 +316,31 @@ on_medialib_entry_removed (xmms_object_t *object, xmmsv_t *val, gpointer udata)
 	g_mutex_unlock (playlist->mutex);
 }
 
+static void
+on_collection_changed (xmms_object_t *object, xmmsv_t *val, gpointer udata)
+{
+	xmms_playlist_t *playlist = (xmms_playlist_t *) udata;
+	const gchar *ns, *name;
+
+	g_return_if_fail (playlist);
+	g_return_if_fail (xmmsv_is_type (val, XMMSV_TYPE_DICT));
+	g_return_if_fail (xmmsv_dict_entry_get_string (val, "namespace", &ns));
+
+	if (strcmp (ns, XMMS_COLLECTION_NS_PLAYLISTS) != 0) {
+		/* Not a playlist, not our concern... */
+		return;
+	}
+
+	g_return_if_fail (xmmsv_dict_entry_get_string (val, "name", &name));
+
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_UPDATE, 0, name);
+}
+
 /**
  * Initializes a new xmms_playlist_t.
  */
 xmms_playlist_t *
-xmms_playlist_init (xmms_medialib_t *medialib)
+xmms_playlist_init (xmms_medialib_t *medialib, xmms_coll_dag_t *colldag)
 {
 	xmms_playlist_t *ret;
 	xmms_config_property_t *val;
@@ -347,11 +370,17 @@ xmms_playlist_init (xmms_medialib_t *medialib)
 
 	xmms_object_ref (medialib);
 	ret->medialib = medialib;
-	ret->colldag = xmms_collection_init (ret, medialib);
+
+	xmms_object_ref (colldag);
+	ret->colldag = colldag;
 
 	xmms_object_connect (XMMS_OBJECT (ret->medialib),
 	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
 	                     on_medialib_entry_removed, ret);
+
+	xmms_object_connect (XMMS_OBJECT (ret->colldag),
+	                     XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                     on_collection_changed, ret);
 
 	return ret;
 }
@@ -1388,12 +1417,25 @@ xmms_playlist_destroy (xmms_object_t *object)
 
 	val = xmms_config_lookup ("playlist.repeat_one");
 	xmms_config_property_callback_remove (val, on_playlist_r_one_changed, playlist);
+
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_callback_remove (val, on_playlist_r_all_changed, playlist);
+
+	xmms_object_disconnect (XMMS_OBJECT (playlist),
+	                        XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                        on_playlist_updated_chg, playlist);
+
+	xmms_object_disconnect (XMMS_OBJECT (playlist),
+	                        XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+	                        on_playlist_updated_pos, playlist);
 
 	xmms_object_disconnect (XMMS_OBJECT (playlist->medialib),
 	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
 	                        on_medialib_entry_removed, playlist);
+
+	xmms_object_disconnect (XMMS_OBJECT (playlist->colldag),
+	                        XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                        on_collection_changed, playlist);
 
 	xmms_object_unref (playlist->colldag);
 	xmms_object_unref (playlist->medialib);

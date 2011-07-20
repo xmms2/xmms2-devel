@@ -27,14 +27,11 @@
 #include <math.h>
 
 #include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collserial.h"
-#include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmms/xmms_ipc.h"
-#include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 
 
@@ -174,9 +171,6 @@ xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GTree *dict)
 struct xmms_coll_dag_St {
 	xmms_object_t object;
 
-	/* Ref to the playlist object, needed to notify it when a playlist changes */
-	xmms_playlist_t *playlist;
-
 	GHashTable *collrefs[XMMS_COLLECTION_NUM_NAMESPACES];
 
 	GMutex *mutex;
@@ -184,18 +178,12 @@ struct xmms_coll_dag_St {
 	xmms_medialib_t *medialib;
 };
 
-static void
-coll_sync_cb (xmms_object_t *object, xmmsv_t *val, gpointer udata)
-{
-	xmms_coll_sync_schedule_sync ();
-}
-
 /** Initializes a new xmms_coll_dag_t.
  *
  * @returns  The newly allocated collection DAG.
  */
 xmms_coll_dag_t *
-xmms_collection_init (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
+xmms_collection_init (xmms_medialib_t *medialib)
 {
 	xmms_stream_type_t *f;
 	xmms_coll_dag_t *ret;
@@ -204,10 +192,7 @@ xmms_collection_init (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
 
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
-	ret->playlist = playlist;
 	ret->medialib = medialib;
-
-	xmms_coll_sync_init (ret);
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		ret->collrefs[i] = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -215,25 +200,6 @@ xmms_collection_init (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
 	}
 
 	xmms_collection_register_ipc_commands (XMMS_OBJECT (ret));
-
-	/* Connection coll_sync_cb to some signals */
-	xmms_object_connect (XMMS_OBJECT (ret),
-	                     XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
-	                     coll_sync_cb, ret);
-
-	/* FIXME: These signals should trigger COLLECTION_CHANGED */
-	xmms_object_connect (XMMS_OBJECT (playlist),
-	                     XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
-	                     coll_sync_cb, ret);
-
-	xmms_object_connect (XMMS_OBJECT (playlist),
-	                     XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                     coll_sync_cb, ret);
-
-	xmms_object_connect (XMMS_OBJECT (playlist),
-	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
-	                     coll_sync_cb, ret);
-
 
 	uuid = xmms_medialib_uuid (medialib);
 	xmms_collection_dag_restore (ret, uuid);
@@ -470,12 +436,6 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	}
 
 	g_mutex_unlock (dag->mutex);
-
-	/* If updating a playlist, trigger PLAYLIST_CHANGED */
-	if (nsid == XMMS_COLLECTION_NSID_PLAYLISTS) {
-		XMMS_PLAYLIST_COLLECTION_CHANGED_MSG (dag->playlist, newkey);
-	}
-
 }
 
 
@@ -1036,8 +996,6 @@ xmms_collection_destroy (xmms_object_t *object)
 	XMMS_DBG ("Deactivating collection object.");
 
 	g_return_if_fail (dag);
-
-	xmms_coll_sync_shutdown ();
 
 	uuid = xmms_medialib_uuid (dag->medialib);
 	xmms_collection_dag_save (dag, uuid);

@@ -19,8 +19,9 @@
 
 #include "xmmspriv/xmms_collection.h"
 
-void xmms_coll_sync_init (xmms_coll_dag_t *dag);
-void xmms_coll_sync_shutdown (void);
-void xmms_coll_sync_schedule_sync (void);
+typedef struct xmms_coll_sync_St xmms_coll_sync_t;
+
+xmms_coll_sync_t *xmms_coll_sync_init (xmms_coll_dag_t *dag, xmms_playlist_t *playlist);
+
 
 #endif

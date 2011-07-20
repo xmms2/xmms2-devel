@@ -48,7 +48,7 @@ typedef struct xmms_playlist_St xmms_playlist_t;
  * Public functions
  */
 
-xmms_playlist_t * xmms_playlist_init (xmms_medialib_t *medialib);
+xmms_playlist_t * xmms_playlist_init (xmms_medialib_t *medialib, xmms_coll_dag_t *dag);
 
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
@@ -57,11 +57,6 @@ GList * xmms_playlist_list (xmms_playlist_t *playlist, const gchar *plname, xmms
 
 void xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
 void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
-
-GTree *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, xmms_medialib_entry_t id, const gchar *plname);
-void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GTree *dict);
-
-#define XMMS_PLAYLIST_COLLECTION_CHANGED_MSG(playlist, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, XMMS_PLAYLIST_CHANGED_UPDATE, 0, name))
 
 /*
  * Entry modifications

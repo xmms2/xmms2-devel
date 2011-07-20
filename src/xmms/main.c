@@ -31,6 +31,7 @@
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_signal.h"
 #include "xmmspriv/xmms_symlink.h"
@@ -87,8 +88,10 @@ struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output_object;
 	xmms_bindata_t *bindata_object;
+	xmms_coll_dag_t *colldag_object;
 	xmms_medialib_t *medialib_object;
 	xmms_playlist_t *playlist_object;
+	xmms_coll_sync_t *collsync_object;
 	xmms_xform_object_t *xform_object;
 	xmms_mediainfo_reader_t *mediainfo_object;
 	xmms_visualization_t *visualization_object;
@@ -550,8 +553,12 @@ main (int argc, char **argv)
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	mainobj->medialib_object = xmms_medialib_init ();
+	mainobj->colldag_object = xmms_collection_init (mainobj->medialib_object);
 	mainobj->mediainfo_object = xmms_mediainfo_reader_start (mainobj->medialib_object);
-	mainobj->playlist_object = xmms_playlist_init (mainobj->medialib_object);
+	mainobj->playlist_object = xmms_playlist_init (mainobj->medialib_object,
+	                                               mainobj->colldag_object);
+	mainobj->collsync_object = xmms_coll_sync_init (mainobj->colldag_object,
+	                                                mainobj->playlist_object);
 	mainobj->xform_object = xmms_xform_object_init ();
 	mainobj->bindata_object = xmms_bindata_init ();
 
