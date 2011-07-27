@@ -248,9 +248,16 @@ static s4_t *
 xmms_medialib_database_open (const gchar *database_name,
                              const gchar *indices[])
 {
+	gint flags = 0;
 	s4_t *s4;
 
-	s4 = s4_open (database_name, indices, 0);
+	g_return_val_if_fail (database_name, NULL);
+
+	if (strcmp (database_name, "memory://") == 0) {
+		flags = S4_MEMORY;
+	}
+
+	s4 = s4_open (database_name, indices, flags);
 	if (s4 != NULL) {
 		return s4;
 	}
