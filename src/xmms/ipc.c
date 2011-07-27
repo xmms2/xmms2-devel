@@ -776,6 +776,14 @@ xmms_ipc_shutdown (void)
 	}
 	g_mutex_unlock (ipc_servers_lock);
 
+	g_mutex_free (ipc_servers_lock);
+	ipc_servers_lock = NULL;
+
+	g_mutex_free (ipc_object_pool_lock);
+	ipc_object_pool_lock = NULL;
+
+	g_free (ipc_object_pool);
+	ipc_object_pool = NULL;
 }
 
 /**
