@@ -376,7 +376,6 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	xmmsv_coll_t *existing;
 	guint nsid;
 	const gchar *alias;
-	gchar *newkey = NULL;
 	const gchar *valerr = "Invalid collection: unknown reason. This is "
 	                      "probably a bug in xmms2d.";
 
@@ -412,25 +411,22 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	if (existing != NULL) {
 		while ((alias = xmms_collection_find_alias (dag, nsid,
 		                                            existing, NULL)) != NULL) {
-			newkey = g_strdup (alias);
-
 			/* update all pairs pointing to the old coll */
-			xmms_collection_dag_replace (dag, nsid, newkey, coll);
+			xmms_collection_dag_replace (dag, nsid, alias, coll);
 			xmmsv_coll_ref (coll);
 
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
-			                             newkey,
+			                             alias,
 			                             namespace);
 		}
 
 	/* Save new collection in the table */
 	} else {
-		newkey = g_strdup (name);
-		xmms_collection_dag_replace (dag, nsid, newkey, coll);
+		xmms_collection_dag_replace (dag, nsid, name, coll);
 		xmmsv_coll_ref (coll);
 
 		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
-		                             newkey,
+		                             name,
 		                             namespace);
 	}
 
@@ -654,7 +650,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		GTree *dict;
 
 		/* insert new pair in hashtable */
-		xmms_collection_dag_replace (dag, nsid, g_strdup (to_name), from_coll);
+		xmms_collection_dag_replace (dag, nsid, to_name, from_coll);
 		xmmsv_coll_ref (from_coll);
 
 		/* remove old pair from hashtable */
@@ -839,7 +835,7 @@ void
 xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name,
                                 guint nsid, xmmsv_coll_t *newtarget)
 {
-	xmms_collection_dag_replace (dag, nsid, g_strdup (name), newtarget);
+	xmms_collection_dag_replace (dag, nsid, name, newtarget);
 	xmmsv_coll_ref (newtarget);
 }
 
@@ -847,9 +843,9 @@ xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name,
 void
 xmms_collection_dag_replace (xmms_coll_dag_t *dag,
                              xmms_collection_namespace_id_t nsid,
-                             gchar *key, xmmsv_coll_t *newcoll)
+                             const gchar *key, xmmsv_coll_t *newcoll)
 {
-	g_hash_table_replace (dag->collrefs[nsid], key, newcoll);
+	g_hash_table_replace (dag->collrefs[nsid], g_strdup (key), newcoll);
 }
 
 /** Find the collection structure corresponding to the given name in the given namespace.

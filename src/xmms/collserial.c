@@ -216,7 +216,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 				coll = xmms_collection_read_operator (file);
 				fclose (file);
 				if (coll != NULL)
-					xmms_collection_dag_replace (dag, i, g_strdup (label), coll);
+					xmms_collection_dag_replace (dag, i, label, coll);
 			}
 
 			g_free (path);
@@ -237,7 +237,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 		if (coll == NULL) {
 			coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 			xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
-			                             g_strdup ("Default"), coll);
+			                             "Default", coll);
 		}
 	} else {
 		fgets (buffer, 1024, file);
@@ -250,7 +250,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 	g_free (path);
 	xmmsv_coll_ref (coll);
 	xmms_collection_dag_replace (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
-	                             g_strdup (XMMS_ACTIVE_PLAYLIST), coll);
+	                             XMMS_ACTIVE_PLAYLIST, coll);
 
 	/* FIXME: validate ? */
 

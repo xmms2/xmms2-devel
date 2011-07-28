@@ -67,7 +67,7 @@ xmmsv_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, const gchar *c
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name, guint nsid, xmmsv_coll_t *newtarget);
 const gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsv_coll_t *value, const gchar *key);
 xmms_medialib_entry_t xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source);
-void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, gchar *key, xmmsv_coll_t *newcoll);
+void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, const gchar *key, xmmsv_coll_t *newcoll);
 
 xmms_collection_namespace_id_t xmms_collection_get_namespace_id (const gchar *namespace);
 const gchar *xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
