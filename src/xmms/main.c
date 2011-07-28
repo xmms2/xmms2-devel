@@ -429,7 +429,7 @@ main (int argc, char **argv)
 	gboolean showhelp = FALSE;
 	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
-	gchar *ppath = NULL;
+	gchar *uuid, *ppath = NULL;
 	int status_fd = -1;
 	GOptionContext *context = NULL;
 	GError *error = NULL;
@@ -557,8 +557,13 @@ main (int argc, char **argv)
 	mainobj->mediainfo_object = xmms_mediainfo_reader_start (mainobj->medialib_object);
 	mainobj->playlist_object = xmms_playlist_init (mainobj->medialib_object,
 	                                               mainobj->colldag_object);
-	mainobj->collsync_object = xmms_coll_sync_init (mainobj->colldag_object,
+
+	uuid = xmms_medialib_uuid (mainobj->medialib_object);
+	mainobj->collsync_object = xmms_coll_sync_init (uuid,
+	                                                mainobj->colldag_object,
 	                                                mainobj->playlist_object);
+	g_free (uuid);
+
 	mainobj->xform_object = xmms_xform_object_init ();
 	mainobj->bindata_object = xmms_bindata_init ();
 

@@ -21,6 +21,7 @@
  */
 
 #include "xmmspriv/xmms_collsync.h"
+#include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_thread_name.h"
 #include "xmms/xmms_log.h"
 #include <glib.h>
@@ -38,6 +39,8 @@ struct xmms_coll_sync_St {
 	xmms_coll_dag_t *dag;
 	xmms_playlist_t *playlist;
 
+	gchar *uuid;
+
 	GThread *thread;
 	GMutex *mutex;
 	GCond *cond;
@@ -50,11 +53,13 @@ struct xmms_coll_sync_St {
  * Get the collection-to-database-synchronization thread running.
  */
 xmms_coll_sync_t *
-xmms_coll_sync_init (xmms_coll_dag_t *dag, xmms_playlist_t *playlist)
+xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *playlist)
 {
 	xmms_coll_sync_t *sync;
 
 	sync = xmms_object_new (xmms_coll_sync_t, xmms_coll_sync_destroy);
+
+	sync->uuid = g_strdup (uuid);
 
 	sync->cond = g_cond_new ();
 	sync->mutex = g_mutex_new ();
@@ -100,11 +105,6 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 
 	XMMS_DBG ("Deactivating collection synchronizer object.");
 
-	xmms_coll_sync_stop (sync);
-
-	g_mutex_free (sync->mutex);
-	g_cond_free (sync->cond);
-
 	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
 	                        XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
 	                        xmms_coll_sync_schedule_sync, sync);
@@ -121,8 +121,14 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	                        XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
 	                        xmms_coll_sync_schedule_sync, sync);
 
+	xmms_coll_sync_stop (sync);
+
 	xmms_object_unref (sync->playlist);
 	xmms_object_unref (sync->dag);
+
+	g_mutex_free (sync->mutex);
+	g_cond_free (sync->cond);
+	g_free (sync->uuid);
 }
 
 static void
@@ -189,6 +195,8 @@ xmms_coll_sync_loop (gpointer udata)
 
 	g_mutex_lock (sync->mutex);
 
+	xmms_collection_dag_restore (sync->dag, sync->uuid);
+
 	while (sync->keep_running) {
 		if (!sync->want_sync) {
 			g_cond_wait (sync->cond, sync->mutex);
@@ -210,11 +218,14 @@ xmms_coll_sync_loop (gpointer udata)
 			g_mutex_unlock (sync->mutex);
 
 			XMMS_DBG ("Syncing collections to database.");
-			xmms_collection_sync (sync->dag);
+
+			xmms_collection_dag_save (sync->dag, sync->uuid);
 
 			g_mutex_lock (sync->mutex);
 		}
 	}
+
+	xmms_collection_dag_save (sync->dag, sync->uuid);
 
 	g_mutex_unlock (sync->mutex);
 

@@ -187,7 +187,6 @@ xmms_collection_init (xmms_medialib_t *medialib)
 {
 	xmms_stream_type_t *f;
 	xmms_coll_dag_t *ret;
-	gchar *uuid;
 	gint i;
 
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
@@ -990,16 +989,11 @@ static void
 xmms_collection_destroy (xmms_object_t *object)
 {
 	xmms_coll_dag_t *dag = (xmms_coll_dag_t *)object;
-	gchar *uuid;
 	gint i;
 
 	XMMS_DBG ("Deactivating collection object.");
 
 	g_return_if_fail (dag);
-
-	uuid = xmms_medialib_uuid (dag->medialib);
-	xmms_collection_dag_save (dag, uuid);
-	g_free (uuid);
 
 	g_mutex_free (dag->mutex);
 
