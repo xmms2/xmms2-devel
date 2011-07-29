@@ -8,6 +8,7 @@
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
+#include "utils/ipc_call.h"
 
 static xmms_medialib_entry_t xmms_mock_entry (gint tracknr, const gchar *artist,
                                               const gchar *album, const gchar *title);
@@ -501,6 +502,59 @@ CASE (test_organize_fetch_spec)
 	xmmsv_unref (result);
 
 	xmmsv_coll_unref (universe);
+}
+
+CASE(test_client_rehash)
+{
+	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t first, second;
+	xmmsv_t *value;
+	gint status;
+
+	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	/* check base status */
+	session = xmms_medialib_session_begin (medialib);
+
+	status = xmms_medialib_entry_property_get_int (session, first, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_OK, status);
+
+	status = xmms_medialib_entry_property_get_int (session, second, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_OK, status);
+
+	xmms_medialib_session_abort (session);
+
+	/* rehash first entry */
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (1));
+	CU_ASSERT (xmmsv_is_type (value, XMMSV_TYPE_NONE));
+	xmmsv_unref (value);
+
+	/* verify that only entry 1 have rehash status */
+	session = xmms_medialib_session_begin (medialib);
+
+	status = xmms_medialib_entry_property_get_int (session, first, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_REHASH, status);
+
+	status = xmms_medialib_entry_property_get_int (session, second, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_OK, status);
+
+	xmms_medialib_session_abort (session);
+
+	/* rehash all entries */
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (0));
+	xmmsv_unref (value);
+
+	/* verify that both entries have rehash status */
+	session = xmms_medialib_session_begin (medialib);
+
+	status = xmms_medialib_entry_property_get_int (session, first, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_REHASH, status);
+
+	status = xmms_medialib_entry_property_get_int (session, second, "status");
+	CU_ASSERT_EQUAL (XMMS_MEDIALIB_ENTRY_STATUS_REHASH, status);
+
+	xmms_medialib_session_abort (session);
 }
 
 static xmms_medialib_entry_t
