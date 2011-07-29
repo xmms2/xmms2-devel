@@ -557,6 +557,26 @@ CASE(test_client_rehash)
 	xmms_medialib_session_abort (session);
 }
 
+CASE(test_client_get_info)
+{
+	xmmsv_t *result, *title, *server;
+	const gchar *value;
+
+	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (1));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
+	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
+	CU_ASSERT (xmmsv_dict_get (title, "server", &server));
+	CU_ASSERT (xmmsv_get_string (server, &value));
+	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", value);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (1337));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+}
+
 static xmms_medialib_entry_t
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
 {
