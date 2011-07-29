@@ -79,13 +79,13 @@
     'expected': {
         'ordered': 1,
         'result': [
-            { 'id': 0, 'tracknr': 1, 'title': 'Prehistoric Dog' },
-            { 'id': 1, 'tracknr': 2, 'title': 'Reverse Thunder' },
-            { 'id': 2, 'tracknr': 3, 'title': 'Night Destroyer' },
-            { 'id': 3, 'tracknr': 4, 'title': 'Humans Remain Human Remains' },
-            { 'id': 4, 'tracknr': 1, 'title': 'Decade' },
-            { 'id': 5, 'tracknr': 2, 'title': 'Breathing Place' },
-            { 'id': 6, 'tracknr': 3, 'title': 'Ensueno (Morning mix)'}
+            { 'id': 1, 'tracknr': 1, 'title': 'Prehistoric Dog' },
+            { 'id': 2, 'tracknr': 2, 'title': 'Reverse Thunder' },
+            { 'id': 3, 'tracknr': 3, 'title': 'Night Destroyer' },
+            { 'id': 4, 'tracknr': 4, 'title': 'Humans Remain Human Remains' },
+            { 'id': 5, 'tracknr': 1, 'title': 'Decade' },
+            { 'id': 6, 'tracknr': 2, 'title': 'Breathing Place' },
+            { 'id': 7, 'tracknr': 3, 'title': 'Ensueno (Morning mix)'}
         ]
     }
 }

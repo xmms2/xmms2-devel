@@ -32,6 +32,6 @@
         }
     },
     'expected': {
-        'result': [ { 'id': 0 } ]
+        'result': [ { 'id': 1 } ]
     }
 }

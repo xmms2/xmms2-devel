@@ -20,7 +20,7 @@
         }
     },
     'expected': {
-        'result': [0, 1, 2],
+        'result': [1, 2, 3],
         'ordered': 1
     }
 }

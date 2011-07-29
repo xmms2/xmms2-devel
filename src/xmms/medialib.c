@@ -534,11 +534,13 @@ highest_id_filter (const s4_val_t *value, s4_condition_t *cond)
 
 /**
  * Return a fresh unused medialib id.
+ *
+ * The first id starts at 1 as 0 is considered reserved for other use.
  */
 static int32_t
 xmms_medialib_get_new_id (xmms_medialib_session_t *session)
 {
-	gint32 highest = -1;
+	gint32 highest = 0;
 	s4_fetchspec_t *fs;
 	s4_condition_t *cond;
 	s4_resultset_t *set;

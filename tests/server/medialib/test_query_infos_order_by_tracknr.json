@@ -49,8 +49,8 @@
     },
     'expected': {
         'result': [
-            { 'id': 0, 'tracknr': 2, 'title': 'Reverse Thunder' },
-            { 'id': 3, 'tracknr': 3, 'title': 'Night Destroyer' }
+            { 'id': 1, 'tracknr': 2, 'title': 'Reverse Thunder' },
+            { 'id': 4, 'tracknr': 3, 'title': 'Night Destroyer' }
         ],
         'ordered': 1
     }

@@ -9,8 +9,8 @@
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
 
-static void xmms_mock_entry (gint tracknr, const gchar *artist,
-                             const gchar *album, const gchar *title);
+static xmms_medialib_entry_t xmms_mock_entry (gint tracknr, const gchar *artist,
+                                              const gchar *album, const gchar *title);
 
 #define CU_ASSERT_LIST_INT_EQUAL(list, pos, expected) do { \
 		xmmsv_t *item; \
@@ -72,23 +72,24 @@ medialib_query (xmmsv_coll_t *coll, xmmsv_t *spec, xmms_error_t *err)
 CASE (test_entry_property_get)
 {
 	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t first, second;
 	xmmsv_t *result;
 	gint tracknr;
 	const gchar *title;
 	gchar *string;
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 1, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, second, "tracknr");
 	xmms_medialib_session_commit (session);
 	xmmsv_get_int (result, &tracknr);
 	CU_ASSERT_EQUAL (4, tracknr);
 	xmmsv_unref (result);
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "title");
+	result = xmms_medialib_entry_property_get_value (session, first, "title");
 	xmms_medialib_session_commit (session);
 	xmmsv_get_string (result, &title);
 	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", title);
@@ -100,13 +101,13 @@ CASE (test_entry_property_get)
 	CU_ASSERT_EQUAL (NULL, result);
 
 	session = xmms_medialib_session_begin (medialib);
-	string = xmms_medialib_entry_property_get_str (session, 0, "title");
+	string = xmms_medialib_entry_property_get_str (session, first, "title");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", string);
 	g_free (string);
 
 	session = xmms_medialib_session_begin (medialib);
-	string = xmms_medialib_entry_property_get_str (session, 1, "tracknr");
+	string = xmms_medialib_entry_property_get_str (session, second, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (string);
 	g_free (string);
@@ -117,7 +118,7 @@ CASE (test_entry_property_get)
 	CU_ASSERT_EQUAL (NULL, string);
 
 	session = xmms_medialib_session_begin (medialib);
-	tracknr = xmms_medialib_entry_property_get_int (session, 1, "tracknr");
+	tracknr = xmms_medialib_entry_property_get_int (session, second, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_EQUAL (4, tracknr);
 
@@ -137,22 +138,23 @@ CASE (test_entry_property_get)
 CASE (test_entry_remove)
 {
 	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t entry;
 	xmmsv_t *result;
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, entry, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NOT_NULL (result);
 	xmmsv_unref (result);
 
 	session = xmms_medialib_session_begin (medialib);
-	xmms_medialib_entry_remove (session, 0);
+	xmms_medialib_entry_remove (session, entry);
 	xmms_medialib_session_commit (session);
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, entry, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (result);
 }
@@ -160,6 +162,7 @@ CASE (test_entry_remove)
 CASE (test_entry_cleanup)
 {
 	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t entry;
 	xmmsv_coll_t *universe;
 	xmmsv_t *spec, *result;
 	xmms_error_t err;
@@ -167,14 +170,14 @@ CASE (test_entry_cleanup)
 
 	xmms_error_reset (&err);
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	session = xmms_medialib_session_begin (medialib);
-	xmms_medialib_entry_cleanup (session, 0);
+	xmms_medialib_entry_cleanup (session, entry);
 	xmms_medialib_session_commit (session);
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, entry, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (result);
 
@@ -198,11 +201,18 @@ CASE (test_entry_cleanup)
 CASE (test_not_resolved)
 {
 	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t entry;
+	xmms_medialib_entry_t entry, first, second;
 	guint count;
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	session = xmms_medialib_session_begin (medialib);
+	xmms_medialib_entry_property_set_int (session, first, "status",
+	                                      XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+	xmms_medialib_entry_property_set_int (session, second, "status",
+	                                      XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+	xmms_medialib_session_commit(session);
 
 	session = xmms_medialib_session_begin (medialib);
 	count = xmms_medialib_num_not_resolved (session);
@@ -213,17 +223,17 @@ CASE (test_not_resolved)
 	session = xmms_medialib_session_begin (medialib);
 	entry = xmms_medialib_entry_not_resolved_get (session);
 	xmms_medialib_session_commit (session);
-	CU_ASSERT (entry == 0 || entry == 1);
+	CU_ASSERT (entry == first || entry == second);
 }
 
 CASE (test_query_random_id)
 {
 	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t entry;
+	xmms_medialib_entry_t entry, first, second;
 	xmmsv_coll_t *universe;
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
+	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
 
 	universe = xmmsv_coll_universe ();
 	session = xmms_medialib_session_begin (medialib);
@@ -231,37 +241,38 @@ CASE (test_query_random_id)
 	xmms_medialib_session_commit (session);
 	xmmsv_coll_unref (universe);
 
-	CU_ASSERT (entry == 0 || entry == 1);
+	CU_ASSERT (entry == first || entry == second);
 }
 
 CASE (test_session)
 {
 	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t first, second;
 	xmmsv_coll_t *universe;
 	xmms_error_t err;
 	xmmsv_t *result, *spec;
 	gint tracknr;
 
-	xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	session = xmms_medialib_session_begin (medialib);
-	xmms_medialib_entry_remove (session, 0);
+	xmms_medialib_entry_remove (session, first);
 	xmms_medialib_session_abort (session);
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, first, "tracknr");
 	xmms_medialib_session_commit (session);
 	xmmsv_get_int (result, &tracknr);
 	CU_ASSERT_EQUAL (1, tracknr);
 	xmmsv_unref (result);
 
 	session = xmms_medialib_session_begin (medialib);
-	xmms_medialib_entry_remove (session, 0);
+	xmms_medialib_entry_remove (session, first);
 	xmms_medialib_session_commit (session);
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_entry_property_get_value (session, 0, "tracknr");
+	result = xmms_medialib_entry_property_get_value (session, first, "tracknr");
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (result);
 
@@ -492,7 +503,7 @@ CASE (test_organize_fetch_spec)
 	xmmsv_coll_unref (universe);
 }
 
-static void
+static xmms_medialib_entry_t
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
 {
 	xmms_medialib_session_t *session;
@@ -522,17 +533,11 @@ xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gc
 	                                      title);
 	xmms_medialib_entry_property_set_int (session, entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
-	                                      XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+	                                      XMMS_MEDIALIB_ENTRY_STATUS_OK);
 
 	xmms_medialib_session_commit (session);
 
 	g_free (path);
-}
 
-/* START: Stub some crap so we don't have to pull in the whole daemon */
-GList *
-xmms_xform_browse (const gchar *url, xmms_error_t *error)
-{
-	return NULL;
+	return entry;
 }
-/* END */
