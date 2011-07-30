@@ -577,6 +577,25 @@ CASE(test_client_get_info)
 	xmmsv_unref (result);
 }
 
+CASE(test_client_entry_add)
+{
+	xmms_medialib_session_t *session;
+	xmmsv_t *result;
+
+	session = xmms_medialib_session_begin (medialib);
+	CU_ASSERT_FALSE (xmms_medialib_check_id (session, 1));
+	xmms_medialib_session_abort (session);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MLIB_ADD_URL, xmmsv_new_string ("file:///apankorv.mp3"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	session = xmms_medialib_session_begin (medialib);
+	CU_ASSERT_TRUE (xmms_medialib_check_id (session, 1));
+	xmms_medialib_session_abort (session);
+}
+
+
 CASE(test_client_entry_remove)
 {
 	xmms_medialib_session_t *session;
