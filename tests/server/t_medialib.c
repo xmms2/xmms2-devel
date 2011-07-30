@@ -691,6 +691,54 @@ CASE(test_client_property_set)
 	xmmsv_unref (result);
 }
 
+CASE(test_client_property_remove)
+{
+	xmms_medialib_entry_t entry;
+	xmmsv_t *result, *tracknr, *client;
+	gint int_value;
+
+	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	/* clients must not remove server properties */
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("server"),
+	                        xmmsv_new_string ("tracknr"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"),
+	                        xmmsv_new_int (2));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
+	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
+	CU_ASSERT (xmmsv_dict_get (tracknr, "client/unittest", &client));
+	CU_ASSERT (xmmsv_get_int (client, &int_value));
+	CU_ASSERT_EQUAL (2, int_value);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
+	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
+	CU_ASSERT_FALSE (xmmsv_dict_get (tracknr, "client/unittest", &client));
+
+	xmmsv_unref (result);
+}
+
+
 static xmms_medialib_entry_t
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
 {
