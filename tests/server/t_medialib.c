@@ -632,7 +632,64 @@ CASE(test_client_get_id)
 	xmmsv_unref (result);
 }
 
+CASE(test_client_property_set)
+{
+	xmms_medialib_entry_t entry;
+	xmmsv_t *result, *title, *tracknr, *client;
+	const gchar *string_value;
+	gint int_value;
 
+	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	/* clients must not overwrite server properties */
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("server"),
+	                        xmmsv_new_string ("tracknr"),
+	                        xmmsv_new_int (2));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"),
+	                        xmmsv_new_int (2));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	/* clients must not overwrite server properties */
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("server"),
+	                        xmmsv_new_string ("title"),
+	                        xmmsv_new_string ("Reverse Thunder"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("title"),
+	                        xmmsv_new_string ("Reverse Thunder"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
+
+	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
+	CU_ASSERT (xmmsv_dict_get (title, "client/unittest", &client));
+	CU_ASSERT (xmmsv_get_string (client, &string_value));
+	CU_ASSERT_STRING_EQUAL ("Reverse Thunder", string_value);
+
+	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
+	CU_ASSERT (xmmsv_dict_get (tracknr, "client/unittest", &client));
+	CU_ASSERT (xmmsv_get_int (client, &int_value));
+	CU_ASSERT_EQUAL (2, int_value);
+
+	xmmsv_unref (result);
+}
 
 static xmms_medialib_entry_t
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
