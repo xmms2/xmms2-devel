@@ -738,6 +738,33 @@ CASE(test_client_property_remove)
 	xmmsv_unref (result);
 }
 
+CASE(test_client_move_entry)
+{
+	xmms_medialib_session_t *session;
+	xmms_medialib_entry_t entry;
+	xmmsv_t *result;
+	gchar *string;
+
+	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	session = xmms_medialib_session_begin (medialib);
+	string = xmms_medialib_entry_property_get_str (session, entry, "url");
+	CU_ASSERT_STRING_NOT_EQUAL ("file://test.mp3", string);
+	xmms_medialib_session_abort (session);
+	g_free (string);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_ENTRY,
+	                        xmmsv_new_int (entry),
+	                        xmmsv_new_string ("file://test.mp3"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	session = xmms_medialib_session_begin (medialib);
+	string = xmms_medialib_entry_property_get_str (session, entry, "url");
+	CU_ASSERT_STRING_EQUAL ("file://test.mp3", string);
+	xmms_medialib_session_abort (session);
+	g_free (string);
+}
 
 static xmms_medialib_entry_t
 xmms_mock_entry (gint tracknr, const gchar *artist, const gchar *album, const gchar *title)
