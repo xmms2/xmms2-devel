@@ -1,4 +1,4 @@
-#include "common.h"
+#include "xmmsclientpriv/visualization/common.h"
 
 static double
 udp_timediff (int32_t id, int socket) {

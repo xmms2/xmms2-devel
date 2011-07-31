@@ -25,8 +25,7 @@
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmms_configuration.h"
-
-#include "common.h"
+#include "xmmsclientpriv/visualization/common.h"
 
 /**
  * @defgroup Visualization Visualization
