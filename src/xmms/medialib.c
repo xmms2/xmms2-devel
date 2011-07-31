@@ -54,7 +54,7 @@ static void xmms_medialib_client_rehash (xmms_medialib_t *medialib, xmms_mediali
 static void xmms_medialib_client_set_property_string (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
 static void xmms_medialib_client_set_property_int (xmms_medialib_t *medialib, gint32 entry, const gchar *source, const gchar *key, gint32 value, xmms_error_t *error);
 static void xmms_medialib_client_remove_property (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, const gchar *source, const gchar *key, xmms_error_t *error);
-static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 id, xmms_error_t *err);
+static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, xmms_error_t *err);
 static gint32 xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
 static s4_t *xmms_medialib_database_open (const gchar *config_path, const gchar *indices[]);
@@ -969,12 +969,6 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	GTree *ret;
 	gint i;
 
-	g_return_val_if_fail (entry, NULL);
-
-	if (!xmms_medialib_check_id (session, entry)) {
-		return NULL;
-	}
-
 	song_id = s4_val_new_int (entry);
 	set = xmms_medialib_filter (session, "song_id", song_id, S4_COND_PARENT,
 	                            NULL, NULL, S4_FETCH_PARENT | S4_FETCH_DATA);
@@ -1016,21 +1010,19 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 }
 
 static GTree *
-xmms_medialib_client_get_info (xmms_medialib_t *medialib, gint32 id,
+xmms_medialib_client_get_info (xmms_medialib_t *medialib,
+                               xmms_medialib_entry_t entry,
                                xmms_error_t *err)
 {
 	GTree *ret = NULL;
 
-	if (!id) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry, 0");
+	MEDIALIB_BEGIN (medialib);
+	if (xmms_medialib_check_id (session, entry)) {
+		ret = xmms_medialib_entry_to_tree (session, entry);
 	} else {
-		SESSION (ret = xmms_medialib_entry_to_tree (session, id));
-
-		if (!ret) {
-			xmms_error_set (err, XMMS_ERROR_NOENT,
-			                "Could not retrieve info for that entry!");
-		}
+		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry");
 	}
+	MEDIALIB_COMMIT ();
 
 	return ret;
 }
