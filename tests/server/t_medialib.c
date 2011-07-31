@@ -716,6 +716,14 @@ CASE(test_client_property_remove)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
+	/* removing properties from non-existing entries should fail */
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                        xmmsv_new_int (1337),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
