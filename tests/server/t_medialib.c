@@ -511,6 +511,11 @@ CASE(test_client_rehash)
 	xmmsv_t *value;
 	gint status;
 
+	/* rehashing missing id should fail */
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (1));
+	CU_ASSERT (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
+	xmmsv_unref (value);
+
 	first = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	second = xmms_mock_entry (2, "Red Fang", "Red Fang", "Reverse Thunder");
 
@@ -526,7 +531,7 @@ CASE(test_client_rehash)
 	xmms_medialib_session_abort (session);
 
 	/* rehash first entry */
-	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (1));
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (first));
 	CU_ASSERT (xmmsv_is_type (value, XMMSV_TYPE_NONE));
 	xmmsv_unref (value);
 
