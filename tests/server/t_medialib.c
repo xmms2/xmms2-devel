@@ -664,6 +664,22 @@ CASE(test_client_property_set)
 	xmmsv_unref (result);
 
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                        xmmsv_new_int (0),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"),
+	                        xmmsv_new_int (2));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                        xmmsv_new_int (1337),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("tracknr"),
+	                        xmmsv_new_int (2));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"),
@@ -675,6 +691,22 @@ CASE(test_client_property_set)
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("server"),
+	                        xmmsv_new_string ("title"),
+	                        xmmsv_new_string ("Reverse Thunder"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                        xmmsv_new_int (0),
+	                        xmmsv_new_string ("client/unittest"),
+	                        xmmsv_new_string ("title"),
+	                        xmmsv_new_string ("Reverse Thunder"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                        xmmsv_new_int (1337),
+	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("title"),
 	                        xmmsv_new_string ("Reverse Thunder"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
