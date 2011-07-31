@@ -1055,18 +1055,25 @@ xmms_medialib_client_add_entry (xmms_medialib_t *medialib, const gchar *url,
  * @param error In case of error this will be filled.
  */
 static void
-xmms_medialib_client_move_entry (xmms_medialib_t *medialib, gint32 entry,
+xmms_medialib_client_move_entry (xmms_medialib_t *medialib,
+                                 xmms_medialib_entry_t entry,
                                  const gchar *url, xmms_error_t *error)
 {
-	const gchar *key = XMMS_MEDIALIB_ENTRY_PROPERTY_URL;
-	gchar *enc_url;
+	gchar *encoded;
 
-	enc_url = xmms_medialib_url_encode (url);
+	encoded = xmms_medialib_url_encode (url);
 
-	SESSION (xmms_medialib_entry_property_set_str_source (session, entry, key,
-	                                                      enc_url, "server"));
+	MEDIALIB_BEGIN (medialib);
+	if (xmms_medialib_check_id (session, entry)) {
+		xmms_medialib_entry_property_set_str_source (session, entry,
+		                                             XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
+		                                             encoded, "server");
+	} else {
+		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+	}
+	MEDIALIB_COMMIT ();
 
-	g_free (enc_url);
+	g_free (encoded);
 }
 
 static void

@@ -768,6 +768,18 @@ CASE(test_client_move_entry)
 
 	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_ENTRY,
+	                        xmmsv_new_int (0),
+	                        xmmsv_new_string ("file://test.mp3"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_ENTRY,
+	                        xmmsv_new_int (1337),
+	                        xmmsv_new_string ("file://test.mp3"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
 	session = xmms_medialib_session_begin (medialib);
 	string = xmms_medialib_entry_property_get_str (session, entry, "url");
 	CU_ASSERT_STRING_NOT_EQUAL ("file://test.mp3", string);
