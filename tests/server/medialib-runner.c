@@ -16,19 +16,12 @@
 
 #include <glib.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "../src/xmms/error.c"
-#include "../src/xmms/utils.c"
-#include "../src/xmms/ipc.c"
-#include "../src/xmms/object.c"
-#include "../src/xmms/config.c"
-#include "../src/xmms/medialib.c"
-#include "../src/xmms/medialib_query.c"
-#include "../src/xmms/medialib_query_result.c"
-#include "../src/xmms/medialib_session.c"
-#include "../src/xmms/fetchinfo.c"
-#include "../src/xmms/fetchspec.c"
-#include "../src/xmms/compat/thread_name_dummy.c"
+#include "xmmspriv/xmms_log.h"
+#include "xmmspriv/xmms_ipc.h"
+#include "xmmspriv/xmms_config.h"
+#include "xmmspriv/xmms_medialib.h"
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
@@ -169,8 +162,11 @@ filter_testcase (const gchar *path, xmmsv_t *list)
 static void
 populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 {
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry = 0;
 	xmmsv_list_iter_t *lit;
+
+	session = xmms_medialib_session_begin (medialib);
 
 	xmmsv_get_list_iter (content, &lit);
 	while (xmmsv_list_iter_valid (lit)) {
@@ -185,38 +181,38 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 		if (xmmsv_dict_has_key (dict, "url")) {
 			const gchar *url;
 			xmmsv_dict_entry_get_string (dict, "url", &url);
-			SESSION (entry = xmms_medialib_entry_new (session, url, &err));
+			entry = xmms_medialib_entry_new (session, url, &err);
 		} else {
 			gchar *url;
 			url = g_strdup_printf ("file://%d.mp3", entry + 1);
-			SESSION (entry = xmms_medialib_entry_new (session, url, &err));
+			entry = xmms_medialib_entry_new (session, url, &err);
 			g_free (url);
 		}
 
-		SESSION (
-			xmmsv_get_dict_iter (dict, &dit);
+		xmmsv_get_dict_iter (dict, &dit);
 
-			while (xmmsv_dict_iter_valid (dit)) {
-				const gchar *key;
-				xmmsv_t *container;
+		while (xmmsv_dict_iter_valid (dit)) {
+			const gchar *key;
+			xmmsv_t *container;
 
-				xmmsv_dict_iter_pair (dit, &key, &container);
-				if (xmmsv_is_type (container, XMMSV_TYPE_STRING)) {
-					const gchar *value;
-					xmmsv_get_string (container, &value);
-					xmms_medialib_entry_property_set_str (session, entry, key, value);
-				} else {
-					gint32 value;
-					xmmsv_get_int (container, &value);
-					xmms_medialib_entry_property_set_int (session, entry, key, value);
-				}
-
-				xmmsv_dict_iter_next (dit);
+			xmmsv_dict_iter_pair (dit, &key, &container);
+			if (xmmsv_is_type (container, XMMSV_TYPE_STRING)) {
+				const gchar *value;
+				xmmsv_get_string (container, &value);
+				xmms_medialib_entry_property_set_str (session, entry, key, value);
+			} else {
+				gint32 value;
+				xmmsv_get_int (container, &value);
+				xmms_medialib_entry_property_set_int (session, entry, key, value);
 			}
-		);
+
+			xmmsv_dict_iter_next (dit);
+		}
 
 		xmmsv_list_iter_next (lit);
 	}
+
+	xmms_medialib_session_commit (session);
 }
 
 
@@ -232,16 +228,21 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmmsv_t *ret, *value;
 	xmms_error_t err;
 	xmms_medialib_t *medialib;
+	xmms_medialib_session_t *session;
 
 	g_debug ("Running test: %s", name);
 
-	medialib = xmms_object_new (xmms_medialib_t, NULL);
-	medialib->s4 = s4_open (NULL, NULL, S4_MEMORY);
-	medialib->default_sp = s4_sourcepref_create (source_pref);
+	xmms_ipc_init ();
+	xmms_config_init (NULL);
+	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
+
+	medialib = xmms_medialib_init ();
 
 	populate_medialib (medialib, content);
 
-	SESSION (ret = xmms_medialib_query (session, coll, specification, &err));
+	session = xmms_medialib_session_begin (medialib);
+	ret = xmms_medialib_query (session, coll, specification, &err);
+	xmms_medialib_session_commit (session);
 
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);
@@ -276,9 +277,9 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 
 	xmmsv_unref (ret);
 
-	s4_close (medialib->s4);
-	s4_sourcepref_unref (medialib->default_sp);
 	xmms_object_unref (medialib);
+	xmms_config_shutdown ();
+	xmms_ipc_shutdown ();
 }
 
 
@@ -290,14 +291,19 @@ run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *con
                       xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                       gint format, const gchar *datasetname)
 {
+	xmms_medialib_session_t *session;
 	xmms_error_t err;
 	GTimeVal t0, t1;
 	guint64 duration;
 	xmmsv_t *ret;
 
+	session = xmms_medialib_session_begin (medialib);
+
 	g_get_current_time (&t0);
-	SESSION (ret = xmms_medialib_query (session, coll, specification, &err));
+	ret = xmms_medialib_query (session, coll, specification, &err);
 	g_get_current_time (&t1);
+
+	xmms_medialib_session_commit (session);
 
 	duration = (guint64)((t1.tv_sec - t0.tv_sec) * G_USEC_PER_SEC) + (t1.tv_usec - t0.tv_usec);
 
@@ -358,11 +364,6 @@ static void
 run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 {
 	xmmsv_list_iter_t *it;
-	const gchar *indices[] = {
-		XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
-		XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
-		NULL
-	};
 
 	xmmsv_get_list_iter (databases, &it);
 	while (xmmsv_list_iter_valid (it)) {
@@ -374,19 +375,22 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 		if (format == FORMAT_PRETTY)
 			g_print ("Running suite with: %s\n", filename);
 
-		medialib = xmms_object_new (xmms_medialib_t, NULL);
-		medialib->s4 = s4_open (filename, indices, 0);
-		if (medialib->s4 == NULL) {
+		xmms_ipc_init ();
+		xmms_config_init (NULL);
+		xmms_config_property_register ("medialib.path", filename, NULL, NULL);
+
+		medialib = xmms_medialib_init ();
+		if (medialib == NULL) {
 			g_print ("Could not open database: %s (%d)\n", filename, s4_errno ());
 			exit (EXIT_FAILURE);
 		}
-		medialib->default_sp = s4_sourcepref_create (source_pref);
 
 		run_tests (medialib, testcases, run_performance_test, format, filename);
 
-		s4_close (medialib->s4);
-		s4_sourcepref_unref (medialib->default_sp);
 		xmms_object_unref (medialib);
+		xmms_config_shutdown ();
+		xmms_ipc_shutdown ();
+
 		xmmsv_list_iter_next (it);
 	}
 }
@@ -474,6 +478,8 @@ main (gint argc, gchar **argv)
 
 	g_thread_init (0);
 
+	xmms_log_init (0);
+
 	parse_command_line (argc, argv, &args);
 
 	g_log_set_default_handler (simple_log_handler, (gpointer) &args);
@@ -506,22 +512,3 @@ main (gint argc, gchar **argv)
 
 	return EXIT_SUCCESS;
 }
-
-
-
-
-
-
-
-
-
-
-
-/* START: Stub some crap so we don't have to pull in the whole daemon */
-GList *
-xmms_xform_browse (const gchar *url, xmms_error_t *error)
-{
-	return NULL;
-}
-/* END */
-

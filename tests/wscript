@@ -37,11 +37,6 @@ runner/valgrind.c
 ../src/xmms/object.c
 """.split() + server_suite
 
-mlib_ipc = """
-medialib_ipc
-config_ipc
-visualisation/object_ipc
-""".split()
 test_mlib_src = """
 runner/main.c
 runner/valgrind.c
@@ -98,13 +93,6 @@ def build(bld):
         install_path = None
         )
 
-    for n in mlib_ipc:
-        bld(rule = "${PYTHON} ${SRC[1].abspath()} > ${TGT}",
-            target = n + ".c",
-            source = ["../src/ipc.xml", "../src/xmms/"+n+".py"],
-            before = "c"
-            )
-
     bld(features = "c cprogram",
         target = "test_medialib",
         source = test_mlib_src,
@@ -127,7 +115,7 @@ def build(bld):
         target = "medialib-runner",
         source = mlib_runner_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
         install_path = None
         )
