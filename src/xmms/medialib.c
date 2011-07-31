@@ -44,7 +44,7 @@
  */
 
 
-static void xmms_medialib_client_remove_entry (xmms_medialib_t *medialib, gint32 entry, xmms_error_t *error);
+static void xmms_medialib_client_remove_entry (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, xmms_error_t *error);
 gchar *xmms_medialib_url_encode (const gchar *path);
 
 static void xmms_medialib_client_add_entry (xmms_medialib_t *, const gchar *, xmms_error_t *);
@@ -564,9 +564,16 @@ xmms_medialib_get_new_id (xmms_medialib_session_t *session)
 
 static void
 xmms_medialib_client_remove_entry (xmms_medialib_t *medialib,
-                                   gint32 entry, xmms_error_t *error)
+                                   xmms_medialib_entry_t entry,
+                                   xmms_error_t *error)
 {
-	SESSION (xmms_medialib_entry_remove (session, entry));
+	MEDIALIB_BEGIN (medialib);
+	if (xmms_medialib_check_id (session, entry)) {
+		xmms_medialib_entry_remove (session, entry);
+	} else {
+		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+	}
+	MEDIALIB_COMMIT ();
 }
 
 /**

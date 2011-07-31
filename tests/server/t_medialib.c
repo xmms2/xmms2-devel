@@ -602,13 +602,17 @@ CASE(test_client_entry_remove)
 	xmms_medialib_entry_t entry;
 	xmmsv_t *result;
 
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REMOVE_ID, xmmsv_new_int (1337));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
 	entry = xmms_mock_entry (1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	session = xmms_medialib_session_begin (medialib);
 	CU_ASSERT_TRUE (xmms_medialib_check_id (session, entry));
 	xmms_medialib_session_abort (session);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REMOVE_ID, xmmsv_new_int (1));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REMOVE_ID, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
