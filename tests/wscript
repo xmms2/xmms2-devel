@@ -5,6 +5,7 @@ utils/jsonism.c
 utils/value_utils.c
 utils/coll_utils.c
 utils/ipc_call.c
+utils/mlib_utils.c
 """.split()
 
 types_suite = """
@@ -70,8 +71,9 @@ def build(bld):
     bld(features = "c cstlib",
         target = "testutils",
         source = testutils_src,
-        include = ". ../src/include",
+        includes = ". ../src/include ../src/includepriv",
         uselib = "glib2",
+        use = "s4",
         install_path = None
         )
 
