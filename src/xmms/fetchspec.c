@@ -392,6 +392,9 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 			spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_field,
 			                                                     field, prefs);
 			break;
+		case CLUSTER_BY_POSITION:
+			/* do nothing */
+			break;
 	}
 
 	return spec;
