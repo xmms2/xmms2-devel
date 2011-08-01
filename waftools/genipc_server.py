@@ -34,6 +34,15 @@ c_creator_map = {
 	'xmmsv' : None,
 }
 
+c_nullable_type_map = {
+	'int': False,
+	'string': "gchar *",
+	'list': "GList *",
+	'dictionary': "GTree *",
+	'collection': "xmmsv_coll_t *",
+	'binary': "GString *",
+	'xmmsv' : "xmmsv_t *",
+}
 
 def build(object_name, c_type):
 	ipc = genipc.parse_xml('../src/ipc.xml')
@@ -130,7 +139,7 @@ def emit_method_define_code(object, method, c_type):
 			Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Error parsing arg %d in %s");' % (i, method.name))
 			Indenter.printline("return;")
 			Indenter.leave("}")
-			
+
 
 	Indenter.printline()
 
@@ -140,7 +149,13 @@ def emit_method_define_code(object, method, c_type):
 		if c_creator_map[method.return_value.type[0]] is None:
 			Indenter.printline("arg->retval = %s;" % (funccall))
 		else:
-			Indenter.printline("arg->retval = %s (%s);" % (c_creator_map[method.return_value.type[0]], funccall))
+			if c_nullable_type_map[method.return_value.type[0]]:
+				Indenter.printline("%s retval = %s;" % (c_nullable_type_map[method.return_value.type[0]], funccall))
+				Indenter.enter("if (retval != NULL) {")
+				Indenter.printline("arg->retval = %s (retval);" % c_creator_map[method.return_value.type[0]])
+				Indenter.leave("}")
+			else:
+				Indenter.printline("arg->retval = %s (%s);" % (c_creator_map[method.return_value.type[0]], funccall))
 	else:
 		Indenter.printline("%s;" % funccall)
 		Indenter.printline("arg->retval = xmmsv_new_none ();")
