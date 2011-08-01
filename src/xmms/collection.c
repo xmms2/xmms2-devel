@@ -461,10 +461,6 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 	/* Not found! */
 	if (coll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
-
-	/* New reference, will be freed after being put in the return message */
-	} else {
-		xmmsv_coll_ref (coll);
 	}
 
 	g_mutex_unlock (dag->mutex);
