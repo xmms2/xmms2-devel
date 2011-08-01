@@ -83,49 +83,35 @@ CASE (test_entry_property_get)
 	second = xmms_mock_entry (4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	session = xmms_medialib_session_begin (medialib);
+
 	result = xmms_medialib_entry_property_get_value (session, second, "tracknr");
-	xmms_medialib_session_commit (session);
 	xmmsv_get_int (result, &tracknr);
 	CU_ASSERT_EQUAL (4, tracknr);
 	xmmsv_unref (result);
 
-	session = xmms_medialib_session_begin (medialib);
 	result = xmms_medialib_entry_property_get_value (session, first, "title");
-	xmms_medialib_session_commit (session);
 	xmmsv_get_string (result, &title);
 	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", title);
 	xmmsv_unref (result);
 
-	session = xmms_medialib_session_begin (medialib);
 	result = xmms_medialib_entry_property_get_value (session, 1337, "tracknr");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_EQUAL (NULL, result);
 
-	session = xmms_medialib_session_begin (medialib);
 	string = xmms_medialib_entry_property_get_str (session, first, "title");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", string);
 	g_free (string);
 
-	session = xmms_medialib_session_begin (medialib);
 	string = xmms_medialib_entry_property_get_str (session, second, "tracknr");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (string);
 	g_free (string);
 
-	session = xmms_medialib_session_begin (medialib);
 	string = xmms_medialib_entry_property_get_str (session, 1337, "monkey");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_EQUAL (NULL, string);
 
-	session = xmms_medialib_session_begin (medialib);
 	tracknr = xmms_medialib_entry_property_get_int (session, second, "tracknr");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_EQUAL (4, tracknr);
 
-	session = xmms_medialib_session_begin (medialib);
 	tracknr = xmms_medialib_entry_property_get_int (session, 1337, "tracknr");
-	xmms_medialib_session_commit (session);
 	CU_ASSERT_EQUAL (-1, tracknr);
 
 	/*
@@ -134,6 +120,8 @@ CASE (test_entry_property_get)
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (result);
 	*/
+
+	xmms_medialib_session_abort (session);
 }
 
 CASE (test_entry_remove)
