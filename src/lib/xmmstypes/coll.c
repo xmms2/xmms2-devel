@@ -650,6 +650,8 @@ xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
 	xmmsv_coll_t *ret;
 	char str[12];
 
+	x_return_val_if_fail (lim_start >= 0 && lim_len >= 0, NULL);
+
 	if (lim_start == 0 && lim_len == 0) {
 		return xmmsv_coll_ref (coll);
 	}
@@ -658,13 +660,21 @@ xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
 	xmmsv_coll_add_operand (ret, coll);
 
 	if (lim_start != 0) {
-		sprintf (str, "%i", lim_start);
-		xmmsv_coll_attribute_set (ret, "start", str);
+		int count = snprintf (str, sizeof (str), "%i", lim_start);
+		if (count > 0 && count < sizeof (str)) {
+			xmmsv_coll_attribute_set (ret, "start", str);
+		} else {
+			x_api_warning ("could not set collection limit operator start");
+		}
 	}
 
 	if (lim_len != 0) {
-		sprintf (str, "%i", lim_len);
-		xmmsv_coll_attribute_set (ret, "length", str);
+		int count = snprintf (str, sizeof (str), "%i", lim_len);
+		if (count > 0 && count < sizeof (str)) {
+			xmmsv_coll_attribute_set (ret, "length", str);
+		} else {
+			x_api_warning ("could not set collection limit operator length");
+		}
 	}
 
 	return ret;
