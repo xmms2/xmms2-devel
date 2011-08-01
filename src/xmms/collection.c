@@ -79,7 +79,6 @@ typedef struct add_metadata_from_tree_user_data_St {
 	const gchar* src;
 } add_metadata_from_tree_user_data_t;
 
-static GList *global_stream_type;
 
 /* Functions */
 
@@ -185,7 +184,6 @@ struct xmms_coll_dag_St {
 xmms_coll_dag_t *
 xmms_collection_init (xmms_medialib_t *medialib)
 {
-	xmms_stream_type_t *f;
 	xmms_coll_dag_t *ret;
 	gint i;
 
@@ -199,16 +197,6 @@ xmms_collection_init (xmms_medialib_t *medialib)
 	}
 
 	xmms_collection_register_ipc_commands (XMMS_OBJECT (ret));
-
-	uuid = xmms_medialib_uuid (medialib);
-	xmms_collection_dag_restore (ret, uuid);
-	g_free (uuid);
-
-	f = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
-	                           XMMS_STREAM_TYPE_MIMETYPE,
-	                           "application/x-xmms2-playlist-entries",
-	                           XMMS_STREAM_TYPE_END);
-	global_stream_type = g_list_prepend (NULL, f);
 
 	return ret;
 }
@@ -249,14 +237,21 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
                                              const gchar *path,
                                              xmms_error_t *err)
 {
+	xmms_stream_type_t *stream_type;
 	xmms_xform_t *xform;
-	GList *lst, *n;
+	GList *stream_types, *lst, *n;
 	xmmsv_coll_t *coll;
 	const gchar* src;
 	const gchar *buf;
 
+	stream_type = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
+	                                     XMMS_STREAM_TYPE_MIMETYPE,
+	                                     "application/x-xmms2-playlist-entries",
+	                                     XMMS_STREAM_TYPE_END);
+	stream_types = g_list_prepend (NULL, stream_type);
+
 	/* we don't want any effects for playlist, so just report we're rehashing */
-	xform = xmms_xform_chain_setup_url (dag->medialib, 0, path, global_stream_type, TRUE);
+	xform = xmms_xform_chain_setup_url (dag->medialib, 0, path, stream_types, TRUE);
 
 	if (!xform) {
 		xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "We can't handle this type of playlist or URL");
@@ -313,6 +308,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	}
 
 	xmms_object_unref (xform);
+	xmms_object_unref (stream_type);
+	g_list_free (stream_types);
 
 	return coll;
 }
