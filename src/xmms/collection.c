@@ -698,6 +698,8 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	xmmsv_coll_unref (coll2);
 	xmmsv_coll_unref (coll3);
 
+	xmmsv_unref (fetch_spec);
+
 	return ret;
 }
 
