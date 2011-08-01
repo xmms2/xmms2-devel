@@ -31,7 +31,7 @@
 /** @file */
 
 /* Default source preferences for accessing "propdicts" */
-const char *default_source_pref[] = {
+const char *xmmsv_default_source_pref[] = {
 	"server",
 	"client/*",
 	"plugin/playlist",
@@ -759,7 +759,7 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 
 	dict = xmmsv_new_dict ();
 
-	local_prefs = src_prefs ? src_prefs : default_source_pref;
+	local_prefs = src_prefs ? src_prefs : xmmsv_default_source_pref;
 
 	xmmsv_get_dict_iter (propdict, &key_it);
 	while (xmmsv_dict_iter_valid (key_it)) {

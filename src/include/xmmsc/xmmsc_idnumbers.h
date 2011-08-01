@@ -256,7 +256,7 @@ typedef const char* xmmsv_coll_namespace_t;
 #define XMMS_ACTIVE_PLAYLIST "_active"
 
 /* Default source preferences for accessing "propdicts" (decl. in value.c) */
-extern const char *default_source_pref[];
+extern const char *xmmsv_default_source_pref[];
 
 /* compability */
 typedef xmmsv_coll_type_t xmmsc_coll_type_t;
