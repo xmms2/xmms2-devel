@@ -26,6 +26,10 @@ playlist_suite = """
 server/t_playlist.c
 """.split()
 
+collection_suite = """
+server/t_collection.c
+""".split()
+
 test_xmmstypes_src = """
 runner/main.c
 runner/valgrind.c
@@ -47,6 +51,11 @@ test_playlist_src = """
 runner/main.c
 runner/valgrind.c
 """.split() + playlist_suite
+
+test_collection_src = """
+runner/main.c
+runner/valgrind.c
+""".split() + collection_suite
 
 mlib_runner_src = """
 server/medialib-runner.c
@@ -107,6 +116,15 @@ def build(bld):
     bld(features = "c cprogram",
         target = "test_playlist",
         source = test_playlist_src,
+        includes = '. .. runner ../src ../src/includepriv ../src/include',
+        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+        install_path = None
+        )
+
+    bld(features = "c cprogram",
+        target = "test_collection",
+        source = test_collection_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
         use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
