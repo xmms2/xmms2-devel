@@ -2514,6 +2514,7 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *fields, xmmsv_t *get, const char *aggreg
 		if (xmmsv_get_type (fields) == XMMSV_TYPE_STRING) {
 			xmmsv_t *list = xmmsv_new_list ();
 			xmmsv_list_append (list, fields);
+			xmmsv_unref (fields);
 			fields = list;
 		}
 		xmmsv_dict_set (res, "fields", fields);
@@ -2523,6 +2524,7 @@ xmmsv_t *xmmsv_build_metadata (xmmsv_t *fields, xmmsv_t *get, const char *aggreg
 		if (xmmsv_get_type (get) == XMMSV_TYPE_STRING) {
 			xmmsv_t *list = xmmsv_new_list ();
 			xmmsv_list_append (list, get);
+			xmmsv_unref (get);
 			get = list;
 		}
 		xmmsv_dict_set (res, "get", get);
