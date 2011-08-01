@@ -567,6 +567,8 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *name
 	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, match_table);
 
 	filter_coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
+	xmmsv_coll_attribute_set (filter_coll, "type", "id");
+	xmms_collection_set_int_attr (filter_coll, "value", mid);
 
 	/* While not all collections have been checked, check next */
 	while (g_hash_table_find (match_table, find_unchecked, &open_name) != NULL) {
@@ -576,7 +578,7 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *name
 		xmmsv_coll_add_operand (filter_coll, coll);
 		idlist = xmms_collection_query_ids (dag, coll, 0, 0, NULL, err);
 
-		if (xmmsv_list_get_size (idlist) <= 0) {
+		if (xmmsv_list_get_size (idlist) > 0) {
 			*match = XMMS_COLLECTION_FIND_STATE_MATCH;
 		} else {
 			*match = XMMS_COLLECTION_FIND_STATE_NOMATCH;
