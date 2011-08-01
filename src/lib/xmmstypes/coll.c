@@ -647,13 +647,14 @@ xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
 xmmsv_coll_t *
 xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
 {
-	xmmsv_coll_t *ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_LIMIT);
+	xmmsv_coll_t *ret;
 	char str[12];
 
 	if (lim_start == 0 && lim_len == 0) {
 		return xmmsv_coll_ref (coll);
 	}
 
+	ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_LIMIT);
 	xmmsv_coll_add_operand (ret, coll);
 
 	if (lim_start != 0) {
