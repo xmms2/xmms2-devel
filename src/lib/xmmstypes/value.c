@@ -377,6 +377,12 @@ xmmsv_free (xmmsv_t *val)
 			xmmsv_dict_free (val->value.dict);
 			val->value.dict = NULL;
 			break;
+		case XMMSV_TYPE_BITBUFFER:
+			if (!val->value.bit.ro && val->value.bit.buf) {
+				free (val->value.bit.buf);
+			}
+			val->value.bit.buf = NULL;
+			break;
 	}
 
 	free (val);
