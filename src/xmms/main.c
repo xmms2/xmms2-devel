@@ -31,6 +31,7 @@
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_playlist_updater.h"
 #include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_signal.h"
@@ -92,6 +93,7 @@ struct xmms_main_St {
 	xmms_medialib_t *medialib_object;
 	xmms_playlist_t *playlist_object;
 	xmms_coll_sync_t *collsync_object;
+	xmms_playlist_updater_t *plsupdater_object;
 	xmms_xform_object_t *xform_object;
 	xmms_mediainfo_reader_t *mediainfo_object;
 	xmms_visualization_t *visualization_object;
@@ -563,6 +565,7 @@ main (int argc, char **argv)
 	                                                mainobj->colldag_object,
 	                                                mainobj->playlist_object);
 	g_free (uuid);
+	mainobj->plsupdater_object = xmms_playlist_updater_init (mainobj->playlist_object);
 
 	mainobj->xform_object = xmms_xform_object_init ();
 	mainobj->bindata_object = xmms_bindata_init ();

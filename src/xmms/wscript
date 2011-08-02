@@ -20,6 +20,7 @@ source = """
     error.c
     output.c
     playlist.c
+    playlist_updater.c
     collection.c
     collserial.c
     collsync.c
