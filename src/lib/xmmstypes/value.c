@@ -28,6 +28,7 @@
 #include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_list.h"
 
+/** @file */
 
 /* Default source preferences for accessing "propdicts" */
 const char *default_source_pref[] = {
@@ -118,14 +119,6 @@ static int absolutify_and_validate_pos (int *pos, int size, int allow_append);
 
 
 
-
-/**
- * @defgroup ValueType ValueType
- * @ingroup Values
- * @brief The API to be used to work with value objects.
- *
- * @{
- */
 
 /**
  * Allocates a new empty #xmmsv_t.
@@ -2470,8 +2463,6 @@ xmmsv_utf8_validate (const char *str)
 	}
 }
 
-
-/** @} */
 
 
 /**
