@@ -765,12 +765,12 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		xmmsv_get_string (entry, &value);
 
 		if (strcmp (value, "position") == 0) {
-			cluster_by = entry;
+			cluster_by = xmmsv_ref (entry);
 		} else if (strcmp (value, "id") == 0) {
-			cluster_by = entry;
+			cluster_by = xmmsv_ref (entry);
 		} else {
 			cluster_by = xmmsv_new_string ("value");
-			cluster_field = entry;
+			cluster_field = xmmsv_ref (entry);
 		}
 
 		fetch_spec = xmmsv_build_cluster_list (cluster_by, cluster_field, fetch_spec);
@@ -792,6 +792,8 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	} else {
 		ret = unflattened;
 	}
+
+	xmmsv_unref (group);
 
 	return ret;
 }
