@@ -257,3 +257,67 @@ CASE (test_client_list)
 	xmmsv_unref (result);
 }
 
+CASE (test_client_query_infos)
+{
+	xmms_medialib_entry_t first, second;
+	xmms_medialib_session_t *session;
+	xmmsv_coll_t *universe;
+	xmmsv_t *expected, *result, *order, *fetch, *group;
+	gint limit_start, limit_length;
+
+	limit_start = 0;
+	limit_length = 0;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	session = xmms_medialib_session_begin (medialib);
+	xmms_medialib_entry_property_set_str_source (session, second,
+	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
+	                                             "2009", "client/unittest");
+	xmms_medialib_session_commit (session);
+
+
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
+	                          XMMSV_LIST_END);
+
+	fetch = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_ENTRY_STR ("title"),
+	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
+	                          XMMSV_LIST_ENTRY_STR ("date"),
+	                          XMMSV_LIST_END);
+
+	group = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("position"),
+	                          XMMSV_LIST_END);
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	                        xmmsv_new_coll (universe),
+	                        xmmsv_new_int (limit_start),
+	                        xmmsv_new_int (limit_length),
+	                        order, fetch, group);
+	xmmsv_coll_unref (universe);
+
+
+	expected = xmmsv_from_json ("[{                             "
+	                            "  'artist': 'Red Fang',        "
+	                            "   'album': 'Red Fang',        "
+	                            " 'tracknr':  1,                "
+	                            "   'title': 'Prehistoric Dog'  "
+	                            "}, {                           "
+	                            "   'album': 'Red Fang',        "
+	                            " 'tracknr':  2,                "
+	                            "   'title': 'Reverse Thunder', "
+	                            "  'artist': 'Red Fang',        "
+	                            "    'date': '2009'             "
+	                            "}]                             ");
+
+	CU_ASSERT (xmmsv_compare (expected, result));
+
+	xmmsv_unref (expected);
+	xmmsv_unref (result);
+}
