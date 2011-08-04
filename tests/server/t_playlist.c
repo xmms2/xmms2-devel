@@ -166,6 +166,30 @@ CASE(test_client_add_collection)
 
 CASE(test_client_add_idlist)
 {
+	xmms_medialib_entry_t first, second;
+	xmmsv_coll_t *list;
+	xmmsv_t *result;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	list = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (list, first);
+	xmmsv_coll_idlist_append (list, second);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_IDLIST,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_coll (list));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
+
+	xmmsv_coll_unref (list);
 }
 
 CASE(test_client_add_id)
