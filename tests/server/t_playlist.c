@@ -11,6 +11,7 @@
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
 #include "utils/ipc_call.h"
+#include "utils/mlib_utils.h"
 
 static xmms_medialib_t *medialib;
 static xmms_coll_dag_t *colldag;
@@ -130,4 +131,91 @@ CASE (test_basic_functionality)
 	xmmsv_unref (signals);
 	xmmsv_unref (expected);
 	xmms_future_free (future);
+}
+
+CASE(test_client_add_collection)
+{
+	xmmsv_coll_t *universe;
+	xmmsv_t *result, *order;
+
+	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
+	                          XMMSV_LIST_END);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_coll (universe),
+	                        order);
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
+
+	xmmsv_coll_unref (universe);
+}
+
+CASE(test_client_add_idlist)
+{
+}
+
+CASE(test_client_add_id)
+{
+}
+
+CASE(test_client_add_url)
+{
+}
+
+CASE(test_client_clear)
+{
+}
+
+CASE(test_client_insert_collection)
+{
+}
+
+CASE(test_client_insert_id)
+{
+}
+
+CASE(test_client_insert_url)
+{
+}
+
+CASE(test_client_load)
+{
+}
+
+CASE(test_client_move_entry)
+{
+}
+
+CASE(test_client_radd)
+{
+}
+
+CASE(test_client_remove_entry)
+{
+}
+
+CASE(test_client_rinsert)
+{
+}
+
+CASE(test_client_shuffle)
+{
+}
+
+CASE(test_client_sort)
+{
 }
