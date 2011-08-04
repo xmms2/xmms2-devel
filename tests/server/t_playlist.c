@@ -194,14 +194,80 @@ CASE(test_client_add_idlist)
 
 CASE(test_client_add_id)
 {
+	xmms_medialib_entry_t first;
+	xmmsv_t *result;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (first));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 }
 
 CASE(test_client_add_url)
 {
+	xmmsv_t *result;
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_URL,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_string ("file:///test/file.mp3"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 }
 
 CASE(test_client_clear)
 {
+	xmms_medialib_entry_t first;
+	xmmsv_t *result;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	/* TODO: Is this what we want? */
+	CU_ASSERT_PTR_NULL (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (first));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CLEAR,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	/* TODO: Is this what we want? */
+	CU_ASSERT_PTR_NULL (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (first));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 }
 
 CASE(test_client_insert_collection)
@@ -230,6 +296,39 @@ CASE(test_client_radd)
 
 CASE(test_client_remove_entry)
 {
+	xmms_medialib_entry_t first;
+	xmmsv_t *result;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (first));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_REMOVE_ENTRY,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (0));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_REMOVE_ENTRY,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (0));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	/* TODO: Is this what we want? */
+	CU_ASSERT_PTR_NULL (result);
 }
 
 CASE(test_client_rinsert)
