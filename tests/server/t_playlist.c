@@ -290,10 +290,6 @@ CASE(test_client_move_entry)
 {
 }
 
-CASE(test_client_radd)
-{
-}
-
 CASE(test_client_remove_entry)
 {
 	xmms_medialib_entry_t first;
@@ -337,6 +333,54 @@ CASE(test_client_rinsert)
 
 CASE(test_client_shuffle)
 {
+	xmms_medialib_entry_t first, second;
+	xmms_future_t *future1, *future2;
+	xmmsv_t *result, *signals, *expected;
+	xmms_error_t err;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
+
+	/* advance position from -1 to 0, and from 0 to 1 */
+	xmms_playlist_advance (playlist);
+	xmms_playlist_advance (playlist);
+	CU_ASSERT_EQUAL (second, xmms_playlist_current_entry (playlist));
+
+	future1 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	future2 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
+
+	/* emits CHANGED_UPDATE, CHANGED_SHUFFLE, and CURRENT_POS */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SHUFFLE,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	signals = xmms_future_await_many (future1, 2);
+
+	/* XMMS_PLAYLIST_CHANGED_UPDATE = 7, XMMS_PLAYLIST_CHANGED_SHUFFLE = 2 */
+	expected = xmmsv_from_json ("[{ 'type': 7, 'name': 'Default' },"
+	                            " { 'type': 2, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, signals));
+	xmmsv_unref (signals);
+	xmmsv_unref (expected);
+
+	xmms_future_free (future1);
+
+	signals = xmms_future_await_many (future2, 1);
+
+	/* current entry is moved to position 0 of the playlist */
+	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, signals));
+	xmmsv_unref (signals);
+	xmmsv_unref (expected);
+
+	xmms_future_free (future2);
+
+	/* verify that the current entry is still the same */
+	CU_ASSERT_EQUAL (second, xmms_playlist_current_entry (playlist));
 }
 
 CASE(test_client_sort)
