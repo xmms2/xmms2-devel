@@ -1106,6 +1106,8 @@ xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *pln
 	for (i = 0; xmmsv_list_get_int (res, i, &id); i++) {
 		xmms_playlist_add_entry (playlist, plname, id, err);
 	}
+
+	xmmsv_unref (res);
 }
 
 /**
