@@ -44,18 +44,45 @@ CLEANUP () {
 
 
 CASE (test_client_save) {
+	xmms_future_t *future;
 	xmmsv_coll_t *universe;
-	xmmsv_t *result;
+	xmmsv_t *result, *signals, *expected;
+
+	future = XMMS_IPC_CHECK_SIGNAL (dag, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
 	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
 
+	/* emits XMMS_COLLECTION_CHANGED_ADD */
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_new_coll (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
+
 	xmmsv_coll_unref (universe);
+
+	/* each save requires a new collection, normally handled by IPC deserialization */
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	/* replace the collection, emits XMMS_COLLECTION_CHANGED_UPDATE */
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Test"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_new_coll (universe));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	xmmsv_coll_unref (universe);
+
+	signals = xmms_future_await_many (future, 2);
+
+	/* XMMS_COLLECTION_CHANGED_ADD = 0, XMMS_COLLECTION_CHANGED_UPDATE = 1 */
+	expected = xmmsv_from_json ("[{ 'type': 0, 'namespace': 'Collections', 'name': 'Test' },"
+	                            " { 'type': 1, 'namespace': 'Collections', 'name': 'Test' }]");
+	CU_ASSERT (xmmsv_compare (expected, signals));
+	xmmsv_unref (signals);
+	xmmsv_unref (expected);
 }
 
 CASE (test_client_get) {
