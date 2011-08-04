@@ -288,6 +288,38 @@ CASE(test_client_load)
 
 CASE(test_client_move_entry)
 {
+	xmms_medialib_entry_t first, second, third;
+	xmmsv_t *result, *expected;
+	xmms_error_t err;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	third = xmms_mock_entry (medialib, 3, "Red Fang", "Red Fang", "Night Destroyer");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, third, &err);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	expected = xmmsv_from_json ("[1, 2, 3]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_MOVE_ENTRY,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_int (2),
+	                        xmmsv_new_int (0));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	expected = xmmsv_from_json ("[3, 1, 2]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
 }
 
 CASE(test_client_remove_entry)
