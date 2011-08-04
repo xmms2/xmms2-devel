@@ -370,11 +370,11 @@ void
 xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gchar *namespace,
                              xmmsv_coll_t *coll, xmms_error_t *err)
 {
-	xmmsv_coll_t *existing;
-	guint nsid;
-	const gchar *alias;
 	const gchar *valerr = "Invalid collection: unknown reason. This is "
 	                      "probably a bug in xmms2d.";
+	xmmsv_coll_t *existing;
+	gchar *alias;
+	guint nsid;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -413,8 +413,8 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 			xmmsv_coll_ref (coll);
 
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
-			                             alias,
-			                             namespace);
+			                             alias, namespace);
+			g_free (alias);
 		}
 
 	/* Save new collection in the table */
@@ -423,8 +423,7 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 		xmmsv_coll_ref (coll);
 
 		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
-		                             name,
-		                             namespace);
+		                             name, namespace);
 	}
 
 	g_mutex_unlock (dag->mutex);
@@ -934,18 +933,18 @@ xmms_collection_set_int_attr (xmmsv_coll_t *coll, const gchar *attrname,
  * @param nsid  The id of the namespace to consider.
  * @param value  The value of the pair to find.
  * @param key  If not NULL, ignore any pair with that key.
- * @return The key of the found pair.
+ * @return A copy of the key of the found pair, needs to be freed.
  */
-const gchar *
+gchar *
 xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
                             xmmsv_coll_t *value, const gchar *key)
 {
-	const gchar *otherkey = NULL;
+	gchar *otherkey = NULL;
 	coll_table_pair_t search_pair = { key, value };
 
 	if (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
 	                       &search_pair) != NULL) {
-		otherkey = search_pair.key;
+		otherkey = g_strdup (search_pair.key);
 	}
 
 	return otherkey;
@@ -1324,9 +1323,9 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid
 
 	/* Unref if collection exists, and is not pointed at by _active playlist */
 	if (existing != NULL && existing != active_pl) {
-		const gchar *matchkey;
 		const gchar *nsname = xmms_collection_get_namespace_string (nsid);
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
+		gchar *matchkey;
 
 		/* FIXME: if reference pointed to by a label, we should update
 		 * the label to point to the ref'd operator instead ! */
@@ -1343,6 +1342,7 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid
 			                             nsname);
 
 			g_hash_table_remove (dag->collrefs[nsid], matchkey);
+			g_free (matchkey);
 		}
 
 		retval = TRUE;

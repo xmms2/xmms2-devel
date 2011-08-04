@@ -70,7 +70,7 @@ static void xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar
 static void xmms_playlist_client_load (xmms_playlist_t *, const gchar *, xmms_error_t *);
 
 static xmmsv_coll_t *xmms_playlist_get_coll (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *error);
-static const gchar *xmms_playlist_canonical_name (xmms_playlist_t *playlist, const gchar *plname);
+static gchar *xmms_playlist_canonical_name (xmms_playlist_t *playlist, const gchar *plname);
 static gint xmms_playlist_coll_get_currpos (xmmsv_coll_t *plcoll);
 static gint xmms_playlist_coll_get_size (xmmsv_coll_t *plcoll);
 
@@ -1467,10 +1467,10 @@ xmms_playlist_get_coll (xmms_playlist_t *playlist, const gchar *plname,
  *  Retrieve the canonical name of a playlist. Assumes the playlist
  * name is valid.
  */
-static const gchar *
+static gchar *
 xmms_playlist_canonical_name (xmms_playlist_t *playlist, const gchar *plname)
 {
-	const gchar *fullname;
+	gchar *fullname;
 
 	if (strcmp (plname, XMMS_ACTIVE_PLAYLIST) == 0) {
 		xmmsv_coll_t *coll;
@@ -1480,7 +1480,7 @@ xmms_playlist_canonical_name (xmms_playlist_t *playlist, const gchar *plname)
 		                                       XMMS_COLLECTION_NSID_PLAYLISTS,
 		                                       coll, plname);
 	} else {
-		fullname = plname;
+		fullname = g_strdup (plname);
 	}
 
 	return fullname;
@@ -1515,7 +1515,7 @@ xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
                                xmms_medialib_entry_t id, const gchar *plname)
 {
 	GTree *dict;
-	const gchar *tmp;
+	gchar *tmp;
 
 	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
 	                        NULL, (GDestroyNotify) xmmsv_unref);
@@ -1528,6 +1528,7 @@ xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
 
 	tmp = xmms_playlist_canonical_name (playlist, plname);
 	g_tree_insert (dict, (gpointer) "name", xmmsv_new_string (tmp));
+	g_free (tmp);
 
 	return dict;
 }
@@ -1537,7 +1538,7 @@ xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist,
                                    guint32 pos, const gchar *plname)
 {
 	GTree *dict;
-	const gchar *tmp;
+	gchar *tmp;
 
 	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
 	                        NULL, (GDestroyNotify) xmmsv_unref);
@@ -1546,6 +1547,7 @@ xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist,
 
 	tmp = xmms_playlist_canonical_name (playlist, plname);
 	g_tree_insert (dict, (gpointer) "name", xmmsv_new_string (tmp));
+	g_free (tmp);
 
 	return dict;
 }

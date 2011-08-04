@@ -131,8 +131,8 @@ void
 xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
 {
 	gint i;
-	char *path;
-	const char *namespace, *name;
+	char *path, *name;
+	const char *namespace;
 	FILE *file;
 	xmmsv_coll_t *coll;
 
@@ -176,6 +176,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
 	}
 
 	g_free (path);
+	g_free (name);
 }
 
 /** Restore the collection DAG from disc.
