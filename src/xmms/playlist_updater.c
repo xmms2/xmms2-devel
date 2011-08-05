@@ -227,20 +227,13 @@ void
 xmms_playlist_updater_push (xmms_playlist_updater_t *updater,
                             const gchar *plname)
 {
-	GList *iter;
-
 	g_return_if_fail (updater);
+	g_return_if_fail (plname);
 
 	g_mutex_lock (updater->mutex);
 
-	for (iter = updater->stack; iter; iter = g_list_next (iter)) {
-		if (!g_strcmp0 (plname, (gchar *) iter->data)) {
-			plname = NULL;
-			break;
-		}
-	}
-
-	if (plname) {
+	/* don't schedule the playlist if it's already scheduled */
+	if (!g_list_find_custom (updater->stack, plname, (GCompareFunc) g_strcmp0)) {
 		updater->stack = g_list_prepend (updater->stack, g_strdup (plname));
 		g_cond_signal (updater->cond);
 	}
