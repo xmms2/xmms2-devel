@@ -191,21 +191,21 @@ static void
 xmms_playlist_updater_need_update (xmms_object_t *object, xmmsv_t *val,
                                    gpointer udata)
 {
-	const gchar *ns = NULL;
-	const gchar *plname;
+	xmms_playlist_updater_t *updater = (xmms_playlist_updater_t *) udata;
+	const gchar *plname, *ns;
 
-	xmmsv_dict_entry_get_string (val, "namespace", &ns);
-	if (ns && g_strcmp0 (ns, XMMS_COLLECTION_NS_PLAYLISTS)) {
-		return;
+	if (xmmsv_dict_entry_get_string (val, "namespace", &ns)) {
+		if (g_strcmp0 (ns, XMMS_COLLECTION_NS_PLAYLISTS) != 0) {
+			return;
+		}
 	}
 
 	if (!xmmsv_dict_entry_get_string (val, "name", &plname)) {
 		return;
 	}
 
-	xmms_playlist_updater_push ((xmms_playlist_updater_t *) udata, plname);
+	xmms_playlist_updater_push (updater, plname);
 }
-
 
 static gchar *
 xmms_playlist_updater_pop (xmms_playlist_updater_t *updater)
