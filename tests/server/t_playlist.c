@@ -88,7 +88,7 @@ CASE (test_basic_functionality)
 	/* emits CHANGED_UPDATE, and CHANGED_ADD */
 	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
 
-	signals = xmms_future_await_many (future, 4);
+	signals = xmms_future_await (future, 4);
 
 	/* XMMS_PLAYLIST_CHANGED_ADD = 0, XMMS_PLAYLIST_CHANGED_UPDATE = 7 */
 	expected = xmmsv_from_json ("[{                         'type': 7, 'name': 'Default' },"
@@ -121,7 +121,7 @@ CASE (test_basic_functionality)
 	result = xmms_playlist_current_entry (playlist);
 	CU_ASSERT_EQUAL (first, result);
 
-	signals = xmms_future_await_many (future, 3);
+	signals = xmms_future_await (future, 3);
 
 	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' },"
 	                            " { 'position': 1, 'name': 'Default' },"
@@ -390,7 +390,7 @@ CASE(test_client_shuffle)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	signals = xmms_future_await_many (future1, 2);
+	signals = xmms_future_await (future1, 2);
 
 	/* XMMS_PLAYLIST_CHANGED_UPDATE = 7, XMMS_PLAYLIST_CHANGED_SHUFFLE = 2 */
 	expected = xmmsv_from_json ("[{ 'type': 7, 'name': 'Default' },"
@@ -401,7 +401,7 @@ CASE(test_client_shuffle)
 
 	xmms_future_free (future1);
 
-	signals = xmms_future_await_many (future2, 1);
+	signals = xmms_future_await (future2, 1);
 
 	/* current entry is moved to position 0 of the playlist */
 	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' }]");

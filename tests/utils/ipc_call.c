@@ -20,11 +20,16 @@
 #include "xmmsc/xmmsc_util.h"
 
 struct xmms_future_St {
-	xmmsv_t *result;
 	xmms_object_t *object;
 	gint message;
-	gint delay;
-	gint timeout;
+
+	xmmsv_t *result;
+
+	glong delay;
+	glong timeout;
+
+	GMutex *mutex;
+	GCond *cond;
 };
 
 xmmsv_t *
@@ -65,12 +70,19 @@ future_callback (xmms_object_t *object, xmmsv_t *val, gpointer udata)
 {
 	xmms_future_t *future = (xmms_future_t *) udata;
 
-	xmmsv_list_append (future->result, val);
+	g_mutex_lock (future->mutex);
+
+	if (future->result != NULL) {
+		xmmsv_list_append (future->result, val);
+		g_cond_signal (future->cond);
+	}
+
+	g_mutex_unlock (future->mutex);
 }
 
 xmms_future_t *
 __xmms_ipc_check_signal (xmms_object_t *object, gint message,
-                         gint delay, gint timeout)
+                         glong delay, glong timeout)
 {
 	xmms_future_t *future = g_new0 (xmms_future_t, 1);
 
@@ -79,6 +91,9 @@ __xmms_ipc_check_signal (xmms_object_t *object, gint message,
 	future->result = xmmsv_new_list ();
 	future->object = object;
 	future->message = message;
+
+	future->mutex = g_mutex_new ();
+	future->cond = g_cond_new ();
 
 	future->delay = delay;
 	future->timeout = timeout;
@@ -95,74 +110,62 @@ xmms_future_free (xmms_future_t *future)
 	xmms_object_disconnect (future->object, future->message,
 	                        future_callback, future);
 	xmms_object_unref (future->object);
+
 	xmmsv_unref (future->result);
+	future->result = NULL;
+
+	g_mutex_free (future->mutex);
+	g_cond_free (future->cond);
+
 	g_free (future);
 }
 
 /**
- * Fetch one signal result.
+ * Wait until a requested number of signals have occurred.
  *
- * Waits for one entry to enter the result list and then clears
- * the list and return that entry.
+ * If the the number of signals does not occur within the
+ * allotted time, a timeout will occur and it will be up
+ * to the user of the API to check that the number of
+ * signals returned match what was expected.
  *
- * TODO: Should check result, wait X ms, try again, repeat all
- *       until Y ms has passed.
- *
- * @return the first signal in queue, or NULL on error, ownership transferred.
+ * @return max 'count' signals, ownership transferred.
  */
 xmmsv_t *
-xmms_future_await_one (xmms_future_t *future)
+xmms_future_await (xmms_future_t *future, gint count)
 {
-	xmmsv_t *entry;
+	xmmsv_t *result, *entry;
+	GTimeVal timeout;
+	gint i, entries;
 
-	if (future->result == NULL) {
-		return NULL;
+	g_mutex_lock (future->mutex);
+
+	g_get_current_time (&timeout);
+	g_time_val_add (&timeout, future->timeout);
+
+	while (xmmsv_list_get_size (future->result) < count) {
+		GTimeVal now, wait;
+
+		g_get_current_time (&now);
+		if (now.tv_sec >= timeout.tv_sec && now.tv_usec > timeout.tv_usec) {
+			break;
+		}
+
+		g_get_current_time (&wait);
+		g_time_val_add (&wait, future->delay);
+
+		g_cond_timed_wait (future->cond, future->mutex, &wait);
 	}
 
-	if (!xmmsv_list_get (future->result, 0, &entry)) {
-		fprintf (stderr, "Expected one element, found none\n");
-		xmms_dump_stack ();
-		return NULL;
+	result = xmmsv_new_list ();
+
+	entries = MIN (count, xmmsv_list_get_size (future->result));
+	for (i = 0; i < entries; i++) {
+		xmmsv_list_get (future->result, 0, &entry);
+		xmmsv_list_append (result, entry);
+		xmmsv_list_remove (future->result, 0);
 	}
 
-	xmmsv_ref (entry);
-
-	xmmsv_list_remove (future->result, 0);
-
-	return entry;
-}
-
-/**
- * Fetch one signal result.
- *
- * Waits until a certain number of signal results have
- * been cought, then creates a new result list and
- * returns the signals cought.
- *
- * TODO: Should check result, wait X ms, try again, repeat all
- *       until Y ms has passed.
- *
- * @return all signals in queue, or NULL on error, ownership transferred.
- */
-xmmsv_t *
-xmms_future_await_many (xmms_future_t *future, gint count)
-{
-	xmmsv_t *result;
-
-	if (future->result == NULL) {
-		return NULL;
-	}
-
-	if (xmmsv_list_get_size (future->result) != count) {
-		fprintf (stderr, "Expected size %d != %d\n",
-		         count, xmmsv_list_get_size (future->result));
-		xmms_dump_stack ();
-		return NULL;
-	}
-
-	result = future->result;
-
-	future->result = xmmsv_new_list ();
+	g_mutex_unlock (future->mutex);
 
 	return result;
 }
