@@ -27,20 +27,14 @@
 #include <math.h>
 #include <ctype.h>
 
-#include "xmmspriv/xmms_playlist.h"
+#include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_config.h"
+
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_collection.h"
-#include "xmms/xmms_log.h"
-/*
-#include "xmms/plsplugins.h"
-#include "xmms/util.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc.h"
-#include "xmms/mediainfo.h"
-#include "xmms/magic.h"
-*/
+#include "xmmspriv/xmms_playlist.h"
+
 static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_client_shuffle (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static void xmms_playlist_client_clear (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
