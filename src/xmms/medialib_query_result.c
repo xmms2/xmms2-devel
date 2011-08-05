@@ -201,7 +201,10 @@ aggregate_random (xmmsv_t **current, gint int_value, const gchar *str_value)
 	data->n++;
 
 	if (g_random_int_range (0, data->n) == 0) {
-		xmmsv_unref (data->data);
+		if (data->data != NULL) {
+			xmmsv_unref (data->data);
+		}
+
 		if (str_value != NULL) {
 			data->data = xmmsv_new_string (str_value);
 		} else {
