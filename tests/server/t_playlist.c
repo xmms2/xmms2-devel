@@ -6,6 +6,7 @@
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_playlist_updater.h"
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
@@ -417,4 +418,144 @@ CASE(test_client_shuffle)
 
 CASE(test_client_sort)
 {
+}
+
+/**
+ * Party Shuffle should work like the following:
+ *
+ * [3, 2]        // -1 is currpos, 3 and 2 are upcoming.
+ * [3, 2, 4]     //  3 is currpos, 2, 4 are upcoming.
+ * [3, 2, 4, 4]  //  3 is history, 3 is currpos, 4, 4 are upcoming.
+ * [2, 4, 4, 2]  //  2 is history, 4 is currpos, 4, 2 are upcoming.
+ */
+CASE(test_party_shuffle)
+{
+	xmms_playlist_updater_t *updater;
+	xmmsv_t *result, *expected, *signal;
+	xmmsv_coll_t *coll, *universe;
+	xmms_future_t *future;
+	gint type, current, entry;
+	gint first_upcoming, second_upcoming, third_upcoming, fourth_upcoming;
+
+	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	xmms_mock_entry (medialib, 3, "Red Fang", "Red Fang", "Night Destroyer");
+	xmms_mock_entry (medialib, 4, "Red Fang", "Red Fang", "Human Remain Human Remains");
+
+	future = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+
+	updater = xmms_playlist_updater_init (playlist);
+
+	/* reconfigure the active playlist as party shuffle */
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_attribute_set (coll, "type", "pshuffle");
+	xmmsv_coll_attribute_set (coll, "history", "1");
+	xmmsv_coll_attribute_set (coll, "upcoming", "2");
+
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	xmmsv_coll_add_operand (coll, universe);
+	xmmsv_coll_unref (universe);
+
+	result = XMMS_IPC_CALL (colldag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
+	                        xmmsv_new_coll (coll));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+	xmmsv_coll_unref (coll);
+
+	/* saving the collection to 'Default' and '_active' */
+	result = xmms_future_await (future, 2);
+	expected = xmmsv_from_json ("[{ 'type': 7, 'name': 'Default' },"
+	                            " { 'type': 7, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+
+	/* adding the two 'upcoming' tracks to the playlist, 'id' is random thus the verbosity */
+	result = xmms_future_await (future, 4);
+	CU_ASSERT (xmmsv_list_get (result, 0, &signal));
+	CU_ASSERT (xmmsv_dict_entry_get_int (signal, "type", &type));
+	CU_ASSERT_EQUAL (XMMS_PLAYLIST_CHANGED_UPDATE, type);
+	CU_ASSERT (xmmsv_list_get (result, 1, &signal));
+	CU_ASSERT (xmmsv_dict_entry_get_int (signal, "type", &type));
+	CU_ASSERT_EQUAL (XMMS_PLAYLIST_CHANGED_ADD, type);
+
+	CU_ASSERT (xmmsv_list_get (result, 2, &signal));
+	CU_ASSERT (xmmsv_dict_entry_get_int (signal, "type", &type));
+	CU_ASSERT_EQUAL (XMMS_PLAYLIST_CHANGED_UPDATE, type);
+	CU_ASSERT (xmmsv_list_get (result, 3, &signal));
+	CU_ASSERT (xmmsv_dict_entry_get_int (signal, "type", &type));
+	CU_ASSERT_EQUAL (XMMS_PLAYLIST_CHANGED_ADD, type);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_list_get_int (result, 0, &first_upcoming));
+	CU_ASSERT (xmmsv_list_get_int (result, 1, &second_upcoming));
+	xmmsv_unref (result);
+
+	/* position moves to 0, which should result in a new upcoming */
+	xmms_playlist_advance (playlist);
+
+	current = xmms_playlist_current_entry (playlist);
+	CU_ASSERT_EQUAL (first_upcoming, current);
+
+	/* _UPDATE and _ADD will be emited when the new entry has been added */
+	result = xmms_future_await (future, 2);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_EQUAL (3, xmmsv_list_get_size (result));
+	CU_ASSERT (xmmsv_list_get_int (result, 2, &third_upcoming));
+	xmmsv_unref (result);
+
+	/* after this advance there should be at least one entry of each type:
+	 * 1x history.
+	 * 1x current position.
+	 * 2x upcoming.
+	 */
+	xmms_playlist_advance (playlist);
+
+	/* _UPDATE and _ADD will be emited when the new entry has been added */
+	result = xmms_future_await (future, 2);
+	xmmsv_unref (result);
+
+	current = xmms_playlist_current_entry (playlist);
+	CU_ASSERT_EQUAL (second_upcoming, current);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_EQUAL (4, xmmsv_list_get_size (result));
+	CU_ASSERT (xmmsv_list_get_int (result, 0, &entry));
+	CU_ASSERT_EQUAL (first_upcoming, entry);
+	CU_ASSERT (xmmsv_list_get_int (result, 1, &entry));
+	CU_ASSERT_EQUAL (second_upcoming, entry);
+	CU_ASSERT (xmmsv_list_get_int (result, 2, &entry));
+	CU_ASSERT_EQUAL (third_upcoming, entry);
+	CU_ASSERT (xmmsv_list_get_int (result, 3, &fourth_upcoming));
+	xmmsv_unref (result);
+
+	xmms_playlist_advance (playlist);
+
+	/* _UPDATE and _ADD will be emited when the new entry has been added */
+	result = xmms_future_await (future, 2);
+	xmmsv_unref (result);
+
+	/* verify that the list is the same size, and the history item has changed */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_EQUAL (4, xmmsv_list_get_size (result));
+	CU_ASSERT (xmmsv_list_get_int (result, 0, &entry));
+	CU_ASSERT_EQUAL (second_upcoming, entry);
+	CU_ASSERT (xmmsv_list_get_int (result, 1, &entry));
+	CU_ASSERT_EQUAL (third_upcoming, entry);
+	CU_ASSERT (xmmsv_list_get_int (result, 2, &entry));
+	CU_ASSERT_EQUAL (fourth_upcoming, entry);
+	xmmsv_unref (result);
+
+	xmms_object_unref (updater);
+
+	xmms_future_free (future);
 }
