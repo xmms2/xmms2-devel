@@ -67,11 +67,12 @@ CLEANUP () {
 
 CASE (test_basic_functionality)
 {
+	xmms_medialib_entry_t first, second, entry;
 	xmms_medialib_session_t *session;
 	xmms_error_t err;
 	xmms_future_t *future;
-	gint first, second, result;
-	xmmsv_t *signals, *expected;
+	xmmsv_t *signals, *expected, *result;
+	gint position;
 
 	session = xmms_medialib_session_begin (medialib);
 
@@ -105,22 +106,38 @@ CASE (test_basic_functionality)
 	future = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 
 	/* emit CURRPOS_MSG pointing at first position as last position was -1 */
-	result = xmms_playlist_current_entry (playlist);
-	CU_ASSERT_EQUAL (first, result);
+	entry = xmms_playlist_current_entry (playlist);
+	CU_ASSERT_EQUAL (first, entry);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CURRENT_POS,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_TRUE (xmmsv_dict_entry_get_int (result, "position", &position));
+	CU_ASSERT_EQUAL (0, position);
+	xmmsv_unref (result);
 
 	/* emit CURRPOS_MSG -> moves to second entry */
-	result = xmms_playlist_advance (playlist);
-	CU_ASSERT_EQUAL (TRUE, result);
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
 
-	result = xmms_playlist_current_entry (playlist);
-	CU_ASSERT_EQUAL (second, result);
+	entry = xmms_playlist_current_entry (playlist);
+	CU_ASSERT_EQUAL (second, entry);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CURRENT_POS,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_TRUE (xmmsv_dict_entry_get_int (result, "position", &position));
+	CU_ASSERT_EQUAL (1, position);
+	xmmsv_unref (result);
 
 	/* emit CURRPOS_MSG -> hits end of list, back to first position */
-	result = xmms_playlist_advance (playlist);
-	CU_ASSERT_EQUAL (FALSE, result);
+	CU_ASSERT_FALSE (xmms_playlist_advance (playlist));
 
-	result = xmms_playlist_current_entry (playlist);
-	CU_ASSERT_EQUAL (first, result);
+	entry = xmms_playlist_current_entry (playlist);
+	CU_ASSERT_EQUAL (first, entry);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CURRENT_POS,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_TRUE (xmmsv_dict_entry_get_int (result, "position", &position));
+	CU_ASSERT_EQUAL (0, position);
+	xmmsv_unref (result);
 
 	signals = xmms_future_await (future, 3);
 
