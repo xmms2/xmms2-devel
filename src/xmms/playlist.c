@@ -648,11 +648,11 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
 	g_tree_insert (dict, (gpointer) "position", xmmsv_new_int (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
-	/* decrease currentpos if removed entry was before or if it's
-	 * the current entry, but only if currentpos is a valid entry.
+	/* decrease current position if removed entry was before or if it's
+	 * the current entry, but only if current position is a valid entry.
 	 */
 	if (currpos != -1 && pos <= currpos) {
-		currpos--;
+		currpos = MAX (0, currpos - 1);
 		xmms_collection_set_int_attr (plcoll, "position", currpos);
 		XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
 	}
