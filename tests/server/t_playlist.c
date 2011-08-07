@@ -457,6 +457,12 @@ CASE(test_client_sort)
 	xmmsv_t *order, *result;
 	xmms_error_t err;
 
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SORT,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_list ());
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
 	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
 	third  = xmms_mock_entry (medialib, 1, "Vibrasphere", "Lungs for Life", "Decade");

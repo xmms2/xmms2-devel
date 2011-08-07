@@ -1270,6 +1270,12 @@ xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
 	g_return_if_fail (playlist);
 	g_return_if_fail (properties);
 
+	if (xmmsv_list_get_size (properties) < 1) {
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+		                "need at least one property to sort");
+		return;
+	}
+
 	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
