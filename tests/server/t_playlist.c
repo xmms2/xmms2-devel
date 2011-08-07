@@ -134,6 +134,41 @@ CASE (test_basic_functionality)
 	xmms_future_free (future);
 }
 
+CASE(test_repeat)
+{
+	xmms_medialib_entry_t first, second;
+	xmms_config_property_t *property;
+	xmms_error_t err;
+
+	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
+
+	property = xmms_config_lookup ("playlist.repeat_one");
+	xmms_config_property_set_data (property, "1");
+
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
+	CU_ASSERT_EQUAL (first, xmms_playlist_current_entry (playlist));
+
+	property = xmms_config_lookup ("playlist.repeat_one");
+	xmms_config_property_set_data (property, "0");
+
+	property = xmms_config_lookup ("playlist.repeat_all");
+	xmms_config_property_set_data (property, "1");
+
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
+	CU_ASSERT_EQUAL (second, xmms_playlist_current_entry (playlist));
+	CU_ASSERT_TRUE (xmms_playlist_advance (playlist));
+	CU_ASSERT_EQUAL (first, xmms_playlist_current_entry (playlist));
+
+	property = xmms_config_lookup ("playlist.repeat_all");
+	xmms_config_property_set_data (property, "0");
+}
+
 CASE(test_client_add_collection)
 {
 	xmmsv_coll_t *universe;
