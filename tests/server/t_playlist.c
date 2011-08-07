@@ -453,7 +453,55 @@ CASE(test_client_shuffle)
 
 CASE(test_client_sort)
 {
+	xmms_medialib_entry_t first, second, third, fourth, current, entry;
+	xmmsv_t *order, *result;
+	xmms_error_t err;
+
+	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	third  = xmms_mock_entry (medialib, 1, "Vibrasphere", "Lungs for Life", "Decade");
+	fourth = xmms_mock_entry (medialib, 2, "Vibrasphere", "Lungs for Life", "Breathing Place");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, fourth, &err); // Vibrasphere Track 2
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err); // Red Fang Track 2
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, third, &err);  // Vibrasphere Track 1
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);  // Red Fang Track 1
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err); // Red Fang Track 2
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_EQUAL (5, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
+
+	current = xmms_playlist_current_entry (playlist);
+
+	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
+	                          XMMSV_LIST_END);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SORT,
+	                        xmmsv_new_string ("Default"),
+	                        order);
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT_EQUAL (5, xmmsv_list_get_size (result));
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 0, &entry));
+	CU_ASSERT_EQUAL (first, entry);
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 1, &entry));
+	CU_ASSERT_EQUAL (second, entry);
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 2, &entry));
+	CU_ASSERT_EQUAL (second, entry);
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 3, &entry));
+	CU_ASSERT_EQUAL (third, entry);
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 4, &entry));
+	CU_ASSERT_EQUAL (fourth, entry);
+	xmmsv_unref (result);
 }
+
 
 /**
  * Party Shuffle should work like the following:
