@@ -39,7 +39,7 @@ SETUP (mlib) {
 
 	xmms_log_init (0);
 
-	xmms_config_init (NULL);
+	xmms_config_init ("memory://");
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 
 	medialib = xmms_medialib_init ();

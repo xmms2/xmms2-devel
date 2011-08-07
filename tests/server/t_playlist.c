@@ -39,7 +39,7 @@ SETUP (mlib) {
 	xmms_ipc_init ();
 	xmms_log_init (0);
 
-	xmms_config_init (NULL);
+	xmms_config_init ("memory://");
 
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 	xmms_config_property_register ("playlist.repeat_one", "0", NULL, NULL);

@@ -686,6 +686,94 @@ clear_config (xmms_config_t *config)
 	config->value_name = NULL;
 }
 
+static void
+load_config (xmms_config_t *config, const gchar *filename)
+{
+	GMarkupParser pars;
+	GMarkupParseContext *ctx;
+	int fd = -1;
+	gboolean parserr = FALSE, eof = FALSE;
+
+	memset (&pars, 0, sizeof (pars));
+
+	pars.start_element = xmms_config_parse_start;
+	pars.end_element = xmms_config_parse_end;
+	pars.text = xmms_config_parse_text;
+
+	if (g_strcmp0 (filename, "memory://") == 0) {
+		/* no persistent storage */
+		return;
+	}
+
+	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
+		fd = open (filename, O_RDONLY);
+	}
+
+	if (fd < 0) {
+		xmms_log_info ("No configfile specified, using default values.");
+		return;
+	}
+
+	config->is_parsing = TRUE;
+	config->states = g_queue_new ();
+	config->sections = g_queue_new ();
+
+	ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
+
+	while ((!eof) && (!parserr)) {
+		GError *error = NULL;
+		gchar buffer[1024];
+		gint ret;
+
+		ret = read (fd, buffer, 1024);
+		if (ret < 1) {
+			g_markup_parse_context_end_parse (ctx, &error);
+			if (error) {
+				xmms_log_error ("Cannot parse config file: %s",
+				                error->message);
+				g_error_free (error);
+				error = NULL;
+				parserr = TRUE;
+			}
+			eof = TRUE;
+		}
+
+		g_markup_parse_context_parse (ctx, buffer, ret, &error);
+		if (error) {
+			xmms_log_error ("Cannot parse config file: %s",
+			                error->message);
+			g_error_free (error);
+			error = NULL;
+			parserr = TRUE;
+		}
+		/* check config file version, assumes that g_markup_context_parse
+		 * above managed to parse the <xmms> element during the first
+		 * iteration of this loop */
+		if (XMMS_CONFIG_VERSION > config->version) {
+			clear_config (config);
+			break;
+		}
+	}
+
+	close (fd);
+	g_markup_parse_context_free (ctx);
+
+	while (!g_queue_is_empty (config->sections)) {
+		g_free (g_queue_pop_head (config->sections));
+	}
+
+	g_queue_free (config->states);
+	g_queue_free (config->sections);
+
+	config->is_parsing = FALSE;
+
+	if (parserr) {
+		xmms_log_info ("The config file could not be parsed, reverting to default configuration..");
+		clear_config (config);
+	}
+}
+
+
 /**
  * @internal Initialize and parse the config file. Resets to default config
  * on parse error.
@@ -694,11 +782,7 @@ clear_config (xmms_config_t *config)
 void
 xmms_config_init (const gchar *filename)
 {
-	GMarkupParser pars;
-	GMarkupParseContext *ctx;
 	xmms_config_t *config;
-	int ret, fd = -1;
-	gboolean parserr = FALSE, eof = FALSE;
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
@@ -711,75 +795,7 @@ xmms_config_init (const gchar *filename)
 
 	xmms_config_register_ipc_commands (XMMS_OBJECT (config));
 
-	memset (&pars, 0, sizeof (pars));
-
-	pars.start_element = xmms_config_parse_start;
-	pars.end_element = xmms_config_parse_end;
-	pars.text = xmms_config_parse_text;
-
-	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
-		fd = open (filename, O_RDONLY);
-	}
-
-	if (fd > -1) {
-		config->is_parsing = TRUE;
-		config->states = g_queue_new ();
-		config->sections = g_queue_new ();
-		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
-
-		while ((!eof) && (!parserr)) {
-			GError *error = NULL;
-			gchar buffer[1024];
-
-			ret = read (fd, buffer, 1024);
-			if (ret < 1) {
-				g_markup_parse_context_end_parse (ctx, &error);
-				if (error) {
-					xmms_log_error ("Cannot parse config file: %s",
-					                error->message);
-					g_error_free (error);
-					error = NULL;
-					parserr = TRUE;
-				}
-				eof = TRUE;
-			}
-
-			g_markup_parse_context_parse (ctx, buffer, ret, &error);
-			if (error) {
-				xmms_log_error ("Cannot parse config file: %s",
-				                error->message);
-				g_error_free (error);
-				error = NULL;
-				parserr = TRUE;
-			}
-			/* check config file version, assumes that g_markup_context_parse
-			 * above managed to parse the <xmms> element during the first
-			 * iteration of this loop */
-			if (XMMS_CONFIG_VERSION > config->version) {
-				clear_config (config);
-				break;
-			}
-		}
-
-		close (fd);
-		g_markup_parse_context_free (ctx);
-
-		while (!g_queue_is_empty (config->sections)) {
-			g_free (g_queue_pop_head (config->sections));
-		}
-
-		g_queue_free (config->states);
-		g_queue_free (config->sections);
-
-		config->is_parsing = FALSE;
-	} else {
-		xmms_log_info ("No configfile specified, using default values.");
-	}
-
-	if (parserr) {
-		xmms_log_info ("The config file could not be parsed, reverting to default configuration..");
-		clear_config (config);
-	}
+	load_config (config, filename);
 }
 
 /**
@@ -888,6 +904,10 @@ xmms_config_save (void)
 	dump_tree_data_t data;
 
 	g_return_val_if_fail (global_config, FALSE);
+
+	if (g_strcmp0 (global_config->filename, "memory://") == 0) {
+		return FALSE;
+	}
 
 	/* don't try to save config while it's being read */
 	if (global_config->is_parsing)

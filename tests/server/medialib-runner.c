@@ -233,7 +233,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	g_debug ("Running test: %s", name);
 
 	xmms_ipc_init ();
-	xmms_config_init (NULL);
+	xmms_config_init ("memory://");
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 
 	medialib = xmms_medialib_init ();
@@ -376,7 +376,7 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 			g_print ("Running suite with: %s\n", filename);
 
 		xmms_ipc_init ();
-		xmms_config_init (NULL);
+		xmms_config_init ("memory://");
 		xmms_config_property_register ("medialib.path", filename, NULL, NULL);
 
 		medialib = xmms_medialib_init ();
