@@ -169,6 +169,54 @@ CASE(test_repeat)
 	xmms_config_property_set_data (property, "0");
 }
 
+CASE(test_medialib_remove)
+{
+	xmms_medialib_entry_t first, second, entry;
+	xmms_medialib_session_t *session;
+	xmms_error_t err;
+	xmmsv_t *result, *expected;
+	xmms_future_t *future1, *future2, *future3;
+
+	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
+
+	/* position is now 0 */
+	xmms_playlist_advance (playlist);
+
+	future1 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	future2 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
+	future3 = XMMS_IPC_CHECK_SIGNAL (medialib, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED);
+
+	session = xmms_medialib_session_begin (medialib);
+	xmms_medialib_entry_remove (session, first);
+	xmms_medialib_session_commit (session);
+
+	result = xmms_future_await (future1, 2);
+	expected = xmmsv_from_json ("[{                'type': 7, 'name': 'Default' },"
+	                            " { 'position': 0, 'type': 3, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+
+	result = xmms_future_await (future2, 1);
+	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+
+	result = xmms_future_await (future3, 1);
+	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 0, &entry));
+	CU_ASSERT_EQUAL (first, entry);
+	xmmsv_unref (result);
+
+	xmms_future_free (future1);
+	xmms_future_free (future2);
+	xmms_future_free (future3);
+}
+
 CASE(test_client_add_collection)
 {
 	xmmsv_coll_t *universe;
