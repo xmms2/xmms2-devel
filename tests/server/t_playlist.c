@@ -554,6 +554,59 @@ CASE(test_client_remove_entry)
 	CU_ASSERT_PTR_NULL (result);
 }
 
+CASE(test_client_set_next)
+{
+	xmms_medialib_entry_t first, second, third, fourth, entry;
+	xmmsv_t *result;
+	xmms_error_t err;
+	xmms_config_property_t *property;
+
+	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	third  = xmms_mock_entry (medialib, 3, "Red Fang", "Red Fang", "Night Destroyer");
+	fourth = xmms_mock_entry (medialib, 4, "Red Fang", "Red Fang", "Human Remain Human Remains");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, third, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, fourth, &err);
+
+	CU_ASSERT_EQUAL (first, xmms_playlist_current_entry (playlist));
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SET_POS, xmmsv_new_int (1337));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	CU_ASSERT_EQUAL (first, xmms_playlist_current_entry (playlist));
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SET_POS, xmmsv_new_int (3));
+	CU_ASSERT_TRUE (xmmsv_get_int (result, &entry));
+	CU_ASSERT_EQUAL (fourth, entry);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SET_POS_REL, xmmsv_new_int (-1));
+	CU_ASSERT_TRUE (xmmsv_get_int (result, &entry));
+	CU_ASSERT_EQUAL (third, entry);
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SET_POS_REL, xmmsv_new_int (-1337));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	CU_ASSERT_EQUAL (third, xmms_playlist_current_entry (playlist));
+
+	property = xmms_config_lookup ("playlist.repeat_all");
+	xmms_config_property_set_data (property, "1");
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SET_POS_REL, xmmsv_new_int (4));
+	CU_ASSERT_TRUE (xmmsv_get_int (result, &entry));
+	CU_ASSERT_EQUAL (third, entry);
+	xmmsv_unref (result);
+
+	property = xmms_config_lookup ("playlist.repeat_all");
+	xmms_config_property_set_data (property, "0");
+}
+
 CASE(test_client_shuffle)
 {
 	xmms_medialib_entry_t first, second;
