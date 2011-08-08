@@ -396,6 +396,51 @@ CASE(test_client_insert_url)
 
 CASE(test_client_load)
 {
+	xmms_future_t *future;
+	xmmsv_t *result;
+	xmmsv_coll_t *coll;
+	const gchar *name;
+
+	future = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_LOADED);
+
+	/* refuse to load '_active' */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LOAD,
+	                        xmmsv_new_string (XMMS_ACTIVE_PLAYLIST));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	/* loading the currently active list is a no-op */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LOAD,
+	                        xmmsv_new_string ("Default"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	/* refuse to load non existing lists */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LOAD,
+	                        xmmsv_new_string ("does not exist"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	result = XMMS_IPC_CALL (colldag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("New List"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
+	                        xmmsv_new_coll (coll));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+	xmmsv_coll_unref (coll);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LOAD,
+	                        xmmsv_new_string ("New List"));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = xmms_future_await (future, 1);
+	CU_ASSERT_TRUE (xmmsv_list_get_string (result, 0, &name));
+	CU_ASSERT_STRING_EQUAL ("New List", name);
+	xmmsv_unref (result);
+
+	xmms_future_free (future);
 }
 
 CASE(test_client_move_entry)
