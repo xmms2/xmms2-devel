@@ -499,7 +499,7 @@ xmms_playlist_client_current_pos (xmms_playlist_t *playlist, const gchar *plname
 static gchar *
 xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 {
-	gchar *name = NULL;
+	gchar *alias = NULL;
 	xmmsv_coll_t *active_coll;
 
 	g_return_val_if_fail (playlist, 0);
@@ -508,15 +508,11 @@ xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *er
 
 	active_coll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 	if (active_coll != NULL) {
-		const gchar *alias;
-
 		alias = xmms_collection_find_alias (playlist->colldag,
 		                                    XMMS_COLLECTION_NSID_PLAYLISTS,
 		                                    active_coll, XMMS_ACTIVE_PLAYLIST);
 		if (alias == NULL) {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "active playlist not referenced!");
-		} else {
-			name = g_strdup (alias);
 		}
 	} else {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "no active playlist");
@@ -524,7 +520,7 @@ xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *er
 
 	g_mutex_unlock (playlist->mutex);
 
-	return name;
+	return alias;
 }
 
 
