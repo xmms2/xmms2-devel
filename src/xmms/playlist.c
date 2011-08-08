@@ -839,16 +839,31 @@ xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *
                                         gint32 pos, xmmsv_coll_t *coll,
                                         xmmsv_t *order, xmms_error_t *err)
 {
-	xmmsv_t *res;
-	int32_t id;
-	int i;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *list;
 
-	res = xmms_collection_query_ids (playlist->colldag, coll, 0, 0, order, err);
-
-	for (i = 0; xmmsv_list_get_int (res, i, &id); i++) {
-		xmms_playlist_client_insert_id (playlist, plname, pos, id, err);
+	list = xmms_collection_query_ids (playlist->colldag, coll, 0, 0, order, err);
+	if (xmms_error_iserror (err)) {
+		return;
 	}
 
+	xmmsv_get_list_iter (list, &it);
+
+	xmmsv_list_iter_last (it);
+
+	while (xmmsv_list_iter_valid (it)) {
+		xmms_medialib_entry_t mid;
+		xmmsv_t *entry;
+
+		xmmsv_list_iter_entry (it, &entry);
+		xmmsv_get_int (entry, &mid);
+
+		xmms_playlist_insert_entry (playlist, plname, pos, mid, err);
+
+		xmmsv_list_iter_prev (it);
+	}
+
+	xmmsv_unref (list);
 }
 
 /**
