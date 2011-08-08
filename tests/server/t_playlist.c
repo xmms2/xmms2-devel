@@ -384,6 +384,44 @@ CASE(test_client_current_active)
 
 CASE(test_client_insert_collection)
 {
+	xmms_medialib_entry_t first, second, third;
+	xmmsv_t *result, *order, *expected;
+	xmmsv_coll_t *coll;
+	xmms_error_t err;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	third = xmms_mock_entry (medialib, 3, "Red Fang", "Red Fang", "Night Destroyer");
+
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
+	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, third, &err);
+
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (coll, first);
+	xmmsv_coll_idlist_append (coll, second);
+	xmmsv_coll_idlist_append (coll, third);
+
+	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
+	                          XMMSV_LIST_END);
+
+	/* the list should now go from [1, 3] -> [1, 1, 2, 3, 3] */
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_INSERT_COLL,
+	                        xmmsv_new_string (XMMS_ACTIVE_PLAYLIST),
+	                        xmmsv_new_int (1),
+	                        xmmsv_new_coll (coll),
+	                        order);
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+	xmmsv_coll_unref (coll);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
+	                        xmmsv_new_string ("Default"));
+	expected = xmmsv_from_json ("[1, 1, 2, 3, 3]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
 }
 
 CASE(test_client_insert_id)
@@ -516,10 +554,6 @@ CASE(test_client_remove_entry)
 	CU_ASSERT_PTR_NULL (result);
 }
 
-CASE(test_client_rinsert)
-{
-}
-
 CASE(test_client_shuffle)
 {
 	xmms_medialib_entry_t first, second;
@@ -628,7 +662,6 @@ CASE(test_client_sort)
 	CU_ASSERT_EQUAL (fourth, entry);
 	xmmsv_unref (result);
 }
-
 
 /**
  * Party Shuffle should work like the following:
