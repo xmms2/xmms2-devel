@@ -371,6 +371,17 @@ CASE(test_client_clear)
 	xmmsv_unref (result);
 }
 
+CASE(test_client_current_active)
+{
+	xmmsv_t *result;
+	const gchar *name;
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CURRENT_ACTIVE, NULL);
+	CU_ASSERT_TRUE (xmmsv_get_string (result, &name));
+	CU_ASSERT_STRING_EQUAL ("Default", name);
+	xmmsv_unref (result);
+}
+
 CASE(test_client_insert_collection)
 {
 }
