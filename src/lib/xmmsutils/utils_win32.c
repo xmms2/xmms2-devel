@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <windows.h>
 #include <time.h>
 
 #include "xmmsc/xmmsc_util.h"
