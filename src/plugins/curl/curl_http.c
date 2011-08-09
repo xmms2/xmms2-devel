@@ -38,8 +38,6 @@ typedef struct {
 
 	guint meta_offset;
 
-	gint read_timeout;
-
 	gchar *url;
 
 	struct curl_slist *http_200_aliases;
@@ -171,7 +169,7 @@ xmms_curl_init (xmms_xform_t *xform)
 	xmms_curl_data_t *data;
 	xmms_config_property_t *val;
 	xmms_error_t error;
-	gint metaint, verbose, connecttimeout, useproxy, authproxy;
+	gint metaint, verbose, connecttimeout, readtimeout, useproxy, authproxy;
 	const gchar *proxyaddress, *proxyuser, *proxypass;
 	gchar proxyuserpass[90];
 	const gchar *url;
@@ -188,7 +186,7 @@ xmms_curl_init (xmms_xform_t *xform)
 	connecttimeout = xmms_config_property_get_int (val);
 
 	val = xmms_xform_config_lookup (xform, "readtimeout");
-	data->read_timeout = xmms_config_property_get_int (val);
+	readtimeout = xmms_config_property_get_int (val);
 
 	val = xmms_xform_config_lookup (xform, "shoutcastinfo");
 	metaint = xmms_config_property_get_int (val);
@@ -253,6 +251,8 @@ xmms_curl_init (xmms_xform_t *xform)
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION,
 	                  xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+	curl_easy_setopt (data->curl_easy, CURLOPT_LOW_SPEED_TIME, readtimeout);
+	curl_easy_setopt (data->curl_easy, CURLOPT_LOW_SPEED_LIMIT, 1);
 
 	if (!data->broken_version) {
 		data->http_200_aliases = curl_slist_append (data->http_200_aliases,
@@ -328,9 +328,7 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 			fd_set fdread, fdwrite, fdexcp;
 			struct timeval timeout;
 			gint ret, maxfd;
-
-			timeout.tv_sec = data->read_timeout;
-			timeout.tv_usec = 0;
+			glong milliseconds;
 
 			FD_ZERO (&fdread);
 			FD_ZERO (&fdwrite);
@@ -338,17 +336,21 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 
 			curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,
 			                  &maxfd);
+			curl_multi_timeout (data->curl_multi, &milliseconds);
+
+			if (milliseconds <= 0) {
+				milliseconds = 1000;
+			}
+
+			timeout.tv_sec = milliseconds / 1000;
+			timeout.tv_usec = (milliseconds % 1000) * 1000;
 
 			ret = select (maxfd + 1, &fdread, &fdwrite, &fdexcp, &timeout);
 
 			if (ret == -1) {
 				xmms_error_set (error, XMMS_ERROR_GENERIC, "Error select");
 				return -1;
-			} else if (ret == 0) {
-				xmms_error_set (error, XMMS_ERROR_GENERIC, "Read timeout");
-				return -1;
 			}
-
 		}
 
 		data->curl_code = curl_multi_perform (data->curl_multi, &handles);
