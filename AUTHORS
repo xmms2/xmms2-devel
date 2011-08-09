@@ -316,6 +316,10 @@ N: Christopher Rosell
 E: chrippa@evangelion.se
 D: FreeBSD support in cdae plugin.
 
+N: Fabian Roth
+E: fabianroth64@googlemail.com
+D: ID3v2 improvements.
+
 N: Andrew Ruder
 E: andy@aeruder.net
 W: http://www.aeruder.net
