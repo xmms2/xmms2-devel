@@ -2366,7 +2366,7 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 	if (num_args == 0) {
 		help_list (names, NULL, cmdtype);
 	} else {
-		help_command (infos, names, ctx->argv, num_args, cmdtype);
+		help_command (infos, names, command_argv_get (ctx), num_args, cmdtype);
 	}
 
 	/* No data pending */
