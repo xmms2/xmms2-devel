@@ -63,12 +63,13 @@
  *>TCOM Composer
  *>TCON Content type
  * TCOP Copyright message
- * TDAT Date
+ * TDAT Date (v2.3 deprecated in v2.4, replaced by TDRC)
+ *>TDRC Recording time (v2.4)
  * TDLY Playlist delay
  * TENC Encoded by
  * TEXT Lyricist/Text writer
  * TFLT File type
- * TIME Time
+ * TIME Time (v2.3 deprecated in v2.4, replaced by TDRC)
  *>TIT1 Content group description
  *>TIT2 Title/songname/content description
  *>TIT3 Subtitle/Description refinement
@@ -89,13 +90,13 @@
  * TPOS Part of a set
  *>TPUB Publisher
  *>TRCK Track number/Position in set
- * TRDA Recording dates
+ * TRDA Recording dates (v2.3 deprecated in v2.4, replaced by TDRC)
  * TRSN Internet radio station name
  * TRSO Internet radio station owner
  * TSIZ Size
  * TSRC ISRC (international standard recording code)
  * TSSE Software/Hardware and settings used for encoding
- *>TYER Year
+ *>TYER Year (v2.3 deprecated in v2.4, replaced by TDRC)
  * WCOM Commercial information URL
  *>WCOP Copyright/Legal information URL
  *>WOAF Official audio file webpage
@@ -465,6 +466,7 @@ struct id3tags_t {
 static struct id3tags_t tags[] = {
 	{ quad2long ('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
 	{ quad2long ('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long ('T','D','R','C'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
 	{ quad2long ('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long ('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long ('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
