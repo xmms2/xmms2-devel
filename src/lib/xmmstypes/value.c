@@ -2615,7 +2615,7 @@ xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset)
 		return 0;
 	if (!xmmsv_bitbuffer_put_bits (v, bits, d))
 		return 0;
-	xmmsv_bitbuffer_goto (v, prevpos);
+	return xmmsv_bitbuffer_goto (v, prevpos);
 }
 
 int
