@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <faad.h>
+#include <neaacdec.h>
 #include <glib.h>
 
 #define FAAD_BUFFER_SIZE 4096
@@ -38,7 +38,7 @@ static int faad_mpeg_samplerates[] = { 96000, 88200, 64000, 48000, 44100,
                                        11025, 8000, 7350, 0, 0, 0 };
 
 typedef struct {
-	faacDecHandle decoder;
+	NeAACDecHandle decoder;
 	gint filetype;
 
 	guchar buffer[FAAD_BUFFER_SIZE];
@@ -106,7 +106,7 @@ xmms_faad_destroy (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	faacDecClose (data->decoder);
+	NeAACDecClose (data->decoder);
 	g_string_free (data->outbuf, TRUE);
 	g_free (data);
 }
@@ -117,9 +117,9 @@ xmms_faad_init (xmms_xform_t *xform)
 	xmms_faad_data_t *data;
 	xmms_error_t error;
 
-	faacDecConfigurationPtr config;
+	NeAACDecConfigurationPtr config;
 	gint bytes_read;
-	guint32 samplerate;
+	gulong samplerate;
 	guchar channels;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -130,14 +130,14 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	data->decoder = faacDecOpen ();
-	config = faacDecGetCurrentConfiguration (data->decoder);
+	data->decoder = NeAACDecOpen ();
+	config = NeAACDecGetCurrentConfiguration (data->decoder);
 	config->defObjectType = LC;
 	config->defSampleRate = 44100;
 	config->outputFormat = FAAD_FMT_16BIT;
 	config->downMatrix = 0;
 	config->dontUpSampleImplicitSBR = 0;
-	faacDecSetConfiguration (data->decoder, config);
+	NeAACDecSetConfiguration (data->decoder, config);
 
 	switch (config->outputFormat) {
 	case FAAD_FMT_16BIT:
@@ -197,12 +197,12 @@ xmms_faad_init (xmms_xform_t *xform)
 	}
 
 	if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
-		bytes_read = faacDecInit (data->decoder, data->buffer,
+		bytes_read = NeAACDecInit (data->decoder, data->buffer,
 		                          data->buffer_length, &samplerate,
 		                          &channels);
 	} else if (data->filetype == FAAD_TYPE_MP4) {
 		const guchar *tmpbuf;
-		gssize tmpbuflen;
+		gsize tmpbuflen;
 		guchar *copy;
 
 		if (!xmms_xform_auxdata_get_bin (xform, "decoder_config", &tmpbuf,
@@ -212,7 +212,7 @@ xmms_faad_init (xmms_xform_t *xform)
 		}
 
 		copy = g_memdup (tmpbuf, tmpbuflen);
-		bytes_read = faacDecInit2 (data->decoder, copy, tmpbuflen,
+		bytes_read = NeAACDecInit2 (data->decoder, copy, tmpbuflen,
 		                           &samplerate, &channels);
 		g_free (copy);
 	}
@@ -275,7 +275,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 	xmms_faad_data_t *data;
 	xmms_error_t error;
 
-	faacDecFrameInfo frameInfo;
+	NeAACDecFrameInfo frameInfo;
 	gpointer sample_buffer;
 	guint size, bytes_read = 0;
 
@@ -306,7 +306,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			data->buffer_length += bytes_read;
 		}
 
-		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
+		sample_buffer = NeAACDecDecode (data->decoder, &frameInfo, data->buffer,
 		                               data->buffer_length);
 
 		g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
@@ -339,7 +339,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			                     bytes_read - toskip);
 		} else if (frameInfo.error > 0) {
 			XMMS_DBG ("ERROR %d in faad decoding: %s", frameInfo.error,
-			          faacDecGetErrorMessage (frameInfo.error));
+			          NeAACDecGetErrorMessage (frameInfo.error));
 			return -1;
 		}
 
@@ -367,7 +367,7 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	if (data->filetype == FAAD_TYPE_MP4) {
 		ret = xmms_xform_seek (xform, samples, whence, err);
 		if (ret >= 0) {
-			faacDecPostSeekReset (data->decoder, -1);
+			NeAACDecPostSeekReset (data->decoder, -1);
 
 			data->buffer_length = 0;
 			g_string_erase (data->outbuf, 0, -1);
