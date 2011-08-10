@@ -1463,20 +1463,21 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	xmmsv_t *orderval;
 	const gchar *playlist;
-	gchar **order = NULL;
-	const gchar *default_order[] = { "artist", "album", "tracknr", NULL};
 
 	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
 	if (command_arg_count (ctx) == 0) {
-		order = default_order;
+		orderval = xmmsv_new_list ();
+		xmmsv_list_append_string (orderval, "artist");
+		xmmsv_list_append_string (orderval, "album");
+		xmmsv_list_append_string (orderval, "tracknr");
 	} else {
-		order = command_argv_get (ctx);
+		gchar **order = command_argv_get (ctx);
+		orderval = xmmsv_make_stringlist (order, -1);
 	}
 
-	orderval = xmmsv_make_stringlist (order, -1);
 	res = xmmsc_playlist_sort (infos->sync, playlist, orderval);
 	xmmsc_result_wait (res);
 	done (res, infos);
