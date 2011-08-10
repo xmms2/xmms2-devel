@@ -170,6 +170,8 @@ typedef enum {
   RTSP_STS_OPTION_NOT_SUPPORTED                 = 551, 
 } RTSPStatusCode;
 
+void rtsp_init_status (void);
+
 const gchar*    rtsp_method_as_text     (RTSPMethod method);
 const gchar*    rtsp_header_as_text     (RTSPHeaderField field);
 const gchar*    rtsp_status_as_text     (RTSPStatusCode code);
