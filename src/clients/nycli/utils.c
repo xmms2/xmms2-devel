@@ -104,6 +104,8 @@ dict_dump (const gchar *source, xmmsv_t *val, void *udata)
 	case XMMSV_TYPE_ERROR:
 		g_printf (_("[%s] %s = <error>\n"), source, key);
 		break;
+	default:
+		break;
 	}
 }
 
