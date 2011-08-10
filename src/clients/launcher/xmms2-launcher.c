@@ -192,7 +192,7 @@ main (int argc, char **argv)
 		char buf[32];
 		int i, j = 0;
 
-		args[j++] = BINDIR "/xmms2d";
+		args[j++] = (char *) BINDIR "/xmms2d";
 
 		snprintf (buf, 32, "--status-fd=%d", pipefd[1]);
 		args[j++] = buf;
