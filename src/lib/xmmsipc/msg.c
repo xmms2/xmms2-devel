@@ -270,7 +270,7 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 			return false;
 		} else {
 			xmmsv_bitbuffer_goto (msg->bb, msg->xfered * 8);
-			xmmsv_bitbuffer_put_data (msg->bb, buf, ret);
+			xmmsv_bitbuffer_put_data (msg->bb, (unsigned char *) buf, ret);
 			msg->xfered += ret;
 			xmmsv_bitbuffer_goto (msg->bb, XMMS_IPC_MSG_HEAD_LEN * 8);
 		}
