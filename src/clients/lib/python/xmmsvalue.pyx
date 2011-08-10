@@ -128,7 +128,7 @@ cdef class XmmsValue:
 		@return: Error string from the result.
 		@rtype: String
 		"""
-		cdef char *ret
+		cdef char *ret = NULL
 		if not xmmsv_get_error(self.val, <const_char **>&ret):
 			raise ValueError("Failed to retrieve value")
 		return to_unicode(ret)
@@ -138,7 +138,7 @@ cdef class XmmsValue:
 		Get data from the result structure as an int.
 		@rtype: int
 		"""
-		cdef int ret
+		cdef int ret = 0
 		if not xmmsv_get_int(self.val, &ret):
 			raise ValueError("Failed to retrieve value")
 		return ret
@@ -148,7 +148,7 @@ cdef class XmmsValue:
 		Get data from the result structure as a string.
 		@rtype: string
 		"""
-		cdef char *ret
+		cdef char *ret = NULL
 		if not xmmsv_get_string(self.val, <const_char **>&ret):
 			raise ValueError("Failed to retrieve value")
 		return to_unicode(ret)
@@ -158,8 +158,8 @@ cdef class XmmsValue:
 		Get data from the result structure as binary data.
 		@rtype: string
 		"""
-		cdef char *ret
-		cdef unsigned int rlen
+		cdef char *ret = NULL
+		cdef unsigned int rlen = 0
 		if not xmmsv_get_bin(self.val, <const_uchar **>&ret, &rlen):
 			raise ValueError("Failed to retrieve value")
 		return PyBytes_FromStringAndSize(<char *>ret, rlen)
@@ -169,7 +169,7 @@ cdef class XmmsValue:
 		Get data from the result structure as a Collection.
 		@rtype: Collection
 		"""
-		cdef xmmsv_coll_t *coll
+		cdef xmmsv_coll_t *coll = NULL
 		if not xmmsv_get_coll(self.val, &coll):
 			raise ValueError("Failed to retrieve value")
 		return create_coll(coll)
@@ -178,9 +178,9 @@ cdef class XmmsValue:
 		"""
 		@return: A dictionary containing media info.
 		"""
-		cdef xmmsv_dict_iter_t *it
-		cdef char *k
-		cdef xmmsv_t *v
+		cdef xmmsv_dict_iter_t *it = NULL
+		cdef char *k = NULL
+		cdef xmmsv_t *v = NULL
 		cdef XmmsValue V
 		ret = {}
 
@@ -213,8 +213,8 @@ cdef class XmmsValue:
 		"""
 		@return: A list of dicts from the result structure.
 		"""
-		cdef xmmsv_list_iter_t *it
-		cdef xmmsv_t *val
+		cdef xmmsv_list_iter_t *it = NULL
+		cdef xmmsv_t *val = NULL
 		cdef XmmsValue V
 
 		ret = []
@@ -376,7 +376,7 @@ cdef class AttributesIterator:
 			xmmsv_dict_iter_explicit_destroy(self.diter)
 
 	def __init__(self, CollectionAttributes attributes, AttributesIterType itertype):
-		cdef xmmsv_dict_iter_t *it
+		cdef xmmsv_dict_iter_t *it = NULL
 		if attributes is None:
 			raise TypeError("__init__() argument must not be None")
 		if not xmmsv_get_dict_iter(xmmsv_coll_attributes_get(attributes.coll), &it):
@@ -389,8 +389,8 @@ cdef class AttributesIterator:
 		return self
 
 	def __next__(self):
-		cdef char *key
-		cdef char *value
+		cdef char *key = NULL
+		cdef char *value = NULL
 		if self.diter != NULL and xmmsv_dict_iter_valid(self.diter):
 			xmmsv_dict_iter_pair_string(self.diter, <const_char **>&key, <const_char **>&value)
 			if self.itertype == ITER_VALUES:
@@ -445,7 +445,7 @@ cdef class CollectionAttributes(CollectionRef):
 		return str(self.get_dict())
 
 	def __getitem__(self, name):
-		cdef char *value
+		cdef char *value = NULL
 		cdef char *nam
 		nam = to_charp(from_unicode(name))
 		if not xmmsv_coll_attribute_get(self.coll, nam, &value):
@@ -476,7 +476,7 @@ cdef class CollectionAttributes(CollectionRef):
 			self[k] = kargs[k]
 
 	def __contains__(self, name):
-		cdef char *value
+		cdef char *value = NULL
 		return xmmsv_coll_attribute_get(self.coll, name, &value)
 
 cdef class CollectionOperands(CollectionRef):
@@ -602,7 +602,7 @@ cdef class CollectionIDList(CollectionRef):
 		self.remove(i)
 
 	def __getitem__(self, int i):
-		cdef int x
+		cdef int x = 0
 		if i < 0:
 			i = len(self) + i
 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
@@ -681,12 +681,14 @@ class IDList(BaseCollection):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
 
 class Queue(BaseCollection):
-	def __init__(Collection self):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE)
+	def __init__(Collection self, ids = None):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
 
 class PShuffle(BaseCollection):
-	def __init__(Collection self, parent):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE)
+	def __init__(Collection self, parent = None, ids = None):
+		if parent is None:
+			parent = Universe()
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE, operands=[parent], ids=ids)
 
 class Union(BaseCollection):
 	def __init__(Collection self, *a):
@@ -744,7 +746,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 
 
 def coll_parse(pattern):
-	cdef xmmsv_coll_t *coll
+	cdef xmmsv_coll_t *coll = NULL
 
 	_pattern = from_unicode(pattern)
 	if not xmmsv_coll_parse(_pattern, &coll):
