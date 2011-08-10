@@ -241,7 +241,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	if (arg.retval)
 		xmmsv_unref (arg.retval);
 
-err:
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);
