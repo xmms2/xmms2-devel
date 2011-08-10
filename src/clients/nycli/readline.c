@@ -174,7 +174,8 @@ readline_init (cli_infos_t *infos)
 	rl_filename_dequoting_function = filename_dequoting;
 
 	rl_completer_quote_characters = "\"'";
-	rl_completer_word_break_characters = " \t\n\"\'";
+	rl_completer_word_break_characters = (gchar *) " \t\n\"\'";
+
 	rl_char_is_quoted_p = char_is_quoted;
 	rl_completion_entry_function = command_tab_completion;
 }
