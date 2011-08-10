@@ -160,7 +160,7 @@ client_callback (AvahiClient *c,
 	}
 }
 
-void
+static void
 register_service (void)
 {
 	int error;
