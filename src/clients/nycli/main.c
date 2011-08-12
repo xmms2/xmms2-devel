@@ -487,6 +487,7 @@ main (gint argc, gchar **argv)
 			                                     "HISTORY_FILE");
 
 			read_history (filename);
+			using_history ();
 			loop_run (cli_infos);
 			write_history (filename);
 		}
