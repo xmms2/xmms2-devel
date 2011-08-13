@@ -816,3 +816,38 @@ CASE(test_client_move_entry)
 	xmms_medialib_session_abort (session);
 	g_free (string);
 }
+
+CASE (test_session_locking)
+{
+	xmms_medialib_session_t *session, *inner_session;
+	xmms_medialib_entry_t first, second;
+	gint status, inner_status, new_status;
+
+	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	second = xmms_mock_entry (medialib, 4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
+
+	session = xmms_medialib_session_begin (medialib);
+
+	status = xmms_medialib_entry_property_get_int (session, first,
+	                                               XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
+
+	/* this should be ok as there have been no writes to that property */
+	inner_session = xmms_medialib_session_begin_ro (medialib);
+	inner_status = xmms_medialib_entry_property_get_int (inner_session, first,
+	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
+	CU_ASSERT_EQUAL (status, inner_status);
+	xmms_medialib_session_abort (inner_session);
+
+	xmms_medialib_entry_status_set (session, first,
+	                                XMMS_MEDIALIB_ENTRY_STATUS_NEW);
+
+	/* this should be ok as 'inner_session' aborted, and the stuff it did was read-only operations */
+	CU_ASSERT_TRUE (xmms_medialib_session_commit (session));
+
+	session = xmms_medialib_session_begin (medialib);
+	new_status = xmms_medialib_entry_property_get_int (session, first,
+	                                                   XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
+	xmms_medialib_session_abort (session);
+
+	CU_ASSERT_NOT_EQUAL (status, new_status);
+}
