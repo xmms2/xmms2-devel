@@ -69,6 +69,7 @@ xmmsv_t *xmms_medialib_query_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *s
 
 
 xmms_medialib_session_t *xmms_medialib_session_begin (xmms_medialib_t *mlib);
+xmms_medialib_session_t *xmms_medialib_session_begin_ro (xmms_medialib_t *medialib);
 void xmms_medialib_session_abort (xmms_medialib_session_t *session);
 gboolean xmms_medialib_session_commit (xmms_medialib_session_t *session);
 s4_resultset_t *xmms_medialib_session_query (xmms_medialib_session_t *session, s4_fetchspec_t *specification, s4_condition_t *condition);

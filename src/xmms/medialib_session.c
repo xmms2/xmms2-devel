@@ -34,8 +34,9 @@ static void xmms_medialib_entry_send_added (xmms_medialib_t *medialib, xmms_medi
 static void xmms_medialib_entry_send_update (xmms_medialib_t *medialib, xmms_medialib_entry_t entry);
 static void xmms_medialib_entry_send_removed (xmms_medialib_t *medialib, xmms_medialib_entry_t entry);
 
-xmms_medialib_session_t *
-xmms_medialib_session_begin (xmms_medialib_t *medialib)
+static xmms_medialib_session_t *
+xmms_medialib_session_begin_internal (xmms_medialib_t *medialib,
+                                      s4_transaction_flag_t flags)
 {
 	xmms_medialib_session_t *ret = g_new0 (xmms_medialib_session_t, 1);
 
@@ -43,7 +44,7 @@ xmms_medialib_session_begin (xmms_medialib_t *medialib)
 	ret->medialib = medialib;
 
 	s4_t *s4 = xmms_medialib_get_database_backend (medialib);
-	ret->trans = s4_begin (s4, 0);
+	ret->trans = s4_begin (s4, flags);
 
 	ret->added = g_hash_table_new (NULL, NULL);
 	ret->updated = g_hash_table_new (NULL, NULL);
@@ -52,6 +53,18 @@ xmms_medialib_session_begin (xmms_medialib_t *medialib)
 	ret->vals = xmmsv_new_list ();
 
 	return ret;
+}
+
+xmms_medialib_session_t *
+xmms_medialib_session_begin (xmms_medialib_t *medialib)
+{
+	return xmms_medialib_session_begin_internal (medialib, 0);
+}
+
+xmms_medialib_session_t *
+xmms_medialib_session_begin_ro (xmms_medialib_t *medialib)
+{
+	return xmms_medialib_session_begin_internal (medialib, S4_TRANS_READONLY);
 }
 
 void
