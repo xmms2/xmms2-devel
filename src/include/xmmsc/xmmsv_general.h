@@ -54,6 +54,8 @@ xmmsv_t *xmmsv_new_string (const char *s);
 xmmsv_t *xmmsv_new_coll (xmmsv_coll_t *coll);
 xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len);
 
+xmmsv_t *xmmsv_copy (xmmsv_t *val);
+
 xmmsv_t *xmmsv_ref (xmmsv_t *val);
 void xmmsv_unref (xmmsv_t *val);
 
@@ -65,6 +67,8 @@ int xmmsv_get_int (const xmmsv_t *val, int32_t *r);
 int xmmsv_get_string (const xmmsv_t *val, const char **r);
 int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll);
 int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
+
+xmmsv_coll_t *xmmsv_coll_copy (xmmsv_coll_t *orig_coll);
 
 /* legacy aliases */
 int xmmsv_is_error (const xmmsv_t *val);

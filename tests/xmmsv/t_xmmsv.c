@@ -939,3 +939,91 @@ CASE (test_xmmsv_list_flatten) {
 	xmmsv_unref (tmp);
 	xmmsv_unref (list);
 }
+
+CASE (test_xmmsv_deep_copy)
+{
+	xmmsv_t *value, *val2, *val_cpy;
+	const char *s;
+	int i;
+
+	val2 = xmmsv_new_list ();
+	value = xmmsv_new_int (7654321);
+	xmmsv_list_append (val2, value);
+	xmmsv_unref (value);
+	value = xmmsv_new_string ("hiya");
+	xmmsv_list_append (val2, value);
+	xmmsv_unref (value);
+
+	value = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("a", "aaaaaaa"),
+	                        XMMSV_DICT_ENTRY_STR ("b", ""),
+	                        XMMSV_DICT_ENTRY_INT ("c",  1234567),
+	                        XMMSV_DICT_END);
+
+	xmmsv_dict_set (value, "list", val2);
+
+	val_cpy = xmmsv_copy (value);
+	xmmsv_unref (value);
+	xmmsv_unref (val2);
+
+	CU_ASSERT_PTR_NOT_NULL (val_cpy);
+	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "a", &value));
+	CU_ASSERT_TRUE (xmmsv_get_string (value, &s));
+	CU_ASSERT_TRUE (strcmp (s, "aaaaaaa") == 0);
+
+	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "b", &value));
+	CU_ASSERT_TRUE (xmmsv_get_string (value, &s));
+	CU_ASSERT_TRUE (strcmp (s, "") == 0);
+
+	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "c", &value));
+	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
+	CU_ASSERT_EQUAL (i, 1234567);
+
+	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "list", &value));
+	CU_ASSERT_TRUE (xmmsv_list_get_int (value, 0, &i));
+	CU_ASSERT_EQUAL (i, 7654321);
+	CU_ASSERT_TRUE (xmmsv_list_get_string (value, 1, &s));
+	CU_ASSERT_EQUAL (strcmp (s, "hiya"), 0);
+	xmmsv_unref (val_cpy);
+}
+
+CASE (test_xmmsv_deep_copy_bin)
+{
+	unsigned char *b;
+	unsigned char *a = "look behind you! a three headed monkey!";
+	unsigned int b_len, a_len = strlen (a) + 1;
+	xmmsv_t *value, *val_cpy;
+
+	value = xmmsv_new_bin (a, a_len);
+
+	val_cpy = xmmsv_copy (value);
+	xmmsv_unref (value);
+	CU_ASSERT_TRUE (xmmsv_get_bin (val_cpy, &b, &b_len));
+
+	CU_ASSERT_EQUAL (a_len, b_len);
+	CU_ASSERT_STRING_EQUAL (a, b);
+	xmmsv_unref (val_cpy);
+}
+
+CASE (test_xmmsv_deep_copy_bitbuffer)
+{
+	unsigned char b[4];
+	xmmsv_t *value, *val_cpy;
+	value = xmmsv_bitbuffer_new ();
+
+	CU_ASSERT_TRUE (xmmsv_bitbuffer_put_data (value, (unsigned char *)"test", 4));
+
+	val_cpy = xmmsv_copy (value);
+	xmmsv_unref (value);
+
+	CU_ASSERT_EQUAL (xmmsv_bitbuffer_pos (val_cpy), 32);
+	CU_ASSERT_EQUAL (xmmsv_bitbuffer_len (val_cpy), 32);
+	CU_ASSERT_TRUE (xmmsv_bitbuffer_rewind (val_cpy));
+	CU_ASSERT_TRUE (xmmsv_bitbuffer_get_data (val_cpy, b, 4));
+
+	CU_ASSERT_EQUAL ('t', b[0]);
+	CU_ASSERT_EQUAL ('e', b[1]);
+	CU_ASSERT_EQUAL ('s', b[2]);
+	CU_ASSERT_EQUAL ('t', b[3]);
+
+	xmmsv_unref (val_cpy);
+}
