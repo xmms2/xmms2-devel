@@ -718,6 +718,7 @@ xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
 GEN_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_EXTRACTOR_FUNC (int32, int32_t)
 GEN_DICT_EXTRACTOR_FUNC (int64, int64_t)
+GEN_DICT_EXTRACTOR_FUNC (float, float)
 
 int
 xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_t **r)
@@ -742,6 +743,7 @@ xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_t **r)
 
 GEN_DICT_SET_FUNC (string, const char *)
 GEN_DICT_SET_FUNC (int, int64_t)
+GEN_DICT_SET_FUNC (float, float)
 
 int
 xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_t *elem)
@@ -770,6 +772,7 @@ xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_t *elem)
 GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_ITER_EXTRACTOR_FUNC (int32, int32_t)
 GEN_DICT_ITER_EXTRACTOR_FUNC (int64, int64_t)
+GEN_DICT_ITER_EXTRACTOR_FUNC (float, float)
 
 int
 xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **r)
@@ -794,6 +797,7 @@ xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **r)
 
 GEN_DICT_ITER_SET_FUNC (string, const char *)
 GEN_DICT_ITER_SET_FUNC (int, int64_t)
+GEN_DICT_ITER_SET_FUNC (float, float)
 
 int
 xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_t *elem)

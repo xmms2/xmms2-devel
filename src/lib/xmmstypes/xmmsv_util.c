@@ -296,6 +296,11 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 					xmmsv_get_int (v, &i);
 					snprintf (tmp, 21, "%" PRId64, i);
 					result = tmp;
+				} else if (type == XMMSV_TYPE_FLOAT) {
+					float f;
+					xmmsv_get_float (v, &f);
+					snprintf (tmp, 12, "%.6f", f);
+					result = tmp;
 				}
 			}
 

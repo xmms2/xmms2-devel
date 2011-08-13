@@ -45,6 +45,7 @@ typedef enum {
 	XMMSV_TYPE_LIST,
 	XMMSV_TYPE_DICT,
 	XMMSV_TYPE_BITBUFFER,
+	XMMSV_TYPE_FLOAT,
 	XMMSV_TYPE_END
 } xmmsv_type_t;
 
@@ -55,6 +56,7 @@ typedef struct xmmsv_St xmmsv_t;
 xmmsv_t *xmmsv_new_none (void) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_error (const char *errstr) XMMS_PUBLIC; /* FIXME: err id? */
 xmmsv_t *xmmsv_new_int (int64_t i) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_float (float i) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_string (const char *s) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len) XMMS_PUBLIC;
@@ -71,6 +73,7 @@ int xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t) XMMS_PUBLIC;
 int xmmsv_get_error (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
 int xmmsv_get_int32 (const xmmsv_t *val, int32_t *r) XMMS_PUBLIC;
 int xmmsv_get_int64 (const xmmsv_t *val, int64_t *r) XMMS_PUBLIC;
+int xmmsv_get_float (const xmmsv_t *val, float *r) XMMS_PUBLIC;
 int xmmsv_get_string (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
 int xmmsv_get_coll (const xmmsv_t *val, xmmsv_t **coll) XMMS_PUBLIC XMMS_DEPRECATED;
 int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen) XMMS_PUBLIC;

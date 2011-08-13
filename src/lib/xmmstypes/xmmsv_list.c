@@ -926,6 +926,7 @@ xmmsv_list_flatten (xmmsv_t *list, int depth)
 GEN_LIST_EXTRACTOR_FUNC (string, const char *)
 GEN_LIST_EXTRACTOR_FUNC (int32, int32_t)
 GEN_LIST_EXTRACTOR_FUNC (int64, int64_t)
+GEN_LIST_EXTRACTOR_FUNC (float, float)
 
 int
 xmmsv_list_get_coll (xmmsv_t *val, int pos, xmmsv_t **r)
@@ -950,6 +951,7 @@ xmmsv_list_get_coll (xmmsv_t *val, int pos, xmmsv_t **r)
 
 GEN_LIST_SET_FUNC (string, const char *)
 GEN_LIST_SET_FUNC (int, int64_t)
+GEN_LIST_SET_FUNC (float, float)
 
 int
 xmmsv_list_set_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
@@ -974,6 +976,7 @@ xmmsv_list_set_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
 
 GEN_LIST_INSERT_FUNC (string, const char *)
 GEN_LIST_INSERT_FUNC (int, int64_t)
+GEN_LIST_INSERT_FUNC (float, float)
 
 int
 xmmsv_list_insert_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
@@ -998,6 +1001,7 @@ xmmsv_list_insert_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
 
 GEN_LIST_APPEND_FUNC (string, const char *)
 GEN_LIST_APPEND_FUNC (int, int64_t)
+GEN_LIST_APPEND_FUNC (float, float)
 
 int
 xmmsv_list_append_coll (xmmsv_t *list, xmmsv_t *elem)
@@ -1020,6 +1024,7 @@ xmmsv_list_append_coll (xmmsv_t *list, xmmsv_t *elem)
 GEN_LIST_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_LIST_ITER_EXTRACTOR_FUNC (int32, int32_t)
 GEN_LIST_ITER_EXTRACTOR_FUNC (int64, int64_t)
+GEN_LIST_ITER_EXTRACTOR_FUNC (float, float)
 
 int
 xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_t **r)
@@ -1044,6 +1049,7 @@ xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_t **r)
 
 GEN_LIST_ITER_INSERT_FUNC (string, const char *)
 GEN_LIST_ITER_INSERT_FUNC (int, int64_t)
+GEN_LIST_ITER_INSERT_FUNC (float, float)
 
 int
 xmmsv_list_iter_insert_coll (xmmsv_list_iter_t *it, xmmsv_t *elem)

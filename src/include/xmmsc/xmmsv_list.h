@@ -50,18 +50,22 @@ int xmmsv_list_get_type (xmmsv_t *listv, xmmsv_type_t *type) XMMS_PUBLIC;
 int xmmsv_list_get_string (xmmsv_t *v, int pos, const char **val) XMMS_PUBLIC;
 int xmmsv_list_get_int32 (xmmsv_t *v, int pos, int32_t *val) XMMS_PUBLIC;
 int xmmsv_list_get_int64 (xmmsv_t *v, int pos, int64_t *val) XMMS_PUBLIC;
+int xmmsv_list_get_float (xmmsv_t *v, int pos, float *val) XMMS_PUBLIC;
 int xmmsv_list_get_coll (xmmsv_t *v, int pos, xmmsv_t **val) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_list_set_string (xmmsv_t *v, int pos, const char *val) XMMS_PUBLIC;
 int xmmsv_list_set_int (xmmsv_t *v, int pos, int64_t val) XMMS_PUBLIC;
+int xmmsv_list_set_float (xmmsv_t *v, int pos, float val) XMMS_PUBLIC;
 int xmmsv_list_set_coll (xmmsv_t *v, int pos, xmmsv_t *val) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_list_insert_string (xmmsv_t *v, int pos, const char *val) XMMS_PUBLIC;
 int xmmsv_list_insert_int (xmmsv_t *v, int pos, int64_t val) XMMS_PUBLIC;
+int xmmsv_list_insert_float (xmmsv_t *v, int pos, float val) XMMS_PUBLIC;
 int xmmsv_list_insert_coll (xmmsv_t *v, int pos, xmmsv_t *val) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_list_append_string (xmmsv_t *v, const char *val) XMMS_PUBLIC;
 int xmmsv_list_append_int (xmmsv_t *v, int64_t val) XMMS_PUBLIC;
+int xmmsv_list_append_float (xmmsv_t *v, float val) XMMS_PUBLIC;
 int xmmsv_list_append_coll (xmmsv_t *v, xmmsv_t *val) XMMS_PUBLIC XMMS_DEPRECATED;
 
 xmmsv_t *xmmsv_list_flatten (xmmsv_t *list, int depth) XMMS_PUBLIC;
@@ -95,10 +99,12 @@ int  xmmsv_list_iter_remove (xmmsv_list_iter_t *it) XMMS_PUBLIC;
 int xmmsv_list_iter_entry_string (xmmsv_list_iter_t *it, const char **val) XMMS_PUBLIC;
 int xmmsv_list_iter_entry_int32 (xmmsv_list_iter_t *it, int32_t *val) XMMS_PUBLIC;
 int xmmsv_list_iter_entry_int64 (xmmsv_list_iter_t *it, int64_t *val) XMMS_PUBLIC;
+int xmmsv_list_iter_entry_float (xmmsv_list_iter_t *it, float *val) XMMS_PUBLIC;
 int xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_t **val) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_list_iter_insert_string (xmmsv_list_iter_t *it, const char *val) XMMS_PUBLIC;
 int xmmsv_list_iter_insert_int (xmmsv_list_iter_t *it, int64_t val) XMMS_PUBLIC;
+int xmmsv_list_iter_insert_float (xmmsv_list_iter_t *it, float val) XMMS_PUBLIC;
 int xmmsv_list_iter_insert_coll (xmmsv_list_iter_t *it, xmmsv_t *val) XMMS_PUBLIC XMMS_DEPRECATED;
 /** @} */
 

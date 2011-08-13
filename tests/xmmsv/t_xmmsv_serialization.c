@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <float.h>
 #include <xmmsc/xmmsv.h>
 
 SETUP (xmmsv_serialization) {
@@ -171,6 +172,72 @@ CASE (test_xmmsv_serialize_large_int)
 	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
 	CU_ASSERT_EQUAL (i, 9667);
 
+	xmmsv_unref (value);
+}
+
+CASE (test_xmmsv_serialize_float)
+{
+	xmmsv_t *bin, *value;
+	const unsigned char *data;
+	unsigned int length;
+	float f;
+	char in[16];
+	const unsigned char expected[] = {
+		0x00, 0x00, 0x00, 0x09, /* XMMSV_TYPE_FLOAT */
+		0x60, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00
+	};
+
+	value = xmmsv_new_float (0.75);
+
+	bin = xmmsv_serialize (value);
+	xmmsv_unref (value);
+
+	CU_ASSERT_PTR_NOT_NULL (bin);
+
+	CU_ASSERT_TRUE (xmmsv_get_bin (bin, &data, &length));
+	CU_ASSERT_EQUAL (length, sizeof (expected));
+
+	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
+
+	value = xmmsv_deserialize (bin);
+	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_FLOAT));
+
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &f));
+	CU_ASSERT_EQUAL (f, 0.75);
+
+	xmmsv_unref (value);
+
+	/* test values with many decimal places */
+	value = xmmsv_new_float (3.141592);
+	bin = xmmsv_serialize (value);
+	xmmsv_unref (value);
+	value = xmmsv_deserialize (bin);
+	xmmsv_unref (bin);
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &f));
+	sprintf (in, "%.6E", f);
+	CU_ASSERT_TRUE (strcmp (in, "3.141592E+00") == 0);
+	xmmsv_unref (value);
+
+	value = xmmsv_new_float (FLT_MIN);
+	bin = xmmsv_serialize (value);
+	xmmsv_unref (value);
+	value = xmmsv_deserialize (bin);
+	xmmsv_unref (bin);
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &f));
+	CU_ASSERT_EQUAL (FLT_MIN, f);
+	xmmsv_unref (value);
+
+	value = xmmsv_new_float (FLT_MAX);
+	bin = xmmsv_serialize (value);
+	xmmsv_unref (value);
+	value = xmmsv_deserialize (bin);
+	xmmsv_unref (bin);
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &f));
+	CU_ASSERT_EQUAL (FLT_MAX, f);
 	xmmsv_unref (value);
 }
 
@@ -358,15 +425,20 @@ CASE (test_xmmsv_serialize_list)
 	const unsigned char *data;
 	unsigned int length;
 	int32_t i;
+	float f;
 	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x06, /* XMMSV_TYPE_LIST */
 		0x00, 0x00, 0x00, 0x00, /* restrict to XMMSV_TYPE_NONE */
-		0x00, 0x00, 0x00, 0x02, /* 2 (number of list items) */
+		0x00, 0x00, 0x00, 0x03, /* 3 (number of list items) */
 
 		0x00, 0x00, 0x00, 0x02, /* list[0]: XMMSV_TYPE_INT64 */
 		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x2a, /* list[0]: 42 */
+
+		0x00, 0x00, 0x00, 0x09, /* list[0]: XMMSV_TYPE_FLOAT */
+		0xc0, 0x00, 0x00, 0x00, /* list[0]: -1.0 */
+		0x00, 0x00, 0x00, 0x01,
 
 		0x00, 0x00, 0x00, 0x03, /* list[1]: XMMSV_TYPE_STRING */
 		0x00, 0x00, 0x00, 0x04, /* list[1]: 4 (length of following bytes) */
@@ -376,6 +448,10 @@ CASE (test_xmmsv_serialize_list)
 	value = xmmsv_new_list ();
 
 	item = xmmsv_new_int (42);
+	xmmsv_list_append (value, item);
+	xmmsv_unref (item);
+
+	item = xmmsv_new_float (-1.0);
 	xmmsv_list_append (value, item);
 	xmmsv_unref (item);
 
@@ -398,7 +474,7 @@ CASE (test_xmmsv_serialize_list)
 
 	CU_ASSERT_PTR_NOT_NULL (value);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_LIST));
-	CU_ASSERT_EQUAL (xmmsv_list_get_size (value), 2);
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (value), 3);
 
 	CU_ASSERT_TRUE (xmmsv_list_get (value, 0, &item));
 	CU_ASSERT_PTR_NOT_NULL (item);
@@ -407,6 +483,12 @@ CASE (test_xmmsv_serialize_list)
 	CU_ASSERT_EQUAL (i, 42);
 
 	CU_ASSERT_TRUE (xmmsv_list_get (value, 1, &item));
+	CU_ASSERT_PTR_NOT_NULL (item);
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_FLOAT));
+	CU_ASSERT_TRUE (xmmsv_get_float (item, &f));
+	CU_ASSERT_EQUAL (f, -1.0);
+
+	CU_ASSERT_TRUE (xmmsv_list_get (value, 2, &item));
 	CU_ASSERT_PTR_NOT_NULL (item);
 	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_STRING));
 	CU_ASSERT_TRUE (xmmsv_get_string (item, &s));

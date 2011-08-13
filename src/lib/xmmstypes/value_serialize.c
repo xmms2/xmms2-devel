@@ -15,6 +15,7 @@
  */
 
 #include <string.h>
+#include <math.h>
 
 #include <xmmsc/xmmsc_stdbool.h>
 #include <xmmsc/xmmsv.h>
@@ -24,6 +25,7 @@ static bool _internal_put_on_bb_bin (xmmsv_t *bb, const unsigned char *data, uns
 static bool _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg);
 static bool _internal_put_on_bb_int32 (xmmsv_t *bb, int32_t v);
 static bool _internal_put_on_bb_int64 (xmmsv_t *bb, int64_t v);
+static bool _internal_put_on_bb_float (xmmsv_t *bb, float v);
 static bool _internal_put_on_bb_string (xmmsv_t *bb, const char *str);
 static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll);
 static bool _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v);
@@ -36,6 +38,7 @@ static bool _internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf, unsigned
 static bool _internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_int64 (xmmsv_t *bb, int64_t *v);
+static bool _internal_get_from_bb_float (xmmsv_t *bb, float *v);
 static bool _internal_get_from_bb_string_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
 static bool _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_t **coll);
 static bool _internal_get_from_bb_value_dict_alloc (xmmsv_t *bb, xmmsv_t **val);
@@ -82,6 +85,27 @@ static bool
 _internal_put_on_bb_int64 (xmmsv_t *bb, int64_t v)
 {
 	return xmmsv_bitbuffer_put_bits (bb, 64, v);
+}
+
+static bool
+_internal_put_on_bb_float (xmmsv_t *bb, float v)
+{
+	int64_t mant_int;
+	int32_t expon;
+	float mant;
+
+	mant = frexpf (v, &expon);
+	if (mant > 0.0f) {
+		mant_int = mant * INT32_MAX;
+	} else {
+		mant_int = mant * fabsf (INT32_MIN);
+	}
+
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, mant_int)) {
+		return false;
+	}
+
+	return xmmsv_bitbuffer_put_bits (bb, 32, expon);
 }
 
 static bool
@@ -235,6 +259,31 @@ static bool
 _internal_get_from_bb_int64 (xmmsv_t *bb, int64_t *v)
 {
 	return xmmsv_bitbuffer_get_bits (bb, 64, v);
+}
+
+static bool
+_internal_get_from_bb_float (xmmsv_t *bb, float *v)
+{
+	int64_t mant_int, expon;
+	float mant;
+
+	if (!xmmsv_bitbuffer_get_bits (bb, 32, &mant_int)) {
+		return false;
+	}
+
+	if (!xmmsv_bitbuffer_get_bits (bb, 32, &expon)) {
+		return false;
+	}
+
+	if (mant_int > 0.0f) {
+		mant = (int32_t) mant_int / (float) INT32_MAX;
+	} else {
+		mant = mant_int / fabsf (INT32_MIN);
+	}
+
+	*v = ldexpf (mant, expon);
+
+	return true;
 }
 
 static bool
@@ -430,6 +479,7 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
                                            xmmsv_t **val)
 {
 	int64_t i;
+	float f;
 	uint32_t len;
 	char *s;
 	unsigned char *d;
@@ -447,6 +497,12 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
 				return false;
 			}
 			*val = xmmsv_new_int (i);
+			break;
+		case XMMSV_TYPE_FLOAT:
+			if (!_internal_get_from_bb_float (bb, &f)) {
+				return false;
+			}
+			*val = xmmsv_new_float (f);
 			break;
 		case XMMSV_TYPE_STRING:
 			if (!_internal_get_from_bb_string_alloc (bb, &s, &len)) {
@@ -497,6 +553,7 @@ _internal_put_on_bb_value_of_type (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t *v)
 {
 	bool ret = true;
 	int64_t i;
+	float f;
 	const char *s;
 	const unsigned char *bc;
 	unsigned int bl;
@@ -513,6 +570,12 @@ _internal_put_on_bb_value_of_type (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t *v)
 			return false;
 		}
 		ret = _internal_put_on_bb_int64 (bb, i);
+		break;
+	case XMMSV_TYPE_FLOAT:
+		if (!xmmsv_get_float (v, &f)) {
+			return false;
+		}
+		ret = _internal_put_on_bb_float (bb, f);
 		break;
 	case XMMSV_TYPE_STRING:
 		if (!xmmsv_get_string (v, &s)) {

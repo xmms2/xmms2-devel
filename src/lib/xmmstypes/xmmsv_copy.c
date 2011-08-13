@@ -37,6 +37,7 @@ xmmsv_copy (xmmsv_t *val)
 	xmmsv_type_t type;
 	int64_t i;
 	const char *s;
+	float f;
 
 	x_return_val_if_fail (val, 0);
 	type = xmmsv_get_type (val);
@@ -50,6 +51,10 @@ xmmsv_copy (xmmsv_t *val)
 		case XMMSV_TYPE_INT64:
 			xmmsv_get_int (val, &i);
 			cur_val = xmmsv_new_int (i);
+			break;
+		case XMMSV_TYPE_FLOAT:
+			xmmsv_get_float (val, &f);
+			cur_val = xmmsv_new_float (f);
 			break;
 		case XMMSV_TYPE_STRING:
 			xmmsv_get_string (val, &s);

@@ -30,6 +30,7 @@ struct xmmsv_St {
 	union {
 		char *error;
 		int64_t int64;
+		float flt32;
 		char *string;
 		xmmsv_coll_internal_t *coll;
 		xmmsv_list_internal_t *list;

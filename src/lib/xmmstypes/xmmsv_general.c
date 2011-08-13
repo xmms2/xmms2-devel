@@ -71,6 +71,7 @@ _xmmsv_free (xmmsv_t *val)
 		case XMMSV_TYPE_NONE :
 		case XMMSV_TYPE_END :
 		case XMMSV_TYPE_INT64 :
+		case XMMSV_TYPE_FLOAT :
 			break;
 		case XMMSV_TYPE_ERROR :
 			free (val->value.error);
@@ -152,6 +153,24 @@ xmmsv_new_int (int64_t i)
 
 	if (val) {
 		val->value.int64 = i;
+	}
+
+	return val;
+}
+
+/**
+ * Allocates a new float #xmmsv_t.
+ * @param i The value to store in the #xmmsv_t.
+ * @return The new #xmmsv_t. Must be unreferenced with
+ * #xmmsv_unref.
+ */
+xmmsv_t *
+xmmsv_new_float (float i)
+{
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_FLOAT);
+
+	if (val) {
+		val->value.flt32 = i;
 	}
 
 	return val;
@@ -346,6 +365,25 @@ xmmsv_get_int64 (const xmmsv_t *val, int64_t *r)
 	}
 
 	return 0;
+}
+
+/**
+ * Retrieves a float from the value.
+ *
+ * @param val a #xmmsv_t containing a float value.
+ * @param r the return float.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_get_float (const xmmsv_t *val, float *r)
+{
+	if (!val || val->type != XMMSV_TYPE_FLOAT) {
+		return 0;
+	}
+
+	*r = val->value.flt32;
+
+	return 1;
 }
 
 /**
