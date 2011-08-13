@@ -344,7 +344,7 @@ updater_config_get (xmmsv_t *value, void *udata)
 		updater_switch_directory (updater, path);
 	} else {
 		g_message ("Please register a directory with the command:");
-		g_message ("\nxmms2 server config"
+		g_message ("\nxmms2 server config "
 		           "clients.mlibupdater.watch_dirs /path/to/directory");
 	}
 
