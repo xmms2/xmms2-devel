@@ -451,7 +451,7 @@ xmms_bin_to_gstring (xmmsv_t *value, GString **gs)
 	if (!xmmsv_get_bin (value, &str, &len)) {
 		return 0;
 	}
-	*gs = g_string_new_len (str, len);
+	*gs = g_string_new_len ((const gchar *) str, len);
 	return 1;
 }
 
