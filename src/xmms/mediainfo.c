@@ -137,7 +137,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 	                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
 
 
-	f = _xmms_stream_type_new (NULL,
+	f = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
 	                           XMMS_STREAM_TYPE_MIMETYPE,
 	                           "audio/pcm",
 	                           XMMS_STREAM_TYPE_END);

@@ -25,6 +25,8 @@
 
 G_BEGIN_DECLS
 
+#define XMMS_STREAM_TYPE_BEGIN "placeholder"
+
 typedef enum xmms_stream_type_key_E {
 	XMMS_STREAM_TYPE_END,
 	XMMS_STREAM_TYPE_MIMETYPE,

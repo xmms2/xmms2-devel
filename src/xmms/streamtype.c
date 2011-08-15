@@ -327,7 +327,7 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 		gsamplerate = samplerate;
 	}
 
-	best = _xmms_stream_type_new ("dummy",
+	best = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
 	                              XMMS_STREAM_TYPE_MIMETYPE, gmime,
 	                              XMMS_STREAM_TYPE_FMT_FORMAT, gformat,
 	                              XMMS_STREAM_TYPE_FMT_CHANNELS, gchannels,
@@ -359,12 +359,12 @@ xmms_stream_type_coerce (const xmms_stream_type_t *in, const GList *goal_types)
 */
 
 xmms_stream_type_t *
-_xmms_stream_type_new (void *dumb, ...)
+_xmms_stream_type_new (const gchar *begin, ...)
 {
 	xmms_stream_type_t *res;
 	va_list ap;
 
-	va_start (ap, dumb);
+	va_start (ap, begin);
 	res = xmms_stream_type_parse (ap);
 	va_end (ap);
 

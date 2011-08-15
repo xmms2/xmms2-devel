@@ -251,7 +251,7 @@ xmms_collection_init (xmms_playlist_t *playlist)
 
 	xmms_collection_dag_restore (ret);
 
-	f = _xmms_stream_type_new (NULL,
+	f = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
 	                           XMMS_STREAM_TYPE_MIMETYPE,
 	                           "application/x-xmms2-playlist-entries",
 	                           XMMS_STREAM_TYPE_END);
