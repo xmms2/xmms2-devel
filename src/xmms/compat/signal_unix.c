@@ -69,6 +69,8 @@ sigwaiter (gpointer data)
 				break;
 		}
 	}
+
+	return 0;
 }
 
 void
