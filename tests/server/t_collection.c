@@ -119,14 +119,17 @@ CASE (test_client_get) {
 
 CASE (test_client_remove)
 {
+	xmms_future_t *future;
 	xmmsv_coll_t *universe;
-	xmmsv_t *result;
+	xmmsv_t *result, *signals, *expected;
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_REMOVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
+
+	future = XMMS_IPC_CHECK_SIGNAL (dag, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
 	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
@@ -142,6 +145,16 @@ CASE (test_client_remove)
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
+
+	signals = xmms_future_await (future, 2);
+
+	/* XMMS_COLLECTION_CHANGED_ADD = 0, XMMS_COLLECTION_CHANGED_REMOVE = 3 */
+	expected = xmmsv_from_json ("[{ 'type': 0, 'namespace': 'Collections', 'name': 'Test' },"
+	                            " { 'type': 3, 'namespace': 'Collections', 'name': 'Test' }]");
+	CU_ASSERT (xmmsv_compare (expected, signals));
+	xmmsv_unref (signals);
+	xmmsv_unref (expected);
+	xmms_future_free (future);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
 	                        xmmsv_new_string ("Test"),
