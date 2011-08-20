@@ -12,7 +12,8 @@ def gzip_func(task):
     outfile = task.outputs[0].abspath()
 
     input = open(infile, 'rb')
-    output = gzip.GzipFile(outfile, mode='wb')
+    outf = open(outfile, 'wb')
+    output = gzip.GzipFile(os.path.basename(infile), fileobj=outf)
     output.write(input.read())
 
 @feature('man')
