@@ -1,7 +1,7 @@
 from waflib import Logs, Errors
 import os
 
-CYTHON_PRECOMPILED_VERSION = (0,14,1)
+CYTHON_PRECOMPILED_VERSION = (0,15)
 
 def copy_cython(task):
     """Copy generated cython file from build tree to source tree.
