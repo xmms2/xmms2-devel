@@ -9,8 +9,8 @@ def copy_cython(task):
     """
     import re
     node = task.inputs[0]
-    orig_file = node.get_bldnode().abspath()
-    copy_file = node.get_srcnode().abspath()
+    orig_file = node.get_bld().abspath()
+    copy_file = node.get_src().abspath()
     orig = None
     copy = None
     try:
