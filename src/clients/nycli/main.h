@@ -79,13 +79,15 @@ struct command_action_St {
 typedef enum {
 	COMMAND_ARGUMENT_TYPE_BOOLEAN = G_OPTION_ARG_NONE,
 	COMMAND_ARGUMENT_TYPE_INT = G_OPTION_ARG_INT,
-	COMMAND_ARGUMENT_TYPE_STRING = G_OPTION_ARG_STRING
+	COMMAND_ARGUMENT_TYPE_STRING = G_OPTION_ARG_STRING,
+	COMMAND_ARGUMENT_TYPE_STRING_ARRAY = G_OPTION_ARG_STRING_ARRAY,
 } command_argument_type_t;
 
 typedef union {
 	gboolean vbool;
 	gint vint;
 	gchar *vstring;
+	gchar **vstringv;
 } command_argument_value_t;
 
 struct command_argument_St {

@@ -180,6 +180,12 @@ init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
 			argdefs[i].arg_data = &arg->value.vstring;
 			break;
 
+		case G_OPTION_ARG_STRING_ARRAY:
+			arg->type = COMMAND_ARGUMENT_TYPE_STRING_ARRAY;
+			arg->value.vstringv = NULL;
+			argdefs[i].arg_data = &arg->value.vstringv;
+			break;
+
 		default:
 			g_printf (_("Trying to register a flag '%s' of invalid type!"),
 			          argdefs[i].long_name);

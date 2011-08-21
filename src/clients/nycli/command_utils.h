@@ -48,6 +48,7 @@ gboolean command_flag_boolean_get (command_context_t *ctx, const gchar *name, gb
 gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
 gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, const gchar **v);
 gboolean command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v);
+gboolean command_flag_stringarray_get (command_context_t *ctx, const gchar *name, const gchar ***v);
 gchar *command_name_get (command_context_t *ctx);
 gint command_arg_count (command_context_t *ctx);
 gchar** command_argv_get (command_context_t *ctx);
