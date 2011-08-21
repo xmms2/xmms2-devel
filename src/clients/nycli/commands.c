@@ -227,11 +227,12 @@ cli_add_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Add to the given playlist."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Add after the current track."), NULL },
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
+		{ "attribute", 'A', 0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Add media with given key=value attribute(s)."), NULL },
 		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
+	                     _("[-t | -f [-N] [-P] [-A]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -1037,6 +1038,33 @@ guessfile (const gchar *pattern)
 	return FALSE;
 }
 
+/**
+ * Build a dict out of a number of key=value strings.
+ *
+ * @return a dict with 0..n attributes.
+ */
+static xmmsv_t *
+cli_add_parse_attributes (command_context_t *ctx)
+{
+	const gchar **attributes;
+	xmmsv_t *result;
+	gint i;
+
+	result = xmmsv_new_dict ();
+
+	if (command_flag_stringarray_get (ctx, "attribute", &attributes)) {
+		for (i = 0; attributes[i] != NULL; i++) {
+			gchar **parts = g_strsplit (attributes[i], "=", 2);
+			if (parts[0] != NULL && parts[1] != NULL) {
+				xmmsv_dict_set_string (result, parts[0], parts[1]);
+			}
+			g_strfreev (parts);
+		}
+	}
+
+	return result;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
@@ -1046,6 +1074,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	const gchar *playlist;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	xmmsv_t *attributes;
 	xmmsv_t *order = NULL;
 	gint pos;
 	const gchar *path;
@@ -1064,6 +1093,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 --at  Add media at a given position in the playlist, or at a given offset from the current track.
 --order Order media matched by pattern.
 */
+	attributes = cli_add_parse_attributes (ctx);
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
 	if (command_flag_string_get (ctx, "playlist", &playlist)) {
@@ -1139,6 +1169,9 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 				browse_entry_get (entry, &url, &is_directory);
 
 				if (plsfile || guesspls (infos, url)) {
+					if (xmmsv_dict_get_size (attributes) > 0) {
+						g_printf (_("Warning: Skipping attributes together with playlist."));
+					}
 					xmmsc_result_t *plsres;
 					gchar *decoded = decode_url (url);
 
@@ -1148,11 +1181,16 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 					add_pls (plsres, infos, playlist, pos);
 					g_free (decoded);
 				} else if (norecurs || !is_directory) {
-					res = xmmsc_playlist_insert_encoded (infos->sync, playlist,
-					                                     pos, url);
+					gchar *decoded = decode_url (url);
+					res = xmmsc_playlist_insert_full (infos->sync, playlist,
+					                                  pos, url, attributes);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
+					g_free (decoded);
 				} else {
+					if (xmmsv_dict_get_size (attributes) > 0) {
+						g_printf (_("Warning: Skipping attributes together with playlist."));
+					}
 					res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist,
 					                                      pos, url);
 					xmmsc_result_wait (res);
@@ -1169,6 +1207,12 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		}
 		cli_infos_loop_resume (infos);
 	} else {
+		if (xmmsv_dict_get_size (attributes) > 0) {
+			g_printf (_("Warning: Skipping attributes together with pattern."));
+			success = FALSE;
+			goto finish;
+		}
+
 		if (norecurs) {
 			g_printf (_("Error:"
 			            "--non-recursive only applies when passing --file!\n"));
@@ -1194,6 +1238,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		xmmsv_unref (order);
 	}
 
+	xmmsv_unref (attributes);
 	g_free (pattern);
 
 	return success;
