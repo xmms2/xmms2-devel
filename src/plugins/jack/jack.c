@@ -60,7 +60,9 @@ static gboolean xmms_jack_volume_get (xmms_output_t *output, const gchar **names
 static int xmms_jack_process (jack_nframes_t frames, void *arg);
 static void xmms_jack_shutdown (void *arg);
 static void xmms_jack_error (const gchar *desc);
-
+static gboolean xmms_jack_ports_connected (xmms_output_t *output);
+static gboolean xmms_jack_connect_ports (xmms_output_t *output);
+static gboolean xmms_jack_connect (xmms_output_t *output);
 
 /*
  * Plugin header
@@ -88,6 +90,12 @@ xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)
 
 	xmms_output_plugin_config_property_register (plugin, "clientname", "XMMS2",
 	                                             NULL, NULL);
+	                                             
+	xmms_output_plugin_config_property_register (plugin, "connect_ports", "1",
+	                                             NULL, NULL);
+
+	xmms_output_plugin_config_property_register (plugin, "connect_to_ports", "physical",
+	                                             NULL, NULL);
 
 	xmms_output_plugin_config_property_register (plugin, "volume.left", "100",
 	                                             NULL, NULL);
@@ -107,11 +115,16 @@ xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)
 
 
 static gboolean
-xmms_jack_connect (xmms_output_t *output, xmms_jack_data_t *data)
+xmms_jack_connect (xmms_output_t *output)
 {
 	int i;
 	const xmms_config_property_t *cv;
 	const gchar *clientname;
+	xmms_jack_data_t *data;
+
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_output_config_lookup (output, "clientname");
 	clientname = xmms_config_property_get_string (cv);
@@ -152,6 +165,7 @@ xmms_jack_new (xmms_output_t *output)
 {
 	xmms_jack_data_t *data;
 	xmms_config_property_t *cv;
+	int connect;
 
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_jack_data_t, 1);
@@ -171,14 +185,25 @@ xmms_jack_new (xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data);
 
-	if (!xmms_jack_connect (output, data)) {
+	if (!xmms_jack_connect (output)) {
+		g_free (data);
 		return FALSE;
 	}
 
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, CHANNELS,
 	                        jack_get_sample_rate (data->jack));
 
-	/* we should connect the ports here? */
+	cv = xmms_output_config_lookup (output, "connect_ports");
+	connect = xmms_config_property_get_int (cv);
+
+	if (connect == 1) {
+
+		if (!xmms_jack_ports_connected (output) && !xmms_jack_connect_ports (output)) {
+			g_free (data);
+			return FALSE;
+		}
+
+	}
 
 	return TRUE;
 }
@@ -190,7 +215,6 @@ xmms_jack_destroy (xmms_output_t *output)
 	xmms_jack_data_t *data;
 
 	g_return_if_fail (output);
-
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
@@ -204,8 +228,14 @@ xmms_jack_destroy (xmms_output_t *output)
 
 
 static gboolean
-xmms_jack_ports_connected (xmms_jack_data_t *data)
+xmms_jack_ports_connected (xmms_output_t *output)
 {
+	xmms_jack_data_t *data;
+
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
 	gint is_connected = 0;
 	gint i;
 
@@ -217,14 +247,32 @@ xmms_jack_ports_connected (xmms_jack_data_t *data)
 }
 
 static gboolean
-xmms_jack_connect_ports (xmms_jack_data_t *data)
+xmms_jack_connect_ports (xmms_output_t *output)
 {
+	const gchar *ports;
 	const gchar **remote_ports;
 	gboolean ret = TRUE;
 	gint i, err;
+	xmms_config_property_t *cv;
+	xmms_jack_data_t *data;
 
-	remote_ports = jack_get_ports (data->jack, NULL, NULL,
-	                               JackPortIsInput | JackPortIsPhysical);
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
+	cv = xmms_output_config_lookup (output, "connect_to_ports");
+	ports = xmms_config_property_get_string (cv);
+
+	if ((strlen(ports) == 0) || ((strncmp(ports, "physical", 8) == 0))) {
+	
+		remote_ports = jack_get_ports (data->jack, NULL, NULL,
+		                               JackPortIsInput | JackPortIsPhysical);
+
+	} else {
+	
+		remote_ports = jack_get_ports (data->jack, ports, NULL, JackPortIsInput);
+	
+	}
 
 	for (i = 0; i < CHANNELS && remote_ports && remote_ports[i]; i++) {
 		const gchar *src_port = jack_port_name (data->ports[i]);
@@ -247,14 +295,6 @@ xmms_jack_status (xmms_output_t *output, xmms_playback_status_t status)
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-
-	if (data->error && !xmms_jack_connect (output, data)) {
-		return FALSE;
-	}
-
-	if (!xmms_jack_ports_connected (data) && !xmms_jack_connect_ports (data)) {
-		return FALSE;
-	}
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		data->running = TRUE;
