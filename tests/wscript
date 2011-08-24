@@ -24,6 +24,8 @@ runner/valgrind.c
 
 
 def configure(conf):
+    conf.load("unittest", tooldir="waftools")
+
     conf.check_cc(header_name="CUnit/CUnit.h")
     conf.check_cc(lib="cunit", uselib_store="cunit")
     conf.check_cc(lib="ncurses", uselib_store="ncurses", mandatory=False)
@@ -38,16 +40,16 @@ def configure(conf):
 
 
 def build(bld):
-    bld(features = 'c cprogram',
+    bld(features = 'c cprogram test',
         target = 'test_xmmstypes',
         source = test_xmmstypes_src,
         includes = '. .. runner ../src ../src/include',
-        use = 'xmmstypes', 
+        use = 'xmmstypes',
         uselib = 'cunit ncurses valgrind DISABLE_WRITESTRINGS',
         install_path = None
         )
 
-    bld(features = 'c cprogram',
+    bld(features = 'c cprogram test',
         target = 'test_server',
         source = test_server_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
@@ -58,4 +60,4 @@ def build(bld):
 
 
 def options(o):
-    pass
+    o.load("unittest", tooldir="waftools")

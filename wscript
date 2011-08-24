@@ -485,8 +485,6 @@ def options(opt):
                    help="Force a specific Windows version (cross-compilation)")
     opt.add_option('--with-profiling', action="store_true", default=False,
                    dest='with_profiling', help="Enable profiling")
-    opt.add_option('--run-tests', action='store_true', default=False,
-                   dest='run_tests', help="Run test suite")
     opt.add_option('--with-ldconfig', action='store_true', default=None,
                    dest='ldconfig', help="Run ldconfig after install even if not root")
     opt.add_option('--without-ldconfig', action='store_false',
@@ -509,7 +507,3 @@ def shutdown(ctx):
                 subprocess.check_output(['ldconfig', 'libprefix'])
             except:
                 pass
-
-    if ctx.options.run_tests:
-        os.system(os.path.join(blddir, "default/tests/test_xmmstypes"))
-        os.system(os.path.join(blddir, "default/tests/test_server"))

@@ -1,0 +1,169 @@
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_get_filename_charsets
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:g_get_charset
+   fun:g_get_filename_charsets
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:memalign
+   fun:posix_memalign
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_slice_alloc
+   fun:g_hash_table_new_full
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_get_charset
+   fun:g_get_filename_charsets
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:g_get_filename_charsets
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:memalign
+   fun:posix_memalign
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_slice_alloc
+   fun:g_array_sized_new
+   fun:g_static_private_set
+   fun:g_get_filename_charsets
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strconcat
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:memalign
+   fun:posix_memalign
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_slice_alloc
+   fun:g_slist_prepend
+   fun:g_strsplit
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
+{
+   g_thread_init_glib
+   Memcheck:Leak
+   fun:realloc
+   fun:g_realloc
+   obj:/lib/libglib-2.0.so.0.2600.0
+   fun:g_array_set_size
+   fun:g_static_private_set
+   fun:g_get_language_names
+   fun:g_thread_init_glib
+   fun:__testsuite_setup
+   obj:/usr/lib/libcunit.so.1.0.1
+   fun:CU_run_all_tests
+   fun:main
+}
