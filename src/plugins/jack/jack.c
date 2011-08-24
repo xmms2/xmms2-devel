@@ -41,8 +41,11 @@ typedef struct xmms_jack_data_St {
 	gboolean error;
 	gboolean running;
 	guint underruns;
-	guint volume[2];
-	gfloat volume_actual[2];
+	guint volume[CHANNELS];
+	gfloat volume_actual[CHANNELS];
+	gfloat new_volume_actual[CHANNELS];
+	gint last_sign[CHANNELS];
+	GMutex *volume_change; /* This should not be needed once the server doesn't allow multiple clients to set the volume at the same time */
 } xmms_jack_data_t;
 
 
@@ -151,6 +154,7 @@ xmms_jack_connect (xmms_output_t *output)
 
 	if (jack_activate (data->jack)) {
 		/* jadda jadda */
+		jack_client_close (data->jack);
 		return FALSE;
 	}
 
@@ -168,6 +172,7 @@ xmms_jack_new (xmms_output_t *output)
 	int connect;
 
 	g_return_val_if_fail (output, FALSE);
+
 	data = g_new0 (xmms_jack_data_t, 1);
 
 	data->underruns = 0;
@@ -180,12 +185,17 @@ xmms_jack_new (xmms_output_t *output)
 
 	data->volume_actual[0] = (gfloat)(data->volume[0] / 100.0);
 	data->volume_actual[0] *= data->volume_actual[0];
+	data->new_volume_actual[0] = data->volume_actual[0];
 	data->volume_actual[1] = (gfloat)(data->volume[1] / 100.0);
 	data->volume_actual[1] *= data->volume_actual[1];
+	data->new_volume_actual[1] = data->volume_actual[1];
+
+	data->volume_change = g_mutex_new ();
 
 	xmms_output_private_data_set (output, data);
 
 	if (!xmms_jack_connect (output)) {
+		g_mutex_free (data->volume_change);
 		g_free (data);
 		return FALSE;
 	}
@@ -199,6 +209,7 @@ xmms_jack_new (xmms_output_t *output)
 	if (connect == 1) {
 
 		if (!xmms_jack_ports_connected (output) && !xmms_jack_connect_ports (output)) {
+			g_mutex_free (data->volume_change);
 			g_free (data);
 			return FALSE;
 		}
@@ -217,6 +228,8 @@ xmms_jack_destroy (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
+
+	g_mutex_free (data->volume_change);
 
 	if (data->jack) {
 		jack_deactivate (data->jack);
@@ -320,7 +333,7 @@ xmms_jack_process (jack_nframes_t frames, void *arg)
 	xmms_jack_data_t *data;
 	xmms_samplefloat_t *buf[CHANNELS];
 	xmms_samplefloat_t tbuf[CHANNELS*4096];
-	gint i, j, res, toread;
+	gint i, j, res, toread, sign;
 
 	g_return_val_if_fail (output, -1);
 	data = xmms_output_private_data_get (output);
@@ -359,19 +372,70 @@ xmms_jack_process (jack_nframes_t frames, void *arg)
 			}
 
 			res /= CHANNELS * sizeof (xmms_samplefloat_t);
-			for (i = 0; i < res; i++) {
-				for (j = 0; j < CHANNELS; j++) {
-					buf[j][i] = (tbuf[i * CHANNELS + j] * data->volume_actual[j]);
+
+			for (j = 0; j < CHANNELS; j++) {
+				if (data->new_volume_actual[j] == data->volume_actual[j]) {
+					for (i = 0; i < res; i++) {
+						buf[j][i] = (tbuf[i * CHANNELS + j] * data->volume_actual[j]);
+					}
+				} else {
+				
+					/* The way the volume change is set up here, the volume can only change once per callback, but thats 
+					   allways plenty of times per second */
+				
+					/* last_sign: 0 = unset, -1 neg, +1 pos */
+					
+					if (data->last_sign[j] == 0) {
+						if (tbuf[j] > 0.0f) {
+							data->last_sign[j] = 1;
+						} else {
+							/* Zero counts as negative here, but its moot */
+							data->last_sign[j] = -1;
+						}
+					}
+				
+					for (i = 0; i < res; i++) {
+					
+						if (data->last_sign[j] != 0) {
+							if (tbuf[i*CHANNELS + j] > 0.0f) {
+								sign = 1;
+							} else {
+								sign = -1;
+							}
+					
+							if ((sign != data->last_sign[j]) || (tbuf[i * CHANNELS + j] == 0.0f)) {						
+						
+								data->volume_actual[j] = data->new_volume_actual[j];
+								data->last_sign[j] = 0;
+							}
+						}
+						
+						buf[j][i] = (tbuf[i * CHANNELS + j] * data->volume_actual[j]);
+						
+					}
+
+					if (data->last_sign[j] != 0) {
+						data->last_sign[j] = sign;
+					}
 				}
 			}
+			
 			toread -= res;
 		}
 	}
 
-	/* fill rest of buffer with silence */
-	for (i = frames - toread; i < frames; i++) {
+	if ((!data->running) || ((frames - toread) != frames)) {
+		/* fill rest of buffer with silence */
+		if (data->running) {
+			XMMS_DBG ("Silence for %d frames", toread);
+		}
 		for (j = 0; j < CHANNELS; j++) {
-			buf[j][i] = 0.0;
+			if (data->new_volume_actual[j] != data->volume_actual[j]) {
+				data->volume_actual[j] = data->new_volume_actual[j];
+			}
+			for (i = frames - toread; i < frames; i++) {
+				buf[j][i] = 0.0f;
+			}
 		}
 	}
 
@@ -386,6 +450,7 @@ xmms_jack_volume_set (xmms_output_t *output,
 	xmms_config_property_t *cv;
 	gchar *volume_strp;
 	gchar volume_str[4];
+	gfloat new_volume; /* For atomicness with zero crossing respect */
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (channel_name, FALSE);
@@ -395,24 +460,30 @@ xmms_jack_volume_set (xmms_output_t *output,
 
 	data = xmms_output_private_data_get (output);
 
+	g_mutex_lock (data->volume_change);
+
 	g_return_val_if_fail (data, FALSE);
 
-	if (g_ascii_strcasecmp (channel_name, "left") == 0) {
+	if (g_ascii_strcasecmp (channel_name, "Left") == 0) {
 		data->volume[0] = volume;
-		data->volume_actual[0] = (gfloat)(volume / 100.0);
-		data->volume_actual[0] *= data->volume_actual[0];
+		new_volume = (gfloat)(volume / 100.0);
+		new_volume *= new_volume;
+		data->new_volume_actual[0] = new_volume;
 		cv = xmms_output_config_lookup (output, "volume.left");
 		sprintf (volume_str, "%d", data->volume[0]);
 		xmms_config_property_set_data (cv, volume_strp);
 	} else {
 		/* If its not left, its right */
 		data->volume[1] = volume;
-		data->volume_actual[1] = (gfloat)(volume / 100.0);
-		data->volume_actual[1] *= data->volume_actual[1];
+		new_volume = (gfloat)(volume / 100.0);
+		new_volume *= new_volume;
+		data->new_volume_actual[1] = new_volume;
 		cv = xmms_output_config_lookup (output, "volume.right");
 		sprintf (volume_str, "%d", data->volume[1]);
 		xmms_config_property_set_data (cv, volume_strp);
 	}
+
+	g_mutex_unlock (data->volume_change);
 
 	return TRUE;
 }
@@ -440,10 +511,10 @@ xmms_jack_volume_get (xmms_output_t *output, const gchar **names,
 	g_return_val_if_fail (values, FALSE);
 
 	values[0] = data->volume[0];
-	names[0] = "left";
+	names[0] = "Left";
 
 	values[1] = data->volume[1];
-	names[1] = "right";
+	names[1] = "Right";
 
 	return TRUE;
 }
