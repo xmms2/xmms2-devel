@@ -288,6 +288,7 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', ['-g', '-O0'])
 
     if conf.options.with_profiling:
+        conf.env.with_profiling = True
         conf.env.append_unique('CFLAGS', ['--coverage'])
         conf.env.append_unique('LINKFLAGS', ['--coverage'])
 
