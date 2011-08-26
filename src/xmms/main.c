@@ -609,8 +609,6 @@ main (int argc, char **argv)
 	/* Startup dir */
 	do_scriptdir (xmms_config_property_get_string (cv), "start");
 
-	xmms_set_thread_name ("x2 main");
-
 	mainloop = g_main_loop_new (NULL, FALSE);
 
 	g_main_loop_run (mainloop);
