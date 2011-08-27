@@ -36,8 +36,10 @@ def process_man(self):
         tsk.set_inputs(node)
         tsk.set_outputs(out)
         tsk.fun = gzip_func
-        tsk.install_path = '${MANDIR}/man' + getattr(self, 'section', '1')
         tsk.color = 'BLUE'
+
+        self.bld.install_files('${MANDIR}/man' + getattr(self, 'section', '1'), out)
+
 
 def configure(conf):
     return True
