@@ -54,11 +54,17 @@ static const struct {
 static const int rates[] = {
 	8000,
 	11025,
+	12000,
 	16000,
 	22050,
+	24000,
+	32000,
 	44100,
 	48000,
-	96000
+	88200,
+	96000,
+	176400,
+	192000
 };
 
 static const struct {
