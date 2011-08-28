@@ -28,7 +28,7 @@ def summary(bld):
         for (f, code, out, err) in lst:
             if code != 0:
                 failed_tests.append(f)
-            Logs.pprint('NORMAL', out)
+            Logs.pprint('NORMAL', out.decode("ascii", "ignore"))
 
         if len(failed_tests) > 0:
             raise Errors.WafError("Test(s) failed:\n%s" % "\n".join(failed_tests))
