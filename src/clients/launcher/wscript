@@ -9,9 +9,8 @@ def build(bld):
         use = 'xmmsutils'
         )
 
-    bld(features='man',
-        files='xmms2-launcher.1',
-        section='1'
+    bld(features = 'man',
+        source = 'xmms2-launcher.1'
         )
 
 def configure(conf):

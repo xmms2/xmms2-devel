@@ -1,44 +1,54 @@
-import TaskGen, Build, Utils, Task
-import sys, os
+from waflib import Task, Errors, Utils
+import os
 import gzip
 
-#cls = Task.simple_task_type('man', 'foo', color='YELLOW')
-#cls.maxjobs = 1
-
-from TaskGen import feature
+from TaskGen import feature,before_method
 
 def gzip_func(task):
     infile = task.inputs[0].abspath()
     outfile = task.outputs[0].abspath()
 
-    input = open(infile, 'rb')
-    outf = open(outfile, 'wb')
-    output = gzip.GzipFile(os.path.basename(infile), fileobj=outf)
-    output.write(input.read())
+    input = None
+    outf = None
+    output = None
+    try:
+        input = open(infile, 'rb')
+        outf = open(outfile, 'wb')
+        output = gzip.GzipFile(os.path.basename(infile), fileobj=outf)
+        output.write(input.read())
+    finally:
+        if input:
+            input.close()
+        if output: # Must close before outf to flush compressed data.
+            output.close()
+        if outf:
+            outf.close()
+
+Task.task_factory('man', gzip_func, color='BLUE')
 
 @feature('man')
+@before_method('process_source')
 def process_man(self):
-    if not getattr(self, 'files', None):
-        return
+    source = self.to_nodes(getattr(self, 'source', []))
+    self.source = []
 
-    for x in self.to_list(self.files):
-        node = self.path.find_resource(x)
+    section = getattr(self, 'section', None)
+
+    for node in source:
         if not node:
-            raise Build.BuildError('cannot find input file %s for processing' % x)
+            raise Errors.BuildError('cannot find input file %s for processing' % x)
 
-        target = self.target
-        if not target:
-            target = node.name
+        s = section or node.name.rpartition('.')[2]
+        if not s:
+            raise Errors.BuildError('cannot determine man section from filename')
 
-        out = self.path.find_or_declare(x + '.gz')
+        out = self.path.find_or_declare(node.name + '.gz')
 
-        tsk = self.create_task('copy')
+        tsk = self.create_task('man')
         tsk.set_inputs(node)
         tsk.set_outputs(out)
-        tsk.fun = gzip_func
-        tsk.color = 'BLUE'
 
-        self.bld.install_files('${MANDIR}/man' + getattr(self, 'section', '1'), out)
+        self.bld.install_files('${MANDIR}/man%s' % s, out)
 
 
 def configure(conf):

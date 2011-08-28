@@ -24,8 +24,7 @@ def build(bld):
         )
 
     bld(features = 'man',
-        files = 'xmms2-mdns-avahi.1',
-        section = '1'
+        source = 'xmms2-mdns-avahi.1'
         )
 
 

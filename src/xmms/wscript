@@ -97,8 +97,7 @@ def build(bld):
     )
 
     bld(features = 'man',
-        files = 'xmms2d.1',
-        section = '1'
+        source = 'xmms2d.1'
     )
 
 

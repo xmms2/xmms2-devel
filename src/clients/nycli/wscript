@@ -30,8 +30,7 @@ def build(bld):
         )
 
     bld(features = 'man',
-        files = 'xmms2.1',
-        section = '1'
+        source = 'xmms2.1'
         )
 
     bld.symlink_as('${PREFIX}/bin/nyxmms2', 'xmms2')

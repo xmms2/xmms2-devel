@@ -17,9 +17,8 @@ def build(bld):
         PRG_PATH = bld.env.BINDIR
         )
 
-    bld(features='man',
-        files='xmms2-et.1',
-        section='1'
+    bld(features = 'man',
+        source = 'xmms2-et.1'
         )
 
 
