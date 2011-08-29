@@ -209,7 +209,7 @@ cli_list_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "list", &cli_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-p <name>] [pattern]"),
+	                     _("[-p <name>] <pattern|position>"),
 	                     _("List the contents of a playlist (the active playlist by default). If a\n"
 	                       "pattern is provided, contents are further filtered and only the matching\n"
 	                       "media are displayed."));
@@ -232,7 +232,7 @@ cli_add_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
+	                     _("[-t | -f [-N] [-P] [-A key=value]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -324,7 +324,7 @@ cli_coll_create_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "collection create", &cli_coll_create, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-f] [-a | -e] [-c <collection>] <name> [pattern]"),
+	                     _("[-f] [-e] [-c <collection>] <name> [pattern]"),
 	                     _("Create a new collection.\nIf pattern is provided, it is used to define the collection."
 	                       "\nOtherwise, the new collection contains the whole media library."));
 }

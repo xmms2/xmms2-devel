@@ -35,82 +35,102 @@ xmms2 \- The official XMMS2 command line interface
 [arguments]
 .SH DESCRIPTION
 .B xmms2
-is the new official CLI XMMS2 client, replacing \fBxmms2\fR(1).
+is the official CLI XMMS2 client.
 .SH INVOCATION
-.SS INLINE MODE
+.SS Inline mode
 If
 .B xmms2
 is passed a command as an argument, that command will be interpreted and
 .B xmms2
 will exit after it is finished.
-.SS INTERACTIVE MODE
+.SS Interactive mode
 .B xmms2
 features a powerful shell-like environment via readline that allows the user to
-enter commands at a prompt and have the usual cool features such as pathname expansion
-and line editing.
-.SH GENERAL COMMANDS
-
+enter commands at a prompt and have the usual cool features such as pathname
+expansion and line editing.
+.SH COMMANDS
+.PP
+All commands accept the option \fB-h\fR/\fB--help\fR which displays the command's help.
+.PP
+\fIpattern\fR refers to a collection definition. (see \fBPATTERN\fR below).
+.PP
+\fIposition\fR is a pattern to match playlist positions. (see \fBPOSITION PATTERN\fR below).
+.SS General Commands
+.BR
 .TP
-\fBadd\fR [\-f [\-N] [\-P]] [\-p <playlist>, \-c <collection>] [\-n, \-a <pos|offset>] [pattern, paths]
+\fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR] ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop1\fR[,\fIprop2\fR...]] \fIarguments\fR...
 .PP
 .RS 4
-Add the matching media or files to a playlist.
+Add media to a playlist. It will attempt to guess whether \fIarguments\fR
+constitue a \fIpattern\fR or represent file paths. This behaviour can be overridden by
+forcing the type with \fB-f\fR and \fB-t\fR. If file paths contain * or ?
+characters, it will attempt to expand them. Failing to find a match the * and ? characters
+will be attempted to be added as a part of the URL.
 .RE
 .PP
 .RS 4
-\-f, \-\-file
+\fB\-f\fR, \fB\-\-file\fR
 .RE
 .RS 8
-Treat the arguments as file paths instead of a pattern.
+Force treating \fIarguments\fR as file paths.
 .RE
 .PP
 .RS 4
-\-P, \-\-pls
+\fB\-P\fR, \fB\-\-pls\fR
 .RE
 .RS 8
-Treat the files as playlist files (implies \-\-file.)
+Force treating \fIarguments\fR as playlist files. This option implies \fB-f\fR.
 .RE
 .PP
 .RS 4
-\-t, \-\-pattern
+\fB\-t\fR, \fB\-\-pattern\fR
 .RE
 .RS 8
-Force treating arguments as pattern.
+Force treating \fIarguments\fR as a pattern.
 .RE
 .PP
 .RS 4
-\-N, \-\-non-recursive
+\fB\-N\fR, \fB\-\-non-recursive\fR
 .RE
 .RS 8
 Do not add directories recursively.
 .RE
 .PP
 .RS 4
-\-p, \-\-playlist
+\fB\-p\fR, \fB\-\-playlist\fR \fIplaylist\fR
 .RE
 .RS 8
-Add to the given playlist.
+Add media to \fIplaylist\fR instead of the active playlist.
 .RE
 .PP
 .RS 4
-\-n, \-\-next
+\fB\-n\fR, \fB\-\-next\fR
 .RE
 .RS 8
-Add after the current track.
+Add media after the current track.
 .RE
 .PP
 .RS 4
-\-a, \-\-at
+\fB\-a\fR, \fB\-\-at\fR \fIposition\fR
 .RE
 .RS 8
-Add media at a given position in the playlist, or at a given offset from the current track.
+Add media at the given position.
 .RE
 .PP
 .RS 4
-\-h, \-\-help
+\fB\-A\fR, \fB\-\-attribute\fR \fIkey=value\fR
 .RE
 .RS 8
-Display command help.
+Add media with given key=value attribute. May occur multiple times. Only
+valid when adding new files to the media library.
+.RE
+.PP
+.RS 4
+\fB\-o\fR, \fB\-\-order\fR \fIprop1\fR[,\fIprop2\fR...]
+.RE
+.RS 8
+Add media sorted by the given list of properties. If a property
+is prefixed by \-, media are sorted in reverse order on that property.
 .RE
 .PP
 
@@ -121,145 +141,101 @@ Display command help.
 Exit the shell-like interface.
 .RE
 .PP
+
+.TP
+\fBhelp\fR [\fB\-a\fR] \fIcommand\fR
+.PP
 .RS 4
-\-h, \-\-help
+Show the help on \fIcommand\fR. This is equivalent to \fBcommand -h\fR.
+If \fIcommand\fR is an alias, show the alias definition.
+If no command is provided, list all available commands.
+.RE
+.PP
+.RS 4
+\fB\-a\fR, \fB\-\-alias\fR
 .RE
 .RS 8
-Display command help.
+List available aliases if \fIcommand\fR is not provided. Otherwise, have no
+effect.
 .RE
 .PP
 
 .TP
-\fBhelp\fR [\-a] [command]
+\fBinfo\fR [\fIpattern\fR | \fIpositions\fR...]
 .PP
 .RS 4
-List all commands, or help on one command.
-.RE
-.PP
-.RS 4
-\-a, \-\-alias
-.RE
-.RS 8
-List aliases, or alias definition.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Display the properties of all media matching \fIpattern\fR or at the given
+positions. Without argument, display the properties of the current
+track.
 .RE
 .PP
 
 .TP
-\fBinfo\fR <pattern|positions>
+\fBjump\fR [\fB\-b\fR] \fIpattern\fR|\fIposition\fR
 .PP
 .RS 4
-Display all the properties for all media matching the pattern.
+Jump to the first media maching \fIpattern\fR or to the given position.
 .RE
 .PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBjump\fR [\-b] <pattern|positions>
-.PP
-.RS 4
-Jump to the first media maching the pattern.
-.RE
-.PP
-.RS 4
-\-b, \-\-backward
+\fB\-b\fR, \fB\-\-backward\fR
 .RE
 .RS 8
 Jump backward to the first media matching the pattern
 .RE
 .PP
+
+.TP
+\fBlist\fR [\fB\-p\fR \fIname\fR] [\fIpattern\fR | \fIpositions\fR...]
+.PP
 .RS 4
-\-h, \-\-help
+List the contents of a playlist (the active one by default).
+If \fIpattern\fR is provided, contents are further filtered and only the
+matching media are displayed.
+.RE
+.PP
+.RS 4
+\fB\-p\fR, \fB\-\-playlist\fR
 .RE
 .RS 8
-Display command help.
+List \fIplaylist\fR, instead of the active playlist.
 .RE
 .PP
 
 .TP
-\fBlist\fR [\-p <name>] [pattern]
+\fBmove\fR [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] \fIpattern\fR | \fIpositions\fR...
 .PP
 .RS 4
-List the contents of a playlist (the active playlist by default). If a
-pattern is provided, contents are further filtered and only the matching
-media are displayed.
+Move entries inside a playlist (the active one by default).
 .RE
 .PP
 .RS 4
-\-p, \-\-playlist
+\fB\-p\fR, \fB\-\-playlist\fR \fIplaylist\fR
 .RE
 .RS 8
-List the given playlist.
+The \fIplaylist\fR to act on.
 .RE
 .PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBmove\fR [\-p <playlist>] [\-n, \-a <pos|offset>] <pattern|positions>
-.PP
-.RS 4
-Move entries inside a playlist.
-.RE
-.PP
-.RS 4
-\-p, \-\-playlist
-.RE
-.RS 8
-Playlist to act on.
-.RE
-.PP
-.RS 4
-\-n, \-\-next
+\fB\-n\fR, \fB\-\-next\fR
 .RE
 .RS 8
 Move the matching tracks after the current track.
 .RE
 .PP
 .RS 4
-\-a, \-\-at
+\fB\-a\fR, \fB\-\-at\fR \fIposition\fR
 .RE
 .RS 8
-Move the matching tracks by an offset or to a position.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Move the matching tracks by an offset or to a \fIposition\fR.
 .RE
 .PP
 
 .TP
-\fBnext\fR [offset]
+\fBnext\fR [\fIoffset\fR]
 .PP
 .RS 4
-Jump to next song.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Jump to the next song. If \fIoffset\fR is provided, act like \fBjump +\fIoffset\fR.
 .RE
 .PP
 
@@ -270,13 +246,6 @@ Display command help.
 Pause playback.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBplay\fR
@@ -285,122 +254,83 @@ Display command help.
 Start playback.
 .RE
 .PP
+
+.TP
+\fBprev\fR [\fIoffset\fR]
+.PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Jump to the previous song. If \fIoffset\fR is provided, act like \fBjump -\fIoffset\fR.
 .RE
 .PP
 
 .TP
-\fBprev\fR [offset]
+\fBremove\fR [\fB\-p\fR \fIplaylist\fR] \fIpattern\fR | \fIpositions...\fR
 .PP
 .RS 4
-Jump to previous song.
+Remove the matching media from a playlist (the active one by default).
 .RE
 .PP
 .RS 4
-\-h, \-\-help
+\fB\-p\fR, \fB\-\-playlist\fR \fIplaylist\fR
 .RE
 .RS 8
-Display command help.
+Remove from \fIplaylist\fR, instead of the active playlist.
 .RE
 .PP
 
 .TP
-\fBremove\fR [\-p <playlist>] <pattern|positions>
-.PP
-.RS 4
-Remove the matching media from a playlist.
-.RE
-.PP
-.RS 4
-\-p, \-\-playlist
-.RE
-.RS 8
-Remove from the given playlist, instead of the active playlist.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBstatus\fR [\-r <time>] [\-f <format>]
+\fBcurrent\fR [\fB\-r\fR \fIseconds\fR] [\fB\-f\fR \fIformat\fR]
 .PP
 .RS 4
 Display playback status, either continuously or once.
 .RE
 .PP
 .RS 4
-\-r, \-\-refresh
+\fB\-r\fR, \fB\-\-refresh\fR \fIseconds\fR
 .RE
 .RS 8
-Delay between each refresh of the status. If 0, the status is only printed once (default).
+Set the delay, in seconds, between each refresh of the current playback metadata.
+If 0, the metadata is only printed once (default) and the command exit immediately.
+When in refresh mode, basic control is provided on the active playlist.
 .RE
 .PP
 .RS 4
-\-f, \-\-format
+\fB\-f\fR, \fB\-\-format\fR \fIformat\fR
 .RE
 .RS 8
-Format string used to display status.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Set the format string used to display status informations, instead of the one
+from the configuration file (see \fBFORMAT STRING\fR below).
 .RE
 .PP
 
 .TP
-\fBsearch\fR [\-o <prop1[,prop2...]>] [\-l <prop1[,prop2...]>] <pattern>
+\fBsearch\fR [\fB\-o\fR \fIprop1\fR[,\fIprop2\fR...]] [\fB\-l\fR \fIprop1\fR[,\fIprop2\fR...] ] \fIpattern\fR
 .PP
 .RS 4
-Search and print all media matching the pattern. Search can be restricted
-to a collection or a playlist by using the corresponding flag.
+Search and print all media matching \fIpattern\fR.
 .RE
 .PP
 .RS 4
-\-o, \-\-order
+\fB\-o\fR, \fB\-\-order\fR \fIprop1\fR[,\fIprop2\fR...]
 .RE
 .RS 8
-List of properties to order by (prefix by '-' for reverse ordering).
+Display search results sorted by the given list of properties. If a property is
+prefixed by '-', results are sorted in reverse order on that property.
 .RE
 .PP
 .RS 4
-\-l, \-\-columns
+\fB\-l\fR, \fB\-\-columns\fR \fIprop1\fR[,\fIprop2\fR...]
 .RE
 .RS 8
-List of properties to use as columns.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+List of \fIproperties\fR to use as columns.
 .RE
 .PP
 
 .TP
-\fBseek\fR <time|offset>
+\fBseek\fR \fItime\fR | \fIoffset\fR
 .PP
 .RS 4
-Seek to a relative or absolute position.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Seek to a relative or an absolute time in the current track.
 .RE
 .PP
 
@@ -411,13 +341,6 @@ Display command help.
 Stop playback.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBtoggle\fR
@@ -426,15 +349,9 @@ Display command help.
 Toggle playback.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
-.SH PLAYLIST COMMANDS
+.SS Playlist Commands
+.BR
 
 .TP
 \fBplaylist\fR
@@ -443,31 +360,17 @@ Display command help.
 No description
 .RE
 .PP
+
+.TP
+\fBplaylist clear\fR [\fIplaylist\fR]
+.PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Clear a playlist. By default, clear the active playlist.
 .RE
 .PP
 
 .TP
-\fBplaylist clear\fR [playlist]
-.PP
-.RS 4
-Clear a playlist.  By default, clear the active playlist.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-
-.TP
-\fBplaylist config\fR [\-t <type>] [\-s <history>] [\-u <upcoming>] [\-i <coll>] [-j <playlist>] [playlist]
+\fBplaylist config\fR [\fB\-t\fR \fItype\fR] [\fB\-s\fR \fIhistory\fR] [\fB\-u\fR \fIupcoming\fR] [\fB\-i\fR \fIcoll\fR] [\fB-j\fR \fIplaylist\fR] [\fIplaylist\fR]
 .PP
 .RS 4
 Configure a playlist by changing its type, attributes, etc.
@@ -475,153 +378,111 @@ By default, configure the active playlist.
 .RE
 .PP
 .RS 4
-\-t, \-\-type
+\fB\-t\fR, \fB\-\-type\fR \fItype\fR
 .RE
 .RS 8
-Change the type of the playlist: list, queue, pshuffle.
+Change the \fItype\fR of the playlist: list, queue, pshuffle.
 .RE
 .PP
 .RS 4
-\-s, \-\-history
+\fB\-s\fR, \fB\-\-history\fR \fIsize\fR
 .RE
 .RS 8
-Size of the history of played tracks (for queue, pshuffle).
+The \fIsize\fR of the history of played tracks (for queue, pshuffle).
 .RE
 .PP
 .RS 4
-\-u, \-\-upcoming
+\fB\-u\fR, \fB\-\-upcoming\fR \fIupcoming\fR
 .RE
 .RS 8
-Number of upcoming tracks to maintain (for pshuffle).
+Number of \fIupcoming\fR tracks to maintain (for pshuffle).
 .RE
 .PP
 .RS 4
-\-i, \-\-input
+\fB\-i\fR, \fB\-\-input\fR \fIcollection\fR
 .RE
 .RS 8
-Input collection for the playlist (for pshuffle). Default to 'All Media'.
+Input \fIcollection\fR for the playlist (for pshuffle). Default to 'All Media'.
 .RE
 .PP
 .RS 4
-\-j, \-\-jumplist
+\fB\-j\fR, \fB\-\-jumplist\fR \fIplaylist\fR
 .RE
 .RS 8
-Jump to another playlist when the end of the playlist is reached.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Jump to another \fIplaylist\fR when the end of the playlist is reached.
 .RE
 .PP
 
 .TP
-\fBplaylist create\fR [\-p <playlist>] <name>
+\fBplaylist create\fR [\fB\-p\fR \fIplaylist\fR] \fIname\fR
 .PP
 .RS 4
-Change the active playlist.
+Create a new playlist.
 .RE
 .PP
 .RS 4
-\-p, \-\-playlist
+\fB\-p\fR, \fB\-\-playlist\fR \fIplaylist\fR
 .RE
 .RS 8
 Copy the content of the playlist into the new playlist.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist list\fR [\-a]
+\fBplaylist list\fR [\fB\-a\fR]
 .PP
 .RS 4
 List all playlists.
 .RE
 .PP
 .RS 4
-\-a, \-\-all
+\fB\-a\fR, \fB\-\-all\fR
 .RE
 .RS 8
 Include hidden playlists.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist remove\fR <playlist>
+\fBplaylist remove\fR \fIplaylist\fR
 .PP
 .RS 4
 Remove the given playlist.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist rename\fR [\-f] [\-p <playlist>] <newname>
+\fBplaylist rename\fR [\fB\-f\fR] [\fB\-p\fR \fIplaylist\fR] \fInewname\fR
 .PP
 .RS 4
 Rename a playlist.  By default, rename the active playlist.
 .RE
 .PP
 .RS 4
-\-f, \-\-force
+\fB\-f\fR, \fB\-\-force\fR
 .RE
 .RS 8
-Force the rename of the collection, overwrite an existing collection if needed.
+Force the rename of the playlist, overwrite an existing playlist if needed.
 .RE
 .PP
 .RS 4
-\-p, \-\-playlist
+\fB\-p\fR, \fB\-\-playlist\fR
 .RE
 .RS 8
 Rename the given playlist.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist shuffle\fR [playlist]
+\fBplaylist shuffle\fR [\fIplaylist\fR]
 .PP
 .RS 4
 Shuffle a playlist.  By default, shuffle the active playlist.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBplaylist sort\fR [\-p playlist] [prop] ...
+\fBplaylist sort\fR [\fB\-p\fR \fIplaylist\fR] [\fIprop\fR] ...
 .PP
 .RS 4
 Sort a playlist. By default, sort the active playlist. Prefix properties by '-'
@@ -629,14 +490,7 @@ for reverse sorting.
 .RE
 .PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
-.RS 4
-\-p, \-\-playlist
+\fB\-p\fR, \fB\-\-playlist\fR
 .RE
 .RS 8
 Rename the given playlist.
@@ -644,21 +498,15 @@ Rename the given playlist.
 .PP
 
 .TP
-\fBplaylist switch\fR <playlist>
+\fBplaylist switch\fR \fIplaylist\fR
 .PP
 .RS 4
 Change the active playlist.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
-.SH COLLECTION COMMANDS
+.SS Collection Commands
+.BR
 
 .TP
 \fBcollection\fR
@@ -667,16 +515,9 @@ Display command help.
 No description
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcollection config\fR <collection> [attrname [attrvalue]]
+\fBcollection config\fR \fIcollection\fR [\fIattrname\fR [\fIattrvalue\fR]]
 .PP
 .RS 4
 Get or set attributes for the given collection.
@@ -685,16 +526,9 @@ If only an attribute name is provided, display the value of the attribute.
 If both attribute name and value are provided, set the new value of the attribute.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcollection create\fR [\-f] [\-a, \-e] [\-c <collection>] <name> [pattern]
+\fBcollection create\fR [\fB\-f\fR] [\fB\-e\fR] [\fB\-c\fR \fIcollection\fR] \fIname\fR [\fIpattern\fR]
 .PP
 .RS 4
 Create a new collection.
@@ -703,31 +537,24 @@ Otherwise, the new collection contains the whole media library.
 .RE
 .PP
 .RS 4
-\-f, \-\-force
+\fB\-f\fR, \fB\-\-force\fR
 .RE
 .RS 8
 Force creating of the collection, overwrite an existing collection if needed.
 .RE
 .PP
 .RS 4
-\-c, \-\-collection
+\fB\-c\fR, \fB\-\-collection\fR \fIcollection\fR
 .RE
 .RS 8
 Copy an existing collection to the new one.
 .RE
 .PP
 .RS 4
-\-e, \-\-empty
+\fB\-e\fR, \fB\-\-empty\fR
 .RE
 .RS 8
 Initialize an empty collection.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -738,67 +565,40 @@ Display command help.
 List all collections.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcollection show\fR <collection>
+\fBcollection show\fR \fIcollection\fR
 .PP
 .RS 4
 Display a human-readable description of a collection.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcollection remove\fR <collection>
+\fBcollection remove\fR \fIcollection\fR
 .PP
 .RS 4
 Remove a collection.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcollection rename\fR [\-f] <oldname> <newname>
+\fBcollection rename\fR [\fB\-f\fR] \fIoldname\fR \fInewname\fR
 .PP
 .RS 4
 Rename a collection.
 .RE
 .PP
 .RS 4
-\-f, \-\-force
+\fB\-f\fR, \fB\-\-force\fR
 .RE
 .RS 8
 Force renaming of the collection, overwrite an existing collection if needed.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
-.SH SERVER COMMANDS
+.SS Server Commands
+.BR
 
 .TP
 \fBserver\fR
@@ -807,16 +607,17 @@ Display command help.
 No description
 .RE
 .PP
+
+.TP
+\fBserver browse\fR \fIURL\fR
+.PP
 .RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+Browse a URL via the xform plugins available in the daemon.
 .RE
 .PP
 
 .TP
-\fBserver config\fR [name [value]]
+\fBserver config\fR [\fIname\fR [\fIvalue\fR]]
 .PP
 .RS 4
 Get or set configuration values.
@@ -825,16 +626,9 @@ If only a name is provided, display the content of the corresponding configurati
 If both name and a value are provided, set the new content of the configuration value.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver import\fR [\-N] <path>
+\fBserver import\fR [\fB\-N\fR] \fIpath\fR
 .PP
 .RS 4
 Import new files into the media library.
@@ -842,17 +636,10 @@ By default, directories are imported recursively.
 .RE
 .PP
 .RS 4
-\-N, \-\-non-recursive
+\fB\-N\fR, \fB\-\-non-recursive\fR
 .RE
 .RS 8
 Do not import directories recursively.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -863,16 +650,9 @@ Display command help.
 List the plugins loaded in the server.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver property\fR [\-i, \-s, \-D] [\-S] <mid> [name [value]]
+\fBserver property\fR [\fB\-i\fR, \fB\-s\fR, \fB\-D\fR] [\fB\-S\fR] \fImid\fR [\fIname\fR [\fIvalue\fR]]
 .PP
 .RS 4
 Get or set properties for a given media.
@@ -881,76 +661,55 @@ If only a name is provided, display the value of the property.
 If both a name and a value are provided, set the new value of the property.
 
 By default, set operations use client specific source and list, display operations use source-preference.
-Use the \-\-source option to override this behaviour.
+Use the \fB\-\-source\fR option to override this behaviour.
 
 By default, the value will be used to determine whether it should be saved as a string or an integer.
-Use the \-\-int or \-\-string flag to override this behaviour.
+Use the \fB\-\-int\fR or \fB\-\-string\fR flag to override this behaviour.
 .RE
 .PP
 .RS 4
-\-i, \-\-int
+\fB\-i\fR, \fB\-\-int\fR
 .RE
 .RS 8
 Force the value to be treated as integer.
 .RE
 .PP
 .RS 4
-\-s, \-\-string
+\fB\-s\fR, \fB\-\-string\fR
 .RE
 .RS 8
 Force the value to be treated as a string.
 .RE
 .PP
 .RS 4
-\-D, \-\-delete
+\fB\-D\fR, \fB\-\-delete\fR
 .RE
 .RS 8
 Delete the selected property.
 .RE
 .PP
 .RS 4
-\-S, \-\-source
+\fB\-S\fR, \fB\-\-source\fR
 .RE
 .RS 8
 Property source.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver rehash\fR [pattern]
+\fBserver rehash\fR [\fIpattern\fR]
 .PP
 .RS 4
 Rehash the media matched by the pattern,
 or the whole media library if no pattern is provided
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver remove\fR <pattern>
+\fBserver remove\fR [\fIpattern\fR]
 .PP
 .RS 4
 Remove the matching media from the media library.
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -961,26 +720,12 @@ Display command help.
 Shutdown the server.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBserver stats\fR
 .PP
 .RS 4
 Display statistics about the server: uptime, version, size of the medialib, etc
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -991,46 +736,40 @@ Display command help.
 Force the saving of collections to the disk (otherwise only performed on shutdown)
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBserver volume\fR [\-c <name>] [value]
+\fBserver volume\fR [\fB\-c\fR \fIname\fR] [\fIvalue\fR]
 .PP
 .RS 4
 Get or set the audio volume (in a range of 0-100).
 If a value is provided, set the new value of the volume. Otherwise, display the current volume.
-By default, the command applies to all audio channels. Use the \-\-channel flag to override this behaviour.
+By default, the command applies to all audio channels. Use the \fB\-\-channel\fR flag to override this behaviour.
 .RE
 .PP
 .RS 4
-\-c, \-\-channel
+\fB\-c\fR, \fB\-\-channel\fR
 .RE
 .RS 8
 Get or set the volume only for one channel.
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .SH PATTERN
-Patterns are used to search for songs in the media library, some of these patterns may require escaping (with '\\') depending on what shell is used.
+Patterns are used to search for songs in the media library, some of these patterns may require escaping (with '\\') depending on what shell is used. The properties can be found in the output of \fBxmms2 info\fR.
 .PP
+
 .TP
 <property>\fB:\fR<string>
 .PP
 .RS 4
-Match songs whose property match the string.
+Match songs whose property matches the string. A \fI?\fR in the string indicates a single wildcard character, and a \fI*\fR indicates multiple wildcard characters.
+.RE
+
+.TP
+<property>\fB~\fR<string>
+.PP
+.RS 4
+Match songs whose property fuzzily matches the string. Equal to matching by <property>\fB:\fR*<string>*.
 .RE
 
 .TP
@@ -1049,23 +788,30 @@ Match songs which has the property.
 .RE
 
 .TP
+\fBNOT\fR <pattern>
+.PP
+.RS 4
+Match the complement of the pattern.
+.RE
+
+.TP
 <pattern> <pattern>
 .TP
-<pattern> AND <pattern>
+<pattern> \fBAND\fR <pattern>
 .PP
 .RS 4
 Match songs that are matched by both patterns.
 .RE
 
 .TP
-<pattern> OR <pattern>
+<pattern> \fBOR\fR <pattern>
 .PP
 .RS 4
 Match songs that are matched by at least one of the two pattern.
 .RE
 
 .TP
-( <pattern> )
+\fB(\fR <pattern> \fB)\fR
 .PP
 .RS 4
 Match songs matched by the pattern, used for grouping AND and OR matches.
@@ -1079,10 +825,93 @@ Match songs whose artist, title or album match the string.
 .RE
 
 .TP
-#<number>
+\fB#\fR<number>
 .PP
 .RS 4
 Match a specific media library id.
+.RE
+
+.SH POSITION PATTERN
+Position patterns are used together with commands that operate on playlist content.
+.TP
+\fBM\fR_\fBN\fR
+.PP
+.RS 4
+Select playlist entries ranging from \fBM\fR positions before the current song, to \fBN\fR positions after. Both \fBM\fR and \fBN\fR may be omitted and will then default to 0.
+.RE
+
+.TP
+-\fBN\fR
+.PP
+.RS 4
+Select the song \fBN\fR positions before the current song.
+.RE
+
+.TP
++\fBN\fR
+.PP
+.RS 4
+Select the song \fBN\fR positions after the current song.
+.RE
+
+.TP
+\fBpos0\fR,\fBpos1\fR,...,\fBposN\fR
+.PP
+.RS 4
+Select one to many playlist positions.
+.RE
+
+.SH FORMAT STRING
+.PP
+Commands that output formatted metadata can be customized with the help
+of user-defined format strings like the following:
+
+.PP
+\'${artist} - ${title}\'
+.RE
+
+When passed metadata the name of the artist and the title will be inserted into the resulting string. In addition to the metadata supplied from the media library the following list of properties are also available:
+
+.TP
+\fBposition\fR
+.PP
+.RS 4
+The current playlist position.
+.RE
+
+.TP
+\fBplayback_status\fR
+.PP
+.RS 4
+The playback status as a string. (Stopped, Playing, Paused, Unknown)
+.RE
+
+.TP
+\fBplaytime\fR
+.PP
+.RS 4
+The playtime of the currently playing song.
+.RE
+
+.TP
+\fBduration\fR
+.PP
+.RS 4
+The duration of the current song, as zero-padded minutes:seconds
+.RE
+
+.TP
+\fBminutes\fR
+.PP
+.RS 4
+The minutes part, zero-padded, of the current song duration.
+.RE
+
+.TP
+\fBseconds\fR
+.PP
+.RS 4
+The seconds part, zero-padded, of the current song duration.
 .RE
 
 .SH ALIASES
@@ -1092,7 +921,7 @@ at runtime. The syntax of
 .B xmms2
 aliases are somewhat similar to bash and other shells. An alias is defined by a list of semi-colon separated
 commands and arguments. Parameter expansion is supported (see
-.B EXPANSION
+.B Expansion
 below).
 .PP
 .TP
@@ -1105,13 +934,6 @@ The default configuration includes the following aliases:
 add \-f \-P $@
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBclear\fR
@@ -1120,26 +942,12 @@ Display command help.
 playlist clear
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
-\fBcurrent\fR
+\fBstatus\fR
 .PP
 .RS 4
-status \-f $1
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
+current \-f $1
 .RE
 .PP
 
@@ -1150,26 +958,12 @@ Display command help.
 list
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBmute\fR
 .PP
 .RS 4
 server volume 0
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -1180,26 +974,12 @@ Display command help.
 exit
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
-.PP
 
 .TP
 \fBrepeat\fR
 .PP
 .RS 4
 seek 0
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -1210,25 +990,12 @@ Display command help.
 stop ; playlist clear ; add $@ ; play
 .RE
 .PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
-.RE
 
 .TP
 \fBserver kill\fR
 .PP
 .RS 4
 server shutdown
-.RE
-.PP
-.RS 4
-\-h, \-\-help
-.RE
-.RS 8
-Display command help.
 .RE
 .PP
 
@@ -1254,7 +1021,6 @@ This expands to all parameters passed to the alias.
 .RE
 .PP
 .RE
-.PP
 .SH CONFIGURATION
 .PP
 All control characters are interpreted as expected, including ANSI escape sequences.
@@ -1331,10 +1097,25 @@ $XDG_CONFIG_HOME/xmms2/clients/nycli.conf
 The configuration file for
 .B xmms2
 .RE
+.SH ENVIRONMENT
+.PP
+XMMS_PATH
+.RS 4
+Override the default connection path.
+.TP
+To connect via IPv4
+tcp://IPv4-Address:port
+.TP
+To connect via IPv6
+tcp://[IPv6-Address]:port
+.TP
+To connect via unix socket
+unix:///path/to/socket
+.RE
 .SH BUGS
 Please report all bugs at http://bugs.xmms2.xmms.se
 .SH AUTHORS
-Igor Assis, Anders Waldenborg, Anthony Garcia, Sebastien Cevey, and Jonne Lehtinen
+Igor Assis, Anders Waldenborg, Anthony Garcia, Sebastien Cevey, and Jonne Lehtinen, Daniel Svensson, Raphaël Bois
 .PP
 See the
 .B AUTHORS
