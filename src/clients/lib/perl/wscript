@@ -39,7 +39,7 @@ def configure(conf):
                   "perl bindings to be installed to " + conf.env.ARCHDIR_PERL)
 
     conf.env.INSTALLDIR_PERL_AUTO = os.path.join(
-            conf.env.ARCHDIR_PERL, 'auto', 'Audio', 'XmmsClient')
+            conf.env.ARCHDIR_PERL, 'auto', 'Audio', 'XMMSClient')
     conf.env.INSTALLDIR_PERL_LIB = os.path.join(conf.env.ARCHDIR_PERL, "Audio")
 
 
