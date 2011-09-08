@@ -1,45 +1,55 @@
 import Options
 
 def build(bld):
-    bld(features = 'c cprogram',
+    t = bld(features = 'c cprogram',
         target = 'vistest',
         source = 'vistest.c',
         includes = '. ../../.. ../../include',
         uselib = 'glib2',
         use = 'xmmsclient-glib xmmsclient'
         )
+    if not bld.env.INSTALL_VIS_REFERENCE_CLIENTS:
+        t.install_path = None
 
     if bld.env.LIB_math:
-        bld(features = 'c cprogram',
+        t = bld(features = 'c cprogram',
             target = 'vistest-fft',
             source = 'vistest_fft.c',
             includes = '. ../../.. ../../include',
             uselib = 'glib2 math',
             use = 'xmmsclient-glib xmmsclient'
             )
+        if not bld.env.INSTALL_VIS_REFERENCE_CLIENTS:
+            t.install_path = None
+
 
     if bld.env.LIB_vorbisenc:
-        bld(features = 'c cprogram',
+        t = bld(features = 'c cprogram',
             target = 'xmms2-ripper',
             source = 'ripper.c',
             includes = '. ../../.. ../../include',
             uselib = 'vorbisenc',
             use = 'xmmsclient'
             )
+        if not bld.env.INSTALL_VIS_REFERENCE_CLIENTS:
+            t.install_path = None
 
     if bld.env.LIB_visual and bld.env.LIB_sdl:
-        bld(features = 'c cprogram',
+        t = bld(features = 'c cprogram',
             target = 'xmms2-libvisual',
             source = 'libvisual.c',
             includes = '. ../../.. ../../include',
             uselib = 'sdl visual DISABLE_STRICTPROTOTYPES',
             use = 'xmmsclient'
             )
-
+        if not bld.env.INSTALL_VIS_REFERENCE_CLIENTS:
+            t.install_path = None
 
 def configure(conf):
     if Options.platform == "win32":
         conf.fatal("visualisation clients not supported on windows")
+
+    conf.env.INSTALL_VIS_REFERENCE_CLIENTS = conf.options.with_vis_clients
 
     conf.check_cc(lib="m", uselib_store="math", mandatory=False)
 
@@ -53,4 +63,7 @@ def configure(conf):
 
 
 def options(opt):
-    pass
+    opt.add_option('--with-vis-reference-clients',
+                   action='store_true', default=False,
+                   dest='with_vis_clients',
+                   help="Install the visualization reference clients")
