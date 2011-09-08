@@ -272,7 +272,7 @@ xmms_gme_init (xmms_xform_t *xform)
 		val = xmms_xform_config_lookup (xform, "loops");
 		loops = xmms_config_property_get_int (val);
 
-		XMMS_DBG ("intro_length = %ld, loops = %d, loop_length = %ld", metadata->intro_length, loops, metadata->loop_length);
+		XMMS_DBG ("intro_length = %d, loops = %d, loop_length = %d", metadata->intro_length, loops, metadata->loop_length);
 
 		if (metadata->intro_length > 0) {
 			if ((loops > 0) && (metadata->loop_length > 0)) {
