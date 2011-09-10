@@ -37,6 +37,8 @@ xmms2-launcher \- XMMS2 daemon launcher
 .IR file \|]
 .RB [\| -P
 .IR file \|]
+.RB [\| -v \|]
+.RB [\| -- \|]
 .RI [\| XMMS2D_OPTION \|]
 .R \|...
 .br
@@ -53,6 +55,10 @@ process has exited successfully
 .BR xmms2d (1)
 is ready to accept commands.
 .SH OPTIONS
+Unrecognized options and options occuring beyond pseudo-option
+.B --
+are passed to
+.BR xmms2d (1).
 .TP
 .BI \-l\  file ,\ \-\-logfile= file
 Write log to
@@ -65,8 +71,15 @@ Write the pid of
 to
 .IR file .
 .TP
+.B \-v, \-\-verbose
+Make xmms2-launcher verbose.
+.TP
 .B \-?, \-h, \-\-help
 Show short help information and exit.
+.TP
+.B --
+Options beyond this marker are passed to
+.BR xmms2d (1).
 .TP
 .I XMMS2D_OPTION
 See
