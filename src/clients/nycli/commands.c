@@ -185,19 +185,19 @@ cli_jump_setup (command_action_t *action)
 	};
 	command_action_fill (action, "jump", &cli_jump, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-b] <pattern|positions>"),
-	                     _("Jump to the first media maching the pattern."));
+	                     _("Jump to the first media matching the pattern."));
 }
 
 void
 cli_search_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
-		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop1[,prop2...]" },
-		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop1[,prop2...]" },
+		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop[,...]" },
+		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop[,...]" },
 		{ NULL }
 	};
 	command_action_fill (action, "search", &cli_search, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-o <prop1[,prop2...]>] [-l <prop1[,prop2...]>] <pattern>"),
+	                     _("[-o <prop[,...]>] [-l <prop[,...]>] <pattern>"),
 	                     _("Search and print all media matching the pattern."));
 }
 
@@ -232,7 +232,7 @@ cli_add_setup (command_action_t *action)
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A key=value]] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop1[,prop2...]"),
+	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop[,...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -311,7 +311,7 @@ cli_pl_sort_setup (command_action_t *action)
 	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <playlist>] [prop] ..."),
 	                     _("Sort a playlist by a list of properties.  By default, sort the active playlist.\n"
-						   "To sort by a property in reverse, prefix its name by a '-'."));
+	                        "To sort by a property in reverse, prefix its name by a '-'."));
 }
 
 void
@@ -398,7 +398,7 @@ cli_server_property_setup (command_action_t *action)
 	                     "If no name or value is provided, list all properties.\n"
 	                     "If only a name is provided, display the value of the property.\n"
 	                     "If both a name and a value are provided, set the new value of the property.\n\n"
-	                     "By default, set operations use client specific source and list, display operations use source-preference.\n"
+	                     "By default, set operations use source \"client/" CLI_CLIENTNAME "\", while list and display operations use source-preference.\n"
 	                     "Use the --source option to override this behaviour.\n\n"
 	                     "By default, the value will be used to determine whether it should be saved as a string or an integer.\n"
 	                     "Use the --int or --string flag to override this behaviour."));

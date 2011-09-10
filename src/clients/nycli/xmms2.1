@@ -33,7 +33,12 @@ xmms2 \- The official XMMS2 command line interface
 .B xmms2
 [command]
 [arguments]
+.br
+.B xmms2 help
+[command]
 .SH DESCRIPTION
+XMMS2 is a redesign of the XMMS (http://legacy.xmms2.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organise your music.
+.PP
 .B xmms2
 is the official CLI XMMS2 client.
 .SH INVOCATION
@@ -52,17 +57,18 @@ expansion and line editing.
 .PP
 All commands accept the option \fB-h\fR/\fB--help\fR which displays the command's help.
 .PP
-\fIpattern\fR refers to a collection definition. (see \fBPATTERN\fR below).
+\fIpattern\fR refers to a collection definition. (See \fBPATTERN\fR below.)
 .PP
-\fIposition\fR is a pattern to match playlist positions. (see \fBPOSITION PATTERN\fR below).
+\fIposition\fR is a pattern to match playlist positions. (See \fBPOSITION PATTERN\fR below.)
 .SS General Commands
-.BR
-.TP
-\fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR] ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop1\fR[,\fIprop2\fR...]] \fIarguments\fR...
+.T
+\fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR]... ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] \fIarguments\fR...
+.br
+\fBadd\fR [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] \fIpattern\fR...
 .PP
 .RS 4
 Add media to a playlist. It will attempt to guess whether \fIarguments\fR
-constitue a \fIpattern\fR or represent file paths. This behaviour can be overridden by
+constitute a \fIpattern\fR or represent file paths. This behaviour can be overridden by
 forcing the type with \fB-f\fR and \fB-t\fR. If file paths contain * or ?
 characters, it will attempt to expand them. Failing to find a match the * and ? characters
 will be attempted to be added as a part of the URL.
@@ -126,10 +132,10 @@ valid when adding new files to the media library.
 .RE
 .PP
 .RS 4
-\fB\-o\fR, \fB\-\-order\fR \fIprop1\fR[,\fIprop2\fR...]
+\fB\-o\fR, \fB\-\-order\fR \fIprop\fR[,...]
 .RE
 .RS 8
-Add media sorted by the given list of properties. If a property
+Add media sorted by the given comma-separated list of properties. If a property
 is prefixed by \-, media are sorted in reverse order on that property.
 .RE
 .PP
@@ -174,7 +180,7 @@ track.
 \fBjump\fR [\fB\-b\fR] \fIpattern\fR|\fIposition\fR
 .PP
 .RS 4
-Jump to the first media maching \fIpattern\fR or to the given position.
+Jump to the first media matching \fIpattern\fR or to the given position.
 .RE
 .PP
 .RS 4
@@ -354,14 +360,6 @@ Toggle playback.
 .BR
 
 .TP
-\fBplaylist\fR
-.PP
-.RS 4
-No description
-.RE
-.PP
-
-.TP
 \fBplaylist clear\fR [\fIplaylist\fR]
 .PP
 .RS 4
@@ -509,14 +507,6 @@ Change the active playlist.
 .BR
 
 .TP
-\fBcollection\fR
-.PP
-.RS 4
-No description
-.RE
-.PP
-
-.TP
 \fBcollection config\fR \fIcollection\fR [\fIattrname\fR [\fIattrvalue\fR]]
 .PP
 .RS 4
@@ -601,14 +591,6 @@ Force renaming of the collection, overwrite an existing collection if needed.
 .BR
 
 .TP
-\fBserver\fR
-.PP
-.RS 4
-No description
-.RE
-.PP
-
-.TP
 \fBserver browse\fR \fIURL\fR
 .PP
 .RS 4
@@ -652,7 +634,7 @@ List the plugins loaded in the server.
 .PP
 
 .TP
-\fBserver property\fR [\fB\-i\fR, \fB\-s\fR, \fB\-D\fR] [\fB\-S\fR] \fImid\fR [\fIname\fR [\fIvalue\fR]]
+\fBserver property\fR [\fB\-i\fR | \fB\-s\fR | \fB\-D\fR] [\fB\-S\fR] \fImid\fR [\fIname\fR [\fIvalue\fR]]
 .PP
 .RS 4
 Get or set properties for a given media.
@@ -660,7 +642,7 @@ If no name or value is provided, list all properties.
 If only a name is provided, display the value of the property.
 If both a name and a value are provided, set the new value of the property.
 
-By default, set operations use client specific source and list, display operations use source-preference.
+By default, set operations use source "client/xmms2-cli", while list and display operations use source-preference.
 Use the \fB\-\-source\fR option to override this behaviour.
 
 By default, the value will be used to determine whether it should be saved as a string or an integer.
@@ -725,7 +707,7 @@ Shutdown the server.
 \fBserver stats\fR
 .PP
 .RS 4
-Display statistics about the server: uptime, version, size of the medialib, etc
+Display statistics about the server: uptime, version, size of the medialib, etc.
 .RE
 .PP
 
@@ -733,7 +715,7 @@ Display statistics about the server: uptime, version, size of the medialib, etc
 \fBserver sync\fR
 .PP
 .RS 4
-Force the saving of collections to the disk (otherwise only performed on shutdown)
+Immediately save collections to disk. (Otherwise only performed on shutdown or 10 seconds after last change to collections.)
 .RE
 .PP
 
@@ -742,15 +724,16 @@ Force the saving of collections to the disk (otherwise only performed on shutdow
 .PP
 .RS 4
 Get or set the audio volume (in a range of 0-100).
-If a value is provided, set the new value of the volume. Otherwise, display the current volume.
+If a value is provided, set the volume to \fIvalue\fR. Otherwise, display the current volume.
 By default, the command applies to all audio channels. Use the \fB\-\-channel\fR flag to override this behaviour.
+Relative changes to the volume are possible by prefixing \fIvalue\fR by \fB+\fR or \fB-\fR.
 .RE
 .PP
 .RS 4
 \fB\-c\fR, \fB\-\-channel\fR
 .RE
 .RS 8
-Get or set the volume only for one channel.
+Get or set the volume only for the named channel.
 .RE
 .PP
 
@@ -794,9 +777,9 @@ Match songs which has the property.
 Match the complement of the pattern.
 .RE
 
-.TP
+.T
 <pattern> <pattern>
-.TP
+.br
 <pattern> \fBAND\fR <pattern>
 .PP
 .RS 4
@@ -883,7 +866,7 @@ The current playlist position.
 \fBplayback_status\fR
 .PP
 .RS 4
-The playback status as a string. (Stopped, Playing, Paused, Unknown)
+The playback status as a string (Stopped, Playing, Paused, Unknown).
 .RE
 
 .TP
@@ -927,6 +910,7 @@ below).
 .TP
 The default configuration includes the following aliases:
 .PP
+
 .TP
 \fBaddpls\fR
 .PP
@@ -971,7 +955,7 @@ server volume 0
 \fBquit\fR
 .PP
 .RS 4
-exit
+server shutdown
 .RE
 .PP
 
@@ -988,14 +972,6 @@ seek 0
 .PP
 .RS 4
 stop ; playlist clear ; add $@ ; play
-.RE
-.PP
-
-.TP
-\fBserver kill\fR
-.PP
-.RS 4
-server shutdown
 .RE
 .PP
 
