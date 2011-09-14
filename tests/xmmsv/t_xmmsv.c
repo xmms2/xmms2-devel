@@ -530,6 +530,10 @@ CASE (test_xmmsv_type_dict)
 	CU_ASSERT_TRUE (xmmsv_dict_iter_set (it, tmp));
 	xmmsv_unref (tmp);
 
+	/* Set using the value already stored must work without extern ref.
+	 * Allow things like xmmsv_dict_get (..., &val); xmmsv_dict_iter_set (it, val); */
+	CU_ASSERT_TRUE (xmmsv_dict_iter_set (it, tmp));
+
 	/* { test1 => 1337, test2 => 23 } */
 	CU_ASSERT_TRUE (xmmsv_dict_iter_valid (it));
 

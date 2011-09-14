@@ -1862,6 +1862,18 @@ xmmsv_dict_insert (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int alloc)
 	}
 }
 
+/* Remove an entry at the given position
+ */
+static void
+xmmsv_dict_remove_internal (xmmsv_dict_t *dict, int pos)
+{
+	free ((void*)dict->data[pos].str);
+	dict->data[pos].str = DELETED_STR;
+	xmmsv_unref (dict->data[pos].value);
+	dict->data[pos].value = NULL;
+	dict->elems--;
+}
+
 /* Resizes the hash table by creating a new data table
  * twice the size of the old one
  */
@@ -2038,10 +2050,7 @@ xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 
 	/* If we find the entry we free the string and mark it as deleted */
 	if (xmmsv_dict_search (dict, data, &pos, &deleted)) {
-		free ((void*)dict->data[pos].str);
-		dict->data[pos].str = DELETED_STR;
-		xmmsv_unref (dict->data[pos].value);
-		dict->elems--;
+		xmmsv_dict_remove_internal (dict, pos);
 		ret = 1;
 	}
 
@@ -2288,8 +2297,12 @@ int
 xmmsv_dict_iter_set (xmmsv_dict_iter_t *it, xmmsv_t *val)
 {
 	x_return_val_if_fail (xmmsv_dict_iter_valid (it), 0);
+	x_return_val_if_fail (val, 0);
 
-	it->parent->data[it->pos].value = xmmsv_ref (val);
+	/* In case old value is new value, ref first. */
+	xmmsv_ref (val);
+	xmmsv_unref (it->parent->data[it->pos].value);
+	it->parent->data[it->pos].value = val;
 
 	return 1;
 }
@@ -2305,7 +2318,7 @@ xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
 {
 	x_return_val_if_fail (xmmsv_dict_iter_valid (it), 0);
 
-	it->parent->data[it->pos].str = DELETED_STR;
+	xmmsv_dict_remove_internal (it->parent, it->pos);
 	xmmsv_dict_iter_next (it);
 
 	return 1;
