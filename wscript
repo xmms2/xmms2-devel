@@ -19,7 +19,7 @@ from waflib import Options, Utils, Errors, Logs
 from waftools.compiler_flags import compiler_flags
 from waftools import gittools
 
-BASEVERSION="0.7 DrNo"
+BASEVERSION="0.7 DrNo+WIP+TEST1"
 APPNAME='xmms2'
 
 top = '.'
