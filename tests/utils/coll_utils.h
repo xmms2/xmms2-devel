@@ -20,5 +20,8 @@
 
 xmmsv_coll_t *xmmsv_coll_from_string (const char *data);
 xmmsv_coll_t *xmmsv_coll_from_dict (xmmsv_t *data);
+int xmmsv_coll_compare (xmmsv_coll_t *a, xmmsv_coll_t *b);
+void xmmsv_coll_dump_indented (xmmsv_coll_t *coll, int indent);
+void xmmsv_coll_dump (xmmsv_coll_t *coll);
 
 #endif

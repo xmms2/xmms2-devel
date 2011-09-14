@@ -14,10 +14,12 @@
  *  Lesser General Public License for more details.
  */
 
+#include <stdlib.h> /* free() */
 #include <stdio.h>
 #include <string.h>
 
 #include "value_utils.h"
+#include "coll_utils.h"
 
 static int _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered);
 
@@ -86,31 +88,44 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 
 			xmmsv_dict_iter_next (it);
 		}
+		xmmsv_dict_iter_explicit_destroy (it);
 
 		break;
 	}
 	case XMMSV_TYPE_LIST: {
 		int size, i, j;
+		int match = 1;
+		char *matched = NULL;
 
 		size = xmmsv_list_get_size (a);
 		if (size != xmmsv_list_get_size (b))
 			return 0;
 
+		if (size && !ordered) {
+			matched = (char *) calloc (size, sizeof (char));
+		}
+
 		for (i = 0; i < size; i++) {
 			xmmsv_t *ea, *eb;
 
-			if (!xmmsv_list_get (a, i, &ea) || !xmmsv_list_get (b, i, &eb))
-				return 0;
+			if (!xmmsv_list_get (a, i, &ea) || !xmmsv_list_get (b, i, &eb)) {
+				match = 0;
+				break;
+			}
 
 			if (ordered) {
-				if (!_xmmsv_compare (ea, eb, ordered))
-					return 0;
+				match = _xmmsv_compare (ea, eb, ordered);
+				if (!match)
+					break;
 			} else {
-				int match = 0;
+				match = 0;
 				for (j = 0; j < size; j++) {
+					if (matched[j])
+						continue;
 					if (!xmmsv_list_get (b, j, &eb))
-						return 0;
+						break;
 					if (_xmmsv_compare (ea, eb, ordered)) {
+						matched[j] = 1;
 						match = 1;
 						break;
 					}
@@ -120,7 +135,18 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 			}
 		}
 
-		break;
+		if (matched)
+			free (matched);
+
+		return match;
+	}
+	case XMMSV_TYPE_COLL: {
+		xmmsv_coll_t *ca, *cb;
+
+		xmmsv_get_coll (a, &ca);
+		xmmsv_get_coll (b, &cb);
+
+		return xmmsv_coll_compare (ca, cb);
 	}
 	default: {
 		return 0;
@@ -215,9 +241,21 @@ _xmms_dump (xmmsv_t *value, int indent)
 
 		break;
 	}
+	case XMMSV_TYPE_COLL: {
+		xmmsv_coll_t *coll;
+		xmmsv_get_coll (value, &coll);
+		xmmsv_coll_dump_indented (coll, indent);
+		break;
+	}
 	default:
 		printf ("invalid type: %d\n", type);
 	}
+}
+
+void
+xmmsv_dump_indented (xmmsv_t *value, int indent)
+{
+	_xmms_dump (value, indent);
 }
 
 void

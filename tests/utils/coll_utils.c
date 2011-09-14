@@ -20,8 +20,30 @@
 #include "xmmsc/xmmsv.h"
 #include "utils/jsonism.h"
 #include "utils/coll_utils.h"
+#include "utils/value_utils.h"
 
 static xmmsv_coll_t *parse_collection (xmmsv_t *attrs);
+
+static const char *coll_types[XMMS_COLLECTION_TYPE_LAST + 1] = {
+	"reference",
+	"universe",
+	"union",
+	"intersection",
+	"complement",
+	"has",
+	"match",
+	"token",
+	"equals",
+	"notequal",
+	"smaller",
+	"smallereq",
+	"greater",
+	"greatereq",
+	"order",
+	"limit",
+	"mediaset",
+	"idlist"
+};
 
 /**
  * Parse a Collection from a dict.
@@ -51,6 +73,15 @@ xmmsv_coll_t *
 xmmsv_coll_from_dict (xmmsv_t *data)
 {
 	return parse_collection (data);
+}
+
+static const char *
+collection_type_string (xmmsv_coll_type_t type)
+{
+	if (type < 0 || type > XMMS_COLLECTION_TYPE_LAST) {
+		return "unknown";
+	}
+	return coll_types[type];
 }
 
 static int
@@ -165,7 +196,7 @@ parse_operands (xmmsv_coll_t *coll, xmmsv_t *operands)
 static xmmsv_coll_t *
 parse_collection (xmmsv_t *dict)
 {
-	xmmsv_coll_type_t type;
+	xmmsv_coll_type_t type = 0;
 	xmmsv_coll_t *coll;
 	xmmsv_t *attributes, *operands, *list;
 	const char *name;
@@ -186,4 +217,96 @@ parse_collection (xmmsv_t *dict)
 		parse_idlist (coll, list);
 
 	return coll;
+}
+
+int
+xmmsv_coll_compare (xmmsv_coll_t *a, xmmsv_coll_t *b)
+{
+	xmmsv_coll_type_t type;
+	xmmsv_t *_a, *_b;
+
+	type = xmmsv_coll_get_type (a);
+	if (xmmsv_coll_get_type (b) != type) {
+		return 0;
+	}
+
+	_a = xmmsv_coll_idlist_get (a);
+	_b = xmmsv_coll_idlist_get (b);
+	if (!xmmsv_compare (_a, _b)) {
+		return 0;
+	}
+
+	_a = xmmsv_coll_attributes_get (a);
+	_b = xmmsv_coll_attributes_get (b);
+	if (!xmmsv_compare (_a, _b)) {
+		return 0;
+	}
+
+	_a = xmmsv_coll_operands_get (a);
+	_b = xmmsv_coll_operands_get (b);
+	if (!xmmsv_compare (_a, _b)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+static void
+_xmmsv_coll_dump_indent (int indent)
+{
+	int i;
+	for (i = 0; i < indent; i++)
+		printf ("  ");
+}
+
+static void
+_xmms_coll_dump (xmmsv_coll_t *coll, int indent)
+{
+	xmmsv_t *attributes, *operands, *idlist;
+	const char *type_str;
+
+	printf ("/* collection */ {\n");
+
+	type_str = collection_type_string (xmmsv_coll_get_type (coll));
+	_xmmsv_coll_dump_indent (indent + 1);
+	printf ("'type': '%s'", type_str);
+
+	attributes = xmmsv_coll_attributes_get (coll);
+	if (xmmsv_dict_get_size (attributes)) {
+		printf (",\n");
+		_xmmsv_coll_dump_indent (indent + 1);
+		printf ("'attributes': ");
+		xmmsv_dump_indented (attributes, indent + 1);
+	}
+	operands = xmmsv_coll_operands_get (coll);
+	if (xmmsv_list_get_size (operands)) {
+		printf (",\n");
+		_xmmsv_coll_dump_indent (indent + 1);
+		printf ("'operands': ");
+		xmmsv_dump_indented (operands, indent + 1);
+	}
+	idlist = xmmsv_coll_idlist_get (coll);
+	if (xmmsv_list_get_size (idlist)) {
+		printf (",\n");
+		_xmmsv_coll_dump_indent (indent + 1);
+		printf ("'idlist': ");
+		xmmsv_dump_indented (idlist, indent + 1);
+	}
+
+	printf ("\n");
+	_xmmsv_coll_dump_indent (indent);
+	printf ("}");
+}
+
+void
+xmmsv_coll_dump_indented (xmmsv_coll_t *coll, int indent)
+{
+	_xmms_coll_dump (coll, indent);
+}
+
+void
+xmmsv_coll_dump (xmmsv_coll_t *coll)
+{
+	_xmms_coll_dump (coll, 0);
+	printf ("\n");
 }
