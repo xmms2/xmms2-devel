@@ -1,26 +1,26 @@
 {
-    'medialib': [
-        { 'tracknr': 1, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Decade' },
-        { 'tracknr': 2, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Breathing Place' },
-        { 'tracknr': 3, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Ensueno (Morning mix)' }
+    "medialib": [
+        { "tracknr": 1, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Decade" },
+        { "tracknr": 2, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Breathing Place" },
+        { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" }
     ],
-    'collection': {
-        'type': 'order',
-        'attributes': { 'type': 'id' },
-        'operands': [
-            { 'type': 'universe' }
+    "collection": {
+        "type": "order",
+        "attributes": { "type": "id" },
+        "operands": [
+            { "type": "universe" }
         ]
     },
-    'specification': {
-        'type': 'cluster-list',
-        'cluster-by': 'position',
-        'data': {
-            'type': 'metadata',
-            'get': ['id']
+    "specification": {
+        "type": "cluster-list",
+        "cluster-by": "position",
+        "data": {
+            "type": "metadata",
+            "get": ["id"]
         }
     },
-    'expected': {
-        'result': [1, 2, 3],
-        'ordered': 1
+    "expected": {
+        "result": [1, 2, 3],
+        "ordered": 1
     }
 }

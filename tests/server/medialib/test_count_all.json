@@ -1,16 +1,16 @@
 {
-    'medialib': [
-        { 'tracknr': 1, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Decade' },
-        { 'tracknr': 2, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Breathing Place' },
-        { 'tracknr': 3, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Ensueno (Morning mix)' }
+    "medialib": [
+        { "tracknr": 1, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Decade" },
+        { "tracknr": 2, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Breathing Place" },
+        { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" }
     ],
-    'collection': {
-        'type': 'universe'
+    "collection": {
+        "type": "universe"
     },
-    'specification': {
-        'type': 'count'
+    "specification": {
+        "type": "count"
     },
-    'expected': {
-        'result': 3
+    "expected": {
+        "result": 3
     }
 }

@@ -1,57 +1,57 @@
 {
-    'medialib': [
-        { 'tracknr': 2, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Reverse Thunder' },
-        { 'tracknr': 1, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Prehistoric Dog' },
-        { 'tracknr': 4, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Humans Remain Human Remains' },
-        { 'tracknr': 3, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Night Destroyer' }
+    "medialib": [
+        { "tracknr": 2, "artist": "Red Fang", "album": "Red Fang", "title": "Reverse Thunder" },
+        { "tracknr": 1, "artist": "Red Fang", "album": "Red Fang", "title": "Prehistoric Dog" },
+        { "tracknr": 4, "artist": "Red Fang", "album": "Red Fang", "title": "Humans Remain Human Remains" },
+        { "tracknr": 3, "artist": "Red Fang", "album": "Red Fang", "title": "Night Destroyer" }
     ],
-    'collection': {
-        'type': 'limit',
-        'attributes': {
-            'start': '1',
-            'length': '2'
+    "collection": {
+        "type": "limit",
+        "attributes": {
+            "start": "1",
+            "length": "2"
         },
-        'operands': [{
-            'type': 'order',
-            'attributes': {
-                'type': 'value',
-                'field': 'tracknr'
+        "operands": [{
+            "type": "order",
+            "attributes": {
+                "type": "value",
+                "field": "tracknr"
             },
-            'operands': [{'type': 'universe'}]
+            "operands": [{"type": "universe"}]
         }]
     },
-    'specification': {
-        'type': 'cluster-list',
-        'cluster-by': 'value',
-        'cluster-field': 'title',
-        'data': {
-            'type': 'organize',
-            'data': {
-                'id': {
-                    'type': 'metadata',
-                    'get': ['id'],
-                    'aggregate': 'first'
+    "specification": {
+        "type": "cluster-list",
+        "cluster-by": "value",
+        "cluster-field": "title",
+        "data": {
+            "type": "organize",
+            "data": {
+                "id": {
+                    "type": "metadata",
+                    "get": ["id"],
+                    "aggregate": "first"
                 },
-                'tracknr': {
-                    'type': 'metadata',
-                    'fields': ['tracknr'],
-                    'get': ['value'],
-                    'aggregate': 'first'
+                "tracknr": {
+                    "type": "metadata",
+                    "fields": ["tracknr"],
+                    "get": ["value"],
+                    "aggregate": "first"
                 },
-                'title': {
-                    'type': 'metadata',
-                    'fields': ['title'],
-                    'get': ['value'],
-                    'aggregate': 'first'
+                "title": {
+                    "type": "metadata",
+                    "fields": ["title"],
+                    "get": ["value"],
+                    "aggregate": "first"
                 }
             }
         }
     },
-    'expected': {
-        'result': [
-            { 'id': 1, 'tracknr': 2, 'title': 'Reverse Thunder' },
-            { 'id': 4, 'tracknr': 3, 'title': 'Night Destroyer' }
+    "expected": {
+        "result": [
+            { "id": 1, "tracknr": 2, "title": "Reverse Thunder" },
+            { "id": 4, "tracknr": 3, "title": "Night Destroyer" }
         ],
-        'ordered': 1
+        "ordered": 1
     }
 }

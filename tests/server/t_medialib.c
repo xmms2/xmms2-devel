@@ -173,7 +173,7 @@ CASE (test_entry_cleanup)
 	 */
 	universe = xmmsv_coll_universe ();
 
-	spec = xmmsv_from_json ("{ 'type': 'count' }");
+	spec = xmmsv_from_json ("{ \"type\": \"count\" }");
 	result = medialib_query (universe, spec, &err);
 
 	xmmsv_get_int (result, &count);
@@ -264,7 +264,7 @@ CASE (test_session)
 	CU_ASSERT_PTR_NULL (result);
 
 	universe = xmmsv_coll_universe ();
-	spec = xmmsv_from_json ("{ 'type': 'count' }");
+	spec = xmmsv_from_json ("{ \"type\": \"count\" }");
 
 	session = xmms_medialib_session_begin (medialib);
 	result = xmms_medialib_query (session, universe, spec, &err);
@@ -286,43 +286,43 @@ CASE (test_metadata_fetch_spec)
 
 
 	/* missing 'get' parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata' }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\" }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* invalid 'get' entry */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['crap'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"crap\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* invalid 'get' parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': {} }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": {} }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* invalid 'get' parameter type */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': [0] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [0] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* empty 'get' parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': [] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* duplicate 'get' entries */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value', 'value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\", \"value\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* all 'get' entries */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['id', 'field', 'source', 'value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"id\", \"field\", \"source\", \"value\"] }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
 	CU_ASSERT_PTR_NOT_NULL (result);
@@ -330,7 +330,7 @@ CASE (test_metadata_fetch_spec)
 	xmmsv_unref (result);
 
 	/* valid 'fields' content */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': ['artist', 'title'], 'get': ['value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"fields\": [\"artist\", \"title\"], \"get\": [\"value\"] }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_PTR_NOT_NULL (result);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
@@ -338,60 +338,60 @@ CASE (test_metadata_fetch_spec)
 	xmmsv_unref (result);
 
 	/* duplicate 'fields' content */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': ['a', 'a'], 'get': ['value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"fields\": [\"a\", \"a\"], \"get\": [\"value\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* invalid 'fields' parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': 0, 'get': ['value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"fields\": 0, \"get\": [\"value\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* empty 'fields' parameter, fetch all fields */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': [], 'get': ['value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"fields\": [], \"get\": [\"value\"] }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
 	xmmsv_unref (result);
 	xmmsv_unref (spec);
 
 	/* invalid 'fields' content */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'fields': [0], 'get': ['value'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"fields\": [0], \"get\": [\"value\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 
 	/* valid source-preferences parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value'], 'source-preference': ['*'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\"], \"source-preference\": [\"*\"] }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
 	xmmsv_unref (result);
 	xmmsv_unref (spec);
 
 	/* invalid source-preferences parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value'], 'source-preference': 0 }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\"], \"source-preference\": 0 }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* empty source-preferences parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value'], 'source-preference': [] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\"], \"source-preference\": [] }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
 	xmmsv_unref (result);
 	xmmsv_unref (spec);
 
 	/* invalid source-preferences parameter */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value'], 'source-preference': [0] }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\"], \"source-preference\": [0] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 
 	/* invalid aggregate function */
-	spec = xmmsv_from_json ("{ 'type': 'metadata', 'get': ['value'], 'aggregate': 'sausage' }");
+	spec = xmmsv_from_json ("{ \"type\": \"metadata\", \"get\": [\"value\"], \"aggregate\": \"sausage\" }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
@@ -411,7 +411,7 @@ CASE (test_cluster_dict_and_list_fetch_spec)
 	universe = xmmsv_coll_universe ();
 
 	/* missing 'cluster-by' parameter, defaults to 'value' */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-field': 'artist', 'data': { 'type': 'count' } }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-dict\", \"cluster-field\": \"artist\", \"data\": { \"type\": \"count\" } }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_PTR_NOT_NULL (result);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));
@@ -419,31 +419,31 @@ CASE (test_cluster_dict_and_list_fetch_spec)
 	xmmsv_unref (result);
 
 	/* invalid 'cluster-by' entry */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': ['crap'] }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-dict\", \"cluster-by\": [\"crap\"] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* invalid 'cluster-by' entry, missing 'cluster-field' */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': 'value', 'data': { 'type': 'count' } }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-dict\", \"cluster-by\": \"value\", \"data\": { \"type\": \"count\" } }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* bogous 'cluster-by' entry */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-by': 'sausage', 'data': { 'type': 'count' } }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-dict\", \"cluster-by\": \"sausage\", \"data\": { \"type\": \"count\" } }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* missing 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-dict', 'cluster-field': 'artist' }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-dict\", \"cluster-field\": \"artist\" }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* bogous 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'cluster-list', 'cluster-field': 'artist', 'data': { 'type': 'sausage' } }");
+	spec = xmmsv_from_json ("{ \"type\": \"cluster-list\", \"cluster-field\": \"artist\", \"data\": { \"type\": \"sausage\" } }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
@@ -462,25 +462,25 @@ CASE (test_organize_fetch_spec)
 	universe = xmmsv_coll_universe ();
 
 	/* missing 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'organize' }");
+	spec = xmmsv_from_json ("{ \"type\": \"organize\" }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* wrong type for 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': [] }");
+	spec = xmmsv_from_json ("{ \"type\": \"organize\", \"data\": [] }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* bogous 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': { 'korv': { 'type': 'sausage' } } }");
+	spec = xmmsv_from_json ("{ \"type\": \"organize\", \"data\": { \"korv\": { \"type\": \"sausage\" } } }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
 	/* valid 'data' entry */
-	spec = xmmsv_from_json ("{ 'type': 'organize', 'data': { 'count': { 'type': 'count' } } }");
+	spec = xmmsv_from_json ("{ \"type\": \"organize\", \"data\": { \"count\": { \"type\": \"count\" } } }");
 	result = medialib_query (universe, spec, &err);
 	CU_ASSERT_PTR_NOT_NULL (result);
 	CU_ASSERT_FALSE (xmms_error_iserror (&err));

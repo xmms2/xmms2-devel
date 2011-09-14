@@ -14,147 +14,90 @@
  *  Lesser General Public License for more details.
  */
 
-/* psuedo grammar
- * START :: ENTRY
- * DICT :: '{' DICT_ENTRY? (',' DICT_ENTRY)* '}'
- * DICT_ENTRY :: STRING ':' ENTRY
- * LIST :: '[' ENTRY? (',' ENTRY)* ']'
- * ENTRY :: STRING | NUMBER | LIST | DICT
- * STRING :: '\'' [a-zA-Z0-9]* '\''
- * NUMBER :: [0-9]+
- */
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "xmmsc/xmmsv.h"
 #include "jsonism.h"
-
-static xmmsv_t *parse_string (char **ptr);
-static xmmsv_t *parse_dict (char **ptr);
-static xmmsv_t *parse_list (char **ptr);
-static xmmsv_t *parse_number (char **ptr);
-
-static void
-eat (char **p, char c)
-{
-	while (*p && **p == c) (*p)++;
-	assert (*p != NULL);
-}
-
-static void
-munch (char **p, char c)
-{
-	while (*p && (**p == ' ' || **p == '\n' || **p == '\r' || **p == '\t')) (*p)++;
-	assert (*p != NULL);
-	while (*p && **p == c) (*p)++;
-	assert (*p != NULL);
-	while (*p && (**p == ' ' || **p == '\n' || **p == '\r' || **p == '\t')) (*p)++;
-	assert (*p != NULL);
-}
+#include "utils/json.h"
 
 static xmmsv_t *
-parse_number (char **ptr)
+create_structure (int stack_offset, int is_object)
 {
-	char *end;
-	assert (**ptr >= '0' && **ptr <= '9');
-	for (end = *ptr; *end >= '0' && *end <= '9'; end++);
-	char *number = strndup (*ptr, end - *ptr);
-	char *endptr = NULL;
-	int ival = strtol (number, &endptr, 10);
-	assert (endptr != number && *endptr == '\0');
-	xmmsv_t *value = xmmsv_new_int (ival);
-	free (number);
-	*ptr = end;
-	return value;
-}
-
-static xmmsv_t *
-parse_entry (char **ptr)
-{
-	if (**ptr == '\'') {
-		return parse_string (ptr);
-	} else if (**ptr == '{') {
-		return parse_dict (ptr);
-	} else if (**ptr == '[') {
-		return parse_list (ptr);
+	if (is_object) {
+		return xmmsv_new_dict ();
 	} else {
-		return parse_number (ptr);
+		return xmmsv_new_list ();
 	}
 }
 
 static xmmsv_t *
-parse_list (char **ptr)
+create_data (int type, const char *data, uint32_t len)
 {
-	munch (ptr, '[');
-	xmmsv_t *list = xmmsv_new_list ();
-	while (**ptr != ']') {
-		xmmsv_t *entry = parse_entry (ptr);
-		xmmsv_list_append (list, entry);
-		xmmsv_unref (entry);
-		munch (ptr, ',');
-	};
-	munch (ptr, ']');
-	return list;
+	switch (type) {
+		case JSON_STRING:
+			return xmmsv_new_string (data);
+		case JSON_INT:
+			return xmmsv_new_int (atoi(data));
+		case JSON_FLOAT:
+			return xmmsv_new_error ("Float type not supported");
+		case JSON_NULL:
+			return xmmsv_new_none ();
+		case JSON_TRUE:
+			return xmmsv_new_int (1);
+		case JSON_FALSE:
+			return xmmsv_new_int (0);
+		default:
+			return xmmsv_new_error ("Unknown data type.");
+	}
 }
 
-static char *
-parse_cstring (char **ptr)
+static int
+append (xmmsv_t *obj, const char *key, uint32_t key_len, xmmsv_t *value)
 {
-	char *end, *value;
-	eat (ptr, '\'');
-	end = strchr (*ptr, '\'');
-	assert (end != NULL);
-	value = strndup (*ptr, end - *ptr);
-	*ptr = end;
-	eat (ptr, '\'');
-	return value;
-}
-
-static xmmsv_t *
-parse_string (char **ptr)
-{
-	char *str = parse_cstring (ptr);
-	xmmsv_t *value = xmmsv_new_string (str);
-	free (str);
-	return value;
-}
-
-
-static void
-parse_dict_entry (char **ptr, xmmsv_t *dict)
-{
-	xmmsv_t *value;
-	char *key;
-	key = parse_cstring (ptr);
-	munch (ptr, ':');
-	value = parse_entry (ptr);
-	xmmsv_dict_set (dict, key, value);
+	if (xmmsv_is_type (obj, XMMSV_TYPE_LIST)) {
+		xmmsv_list_append (obj, value);
+	} else if (xmmsv_is_type (obj, XMMSV_TYPE_DICT) && key) {
+		xmmsv_dict_set (obj, key, value);
+	} else {
+		/* Should never be reached */
+		assert (0);
+	}
 	xmmsv_unref (value);
-	free (key);
-}
-
-static xmmsv_t *
-parse_dict (char **ptr)
-{
-	munch (ptr, '{');
-	xmmsv_t *dict = xmmsv_new_dict ();
-	while (**ptr != '}') {
-		parse_dict_entry (ptr, dict);
-		munch (ptr, ',');
-	};
-	munch (ptr, '}');
-	return dict;
+	return 0;
 }
 
 xmmsv_t *
 xmmsv_from_json (const char *spec)
 {
-	char *data, *ptr;
-	ptr = data = strdup (spec);
-	eat (&ptr, ' ');
-	xmmsv_t *value = parse_entry (&ptr);
-	free (data);
+	json_config conf = {
+		0, /* buffer_initial_size (0=default) */
+		0, /* max_nesting (0=no limit) */
+		0, /* max_data (0=no limit) */
+		1, /* allow_c_comments */
+		0, /* allow_yaml_comments */
+		NULL, /* user_calloc */
+		NULL /* user_realloc */
+	};
+	json_parser_dom dom;
+	json_parser parser;
+	xmmsv_t *value;
+
+	json_parser_dom_init (&dom,
+						  (json_parser_dom_create_structure) create_structure,
+						  (json_parser_dom_create_data) create_data,
+						  (json_parser_dom_append) append);
+	json_parser_init (&parser, &conf, json_parser_dom_callback, &dom);
+
+	json_parser_string (&parser, spec, strlen (spec), NULL);
+	assert (dom.root_structure != NULL);
+	assert (dom.stack_offset == 0);
+
+	value = (xmmsv_t *) dom.root_structure;
+
+	json_parser_dom_free (&dom);
+	json_parser_free (&parser);
+
 	return value;
 }

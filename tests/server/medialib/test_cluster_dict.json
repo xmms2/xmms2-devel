@@ -1,37 +1,37 @@
 {
-    'medialib': [
-        { 'tracknr': 1, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Decade' },
-        { 'tracknr': 2, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Breathing Place' },
-        { 'tracknr': 3, 'artist': 'Vibrasphere', 'album': 'Lungs for Life', 'title': 'Ensueno (Morning mix)' },
-        { 'tracknr': 1, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Prehistoric Dog' },
-        { 'tracknr': 4, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Humans Remain Human Remains' },
-        { 'tranknr': 3, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Night Destroyer' },
-        { 'tracknr': 2, 'artist': 'Red Fang', 'album': 'Red Fang', 'title': 'Reverse Thunder' }
+    "medialib": [
+        { "tracknr": 1, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Decade" },
+        { "tracknr": 2, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Breathing Place" },
+        { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" },
+        { "tracknr": 1, "artist": "Red Fang", "album": "Red Fang", "title": "Prehistoric Dog" },
+        { "tracknr": 4, "artist": "Red Fang", "album": "Red Fang", "title": "Humans Remain Human Remains" },
+        { "tranknr": 3, "artist": "Red Fang", "album": "Red Fang", "title": "Night Destroyer" },
+        { "tracknr": 2, "artist": "Red Fang", "album": "Red Fang", "title": "Reverse Thunder" }
     ],
-    'collection': { 'type': 'universe' },
-    'specification': {
-        'type': 'cluster-dict',
-        'cluster-by': 'value',
-        'cluster-field': 'album',
-        'data': {
-            'type': 'metadata',
-            'fields': ['title'],
-            'get': ['value'],
-            'aggregate': 'list'
+    "collection": { "type": "universe" },
+    "specification": {
+        "type": "cluster-dict",
+        "cluster-by": "value",
+        "cluster-field": "album",
+        "data": {
+            "type": "metadata",
+            "fields": ["title"],
+            "get": ["value"],
+            "aggregate": "list"
         }
     },
-    'expected': {
-        'result': {
-            'Red Fang': [
-                'Prehistoric Dog',
-                'Reverse Thunder',
-                'Humans Remain Human Remains',
-                'Night Destroyer'
+    "expected": {
+        "result": {
+            "Red Fang": [
+                "Prehistoric Dog",
+                "Reverse Thunder",
+                "Humans Remain Human Remains",
+                "Night Destroyer"
             ],
-            'Lungs for Life': [
-                'Decade',
-                'Ensueno (Morning mix)',
-                'Breathing Place'
+            "Lungs for Life": [
+                "Decade",
+                "Ensueno (Morning mix)",
+                "Breathing Place"
             ]
         }
     }

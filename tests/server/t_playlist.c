@@ -93,10 +93,10 @@ CASE (test_basic_functionality)
 	signals = xmms_future_await (future, 4);
 
 	/* XMMS_PLAYLIST_CHANGED_ADD = 0, XMMS_PLAYLIST_CHANGED_UPDATE = 7 */
-	expected = xmmsv_from_json ("[{                         'type': 7, 'name': 'Default' },"
-	                            " { 'position': 0, 'id': 2, 'type': 0, 'name': 'Default' },"
-	                            " {                         'type': 7, 'name': 'Default' },"
-	                            " { 'position': 1, 'id': 3, 'type': 0, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{                         \"type\": 7, \"name\": \"Default\" },"
+	                            " { \"position\": 0, \"id\": 2, \"type\": 0, \"name\": \"Default\" },"
+	                            " {                         \"type\": 7, \"name\": \"Default\" },"
+	                            " { \"position\": 1, \"id\": 3, \"type\": 0, \"name\": \"Default\" }]");
 
 	CU_ASSERT (xmmsv_compare (expected, signals));
 	xmmsv_unref (signals);
@@ -141,9 +141,9 @@ CASE (test_basic_functionality)
 
 	signals = xmms_future_await (future, 3);
 
-	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' },"
-	                            " { 'position': 1, 'name': 'Default' },"
-	                            " { 'position': 0, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{ \"position\": 0, \"name\": \"Default\" },"
+	                            " { \"position\": 1, \"name\": \"Default\" },"
+	                            " { \"position\": 0, \"name\": \"Default\" }]");
 
 	CU_ASSERT (xmmsv_compare (expected, signals));
 	xmmsv_unref (signals);
@@ -212,14 +212,14 @@ CASE(test_medialib_remove)
 	xmms_medialib_session_commit (session);
 
 	result = xmms_future_await (future1, 2);
-	expected = xmmsv_from_json ("[{                'type': 7, 'name': 'Default' },"
-	                            " { 'position': 0, 'type': 3, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{                \"type\": 7, \"name\": \"Default\" },"
+	                            " { \"position\": 0, \"type\": 3, \"name\": \"Default\" }]");
 	CU_ASSERT (xmmsv_compare (expected, result));
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
 
 	result = xmms_future_await (future2, 1);
-	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{ \"position\": 0, \"name\": \"Default\" }]");
 	CU_ASSERT (xmmsv_compare (expected, result));
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
@@ -637,8 +637,8 @@ CASE(test_client_shuffle)
 	signals = xmms_future_await (future1, 2);
 
 	/* XMMS_PLAYLIST_CHANGED_UPDATE = 7, XMMS_PLAYLIST_CHANGED_SHUFFLE = 2 */
-	expected = xmmsv_from_json ("[{ 'type': 7, 'name': 'Default' },"
-	                            " { 'type': 2, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{ \"type\": 7, \"name\": \"Default\" },"
+	                            " { \"type\": 2, \"name\": \"Default\" }]");
 	CU_ASSERT (xmmsv_compare (expected, signals));
 	xmmsv_unref (signals);
 	xmmsv_unref (expected);
@@ -648,7 +648,7 @@ CASE(test_client_shuffle)
 	signals = xmms_future_await (future2, 1);
 
 	/* current entry is moved to position 0 of the playlist */
-	expected = xmmsv_from_json ("[{ 'position': 0, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{ \"position\": 0, \"name\": \"Default\" }]");
 	CU_ASSERT (xmmsv_compare (expected, signals));
 	xmmsv_unref (signals);
 	xmmsv_unref (expected);
@@ -762,8 +762,8 @@ CASE(test_party_shuffle)
 
 	/* saving the collection to 'Default' and '_active' */
 	result = xmms_future_await (future, 2);
-	expected = xmmsv_from_json ("[{ 'type': 7, 'name': 'Default' },"
-	                            " { 'type': 7, 'name': 'Default' }]");
+	expected = xmmsv_from_json ("[{ \"type\": 7, \"name\": \"Default\" },"
+	                            " { \"type\": 7, \"name\": \"Default\" }]");
 	CU_ASSERT (xmmsv_compare (expected, result));
 	xmmsv_unref (result);
 	xmmsv_unref (expected);

@@ -1,6 +1,7 @@
 #encoding: utf-8
 
 testutils_src = """
+utils/json.c
 utils/jsonism.c
 utils/value_utils.c
 utils/coll_utils.c
