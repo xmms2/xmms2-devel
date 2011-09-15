@@ -20,6 +20,7 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 
 #include "cli_infos.h"
 #include "cli_cache.h"
@@ -479,6 +480,8 @@ gint
 main (gint argc, gchar **argv)
 {
 	cli_infos_t *cli_infos;
+
+	setlocale (LC_ALL, "");
 
 	cli_infos = cli_infos_init (argc - 1, argv + 1);
 
