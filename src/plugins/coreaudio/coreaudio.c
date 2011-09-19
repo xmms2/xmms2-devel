@@ -32,6 +32,7 @@
 
 #include <glib.h>
 
+#include <CoreAudio/CoreAudio.h>
 #include <AudioUnit/AudioUnit.h>
 
 /*
