@@ -7,4 +7,4 @@ def add_install_flag(bld, obj):
     if env['explicit_install_name']:
         libname = obj.env["cshlib_PATTERN"] % obj.target
         insname = os.path.join(obj.env["PREFIX"], 'lib', libname)
-        obj.env.append_unique("LINKFLAGS", '-install_name ' + insname)
+        obj.env.append_unique("LINKFLAGS", ["-install_name", insname])
