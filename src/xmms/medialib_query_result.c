@@ -431,6 +431,7 @@ aggregate_result (xmmsv_t *val, gint depth, aggregate_function_t aggr_func)
 		xmmsv_t *entry;
 
 		xmmsv_dict_iter_pair (it, NULL, &entry);
+		xmmsv_ref (entry);
 
 		entry = aggregate_result (entry, depth - 1, aggr_func);
 		xmmsv_dict_iter_set (it, entry);
