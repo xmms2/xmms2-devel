@@ -32,9 +32,9 @@ class PropDict(dict):
         if isinstance(item, basestring):
             for src in self._sources:
                 if src.endswith('*'):
-                    for k,v in self.iteritems():
+                    for k in self:
                         if k[0].startswith(src[:-1]) and k[1] == item:
-                            return v
+                            return dict.__getitem__(self, k)
                 try:
                     t = dict.__getitem__(self, (src, item))
                     return t
