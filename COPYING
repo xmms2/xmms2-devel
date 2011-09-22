@@ -115,6 +115,9 @@ wafadmin/pproc.py:
 waftools/ruby.py:
         Licensed under BSD license.
 
+waftools/podselect.py:
+        Licensed under BSD license.
+
 src/clients/nycli/:
         Licensed under GPL license.
 

@@ -4,6 +4,9 @@ from waflib import Logs
 def build(bld):
     source = """
     perl_xmmsclient.c
+    """.split()
+
+    xss = """
     XMMSClient.xs
     XMMSClientPlaylist.xs
     XMMSClientCollection.xs
@@ -13,10 +16,15 @@ def build(bld):
     bld(features = 'c cshlib perlext',
         target = 'XMMSClient',
         includes = '. ../../../.. ../../../include ../../../includepriv',
-        source = source,
+        source = source + xss,
         use = 'xmmsclient',
         install_path = '${INSTALLDIR_PERL_AUTO}',
         mac_bundle = bld.env.mac_bundle_enabled
+        )
+
+    bld(features = 'perldoc',
+        source = xss,
+        install_path = '${ARCHDIR_PERL}'
         )
 
     bld.install_files('${INSTALLDIR_PERL_LIB}', 'pm/XMMSClient.pm')
@@ -32,6 +40,8 @@ def configure(conf):
     conf.check_tool('perl')
     conf.check_perl_version((5,7,3))
     conf.check_perl_ext_devel()
+    conf.load('podselect', tooldir='waftools')
+    conf.check_tool('podselect')
 
     if not os.path.commonprefix([conf.env.ARCHDIR_PERL, conf.env.PREFIX]).startswith(conf.env.PREFIX):
         Logs.warn("Default perl libdir is not under PREFIX. specify the path "
