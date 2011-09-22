@@ -1860,7 +1860,7 @@ cdef class XmmsLoop(XmmsApi):
 	def loop_tickle(self):
 		w = self._loop_get_wakeup()
 		if w is not None:
-			write(w, "1")
+			write(w, "1".encode('ascii'))
 
 	def loop_iter(self, infd=None, outfd=None, errfd=None, timeout=-1):
 		"""
