@@ -1425,6 +1425,7 @@ cdef class XmmsApi(XmmsCore):
 				res = xmmsc_medialib_entry_property_set_str_with_source(self.conn, id, s, k, v)
 			else:
 				res = xmmsc_medialib_entry_property_set_str(self.conn, id, k, v)
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult medialib_property_remove(self, int id, key, source=None, cb=None):
 		"""
