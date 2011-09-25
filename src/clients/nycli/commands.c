@@ -1183,7 +1183,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 				} else if (norecurs || !is_directory) {
 					gchar *decoded = decode_url (url);
 					res = xmmsc_playlist_insert_full (infos->sync, playlist,
-					                                  pos, url, attributes);
+					                                  pos, decoded, attributes);
 					xmmsc_result_wait (res);
 					xmmsc_result_unref (res);
 					g_free (decoded);
