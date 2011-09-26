@@ -92,7 +92,7 @@ xmms_signal_block (void)
 	 * we have to fend off SIGPIPE here instead of via sigmask.
 	 * Doesn't affect the behavior on other platforms.
 	 */
-	signal (SIGPIPE, SIG_BLOCK);
+	signal (SIGPIPE, SIG_IGN);
 }
 
 void
