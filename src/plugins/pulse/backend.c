@@ -20,6 +20,7 @@
 #include "backend.h"
 
 #include <glib.h>
+#include <math.h>
 
 #include <pulse/pulseaudio.h>
 
