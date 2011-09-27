@@ -44,6 +44,9 @@ class XMMSSync:
         else:
             return attr
 
+    def __dir__(self):
+        return dir(self.__xmms)
+
 class XMMSError(Exception):
     """
     Thrown when a synchronous method call on an XMMS client object fails.
