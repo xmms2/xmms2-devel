@@ -5,7 +5,8 @@ Python bindings for XMMS2.
 # CImports
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.bytes cimport PyBytes_FromStringAndSize
-from xmmsutils cimport from_unicode, to_charp
+cimport cython
+from xmmsutils cimport from_unicode
 from cxmmsvalue cimport *
 from cxmmsclient cimport *
 from xmmsvalue cimport *
@@ -46,6 +47,8 @@ PLAYBACK_SEEK_SET = XMMS_PLAYBACK_SEEK_SET
 COLLECTION_NS_COLLECTIONS = <char *>XMMS_COLLECTION_NS_COLLECTIONS
 COLLECTION_NS_PLAYLISTS = <char *>XMMS_COLLECTION_NS_PLAYLISTS
 COLLECTION_NS_ALL = <char *>XMMS_COLLECTION_NS_ALL
+
+ACTIVE_PLAYLIST = <char *>XMMS_ACTIVE_PLAYLIST
 
 #####################################################################
 
@@ -396,6 +399,11 @@ def enforce_unicode(object o):
 			s = o
 	return s
 
+cdef object check_playlist(object pls, bint None_is_active):
+	if pls is None and not None_is_active:
+		raise TypeError("expected str, %s found" % pls.__class__.__name__)
+	return from_unicode(pls or ACTIVE_PLAYLIST)
+
 cdef class XmmsCore:
 	"""
 	This is the class representing the XMMS2 client itself. The methods in
@@ -436,7 +444,8 @@ cdef class XmmsCore:
 		self.disconnect()
 
 	cdef new_connection(self):
-		self.conn = xmmsc_init(to_charp(from_unicode(self.clientname)))
+		cn = from_unicode(self.clientname)
+		self.conn = xmmsc_init(<char *>cn)
 		if self.conn == NULL:
 			raise ValueError("Failed to initialize xmmsclient library! Probably due to broken name.")
 
@@ -527,10 +536,9 @@ cdef class XmmsCore:
 		For example, if using L{loop}, your callback should call
 		L{exit_loop} at some point.
 		"""
-		cdef char *p
 		if path:
-			p = to_charp(from_unicode(path))
-			ret = xmmsc_connect(self.conn, p)
+			p = from_unicode(path)
+			ret = xmmsc_connect(self.conn, <char *>p)
 		else:
 			ret = xmmsc_connect(self.conn, NULL)
 
@@ -751,8 +759,7 @@ cdef class XmmsApi(XmmsCore):
 		Set the playback volume for specified channel
 		@rtype: L{XmmsResult}(UInt)
 		"""
-		cdef char *c
-		c = to_charp(from_unicode(channel))
+		c = from_unicode(channel)
 		return self.create_result(cb, xmmsc_playback_volume_set(self.conn, c, volume))
 
 	cpdef XmmsResult playback_volume_get(self, cb = None):
@@ -782,17 +789,16 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playlist_loaded(self.conn))
 
-	cpdef XmmsResult playlist_load(self, playlist = None, cb = None):
+	cpdef XmmsResult playlist_load(self, playlist, cb = None):
 		"""
-		playlist_load(playlist=None, cb=None) -> XmmsResult
+		playlist_load(playlist, cb=None) -> XmmsResult
 
 		Load the playlist as current playlist
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_load(self.conn, p))
+		p = check_playlist(playlist, False)
+		return self.create_result(cb, xmmsc_playlist_load(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_list(self, cb = None):
 		"""
@@ -804,17 +810,16 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_playlist_list(self.conn))
 
-	cpdef XmmsResult playlist_remove(self, playlist = None, cb = None):
+	cpdef XmmsResult playlist_remove(self, playlist, cb = None):
 		"""
-		playlist_remove(playlist=None, cb=None) -> XmmsResult
+		playlist_remove(playlist, cb=None) -> XmmsResult
 
 		Remove the playlist from the server
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_remove(self.conn, p))
+		p = check_playlist(playlist, False)
+		return self.create_result(cb, xmmsc_playlist_remove(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_shuffle(self, playlist = None, cb = None):
 		"""
@@ -824,9 +829,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_shuffle(self.conn, p))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_shuffle(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist = None, cb = None, encoded=False):
 		"""
@@ -837,17 +841,15 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c
-		cdef char *p
 		cdef xmmsc_result_t *res
 
-		c = to_charp(from_unicode(url))
-		p = check_playlist(playlist)
+		c = from_unicode(url)
+		p = check_playlist(playlist, True)
 
 		if encoded:
-			res = xmmsc_playlist_rinsert_encoded(self.conn, p, pos, c)
+			res = xmmsc_playlist_rinsert_encoded(self.conn, <char *>p, pos, <char *>c)
 		else:
-			res = xmmsc_playlist_rinsert(self.conn, p, pos, c)
+			res = xmmsc_playlist_rinsert(self.conn, <char *>p, pos, <char *>c)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -868,17 +870,15 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c
-		cdef char *p
 		cdef xmmsc_result_t *res
 
-		c = to_charp(from_unicode(url))
-		p = check_playlist(playlist)
+		c = from_unicode(url)
+		p = check_playlist(playlist, True)
 
 		if encoded:
-			res = xmmsc_playlist_insert_encoded(self.conn, p, pos, c)
+			res = xmmsc_playlist_insert_encoded(self.conn, <char *>p, pos, <char *>c)
 		else:
-			res = xmmsc_playlist_insert_url(self.conn, p, pos, c)
+			res = xmmsc_playlist_insert_url(self.conn, <char *>p, pos, <char *>c)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -899,9 +899,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_insert_id(self.conn, p, pos, id))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_insert_id(self.conn, <char *>p, pos, id))
 
 
 	cpdef XmmsResult playlist_insert_collection(self, int pos, Collection coll, order = None, playlist = None, cb = None):
@@ -913,17 +912,16 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
 		cdef xmmsv_t *order_val
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
 		if order is None:
 			order = []
-		p = check_playlist(playlist)
+		p = check_playlist(playlist, True)
 		order_val = create_native_value(order)
-		res = self.create_result(cb, xmmsc_playlist_insert_collection(self.conn, p, pos, coll.coll, order_val))
+		res = xmmsc_playlist_insert_collection(self.conn, <char *>p, pos, coll.coll, order_val)
 		xmmsv_unref(order_val)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):
 		"""
@@ -934,16 +932,14 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c
-		cdef char *p
 		cdef xmmsc_result_t *res
 
-		c = to_charp(from_unicode(url))
-		p = check_playlist(playlist)
+		c = from_unicode(url)
+		p = check_playlist(playlist, True)
 		if encoded:
-			res = xmmsc_playlist_radd_encoded(self.conn, p, c)
+			res = xmmsc_playlist_radd_encoded(self.conn, <char *>p, <char *>c)
 		else:
-			res = xmmsc_playlist_radd(self.conn, p, c)
+			res = xmmsc_playlist_radd(self.conn, <char *>p, <char *>c)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -964,16 +960,14 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c
-		cdef char *p
 		cdef xmmsc_result_t *res
 
-		c = to_charp(from_unicode(url))
-		p = check_playlist(playlist)
+		c = from_unicode(url)
+		p = check_playlist(playlist, True)
 		if encoded:
-			res = xmmsc_playlist_add_encoded(self.conn, p, c)
+			res = xmmsc_playlist_add_encoded(self.conn, <char *>p, <char *>c)
 		else:
-			res = xmmsc_playlist_add_url(self.conn, p, c)
+			res = xmmsc_playlist_add_url(self.conn, <char *>p, <char *>c)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -992,9 +986,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_add_id(self.conn, p, id))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_add_id(self.conn, <char *>p, id))
 
 	cpdef XmmsResult playlist_add_collection(self, Collection coll, order = None, playlist = None, cb = None):
 		"""
@@ -1004,17 +997,16 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
 		cdef xmmsv_t *order_val
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
-		p = check_playlist(playlist)
+		p = check_playlist(playlist, True)
 		if order is None:
 			order = []
 		order_val = create_native_value(order)
-		res = self.create_result(cb, xmmsc_playlist_add_collection(self.conn, p, coll.coll, order_val))
+		res = xmmsc_playlist_add_collection(self.conn, <char *>p, coll.coll, order_val)
 		xmmsv_unref(order_val)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult playlist_remove_entry(self, int id, playlist = None, cb = None):
 		"""
@@ -1025,9 +1017,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_remove_entry(self.conn, p, id))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_remove_entry(self.conn, <char *>p, id))
 
 	cpdef XmmsResult playlist_clear(self, playlist = None, cb = None):
 		"""
@@ -1037,9 +1028,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_clear(self.conn, p))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_clear(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_list_entries(self, playlist = None, cb = None):
 		"""
@@ -1051,9 +1041,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}(UIntList)
 		@return: The current playlist.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_list_entries(self.conn, p))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_list_entries(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_sort(self, props, playlist = None, cb = None):
 		"""
@@ -1063,15 +1052,14 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
 		cdef xmmsv_t *props_val
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
-		p = check_playlist(playlist)
+		p = check_playlist(playlist, True)
 		props_val = create_native_value(props)
-		res = self.create_result(cb, xmmsc_playlist_sort(self.conn, p, props_val))
+		res = xmmsc_playlist_sort(self.conn, <char *>p, props_val)
 		xmmsv_unref(props_val)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult playlist_set_next_rel(self, int position, cb = None):
 		"""
@@ -1102,9 +1090,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_move_entry(self.conn, p, cur_pos, new_pos))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_move_entry(self.conn, <char *>p, cur_pos, new_pos))
 
 	cpdef XmmsResult playlist_create(self, playlist, cb = None):
 		"""
@@ -1114,9 +1101,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_create(self.conn, p))
+		p = check_playlist(playlist, False)
+		return self.create_result(cb, xmmsc_playlist_create(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_current_pos(self, playlist = None, cb = None):
 		"""
@@ -1127,9 +1113,8 @@ cdef class XmmsApi(XmmsCore):
 		list is 0.
 		@rtype: L{XmmsResult}
 		"""
-		cdef char *p
-		p = check_playlist(playlist)
-		return self.create_result(cb, xmmsc_playlist_current_pos(self.conn, p))
+		p = check_playlist(playlist, True)
+		return self.create_result(cb, xmmsc_playlist_current_pos(self.conn, <char *>p))
 
 	cpdef XmmsResult playlist_current_active(self, cb = None):
 		"""
@@ -1191,11 +1176,9 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c1
-		cdef char *c2
-		c1 = to_charp(from_unicode(key))
-		c2 = to_charp(from_unicode(val))
-		return self.create_result(cb, xmmsc_config_set_value(self.conn, c1, c2))
+		k = from_unicode(key)
+		v = from_unicode(val)
+		return self.create_result(cb, xmmsc_config_set_value(self.conn, <char *>k, <char *>v))
 
 	@deprecated
 	def configval_set(self, key, val, cb = None):
@@ -1213,9 +1196,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}(String)
 		@return: The result of the operation.
 		"""
-		cdef char *c
-		c = to_charp(from_unicode(key))
-		return self.create_result(cb, xmmsc_config_get_value(self.conn, c))
+		k = from_unicode(key)
+		return self.create_result(cb, xmmsc_config_get_value(self.conn, <char *>k))
 
 	@deprecated
 	def configval_get(self, key, cb = None):
@@ -1255,11 +1237,9 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c1
-		cdef char *c2
-		c1 = to_charp(from_unicode(valuename))
-		c2 = to_charp(from_unicode(defaultvalue))
-		return self.create_result(cb, xmmsc_config_register_value(self.conn, c1, c2))
+		v = from_unicode(valuename)
+		dv = from_unicode(defaultvalue)
+		return self.create_result(cb, xmmsc_config_register_value(self.conn, <char *>v, <char *>dv))
 
 	@deprecated
 	def configval_register(self, valuename, defaultvalue, cb = None):
@@ -1277,13 +1257,12 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *c
 		cdef xmmsc_result_t *res
-		c = to_charp(from_unicode(path))
+		p = from_unicode(path)
 		if encoded:
-			res = xmmsc_medialib_add_entry_encoded(self.conn, c)
+			res = xmmsc_medialib_add_entry_encoded(self.conn, <char *>p)
 		else:
-			res = xmmsc_medialib_add_entry(self.conn, c)
+			res = xmmsc_medialib_add_entry(self.conn, <char *>p)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -1312,16 +1291,14 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return The result of the operation.
 		"""
-		cdef char *u
-
 		if encoded:
 			try:
 				from urllib import unquote_plus
 			except ImportError: #Py3k
 				from urllib.parse import unquote_plus
 			url = unquote_plus(url)
-		u = to_charp(from_unicode(url))
-		return self.create_result(cb, xmmsc_medialib_move_entry(self.conn, id, u))
+		u = from_unicode(url)
+		return self.create_result(cb, xmmsc_medialib_move_entry(self.conn, id, <char *>u))
 
 	cpdef XmmsResult medialib_get_info(self, int id, cb = None):
 		"""
@@ -1356,13 +1333,12 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *u
 		cdef xmmsc_result_t *res
-		u = to_charp(from_unicode(url))
+		u = from_unicode(url)
 		if encoded:
-			res = xmmsc_medialib_get_id_encoded(self.conn, u)
+			res = xmmsc_medialib_get_id_encoded(self.conn, <char *>u)
 		else:
-			res = xmmsc_medialib_get_id(self.conn, u)
+			res = xmmsc_medialib_get_id(self.conn, <char *>u)
 		return self.create_result(cb, res)
 
 	cpdef XmmsResult medialib_import_path(self, path, cb = None, encoded=False):
@@ -1374,13 +1350,12 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
 		cdef xmmsc_result_t *res
-		p = to_charp(from_unicode(path))
+		p = from_unicode(path)
 		if encoded:
-			res = xmmsc_medialib_import_path_encoded(self.conn, p)
+			res = xmmsc_medialib_import_path_encoded(self.conn, <char *>p)
 		else:
-			res = xmmsc_medialib_import_path(self.conn, p)
+			res = xmmsc_medialib_import_path(self.conn, <char *>p)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -1407,24 +1382,21 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *k
-		cdef char *v
-		cdef char *s
 		cdef xmmsc_result_t *res
-		k = to_charp(from_unicode(key))
+		k = from_unicode(key)
 		if isinstance(value, int):
 			if source:
-				s = to_charp(from_unicode(source))
-				res = xmmsc_medialib_entry_property_set_int_with_source(self.conn, id, s, k, value)
+				s = from_unicode(source)
+				res = xmmsc_medialib_entry_property_set_int_with_source(self.conn, id, <char *>s, <char *>k, value)
 			else:
-				res = xmmsc_medialib_entry_property_set_int(self.conn, id, k, value)
+				res = xmmsc_medialib_entry_property_set_int(self.conn, id, <char *>k, value)
 		else:
-			v = to_charp(from_unicode(value))
+			v = from_unicode(value)
 			if source:
-				s = to_charp(from_unicode(source))
-				res = xmmsc_medialib_entry_property_set_str_with_source(self.conn, id, s, k, v)
+				s = from_unicode(source)
+				res = xmmsc_medialib_entry_property_set_str_with_source(self.conn, id, <char *>s, <char *>k, <char *>v)
 			else:
-				res = xmmsc_medialib_entry_property_set_str(self.conn, id, k, v)
+				res = xmmsc_medialib_entry_property_set_str(self.conn, id, <char *>k, <char *>v)
 		return self.create_result(cb, res)
 
 	cpdef XmmsResult medialib_property_remove(self, int id, key, source=None, cb=None):
@@ -1435,14 +1407,14 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *k
-		cdef char *s
-		k = to_charp(from_unicode(key))
+		cdef xmmsc_result_t *res
+		k = from_unicode(key)
 		if source:
-			s = to_charp(from_unicode(source))
-			return self.create_result(cb, xmmsc_medialib_entry_property_remove_with_source(self.conn,id,s,k))
+			s = from_unicode(source)
+			res = xmmsc_medialib_entry_property_remove_with_source(self.conn, id, <char *>s, <char *>k)
 		else:
-			return self.create_result(cb, xmmsc_medialib_entry_property_remove(self.conn,id,k))
+			res = xmmsc_medialib_entry_property_remove(self.conn, id, <char *>k)
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult broadcast_medialib_entry_added(self, cb = None):
 		"""
@@ -1504,13 +1476,12 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *u
 		cdef xmmsc_result_t *res
-		u = to_charp(from_unicode(url))
+		u = from_unicode(url)
 		if encoded:
-			res = xmmsc_xform_media_browse_encoded(self.conn, u)
+			res = xmmsc_xform_media_browse_encoded(self.conn, <char *>u)
 		else:
-			res = xmmsc_xform_media_browse(self.conn, u)
+			res = xmmsc_xform_media_browse(self.conn, <char *>u)
 		return self.create_result(cb, res)
 
 	@deprecated
@@ -1530,21 +1501,20 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *n
-		cdef char *nam
 		n = check_namespace(ns, False)
-		nam = to_charp(from_unicode(name))
+		nam = from_unicode(name)
 		return self.create_result(cb, xmmsc_coll_get(self.conn, nam, n))
 
-	cpdef XmmsResult coll_list(self, ns="*", cb=None):
+	cpdef XmmsResult coll_list(self, ns="Collections", cb=None):
 		"""
-		coll_list(name, ns="*", cb=None) -> XmmsResult
+		coll_list(name, ns="Collections", cb=None) -> XmmsResult
 
 		List collections
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
 		cdef char *n
-		n = check_namespace(ns, True)
+		n = check_namespace(ns, False)
 		return self.create_result(cb, xmmsc_coll_list(self.conn, n))
 
 	cpdef XmmsResult coll_save(self, Collection coll, name, ns="Collections", cb=None):
@@ -1556,10 +1526,9 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *n
-		cdef char *nam
 		n = check_namespace(ns, False)
-		nam = to_charp(from_unicode(name))
-		return self.create_result(cb, xmmsc_coll_save(self.conn, coll.coll, nam, n))
+		nam = from_unicode(name)
+		return self.create_result(cb, xmmsc_coll_save(self.conn, coll.coll, <char *>nam, n))
 
 	cpdef XmmsResult coll_remove(self, name, ns="Collections", cb=None):
 		"""
@@ -1570,10 +1539,9 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *n
-		cdef char *nam
 		n = check_namespace(ns, False)
-		nam = to_charp(from_unicode(name))
-		return self.create_result(cb, xmmsc_coll_remove(self.conn, nam, n))
+		nam = from_unicode(name)
+		return self.create_result(cb, xmmsc_coll_remove(self.conn, <char *>nam, n))
 
 	cpdef XmmsResult coll_rename(self, oldname, newname, ns="Collections", cb=None):
 		"""
@@ -1584,13 +1552,11 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *n
-		cdef char *oldnam
-		cdef char *newnam
 		n = check_namespace(ns, False)
 
-		oldnam = to_charp(from_unicode(oldname))
-		newnam = to_charp(from_unicode(newname))
-		return self.create_result(cb, xmmsc_coll_rename(self.conn, oldnam, newnam, n))
+		oldnam = from_unicode(oldname)
+		newnam = from_unicode(newname)
+		return self.create_result(cb, xmmsc_coll_rename(self.conn, <char *>oldnam, <char *>newnam, n))
 
 	cpdef XmmsResult coll_idlist_from_playlist_file(self, path, cb=None):
 		"""
@@ -1600,9 +1566,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *p
-		p = to_charp(from_unicode(path))
-		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, p))
+		p = from_unicode(path)
+		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, <char *>p))
 
 	cpdef XmmsResult coll_query_ids(self, Collection coll, start=0, leng=0, order=None, cb=None):
 		"""
@@ -1613,14 +1578,14 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef xmmsv_t *order_val
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
 		if order is None:
 			order = []
 		order_val = create_native_value(order)
-		res = self.create_result(cb, xmmsc_coll_query_ids(self.conn, coll.coll, order_val, start, leng))
+		res = xmmsc_coll_query_ids(self.conn, coll.coll, order_val, start, leng)
 		xmmsv_unref(order_val)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult coll_query_infos(self, Collection coll, fields, start=0, leng=0, order=None, groupby=None, cb=None):
 		"""
@@ -1633,7 +1598,7 @@ cdef class XmmsApi(XmmsCore):
 		cdef xmmsv_t *order_val
 		cdef xmmsv_t *fields_val
 		cdef xmmsv_t *groupby_val
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
 		if order is None:
 			order = []
@@ -1642,11 +1607,11 @@ cdef class XmmsApi(XmmsCore):
 		order_val = create_native_value(order)
 		fields_val = create_native_value(fields)
 		groupby_val = create_native_value(groupby)
-		res = self.create_result(cb, xmmsc_coll_query_infos(self.conn, coll.coll, order_val, start, leng, fields_val, groupby_val))
+		res = xmmsc_coll_query_infos(self.conn, coll.coll, order_val, start, leng, fields_val, groupby_val)
 		xmmsv_unref(order_val)
 		xmmsv_unref(fields_val)
 		xmmsv_unref(groupby_val)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsResult bindata_add(self, data, cb=None):
 		"""
@@ -1657,7 +1622,7 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation.
 		"""
 		cdef char *t
-		t = to_charp(data)
+		t = <char *>data
 		return self.create_result(cb, xmmsc_bindata_add(self.conn,<unsigned char *>t,len(data)))
 
 	cpdef XmmsResult bindata_retrieve(self, hash, cb=None):
@@ -1668,9 +1633,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *h
-		h = to_charp(hash)
-		return self.create_result(cb, xmmsc_bindata_retrieve(self.conn, h))
+		h = from_unicode(hash)
+		return self.create_result(cb, xmmsc_bindata_retrieve(self.conn, <char *>h))
 
 	cpdef XmmsResult bindata_remove(self, hash, cb=None):
 		"""
@@ -1680,9 +1644,8 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
-		cdef char *h
-		h = to_charp(hash)
-		return self.create_result(cb, xmmsc_bindata_remove(self.conn, h))
+		h = from_unicode(hash)
+		return self.create_result(cb, xmmsc_bindata_remove(self.conn, <char *>h))
 
 	cpdef XmmsResult bindata_list(self, cb=None):
 		"""
@@ -1762,12 +1725,9 @@ cdef class XmmsApi(XmmsCore):
 		@rtype: L{bool}
 		@return: The result of the operation
 		"""
-		cdef char *k
-		cdef char *v
-
-		k = to_charp(from_unicode(key))
-		v = to_charp(from_unicode(value))
-		return self.create_result(cb, xmmsc_visualization_property_set(self.conn, handle, k, v))
+		k = from_unicode(key)
+		v = from_unicode(value)
+		return self.create_result(cb, xmmsc_visualization_property_set(self.conn, handle, <char *>k, <char *>v))
 
 	cpdef XmmsResult visualization_properties_set(self, int handle, props={}, cb=None):
 		"""
@@ -1778,12 +1738,12 @@ cdef class XmmsApi(XmmsCore):
 		@return: The result of the operation
 		"""
 		cdef xmmsv_t *_props
-		cdef XmmsResult res
+		cdef xmmsc_result_t *res
 
 		_props = create_native_value(props)
-		res = self.create_result(cb, xmmsc_visualization_properties_set(self.conn, handle, _props))
+		res = xmmsc_visualization_properties_set(self.conn, handle, _props)
 		xmmsv_unref(_props)
-		return res
+		return self.create_result(cb, res)
 
 	cpdef XmmsVisChunk visualization_chunk_get(self, int handle, int drawtime=0, bint blocking=False):
 		"""

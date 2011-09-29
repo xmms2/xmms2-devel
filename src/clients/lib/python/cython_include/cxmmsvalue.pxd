@@ -26,6 +26,10 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_COLLECTION_NS_PLAYLISTS
 		XMMS_COLLECTION_NS_ALL
 
+	# XXX Same trick. Requires an explicit cast <char *>
+	enum:
+		XMMS_ACTIVE_PLAYLIST
+
 cdef extern from "xmmsc/xmmsv.h":
 	ctypedef enum xmmsv_type_t:
 		XMMSV_TYPE_NONE

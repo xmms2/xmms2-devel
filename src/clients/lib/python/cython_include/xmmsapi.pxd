@@ -5,13 +5,6 @@ from cxmmsclient cimport *
 cdef bint ResultNotifier(xmmsv_t *res, void *o)
 cdef void ResultDestroyNotifier(void *o)
 
-from xmmsutils cimport *
-cdef inline char *check_playlist(object playlist):
-	if playlist is None:
-		return NULL
-	else:
-		return to_charp(from_unicode(playlist))
-
 cdef inline char *check_namespace(object ns, bint can_be_all) except NULL:
 	cdef char *n
 	if ns == "Collections":
@@ -129,9 +122,9 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playback_volume_get(self, cb=*)
 	cpdef XmmsResult broadcast_playback_volume_changed(self, cb=*)
 	cpdef XmmsResult broadcast_playlist_loaded(self, cb=*)
-	cpdef XmmsResult playlist_load(self, playlist=*, cb=*)
+	cpdef XmmsResult playlist_load(self, playlist, cb=*)
 	cpdef XmmsResult playlist_list(self, cb=*)
-	cpdef XmmsResult playlist_remove(self, playlist=*, cb=*)
+	cpdef XmmsResult playlist_remove(self, playlist, cb=*)
 	cpdef XmmsResult playlist_shuffle(self, playlist=*, cb=*)
 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist=*, cb=*, encoded=*)
 	cpdef XmmsResult playlist_insert_url(self, int pos, url, playlist=*, cb=*, encoded=*)

@@ -2,7 +2,7 @@
 Python bindings for xmmsv manipulations.
 """
 
-from xmmsutils cimport to_unicode, from_unicode, to_charp
+from xmmsutils cimport *
 from cpython.bytes cimport PyBytes_FromStringAndSize
 cimport cython
 from cxmmsvalue cimport *
@@ -504,14 +504,15 @@ cdef class CollectionAttributes(CollectionRef):
 
 	def __getitem__(self, name):
 		cdef char *value = NULL
-		cdef char *nam
-		nam = to_charp(from_unicode(name))
-		if not xmmsv_coll_attribute_get(self.coll, nam, &value):
+		nam = from_unicode(name)
+		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
 			raise KeyError("The attribute '%s' doesn't exist" % name)
 		return to_unicode(value)
 
 	def __setitem__(self, name, value):
-		xmmsv_coll_attribute_set(self.coll, to_charp(from_unicode(name)), to_charp(from_unicode(value)))
+		n = from_unicode(name)
+		v = from_unicode(value)
+		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
 
 	def get(self, name, default=None):
 		try:
@@ -807,7 +808,7 @@ def coll_parse(pattern):
 	cdef xmmsv_coll_t *coll = NULL
 
 	_pattern = from_unicode(pattern)
-	if not xmmsv_coll_parse(_pattern, &coll):
+	if not xmmsv_coll_parse(<char *>_pattern, &coll):
 		raise ValueError("Unable to parse the pattern")
 	return create_coll(coll)
 
