@@ -567,7 +567,7 @@ static struct __pyx_vtabstruct_9xmmsvalue_AttributesIterator *__pyx_vtabptr_9xmm
 
 
 
-/* "xmmsvalue.pyx":601
+/* "xmmsvalue.pyx":602
  * 
  * 
  * cdef class CollectionIDList(CollectionRef):             # <<<<<<<<<<<<<<
@@ -604,7 +604,7 @@ struct __pyx_vtabstruct_9xmmsvalue_Collection {
 static struct __pyx_vtabstruct_9xmmsvalue_Collection *__pyx_vtabptr_9xmmsvalue_Collection;
 
 
-/* "xmmsvalue.pyx":540
+/* "xmmsvalue.pyx":541
  * 		return xmmsv_coll_attribute_get(self.coll, name, &value)
  * 
  * cdef class CollectionOperands(CollectionRef):             # <<<<<<<<<<<<<<
@@ -815,14 +815,13 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t); /*proto*/
 
 /* Module declarations from 'cpython.unicode' */
 
-/* Module declarations from 'cpython.ref' */
-
-/* Module declarations from 'cpython.bytes' */
-
 /* Module declarations from 'xmmsutils' */
 static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *); /*proto*/
 static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *); /*proto*/
-static CYTHON_INLINE char *__pyx_f_9xmmsutils_to_charp(PyObject *); /*proto*/
+
+/* Module declarations from 'cpython.ref' */
+
+/* Module declarations from 'cpython.bytes' */
 
 /* Module declarations from 'cython.cython.view' */
 
@@ -8250,13 +8249,13 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_10__str__(PyObject *
  * 
  * 	def __getitem__(self, name):             # <<<<<<<<<<<<<<
  * 		cdef char *value = NULL
- * 		cdef char *nam
+ * 		nam = from_unicode(name)
  */
 
 static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name); /*proto*/
 static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name) {
   char *__pyx_v_value;
-  char *__pyx_v_nam;
+  PyObject *__pyx_v_nam = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8272,67 +8271,67 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObje
  * 
  * 	def __getitem__(self, name):
  * 		cdef char *value = NULL             # <<<<<<<<<<<<<<
- * 		cdef char *nam
- * 		nam = to_charp(from_unicode(name))
+ * 		nam = from_unicode(name)
+ * 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
  */
   __pyx_v_value = NULL;
 
-  /* "xmmsvalue.pyx":508
+  /* "xmmsvalue.pyx":507
+ * 	def __getitem__(self, name):
  * 		cdef char *value = NULL
- * 		cdef char *nam
- * 		nam = to_charp(from_unicode(name))             # <<<<<<<<<<<<<<
- * 		if not xmmsv_coll_attribute_get(self.coll, nam, &value):
+ * 		nam = from_unicode(name)             # <<<<<<<<<<<<<<
+ * 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
  * 			raise KeyError("The attribute '%s' doesn't exist" % name)
  */
-  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 507; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_f_9xmmsutils_to_charp(__pyx_t_1); if (unlikely(__pyx_t_2 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_nam = __pyx_t_2;
+  __pyx_v_nam = __pyx_t_1;
+  __pyx_t_1 = 0;
 
-  /* "xmmsvalue.pyx":509
- * 		cdef char *nam
- * 		nam = to_charp(from_unicode(name))
- * 		if not xmmsv_coll_attribute_get(self.coll, nam, &value):             # <<<<<<<<<<<<<<
+  /* "xmmsvalue.pyx":508
+ * 		cdef char *value = NULL
+ * 		nam = from_unicode(name)
+ * 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):             # <<<<<<<<<<<<<<
  * 			raise KeyError("The attribute '%s' doesn't exist" % name)
  * 		return to_unicode(value)
  */
-  __pyx_t_3 = (!xmmsv_coll_attribute_get(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.coll, __pyx_v_nam, (&__pyx_v_value)));
+  __pyx_t_2 = PyBytes_AsString(__pyx_v_nam); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = (!xmmsv_coll_attribute_get(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.coll, ((char *)__pyx_t_2), (&__pyx_v_value)));
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":510
- * 		nam = to_charp(from_unicode(name))
- * 		if not xmmsv_coll_attribute_get(self.coll, nam, &value):
+    /* "xmmsvalue.pyx":509
+ * 		nam = from_unicode(name)
+ * 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
  * 			raise KeyError("The attribute '%s' doesn't exist" % name)             # <<<<<<<<<<<<<<
  * 		return to_unicode(value)
  * 
  */
-    __pyx_t_1 = PyNumber_Remainder(((PyObject *)__pyx_kp_s_31), __pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyNumber_Remainder(((PyObject *)__pyx_kp_s_31), __pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 509; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 509; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(((PyObject *)__pyx_t_4));
     PyTuple_SET_ITEM(__pyx_t_4, 0, ((PyObject *)__pyx_t_1));
     __Pyx_GIVEREF(((PyObject *)__pyx_t_1));
     __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_Call(__pyx_builtin_KeyError, ((PyObject *)__pyx_t_4), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_Call(__pyx_builtin_KeyError, ((PyObject *)__pyx_t_4), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 509; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(((PyObject *)__pyx_t_4)); __pyx_t_4 = 0;
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 509; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "xmmsvalue.pyx":511
- * 		if not xmmsv_coll_attribute_get(self.coll, nam, &value):
+  /* "xmmsvalue.pyx":510
+ * 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
  * 			raise KeyError("The attribute '%s' doesn't exist" % name)
  * 		return to_unicode(value)             # <<<<<<<<<<<<<<
  * 
  * 	def __setitem__(self, name, value):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_9xmmsutils_to_unicode(__pyx_v_value); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 511; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_9xmmsutils_to_unicode(__pyx_v_value); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -8346,21 +8345,24 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObje
   __Pyx_AddTraceback("xmmsvalue.CollectionAttributes.__getitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_nam);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":513
+/* "xmmsvalue.pyx":512
  * 		return to_unicode(value)
  * 
  * 	def __setitem__(self, name, value):             # <<<<<<<<<<<<<<
- * 		xmmsv_coll_attribute_set(self.coll, to_charp(from_unicode(name)), to_charp(from_unicode(value)))
- * 
+ * 		n = from_unicode(name)
+ * 		v = from_unicode(value)
  */
 
 static int __pyx_pf_9xmmsvalue_20CollectionAttributes_12__setitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name, PyObject *__pyx_v_value); /*proto*/
 static int __pyx_pf_9xmmsvalue_20CollectionAttributes_12__setitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name, PyObject *__pyx_v_value) {
+  PyObject *__pyx_v_n = NULL;
+  PyObject *__pyx_v_v = NULL;
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8371,22 +8373,40 @@ static int __pyx_pf_9xmmsvalue_20CollectionAttributes_12__setitem__(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__setitem__");
 
-  /* "xmmsvalue.pyx":514
+  /* "xmmsvalue.pyx":513
  * 
  * 	def __setitem__(self, name, value):
- * 		xmmsv_coll_attribute_set(self.coll, to_charp(from_unicode(name)), to_charp(from_unicode(value)))             # <<<<<<<<<<<<<<
+ * 		n = from_unicode(name)             # <<<<<<<<<<<<<<
+ * 		v = from_unicode(value)
+ * 		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
+ */
+  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 513; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_n = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "xmmsvalue.pyx":514
+ * 	def __setitem__(self, name, value):
+ * 		n = from_unicode(name)
+ * 		v = from_unicode(value)             # <<<<<<<<<<<<<<
+ * 		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
+ * 
+ */
+  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_value); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 514; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_v = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "xmmsvalue.pyx":515
+ * 		n = from_unicode(name)
+ * 		v = from_unicode(value)
+ * 		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)             # <<<<<<<<<<<<<<
  * 
  * 	def get(self, name, default=None):
  */
-  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_name); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 514; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_f_9xmmsutils_to_charp(__pyx_t_1); if (unlikely(__pyx_t_2 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 514; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_value); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 514; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __pyx_f_9xmmsutils_to_charp(__pyx_t_1); if (unlikely(__pyx_t_3 == NULL)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 514; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  xmmsv_coll_attribute_set(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.coll, __pyx_t_2, __pyx_t_3);
+  __pyx_t_2 = PyBytes_AsString(__pyx_v_n); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 515; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyBytes_AsString(__pyx_v_v); if (unlikely((!__pyx_t_3) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 515; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  xmmsv_coll_attribute_set(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.coll, ((char *)__pyx_t_2), ((char *)__pyx_t_3));
 
   __pyx_r = 0;
   goto __pyx_L0;
@@ -8395,12 +8415,14 @@ static int __pyx_pf_9xmmsvalue_20CollectionAttributes_12__setitem__(PyObject *__
   __Pyx_AddTraceback("xmmsvalue.CollectionAttributes.__setitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_n);
+  __Pyx_XDECREF(__pyx_v_v);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":516
- * 		xmmsv_coll_attribute_set(self.coll, to_charp(from_unicode(name)), to_charp(from_unicode(value)))
+/* "xmmsvalue.pyx":517
+ * 		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
  * 
  * 	def get(self, name, default=None):             # <<<<<<<<<<<<<<
  * 		try:
@@ -8449,7 +8471,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "get") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "get") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 517; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -8464,14 +8486,14 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("get", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("get", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 517; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.CollectionAttributes.get", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
 
-  /* "xmmsvalue.pyx":517
+  /* "xmmsvalue.pyx":518
  * 
  * 	def get(self, name, default=None):
  * 		try:             # <<<<<<<<<<<<<<
@@ -8485,7 +8507,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "xmmsvalue.pyx":518
+      /* "xmmsvalue.pyx":519
  * 	def get(self, name, default=None):
  * 		try:
  * 			return self[name]             # <<<<<<<<<<<<<<
@@ -8493,7 +8515,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
  * 			return default
  */
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_4 = PyObject_GetItem(__pyx_v_self, __pyx_v_name); if (!__pyx_t_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 518; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
+      __pyx_t_4 = PyObject_GetItem(__pyx_v_self, __pyx_v_name); if (!__pyx_t_4) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L6_error;}
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_r = __pyx_t_4;
       __pyx_t_4 = 0;
@@ -8512,7 +8534,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
     __pyx_L6_error:;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "xmmsvalue.pyx":519
+    /* "xmmsvalue.pyx":520
  * 		try:
  * 			return self[name]
  * 		except KeyError:             # <<<<<<<<<<<<<<
@@ -8522,12 +8544,12 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
     __pyx_t_5 = PyErr_ExceptionMatches(__pyx_builtin_KeyError);
     if (__pyx_t_5) {
       __Pyx_AddTraceback("xmmsvalue.CollectionAttributes.get", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_6, &__pyx_t_7) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L8_except_error;}
+      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_6, &__pyx_t_7) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 520; __pyx_clineno = __LINE__; goto __pyx_L8_except_error;}
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "xmmsvalue.pyx":520
+      /* "xmmsvalue.pyx":521
  * 			return self[name]
  * 		except KeyError:
  * 			return default             # <<<<<<<<<<<<<<
@@ -8580,7 +8602,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_13get(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":522
+/* "xmmsvalue.pyx":523
  * 			return default
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -8606,11 +8628,11 @@ static PyObject *__pyx_f_9xmmsvalue_20CollectionAttributes_clear(struct __pyx_ob
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_20CollectionAttributes_14clear)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_r = __pyx_t_2;
       __pyx_t_2 = 0;
@@ -8620,20 +8642,20 @@ static PyObject *__pyx_f_9xmmsvalue_20CollectionAttributes_clear(struct __pyx_ob
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":523
+  /* "xmmsvalue.pyx":524
  * 
  * 	cpdef clear(self):
  * 		for k in self.keys():             # <<<<<<<<<<<<<<
  * 			xmmsv_coll_attribute_remove(self.coll, k)
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionAttributes *)__pyx_v_self->__pyx_base.__pyx_vtab)->keys(__pyx_v_self, 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionAttributes *)__pyx_v_self->__pyx_base.__pyx_vtab)->keys(__pyx_v_self, 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   if (PyList_CheckExact(__pyx_t_1) || PyTuple_CheckExact(__pyx_t_1)) {
     __pyx_t_2 = __pyx_t_1; __Pyx_INCREF(__pyx_t_2); __pyx_t_3 = 0;
     __pyx_t_4 = NULL;
   } else {
-    __pyx_t_3 = -1; __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = -1; __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_4 = Py_TYPE(__pyx_t_2)->tp_iternext;
   }
@@ -8650,7 +8672,7 @@ static PyObject *__pyx_f_9xmmsvalue_20CollectionAttributes_clear(struct __pyx_ob
       if (unlikely(!__pyx_t_1)) {
         if (PyErr_Occurred()) {
           if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         }
         break;
       }
@@ -8660,14 +8682,14 @@ static PyObject *__pyx_f_9xmmsvalue_20CollectionAttributes_clear(struct __pyx_ob
     __pyx_v_k = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "xmmsvalue.pyx":524
+    /* "xmmsvalue.pyx":525
  * 	cpdef clear(self):
  * 		for k in self.keys():
  * 			xmmsv_coll_attribute_remove(self.coll, k)             # <<<<<<<<<<<<<<
  * 
  * 	def update(self, d, **kargs):
  */
-    __pyx_t_5 = PyBytes_AsString(__pyx_v_k); if (unlikely((!__pyx_t_5) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyBytes_AsString(__pyx_v_k); if (unlikely((!__pyx_t_5) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 525; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     xmmsv_coll_attribute_remove(__pyx_v_self->__pyx_base.coll, __pyx_t_5);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -8686,7 +8708,7 @@ static PyObject *__pyx_f_9xmmsvalue_20CollectionAttributes_clear(struct __pyx_ob
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":522
+/* "xmmsvalue.pyx":523
  * 			return default
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -8704,7 +8726,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_14clear(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("clear");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionAttributes *)((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionAttributes *)((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -8722,7 +8744,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_14clear(PyObject *__
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":526
+/* "xmmsvalue.pyx":527
  * 			xmmsv_coll_attribute_remove(self.coll, k)
  * 
  * 	def update(self, d, **kargs):             # <<<<<<<<<<<<<<
@@ -8775,7 +8797,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kargs, values, PyTuple_GET_SIZE(__pyx_args), "update") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 526; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kargs, values, PyTuple_GET_SIZE(__pyx_args), "update") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 527; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -8786,7 +8808,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("update", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 526; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("update", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 527; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kargs); __pyx_v_kargs = 0;
   __Pyx_AddTraceback("xmmsvalue.CollectionAttributes.update", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -8794,7 +8816,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   return NULL;
   __pyx_L4_argument_unpacking_done:;
 
-  /* "xmmsvalue.pyx":527
+  /* "xmmsvalue.pyx":528
  * 
  * 	def update(self, d, **kargs):
  * 		if hasattr(d, 'keys') and hasattr(d.keys, '__call__'):             # <<<<<<<<<<<<<<
@@ -8803,14 +8825,14 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
  */
   __pyx_t_1 = ((PyObject *)__pyx_n_s__keys);
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_HasAttr(__pyx_v_d, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 527; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_HasAttr(__pyx_v_d, __pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
-    __pyx_t_1 = PyObject_GetAttr(__pyx_v_d, __pyx_n_s__keys); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 527; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(__pyx_v_d, __pyx_n_s__keys); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_3 = ((PyObject *)__pyx_n_s____call__);
     __Pyx_INCREF(__pyx_t_3);
-    __pyx_t_4 = PyObject_HasAttr(__pyx_t_1, __pyx_t_3); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 527; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyObject_HasAttr(__pyx_t_1, __pyx_t_3); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_5 = __pyx_t_4;
@@ -8819,23 +8841,23 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   }
   if (__pyx_t_5) {
 
-    /* "xmmsvalue.pyx":528
+    /* "xmmsvalue.pyx":529
  * 	def update(self, d, **kargs):
  * 		if hasattr(d, 'keys') and hasattr(d.keys, '__call__'):
  * 			for k in d.keys():             # <<<<<<<<<<<<<<
  * 				self[k] = d[k]
  * 		else:
  */
-    __pyx_t_3 = PyObject_GetAttr(__pyx_v_d, __pyx_n_s__keys); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_GetAttr(__pyx_v_d, __pyx_n_s__keys); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = PyObject_Call(__pyx_t_3, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_Call(__pyx_t_3, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (PyList_CheckExact(__pyx_t_1) || PyTuple_CheckExact(__pyx_t_1)) {
       __pyx_t_3 = __pyx_t_1; __Pyx_INCREF(__pyx_t_3); __pyx_t_6 = 0;
       __pyx_t_7 = NULL;
     } else {
-      __pyx_t_6 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_7 = Py_TYPE(__pyx_t_3)->tp_iternext;
     }
@@ -8852,7 +8874,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
         if (unlikely(!__pyx_t_1)) {
           if (PyErr_Occurred()) {
             if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-            else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 528; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+            else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           }
           break;
         }
@@ -8862,16 +8884,16 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
       __pyx_v_k = __pyx_t_1;
       __pyx_t_1 = 0;
 
-      /* "xmmsvalue.pyx":529
+      /* "xmmsvalue.pyx":530
  * 		if hasattr(d, 'keys') and hasattr(d.keys, '__call__'):
  * 			for k in d.keys():
  * 				self[k] = d[k]             # <<<<<<<<<<<<<<
  * 		else:
  * 			for k, v in d:
  */
-      __pyx_t_1 = PyObject_GetItem(__pyx_v_d, __pyx_v_k); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_1 = PyObject_GetItem(__pyx_v_d, __pyx_v_k); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 530; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_1);
-      if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 530; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -8879,7 +8901,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   }
   /*else*/ {
 
-    /* "xmmsvalue.pyx":531
+    /* "xmmsvalue.pyx":532
  * 				self[k] = d[k]
  * 		else:
  * 			for k, v in d:             # <<<<<<<<<<<<<<
@@ -8890,7 +8912,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
       __pyx_t_3 = __pyx_v_d; __Pyx_INCREF(__pyx_t_3); __pyx_t_6 = 0;
       __pyx_t_7 = NULL;
     } else {
-      __pyx_t_6 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_d); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_d); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_7 = Py_TYPE(__pyx_t_3)->tp_iternext;
     }
@@ -8906,7 +8928,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
         if (unlikely(!__pyx_t_1)) {
           if (PyErr_Occurred()) {
             if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-            else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+            else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           }
           break;
         }
@@ -8918,7 +8940,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
           if (unlikely(PyTuple_GET_SIZE(sequence) != 2)) {
             if (PyTuple_GET_SIZE(sequence) > 2) __Pyx_RaiseTooManyValuesError(2);
             else __Pyx_RaiseNeedMoreValuesError(PyTuple_GET_SIZE(sequence));
-            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           }
           __pyx_t_8 = PyTuple_GET_ITEM(sequence, 0); 
           __pyx_t_9 = PyTuple_GET_ITEM(sequence, 1); 
@@ -8926,7 +8948,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
           if (unlikely(PyList_GET_SIZE(sequence) != 2)) {
             if (PyList_GET_SIZE(sequence) > 2) __Pyx_RaiseTooManyValuesError(2);
             else __Pyx_RaiseNeedMoreValuesError(PyList_GET_SIZE(sequence));
-            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+            {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
           }
           __pyx_t_8 = PyList_GET_ITEM(sequence, 0); 
           __pyx_t_9 = PyList_GET_ITEM(sequence, 1); 
@@ -8936,7 +8958,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       } else {
         Py_ssize_t index = -1;
-        __pyx_t_10 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __pyx_t_10 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_GOTREF(__pyx_t_10);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_t_11 = Py_TYPE(__pyx_t_10)->tp_iternext;
@@ -8944,14 +8966,14 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
         __Pyx_GOTREF(__pyx_t_8);
         index = 1; __pyx_t_9 = __pyx_t_11(__pyx_t_10); if (unlikely(!__pyx_t_9)) goto __pyx_L11_unpacking_failed;
         __Pyx_GOTREF(__pyx_t_9);
-        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_10), 2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_10), 2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
         goto __pyx_L12_unpacking_done;
         __pyx_L11_unpacking_failed:;
         __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
         if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_StopIteration)) PyErr_Clear();
         if (!PyErr_Occurred()) __Pyx_RaiseNeedMoreValuesError(index);
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 531; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         __pyx_L12_unpacking_done:;
       }
       __Pyx_XDECREF(__pyx_v_k);
@@ -8961,20 +8983,20 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
       __pyx_v_v = __pyx_t_9;
       __pyx_t_9 = 0;
 
-      /* "xmmsvalue.pyx":532
+      /* "xmmsvalue.pyx":533
  * 		else:
  * 			for k, v in d:
  * 				self[k] = v             # <<<<<<<<<<<<<<
  * 		for k in kargs:
  * 			self[k] = kargs[k]
  */
-      if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_v_v) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 532; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_v_v) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 533; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":533
+  /* "xmmsvalue.pyx":534
  * 			for k, v in d:
  * 				self[k] = v
  * 		for k in kargs:             # <<<<<<<<<<<<<<
@@ -8988,23 +9010,23 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   __pyx_t_12 = PyDict_Size(__pyx_t_3);
   while (1) {
     if (unlikely(__pyx_t_12 != PyDict_Size(__pyx_t_3))) {
-      PyErr_SetString(PyExc_RuntimeError, "dictionary changed size during iteration"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 533; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      PyErr_SetString(PyExc_RuntimeError, "dictionary changed size during iteration"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
     if (!PyDict_Next(__pyx_t_3, (&__pyx_t_6), (&__pyx_t_13), NULL)) break;
     __Pyx_INCREF(((PyObject *)__pyx_t_13));
     __Pyx_XDECREF(__pyx_v_k);
     __pyx_v_k = __pyx_t_13;
 
-    /* "xmmsvalue.pyx":534
+    /* "xmmsvalue.pyx":535
  * 				self[k] = v
  * 		for k in kargs:
  * 			self[k] = kargs[k]             # <<<<<<<<<<<<<<
  * 
  * 	def __contains__(self, name):
  */
-    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject *)__pyx_v_kargs), __pyx_v_k); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject *)__pyx_v_kargs), __pyx_v_k); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 535; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetItem(__pyx_v_self, __pyx_v_k, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 535; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -9028,7 +9050,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_15update(PyObject *_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":536
+/* "xmmsvalue.pyx":537
  * 			self[k] = kargs[k]
  * 
  * 	def __contains__(self, name):             # <<<<<<<<<<<<<<
@@ -9047,7 +9069,7 @@ static int __pyx_pf_9xmmsvalue_20CollectionAttributes_16__contains__(PyObject *_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__contains__");
 
-  /* "xmmsvalue.pyx":537
+  /* "xmmsvalue.pyx":538
  * 
  * 	def __contains__(self, name):
  * 		cdef char *value = NULL             # <<<<<<<<<<<<<<
@@ -9056,14 +9078,14 @@ static int __pyx_pf_9xmmsvalue_20CollectionAttributes_16__contains__(PyObject *_
  */
   __pyx_v_value = NULL;
 
-  /* "xmmsvalue.pyx":538
+  /* "xmmsvalue.pyx":539
  * 	def __contains__(self, name):
  * 		cdef char *value = NULL
  * 		return xmmsv_coll_attribute_get(self.coll, name, &value)             # <<<<<<<<<<<<<<
  * 
  * cdef class CollectionOperands(CollectionRef):
  */
-  __pyx_t_1 = PyBytes_AsString(__pyx_v_name); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyBytes_AsString(__pyx_v_name); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 539; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = xmmsv_coll_attribute_get(((struct __pyx_obj_9xmmsvalue_CollectionAttributes *)__pyx_v_self)->__pyx_base.coll, __pyx_t_1, (&__pyx_v_value));
   goto __pyx_L0;
 
@@ -9077,7 +9099,7 @@ static int __pyx_pf_9xmmsvalue_20CollectionAttributes_16__contains__(PyObject *_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":543
+/* "xmmsvalue.pyx":544
  * 	#cdef object pylist
  * 
  * 	def __init__(self, Collection c):             # <<<<<<<<<<<<<<
@@ -9114,7 +9136,7 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands___init__(PyObject *__pyx_v_s
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 543; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 544; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -9125,15 +9147,15 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands___init__(PyObject *__pyx_v_s
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 543; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 544; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.CollectionOperands.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_c), __pyx_ptype_9xmmsvalue_Collection, 1, "c", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_c), __pyx_ptype_9xmmsvalue_Collection, 1, "c", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 544; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":544
+  /* "xmmsvalue.pyx":545
  * 
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:             # <<<<<<<<<<<<<<
@@ -9143,41 +9165,41 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands___init__(PyObject *__pyx_v_s
   __pyx_t_1 = (__pyx_v_c->__pyx_base.coll == NULL);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":545
+    /* "xmmsvalue.pyx":546
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")             # <<<<<<<<<<<<<<
  * 		self.set_collection(c.coll)
  * 		self.init_pylist()
  */
-    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_32), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 545; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_32), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 545; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":546
+  /* "xmmsvalue.pyx":547
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")
  * 		self.set_collection(c.coll)             # <<<<<<<<<<<<<<
  * 		self.init_pylist()
  * 
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_self), __pyx_v_c->__pyx_base.coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_self), __pyx_v_c->__pyx_base.coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 547; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":547
+  /* "xmmsvalue.pyx":548
  * 			raise RuntimeError("Uninitialized collection")
  * 		self.set_collection(c.coll)
  * 		self.init_pylist()             # <<<<<<<<<<<<<<
  * 
  * 	cdef init_pylist(self):
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->init_pylist(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 547; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->init_pylist(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
@@ -9192,7 +9214,7 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands___init__(PyObject *__pyx_v_s
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":549
+/* "xmmsvalue.pyx":550
  * 		self.init_pylist()
  * 
  * 	cdef init_pylist(self):             # <<<<<<<<<<<<<<
@@ -9211,7 +9233,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_init_pylist(struct __py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("init_pylist");
 
-  /* "xmmsvalue.pyx":551
+  /* "xmmsvalue.pyx":552
  * 	cdef init_pylist(self):
  * 		cdef XmmsValue v
  * 		if self.pylist is None:             # <<<<<<<<<<<<<<
@@ -9221,37 +9243,37 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_init_pylist(struct __py
   __pyx_t_1 = (__pyx_v_self->pylist == Py_None);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":552
+    /* "xmmsvalue.pyx":553
  * 		cdef XmmsValue v
  * 		if self.pylist is None:
  * 			v = XmmsValue()             # <<<<<<<<<<<<<<
  * 			v.set_value(xmmsv_coll_operands_get(self.coll))
  * 			self.pylist = v.value()
  */
-    __pyx_t_2 = PyObject_Call(((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_XmmsValue)), ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_XmmsValue)), ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 553; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_v_v = ((struct __pyx_obj_9xmmsvalue_XmmsValue *)__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "xmmsvalue.pyx":553
+    /* "xmmsvalue.pyx":554
  * 		if self.pylist is None:
  * 			v = XmmsValue()
  * 			v.set_value(xmmsv_coll_operands_get(self.coll))             # <<<<<<<<<<<<<<
  * 			self.pylist = v.value()
  * 
  */
-    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_XmmsValue *)__pyx_v_v->__pyx_vtab)->set_value(__pyx_v_v, xmmsv_coll_operands_get(__pyx_v_self->__pyx_base.coll), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 553; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_XmmsValue *)__pyx_v_v->__pyx_vtab)->set_value(__pyx_v_v, xmmsv_coll_operands_get(__pyx_v_self->__pyx_base.coll), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 554; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "xmmsvalue.pyx":554
+    /* "xmmsvalue.pyx":555
  * 			v = XmmsValue()
  * 			v.set_value(xmmsv_coll_operands_get(self.coll))
  * 			self.pylist = v.value()             # <<<<<<<<<<<<<<
  * 
  * 	def __repr__(self):
  */
-    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_XmmsValue *)__pyx_v_v->__pyx_vtab)->value(__pyx_v_v, 0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 554; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_XmmsValue *)__pyx_v_v->__pyx_vtab)->value(__pyx_v_v, 0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 555; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __Pyx_GOTREF(__pyx_v_self->pylist);
@@ -9275,7 +9297,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_init_pylist(struct __py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":556
+/* "xmmsvalue.pyx":557
  * 			self.pylist = v.value()
  * 
  * 	def __repr__(self):             # <<<<<<<<<<<<<<
@@ -9294,7 +9316,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_1__repr__(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__repr__");
 
-  /* "xmmsvalue.pyx":557
+  /* "xmmsvalue.pyx":558
  * 
  * 	def __repr__(self):
  * 		return repr(self.pylist)             # <<<<<<<<<<<<<<
@@ -9304,7 +9326,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_1__repr__(PyObject *__
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = ((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist;
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 557; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 558; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
@@ -9324,7 +9346,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_1__repr__(PyObject *__
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":558
+/* "xmmsvalue.pyx":559
  * 	def __repr__(self):
  * 		return repr(self.pylist)
  * 	def __str__(self):             # <<<<<<<<<<<<<<
@@ -9343,7 +9365,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_2__str__(PyObject *__p
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__str__");
 
-  /* "xmmsvalue.pyx":559
+  /* "xmmsvalue.pyx":560
  * 		return repr(self.pylist)
  * 	def __str__(self):
  * 		return str(self.pylist)             # <<<<<<<<<<<<<<
@@ -9351,12 +9373,12 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_2__str__(PyObject *__p
  * 		return len(self.pylist)
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 559; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 560; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   __Pyx_INCREF(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist);
   PyTuple_SET_ITEM(__pyx_t_1, 0, ((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist);
   __Pyx_GIVEREF(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist);
-  __pyx_t_2 = PyObject_Call(((PyObject *)((PyObject*)(&PyString_Type))), ((PyObject *)__pyx_t_1), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 559; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Call(((PyObject *)((PyObject*)(&PyString_Type))), ((PyObject *)__pyx_t_1), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 560; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
@@ -9376,7 +9398,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_2__str__(PyObject *__p
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":560
+/* "xmmsvalue.pyx":561
  * 	def __str__(self):
  * 		return str(self.pylist)
  * 	def __len__(self):             # <<<<<<<<<<<<<<
@@ -9395,7 +9417,7 @@ static Py_ssize_t __pyx_pf_9xmmsvalue_18CollectionOperands_3__len__(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__len__");
 
-  /* "xmmsvalue.pyx":561
+  /* "xmmsvalue.pyx":562
  * 		return str(self.pylist)
  * 	def __len__(self):
  * 		return len(self.pylist)             # <<<<<<<<<<<<<<
@@ -9404,7 +9426,7 @@ static Py_ssize_t __pyx_pf_9xmmsvalue_18CollectionOperands_3__len__(PyObject *__
  */
   __pyx_t_1 = ((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist;
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_Length(__pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 561; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Length(__pyx_t_1); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 562; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
   goto __pyx_L0;
@@ -9420,7 +9442,7 @@ static Py_ssize_t __pyx_pf_9xmmsvalue_18CollectionOperands_3__len__(PyObject *__
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":562
+/* "xmmsvalue.pyx":563
  * 	def __len__(self):
  * 		return len(self.pylist)
  * 	def __getitem__(self, i):             # <<<<<<<<<<<<<<
@@ -9438,7 +9460,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_4__getitem__(PyObject 
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__getitem__");
 
-  /* "xmmsvalue.pyx":563
+  /* "xmmsvalue.pyx":564
  * 		return len(self.pylist)
  * 	def __getitem__(self, i):
  * 		return self.pylist[i]             # <<<<<<<<<<<<<<
@@ -9446,7 +9468,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_4__getitem__(PyObject 
  * 		cdef Collection op
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyObject_GetItem(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist, __pyx_v_i); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 563; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_GetItem(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist, __pyx_v_i); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 564; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9464,7 +9486,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_4__getitem__(PyObject 
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":564
+/* "xmmsvalue.pyx":565
  * 	def __getitem__(self, i):
  * 		return self.pylist[i]
  * 	def __delitem__(self, i):             # <<<<<<<<<<<<<<
@@ -9490,7 +9512,7 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands_5__delitem__(PyObject *__pyx
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__delitem__");
 
-  /* "xmmsvalue.pyx":566
+  /* "xmmsvalue.pyx":567
  * 	def __delitem__(self, i):
  * 		cdef Collection op
  * 		try:             # <<<<<<<<<<<<<<
@@ -9504,29 +9526,29 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands_5__delitem__(PyObject *__pyx
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "xmmsvalue.pyx":567
+      /* "xmmsvalue.pyx":568
  * 		cdef Collection op
  * 		try:
  * 			op = self.pylist.pop(i)             # <<<<<<<<<<<<<<
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 		except IndexError:
  */
-      __pyx_t_4 = PyObject_GetAttr(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist, __pyx_n_s__pop); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 567; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
+      __pyx_t_4 = PyObject_GetAttr(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist, __pyx_n_s__pop); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 568; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 567; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 568; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_5));
       __Pyx_INCREF(__pyx_v_i);
       PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_i);
       __Pyx_GIVEREF(__pyx_v_i);
-      __pyx_t_6 = PyObject_Call(__pyx_t_4, ((PyObject *)__pyx_t_5), NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 567; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
+      __pyx_t_6 = PyObject_Call(__pyx_t_4, ((PyObject *)__pyx_t_5), NULL); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 568; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(((PyObject *)__pyx_t_5)); __pyx_t_5 = 0;
-      if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 567; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
+      if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 568; __pyx_clineno = __LINE__; goto __pyx_L5_error;}
       __pyx_v_op = ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_t_6);
       __pyx_t_6 = 0;
 
-      /* "xmmsvalue.pyx":568
+      /* "xmmsvalue.pyx":569
  * 		try:
  * 			op = self.pylist.pop(i)
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)             # <<<<<<<<<<<<<<
@@ -9544,7 +9566,7 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands_5__delitem__(PyObject *__pyx
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "xmmsvalue.pyx":569
+    /* "xmmsvalue.pyx":570
  * 			op = self.pylist.pop(i)
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 		except IndexError:             # <<<<<<<<<<<<<<
@@ -9554,23 +9576,23 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands_5__delitem__(PyObject *__pyx
     __pyx_t_7 = PyErr_ExceptionMatches(__pyx_builtin_IndexError);
     if (__pyx_t_7) {
       __Pyx_AddTraceback("xmmsvalue.CollectionOperands.__delitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_5, &__pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 569; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
+      if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_5, &__pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 570; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GOTREF(__pyx_t_4);
 
-      /* "xmmsvalue.pyx":570
+      /* "xmmsvalue.pyx":571
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 		except IndexError:
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 	def __iter__(self):
  * 		return iter(self.pylist)
  */
-      __pyx_t_8 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_34), NULL); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 570; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
+      __pyx_t_8 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_34), NULL); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 571; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 570; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 571; __pyx_clineno = __LINE__; goto __pyx_L7_except_error;}
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -9605,7 +9627,7 @@ static int __pyx_pf_9xmmsvalue_18CollectionOperands_5__delitem__(PyObject *__pyx
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":571
+/* "xmmsvalue.pyx":572
  * 		except IndexError:
  * 			raise IndexError("Index out of range")
  * 	def __iter__(self):             # <<<<<<<<<<<<<<
@@ -9624,7 +9646,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_6__iter__(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__iter__");
 
-  /* "xmmsvalue.pyx":572
+  /* "xmmsvalue.pyx":573
  * 			raise IndexError("Index out of range")
  * 	def __iter__(self):
  * 		return iter(self.pylist)             # <<<<<<<<<<<<<<
@@ -9634,7 +9656,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_6__iter__(PyObject *__
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = ((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->pylist;
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 572; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
@@ -9654,7 +9676,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_6__iter__(PyObject *__
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":574
+/* "xmmsvalue.pyx":575
  * 		return iter(self.pylist)
  * 
  * 	cpdef append(self, Collection op):             # <<<<<<<<<<<<<<
@@ -9677,16 +9699,16 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_append(struct __pyx_obj
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__append); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 574; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__append); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_18CollectionOperands_7append)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 574; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_2));
       __Pyx_INCREF(((PyObject *)__pyx_v_op));
       PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)__pyx_v_op));
       __Pyx_GIVEREF(((PyObject *)__pyx_v_op));
-      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 574; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
       __pyx_r = __pyx_t_3;
@@ -9697,7 +9719,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_append(struct __pyx_obj
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":577
+  /* "xmmsvalue.pyx":578
  * 		"""Append an operand"""
  * 		with cython.nonecheck(True):
  * 			xmmsv_coll_add_operand(self.coll, op.coll)             # <<<<<<<<<<<<<<
@@ -9706,15 +9728,15 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_append(struct __pyx_obj
  */
   if (unlikely(((PyObject *)__pyx_v_self) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("coll");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 577; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 578; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   if (unlikely(((PyObject *)__pyx_v_op) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("coll");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 577; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 578; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   xmmsv_coll_add_operand(__pyx_v_self->__pyx_base.coll, __pyx_v_op->__pyx_base.coll);
 
-  /* "xmmsvalue.pyx":578
+  /* "xmmsvalue.pyx":579
  * 		with cython.nonecheck(True):
  * 			xmmsv_coll_add_operand(self.coll, op.coll)
  * 			self.pylist.append(op)             # <<<<<<<<<<<<<<
@@ -9723,9 +9745,9 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_append(struct __pyx_obj
  */
   if (unlikely(((PyObject *)__pyx_v_self) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("pylist");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 578; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
-  __pyx_t_1 = __Pyx_PyObject_Append(__pyx_v_self->pylist, ((PyObject *)__pyx_v_op)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 578; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Append(__pyx_v_self->pylist, ((PyObject *)__pyx_v_op)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
@@ -9743,7 +9765,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_append(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":574
+/* "xmmsvalue.pyx":575
  * 		return iter(self.pylist)
  * 
  * 	cpdef append(self, Collection op):             # <<<<<<<<<<<<<<
@@ -9761,9 +9783,9 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_7append(PyObject *__py
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("append");
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_op), __pyx_ptype_9xmmsvalue_Collection, 1, "op", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 574; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_op), __pyx_ptype_9xmmsvalue_Collection, 1, "op", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->append(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_v_op), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 574; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->append(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_v_op), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9781,7 +9803,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_7append(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":580
+/* "xmmsvalue.pyx":581
  * 			self.pylist.append(op)
  * 
  * 	cpdef extend(self, ops):             # <<<<<<<<<<<<<<
@@ -9807,16 +9829,16 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__extend); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__extend); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_18CollectionOperands_8extend)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_2));
       __Pyx_INCREF(__pyx_v_ops);
       PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_ops);
       __Pyx_GIVEREF(__pyx_v_ops);
-      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
       __pyx_r = __pyx_t_3;
@@ -9827,7 +9849,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":581
+  /* "xmmsvalue.pyx":582
  * 
  * 	cpdef extend(self, ops):
  * 		for o in ops:             # <<<<<<<<<<<<<<
@@ -9838,7 +9860,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
     __pyx_t_1 = __pyx_v_ops; __Pyx_INCREF(__pyx_t_1); __pyx_t_4 = 0;
     __pyx_t_5 = NULL;
   } else {
-    __pyx_t_4 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_ops); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_ops); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 582; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_5 = Py_TYPE(__pyx_t_1)->tp_iternext;
   }
@@ -9854,7 +9876,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
       if (unlikely(!__pyx_t_3)) {
         if (PyErr_Occurred()) {
           if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 582; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         }
         break;
       }
@@ -9864,17 +9886,17 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
     __pyx_v_o = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "xmmsvalue.pyx":582
+    /* "xmmsvalue.pyx":583
  * 	cpdef extend(self, ops):
  * 		for o in ops:
  * 			self.append(o)             # <<<<<<<<<<<<<<
  * 
  * 	cpdef remove(self, Collection op):
  */
-    if (!(likely(((__pyx_v_o) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_o, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 582; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (!(likely(((__pyx_v_o) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_o, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 583; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_t_3 = __pyx_v_o;
     __Pyx_INCREF(__pyx_t_3);
-    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)__pyx_v_self->__pyx_base.__pyx_vtab)->append(__pyx_v_self, ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_t_3), 0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 582; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)__pyx_v_self->__pyx_base.__pyx_vtab)->append(__pyx_v_self, ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_t_3), 0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 583; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -9896,7 +9918,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_extend(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":580
+/* "xmmsvalue.pyx":581
  * 			self.pylist.append(op)
  * 
  * 	cpdef extend(self, ops):             # <<<<<<<<<<<<<<
@@ -9914,7 +9936,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_8extend(PyObject *__py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("extend");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), __pyx_v_ops, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), __pyx_v_ops, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 581; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9932,7 +9954,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_8extend(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":584
+/* "xmmsvalue.pyx":585
  * 			self.append(o)
  * 
  * 	cpdef remove(self, Collection op):             # <<<<<<<<<<<<<<
@@ -9955,16 +9977,16 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_remove(struct __pyx_obj
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 585; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_18CollectionOperands_9remove)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 585; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_2));
       __Pyx_INCREF(((PyObject *)__pyx_v_op));
       PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)__pyx_v_op));
       __Pyx_GIVEREF(((PyObject *)__pyx_v_op));
-      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 585; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
       __pyx_r = __pyx_t_3;
@@ -9975,7 +9997,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_remove(struct __pyx_obj
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":587
+  /* "xmmsvalue.pyx":588
  * 		"""Remove an operand"""
  * 		with cython.nonecheck(True):
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)             # <<<<<<<<<<<<<<
@@ -9984,15 +10006,15 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_remove(struct __pyx_obj
  */
   if (unlikely(((PyObject *)__pyx_v_self) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("coll");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 587; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   if (unlikely(((PyObject *)__pyx_v_op) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("coll");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 587; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   xmmsv_coll_remove_operand(__pyx_v_self->__pyx_base.coll, __pyx_v_op->__pyx_base.coll);
 
-  /* "xmmsvalue.pyx":588
+  /* "xmmsvalue.pyx":589
  * 		with cython.nonecheck(True):
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 			self.pylist.remove(op)             # <<<<<<<<<<<<<<
@@ -10001,16 +10023,16 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_remove(struct __pyx_obj
  */
   if (unlikely(((PyObject *)__pyx_v_self) == Py_None)) {
     __Pyx_RaiseNoneAttributeError("pylist");
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
-  __pyx_t_1 = PyObject_GetAttr(__pyx_v_self->pylist, __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyObject_GetAttr(__pyx_v_self->pylist, __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_op));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_op));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_op));
-  __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 588; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -10030,7 +10052,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_remove(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":584
+/* "xmmsvalue.pyx":585
  * 			self.append(o)
  * 
  * 	cpdef remove(self, Collection op):             # <<<<<<<<<<<<<<
@@ -10048,9 +10070,9 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_9remove(PyObject *__py
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("remove");
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_op), __pyx_ptype_9xmmsvalue_Collection, 1, "op", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_op), __pyx_ptype_9xmmsvalue_Collection, 1, "op", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 585; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_v_op), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_v_op), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 585; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10068,7 +10090,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_9remove(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":590
+/* "xmmsvalue.pyx":591
  * 			self.pylist.remove(op)
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -10093,11 +10115,11 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 590; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_18CollectionOperands_10clear)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 590; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_r = __pyx_t_2;
       __pyx_t_2 = 0;
@@ -10107,7 +10129,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":592
+  /* "xmmsvalue.pyx":593
  * 	cpdef clear(self):
  * 		cdef Collection op
  * 		for op in self.pylist:             # <<<<<<<<<<<<<<
@@ -10118,7 +10140,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
     __pyx_t_1 = __pyx_v_self->pylist; __Pyx_INCREF(__pyx_t_1); __pyx_t_3 = 0;
     __pyx_t_4 = NULL;
   } else {
-    __pyx_t_3 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_self->pylist); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_self->pylist); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 593; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_4 = Py_TYPE(__pyx_t_1)->tp_iternext;
   }
@@ -10134,18 +10156,18 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
       if (unlikely(!__pyx_t_2)) {
         if (PyErr_Occurred()) {
           if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 593; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         }
         break;
       }
       __Pyx_GOTREF(__pyx_t_2);
     }
-    if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 592; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 593; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_XDECREF(((PyObject *)__pyx_v_op));
     __pyx_v_op = ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "xmmsvalue.pyx":593
+    /* "xmmsvalue.pyx":594
  * 		cdef Collection op
  * 		for op in self.pylist:
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)             # <<<<<<<<<<<<<<
@@ -10156,14 +10178,14 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "xmmsvalue.pyx":594
+  /* "xmmsvalue.pyx":595
  * 		for op in self.pylist:
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 		self.pylist = []             # <<<<<<<<<<<<<<
  * 
  * 	cpdef list(self):
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   __Pyx_GIVEREF(((PyObject *)__pyx_t_1));
   __Pyx_GOTREF(__pyx_v_self->pylist);
@@ -10185,7 +10207,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_clear(struct __pyx_obj_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":590
+/* "xmmsvalue.pyx":591
  * 			self.pylist.remove(op)
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -10203,7 +10225,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_10clear(PyObject *__py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("clear");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 590; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10221,7 +10243,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_10clear(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":596
+/* "xmmsvalue.pyx":597
  * 		self.pylist = []
  * 
  * 	cpdef list(self):             # <<<<<<<<<<<<<<
@@ -10243,11 +10265,11 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_list(struct __pyx_obj_9
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__list); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__list); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_18CollectionOperands_11list)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_r = __pyx_t_2;
       __pyx_t_2 = 0;
@@ -10257,7 +10279,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_list(struct __pyx_obj_9
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":597
+  /* "xmmsvalue.pyx":598
  * 
  * 	cpdef list(self):
  * 		return self.pylist[:]             # <<<<<<<<<<<<<<
@@ -10265,7 +10287,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_list(struct __pyx_obj_9
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PySequence_GetSlice(__pyx_v_self->pylist, 0, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PySequence_GetSlice(__pyx_v_self->pylist, 0, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 598; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10284,7 +10306,7 @@ static PyObject *__pyx_f_9xmmsvalue_18CollectionOperands_list(struct __pyx_obj_9
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":596
+/* "xmmsvalue.pyx":597
  * 		self.pylist = []
  * 
  * 	cpdef list(self):             # <<<<<<<<<<<<<<
@@ -10302,7 +10324,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_11list(PyObject *__pyx
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("list");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionOperands *)((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionOperands *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10320,7 +10342,7 @@ static PyObject *__pyx_pf_9xmmsvalue_18CollectionOperands_11list(PyObject *__pyx
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":602
+/* "xmmsvalue.pyx":603
  * 
  * cdef class CollectionIDList(CollectionRef):
  * 	def __init__(self, Collection c):             # <<<<<<<<<<<<<<
@@ -10357,7 +10379,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList___init__(PyObject *__pyx_v_sel
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 603; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -10368,15 +10390,15 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList___init__(PyObject *__pyx_v_sel
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 603; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.CollectionIDList.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_c), __pyx_ptype_9xmmsvalue_Collection, 1, "c", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_c), __pyx_ptype_9xmmsvalue_Collection, 1, "c", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 603; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":603
+  /* "xmmsvalue.pyx":604
  * cdef class CollectionIDList(CollectionRef):
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:             # <<<<<<<<<<<<<<
@@ -10386,30 +10408,30 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList___init__(PyObject *__pyx_v_sel
   __pyx_t_1 = (__pyx_v_c->__pyx_base.coll == NULL);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":604
+    /* "xmmsvalue.pyx":605
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")             # <<<<<<<<<<<<<<
  * 		self.set_collection(c.coll)
  * 
  */
-    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_35), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 604; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_35), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 604; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":605
+  /* "xmmsvalue.pyx":606
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")
  * 		self.set_collection(c.coll)             # <<<<<<<<<<<<<<
  * 
  * 	def __len__(self):
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_self), __pyx_v_c->__pyx_base.coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_self), __pyx_v_c->__pyx_base.coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 606; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
@@ -10424,7 +10446,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList___init__(PyObject *__pyx_v_sel
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":607
+/* "xmmsvalue.pyx":608
  * 		self.set_collection(c.coll)
  * 
  * 	def __len__(self):             # <<<<<<<<<<<<<<
@@ -10438,7 +10460,7 @@ static Py_ssize_t __pyx_pf_9xmmsvalue_16CollectionIDList_1__len__(PyObject *__py
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__len__");
 
-  /* "xmmsvalue.pyx":608
+  /* "xmmsvalue.pyx":609
  * 
  * 	def __len__(self):
  * 		return xmmsv_coll_idlist_get_size(self.coll)             # <<<<<<<<<<<<<<
@@ -10454,7 +10476,7 @@ static Py_ssize_t __pyx_pf_9xmmsvalue_16CollectionIDList_1__len__(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":610
+/* "xmmsvalue.pyx":611
  * 		return xmmsv_coll_idlist_get_size(self.coll)
  * 
  * 	cpdef list(self):             # <<<<<<<<<<<<<<
@@ -10482,11 +10504,11 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__list); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 610; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__list); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 611; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_2list)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 610; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 611; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_r = __pyx_t_2;
       __pyx_t_2 = 0;
@@ -10496,7 +10518,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":615
+  /* "xmmsvalue.pyx":616
  * 		cdef int l
  * 		cdef int i
  * 		l = xmmsv_coll_idlist_get_size(self.coll)             # <<<<<<<<<<<<<<
@@ -10505,7 +10527,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
  */
   __pyx_v_l = xmmsv_coll_idlist_get_size(__pyx_v_self->__pyx_base.coll);
 
-  /* "xmmsvalue.pyx":616
+  /* "xmmsvalue.pyx":617
  * 		cdef int i
  * 		l = xmmsv_coll_idlist_get_size(self.coll)
  * 		i = 0             # <<<<<<<<<<<<<<
@@ -10514,19 +10536,19 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
  */
   __pyx_v_i = 0;
 
-  /* "xmmsvalue.pyx":617
+  /* "xmmsvalue.pyx":618
  * 		l = xmmsv_coll_idlist_get_size(self.coll)
  * 		i = 0
  * 		res = []             # <<<<<<<<<<<<<<
  * 		while i < l:
  * 			x = -1
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 617; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 618; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   __pyx_v_res = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "xmmsvalue.pyx":618
+  /* "xmmsvalue.pyx":619
  * 		i = 0
  * 		res = []
  * 		while i < l:             # <<<<<<<<<<<<<<
@@ -10537,7 +10559,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
     __pyx_t_3 = (__pyx_v_i < __pyx_v_l);
     if (!__pyx_t_3) break;
 
-    /* "xmmsvalue.pyx":619
+    /* "xmmsvalue.pyx":620
  * 		res = []
  * 		while i < l:
  * 			x = -1             # <<<<<<<<<<<<<<
@@ -10546,7 +10568,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
  */
     __pyx_v_x = -1;
 
-    /* "xmmsvalue.pyx":620
+    /* "xmmsvalue.pyx":621
  * 		while i < l:
  * 			x = -1
  * 			xmmsv_coll_idlist_get_index(self.coll, i, &x)             # <<<<<<<<<<<<<<
@@ -10555,7 +10577,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
  */
     xmmsv_coll_idlist_get_index(__pyx_v_self->__pyx_base.coll, __pyx_v_i, (&__pyx_v_x));
 
-    /* "xmmsvalue.pyx":621
+    /* "xmmsvalue.pyx":622
  * 			x = -1
  * 			xmmsv_coll_idlist_get_index(self.coll, i, &x)
  * 			res.append(x)             # <<<<<<<<<<<<<<
@@ -10563,14 +10585,14 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
  * 		return res
  */
     if (unlikely(((PyObject *)__pyx_v_res) == Py_None)) {
-      PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 621; __pyx_clineno = __LINE__; goto __pyx_L1_error;} 
+      PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; __pyx_clineno = __LINE__; goto __pyx_L1_error;} 
     }
-    __pyx_t_1 = PyInt_FromLong(__pyx_v_x); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 621; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyInt_FromLong(__pyx_v_x); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = PyList_Append(__pyx_v_res, __pyx_t_1); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 621; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyList_Append(__pyx_v_res, __pyx_t_1); if (unlikely(__pyx_t_4 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 622; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "xmmsvalue.pyx":622
+    /* "xmmsvalue.pyx":623
  * 			xmmsv_coll_idlist_get_index(self.coll, i, &x)
  * 			res.append(x)
  * 			i = i + 1             # <<<<<<<<<<<<<<
@@ -10580,7 +10602,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
     __pyx_v_i = (__pyx_v_i + 1);
   }
 
-  /* "xmmsvalue.pyx":623
+  /* "xmmsvalue.pyx":624
  * 			res.append(x)
  * 			i = i + 1
  * 		return res             # <<<<<<<<<<<<<<
@@ -10606,7 +10628,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_list(struct __pyx_obj_9xm
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":610
+/* "xmmsvalue.pyx":611
  * 		return xmmsv_coll_idlist_get_size(self.coll)
  * 
  * 	cpdef list(self):             # <<<<<<<<<<<<<<
@@ -10625,7 +10647,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_2list(PyObject *__pyx_v_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("list");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 610; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 611; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10643,7 +10665,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_2list(PyObject *__pyx_v_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":625
+/* "xmmsvalue.pyx":626
  * 		return res
  * 
  * 	def __repr__(self):             # <<<<<<<<<<<<<<
@@ -10662,7 +10684,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_3__repr__(PyObject *__py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__repr__");
 
-  /* "xmmsvalue.pyx":626
+  /* "xmmsvalue.pyx":627
  * 
  * 	def __repr__(self):
  * 		return repr(self.list())             # <<<<<<<<<<<<<<
@@ -10670,9 +10692,9 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_3__repr__(PyObject *__py
  * 	def __iter__(self):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 626; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 627; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 626; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 627; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
@@ -10692,7 +10714,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_3__repr__(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":628
+/* "xmmsvalue.pyx":629
  * 		return repr(self.list())
  * 
  * 	def __iter__(self):             # <<<<<<<<<<<<<<
@@ -10711,7 +10733,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_4__iter__(PyObject *__py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__iter__");
 
-  /* "xmmsvalue.pyx":629
+  /* "xmmsvalue.pyx":630
  * 
  * 	def __iter__(self):
  * 		return iter(self.list())             # <<<<<<<<<<<<<<
@@ -10719,9 +10741,9 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_4__iter__(PyObject *__py
  * 	cpdef append(self, int v):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 629; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->list(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 630; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 629; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 630; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
@@ -10741,7 +10763,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_4__iter__(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":631
+/* "xmmsvalue.pyx":632
  * 		return iter(self.list())
  * 
  * 	cpdef append(self, int v):             # <<<<<<<<<<<<<<
@@ -10764,18 +10786,18 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_append(struct __pyx_obj_9
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__append); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__append); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_5append)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyInt_FromLong(__pyx_v_v); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyInt_FromLong(__pyx_v_v); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_3));
       PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
       __Pyx_GIVEREF(__pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
       __pyx_r = __pyx_t_2;
@@ -10786,7 +10808,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_append(struct __pyx_obj_9
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":633
+  /* "xmmsvalue.pyx":634
  * 	cpdef append(self, int v):
  * 		"""Appends an id to the idlist"""
  * 		xmmsv_coll_idlist_append(self.coll, v)             # <<<<<<<<<<<<<<
@@ -10809,7 +10831,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_append(struct __pyx_obj_9
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":631
+/* "xmmsvalue.pyx":632
  * 		return iter(self.list())
  * 
  * 	cpdef append(self, int v):             # <<<<<<<<<<<<<<
@@ -10829,7 +10851,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_5append(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("append");
   assert(__pyx_arg_v); {
-    __pyx_v_v = __Pyx_PyInt_AsInt(__pyx_arg_v); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_v = __Pyx_PyInt_AsInt(__pyx_arg_v); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10838,7 +10860,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_5append(PyObject *__pyx_
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->append(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 631; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->append(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 632; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -10856,7 +10878,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_5append(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":635
+/* "xmmsvalue.pyx":636
  * 		xmmsv_coll_idlist_append(self.coll, v)
  * 
  * 	cpdef extend(self, v):             # <<<<<<<<<<<<<<
@@ -10883,16 +10905,16 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__extend); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 635; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__extend); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_6extend)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 635; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_2));
       __Pyx_INCREF(__pyx_v_v);
       PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_v);
       __Pyx_GIVEREF(__pyx_v_v);
-      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 635; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_2), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
       __pyx_r = __pyx_t_3;
@@ -10903,7 +10925,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":636
+  /* "xmmsvalue.pyx":637
  * 
  * 	cpdef extend(self, v):
  * 		for a in v:             # <<<<<<<<<<<<<<
@@ -10914,7 +10936,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
     __pyx_t_1 = __pyx_v_v; __Pyx_INCREF(__pyx_t_1); __pyx_t_4 = 0;
     __pyx_t_5 = NULL;
   } else {
-    __pyx_t_4 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_v); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_v); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_5 = Py_TYPE(__pyx_t_1)->tp_iternext;
   }
@@ -10930,7 +10952,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
       if (unlikely(!__pyx_t_3)) {
         if (PyErr_Occurred()) {
           if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) PyErr_Clear();
-          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+          else {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
         }
         break;
       }
@@ -10940,15 +10962,15 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
     __pyx_v_a = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "xmmsvalue.pyx":637
+    /* "xmmsvalue.pyx":638
  * 	cpdef extend(self, v):
  * 		for a in v:
  * 			self.append(a)             # <<<<<<<<<<<<<<
  * 
  * 	def __iadd__(self, v):
  */
-    __pyx_t_6 = __Pyx_PyInt_AsInt(__pyx_v_a); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __pyx_t_3 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)__pyx_v_self->__pyx_base.__pyx_vtab)->append(__pyx_v_self, __pyx_t_6, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 637; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = __Pyx_PyInt_AsInt(__pyx_v_a); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 638; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)__pyx_v_self->__pyx_base.__pyx_vtab)->append(__pyx_v_self, __pyx_t_6, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 638; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
@@ -10969,7 +10991,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_extend(struct __pyx_obj_9
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":635
+/* "xmmsvalue.pyx":636
  * 		xmmsv_coll_idlist_append(self.coll, v)
  * 
  * 	cpdef extend(self, v):             # <<<<<<<<<<<<<<
@@ -10987,7 +11009,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_6extend(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("extend");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 635; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 636; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -11005,7 +11027,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_6extend(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":639
+/* "xmmsvalue.pyx":640
  * 			self.append(a)
  * 
  * 	def __iadd__(self, v):             # <<<<<<<<<<<<<<
@@ -11023,18 +11045,18 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_7__iadd__(PyObject *__py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__iadd__");
 
-  /* "xmmsvalue.pyx":640
+  /* "xmmsvalue.pyx":641
  * 
  * 	def __iadd__(self, v):
  * 		self.extend(v)             # <<<<<<<<<<<<<<
  * 		return self
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 640; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->extend(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, 0); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 641; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "xmmsvalue.pyx":641
+  /* "xmmsvalue.pyx":642
  * 	def __iadd__(self, v):
  * 		self.extend(v)
  * 		return self             # <<<<<<<<<<<<<<
@@ -11058,7 +11080,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_7__iadd__(PyObject *__py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":643
+/* "xmmsvalue.pyx":644
  * 		return self
  * 
  * 	cpdef insert(self, int v, int i):             # <<<<<<<<<<<<<<
@@ -11084,15 +11106,15 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__insert); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__insert); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_8insert)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyInt_FromLong(__pyx_v_v); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyInt_FromLong(__pyx_v_v); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = PyInt_FromLong(__pyx_v_i); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyInt_FromLong(__pyx_v_i); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_4));
       PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
       __Pyx_GIVEREF(__pyx_t_2);
@@ -11100,7 +11122,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_2 = 0;
       __pyx_t_3 = 0;
-      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_4), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_4), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(((PyObject *)__pyx_t_4)); __pyx_t_4 = 0;
       __pyx_r = __pyx_t_3;
@@ -11111,7 +11133,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":645
+  /* "xmmsvalue.pyx":646
  * 	cpdef insert(self, int v, int i):
  * 		"""Inserts an id at specified position"""
  * 		if i < 0:             # <<<<<<<<<<<<<<
@@ -11121,20 +11143,20 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
   __pyx_t_5 = (__pyx_v_i < 0);
   if (__pyx_t_5) {
 
-    /* "xmmsvalue.pyx":646
+    /* "xmmsvalue.pyx":647
  * 		"""Inserts an id at specified position"""
  * 		if i < 0:
  * 			i = len(self) + i             # <<<<<<<<<<<<<<
  * 		if not xmmsv_coll_idlist_insert(self.coll, v, i):
  * 			raise IndexError("Index out of range")
  */
-    __pyx_t_6 = PyObject_Length(((PyObject *)__pyx_v_self)); if (unlikely(__pyx_t_6 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 646; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyObject_Length(((PyObject *)__pyx_v_self)); if (unlikely(__pyx_t_6 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 647; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_i = (__pyx_t_6 + __pyx_v_i);
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "xmmsvalue.pyx":647
+  /* "xmmsvalue.pyx":648
  * 		if i < 0:
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_insert(self.coll, v, i):             # <<<<<<<<<<<<<<
@@ -11144,18 +11166,18 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
   __pyx_t_5 = (!xmmsv_coll_idlist_insert(__pyx_v_self->__pyx_base.coll, __pyx_v_v, __pyx_v_i));
   if (__pyx_t_5) {
 
-    /* "xmmsvalue.pyx":648
+    /* "xmmsvalue.pyx":649
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_insert(self.coll, v, i):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	cpdef remove(self, int i):
  */
-    __pyx_t_1 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_36), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 648; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_36), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 648; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L4;
   }
   __pyx_L4:;
@@ -11175,7 +11197,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_insert(struct __pyx_obj_9
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":643
+/* "xmmsvalue.pyx":644
  * 		return self
  * 
  * 	cpdef insert(self, int v, int i):             # <<<<<<<<<<<<<<
@@ -11216,11 +11238,11 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_8insert(PyObject *__pyx_
         values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__i);
         if (likely(values[1])) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("insert", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("insert", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "insert") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "insert") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -11228,19 +11250,19 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_8insert(PyObject *__pyx_
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
-    __pyx_v_v = __Pyx_PyInt_AsInt(values[0]); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_i = __Pyx_PyInt_AsInt(values[1]); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_v = __Pyx_PyInt_AsInt(values[0]); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_i = __Pyx_PyInt_AsInt(values[1]); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("insert", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("insert", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.CollectionIDList.insert", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->insert(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, __pyx_v_i, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 643; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->insert(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_v, __pyx_v_i, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 644; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -11258,7 +11280,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_8insert(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":650
+/* "xmmsvalue.pyx":651
  * 			raise IndexError("Index out of range")
  * 
  * 	cpdef remove(self, int i):             # <<<<<<<<<<<<<<
@@ -11283,18 +11305,18 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_remove(struct __pyx_obj_9
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__remove); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_9remove)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyInt_FromLong(__pyx_v_i); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyInt_FromLong(__pyx_v_i); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_3));
       PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
       __Pyx_GIVEREF(__pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_t_3), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
       __pyx_r = __pyx_t_2;
@@ -11305,7 +11327,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_remove(struct __pyx_obj_9
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":652
+  /* "xmmsvalue.pyx":653
  * 	cpdef remove(self, int i):
  * 		"""Removes entry at specified position"""
  * 		if i < 0:             # <<<<<<<<<<<<<<
@@ -11315,20 +11337,20 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_remove(struct __pyx_obj_9
   __pyx_t_4 = (__pyx_v_i < 0);
   if (__pyx_t_4) {
 
-    /* "xmmsvalue.pyx":653
+    /* "xmmsvalue.pyx":654
  * 		"""Removes entry at specified position"""
  * 		if i < 0:
  * 			i = len(self) + i             # <<<<<<<<<<<<<<
  * 		if not xmmsv_coll_idlist_remove(self.coll, i):
  * 			raise IndexError("Index out of range")
  */
-    __pyx_t_5 = PyObject_Length(((PyObject *)__pyx_v_self)); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 653; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyObject_Length(((PyObject *)__pyx_v_self)); if (unlikely(__pyx_t_5 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 654; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_i = (__pyx_t_5 + __pyx_v_i);
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "xmmsvalue.pyx":654
+  /* "xmmsvalue.pyx":655
  * 		if i < 0:
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_remove(self.coll, i):             # <<<<<<<<<<<<<<
@@ -11338,18 +11360,18 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_remove(struct __pyx_obj_9
   __pyx_t_4 = (!xmmsv_coll_idlist_remove(__pyx_v_self->__pyx_base.coll, __pyx_v_i));
   if (__pyx_t_4) {
 
-    /* "xmmsvalue.pyx":655
+    /* "xmmsvalue.pyx":656
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_remove(self.coll, i):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	def __delitem__(self, int i):
  */
-    __pyx_t_1 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_37), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_37), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 656; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 656; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L4;
   }
   __pyx_L4:;
@@ -11368,7 +11390,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_remove(struct __pyx_obj_9
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":650
+/* "xmmsvalue.pyx":651
  * 			raise IndexError("Index out of range")
  * 
  * 	cpdef remove(self, int i):             # <<<<<<<<<<<<<<
@@ -11388,7 +11410,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_9remove(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("remove");
   assert(__pyx_arg_i); {
-    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11397,7 +11419,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_9remove(PyObject *__pyx_
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_i, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 650; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_i, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 651; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -11415,7 +11437,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_9remove(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":657
+/* "xmmsvalue.pyx":658
  * 			raise IndexError("Index out of range")
  * 
  * 	def __delitem__(self, int i):             # <<<<<<<<<<<<<<
@@ -11436,7 +11458,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_10__delitem__(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__delitem__");
   assert(__pyx_arg_i); {
-    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 657; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 658; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11445,7 +11467,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_10__delitem__(PyObject *__pyx_
   return -1;
   __pyx_L4_argument_unpacking_done:;
 
-  /* "xmmsvalue.pyx":658
+  /* "xmmsvalue.pyx":659
  * 
  * 	def __delitem__(self, int i):
  * 		if i < 0:             # <<<<<<<<<<<<<<
@@ -11455,27 +11477,27 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_10__delitem__(PyObject *__pyx_
   __pyx_t_1 = (__pyx_v_i < 0);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":659
+    /* "xmmsvalue.pyx":660
  * 	def __delitem__(self, int i):
  * 		if i < 0:
  * 			i = len(self) + i             # <<<<<<<<<<<<<<
  * 		self.remove(i)
  * 
  */
-    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 659; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 660; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_i = (__pyx_t_2 + __pyx_v_i);
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "xmmsvalue.pyx":660
+  /* "xmmsvalue.pyx":661
  * 		if i < 0:
  * 			i = len(self) + i
  * 		self.remove(i)             # <<<<<<<<<<<<<<
  * 
  * 	def __getitem__(self, int i):
  */
-  __pyx_t_3 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_i, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 660; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->remove(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), __pyx_v_i, 0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 661; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
@@ -11490,7 +11512,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_10__delitem__(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":662
+/* "xmmsvalue.pyx":663
  * 		self.remove(i)
  * 
  * 	def __getitem__(self, int i):             # <<<<<<<<<<<<<<
@@ -11512,7 +11534,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__getitem__");
   assert(__pyx_arg_i); {
-    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 662; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 663; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11521,7 +11543,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
   return NULL;
   __pyx_L4_argument_unpacking_done:;
 
-  /* "xmmsvalue.pyx":663
+  /* "xmmsvalue.pyx":664
  * 
  * 	def __getitem__(self, int i):
  * 		cdef int x = 0             # <<<<<<<<<<<<<<
@@ -11530,7 +11552,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
  */
   __pyx_v_x = 0;
 
-  /* "xmmsvalue.pyx":664
+  /* "xmmsvalue.pyx":665
  * 	def __getitem__(self, int i):
  * 		cdef int x = 0
  * 		if i < 0:             # <<<<<<<<<<<<<<
@@ -11540,20 +11562,20 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
   __pyx_t_1 = (__pyx_v_i < 0);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":665
+    /* "xmmsvalue.pyx":666
  * 		cdef int x = 0
  * 		if i < 0:
  * 			i = len(self) + i             # <<<<<<<<<<<<<<
  * 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
  * 			raise IndexError("Index out of range")
  */
-    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 665; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 666; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_i = (__pyx_t_2 + __pyx_v_i);
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "xmmsvalue.pyx":666
+  /* "xmmsvalue.pyx":667
  * 		if i < 0:
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):             # <<<<<<<<<<<<<<
@@ -11563,23 +11585,23 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
   __pyx_t_1 = (!xmmsv_coll_idlist_get_index(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.coll, __pyx_v_i, (&__pyx_v_x)));
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":667
+    /* "xmmsvalue.pyx":668
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 		return x
  * 
  */
-    __pyx_t_3 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_38), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 667; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_38), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 668; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 667; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 668; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":668
+  /* "xmmsvalue.pyx":669
  * 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
  * 			raise IndexError("Index out of range")
  * 		return x             # <<<<<<<<<<<<<<
@@ -11587,7 +11609,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
  * 	def __setitem__(self, int i, int v):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = PyInt_FromLong(__pyx_v_x); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 668; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyInt_FromLong(__pyx_v_x); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 669; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = __pyx_t_3;
   __pyx_t_3 = 0;
@@ -11605,7 +11627,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_11__getitem__(PyObject *
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":670
+/* "xmmsvalue.pyx":671
  * 		return x
  * 
  * 	def __setitem__(self, int i, int v):             # <<<<<<<<<<<<<<
@@ -11627,10 +11649,10 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_12__setitem__(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__setitem__");
   assert(__pyx_arg_i); {
-    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 670; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_i = __Pyx_PyInt_AsInt(__pyx_arg_i); if (unlikely((__pyx_v_i == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 671; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   assert(__pyx_arg_v); {
-    __pyx_v_v = __Pyx_PyInt_AsInt(__pyx_arg_v); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 670; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_v = __Pyx_PyInt_AsInt(__pyx_arg_v); if (unlikely((__pyx_v_v == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 671; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11639,7 +11661,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_12__setitem__(PyObject *__pyx_
   return -1;
   __pyx_L4_argument_unpacking_done:;
 
-  /* "xmmsvalue.pyx":671
+  /* "xmmsvalue.pyx":672
  * 
  * 	def __setitem__(self, int i, int v):
  * 		if i < 0:             # <<<<<<<<<<<<<<
@@ -11649,20 +11671,20 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_12__setitem__(PyObject *__pyx_
   __pyx_t_1 = (__pyx_v_i < 0);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":672
+    /* "xmmsvalue.pyx":673
  * 	def __setitem__(self, int i, int v):
  * 		if i < 0:
  * 			i = len(self) + i             # <<<<<<<<<<<<<<
  * 		if not xmmsv_coll_idlist_set_index(self.coll, i, v):
  * 			raise IndexError("Index out of range")
  */
-    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 672; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Length(__pyx_v_self); if (unlikely(__pyx_t_2 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __pyx_v_i = (__pyx_t_2 + __pyx_v_i);
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "xmmsvalue.pyx":673
+  /* "xmmsvalue.pyx":674
  * 		if i < 0:
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_set_index(self.coll, i, v):             # <<<<<<<<<<<<<<
@@ -11672,18 +11694,18 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_12__setitem__(PyObject *__pyx_
   __pyx_t_1 = (!xmmsv_coll_idlist_set_index(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.coll, __pyx_v_i, __pyx_v_v));
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":674
+    /* "xmmsvalue.pyx":675
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_set_index(self.coll, i, v):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	cpdef clear(self):
  */
-    __pyx_t_3 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_39), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_Call(__pyx_builtin_IndexError, ((PyObject *)__pyx_k_tuple_39), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 675; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 675; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L6;
   }
   __pyx_L6:;
@@ -11699,7 +11721,7 @@ static int __pyx_pf_9xmmsvalue_16CollectionIDList_12__setitem__(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":676
+/* "xmmsvalue.pyx":677
  * 			raise IndexError("Index out of range")
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -11721,11 +11743,11 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_clear(struct __pyx_obj_9x
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overriden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__clear); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 677; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (void *)&__pyx_pf_9xmmsvalue_16CollectionIDList_13clear)) {
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 677; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_r = __pyx_t_2;
       __pyx_t_2 = 0;
@@ -11735,7 +11757,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_clear(struct __pyx_obj_9x
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "xmmsvalue.pyx":677
+  /* "xmmsvalue.pyx":678
  * 
  * 	cpdef clear(self):
  * 		xmmsv_coll_idlist_clear(self.coll)             # <<<<<<<<<<<<<<
@@ -11757,7 +11779,7 @@ static PyObject *__pyx_f_9xmmsvalue_16CollectionIDList_clear(struct __pyx_obj_9x
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":676
+/* "xmmsvalue.pyx":677
  * 			raise IndexError("Index out of range")
  * 
  * 	cpdef clear(self):             # <<<<<<<<<<<<<<
@@ -11775,7 +11797,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_13clear(PyObject *__pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("clear");
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 676; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9xmmsvalue_CollectionIDList *)((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self)->__pyx_base.__pyx_vtab)->clear(((struct __pyx_obj_9xmmsvalue_CollectionIDList *)__pyx_v_self), 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 677; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -11793,7 +11815,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16CollectionIDList_13clear(PyObject *__pyx_
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":685
+/* "xmmsvalue.pyx":686
  * 
  * class BaseCollection(CollectionWrapper):
  * 	def __init__(Collection self, int _colltype, **kargs):             # <<<<<<<<<<<<<<
@@ -11850,11 +11872,11 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
         values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s___colltype);
         if (likely(values[1])) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kargs, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kargs, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -11863,20 +11885,20 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
     __pyx_v_self = ((struct __pyx_obj_9xmmsvalue_Collection *)values[0]);
-    __pyx_v__colltype = __Pyx_PyInt_AsInt(values[1]); if (unlikely((__pyx_v__colltype == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v__colltype = __Pyx_PyInt_AsInt(values[1]); if (unlikely((__pyx_v__colltype == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kargs); __pyx_v_kargs = 0;
   __Pyx_AddTraceback("xmmsvalue.BaseCollection.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":686
+  /* "xmmsvalue.pyx":687
  * class BaseCollection(CollectionWrapper):
  * 	def __init__(Collection self, int _colltype, **kargs):
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)             # <<<<<<<<<<<<<<
@@ -11885,7 +11907,7 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
  */
   __pyx_v_self->__pyx_base.coll = xmmsv_coll_new(((xmmsv_coll_type_t)__pyx_v__colltype));
 
-  /* "xmmsvalue.pyx":687
+  /* "xmmsvalue.pyx":688
  * 	def __init__(Collection self, int _colltype, **kargs):
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  * 		if self.coll == NULL:             # <<<<<<<<<<<<<<
@@ -11895,85 +11917,85 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
   __pyx_t_1 = (__pyx_v_self->__pyx_base.coll == NULL);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":688
+    /* "xmmsvalue.pyx":689
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  * 		if self.coll == NULL:
  * 			raise RuntimeError("Bad collection")             # <<<<<<<<<<<<<<
  * 
  * 		operands = kargs.pop("operands", None)
  */
-    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_41), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 688; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_41), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 689; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 688; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 689; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L6;
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":690
+  /* "xmmsvalue.pyx":691
  * 			raise RuntimeError("Bad collection")
  * 
  * 		operands = kargs.pop("operands", None)             # <<<<<<<<<<<<<<
  * 		if operands:
  * 			self.operands = operands
  */
-  __pyx_t_2 = PyObject_GetAttr(((PyObject *)__pyx_v_kargs), __pyx_n_s__pop); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 690; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(((PyObject *)__pyx_v_kargs), __pyx_n_s__pop); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 691; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_k_tuple_42), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 690; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_k_tuple_42), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 691; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_operands = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":691
+  /* "xmmsvalue.pyx":692
  * 
  * 		operands = kargs.pop("operands", None)
  * 		if operands:             # <<<<<<<<<<<<<<
  * 			self.operands = operands
  * 		ids = kargs.pop("ids", None)
  */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_operands); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 691; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_operands); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 692; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":692
+    /* "xmmsvalue.pyx":693
  * 		operands = kargs.pop("operands", None)
  * 		if operands:
  * 			self.operands = operands             # <<<<<<<<<<<<<<
  * 		ids = kargs.pop("ids", None)
  * 		if ids:
  */
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__operands, __pyx_v_operands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 692; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__operands, __pyx_v_operands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 693; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L7;
   }
   __pyx_L7:;
 
-  /* "xmmsvalue.pyx":693
+  /* "xmmsvalue.pyx":694
  * 		if operands:
  * 			self.operands = operands
  * 		ids = kargs.pop("ids", None)             # <<<<<<<<<<<<<<
  * 		if ids:
  * 			try:
  */
-  __pyx_t_3 = PyObject_GetAttr(((PyObject *)__pyx_v_kargs), __pyx_n_s__pop); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 693; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_GetAttr(((PyObject *)__pyx_v_kargs), __pyx_n_s__pop); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 694; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyObject_Call(__pyx_t_3, ((PyObject *)__pyx_k_tuple_43), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 693; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Call(__pyx_t_3, ((PyObject *)__pyx_k_tuple_43), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 694; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_ids = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":694
+  /* "xmmsvalue.pyx":695
  * 			self.operands = operands
  * 		ids = kargs.pop("ids", None)
  * 		if ids:             # <<<<<<<<<<<<<<
  * 			try:
  * 				self.ids = ids
  */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_ids); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 694; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_ids); if (unlikely(__pyx_t_1 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 695; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":695
+    /* "xmmsvalue.pyx":696
  * 		ids = kargs.pop("ids", None)
  * 		if ids:
  * 			try:             # <<<<<<<<<<<<<<
@@ -11987,14 +12009,14 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
       __Pyx_XGOTREF(__pyx_t_6);
       /*try:*/ {
 
-        /* "xmmsvalue.pyx":696
+        /* "xmmsvalue.pyx":697
  * 		if ids:
  * 			try:
  * 				self.ids = ids             # <<<<<<<<<<<<<<
  * 			except TypeError: # Just ignore idlist when illegal
  * 				pass
  */
-        if (PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__ids, __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 696; __pyx_clineno = __LINE__; goto __pyx_L9_error;}
+        if (PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__ids, __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 697; __pyx_clineno = __LINE__; goto __pyx_L9_error;}
       }
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -12004,7 +12026,7 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-      /* "xmmsvalue.pyx":697
+      /* "xmmsvalue.pyx":698
  * 			try:
  * 				self.ids = ids
  * 			except TypeError: # Just ignore idlist when illegal             # <<<<<<<<<<<<<<
@@ -12032,7 +12054,7 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
   }
   __pyx_L8:;
 
-  /* "xmmsvalue.pyx":699
+  /* "xmmsvalue.pyx":700
  * 			except TypeError: # Just ignore idlist when illegal
  * 				pass
  * 		for k in kargs:             # <<<<<<<<<<<<<<
@@ -12046,25 +12068,25 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
   __pyx_t_9 = PyDict_Size(__pyx_t_2);
   while (1) {
     if (unlikely(__pyx_t_9 != PyDict_Size(__pyx_t_2))) {
-      PyErr_SetString(PyExc_RuntimeError, "dictionary changed size during iteration"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 699; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      PyErr_SetString(PyExc_RuntimeError, "dictionary changed size during iteration"); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
     if (!PyDict_Next(__pyx_t_2, (&__pyx_t_8), (&__pyx_t_6), NULL)) break;
     __Pyx_INCREF(((PyObject *)__pyx_t_6));
     __Pyx_XDECREF(__pyx_v_k);
     __pyx_v_k = __pyx_t_6;
 
-    /* "xmmsvalue.pyx":700
+    /* "xmmsvalue.pyx":701
  * 				pass
  * 		for k in kargs:
  * 			self.attributes[k] = kargs[k]             # <<<<<<<<<<<<<<
  * 
  * class Reference(BaseCollection):
  */
-    __pyx_t_3 = __Pyx_PyDict_GetItem(((PyObject *)__pyx_v_kargs), __pyx_v_k); if (!__pyx_t_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyDict_GetItem(((PyObject *)__pyx_v_kargs), __pyx_v_k); if (!__pyx_t_3) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 701; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_10 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__attributes); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_10 = PyObject_GetAttr(((PyObject *)__pyx_v_self), __pyx_n_s__attributes); if (unlikely(!__pyx_t_10)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 701; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_10);
-    if (PyObject_SetItem(__pyx_t_10, __pyx_v_k, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetItem(__pyx_t_10, __pyx_v_k, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 701; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
@@ -12088,7 +12110,7 @@ static PyObject *__pyx_pf_9xmmsvalue_14BaseCollection___init__(PyObject *__pyx_s
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":703
+/* "xmmsvalue.pyx":704
  * 
  * class Reference(BaseCollection):
  * 	def __init__(Collection self, ref, ns="Collections"):             # <<<<<<<<<<<<<<
@@ -12136,7 +12158,7 @@ static PyObject *__pyx_pf_9xmmsvalue_9Reference___init__(PyObject *__pyx_self, P
         values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__ref);
         if (likely(values[1])) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (kw_args > 0) {
@@ -12145,7 +12167,7 @@ static PyObject *__pyx_pf_9xmmsvalue_9Reference___init__(PyObject *__pyx_self, P
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12162,29 +12184,29 @@ static PyObject *__pyx_pf_9xmmsvalue_9Reference___init__(PyObject *__pyx_self, P
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.Reference.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":704
+  /* "xmmsvalue.pyx":705
  * class Reference(BaseCollection):
  * 	def __init__(Collection self, ref, ns="Collections"):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,             # <<<<<<<<<<<<<<
  * 				namespace=ns, reference=ref)
  * 
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_REFERENCE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_REFERENCE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12192,19 +12214,19 @@ static PyObject *__pyx_pf_9xmmsvalue_9Reference___init__(PyObject *__pyx_self, P
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
 
-  /* "xmmsvalue.pyx":705
+  /* "xmmsvalue.pyx":706
  * 	def __init__(Collection self, ref, ns="Collections"):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,
  * 				namespace=ns, reference=ref)             # <<<<<<<<<<<<<<
  * 
  * class Universe(Reference):
  */
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__namespace), __pyx_v_ns) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__reference), __pyx_v_ref) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__namespace), __pyx_v_ns) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__reference), __pyx_v_ref) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 705; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12226,7 +12248,7 @@ static PyObject *__pyx_pf_9xmmsvalue_9Reference___init__(PyObject *__pyx_self, P
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":708
+/* "xmmsvalue.pyx":709
  * 
  * class Universe(Reference):
  * 	def __init__(self):             # <<<<<<<<<<<<<<
@@ -12248,19 +12270,19 @@ static PyObject *__pyx_pf_9xmmsvalue_8Universe___init__(PyObject *__pyx_self, Py
   __Pyx_RefNannySetupContext("__init__");
   __pyx_self = __pyx_self;
 
-  /* "xmmsvalue.pyx":709
+  /* "xmmsvalue.pyx":710
  * class Universe(Reference):
  * 	def __init__(self):
  * 		Reference.__init__(self, "All Media")             # <<<<<<<<<<<<<<
  * 
  * class FilterCollection(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   __Pyx_INCREF(__pyx_v_self);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self);
@@ -12268,7 +12290,7 @@ static PyObject *__pyx_pf_9xmmsvalue_8Universe___init__(PyObject *__pyx_self, Py
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_44));
   PyTuple_SET_ITEM(__pyx_t_1, 1, ((PyObject *)__pyx_kp_s_44));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_44));
-  __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_t_1), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_t_1), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 710; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
@@ -12288,7 +12310,7 @@ static PyObject *__pyx_pf_9xmmsvalue_8Universe___init__(PyObject *__pyx_self, Py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":712
+/* "xmmsvalue.pyx":713
  * 
  * class FilterCollection(BaseCollection):
  * 	def __init__(Collection self, operation, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12340,7 +12362,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
         values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__operation);
         if (likely(values[1])) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (kw_args > 0) {
@@ -12349,7 +12371,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12366,7 +12388,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.FilterCollection.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -12374,9 +12396,9 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   __Pyx_INCREF(__pyx_v_parent);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":713
+  /* "xmmsvalue.pyx":714
  * class FilterCollection(BaseCollection):
  * 	def __init__(Collection self, operation, parent=None, **kv):
  * 		if parent is None:             # <<<<<<<<<<<<<<
@@ -12386,16 +12408,16 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   __pyx_t_1 = (__pyx_v_parent == Py_None);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":714
+    /* "xmmsvalue.pyx":715
  * 	def __init__(Collection self, operation, parent=None, **kv):
  * 		if parent is None:
  * 			parent = Universe()             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, operation, operands=[parent], **kv)
  * 
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_v_parent);
@@ -12405,19 +12427,19 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":715
+  /* "xmmsvalue.pyx":716
  * 		if parent is None:
  * 			parent = Universe()
  * 		BaseCollection.__init__(self, operation, operands=[parent], **kv)             # <<<<<<<<<<<<<<
  * 
  * class Equals(FilterCollection):
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_3, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_3, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12425,17 +12447,17 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   __Pyx_INCREF(__pyx_v_operation);
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_operation);
   __Pyx_GIVEREF(__pyx_v_operation);
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_4));
-  __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_5));
   __Pyx_INCREF(__pyx_v_parent);
   PyList_SET_ITEM(__pyx_t_5, 0, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
-  if (PyDict_SetItem(__pyx_t_4, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_5)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_4, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_5)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(((PyObject *)__pyx_t_5)); __pyx_t_5 = 0;
-  if (PyDict_Update(((PyObject *)__pyx_t_4), ((PyObject *)__pyx_v_kv)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_5 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_4)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 715; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_Update(((PyObject *)__pyx_t_4), ((PyObject *)__pyx_v_kv)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_4)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12459,7 +12481,7 @@ static PyObject *__pyx_pf_9xmmsvalue_16FilterCollection___init__(PyObject *__pyx
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":718
+/* "xmmsvalue.pyx":719
  * 
  * class Equals(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12510,7 +12532,7 @@ static PyObject *__pyx_pf_9xmmsvalue_6Equals___init__(PyObject *__pyx_self, PyOb
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12525,30 +12547,30 @@ static PyObject *__pyx_pf_9xmmsvalue_6Equals___init__(PyObject *__pyx_self, PyOb
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.Equals.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":719
+  /* "xmmsvalue.pyx":720
  * class Equals(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)             # <<<<<<<<<<<<<<
  * 
  * class Smaller(FilterCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_EQUALS); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_EQUALS); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12559,7 +12581,7 @@ static PyObject *__pyx_pf_9xmmsvalue_6Equals___init__(PyObject *__pyx_self, PyOb
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12580,7 +12602,7 @@ static PyObject *__pyx_pf_9xmmsvalue_6Equals___init__(PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":722
+/* "xmmsvalue.pyx":723
  * 
  * class Smaller(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12631,7 +12653,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Smaller___init__(PyObject *__pyx_self, PyO
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12646,30 +12668,30 @@ static PyObject *__pyx_pf_9xmmsvalue_7Smaller___init__(PyObject *__pyx_self, PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.Smaller.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":723
+  /* "xmmsvalue.pyx":724
  * class Smaller(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)             # <<<<<<<<<<<<<<
  * 
  * class Greater(FilterCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_SMALLER); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_SMALLER); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12680,7 +12702,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Smaller___init__(PyObject *__pyx_self, PyO
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12701,7 +12723,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Smaller___init__(PyObject *__pyx_self, PyO
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":726
+/* "xmmsvalue.pyx":727
  * 
  * class Greater(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12752,7 +12774,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Greater___init__(PyObject *__pyx_self, PyO
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12767,30 +12789,30 @@ static PyObject *__pyx_pf_9xmmsvalue_7Greater___init__(PyObject *__pyx_self, PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.Greater.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":727
+  /* "xmmsvalue.pyx":728
  * class Greater(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)             # <<<<<<<<<<<<<<
  * 
  * class Match(FilterCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_GREATER); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_GREATER); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12801,7 +12823,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Greater___init__(PyObject *__pyx_self, PyO
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12822,7 +12844,7 @@ static PyObject *__pyx_pf_9xmmsvalue_7Greater___init__(PyObject *__pyx_self, PyO
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":730
+/* "xmmsvalue.pyx":731
  * 
  * class Match(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12873,7 +12895,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Match___init__(PyObject *__pyx_self, PyObj
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12888,30 +12910,30 @@ static PyObject *__pyx_pf_9xmmsvalue_5Match___init__(PyObject *__pyx_self, PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.Match.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":731
+  /* "xmmsvalue.pyx":732
  * class Match(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)             # <<<<<<<<<<<<<<
  * 
  * class Has(FilterCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 732; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 732; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_MATCH); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_MATCH); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 732; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 732; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -12922,7 +12944,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Match___init__(PyObject *__pyx_self, PyObj
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 732; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -12943,7 +12965,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Match___init__(PyObject *__pyx_self, PyObj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":734
+/* "xmmsvalue.pyx":735
  * 
  * class Has(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
@@ -12994,7 +13016,7 @@ static PyObject *__pyx_pf_9xmmsvalue_3Has___init__(PyObject *__pyx_self, PyObjec
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kv, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -13009,30 +13031,30 @@ static PyObject *__pyx_pf_9xmmsvalue_3Has___init__(PyObject *__pyx_self, PyObjec
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_kv); __pyx_v_kv = 0;
   __Pyx_AddTraceback("xmmsvalue.Has.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":735
+  /* "xmmsvalue.pyx":736
  * class Has(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)             # <<<<<<<<<<<<<<
  * 
  * class IDList(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 736; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 736; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_HAS); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_HAS); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 736; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 736; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13043,7 +13065,7 @@ static PyObject *__pyx_pf_9xmmsvalue_3Has___init__(PyObject *__pyx_self, PyObjec
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_v_kv)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 736; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13064,7 +13086,7 @@ static PyObject *__pyx_pf_9xmmsvalue_3Has___init__(PyObject *__pyx_self, PyObjec
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":738
+/* "xmmsvalue.pyx":739
  * 
  * class IDList(BaseCollection):
  * 	def __init__(Collection self, ids = None):             # <<<<<<<<<<<<<<
@@ -13113,7 +13135,7 @@ static PyObject *__pyx_pf_9xmmsvalue_6IDList___init__(PyObject *__pyx_self, PyOb
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -13128,29 +13150,29 @@ static PyObject *__pyx_pf_9xmmsvalue_6IDList___init__(PyObject *__pyx_self, PyOb
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.IDList.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":739
+  /* "xmmsvalue.pyx":740
  * class IDList(BaseCollection):
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)             # <<<<<<<<<<<<<<
  * 
  * class Queue(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_IDLIST); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_IDLIST); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13158,10 +13180,10 @@ static PyObject *__pyx_pf_9xmmsvalue_6IDList___init__(PyObject *__pyx_self, PyOb
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 740; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13183,7 +13205,7 @@ static PyObject *__pyx_pf_9xmmsvalue_6IDList___init__(PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":742
+/* "xmmsvalue.pyx":743
  * 
  * class Queue(BaseCollection):
  * 	def __init__(Collection self, ids = None):             # <<<<<<<<<<<<<<
@@ -13232,7 +13254,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Queue___init__(PyObject *__pyx_self, PyObj
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -13247,29 +13269,29 @@ static PyObject *__pyx_pf_9xmmsvalue_5Queue___init__(PyObject *__pyx_self, PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.Queue.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":743
+  /* "xmmsvalue.pyx":744
  * class Queue(BaseCollection):
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)             # <<<<<<<<<<<<<<
  * 
  * class PShuffle(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_QUEUE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_QUEUE); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13277,10 +13299,10 @@ static PyObject *__pyx_pf_9xmmsvalue_5Queue___init__(PyObject *__pyx_self, PyObj
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 744; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13302,7 +13324,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Queue___init__(PyObject *__pyx_self, PyObj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":746
+/* "xmmsvalue.pyx":747
  * 
  * class PShuffle(BaseCollection):
  * 	def __init__(Collection self, parent = None, ids = None):             # <<<<<<<<<<<<<<
@@ -13360,7 +13382,7 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -13377,16 +13399,16 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.PShuffle.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   __Pyx_INCREF(__pyx_v_parent);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":747
+  /* "xmmsvalue.pyx":748
  * class PShuffle(BaseCollection):
  * 	def __init__(Collection self, parent = None, ids = None):
  * 		if parent is None:             # <<<<<<<<<<<<<<
@@ -13396,16 +13418,16 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
   __pyx_t_1 = (__pyx_v_parent == Py_None);
   if (__pyx_t_1) {
 
-    /* "xmmsvalue.pyx":748
+    /* "xmmsvalue.pyx":749
  * 	def __init__(Collection self, parent = None, ids = None):
  * 		if parent is None:
  * 			parent = Universe()             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE, operands=[parent], ids=ids)
  * 
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 748; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 748; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyObject_Call(__pyx_t_2, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_v_parent);
@@ -13415,21 +13437,21 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
   }
   __pyx_L6:;
 
-  /* "xmmsvalue.pyx":749
+  /* "xmmsvalue.pyx":750
  * 		if parent is None:
  * 			parent = Universe()
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE, operands=[parent], ids=ids)             # <<<<<<<<<<<<<<
  * 
  * class Union(BaseCollection):
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_3, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_3, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyInt_FromLong(XMMS_COLLECTION_TYPE_PARTYSHUFFLE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyInt_FromLong(XMMS_COLLECTION_TYPE_PARTYSHUFFLE); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_4));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_4, 0, ((PyObject *)__pyx_v_self));
@@ -13437,17 +13459,17 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
   PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
-  __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_5));
   __Pyx_INCREF(__pyx_v_parent);
   PyList_SET_ITEM(__pyx_t_5, 0, __pyx_v_parent);
   __Pyx_GIVEREF(__pyx_v_parent);
-  if (PyDict_SetItem(__pyx_t_3, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_5)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_3, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_5)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(((PyObject *)__pyx_t_5)); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_3, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_5 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_4), ((PyObject *)__pyx_t_3)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_3, ((PyObject *)__pyx_n_s__ids), __pyx_v_ids) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_4), ((PyObject *)__pyx_t_3)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 750; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_4)); __pyx_t_4 = 0;
@@ -13470,7 +13492,7 @@ static PyObject *__pyx_pf_9xmmsvalue_8PShuffle___init__(PyObject *__pyx_self, Py
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":752
+/* "xmmsvalue.pyx":753
  * 
  * class Union(BaseCollection):
  * 	def __init__(Collection self, *a):             # <<<<<<<<<<<<<<
@@ -13523,7 +13545,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Union___init__(PyObject *__pyx_self, PyObj
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t used_pos_args = (PyTuple_GET_SIZE(__pyx_args) < 1) ? PyTuple_GET_SIZE(__pyx_args) : 1;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, used_pos_args, "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, used_pos_args, "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) < 1) {
       goto __pyx_L5_argtuple_error;
@@ -13534,30 +13556,30 @@ static PyObject *__pyx_pf_9xmmsvalue_5Union___init__(PyObject *__pyx_self, PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_a); __pyx_v_a = 0;
   __Pyx_AddTraceback("xmmsvalue.Union.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":753
+  /* "xmmsvalue.pyx":754
  * class Union(BaseCollection):
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)             # <<<<<<<<<<<<<<
  * 
  * class Intersection(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_UNION); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_UNION); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13565,10 +13587,10 @@ static PyObject *__pyx_pf_9xmmsvalue_5Union___init__(PyObject *__pyx_self, PyObj
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_v_a)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_v_a)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13591,7 +13613,7 @@ static PyObject *__pyx_pf_9xmmsvalue_5Union___init__(PyObject *__pyx_self, PyObj
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":756
+/* "xmmsvalue.pyx":757
  * 
  * class Intersection(BaseCollection):
  * 	def __init__(Collection self, *a):             # <<<<<<<<<<<<<<
@@ -13644,7 +13666,7 @@ static PyObject *__pyx_pf_9xmmsvalue_12Intersection___init__(PyObject *__pyx_sel
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t used_pos_args = (PyTuple_GET_SIZE(__pyx_args) < 1) ? PyTuple_GET_SIZE(__pyx_args) : 1;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, used_pos_args, "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, used_pos_args, "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) < 1) {
       goto __pyx_L5_argtuple_error;
@@ -13655,30 +13677,30 @@ static PyObject *__pyx_pf_9xmmsvalue_12Intersection___init__(PyObject *__pyx_sel
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_DECREF(__pyx_v_a); __pyx_v_a = 0;
   __Pyx_AddTraceback("xmmsvalue.Intersection.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":757
+  /* "xmmsvalue.pyx":758
  * class Intersection(BaseCollection):
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)             # <<<<<<<<<<<<<<
  * 
  * class Complement(BaseCollection):
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_INTERSECTION); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_INTERSECTION); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13686,10 +13708,10 @@ static PyObject *__pyx_pf_9xmmsvalue_12Intersection___init__(PyObject *__pyx_sel
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_v_a)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_v_a)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 758; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13712,7 +13734,7 @@ static PyObject *__pyx_pf_9xmmsvalue_12Intersection___init__(PyObject *__pyx_sel
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":760
+/* "xmmsvalue.pyx":761
  * 
  * class Complement(BaseCollection):
  * 	def __init__(Collection self, op):             # <<<<<<<<<<<<<<
@@ -13757,11 +13779,11 @@ static PyObject *__pyx_pf_9xmmsvalue_10Complement___init__(PyObject *__pyx_self,
         values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s__op);
         if (likely(values[1])) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, PyTuple_GET_SIZE(__pyx_args), "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -13774,29 +13796,29 @@ static PyObject *__pyx_pf_9xmmsvalue_10Complement___init__(PyObject *__pyx_self,
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("xmmsvalue.Complement.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_self), __pyx_ptype_9xmmsvalue_Collection, 1, "self", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "xmmsvalue.pyx":761
+  /* "xmmsvalue.pyx":762
  * class Complement(BaseCollection):
  * 	def __init__(Collection self, op):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_GetAttr(__pyx_t_1, __pyx_n_s____init__); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_COMPLEMENT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromLong(XMMS_COLLECTION_TYPE_COMPLEMENT); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_self));
@@ -13804,16 +13826,16 @@ static PyObject *__pyx_pf_9xmmsvalue_10Complement___init__(PyObject *__pyx_self,
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
-  __pyx_t_4 = PyList_New(1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyList_New(1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_4));
   __Pyx_INCREF(__pyx_v_op);
   PyList_SET_ITEM(__pyx_t_4, 0, __pyx_v_op);
   __Pyx_GIVEREF(__pyx_v_op);
-  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_4)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, ((PyObject *)__pyx_n_s__operands), ((PyObject *)__pyx_t_4)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(((PyObject *)__pyx_t_4)); __pyx_t_4 = 0;
-  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyEval_CallObjectWithKeywords(__pyx_t_2, ((PyObject *)__pyx_t_3), ((PyObject *)__pyx_t_1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 762; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_3)); __pyx_t_3 = 0;
@@ -13835,7 +13857,7 @@ static PyObject *__pyx_pf_9xmmsvalue_10Complement___init__(PyObject *__pyx_self,
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":764
+/* "xmmsvalue.pyx":765
  * 
  * 
  * cdef create_coll(xmmsv_coll_t *coll):             # <<<<<<<<<<<<<<
@@ -13856,7 +13878,7 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("create_coll");
 
-  /* "xmmsvalue.pyx":768
+  /* "xmmsvalue.pyx":769
  * 	cdef Collection c
  * 
  * 	colltype = xmmsv_coll_get_type(coll)             # <<<<<<<<<<<<<<
@@ -13865,23 +13887,23 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
  */
   __pyx_v_colltype = xmmsv_coll_get_type(__pyx_v_coll);
 
-  /* "xmmsvalue.pyx":769
+  /* "xmmsvalue.pyx":770
  * 
  * 	colltype = xmmsv_coll_get_type(coll)
  * 	c = CollectionWrapper()             # <<<<<<<<<<<<<<
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		c.__class__ = Reference
  */
-  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__CollectionWrapper); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 769; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetName(__pyx_m, __pyx_n_s__CollectionWrapper); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 770; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 769; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_empty_tuple), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 770; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 769; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_9xmmsvalue_Collection))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 770; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_c = ((struct __pyx_obj_9xmmsvalue_Collection *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":770
+  /* "xmmsvalue.pyx":771
  * 	colltype = xmmsv_coll_get_type(coll)
  * 	c = CollectionWrapper()
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:             # <<<<<<<<<<<<<<
@@ -13891,21 +13913,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_REFERENCE);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":771
+    /* "xmmsvalue.pyx":772
  * 	c = CollectionWrapper()
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		c.__class__ = Reference             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_UNION:
  * 		c.__class__ = Union
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 771; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 772; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 771; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 772; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":772
+  /* "xmmsvalue.pyx":773
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		c.__class__ = Reference
  * 	elif colltype == XMMS_COLLECTION_TYPE_UNION:             # <<<<<<<<<<<<<<
@@ -13915,21 +13937,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_UNION);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":773
+    /* "xmmsvalue.pyx":774
  * 		c.__class__ = Reference
  * 	elif colltype == XMMS_COLLECTION_TYPE_UNION:
  * 		c.__class__ = Union             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_INTERSECTION:
  * 		c.__class__ = Intersection
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Union); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 773; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Union); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 774; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 773; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 774; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":774
+  /* "xmmsvalue.pyx":775
  * 	elif colltype == XMMS_COLLECTION_TYPE_UNION:
  * 		c.__class__ = Union
  * 	elif colltype == XMMS_COLLECTION_TYPE_INTERSECTION:             # <<<<<<<<<<<<<<
@@ -13939,21 +13961,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_INTERSECTION);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":775
+    /* "xmmsvalue.pyx":776
  * 		c.__class__ = Union
  * 	elif colltype == XMMS_COLLECTION_TYPE_INTERSECTION:
  * 		c.__class__ = Intersection             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_COMPLEMENT:
  * 		c.__class__ = Complement
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Intersection); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 775; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Intersection); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 776; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 775; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 776; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":776
+  /* "xmmsvalue.pyx":777
  * 	elif colltype == XMMS_COLLECTION_TYPE_INTERSECTION:
  * 		c.__class__ = Intersection
  * 	elif colltype == XMMS_COLLECTION_TYPE_COMPLEMENT:             # <<<<<<<<<<<<<<
@@ -13963,21 +13985,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_COMPLEMENT);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":777
+    /* "xmmsvalue.pyx":778
  * 		c.__class__ = Intersection
  * 	elif colltype == XMMS_COLLECTION_TYPE_COMPLEMENT:
  * 		c.__class__ = Complement             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_HAS:
  * 		c.__class__ = Has
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Complement); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 777; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Complement); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 778; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 777; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 778; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":778
+  /* "xmmsvalue.pyx":779
  * 	elif colltype == XMMS_COLLECTION_TYPE_COMPLEMENT:
  * 		c.__class__ = Complement
  * 	elif colltype == XMMS_COLLECTION_TYPE_HAS:             # <<<<<<<<<<<<<<
@@ -13987,21 +14009,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_HAS);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":779
+    /* "xmmsvalue.pyx":780
  * 		c.__class__ = Complement
  * 	elif colltype == XMMS_COLLECTION_TYPE_HAS:
  * 		c.__class__ = Has             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_EQUALS:
  * 		c.__class__ = Equals
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Has); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 779; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Has); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 780; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 779; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 780; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":780
+  /* "xmmsvalue.pyx":781
  * 	elif colltype == XMMS_COLLECTION_TYPE_HAS:
  * 		c.__class__ = Has
  * 	elif colltype == XMMS_COLLECTION_TYPE_EQUALS:             # <<<<<<<<<<<<<<
@@ -14011,21 +14033,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_EQUALS);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":781
+    /* "xmmsvalue.pyx":782
  * 		c.__class__ = Has
  * 	elif colltype == XMMS_COLLECTION_TYPE_EQUALS:
  * 		c.__class__ = Equals             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_MATCH:
  * 		c.__class__ = Match
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Equals); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 781; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Equals); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 782; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 781; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 782; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":782
+  /* "xmmsvalue.pyx":783
  * 	elif colltype == XMMS_COLLECTION_TYPE_EQUALS:
  * 		c.__class__ = Equals
  * 	elif colltype == XMMS_COLLECTION_TYPE_MATCH:             # <<<<<<<<<<<<<<
@@ -14035,21 +14057,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_MATCH);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":783
+    /* "xmmsvalue.pyx":784
  * 		c.__class__ = Equals
  * 	elif colltype == XMMS_COLLECTION_TYPE_MATCH:
  * 		c.__class__ = Match             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_SMALLER:
  * 		c.__class__ = Smaller
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Match); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 783; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Match); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 784; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 783; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 784; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":784
+  /* "xmmsvalue.pyx":785
  * 	elif colltype == XMMS_COLLECTION_TYPE_MATCH:
  * 		c.__class__ = Match
  * 	elif colltype == XMMS_COLLECTION_TYPE_SMALLER:             # <<<<<<<<<<<<<<
@@ -14059,21 +14081,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_SMALLER);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":785
+    /* "xmmsvalue.pyx":786
  * 		c.__class__ = Match
  * 	elif colltype == XMMS_COLLECTION_TYPE_SMALLER:
  * 		c.__class__ = Smaller             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_GREATER:
  * 		c.__class__ = Greater
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Smaller); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 785; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Smaller); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 786; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 785; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 786; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":786
+  /* "xmmsvalue.pyx":787
  * 	elif colltype == XMMS_COLLECTION_TYPE_SMALLER:
  * 		c.__class__ = Smaller
  * 	elif colltype == XMMS_COLLECTION_TYPE_GREATER:             # <<<<<<<<<<<<<<
@@ -14083,21 +14105,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_GREATER);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":787
+    /* "xmmsvalue.pyx":788
  * 		c.__class__ = Smaller
  * 	elif colltype == XMMS_COLLECTION_TYPE_GREATER:
  * 		c.__class__ = Greater             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
  * 		c.__class__ = IDList
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Greater); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 787; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Greater); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 788; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 787; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 788; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":788
+  /* "xmmsvalue.pyx":789
  * 	elif colltype == XMMS_COLLECTION_TYPE_GREATER:
  * 		c.__class__ = Greater
  * 	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:             # <<<<<<<<<<<<<<
@@ -14107,21 +14129,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_IDLIST);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":789
+    /* "xmmsvalue.pyx":790
  * 		c.__class__ = Greater
  * 	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
  * 		c.__class__ = IDList             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_QUEUE:
  * 		c.__class__ = Queue
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__IDList); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 789; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__IDList); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 790; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 789; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 790; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":790
+  /* "xmmsvalue.pyx":791
  * 	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
  * 		c.__class__ = IDList
  * 	elif colltype == XMMS_COLLECTION_TYPE_QUEUE:             # <<<<<<<<<<<<<<
@@ -14131,21 +14153,21 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_QUEUE);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":791
+    /* "xmmsvalue.pyx":792
  * 		c.__class__ = IDList
  * 	elif colltype == XMMS_COLLECTION_TYPE_QUEUE:
  * 		c.__class__ = Queue             # <<<<<<<<<<<<<<
  * 	elif colltype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
  * 		c.__class__ = PShuffle
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Queue); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 791; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Queue); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 792; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 791; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 792; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
 
-  /* "xmmsvalue.pyx":792
+  /* "xmmsvalue.pyx":793
  * 	elif colltype == XMMS_COLLECTION_TYPE_QUEUE:
  * 		c.__class__ = Queue
  * 	elif colltype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:             # <<<<<<<<<<<<<<
@@ -14155,48 +14177,48 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":793
+    /* "xmmsvalue.pyx":794
  * 		c.__class__ = Queue
  * 	elif colltype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
  * 		c.__class__ = PShuffle             # <<<<<<<<<<<<<<
  * 	else:
  * 		raise RuntimeError("Unkown collection type")
  */
-    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__PShuffle); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 793; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__PShuffle); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 794; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 793; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 794; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     goto __pyx_L3;
   }
   /*else*/ {
 
-    /* "xmmsvalue.pyx":795
+    /* "xmmsvalue.pyx":796
  * 		c.__class__ = PShuffle
  * 	else:
  * 		raise RuntimeError("Unkown collection type")             # <<<<<<<<<<<<<<
  * 
  * 	c.set_collection(coll)
  */
-    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_46), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 795; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(__pyx_builtin_RuntimeError, ((PyObject *)__pyx_k_tuple_46), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 796; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 795; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 796; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_L3:;
 
-  /* "xmmsvalue.pyx":797
+  /* "xmmsvalue.pyx":798
  * 		raise RuntimeError("Unkown collection type")
  * 
  * 	c.set_collection(coll)             # <<<<<<<<<<<<<<
  * 
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_Collection *)__pyx_v_c->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_c), __pyx_v_coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 797; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = ((struct __pyx_vtabstruct_9xmmsvalue_Collection *)__pyx_v_c->__pyx_base.__pyx_vtab)->__pyx_base.set_collection(((struct __pyx_obj_9xmmsvalue_CollectionRef *)__pyx_v_c), __pyx_v_coll); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 798; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":799
+  /* "xmmsvalue.pyx":800
  * 	c.set_collection(coll)
  * 
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:             # <<<<<<<<<<<<<<
@@ -14206,35 +14228,35 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   __pyx_t_3 = (__pyx_v_colltype == XMMS_COLLECTION_TYPE_REFERENCE);
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":800
+    /* "xmmsvalue.pyx":801
  * 
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		if c.attributes.get("reference", "") == "All Media":             # <<<<<<<<<<<<<<
  * 			c.__class__ = Universe
  * 
  */
-    __pyx_t_2 = PyObject_GetAttr(((PyObject *)__pyx_v_c), __pyx_n_s__attributes); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 800; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_GetAttr(((PyObject *)__pyx_v_c), __pyx_n_s__attributes); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = PyObject_GetAttr(__pyx_t_2, __pyx_n_s__get); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 800; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_GetAttr(__pyx_t_2, __pyx_n_s__get); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_k_tuple_48), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 800; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyObject_Call(__pyx_t_1, ((PyObject *)__pyx_k_tuple_48), NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_3 = __Pyx_PyString_Equals(__pyx_t_2, ((PyObject *)__pyx_kp_s_44), Py_EQ); if (unlikely(__pyx_t_3 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 800; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyString_Equals(__pyx_t_2, ((PyObject *)__pyx_kp_s_44), Py_EQ); if (unlikely(__pyx_t_3 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_3) {
 
-      /* "xmmsvalue.pyx":801
+      /* "xmmsvalue.pyx":802
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		if c.attributes.get("reference", "") == "All Media":
  * 			c.__class__ = Universe             # <<<<<<<<<<<<<<
  * 
  * 	return c
  */
-      __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__Universe); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 802; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      if (PyObject_SetAttr(((PyObject *)__pyx_v_c), __pyx_n_s____class__, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 802; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       goto __pyx_L5;
     }
@@ -14243,7 +14265,7 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   }
   __pyx_L4:;
 
-  /* "xmmsvalue.pyx":803
+  /* "xmmsvalue.pyx":804
  * 			c.__class__ = Universe
  * 
  * 	return c             # <<<<<<<<<<<<<<
@@ -14269,7 +14291,7 @@ static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   return __pyx_r;
 }
 
-/* "xmmsvalue.pyx":806
+/* "xmmsvalue.pyx":807
  * 
  * 
  * def coll_parse(pattern):             # <<<<<<<<<<<<<<
@@ -14293,7 +14315,7 @@ static PyObject *__pyx_pf_9xmmsvalue_coll_parse(PyObject *__pyx_self, PyObject *
   __Pyx_RefNannySetupContext("coll_parse");
   __pyx_self = __pyx_self;
 
-  /* "xmmsvalue.pyx":807
+  /* "xmmsvalue.pyx":808
  * 
  * def coll_parse(pattern):
  * 	cdef xmmsv_coll_t *coll = NULL             # <<<<<<<<<<<<<<
@@ -14302,54 +14324,54 @@ static PyObject *__pyx_pf_9xmmsvalue_coll_parse(PyObject *__pyx_self, PyObject *
  */
   __pyx_v_coll = NULL;
 
-  /* "xmmsvalue.pyx":809
+  /* "xmmsvalue.pyx":810
  * 	cdef xmmsv_coll_t *coll = NULL
  * 
  * 	_pattern = from_unicode(pattern)             # <<<<<<<<<<<<<<
- * 	if not xmmsv_coll_parse(_pattern, &coll):
+ * 	if not xmmsv_coll_parse(<char *>_pattern, &coll):
  * 		raise ValueError("Unable to parse the pattern")
  */
-  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_pattern); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 809; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_9xmmsutils_from_unicode(__pyx_v_pattern); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 810; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v__pattern = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "xmmsvalue.pyx":810
+  /* "xmmsvalue.pyx":811
  * 
  * 	_pattern = from_unicode(pattern)
- * 	if not xmmsv_coll_parse(_pattern, &coll):             # <<<<<<<<<<<<<<
+ * 	if not xmmsv_coll_parse(<char *>_pattern, &coll):             # <<<<<<<<<<<<<<
  * 		raise ValueError("Unable to parse the pattern")
  * 	return create_coll(coll)
  */
-  __pyx_t_2 = PyBytes_AsString(__pyx_v__pattern); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 810; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_3 = (!xmmsv_coll_parse(__pyx_t_2, (&__pyx_v_coll)));
+  __pyx_t_2 = PyBytes_AsString(__pyx_v__pattern); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 811; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = (!xmmsv_coll_parse(((char *)__pyx_t_2), (&__pyx_v_coll)));
   if (__pyx_t_3) {
 
-    /* "xmmsvalue.pyx":811
+    /* "xmmsvalue.pyx":812
  * 	_pattern = from_unicode(pattern)
- * 	if not xmmsv_coll_parse(_pattern, &coll):
+ * 	if not xmmsv_coll_parse(<char *>_pattern, &coll):
  * 		raise ValueError("Unable to parse the pattern")             # <<<<<<<<<<<<<<
  * 	return create_coll(coll)
  * 
  */
-    __pyx_t_1 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_50), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 811; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyObject_Call(__pyx_builtin_ValueError, ((PyObject *)__pyx_k_tuple_50), NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 811; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     goto __pyx_L5;
   }
   __pyx_L5:;
 
-  /* "xmmsvalue.pyx":812
- * 	if not xmmsv_coll_parse(_pattern, &coll):
+  /* "xmmsvalue.pyx":813
+ * 	if not xmmsv_coll_parse(<char *>_pattern, &coll):
  * 		raise ValueError("Unable to parse the pattern")
  * 	return create_coll(coll)             # <<<<<<<<<<<<<<
  * 
  * XMMSValue = XmmsValue
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_9xmmsvalue_create_coll(__pyx_v_coll); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_9xmmsvalue_create_coll(__pyx_v_coll); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 813; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -14368,8 +14390,8 @@ static PyObject *__pyx_pf_9xmmsvalue_coll_parse(PyObject *__pyx_self, PyObject *
   return __pyx_r;
 }
 
-/* "xmmsutils.pxd":4
- * from cpython.bytes cimport PyBytes_AsString
+/* "xmmsutils.pxd":3
+ * from cpython.unicode cimport PyUnicode_DecodeUTF8, PyUnicode_AsUTF8String
  * 
  * cdef inline to_unicode(char *s):             # <<<<<<<<<<<<<<
  * 	try:
@@ -14393,7 +14415,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_unicode");
 
-  /* "xmmsutils.pxd":5
+  /* "xmmsutils.pxd":4
  * 
  * cdef inline to_unicode(char *s):
  * 	try:             # <<<<<<<<<<<<<<
@@ -14407,7 +14429,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "xmmsutils.pxd":6
+      /* "xmmsutils.pxd":5
  * cdef inline to_unicode(char *s):
  * 	try:
  * 		ns = PyUnicode_DecodeUTF8(s, len(s), NULL)             # <<<<<<<<<<<<<<
@@ -14415,7 +14437,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
  * 		ns = s
  */
       __pyx_t_4 = strlen(__pyx_v_s); 
-      __pyx_t_5 = PyUnicode_DecodeUTF8(__pyx_v_s, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 6; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_t_5 = PyUnicode_DecodeUTF8(__pyx_v_s, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 5; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_v_ns = __pyx_t_5;
       __pyx_t_5 = 0;
@@ -14427,7 +14449,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
     __pyx_L3_error:;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "xmmsutils.pxd":7
+    /* "xmmsutils.pxd":6
  * 	try:
  * 		ns = PyUnicode_DecodeUTF8(s, len(s), NULL)
  * 	except:             # <<<<<<<<<<<<<<
@@ -14436,19 +14458,19 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
  */
     /*except:*/ {
       __Pyx_AddTraceback("xmmsutils.to_unicode", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 7; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
+      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 6; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "xmmsutils.pxd":8
+      /* "xmmsutils.pxd":7
  * 		ns = PyUnicode_DecodeUTF8(s, len(s), NULL)
  * 	except:
  * 		ns = s             # <<<<<<<<<<<<<<
  * 	return ns
  * 
  */
-      __pyx_t_8 = PyBytes_FromString(__pyx_v_s); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
+      __pyx_t_8 = PyBytes_FromString(__pyx_v_s); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 7; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
       __Pyx_GOTREF(((PyObject *)__pyx_t_8));
       __Pyx_XDECREF(__pyx_v_ns);
       __pyx_v_ns = ((PyObject *)__pyx_t_8);
@@ -14472,7 +14494,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
     __pyx_L10_try_end:;
   }
 
-  /* "xmmsutils.pxd":9
+  /* "xmmsutils.pxd":8
  * 	except:
  * 		ns = s
  * 	return ns             # <<<<<<<<<<<<<<
@@ -14500,7 +14522,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
   return __pyx_r;
 }
 
-/* "xmmsutils.pxd":11
+/* "xmmsutils.pxd":10
  * 	return ns
  * 
  * cdef inline from_unicode(object o):             # <<<<<<<<<<<<<<
@@ -14518,7 +14540,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_unicode");
 
-  /* "xmmsutils.pxd":12
+  /* "xmmsutils.pxd":11
  * 
  * cdef inline from_unicode(object o):
  * 	if isinstance(o, unicode):             # <<<<<<<<<<<<<<
@@ -14531,7 +14553,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "xmmsutils.pxd":13
+    /* "xmmsutils.pxd":12
  * cdef inline from_unicode(object o):
  * 	if isinstance(o, unicode):
  * 		return PyUnicode_AsUTF8String(o)             # <<<<<<<<<<<<<<
@@ -14539,7 +14561,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
  * 		return o
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = PyUnicode_AsUTF8String(__pyx_v_o); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 13; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyUnicode_AsUTF8String(__pyx_v_o); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 12; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_r = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -14548,12 +14570,10 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
   }
   /*else*/ {
 
-    /* "xmmsutils.pxd":15
+    /* "xmmsutils.pxd":14
  * 		return PyUnicode_AsUTF8String(o)
  * 	else:
  * 		return o             # <<<<<<<<<<<<<<
- * 
- * cdef inline char *to_charp(object o) except NULL:
  */
     __Pyx_XDECREF(__pyx_r);
     __Pyx_INCREF(__pyx_v_o);
@@ -14570,44 +14590,6 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "xmmsutils.pxd":17
- * 		return o
- * 
- * cdef inline char *to_charp(object o) except NULL:             # <<<<<<<<<<<<<<
- * 	return PyBytes_AsString(o)
- * 
- */
-
-static CYTHON_INLINE char *__pyx_f_9xmmsutils_to_charp(PyObject *__pyx_v_o) {
-  char *__pyx_r;
-  __Pyx_RefNannyDeclarations
-  char *__pyx_t_1;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("to_charp");
-
-  /* "xmmsutils.pxd":18
- * 
- * cdef inline char *to_charp(object o) except NULL:
- * 	return PyBytes_AsString(o)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_t_1 = PyBytes_AsString(__pyx_v_o); if (unlikely(__pyx_t_1 == NULL)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 18; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_r = __pyx_t_1;
-  goto __pyx_L0;
-
-  __pyx_r = 0;
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_AddTraceback("xmmsutils.to_charp", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -16664,8 +16646,8 @@ static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_RuntimeError = __Pyx_GetName(__pyx_b, __pyx_n_s__RuntimeError); if (!__pyx_builtin_RuntimeError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 261; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_builtin_StopIteration = __Pyx_GetName(__pyx_b, __pyx_n_s__StopIteration); if (!__pyx_builtin_StopIteration) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_builtin_NotImplemented = __Pyx_GetName(__pyx_b, __pyx_n_s__NotImplemented); if (!__pyx_builtin_NotImplemented) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 406; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_KeyError = __Pyx_GetName(__pyx_b, __pyx_n_s__KeyError); if (!__pyx_builtin_KeyError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 510; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_IndexError = __Pyx_GetName(__pyx_b, __pyx_n_s__IndexError); if (!__pyx_builtin_IndexError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 569; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_KeyError = __Pyx_GetName(__pyx_b, __pyx_n_s__KeyError); if (!__pyx_builtin_KeyError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 509; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_IndexError = __Pyx_GetName(__pyx_b, __pyx_n_s__IndexError); if (!__pyx_builtin_IndexError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 570; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -16885,126 +16867,126 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_29));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_30));
 
-  /* "xmmsvalue.pyx":545
+  /* "xmmsvalue.pyx":546
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")             # <<<<<<<<<<<<<<
  * 		self.set_collection(c.coll)
  * 		self.init_pylist()
  */
-  __pyx_k_tuple_32 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 545; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_32 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 546; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_32));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_29));
   PyTuple_SET_ITEM(__pyx_k_tuple_32, 0, ((PyObject *)__pyx_kp_s_29));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_29));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_32));
 
-  /* "xmmsvalue.pyx":570
+  /* "xmmsvalue.pyx":571
  * 			xmmsv_coll_remove_operand(self.coll, op.coll)
  * 		except IndexError:
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 	def __iter__(self):
  * 		return iter(self.pylist)
  */
-  __pyx_k_tuple_34 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_34)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 570; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_34 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_34)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 571; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_34));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_33));
   PyTuple_SET_ITEM(__pyx_k_tuple_34, 0, ((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_34));
 
-  /* "xmmsvalue.pyx":604
+  /* "xmmsvalue.pyx":605
  * 	def __init__(self, Collection c):
  * 		if c.coll == NULL:
  * 			raise RuntimeError("Uninitialized collection")             # <<<<<<<<<<<<<<
  * 		self.set_collection(c.coll)
  * 
  */
-  __pyx_k_tuple_35 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_35)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 604; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_35 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_35)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 605; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_35));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_29));
   PyTuple_SET_ITEM(__pyx_k_tuple_35, 0, ((PyObject *)__pyx_kp_s_29));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_29));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_35));
 
-  /* "xmmsvalue.pyx":648
+  /* "xmmsvalue.pyx":649
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_insert(self.coll, v, i):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	cpdef remove(self, int i):
  */
-  __pyx_k_tuple_36 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_36)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 648; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_36 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_36)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 649; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_36));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_33));
   PyTuple_SET_ITEM(__pyx_k_tuple_36, 0, ((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_36));
 
-  /* "xmmsvalue.pyx":655
+  /* "xmmsvalue.pyx":656
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_remove(self.coll, i):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	def __delitem__(self, int i):
  */
-  __pyx_k_tuple_37 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_37)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 655; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_37 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_37)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 656; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_37));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_33));
   PyTuple_SET_ITEM(__pyx_k_tuple_37, 0, ((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_37));
 
-  /* "xmmsvalue.pyx":667
+  /* "xmmsvalue.pyx":668
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 		return x
  * 
  */
-  __pyx_k_tuple_38 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 667; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_38 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 668; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_38));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_33));
   PyTuple_SET_ITEM(__pyx_k_tuple_38, 0, ((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_38));
 
-  /* "xmmsvalue.pyx":674
+  /* "xmmsvalue.pyx":675
  * 			i = len(self) + i
  * 		if not xmmsv_coll_idlist_set_index(self.coll, i, v):
  * 			raise IndexError("Index out of range")             # <<<<<<<<<<<<<<
  * 
  * 	cpdef clear(self):
  */
-  __pyx_k_tuple_39 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_39)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_39 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_39)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 675; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_39));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_33));
   PyTuple_SET_ITEM(__pyx_k_tuple_39, 0, ((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_33));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_39));
 
-  /* "xmmsvalue.pyx":688
+  /* "xmmsvalue.pyx":689
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  * 		if self.coll == NULL:
  * 			raise RuntimeError("Bad collection")             # <<<<<<<<<<<<<<
  * 
  * 		operands = kargs.pop("operands", None)
  */
-  __pyx_k_tuple_41 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_41)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 688; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_41 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_41)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 689; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_41));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_40));
   PyTuple_SET_ITEM(__pyx_k_tuple_41, 0, ((PyObject *)__pyx_kp_s_40));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_40));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_41));
 
-  /* "xmmsvalue.pyx":690
+  /* "xmmsvalue.pyx":691
  * 			raise RuntimeError("Bad collection")
  * 
  * 		operands = kargs.pop("operands", None)             # <<<<<<<<<<<<<<
  * 		if operands:
  * 			self.operands = operands
  */
-  __pyx_k_tuple_42 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_42)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 690; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_42 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_42)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 691; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_42));
   __Pyx_INCREF(((PyObject *)__pyx_n_s__operands));
   PyTuple_SET_ITEM(__pyx_k_tuple_42, 0, ((PyObject *)__pyx_n_s__operands));
@@ -17014,14 +16996,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(Py_None);
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_42));
 
-  /* "xmmsvalue.pyx":693
+  /* "xmmsvalue.pyx":694
  * 		if operands:
  * 			self.operands = operands
  * 		ids = kargs.pop("ids", None)             # <<<<<<<<<<<<<<
  * 		if ids:
  * 			try:
  */
-  __pyx_k_tuple_43 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_43)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 693; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_43 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_43)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 694; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_43));
   __Pyx_INCREF(((PyObject *)__pyx_n_s__ids));
   PyTuple_SET_ITEM(__pyx_k_tuple_43, 0, ((PyObject *)__pyx_n_s__ids));
@@ -17031,28 +17013,28 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(Py_None);
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_43));
 
-  /* "xmmsvalue.pyx":795
+  /* "xmmsvalue.pyx":796
  * 		c.__class__ = PShuffle
  * 	else:
  * 		raise RuntimeError("Unkown collection type")             # <<<<<<<<<<<<<<
  * 
  * 	c.set_collection(coll)
  */
-  __pyx_k_tuple_46 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_46)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 795; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_46 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_46)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 796; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_46));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_45));
   PyTuple_SET_ITEM(__pyx_k_tuple_46, 0, ((PyObject *)__pyx_kp_s_45));
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_45));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_46));
 
-  /* "xmmsvalue.pyx":800
+  /* "xmmsvalue.pyx":801
  * 
  * 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
  * 		if c.attributes.get("reference", "") == "All Media":             # <<<<<<<<<<<<<<
  * 			c.__class__ = Universe
  * 
  */
-  __pyx_k_tuple_48 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_48)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 800; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_48 = PyTuple_New(2); if (unlikely(!__pyx_k_tuple_48)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 801; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_48));
   __Pyx_INCREF(((PyObject *)__pyx_n_s__reference));
   PyTuple_SET_ITEM(__pyx_k_tuple_48, 0, ((PyObject *)__pyx_n_s__reference));
@@ -17062,14 +17044,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(((PyObject *)__pyx_kp_s_47));
   __Pyx_GIVEREF(((PyObject *)__pyx_k_tuple_48));
 
-  /* "xmmsvalue.pyx":811
+  /* "xmmsvalue.pyx":812
  * 	_pattern = from_unicode(pattern)
- * 	if not xmmsv_coll_parse(_pattern, &coll):
+ * 	if not xmmsv_coll_parse(<char *>_pattern, &coll):
  * 		raise ValueError("Unable to parse the pattern")             # <<<<<<<<<<<<<<
  * 	return create_coll(coll)
  * 
  */
-  __pyx_k_tuple_50 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_50)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 811; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_k_tuple_50 = PyTuple_New(1); if (unlikely(!__pyx_k_tuple_50)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 812; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_k_tuple_50));
   __Pyx_INCREF(((PyObject *)__pyx_kp_s_49));
   PyTuple_SET_ITEM(__pyx_k_tuple_50, 0, ((PyObject *)__pyx_kp_s_49));
@@ -17225,9 +17207,9 @@ PyMODINIT_FUNC PyInit_xmmsvalue(void)
   __pyx_vtable_9xmmsvalue_CollectionOperands.clear = (PyObject *(*)(struct __pyx_obj_9xmmsvalue_CollectionOperands *, int __pyx_skip_dispatch))__pyx_f_9xmmsvalue_18CollectionOperands_clear;
   __pyx_vtable_9xmmsvalue_CollectionOperands.list = (PyObject *(*)(struct __pyx_obj_9xmmsvalue_CollectionOperands *, int __pyx_skip_dispatch))__pyx_f_9xmmsvalue_18CollectionOperands_list;
   __pyx_type_9xmmsvalue_CollectionOperands.tp_base = __pyx_ptype_9xmmsvalue_CollectionRef;
-  if (PyType_Ready(&__pyx_type_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 540; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_SetVtable(__pyx_type_9xmmsvalue_CollectionOperands.tp_dict, __pyx_vtabptr_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 540; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_SetAttrString(__pyx_m, "CollectionOperands", (PyObject *)&__pyx_type_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 540; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 541; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_9xmmsvalue_CollectionOperands.tp_dict, __pyx_vtabptr_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 541; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetAttrString(__pyx_m, "CollectionOperands", (PyObject *)&__pyx_type_9xmmsvalue_CollectionOperands) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 541; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_9xmmsvalue_CollectionOperands = &__pyx_type_9xmmsvalue_CollectionOperands;
   __pyx_vtabptr_9xmmsvalue_CollectionIDList = &__pyx_vtable_9xmmsvalue_CollectionIDList;
   __pyx_vtable_9xmmsvalue_CollectionIDList.__pyx_base = *__pyx_vtabptr_9xmmsvalue_CollectionRef;
@@ -17238,9 +17220,9 @@ PyMODINIT_FUNC PyInit_xmmsvalue(void)
   __pyx_vtable_9xmmsvalue_CollectionIDList.remove = (PyObject *(*)(struct __pyx_obj_9xmmsvalue_CollectionIDList *, int, int __pyx_skip_dispatch))__pyx_f_9xmmsvalue_16CollectionIDList_remove;
   __pyx_vtable_9xmmsvalue_CollectionIDList.clear = (PyObject *(*)(struct __pyx_obj_9xmmsvalue_CollectionIDList *, int __pyx_skip_dispatch))__pyx_f_9xmmsvalue_16CollectionIDList_clear;
   __pyx_type_9xmmsvalue_CollectionIDList.tp_base = __pyx_ptype_9xmmsvalue_CollectionRef;
-  if (PyType_Ready(&__pyx_type_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 601; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_SetVtable(__pyx_type_9xmmsvalue_CollectionIDList.tp_dict, __pyx_vtabptr_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 601; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (__Pyx_SetAttrString(__pyx_m, "CollectionIDList", (PyObject *)&__pyx_type_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 601; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_9xmmsvalue_CollectionIDList.tp_dict, __pyx_vtabptr_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetAttrString(__pyx_m, "CollectionIDList", (PyObject *)&__pyx_type_9xmmsvalue_CollectionIDList) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 602; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_9xmmsvalue_CollectionIDList = &__pyx_type_9xmmsvalue_CollectionIDList;
   /*--- Type import code ---*/
   /*--- Variable import code ---*/
@@ -17508,690 +17490,690 @@ PyMODINIT_FUNC PyInit_xmmsvalue(void)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":681
+  /* "xmmsvalue.pyx":682
  * 
  * # XXX Might not be needed.
  * class CollectionWrapper(Collection):             # <<<<<<<<<<<<<<
  * 	pass
  * 
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   __Pyx_INCREF(((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_Collection)));
   PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_Collection)));
   __Pyx_GIVEREF(((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_Collection)));
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__CollectionWrapper, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__CollectionWrapper, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__CollectionWrapper, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__CollectionWrapper, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":684
+  /* "xmmsvalue.pyx":685
  * 	pass
  * 
  * class BaseCollection(CollectionWrapper):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, int _colltype, **kargs):
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":685
+  /* "xmmsvalue.pyx":686
  * 
  * class BaseCollection(CollectionWrapper):
  * 	def __init__(Collection self, int _colltype, **kargs):             # <<<<<<<<<<<<<<
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  * 		if self.coll == NULL:
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_14BaseCollection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_14BaseCollection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":684
+  /* "xmmsvalue.pyx":685
  * 	pass
  * 
  * class BaseCollection(CollectionWrapper):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, int _colltype, **kargs):
  * 		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__CollectionWrapper); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__CollectionWrapper); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__BaseCollection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__BaseCollection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__BaseCollection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__BaseCollection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":702
+  /* "xmmsvalue.pyx":703
  * 			self.attributes[k] = kargs[k]
  * 
  * class Reference(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ref, ns="Collections"):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":703
+  /* "xmmsvalue.pyx":704
  * 
  * class Reference(BaseCollection):
  * 	def __init__(Collection self, ref, ns="Collections"):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,
  * 				namespace=ns, reference=ref)
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_9Reference___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_9Reference___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":702
+  /* "xmmsvalue.pyx":703
  * 			self.attributes[k] = kargs[k]
  * 
  * class Reference(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ref, ns="Collections"):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Reference, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Reference, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Reference, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 702; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Reference, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 703; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":707
+  /* "xmmsvalue.pyx":708
  * 				namespace=ns, reference=ref)
  * 
  * class Universe(Reference):             # <<<<<<<<<<<<<<
  * 	def __init__(self):
  * 		Reference.__init__(self, "All Media")
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":708
+  /* "xmmsvalue.pyx":709
  * 
  * class Universe(Reference):
  * 	def __init__(self):             # <<<<<<<<<<<<<<
  * 		Reference.__init__(self, "All Media")
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_8Universe___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_8Universe___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 709; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":707
+  /* "xmmsvalue.pyx":708
  * 				namespace=ns, reference=ref)
  * 
  * class Universe(Reference):             # <<<<<<<<<<<<<<
  * 	def __init__(self):
  * 		Reference.__init__(self, "All Media")
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__Reference); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Universe, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Universe, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Universe, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 707; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Universe, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":711
+  /* "xmmsvalue.pyx":712
  * 		Reference.__init__(self, "All Media")
  * 
  * class FilterCollection(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, operation, parent=None, **kv):
  * 		if parent is None:
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 711; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":712
+  /* "xmmsvalue.pyx":713
  * 
  * class FilterCollection(BaseCollection):
  * 	def __init__(Collection self, operation, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		if parent is None:
  * 			parent = Universe()
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_16FilterCollection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_16FilterCollection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":711
+  /* "xmmsvalue.pyx":712
  * 		Reference.__init__(self, "All Media")
  * 
  * class FilterCollection(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, operation, parent=None, **kv):
  * 		if parent is None:
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 711; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 711; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__FilterCollection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 711; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__FilterCollection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__FilterCollection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 711; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__FilterCollection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 712; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":717
+  /* "xmmsvalue.pyx":718
  * 		BaseCollection.__init__(self, operation, operands=[parent], **kv)
  * 
  * class Equals(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":718
+  /* "xmmsvalue.pyx":719
  * 
  * class Equals(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_6Equals___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_6Equals___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 719; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":717
+  /* "xmmsvalue.pyx":718
  * 		BaseCollection.__init__(self, operation, operands=[parent], **kv)
  * 
  * class Equals(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Equals, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Equals, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Equals, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Equals, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":721
+  /* "xmmsvalue.pyx":722
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
  * 
  * class Smaller(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":722
+  /* "xmmsvalue.pyx":723
  * 
  * class Smaller(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_7Smaller___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_7Smaller___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 723; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":721
+  /* "xmmsvalue.pyx":722
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
  * 
  * class Smaller(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Smaller, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Smaller, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Smaller, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Smaller, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":725
+  /* "xmmsvalue.pyx":726
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
  * 
  * class Greater(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 725; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":726
+  /* "xmmsvalue.pyx":727
  * 
  * class Greater(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_7Greater___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_7Greater___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 727; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":725
+  /* "xmmsvalue.pyx":726
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
  * 
  * class Greater(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 725; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 725; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Greater, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 725; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Greater, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Greater, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 725; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Greater, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 726; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":729
+  /* "xmmsvalue.pyx":730
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
  * 
  * class Match(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":730
+  /* "xmmsvalue.pyx":731
  * 
  * class Match(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Match___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Match___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":729
+  /* "xmmsvalue.pyx":730
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
  * 
  * class Match(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Match, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Match, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Match, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 729; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Match, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":733
+  /* "xmmsvalue.pyx":734
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
  * 
  * class Has(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":734
+  /* "xmmsvalue.pyx":735
  * 
  * class Has(FilterCollection):
  * 	def __init__(Collection self, parent=None, **kv):             # <<<<<<<<<<<<<<
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_3Has___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_3Has___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 735; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":733
+  /* "xmmsvalue.pyx":734
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
  * 
  * class Has(FilterCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent=None, **kv):
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__FilterCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Has, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Has, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Has, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Has, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 734; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":737
+  /* "xmmsvalue.pyx":738
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
  * 
  * class IDList(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 737; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":738
+  /* "xmmsvalue.pyx":739
  * 
  * class IDList(BaseCollection):
  * 	def __init__(Collection self, ids = None):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_6IDList___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_6IDList___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 739; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":737
+  /* "xmmsvalue.pyx":738
  * 		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
  * 
  * class IDList(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 737; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 737; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__IDList, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 737; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__IDList, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__IDList, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 737; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__IDList, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 738; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":741
+  /* "xmmsvalue.pyx":742
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
  * 
  * class Queue(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 741; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":742
+  /* "xmmsvalue.pyx":743
  * 
  * class Queue(BaseCollection):
  * 	def __init__(Collection self, ids = None):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Queue___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Queue___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 743; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":741
+  /* "xmmsvalue.pyx":742
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, ids=ids)
  * 
  * class Queue(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, ids = None):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 741; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 741; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Queue, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 741; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Queue, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Queue, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 741; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Queue, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 742; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":745
+  /* "xmmsvalue.pyx":746
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
  * 
  * class PShuffle(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent = None, ids = None):
  * 		if parent is None:
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":746
+  /* "xmmsvalue.pyx":747
  * 
  * class PShuffle(BaseCollection):
  * 	def __init__(Collection self, parent = None, ids = None):             # <<<<<<<<<<<<<<
  * 		if parent is None:
  * 			parent = Universe()
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_8PShuffle___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_8PShuffle___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 747; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":745
+  /* "xmmsvalue.pyx":746
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE, ids=ids)
  * 
  * class PShuffle(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, parent = None, ids = None):
  * 		if parent is None:
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__PShuffle, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__PShuffle, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__PShuffle, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__PShuffle, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 746; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":751
+  /* "xmmsvalue.pyx":752
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE, operands=[parent], ids=ids)
  * 
  * class Union(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 751; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":752
+  /* "xmmsvalue.pyx":753
  * 
  * class Union(BaseCollection):
  * 	def __init__(Collection self, *a):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Union___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_5Union___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 753; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":751
+  /* "xmmsvalue.pyx":752
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE, operands=[parent], ids=ids)
  * 
  * class Union(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 751; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 751; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Union, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 751; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Union, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Union, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 751; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Union, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 752; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":755
+  /* "xmmsvalue.pyx":756
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
  * 
  * class Intersection(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":756
+  /* "xmmsvalue.pyx":757
  * 
  * class Intersection(BaseCollection):
  * 	def __init__(Collection self, *a):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_12Intersection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_12Intersection___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 757; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":755
+  /* "xmmsvalue.pyx":756
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
  * 
  * class Intersection(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, *a):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Intersection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Intersection, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Intersection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 755; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Intersection, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 756; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":759
+  /* "xmmsvalue.pyx":760
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
  * 
  * class Complement(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, op):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 759; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_2));
 
-  /* "xmmsvalue.pyx":760
+  /* "xmmsvalue.pyx":761
  * 
  * class Complement(BaseCollection):
  * 	def __init__(Collection self, op):             # <<<<<<<<<<<<<<
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])
  * 
  */
-  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_10Complement___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_binding_PyCFunctionType_NewEx(&__pyx_mdef_9xmmsvalue_10Complement___init__, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s____init__, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 761; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "xmmsvalue.pyx":759
+  /* "xmmsvalue.pyx":760
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
  * 
  * class Complement(BaseCollection):             # <<<<<<<<<<<<<<
  * 	def __init__(Collection self, op):
  * 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])
  */
-  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 759; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__BaseCollection); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 759; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_1));
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Complement, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 759; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_CreateClass(((PyObject *)__pyx_t_1), ((PyObject *)__pyx_t_2), __pyx_n_s__Complement, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(((PyObject *)__pyx_t_1)); __pyx_t_1 = 0;
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Complement, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 759; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__Complement, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 760; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":806
+  /* "xmmsvalue.pyx":807
  * 
  * 
  * def coll_parse(pattern):             # <<<<<<<<<<<<<<
  * 	cdef xmmsv_coll_t *coll = NULL
  * 
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_9xmmsvalue_coll_parse, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 806; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_9xmmsvalue_coll_parse, NULL, __pyx_n_s__xmmsvalue); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 807; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__coll_parse, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 806; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__coll_parse, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 807; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "xmmsvalue.pyx":814
+  /* "xmmsvalue.pyx":815
  * 	return create_coll(coll)
  * 
  * XMMSValue = XmmsValue             # <<<<<<<<<<<<<<
  */
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__XMMSValue, ((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_XmmsValue))) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 814; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s__XMMSValue, ((PyObject *)((PyObject*)__pyx_ptype_9xmmsvalue_XmmsValue))) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 815; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "xmmsvalue.pyx":1
  * """             # <<<<<<<<<<<<<<
@@ -18203,12 +18185,12 @@ PyMODINIT_FUNC PyInit_xmmsvalue(void)
   if (PyObject_SetAttr(__pyx_m, __pyx_n_s____test__, ((PyObject *)__pyx_t_2)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(((PyObject *)__pyx_t_2)); __pyx_t_2 = 0;
 
-  /* "xmmsutils.pxd":17
- * 		return o
+  /* "xmmsutils.pxd":10
+ * 	return ns
  * 
- * cdef inline char *to_charp(object o) except NULL:             # <<<<<<<<<<<<<<
- * 	return PyBytes_AsString(o)
- * 
+ * cdef inline from_unicode(object o):             # <<<<<<<<<<<<<<
+ * 	if isinstance(o, unicode):
+ * 		return PyUnicode_AsUTF8String(o)
  */
   goto __pyx_L0;
   __pyx_L1_error:;
