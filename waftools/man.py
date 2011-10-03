@@ -38,7 +38,8 @@ def process_man(self):
         if not node:
             raise Errors.BuildError('cannot find input file %s for processing' % x)
 
-        s = section or node.name.rpartition('.')[2]
+        # s = section or node.name.rpartition('.')[2]
+        s = section or "." in node.name and node.name.rsplit(".", 1)[1]
         if not s:
             raise Errors.BuildError('cannot determine man section from filename')
 
