@@ -511,6 +511,6 @@ def shutdown(ctx):
     if not os.path.isfile('/sbin/ldconfig'):
         return
 
-    libprefix = Utils.subst_vars('${LIBDIR', ctx.env)
+    libprefix = Utils.subst_vars('${LIBDIR}', ctx.env)
     Logs.info("- ldconfig '%s'" % libprefix)
     ctx.exec_command('/sbin/ldconfig %s' % libprefix)
