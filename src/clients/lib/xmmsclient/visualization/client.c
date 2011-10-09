@@ -134,13 +134,21 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv)
 		/* first try unixshm */
 		v->type = VIS_UNIXSHM;
 		res = setup_shm_prepare (c, vv);
-		v->state = VIS_TRYING_UNIXSHM;
+		if (res) {
+			v->state = VIS_TRYING_UNIXSHM;
+		} else {
+			v->state = VIS_TO_TRY_UDP;
+		}
 		break;
 #endif
 	case VIS_TO_TRY_UDP:
 		v->type = VIS_UDP;
 		res = setup_udp_prepare (c, vv);
-		v->state = VIS_TRYING_UDP;
+		if (res) {
+			v->state = VIS_TRYING_UDP;
+		} else {
+			v->state = VIS_ERRORED;
+		}
 		break;
 	default:
 		v->state = VIS_ERRORED;
