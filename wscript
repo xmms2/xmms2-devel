@@ -14,7 +14,7 @@ import os
 # tools stuff.
 sys.path.insert(0, os.getcwd())
 
-from waflib import Options, Utils, Errors, Logs
+from waflib import Configure, Options, Utils, Errors, Logs
 
 from waftools.compiler_flags import compiler_flags
 from waftools import gittools
@@ -32,6 +32,17 @@ distributed with xmms2. This is not supported by the XMMS2 Team. Before
 reporting any errors with this setup, please rebuild XMMS2 using './waf
 configure build install'
 """
+
+####
+## Patch undefine so that HAVE_* envs are still defined after
+## we write the configuration header file.
+####
+@Configure.conf
+def undefine(self, key):
+    ban = key + '='
+    lst = [x for x in self.env['DEFINES'] if not x.startswith(ban)]
+    self.env['DEFINES'] = lst
+    self.env.append_unique('define_key', key)
 
 ####
 ## Initialization
