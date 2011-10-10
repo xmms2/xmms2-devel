@@ -3,6 +3,7 @@
 # themselves.
 
 from waflib.Errors import ConfigurationError
+from copy import copy
 
 def plugin(name, source=None, configure=False, build=False,
            build_replace=False, libs=[],
@@ -24,7 +25,7 @@ def plugin(name, source=None, configure=False, build=False,
         obj = bld(
             features = '%(tool)s %(tool)sshlib' % dict(tool=tool),
             target = 'xmms_%s' % name,
-            source = source or bld.path.ant_glob(pat),
+            source = copy(source) or bld.path.ant_glob(pat),
             includes = '../../.. ../../include',
             uselib = ['glib2'] + libs,
             use = bld.env.xmms_shared_library and 'xmms2core' or '',

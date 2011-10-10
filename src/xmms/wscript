@@ -65,7 +65,7 @@ def build(bld):
             before='c'
         )
 
-    source.extend([
+    compat = [
         "compat/localtime_%s.c" % bld.env.localtime_impl,
         "compat/statfs_%s.c" % bld.env.statfs_impl,
         "compat/signal_%s.c" % bld.env.compat_impl,
@@ -73,11 +73,11 @@ def build(bld):
         "compat/checkroot_%s.c" % bld.env.compat_impl,
         "compat/thread_name_%s.c" % bld.env.thread_name_impl,
         "visualization/%s.c" % bld.env.visualization_impl
-    ])
+    ]
 
     bld(features='c ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
         target = 'xmms2core',
-        source = source,
+        source = source + compat,
         includes = '. ../.. ../include ../includepriv',
         uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket shm valgrind',
         use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization'

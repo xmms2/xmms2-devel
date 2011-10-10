@@ -19,11 +19,11 @@ playlist_positions.c
 """.split()
 
 def build(bld):
-    source.append('compat_%s.c' % bld.env.CLI_COMPAT_IMPL)
+    compat = ['compat_%s.c' % bld.env.CLI_COMPAT_IMPL]
 
     bld(features = 'c cprogram',
         target = 'xmms2',
-        source = source,
+        source = source + compat,
         includes = '. ../../include',
         uselib = 'glib2 readline readline_ncurses',
         use = 'xmmsclient'
