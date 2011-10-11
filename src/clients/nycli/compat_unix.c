@@ -34,42 +34,63 @@ x_path2url (gchar *path)
 	return path;
 }
 
+static gint
+find_terminal_width_from_environment (void)
+{
+	gchar *colstr, *endptr;
+	gint columns;
+
+	colstr = getenv ("COLUMNS");
+	if (colstr != NULL) {
+		columns = strtol (colstr, &endptr, 10);
+		if (endptr != '\0') {
+			return columns;
+		}
+	}
+
+	return -1;
+}
+
+static gint
+find_terminal_width_from_terminal (void)
+{
+#ifdef TIOCGWINSZ
+	struct winsize ws;
+	/* Try to get size from terminal */
+	if (isatty (STDOUT_FILENO) && !ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
+		return ws.ws_col;
+	}
+#endif
+	return -1;
+}
+
+static gint
+find_terminal_width_from_fallback (void)
+{
+	if (!isatty (STDOUT_FILENO)) {
+#ifdef LINE_MAX
+		return LINE_MAX;
+#else
+		return 2048; /* Minimum value for LINE_MAX according to POSIX */
+#endif
+	}
+	return 80;
+}
+
 gint
 find_terminal_width (void)
 {
 	gint columns;
-	struct winsize ws;
-	char *colstr, *endptr;
 
-	columns = -1;
-
-	/* Try to get size from terminal */
-#ifdef TIOCGWINSZ
-	if (isatty (STDOUT_FILENO) && !ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws)) {
-		columns = ws.ws_col;
-	}
-#endif
-
-	/* If failed, try to use environment variable */
-	if (columns <= 0) {
-		colstr = getenv ("COLUMNS");
-		if (colstr != NULL) {
-			columns = strtol (colstr, &endptr, 10);
-		}
+	columns = find_terminal_width_from_terminal ();
+	if (columns > 0) {
+		return columns;
 	}
 
-	/* Otherwise, use LINE_MAX or 80 column default */
-	if (columns <= 0) {
-		if (!isatty (STDOUT_FILENO)) {
-#ifdef LINE_MAX
-			columns = LINE_MAX;
-#else
-			columns = 2048; /* Minimum value for LINE_MAX according to POSIX */
-#endif
-		} else {
-			columns = 80;
-		}
+	columns = find_terminal_width_from_environment ();
+	if (columns > 0) {
+		return columns;
 	}
 
-	return columns;
+	return find_terminal_width_from_fallback ();
 }
