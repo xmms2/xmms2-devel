@@ -170,6 +170,10 @@ N: Brad Jorsch
 E: anomie@users.sourceforge.net
 D: Support for front picture from Vorbis.
 
+N: Richard Kralovic
+E: riso@ksp.sk
+D: xmms2 cli patches
+
 N: Daniel Kamiński
 E: maniel.rulez@gmail.com
 D: mlib remove command in cli, Ruby fixes.
