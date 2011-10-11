@@ -82,12 +82,12 @@ find_terminal_width (void)
 {
 	gint columns;
 
-	columns = find_terminal_width_from_terminal ();
+	columns = find_terminal_width_from_environment ();
 	if (columns > 0) {
 		return columns;
 	}
 
-	columns = find_terminal_width_from_environment ();
+	columns = find_terminal_width_from_terminal ();
 	if (columns > 0) {
 		return columns;
 	}
