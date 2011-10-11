@@ -207,13 +207,15 @@ status_print_entry (status_entry_t *entry)
 
 	res = xmmsv_dict_format (r, columns + 1, entry->format, entry->data);
 
-	g_printf ("%s", r);
-
-	for (;res < columns; res++) {
-		g_printf (" ");
+	if (entry->refresh) {
+		g_printf ("%s", r);
+		for (;res < columns; res++) {
+			g_printf (" ");
+		}
+		fflush (stdout);
+	} else {
+		g_printf ("%s\n", r);
 	}
-
-	fflush (stdout);
 
 	g_free (r);
 }
