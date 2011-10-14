@@ -19,7 +19,8 @@ def copy_cython(task):
         i = 0
         for l in orig:
             if i == 0:
-                l = re.sub(' on .* \\*/', ' */', l)
+                l = re.sub(' on .* \\*/', ' */', l.decode('ascii'))
+                l = l.encode('ascii')
             # TODO: strip all comment lines
             copy.write(l)
     finally:
