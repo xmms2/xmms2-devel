@@ -71,8 +71,7 @@ optional_subdirs = """
 src/clients/nycli
 src/clients/launcher
 src/clients/et
-src/clients/mdns/dns_sd
-src/clients/mdns/avahi
+src/clients/mdns
 src/clients/medialib-updater
 src/clients/vistest
 src/clients/lib/xmmsclient-ecore

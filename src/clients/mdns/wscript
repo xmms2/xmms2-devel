@@ -1,0 +1,34 @@
+from waflib import Errors
+
+def build(bld):
+    if bld.env.MDNS_BACKEND in ("avahi", "dns_sd"):
+        bld.recurse(bld.env.MDNS_BACKEND)
+
+def configure_backend(conf, backend):
+    try:
+        conf.recurse(backend, mandatory=True)
+    except Errors.ConfigurationError, e:
+        return False
+    return True
+
+def configure(conf):
+    if conf.options.mdns_backend == "avahi":
+        order = ["avahi"]
+    elif conf.options.mdns_backend == "dns_sd":
+        order = ["dns_sd"]
+    else:
+        order = ["avahi", "dns_sd"]
+
+    success = False
+    for backend in order:
+        success = configure_backend(conf, backend)
+        if success:
+            conf.env.MDNS_BACKEND = backend
+            break
+
+    if not success:
+        raise Errors.ConfigurationError("No MDNS backend available.")
+
+def options(opt):
+    opt.add_option("--with-mdns-backend", dest="mdns_backend",
+                   help="Select MDNS backend, avahi or dns_sd", default="")
