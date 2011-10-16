@@ -834,7 +834,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist = None, cb = None, encoded=False):
 		"""
-		playlist_rinsert(pos, url, playlist=None, cb=None) -> XmmsResult
+		playlist_rinsert(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
 
 		Insert a directory in the playlist.
 		Requires an int 'pos' and a string 'url' as argument.
@@ -862,7 +862,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_insert_url(self, int pos, url, playlist = None, cb = None, encoded = False):
 		"""
-		playlist_insert_url(pos, url, playlist=None, cb=None) -> XmmsResult
+		playlist_insert_url(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
 
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -905,7 +905,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_insert_collection(self, int pos, Collection coll, order = None, playlist = None, cb = None):
 		"""
-		playlist_insert_collection(pos, coll, order, playlist=None, cb=None) -> XmmsResult
+		playlist_insert_collection(pos, coll, order=None, playlist=None, cb=None) -> XmmsResult
 
 		Insert the content of a collection to the playlist.
 		Requires an int 'pos' and an int 'id' as argument.
@@ -925,7 +925,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):
 		"""
-		playlist_radd(url, playlist=None, cb=None) -> XmmsResult
+		playlist_radd(url, playlist=None, cb=None, encoded=False) -> XmmsResult
 
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
@@ -952,7 +952,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_add_url(self, url, playlist = None, cb = None, encoded=False):
 		"""
-		playlist_add_url(url, playlist=None, cb=None) -> XmmsResult
+		playlist_add_url(url, playlist=None, cb=None, encoded=False) -> XmmsResult
 
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1251,7 +1251,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded=False):
 		"""
-		medialib_add_entry(file, cb=None) -> XmmsResult
+		medialib_add_entry(file, cb=None, encoded=False) -> XmmsResult
 
 		Add an entry to the MediaLib.
 		@rtype: L{XmmsResult}
@@ -1494,7 +1494,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult coll_get(self, name, ns="Collections", cb=None):
 		"""
-		coll_get(name, ns, cb=None) -> XmmsResult
+		coll_get(name, ns="Collections", cb=None) -> XmmsResult
 
 		Retrieve a Collection
 		@rtype: L{XmmsResult}
@@ -1519,7 +1519,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult coll_save(self, Collection coll, name, ns="Collections", cb=None):
 		"""
-		coll_save(coll, name, ns, cb=None) -> XmmsResult
+		coll_save(coll, name, ns="Collections", cb=None) -> XmmsResult
 
 		Save a collection on server.
 		@rtype: L{XmmsResult}
@@ -1532,7 +1532,7 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult coll_remove(self, name, ns="Collections", cb=None):
 		"""
-		coll_remove(name, ns, cb=None) -> XmmsResult
+		coll_remove(name, ns="Collections", cb=None) -> XmmsResult
 
 		Remove a collection on server.
 		@rtype: L{XmmsResult}
@@ -1825,7 +1825,7 @@ cdef class XmmsLoop(XmmsApi):
 
 	def loop_iter(self, infd=None, outfd=None, errfd=None, timeout=-1):
 		"""
-		loop_iter(infd=None, outfd=None, errfd=None, timeout=None)
+		loop_iter(infd=None, outfd=None, errfd=None, timeout=-1)
 		Run one iteration of the main loop. Should be overridden to add
 		custom operations in the main loop.
 		@return The tuple returned by select.select() to be used by overridding
