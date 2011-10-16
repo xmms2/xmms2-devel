@@ -7,7 +7,7 @@ def build(bld):
 def configure_backend(conf, backend):
     try:
         conf.recurse(backend, mandatory=True)
-    except Errors.ConfigurationError, e:
+    except Errors.ConfigurationError:
         return False
     return True
 
