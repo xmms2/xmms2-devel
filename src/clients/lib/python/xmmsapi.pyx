@@ -1545,9 +1545,9 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult coll_rename(self, oldname, newname, ns="Collections", cb=None):
 		"""
-		coll_remove(name, ns, cb=None) -> XmmsResult
+		coll_rename(oldname, newname, ns="Collections", cb=None) -> XmmsResult
 
-		Remove a collection on server.
+		Rename a collection.
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""
