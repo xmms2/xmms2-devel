@@ -13632,7 +13632,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_23playlist_shuffle(PyObject *__pyx_v
  * 
  * 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_rinsert(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_rinsert(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_24playlist_rinsert(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -13801,11 +13801,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_playlist_
  * 
  * 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_rinsert(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_rinsert(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_24playlist_rinsert(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_24playlist_rinsert[] = "\n\t\tplaylist_rinsert(pos, url, playlist=None, cb=None) -> XmmsResult\n\n\t\tInsert a directory in the playlist.\n\t\tRequires an int 'pos' and a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_24playlist_rinsert[] = "\n\t\tplaylist_rinsert(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult\n\n\t\tInsert a directory in the playlist.\n\t\tRequires an int 'pos' and a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_24playlist_rinsert(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_pos;
   PyObject *__pyx_v_url = 0;
@@ -14065,7 +14065,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_25playlist_rinsert_encoded(PyObject 
  * 
  * 	cpdef XmmsResult playlist_insert_url(self, int pos, url, playlist = None, cb = None, encoded = False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_insert_url(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_insert_url(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_26playlist_insert_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -14234,11 +14234,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_playlist_
  * 
  * 	cpdef XmmsResult playlist_insert_url(self, int pos, url, playlist = None, cb = None, encoded = False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_insert_url(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_insert_url(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_26playlist_insert_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_26playlist_insert_url[] = "\n\t\tplaylist_insert_url(pos, url, playlist=None, cb=None) -> XmmsResult\n\n\t\tInsert a path or URL to a playable media item to the playlist.\n\t\tPlayable media items may be files or streams.\n\t\tRequires an int 'pos' and a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_26playlist_insert_url[] = "\n\t\tplaylist_insert_url(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult\n\n\t\tInsert a path or URL to a playable media item to the playlist.\n\t\tPlayable media items may be files or streams.\n\t\tRequires an int 'pos' and a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_26playlist_insert_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_pos;
   PyObject *__pyx_v_url = 0;
@@ -14720,7 +14720,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_28playlist_insert_id(PyObject *__pyx
  * 
  * 	cpdef XmmsResult playlist_insert_collection(self, int pos, Collection coll, order = None, playlist = None, cb = None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_insert_collection(pos, coll, order, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_insert_collection(pos, coll, order=None, playlist=None, cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_29playlist_insert_collection(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -14896,11 +14896,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_playlist_
  * 
  * 	cpdef XmmsResult playlist_insert_collection(self, int pos, Collection coll, order = None, playlist = None, cb = None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_insert_collection(pos, coll, order, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_insert_collection(pos, coll, order=None, playlist=None, cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_29playlist_insert_collection(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_29playlist_insert_collection[] = "\n\t\tplaylist_insert_collection(pos, coll, order, playlist=None, cb=None) -> XmmsResult\n\n\t\tInsert the content of a collection to the playlist.\n\t\tRequires an int 'pos' and an int 'id' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_29playlist_insert_collection[] = "\n\t\tplaylist_insert_collection(pos, coll, order=None, playlist=None, cb=None) -> XmmsResult\n\n\t\tInsert the content of a collection to the playlist.\n\t\tRequires an int 'pos' and an int 'id' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_29playlist_insert_collection(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_pos;
   struct __pyx_obj_9xmmsvalue_Collection *__pyx_v_coll = 0;
@@ -15017,7 +15017,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_29playlist_insert_collection(PyObjec
  * 
  * 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_radd(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_radd(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_30playlist_radd(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -15181,11 +15181,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_playlist_
  * 
  * 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_radd(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_radd(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_30playlist_radd(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_30playlist_radd[] = "\n\t\tplaylist_radd(url, playlist=None, cb=None) -> XmmsResult\n\n\t\tAdd a directory to the playlist.\n\t\tRequires a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_30playlist_radd[] = "\n\t\tplaylist_radd(url, playlist=None, cb=None, encoded=False) -> XmmsResult\n\n\t\tAdd a directory to the playlist.\n\t\tRequires a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_30playlist_radd(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_url = 0;
   PyObject *__pyx_v_playlist = 0;
@@ -15420,7 +15420,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_31playlist_radd_encoded(PyObject *__
  * 
  * 	cpdef XmmsResult playlist_add_url(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_add_url(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_add_url(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_32playlist_add_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -15584,11 +15584,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_playlist_
  * 
  * 	cpdef XmmsResult playlist_add_url(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_add_url(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_add_url(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_32playlist_add_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_32playlist_add_url[] = "\n\t\tplaylist_add_url(url, playlist=None, cb=None) -> XmmsResult\n\n\t\tAdd a path or URL to a playable media item to the playlist.\n\t\tPlayable media items may be files or streams.\n\t\tRequires a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_32playlist_add_url[] = "\n\t\tplaylist_add_url(url, playlist=None, cb=None, encoded=False) -> XmmsResult\n\n\t\tAdd a path or URL to a playable media item to the playlist.\n\t\tPlayable media items may be files or streams.\n\t\tRequires a string 'url' as argument.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_32playlist_add_url(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_url = 0;
   PyObject *__pyx_v_playlist = 0;
@@ -19961,7 +19961,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_57configval_register(PyObject *__pyx
  * 
  * 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		medialib_add_entry(file, cb=None) -> XmmsResult
+ * 		medialib_add_entry(file, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_58medialib_add_entry(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -20101,11 +20101,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_medialib_
  * 
  * 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		medialib_add_entry(file, cb=None) -> XmmsResult
+ * 		medialib_add_entry(file, cb=None, encoded=False) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_58medialib_add_entry(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_58medialib_add_entry[] = "\n\t\tmedialib_add_entry(file, cb=None) -> XmmsResult\n\n\t\tAdd an entry to the MediaLib.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_58medialib_add_entry[] = "\n\t\tmedialib_add_entry(file, cb=None, encoded=False) -> XmmsResult\n\n\t\tAdd an entry to the MediaLib.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_58medialib_add_entry(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_path = 0;
   PyObject *__pyx_v_cb = 0;
@@ -23731,7 +23731,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_76xform_media_browse_encoded(PyObjec
  * 
  * 	cpdef XmmsResult coll_get(self, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_get(name, ns, cb=None) -> XmmsResult
+ * 		coll_get(name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_77coll_get(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -23846,11 +23846,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_coll_get(
  * 
  * 	cpdef XmmsResult coll_get(self, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_get(name, ns, cb=None) -> XmmsResult
+ * 		coll_get(name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_77coll_get(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_77coll_get[] = "\n\t\tcoll_get(name, ns, cb=None) -> XmmsResult\n\n\t\tRetrieve a Collection\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_77coll_get[] = "\n\t\tcoll_get(name, ns=\"Collections\", cb=None) -> XmmsResult\n\n\t\tRetrieve a Collection\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_77coll_get(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_name = 0;
   PyObject *__pyx_v_ns = 0;
@@ -24133,7 +24133,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_78coll_list(PyObject *__pyx_v_self, 
  * 
  * 	cpdef XmmsResult coll_save(self, Collection coll, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_save(coll, name, ns, cb=None) -> XmmsResult
+ * 		coll_save(coll, name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_79coll_save(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -24251,11 +24251,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_coll_save
  * 
  * 	cpdef XmmsResult coll_save(self, Collection coll, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_save(coll, name, ns, cb=None) -> XmmsResult
+ * 		coll_save(coll, name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_79coll_save(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_79coll_save[] = "\n\t\tcoll_save(coll, name, ns, cb=None) -> XmmsResult\n\n\t\tSave a collection on server.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_79coll_save[] = "\n\t\tcoll_save(coll, name, ns=\"Collections\", cb=None) -> XmmsResult\n\n\t\tSave a collection on server.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_79coll_save(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   struct __pyx_obj_9xmmsvalue_Collection *__pyx_v_coll = 0;
   PyObject *__pyx_v_name = 0;
@@ -24361,7 +24361,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_79coll_save(PyObject *__pyx_v_self, 
  * 
  * 	cpdef XmmsResult coll_remove(self, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_remove(name, ns, cb=None) -> XmmsResult
+ * 		coll_remove(name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_80coll_remove(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -24476,11 +24476,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_coll_remo
  * 
  * 	cpdef XmmsResult coll_remove(self, name, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_remove(name, ns, cb=None) -> XmmsResult
+ * 		coll_remove(name, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_80coll_remove(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_80coll_remove[] = "\n\t\tcoll_remove(name, ns, cb=None) -> XmmsResult\n\n\t\tRemove a collection on server.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_80coll_remove[] = "\n\t\tcoll_remove(name, ns=\"Collections\", cb=None) -> XmmsResult\n\n\t\tRemove a collection on server.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_80coll_remove(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_name = 0;
   PyObject *__pyx_v_ns = 0;
@@ -24575,7 +24575,7 @@ static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_80coll_remove(PyObject *__pyx_v_self
  * 
  * 	cpdef XmmsResult coll_rename(self, oldname, newname, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_remove(name, ns, cb=None) -> XmmsResult
+ * 		coll_rename(oldname, newname, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_81coll_rename(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -24709,11 +24709,11 @@ static struct __pyx_obj_7xmmsapi_XmmsResult *__pyx_f_7xmmsapi_7XmmsApi_coll_rena
  * 
  * 	cpdef XmmsResult coll_rename(self, oldname, newname, ns="Collections", cb=None):             # <<<<<<<<<<<<<<
  * 		"""
- * 		coll_remove(name, ns, cb=None) -> XmmsResult
+ * 		coll_rename(oldname, newname, ns="Collections", cb=None) -> XmmsResult
  */
 
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_81coll_rename(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_7XmmsApi_81coll_rename[] = "\n\t\tcoll_remove(name, ns, cb=None) -> XmmsResult\n\n\t\tRemove a collection on server.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
+static char __pyx_doc_7xmmsapi_7XmmsApi_81coll_rename[] = "\n\t\tcoll_rename(oldname, newname, ns=\"Collections\", cb=None) -> XmmsResult\n\n\t\tRename a collection.\n\t\t@rtype: L{XmmsResult}\n\t\t@return: The result of the operation.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_7XmmsApi_81coll_rename(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_oldname = 0;
   PyObject *__pyx_v_newname = 0;
@@ -28372,11 +28372,11 @@ static PyObject *__pyx_pf_7xmmsapi_8XmmsLoop_4loop_tickle(PyObject *__pyx_v_self
  * 
  * 	def loop_iter(self, infd=None, outfd=None, errfd=None, timeout=-1):             # <<<<<<<<<<<<<<
  * 		"""
- * 		loop_iter(infd=None, outfd=None, errfd=None, timeout=None)
+ * 		loop_iter(infd=None, outfd=None, errfd=None, timeout=-1)
  */
 
 static PyObject *__pyx_pf_7xmmsapi_8XmmsLoop_5loop_iter(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7xmmsapi_8XmmsLoop_5loop_iter[] = "\n\t\tloop_iter(infd=None, outfd=None, errfd=None, timeout=None)\n\t\tRun one iteration of the main loop. Should be overridden to add\n\t\tcustom operations in the main loop.\n\t\t@return The tuple returned by select.select() to be used by overridding\n\t\tmethods in subclasses.\n\t\t";
+static char __pyx_doc_7xmmsapi_8XmmsLoop_5loop_iter[] = "\n\t\tloop_iter(infd=None, outfd=None, errfd=None, timeout=-1)\n\t\tRun one iteration of the main loop. Should be overridden to add\n\t\tcustom operations in the main loop.\n\t\t@return The tuple returned by select.select() to be used by overridding\n\t\tmethods in subclasses.\n\t\t";
 static PyObject *__pyx_pf_7xmmsapi_8XmmsLoop_5loop_iter(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_infd = 0;
   PyObject *__pyx_v_outfd = 0;
@@ -33097,7 +33097,7 @@ PyMODINIT_FUNC PyInit_xmmsapi(void)
  * 
  * 	cpdef XmmsResult playlist_rinsert(self, int pos, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_rinsert(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_rinsert(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
   __pyx_t_5 = __Pyx_PyBool_FromLong(0); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 835; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
@@ -33142,7 +33142,7 @@ PyMODINIT_FUNC PyInit_xmmsapi(void)
  * 
  * 	cpdef XmmsResult playlist_insert_url(self, int pos, url, playlist = None, cb = None, encoded = False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_insert_url(pos, url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_insert_url(pos, url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
   __pyx_t_3 = __Pyx_PyBool_FromLong(0); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 863; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
@@ -33187,7 +33187,7 @@ PyMODINIT_FUNC PyInit_xmmsapi(void)
  * 
  * 	cpdef XmmsResult playlist_radd(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_radd(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_radd(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
   __pyx_t_2 = __Pyx_PyBool_FromLong(0); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 926; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -33232,7 +33232,7 @@ PyMODINIT_FUNC PyInit_xmmsapi(void)
  * 
  * 	cpdef XmmsResult playlist_add_url(self, url, playlist = None, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		playlist_add_url(url, playlist=None, cb=None) -> XmmsResult
+ * 		playlist_add_url(url, playlist=None, cb=None, encoded=False) -> XmmsResult
  */
   __pyx_t_5 = __Pyx_PyBool_FromLong(0); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 953; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
@@ -33437,7 +33437,7 @@ PyMODINIT_FUNC PyInit_xmmsapi(void)
  * 
  * 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded=False):             # <<<<<<<<<<<<<<
  * 		"""
- * 		medialib_add_entry(file, cb=None) -> XmmsResult
+ * 		medialib_add_entry(file, cb=None, encoded=False) -> XmmsResult
  */
   __pyx_t_5 = __Pyx_PyBool_FromLong(0); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 1252; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
