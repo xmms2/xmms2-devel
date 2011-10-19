@@ -339,13 +339,14 @@ cdef class CollectionRef:
 		self.coll = coll
 
 
+cdef _idlist_types = [XMMS_COLLECTION_TYPE_IDLIST, XMMS_COLLECTION_TYPE_QUEUE, XMMS_COLLECTION_TYPE_PARTYSHUFFLE]
 cdef class Collection(CollectionRef):
 	#cdef object _attributes
 	#cdef object _operands
 	#cdef object _idlist
 
 	cdef init_idlist(self):
-		if self._idlist is None and self.coll != NULL and xmmsv_coll_get_type(self.coll) == XMMS_COLLECTION_TYPE_IDLIST:
+		if self._idlist is None and self.coll != NULL and xmmsv_coll_get_type(self.coll) in _idlist_types:
 			self._idlist = CollectionIDList(self)
 
 	cdef init_attributes(self):
