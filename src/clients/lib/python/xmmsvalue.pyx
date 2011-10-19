@@ -630,7 +630,8 @@ cdef class CollectionIDList(CollectionRef):
 		res = []
 		while i < l:
 			x = -1
-			xmmsv_coll_idlist_get_index(self.coll, i, &x)
+			if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
+				raise RuntimeError("Failed to retrieve id at index %d" % i)
 			res.append(x)
 			i = i + 1
 		return res
@@ -643,7 +644,8 @@ cdef class CollectionIDList(CollectionRef):
 
 	cpdef append(self, int v):
 		"""Appends an id to the idlist"""
-		xmmsv_coll_idlist_append(self.coll, v)
+		if not xmmsv_coll_idlist_append(self.coll, v):
+			raise RuntimeError("Failed to append an id")
 
 	cpdef extend(self, v):
 		for a in v:
@@ -687,7 +689,8 @@ cdef class CollectionIDList(CollectionRef):
 			raise IndexError("Index out of range")
 
 	cpdef clear(self):
-		xmmsv_coll_idlist_clear(self.coll)
+		if not xmmsv_coll_idlist_clear(self.coll):
+			raise RuntimeError("Failed to clear ids")
 
 
 # XXX Might not be needed.
