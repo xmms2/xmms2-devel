@@ -3,7 +3,7 @@ try:
 	a = basestring
 	del a
 except NameError:
-	basestring = str
+	basestring = (bytes, str)
 
 class PropDict(dict):
     def __init__(self, srcs):
