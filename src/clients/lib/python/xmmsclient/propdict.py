@@ -29,19 +29,21 @@ class PropDict(dict):
         return self.has_key(item)
 
     def __getitem__(self, item):
-        if isinstance(item, basestring):
-            for src in self._sources:
-                if src.endswith('*'):
-                    for k in self:
-                        if k[0].startswith(src[:-1]) and k[1] == item:
-                            return dict.__getitem__(self, k)
-                try:
-                    t = dict.__getitem__(self, (src, item))
-                    return t
-                except KeyError:
-                    pass
-            raise KeyError(item)
-        return dict.__getitem__(self, item)
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            if isinstance(item, basestring):
+                for src in self._sources:
+                    if src.endswith('*'):
+                        for k in self:
+                            if k[0].startswith(src[:-1]) and k[1] == item:
+                                return dict.__getitem__(self, k)
+                    try:
+                        t = dict.__getitem__(self, (src, item))
+                        return t
+                    except KeyError:
+                        pass
+            raise
 
     def get(self, item, default=None):
         try:
