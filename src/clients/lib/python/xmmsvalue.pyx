@@ -521,6 +521,11 @@ cdef class CollectionAttributes(CollectionRef):
 		v = from_unicode(value)
 		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
 
+	def __delitem__(self, name):
+		n = from_unicode(name)
+		if not xmmsv_coll_attribute_remove(self.coll, <char *>n):
+			raise KeyError("The attribute '%s' doesn't exist" % name)
+
 	def get(self, name, default=None):
 		try:
 			return self[name]
