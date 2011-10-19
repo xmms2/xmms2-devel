@@ -1,8 +1,7 @@
 # encoding: utf-8
 """
 
- A GLib connector for PyGTK - 
-	to use with your cool PyGTK xmms2 client.
+ A GLib connector for PyGTK - to use with your cool PyGTK xmms2 client.
  Tobias Rundstrom <tru@xmms.org>
  Raphaël Bois <virtualdust@gmail.com>
 
