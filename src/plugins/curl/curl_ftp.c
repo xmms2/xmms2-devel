@@ -95,7 +95,7 @@ xmms_plugin_get (void)
 		return NULL;
 	}
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://xmms2.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

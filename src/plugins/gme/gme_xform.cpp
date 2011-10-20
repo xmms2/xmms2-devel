@@ -16,7 +16,7 @@
 
 /**
   * @file gme decoder.
-  * @url http://wiki.xmms2.xmms.se/index.php/Notes_from_developing_an_xform_plugin
+  * @url http://xmms2.org/wiki/Notes_from_developing_an_xform_plugin
   */
 
 #include <glib.h>
@@ -35,9 +35,9 @@
 
 extern "C" {
 
-/* 
+/*
  * Persistent data
- * 
+ *
  */
 typedef struct xmms_gme_data_St {
 	Music_Emu *emu; /* An emulation instance for the GME library */
