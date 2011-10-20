@@ -29,7 +29,8 @@ See COPYING for details.
 ==CREDITS==
 
 See the AUTHORS file.
-(for the people not in AUTHORS: like everyone but you - help and you will be included as well)
+(for the people not in AUTHORS: like everyone but you - help and you will be
+included as well)
 
 
 ==HELPING==
@@ -42,12 +43,10 @@ for further info might be: http://xmms2.org/wiki/Developer_Corner
 
 Feel free to post any questions/patches/whatever to the mailing list:
 xmms2-devel@lists.xmms.se
- (http://lists.xmms.se/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
+(http://lists.xmms.se/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
 
-The IRC channel is usually fairly active as well,
-chat away at: #xmms2 on freenode (irc.freenode.net)
+The IRC channel is usually fairly active as well, chat away at: #xmms2 on
+freenode (irc.freenode.net)
 
-Report bugs to the bug tracker at: http://bugs.xmms2.org/
-(account registration required - Linus, you can just post
- the reports to the mailing list)
-
+Report bugs to the bug tracker at: http://bugs.xmms2.org/ (account registration
+required - Linus, you can just post the reports to the mailing list)
