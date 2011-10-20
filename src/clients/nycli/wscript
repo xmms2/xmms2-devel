@@ -24,7 +24,7 @@ def build(bld):
     bld(features = 'c cprogram',
         target = 'xmms2',
         source = source + compat,
-        includes = '. ../../include',
+        includes = '. ../../../ ../../include',
         uselib = 'glib2 readline readline_ncurses',
         use = 'xmmsclient'
         )

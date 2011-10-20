@@ -18,7 +18,6 @@
 #define __MAIN_H__
 
 #define CLI_CLIENTNAME "xmms2-cli"
-#define XMMS2_CLI_VERSION "0.1 (Speak To Me)"
 
 /* FIXME: shall be loaded from config when config exists */
 #define STDINFD 0

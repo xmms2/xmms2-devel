@@ -31,6 +31,7 @@
 #include "readline.h"
 #include "configuration.h"
 
+#include "xmms_configuration.h"
 
 static void loop_select (cli_infos_t *infos);
 
@@ -288,13 +289,13 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
 			g_printf (_("usage: xmms2 [<command> [args]]\n\n"));
 			g_printf (_("XMMS2 CLI, the awesome command-line XMMS2 client from the future, "
-			          "v" XMMS2_CLI_VERSION ".\n\n"));
+			          "v" XMMS_VERSION ".\n\n"));
 			g_printf (_("If given a command, runs it inline and exit.\n"));
 			g_printf (_("If not, enters a shell-like interface to execute commands.\n\n"));
 			g_printf (_("Type 'help <command>' for detailed help about a command.\n"));
 		}
 	} else if (command_flag_boolean_get (ctx, "version", &check) && check) {
-		g_printf (_("XMMS2 CLI version " XMMS2_CLI_VERSION "\n"));
+		g_printf (_("XMMS2 CLI version " XMMS_VERSION "\n"));
 		g_printf (_("Copyright (C) 2008 XMMS2 Team\n"));
 		g_printf (_("This is free software; see the source for copying conditions.\n"));
 		g_printf (_("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
