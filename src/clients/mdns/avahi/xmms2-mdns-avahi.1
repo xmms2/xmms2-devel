@@ -1,7 +1,7 @@
-.\" 
+.\"
 .\" xmms2-mdns-avahi - The Avahi mDNS Announcer for XMMS2
 .\"
-.\" xmms2-mdns-avahi.1 - xmms2-mdns-avahi manpage 
+.\" xmms2-mdns-avahi.1 - xmms2-mdns-avahi manpage
 .\"
 .\" Copyright (C) 2005-2011 XMMS2 Team
 .\"
@@ -16,7 +16,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,32 +27,32 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
 .\"
-.TH XMMS2-MDNS-AVAHI 1 
+.\"
+.TH XMMS2-MDNS-AVAHI 1
 .SH NAME
 xmms2-mdns-avahi \- announces XMMS2 via mDNS
 .SH SYNOPSIS
 .I xmms2-mdns-avahi
 .P
 .SH DESCRIPTION
-.B XMMS2 
+.B XMMS2
 is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organize your music.
 .PP
 .I xmms2-mdns-avahi
 is the Avahi mDNS announcing client for
 .B XMMS2.
 .I xmms2-mdns-avahi
-is designed to announce the presence of an accessible 
+is designed to announce the presence of an accessible
 .B XMMS2
 TCP socket if one is available.
 .P
 .I xmms2-mdns-avahi
-offers a _xmms2._tcp service if, and only if, the 
+offers a _xmms2._tcp service if, and only if, the
 .I XMMS_PATH_FULL
-enviornmental variable contains a TCP socket. This allows clients that support mDNS discovery to easily locate and connect to this 
-.I xmms2d(1) 
-instance. 
+enviornmental variable contains a TCP socket. This allows clients that support mDNS discovery to easily locate and connect to this
+.I xmms2d(1)
+instance.
 .SH ENVIRONMENTAL VARIABLES
 .TP
 .I XMMS_PATH_FULL
@@ -60,7 +60,7 @@ A complete list of URL paths separated by ';' pointed to the
 .I xmms2d(1).
 See
 .B IPC SOCKET
-in  
+in
 .I xmms2d(1)
 for details of possible values for this variable
 

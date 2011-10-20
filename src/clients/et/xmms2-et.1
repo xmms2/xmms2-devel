@@ -1,7 +1,7 @@
-.\" 
+.\"
 .\" xmms2-et - The ET Phone Home Client for XMMS2
 .\"
-.\" xmms2-et.1 - xmms2-et manpage 
+.\" xmms2-et.1 - xmms2-et manpage
 .\"
 .\" Copyright (C) 2005-2011 XMMS2 Team
 .\"
@@ -16,7 +16,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -27,38 +27,38 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
 .\"
-.TH XMMS2-ET 1 
+.\"
+.TH XMMS2-ET 1
 .SH NAME
 xmms2-et \- transmits an anonymous informative packet to the XMMS2 team on each song change
 .SH SYNOPSIS
 .I xmms2-et
 .P
 .SH DESCRIPTION
-.B XMMS2 
+.B XMMS2
 is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organize your music.
 .PP
 .I xmms2-et
-is the ET Phone Home Client for 
+is the ET Phone Home Client for
 .B XMMS2.
-.I xmms2-et 
-is designed to transmit a packet of information to the 
+.I xmms2-et
+is designed to transmit a packet of information to the
 .B XMMS2
-team whenever a new song is played. The packet is anonymous and does not contain metadata about the song being played. The specifics of what data is transmitted to the 
+team whenever a new song is played. The packet is anonymous and does not contain metadata about the song being played. The specifics of what data is transmitted to the
 .B XMMS2
-team can be found in the 
+team can be found in the
 .B ET PACKET
 section of this manual page.
 .P
 .I xmms2-et
 is used for release engineering by the
 .B XMMS2
-team. During a release cycle, the usage of various plugins, operating systems, and XMMS2 components is collected from data transmitted by the 
+team. During a release cycle, the usage of various plugins, operating systems, and XMMS2 components is collected from data transmitted by the
 .I xmms2-et
 client. A release is made when sufficient testing has occured as determined by the number of related
 .I xmms2-et
-packets that the 
+packets that the
 .B XMMS2
 team has received.
 .SH ET PACKET
@@ -80,7 +80,7 @@ contains the name and release of the operating system on which
 .I xmms2d
 is running
 .TP
-.I output=output_plugin 
+.I output=output_plugin
 contains the output plugin being used to playback audio by
 .I xmms2d
 .TP
@@ -107,7 +107,7 @@ contains the decoder plugin used to playback the last played song
 .TP
 .I transport=plugin
 contains the transport plugin used to read the last played song
-.TP 
+.TP
 .I samplefmt:in=in_fmt
 contains the sample format of the original audio file of the last played song
 .TP
@@ -128,11 +128,11 @@ contains the number of channels that were sent to the output plugin for the last
 .SH ENVIRONMENTAL VARIABLES
 .TP
 .I XMMS_PATH
-The URL path to 
+The URL path to
 .I xmms2d.
 See
 .B IPC SOCKET
-in  
+in
 .I xmms2d(8)
 for details of possible values for this variable
 
