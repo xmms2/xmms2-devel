@@ -1674,7 +1674,7 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		stats(cb=None) -> XmmsResult
 
-		Get statistics informations from the server
+		Get statistics information from the server
 		@rtype: L{XmmsResult}
 		@return: The result of the operation.
 		"""

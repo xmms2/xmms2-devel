@@ -867,7 +867,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 		else:
 			c.__class__ = IDList
 	else:
-		raise RuntimeError("Unkown collection type")
+		raise RuntimeError("Unknown collection type")
 
 	c.set_collection(coll)
 
