@@ -16,7 +16,7 @@ If you are building XMMS2 on a binary distro, be sure to install -dev or -header
 These libraries are '''not needed''' for building xmms2d itself, but will add extra functionality you might need. You will probably want MAD at the very least as without it, you can't play MP3s.
 
 *For xform plugins:
-** [http://curl.haxx.se Curl] (>= 7.11.2) - For listening to streams over HTTP.
+** [http://curl.haxx.se Curl] (>= 7.12.0) - For listening to streams over HTTP.
 ** [http://www.underbit.com/products/mad/ MAD] (Ubuntu and debian users will want libmad0-dev) - For listening to MPEG files (MPEG 1 & 2 layers I, II and III - includes MP3)
 ** [http://www.audiocoding.com/ FAAD] - For listening to AAC.
 ** [http://www.xiph.org Vorbisfile] - For listening to Ogg Vorbis.
@@ -47,7 +47,7 @@ These libraries are '''not needed''' for building xmms2d itself, but will add ex
 ** [http://cython.org/ Cython] (>= 0.15.1) - For python bindings. If your cython is older, it makes sense to use the pre-generated bindings instead.
 ** [http://www.ruby-lang.org/ Ruby] (>= 1.8) - For Ruby bindings.
 ** [http://www.perl.org Perl] (>= 5.7.3) - For Perl bindings.
-** [http://www.boost.org Boost signals] - For C++ bindings.
+** [http://www.boost.org Boost signals] (>= 1.37, older versions work with gcc < 4.4) - For C++ bindings.
 
 As with the packages above, be sure to grab -dev or -headers packages if building on a binary distro!
 
