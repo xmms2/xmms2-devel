@@ -17,12 +17,28 @@ def copy_cython(task):
         orig = open(orig_file, 'rb')
         copy = open(copy_file, 'wb')
         i = 0
+        comment = None
         for l in orig:
+            sl = l.decode('utf-8')
+            if i != 0:
+                sl = sl.strip()
             if i == 0:
-                l = re.sub(' on .* \\*/', ' */', l.decode('ascii'))
-                l = l.encode('ascii')
-            # TODO: strip all comment lines
-            copy.write(l)
+                l = re.sub(' on .* \\*/', ' */', sl).encode('utf-8')
+            elif comment:
+                end_c = sl.find('*/')
+                if end_c < 0:
+                    comment += l
+                else:
+                    if end_c != len(sl) - 2:
+                        copy.write(comment + l)
+                    comment = None
+                l = None
+            elif sl[0:2] == '/*' and sl.find('*/') < 0:
+                comment = l
+                l = None
+            if l:
+                copy.write(l)
+            i += 1
     finally:
         if orig:
             orig.close()
