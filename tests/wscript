@@ -105,7 +105,7 @@ def build(bld):
         install_path = None
         )
 
-    bld(features = "c cprogram",
+    bld(features = "c cprogram test",
         target = "test_medialib",
         source = test_mlib_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
@@ -114,7 +114,7 @@ def build(bld):
         install_path = None
         )
 
-    bld(features = "c cprogram",
+    bld(features = "c cprogram test",
         target = "test_playlist",
         source = test_playlist_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
@@ -123,7 +123,7 @@ def build(bld):
         install_path = None
         )
 
-    bld(features = "c cprogram",
+    bld(features = "c cprogram test",
         target = "test_collection",
         source = test_collection_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
@@ -132,7 +132,7 @@ def build(bld):
         install_path = None
         )
 
-    bld(features = "c cprogram",
+    bld(features = "c cprogram test",
         target = "medialib-runner",
         source = mlib_runner_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
