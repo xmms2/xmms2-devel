@@ -130,6 +130,10 @@ filter_testcase (const gchar *path, xmmsv_t *list)
 
 	g_assert (g_file_get_contents (path, &content, NULL, NULL));
 	dict = xmmsv_from_json (content);
+	if (dict == NULL) {
+		g_error ("Could not parse '%s'!\n", path);
+		g_assert_not_reached ();
+	}
 	g_free (content);
 
 	g_assert (xmmsv_dict_has_key (dict, "medialib"));

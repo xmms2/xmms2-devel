@@ -105,6 +105,8 @@ xmmsv_from_json (const char *spec)
 				fprintf (stderr, "Failed to parse (%d)!\n", error);
 				break;
 		}
+
+		return NULL;
 	}
 
 	assert (dom.root_structure != NULL);
