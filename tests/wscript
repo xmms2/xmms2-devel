@@ -138,7 +138,8 @@ def build(bld):
         includes = '. .. runner ../src ../src/includepriv ../src/include',
         use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None
+        install_path = None,
+        ut_cwd = "."
         )
 
 def options(o):
