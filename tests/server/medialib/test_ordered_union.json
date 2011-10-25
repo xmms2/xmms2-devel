@@ -1,12 +1,12 @@
 {
     "medialib": [
         { "tracknr": 1, "artist": "Red Fang", "album": "Red Fang", "title": "Prehistoric Dog" },
-        { "tracknr": 2, "artist": "Red Fang", "album": "Red Fang", "title": "Reverse Thunder" }
+        { "tracknr": 2, "artist": "Red Fang", "album": "Red Fang", "title": "Reverse Thunder" },
         { "tracknr": 3, "artist": "Red Fang", "album": "Red Fang", "title": "Night Destroyer" },
         { "tracknr": 4, "artist": "Red Fang", "album": "Red Fang", "title": "Humans Remain Human Remains" },
         { "tracknr": 1, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Decade" },
         { "tracknr": 2, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Breathing Place" },
-        { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" },
+        { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" }
     ],
     "collection": {
         "type": "order",
@@ -48,7 +48,7 @@
                 }
             ]
         }]
-    }
+    },
     "specification": {
         "type": "cluster-list",
         "cluster-by": "value",

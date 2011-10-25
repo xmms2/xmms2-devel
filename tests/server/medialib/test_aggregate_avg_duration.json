@@ -1,7 +1,7 @@
 {
     "medialib": [
-        { "duration": 10 }
-        { "duration": 20 }
+        { "duration": 10 },
+        { "duration": 20 },
         { "duration": 30 }
     ],
     "collection": {

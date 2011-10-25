@@ -2,7 +2,7 @@
     "medialib": [
         { "album": "Lungs for Life", "title": "Decade" },
         { "album": "Lungs for Life", "title": "Breathing Place" },
-        { "title": "Prehistoric Dog" },
+        { "title": "Prehistoric Dog" }
     ],
     "collection": { "type": "universe" },
     "specification": {

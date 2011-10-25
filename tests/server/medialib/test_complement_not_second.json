@@ -13,7 +13,7 @@
                 "type": "value",
                 "field": "tracknr",
                 "value": "3"
-            }
+            },
             "operands": [{ "type": "universe" }]
         }]
     },
