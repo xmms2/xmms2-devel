@@ -6,6 +6,10 @@ def monkey_patch_test_runner():
 
     def xmms_test_runner(self):
         if getattr(self.generator, 'use_valgrind', self.env.VALGRIND and True):
+            # Disable GLib memory optimizations to avoid Valgrind confusion.
+            os.environ["G_SLICE"] = "always-malloc"
+            os.environ["G_DEBUG"] = "gc-friendly"
+
             suppression = os.path.join(os.getcwd(), "utils", "valgrind-suppressions")
             self.ut_exec = [
                 "valgrind",
