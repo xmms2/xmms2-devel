@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "xmmsc/xmmsv.h"
@@ -83,6 +84,7 @@ xmmsv_from_json (const char *spec)
 	json_parser_dom dom;
 	json_parser parser;
 	xmmsv_t *value;
+	int error;
 
 	json_parser_dom_init (&dom,
 						  (json_parser_dom_create_structure) create_structure,
@@ -90,7 +92,21 @@ xmmsv_from_json (const char *spec)
 						  (json_parser_dom_append) append);
 	json_parser_init (&parser, &conf, json_parser_dom_callback, &dom);
 
-	json_parser_string (&parser, spec, strlen (spec), NULL);
+	error = json_parser_string (&parser, spec, strlen (spec), NULL);
+	if (error != 0) {
+		switch (error) {
+			case JSON_ERROR_BAD_CHAR:
+				fprintf (stderr, "Failed to parse due to bad character!\n");
+				break;
+			case JSON_ERROR_UNEXPECTED_CHAR:
+				fprintf (stderr, "Failed to parse due to unexpected character!\n");
+				break;
+			case JSON_ERROR_NO_MEMORY:
+				fprintf (stderr, "Failed to parse (%d)!\n", error);
+				break;
+		}
+	}
+
 	assert (dom.root_structure != NULL);
 	assert (dom.stack_offset == 0);
 
