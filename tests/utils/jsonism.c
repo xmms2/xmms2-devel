@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "xmmsc/xmmsv.h"
 #include "jsonism.h"
 #include "utils/json.h"
@@ -67,6 +69,27 @@ append (xmmsv_t *obj, const char *key, uint32_t key_len, xmmsv_t *value)
 	}
 	xmmsv_unref (value);
 	return 0;
+}
+
+xmmsv_t *
+xmmsv_from_xson (const char *spec)
+{
+	gchar *normalized;
+	char *p;
+	xmmsv_t *dict;
+
+	normalized = g_strdup (spec);
+	for (p = normalized; *p != NULL; p++) {
+		if (*p == '\'') {
+			*p = '"';
+		}
+	}
+
+	dict = xmmsv_from_json (normalized);
+
+	g_free (normalized);
+
+	return dict;
 }
 
 xmmsv_t *
