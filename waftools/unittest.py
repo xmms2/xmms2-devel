@@ -5,6 +5,10 @@ def monkey_patch_test_runner():
     original = Task.classes["utest"].run
 
     def xmms_test_runner(self):
+        if self.env.with_profiling:
+            # If profiling is enabled, we don't want to invoke valgrind.
+            return original(self)
+
         if getattr(self.generator, 'use_valgrind', self.env.VALGRIND and True):
             # Disable GLib memory optimizations to avoid Valgrind confusion.
             os.environ["G_SLICE"] = "always-malloc"
