@@ -1017,15 +1017,16 @@ xmms_medialib_client_get_info (xmms_medialib_t *medialib,
                                xmms_medialib_entry_t entry,
                                xmms_error_t *err)
 {
+	xmms_medialib_session_t *session;
 	GTree *ret = NULL;
 
-	MEDIALIB_BEGIN (medialib);
+	session = xmms_medialib_session_begin_ro (medialib);
 	if (xmms_medialib_check_id (session, entry)) {
 		ret = xmms_medialib_entry_to_tree (session, entry);
 	} else {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry");
 	}
-	MEDIALIB_COMMIT ();
+	xmms_medialib_session_commit (session);
 
 	return ret;
 }
