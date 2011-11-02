@@ -16,6 +16,7 @@ def build(bld):
     xmmsv_dict.c
     xmmsv_general.c
     xmmsv_list.c
+    xmmsv_service.c
     xmmsv_util.c
     """.split()
 
