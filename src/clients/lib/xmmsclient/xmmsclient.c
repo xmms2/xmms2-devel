@@ -37,7 +37,6 @@
 #define XMMS_MAX_URI_LEN 1024
 
 static void xmmsc_deinit (xmmsc_connection_t *c);
-static xmms_ipc_msg_t *xmmsc_build_ipc_msg_va (int obj, int cmd, xmmsv_t *first_arg, va_list ap);
 
 /*
  * Public methods
@@ -118,6 +117,8 @@ xmmsc_init (const char *clientname)
 
 	c->visc = 0;
 	c->visv = NULL;
+
+	c->sc_root = NULL;
 	return xmmsc_ref (c);
 }
 
@@ -187,7 +188,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		xmmsc_result_unref (result);
 		return false;
 	} else {
-		xmmsv_get_int (value, &c->id);
+		xmmsv_get_int64 (value, &c->id);
 	}
 	xmmsc_result_unref (result);
 	return true;
@@ -265,6 +266,10 @@ static void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
+
+	if (c->sc_root) {
+		xmmsc_sc_interface_entity_destroy (c->sc_root);
+	}
 
 	free (c->error);
 	free (c->clientname);

@@ -34,6 +34,7 @@
 
 /* needed by connection_St */
 
+typedef struct xmmsc_sc_interface_entity_St xmmsc_sc_interface_entity_t;
 typedef struct xmmsc_visualization_St xmmsc_visualization_t;
 
 /**
@@ -59,6 +60,9 @@ struct xmmsc_connection_St {
 
 	/* this client's id, assigned by the server */
 	int64_t id;
+
+	/* anonymous root namespace */
+	xmmsc_sc_interface_entity_t *sc_root;
 
 	/* we need to hold the connection path to get the hostname */
 	char path[XMMS_PATH_MAX];
@@ -89,6 +93,7 @@ void xmmsc_result_visc_set (xmmsc_result_t *res, xmmsc_visualization_t *visc);
 xmmsc_visualization_t *xmmsc_result_visc_get (xmmsc_result_t *res);
 xmmsc_connection_t *xmmsc_result_get_connection (xmmsc_result_t *res);
 
+void xmmsc_sc_interface_entity_destroy (xmmsc_sc_interface_entity_t *ifent);
 
 #endif
 
