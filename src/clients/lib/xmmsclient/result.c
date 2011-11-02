@@ -29,19 +29,31 @@
 #include <xmmsc/xmmsc_errorcodes.h>
 #include <xmmsc/xmmsc_stdint.h>
 #include <xmmsc/xmmsc_stdbool.h>
+#include <xmmscpriv/xmmsv_c2c.h>
 
-static void xmmsc_result_restart (xmmsc_result_t *res);
-static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
-static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
-static void xmmsc_result_notifier_delete_all (xmmsc_result_t *res);
+typedef enum {
+	XMMSC_RESULT_CALLBACK_DEFAULT,
+	XMMSC_RESULT_CALLBACK_RAW,
+	XMMSC_RESULT_CALLBACK_C2C
+} xmmsc_result_callback_type_t;
 
 typedef struct xmmsc_result_callback_St {
+	xmmsc_result_callback_type_t type;
 	xmmsc_result_notifier_t func;
+
 	void *user_data;
 	xmmsc_user_data_free_func_t free_func;
 } xmmsc_result_callback_t;
 
-static xmmsc_result_callback_t *xmmsc_result_callback_new (xmmsc_result_notifier_t f, void *udata, xmmsc_user_data_free_func_t free_f);
+static void xmmsc_result_restart (xmmsc_result_t *res);
+static void xmmsc_result_notifier_add (xmmsc_result_t *res, xmmsc_result_callback_t *cb);
+static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);
+static void xmmsc_result_notifier_delete (xmmsc_result_t *res, x_list_t *node);
+static void xmmsc_result_notifier_delete_all (xmmsc_result_t *res);
+
+static xmmsc_result_callback_t *xmmsc_result_callback_new_default (xmmsc_result_notifier_t f, void *udata, xmmsc_user_data_free_func_t free_f);
+static xmmsc_result_callback_t *xmmsc_result_callback_new_raw (xmmsc_result_notifier_t f, void *udata, xmmsc_user_data_free_func_t free_f);
+static xmmsc_result_callback_t *xmmsc_result_callback_new_c2c (xmmsc_result_notifier_t f, void *udata, xmmsc_user_data_free_func_t free_f);
 
 struct xmmsc_result_St {
 	xmmsc_connection_t *c;
@@ -57,6 +69,7 @@ struct xmmsc_result_St {
 	xmmsc_ipc_t *ipc;
 
 	bool parsed;
+	bool is_c2c;
 
 	uint32_t cookie;
 	uint32_t restart_signal;
@@ -244,6 +257,17 @@ xmmsc_result_cookie_get (xmmsc_result_t *res)
 	return res->cookie;
 }
 
+/**
+ * Set a result to be a client-to-client result.
+ */
+void
+xmmsc_result_c2c_set (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	res->is_c2c = true;
+}
+
 void
 xmmsc_result_visc_set (xmmsc_result_t *res, xmmsc_visualization_t *visc)
 {
@@ -287,24 +311,50 @@ xmmsc_result_unref (xmmsc_result_t *res)
 	}
 }
 
+/* Macro magic to define the xmmsc_result_*_notifier_set. */
+#define GEN_RESULT_NOTIFIER_SET_FUNC(type) \
+void \
+xmmsc_result_notifier_set_##type (xmmsc_result_t *res, \
+                                  xmmsc_result_notifier_t func, \
+                                  void *user_data) \
+{ \
+	xmmsc_result_notifier_set_##type##_full (res, func, user_data, NULL); \
+}
+
+/* And more macro magic to define the xmmsc_result_*_notifier_set_full. */
+#define GEN_RESULT_NOTIFIER_SET_FULL_FUNC(type) \
+void \
+xmmsc_result_notifier_set_##type##_full (xmmsc_result_t *res, \
+                                         xmmsc_result_notifier_t func, \
+                                         void *user_data, \
+                                         xmmsc_user_data_free_func_t free_func) \
+{ \
+	xmmsc_result_callback_t *cb; \
+\
+	x_return_if_fail (res); \
+	x_return_if_fail (func); \
+\
+	cb = xmmsc_result_callback_new_##type (func, user_data, free_func); \
+	xmmsc_result_notifier_add (res, cb); \
+}
+
 /**
- * Set up a callback for the result retrival. This callback
- * Will be called when the answers arrives.
+ * Set up a default callback for the result retrieval. This callback
+ * will be called when the answer arrives.
+ * The callback receives the value as sent by the server or another
+ * client, that is, for c2c messages only the payload is passed to the
+ * callback.
  * @param res a #xmmsc_result_t that you got from a command dispatcher.
  * @param func the function that should be called when we receive the answer
  * @param user_data optional user data to the callback
  */
 
-void
-xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data)
-{
-	xmmsc_result_notifier_set_full (res, func, user_data, NULL);
-}
+GEN_RESULT_NOTIFIER_SET_FUNC (default)
 
 /**
- * Set up a callback for the result retrieval. This callback
+ * Set up a default callback for the result retrieval. This callback
  * will be called when the answer arrives. This function differs from
- * xmmsc_result_notifier_set in the additional free_func parameter,
+ * xmmsc_result_default_notifier_set in the additional free_func parameter,
  * which allows to pass a pointer to a function which will be called
  * to free the user_data when needed.
  * @param res a #xmmsc_result_t that you got from a command dispatcher.
@@ -313,23 +363,66 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
  * @param free_func optional function that should be called to free the user_data
  */
 
-void
-xmmsc_result_notifier_set_full (xmmsc_result_t *res, xmmsc_result_notifier_t func,
-                                void *user_data, xmmsc_user_data_free_func_t free_func)
-{
-	xmmsc_result_callback_t *cb;
+GEN_RESULT_NOTIFIER_SET_FULL_FUNC (default)
 
-	x_return_if_fail (res);
-	x_return_if_fail (res->ipc);
-	x_return_if_fail (func);
+/**
+ * Set up a raw callback for the result retrieval. This callback
+ * will be called when the answer arrives.
+ * The client receives the value sent by the server or, for
+ * client-to-client messages, the full message, whose fields can
+ * be extracted with the appropriate functions.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ *
+ * \sa xmmsv_c2c_message_get_payload and others.
+ */
 
-	/* The pending call takes one ref */
-	xmmsc_result_ref (res);
+GEN_RESULT_NOTIFIER_SET_FUNC (raw)
 
-	cb = xmmsc_result_callback_new (func, user_data, free_func);
-	res->notifiers = x_list_append (res->notifiers, cb);
-}
+/**
+ * Set up a raw callback for the result retrieval. This callback
+ * will be called when the answer arrives. This function differs from
+ * xmmsc_result_raw_notifier_set in the additional free_func parameter,
+ * which allows to pass a pointer to a function which will be called
+ * to free the user_data when needed.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ * @param free_func optional function that should be called to free the user_data
+ */
 
+GEN_RESULT_NOTIFIER_SET_FULL_FUNC (raw)
+
+/**
+ * Set up a c2c callback for the result retrieval. This callback
+ * will be called when the answer arrives.
+ * This callback always receives values formatted as client-to-client
+ * messages, whose fields can be extracted with the appropriate functions.
+ * For values sent by the server, the sender id and message id fields
+ * will be zero.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ *
+ * \sa xmmsv_c2c_message_get_payload and others.
+ */
+
+GEN_RESULT_NOTIFIER_SET_FUNC (c2c)
+
+/**
+ * Set up a c2c callback for the result retrieval. This callback
+ * will be called when the answer arrives. This function differs from
+ * xmmsc_result_c2c_notifier_set in the additional free_func parameter,
+ * which allows to pass a pointer to a function which will be called
+ * to free the user_data when needed.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ * @param free_func optional function that should be called to free the user_data
+ */
+
+GEN_RESULT_NOTIFIER_SET_FULL_FUNC (c2c)
 
 /**
  * Block for the reply. In a synchronous application this
@@ -402,6 +495,45 @@ xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
 }
 
 /**
+ * Helper for xmmsc_result_run.
+ * Correctly calls a callback based on its type.
+ * @param res The result that owns the callback
+ * @param cb The callback to be called
+ * @return The result of the callback
+ */
+static int
+xmmsc_result_run_callback (xmmsc_result_t *res, xmmsc_result_callback_t *cb)
+{
+	int ret;
+	xmmsv_t *val = NULL;
+
+	if (res->is_c2c && !xmmsv_is_error (res->data)) {
+		if (cb->type == XMMSC_RESULT_CALLBACK_DEFAULT) {
+			/* For default callbacks, pass the payload in c2c
+			 * messages.
+			 */
+			val = xmmsv_ref (xmmsv_c2c_message_get_payload (res->data));
+		}
+	} else {
+		if (cb->type == XMMSC_RESULT_CALLBACK_C2C) {
+			/* For c2c callbacks and non-c2c messages, build a
+			 * message with pseudo c2c metadata.
+			 */
+			val = xmmsv_c2c_message_format (0, 0, 0, res->data);
+		}
+	}
+
+	if (!val) {
+		val = xmmsv_ref (res->data);
+	}
+
+	ret = cb->func (val, cb->user_data);
+
+	xmmsv_unref (val);
+	return ret;
+}
+
+/**
  * @internal
  */
 void
@@ -430,7 +562,7 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		next = x_list_next (n);
 		cb = n->data;
 
-		keep = cb->func (res->data, cb->user_data);
+		keep = xmmsc_result_run_callback (res, cb);
 		if (!keep || res->type == XMMSC_RESULT_CLASS_DEFAULT) {
 			xmmsc_result_notifier_delete (res, n);
 		}
@@ -446,10 +578,14 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		xmmsc_result_restart (res);
 	}
 
-	if (res->type != XMMSC_RESULT_CLASS_DEFAULT) {
+	if (res->type != XMMSC_RESULT_CLASS_DEFAULT && !res->is_c2c) {
 		/* We keep the results alive with signals and broadcasts,
 		   but we just renew the value because it went out of scope.
-		   (freeing the payload, forget about it) */
+		   (freeing the payload, forget about it).
+		   The exception being for c2c results of the BROADCAST class
+		   (those associated with messages and replies), which may be
+		   used synchronously as if they belonged to the DEFAULT class.
+		*/
 		xmmsv_unref (res->data);
 		res->data = NULL;
 	}
@@ -500,19 +636,42 @@ xmmsc_result_clear_weakrefs (xmmsc_result_t *result)
 	result->ipc = NULL;
 }
 
-static xmmsc_result_callback_t *
-xmmsc_result_callback_new (xmmsc_result_notifier_t f, void *udata,
-                           xmmsc_user_data_free_func_t free_f)
-{
-	xmmsc_result_callback_t *cb;
-
-	cb = x_new0 (xmmsc_result_callback_t, 1);
-	cb->func = f;
-	cb->user_data = udata;
-	cb->free_func = free_f;
-
-	return cb;
+/* Macro-magically define the xmmsc_result_callback_new_* functions. */
+#define GEN_RESULT_CALLBACK_NEW_FUNC(name, cbtype) \
+static xmmsc_result_callback_t * \
+xmmsc_result_callback_new_##name (xmmsc_result_notifier_t f, void *udata, \
+                                  xmmsc_user_data_free_func_t free_f) \
+{ \
+	xmmsc_result_callback_t *cb; \
+\
+	cb = x_new0 (xmmsc_result_callback_t, 1); \
+	if (!cb) { \
+		x_oom(); \
+		return NULL; \
+	} \
+\
+	cb->type = cbtype; \
+	cb->user_data = udata; \
+	cb->free_func = free_f; \
+	cb->func = f; \
+\
+	return cb; \
 }
+
+GEN_RESULT_CALLBACK_NEW_FUNC (default, XMMSC_RESULT_CALLBACK_DEFAULT)
+GEN_RESULT_CALLBACK_NEW_FUNC (raw, XMMSC_RESULT_CALLBACK_RAW)
+GEN_RESULT_CALLBACK_NEW_FUNC (c2c, XMMSC_RESULT_CALLBACK_C2C)
+
+/* Add a new notifier to a result
+ */
+static void
+xmmsc_result_notifier_add (xmmsc_result_t *res, xmmsc_result_callback_t *cb)
+{
+	/* The pending call takes one ref */
+	xmmsc_result_ref (res);
+	res->notifiers = x_list_append (res->notifiers, cb);
+}
+
 
 /* Dereference a notifier from a result.
  * The #x_list_t node containing the notifier is passed.
