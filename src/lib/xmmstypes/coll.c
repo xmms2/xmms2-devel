@@ -341,7 +341,7 @@ xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, int index, int32_t val)
  * @param coll  The collection to update.
  * @return  The size of the idlist.
  */
-size_t
+int
 xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
