@@ -35,7 +35,7 @@ vim:expandtab
     <object>
         <name>main</name>
 
-        <method>
+        <method need_client="true">
             <name>hello</name>
 
             <documentation>Says hello to the daemon.</documentation>
@@ -57,6 +57,13 @@ vim:expandtab
                     <string />
                 </type>
             </argument>
+
+            <return_value>
+                <documentation>The calling client's id.</documentation>
+                <type>
+                    <int/>
+                </type>
+            </return_value>
         </method>
 
         <method>

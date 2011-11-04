@@ -77,7 +77,12 @@ typedef struct xmms_ipc_client_St {
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
 	GList *broadcasts[XMMS_IPC_SIGNAL_END];
+
+	gint64 id;
 } xmms_ipc_client_t;
+
+/* id 0 is reserved for the server */
+static gint64 next_client_id = 1;
 
 static GMutex ipc_servers_lock;
 static GList *ipc_servers = NULL;
@@ -395,6 +400,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->ipc = ipc;
 	client->out_msg = g_queue_new ();
 	g_mutex_init (&client->lock);
+	client->id = next_client_id++;
 
 	return client;
 }

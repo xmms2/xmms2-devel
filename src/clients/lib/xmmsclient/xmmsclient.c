@@ -185,6 +185,8 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		c->error = strdup (buf);
 		xmmsc_result_unref (result);
 		return false;
+	} else {
+		xmmsv_get_int (value, &c->id);
 	}
 	xmmsc_result_unref (result);
 	return true;
