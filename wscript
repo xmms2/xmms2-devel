@@ -435,7 +435,7 @@ int main() { return 0; }
 
     # Valgrind can be used for debugging here and there, so lets check
     # it at top-level so each consumer don't have to bother.
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags')
+    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
 
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
