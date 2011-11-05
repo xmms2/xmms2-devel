@@ -375,6 +375,7 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	xmmsv_coll_t *existing;
 	gchar *alias;
 	guint nsid;
+	GList *list;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -406,16 +407,24 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 
 	/* Update existing collection in the table */
 	if (existing != NULL) {
+		list = NULL;
 		while ((alias = xmms_collection_find_alias (dag, nsid,
 		                                            existing, NULL)) != NULL) {
 			/* update all pairs pointing to the old coll */
 			xmms_collection_dag_replace (dag, nsid, alias, coll);
 			xmmsv_coll_ref (coll);
 
+			list = g_list_prepend (list, alias);
+		}
+
+		for (list = g_list_first (list); list; list = g_list_next (list)) {
+			alias = list->data;
+
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
 			                             alias, namespace);
 			g_free (alias);
 		}
+		g_list_free (list);
 
 	/* Save new collection in the table */
 	} else {
