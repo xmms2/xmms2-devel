@@ -362,6 +362,7 @@ xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 	vorbis_comment_clear (vc);
 	vorbis_comment_init (vc);
 
+	/* TODO: #2333
 	for (pptr = props; pptr && pptr->prop; pptr++) {
 		const gchar *tmp;
 
@@ -370,6 +371,7 @@ xmms_ices_update_comment (xmms_medialib_entry_t entry, vorbis_comment *vc)
 			vorbis_comment_add_tag (vc, pptr->key, (gchar *) tmp);
 		}
 	}
+	*/
 
 }
 
