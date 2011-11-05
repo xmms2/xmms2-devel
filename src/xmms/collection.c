@@ -375,7 +375,7 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 	xmmsv_coll_t *existing;
 	gchar *alias;
 	guint nsid;
-	GList *list;
+	GList *list, *item;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -417,8 +417,8 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 			list = g_list_prepend (list, alias);
 		}
 
-		for (list = g_list_first (list); list; list = g_list_next (list)) {
-			alias = list->data;
+		for (item = g_list_first (list); item; item = g_list_next (item)) {
+			alias = item->data;
 
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
 			                             alias, namespace);
