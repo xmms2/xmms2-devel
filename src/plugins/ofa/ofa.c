@@ -126,7 +126,10 @@ xmms_ofa_init (xmms_xform_t *xform)
 	data->buf = g_malloc (data->bytes_to_read);
 	entry = xmms_xform_entry_get (xform);
 
+	/* TODO: #2482
 	fp = xmms_medialib_entry_property_get_str (entry, "ofa_fingerprint");
+	*/
+	fp = NULL;
 	if (fp) {
 		XMMS_DBG ("Entry already has ofa_fingerprint, not recalculating");
 		/* keep it! */
