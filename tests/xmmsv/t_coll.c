@@ -78,7 +78,6 @@ CASE (test_coll_simple_types)
 
 CASE (test_coll_universe)
 {
-	char *am;
 	xmmsv_coll_t *c;
 
 	c = xmmsv_coll_universe ();

@@ -132,8 +132,9 @@ CASE (test_xmmsv_type_coll_wrong_type)
 CASE (test_xmmsv_type_bin)
 {
 	const unsigned char *b;
-	unsigned char *a = "look behind you! a three headed monkey!";
-	unsigned int b_len, a_len = strlen (a) + 1;
+	const unsigned char *a =
+		(const unsigned char *)"look behind you! a three headed monkey!";
+	unsigned int b_len, a_len = strlen ((const char *)a) + 1;
 	xmmsv_t *value;
 
 	value = xmmsv_new_bin (a, a_len);
@@ -142,7 +143,6 @@ CASE (test_xmmsv_type_bin)
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BIN, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
 	CU_ASSERT_TRUE (xmmsv_get_bin (value, &b, &b_len));
-
 	CU_ASSERT_EQUAL (a_len, b_len);
 	CU_ASSERT_STRING_EQUAL (a, b);
 
@@ -482,7 +482,6 @@ CASE (test_xmmsv_type_dict)
 	xmmsv_dict_iter_t *it = NULL;
 	xmmsv_t *value, *tmp;
 	const char *key = NULL;
-	unsigned int ui;
 	int i;
 
 	value = xmmsv_new_dict ();
@@ -503,8 +502,8 @@ CASE (test_xmmsv_type_dict)
 
 	/* { test1 => 42 }*/
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "test1", &tmp));
-	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &ui));
-	CU_ASSERT_EQUAL (ui, 42);
+	CU_ASSERT_TRUE (xmmsv_get_int (tmp, &i));
+	CU_ASSERT_EQUAL (i, 42);
 
 	CU_ASSERT_FALSE (xmmsv_dict_get (value, "apan tutar i skogen", &tmp));
 

@@ -214,7 +214,7 @@ CASE (test_xmmsv_serialize_coll_match)
 	xmmsv_coll_t *coll, *all_media;
 	const unsigned char *data;
 	unsigned int length;
-	char **s;
+	char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x04, /* XMMSV_TYPE_COLL */
 		0x00, 0x00, 0x00, 0x06, /* XMMS_COLLECTION_TYPE_MATCH */

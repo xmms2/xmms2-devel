@@ -79,7 +79,7 @@ xmmsv_from_xson (const char *spec)
 	xmmsv_t *dict;
 
 	normalized = g_strdup (spec);
-	for (p = normalized; *p != NULL; p++) {
+	for (p = normalized; *p != '\0'; p++) {
 		if (*p == '\'') {
 			*p = '"';
 		}
