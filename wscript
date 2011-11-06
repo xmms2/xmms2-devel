@@ -341,7 +341,7 @@ def configure(conf):
             if not os.path.isabs(d):
                 d = os.path.abspath(d)
             conf.env.prepend_value('LIBPATH', os.path.join(d, 'lib'))
-            conf.env.prepend_value('CPPPATH', os.path.join(d, 'include'))
+            conf.env.prepend_value('INCLUDES', os.path.join(d, 'include'))
 
     if Options.platform != 'win32':
         conf.env.append_unique('CFLAGS_cstlib', ['-fPIC', '-DPIC'])
