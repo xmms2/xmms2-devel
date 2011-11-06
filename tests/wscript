@@ -1,7 +1,6 @@
 #encoding: utf-8
 
 testutils_src = """
-utils/json.c
 utils/jsonism.c
 utils/value_utils.c
 utils/coll_utils.c
@@ -47,9 +46,17 @@ def configure(conf):
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
 
 def build(bld):
+    bld(features = "c",
+        target = "testutils_json",
+        source = "utils/json.c",
+        uselib = "DISABLE_MISSINGPROTOTYPES DISABLE_WRITESTRINGS",
+        install_path = None,
+        )
+
     bld(features = "c cstlib",
         target = "testutils",
         source = testutils_src,
+        add_objects = "testutils_json",
         includes = ". ../src/include ../src/includepriv",
         uselib = "glib2",
         use = "s4",
