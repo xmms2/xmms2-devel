@@ -35,8 +35,6 @@ struct xmmsv_coll_St {
 	xmmsv_t *operands;
 	xmmsv_t *attributes;
 	xmmsv_t *idlist;
-
-	int32_t *legacy_idlist;
 };
 
 
@@ -98,8 +96,6 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 
 	coll->attributes = xmmsv_new_dict ();
 
-	coll->legacy_idlist = NULL;
-
 	/* user must give this back */
 	xmmsv_coll_ref (coll);
 
@@ -122,9 +118,6 @@ xmmsv_coll_free (xmmsv_coll_t *coll)
 	xmmsv_unref (coll->operands);
 	xmmsv_unref (coll->attributes);
 	xmmsv_unref (coll->idlist);
-	if (coll->legacy_idlist) {
-		free (coll->legacy_idlist);
-	}
 
 	free (coll);
 }
@@ -369,49 +362,6 @@ xmmsv_coll_get_type (xmmsv_coll_t *coll)
 	x_return_val_if_fail (coll, -1);
 
 	return coll->type;
-}
-
-/**
- * Return the list of ids stored in the collection.
- * The list is owned by the collection.
- * Note that this must not be confused with the content of the
- * collection, which must be queried using xmmsc_coll_query_ids!
- *
- * Also note that this function is deprecated (use xmmsv_coll_idlist_get
- * instead) and that changes to the returned array will be ignored. The array
- * is also not updated when the idlist is changed using the supplied functions.
- * Additionally every call to this function allocates a new array, so calling
- * it repetitively will be a performance penalty.
- *
- * @param coll  The collection to consider.
- * @return The 0-terminated list of ids.
- */
-const int32_t*
-xmmsv_coll_get_idlist (xmmsv_coll_t *coll)
-{
-	xmmsv_list_iter_t *it;
-	unsigned int i;
-	int32_t entry;
-
-	x_return_null_if_fail (coll);
-
-	/* free and allocate a new legacy list */
-	if (coll->legacy_idlist) {
-		free (coll->legacy_idlist);
-	}
-	coll->legacy_idlist = calloc (xmmsv_coll_idlist_get_size (coll) + 1,
-	                              sizeof (int32_t));
-
-	/* copy contents to legacy list */
-	for (xmmsv_get_list_iter (coll->idlist, &it), i = 0;
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it), i++) {
-		xmmsv_list_iter_entry_int (it, &entry);
-		coll->legacy_idlist[i] = entry;
-	}
-	coll->legacy_idlist[i] = 0;
-
-	return coll->legacy_idlist;
 }
 
 /**
