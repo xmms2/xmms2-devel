@@ -73,7 +73,7 @@ def monkey_patch_test_runner():
     original = Task.classes["utest"].run
 
     def xmms_test_runner(self):
-        if self.env.with_profiling:
+        if self.env.enable_gcov:
             # If profiling is enabled, we don't want to invoke valgrind.
             return original(self)
 
@@ -118,8 +118,8 @@ def run(cmd, cwd):
 
 def generate_coverage(bld):
     if Options.options.generate_coverage:
-        if not bld.env.with_profiling:
-            raise Errors.WafError("Coverage reports need --with-profiling passed to configure.")
+        if not bld.env.enable_gcov:
+            raise Errors.WafError("Coverage reports need --enable-gcov passed to configure.")
 
         if not (bld.env.LCOV and bld.env.GENHTML):
             raise Errors.WafError("Could not generate coverage as the tools are missing.")

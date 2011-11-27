@@ -302,8 +302,8 @@ def configure(conf):
     conf.env.append_unique('CFLAGS', ['-g', '-O0'])
     conf.env.append_unique('CXXFLAGS', ['-g', '-O0'])
 
-    if conf.options.with_profiling:
-        conf.env.with_profiling = True
+    if conf.options.enable_gcov:
+        conf.env.enable_gcov = True
         conf.env.append_unique('CFLAGS', ['--coverage', '-pg'])
         conf.env.append_unique('LINKFLAGS', ['--coverage', '-pg'])
 
@@ -503,8 +503,8 @@ def options(opt):
                    help="Force a target platform (cross-compilation)")
     opt.add_option('--with-windows-version', type='string', dest='winver',
                    help="Force a specific Windows version (cross-compilation)")
-    opt.add_option('--with-profiling', action="store_true", default=False,
-                   dest='with_profiling', help="Enable profiling")
+    opt.add_option('--enable-gcov', action="store_true", default=False,
+                   dest='enable_gcov', help="Enable coverage report")
     opt.add_option('--with-ldconfig', action='store_true', default=None,
                    dest='ldconfig', help="Run ldconfig after install even if not root")
     opt.add_option('--without-ldconfig', action='store_false',
