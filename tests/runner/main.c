@@ -22,12 +22,7 @@
 
 #include <xcu_valgrind.h>
 
-static void __registry_init (void) __attribute__ ((constructor (200)));
-static void __registry_init (void) {
-	if (CU_initialize_registry() != CUE_SUCCESS)
-		_exit (CU_get_error());
-
-}
+@@DECLARE_TEST_CASES@@
 
 static void
 segvhandler(int s)
@@ -56,10 +51,15 @@ main (int argc, char **argv)
 	struct sigaction sa;
 	unsigned int failures;
 
+	if (CU_initialize_registry() != CUE_SUCCESS)
+		return CU_get_error();
+
 	memset (&sa, 0 , sizeof (sa));
 	sa.sa_handler = segvhandler;
 	sa.sa_flags = SA_RESETHAND;
 	sigaction (SIGSEGV, &sa, NULL);
+
+	@@REGISTER_TEST_SUITES@@
 
 	CU_basic_set_mode(CU_BRM_VERBOSE);
 	CU_basic_run_tests();

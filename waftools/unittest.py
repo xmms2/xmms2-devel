@@ -1,5 +1,73 @@
 from waflib import Task, Logs, Errors, Options, Utils
+from TaskGen import feature, before_method
 import os
+import re
+
+class create_test_runner(Task.Task):
+    def generate_runner_source_code(self):
+        TEST_CASE_PREFIX = "__testcase_wrapper_"
+
+        declare = []
+        register = []
+        for i, (suite, tests) in enumerate(self.suites):
+            register.append("""CU_pSuite suite%d = CU_add_suite ("%s", NULL, NULL);""" % (i, suite))
+            for test in sorted(tests):
+                register.append("""CU_add_test (suite%d, "%s", %s);""" % (i, test, TEST_CASE_PREFIX + test))
+                declare.append("""void %s (void);""" % (TEST_CASE_PREFIX + test))
+
+        return "\n\t".join(register), "\n".join(declare)
+
+    def run(self):
+        register, declare = self.generate_runner_source_code()
+        code = self.inputs[0].read().decode("UTF-8", "ignore")
+        code = code.replace("@@DECLARE_TEST_CASES@@", declare)
+        code = code.replace("@@REGISTER_TEST_SUITES@@", register)
+        self.outputs[0].write(code.encode("UTF-8"))
+
+scraper = re.compile("^(CASE|SETUP)\s*\(([^)]+)\)")
+
+def scrape_test_cases(node):
+    suite = ""
+    tests = []
+    for line in node.read().split("\n"):
+        match = scraper.match(line.decode("UTF-8", "ignore"))
+        if not match:
+            continue
+        typ, name = match.groups()
+        if typ == "SETUP":
+            suite = name
+        elif typ == "CASE":
+            tests.append(name)
+    if suite and tests:
+        return suite, tests
+    return False
+
+@feature("test")
+@before_method("process_source")
+def generate_runner(self):
+    self.source = self.to_nodes(self.source)
+
+    suites = []
+    for node in self.source:
+        result = scrape_test_cases(node)
+        if result:
+            suites.append(result)
+
+    if suites:
+        test_runner_template = os.path.join("tests", "runner", "main.c")
+        test_runner_valgrind = os.path.join("tests", "runner", "valgrind.c")
+
+        runner = self.bld.srcnode.find_resource(test_runner_template)
+        valgrind = self.bld.srcnode.find_resource(test_runner_valgrind)
+
+        target = self.path.find_or_declare("test_runner_%s.c" % self.target)
+
+        task = self.create_task("create_test_runner", [runner] + self.source, target)
+        task.suites = suites
+
+        self.source += [target, valgrind]
+        if self.env.HAVE_VALGRIND:
+            self.defines = ["HAVE_VALGRIND=1"]
 
 def monkey_patch_test_runner():
     original = Task.classes["utest"].run

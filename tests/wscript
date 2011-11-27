@@ -9,54 +9,29 @@ utils/ipc_call.c
 utils/mlib_utils.c
 """.split()
 
-types_suite = """
+test_xmmstypes_src = """
+xmmsv/t_coll.c
 xmmsv/t_xmmsv.c
 xmmsv/t_xmmsv_serialization.c
-xmmsv/t_coll.c
 """.split()
 
-server_suite = """
+test_server_src = """
+../src/xmms/streamtype.c
+../src/xmms/object.c
 server/t_streamtype.c
 """.split()
 
-mlib_suite = """
+test_mlib_src = """
 server/t_medialib.c
 """.split()
 
-playlist_suite = """
+test_playlist_src = """
 server/t_playlist.c
 """.split()
 
-collection_suite = """
+test_collection_src = """
 server/t_collection.c
 """.split()
-
-test_xmmstypes_src = """
-runner/main.c
-runner/valgrind.c
-""".split() + types_suite
-
-test_server_src = """
-runner/main.c
-runner/valgrind.c
-../src/xmms/streamtype.c
-../src/xmms/object.c
-""".split() + server_suite
-
-test_mlib_src = """
-runner/main.c
-runner/valgrind.c
-""".split() + mlib_suite
-
-test_playlist_src = """
-runner/main.c
-runner/valgrind.c
-""".split() + playlist_suite
-
-test_collection_src = """
-runner/main.c
-runner/valgrind.c
-""".split() + collection_suite
 
 mlib_runner_src = """
 server/medialib-runner.c
@@ -68,12 +43,6 @@ def configure(conf):
     conf.check_cc(header_name="CUnit/CUnit.h")
     conf.check_cc(lib="cunit", uselib_store="cunit")
     conf.check_cc(lib="ncurses", uselib_store="ncurses", mandatory=False)
-
-    code = """
-           static void T (void) __attribute__ ((constructor (220)));
-           static void T (void) {};
-    """
-    conf.check_cc(fragment=code, type="c", msg="Checking for constructor attribute")
 
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
 

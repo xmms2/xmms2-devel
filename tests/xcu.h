@@ -29,15 +29,8 @@ void xcu_post_case (const char *name);
 
 #define CASE(name)							\
 	static void __testcase_##name (void);				\
-	static void __testcase_init_##name (void) __attribute__ ((constructor (220))); \
-	static void __testcase_wrapper_##name (void);			\
-									\
-	static void __testcase_init_##name (void) {			\
-		CU_add_test (__this_suite,				\
-			     ST (name),					\
-			     __testcase_wrapper_##name);		\
-	}								\
-	static void __testcase_wrapper_##name (void) {			\
+	void __testcase_wrapper_##name (void);			\
+	void __testcase_wrapper_##name (void) {			\
 		if (xcu_pre_case (ST (name))) {				\
 			__testsuite_setup ();					\
 			__testcase_##name ();					\
@@ -48,13 +41,8 @@ void xcu_post_case (const char *name);
 	static void __testcase_##name (void)
 
 #define SETUP(name)							\
-	static CU_pSuite __this_suite;					\
 	static int __testsuite_setup (void);				\
 	static int __testsuite_cleanup (void);				\
-	static void __testsuite_init (void) __attribute__ ((constructor (210))); \
-	static void __testsuite_init (void) {				\
-		__this_suite = CU_add_suite (ST (name), NULL, NULL); \
-	} \
 	static int __testsuite_setup (void)
 
 #define CLEANUP(name) \
