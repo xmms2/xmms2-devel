@@ -19,10 +19,10 @@ class create_test_runner(Task.Task):
 
     def run(self):
         register, declare = self.generate_runner_source_code()
-        code = self.inputs[0].read().decode("UTF-8", "ignore")
+        code = self.inputs[0].read()
         code = code.replace("@@DECLARE_TEST_CASES@@", declare)
         code = code.replace("@@REGISTER_TEST_SUITES@@", register)
-        self.outputs[0].write(code.encode("UTF-8"))
+        self.outputs[0].write(code)
 
 scraper = re.compile("^(CASE|SETUP)\s*\(([^)]+)\)")
 
@@ -30,7 +30,7 @@ def scrape_test_cases(node):
     suite = ""
     tests = []
     for line in node.read().split("\n"):
-        match = scraper.match(line.decode("UTF-8", "ignore"))
+        match = scraper.match(line)
         if not match:
             continue
         typ, name = match.groups()
