@@ -1,12 +1,27 @@
 class compiler_flags(object):
     def __init__(self, conf):
         self.conf = conf
+        self.extra = { "CFLAGS": [], "CXXFLAGS": [] }
+        if self.conf.check_cc(cflags="-Werror=unknown-warning-option", mandatory=False):
+            self.extra["CFLAGS"] = ["-Werror=unknown-warning-option"]
+        if self.conf.check_cxx(cxxflags="-Werror=unknown-warning-option", mandatory=False):
+            self.extra["CXXFLAGS"] = ["-Werror=unknown-warning-option"]
 
     def _check(self, func, key, enable_prefix, disable_prefix, name):
         enable_flag = enable_prefix + name
         disable_flag = disable_prefix + name
+
+        # Fork the environment so we can add some temporary compiler
+        # flags that might be needed during the detection.
+        self.conf.env.stash()
+        self.conf.env[key] += self.extra[key]
+
         kw = { 'mandatory': False, key.lower(): enable_flag }
-        if not func(**kw):
+        result = func(**kw)
+
+        self.conf.env.revert()
+
+        if not result:
             return False, False
 
         uselib = name.replace("-", "").replace("=", "").upper()
