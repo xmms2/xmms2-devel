@@ -40,6 +40,7 @@ namespace Xmms
 
 		typedef xmmsv_coll_type_t Type;
 
+		const Type UNIVERSE     = XMMS_COLLECTION_TYPE_UNIVERSE;
 		const Type REFERENCE    = XMMS_COLLECTION_TYPE_REFERENCE;
 		const Type UNION        = XMMS_COLLECTION_TYPE_UNION;
 		const Type INTERSECTION = XMMS_COLLECTION_TYPE_INTERSECTION;
@@ -255,8 +256,15 @@ namespace Xmms
 		 *  meta-collection that represents all the media in the
 		 *  medialib.  Useful as input for other operators.
 		 */
-		class Universe : public Reference
+		class Universe : public Coll
 		{
+			friend class ::Xmms::Collection;
+			friend class ::Xmms::CollResult;
+			friend Coll* ::Xmms::extract_collection( xmmsv_t* );
+
+			protected:
+				Universe( xmmsv_coll_t* coll );
+
 			public:
 				Universe();
 				~Universe();

@@ -348,8 +348,10 @@ namespace Xmms
 	}
 
 
+	Universe::Universe( xmmsv_coll_t* coll )
+		: Coll( coll ) {}
 	Universe::Universe()
-		: Reference( "All Media", Collection::COLLECTIONS ) {}
+		: Coll( UNIVERSE ) {}
 	Universe::~Universe() {}
 
 	Union::Union()

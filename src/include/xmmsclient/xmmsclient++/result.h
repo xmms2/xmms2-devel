@@ -394,7 +394,10 @@ namespace Xmms
 				CollPtr collptr;
 
 				switch( xmmsv_coll_get_type( coll ) ) {
-
+					case XMMS_COLLECTION_TYPE_UNIVERSE: {
+						collptr.reset( new Coll::Universe( coll ) );
+						break;
+					}
 					case XMMS_COLLECTION_TYPE_REFERENCE: {
 						collptr.reset( new Coll::Reference( coll ) );
 						break;
