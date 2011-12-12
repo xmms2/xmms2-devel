@@ -46,6 +46,10 @@ def scrape_test_cases(node):
 @before_method("process_source")
 def generate_runner(self):
     self.source = self.to_nodes(self.source)
+    try:
+        self.add_objects = self.to_list(self.add_objects)
+    except (AttributeError):
+        self.add_objects = []
 
     suites = []
     for node in self.source:
@@ -54,18 +58,25 @@ def generate_runner(self):
             suites.append(result)
 
     if suites:
+        # Make sure stuff in runner directory gets build (for example
+        # valgrind_object is in there)
+        directory = self.bld.srcnode.find_dir(os.path.join("tests", "runner"))
+        self.bld.recurse (directory.abspath())
+
+        # Generate and add runner
         test_runner_template = os.path.join("tests", "runner", "main.c")
-        test_runner_valgrind = os.path.join("tests", "runner", "valgrind.c")
-
         runner = self.bld.srcnode.find_resource(test_runner_template)
-        valgrind = self.bld.srcnode.find_resource(test_runner_valgrind)
-
         target = self.path.find_or_declare("test_runner_%s.c" % self.target)
 
         task = self.create_task("create_test_runner", [runner] + self.source, target)
         task.suites = suites
 
-        self.source += [target, valgrind]
+        self.source += [target]
+
+        # link valgrind_object in
+        self.add_objects += ["valgrind_object"]
+
+        # Set HAVE_VALGRIND-define
         if self.env.HAVE_VALGRIND:
             self.defines = ["HAVE_VALGRIND=1"]
 

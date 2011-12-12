@@ -319,6 +319,7 @@ def configure(conf):
     flags.enable_c_warning('strict-prototypes')
     flags.enable_c_warning('type-limits')
     flags.enable_c_warning('write-strings')
+    flags.enable_c_warning('unused-but-set-variable')
 
     flags.disable_c_warning('format-extra-args')
     flags.disable_c_warning('format-zero-length')
