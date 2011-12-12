@@ -760,7 +760,7 @@ namespace Xmms
 
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::AbstractElement( const Coll& coll, keyT index )
-			: coll_ (coll), index_( index )
+			: coll_ ( const_cast< Coll& >( coll ) ), index_( index )
 		{
 			xmmsv_coll_ref( coll_.getColl() );
 		}
