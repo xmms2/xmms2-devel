@@ -108,7 +108,7 @@ cdef class XmmsSourcePreference:
 		if sources is None:
 			self.sources = []
 		else:
-			self.sources = map(enforce_unicode, [s for s in sources])
+			self.sources = [enforce_unicode(s) for s in sources]
 
 cdef class XmmsResultTracker:
 	"""
