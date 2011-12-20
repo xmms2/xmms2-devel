@@ -620,7 +620,7 @@ cli_current (cli_infos_t *infos, command_context_t *ctx)
 		format = configuration_get_string (infos->config, "STATUS_FORMAT");
 	}
 
-	status_mode (infos, format, refresh);
+	currently_playing_mode (infos, format, refresh);
 
 	return refresh != 0; /* need I/O if we are refreshing */
 }

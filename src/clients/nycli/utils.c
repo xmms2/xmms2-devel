@@ -16,6 +16,7 @@
 
 #include "utils.h"
 #include "status.h"
+#include "currently_playing.h"
 #include "compat.h"
 
 #include "cli_infos.h"
@@ -495,22 +496,16 @@ set_volume (cli_infos_t *infos, const gchar *channel, gint volume)
 }
 
 void
-status_mode (cli_infos_t *infos, const gchar *format, gint refresh)
+currently_playing_mode (cli_infos_t *infos, const gchar *format, gint refresh)
 {
 	status_entry_t *status;
 
-	status = status_init (format, refresh);
+	status = currently_playing_init (format, refresh);
 
 	if (refresh > 0) {
-		g_printf (_("\n"
-		            "   (n) next song\n"
-		            "   (p) previous song\n"
-		            "   (SPACE) toggle playback\n"
-		            "   (ENTER) exit status mode\n\n"));
 		cli_infos_status_mode (infos, status);
 	} else {
-		status_update_all (infos, status);
-		status_print_entry (status);
+		status_refresh (infos, status, TRUE, TRUE);
 		status_free (status);
 	}
 }

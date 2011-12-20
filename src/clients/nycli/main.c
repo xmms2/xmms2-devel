@@ -415,7 +415,7 @@ loop_select (cli_infos_t *infos)
 
 	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
 		struct timeval refresh;
-		refresh.tv_sec = infos->status_entry->refresh;
+		refresh.tv_sec = status_get_refresh_interval (infos->status_entry);
 		refresh.tv_usec = 0;
 		modfds = select (maxfds + 1, &rfds, &wfds, NULL, &refresh);
 	} else {
@@ -448,11 +448,11 @@ loop_select (cli_infos_t *infos)
 	}
 
 	/* Status -refresh
-	   Ask theefer: use callbacks for update and -refresh only for print? */
+	   Ask theefer: use callbacks for update and -refresh only for print?
+	   Nesciens: Yes, please!
+	*/
 	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
-		status_update_all (infos, infos->status_entry);
-		g_printf ("\r");
-		status_print_entry (infos->status_entry);
+		status_refresh (infos, infos->status_entry, FALSE, FALSE);
 	}
 }
 

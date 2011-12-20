@@ -19,15 +19,18 @@
 
 #include "main.h"
 
-struct status_entry_St {
-	xmmsv_t *data;
-	gchar *format;
-	gint refresh;
-};
+typedef void (*status_free_func_t) (gpointer udata);
+typedef void (*status_refresh_func_t) (cli_infos_t *infos, gpointer udata,
+                                       gboolean first, gboolean last);
 
-status_entry_t *status_init (const gchar *format, gint refresh);
+status_entry_t *status_init (status_free_func_t free_func,
+                             status_refresh_func_t refresh_func,
+                             const keymap_entry_t map[],
+                             gpointer udata, gint refresh);
+void status_refresh (cli_infos_t *infos, status_entry_t *entry,
+                     gboolean first, gboolean last);
 void status_free (status_entry_t *entry);
-void status_update_all (cli_infos_t *infos, status_entry_t *entry);
-void status_print_entry (status_entry_t *entry);
+gint status_get_refresh_interval (const status_entry_t *entry);
+const keymap_entry_t *status_get_keymap (const status_entry_t *entry);
 
 #endif /* __STATUS_H__ */

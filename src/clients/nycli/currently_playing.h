@@ -14,18 +14,11 @@
  *  General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
-
-#include <glib.h>
-#include <glib/gprintf.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+#ifndef __CURRENTLY_PLAYING_H__
+#define __CURRENTLY_PLAYING_H__
 
 #include "main.h"
 
-void readline_init (cli_infos_t *infos);
-void readline_suspend (cli_infos_t *infos);
-void readline_resume (cli_infos_t *infos);
-void readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[]);
-void readline_status_mode_exit (void);
-void readline_free (void);
+status_entry_t *currently_playing_init (const gchar *format, gint refresh);
+
+#endif /* __CURRENTLY_PLAYING_H__ */

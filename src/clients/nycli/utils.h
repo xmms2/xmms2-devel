@@ -37,7 +37,7 @@ void rehash_ids (cli_infos_t *infos, xmmsc_result_t *res);
 void print_volume (xmmsc_result_t *res, cli_infos_t *infos, const gchar *channel);
 void adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative);
 void set_volume (cli_infos_t *infos, const gchar *channel, gint volume);
-void status_mode (cli_infos_t *infos, const gchar *format, gint refresh);
+void currently_playing_mode (cli_infos_t *infos, const gchar *format, gint refresh);
 void list_print_info (xmmsc_result_t *res, cli_infos_t *infos);
 void list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter, column_display_t *coldisp, gboolean is_search, gboolean result_is_infos);
 void list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all);

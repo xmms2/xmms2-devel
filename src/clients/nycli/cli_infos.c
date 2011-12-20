@@ -23,6 +23,7 @@
 #include "configuration.h"
 #include "command_trie.h"
 #include "alias.h"
+#include "status.h"
 
 static gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
@@ -43,7 +44,8 @@ cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry)
 {
 	infos->status = CLI_ACTION_STATUS_REFRESH;
 	infos->status_entry = entry;
-	readline_status_mode (infos);
+	readline_status_mode (infos, status_get_keymap (entry));
+	status_refresh (infos, entry, TRUE, FALSE);
 }
 
 void
@@ -119,7 +121,10 @@ cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 	infos->conn = NULL;
 	infos->sync = NULL;
 
-	readline_status_mode_exit ();
+	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+		status_refresh (infos, infos->status_entry, FALSE, TRUE);
+		readline_status_mode_exit ();
+	}
 	cli_infos_loop_resume (infos);
 
 	return TRUE;
@@ -229,6 +234,8 @@ cli_infos_init (gint argc, gchar **argv)
 	infos->config = configuration_init (filename);
 	g_free (filename);
 
+	readline_init (infos);
+
 	if (argc == 0) {
 		infos->mode = CLI_EXECUTION_MODE_SHELL;
 		/* print welcome message before initialising readline */
@@ -237,7 +244,7 @@ cli_infos_init (gint argc, gchar **argv)
 			g_printf (_("Type 'help' to list the available commands "
 			            "and 'exit' (or CTRL-D) to leave the shell.\n"));
 		}
-		readline_init (infos);
+		readline_resume (infos);
 	} else {
 		infos->mode = CLI_EXECUTION_MODE_INLINE;
 	}

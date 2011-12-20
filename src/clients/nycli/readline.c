@@ -40,21 +40,28 @@ readline_status_callback (gchar *input)
 }
 
 static gint
-readline_status_next (gint count, gint key)
+readline_status_quit (gint count, gint key)
+{
+	/* Let readline_status_callback above be called: */
+	return rl_newline (count, key);
+}
+
+static gint
+readline_next_song (gint count, gint key)
 {
 	set_next_rel (readline_cli_infos, 1);
 	return 0;
 }
 
 static gint
-readline_status_prev (gint count, gint key)
+readline_previous_song (gint count, gint key)
 {
 	set_next_rel (readline_cli_infos, -1);
 	return 0;
 }
 
 static gint
-readline_status_toggle (gint count, gint key)
+readline_toggle_playback (gint count, gint key)
 {
 	playback_toggle (readline_cli_infos);
 	return 0;
@@ -165,9 +172,6 @@ void
 readline_init (cli_infos_t *infos)
 {
 	readline_cli_infos = infos;
-	rl_callback_handler_install (configuration_get_string (infos->config,
-	                                                       "PROMPT"),
-	                             &readline_callback);
 
 	/* correctly quote filenames with double-quotes */
 	rl_filename_quote_characters = " ";
@@ -178,6 +182,12 @@ readline_init (cli_infos_t *infos)
 
 	rl_char_is_quoted_p = char_is_quoted;
 	rl_completion_entry_function = command_tab_completion;
+
+	/* Set up some named functions for key-bindings */
+	rl_add_defun ("next-song", readline_next_song, -1);
+	rl_add_defun ("previous-song", readline_previous_song, -1);
+	rl_add_defun ("toggle-playback", readline_toggle_playback, -1);
+	rl_add_defun ("quit-status-mode", readline_status_quit, -1);
 }
 
 void
@@ -195,8 +205,9 @@ readline_resume (cli_infos_t *infos)
 }
 
 void
-readline_status_mode (cli_infos_t *infos)
+readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[])
 {
+	int i;
 	Keymap stkmap;
 
 	readline_cli_infos = infos;
@@ -208,25 +219,29 @@ readline_status_mode (cli_infos_t *infos)
 	/* New keymap for status mode */
 	stkmap = rl_make_bare_keymap ();
 
-	rl_bind_key_in_map ('\n', rl_newline, stkmap);
-	rl_bind_key_in_map ('\r', rl_newline, stkmap);
-	rl_bind_key_in_map ('n', readline_status_next, stkmap);
-	rl_bind_key_in_map ('p', readline_status_prev, stkmap);
-	rl_bind_key_in_map (' ', readline_status_toggle, stkmap);
+	/* Fill out the keymap and display it. */
+	g_printf ("\n");
+	for (i = 0; map[i].keyseq; i++) {
+		rl_bind_keyseq_in_map (map[i].keyseq,
+		                       rl_named_function (map[i].named_function),
+		                       stkmap);
+		if (map[i].readable_keyseq) {
+			g_printf ("   (%s) %s\n", map[i].readable_keyseq,
+			          map[i].readable_function ? map[i].readable_function
+			                                   : map[i].named_function);
+		}
+	}
+	g_printf ("\n");
 
 	rl_set_keymap (stkmap);
 }
 
 void
-readline_status_mode_exit ()
+readline_status_mode_exit (void)
 {
 	Keymap active;
 
-	/* Just return if not in status mode */
-	if (!readline_cli_infos ||
-	    readline_cli_infos->status != CLI_ACTION_STATUS_REFRESH) {
-		return;
-	}
+	g_assert (readline_cli_infos->status == CLI_ACTION_STATUS_REFRESH);
 
 	active = rl_get_keymap ();
 

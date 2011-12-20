@@ -11,6 +11,7 @@ command_utils.c
 cmdnames.c
 configuration.c
 status.c
+currently_playing.c
 utils.c
 alias.c
 column_display.c

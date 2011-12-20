@@ -41,6 +41,7 @@ typedef struct command_context_St command_context_t;
 typedef struct command_argument_St command_argument_t;
 typedef struct configuration_St configuration_t;
 typedef struct alias_define_St alias_define_t;
+typedef struct keymap_entry_St keymap_entry_t;
 
 typedef GOptionEntry argument_t;
 
@@ -92,6 +93,13 @@ typedef union {
 struct command_argument_St {
 	command_argument_type_t type;
 	command_argument_value_t value;
+};
+
+struct keymap_entry_St {
+	const gchar *keyseq;
+	const gchar *readable_keyseq;   /* or NULL to not display */
+	const gchar *named_function;    /* as named in readline_init */
+	const gchar *readable_function; /* or NULL to use named_function */
 };
 
 
