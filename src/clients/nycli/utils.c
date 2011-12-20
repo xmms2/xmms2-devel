@@ -147,7 +147,6 @@ done (xmmsc_result_t *res, cli_infos_t *infos)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -167,7 +166,6 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 		done (res2, infos);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
-		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -202,8 +200,6 @@ list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 	}
 
 	xmmsc_result_unref (res);
-
-	cli_infos_loop_resume (infos);
 }
 
 static void
@@ -230,8 +226,6 @@ void
 print_stats (cli_infos_t *infos, xmmsc_result_t *res)
 {
 	print_server_stats (res);
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -282,8 +276,6 @@ print_config (cli_infos_t *infos, const gchar *confname)
 		print_config_entry (confname, val, NULL);
 	}
 
-	cli_infos_loop_resume (infos);
-
 	xmmsc_result_unref (res);
 }
 
@@ -296,8 +288,6 @@ print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
 	} else {
 		/* FIXME(g): print if given an specific property */
 	}
-
-	cli_infos_loop_resume (infos);
 }
 
 /* Apply operation to an idlist */
@@ -342,8 +332,6 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	cli_infos_loop_resume (infos);
-
 	xmmsc_result_unref (res);
 }
 
@@ -371,8 +359,6 @@ positions_remove (cli_infos_t *infos, const gchar *playlist,
 {
 	pl_pos_udata_t udata = { infos, NULL, playlist, NULL, 0, 0 };
 	playlist_positions_foreach (positions, pos_remove_cb, FALSE, &udata);
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -407,8 +393,6 @@ print_volume (xmmsc_result_t *res, cli_infos_t *infos, const gchar *channel)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	cli_infos_loop_resume (infos);
-
 	xmmsc_result_unref (res);
 }
 
@@ -437,10 +421,7 @@ adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 
 	if (xmmsv_get_error (val, &err)) {
 		g_printf (_("Server error: %s\n"), err);
-
 		xmmsc_result_unref (res);
-		cli_infos_loop_resume (infos);
-
 		return;
 	}
 
@@ -468,15 +449,12 @@ adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 
 			xmmsc_result_unref (res);
 			xmmsc_result_unref (innerres);
-			cli_infos_loop_resume (infos);
 			return;
 		}
 		xmmsc_result_unref (innerres);
 	}
 
 	xmmsc_result_unref (res);
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -514,8 +492,6 @@ set_volume (cli_infos_t *infos, const gchar *channel, gint volume)
 	}
 
 	g_list_free (channels);
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -536,7 +512,6 @@ status_mode (cli_infos_t *infos, const gchar *format, gint refresh)
 		status_update_all (infos, status);
 		status_print_entry (status);
 		status_free (status);
-		cli_infos_loop_resume (infos);
 	}
 }
 
@@ -594,7 +569,6 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -629,8 +603,6 @@ positions_print_info (cli_infos_t *infos, playlist_positions_t *positions)
 {
 	pl_pos_udata_t udata = { infos, NULL, NULL, NULL, 0, 0 };
 	playlist_positions_foreach (positions, pos_print_info_cb, TRUE, &udata);
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -774,8 +746,6 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 
 	column_display_free (coldisp);
 	g_array_free (entries, TRUE);
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -888,7 +858,6 @@ finish:
 	}
 	column_display_free (coldisp);
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -935,8 +904,6 @@ coll_save (cli_infos_t *infos, xmmsv_coll_t *coll,
 		res = xmmsc_coll_save (infos->sync, coll, name, ns);
 		xmmsc_result_wait (res);
 		done (res, infos);
-	} else {
-		cli_infos_loop_resume (infos);
 	}
 }
 
@@ -1148,7 +1115,6 @@ coll_show (cli_infos_t *infos, xmmsc_result_t *res)
 		g_printf (_("Server error: %s\n"), err);
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -1181,8 +1147,6 @@ print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
 }
 
@@ -1259,7 +1223,6 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 	/* No matching media found, don't jump */
 	if (!jumpres) {
 		g_printf (_("No media matching the pattern in the playlist!\n"));
-		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -1290,8 +1253,6 @@ position_jump (cli_infos_t *infos, playlist_positions_t *positions)
 	} else {
 		g_printf (_("Cannot jump to several positions!\n"));
 	}
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -1402,8 +1363,6 @@ add_list (xmmsc_result_t *matching, cli_infos_t *infos,
 			}
 		}
 	}
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matching);
 }
 
@@ -1468,7 +1427,6 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		g_tree_destroy (list);
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matching);
 	xmmsc_result_unref (lisres);
 }
@@ -1508,8 +1466,6 @@ positions_move (cli_infos_t *infos, const gchar *playlist,
 {
 	pl_pos_udata_t udata = { infos, NULL, playlist, NULL, 0, pos };
 	playlist_positions_foreach (positions, pos_move_cb, FALSE, &udata);
-
-	cli_infos_loop_resume (infos);
 }
 
 void
@@ -1560,8 +1516,6 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 			}
 		}
 	}
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matching);
 }
 
@@ -1629,8 +1583,6 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 			i++;
 		}
 	}
-
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (matchres);
 	xmmsc_result_unref (plistres);
 }
@@ -1652,7 +1604,6 @@ copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist)
 		done (saveres, infos);
 	} else {
 		g_printf (_("Cannot find the playlist to copy!\n"));
-		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -1672,7 +1623,6 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
 		coll_save (infos, coll, ns, name, TRUE);
 	} else {
 		g_printf (_("Invalid collection!\n"));
-		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -1726,7 +1676,6 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 		done (saveres, infos);
 	} else {
 		g_printf (_("Cannot find the playlist to configure!\n"));
-		cli_infos_loop_resume (infos);
 	}
 
 	xmmsc_result_unref (res);
@@ -1757,8 +1706,6 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 		g_printf (_("Invalid collection!\n"));
 	}
 
-	cli_infos_loop_resume (infos);
-
 	xmmsc_result_unref (res);
 }
 
@@ -1776,8 +1723,6 @@ playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 	} else {
 		g_printf (_("Invalid playlist!\n"));
 	}
-
-	cli_infos_loop_resume (infos);
 
 	xmmsc_result_unref (res);
 }

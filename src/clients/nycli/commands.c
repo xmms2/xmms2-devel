@@ -555,24 +555,21 @@ gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
 	playback_play (infos);
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
 cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
 	playback_pause (infos);
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
 cli_toggle (cli_infos_t *infos, command_context_t *ctx)
 {
 	playback_toggle (infos);
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -584,7 +581,7 @@ cli_stop (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_wait (res);
 	done (res, infos);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -604,10 +601,9 @@ cli_seek (cli_infos_t *infos, command_context_t *ctx)
 		done (res, infos);
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
-		return FALSE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -626,7 +622,7 @@ cli_current (cli_infos_t *infos, command_context_t *ctx)
 
 	status_mode (infos, format, refresh);
 
-	return TRUE;
+	return refresh != 0; /* need I/O if we are refreshing */
 }
 
 gboolean
@@ -641,7 +637,7 @@ cli_prev (cli_infos_t *infos, command_context_t *ctx)
 
 	set_next_rel (infos, - offset);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -656,7 +652,7 @@ cli_next (cli_infos_t *infos, command_context_t *ctx)
 
 	set_next_rel (infos, offset);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -664,12 +660,10 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
-	gboolean backward = TRUE, retval = TRUE;
+	gboolean backward = FALSE;
 	playlist_positions_t *positions;
 
-	if (!command_flag_boolean_get (ctx, "backward", &backward)) {
-		backward = FALSE;
-	}
+	command_flag_boolean_get (ctx, "backward", &backward);
 
 	/* Select by positions */
 	if (command_arg_positions_get (ctx, 0, &positions, infos->cache->currpos)) {
@@ -687,11 +681,9 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 			list_jump (res, infos);
 		}
 		xmmsc_coll_unref (query);
-	} else {
-		retval = FALSE;
 	}
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -700,8 +692,6 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
 	xmmsv_t *orderval, *fetchval;
-
-	gboolean retval = TRUE;
 
 	column_display_t *coldisp;
 	const gchar **order = NULL;
@@ -741,11 +731,9 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 		g_free (order);
 		g_free (columns);
-	} else {
-		retval = FALSE;
 	}
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -826,8 +814,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	g_free (pattern);
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -858,7 +845,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 		print_property (infos, res, id, NULL, NULL);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static xmmsv_coll_t *
@@ -976,7 +963,7 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 		return FALSE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean
@@ -1102,7 +1089,6 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	gboolean plsfile;
 	gboolean forceptrn;
 	gint i, count;
-	gboolean success = TRUE;
 
 /*
 --file  Add a path from the local filesystem
@@ -1144,14 +1130,12 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	if (forceptrn && (plsfile || fileargs)) {
 		g_printf (_("Error: --pattern is mutually exclusive with "
 		            "--file and --pls!\n"));
-		success = FALSE;
 		goto finish;
 	}
 
 	/* We need either a file or a pattern! */
 	if (!pattern) {
 		g_printf (_("Error: you must provide a pattern or files to add!\n"));
-		success = FALSE;
 		goto finish;
 	}
 
@@ -1224,24 +1208,20 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			g_free (vpath);
 			g_list_free (files);
 		}
-		cli_infos_loop_resume (infos);
 	} else {
 		if (xmmsv_dict_get_size (attributes) > 0) {
 			g_printf (_("Warning: Skipping attributes together with pattern."));
-			success = FALSE;
 			goto finish;
 		}
 
 		if (norecurs) {
 			g_printf (_("Error:"
 			            "--non-recursive only applies when passing --file!\n"));
-			success = FALSE;
 			goto finish;
 		}
 
 		if (!xmmsc_coll_parse (pattern, &query)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
-			success = FALSE;
 			goto finish;
 		} else {
 			res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
@@ -1260,14 +1240,13 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	xmmsv_unref (attributes);
 	g_free (pattern);
 
-	return success;
+	return FALSE;
 }
 
 gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	const gchar *playlist = NULL;
-	gboolean retval = TRUE;
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
 	playlist_positions_t *positions;
@@ -1296,11 +1275,9 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 			remove_list (res, plres, infos, playlist);
 		}
 		xmmsc_coll_unref (query);
-	} else {
-		retval = FALSE;
 	}
 
-	return retval;
+	return FALSE;
 }
 
 /*
@@ -1344,11 +1321,9 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		move_entries (res, infos, playlist, pos);
 		xmmsc_coll_unref (query);
-	} else {
-		return FALSE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1366,7 +1341,7 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 
 	list_print_playlists (res, infos, all);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1386,7 +1361,7 @@ cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (playlist);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1432,7 +1407,7 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (newplaylist);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1461,7 +1436,7 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (newname);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1488,7 +1463,7 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (playlist);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1507,7 +1482,7 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 
 	g_free (playlist);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1529,7 +1504,7 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 	if (free_playlist)
 		g_free (playlist);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1559,7 +1534,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 
 	xmmsv_unref (orderval);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1568,7 +1543,6 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	gchar *playlist;
 	gint history, upcoming;
-	xmmsc_coll_type_t type;
 	gboolean modif = FALSE;
 	const gchar *input, *jumplist, *typestr;
 	xmmsv_t *coll, *val;
@@ -1632,7 +1606,7 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		g_free (playlist);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 /* Strings must be free manually */
@@ -1665,7 +1639,7 @@ cli_coll_list (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_wait (res);
 	list_print_collections (res, infos);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1689,52 +1663,41 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 	g_free (name);
     g_free (collection);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
 cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsv_t *val;
-	xmmsc_coll_t *coll;
-	xmmsc_result_t *res = NULL;
-
+	xmmsc_coll_t *coll = NULL;
 	gchar *ns, *name, *pattern = NULL;
-	gboolean force, empty, coll_isset, retval = TRUE;
+	gboolean force = FALSE, empty = FALSE, copy;
 	const gchar *collection, *fullname;
-
-	command_flag_boolean_get (ctx, "empty", &empty);
-	coll_isset = command_flag_string_get (ctx, "collection", &collection);
-	if (coll_isset && empty) {
-		g_printf (_("Error: -c and -e are mutually exclusive!\n"));
-		return FALSE;
-	}
-
-	if (!command_flag_boolean_get (ctx, "force", &force)) {
-		force = FALSE;
-	}
 
 	if (!command_arg_string_get (ctx, 0, &fullname)) {
 		g_printf (_("Error: You must provide a collection name!\n"));
 		return FALSE;
 	}
+
+	command_flag_boolean_get (ctx, "empty", &empty);
+	copy = command_flag_string_get (ctx, "collection", &collection);
+	command_arg_longstring_get_escaped (ctx, 1, &pattern);
+
+	if ((empty && copy) || (empty && pattern) || (copy && pattern)) {
+		g_printf (_("Error: -e, -c and pattern are mutually exclusive!"));
+		return FALSE;
+	}
+
+	command_flag_boolean_get (ctx, "force", &force);
 	coll_name_split (fullname, &ns, &name);
 
-	command_arg_longstring_get_escaped (ctx, 1, &pattern);
 	if (pattern) {
-		if (coll_isset || empty) {
-			g_printf (_("Error: "
-			            "pattern is mutually exclusive with -c and -e!\n"));
-			retval = FALSE;
-			goto finish;
-		}
-
 		if (!xmmsc_coll_parse (pattern, &coll)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
-			retval = FALSE;
-			goto finish;
 		}
-	} else if (coll_isset) {
+	} else if (copy) {
+		xmmsc_result_t *res;
+		xmmsv_t *val;
 		gchar *from_ns, *from_name;
 
 		coll_name_split (collection, &from_ns, &from_name);
@@ -1744,11 +1707,13 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 
-		if (!xmmsv_get_coll (val, &coll)) {
+		if (xmmsv_get_coll (val, &coll)) {
+			xmmsv_coll_ref (coll);
+		} else {
 			g_printf (_("Error: cannot find collection to copy\n"));
-			retval = FALSE;
 		}
 
+		xmmsc_result_unref (res);
 		g_free (from_ns);
 		g_free (from_name);
 	} else if (empty) {
@@ -1764,27 +1729,22 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		coll = xmmsc_coll_universe ();
 	}
 
-	if (retval) {
+	if (coll) {
 		coll_save (infos, coll, ns, name, force);
-		if (res != NULL) {
-			xmmsc_result_unref (res);
-		} else {
-			xmmsc_coll_unref (coll);
-		}
+		xmmsc_coll_unref (coll);
 	}
 
-    finish:
 	g_free (pattern);
 	g_free (ns);
 	g_free (name);
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
 cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 {
-	gboolean retval, force;
+	gboolean force;
 	gchar *from_ns, *to_ns, *from_name, *to_name;
 	const gchar *oldname, *newname;
 
@@ -1807,10 +1767,8 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 
 	if (strcmp (from_ns, to_ns)) {
 		g_printf ("Error: collections namespaces can't be different!\n");
-		retval = FALSE;
 	} else {
 		coll_rename (infos, oldname, newname, to_ns, force);
-		retval = TRUE;
 	}
 
 	g_free (from_ns);
@@ -1818,7 +1776,7 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 	g_free (to_ns);
 	g_free (to_name);
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -1842,7 +1800,7 @@ cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
 	g_free (name);
     g_free (collection);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1878,7 +1836,7 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 	g_free (ns);
 	g_free (name);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -1889,7 +1847,6 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 	gint i, count;
 	const gchar *path;
 	gboolean norecurs;
-	gboolean retval = TRUE;
 
 	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
 		norecurs = FALSE;
@@ -1934,15 +1891,13 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		g_free (enc);
 		g_free (vpath);
 		g_list_free (files);
-		cli_infos_loop_resume (infos);
 	}
 
 	if (count == 0) {
 		g_printf (_("Error: no path to import!\n"));
-		retval = FALSE;
 	}
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -1993,10 +1948,8 @@ cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
 		xmmsv_list_iter_next (it);
 	}
 
-	cli_infos_loop_resume (infos);
 	xmmsc_result_unref (res);
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -2005,7 +1958,6 @@ cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	xmmsc_coll_t *coll;
 
-	gboolean retval = TRUE;
 	gchar *pattern;
 
 	if (!command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
@@ -2015,7 +1967,6 @@ cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 
 	if (!xmmsc_coll_parse (pattern, &coll)) {
 		g_printf (_("Error: failed to parse the pattern!\n"));
-		retval = FALSE;
 		goto finish;
 	}
 
@@ -2026,7 +1977,7 @@ cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 	finish:
 	g_free (pattern);
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -2035,13 +1986,11 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_t *res;
 	xmmsc_coll_t *coll;
 
-	gboolean retval = TRUE;
 	gchar *pattern;
 
 	if (command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
 		if (!xmmsc_coll_parse (pattern, &coll)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
-			retval = FALSE;
 			goto finish;
 		}
 
@@ -2060,7 +2009,7 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
     finish:
 	g_free (pattern);
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -2084,7 +2033,7 @@ cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 		print_config (infos, confname);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -2094,7 +2043,7 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 
 	gint mid;
 	gchar *default_source = NULL;
-	gboolean delete, fint, fstring, retval = TRUE;
+	gboolean delete, fint, fstring;
 	const gchar *source, *propname, *propval;
 
 	delete = fint = fstring = FALSE;
@@ -2134,7 +2083,6 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 	if (delete) {
 		if (!propname) {
 			g_printf (_("Error: you must provide a property to delete!\n"));
-			retval = FALSE;
 			goto finish;
 		}
 		res = xmmsc_medialib_entry_property_remove_with_source (infos->sync,
@@ -2183,7 +2131,7 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 finish:
 	g_free (default_source);
 
-	return retval;
+	return FALSE;
 }
 
 gboolean
@@ -2195,7 +2143,7 @@ cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_wait (res);
 	list_plugins (infos, res);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -2227,7 +2175,7 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 		}
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -2240,7 +2188,7 @@ cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
 
 	print_stats (infos, res);
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
@@ -2252,7 +2200,7 @@ cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_result_wait (res);
 	done (res, infos);
 
-	return TRUE;
+	return FALSE;
 }
 
 /* The loop is resumed in the disconnect callback */
@@ -2265,19 +2213,15 @@ cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_quit (infos->sync);
 		xmmsc_result_wait (res);
 		done (res, infos);
-	} else {
-		return FALSE;
 	}
-
-	return TRUE;
+	return FALSE;
 }
 
 gboolean
 cli_exit (cli_infos_t *infos, command_context_t *ctx)
 {
 	cli_infos_loop_stop (infos);
-
-	return TRUE;
+	return FALSE;
 }
 
 static void
