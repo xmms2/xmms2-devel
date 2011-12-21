@@ -30,6 +30,7 @@
 struct status_entry_St {
 	status_free_func_t free_func;
 	status_refresh_func_t refresh_func;
+	status_callback_func_t callback_func;
 	gpointer udata;
 	const keymap_entry_t *map;
 
@@ -38,6 +39,7 @@ struct status_entry_St {
 
 status_entry_t *
 status_init (status_free_func_t free_func, status_refresh_func_t refresh_func,
+             status_callback_func_t callback_func,
              const keymap_entry_t map[], gpointer udata,
              gint refresh)
 {
@@ -46,6 +48,7 @@ status_init (status_free_func_t free_func, status_refresh_func_t refresh_func,
 	entry = g_new0 (status_entry_t, 1);
 	entry->free_func = free_func;
 	entry->refresh_func = refresh_func;
+	entry->callback_func = callback_func;
 	entry->udata = udata;
 	entry->map = map;
 	entry->refresh = refresh;
@@ -75,4 +78,14 @@ status_get_refresh_interval (const status_entry_t *entry)
 const keymap_entry_t *
 status_get_keymap (const status_entry_t *entry) {
 	return entry->map;
+}
+
+gint
+status_call_callback (const status_entry_t *entry, gint i, cli_infos_t *infos)
+{
+	if (entry->callback_func) {
+		return entry->callback_func (infos, i, entry->udata);
+	} else {
+		return 1;
+	}
 }

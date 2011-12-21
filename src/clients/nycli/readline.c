@@ -67,6 +67,17 @@ readline_toggle_playback (gint count, gint key)
 	return 0;
 }
 
+#define create_callback(i) \
+static gint \
+readline_status_callback##i (gint count, gint key) \
+{ \
+	return status_call_callback (readline_cli_infos->status_entry, i, \
+	                             readline_cli_infos); \
+}
+
+create_callback(0)
+create_callback(1)
+
 static int
 char_is_quoted (char *text, int index)
 {
@@ -188,6 +199,8 @@ readline_init (cli_infos_t *infos)
 	rl_add_defun ("previous-song", readline_previous_song, -1);
 	rl_add_defun ("toggle-playback", readline_toggle_playback, -1);
 	rl_add_defun ("quit-status-mode", readline_status_quit, -1);
+	rl_add_defun ("status-callback-0", readline_status_callback0, -1);
+	rl_add_defun ("status-callback-1", readline_status_callback1, -1);
 }
 
 void

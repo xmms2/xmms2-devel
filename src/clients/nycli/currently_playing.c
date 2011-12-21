@@ -249,6 +249,7 @@ currently_playing_init (const gchar *format, gint refresh)
 
 	return status_init (currently_playing_free,
 	                    currently_playing_refresh,
+	                    NULL,
 	                    currently_playing_keymap,
 	                    entry, refresh);
 }
