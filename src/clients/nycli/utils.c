@@ -564,7 +564,7 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 	xmmsv_t *val;
 	const gchar *err;
 	gint32 id;
-	gboolean first = true;
+	gboolean first = TRUE;
 
 	val = xmmsc_result_get_value (res);
 
@@ -583,7 +583,7 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 				if (!first) {
 					g_printf ("\n");
 				} else {
-					first = false;
+					first = FALSE;
 				}
 				id_print_info (infores, id, NULL);
 			}
