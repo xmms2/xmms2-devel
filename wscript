@@ -67,7 +67,6 @@ src/clients/lib/xmmsclient
 src/clients/lib/xmmsclient-glib
 src/include
 src/includepriv
-src/tools/sqlite2s4
 """.split()
 
 optional_subdirs = """
@@ -85,6 +84,7 @@ src/clients/lib/python
 src/clients/lib/perl
 src/clients/lib/ruby
 src/lib/s4/src/tools/s4
+src/tools/sqlite2s4
 tests
 pixmaps
 """.split()
