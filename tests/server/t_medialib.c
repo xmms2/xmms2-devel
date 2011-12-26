@@ -234,14 +234,13 @@ CASE (test_query_random_id)
 CASE (test_session)
 {
 	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t first, second;
+	xmms_medialib_entry_t first;
 	xmmsv_coll_t *universe;
 	xmms_error_t err;
 	xmmsv_t *result, *spec;
 	gint tracknr;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	session = xmms_medialib_session_begin (medialib);
 	xmms_medialib_entry_remove (session, first);
@@ -820,11 +819,10 @@ CASE(test_client_move_entry)
 CASE (test_session_locking)
 {
 	xmms_medialib_session_t *session, *inner_session;
-	xmms_medialib_entry_t first, second;
+	xmms_medialib_entry_t first;
 	gint status, inner_status, new_status;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 4, "Red Fang", "Red Fang", "Humans Remain Human Remains");
 
 	session = xmms_medialib_session_begin (medialib);
 
