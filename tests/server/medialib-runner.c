@@ -196,19 +196,40 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 		xmmsv_get_dict_iter (dict, &dit);
 
 		while (xmmsv_dict_iter_valid (dit)) {
-			const gchar *key;
+			const gchar *key, *source;
+			gchar **parts;
 			xmmsv_t *container;
 
 			xmmsv_dict_iter_pair (dit, &key, &container);
+
+			parts = g_strsplit (key, "/", 2);
+
+			key = (parts[1] != NULL) ? parts[1] : key;
+			source = (parts[1] != NULL) ? parts[0] : NULL;
+
 			if (xmmsv_is_type (container, XMMSV_TYPE_STRING)) {
 				const gchar *value;
+
 				xmmsv_get_string (container, &value);
-				xmms_medialib_entry_property_set_str (session, entry, key, value);
+
+				if (source != NULL) {
+					xmms_medialib_entry_property_set_str_source (session, entry, key, value, source);
+				} else {
+					xmms_medialib_entry_property_set_str (session, entry, key, value);
+				}
 			} else {
 				gint32 value;
+
 				xmmsv_get_int (container, &value);
-				xmms_medialib_entry_property_set_int (session, entry, key, value);
+
+				if (source != NULL) {
+					xmms_medialib_entry_property_set_int_source (session, entry, key, value, source);
+				} else {
+					xmms_medialib_entry_property_set_int (session, entry, key, value);
+				}
 			}
+
+			g_strfreev (parts);
 
 			xmmsv_dict_iter_next (dit);
 		}
