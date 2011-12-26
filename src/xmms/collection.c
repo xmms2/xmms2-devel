@@ -621,7 +621,6 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
                                const gchar *to_name, const gchar *namespace,
                                xmms_error_t *err)
 {
-	gboolean retval;
 	guint nsid;
 	xmmsv_coll_t *from_coll, *to_coll;
 
@@ -642,14 +641,11 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 	/* Input validation */
 	if (from_coll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
-		retval = FALSE;
-
 	} else if (to_coll != NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "a collection already exists with the target name");
-		retval = FALSE;
-
-	/* Update collection name everywhere */
 	} else {
+		/* Update collection name everywhere */
+
 		GTree *dict;
 
 		/* insert new pair in hashtable */
@@ -668,8 +664,6 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		                                        from_name, namespace);
 		g_tree_insert (dict, (gpointer) "newname", xmmsv_new_string (to_name));
 		xmms_collection_changed_msg_send (dag, dict);
-
-		retval = TRUE;
 	}
 
 	g_mutex_unlock (dag->mutex);
