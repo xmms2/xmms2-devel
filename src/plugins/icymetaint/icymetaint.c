@@ -227,7 +227,6 @@ xmms_icymetaint_read (xmms_xform_t *xform, void *orig_ptr, gint orig_len, xmms_e
 static void
 handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 {
-	xmms_icymetaint_data_t *data;
 	gchar **tags;
 	guint i = 0;
 
@@ -235,8 +234,6 @@ handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 	g_return_if_fail (metadata);
 
 	XMMS_DBG ("metadata: %s", metadata);
-
-	data = xmms_xform_private_data_get (xform);
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
