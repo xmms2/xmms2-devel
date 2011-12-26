@@ -1,0 +1,32 @@
+{
+    "medialib": [
+        { "generic/rating": 1, "other/rating": 2, "title": "song a" },
+        { "generic/rating": 2, "other/rating": 1, "title": "song b" },
+        {                                         "title": "song c" }
+    ],
+    "collection": {
+        "type": "complement",
+        "operands": [{
+            "type": "equals",
+            "attributes": {
+                "type": "value",
+                "field": "rating",
+                "value": "1"
+            },
+            "operands": [{ "type": "universe" }]
+        }]
+    },
+    "specification": {
+        "type": "cluster-list",
+        "cluster-by": "id",
+        "data": {
+            "type": "metadata",
+            "get": ["value"],
+            "fields": ["title"],
+            "aggregate": "first"
+        }
+    },
+    "expected": {
+        "result": [ "song c" ]
+    }
+}
