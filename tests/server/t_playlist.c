@@ -661,7 +661,7 @@ CASE(test_client_shuffle)
 
 CASE(test_client_sort)
 {
-	xmms_medialib_entry_t first, second, third, fourth, current, entry;
+	xmms_medialib_entry_t first, second, third, fourth, entry;
 	xmmsv_t *order, *result;
 	xmms_error_t err;
 
@@ -686,8 +686,6 @@ CASE(test_client_sort)
 	                        xmmsv_new_string ("Default"));
 	CU_ASSERT_EQUAL (5, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
-
-	current = xmms_playlist_current_entry (playlist);
 
 	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
 	                          XMMSV_LIST_ENTRY_STR ("album"),
