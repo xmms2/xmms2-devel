@@ -665,7 +665,6 @@ xmms_playlist_client_remove_entry (xmms_playlist_t *playlist,
                                    const gchar *plname,
                                    gint32 pos, xmms_error_t *err)
 {
-	gboolean ret = FALSE;
 	xmmsv_coll_t *plcoll;
 
 	g_return_if_fail (playlist);
@@ -673,7 +672,7 @@ xmms_playlist_client_remove_entry (xmms_playlist_t *playlist,
 	g_mutex_lock (playlist->mutex);
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
 	if (plcoll != NULL) {
-		ret = xmms_playlist_remove_unlocked (playlist, plname, plcoll, pos, err);
+		xmms_playlist_remove_unlocked (playlist, plname, plcoll, pos, err);
 	}
 	g_mutex_unlock (playlist->mutex);
 }
