@@ -1203,14 +1203,6 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_config_list_values(self.conn))
 
-	@deprecated
-	def configval_list(self, cb = None):
-		"""
-		@deprecated
-		Use config_list_values(...) instead
-		"""
-		return self.config_list_values(cb)
-
 	cpdef XmmsResult config_register_value(self, valuename, defaultvalue, cb = None):
 		"""
 		config_register_value(valuename, defaultvalue, cb=None) -> XmmsResult

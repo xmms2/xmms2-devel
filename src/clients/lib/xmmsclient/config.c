@@ -110,18 +110,6 @@ xmmsc_config_get_value (xmmsc_connection_t *c, const char *key)
  * Lists all configuration values.
  *
  * @param c The connection structure.
- * @deprecated
- */
-xmmsc_result_t *
-xmmsc_configval_list (xmmsc_connection_t *c)
-{
-	return xmmsc_config_list_values (c);
-}
-
-/**
- * Lists all configuration values.
- *
- * @param c The connection structure.
  */
 xmmsc_result_t *
 xmmsc_config_list_values (xmmsc_connection_t *c)
