@@ -51,8 +51,6 @@ XMMSV_TYPE_T
 			sv_setpv ($arg, \"none\");
 		} else if ($var == XMMSV_TYPE_ERROR) {
 			sv_setpv ($arg, \"error\");
-		} else if ($var == XMMSV_TYPE_UINT32) {
-			sv_setpv ($arg, \"uint\");
 		} else if ($var == XMMSV_TYPE_INT32) {
 			sv_setpv ($arg, \"int\");
 		} else if ($var == XMMSV_TYPE_STRING) {

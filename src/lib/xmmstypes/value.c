@@ -791,26 +791,6 @@ xmmsv_get_int (const xmmsv_t *val, int32_t *r)
 }
 
 /**
- * Retrieves a unsigned integer from the value.
- *
- * @param val a #xmmsv_t containing an unsigned integer.
- * @param r the return unsigned integer.
- * @return 1 upon success otherwise 0
- */
-int
-xmmsv_get_uint (const xmmsv_t *val, uint32_t *r)
-{
-	if (!val)
-		return 0;
-	if (val->type != XMMSV_TYPE_INT32)
-		return 0;
-
-	*r = val->value.int32;
-
-	return 1;
-}
-
-/**
  * Retrieves a string from the value.
  *
  * @param val a #xmmsv_t containing a string.
@@ -2695,11 +2675,6 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 				xmmsv_type_t type = xmmsv_get_type (v);
 				if (type == XMMSV_TYPE_STRING) {
 					xmmsv_get_string (v, &result);
-				} else if (type == XMMSV_TYPE_UINT32) {
-					uint32_t ui;
-					xmmsv_get_uint (v, &ui);
-					snprintf (tmp, 12, "%u", ui);
-					result = tmp;
 				} else if (type == XMMSV_TYPE_INT32) {
 					int32_t i;
 					xmmsv_get_int (v, &i);

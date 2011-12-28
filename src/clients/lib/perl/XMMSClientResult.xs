@@ -14,21 +14,6 @@ notifyer_cb (xmmsv_t *val, void *user_data)
 }
 
 STATIC SV *
-sv_from_value_uint (xmmsv_t *val)
-{
-	int ret;
-	unsigned int num;
-
-	ret = xmmsv_get_uint (val, &num);
-
-	if (ret == 0) {
-		croak("could not fetch uint value");
-	}
-
-	return newSVuv (num);
-}
-
-STATIC SV *
 sv_from_value_int (xmmsv_t *val)
 {
 	int ret, num;
