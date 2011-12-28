@@ -949,7 +949,19 @@ c_playlist_current_active (VALUE self)
 static VALUE
 c_medialib_path_import (VALUE self, VALUE path)
 {
-	METHOD_ADD_HANDLER_STR (medialib_path_import, path);
+	METHOD_ADD_HANDLER_STR (medialib_import_path, path);
+}
+
+/*
+ * call-seq:
+ *  xc.medialib_path_import(path) -> result
+ *
+ * Recursively imports all media files under the url encoded _path_ to the medialib.
+ */
+static VALUE
+c_medialib_path_import_encoded (VALUE self, VALUE path)
+{
+	METHOD_ADD_HANDLER_STR (medialib_import_path_encoded, path);
 }
 
 /*
@@ -1543,6 +1555,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "medialib_entry_remove", c_medialib_entry_remove, 1);
 	rb_define_method (c, "medialib_entry_move", c_medialib_entry_move, 2);
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
+	rb_define_method (c, "medialib_path_import_encoded", c_medialib_path_import_encoded, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
 	rb_define_method (c, "xform_media_browse", c_xform_media_browse, 1);
