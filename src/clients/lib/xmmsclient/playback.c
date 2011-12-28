@@ -111,49 +111,6 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds,
 }
 
 /**
- * Seek to a absoulte number of samples in the current playback.
- *
- * @param c The connection structure.
- * @param samples the total number of samples where playback
- * should continue.
- * @deprecated
- */
-
-xmmsc_result_t *
-xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
-	                       XMMS_IPC_CMD_SEEKSAMPLES,
-	                       XMMSV_LIST_ENTRY_INT (samples),
-	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
-	                       XMMSV_LIST_END);
-}
-
-/**
- * Seek to a number of samples relative to the current position in the
- * current playback.
- *
- * @param c The connection structure.
- * @param samples The offset in number of samples from the current
- * position to where playback should continue.
- * @deprecated
- */
-
-xmmsc_result_t *
-xmmsc_playback_seek_samples_rel (xmmsc_connection_t *c, int samples)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK,
-	                       XMMS_IPC_CMD_SEEKSAMPLES,
-	                       XMMSV_LIST_ENTRY_INT (samples),
-	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
-	                       XMMSV_LIST_END);
-}
-
-/**
  * Seek to a position given in samples in the current playback.
  *
  * @param c The connection structure.

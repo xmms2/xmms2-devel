@@ -1538,36 +1538,18 @@ xmmsc_playback_seek_ms (c, milliseconds, whence = XMMS_PLAYBACK_SEEK_SET)
 
   my $result = $conn->playback_seek_samples(5000);
 
-Seek to a absoulte number of C<$samples> in the current playback.
+Seek in the current playback. The time is specified in C<$samples>.
+The whence parameter specifies whether the time is absolute (seek mode 'cur')
+or relative to the current point in the song (seek mode 'set'). The default is
+to seek using an absolute time.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_playback_seek_samples_abs (c, samples)
+xmmsc_playback_seek_samples (c, samples, whence = XMMS_PLAYBACK_SEEK_SET)
 		xmmsc_connection_t *c
-		uint32_t samples
-
-=head2 playback_seek_samples_rel
-
-=over 4
-
-=item Arguments: $samples
-
-=item Return Value: $result
-
-=back
-
-  my $result = $conn->playback_seek_samples_rel(-5000);
-
-Seek to a number of C<$samples> relative to the current position in the current
-playback.
-
-=cut
-
-xmmsc_result_t *
-xmmsc_playback_seek_samples_rel (c, samples)
-		xmmsc_connection_t *c
-		int samples
+		int32_t samples
+		xmms_playback_seek_mode_t whence
 
 =head2 broadcast_playback_status
 

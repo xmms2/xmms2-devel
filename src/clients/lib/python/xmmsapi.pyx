@@ -671,19 +671,6 @@ cdef class XmmsApi(XmmsCore):
 		else:
 			raise ValueError("Bad whence parameter")
 
-	@deprecated
-	def playback_seek_samples_rel(self, int samples, cb = None):
-		"""
-		@deprecated
-		playback_seek_samples_rel(samples, cb=None) -> XmmsResult
-
-		Seek to a number of samples by the given offset in the
-		current file or stream in playback.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
-		"""
-		return self.playback_seek_samples(samples, XMMS_PLAYBACK_SEEK_CUR, cb=cb)
-
 	cpdef XmmsResult playback_status(self, cb = None):
 		"""
 		playback_status(cb=None) -> XmmsResult
