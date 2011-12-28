@@ -91,19 +91,6 @@ xmmsc_config_set_value (xmmsc_connection_t *c,
 }
 
 /**
- * Retrives a list of configvalues in server
- *
- * @param c The connection structure.
- * @param key The key of the configval to retrieve.
- * @deprecated
- */
-xmmsc_result_t *
-xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
-{
-	return xmmsc_config_get_value (c, key);
-}
-
-/**
  * Retrieves a configvalue from the server
  *
  * @param c The connection structure.
