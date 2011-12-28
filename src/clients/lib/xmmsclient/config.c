@@ -41,21 +41,6 @@
  * @param c The connection structure.
  * @param key should be &lt;clientname&gt;.myval like cli.path or something like that.
  * @param value The default value of this config value.
- * @deprecated
- */
-xmmsc_result_t *
-xmmsc_configval_register (xmmsc_connection_t *c, const char *key,
-                          const char *value)
-{
-	return xmmsc_config_register_value (c, key, value);
-}
-
-/**
- * Registers a configvalue in the server.
- *
- * @param c The connection structure.
- * @param key should be &lt;clientname&gt;.myval like cli.path or something like that.
- * @param value The default value of this config value.
  */
 xmmsc_result_t *
 xmmsc_config_register_value (xmmsc_connection_t *c, const char *key,

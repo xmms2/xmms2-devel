@@ -1217,14 +1217,6 @@ cdef class XmmsApi(XmmsCore):
 		dv = from_unicode(defaultvalue)
 		return self.create_result(cb, xmmsc_config_register_value(self.conn, <char *>v, <char *>dv))
 
-	@deprecated
-	def configval_register(self, valuename, defaultvalue, cb = None):
-		"""
-		@deprecated
-		Use config_register_value(valuename, defaultvalue, ...) instead
-		"""
-		return self.config_register_value(valuename, defaultvalue, cb)
-
 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded=False):
 		"""
 		medialib_add_entry(file, cb=None, encoded=False) -> XmmsResult
