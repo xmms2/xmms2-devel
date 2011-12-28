@@ -487,11 +487,10 @@ CASE (test_xmmsv_type_dict)
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_DICT, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
-	CU_ASSERT_TRUE (xmmsv_is_dict (value));
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_DICT));
 
 	tmp = xmmsv_new_int (1);
-	CU_ASSERT_FALSE (xmmsv_is_dict (tmp));
+	CU_ASSERT_FALSE (xmmsv_is_type (tmp, XMMSV_TYPE_DICT));
 	xmmsv_unref (tmp);
 
 	tmp = xmmsv_new_int (42);

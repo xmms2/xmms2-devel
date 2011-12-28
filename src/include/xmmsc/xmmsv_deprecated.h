@@ -39,8 +39,6 @@ XMMSV_TYPE_UINT32_IS_DEPRECATED (void)
 }
 #define XMMSV_TYPE_UINT32 XMMSV_TYPE_UINT32_IS_DEPRECATED()
 
-/** @deprecated */
-int xmmsv_is_dict (const xmmsv_t *val) XMMS_DEPRECATED;
 
 /** @deprecated */
 const char * xmmsv_get_error_old (const xmmsv_t *val) XMMS_DEPRECATED;

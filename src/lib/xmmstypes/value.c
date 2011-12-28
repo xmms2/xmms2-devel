@@ -428,18 +428,6 @@ xmmsv_is_error (const xmmsv_t *val)
 }
 
 /**
- * Check if the value stores a dict.
- *
- * @param val a #xmmsv_t
- * @return 1 if value stores a dict, 0 otherwise.
- */
-int
-xmmsv_is_dict (const xmmsv_t *val)
-{
-	return xmmsv_is_type (val, XMMSV_TYPE_DICT);
-}
-
-/**
  * Legacy alias to retrieve the error string from an
  * #xmmsv_t. Obsolete now, use #xmmsv_get_error instead!
  *
