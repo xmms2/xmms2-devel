@@ -1028,7 +1028,7 @@ c_plugin_list (int argc, VALUE *argv, VALUE self)
 	if (NIL_P (type))
 		type = INT2FIX (XMMS_PLUGIN_TYPE_ALL);
 
-	METHOD_ADD_HANDLER_INT (plugin_list, type);
+	METHOD_ADD_HANDLER_INT (main_list_plugins, type);
 }
 
 /*
