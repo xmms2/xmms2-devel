@@ -60,6 +60,12 @@
 	res = xmmsc_##name (xmms->real, check_int32 (arg1)); \
 	METHOD_HANDLER_FOOTER
 
+#define METHOD_ADD_HANDLER_INT_INT(name, arg1, arg2) \
+	METHOD_HANDLER_HEADER \
+\
+	res = xmmsc_##name (xmms->real, check_int32 (arg1), check_int32 (arg2)); \
+	METHOD_HANDLER_FOOTER
+
 #define METHOD_ADD_HANDLER_BIN(name, arg1) \
 	METHOD_HANDLER_HEADER \
 \
@@ -540,7 +546,7 @@ c_broadcast_config_value_changed (VALUE self)
 static VALUE
 c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_INT (playback_seek_ms_abs, ms);
+	METHOD_ADD_HANDLER_INT_INT (playback_seek_ms, ms, XMMS_PLAYBACK_SEEK_SET);
 }
 
 /*
@@ -552,7 +558,7 @@ c_playback_seek_ms (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_ms_rel (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_INT (playback_seek_ms_rel, ms);
+	METHOD_ADD_HANDLER_INT_INT (playback_seek_ms, ms, XMMS_PLAYBACK_SEEK_CUR);
 }
 
 /*
@@ -564,7 +570,7 @@ c_playback_seek_ms_rel (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_INT (playback_seek_samples_abs, samples);
+	METHOD_ADD_HANDLER_INT_INT (playback_seek_samples, samples, XMMS_PLAYBACK_SEEK_SET);
 }
 
  /*
@@ -576,7 +582,7 @@ c_playback_seek_samples (VALUE self, VALUE samples)
 static VALUE
 c_playback_seek_samples_rel (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_INT (playback_seek_samples_rel, samples);
+	METHOD_ADD_HANDLER_INT_INT (playback_seek_samples, samples, XMMS_PLAYBACK_SEEK_CUR);
 }
 
 /*
