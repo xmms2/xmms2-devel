@@ -150,7 +150,6 @@ xmmsc_result_t *xmmsc_signal_playback_playtime (xmmsc_connection_t *c);
  */
 
 /* commands */
-xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, const char *key) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue) XMMS_DEPRECATED;

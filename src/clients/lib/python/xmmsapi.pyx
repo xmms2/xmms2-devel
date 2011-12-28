@@ -1180,14 +1180,6 @@ cdef class XmmsApi(XmmsCore):
 		v = from_unicode(val)
 		return self.create_result(cb, xmmsc_config_set_value(self.conn, <char *>k, <char *>v))
 
-	@deprecated
-	def configval_set(self, key, val, cb = None):
-		"""
-		@deprecated
-		Use config_set_value(key, val, ...) instead
-		"""
-		return self.config_set_value(key, val, cb)
-
 	cpdef XmmsResult config_get_value(self, key, cb = None):
 		"""
 		config_get_value(key, cb=None) -> XmmsResult

@@ -76,20 +76,6 @@ xmmsc_config_register_value (xmmsc_connection_t *c, const char *key,
  * @param c The connection structure.
  * @param key The key of the configval to set a value for.
  * @param val The new value of the configval.
- * @deprecated
- */
-xmmsc_result_t *
-xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
-{
-	return xmmsc_config_set_value (c, key, val);
-}
-
-/**
- * Sets a configvalue in the server.
- *
- * @param c The connection structure.
- * @param key The key of the configval to set a value for.
- * @param val The new value of the configval.
  */
 xmmsc_result_t *
 xmmsc_config_set_value (xmmsc_connection_t *c,
