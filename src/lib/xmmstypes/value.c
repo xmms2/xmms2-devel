@@ -428,18 +428,6 @@ xmmsv_is_error (const xmmsv_t *val)
 }
 
 /**
- * Check if the value stores a list.
- *
- * @param val a #xmmsv_t
- * @return 1 if value stores a list, 0 otherwise.
- */
-int
-xmmsv_is_list (const xmmsv_t *val)
-{
-	return xmmsv_is_type (val, XMMSV_TYPE_LIST);
-}
-
-/**
  * Check if the value stores a dict.
  *
  * @param val a #xmmsv_t

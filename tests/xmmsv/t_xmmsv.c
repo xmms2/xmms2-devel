@@ -176,10 +176,8 @@ CASE (test_xmmsv_type_list)
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
-	CU_ASSERT_TRUE (xmmsv_is_list (value));
 
 	tmp = xmmsv_new_int (1);
-	CU_ASSERT_FALSE (xmmsv_is_list (tmp));
 	CU_ASSERT_FALSE (xmmsv_is_type (tmp, XMMSV_TYPE_LIST));
 	xmmsv_unref (tmp);
 
