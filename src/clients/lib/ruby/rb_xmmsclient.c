@@ -54,13 +54,6 @@
 	                    StringValuePtr (arg1), StringValuePtr (arg2)); \
 	METHOD_HANDLER_FOOTER
 
-#define METHOD_ADD_HANDLER_UINT(name, arg1) \
-	METHOD_HANDLER_HEADER \
-\
-	res = xmmsc_##name (xmms->real, check_uint32 (arg1)); \
-\
-	METHOD_HANDLER_FOOTER
-
 #define METHOD_ADD_HANDLER_INT(name, arg1) \
 	METHOD_HANDLER_HEADER \
 \
@@ -547,7 +540,7 @@ c_broadcast_config_value_changed (VALUE self)
 static VALUE
 c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_UINT (playback_seek_ms_abs, ms);
+	METHOD_ADD_HANDLER_INT (playback_seek_ms_abs, ms);
 }
 
 /*
@@ -571,7 +564,7 @@ c_playback_seek_ms_rel (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_UINT (playback_seek_samples_abs, samples);
+	METHOD_ADD_HANDLER_INT (playback_seek_samples_abs, samples);
 }
 
  /*
@@ -716,7 +709,7 @@ c_broadcast_medialib_entry_added (VALUE self)
 static VALUE
 c_playlist_set_next (VALUE self, VALUE pos)
 {
-	METHOD_ADD_HANDLER_UINT (playlist_set_next, pos);
+	METHOD_ADD_HANDLER_INT (playlist_set_next, pos);
 }
 
 /*
@@ -783,7 +776,7 @@ c_medialib_get_id (VALUE self, VALUE url)
 static VALUE
 c_medialib_get_info (VALUE self, VALUE id)
 {
-	METHOD_ADD_HANDLER_UINT (medialib_get_info, id);
+	METHOD_ADD_HANDLER_INT (medialib_get_info, id);
 }
 
 /*
@@ -812,7 +805,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 
 	rb_scan_args (argc, argv, "31", &tmp, &key, &value, &src);
 
-	id = check_uint32 (tmp);
+	id = check_int32 (tmp);
 	Check_Type (key, T_SYMBOL);
 
 	if (!NIL_P (rb_check_string_type (value)))
@@ -869,7 +862,7 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 
 	rb_scan_args (argc, argv, "21", &tmp, &key, &src);
 
-	id = check_uint32 (tmp);
+	id = check_int32 (tmp);
 	Check_Type (key, T_SYMBOL);
 
 	ckey = rb_id2name (SYM2ID (key));
@@ -897,7 +890,7 @@ c_medialib_entry_move (VALUE self, VALUE id, VALUE url)
 {
 	METHOD_HANDLER_HEADER
 
-	res = xmmsc_medialib_move_entry (xmms->real, check_uint32 (id),
+	res = xmmsc_medialib_move_entry (xmms->real, check_int32 (id),
 	                                 StringValuePtr (url));
 
 	METHOD_HANDLER_FOOTER
@@ -912,7 +905,7 @@ c_medialib_entry_move (VALUE self, VALUE id, VALUE url)
 static VALUE
 c_medialib_entry_remove (VALUE self, VALUE id)
 {
-	METHOD_ADD_HANDLER_UINT (medialib_remove_entry, id)
+	METHOD_ADD_HANDLER_INT (medialib_remove_entry, id)
 }
 
 /*
@@ -962,7 +955,7 @@ c_medialib_path_import (VALUE self, VALUE path)
 static VALUE
 c_medialib_rehash (VALUE self, VALUE id)
 {
-	METHOD_ADD_HANDLER_UINT (medialib_rehash, id);
+	METHOD_ADD_HANDLER_INT (medialib_rehash, id);
 }
 
 /*
@@ -1017,7 +1010,7 @@ c_plugin_list (int argc, VALUE *argv, VALUE self)
 	if (NIL_P (type))
 		type = INT2FIX (XMMS_PLUGIN_TYPE_ALL);
 
-	METHOD_ADD_HANDLER_UINT (plugin_list, type);
+	METHOD_ADD_HANDLER_INT (plugin_list, type);
 }
 
 /*
@@ -1236,7 +1229,7 @@ c_coll_find (VALUE self, VALUE id, VALUE ns)
 {
 	METHOD_HANDLER_HEADER
 
-	res = xmmsc_coll_find (xmms->real, check_uint32 (id),
+	res = xmmsc_coll_find (xmms->real, check_int32 (id),
 	                       StringValuePtr (ns));
 
 	METHOD_HANDLER_FOOTER
@@ -1374,25 +1367,6 @@ static VALUE
 c_broadcast_coll_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_collection_changed)
-}
-
-VALUE
-check_uint32 (VALUE arg)
-{
-	VALUE uint32_max = UINT2NUM (4294967295UL);
-	VALUE uint32_min = INT2NUM (0);
-
-	if (!rb_obj_is_kind_of (arg, rb_cInteger))
-		rb_raise (rb_eTypeError,
-		          "wrong argument type %s (expected Integer)",
-		          rb_obj_classname (arg));
-
-	if (rb_funcall2 (arg, id_lt, 1, &uint32_min) ||
-	    rb_funcall2 (arg, id_gt, 1, &uint32_max))
-		rb_raise (rb_eTypeError,
-		          "wrong argument type (expected 32 bit unsigned int)");
-
-	return NUM2UINT (arg);
 }
 
 VALUE
