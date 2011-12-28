@@ -1160,14 +1160,6 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_broadcast_config_value_changed(self.conn))
 
-	@deprecated
-	def broadcast_configval_changed(self, cb = None):
-		"""
-		@deprecated
-		Use broadcast_config_value_changed(...) instead
-		"""
-		return self.broadcast_config_value_changed(cb)
-
 	cpdef XmmsResult config_set_value(self, key, val, cb = None):
 		"""
 		config_set_value(key, val, cb=None) -> XmmsResult

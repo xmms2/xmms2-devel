@@ -156,7 +156,6 @@ xmmsc_result_t *xmmsc_config_get_value (xmmsc_connection_t *c, const char *key);
 xmmsc_result_t *xmmsc_config_register_value (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue);
 
 /* broadcasts */
-xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_broadcast_config_value_changed (xmmsc_connection_t *c);
 
 

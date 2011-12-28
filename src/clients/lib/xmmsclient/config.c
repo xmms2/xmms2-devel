@@ -105,19 +105,6 @@ xmmsc_config_list_values (xmmsc_connection_t *c)
 }
 
 /**
- * Requests the configval_changed broadcast. This will be called when a configvalue
- * has been updated.
- *
- * @param c The connection structure.
- * @deprecated
- */
-xmmsc_result_t *
-xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
-{
-	return xmmsc_broadcast_config_value_changed (c);
-}
-
-/**
  * Requests the config_value_changed broadcast. This will be called when a configvalue
  * has been updated.
  *
