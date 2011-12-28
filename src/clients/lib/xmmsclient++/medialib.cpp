@@ -149,7 +149,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_medialib_path_import, conn_, path.c_str() )
+		          boost::bind( xmmsc_medialib_import_path, conn_, path.c_str() )
 		        );
 		return VoidResult( res, ml_ );
 	}
@@ -158,7 +158,7 @@ namespace Xmms
 	{
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_medialib_path_import_encoded,
+		          boost::bind( xmmsc_medialib_import_path_encoded,
 		                       conn_, path.c_str() ) );
 		return VoidResult( res, ml_ );
 	}
