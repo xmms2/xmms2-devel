@@ -88,47 +88,6 @@ xmmsc_playback_start (xmmsc_connection_t *c)
 
 
 /**
- * Seek to a absolute time in the current playback.
- *
- * @param c The connection structure.
- * @param milliseconds The total number of ms where
- * playback should continue.
- * @deprecated
- */
-
-xmmsc_result_t *
-xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS,
-	                       XMMSV_LIST_ENTRY_INT (milliseconds),
-	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_SET),
-	                       XMMSV_LIST_END);
-}
-
-/**
- * Seek to a time relative to the current position in the current
- * playback.
- *
- * @param c The connection structure.
- * @param milliseconds The offset in ms from the current position to
- * where playback should continue.
- * @deprecated
- */
-
-xmmsc_result_t *
-xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYBACK, XMMS_IPC_CMD_SEEKMS,
-	                       XMMSV_LIST_ENTRY_INT (milliseconds),
-	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYBACK_SEEK_CUR),
-	                       XMMSV_LIST_END);
-}
-
-/**
  * Seek to a position given in milliseconds in the current playback.
  *
  * @param c The connection structure.

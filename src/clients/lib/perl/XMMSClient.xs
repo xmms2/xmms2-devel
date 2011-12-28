@@ -1505,43 +1505,26 @@ xmmsc_playback_start (c)
 
 =item Arguments: $milliseconds
 
+=item Arguments: $whence?
+
 =item Return Value: $result
 
 =back
 
   my $result = $conn->playback_seek_ms(1000);
 
-Seek to a absolute time in the current playback. The time is specified in
-C<$milliseconds>.
+Seek in the current playback. The time is specified in C<$milliseconds>.
+The whence parameter specifies whether the time is absolute (seek mode 'cur')
+or relative to the current point in the song (seek mode 'set'). The default is
+to seek using an absolute time.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_playback_seek_ms_abs (c, milliseconds)
+xmmsc_playback_seek_ms (c, milliseconds, whence = XMMS_PLAYBACK_SEEK_SET)
 		xmmsc_connection_t *c
-		uint32_t milliseconds
-
-=head2 playback_seek_ms_rel
-
-=over 4
-
-=item Arguments: $milliseconds
-
-=item Return Value: $result
-
-=back
-
-  my $result = $conn->playback_seek_ms_rel(-1000);
-
-Seek to a time relative to the current position in the current playback. Time
-is specified in C<$milliseconds>.
-
-=cut
-
-xmmsc_result_t *
-xmmsc_playback_seek_ms_rel (c, milliseconds)
-		xmmsc_connection_t *c
-		int milliseconds
+		int32_t milliseconds
+		xmms_playback_seek_mode_t whence
 
 =head2 playback_seek_samples
 

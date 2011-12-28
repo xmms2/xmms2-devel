@@ -2,6 +2,7 @@ TYPEMAP
 xmmsc_connection_t*			XMMSC_CONNECTION_T
 xmmsv_coll_t*				XMMSV_COLL_T
 xmmsv_coll_type_t			XMMSV_COLL_TYPE_T
+xmms_playback_seek_mode_t	XMMSV_PLAYBACK_SEEK_MODE_T
 xmmsv_coll_namespace_t		T_PV
 xmmsc_result_t*				XMMSC_RESULT_T
 xmmsc_result_propdict_t*	XMMSC_RESULT_PROPDICT_T
@@ -123,6 +124,20 @@ XMMSV_COLL_TYPE_T
 		}
 	}
 
+XMMSV_PLAYBACK_SEEK_MODE_T
+	{
+		$arg = newSVpv ("", 0);
+		if ($var == XMMS_PLAYBACK_SEEK_CUR) {
+			sv_setpv ($arg, \"cur\");
+		}
+		else if ($var == XMMS_PLAYBACK_SEEK_SET) {
+			sv_setpv ($arg, \"set\");
+		}
+		else {
+			croak (\"unknown XMMSV_PLAYBACK_SEEK_MODE_T\");
+		}
+	}
+
 PERL_XMMSCLIENT_PLAYLIST_T
 	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Playlist\");
 
@@ -220,5 +235,20 @@ XMMSV_COLL_TYPE_T
 		}
 		else {
 			croak (\"unknown XMMSV_COLL_TYPE_T: %s\", coll_type);
+		}
+	}
+
+XMMSV_PLAYBACK_SEEK_MODE_T
+	{
+		char *seek_type = SvPV_nolen ($arg);
+
+		if (strcmp (seek_type, \"cur\") == 0) {
+			$var = XMMS_PLAYBACK_SEEK_CUR;
+		}
+		else if (strcmp (seek_type, \"set\") == 0) {
+			$var = XMMS_PLAYBACK_SEEK_SET;
+		}
+		else {
+			croak (\"unknown XMMSV_PLAYBACK_SEEK_MODE_T: %s\", seek_type);
 		}
 	}

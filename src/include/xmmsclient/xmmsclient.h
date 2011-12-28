@@ -126,8 +126,6 @@ xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_seek_ms (xmmsc_connection_t *c, int milliseconds, xmms_playback_seek_mode_t whence);
-xmmsc_result_t *xmmsc_playback_seek_ms_abs (xmmsc_connection_t *c, int milliseconds) XMMS_DEPRECATED;
-xmmsc_result_t *xmmsc_playback_seek_ms_rel (xmmsc_connection_t *c, int milliseconds) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_playback_seek_samples (xmmsc_connection_t *c, int samples, xmms_playback_seek_mode_t whence);
 xmmsc_result_t *xmmsc_playback_seek_samples_abs (xmmsc_connection_t *c, int samples) XMMS_DEPRECATED;
 xmmsc_result_t *xmmsc_playback_seek_samples_rel (xmmsc_connection_t *c, int samples) XMMS_DEPRECATED;
