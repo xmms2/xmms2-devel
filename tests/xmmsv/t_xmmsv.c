@@ -51,14 +51,12 @@ CASE (test_xmmsv_type_error)
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
 	CU_ASSERT_TRUE (xmmsv_get_error (value, &b));
 	CU_ASSERT_STRING_EQUAL (a, b);
-	CU_ASSERT_STRING_EQUAL (a, xmmsv_get_error_old (value));
 
 	xmmsv_unref (value);
 
 	value = xmmsv_new_int (0);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
 	CU_ASSERT_FALSE (xmmsv_get_error (value, &b));
-	CU_ASSERT_PTR_NULL (xmmsv_get_error_old (value));
 	xmmsv_unref (value);
 }
 

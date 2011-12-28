@@ -358,7 +358,6 @@ xmmsv_t *xmmsc_result_get_value (xmmsc_result_t *res);
 
 /* Legacy aliases for convenience. */
 #define xmmsc_result_iserror(res) xmmsv_is_error(xmmsc_result_get_value(res))
-#define xmmsc_result_get_error(res) xmmsv_get_error_old(xmmsc_result_get_value(res))
 
 /* compability */
 

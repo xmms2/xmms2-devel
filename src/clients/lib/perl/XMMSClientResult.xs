@@ -365,6 +365,16 @@ Get an error C<$message> describing the error that occoured.
 const char *
 xmmsc_result_get_error (res)
 		xmmsc_result_t *res
+	PREINIT:
+		xmmsv_t *val;
+	CODE:
+		RETVAL = NULL;
+		val = xmmsc_result_get_value (res);
+		if (val) {
+			xmmsv_get_error (val, &RETVAL);
+		}
+	OUTPUT:
+		RETVAL
 
 =head2 value
 

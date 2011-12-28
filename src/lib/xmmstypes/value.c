@@ -428,23 +428,6 @@ xmmsv_is_error (const xmmsv_t *val)
 }
 
 /**
- * Legacy alias to retrieve the error string from an
- * #xmmsv_t. Obsolete now, use #xmmsv_get_error instead!
- *
- * @param val an error #xmmsv_t
- * @return the error string if valid, NULL otherwise.
- */
-const char *
-xmmsv_get_error_old (const xmmsv_t *val)
-{
-	if (!val || val->type != XMMSV_TYPE_ERROR) {
-		return NULL;
-	}
-
-	return val->value.error;
-}
-
-/**
  * Helper function to build a list #xmmsv_t containing the
  * strings from the input array.
  *
