@@ -27,8 +27,6 @@ extern "C" {
 
 typedef struct xmmsv_coll_St xmmsv_coll_t;
 
-typedef void (*xmmsv_coll_attribute_foreach_func) (const char *key, const char *value, void *udata);
-
 xmmsv_coll_t *xmmsv_coll_new (xmmsv_coll_type_t type);
 xmmsv_coll_t *xmmsv_coll_ref (xmmsv_coll_t *coll);
 void xmmsv_coll_unref (xmmsv_coll_t *coll);
@@ -53,9 +51,6 @@ struct xmmsv_St *xmmsv_coll_idlist_get (xmmsv_coll_t *coll);
 void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value);
 int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key);
 int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value);
-
-/** @deprecated */
-void xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll, xmmsv_coll_attribute_foreach_func func, void *user_data) XMMS_DEPRECATED;
 
 struct xmmsv_St *xmmsv_coll_attributes_get (xmmsv_coll_t *coll);
 
@@ -91,7 +86,6 @@ typedef xmmsv_coll_t xmmsc_coll_t;
 #define xmmsc_coll_attribute_set xmmsv_coll_attribute_set
 #define xmmsc_coll_attribute_remove xmmsv_coll_attribute_remove
 #define xmmsc_coll_attribute_get xmmsv_coll_attribute_get
-#define xmmsc_coll_attribute_foreach xmmsv_coll_attribute_foreach
 
 #define xmmsc_coll_universe xmmsv_coll_universe
 

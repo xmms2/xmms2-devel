@@ -456,43 +456,6 @@ xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value)
 
 
 
-struct attr_fe_data {
-	xmmsv_coll_attribute_foreach_func func;
-	void *userdata;
-};
-
-static void
-attr_fe_func (const char *key, xmmsv_t *val, void *user_data)
-{
-	struct attr_fe_data *d = user_data;
-	const char *v;
-	int r;
-
-	r = xmmsv_get_string (val, &v);
-	x_return_if_fail (r)
-
-	d->func (key, v, d->userdata);
-}
-/**
- * Iterate over all key/value-pair of the collection attributes.
- *
- * Calls specified function for each key/value-pair of the attribute list.
- *
- * void function (const char *key, const char *value, void *user_data);
- *
- * @param coll the #xmmsv_coll_t.
- * @param func function that is called for each key/value-pair
- * @param user_data extra data passed to func
- */
-void
-xmmsv_coll_attribute_foreach (xmmsv_coll_t *coll,
-                              xmmsv_coll_attribute_foreach_func func,
-                              void *user_data)
-{
-	struct attr_fe_data d = {func, user_data};
-	xmmsv_dict_foreach (coll->attributes, attr_fe_func, &d);
-}
-
 /**
  * Return a collection referencing the whole media library.
  * The returned structure must be unref'd using #xmmsv_coll_unref
