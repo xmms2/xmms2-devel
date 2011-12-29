@@ -41,22 +41,6 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 }
 
 /**
- * This function will make a pretty string about the information in
- * the mediainfo hash supplied to it.
- * @param target A allocated char *
- * @param len Length of target
- * @param fmt A format string to use. You can insert items from the hash by
- * using specialformat "${field}".
- * @param val The #xmmsv_t that contains the dict.
- * @returns The number of chars written to target
- */
-int
-xmmsc_entry_format (char *target, int len, const char *fmt, xmmsv_t *val)
-{
-	return xmmsv_dict_format (target, len, fmt, val);
-}
-
-/**
  * Search for a entry (URL) in the medialib db and return its ID number
  * @param conn The #xmmsc_connection_t
  * @param url The URL to search for

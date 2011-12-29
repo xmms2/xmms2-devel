@@ -533,7 +533,7 @@ create_list_column_display (cli_infos_t *infos)
 	                           COLUMN_DEF_ALIGN_LEFT);
 
 	/* FIXME: making duration part of the format would require proper
-	 * rendering of duration in xmmsc_entry_format and conditional
+	 * rendering of duration in xmmsv_dict_format and conditional
 	 * expressions to the parentheses if no duration is present. */
 
 	/* FIXME: if time takes 6 chars, the display will exceed termwidth.. */
