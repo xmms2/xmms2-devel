@@ -45,15 +45,6 @@ xmmsc_main_list_plugins (xmmsc_connection_t *c, xmms_plugin_type_t type)
 }
 
 /**
- * Get a list of loaded plugins from the server
- */
-xmmsc_result_t *
-xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
-{
-	return xmmsc_main_list_plugins (c, type);
-}
-
-/**
  * Get a list of statistics from the server
  */
 xmmsc_result_t *

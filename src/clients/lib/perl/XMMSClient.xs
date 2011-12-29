@@ -223,7 +223,7 @@ If C<$type> is omitted "all" is assumed.
 =cut
 
 xmmsc_result_t *
-xmmsc_plugin_list (c, type=XMMS_PLUGIN_TYPE_ALL)
+xmmsc_main_list_plugins (c, type=XMMS_PLUGIN_TYPE_ALL)
 		xmmsc_connection_t *c
 		xmms_plugin_type_t type
 

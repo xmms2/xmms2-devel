@@ -160,8 +160,6 @@ xmmsc_result_t *xmmsc_broadcast_config_value_changed (xmmsc_connection_t *c);
  */
 
 /* commands */
-xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type) XMMS_DEPRECATED;
-
 xmmsc_result_t *xmmsc_main_list_plugins (xmmsc_connection_t *c, xmms_plugin_type_t type);
 
 xmmsc_result_t *xmmsc_main_stats (xmmsc_connection_t *c);
