@@ -25,6 +25,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 #include <vector>
 
 namespace Xmms
@@ -45,13 +46,24 @@ namespace Xmms
 	VoidResult Medialib::addEntry( const std::string& url,
 	                               const std::list< std::string >& args ) const
 	{
-		std::vector< const char* > cargs;
-		fillCharArray( args, cargs );
+		xmmsv_t* dict = makeStringDict( args );
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_medialib_add_entry_full, conn_,
+			                   url.c_str(), dict ) );
+		xmmsv_unref( dict );
+		return VoidResult( res, ml_ );
+	}
 
+	VoidResult Medialib::addEntry( const std::string& url,
+	                               const std::map< std::string, Xmms::Dict::Variant >& args ) const
+	{
+		xmmsv_t* dict = makeStringDict( args );
 		xmmsc_result_t* res =
 		    call( connected_,
-		          boost::bind( xmmsc_medialib_add_entry_args, conn_,
-		                       url.c_str(), args.size(), &cargs[0] ) );
+		          boost::bind( xmmsc_medialib_add_entry_full, conn_,
+		                       url.c_str(), dict ) );
+		xmmsv_unref( dict );
 		return VoidResult( res, ml_ );
 	}
 

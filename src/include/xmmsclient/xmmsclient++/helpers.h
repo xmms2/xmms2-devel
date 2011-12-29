@@ -26,11 +26,14 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/type_traits/remove_pointer.hpp>
 
 #include <string>
 #include <list>
 #include <vector>
+#include <map>
 
 namespace Xmms
 {
@@ -154,6 +157,64 @@ namespace Xmms
 
 		return list;
 	}
+
+	/** Make a #xmmsv_t* dict from a Xmms::Dict.
+	 *  Convenience function to convert C++ arguments into an XMMS value type
+	 *  accepted by the C functions.
+	 *
+	 *  @param input  The Xmms::Dict to put in the second argument.
+	 *  @return       The filled #xmmsv_t* list.
+	 */
+	inline xmmsv_t *
+	makeStringDict( const std::map< std::string, Xmms::Dict::Variant > input )
+	{
+		xmmsv_t *dict;
+
+		dict = xmmsv_new_dict();
+		for( std::map< std::string, Xmms::Dict::Variant >::const_iterator it = input.begin();
+		     it != input.end(); ++it) {
+			std::pair< std::string, Xmms::Dict::Variant > pair = *it;
+			if( int32_t *val = boost::get< int32_t >( &pair.second ) ) {
+				std::string str = boost::lexical_cast< std::string >( *val );
+				xmmsv_dict_set_string( dict, pair.first.c_str(), str.c_str() );
+			}
+			else if( std::string *val = boost::get< std::string >( &pair.second ) ) {
+				xmmsv_dict_set_string( dict, pair.first.c_str(), (*val).c_str() );
+			}
+			else {
+				throw std::runtime_error( "Can only handle int and string." );
+			}
+		}
+
+		return dict;
+	}
+
+	/** Make a #xmmsv_t* dict from a list of strings.
+	 *  Convenience function to convert a C++ list of key=value strings
+	 *  into an XMMS value type accepted by the C functions.
+	 *
+	 *  @param input  The std::list< std::string > to put in the second argument.
+	 *  @return       The filled #xmmsv_t* list.
+	 */
+	inline xmmsv_t *
+	makeStringDict( const std::list< std::string >& input )
+	{
+		xmmsv_t *dict;
+
+		dict = xmmsv_new_dict();
+		for( std::list< std::string >::const_iterator it = input.begin();
+		     it != input.end(); ++it ) {
+			std::vector< std::string > strs;
+			boost::split( strs, *it, boost::is_any_of( "=" ) );
+			if (strs.size() != 2) {
+				continue;
+			}
+			xmmsv_dict_set_string( dict, strs[0].c_str(), strs[1].c_str() );
+		}
+
+		return dict;
+	}
+
 
 	/** Convenience function to call a function.
 	 *  @note does not unref the result

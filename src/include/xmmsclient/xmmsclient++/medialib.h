@@ -23,6 +23,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 namespace Xmms
 {
@@ -67,6 +68,22 @@ namespace Xmms
 			 *  If you want to add multiple files you should call pathImport.
 			 *
 			 *  @param url URL to add to the medialib.
+			 *  @param args An Xmms::Dict of key-value strings used as arguments.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			VoidResult addEntry( const std::string& url,
+			                     const std::map< std::string, Xmms::Dict::Variant >& args ) const;
+
+			/** Add a URL with arguments to the medialib.
+			 *  If you want to add multiple files you should call pathImport.
+			 *
+			 *  @param url URL to add to the medialib.
 			 *  @param args Pairs of key-value strings used as arguments.
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -77,7 +94,7 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 */
 			VoidResult addEntry( const std::string& url,
-			                     const std::list< std::string >& args ) const;
+			                     const std::list< std::string >& args ) const XMMS_DEPRECATED;
 
 			/** Add a URL to the medialib.
 			 *  Same as #addEntry but takes a encoded URL instead.
