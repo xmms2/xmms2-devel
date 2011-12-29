@@ -36,7 +36,7 @@ namespace Xmms
 
 		public:
 
-			typedef boost::variant< int32_t, uint32_t, std::string > Variant;
+			typedef boost::variant< int32_t, std::string > Variant;
 
 			typedef std::pair<std::string, Variant> Pair;
 
