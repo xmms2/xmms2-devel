@@ -339,8 +339,9 @@ CASE(test_client_clear)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
-	/* TODO: Is this what we want? */
-	CU_ASSERT_PTR_NULL (result);
+	CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (result));
+	CU_ASSERT_EQUAL (0, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
 	                        xmmsv_new_string ("Default"),
@@ -355,8 +356,9 @@ CASE(test_client_clear)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
-	/* TODO: Is this what we want? */
-	CU_ASSERT_PTR_NULL (result);
+	CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (result));
+	CU_ASSERT_EQUAL (0, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
 	                        xmmsv_new_string ("Default"),
@@ -550,8 +552,9 @@ CASE(test_client_remove_entry)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
-	/* TODO: Is this what we want? */
-	CU_ASSERT_PTR_NULL (result);
+	CU_ASSERT_EQUAL (XMMSV_TYPE_LIST, xmmsv_get_type (result));
+	CU_ASSERT_EQUAL (0, xmmsv_list_get_size (result));
+	xmmsv_unref (result);
 }
 
 CASE(test_client_set_next)
