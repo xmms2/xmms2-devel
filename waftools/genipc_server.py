@@ -37,7 +37,7 @@ c_creator_map = {
 c_nullable_type_map = {
 	'int': False,
 	'string': "gchar *",
-	'list': "GList *",
+	'list': False,
 	'dictionary': "GTree *",
 	'collection': "xmmsv_coll_t *",
 	'binary': "GString *",
