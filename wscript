@@ -168,7 +168,6 @@ def _configure_optionals(conf):
         selected_optionals = all_optionals
         optionals_must_work = False
 
-    failed_optionals = set()
     succeeded_optionals = set()
 
     for o in selected_optionals:
@@ -178,12 +177,12 @@ def _configure_optionals(conf):
             conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
             succeeded_optionals.add(o)
         except Errors.ConfigurationError:
-            failed_optionals.add(o)
-
-    if optionals_must_work and failed_optionals:
-        conf.fatal("The following required optional(s) failed to configure: %s"
-                % ', '.join(failed_optionals))
-        raise SystemExit(1)
+            if optionals_must_work:
+                # This raises a new exception:
+                conf.fatal("The required optional %s failed to configure: %s"
+                        % (o, sys.exc_info()[1]))
+            else:
+                pass
 
     disabled_optionals = set(all_optionals)
     disabled_optionals.difference_update(succeeded_optionals)
@@ -222,22 +221,25 @@ def _configure_plugins(conf):
         disabled_plugins = set()
         plugins_must_work = False
 
+    def disable_plugin(plugin, exc = None):
+        disabled_plugins.add(plugin)
+        if plugins_must_work:
+             if exc:
+                 conf.fatal("The required plugin %s failed to configure: %s"
+                         % (plugin, exc))
+             else:
+                 conf.fatal("The required plugin %s failed to configure"
+                         % plugin)
+
     for plugin in selected_plugins:
         try:
             conf.sub_config("src/plugins/%s" % plugin)
             if (not conf.env.XMMS_PLUGINS_ENABLED or
                     (len(conf.env.XMMS_PLUGINS_ENABLED) > 0 and
                         conf.env.XMMS_PLUGINS_ENABLED[-1] != plugin)):
-                disabled_plugins.add(plugin)
+                disable_plugin(plugin)
         except Errors.ConfigurationError:
-            disabled_plugins.add(plugin)
-
-    if plugins_must_work:
-        broken_plugins = selected_plugins.intersection(disabled_plugins)
-        if broken_plugins:
-            conf.fatal("The following required plugin(s) failed to configure: "
-                    "%s" % ', '.join(broken_plugins))
-            raise SystemExit(1)
+            disable_plugin(plugin, sys.exc_info()[1])
 
     return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins
 
