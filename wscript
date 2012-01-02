@@ -9,6 +9,7 @@ if sys.version_info < (2,4):
     raise RuntimeError("Python 2.4 or newer is required")
 
 import os
+import logging
 
 # Waf removes the current dir from the python path. We readd it to import waf
 # tools stuff.
@@ -245,7 +246,7 @@ def _configure_plugins(conf):
 
 def _output_summary(enabled_plugins, disabled_plugins,
                     enabled_optionals, disabled_optionals,
-                    output_plugins):
+                    output_plugins, warning_cache):
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
     Logs.pprint('Normal', "\n")
 
@@ -265,7 +266,24 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Logs.pprint('Normal', 'Disabled: ', sep='')
     Logs.pprint('BLUE', ', '.join(sorted(disabled_plugins)))
 
+    if len(warning_cache) > 0:
+        fmter = Logs.formatter();
+        Logs.pprint('Normal', "Warnings from buildsystem:\n"
+                              "==========================")
+        for i,x in enumerate(warning_cache):
+            sys.stderr.write("%d: %s\n" % (i, fmter.format(x)))
+
+class _CacheHandler(logging.Handler):
+    def __init__(self, cache, lvl = logging.NOTSET):
+        logging.Handler.__init__(self, lvl)
+        self.cache = cache
+    def emit(self, rec):
+        self.cache.append(rec)
+
 def configure(conf):
+    warning_cache = []
+    logging.getLogger("waflib").addHandler(_CacheHandler(warning_cache, logging.WARNING))
+
     has_platform_support = os.name in ('nt', 'posix')
     conf.msg('Platform code for %s' % os.name, has_platform_support)
     if not has_platform_support:
@@ -457,7 +475,7 @@ int main() { return 0; }
     _output_summary(
             enabled_plugins, disabled_plugins,
             enabled_optionals, disabled_optionals,
-            output_plugins)
+            output_plugins, warning_cache)
 
     return True
 
