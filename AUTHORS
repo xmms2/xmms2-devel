@@ -191,6 +191,10 @@ N: Karsten Krispin
 E: karsten@krispin.de
 D: Multiple socket support
 
+N: Joonas Kuorilehto
+E: joneskoo+xmms2@derbian.fi
+D: nycli trivial fixes
+
 N: Alan LaMielle
 E: alan.lamielle@gmail.com
 D: 'playlist active' command in cli client.
