@@ -280,11 +280,12 @@ void
 cli_pl_create_setup (command_action_t *action)
 {
 	const argument_t flags[] = {
+		{ "switch", 's', 0, G_OPTION_ARG_NONE, NULL, _("Switch to the newly created playlist."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Copy the content of the playlist into the new playlist."), "name" },
 		{ NULL }
 	};
 	command_action_fill (action, "playlist create", &cli_pl_create, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-p <playlist>] <name>"),
+	                     _("[-s] [-p <playlist>] <name>"),
 	                     _("Change the active playlist."));
 }
 
@@ -1392,12 +1393,17 @@ gboolean
 cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
+	gboolean switch_to;
 	gchar *newplaylist;
 	const gchar *copy;
 
 	if (!command_arg_longstring_get (ctx, 0, &newplaylist)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
 		return FALSE;
+	}
+
+	if (!command_flag_boolean_get (ctx, "switch", &switch_to)) {
+		switch_to = FALSE;
 	}
 
 	/* FIXME: Prevent overwriting existing playlists! */
@@ -1416,6 +1422,12 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_playlist_create (infos->sync, newplaylist);
 		xmmsc_result_wait (res);
 		done (res, infos);
+	}
+
+	if (switch_to) {
+		res = xmmsc_playlist_load (infos->sync, newplaylist);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
 	}
 
 	g_free (newplaylist);
