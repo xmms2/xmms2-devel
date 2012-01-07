@@ -286,7 +286,7 @@ cli_pl_create_setup (command_action_t *action)
 	};
 	command_action_fill (action, "playlist create", &cli_pl_create, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-s] [-p <playlist>] <name>"),
-	                     _("Change the active playlist."));
+	                     _("Create a new playlist."));
 }
 
 void
