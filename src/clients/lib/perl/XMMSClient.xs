@@ -1514,8 +1514,8 @@ xmmsc_playback_start (c)
   my $result = $conn->playback_seek_ms(1000);
 
 Seek in the current playback. The time is specified in C<$milliseconds>.
-The whence parameter specifies whether the time is absolute (seek mode 'cur')
-or relative to the current point in the song (seek mode 'set'). The default is
+The whence parameter specifies whether the time is absolute (seek mode 'set')
+or relative to the current point in the song (seek mode 'cur'). The default is
 to seek using an absolute time.
 
 =cut
@@ -1539,8 +1539,8 @@ xmmsc_playback_seek_ms (c, milliseconds, whence = XMMS_PLAYBACK_SEEK_SET)
   my $result = $conn->playback_seek_samples(5000);
 
 Seek in the current playback. The time is specified in C<$samples>.
-The whence parameter specifies whether the time is absolute (seek mode 'cur')
-or relative to the current point in the song (seek mode 'set'). The default is
+The whence parameter specifies whether the time is absolute (seek mode 'set')
+or relative to the current point in the song (seek mode 'cur'). The default is
 to seek using an absolute time.
 
 =cut
