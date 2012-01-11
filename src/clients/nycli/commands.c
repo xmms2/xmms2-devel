@@ -1559,6 +1559,7 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	xmmsc_coll_type_t type;
 	gboolean modif = FALSE;
 	const gchar *input, *jumplist, *typestr;
+	xmmsv_t *coll, *val;
 
 	history = -1;
 	upcoming = -1;
@@ -1568,6 +1569,8 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	/* Convert type string to type id */
 	if (command_flag_string_get (ctx, "type", &typestr)) {
 		modif = TRUE;
+	} else {
+		typestr = NULL;
 	}
 
 	if (command_flag_int_get (ctx, "history", &history)) {
@@ -1590,16 +1593,26 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		playlist = infos->cache->active_playlist_name;
 	}
 
+	res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsc_result_wait (res);
 	if (modif) {
 		/* Send the previous coll_t for update. */
-		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_wait (res);
-		configure_playlist (res, infos, playlist, history, upcoming,
-		                    typestr, input, jumplist);
+		if (typestr == NULL) {
+			val = xmmsc_result_get_value (res);
+			if (xmmsv_get_coll (val, &coll)) {
+				xmmsv_coll_attribute_get (coll, "type", &typestr);
+			} else {
+				g_printf (_("Cannot find the playlist to configure!\n"));
+				cli_infos_loop_resume (infos);
+				xmmsc_result_unref (res);
+			}
+		}
+		if (typestr != NULL) {
+			configure_playlist (res, infos, playlist, history, upcoming,
+			                    typestr, input, jumplist);
+		}
 	} else {
 		/* Display current config of the playlist. */
-		res = xmmsc_coll_get (infos->sync, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_wait (res);
 		playlist_print_config (res, infos, playlist);
 	}
 
