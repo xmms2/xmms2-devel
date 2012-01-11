@@ -188,7 +188,7 @@ char *
 xmmsc_get_last_error (c)
 		xmmsc_connection_t *c
 
-=head2 plugin_list
+=head2 main_list_plugins
 
 =over 4
 
@@ -198,7 +198,7 @@ xmmsc_get_last_error (c)
 
 =back
 
-  my $result = $conn->plugin_list;
+  my $result = $conn->main_list_plugins;
 
 Get a list of loaded plugins from the server. C<$type>, which may be used to
 only get a list of plugins of a specific type, can be any of the following

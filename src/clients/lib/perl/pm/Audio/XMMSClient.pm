@@ -82,6 +82,30 @@ sub request {
     return $result;
 }
 
+sub plugin_list {
+    my ($pkg, $file, $line) = caller;
+    warn "call to deprecated sub 'plugin_list' at $file line $line";
+
+    my ($self, $type) = @_;
+    return $self->main_list_plugins($type);
+}
+
+sub playback_seek_ms_rel {
+    my ($pkg, $file, $line) = caller;
+    warn "call to deprecated sub 'playback_seek_ms_rel' at $file line $line";
+
+    my ($self, $ms) = @_;
+    return $self->playback_seek_ms($ms, 'cur');
+}
+
+sub playback_seek_samples_rel {
+    my ($pkg, $file, $line) = caller;
+    warn "call to deprecated sub 'playback_seek_samples_rel' at $file line $line";
+
+    my ($self, $samples) = @_;
+    return $self->playback_seek_samples($samples, 'cur');
+}
+
 1;
 
 =pod
