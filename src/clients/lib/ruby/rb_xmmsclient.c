@@ -1309,7 +1309,8 @@ c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 	                            NIL_P (start) ? 0 : NUM2UINT (start),
 	                            NIL_P (start) ? 0 : NUM2UINT (len));
 
-	xmmsv_unref (corder);
+	if (corder)
+		xmmsv_unref (corder);
 
 	METHOD_HANDLER_FOOTER
 }
