@@ -244,20 +244,50 @@ def _configure_plugins(conf):
 
     return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins
 
+def check_git_submodules():
+    submodules = gittools.get_submodules()
+    needupdate = False
+    for k in submodules:
+        status, commithash = submodules[k]
+        commithash = commithash[:8]
+        Logs.pprint('NORMAL', "%s:" % k, sep='')
+        if status == 'missing':
+             Logs.pprint('RED', "%s (not initialized)" % commithash)
+             Logs.pprint('RED',
+                         "The submodule '%s' is not initialized. "
+                         "Run `git submodule update --init` and try again." % k)
+             raise SystemExit(1)
+        elif status == 'outdated':
+            Logs.pprint('YELLOW', "%s (may need update)" % commithash)
+            needupdate = True
+        else:
+            Logs.pprint('GREEN', '%s (up-to-date)' % commithash)
+    if needupdate:
+        Logs.pprint('YELLOW',
+                "Some submodules are not up-to-date. You may need to run "
+                "`git submodule update` and reconfigure.")
+
 def _output_summary(enabled_plugins, disabled_plugins,
                     enabled_optionals, disabled_optionals,
                     output_plugins, warning_cache):
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
     Logs.pprint('Normal', "\n")
 
-    Logs.pprint('Normal', "Optional configuration:\n"
+    # Check again for outdated submodules.
+    Logs.pprint('NORMAL', "Git submodules:\n"
+                          "===============")
+    check_git_submodules()
+
+    Logs.pprint('Normal', "\n"
+                          "Optional configuration:\n"
                           "=======================")
     Logs.pprint('Normal', "Enabled: ", sep='')
     Logs.pprint('BLUE', ', '.join(sorted(enabled_optionals)))
     Logs.pprint('Normal', "Disabled: ", sep='')
     Logs.pprint('BLUE', ', '.join(sorted(disabled_optionals)))
 
-    Logs.pprint('Normal', "Plugins configuration:\n"
+    Logs.pprint('Normal', "\n"
+                          "Plugins configuration:\n"
                           "======================")
     Logs.pprint('Normal', 'Output: ', sep='')
     Logs.pprint('BLUE', ', '.join(sorted(output_plugins)))
@@ -553,3 +583,6 @@ def shutdown(ctx):
     libprefix = Utils.subst_vars('${LIBDIR}', ctx.env)
     Logs.info("- ldconfig '%s'" % libprefix)
     ctx.exec_command('/sbin/ldconfig %s' % libprefix)
+
+# Wee need to do the check right now because options() is called before init()
+check_git_submodules()

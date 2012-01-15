@@ -52,3 +52,21 @@ def get_info_str():
         changed = ""
 
     return "%s%s" % (commithash, changed)
+
+submodule_status = {'-':'missing', '+':'outdated', ' ':'uptodate'}
+def git_submodules():
+    submodules = {}
+    for l in os.popen('git submodule').read().split('\n'):
+        status = submodule_status.get(l and l[0] or "", 'uptodate')
+        l = l[1:].strip()
+        if not l:
+            continue
+        commithash, folder = l.strip().split()[:2]
+        submodules[folder] = (status, commithash[:8])
+    return submodules
+
+def get_submodules():
+    try:
+        return git_submodules()
+    except:
+        return {}
