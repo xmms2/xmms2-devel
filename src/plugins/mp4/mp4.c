@@ -251,7 +251,7 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 static gint64
 xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
-	int32_t toskip;
+	int32_t toskip, sampleid_candidate;
 	xmms_mp4_data_t *data;
 
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
@@ -260,10 +260,16 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
-	                                                samples, &toskip);
+	sampleid_candidate = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
+	                                                    samples, &toskip);
 
+	if (sampleid_candidate < 0) {
+		return -1;
+	}
+
+	data->sampleid = sampleid_candidate;
 	data->buffer_length = 0;
+
 	g_string_erase (data->outbuf, 0, -1);
 
 	return samples-toskip;
