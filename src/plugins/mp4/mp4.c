@@ -186,9 +186,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 	xmms_xform_auxdata_set_bin (xform, "decoder_config", tmpbuf, tmpbuflen);
 	g_free (tmpbuf);
 
-	/* This is only for ALAC to set 16-bit samples, ignored for AAC */
-	xmms_xform_auxdata_set_int (xform, "samplebits", 16);
-
 	xmms_mp4_get_mediainfo (xform);
 
 	XMMS_DBG ("MP4 demuxer inited successfully!");
@@ -288,7 +285,7 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) >= 0) {
+	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) > 0) {
 		glong srate = temp;
 
 		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff,
@@ -492,7 +489,7 @@ xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile)
 		case 0x69: /* MPEG-2 audio */
 		case 0x6B: /* MPEG-1 audio */
 			continue;
-		case 0xff:
+		case 0xff: /* ALAC */
 			chans = mp4ff_get_channel_count (infile, i);
 			rate = mp4ff_get_sample_rate (infile, i);
 			if (chans <= 0 || rate <= 0) {

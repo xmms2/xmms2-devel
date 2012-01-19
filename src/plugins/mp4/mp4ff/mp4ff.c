@@ -32,6 +32,8 @@
 #include <string.h>
 #include "mp4ffint.h"
 
+static uint32_t mp4ff_normalize_flawed_sample_rate (uint16_t samplerate);
+
 mp4ff_t *mp4ff_open_read(mp4ff_callback_t *f)
 {
     mp4ff_t *ff = malloc(sizeof(mp4ff_t));
@@ -304,12 +306,39 @@ int32_t mp4ff_num_samples(const mp4ff_t *f, const int32_t track)
     return total;
 }
 
+static uint32_t
+mp4ff_normalize_flawed_sample_rate (uint16_t samplerate)
+{
+	/* A list of common rates can be found at
+	 * http://en.wikipedia.org/wiki/Sampling_rate */
+	uint32_t rates[] = {8000, 11025, 16000, 22050, 32000, 44056, 44100,
+	                  47250, 48000, 50000, 50400, 88200, 96000, 176400,
+	                  192000, 352800, 384000, 0};
+	uint32_t* rate;
 
+	/* First check standard rates. */
+	for (rate = rates; *rate; rate++) {
+		if (*rate == samplerate) {
+			return *rate;
+		}
+	}
+
+	/* No standard rates matching - check if sample rate got truncated when
+	 * added to MP4 container */
+	for (rate = rates; *rate; rate++) {
+		if ((*rate & 0x0000FFFF) == samplerate) {
+			return *rate;
+		}
+	}
+
+	/* Failed to find a standard rate - we give up returning the original rate */
+	return samplerate;
+}
 
 
 uint32_t mp4ff_get_sample_rate(const mp4ff_t *f, const int32_t track)
 {
-	return f->track[track]->sampleRate;
+	return mp4ff_normalize_flawed_sample_rate (f->track[track]->sampleRate);
 }
 
 uint32_t mp4ff_get_channel_count(const mp4ff_t * f,const int32_t track)

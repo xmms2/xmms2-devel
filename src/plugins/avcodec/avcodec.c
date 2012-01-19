@@ -60,6 +60,7 @@ static gint xmms_avcodec_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len
                                xmms_error_t *error);
 static gint64 xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples,
                                  xmms_xform_seek_mode_t whence, xmms_error_t *err);
+static xmms_sample_format_t xmms_avcodec_translate_sample_format (enum AVSampleFormat av_sample_format);
 
 /*
  * Plugin header
@@ -168,12 +169,12 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		data->channels = ret;
 	}
 
-	/* bitrate required for WMA files */
+	/* Required by WMA xform. */
 	xmms_xform_auxdata_get_int (xform,
 	                            "bitrate",
 	                            &data->bitrate);
 
-	/* ALAC and MAC require bits per sample field to be 16 */
+	/* Required by tta and apefile xforms. */
 	xmms_xform_auxdata_get_int (xform,
 	                            "samplebits",
 	                            &data->samplebits);
@@ -238,12 +239,17 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	data->samplerate = data->codecctx->sample_rate;
 	data->channels = data->codecctx->channels;
+	data->sampleformat = xmms_avcodec_translate_sample_format (data->codecctx->sample_fmt);
+	if (data->sampleformat == XMMS_SAMPLE_FORMAT_UNKNOWN) {
+		avcodec_close (data->codecctx);
+		goto err;
+	}
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "audio/pcm",
 	                             XMMS_STREAM_TYPE_FMT_FORMAT,
-	                             XMMS_SAMPLE_FORMAT_S16,
+	                             data->sampleformat,
 	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
 	                             data->channels,
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
@@ -427,4 +433,24 @@ xmms_avcodec_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t w
 	}
 
 	return ret;
+}
+
+static xmms_sample_format_t
+xmms_avcodec_translate_sample_format (enum AVSampleFormat av_sample_format)
+{
+	switch (av_sample_format) {
+	case AV_SAMPLE_FMT_U8:
+		return XMMS_SAMPLE_FORMAT_U8;
+	case AV_SAMPLE_FMT_S16:
+		return XMMS_SAMPLE_FORMAT_S16;
+	case AV_SAMPLE_FMT_S32:
+		return XMMS_SAMPLE_FORMAT_S32;
+	case AV_SAMPLE_FMT_FLT:
+		return XMMS_SAMPLE_FORMAT_FLOAT;
+	case AV_SAMPLE_FMT_DBL:
+		return XMMS_SAMPLE_FORMAT_DOUBLE;
+	default:
+		XMMS_DBG ("AVSampleFormat (%i) not supported.", av_sample_format);
+		return XMMS_SAMPLE_FORMAT_UNKNOWN;
+	}
 }
