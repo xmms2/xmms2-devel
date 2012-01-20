@@ -94,6 +94,10 @@ xmms_mediainfo_reader_start (xmms_medialib_t *medialib)
 	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
 	                     on_medialib_entry_added, mrt);
 
+	xmms_object_connect (XMMS_OBJECT (mrt->medialib),
+	                     XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
+	                     on_medialib_entry_added, mrt);
+
 	return mrt;
 }
 
@@ -119,6 +123,9 @@ xmms_mediainfo_reader_stop (xmms_object_t *o)
 	g_cond_free (mir->cond);
 	g_mutex_free (mir->mutex);
 
+	xmms_object_disconnect (XMMS_OBJECT (mir->medialib),
+	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
+	                        on_medialib_entry_added, mir);
 
 	xmms_object_disconnect (XMMS_OBJECT (mir->medialib),
 	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
