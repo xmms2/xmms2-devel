@@ -306,7 +306,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 }
 
 static gboolean
-cluster_by_from_string (const gchar *name, guint32 *value)
+cluster_by_from_string (const gchar *name, gint *value)
 {
 	if (name == NULL) {
 		return FALSE;

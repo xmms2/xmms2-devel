@@ -857,7 +857,7 @@ xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
 
 	obj = xmms_xform_auxdata_get_val (xform, key);
 	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_BIN) {
-		xmmsv_get_bin (obj, data, datalen);
+		xmmsv_get_bin (obj, data, (guint *) datalen);
 		return TRUE;
 	}
 
