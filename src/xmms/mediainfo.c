@@ -176,7 +176,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 	while (mrt->running) {
 		xmmsc_medialib_entry_status_t prev_status;
-		guint lmod = 0;
 		xmms_medialib_entry_t entry;
 		xmms_medialib_session_t *session;
 		xmms_xform_t *xform;
@@ -207,9 +206,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		prev_status = xmms_medialib_entry_property_get_int (session, entry,
 		                                                    XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
-
-		lmod = xmms_medialib_entry_property_get_int (session, entry,
-		                                             XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
