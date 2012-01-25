@@ -463,7 +463,7 @@ namespace Xmms
 						break;
 					}
 					case XMMS_COLLECTION_TYPE_IDLIST: {
-						char *type = NULL;
+						const char *type = NULL;
 
 						if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
 							collptr.reset( new Coll::Idlist( coll ) );

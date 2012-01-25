@@ -198,7 +198,7 @@ cdef extern from "xmmsc/xmmsv.h":
 
 	void xmmsv_coll_attribute_set    (xmmsv_coll_t *coll, char *key, char *value)
 	bint xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, char *key)
-	bint xmmsv_coll_attribute_get    (xmmsv_coll_t *coll, char *key, char **value)
+	bint xmmsv_coll_attribute_get    (xmmsv_coll_t *coll, char *key, const_char **value)
 
 	xmmsv_t *xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
 

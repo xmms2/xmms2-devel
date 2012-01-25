@@ -124,7 +124,7 @@ namespace Xmms
 				break;
 			}
 			case XMMS_COLLECTION_TYPE_IDLIST: {
-				char *type = NULL;
+				const char *type = NULL;
 
 				if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
 					temp = new Coll::Idlist( coll );

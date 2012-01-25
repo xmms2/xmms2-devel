@@ -336,14 +336,14 @@ c_attrs_aref (VALUE self, VALUE key)
 	RbCollection *coll = NULL;
 	VALUE tmp;
 	int s;
-	char *value;
+	const char *value;
 
 	StringValue (key);
 
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	s = xmmsc_coll_attribute_get (coll->real, StringValuePtr (key), &value);
+	s = xmmsv_coll_attribute_get (coll->real, StringValuePtr (key), &value);
 	if (!s)
 		return Qnil;
 
@@ -362,7 +362,7 @@ c_attrs_aset (VALUE self, VALUE key, VALUE value)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsc_coll_attribute_set (coll->real, StringValuePtr (key),
+	xmmsv_coll_attribute_set (coll->real, StringValuePtr (key),
 	                          StringValuePtr (value));
 
 	return Qnil;

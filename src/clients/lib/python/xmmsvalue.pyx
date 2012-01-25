@@ -510,7 +510,7 @@ cdef class CollectionAttributes(CollectionRef):
 		return str(self.get_dict())
 
 	def __getitem__(self, name):
-		cdef char *value = NULL
+		cdef const_char *value = NULL
 		nam = from_unicode(name)
 		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
 			raise KeyError("The attribute '%s' doesn't exist" % name)
@@ -547,7 +547,7 @@ cdef class CollectionAttributes(CollectionRef):
 			self[k] = kargs[k]
 
 	def __contains__(self, name):
-		cdef char *value = NULL
+		cdef const_char *value = NULL
 		return xmmsv_coll_attribute_get(self.coll, name, &value)
 
 cdef class CollectionOperands(CollectionRef):
@@ -816,7 +816,7 @@ class Complement(BaseCollection):
 cdef create_coll(xmmsv_coll_t *coll):
 	cdef xmmsv_coll_type_t colltype
 	cdef Collection c
-	cdef char *idlist_type
+	cdef const_char *idlist_type
 	cdef object idtype_uni
 
 	colltype = xmmsv_coll_get_type(coll)

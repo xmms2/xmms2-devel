@@ -535,7 +535,7 @@ Retrieve the C<$value> of the attribute C<$key> of the given collection.
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, OUTLIST char *val)
+xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, OUTLIST const char *val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 	POSTCALL:

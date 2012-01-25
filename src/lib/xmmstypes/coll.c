@@ -445,7 +445,7 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value)
+xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value)
 {
 	if (xmmsv_dict_entry_get_string (coll->attributes, key, value)) {
 		return 1;

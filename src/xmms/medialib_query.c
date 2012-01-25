@@ -190,7 +190,7 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 static gboolean
 is_universe (xmmsv_coll_t *coll)
 {
-	gchar *target_name;
+	const gchar *target_name;
 	gboolean ret = FALSE;
 
 	switch (xmmsv_coll_get_type (coll)) {
@@ -334,7 +334,7 @@ get_filter_type_and_compare_mode (xmmsv_coll_t *coll,
                                   s4_filter_type_t *type,
                                   s4_cmp_mode_t *cmp_mode)
 {
-	gchar *value;
+	const gchar *value;
 
 	*type = filter_type_from_collection (coll);
 
@@ -373,7 +373,7 @@ filter_condition (xmms_medialib_session_t *session,
 	s4_filter_type_t type;
 	s4_cmp_mode_t cmp_mode;
 	gint32 ival, flags = 0;
-	gchar *filter_type, *key, *val;
+	const gchar *filter_type, *key, *val;
 	xmmsv_t *operands;
 	xmmsv_coll_t *operand;
 	s4_condition_t *cond;
@@ -495,7 +495,7 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	GHashTable *id_table;
 	gint32 ival;
 	guint start, stop;
-	gchar *key;
+	const gchar *key;
 
 	if (xmmsv_coll_attribute_get (coll, "start", &key)) {
 		start = atoi (key);
@@ -570,7 +570,7 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	s4_sourcepref_t *sourcepref;
 	xmmsv_coll_t *operand;
 	xmmsv_t *operands, *entry;
-	gchar *key, *value;
+	const gchar *key, *value;
 	gint field;
 
 	entry = xmmsv_new_dict ();

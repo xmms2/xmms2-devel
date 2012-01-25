@@ -1681,7 +1681,7 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
                          const gchar *attrname)
 {
 	xmmsv_coll_t *coll;
-	gchar *attrvalue;
+	const gchar *attrvalue;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
@@ -1691,7 +1691,7 @@ collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
 			xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
 			                    coll_print_attributes, NULL);
 		} else {
-			if (xmmsc_coll_attribute_get (coll, attrname, &attrvalue)) {
+			if (xmmsv_coll_attribute_get (coll, attrname, &attrvalue)) {
 				g_printf ("[%s] %s\n", attrname, attrvalue);
 			} else {
 				g_printf (_("Invalid attribute!\n"));
@@ -1810,12 +1810,12 @@ static void
 pl_print_config (xmmsv_coll_t *coll, const char *name)
 {
 	xmmsv_coll_t *op;
-	gchar *type = NULL;
-	gchar *upcoming = NULL;
-	gchar *history = NULL;
-	gchar *input = NULL;
-	gchar *input_ns = NULL;
-	gchar *jumplist = NULL;
+	const gchar *type = NULL;
+	const gchar *upcoming = NULL;
+	const gchar *history = NULL;
+	const gchar *input = NULL;
+	const gchar *input_ns = NULL;
+	const gchar *jumplist = NULL;
 	xmmsv_t *v;
 
 	xmmsv_coll_attribute_get (coll, "type", &type);

@@ -110,7 +110,7 @@ static xmmsv_coll_t*
 augment_coll (xmmsv_coll_t *coll)
 {
 	xmmsv_coll_t *ret = coll;
-	char *key;
+	const char *key;
 
 	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_HAS:

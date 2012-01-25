@@ -143,7 +143,7 @@ static void
 xmms_playlist_update_unlocked (xmms_playlist_t *playlist, const gchar *plname)
 {
 	xmmsv_coll_t *plcoll;
-	gchar *type = NULL;
+	const gchar *type = NULL;
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, NULL);
 	if (plcoll) {
@@ -344,7 +344,7 @@ xmms_playlist_advance_do (xmms_playlist_t *playlist)
 	gint size, currpos;
 	gboolean ret = TRUE;
 	xmmsv_coll_t *plcoll;
-	char *jumplist;
+	const gchar *jumplist;
 	xmms_error_t err;
 	xmms_playlist_t *buffer = playlist;
 	guint newpos;
@@ -1157,7 +1157,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 	gint size;
 	xmms_medialib_entry_t mid;
 	xmmsv_coll_t *plcoll;
-	char *jumplist;
+	const gchar *jumplist;
 
 	g_return_val_if_fail (playlist, FALSE);
 

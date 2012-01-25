@@ -886,7 +886,7 @@ xmms_collection_get_int_attr (xmmsv_coll_t *coll, const gchar *attrname, gint *v
 {
 	gboolean retval = FALSE;
 	gint buf;
-	gchar *str;
+	const gchar *str;
 	gchar *endptr;
 
 	if (xmmsv_coll_attribute_get (coll, attrname, &str)) {
@@ -1050,7 +1050,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 {
 	guint num_operands = 0;
 	xmmsv_coll_t *op, *ref;
-	gchar *attr, *attr2;
+	const gchar *attr, *attr2;
 	gboolean valid = TRUE;
 	xmmsv_coll_type_t type;
 	xmms_collection_namespace_id_t nsid;
@@ -1570,8 +1570,8 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *par
 {
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
 		xmmsv_coll_t *target;
-		gchar *target_name;
-		gchar *target_namespace;
+		const gchar *target_name;
+		const gchar *target_namespace;
 		gint   target_nsid;
 
 		xmmsv_coll_attribute_get (coll, "reference", &target_name);
@@ -1606,8 +1606,8 @@ rebind_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *paren
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
 		coll_rebind_infos_t *infos;
 
-		gchar *target_name = NULL;
-		gchar *target_namespace = NULL;
+		const gchar *target_name = NULL;
+		const gchar *target_namespace = NULL;
 
 		infos = (coll_rebind_infos_t*)udata;
 
@@ -1635,8 +1635,8 @@ rename_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *paren
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
 		coll_rename_infos_t *infos;
 
-		gchar *target_name = NULL;
-		gchar *target_namespace = NULL;
+		const gchar *target_name = NULL;
+		const gchar *target_namespace = NULL;
 
 		infos = (coll_rename_infos_t*)udata;
 
@@ -1658,8 +1658,8 @@ strip_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent
 {
 	xmmsv_coll_t *op;
 	coll_rebind_infos_t *infos;
-	gchar *target_name = NULL;
-	gchar *target_namespace = NULL;
+	const gchar *target_name = NULL;
+	const gchar *target_namespace = NULL;
 	xmmsv_list_iter_t *iter;
 	xmmsv_t *tmp;
 
@@ -1707,7 +1707,7 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *par
 {
 	coll_refcheck_t *check = (coll_refcheck_t*)udata;
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE && !check->found) {
-		gchar *target_name, *target_namespace;
+		const gchar *target_name, *target_namespace;
 
 		xmmsv_coll_attribute_get (coll, "reference", &target_name);
 		xmmsv_coll_attribute_get (coll, "namespace", &target_namespace);

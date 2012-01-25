@@ -50,7 +50,7 @@ struct xmmsv_St *xmmsv_coll_idlist_get (xmmsv_coll_t *coll);
 
 void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value);
 int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key);
-int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, char **value);
+int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value);
 
 struct xmmsv_St *xmmsv_coll_attributes_get (xmmsv_coll_t *coll);
 

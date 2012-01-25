@@ -170,7 +170,7 @@ CASE (test_coll_operands_list)
 
 CASE (test_coll_attributes)
 {
-	char *v;
+	const char *v;
 	xmmsv_coll_t *c;
 	int cnt;
 	int sum;

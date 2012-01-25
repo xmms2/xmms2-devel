@@ -96,7 +96,7 @@ namespace Xmms
 
 	string Coll::getAttribute( const string &attrname ) const
 	{
-		char *val;
+		const char *val;
 		if( !xmmsv_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
