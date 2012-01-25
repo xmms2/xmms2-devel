@@ -1545,7 +1545,8 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	gint history, upcoming;
 	gboolean modif = FALSE;
 	const gchar *input, *jumplist, *typestr;
-	xmmsv_t *coll, *val;
+	xmmsv_coll_t *coll;
+	xmmsv_t *val;
 
 	history = -1;
 	upcoming = -1;
