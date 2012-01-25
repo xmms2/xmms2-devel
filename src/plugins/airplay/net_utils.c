@@ -9,6 +9,10 @@ get_local_addr (int fd)
 
 	ret = getsockname (fd, (struct sockaddr *) &addr, &len);
 
+	if (ret) {
+		return NULL;
+	}
+
 	return inet_ntoa (addr.sin_addr);
 }
 

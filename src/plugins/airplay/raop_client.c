@@ -397,10 +397,16 @@ raop_client_init (raop_client_t **client)
 
 	/* setup client_id, aes_key */
 	ret = RAND_bytes (rand_buf, sizeof (rand_buf));
+	if (ret <= 0) {
+		return RAOP_EFAIL;
+	}
 	g_snprintf (rc->client_id, 17, "%08X%08X", *((guint *) rand_buf),
 	            *((guint *) (rand_buf + 4)));
 
 	ret = RAND_bytes (rc->aes_key_str, sizeof (rc->aes_key_str));
+	if (ret <= 0) {
+		return RAOP_EFAIL;
+	}
 	rc->aes_key = (AES_KEY *) g_malloc (sizeof (AES_KEY));
 	AES_set_encrypt_key (rc->aes_key_str, 128, rc->aes_key);
 
