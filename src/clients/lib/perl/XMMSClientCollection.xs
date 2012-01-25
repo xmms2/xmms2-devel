@@ -93,7 +93,7 @@ xmmsv_coll_parse (class, const char *pattern)
 	CODE:
 		ret = xmmsv_coll_parse (pattern, &RETVAL);
 	POSTCALL:
-		if (RETVAL == 0)
+		if (ret == 0)
 			XSRETURN_UNDEF;
 	OUTPUT:
 		RETVAL
