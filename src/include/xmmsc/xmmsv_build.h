@@ -39,6 +39,7 @@ static inline xmmsv_t *__xmmsv_null_to_none (xmmsv_t *v) { return v ? v : xmmsv_
 #define XMMSV_DICT_ENTRY_INT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_int (v))
 #define XMMSV_DICT_END NULL
 xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
+xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap);
 
 #define XMMSV_LIST_ENTRY(v) __xmmsv_identity_xmmsv (v)
 #define XMMSV_LIST_ENTRY_STR(v) XMMSV_LIST_ENTRY (__xmmsv_null_to_none (xmmsv_new_string (v)))
