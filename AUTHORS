@@ -43,7 +43,9 @@ D: PythonAPI fixes.
 
 N: Raphaël Bois
 E: virtualdust@gmail.com
-D: Port of python bindings to Cython. Various fixes.
+W: http://blog.vdust.net/
+D: Port of python bindings to Cython. Playlist updater.
+D: Build system upgrade to waf 1.6.x. Various fixes.
 
 N: Romain Boissat
 E: r.boissat@gmail.com
