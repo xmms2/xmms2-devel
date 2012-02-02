@@ -390,7 +390,7 @@ filter_condition (xmms_medialib_session_t *session,
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "value", &val)) {
-		if (xmms_is_int (val, &ival)) {
+		if (xmms_parse_int (val, &ival)) {
 			value = s4_val_new_int (ival);
 		} else {
 			value = s4_val_new_string (val);

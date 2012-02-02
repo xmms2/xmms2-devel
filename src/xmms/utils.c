@@ -161,7 +161,7 @@ xmms_natcmp (const gchar *str1, const gchar *str2)
  * @return TRUE if the str is a number, FALSE otherwise
  */
 gboolean
-xmms_is_int (const gchar *str, int *val)
+xmms_parse_int (const gchar *str, gint *val)
 {
 	gboolean ret = FALSE;
 	gchar *end;

@@ -6,6 +6,6 @@
 char *xmms_build_path (const char *name, ...);
 gint xmms_natcmp_len (const gchar *str1, gint len1, const gchar *str2, gint len2);
 gint xmms_natcmp (const gchar *str1, const gchar *str2);
-gboolean xmms_is_int (const gchar *str, int *val);
+gboolean xmms_parse_int (const gchar *str, gint *val);
 
 #endif /* __XMMS_PRIV_UTILS_H__ */
