@@ -76,6 +76,55 @@ static gboolean xmms_flac_init (xmms_xform_t *xform);
 static void xmms_flac_destroy (xmms_xform_t *xform);
 static gint64 xmms_flac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
+/** These are the properties that we extract from the comments */
+static const xmms_xform_metadata_basic_mapping_t mappings[] = {
+	{ "album",                     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM             },
+	{ "title",                     XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE             },
+	{ "artist",                    XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST            },
+	{ "albumartist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "date",                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "originaldate",              XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINALYEAR      },
+	{ "composer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
+	{ "lyricist",                  XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
+	{ "conductor",                 XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "performer",                 XMMS_MEDIALIB_ENTRY_PROPERTY_PERFORMER         },
+	{ "remixer",                   XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER           },
+	{ "arranger",                  XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER          },
+	{ "producer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER          },
+	{ "mixer",                     XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER             },
+	{ "grouping",                  XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "grouping",                  XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "tracknumber",               XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR           },
+	{ "tracktotal",                XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS       },
+	{ "totaltracks",               XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS       },
+	{ "discnumber",                XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET         },
+	{ "disctotal",                 XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET          },
+	{ "totaldiscs",                XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET          },
+	{ "compilation",               XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "comment",                   XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT           },
+	{ "genre",                     XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE             },
+	{ "bpm",                       XMMS_MEDIALIB_ENTRY_PROPERTY_BPM               },
+	{ "isrc",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC              },
+	{ "copyright",                 XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT         },
+	{ "catalognumber",             XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER     },
+	{ "barcode",                   XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE           },
+	{ "albumsort",                 XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT        },
+	{ "albumartistsort",           XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT },
+	{ "artistsort",                XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT       },
+	{ "description",               XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION       },
+	{ "label",                     XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER         },
+	{ "asin",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN              },
+	{ "conductor",                 XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "musicbrainz_albumid",       XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID          },
+	{ "musicbrainz_artistid",      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID         },
+	{ "musicbrainz_trackid",       XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID          },
+	{ "musicbrainz_albumartistid", XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "replaygain_track_gain",     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK        },
+	{ "replaygain_album_gain",     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM        },
+	{ "replaygain_track_peak",     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK        },
+	{ "replaygain_album_peak",     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM        },
+};
+
 /*
  * Plugin header
  */
@@ -98,6 +147,9 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.seek = xmms_flac_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_metadata_basic_mapper_init (xform_plugin, mappings,
+	                                              G_N_ELEMENTS (mappings));
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -283,10 +335,10 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 			                             metadata->data.picture.data_length,
 			                             hash)) {
 				const gchar *metakey;
-				
+
 				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
 				xmms_xform_metadata_set_str (xform, metakey, hash);
-				
+
 				metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
 				xmms_xform_metadata_set_str (xform, metakey, metadata->data.picture.mime_type);
 			}
@@ -327,71 +379,7 @@ flac_callback_error (const FLAC__StreamDecoder *flacdecoder,
 	XMMS_DBG ("%s", FLAC__StreamDecoderErrorStatusString[status]);
 }
 
-typedef enum { STRING, INTEGER, RPGAIN } ptype;
-typedef struct {
-	const gchar *vname;
-	const gchar *xname;
-	ptype type;
-} props;
 
-#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
-
-/** These are the properties that we extract from the comments */
-static const props properties[] = {
-	{ "title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
-	{ "artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
-	{ "album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },
-	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
-	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
-	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
-	{ "comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
-	{ "description",          XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, STRING  },
-	{ "discnumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, INTEGER },
-	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
-	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
-	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
-	{ "replaygain_track_gain",XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,RPGAIN  },
-	{ "replaygain_album_gain",XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,RPGAIN  },
-	{ "replaygain_track_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,STRING  },
-	{ "replaygain_album_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,STRING  },
-};
-
-/* note that "key" is NOT NUL-terminated here,
- * but "value" is.
- */
-static void
-handle_comment (xmms_xform_t *xform,
-                const gchar *key, gint key_len, const gchar *value)
-{
-	gchar buf[8];
-	gint i;
-
-	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-		if (key_len != strlen (properties[i].vname))
-			continue;
-		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
-		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
-			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
-			xmms_xform_metadata_set_int (xform, metakey, 1);
-		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
-			if (properties[i].type == INTEGER) {
-				gint tmp = strtol (value, NULL, 10);
-				xmms_xform_metadata_set_int (xform,
-				                             properties[i].xname, tmp);
-			} else if (properties[i].type == RPGAIN) {
-				g_snprintf (buf, sizeof (buf), "%f",
-				            pow (10.0, g_strtod (value, NULL) / 20));
-
-				/** @todo this should probably be a int instead? */
-				xmms_xform_metadata_set_str (xform,
-				                             properties[i].xname, buf);
-			} else {
-				xmms_xform_metadata_set_str (xform,
-				                             properties[i].xname, value);
-			}
-		}
-	}
-}
 
 static void
 handle_comments (xmms_xform_t *xform, xmms_flac_data_t *data)
@@ -404,23 +392,27 @@ handle_comments (xmms_xform_t *xform, xmms_flac_data_t *data)
 	vc = &data->vorbiscomment->data.vorbis_comment;
 
 	for (i = 0; i < vc->num_comments; i++) {
-		FLAC__byte *ptr, *content = vc->comments[i].entry;
-		gint j;
+		const gchar *entry, *ptr;
+		gchar key[64];
+		gsize length;
 
-		/* check whether it's a valid comment */
-		if (!content || !*content || *content == '=')
+		entry = (const gchar *) vc->comments[i].entry;
+		length = vc->comments[i].length;
+
+		if (entry == NULL || *entry == '\0')
 			continue;
 
-		for (ptr = content, j = 0; j < vc->comments[i].length; ptr++, j++)
-			if (*ptr == '=')
-				break;
-
-		if (j == vc->comments[i].length)
+		ptr = memchr (entry, '=', length);
+		if (ptr == NULL)
 			continue;
 
-		handle_comment (xform,
-		                (gchar *) content, j,
-		                (gchar *) ptr + 1);
+		ptr++;
+
+		g_strlcpy (key, entry, MIN (ptr - entry, sizeof (key)));
+
+		if (!xmms_xform_metadata_mapper_match (xform, key, ptr, length - (ptr - entry))) {
+			XMMS_DBG ("Unhandled tag '%s'", entry);
+		}
 	}
 }
 
