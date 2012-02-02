@@ -16,11 +16,13 @@
 
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_xform_plugin.h"
+#include "xmmspriv/xmms_metadata_mapper.h"
 #include "xmms/xmms_log.h"
 
 struct xmms_xform_plugin_St {
 	xmms_plugin_t plugin;
 	xmms_xform_methods_t methods;
+	GHashTable *metadata_mapper;
 	GList *in_types;
 };
 
@@ -34,6 +36,10 @@ destroy (xmms_object_t *obj)
 
 		plugin->in_types = g_list_delete_link (plugin->in_types,
 		                                       plugin->in_types);
+	}
+
+	if (plugin->metadata_mapper != NULL) {
+		g_hash_table_unref (plugin->metadata_mapper);
 	}
 
 	xmms_plugin_destroy ((xmms_plugin_t *) obj);
@@ -135,6 +141,39 @@ xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, xmms_stream_type_
 	}
 
 	return FALSE;
+}
+
+void
+xmms_xform_plugin_metadata_basic_mapper_init (xmms_xform_plugin_t *xform_plugin,
+                                               const xmms_xform_metadata_basic_mapping_t *mappings,
+                                               gint count)
+{
+	g_return_if_fail (xform_plugin != NULL);
+	g_return_if_fail (mappings != NULL && count > 0);
+	xform_plugin->metadata_mapper = xmms_metadata_mapper_init (mappings, count, NULL, 0);
+}
+
+void
+xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
+                                        const xmms_xform_metadata_basic_mapping_t *basic_mappings,
+                                        gint basic_count,
+                                        const xmms_xform_metadata_mapping_t *mappings,
+                                        gint count)
+{
+	g_return_if_fail (xform_plugin != NULL);
+	g_return_if_fail (basic_mappings != NULL && basic_count > 0);
+	g_return_if_fail (mappings != NULL && count > 0);
+	xform_plugin->metadata_mapper = xmms_metadata_mapper_init (basic_mappings, basic_count,
+	                                                           mappings, count);
+}
+
+gboolean
+xmms_xform_plugin_metadata_mapper_match (const xmms_xform_plugin_t *xform_plugin, xmms_xform_t *xform,
+                                         const gchar *key, const gchar *value, gsize length)
+{
+	g_return_val_if_fail (xform_plugin->metadata_mapper != NULL, FALSE);
+	g_return_val_if_fail (key != NULL && value != NULL, FALSE);
+	return xmms_metadata_mapper_match (xform_plugin->metadata_mapper, xform, key, value, length);
 }
 
 xmms_config_property_t *

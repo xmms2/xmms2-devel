@@ -95,6 +95,25 @@ struct xmms_xform_St;
 /* xform */
 typedef struct xmms_xform_St xmms_xform_t;
 
+
+/**
+ * Mapping between format specific and internal metadata naming.
+ */
+typedef struct xmms_xform_metadata_basic_mapping_St {
+	const gchar *from;
+	const gchar *to;
+} xmms_xform_metadata_basic_mapping_t;
+
+/**
+ * Mapping function that recieves a metadata key and value pair.
+ */
+typedef gboolean (*xmms_xform_metadata_mapper_func_t) (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
+typedef struct xmms_xform_metadata_mapping_St {
+	const gchar *key;
+	xmms_xform_metadata_mapper_func_t func;
+} xmms_xform_metadata_mapping_t;
+
 /**
  * Seek direction argument.
  */
@@ -138,7 +157,7 @@ typedef struct xmms_xform_methods_St {
 	 * Called to change the offset in the stream.  Observe that
 	 * the offset is measured in "natural" units; audio/pcm-data
 	 * is measured in samples, application/octet-stream in bytes.
-	 * 
+	 *
 	 */
 	gint64 (*seek)(xmms_xform_t *, gint64, xmms_xform_seek_mode_t, xmms_error_t *);
 
@@ -159,6 +178,29 @@ typedef struct xmms_xform_methods_St {
  * Should be called _once_ from the plugin's setupfunc.
  */
 void xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t *methods);
+
+
+/**
+ * Configure automatic metadata mapping.
+ * @param xform_plugin the plugin
+ * @param mappings mapping from format specific naming to internal naming.
+ * @param count the number of properties
+ */
+void xmms_xform_plugin_metadata_basic_mapper_init (xmms_xform_plugin_t *xform_plugin,
+                                                   const xmms_xform_metadata_basic_mapping_t *mappings, gint count);
+
+/**
+ * Configure automatic metadata mapping.
+ * @param xform_plugin the plugin
+ * @param basic_mappings mapping from format specific naming to internal naming.
+ * @param basic_count the number of properties
+ * @param mappings custom mapping from format specific naming to a function that will marshall the property.
+ * @param count the number of custom properties
+ */
+void xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
+                                             const xmms_xform_metadata_basic_mapping_t *basic_mappings, gint basic_count,
+                                             const xmms_xform_metadata_mapping_t *mappings, gint count);
+
 /**
  * Add a valid input type to the plugin.
  *
@@ -193,7 +235,7 @@ gpointer xmms_xform_private_data_get (xmms_xform_t *xform);
  * #xmms_xform_private_data_get in read, seek and destroy methods.
  *
  * @param xform current xform
- * @param data 
+ * @param data
  */
 void xmms_xform_private_data_set (xmms_xform_t *xform, gpointer data);
 
@@ -207,22 +249,71 @@ void xmms_xform_outdata_type_copy (xmms_xform_t *xform);
  * @param xform
  * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
  * @param val
+ * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-void xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val);
+gboolean xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val);
 /**
  * Set string metadata for the media transformed by this xform.
  *
  * @param xform
  * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
  * @param val
+ * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-void xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val);
+gboolean xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val);
 
 gboolean xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key);
 gboolean xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key,
                                       gint *val);
 gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key,
                                       const gchar **val);
+
+/**
+ * Set numeric metadata for the media by parsing a string value.
+ *
+ * @param xform current xform
+ * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
+ * @param val The value to parse to an integer.
+ * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
+ */
+gboolean xmms_xform_metadata_parse_number (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
+/**
+ * Set compliation status by performing a number of probes on a value.
+ *
+ * First check if the value is an integer (0 or 1), next check if the string
+ * matches the MusicBrainz Artist ID for various artists, and then finally
+ * see if the string equals 'Various Artists' which is usually the albumartist
+ * in the case of compilations.
+ *
+ * @param xform current xform
+ * @param key Metadatum key to set. Should preferably be XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION.
+ * @param val The value to interpret as compliation or not.
+ * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
+ */
+gboolean xmms_xform_metadata_parse_compilation (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
+/**
+ * Set string metadata represesting replay gain for the media by parsing a string value.
+ *
+ * @param xform current xform
+ * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
+ * @param val The value to interpret as replay gain.
+ * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
+ */
+gboolean xmms_xform_metadata_parse_replay_gain (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
+
+/**
+ * Attempt to automatically set a metadata property.
+ * @param xform current xform
+ * @param key the name of a key found by the xform
+ * @param value the corresponding value found by the xform
+ * @param length the length of the value, optional for NULL terminated values
+ * @return TRUE if the configured metadata mapper marshalled the key/value into a property
+ */
+gboolean xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
 void xmms_xform_auxdata_barrier (xmms_xform_t *xform);
 void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
 void xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);
@@ -263,7 +354,7 @@ gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
  * @param err error container which is filled in if error occours.
  * @returns the line read from the parent or NULL to indicate error.
  */
-gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err);         
+gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err);
 
 /**
  * Read data from previous xform.
@@ -314,7 +405,7 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  * Get the medialib entry played by this xform.
  *
  * @param xform
- * @returns 
+ * @returns
  */
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
 const gchar *xmms_xform_get_url (xmms_xform_t *xform);

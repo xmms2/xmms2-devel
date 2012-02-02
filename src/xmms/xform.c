@@ -510,17 +510,23 @@ xmms_xform_outtype_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 	return xmms_stream_type_get_int (xform->out_type, key);
 }
 
+gboolean
+xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length)
+{
+	return xmms_xform_plugin_metadata_mapper_match (xform->plugin, xform, key, value, length);
+}
 
-void
+gboolean
 xmms_xform_metadata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
 	XMMS_DBG ("Setting '%s' to %d", key, val);
 	g_hash_table_insert (xform->metadata, g_strdup (key),
 	                     xmmsv_new_int (val));
 	xform->metadata_changed = TRUE;
+	return TRUE;
 }
 
-void
+gboolean
 xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
                              const char *val)
 {
@@ -528,12 +534,12 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
 
 	if (!g_utf8_validate (val, -1, NULL)) {
 		xmms_log_error ("xform '%s' tried to set property '%s' to a NON UTF-8 string!", xmms_xform_shortname (xform), key);
-		return;
+		return FALSE;
 	}
 
 	if (xmms_xform_metadata_get_str (xform, key, &old)) {
 		if (strcmp (old, val) == 0) {
-			return;
+			return TRUE;
 		}
 	}
 
@@ -541,6 +547,8 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key,
 	                     xmmsv_new_string (val));
 
 	xform->metadata_changed = TRUE;
+
+	return TRUE;
 }
 
 static const xmmsv_t *

@@ -23,6 +23,7 @@ gboolean xmms_xform_plugin_can_browse (const xmms_xform_plugin_t *plugin);
 gboolean xmms_xform_plugin_can_destroy (const xmms_xform_plugin_t *plugin);
 
 gboolean xmms_xform_plugin_init (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform);
+gboolean xmms_xform_plugin_metadata_mapper_match (const xmms_xform_plugin_t *xform_plugin, xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 gint xmms_xform_plugin_read (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform, xmms_sample_t *buf, gint length, xmms_error_t *error);
 gint64 xmms_xform_plugin_seek (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 gboolean xmms_xform_plugin_browse (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
