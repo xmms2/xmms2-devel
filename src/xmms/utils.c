@@ -174,3 +174,36 @@ xmms_parse_int (const gchar *str, gint *val)
 
 	return ret;
 }
+
+/**
+ * Case insensitive version of g_str_equal.
+ * @param v1 first string
+ * @param v2 second string
+ * @return TRUE if first string equals the seconds tring, otherwise FALSE
+ */
+gboolean
+xmms_strcase_equal (gconstpointer v1, gconstpointer v2)
+{
+	const gchar *string1 = v1;
+	const gchar *string2 = v2;
+
+	return strcasecmp (string1, string2) == 0;
+}
+
+/**
+ * Case insensitive version of g_str_hash.
+ * @param v a string
+ * @return the case insensitive hash code of the string
+ */
+guint
+xmms_strcase_hash (gconstpointer v)
+{
+	const signed char *p;
+	guint32 h = 5381;
+
+	for (p = v; *p != '\0'; p++)
+		h = (h << 5) + h + (((*p <= 'Z') && (*p >= 'A')) ? *p + 32 : *p );
+
+	return h;
+}
+
