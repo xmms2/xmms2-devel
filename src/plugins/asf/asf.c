@@ -49,9 +49,51 @@ static gint xmms_asf_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xm
 static gint64 xmms_asf_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_asf_get_mediainfo (xmms_xform_t *xform);
 
+static gboolean xmms_asf_handle_tag_coverart (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+static gboolean xmms_asf_handle_tag_old_tracknr (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+static gboolean xmms_asf_handle_tag_is_vbr (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
 int32_t xmms_asf_read_callback (void *opaque, void *buffer, int32_t size);
 int64_t xmms_asf_seek_callback (void *opaque, int64_t position);
 gint xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file);
+
+static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
+	{ "WM/AlbumTitle",               XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM             },
+	{ "WM/AlbumArtist",              XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "WM/OriginalArtist",           XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINAL_ARTIST   },
+	{ "WM/Year",                     XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "WM/OriginalReleaseYear",      XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINALYEAR      },
+	{ "WM/Composer",                 XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
+	{ "WM/Writer",                   XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
+	{ "WM/Conductor",                XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "WM/ModifiedBy",               XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER           },
+	{ "WM/Producer",                 XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER          },
+	{ "WM/ContentGroupDescription",  XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "WM/TrackNumber",              XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR           },
+	{ "WM/PartOfSet",                XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET         },
+	{ "WM/Genre",                    XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE             },
+	{ "WM/BeatsPerMinute",           XMMS_MEDIALIB_ENTRY_PROPERTY_BPM               },
+	{ "WM/ISRC",                     XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC              },
+	{ "WM/Publisher",                XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER         },
+	{ "WM/CatalogNo",                XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER     },
+	{ "WM/Barcode",                  XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE           },
+	{ "WM/AlbumSortOrder",           XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT        },
+	{ "WM/AlbumArtistSortOrder",     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT },
+	{ "WM/ArtistSortOrder",          XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT       },
+	{ "Year",                        XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "Copyright",                   XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT         },
+	{ "Station",                     XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL           },
+	{ "MusicBrainz/Album Id",        XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID          },
+	{ "MusicBrainz/Artist Id",       XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID         },
+	{ "MusicBrainz/Track Id",        XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID          },
+	{ "MusicBrainz/Album Artist Id", XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+};
+
+static const xmms_xform_metadata_mapping_t mappings[] = {
+	{ "WM/Picture", xmms_asf_handle_tag_coverart    },
+	{ "WM/Track",   xmms_asf_handle_tag_old_tracknr },
+	{ "IsVBR",      xmms_asf_handle_tag_is_vbr      },
+};
 
 /*
  * Plugin header
@@ -68,12 +110,19 @@ xmms_asf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_methods_t methods;
 
 	XMMS_XFORM_METHODS_INIT (methods);
+
 	methods.init = xmms_asf_init;
 	methods.destroy = xmms_asf_destroy;
 	methods.read = xmms_asf_read;
 	methods.seek = xmms_asf_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_metadata_mapper_init (xform_plugin,
+	                                        basic_mappings,
+	                                        G_N_ELEMENTS (basic_mappings),
+	                                        mappings,
+	                                        G_N_ELEMENTS (mappings));
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -216,13 +265,130 @@ xmms_asf_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	return position * data->samplerate / 1000;
 }
 
+static gsize
+xmms_asf_utf16_strnlen (const gchar *buf, gsize max_length)
+{
+	gint i;
+
+	for (i = 0; i < (max_length - 1); i += 2) {
+		if (buf[i] == '\0' && buf[i + 1] == '\0') {
+			return i;
+		}
+	}
+
+	return max_length;
+}
+
+static gboolean
+xmms_asf_handle_tag_coverart (xmms_xform_t *xform, const gchar *key,
+                              const gchar *value, gsize length)
+{
+	const guint8 *uptr;
+	const gchar *ptr;
+	gchar *mime;
+	gchar hash[33];
+	guint32 picture_length;
+	gsize size;
+	GError *err = NULL;
+
+	uptr = (const guchar *) value;
+
+	/* check picture type */
+	if (uptr[0] != 0x00 && uptr[0] != 0x03) {
+		return FALSE;
+	}
+
+	/* step past picture type */
+	uptr++;
+
+	picture_length =
+		((guint32) uptr[3] << 24) |
+		((guint32) uptr[2] << 16) |
+		((guint32) uptr[1] <<  8) |
+		((guint32) uptr[0]);
+	if (picture_length == 0) {
+		return FALSE;
+	}
+
+	/* step past picture size */
+	uptr += sizeof (guint32);
+
+	ptr = (const gchar *) uptr;
+
+	/* parse the UTF-16 mime type */
+	size = xmms_asf_utf16_strnlen (ptr, (value + length) - ptr);
+	mime = g_convert (ptr, size, "UTF-8", "UTF-16", NULL, NULL, &err);
+	ptr += size + 2;
+
+	if (mime == NULL || mime[0] == '\0') {
+		return FALSE;
+	}
+
+	/* step past picture description */
+	size = xmms_asf_utf16_strnlen (ptr, (value + length) - ptr);
+	ptr += size + 2;
+
+	uptr = (const guchar *) ptr;
+
+	if (xmms_bindata_plugin_add (uptr, picture_length, hash)) {
+		const gchar *metakey;
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
+		xmms_xform_metadata_set_str (xform, metakey, hash);
+
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
+		xmms_xform_metadata_set_str (xform, metakey, mime);
+	}
+
+	g_free (mime);
+
+	return TRUE;
+}
+
+
+static gboolean
+xmms_asf_handle_tag_is_vbr (xmms_xform_t *xform, const gchar *key,
+                            const gchar *value, gsize length)
+{
+	if (strcasecmp ("true", value) == 0) {
+		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR, 1);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static gboolean
+xmms_asf_handle_tag_old_tracknr (xmms_xform_t *xform, const gchar *key,
+                                 const gchar *value, gsize length)
+{
+	gint ivalue;
+
+	/* WM/TrackNumber overrides WM/Track value as specified in the Microsoft
+	 * documentation at http://msdn2.microsoft.com/en-us/library/aa392014.aspx
+	 * so lets check if something else has set the tracknr property before us.
+	 */
+	if (xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, &ivalue)) {
+		return FALSE;
+	}
+
+	/* Ok, nothing set, lets handle "WM/Track" as "WM/TrackNumber" */
+	if (!xmms_xform_metadata_mapper_match (xform, "WM/TrackNumber", value, length)) {
+		return FALSE;
+	}
+
+	/* Last quirk, WM/Track is 0-indexed, need to fix that */
+	xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, &ivalue);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, ivalue + 1);
+
+	return TRUE;
+}
+
 static void
 xmms_asf_get_mediainfo (xmms_xform_t *xform)
 {
 	xmms_asf_data_t *data;
 	asf_metadata_t *metadata;
 	uint64_t tmp;
-	gchar *track = NULL;
 	gint i;
 
 	g_return_if_fail (xform);
@@ -266,54 +432,16 @@ xmms_asf_get_mediainfo (xmms_xform_t *xform)
 		                             metadata->description);
 	}
 
-	for (i=0; i<metadata->extended_count; i++) {
-		char *key, *value;
+	for (i = 0; i < metadata->extended_count; i++) {
+		const char *key, *value;
+		guint16 length;
 
 		key = metadata->extended[i].key;
 		value = metadata->extended[i].value;
+		length = metadata->extended[i].length;
 
-		if (key == NULL || value == NULL || !strlen (value)) {
-			continue;
-		} else if (!strcmp (key, "WM/AlbumTitle")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-			                             value);
-		} else if (!strcmp (key, "WM/Year")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
-			                             value);
-		} else if (!strcmp (key, "WM/Genre")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-			                             value);
-		} else if ((!track && !strcmp (key, "WM/Track")) || !strcmp (key, "WM/TrackNumber")) {
-			/* WM/TrackNumber overrides WM/Track value as specified in the Microsoft
-			 * documentation at http://msdn2.microsoft.com/en-us/library/aa392014.aspx */
-			track = value;
-		} else if (!strcmp (key, "MusicBrainz/Album Id")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
-			                             value);
-		} else if (!strcmp (key, "MusicBrainz/Artist Id")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
-			                             value);
-		} else if (!strcmp (key, "MusicBrainz/Track Id")) {
-			xmms_xform_metadata_set_str (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
-			                             value);
-		}
-	}
-
-	if (track) {
-		gint tracknr;
-		gchar *end;
-
-		tracknr = strtol (track, &end, 10);
-		if (end && *end == '\0') {
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-			                             tracknr);
+		if (!xmms_xform_metadata_mapper_match (xform, key, value, length)) {
+			XMMS_DBG ("Unhandled tag '%s' = '%s'", key, value);
 		}
 	}
 
