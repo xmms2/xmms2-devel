@@ -115,9 +115,10 @@ static int media_callback (void *u, int argc, char *argv[], char *col[])
 		val_val = s4_val_new_string (val);
 	}
 
-	trans = s4_begin (s4, 0);
-	s4_add (trans, "song_id", id_val, key, val_val, src);
-	s4_commit (trans);
+	do {
+		trans = s4_begin (s4, 0);
+		s4_add (trans, "song_id", id_val, key, val_val, src);
+	} while (!s4_commit (trans));
 
 	s4_val_free (val_val);
 	s4_val_free (id_val);
