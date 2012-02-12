@@ -533,11 +533,8 @@ static void
 header_handler_contentlength (xmms_xform_t *xform,
                               gchar *header)
 {
-	xmms_curl_data_t *data;
 	int length;
 	const gchar *metakey;
-
-	data = xmms_xform_private_data_get (xform);
 
 	length = strtoul (header, NULL, 10);
 
