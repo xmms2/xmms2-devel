@@ -191,7 +191,7 @@ OpenDaap_MD5Final (MD5_CTX *ctx,
 	MD5Transform (ctx->buf, (guint32 *) ctx->in, ctx->version);
 	byteReverse ((unsigned char *) ctx->buf, 4);
 	memcpy (digest, ctx->buf, 16);
-	memset (ctx, 0, sizeof (ctx));     /* In case it's sensitive */
+	memset (ctx, 0, sizeof (*ctx));     /* In case it's sensitive */
 
 	return;
 }
