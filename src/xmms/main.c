@@ -548,7 +548,7 @@ main (int argc, char **argv)
 	}
 
 	if (!xmms_plugin_init (ppath)) {
-		return 1;
+		exit (EXIT_FAILURE);
 	}
 
 
@@ -637,7 +637,7 @@ main (int argc, char **argv)
 
 	g_main_loop_run (mainloop);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 /** @} */
