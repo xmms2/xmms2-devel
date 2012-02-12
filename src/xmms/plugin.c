@@ -49,7 +49,6 @@ static GList *xmms_plugin_list;
  * Function prototypes
  */
 static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, const xmms_plugin_desc_t *desc);
-static gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module);
 static gboolean xmms_plugin_scan_directory (const gchar *dir);
 
 /*
@@ -262,8 +261,13 @@ xmms_plugin_shutdown ()
 	}
 }
 
-
-static gboolean
+/**
+ * @internal Load a plugin.
+ * @param[in] desc The plugin description.
+ * @param[in] module The model reference if dynamically loaded, otherwise NULL.
+ * @return TRUE if the plugin was loaded, otherwise FALSE.
+ */
+gboolean
 xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module)
 {
 	xmms_plugin_t *plugin;

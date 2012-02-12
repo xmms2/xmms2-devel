@@ -40,7 +40,7 @@ typedef struct xmms_plugin_St {
 /*
  * Private functions
  */
-
+gboolean xmms_plugin_load (const xmms_plugin_desc_t *desc, GModule *module);
 gboolean xmms_plugin_init (const gchar *path);
 void xmms_plugin_shutdown (void);
 void xmms_plugin_destroy (xmms_plugin_t *plugin);
