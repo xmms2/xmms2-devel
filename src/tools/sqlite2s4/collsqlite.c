@@ -263,7 +263,7 @@ xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type)
 	gchar query[256];
 	struct db_info info;
 
-	coll = create_coll (type);
+	coll = create_coll ((xmmsv_coll1_type_t) type);
 
 	/* Retrieve the attributes */
 	g_snprintf (query, sizeof (query),

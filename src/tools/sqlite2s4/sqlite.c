@@ -30,7 +30,6 @@
 #include "xmmspriv/xmms_collection.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
-
 /* increment this whenever there are incompatible db structure changes */
 #define DB_VERSION 36
 
@@ -329,6 +328,9 @@ upgrade_v35_to_v36 (sqlite3 *sql)
 
 	printf ("done");
 }
+
+/* XXX Prevent "missing-prototype" warning */
+gboolean try_upgrade (sqlite3 *sql);
 
 gboolean
 try_upgrade (sqlite3 *sql)
