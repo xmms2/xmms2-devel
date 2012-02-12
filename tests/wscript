@@ -32,6 +32,10 @@ test_collection_src = """
 server/t_collection.c
 """.split()
 
+test_xform_src = """
+server/t_xform.c
+""".split()
+
 mlib_runner_src = """
 server/medialib-runner.c
 """.split()
@@ -102,6 +106,15 @@ def build(bld):
     bld(features = "c cprogram test",
         target = "test_collection",
         source = test_collection_src,
+        includes = '. .. runner ../src ../src/includepriv ../src/include',
+        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+        install_path = None
+        )
+
+    bld(features = "c cprogram test",
+        target = "test_xform",
+        source = test_xform_src,
         includes = '. .. runner ../src ../src/includepriv ../src/include',
         use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
         uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
