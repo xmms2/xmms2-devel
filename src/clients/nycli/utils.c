@@ -25,9 +25,7 @@
 
 static void coll_int_attribute_set (xmmsv_coll_t *coll, const char *key, gint value);
 static xmmsv_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
-static void coll_copy_attributes (const char *key, xmmsv_t *val, void *udata);
 static void coll_print_attributes (const char *key, xmmsv_t *val, void *udata);
-static xmmsv_coll_t *coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t type);
 
 static void pl_print_config (xmmsv_coll_t *coll, const char *name);
 
@@ -1633,8 +1631,6 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 	xmmsv_coll_t *newcoll = NULL;
 	xmmsv_t *val;
 
-	gboolean copied = FALSE;
-
 	val = xmmsc_result_get_value (res);
 
 	if (xmmsv_get_coll (val, &coll)) {
@@ -1765,16 +1761,6 @@ coll_make_reference (const char *name, xmmsc_coll_namespace_t ns)
 }
 
 static void
-coll_copy_attributes (const char *key, xmmsv_t *val, void *udata)
-{
-	const char *value;
-
-	if (xmmsv_get_string (val, &value)) {
-		xmmsv_coll_attribute_set ((xmmsv_coll_t *) udata, key, value);
-	}
-}
-
-static void
 coll_print_attributes (const char *key, xmmsv_t *val, void *udata)
 {
 	const char *value;
@@ -1782,28 +1768,6 @@ coll_print_attributes (const char *key, xmmsv_t *val, void *udata)
 	if (xmmsv_get_string (val, &value)) {
 		g_printf ("[%s] %s\n", key, value);
 	}
-}
-
-static xmmsv_coll_t *
-coll_copy_retype (xmmsv_coll_t *coll, xmmsv_coll_type_t type)
-{
-	xmmsv_coll_t *copy;
-	gint idlistsize;
-	gint i;
-	gint32 id;
-
-	copy = xmmsv_coll_new (type);
-
-	idlistsize = xmmsv_coll_idlist_get_size (coll);
-	for (i = 0; i < idlistsize; i++) {
-		xmmsv_coll_idlist_get_index (coll, i, &id);
-		xmmsv_coll_idlist_append (copy, id);
-	}
-
-	xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
-	                    coll_copy_attributes, copy);
-
-	return copy;
 }
 
 static void
