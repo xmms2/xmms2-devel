@@ -1,7 +1,7 @@
 /** @file daap_xform.c
  *  XMMS2 transform for accessing DAAP music shares.
  *
- *  Copyright (C) 2006-2011 XMMS2 Team
+ *  Copyright (C) 2006-2012 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
