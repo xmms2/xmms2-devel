@@ -33,7 +33,7 @@ extern void collection_dag_save (GHashTable **ht, const char *bdir);
  * @param val A pointer to where we want the number to be saved
  * @return TRUE if the str is a number, FALSE otherwise
  */
-gboolean
+static gboolean
 xmms_is_int (const gchar *str, int *val)
 {
 	gboolean ret = FALSE;
