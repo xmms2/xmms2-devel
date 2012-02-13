@@ -24,7 +24,7 @@
 
 static xmmsv_coll_t *parse_collection (xmmsv_t *attrs);
 
-static const char *coll_types[XMMS_COLLECTION_TYPE_LAST + 1] = {
+static const char *coll_types[] = {
 	"reference",
 	"universe",
 	"union",
@@ -78,10 +78,10 @@ xmmsv_coll_from_dict (xmmsv_t *data)
 static const char *
 collection_type_string (xmmsv_coll_type_t type)
 {
-	if (type < 0 || type > XMMS_COLLECTION_TYPE_LAST) {
-		return "unknown";
+	if ((unsigned int) type < (sizeof (coll_types) / sizeof (coll_types[0]))) {
+		return coll_types[(unsigned int) type];
 	}
-	return coll_types[type];
+	return "unknown";
 }
 
 static int
