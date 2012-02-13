@@ -988,9 +988,9 @@ CASE (test_xmmsv_deep_copy)
 
 CASE (test_xmmsv_deep_copy_bin)
 {
-	unsigned char *b;
-	unsigned char *a = "look behind you! a three headed monkey!";
-	unsigned int b_len, a_len = strlen (a) + 1;
+	const unsigned char *b;
+	const unsigned char *a = (const unsigned char *) "look behind you! a three headed monkey!";
+	unsigned int b_len, a_len = strlen ((const char *) a) + 1;
 	xmmsv_t *value, *val_cpy;
 
 	value = xmmsv_new_bin (a, a_len);
