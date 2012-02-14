@@ -697,6 +697,7 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	const gchar **order = NULL;
 	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
+	const gchar *property = NULL;
 
 	if (!command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		return FALSE;
@@ -721,7 +722,54 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		fetchval = xmmsv_make_stringlist ((gchar **) default_columns, -1);
 	}
 
-	res = xmmsc_coll_query_infos (infos->sync, query, orderval, 0, 0, fetchval, NULL);
+	xmmsv_list_get_string (orderval, 0, &property);
+
+	/* If sorting by artist, put compilation albums at the end */
+	if (g_strcmp0 ("artist", property) == 0) {
+		xmmsv_coll_t *compilation, *compilation_sorted;
+		xmmsv_coll_t *regular, *regular_sorted;
+		xmmsv_coll_t *concatenated;
+		xmmsv_t *compilation_order;
+		gint i;
+
+		compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+		xmmsv_coll_add_operand (compilation, query);
+		xmmsv_coll_attribute_set (compilation, "field", "compilation");
+		xmmsv_coll_attribute_set (compilation, "value", "1");
+
+		regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+		xmmsv_coll_add_operand (regular, compilation);
+
+		/* Drop artist from the sort order */
+		compilation_order = xmmsv_new_list ();
+		for (i = 1; i < xmmsv_list_get_size (orderval); i++) {
+			xmmsv_t *entry;
+			xmmsv_list_get (orderval, i, &entry);
+			xmmsv_list_append (compilation_order, entry);
+		}
+
+		compilation_sorted = xmmsv_coll_add_order_operators (compilation,
+		                                                     compilation_order);
+		xmmsv_coll_unref (compilation);
+		xmmsv_unref (compilation_order);
+
+		regular_sorted = xmmsv_coll_add_order_operators (regular, orderval);
+		xmmsv_coll_unref (regular);
+
+		concatenated = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+		xmmsv_coll_add_operand (concatenated, regular_sorted);
+		xmmsv_coll_unref (regular_sorted);
+		xmmsv_coll_add_operand (concatenated, compilation_sorted);
+		xmmsv_coll_unref (compilation_sorted);
+
+		res = xmmsc_coll_query_infos (infos->sync, concatenated, NULL,
+		                              0, 0, fetchval, NULL);
+		xmmsv_coll_unref (concatenated);
+	} else {
+		res = xmmsc_coll_query_infos (infos->sync, query, orderval,
+		                              0, 0, fetchval, NULL);
+	}
+
 	xmmsc_result_wait (res);
 
 	list_print_row (res, NULL, coldisp, TRUE, TRUE);
