@@ -1925,12 +1925,10 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 			if (norecurs || !is_directory) {
 				res = xmmsc_medialib_add_entry_encoded (infos->sync,
 				                                        url);
-				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);
 			} else {
 				res = xmmsc_medialib_import_path_encoded (infos->sync,
 				                                          url);
-				xmmsc_result_wait (res);
 				xmmsc_result_unref (res);
 			}
 
