@@ -698,40 +698,40 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
 
-	/* FIXME: Support arguments -p and -c */
-
-	if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
-		coldisp = create_column_display (infos, ctx, default_columns);
-		if (!command_flag_stringlist_get (ctx, "order", &order)) {
-			orderval = xmmsv_build_list (
-					XMMSV_LIST_ENTRY_STR ("artist"),
-					XMMSV_LIST_ENTRY_STR ("album"),
-					XMMSV_LIST_ENTRY_STR ("partofset"),
-					XMMSV_LIST_ENTRY_STR ("tracknr"),
-					XMMSV_LIST_END);
-		} else {
-			orderval = xmmsv_make_stringlist ((gchar **)order, -1);
-		}
-
-		command_flag_stringlist_get (ctx, "columns", &columns);
-		if (columns) {
-			fetchval = xmmsv_make_stringlist ((gchar **)columns, -1);
-		} else {
-			fetchval = xmmsv_make_stringlist ((gchar **)default_columns, -1);
-		}
-
-		res = xmmsc_coll_query_infos (infos->sync, query, orderval, 0, 0, fetchval, NULL);
-		xmmsc_result_wait (res);
-
-		list_print_row (res, NULL, coldisp, TRUE, TRUE);
-
-		xmmsv_unref (orderval);
-		xmmsv_unref (fetchval);
-		xmmsc_coll_unref (query);
-
-		g_free (order);
-		g_free (columns);
+	if (!command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+		return FALSE;
 	}
+
+	coldisp = create_column_display (infos, ctx, default_columns);
+	if (!command_flag_stringlist_get (ctx, "order", &order)) {
+		orderval = xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("artist"),
+			XMMSV_LIST_ENTRY_STR ("album"),
+			XMMSV_LIST_ENTRY_STR ("partofset"),
+			XMMSV_LIST_ENTRY_STR ("tracknr"),
+			XMMSV_LIST_END);
+	} else {
+		orderval = xmmsv_make_stringlist ((gchar **) order, -1);
+	}
+
+	command_flag_stringlist_get (ctx, "columns", &columns);
+	if (columns) {
+		fetchval = xmmsv_make_stringlist ((gchar **) columns, -1);
+	} else {
+		fetchval = xmmsv_make_stringlist ((gchar **) default_columns, -1);
+	}
+
+	res = xmmsc_coll_query_infos (infos->sync, query, orderval, 0, 0, fetchval, NULL);
+	xmmsc_result_wait (res);
+
+	list_print_row (res, NULL, coldisp, TRUE, TRUE);
+
+	xmmsv_unref (orderval);
+	xmmsv_unref (fetchval);
+	xmmsc_coll_unref (query);
+
+	g_free (order);
+	g_free (columns);
 
 	return FALSE;
 }
