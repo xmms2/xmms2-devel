@@ -728,17 +728,25 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	if (g_strcmp0 ("artist", property) == 0) {
 		xmmsv_coll_t *compilation, *compilation_sorted;
 		xmmsv_coll_t *regular, *regular_sorted;
-		xmmsv_coll_t *concatenated;
+		xmmsv_coll_t *complement, *concatenated;
 		xmmsv_t *compilation_order;
 		gint i;
 
+		/* All various artists entries that match the user query. */
 		compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
 		xmmsv_coll_add_operand (compilation, query);
 		xmmsv_coll_attribute_set (compilation, "field", "compilation");
 		xmmsv_coll_attribute_set (compilation, "value", "1");
 
-		regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-		xmmsv_coll_add_operand (regular, compilation);
+		/* All entries that aren't various artists, or don't match the user query */
+		complement = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+		xmmsv_coll_add_operand (complement, compilation);
+
+		/* All entries that aren't various artists, and match the user query */
+		regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+		xmmsv_coll_add_operand (regular, query);
+		xmmsv_coll_add_operand (regular, complement);
+		xmmsv_coll_unref (complement);
 
 		/* Drop artist from the sort order */
 		compilation_order = xmmsv_new_list ();
