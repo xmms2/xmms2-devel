@@ -1841,4 +1841,137 @@ vim:expandtab
         </method>
     </object>
 
+    <object>
+        <name>courier</name>
+
+        <method noreply="true" need_client="true" need_cookie="true">
+            <name>send_message</name>
+            <documentation>Assemble and send a client-to-client message.</documentation>
+
+            <argument>
+                <name>dest</name>
+                <documentation>The destination client.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>reply_policy</name>
+                <documentation>The reply policy for this message</documentation>
+
+                <type>
+                    <int />
+                </type>
+           </argument>
+
+            <argument>
+                <name>payload</name>
+                <documentation>The contents of the message.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </argument>
+        </method>
+
+        <method noreply="true" need_client="true" need_cookie="true">
+            <name>reply</name>
+            <documentation>Assemble and send a reply to a client-to-client message</documentation>
+
+            <argument>
+                <name>msgid</name>
+                <documentation>The id of the message.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>reply_policy</name>
+                <documentation>The reply policy for this message.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </argument>
+
+            <argument>
+                <name>payload</name>
+                <documentation>The contents of the reply.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </argument>
+        </method>
+
+        <method>
+            <name>get_connected_clients</name>
+            <documentation>Return a list of connected clients.</documentation>
+
+            <return_value>
+                <documentation>A list of ids.</documentation>
+                <type>
+                    <list>
+                        <int/>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
+        <broadcast>
+            <id>15</id>
+            <name>message</name>
+            <documentation>This broadcast carries client-to-client messages.</documentation>
+
+            <return_value>
+                <documentation>Messages sent to the client.</documentation>
+
+                <type>
+                    <dictionary>
+                        <unknown />
+                    </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
+
+    <object>
+        <name>ipc_manager</name>
+
+        <broadcast>
+            <id>16</id>
+            <name>client_connected</name>
+            <documentation>This broadcast is emitted when a new client connects.</documentation>
+
+            <return_value>
+                <documentation>The new client's id.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>17</id>
+            <name>client_disconnected</name>
+            <documentation>This broadcast is emitted when a client disconnects.</documentation>
+
+            <return_value>
+                <documentation>The disconnected client's id.</documentation>
+
+                <type>
+                    <int />
+                </type>
+            </return_value>
+        </broadcast>
+    </object>
 </ipc>

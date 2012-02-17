@@ -30,6 +30,7 @@
 #include <xmmsc/xmmsc_util.h>
 #include <xmmspriv/xmms_plugin.h>
 #include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_courier.h>
 #include <xmmspriv/xmms_playlist.h>
 #include <xmmspriv/xmms_playlist_updater.h>
 #include <xmmspriv/xmms_collsync.h>
@@ -97,6 +98,7 @@ struct xmms_main_St {
 	xmms_xform_object_t *xform_object;
 	xmms_mediainfo_reader_t *mediainfo_object;
 	xmms_visualization_t *visualization_object;
+	xmms_courier_t *courier_object;
 	time_t starttime;
 };
 
@@ -392,6 +394,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_object_unref (mainobj->mediainfo_object);
 	xmms_object_unref (mainobj->plsupdater_object);
 	xmms_object_unref (mainobj->collsync_object);
+	xmms_object_unref (mainobj->courier_object);
 
 	xmms_config_save ();
 
@@ -647,7 +650,6 @@ main (int argc, char **argv)
 		exit (EXIT_FAILURE);
 	}
 
-
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	mainobj->medialib_object = xmms_medialib_init ();
@@ -665,6 +667,7 @@ main (int argc, char **argv)
 
 	mainobj->xform_object = xmms_xform_object_init ();
 	mainobj->bindata_object = xmms_bindata_init ();
+	mainobj->courier_object = xmms_courier_init();
 
 	/* find output plugin. */
 	cv = xmms_config_property_register ("output.plugin",
