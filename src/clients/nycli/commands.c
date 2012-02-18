@@ -691,29 +691,17 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
-	xmmsv_t *orderval, *fetchval;
-
+	xmmsv_t *fetchval;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
 	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
-	const gchar *property = NULL;
 
 	if (!command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		return FALSE;
 	}
 
 	coldisp = create_column_display (infos, ctx, default_columns);
-	if (!command_flag_stringlist_get (ctx, "order", &order)) {
-		orderval = xmmsv_build_list (
-			XMMSV_LIST_ENTRY_STR ("artist"),
-			XMMSV_LIST_ENTRY_STR ("album"),
-			XMMSV_LIST_ENTRY_STR ("partofset"),
-			XMMSV_LIST_ENTRY_STR ("tracknr"),
-			XMMSV_LIST_END);
-	} else {
-		orderval = xmmsv_make_stringlist ((gchar **) order, -1);
-	}
 
 	command_flag_stringlist_get (ctx, "columns", &columns);
 	if (columns) {
@@ -722,15 +710,16 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		fetchval = xmmsv_make_stringlist ((gchar **) default_columns, -1);
 	}
 
-	xmmsv_list_get_string (orderval, 0, &property);
-
-	/* If sorting by artist, put compilation albums at the end */
-	if (g_strcmp0 ("artist", property) == 0) {
+	/* If the user hasn't requested any special order, we assume ordering
+	 * search result per artist, and then album. To make this result more
+	 * readable we put the compilation albums at the end to get proper album
+	 * grouping.
+	 */
+	if (!command_flag_stringlist_get (ctx, "order", &order)) {
 		xmmsv_coll_t *compilation, *compilation_sorted;
 		xmmsv_coll_t *regular, *regular_sorted;
 		xmmsv_coll_t *complement, *concatenated;
-		xmmsv_t *compilation_order;
-		gint i;
+		xmmsv_t *compilation_order, *regular_order;
 
 		/* All various artists entries that match the user query. */
 		compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
@@ -748,21 +737,27 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		xmmsv_coll_add_operand (regular, complement);
 		xmmsv_coll_unref (complement);
 
-		/* Drop artist from the sort order */
-		compilation_order = xmmsv_new_list ();
-		for (i = 1; i < xmmsv_list_get_size (orderval); i++) {
-			xmmsv_t *entry;
-			xmmsv_list_get (orderval, i, &entry);
-			xmmsv_list_append (compilation_order, entry);
-		}
+		compilation_order = xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("album"),
+			XMMSV_LIST_ENTRY_STR ("partofset"),
+			XMMSV_LIST_ENTRY_STR ("tracknr"),
+			XMMSV_LIST_END);
 
 		compilation_sorted = xmmsv_coll_add_order_operators (compilation,
 		                                                     compilation_order);
 		xmmsv_coll_unref (compilation);
 		xmmsv_unref (compilation_order);
 
-		regular_sorted = xmmsv_coll_add_order_operators (regular, orderval);
+		regular_order = xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("artist"),
+			XMMSV_LIST_ENTRY_STR ("album"),
+			XMMSV_LIST_ENTRY_STR ("partofset"),
+			XMMSV_LIST_ENTRY_STR ("tracknr"),
+			XMMSV_LIST_END);
+
+		regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
 		xmmsv_coll_unref (regular);
+		xmmsv_unref (regular_order);
 
 		concatenated = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
 		xmmsv_coll_add_operand (concatenated, regular_sorted);
@@ -774,15 +769,16 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		                              0, 0, fetchval, NULL);
 		xmmsv_coll_unref (concatenated);
 	} else {
+		xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
 		res = xmmsc_coll_query_infos (infos->sync, query, orderval,
 		                              0, 0, fetchval, NULL);
+		xmmsv_unref (orderval);
 	}
 
 	xmmsc_result_wait (res);
 
 	list_print_row (res, NULL, coldisp, TRUE, TRUE);
 
-	xmmsv_unref (orderval);
 	xmmsv_unref (fetchval);
 	xmmsc_coll_unref (query);
 
