@@ -1015,7 +1015,7 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 		return FALSE;
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 static gboolean
