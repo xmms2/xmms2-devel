@@ -29,7 +29,6 @@
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
-#include "id3v1.h"
 #include "xing.h"
 #include <mad.h>
 
@@ -38,6 +37,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "../mp3_common/id3v1.c"
 
 /*
  * Type definitions

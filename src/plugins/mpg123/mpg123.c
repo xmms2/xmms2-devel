@@ -43,7 +43,7 @@
 #include <glib.h>
 #include <mpg123.h>
 
-#include "id3v1.h"
+#include "../mp3_common/id3v1.c"
 
 #define BUFSIZE 4096
 

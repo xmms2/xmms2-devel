@@ -21,7 +21,6 @@
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_medialib.h"
 #include "xmms/xmms_log.h"
-#include "id3v1.h"
 
 static const gchar * const id3_genres[] = {
         "Blues", "Classic Rock", "Country", "Dance",
@@ -171,7 +170,7 @@ xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	return TRUE;
 }
 
-gint
+static gint
 xmms_id3v1_get_tags (xmms_xform_t *xform)
 {
 	xmms_error_t err;
