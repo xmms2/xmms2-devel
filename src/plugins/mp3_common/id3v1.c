@@ -173,10 +173,21 @@ xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 static gint
 xmms_id3v1_get_tags (xmms_xform_t *xform)
 {
+	xmms_config_property_t *config;
+	gint enabled;
 	xmms_error_t err;
 	gint64 res;
 	guchar buf[128];
 	gint ret = 0;
+
+	config = xmms_xform_config_lookup (xform, "id3v1_enable");
+	g_return_val_if_fail (config, -1);
+	enabled = xmms_config_property_get_int (config);
+
+	if (!enabled) {
+		XMMS_DBG ("ID3v1 tags disabled.");
+		return 0;
+	}
 
 	xmms_error_reset (&err);
 

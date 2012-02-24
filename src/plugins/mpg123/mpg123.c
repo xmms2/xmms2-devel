@@ -105,6 +105,9 @@ xmms_mpg123_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                                            NULL,
 	                                            NULL);
 
+	xmms_xform_plugin_config_property_register (xform_plugin, "id3v1_enable",
+	                                            "1", NULL, NULL);
+
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/mpeg",
