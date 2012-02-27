@@ -43,11 +43,6 @@
 \
 	ret = xmmsv_coll_##action (coll->real); \
 
-#define COLL_METHOD_ADD_HANDLER_UINT(action, arg1) \
-	COLL_METHOD_HANDLER_HEADER \
-\
-	xmmsv_coll_##action (coll->real, check_uint32 (arg1)); \
-
 typedef struct {
 	VALUE attributes;
 	VALUE operands;
@@ -128,7 +123,7 @@ c_coll_init (VALUE self, VALUE type)
 {
 	COLL_METHOD_HANDLER_HEADER
 
-	coll->real = xmmsc_coll_new (check_uint32 (type));
+	coll->real = xmmsc_coll_new (check_int32 (type));
 
 	return self;
 }

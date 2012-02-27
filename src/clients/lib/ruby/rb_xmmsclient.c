@@ -802,8 +802,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 	xmmsc_result_t *res;
 	const char *ckey;
 	bool is_str = false;
-	uint32_t id;
-	int32_t ivalue;
+	int32_t id, ivalue;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
@@ -860,7 +859,7 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 	const char *ckey;
-	uint32_t id;
+	int32_t id;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 

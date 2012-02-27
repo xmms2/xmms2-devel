@@ -64,20 +64,20 @@
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
-#define PLAYLIST_METHOD_ADD_HANDLER_UINT(action, arg) \
+#define PLAYLIST_METHOD_ADD_HANDLER_INT(action, arg) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
 	res = xmmsc_playlist_##action (xmms->real, pl->name, \
-	                               check_uint32 (arg)); \
+	                               check_int32 (arg)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
-#define PLAYLIST_METHOD_ADD_HANDLER_UINT_UINT(action, arg1, arg2) \
+#define PLAYLIST_METHOD_ADD_HANDLER_INT_INT(action, arg1, arg2) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
 	res = xmmsc_playlist_##action (xmms->real, pl->name, \
-	                               check_uint32 (arg1), \
-	                               check_uint32 (arg2)); \
+	                               check_int32 (arg1), \
+	                               check_int32 (arg2)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
@@ -189,7 +189,7 @@ c_list_entries (VALUE self)
 static VALUE
 c_add_entry (VALUE self, VALUE arg)
 {
-	uint32_t id;
+	int32_t id;
 
 	PLAYLIST_METHOD_HANDLER_HEADER
 
@@ -197,7 +197,7 @@ c_add_entry (VALUE self, VALUE arg)
 		res = xmmsc_playlist_add_url (xmms->real, pl->name,
 		                              StringValuePtr (arg));
 	else {
-		id = check_uint32 (arg);
+		id = check_int32 (arg);
 		res = xmmsc_playlist_add_id (xmms->real, pl->name, id);
 	}
 
@@ -226,7 +226,7 @@ c_radd (VALUE self, VALUE path)
 static VALUE
 c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 {
-	uint32_t id;
+	int32_t id;
 	int32_t ipos;
 
 	PLAYLIST_METHOD_HANDLER_HEADER
@@ -237,7 +237,7 @@ c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 		res = xmmsc_playlist_insert_url (xmms->real, pl->name,
 		                                 ipos, StringValuePtr (arg));
 	else {
-		id = check_uint32 (arg);
+		id = check_int32 (arg);
 		res = xmmsc_playlist_insert_id (xmms->real, pl->name,
 		                                ipos, id);
 	}
@@ -267,7 +267,7 @@ c_rinsert (VALUE self, VALUE pos, VALUE path)
 static VALUE
 c_remove_entry (VALUE self, VALUE pos)
 {
-	PLAYLIST_METHOD_ADD_HANDLER_UINT (remove_entry, pos)
+	PLAYLIST_METHOD_ADD_HANDLER_INT (remove_entry, pos)
 }
 
 /*
@@ -279,7 +279,7 @@ c_remove_entry (VALUE self, VALUE pos)
 static VALUE
 c_move_entry (VALUE self, VALUE cur_pos, VALUE new_pos)
 {
-	PLAYLIST_METHOD_ADD_HANDLER_UINT_UINT (move_entry, cur_pos, new_pos)
+	PLAYLIST_METHOD_ADD_HANDLER_INT_INT (move_entry, cur_pos, new_pos)
 }
 
 /*
