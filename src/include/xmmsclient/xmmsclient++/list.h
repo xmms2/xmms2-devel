@@ -190,6 +190,10 @@ namespace Xmms
 			{
 				return const_reverse_iterator(begin());
 			}
+			int size () const
+			{
+				return xmmsv_list_get_size (value_);
+			}
 
 		/** @cond */
 		private:
