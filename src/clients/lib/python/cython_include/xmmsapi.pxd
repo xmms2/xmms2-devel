@@ -5,18 +5,6 @@ from cxmmsclient cimport *
 cdef bint ResultNotifier(xmmsv_t *res, void *o)
 cdef void ResultDestroyNotifier(void *o)
 
-cdef inline char *check_namespace(object ns, bint can_be_all) except NULL:
-	cdef char *n
-	if ns == "Collections":
-		n = <char *>XMMS_COLLECTION_NS_COLLECTIONS
-	elif ns == "Playlists":
-		n = <char *>XMMS_COLLECTION_NS_PLAYLISTS
-	elif can_be_all and ns == "*":
-		n = <char *>XMMS_COLLECTION_NS_ALL
-	else:
-		raise ValueError("Bad namespace")
-	return n
-
 cdef class XmmsSourcePreference:
 	cdef object sources
 

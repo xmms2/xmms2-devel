@@ -6,7 +6,7 @@ Python bindings for XMMS2.
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.bytes cimport PyBytes_FromStringAndSize
 cimport cython
-from xmmsutils cimport from_unicode
+from xmmsutils cimport from_unicode, to_unicode
 from cxmmsvalue cimport *
 from cxmmsclient cimport *
 from xmmsvalue cimport *
@@ -44,11 +44,11 @@ COLLECTION_CHANGED_REMOVE = XMMS_COLLECTION_CHANGED_REMOVE
 PLAYBACK_SEEK_CUR = XMMS_PLAYBACK_SEEK_CUR
 PLAYBACK_SEEK_SET = XMMS_PLAYBACK_SEEK_SET
 
-COLLECTION_NS_COLLECTIONS = <char *>XMMS_COLLECTION_NS_COLLECTIONS
-COLLECTION_NS_PLAYLISTS = <char *>XMMS_COLLECTION_NS_PLAYLISTS
-COLLECTION_NS_ALL = <char *>XMMS_COLLECTION_NS_ALL
+COLLECTION_NS_COLLECTIONS = to_unicode(<char *>XMMS_COLLECTION_NS_COLLECTIONS)
+COLLECTION_NS_PLAYLISTS = to_unicode(<char *>XMMS_COLLECTION_NS_PLAYLISTS)
+COLLECTION_NS_ALL = to_unicode(<char *>XMMS_COLLECTION_NS_ALL)
 
-ACTIVE_PLAYLIST = <char *>XMMS_ACTIVE_PLAYLIST
+ACTIVE_PLAYLIST = to_unicode(<char *>XMMS_ACTIVE_PLAYLIST)
 
 #####################################################################
 
@@ -74,6 +74,18 @@ cdef _install_select():
 	from select import select as _sel
 	select = _sel
 _install_select()
+
+cdef char *check_namespace(object ns, bint can_be_all) except NULL:
+	cdef char *n
+	if ns == COLLECTION_NS_COLLECTIONS:
+		n = <char *>XMMS_COLLECTION_NS_COLLECTIONS
+	elif ns == COLLECTION_NS_PLAYLISTS:
+		n = <char *>XMMS_COLLECTION_NS_PLAYLISTS
+	elif can_be_all and ns == COLLECTION_NS_ALL:
+		n = <char *>XMMS_COLLECTION_NS_ALL
+	else:
+		raise ValueError("Bad namespace")
+	return n
 
 cdef bint ResultNotifier(xmmsv_t *res, void *o):
 	cdef object xres
