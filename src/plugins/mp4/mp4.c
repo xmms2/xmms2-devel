@@ -51,10 +51,55 @@ static void xmms_mp4_destroy (xmms_xform_t *xform);
 static gint xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gint64 xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_mp4_get_mediainfo (xmms_xform_t *xform);
+static gboolean xmms_mp4_mediainfo_set_coverart (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 
 static uint32_t xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length);
 static uint32_t xmms_mp4_seek_callback (void *user_data, uint64_t position);
 static int xmms_mp4_get_track (xmms_xform_t *xform, mp4ff_t *infile);
+
+static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
+	{ "album",                       XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM             },
+	{ "title",                       XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE             },
+	{ "artist",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST            },
+	{ "album_artist",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "date",                        XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "writer",                      XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
+	{ "lyricist",                    XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
+	{ "conductor",                   XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "remixer",                     XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER           },
+	{ "producer",                    XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER          },
+	{ "mixer",                       XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER             },
+	{ "contentgroup",                XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "track",                       XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR           },
+	{ "totaltracks",                 XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS       },
+	{ "disc",                        XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET         },
+	{ "totaldiscs",                  XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET          },
+	{ "compilation",                 XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "comment",                     XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT           },
+	{ "genre",                       XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE             },
+	{ "tempo",                       XMMS_MEDIALIB_ENTRY_PROPERTY_BPM               },
+	{ "isrc",                        XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC              },
+	{ "catalognumber",               XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER     },
+	{ "barcode",                     XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE           },
+	{ "sortalbum",                   XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT        },
+	{ "sortalbumartist",             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT },
+	{ "sortartist",                  XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT       },
+	{ "description",                 XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION       },
+	{ "label",                       XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER         },
+	{ "asin",                        XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN              },
+	{ "MusicBrainz Album Id",        XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID          },
+	{ "MusicBrainz Artist Id",       XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID         },
+	{ "MusicBrainz Track Id",        XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID          },
+	{ "MusicBrainz Album Artist Id", XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "replaygain_track_gain",       XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK        },
+	{ "replaygain_album_gain",       XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM        },
+	{ "replaygain_track_peak",       XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK        },
+	{ "replaygain_album_peak",       XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM        },
+};
+
+static const xmms_xform_metadata_mapping_t mappings[] = {
+	{ "cover", xmms_mp4_mediainfo_set_coverart }
+};
 
 /*
  * Plugin header
@@ -77,6 +122,12 @@ xmms_mp4_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.seek = xmms_mp4_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_metadata_mapper_init (xform_plugin,
+	                                        basic_mappings,
+	                                        G_N_ELEMENTS (basic_mappings),
+	                                        mappings,
+	                                        G_N_ELEMENTS (mappings));
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -272,13 +323,33 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	return samples-toskip;
 }
 
+static gboolean
+xmms_mp4_mediainfo_set_coverart (xmms_xform_t *xform, const gchar *key,
+                                 const gchar *value, gsize length)
+{
+	const gchar *metakey;
+	gchar hash[33];
+
+	if (!xmms_bindata_plugin_add ((const guchar *) value, length, hash)) {
+		return FALSE;
+	}
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
+	xmms_xform_metadata_set_str (xform, metakey, hash);
+
+	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
+	xmms_xform_metadata_set_str (xform, metakey, "image/jpeg");
+
+	return TRUE;
+}
+
 static void
 xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 {
 	xmms_mp4_data_t *data;
-	glong temp;
-	gchar *metabuf;
 	const gchar *metakey;
+	glong temp;
+	gint i, num_items;
 
 	g_return_if_fail (xform);
 
@@ -296,111 +367,26 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 			xmms_xform_metadata_set_int (xform, metakey, msec);
 		}
 	}
+
 	if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
 		xmms_xform_metadata_set_int (xform, metakey, temp);
 	}
-	if (mp4ff_meta_get_artist (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_title (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_album (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_date (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_genre (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_comment (data->mp4ff, &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_get_track (data->mp4ff, &metabuf)) {
-		gint tracknr;
-		gchar *end;
 
-		tracknr = strtol (metabuf, &end, 10);
-		if (end && *end == '\0') {
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
-			xmms_xform_metadata_set_int (xform, metakey, tracknr);
+	num_items = mp4ff_meta_get_num_items (data->mp4ff);
+
+	for (i = 0; i < num_items; i++) {
+		gchar *key, *value;
+		guint length;
+
+		length = mp4ff_meta_get_by_index (data->mp4ff, i, &key, &value);
+		if (length > 0) {
+			if (!xmms_xform_metadata_mapper_match (xform, key, value, length)) {
+				XMMS_DBG ("Unhandled tag '%s' = '%s'", key, value);
+			}
+			g_free (key);
+			g_free (value);
 		}
-		g_free (metabuf);
-	}
-	if ((temp = mp4ff_meta_get_coverart (data->mp4ff, &metabuf))) {
-		gchar hash[33];
-
-		if (xmms_bindata_plugin_add ((guchar *) metabuf, temp, hash)) {
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
-			xmms_xform_metadata_set_str (xform, metakey, hash);
-
-			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
-			xmms_xform_metadata_set_str (xform, metakey, "image/jpeg");
-		}
-		g_free (metabuf);
-	}
-
-	/* MusicBrainz tag support */
-	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Track Id", &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Album Id", &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Artist Id", &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-
-	/* Replay Gain support */
-	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_track_gain", &metabuf)) {
-		gchar buf[8];
-
-		g_snprintf (buf, sizeof (buf), "%f",
-		            pow (10.0, g_strtod (metabuf, NULL) / 20));
-		g_free (metabuf);
-
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
-		xmms_xform_metadata_set_str (xform, metakey, buf);
-	}
-	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_gain", &metabuf)) {
-		gchar buf[8];
-
-		g_snprintf (buf, sizeof (buf), "%f",
-		            pow (10.0, g_strtod (metabuf, NULL) / 20));
-		g_free (metabuf);
-
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
-		xmms_xform_metadata_set_str (xform, metakey, buf);
-	}
-	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_track_peak", &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
-	}
-	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_peak", &metabuf)) {
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
-		xmms_xform_metadata_set_str (xform, metakey, metabuf);
-		g_free (metabuf);
 	}
 }
 
