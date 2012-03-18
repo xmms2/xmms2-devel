@@ -304,6 +304,7 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 	}
 
+
 	if (g_ascii_strcasecmp (key, "MusicBrainz Album Id") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID;
 		xmms_xform_metadata_set_str (xform, metakey, val);
@@ -320,13 +321,9 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	} else if (g_ascii_strcasecmp (key, "QuodLibet::albumartist") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
 		xmms_xform_metadata_set_str (xform, metakey, val);
-		// ArtistAlbumSort as last resort
-	} else if ((g_ascii_strcasecmp (key, "ALBUMARTISTSORT") == 0)) {
-		const gchar *tmp;
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST;
-		if (xmms_xform_metadata_get_str (xform, metakey, &tmp) && !strlen (tmp)) {
-			xmms_xform_metadata_set_str (xform, metakey, val);
-		}
+	} else if (g_ascii_strcasecmp (key, "ALBUMARTISTSORT") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	}
 
 	g_free (cbuf);
