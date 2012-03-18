@@ -107,6 +107,8 @@
  *>WPUB Publishers official webpage
  * TXXX User defined text information frame
  *>TXXX:ASIN                        Amazon Identification Number
+ *>TXXX:BARCODE                     Barcode
+ *>TXXX:CATALOGNUMBER               Record label catalog number
  *>TXXX:QuodLibet::albumartist      Album Artist Name (more to come)
  */
 
@@ -304,7 +306,6 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 	}
 
-
 	if (g_ascii_strcasecmp (key, "MusicBrainz Album Id") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID;
 		xmms_xform_metadata_set_str (xform, metakey, val);
@@ -324,6 +325,14 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	} else if (g_ascii_strcasecmp (key, "ALBUMARTISTSORT") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT;
 		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_ascii_strcasecmp (key, "BARCODE") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE;
+		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_ascii_strcasecmp (key, "CATALOGNUMBER") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER;
+		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else {
+		XMMS_DBG ("Unhandled tag 'TXXX:%s' = '%s'", key, val);
 	}
 
 	g_free (cbuf);
@@ -519,7 +528,7 @@ handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		}
 		i++;
 	}
-	XMMS_DBG ("Unhandled tag %c%c%c%c", (type >> 24) & 0xff, (type >> 16) & 0xff, (type >> 8) & 0xff, (type) & 0xff);
+	XMMS_DBG ("Unhandled tag '%c%c%c%c'", (type >> 24) & 0xff, (type >> 16) & 0xff, (type >> 8) & 0xff, (type) & 0xff);
 }
 
 
