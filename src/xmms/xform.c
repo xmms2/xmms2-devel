@@ -519,7 +519,6 @@ xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const g
 gboolean
 xmms_xform_metadata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
-	XMMS_DBG ("Setting '%s' to %d", key, val);
 	g_hash_table_insert (xform->metadata, g_strdup (key),
 	                     xmmsv_new_int (val));
 	xform->metadata_changed = TRUE;
