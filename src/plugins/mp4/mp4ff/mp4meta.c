@@ -391,16 +391,23 @@ int32_t mp4ff_meta_get_num_items(const mp4ff_t *f)
 int32_t mp4ff_meta_get_by_index(const mp4ff_t *f, uint32_t index,
                                 char **item, char **value)
 {
-    if (index >= f->tags.count)
+    if (index < f->tags.count)
     {
-        *item = NULL;
-        *value = NULL;
-        return 0;
-    } else {
-		*item = strdup(f->tags.tags[index].item);
-		*value = strdup(f->tags.tags[index].value);
-		return 1;
+        uint32_t value_length = f->tags.tags[index].value_length;
+
+        if (value_length > 0)
+        {
+            *item = strdup(f->tags.tags[index].item);
+            *value = malloc(value_length+1);
+            memcpy(*value, f->tags.tags[index].value, value_length+1);
+            return value_length;
+        }
     }
+
+    *item = NULL;
+    *value = NULL;
+
+    return 0;
 }
 
 int32_t mp4ff_meta_get_title(const mp4ff_t *f, char **value)

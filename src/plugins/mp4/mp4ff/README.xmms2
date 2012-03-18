@@ -13,3 +13,6 @@ Changes:
    necessary for cover art since it's binary data and can't be handled as a string
  * Add support for Apple Lossless audio files
  * Add a workaround for supporting higher samplerates.
+ * Use memcpy instead of strdup in mp4ff_meta_get_by_index to handle coverart tag which
+   is how mp4ff_meta_find_by_name works as well.
+ * Return length of value from mp4ff_meta_get_by_index, same as mp4ff_meta_find_by_name.
