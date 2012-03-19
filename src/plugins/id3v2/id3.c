@@ -363,6 +363,91 @@ handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 }
 
+/* Parse a string like '1/10' and return how many integers were found */
+static gint
+parse_number_slash_number (const gchar *value, gint *first, gint *second)
+{
+	gchar *endptr = NULL;
+	gint ivalue;
+
+	*first = *second = -1;
+
+	ivalue = strtol (value, &endptr, 10);
+	if (!(endptr > value)) {
+		return 0;
+	}
+
+	*first = ivalue;
+
+	if (*endptr != '/') {
+		return 1;
+	}
+
+	value = (const gchar *) endptr + 1;
+
+	ivalue = strtol (value, &endptr, 10);
+	if (!(endptr > value)) {
+		return 1;
+	}
+
+	*second = ivalue;
+
+	return 2;
+}
+
+static void
+handle_tracknr_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                      const gchar *key, gchar *buf, gsize len)
+{
+	const gchar *enc;
+	gchar *nval;
+	gsize clen;
+
+	enc = binary_to_enc (buf[0]);
+	nval = convert_id3_text (enc, &buf[1], len - 1, &clen);
+	if (nval) {
+		gint tracknr, tracktotal;
+
+		parse_number_slash_number (nval, &tracknr, &tracktotal);
+		if (tracknr > 0) {
+			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
+			xmms_xform_metadata_set_int (xform, metakey, tracknr);
+		}
+		if (tracktotal > 0) {
+			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS;
+			xmms_xform_metadata_set_int (xform, metakey, tracktotal);
+		}
+
+		g_free (nval);
+	}
+}
+
+static void
+handle_partofset_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                        const gchar *key, gchar *buf, gsize len)
+{
+	const gchar *enc;
+	gchar *nval;
+	gsize clen;
+
+	enc = binary_to_enc (buf[0]);
+	nval = convert_id3_text (enc, &buf[1], len - 1, &clen);
+	if (nval) {
+		gint partofset, totalset;
+
+		parse_number_slash_number (nval, &partofset, &totalset);
+		if (partofset > 0) {
+			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET;
+			xmms_xform_metadata_set_int (xform, metakey, partofset);
+		}
+		if (totalset > 0) {
+			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET;
+			xmms_xform_metadata_set_int (xform, metakey, totalset);
+		}
+		g_free (nval);
+	}
+}
+
 static void
 handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
                    const gchar *key, gchar *buf, gsize len)
@@ -487,8 +572,8 @@ static struct id3tags_t tags[] = {
 	{ quad2long ('X','S','O','A'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT, NULL },
 	{ quad2long ('T','T','2',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
 	{ quad2long ('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long ('T','R','K',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
-	{ quad2long ('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long ('T','R','K',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_tracknr_field },
+	{ quad2long ('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_tracknr_field },
 	{ quad2long ('T','P','1',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long ('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long ('T','S','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT, NULL },
@@ -496,7 +581,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long ('T','C','O','N'), NULL, handle_id3v2_tcon },
 	{ quad2long ('T','B','P',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
 	{ quad2long ('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
-	{ quad2long ('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
+	{ quad2long ('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_partofset_field },
 	{ quad2long ('T','C','M','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, handle_int_field },
 	{ quad2long ('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long ('U','F','I','D'), NULL, handle_id3v2_ufid },
