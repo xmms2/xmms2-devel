@@ -60,14 +60,16 @@
  *
  *>TALB Album/Movie/Show title
  *>TBPM BPM (beats per minute)
+ *>TCMP Compilation
  *>TCOM Composer
  *>TCON Content type
  * TCOP Copyright message
  * TDAT Date (v2.3 deprecated in v2.4, replaced by TDRC)
  *>TDRC Recording time (v2.4)
  * TDLY Playlist delay
+ *>TDOR Original recording year
  * TENC Encoded by
- * TEXT Lyricist/Text writer
+ *>TEXT Lyricist/Text writer
  * TFLT File type
  * TIME Time (v2.3 deprecated in v2.4, replaced by TDRC)
  *>TIT1 Content group description
@@ -81,20 +83,22 @@
  * TOFN Original filename
  * TOLY Original lyricist(s)/text writer(s)
  *>TOPE Original artist(s)/performer(s)
- * TORY Original release year
+ *>TORY Original release year
  * TOWN File owner/licensee
  *>TPE1 Lead performer(s)/Soloist(s)
- *>TPE2 Band/orchestra/accompaniment
+ *>TPE2 Album artist
  *>TPE3 Conductor/performer refinement
  *>TPE4 Interpreted, remixed, or otherwise modified by
- * TPOS Part of a set
+ *>TPOS Part of a set
  *>TPUB Publisher
  *>TRCK Track number/Position in set
  * TRDA Recording dates (v2.3 deprecated in v2.4, replaced by TDRC)
  * TRSN Internet radio station name
  * TRSO Internet radio station owner
  * TSIZ Size
- * TSRC ISRC (international standard recording code)
+ *>TSOA Album sort
+ *>TSOP Artist sort
+ *>TSRC ISRC (international standard recording code)
  * TSSE Software/Hardware and settings used for encoding
  *>TYER Year (v2.3 deprecated in v2.4, replaced by TDRC)
  * WCOM Commercial information URL
@@ -105,6 +109,8 @@
  * WORS Official Internet radio station homepage
  * WPAY Payment URL
  *>WPUB Publishers official webpage
+ *>XSOA Album sort
+ *>XSOP Artist sort
  * TXXX User defined text information frame
  *>TXXX:ASIN                        Amazon Identification Number
  *>TXXX:BARCODE                     Barcode
@@ -470,33 +476,42 @@ struct id3tags_t {
 };
 
 static struct id3tags_t tags[] = {
-	{ quad2long ('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long ('T','Y','E',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
 	{ quad2long ('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
 	{ quad2long ('T','D','R','C'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
-	{ quad2long ('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long ('T','D','O','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINALYEAR, NULL },
+	{ quad2long ('T','O','R','Y'), XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINALYEAR, NULL },
+	{ quad2long ('T','A','L',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long ('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
-	{ quad2long ('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long ('T','S','O','A'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT, NULL },
+	{ quad2long ('X','S','O','A'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT, NULL },
+	{ quad2long ('T','T','2',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
 	{ quad2long ('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long ('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long ('T','R','K',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
 	{ quad2long ('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
-	{ quad2long ('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long ('T','P','1',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long ('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long ('T','S','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT, NULL },
+	{ quad2long ('X','S','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT, NULL },
 	{ quad2long ('T','C','O','N'), NULL, handle_id3v2_tcon },
-	{ quad2long ('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long ('T','B','P',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
 	{ quad2long ('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
 	{ quad2long ('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
+	{ quad2long ('T','C','M','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, handle_int_field },
 	{ quad2long ('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long ('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ quad2long ('A','P','I','C'), NULL, handle_id3v2_apic },
 	{ quad2long ('C','O','M','M'), NULL, handle_id3v2_comm },
 	{ quad2long ('T','I','T','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING, NULL },
 	{ quad2long ('T','I','T','3'), XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION, NULL },
-	{ quad2long ('T','P','E','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_PERFORMER, NULL },
+	{ quad2long ('T','P','E','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST, NULL },
 	{ quad2long ('T','P','E','3'), XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR, NULL },
-	{ quad2long ('T','P','E','4'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER, NULL },
+	{ quad2long ('T','P','E','4'), XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER, NULL },
 	{ quad2long ('T','O','P','E'), XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINAL_ARTIST, NULL },
 	{ quad2long ('T','P','U','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER, NULL },
 	{ quad2long ('T','C','O','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER, NULL },
+	{ quad2long ('T','E','X','T'), XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST, NULL },
+	{ quad2long ('T','S','R','C'), XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC, NULL },
 	{ quad2long ('T','C','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT, NULL },
 	{ quad2long ('W','O','A','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_ARTIST, NULL },
 	{ quad2long ('W','O','A','F'), XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_FILE, NULL },
