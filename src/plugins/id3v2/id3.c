@@ -475,10 +475,10 @@ static void
 handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
                    const gchar *key, gchar *buf, gsize len)
 {
-	const gchar *enc, *typ, *desc, *data, *mime;
+	const gchar *typ, *desc, *data, *mime;
 	gchar hash[33];
 
-	enc = binary_to_enc (buf[0]);
+	/* skip encoding */
 	buf++;
 	len--;
 	mime = buf;
