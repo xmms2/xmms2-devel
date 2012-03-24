@@ -390,7 +390,10 @@ filter_condition (xmms_medialib_session_t *session,
 	}
 
 	if (xmmsv_coll_attribute_get (coll, "value", &val)) {
-		if (xmms_parse_int (val, &ival)) {
+		gchar *endptr;
+
+		ival = strtol (val, &endptr, 10);
+		if (endptr > val && *endptr == '\0') {
 			value = s4_val_new_int (ival);
 		} else {
 			value = s4_val_new_string (val);

@@ -154,28 +154,6 @@ xmms_natcmp (const gchar *str1, const gchar *str2)
 }
 
 /**
- * Check if a string is a number, if it is save it in val
- *
- * @param str The str to check
- * @param val A pointer to where we want the number to be saved
- * @return TRUE if the str is a number, FALSE otherwise
- */
-gboolean
-xmms_parse_int (const gchar *str, gint *val)
-{
-	gboolean ret = FALSE;
-	gchar *end;
-
-	if (!isspace (*str)) {
-		*val = strtol (str, &end, 10);
-		if (*end == '\0')
-			ret = TRUE;
-	}
-
-	return ret;
-}
-
-/**
  * Case insensitive version of g_str_equal.
  * @param v1 first string
  * @param v2 second string
