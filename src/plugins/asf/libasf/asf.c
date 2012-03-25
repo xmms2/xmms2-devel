@@ -1,5 +1,5 @@
 /*  libasf - An Advanced Systems Format media file parser
- *  Copyright (C) 2006-2007 Juho Vähä-Herttua
+ *  Copyright (C) 2006-2010 Juho Vähä-Herttua
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,12 +21,30 @@
 
 #include "asf.h"
 #include "asfint.h"
-#include "fileio.h"
 #include "byteio.h"
 #include "header.h"
 #include "parse.h"
 #include "data.h"
 #include "debug.h"
+
+
+static int
+asf_fileio_read_cb(void *stream, void *buffer, int size)
+{
+	int ret;
+
+	ret = fread(buffer, 1, size, stream);
+	if (!ret && !feof(stream))
+		return -1;
+
+	return ret;
+}
+
+static int64_t
+asf_fileio_seek_cb(void *stream, int64_t offset)
+{
+	return fseek(stream, offset, SEEK_SET);
+}
 
 asf_file_t *
 asf_open_file(const char *filename)
@@ -35,12 +53,12 @@ asf_open_file(const char *filename)
 	asf_iostream_t stream;
 	FILE *fstream;
 
-	fstream = fopen(filename, "r");
+	fstream = fopen(filename, "rb");
 	if (!fstream)
 		return NULL;
 
 	stream.read = asf_fileio_read_cb;
-	stream.write = asf_fileio_write_cb;
+	stream.write = NULL;
 	stream.seek = asf_fileio_seek_cb;
 	stream.opaque = fstream;
 
@@ -80,7 +98,7 @@ asf_open_cb(asf_iostream_t *iostream)
 		file->streams[i].type = ASF_STREAM_TYPE_NONE;
 		file->streams[i].flags = ASF_STREAM_FLAG_NONE;
 		file->streams[i].properties = NULL;
-		file->streams[i].extended = NULL;
+		file->streams[i].extended_properties = NULL;
 	}
 
 	return file;
@@ -120,7 +138,7 @@ asf_init(asf_file_t *file)
 
 		/* if first seek fails, we can try to recover and just ignore seeking */
 		if (seek_position >= 0) {
-			while (seek_position == file->index_position &&
+			while ((uint64_t)seek_position == file->index_position &&
 			       file->index_position < file->file_size && !file->index) {
 				tmp = asf_parse_index(file);
 				if (tmp < 0) {
@@ -143,7 +161,7 @@ asf_init(asf_file_t *file)
 
 			seek_position = file->iostream.seek(file->iostream.opaque,
 							  file->data->packets_position);
-			if (seek_position != file->data->packets_position) {
+			if ((uint64_t)seek_position != file->data->packets_position) {
 				/* Couldn't seek back to packets position, this is fatal! */
 				return ASF_ERROR_SEEK;
 			}
@@ -176,7 +194,7 @@ asf_close(asf_file_t *file)
 
 		for (i=0; i < ASF_MAX_STREAMS; i++) {
 			free(file->streams[i].properties);
-			free(file->streams[i].extended);
+			free(file->streams[i].extended_properties);
 		}
 
 		free(file);
@@ -227,8 +245,8 @@ asf_packet_destroy(asf_packet_t *packet)
 	free(packet);
 }
 
-int64_t
-asf_seek_to_msec(asf_file_t *file, int64_t msec)
+uint64_t
+asf_seek_to_msec(asf_file_t *file, uint64_t msec)
 {
 	uint64_t packet;
 	uint64_t new_position;
@@ -292,7 +310,7 @@ asf_seek_to_msec(asf_file_t *file, int64_t msec)
 	new_position = file->data->packets_position + packet * file->packet_size;
 
 	seek_position = file->iostream.seek(file->iostream.opaque, new_position);
-	if (seek_position < 0 || seek_position != new_position) {
+	if (seek_position < 0 || (uint64_t)seek_position != new_position) {
 		return ASF_ERROR_SEEK;
 	}
 
