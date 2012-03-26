@@ -34,7 +34,7 @@
 #include <mpc/mpcdec.h>
 #endif
 
-#include "ape.h"
+#include "../apev2_common/apev2.c"
 
 #ifdef HAVE_MPCDEC_OLD
 typedef struct xmms_mpc_data_St {
@@ -65,21 +65,62 @@ static void xmms_mpc_destroy (xmms_xform_t *decoder);
 
 static void xmms_mpc_cache_streaminfo (xmms_xform_t *decoder);
 
-static void xmms_mpc_collect_metadata (xmms_xform_t *xform);
-
 static gint xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
                            gint len, xmms_error_t *err);
 
 static gint64 xmms_mpc_seek (xmms_xform_t *xform, gint64 offset,
                              xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
-XMMS_XFORM_PLUGIN ("musepack", "Musepack decoder", XMMS_VERSION,
-                   "Musepack Living Audio Compression",
-                   xmms_mpc_plugin_setup);
+/** These are the properties that we extract from the comments */
+static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
+	{ "Album",                     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM             },
+	{ "Title",                     XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE             },
+	{ "Artist",                    XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST            },
+	{ "Album Artist",              XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "Year",                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "Composer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
+	{ "Lyricist",                  XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
+	{ "Conductor",                 XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "Performer",                 XMMS_MEDIALIB_ENTRY_PROPERTY_PERFORMER         },
+	{ "MixArtist",                 XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER           },
+	{ "Arranger",                  XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER          },
+	{ "Producer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER          },
+	{ "Mixer",                     XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER             },
+	{ "Grouping",                  XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "Compilation",               XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "Comment",                   XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT           },
+	{ "Genre",                     XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE             },
+	{ "BPM",                       XMMS_MEDIALIB_ENTRY_PROPERTY_BPM               },
+	{ "ASIN",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN              },
+	{ "ISRC",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC              },
+	{ "Label",                     XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER         },
+	{ "Copyright",                 XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT         },
+	{ "CatalogNumber",             XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER     },
+	{ "Barcode",                   XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE           },
+	{ "ALBUMSORT",                 XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT        },
+	{ "ALBUMARTISTSORT",           XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT },
+	{ "ARTISTSORT",                XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT       },
+	{ "MUSICBRAINZ_TRACKID",       XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID          },
+	{ "MUSICBRAINZ_ALBUMID",       XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID          },
+	{ "MUSICBRAINZ_ARTISTID",      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID         },
+	{ "MUSICBRAINZ_ALBUMARTISTID", XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       }
+};
+
+static const xmms_xform_metadata_mapping_t mappings[] = {
+	{ "Track",             xmms_apetag_handle_tag_track    },
+	{ "Disc",              xmms_apetag_handle_tag_disc     },
+	{ "Cover Art (Front)", xmms_apetag_handle_tag_coverart }
+};
+
 
 /*
  * Plugin header
  */
+
+XMMS_XFORM_PLUGIN ("musepack", "Musepack decoder", XMMS_VERSION,
+                   "Musepack Living Audio Compression",
+                   xmms_mpc_plugin_setup);
+
 static gboolean
 xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
@@ -92,6 +133,12 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.seek = xmms_mpc_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_metadata_mapper_init (xform_plugin,
+	                                        basic_mappings,
+	                                        G_N_ELEMENTS (basic_mappings),
+	                                        mappings,
+	                                        G_N_ELEMENTS (mappings));
 
 	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-mpc", NULL);
@@ -106,8 +153,6 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	return TRUE;
 }
-
-
 
 static mpc_int32_t
 xmms_mpc_callback_read (READER_OBJ *p_obj, void *buffer, mpc_int32_t size)
@@ -188,12 +233,18 @@ static gboolean
 xmms_mpc_init (xmms_xform_t *xform)
 {
 	xmms_mpc_data_t *data;
+	xmms_error_t error;
 
 	data = g_new0 (xmms_mpc_data_t, 1);
 	xmms_xform_private_data_set (xform, data);
 
-	xmms_mpc_collect_metadata (xform);
+	if (!xmms_apetag_read (xform)) {
+		XMMS_DBG ("Failed to read APEv2 tag");
+	}
 
+	/* Reset to start after reading the tags */
+	xmms_error_reset (&error);
+	xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_SET, &error);
 
 	data->buffer = g_string_new (NULL);
 
@@ -321,64 +372,6 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 		xmms_xform_metadata_set_str (xform, metakey, buf);
 	}
 }
-
-
-typedef enum { STRING, INTEGER } ptype;
-typedef struct {
-       const gchar *vname;
-       const gchar *xname;
-       ptype type;
-} props ;
-
-
-static const props properties[] = {
-       { "title",  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,   STRING  },
-       { "album",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,   STRING  },
-       { "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,  STRING  },
-       { "track",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, INTEGER },
-       { "genre",  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,   STRING  },
-       { "year",   XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,    STRING  },
-};
-
-
-static void
-xmms_mpc_collect_metadata (xmms_xform_t *xform)
-{
-	xmms_mpc_data_t *data;
-	xmms_apetag_t *tag;
-	gint i, intval;
-	const gchar *strval;
-
-	g_return_if_fail (xform);
-	data = xmms_xform_private_data_get (xform);
-	g_return_if_fail (data);
-
-	tag = xmms_apetag_init (xform);
-
-	if (xmms_apetag_read (tag)) {
-		for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-			switch (properties[i].type) {
-				case INTEGER:
-					intval = xmms_apetag_lookup_int (tag, properties[i].vname);
-					if (intval > 0) {
-						xmms_xform_metadata_set_int (xform, properties[i].xname,
-						                             intval);
-					}
-					break;
-				case STRING:
-					strval = xmms_apetag_lookup_str (tag, properties[i].vname);
-					if (strval != NULL) {
-						xmms_xform_metadata_set_str (xform, properties[i].xname,
-						                             strval);
-					}
-					break;
-			}
-		}
-	}
-
-	xmms_apetag_destroy (tag);
-}
-
 
 static gint
 xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
