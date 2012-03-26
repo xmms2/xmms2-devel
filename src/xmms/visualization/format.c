@@ -100,11 +100,10 @@ fft (short *samples, gfloat *spec)
 
 	/* output abs-value instead */
 	for (i = 0; i < nv2; i++) {
-		spec[i] = hypot (buf[i][0], buf[i][1]);
+		spec[i] = 2 * hypot (buf[i][0], buf[i][1]) / FFT_LEN;
 	}
 
 	/* correct the scale */
-	spec[0] /= 2;
 	spec[nv2 - 1] /= 2;
 }
 
