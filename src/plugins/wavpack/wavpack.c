@@ -30,6 +30,8 @@
 #include <string.h>
 #include <wavpack/wavpack.h>
 
+#include "../apev2_common/apev2.c"
+
 typedef struct xmms_wavpack_data_St {
 	WavpackContext *ctx;
 	WavpackStreamReader reader;
@@ -45,47 +47,58 @@ typedef struct xmms_wavpack_data_St {
 	gint buf_mono_samples;
 } xmms_wavpack_data_t;
 
-typedef enum { STRING, INTEGER, INTEGERSLASH, RPGAIN } ptype;
-typedef struct {
-	const gchar *vname;
-	const gchar *xname;
-	ptype type;
-} props;
+/** These are the properties that we extract from the comments */
+static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
+	{ "Album",                     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM             },
+	{ "Title",                     XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE             },
+	{ "Artist",                    XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST            },
+	{ "Album Artist",              XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "Year",                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
+	{ "Composer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
+	{ "Lyricist",                  XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
+	{ "Conductor",                 XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR         },
+	{ "Performer",                 XMMS_MEDIALIB_ENTRY_PROPERTY_PERFORMER         },
+	{ "MixArtist",                 XMMS_MEDIALIB_ENTRY_PROPERTY_REMIXER           },
+	{ "Arranger",                  XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER          },
+	{ "Producer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER          },
+	{ "Mixer",                     XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER             },
+	{ "Grouping",                  XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING          },
+	{ "Compilation",               XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
+	{ "Comment",                   XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT           },
+	{ "Genre",                     XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE             },
+	{ "BPM",                       XMMS_MEDIALIB_ENTRY_PROPERTY_BPM               },
+	{ "ASIN",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ASIN              },
+	{ "ISRC",                      XMMS_MEDIALIB_ENTRY_PROPERTY_ISRC              },
+	{ "Label",                     XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER         },
+	{ "Copyright",                 XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT         },
+	{ "CatalogNumber",             XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER     },
+	{ "Barcode",                   XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE           },
+	{ "ALBUMSORT",                 XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_SORT        },
+	{ "ALBUMARTISTSORT",           XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT },
+	{ "ARTISTSORT",                XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT       },
+	{ "MUSICBRAINZ_TRACKID",       XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID          },
+	{ "MUSICBRAINZ_ALBUMID",       XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID          },
+	{ "MUSICBRAINZ_ARTISTID",      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID         },
+	{ "MUSICBRAINZ_ALBUMARTISTID", XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION       },
 
-/*
- *  Try to map as many APEv2 tag keys to medialib as possible.
- *  If a medialib key is listed twice, the one furthest down the list takes priority
- */
-static const props properties[] = {
 	/* foobar2000 free-form strings (not in APEv2 spec) */
-	{ "tracknumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,      STRING },
-	{ "discnumber",            XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET,    STRING },
-	{ "album artist",          XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST, STRING },
-
-	/* Standard APEv2 tags (defined in the spec) */
-	{ "title",                 XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,        STRING },
-	{ "artist",                XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,       STRING },
-	{ "album",                 XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,        STRING },
-	{ "publisher",             XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER,    STRING },
-	{ "conductor",             XMMS_MEDIALIB_ENTRY_PROPERTY_CONDUCTOR,    STRING },
-	{ "track",                 XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,      STRING },
-	{ "composer",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER,     STRING },
-	{ "comment",               XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,      STRING },
-	{ "copyright",             XMMS_MEDIALIB_ENTRY_PROPERTY_COPYRIGHT,    STRING },
-	{ "file",                  XMMS_MEDIALIB_ENTRY_PROPERTY_WEBSITE_FILE, STRING },
-	{ "year",                  XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,         STRING },
-	{ "genre",                 XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,        STRING },
-	{ "media",                 XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET,    STRING },
-	{ "language",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT_LANG, STRING },
+	{ "tracknumber",               XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,          },
+	{ "discnumber",                XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET,        },
 
 	/* ReplayGain (including obsolete tag names - priority to new style tags) */
-	{ "rg_audiophile",         XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,   RPGAIN },
-	{ "replaygain_album_gain", XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,   RPGAIN },
-	{ "replaygain_album_peak", XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,   RPGAIN },
-	{ "rg_radio",              XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,   RPGAIN },
-	{ "replaygain_track_gain", XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,   RPGAIN },
-	{ "rg_peak",               XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,   RPGAIN },
-	{ "replaygain_track_peak", XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,   RPGAIN }
+	{ "rg_audiophile",             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,       },
+	{ "replaygain_album_gain",     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,       },
+	{ "replaygain_album_peak",     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,       },
+	{ "rg_radio",                  XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,       },
+	{ "replaygain_track_gain",     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,       },
+	{ "rg_peak",                   XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,       },
+	{ "replaygain_track_peak",     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,       }
+};
+
+static const xmms_xform_metadata_mapping_t mappings[] = {
+	{ "Track",             xmms_apetag_handle_tag_track    },
+	{ "Disc",              xmms_apetag_handle_tag_disc     },
+	{ "Cover Art (Front)", xmms_apetag_handle_tag_coverart }
 };
 
 /*
@@ -94,7 +107,6 @@ static const props properties[] = {
 
 static gboolean xmms_wavpack_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_wavpack_init (xmms_xform_t *xform);
-static void xmms_wavpack_get_tags (xmms_xform_t *xform);
 static gint64 xmms_wavpack_seek (xmms_xform_t *xform, gint64 samples,
                                  xmms_xform_seek_mode_t whence, xmms_error_t *error);
 static gint xmms_wavpack_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
@@ -133,6 +145,12 @@ xmms_wavpack_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
+	xmms_xform_plugin_metadata_mapper_init (xform_plugin,
+	                                        basic_mappings,
+	                                        G_N_ELEMENTS (basic_mappings),
+	                                        mappings,
+	                                        G_N_ELEMENTS (mappings));
+
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-wavpack",
@@ -156,6 +174,10 @@ xmms_wavpack_init (xmms_xform_t *xform)
 	gchar error[1024];
 
 	g_return_val_if_fail (xform, FALSE);
+
+	if (!xmms_apetag_read (xform)) {
+		XMMS_DBG ("Failed to read APEv2 tag");
+	}
 
 	data = g_new0 (xmms_wavpack_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
@@ -196,8 +218,6 @@ xmms_wavpack_init (xmms_xform_t *xform)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             (int) WavpackGetAverageBitrate (data->ctx, FALSE));
 
-	xmms_wavpack_get_tags (xform);
-
 	switch (data->bits_per_sample) {
 	case 8:
 		sample_format = XMMS_SAMPLE_FORMAT_S8;
@@ -230,45 +250,6 @@ xmms_wavpack_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_END);
 
 	return TRUE;
-}
-
-static void
-xmms_wavpack_get_tags (xmms_xform_t *xform)
-{
-	xmms_wavpack_data_t *data;
-	xmms_error_t error;
-
-	guint i = 0;
-	gchar value[255];
-	gchar buf[8];
-
-	XMMS_DBG ("xmms_wavpack_get_tags");
-
-	g_return_if_fail (xform);
-
-	data = (xmms_wavpack_data_t *) xmms_xform_private_data_get (xform);
-
-	xmms_error_reset (&error);
-
-	if (WavpackGetMode (data->ctx) & MODE_VALID_TAG) {
-		memset (value, 0, 255);
-
-		for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-			if (WavpackGetTagItem (data->ctx, properties[i].vname, value, sizeof (value))) {
-				if (properties[i].type == INTEGER) {
-					gint tmp = strtol (value, NULL, 10);
-					xmms_xform_metadata_set_int (xform, properties[i].xname, tmp);
-				} else if (properties[i].type == RPGAIN) {
-					g_snprintf (buf, sizeof (buf), "%f",
-					            pow (10.0, g_strtod (value, NULL) / 20));
-
-					xmms_xform_metadata_set_str (xform, properties[i].xname, buf);
-				} else {
-					xmms_xform_metadata_set_str (xform, properties[i].xname, value);
-				}
-			}
-		}
-	}
 }
 
 static gint64
