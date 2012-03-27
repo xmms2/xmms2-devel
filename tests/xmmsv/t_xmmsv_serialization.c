@@ -214,26 +214,36 @@ CASE (test_xmmsv_serialize_coll_match)
 	xmmsv_coll_t *coll, *all_media;
 	const unsigned char *data;
 	unsigned int length;
+	int i;
 	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x04, /* XMMSV_TYPE_COLL */
 		0x00, 0x00, 0x00, 0x06, /* XMMS_COLLECTION_TYPE_MATCH */
-		0x00, 0x00, 0x00, 0x02, /* number of attributes*/
+		0x00, 0x00, 0x00, 0x03, /* number of attributes*/
 
-		0x00, 0x00, 0x00, 0x06, /* attr[0] key length */
-		0x66, 0x69, 0x65, 0x6c, /* attr[0] key "fiel" */
-		0x64, 0x00,             /*              "d\0" */
+		0x00, 0x00, 0x00, 0x05, /* attr[0] key length */
+		0x73, 0x65, 0x65, 0x64, /* attr[0] key "seed" */
+		0x00,                   /*             "\0"   */
 
-		0x00, 0x00, 0x00, 0x07, /* attr[0] value length */
-		0x61, 0x72, 0x74, 0x69, /* attr[0] value "arti"*/
-		0x73, 0x74, 0x00,       /*               "st\0" */
+		0x00, 0x00, 0x00, 0x02, /* attr[0] value type  */
+		0x00, 0x00, 0x7a, 0x69, /* attr[0] value 31337 */
 
 		0x00, 0x00, 0x00, 0x06, /* attr[1] key length */
-		0x76, 0x61, 0x6c, 0x75, /* attr[1] key "valu" */
+		0x66, 0x69, 0x65, 0x6c, /* attr[1] key "fiel" */
+		0x64, 0x00,             /*              "d\0" */
+
+		0x00, 0x00, 0x00, 0x03, /* attr[1] value type   */
+		0x00, 0x00, 0x00, 0x07, /* attr[1] value length */
+		0x61, 0x72, 0x74, 0x69, /* attr[1] value "arti" */
+		0x73, 0x74, 0x00,       /*               "st\0" */
+
+		0x00, 0x00, 0x00, 0x06, /* attr[2] key length */
+		0x76, 0x61, 0x6c, 0x75, /* attr[2] key "valu" */
 		0x65, 0x00,             /*             "e\0" */
 
-		0x00, 0x00, 0x00, 0x0c, /* attr[1] value length */
-		0x2a, 0x73, 0x65, 0x6e, /* attr[1] value "*sen"*/
+		0x00, 0x00, 0x00, 0x03, /* attr[2] value type   */
+		0x00, 0x00, 0x00, 0x0c, /* attr[2] value length */
+		0x2a, 0x73, 0x65, 0x6e, /* attr[2] value "*sen"*/
 		0x74, 0x65, 0x6e, 0x63, /*               "tenc" */
 		0x65, 0x64, 0x2a, 0x00, /*               "ed*\0" */
 
@@ -252,6 +262,10 @@ CASE (test_xmmsv_serialize_coll_match)
 
 	xmmsv_coll_attribute_set (coll, "field", "artist");
 	xmmsv_coll_attribute_set (coll, "value", "*sentenced*");
+
+	/* TODO: Workaround until the attributes API has been reworked. */
+	attrs = xmmsv_coll_attributes_get (coll);
+	xmmsv_dict_set_int (attrs, "seed", 31337);
 
 	all_media = xmmsv_coll_universe ();
 	xmmsv_coll_add_operand (coll, all_media);
@@ -279,13 +293,17 @@ CASE (test_xmmsv_serialize_coll_match)
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (coll), XMMS_COLLECTION_TYPE_MATCH);
 
 	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (coll)),
-	                 2);
+	                 3);
 
 	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "field", &s));
 	CU_ASSERT_STRING_EQUAL (s, "artist");
 
 	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "value", &s));
 	CU_ASSERT_STRING_EQUAL (s, "*sentenced*");
+
+	attrs = xmmsv_coll_attributes_get (coll);
+	CU_ASSERT_TRUE (xmmsv_dict_entry_get_int (attrs, "seed", &i));
+	CU_ASSERT_EQUAL (i, 31337);
 
 	operands = xmmsv_coll_operands_get (coll);
 
