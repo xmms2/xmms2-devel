@@ -29,12 +29,14 @@ static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_coll_t *coll);
 static bool _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v);
 static bool _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v);
 
+static bool _internal_get_from_bb_bin_alloc (xmmsv_t *bb, unsigned char **buf, unsigned int *len);
 static bool _internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
 static bool _internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_string_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
 static bool _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll);
-static bool _internal_get_from_bb_bin_alloc (xmmsv_t *bb, unsigned char **buf, unsigned int *len);
+static bool _internal_get_from_bb_value_dict_alloc (xmmsv_t *bb, xmmsv_t **val);
+static bool _internal_get_from_bb_value_list_alloc (xmmsv_t *bb, xmmsv_t **val);
 
 static bool _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t **val);
 
@@ -424,8 +426,8 @@ err:
 }
 
 
-static int
-xmmsc_deserialize_dict (xmmsv_t *bb, xmmsv_t **val)
+static bool
+_internal_get_from_bb_value_dict_alloc (xmmsv_t *bb, xmmsv_t **val)
 {
 	xmmsv_t *dict;
 	int32_t len;
@@ -465,8 +467,8 @@ err:
 	return false;
 }
 
-static int
-xmmsc_deserialize_list (xmmsv_t *bb, xmmsv_t **val)
+static bool
+_internal_get_from_bb_value_list_alloc (xmmsv_t *bb, xmmsv_t **val)
 {
 	xmmsv_t *list;
 	int32_t len;
@@ -529,13 +531,13 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
 			free (s);
 			break;
 		case XMMSV_TYPE_DICT:
-			if (!xmmsc_deserialize_dict (bb, val)) {
+			if (!_internal_get_from_bb_value_dict_alloc (bb, val)) {
 				return false;
 			}
 			break;
 
 		case XMMSV_TYPE_LIST :
-			if (!xmmsc_deserialize_list (bb, val)) {
+			if (!_internal_get_from_bb_value_list_alloc (bb, val)) {
 				return false;
 			}
 			break;
