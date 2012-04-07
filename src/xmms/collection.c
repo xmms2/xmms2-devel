@@ -687,20 +687,27 @@ xmmsv_t *
 xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                            xmmsv_t *order, xmms_error_t *err)
 {
-	xmmsv_t *ret;
-	xmmsv_t *fetch_spec = NULL;
+	xmmsv_t *ret, *spec, *metadata, *get;
 	xmmsv_coll_t *ordered;
 
-	xmmsv_t *meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("id"), NULL, meta);
+	get = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("id"),
+	                        XMMSV_LIST_END);
+
+	metadata = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+	                             XMMSV_DICT_ENTRY_STR ("aggregate", "first"),
+	                             XMMSV_DICT_ENTRY ("get", get),
+	                             XMMSV_DICT_END);
+
+	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "cluster-list"),
+	                         XMMSV_DICT_ENTRY_STR ("cluster-by", "position"),
+	                         XMMSV_DICT_ENTRY ("data", metadata),
+	                         XMMSV_DICT_END);
 
 	ordered = xmmsv_coll_add_order_operators (coll, order);
 
-	ret = xmms_collection_client_query (dag, ordered, fetch_spec, err);
-
+	ret = xmms_collection_client_query (dag, ordered, spec, err);
 	xmmsv_coll_unref (ordered);
-
-	xmmsv_unref (fetch_spec);
+	xmmsv_unref (spec);
 
 	return ret;
 }
