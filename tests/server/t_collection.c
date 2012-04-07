@@ -305,12 +305,8 @@ CASE (test_client_query_infos)
 {
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
-	xmmsv_coll_t *universe;
+	xmmsv_coll_t *universe, *ordered;
 	xmmsv_t *expected, *result, *order, *fetch, *group;
-	gint limit_start, limit_length;
-
-	limit_start = 0;
-	limit_length = 0;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	entry = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
@@ -329,6 +325,10 @@ CASE (test_client_query_infos)
 	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
 	                          XMMSV_LIST_END);
 
+	ordered = xmmsv_coll_add_order_operators (universe, order);
+	xmmsv_coll_unref (universe);
+	xmmsv_unref (order);
+
 	fetch = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
 	                          XMMSV_LIST_ENTRY_STR ("album"),
 	                          XMMSV_LIST_ENTRY_STR ("title"),
@@ -340,12 +340,10 @@ CASE (test_client_query_infos)
 	                          XMMSV_LIST_END);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
-	                        xmmsv_new_coll (universe),
-	                        xmmsv_new_int (limit_start),
-	                        xmmsv_new_int (limit_length),
-	                        order, fetch, group);
-	xmmsv_coll_unref (universe);
-
+	                        xmmsv_new_coll (ordered),
+	                        xmmsv_new_int (0), xmmsv_new_int (0),
+	                        fetch, group);
+	xmmsv_coll_unref (ordered);
 
 	expected = xmmsv_from_xson ("[{                             "
 	                            "  'artist': 'Red Fang',        "

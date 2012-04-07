@@ -245,16 +245,11 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
                         int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
+	xmmsv_coll_t *ordered;
+
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
 	x_api_error_if (!fetch, "with a NULL fetch list", NULL);
-
-	/* default to empty ordering */
-	if (!order) {
-		order = xmmsv_new_list ();
-	} else {
-		xmmsv_ref (order);
-	}
 
 	/* default to empty grouping */
 	if (!group) {
@@ -263,12 +258,13 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 		xmmsv_ref (group);
 	}
 
+	ordered = xmmsv_coll_add_order_operators (coll, order);
+
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
 	                       XMMS_IPC_CMD_QUERY_INFOS,
-	                       XMMSV_LIST_ENTRY_COLL (coll),
+	                       XMMSV_LIST_ENTRY_COLL (ordered),
 	                       XMMSV_LIST_ENTRY_INT (limit_start),
 	                       XMMSV_LIST_ENTRY_INT (limit_len),
-	                       XMMSV_LIST_ENTRY (order),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
 	                       XMMSV_LIST_ENTRY (group),
 	                       XMMSV_LIST_END);

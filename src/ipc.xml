@@ -1559,17 +1559,6 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>order</name>
-                <documentation>The list of properties to order by.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
-                </type>
-            </argument>
-
-            <argument>
                 <name>fetch</name>
                 <documentation>The list of properties to be retrieved (may not be empty).</documentation>
 

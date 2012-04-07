@@ -114,7 +114,7 @@ static void xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *co
 static GList * xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *namespace, xmms_error_t *error);
 static void xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name, const gchar *to_name, const gchar *namespace, xmms_error_t *error);
 
-static xmmsv_t * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, int limit_start, int limit_len, xmmsv_t *order, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
+static xmmsv_t * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, int limit_start, int limit_len, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
 static xmmsv_t * xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_t *fetch, xmms_error_t *err);
 static xmmsv_coll_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
 static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
@@ -711,11 +711,11 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 xmmsv_t *
 xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                                     int limit_start, int limit_len,
-                                    xmmsv_t *order, xmmsv_t *fetch,
+                                    xmmsv_t *fetch,
                                     xmmsv_t *group, xmms_error_t *err)
 {
 	xmmsv_t *fetch_spec, *org_dict, *org_data, *unflattened, *ret;
-	xmmsv_coll_t *coll2, *coll3;
+	xmmsv_coll_t *coll3;
 	xmmsv_list_iter_t *it;
 	int i;
 	const char *str;
@@ -726,8 +726,6 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid fetch list");
 	} else if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING)) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid group list");
-	} else if (order != NULL && !xmmsv_list_has_type (order, XMMSV_TYPE_STRING)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid order list");
 	}
 
 	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
@@ -783,11 +781,9 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 		xmmsv_list_iter_prev (it);
 	}
 
-	coll2 = xmmsv_coll_add_order_operators (coll, order);
-	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
+	coll3 = xmmsv_coll_add_limit_operator (coll, limit_start, limit_len);
 	unflattened = xmms_collection_client_query (dag, coll3, fetch_spec, err);
 
-	xmmsv_coll_unref (coll2);
 	xmmsv_coll_unref (coll3);
 	xmmsv_unref (fetch_spec);
 
