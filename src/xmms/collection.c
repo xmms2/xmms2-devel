@@ -587,7 +587,7 @@ xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *name
 		coll = xmms_collection_get_pointer (dag, open_name, nsid);
 
 		xmmsv_coll_add_operand (filter_coll, coll);
-		idlist = xmms_collection_query_ids (dag, coll, 0, 0, NULL, err);
+		idlist = xmms_collection_query_ids (dag, coll, NULL, err);
 
 		if (xmmsv_list_get_size (idlist) > 0) {
 			*match = XMMS_COLLECTION_FIND_STATE_MATCH;
@@ -685,23 +685,20 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
  */
 xmmsv_t *
 xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                           gint32 lim_start, gint32 lim_len, xmmsv_t *order,
-                           xmms_error_t *err)
+                           xmmsv_t *order, xmms_error_t *err)
 {
 	xmmsv_t *ret;
 	xmmsv_t *fetch_spec = NULL;
-	xmmsv_coll_t *coll2, *coll3;
+	xmmsv_coll_t *ordered;
 
 	xmmsv_t *meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
 	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("id"), NULL, meta);
 
-	coll2 = xmmsv_coll_add_order_operators (coll, order);
-	coll3 = xmmsv_coll_add_limit_operator (coll2, lim_start, lim_len);
+	ordered = xmmsv_coll_add_order_operators (coll, order);
 
-	ret = xmms_collection_client_query (dag, coll3, fetch_spec, err);
+	ret = xmms_collection_client_query (dag, ordered, fetch_spec, err);
 
-	xmmsv_coll_unref (coll2);
-	xmmsv_coll_unref (coll3);
+	xmmsv_coll_unref (ordered);
 
 	xmmsv_unref (fetch_spec);
 
