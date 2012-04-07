@@ -198,25 +198,33 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  */
 xmmsc_result_t*
 xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
-                      xmmsv_t *order, int limit_start,
-                      int limit_len)
+                      xmmsv_t *order, int limit_start, int limit_len)
 {
+	xmmsv_t *spec, *metadata, *get;
+	xmmsv_coll_t *ordered, *limited;
 	xmmsc_result_t *ret;
-	xmmsv_t *fetch_spec, *meta;
-	xmmsv_coll_t *coll2, *coll3;
 
 	/* Creates the fetchspec to use */
-	meta = xmmsv_build_metadata (NULL, xmmsv_new_string ("id"), "first", NULL);
-	fetch_spec = xmmsv_build_cluster_list (xmmsv_new_string ("position"), NULL, meta);
+	get = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("id"),
+	                        XMMSV_LIST_END);
 
-	coll2 = xmmsv_coll_add_order_operators (coll, order);
-	coll3 = xmmsv_coll_add_limit_operator (coll2, limit_start, limit_len);
+	metadata = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+	                             XMMSV_DICT_ENTRY_STR ("aggregate", "first"),
+	                             XMMSV_DICT_ENTRY ("get", get),
+	                             XMMSV_DICT_END);
 
-	ret = xmmsc_coll_query (conn, coll3, fetch_spec);
+	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "cluster-list"),
+	                         XMMSV_DICT_ENTRY_STR ("cluster-by", "position"),
+	                         XMMSV_DICT_ENTRY ("data", metadata),
+	                         XMMSV_DICT_END);
 
-	xmmsv_unref (fetch_spec);
-	xmmsv_coll_unref (coll2);
-	xmmsv_coll_unref (coll3);
+	ordered = xmmsv_coll_add_order_operators (coll, order);
+	limited = xmmsv_coll_add_limit_operator (ordered, limit_start, limit_len);
+
+	ret = xmmsc_coll_query (conn, limited, spec);
+	xmmsv_coll_unref (ordered);
+	xmmsv_coll_unref (limited);
+	xmmsv_unref (spec);
 
 	return ret;
 }
