@@ -1196,23 +1196,22 @@ xmms_medialib_entry_t
 xmms_medialib_query_random_id (xmms_medialib_session_t *session,
                                xmmsv_coll_t *coll)
 {
-	xmmsv_t *fetch_spec, *get_list, *res;
 	xmms_medialib_entry_t ret;
+	xmmsv_t *spec, *res;
 	xmms_error_t err;
 
-	get_list = xmmsv_new_list ();
-	xmmsv_list_append_string (get_list, "id");
+	spec = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("id"),
+	                         XMMSV_LIST_END);
 
-	fetch_spec = xmmsv_new_dict ();
-	xmmsv_dict_set_string (fetch_spec, "type", "metadata");
-	xmmsv_dict_set_string (fetch_spec, "aggregate", "random");
-	xmmsv_dict_set (fetch_spec, "get", get_list);
+	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+	                         XMMSV_DICT_ENTRY_STR ("aggregate", "random"),
+	                         XMMSV_DICT_ENTRY ("get", spec),
+	                         XMMSV_DICT_END);
 
-	res = xmms_medialib_query (session, coll, fetch_spec, &err);
+	res = xmms_medialib_query (session, coll, spec, &err);
 	xmmsv_get_int (res, &ret);
 
-	xmmsv_unref (get_list);
-	xmmsv_unref (fetch_spec);
+	xmmsv_unref (spec);
 	xmmsv_unref (res);
 
 	return ret;

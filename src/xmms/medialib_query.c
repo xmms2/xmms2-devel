@@ -443,9 +443,9 @@ idlist_condition (xmms_medialib_session_t *session,
 
 	idlist = xmmsv_coll_idlist_get (coll);
 
-	child_order = xmmsv_new_dict ();
-	xmmsv_dict_set_int (child_order, "type", SORT_TYPE_LIST);
-	xmmsv_dict_set (child_order, "list", idlist);
+	child_order = xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", SORT_TYPE_LIST),
+	                                XMMSV_DICT_ENTRY ("list", xmmsv_ref (idlist)),
+	                                XMMSV_DICT_END);
 
 	xmmsv_list_append (order, child_order);
 	xmmsv_unref (child_order);
@@ -539,10 +539,10 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	s4_resultset_free (set);
 
 	/* Need ordering for correct windowing */
-	child_order = xmmsv_new_dict ();
-	xmmsv_dict_set_int (child_order, "type", SORT_TYPE_LIST);
-	xmmsv_dict_set (child_order, "list", id_list);
-	xmmsv_unref (id_list);
+
+	child_order = xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", SORT_TYPE_LIST),
+	                                XMMSV_DICT_ENTRY ("list", id_list),
+	                                XMMSV_DICT_END);
 
 	xmmsv_list_append (order, child_order);
 	xmmsv_unref (child_order);
@@ -663,10 +663,9 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 		xmmsv_list_iter_next (it);
 	}
 
-	entry = xmmsv_new_dict ();
-	xmmsv_dict_set_int (entry, "type", SORT_TYPE_LIST);
-	xmmsv_dict_set (entry, "list", id_list);
-	xmmsv_unref (id_list);
+	entry = xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", SORT_TYPE_LIST),
+	                          XMMSV_DICT_ENTRY ("list", id_list),
+	                          XMMSV_DICT_END);
 
 	xmmsv_list_append (order, entry);
 	xmmsv_unref (entry);

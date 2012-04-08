@@ -1272,7 +1272,7 @@ xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
                            xmmsv_t *properties, xmms_error_t *err)
 {
 
-	xmmsv_t *tmp, *idlist, *val, *spec, *metadata, *get;
+	xmmsv_t *tmp, *idlist, *val, *spec;
 	xmmsv_coll_t *plcoll, *ordered;
 	gint currpos, pos;
 	xmms_medialib_entry_t currid;
@@ -1298,20 +1298,18 @@ xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
 	xmmsv_coll_idlist_get_index (plcoll, currpos, &currid);
 
-	get = xmmsv_new_list ();
-	xmmsv_list_append_string (get, "id");
+	spec = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("id"),
+	                         XMMSV_LIST_END);
 
-	metadata = xmmsv_new_dict ();
-	xmmsv_dict_set_string (metadata, "type", "metadata");
-	xmmsv_dict_set_string (metadata, "aggregate", "first");
-	xmmsv_dict_set (metadata, "get", get);
-	xmmsv_unref (get);
+	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+	                         XMMSV_DICT_ENTRY_STR ("aggregate", "first"),
+	                         XMMSV_DICT_ENTRY ("get", spec),
+	                         XMMSV_DICT_END);
 
-	spec = xmmsv_new_dict ();
-	xmmsv_dict_set_string (spec, "type", "cluster-list");
-	xmmsv_dict_set_string (spec, "cluster-by", "position");
-	xmmsv_dict_set (spec, "data", metadata);
-	xmmsv_unref (metadata);
+	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "cluster-list"),
+	                         XMMSV_DICT_ENTRY_STR ("cluster-by", "position"),
+	                         XMMSV_DICT_ENTRY ("data", spec),
+	                         XMMSV_DICT_END);
 
 	ordered = xmmsv_coll_add_order_operators (plcoll, properties);
 
