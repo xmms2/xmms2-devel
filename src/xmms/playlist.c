@@ -36,9 +36,7 @@
 #include "xmmspriv/xmms_playlist.h"
 
 static void xmms_playlist_destroy (xmms_object_t *object);
-static void xmms_playlist_client_shuffle (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
-static void xmms_playlist_client_clear (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
-static void xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname, xmmsv_t *property, xmms_error_t *err);
+static void xmms_playlist_client_replace (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_playlist_position_action_t action, xmms_error_t *err);
 static GList * xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static gchar *xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
@@ -561,68 +559,6 @@ xmms_playlist_client_load (xmms_playlist_t *playlist, const gchar *name, xmms_er
 	                    name);
 }
 
-static inline void
-swap_entries (xmmsv_coll_t *coll, gint i, gint j)
-{
-	xmms_medialib_entry_t tmp, tmp2;
-
-	xmmsv_coll_idlist_get_index (coll, i, &tmp);
-	xmmsv_coll_idlist_get_index (coll, j, &tmp2);
-
-	xmmsv_coll_idlist_set_index (coll, i, tmp2);
-	xmmsv_coll_idlist_set_index (coll, j, tmp);
-}
-
-
-/**
- * Shuffle the playlist.
- *
- */
-static void
-xmms_playlist_client_shuffle (xmms_playlist_t *playlist, const gchar *plname,
-                              xmms_error_t *err)
-{
-	guint j,i;
-	gint len, currpos;
-	xmmsv_coll_t *plcoll;
-
-	g_return_if_fail (playlist);
-
-	g_mutex_lock (playlist->mutex);
-
-	plcoll = xmms_playlist_get_coll (playlist, plname, err);
-	if (plcoll == NULL) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "no such playlist");
-		g_mutex_unlock (playlist->mutex);
-		return;
-	}
-
-	currpos = xmms_playlist_coll_get_currpos (plcoll);
-	len = xmms_playlist_coll_get_size (plcoll);
-	if (len > 1) {
-		/* put current at top and exclude from shuffling */
-		if (currpos != -1) {
-			swap_entries (plcoll, 0, currpos);
-			currpos = 0;
-			xmms_collection_set_int_attr (plcoll, "position", currpos);
-		}
-
-		/* knuth <3 */
-		for (i = currpos + 1; i < len; i++) {
-			j = g_random_int_range (i, len);
-
-			if (i != j) {
-				swap_entries (plcoll, i, j);
-			}
-		}
-
-	}
-
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, plname);
-	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
-
-	g_mutex_unlock (playlist->mutex);
-}
 
 static gboolean
 xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, const gchar *plname,
@@ -1117,31 +1053,6 @@ xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist,
 	xmms_playlist_changed_msg_send (playlist, dict);
 }
 
-/** Clear the playlist */
-static void
-xmms_playlist_client_clear (xmms_playlist_t *playlist, const gchar *plname,
-                            xmms_error_t *err)
-{
-	xmmsv_coll_t *plcoll;
-
-	g_return_if_fail (playlist);
-
-	g_mutex_lock (playlist->mutex);
-
-	plcoll = xmms_playlist_get_coll (playlist, plname, err);
-	if (plcoll == NULL) {
-		g_mutex_unlock (playlist->mutex);
-		return;
-	}
-
-	xmmsv_coll_idlist_clear (plcoll);
-	xmms_collection_set_int_attr (plcoll, "position", -1);
-
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, plname);
-	g_mutex_unlock (playlist->mutex);
-
-}
-
 
 /** Set the nextentry pointer in the playlist.
  *
@@ -1268,23 +1179,17 @@ xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32 pos,
  *  method handler.
  */
 static void
-xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
-                           xmmsv_t *properties, xmms_error_t *err)
+xmms_playlist_client_replace (xmms_playlist_t *playlist, const gchar *plname,
+                              xmmsv_coll_t *coll, xmms_playlist_position_action_t action,
+                              xmms_error_t *err)
 {
-
-	xmmsv_t *tmp, *idlist, *val, *spec;
-	xmmsv_coll_t *plcoll, *ordered;
-	gint currpos, pos;
-	xmms_medialib_entry_t currid;
+	xmms_medialib_entry_t id, current_id;
+	xmmsv_coll_t *plcoll;
+	xmmsv_t *result;
+	gint current_position, i;
 
 	g_return_if_fail (playlist);
-	g_return_if_fail (properties);
-
-	if (xmmsv_list_get_size (properties) < 1) {
-		xmms_error_set (err, XMMS_ERROR_NOENT,
-		                "need at least one property to sort");
-		return;
-	}
+	g_return_if_fail (coll);
 
 	g_mutex_lock (playlist->mutex);
 
@@ -1295,55 +1200,46 @@ xmms_playlist_client_sort (xmms_playlist_t *playlist, const gchar *plname,
 		return;
 	}
 
-	currpos = xmms_playlist_coll_get_currpos (plcoll);
-	xmmsv_coll_idlist_get_index (plcoll, currpos, &currid);
+	current_position = xmms_playlist_coll_get_currpos (plcoll);
+	xmmsv_coll_idlist_get_index (plcoll, current_position, &current_id);
 
-	spec = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("id"),
-	                         XMMSV_LIST_END);
-
-	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "metadata"),
-	                         XMMSV_DICT_ENTRY_STR ("aggregate", "first"),
-	                         XMMSV_DICT_ENTRY ("get", spec),
-	                         XMMSV_DICT_END);
-
-	spec = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "cluster-list"),
-	                         XMMSV_DICT_ENTRY_STR ("cluster-by", "position"),
-	                         XMMSV_DICT_ENTRY ("data", spec),
-	                         XMMSV_DICT_END);
-
-	ordered = xmmsv_coll_add_order_operators (plcoll, properties);
-
-	MEDIALIB_BEGIN (playlist->medialib);
-	tmp = xmms_medialib_query (session, ordered, spec, err);
-	MEDIALIB_COMMIT ();
-
-	xmmsv_coll_unref (ordered);
-	xmmsv_unref (spec);
-
-	if (tmp == NULL) {
+	result = xmms_collection_query_ids (playlist->colldag, coll, NULL, err);
+	if (result == NULL) {
 		g_mutex_unlock (playlist->mutex);
 		return;
 	}
 
-	idlist = xmmsv_coll_idlist_get (plcoll);
-	xmmsv_list_clear (idlist);
+	xmmsv_coll_idlist_clear (plcoll);
 
-	for (pos = 0; xmmsv_list_get (tmp, pos, &val); pos++) {
-		xmms_medialib_entry_t id;
+	current_position = -1;
 
-		xmmsv_get_int (val, &id);
-		xmmsv_list_append (idlist, val);
-
-		if (id == currid) {
-			xmms_collection_set_int_attr (plcoll, "position", pos);
-			currpos = pos;
-		}
+	for (i = 0; xmmsv_list_get_int (result, i, &id); i++) {
+		if (id == current_id)
+			current_position = i;
+		xmmsv_coll_idlist_append (plcoll, id);
 	}
 
-	xmmsv_unref (tmp);
+	switch (action) {
+		case XMMS_PLAYLIST_CURRENT_ID_FORGET:
+			current_position = -1;
+			break;
+		case XMMS_PLAYLIST_CURRENT_ID_MOVE_TO_FRONT:
+			if (current_position > 0) {
+				xmmsv_coll_idlist_move (plcoll, current_position, 0);
+				current_position = 0;
+			}
+			break;
+		default:
+			break;
+	}
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0, plname);
-	XMMS_PLAYLIST_CURRPOS_MSG (currpos, plname);
+	xmmsv_unref (result);
+
+	xmms_collection_set_int_attr (plcoll, "position", current_position);
+
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_REPLACE,
+	                           (current_position < 0) ? 0 : current_id, plname);
+	XMMS_PLAYLIST_CURRPOS_MSG (current_position, plname);
 
 	g_mutex_unlock (playlist->mutex);
 }

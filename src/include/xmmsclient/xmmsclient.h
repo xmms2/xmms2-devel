@@ -89,6 +89,7 @@ xmmsc_result_t *xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *pl
 xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist, xmmsv_coll_t *coll, xmmsv_t *order);
 xmmsc_result_t *xmmsc_playlist_remove_entry (xmmsc_connection_t *c, const char *playlist, int);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist);
+xmmsc_result_t *xmmsc_playlist_replace (xmmsc_connection_t *c, const char *playlist, xmmsv_coll_t *coll, xmms_playlist_position_action_t action);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *properties);
