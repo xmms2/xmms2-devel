@@ -713,6 +713,7 @@ static s4_condition_t *
 reference_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                      xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
+	xmmsv_coll_t *reference;
 	xmmsv_t *operands;
 
 	if (is_universe (coll)) {
@@ -720,9 +721,12 @@ reference_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	}
 
 	operands = xmmsv_coll_operands_get (coll);
-	xmmsv_list_get_coll (operands, 0, &coll);
+	if (!xmmsv_list_get_coll (operands, 0, &reference)) {
+		xmms_log_error ("Collection references not properly bound, bye bye");
+		g_assert_not_reached ();
+	}
 
-	return collection_to_condition  (session, coll, fetch, order);
+	return collection_to_condition  (session, reference, fetch, order);
 }
 
 /**
