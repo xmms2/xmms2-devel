@@ -60,7 +60,7 @@
  * Forward declarations of the methods in the main object
  */
 static void xmms_main_client_quit (xmms_object_t *object, xmms_error_t *error);
-static GTree *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
+static xmmsv_t *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
 static GList *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
@@ -111,23 +111,15 @@ static gchar *conffile = NULL;
 /**
  * This returns the main stats for the server
  */
-static GTree *
+static xmmsv_t *
 xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 {
-	GTree *ret;
-	gint starttime;
+	xmms_main_t *mainobj = (xmms_main_t *) object;
+	gint uptime = time (NULL) - mainobj->starttime;
 
-	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                       NULL, (GDestroyNotify) xmmsv_unref);
-
-	starttime = ((xmms_main_t*)object)->starttime;
-
-	g_tree_insert (ret, (gpointer) "version",
-	               xmmsv_new_string (XMMS_VERSION));
-	g_tree_insert (ret, (gpointer) "uptime",
-	               xmmsv_new_int (time (NULL) - starttime));
-
-	return ret;
+	return xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("version", XMMS_VERSION),
+	                         XMMSV_DICT_ENTRY_INT ("uptime", uptime),
+	                         XMMSV_DICT_END);
 }
 
 static gboolean
@@ -328,10 +320,12 @@ xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *cl
 
 static gboolean
 kill_server (gpointer object) {
-	xmms_object_emit_f (XMMS_OBJECT (object),
-	                    XMMS_IPC_SIGNAL_QUIT,
-	                    XMMSV_TYPE_INT32,
-	                    time (NULL)-((xmms_main_t*)object)->starttime);
+	xmms_main_t *mainobj = (xmms_main_t *) object;
+	gint uptime = time (NULL) - mainobj->starttime;
+
+	xmms_object_emit (XMMS_OBJECT (object),
+	                  XMMS_IPC_SIGNAL_QUIT,
+	                  xmmsv_new_int (uptime));
 
 	xmms_object_unref (object);
 

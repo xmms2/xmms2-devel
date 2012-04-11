@@ -122,34 +122,25 @@ static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err
 
 #include "collection_ipc.c"
 
-GTree *
+xmmsv_t *
 xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
                                  const gchar *plname, const gchar *namespace)
 {
-	GTree *dict;
-
-	dict = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                        NULL, (GDestroyNotify)xmmsv_unref);
-
-	g_tree_insert (dict, (gpointer) "type", xmmsv_new_int (type));
-	g_tree_insert (dict, (gpointer) "name", xmmsv_new_string (plname));
-	g_tree_insert (dict, (gpointer) "namespace", xmmsv_new_string (namespace));
-
-	return dict;
+	return xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", type),
+	                         XMMSV_DICT_ENTRY_STR ("name", plname),
+	                         XMMSV_DICT_ENTRY_STR ("namespace", namespace),
+	                         XMMSV_DICT_END);
 }
 
 void
-xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GTree *dict)
+xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, xmmsv_t *dict)
 {
 	g_return_if_fail (colldag);
 	g_return_if_fail (dict);
 
-	xmms_object_emit_f (XMMS_OBJECT (colldag),
-	                    XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
-	                    XMMSV_TYPE_DICT,
-	                    dict);
-
-	g_tree_destroy (dict);
+	xmms_object_emit (XMMS_OBJECT (colldag),
+	                  XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                  dict);
 }
 
 #define XMMS_COLLECTION_CHANGED_MSG(type, name, namespace) xmms_collection_changed_msg_send (dag, xmms_collection_changed_msg_new (type, name, namespace))
@@ -648,8 +639,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		xmms_error_set (err, XMMS_ERROR_NOENT, "a collection already exists with the target name");
 	} else {
 		/* Update collection name everywhere */
-
-		GTree *dict;
+		xmmsv_t *dict;
 
 		/* insert new pair in hashtable */
 		xmms_collection_dag_replace (dag, nsid, to_name, from_coll);
@@ -665,7 +655,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		/* Send _RENAME signal */
 		dict = xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_RENAME,
 		                                        from_name, namespace);
-		g_tree_insert (dict, (gpointer) "newname", xmmsv_new_string (to_name));
+		xmmsv_dict_set_string (dict, "newname", to_name);
 		xmms_collection_changed_msg_send (dag, dict);
 	}
 

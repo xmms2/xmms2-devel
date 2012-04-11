@@ -22,9 +22,7 @@
 #include <string.h>
 
 static xmmsv_t *xmms_create_xmmsv_list (GList *list);
-static xmmsv_t *xmms_create_xmmsv_dict (GTree *dict);
 static void create_xmmsv_list_foreach (gpointer data, gpointer userdata);
-static gboolean create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata);
 
 
 /** @defgroup Object Object
@@ -226,6 +224,8 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data)
 
 		list2 = g_list_delete_link (list2, list2);
 	}
+
+	xmmsv_unref (data);
 }
 
 /**
@@ -239,60 +239,6 @@ xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg)
 
 	memset (arg, 0, sizeof (xmms_object_cmd_arg_t));
 	xmms_error_reset (&arg->error);
-}
-
-/**
- * Emits a signal on the current object. This is like xmms_object_emit
- * but you don't have to create the #xmms_object_cmd_arg_t yourself.
- * Use this when you creating non-complex signal arguments.
- *
- * @param object Object to signal on.
- * @param signalid Signal to emit.
- * @param type the argument type to emit followed by the argument data.
- *
- */
-
-void
-xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
-                    xmmsv_type_t type, ...)
-{
-	va_list ap;
-	xmmsv_t *arg;
-
-	va_start (ap, type);
-
-	switch (type) {
-		case XMMSV_TYPE_NONE:
-			arg = xmmsv_new_none ();
-			break;
-		case XMMSV_TYPE_INT32:
-			arg = xmmsv_new_int (va_arg (ap, gint32));
-			break;
-		case XMMSV_TYPE_STRING:
-			arg = xmmsv_new_string (va_arg (ap, gchar *));
-			break;
-		case XMMSV_TYPE_DICT:
-			arg = xmms_create_xmmsv_dict (va_arg (ap, GTree *));
-			break;
-		case XMMSV_TYPE_END:
-		default:
-			XMMS_DBG ("OBJECT: trying to emit value of unsupported type (%d)!", (int)type);
-			g_assert_not_reached ();
-			break;
-	}
-	va_end (ap);
-
-	xmms_object_emit (object, signalid, arg);
-
-	/* In all cases above, we created a new xmmsv_t, which we
-	 * now destroy.
-	 * In some cases, those xmmsv_t's are created from GLib objects,
-	 * such as GTrees. Here we must not destroy those GLib objects,
-	 * because the caller wants to do that. However, the xmmsv_t's
-	 * don't hold onto those GLib objects, so unreffing the
-	 * xmmsv_t doesn't kill the GLib object.
-	 */
-	xmmsv_unref (arg);
 }
 
 static gint
@@ -374,36 +320,6 @@ xmms_convert_and_kill_list (GList *list)
 	return v;
 }
 
-/**
- * Create a new #xmmsv_t dict initialized with the argument.
- * @param dict The dict of values to initially fill the #xmmsv_t with.
- * @return a new #xmmsv_t dict.
- */
-static xmmsv_t *
-xmms_create_xmmsv_dict (GTree *dict)
-{
-	xmmsv_t *v = NULL;
-	if (dict) {
-		v = xmmsv_new_dict ();
-		g_tree_foreach (dict, create_xmmsv_dict_foreach, (gpointer) v);
-	}
-	return v;
-}
-
-xmmsv_t *
-xmms_convert_and_kill_dict (GTree *dict)
-{
-	xmmsv_t *v;
-
-	v = xmms_create_xmmsv_dict (dict);
-
-	if (dict) {
-		g_tree_destroy (dict);
-	}
-
-	return v;
-}
-
 xmmsv_t *
 xmms_convert_and_kill_string (gchar *str)
 {
@@ -431,16 +347,6 @@ create_xmmsv_list_foreach (gpointer data, gpointer userdata)
 	 * xmmsv list.
 	 */
 	xmmsv_unref (v);
-}
-
-static gboolean
-create_xmmsv_dict_foreach (gpointer key, gpointer data, gpointer userdata)
-{
-	const char *k = (const char *) key;
-	xmmsv_t *v = (xmmsv_t *) data;
-	xmmsv_t *l = (xmmsv_t *) userdata;
-	xmmsv_dict_set (l, k, v);
-	return FALSE;
 }
 
 int

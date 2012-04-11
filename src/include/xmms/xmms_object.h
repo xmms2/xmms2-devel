@@ -52,7 +52,6 @@ struct xmms_object_St {
 
 /* Convenience wrapper to create #xmmsv_t from GLib types. */
 xmmsv_t *xmms_convert_and_kill_list (GList *list);
-xmmsv_t *xmms_convert_and_kill_dict (GTree *dict);
 xmmsv_t *xmms_convert_and_kill_string (gchar *str);
 xmmsv_t *xmms_convert_and_kill_bin (GString *gs);
 
@@ -85,9 +84,6 @@ void xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 			     xmms_object_handler_t handler, gpointer userdata);
 
 void xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data);
-
-void xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
-			 xmmsv_type_t type, ...);
 
 void xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg);
 

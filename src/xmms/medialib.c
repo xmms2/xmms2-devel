@@ -54,7 +54,7 @@ static void xmms_medialib_client_rehash (xmms_medialib_t *medialib, xmms_mediali
 static void xmms_medialib_client_set_property_string (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, const gchar *source, const gchar *key, const gchar *value, xmms_error_t *error);
 static void xmms_medialib_client_set_property_int (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, const gchar *source, const gchar *key, gint32 value, xmms_error_t *error);
 static void xmms_medialib_client_remove_property (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, const gchar *source, const gchar *key, xmms_error_t *error);
-static GTree *xmms_medialib_client_get_info (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, xmms_error_t *err);
+static xmmsv_t *xmms_medialib_client_get_info (xmms_medialib_t *medialib, xmms_medialib_entry_t entry, xmms_error_t *err);
 static gint32 xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url, xmms_error_t *error);
 
 static s4_t *xmms_medialib_database_open (const gchar *config_path, const gchar *indices[]);
@@ -931,24 +931,24 @@ xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url,
 }
 
 static void
-xmms_medialib_tree_add_tuple (GTree *tree, const char *key,
+xmms_medialib_tree_add_tuple (xmmsv_t *dict, const char *key,
                               const char *source, xmmsv_t *value)
 {
-	xmmsv_t *keytreeval;
+	xmmsv_t *entry;
 
 	if (key == NULL || source == NULL || value == NULL) {
 		return;
 	}
 
 	/* Find (or insert) subtree matching the prop key */
-	keytreeval = (xmmsv_t *) g_tree_lookup (tree, key);
-	if (!keytreeval) {
-		keytreeval = xmmsv_new_dict ();
-		g_tree_insert (tree, g_strdup (key), keytreeval);
+	if (!xmmsv_dict_get (dict, key, &entry)) {
+		entry = xmmsv_new_dict ();
+		xmmsv_dict_set (dict, key, entry);
+		xmmsv_unref (entry);
 	}
 
 	/* Replace (or insert) value matching the prop source */
-	xmmsv_dict_set (keytreeval, source, value);
+	xmmsv_dict_set (entry, source, value);
 }
 
 /**
@@ -962,14 +962,13 @@ xmms_medialib_tree_add_tuple (GTree *tree, const char *key,
  * make sure to free them all.
  */
 
-static GTree *
+static xmmsv_t *
 xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
                              xmms_medialib_entry_t entry)
 {
 	s4_resultset_t *set;
 	s4_val_t *song_id;
-	xmmsv_t *v_entry;
-	GTree *ret;
+	xmmsv_t *ret, *v_entry;
 	gint i;
 
 	song_id = s4_val_new_int (entry);
@@ -977,8 +976,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	                            NULL, NULL, S4_FETCH_PARENT | S4_FETCH_DATA);
 	s4_val_free (song_id);
 
-	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL, g_free,
-	                       (GDestroyNotify) xmmsv_unref);
+	ret = xmmsv_new_dict ();
 
 	for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
 		const s4_result_t *res;
@@ -1012,13 +1010,13 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	return ret;
 }
 
-static GTree *
+static xmmsv_t *
 xmms_medialib_client_get_info (xmms_medialib_t *medialib,
                                xmms_medialib_entry_t entry,
                                xmms_error_t *err)
 {
 	xmms_medialib_session_t *session;
-	GTree *ret = NULL;
+	xmmsv_t *ret = NULL;
 
 	session = xmms_medialib_session_begin_ro (medialib);
 	if (xmms_medialib_check_id (session, entry)) {

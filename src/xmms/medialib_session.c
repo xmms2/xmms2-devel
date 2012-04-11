@@ -258,9 +258,9 @@ xmms_medialib_session_free (xmms_medialib_session_t *session)
 static void
 xmms_medialib_entry_send_added (xmms_medialib_t *medialib, xmms_medialib_entry_t entry)
 {
-	xmms_object_emit_f (XMMS_OBJECT (medialib),
-	                    XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
-	                    XMMSV_TYPE_INT32, entry);
+	xmms_object_emit (XMMS_OBJECT (medialib),
+	                  XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED,
+	                  xmmsv_new_int (entry));
 }
 
 /**
@@ -274,9 +274,9 @@ xmms_medialib_entry_send_added (xmms_medialib_t *medialib, xmms_medialib_entry_t
 static void
 xmms_medialib_entry_send_update (xmms_medialib_t *medialib, xmms_medialib_entry_t entry)
 {
-	xmms_object_emit_f (XMMS_OBJECT (medialib),
-	                    XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
-	                    XMMSV_TYPE_INT32, entry);
+	xmms_object_emit (XMMS_OBJECT (medialib),
+	                  XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
+	                  xmmsv_new_int (entry));
 }
 
 /**
@@ -288,8 +288,8 @@ xmms_medialib_entry_send_update (xmms_medialib_t *medialib, xmms_medialib_entry_
 static void
 xmms_medialib_entry_send_removed (xmms_medialib_t *medialib, xmms_medialib_entry_t entry)
 {
-	xmms_object_emit_f (XMMS_OBJECT (medialib),
-	                    XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
-	                    XMMSV_TYPE_INT32, entry);
+	xmms_object_emit (XMMS_OBJECT (medialib),
+	                  XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED,
+	                  xmmsv_new_int (entry));
 }
 

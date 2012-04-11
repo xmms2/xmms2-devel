@@ -58,7 +58,7 @@ typedef struct dump_tree_data_St {
 	gchar *prev_key;
 } dump_tree_data_t;
 
-static GTree *xmms_config_client_list_values (xmms_config_t *conf, xmms_error_t *err);
+static xmmsv_t *xmms_config_client_list_values (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_property_t *xmms_config_property_new (const gchar *name);
 static gchar *xmms_config_client_get_value (xmms_config_t *conf, const gchar *key, xmms_error_t *err);
 static gchar *xmms_config_client_register_value (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
@@ -201,8 +201,6 @@ xmms_config_property_get_name (const xmms_config_property_t *prop)
 void
 xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 {
-	GTree *dict;
-
 	g_return_if_fail (prop);
 	g_return_if_fail (data);
 
@@ -212,21 +210,15 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 
 	g_free (prop->value);
 	prop->value = g_strdup (data);
+
 	xmms_object_emit (XMMS_OBJECT (prop),
 	                  XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
-	                  (gpointer) data);
+	                  xmmsv_new_string (data));
 
-	dict = g_tree_new_full (compare_key, NULL,
-	                        NULL, (GDestroyNotify) xmmsv_unref);
-	g_tree_insert (dict, (gchar *) prop->name,
-	               xmmsv_new_string (prop->value));
-
-	xmms_object_emit_f (XMMS_OBJECT (global_config),
-	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
-	                    XMMSV_TYPE_DICT,
-	                    dict);
-
-	g_tree_destroy (dict);
+	xmms_object_emit (XMMS_OBJECT (global_config),
+	                  XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                  xmmsv_build_dict (XMMSV_DICT_ENTRY_STR (prop->name, prop->value),
+	                                    XMMSV_DICT_END));
 
 	/* save the database to disk, so we don't lose any data
 	 * if the daemon crashes
@@ -595,9 +587,9 @@ xmms_config_client_set_value (xmms_config_t *conf,
  */
 static gboolean
 xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
-                          GTree *dict)
+                          xmmsv_t *dict)
 {
-	g_tree_insert (dict, g_strdup (key), xmmsv_new_string (prop->value));
+	xmmsv_dict_set_string (dict, key, prop->value);
 
 	return FALSE; /* keep going */
 }
@@ -608,13 +600,10 @@ xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
  * @param err To be filled in if an error occurs
  * @return a dict with config properties and values
  */
-static GTree *
+static xmmsv_t *
 xmms_config_client_list_values (xmms_config_t *conf, xmms_error_t *err)
 {
-	GTree *ret;
-
-	ret = g_tree_new_full (compare_key, NULL,
-	                       g_free, (GDestroyNotify)xmmsv_unref);
+	xmmsv_t *ret = xmmsv_new_dict ();
 
 	g_mutex_lock (conf->mutex);
 	g_tree_foreach (conf->properties,

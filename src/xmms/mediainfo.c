@@ -162,11 +162,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
-	xmms_object_emit_f (XMMS_OBJECT (mrt),
-	                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
-	                    XMMSV_TYPE_INT32,
-	                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
-
+	xmms_object_emit (XMMS_OBJECT (mrt),
+	                  XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+	                  xmmsv_new_int (XMMS_MEDIAINFO_READER_STATUS_RUNNING));
 
 	f = _xmms_stream_type_new (XMMS_STREAM_TYPE_BEGIN,
 	                           XMMS_STREAM_TYPE_MIMETYPE,
@@ -186,10 +184,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		if (!entry) {
 			xmms_medialib_session_abort (session);
-			xmms_object_emit_f (XMMS_OBJECT (mrt),
-			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
-			                    XMMSV_TYPE_INT32,
-			                    XMMS_MEDIAINFO_READER_STATUS_IDLE);
+			xmms_object_emit (XMMS_OBJECT (mrt),
+			                  XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+			                  xmmsv_new_int (XMMS_MEDIAINFO_READER_STATUS_IDLE));
 
 			g_mutex_lock (mrt->mutex);
 			g_cond_wait (mrt->cond, mrt->mutex);
@@ -197,10 +194,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			num = 0;
 
-			xmms_object_emit_f (XMMS_OBJECT (mrt),
-			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
-			                    XMMSV_TYPE_INT32,
-			                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
+			xmms_object_emit (XMMS_OBJECT (mrt),
+			                  XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+			                  xmmsv_new_int (XMMS_MEDIAINFO_READER_STATUS_RUNNING));
 			continue;
 		}
 
@@ -208,10 +204,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 		                                                    XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS);
 
 		if (num == 0) {
-			xmms_object_emit_f (XMMS_OBJECT (mrt),
-			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
-			                    XMMSV_TYPE_INT32,
-			                    xmms_medialib_num_not_resolved (session));
+			xmms_object_emit (XMMS_OBJECT (mrt),
+			                  XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
+			                  xmmsv_new_int (xmms_medialib_num_not_resolved (session)));
 			num = 10;
 		} else {
 			num--;
