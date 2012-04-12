@@ -67,7 +67,7 @@ struct xmms_xform_St {
 	GHashTable *privdata;
 	GQueue *hotspots;
 
-	GList *browse_list;
+	xmmsv_t *browse_list;
 	xmmsv_t *browse_dict;
 	gint browse_index;
 
@@ -100,7 +100,7 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
 static void xmms_xform_destroy (xmms_object_t *object);
 static void effect_callbacks_init (void);
 
-static GList *xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
+static xmmsv_t *xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
 
 #include "xform_ipc.c"
 
@@ -177,7 +177,6 @@ void
 xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
                              guint32 flags)
 {
-	xmmsv_t *val;
 	const gchar *url;
 	gchar *efile, *eurl, *t;
 	gint l, isdir;
@@ -208,8 +207,11 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 	xmms_xform_browse_add_entry_property_str (xform, "path", t);
 	xmms_xform_browse_add_entry_property_int (xform, "isdir", isdir);
 
-	val = xform->browse_dict;
-	xform->browse_list = g_list_prepend (xform->browse_list, val);
+	if (xform->browse_list == NULL) {
+		xform->browse_list = xmmsv_new_list ();
+	}
+	xmmsv_list_append (xform->browse_list, xform->browse_dict);
+	xmmsv_unref (xform->browse_dict);
 
 	g_free (t);
 	g_free (efile);
@@ -217,49 +219,46 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename,
 }
 
 static gint
-xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
+xmms_browse_list_sortfunc (xmmsv_t **a, xmmsv_t **b)
 {
-	int r1, r2;
-	xmmsv_t *val1, *val2, *tmp1, *tmp2;
+	xmmsv_t *val1, *val2;
 	const gchar *s1, *s2;
+	int r1, r2;
 
-	val1 = (xmmsv_t *) a;
-	val2 = (xmmsv_t *) b;
+	g_return_val_if_fail (xmmsv_is_type (*a, XMMSV_TYPE_DICT), 0);
+	g_return_val_if_fail (xmmsv_is_type (*b, XMMSV_TYPE_DICT), 0);
 
-	g_return_val_if_fail (xmmsv_get_type (val1) == XMMSV_TYPE_DICT, 0);
-	g_return_val_if_fail (xmmsv_get_type (val2) == XMMSV_TYPE_DICT, 0);
-
-	r1 = xmmsv_dict_get (val1, "intsort", &tmp1);
-	r2 = xmmsv_dict_get (val2, "intsort", &tmp2);
+	r1 = xmmsv_dict_get (*a, "intsort", &val1);
+	r2 = xmmsv_dict_get (*b, "intsort", &val2);
 
 	if (r1 && r2) {
 		gint i1, i2;
 
-		if (!xmmsv_get_int (tmp1, &i1))
+		if (!xmmsv_get_int (val1, &i1))
 			return 0;
-		if (!xmmsv_get_int (tmp2, &i2))
+		if (!xmmsv_get_int (val2, &i2))
 			return 0;
 		return i1 > i2;
 	}
 
-	if (!xmmsv_dict_get (val1, "path", &tmp1))
+	if (!xmmsv_dict_get (*a, "path", &val1))
 		return 0;
-	if (!xmmsv_dict_get (val2, "path", &tmp2))
+	if (!xmmsv_dict_get (*b, "path", &val2))
 		return 0;
 
-	if (!xmmsv_get_string (tmp1, &s1))
+	if (!xmmsv_get_string (val1, &s1))
 		return 0;
-	if (!xmmsv_get_string (tmp2, &s2))
+	if (!xmmsv_get_string (val2, &s2))
 		return 0;
 
 	return xmms_natcmp (s1, s2);
 }
 
-GList *
+xmmsv_t *
 xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
                           xmms_error_t *error)
 {
-	GList *list = NULL;
+	xmmsv_t *list = NULL;
 
 	if (xmms_xform_plugin_can_browse (xform->plugin)) {
 		if (!xmms_xform_plugin_browse (xform->plugin, xform, url, error)) {
@@ -267,7 +266,7 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
 		}
 		list = xform->browse_list;
 		xform->browse_list = NULL;
-		list = g_list_sort (list, xmms_browse_list_sortfunc);
+		xmmsv_list_sort (list, xmms_browse_list_sortfunc);
 	} else {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't handle that URL");
 	}
@@ -275,10 +274,10 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
 	return list;
 }
 
-GList *
+xmmsv_t *
 xmms_xform_browse (const gchar *url, xmms_error_t *error)
 {
-	GList *list = NULL;
+	xmmsv_t *list = NULL;
 	gchar *durl;
 	xmms_xform_t *xform = NULL;
 	xmms_xform_t *xform2 = NULL;
@@ -316,7 +315,7 @@ xmms_xform_browse (const gchar *url, xmms_error_t *error)
 	return list;
 }
 
-static GList *
+static xmmsv_t *
 xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url,
                           xmms_error_t *error)
 {
@@ -1655,4 +1654,3 @@ effect_callbacks_init (void)
 			                               GINT_TO_POINTER (effect_no));
 	}
 }
-

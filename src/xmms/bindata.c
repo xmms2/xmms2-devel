@@ -66,7 +66,7 @@ static gchar *xmms_bindata_build_path (xmms_bindata_t *bindata, const gchar *has
 static gchar *xmms_bindata_client_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
 static xmmsv_t *xmms_bindata_client_retrieve (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *err);
 static void xmms_bindata_client_remove (xmms_bindata_t *bindata, const gchar *hash, xmms_error_t *);
-static GList *xmms_bindata_client_list (xmms_bindata_t *bindata, xmms_error_t *err);
+static xmmsv_t *xmms_bindata_client_list (xmms_bindata_t *bindata, xmms_error_t *err);
 static gboolean _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err);
 
 #include "bindata_ipc.c"
@@ -268,10 +268,10 @@ xmms_bindata_client_remove (xmms_bindata_t *bindata, const gchar *hash,
 	return;
 }
 
-static GList *
+static xmmsv_t *
 xmms_bindata_client_list (xmms_bindata_t *bindata, xmms_error_t *err)
 {
-	GList *entries = NULL;
+	xmmsv_t *entries;
 	gchar *path;
 	const gchar *file;
 	GDir *dir;
@@ -286,8 +286,10 @@ xmms_bindata_client_list (xmms_bindata_t *bindata, xmms_error_t *err)
 		return NULL;
 	}
 
+	entries = xmmsv_new_list ();
+
 	while ((file = g_dir_read_name (dir))) {
-		entries = g_list_prepend (entries, xmmsv_new_string (file));
+		xmmsv_list_append_string (entries, file);
 	}
 
 	g_dir_close (dir);

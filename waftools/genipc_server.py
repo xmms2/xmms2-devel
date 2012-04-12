@@ -27,7 +27,7 @@ c_getter_map = {
 c_creator_map = {
 	'int': 'xmmsv_new_int',
 	'string': 'xmms_convert_and_kill_string',
-	'list': 'xmms_convert_and_kill_list',
+	'list': None,
 	'dictionary': None,
 	'collection': 'xmmsv_new_coll',
 	'binary': None,
@@ -37,7 +37,7 @@ c_creator_map = {
 c_nullable_type_map = {
 	'int': False,
 	'string': "gchar *",
-	'list': False,
+	'list': "xmmsv_t *",
 	'dictionary': "xmmsv_t *",
 	'collection': "xmmsv_coll_t *",
 	'binary': "GString *",

@@ -21,9 +21,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-static xmmsv_t *xmms_create_xmmsv_list (GList *list);
-static void create_xmmsv_list_foreach (gpointer data, gpointer userdata);
-
 
 /** @defgroup Object Object
   * @ingroup XMMSServer
@@ -295,31 +292,6 @@ xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t 
 	}
 }
 
-
-/**
- * Create a new #xmmsv_t list initialized with the argument.
- * @param list The list of values to initially fill the #xmmsv_t with.
- * @return a new #xmmsv_t list.
- */
-static xmmsv_t *
-xmms_create_xmmsv_list (GList *list)
-{
-	xmmsv_t *v = xmmsv_new_list ();
-	g_list_foreach (list, create_xmmsv_list_foreach, (gpointer) v);
-	return v;
-}
-
-xmmsv_t *
-xmms_convert_and_kill_list (GList *list)
-{
-	xmmsv_t *v;
-
-	v = xmms_create_xmmsv_list (list);
-	g_list_free (list);
-
-	return v;
-}
-
 xmmsv_t *
 xmms_convert_and_kill_string (gchar *str)
 {
@@ -334,20 +306,6 @@ xmms_convert_and_kill_string (gchar *str)
 }
 
 /** @} */
-
-static void
-create_xmmsv_list_foreach (gpointer data, gpointer userdata)
-{
-	xmmsv_t *v = (xmmsv_t *) data;
-	xmmsv_t *l = (xmmsv_t *) userdata;
-
-	xmmsv_list_append (l, v);
-
-	/* Transfer ownership of 'v' from the GList to the
-	 * xmmsv list.
-	 */
-	xmmsv_unref (v);
-}
 
 int
 xmms_bin_to_gstring (xmmsv_t *value, GString **gs)

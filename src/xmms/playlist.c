@@ -37,7 +37,7 @@
 
 static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_client_replace (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_playlist_position_action_t action, xmms_error_t *err);
-static GList * xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
+static xmmsv_t * xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static gchar *xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
 
@@ -1245,11 +1245,11 @@ xmms_playlist_client_replace (xmms_playlist_t *playlist, const gchar *plname,
 
 
 /** List a playlist */
-static GList *
+static xmmsv_t *
 xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plname,
                                    xmms_error_t *err)
 {
-	GList *entries = NULL;
+	xmmsv_t *entries = NULL;
 	xmmsv_coll_t *plcoll;
 	xmms_medialib_entry_t entry;
 	xmmsv_list_iter_t *it;
@@ -1264,19 +1264,19 @@ xmms_playlist_client_list_entries (xmms_playlist_t *playlist, const gchar *plnam
 		return NULL;
 	}
 
+	entries = xmmsv_new_list ();
+
 	xmmsv_get_list_iter (xmmsv_coll_idlist_get (plcoll), &it);
 	for (xmmsv_list_iter_first (it);
 	     xmmsv_list_iter_valid (it);
 	     xmmsv_list_iter_next (it)) {
 
 		xmmsv_list_iter_entry_int (it, &entry);
-		entries = g_list_prepend (entries, xmmsv_new_int (entry));
+		xmmsv_list_append_int (entries, entry);
 	}
 	xmmsv_list_iter_explicit_destroy (it);
 
 	g_mutex_unlock (playlist->mutex);
-
-	entries = g_list_reverse (entries);
 
 	return entries;
 }

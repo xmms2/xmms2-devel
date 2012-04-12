@@ -721,27 +721,6 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib,
 	MEDIALIB_COMMIT ();
 }
 
-static gint
-compare_browse_results (gconstpointer a, gconstpointer b)
-{
-	const gchar *s1, *s2;
-	xmmsv_t *v1, *v2;
-
-	v1 = (xmmsv_t *) a;
-	v2 = (xmmsv_t *) b;
-
-	if (xmmsv_get_type (v1) != XMMSV_TYPE_DICT)
-		return 0;
-
-	if (xmmsv_get_type (v2) != XMMSV_TYPE_DICT)
-		return 0;
-
-	xmmsv_dict_entry_get_string (v1, "path", &s1);
-	xmmsv_dict_entry_get_string (v2, "path", &s2);
-
-	return strcmp (s1, s2);
-}
-
 /**
  * Recursively scan a directory for media files.
  *
@@ -751,19 +730,23 @@ static gboolean
 process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
              const gchar *directory, xmms_error_t *error)
 {
-	GList *list;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *list;
 
 	list = xmms_xform_browse (directory, error);
 	if (!list) {
 		return FALSE;
 	}
 
-	list = g_list_sort (list, compare_browse_results);
+	xmmsv_get_list_iter (list, &it);
+	xmmsv_list_iter_last (it);
 
-	while (list) {
-		xmmsv_t *val = list->data;
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *val;
 		const gchar *str;
 		gint isdir;
+
+		xmmsv_list_iter_entry (it, &val);
 
 		xmmsv_dict_entry_get_string (val, "path", &str);
 		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
@@ -778,9 +761,10 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
 			}
 		}
 
-		xmmsv_unref (val);
-		list = g_list_delete_link (list, list);
+		xmmsv_list_iter_remove (it);
 	}
+
+	xmmsv_unref (list);
 
 	return TRUE;
 }

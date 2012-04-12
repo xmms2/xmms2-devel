@@ -61,7 +61,7 @@
  */
 static void xmms_main_client_quit (xmms_object_t *object, xmms_error_t *error);
 static xmmsv_t *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
-static GList *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
+static xmmsv_t *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static void spawn_script_setup (gpointer data);
@@ -125,8 +125,9 @@ xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 static gboolean
 xmms_main_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 {
-	xmmsv_t *dict;
-	GList **list = data;
+	xmmsv_t *list, *dict;
+
+	list = (xmmsv_t *) data;
 
 	dict = xmmsv_build_dict (
 	        XMMSV_DICT_ENTRY_STR ("name", xmms_plugin_name_get (plugin)),
@@ -136,15 +137,16 @@ xmms_main_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 	        XMMSV_DICT_ENTRY_INT ("type", xmms_plugin_type_get (plugin)),
 	        XMMSV_DICT_END);
 
-	*list = g_list_prepend (*list, dict);
+	xmmsv_list_append (list, dict);
+	xmmsv_unref (dict);
 
 	return TRUE;
 }
 
-static GList *
+static xmmsv_t *
 xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err)
 {
-	GList *list = NULL;
+	xmmsv_t *list = xmmsv_new_list ();
 	xmms_plugin_foreach (type, xmms_main_client_list_foreach, &list);
 	return list;
 }
