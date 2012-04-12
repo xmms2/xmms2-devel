@@ -176,7 +176,7 @@ normalize_metadata_fields (xmmsv_t *fetch, xmms_error_t *err)
 
 
 static s4_sourcepref_t *
-normalize_metadata_prefs (xmmsv_t *fetch, s4_sourcepref_t *prefs, xmms_error_t *err)
+normalize_source_preferences (xmmsv_t *fetch, s4_sourcepref_t *prefs, xmms_error_t *err)
 {
 	s4_sourcepref_t *sp;
 	xmmsv_list_iter_t *it;
@@ -270,7 +270,7 @@ xmms_fetch_spec_new_metadata (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
-	sp = normalize_metadata_prefs (fetch, prefs, err);
+	sp = normalize_source_preferences (fetch, prefs, err);
 	if (xmms_error_iserror (err)) {
 		xmmsv_unref (gets);
 		return NULL;
@@ -335,6 +335,7 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 {
 	xmmsv_t *cluster_by, *cluster_field, *cluster_data;
 	xmms_fetch_spec_t *data, *spec = NULL;
+	s4_sourcepref_t *sp;
 	const gchar *value = NULL;
 	const gchar *field = NULL;
 	gint cluster_type;
@@ -373,8 +374,14 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
-	data = xmms_fetch_spec_new (cluster_data, info, prefs, err);
+	sp = normalize_source_preferences (fetch, prefs, err);
 	if (xmms_error_iserror (err)) {
+		return NULL;
+	}
+
+	data = xmms_fetch_spec_new (cluster_data, info, sp, err);
+	if (xmms_error_iserror (err)) {
+		s4_sourcepref_unref (sp);
 		return NULL;
 	}
 
@@ -390,12 +397,14 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		case CLUSTER_BY_VALUE:
 			xmmsv_dict_get (fetch, "cluster-field", &cluster_field);
 			spec->data.cluster.column = xmms_fetch_info_add_key (info, cluster_field,
-			                                                     field, prefs);
+			                                                     field, sp);
 			break;
 		case CLUSTER_BY_POSITION:
 			/* do nothing */
 			break;
 	}
+
+	s4_sourcepref_unref (sp);
 
 	return spec;
 }
@@ -434,6 +443,7 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 {
 	xmms_fetch_spec_t *spec;
 	xmmsv_dict_iter_t *it;
+	s4_sourcepref_t *sp;
 	xmmsv_t *org_data;
 	gint org_idx;
 
@@ -444,6 +454,11 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 	if (xmmsv_get_type (org_data) != XMMSV_TYPE_DICT) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "Field 'data' in organize must be a dict.");
+		return NULL;
+	}
+
+	sp = normalize_source_preferences (fetch, prefs, err);
+	if (xmms_error_iserror (err)) {
 		return NULL;
 	}
 
@@ -463,7 +478,7 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 		xmmsv_dict_iter_pair (it, &str, &entry);
 
-		orgee = xmms_fetch_spec_new (entry, info, prefs, err);
+		orgee = xmms_fetch_spec_new (entry, info, sp, err);
 		if (xmms_error_iserror (err)) {
 			xmms_fetch_spec_free (spec);
 			spec = NULL;
@@ -477,6 +492,8 @@ xmms_fetch_spec_new_organize (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		xmmsv_dict_iter_next (it);
 	}
 	xmmsv_dict_iter_explicit_destroy (it);
+
+	s4_sourcepref_unref (sp);
 
 	return spec;
 }
