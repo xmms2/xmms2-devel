@@ -1,0 +1,29 @@
+{
+    "medialib": [
+        {
+            "A/artist": "correct artist",
+            "B/artist": "wrong artist",
+            "A/title": "correct title",
+            "B/title": "wrong title"
+        }
+    ],
+    "collection": {
+        "type": "universe"
+    },
+    "specification": {
+        "type": "cluster-dict",
+        "cluster-by": "value",
+        "cluster-field": "artist",
+        "source-preference": ["A"],
+        "data": {
+            "type": "metadata",
+            "get": ["value"],
+            "fields": ["title"]
+        }
+    },
+    "expected": {
+        "result": {
+            "correct artist": "correct title"
+        }
+    }
+}
