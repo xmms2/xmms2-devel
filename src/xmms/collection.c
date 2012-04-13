@@ -282,6 +282,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 
 		xmmsv_get_string (b, &buf);
+		xmmsv_ref (b); // keep buf from being freed
+
 		xmmsv_dict_remove (a, "realpath");
 		xmmsv_dict_remove (a, "path");
 
@@ -303,6 +305,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 		MEDIALIB_COMMIT ();
 
+		xmmsv_unref (b);
 		xmmsv_unref (a);
 		n = g_list_delete_link (n, n);
 	}
