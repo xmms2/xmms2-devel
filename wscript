@@ -56,14 +56,18 @@ def init(ctx):
     if _waf_hexversion != Context.HEXVERSION:
         Logs.warn(_waf_mismatch_msg)
 
+xmms2d_dirs = """
+src/xmms
+src/lib/s4/src/lib
+src/lib/s4/tests
+""".split()
+
 subdirs = """
 src/lib/xmmstypes
 src/lib/xmmssocket
 src/lib/xmmsipc
 src/lib/xmmsutils
 src/lib/xmmsvisualization
-src/lib/s4/src/lib/
-src/lib/s4/tests
 src/clients/lib/xmmsclient
 src/clients/lib/xmmsclient-glib
 src/include
@@ -106,8 +110,7 @@ def get_newest(*dirs):
 ## Build
 ####
 def build(bld):
-    if bld.env.BUILD_XMMS2D:
-        subdirs.append("src/xmms")
+    subdirs = bld.env.BUILD_SUBDIRS
 
     plugins = bld.env.XMMS_PLUGINS_ENABLED
     plugindirs = ["src/plugins/%s" % plugin for plugin in plugins]
@@ -311,6 +314,7 @@ class _CacheHandler(logging.Handler):
         self.cache.append(rec)
 
 def configure(conf):
+    global subdirs
     warning_cache = []
     logging.getLogger("waflib").addHandler(_CacheHandler(warning_cache, logging.WARNING))
 
@@ -329,7 +333,9 @@ def configure(conf):
     conf.env.BUILD_XMMS2D = False
     if not conf.options.without_xmms2d:
         conf.env.BUILD_XMMS2D = True
-        subdirs.insert(0, "src/xmms")
+        subdirs = xmms2d_dirs + subdirs
+
+    conf.env.BUILD_SUBDIRS = subdirs
 
     conf.check_tool('gnu_dirs')
     conf.check_tool('man', tooldir=os.path.abspath('waftools'))
