@@ -233,6 +233,7 @@
 #define __PYX_HAVE__xmmsvalue
 #define __PYX_HAVE_API__xmmsvalue
 #include "xmmsc/xmmsv.h"
+#include "string.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsclient/xmmsclient.h"
 #ifdef _OPENMP
@@ -615,8 +616,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_Append(PyObject* L, PyObject* x) {
     }
 }
 
-#include <string.h>
-
 static CYTHON_INLINE void __Pyx_ExceptionSave(PyObject **type, PyObject **value, PyObject **tb); /*proto*/
 static void __Pyx_ExceptionReset(PyObject *type, PyObject *value, PyObject *tb); /*proto*/
 
@@ -640,6 +639,8 @@ static PyObject *__pyx_binding_PyCFunctionType_NewEx(PyMethodDef *ml, PyObject *
 #define __pyx_binding_PyCFunctionType_New(ml, self) __pyx_binding_PyCFunctionType_NewEx(ml, self, NULL)
 
 static int __pyx_binding_PyCFunctionType_init(void); /* proto */
+
+#include <string.h>
 
 static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int equals); /*proto*/
 
@@ -696,8 +697,10 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t); /*proto*/
 
 /* Module declarations from 'cpython.unicode' */
 
+/* Module declarations from 'libc.string' */
+
 /* Module declarations from 'xmmsutils' */
-static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *); /*proto*/
+static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(const char *); /*proto*/
 static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *); /*proto*/
 
 /* Module declarations from 'cpython.ref' */
@@ -828,6 +831,7 @@ static char __pyx_k__get_bin[] = "get_bin";
 static char __pyx_k__get_int[] = "get_int";
 static char __pyx_k__iserror[] = "iserror";
 static char __pyx_k__operand[] = "operand";
+static char __pyx_k__replace[] = "replace";
 static char __pyx_k__KeyError[] = "KeyError";
 static char __pyx_k__Mediaset[] = "Mediaset";
 static char __pyx_k__NotEqual[] = "NotEqual";
@@ -5994,7 +5998,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_10__str__(PyObject *
 
 static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name); /*proto*/
 static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_11__getitem__(PyObject *__pyx_v_self, PyObject *__pyx_v_name) {
-  char *__pyx_v_value;
+  const char *__pyx_v_value;
   PyObject *__pyx_v_nam = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -6665,7 +6669,7 @@ static PyObject *__pyx_pf_9xmmsvalue_20CollectionAttributes_16update(PyObject *_
 
 static int __pyx_pf_9xmmsvalue_20CollectionAttributes_17__contains__(PyObject *__pyx_v_self, PyObject *__pyx_v_name); /*proto*/
 static int __pyx_pf_9xmmsvalue_20CollectionAttributes_17__contains__(PyObject *__pyx_v_self, PyObject *__pyx_v_name) {
-  char *__pyx_v_value;
+  const char *__pyx_v_value;
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   char *__pyx_t_1;
@@ -11262,7 +11266,7 @@ static PyObject *__pyx_pf_9xmmsvalue_10Complement___init__(PyObject *__pyx_self,
 static PyObject *__pyx_f_9xmmsvalue_create_coll(xmmsv_coll_t *__pyx_v_coll) {
   xmmsv_coll_type_t __pyx_v_colltype;
   struct __pyx_obj_9xmmsvalue_Collection *__pyx_v_c = 0;
-  char *__pyx_v_idlist_type;
+  const char *__pyx_v_idlist_type;
   PyObject *__pyx_v_idtype_uni = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -11621,90 +11625,29 @@ static PyObject *__pyx_pf_9xmmsvalue_coll_parse(PyObject *__pyx_self, PyObject *
 }
 
 
-static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(char *__pyx_v_s) {
-  PyObject *__pyx_v_ns = NULL;
+static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_to_unicode(const char *__pyx_v_s) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  size_t __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_unicode");
 
-  {
-    __Pyx_ExceptionSave(&__pyx_t_1, &__pyx_t_2, &__pyx_t_3);
-    __Pyx_XGOTREF(__pyx_t_1);
-    __Pyx_XGOTREF(__pyx_t_2);
-    __Pyx_XGOTREF(__pyx_t_3);
-    /*try:*/ {
-
-      __pyx_t_4 = strlen(__pyx_v_s); 
-      __pyx_t_5 = PyUnicode_DecodeUTF8(__pyx_v_s, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 5; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_v_ns = __pyx_t_5;
-      __pyx_t_5 = 0;
-    }
-    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    goto __pyx_L10_try_end;
-    __pyx_L3_error:;
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-    /*except:*/ {
-      __Pyx_AddTraceback("xmmsutils.to_unicode", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 6; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_GOTREF(__pyx_t_7);
-
-      __pyx_t_8 = PyBytes_FromString(__pyx_v_s); if (unlikely(!__pyx_t_8)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 7; __pyx_clineno = __LINE__; goto __pyx_L5_except_error;}
-      __Pyx_GOTREF(((PyObject *)__pyx_t_8));
-      __Pyx_XDECREF(__pyx_v_ns);
-      __pyx_v_ns = ((PyObject *)__pyx_t_8);
-      __pyx_t_8 = 0;
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      goto __pyx_L4_exception_handled;
-    }
-    __pyx_L5_except_error:;
-    __Pyx_XGIVEREF(__pyx_t_1);
-    __Pyx_XGIVEREF(__pyx_t_2);
-    __Pyx_XGIVEREF(__pyx_t_3);
-    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
-    goto __pyx_L1_error;
-    __pyx_L4_exception_handled:;
-    __Pyx_XGIVEREF(__pyx_t_1);
-    __Pyx_XGIVEREF(__pyx_t_2);
-    __Pyx_XGIVEREF(__pyx_t_3);
-    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
-    __pyx_L10_try_end:;
-  }
-
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_ns);
-  __pyx_r = __pyx_v_ns;
+  __pyx_t_1 = PyUnicode_DecodeUTF8(__pyx_v_s, strlen(__pyx_v_s), __pyx_k__replace); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 5; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
   goto __pyx_L0;
 
   __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_1);
   __Pyx_AddTraceback("xmmsutils.to_unicode", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_ns);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -11728,7 +11671,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9xmmsutils_from_unicode(PyObject *__pyx_v
   if (__pyx_t_2) {
 
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = PyUnicode_AsUTF8String(__pyx_v_o); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 12; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyUnicode_AsUTF8String(__pyx_v_o); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 9; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_r = __pyx_t_1;
     __pyx_t_1 = 0;
