@@ -775,7 +775,7 @@ xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *
 	xmmsv_list_iter_t *it;
 	xmmsv_t *list;
 
-	list = xmms_collection_query_ids (playlist->colldag, coll, NULL, err);
+	list = xmms_collection_query_ids (playlist->colldag, coll, err);
 	if (xmms_error_iserror (err)) {
 		return;
 	}
@@ -997,7 +997,7 @@ xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *pln
 	int32_t id;
 	int i;
 
-	res = xmms_collection_query_ids (playlist->colldag, coll, NULL, err);
+	res = xmms_collection_query_ids (playlist->colldag, coll, err);
 
 	for (i = 0; xmmsv_list_get_int (res, i, &id); i++) {
 		xmms_playlist_add_entry (playlist, plname, id, err);
@@ -1200,7 +1200,7 @@ xmms_playlist_client_replace (xmms_playlist_t *playlist, const gchar *plname,
 	current_position = xmms_playlist_coll_get_currpos (plcoll);
 	xmmsv_coll_idlist_get_index (plcoll, current_position, &current_id);
 
-	result = xmms_collection_query_ids (playlist->colldag, coll, NULL, err);
+	result = xmms_collection_query_ids (playlist->colldag, coll, err);
 	if (result == NULL) {
 		g_mutex_unlock (playlist->mutex);
 		return;

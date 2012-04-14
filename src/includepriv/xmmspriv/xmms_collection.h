@@ -56,7 +56,7 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_
 xmms_coll_dag_t * xmms_collection_init (xmms_medialib_t *medialib);
 
 void xmms_collection_sync (xmms_coll_dag_t *dag);
-xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_t *order, xmms_error_t *err);
+xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmms_error_t *err);
 
 
 void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
