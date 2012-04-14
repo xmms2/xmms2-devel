@@ -304,16 +304,6 @@ vim:expandtab
                 </type>
             </argument>
 
-            <argument>
-                <name>order</name>
-                <documentation>A list of medialib properties by which to sort the collection.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
-                </type>
-            </argument>
         </method>
 
         <method>
@@ -524,17 +514,6 @@ vim:expandtab
 
                 <type>
                     <collection />
-                </type>
-            </argument>
-
-            <argument>
-                <name>order</name>
-                <documentation>A list of medialib properties on which to sort the collection.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
                 </type>
             </argument>
         </method>

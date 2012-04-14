@@ -460,6 +460,9 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
                                   int pos, xmmsv_coll_t *coll,
                                   xmmsv_t *order)
 {
+	xmmsv_coll_t *ordered;
+	xmmsv_t *value;
+
 	x_check_conn (c, NULL);
 
 	/* default to the active playlist */
@@ -467,12 +470,15 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
+	ordered = xmmsv_coll_add_order_operators (coll, order);
+	value = xmmsv_new_coll (ordered);
+	xmmsv_coll_unref (ordered);
+
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
 	                       XMMS_IPC_CMD_INSERT_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
-	                       XMMSV_LIST_ENTRY_COLL (coll),
-	                       XMMSV_LIST_ENTRY (xmmsv_ref (order)),
+	                       XMMSV_LIST_ENTRY (value),
 	                       XMMSV_LIST_END);
 }
 
@@ -706,6 +712,8 @@ xmmsc_result_t *
 xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
                                xmmsv_coll_t *coll, xmmsv_t *order)
 {
+	xmmsv_t *value;
+
 	x_check_conn (c, NULL);
 
 	/* default to the active playlist */
@@ -714,18 +722,18 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 	}
 
 	/* default to empty order */
-	if (order == NULL) {
-		/* This reference is taken over by xmmsc_send_cmd. */
-		order = xmmsv_new_list ();
+	if (order != NULL) {
+		xmmsv_coll_t *ordered = xmmsv_coll_add_order_operators (coll, order);
+		value = xmmsv_new_coll (ordered);
+		xmmsv_coll_unref (ordered);
 	} else {
-		/* This reference is taken over by xmmsc_send_cmd. */
-		xmmsv_ref (order);
+		value = xmmsv_new_coll (coll);
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_COLL (coll),
-	                       XMMSV_LIST_ENTRY (order),
+	                       XMMSV_LIST_ENTRY (value),
 	                       XMMSV_LIST_END);
 }
 
