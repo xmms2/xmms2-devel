@@ -398,6 +398,9 @@ xmms_config_property_t *xmms_xform_plugin_config_property_register (
 	const gchar *default_value,
 	xmms_object_handler_t cb,
 	gpointer userdata);
+xmms_config_property_t *xmms_xform_plugin_config_lookup (
+	xmms_xform_plugin_t *xform_plugin,
+	const gchar *path);
 xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
                                                   const gchar *path);
 

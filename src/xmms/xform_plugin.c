@@ -190,6 +190,15 @@ xmms_xform_plugin_config_property_register (xmms_xform_plugin_t *xform_plugin,
 	                                             cb, userdata);
 }
 
+xmms_config_property_t *
+xmms_xform_plugin_config_lookup (xmms_xform_plugin_t *xform_plugin,
+                                 const gchar *path)
+{
+	xmms_plugin_t *plugin = (xmms_plugin_t *) xform_plugin;
+
+	return xmms_plugin_config_lookup (plugin, path);
+}
+
 gboolean
 xmms_xform_plugin_can_init (const xmms_xform_plugin_t *plugin)
 {
