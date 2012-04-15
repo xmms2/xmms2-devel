@@ -237,52 +237,6 @@ vim:expandtab
         </method>
 
         <method>
-            <name>add_id</name>
-            <documentation>Adds a song to the given playlist.</documentation>
-
-            <argument>
-                <name>playlist</name>
-                <documentation>The playlist to which to add the song.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>id</name>
-                <documentation>The ID of the song to add to the playlist.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-        </method>
-
-        <method>
-            <name>add_idlist</name>
-            <documentation>Adds songs to the given playlist.</documentation>
-
-            <argument>
-                <name>name</name>
-                <documentation>The name of the playlist to which to add ids.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>collection</name>
-                <documentation>The idlist collection to be added to the playlist.</documentation>
-
-                <type>
-                    <collection />
-                </type>
-            </argument>
-        </method>
-
-        <method>
             <name>add_collection</name>
             <documentation>Adds the contents of a collection to the given playlist.</documentation>
 
@@ -450,38 +404,6 @@ vim:expandtab
 
                 <type>
                     <string />
-                </type>
-            </argument>
-        </method>
-
-        <method>
-            <name>insert_id</name>
-            <documentation>Inserts a song into the given playlist.</documentation>
-
-            <argument>
-                <name>name</name>
-                <documentation>The name of the playlist into which the song is to be inserted.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>position</name>
-                <documentation>The playlist position to insert the song.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>entry</name>
-                <documentation>The medialib id of the song.</documentation>
-
-                <type>
-                    <int />
                 </type>
             </argument>
         </method>

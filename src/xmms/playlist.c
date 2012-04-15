@@ -41,9 +41,7 @@ static xmmsv_t * xmms_playlist_client_list_entries (xmms_playlist_t *playlist, c
 static gchar *xmms_playlist_client_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
 
-static void xmms_playlist_client_add_id (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *error);
 static void xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname, const gchar *nurl, xmms_error_t *err);
-static void xmms_playlist_client_add_idlist (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_error_t *err);
 static void xmms_playlist_client_add_collection (xmms_playlist_t *playlist, const gchar *plname, xmmsv_coll_t *coll, xmms_error_t *err);
 static xmmsv_t * xmms_playlist_client_current_pos (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 static gint xmms_playlist_client_set_next (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
@@ -54,7 +52,6 @@ static gint xmms_playlist_client_set_next_rel (xmms_playlist_t *playlist, gint32
 static gint xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *err);
 
 static void xmms_playlist_client_insert_url (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, const gchar *url, xmms_error_t *error);
-static void xmms_playlist_client_insert_id (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
 static void xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, xmmsv_coll_t *coll, xmms_error_t *error);
 static void xmms_playlist_client_radd (xmms_playlist_t *playlist, const gchar *plname, const gchar *path, xmms_error_t *error);
 static void xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, const gchar *path, xmms_error_t *error);
@@ -709,7 +706,7 @@ xmms_playlist_client_insert_url (xmms_playlist_t *playlist, const gchar *plname,
 		return;
 	}
 
-	xmms_playlist_client_insert_id (playlist, plname, pos, entry, err);
+	xmms_playlist_insert_entry (playlist, plname, pos, entry, err);
 }
 
 /**
@@ -756,17 +753,10 @@ xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar *plname, gi
  *
  * @param playlist the playlist to add the entry to.
  * @param pos the position where the entry is inserted.
- * @param file the #xmms_medialib_entry to add.
+ * @param coll the #xmmsv_coll_t to insert.
  * @param error Upon error this will be set.
  * @returns TRUE on success and FALSE otherwise.
  */
-static void
-xmms_playlist_client_insert_id (xmms_playlist_t *playlist, const gchar *plname,
-                                gint32 pos, xmms_medialib_entry_t file,
-                                xmms_error_t *err)
-{
-	xmms_playlist_insert_entry (playlist, plname, pos, file, err);
-}
 
 static void
 xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *plname,
@@ -919,74 +909,6 @@ xmms_playlist_client_radd (xmms_playlist_t *playlist, const gchar *plname,
 		xmmsv_list_iter_next (it);
 	}
 	xmmsv_coll_unref (idlist);
-}
-
-/** Adds a xmms_medialib_entry to the playlist.
- *
- *  This will append or prepend the entry according to
- *  the option.
- *  This function will wake xmms_playlist_wait.
- *
- * @param playlist the playlist to add the entry to.
- * @param plname the name of the playlist to modify.
- * @param file the #xmms_medialib_entry_t to add
- * @param err Upon error this will be set.
- * @returns TRUE on success
- */
-
-void
-xmms_playlist_client_add_id (xmms_playlist_t *playlist, const gchar *plname,
-                             xmms_medialib_entry_t file, xmms_error_t *err)
-{
-	gboolean valid;
-
-	MEDIALIB_SESSION (playlist->medialib, valid = xmms_medialib_check_id (session, file));
-
-	if (!valid) {
-		xmms_error_set (err, XMMS_ERROR_NOENT,
-		                "That is not a valid medialib id!");
-		return;
-	}
-
-	xmms_playlist_add_entry (playlist, plname, file, err);
-}
-
-void
-xmms_playlist_client_add_idlist (xmms_playlist_t *playlist,
-                                 const gchar *plname,
-                                 xmmsv_coll_t *coll, xmms_error_t *err)
-{
-	xmms_medialib_entry_t entry;
-	xmmsv_list_iter_t *it;
-	gboolean valid;
-
-
-	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
-	for (xmmsv_list_iter_first (it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-
-		xmmsv_list_iter_entry_int (it, &entry);
-		MEDIALIB_SESSION (playlist->medialib,
-		                  valid = xmms_medialib_check_id (session, entry));
-
-		if (!valid) {
-			xmms_error_set (err, XMMS_ERROR_NOENT,
-			                "Idlist contains invalid medialib id!");
-			xmmsv_list_iter_explicit_destroy (it);
-			return;
-		}
-	}
-
-	for (xmmsv_list_iter_first (it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-
-		xmmsv_list_iter_entry_int (it, &entry);
-		xmms_playlist_add_entry (playlist, plname, entry, err);
-	}
-	xmmsv_list_iter_explicit_destroy (it);
-
 }
 
 void

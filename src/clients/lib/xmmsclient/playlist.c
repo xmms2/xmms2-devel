@@ -260,6 +260,9 @@ xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist)
 xmmsc_result_t *
 xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, int id)
 {
+	xmmsc_coll_t *coll;
+	xmmsv_t *value;
+
 	x_check_conn (c, NULL);
 
 	/* default to the active playlist */
@@ -267,10 +270,16 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, 
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_ID,
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (coll, id);
+
+	value = xmmsv_new_coll (coll);
+	xmmsv_coll_unref (coll);
+
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
-	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_ENTRY (value),
 	                       XMMSV_LIST_END);
 }
 
@@ -494,6 +503,9 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 xmmsc_result_t *
 xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, int id)
 {
+	xmmsv_coll_t *coll;
+	xmmsv_t *value;
+
 	x_check_conn (c, NULL);
 
 	/* default to the active playlist */
@@ -501,9 +513,15 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, int id)
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_ID,
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (coll, id);
+
+	value = xmmsv_new_coll (coll);
+	xmmsv_coll_unref (coll);
+
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
-	                       XMMSV_LIST_ENTRY_INT (id),
+	                       XMMSV_LIST_ENTRY (value),
 	                       XMMSV_LIST_END);
 }
 
@@ -692,7 +710,7 @@ xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *playlist,
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_ADD_IDLIST,
+	                       XMMS_IPC_CMD_ADD_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_COLL (coll),
 	                       XMMSV_LIST_END);
