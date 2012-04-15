@@ -160,9 +160,9 @@ xmms_fluidsynth_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	 * set up the callback function on those.
 	 */
 	for (i = 1; ; i++) {
-		g_snprintf (key, sizeof (key), "fluidsynth.soundfont.%i", i);
+		g_snprintf (key, sizeof (key), "soundfont.%i", i);
 
-		cfgv = xmms_config_lookup (key);
+		cfgv = xmms_xform_plugin_config_lookup (xform_plugin, key);
 		if (!cfgv) {
 			break;
 		}
@@ -246,9 +246,9 @@ xmms_fluidsynth_init (xmms_xform_t *xform)
 	/* Scan through all the SoundFonts that have been set and load them all */
 	data->soundfont_id = g_array_new (FALSE, FALSE, sizeof (int));
 	for (i = 0; ; i++) {
-		g_snprintf (key, sizeof (key), "fluidsynth.soundfont.%i", i);
+		g_snprintf (key, sizeof (key), "soundfont.%i", i);
 
-		cfgv = xmms_config_lookup (key);
+		cfgv = xmms_xform_config_lookup (xform, key);
 		if (!cfgv) {
 			/* No more SoundFonts to load */
 			break;
@@ -384,9 +384,9 @@ xmms_fluidsynth_sf_config_changed (xmms_object_t *obj, xmmsv_t *_value, gpointer
 	 * a blank one to allow another SoundFont to be added.
 	 */
 	for (i = 0; ; i++) {
-		g_snprintf (key, sizeof (key), "fluidsynth.soundfont.%i", i);
+		g_snprintf (key, sizeof (key), "soundfont.%i", i);
 
-		cfgv = xmms_config_lookup (key);
+		cfgv = xmms_xform_plugin_config_lookup (xform_plugin, key);
 		if (!cfgv) {
 			/* No more entries, soundfont_path is the content of the previous entry
 			 * (the last one in the list.)
@@ -394,7 +394,7 @@ xmms_fluidsynth_sf_config_changed (xmms_object_t *obj, xmmsv_t *_value, gpointer
 			if (soundfont_path[0] != 0) {
 				/* It had a SoundFont set, so create a new empty one */
 				xmms_xform_plugin_config_property_register (xform_plugin,
-				                                            &key[11], "",
+				                                            key, "",
 				                                            xmms_fluidsynth_sf_config_changed,
 				                                            xform_plugin);
 			}
