@@ -765,7 +765,7 @@ xmms_fluidsynth_set_metadata (xmms_xform_t *xform, const gchar *metakey,
 	                 &writsize, &err);
 
 	if (!tmp) {
-		xmms_log_info ("Converting ID3v1 tag '%s' failed (check fluidsynth.encoding property): %s",
+		xmms_log_info ("Converting text '%s' failed (check fluidsynth.encoding property): %s",
 		               text, err ? err->message : "Error not set");
 		err = NULL;
 		tmp = g_convert ((const char *)text, len, "UTF-8", "ISO8859-1", &readsize, &writsize, &err);
