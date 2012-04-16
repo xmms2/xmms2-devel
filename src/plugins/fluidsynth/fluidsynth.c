@@ -355,7 +355,6 @@ xmms_fluidsynth_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_er
 		data->trailing_samples -= MIN (data->trailing_samples, len / sample_size);
 	}
 
-	/* Uncomment once XMMS2 supports floating-point samples (FluidSynth default) */
 #ifdef FLUIDSYNTH_USE_FLOAT
 	status = fluid_synth_write_float (
 #else
@@ -557,7 +556,7 @@ xmms_fluidsynth_callback (unsigned int time, fluid_event_t *event,
 		gboolean send_event = FALSE;
 		switch (midi_event & 0xF0) {
 			case 0x80: /* Note off (two bytes) */
-				/* Release velocity unused */
+				/* FIXME: Release velocity unused */
 				fluid_event_noteoff (evt, chan, event_data[0]);
 				xmms_fluidsynth_skip_bytes (xform, 1);
 				send_event = TRUE;
@@ -569,7 +568,7 @@ xmms_fluidsynth_callback (unsigned int time, fluid_event_t *event,
 				send_event = TRUE;
 				break;
 			case 0xA0:  /* Key pressure (two bytes) */
-				// TODO: Does FluidSynth support this?
+				/* TODO: Does FluidSynth support this? */
 				xmms_fluidsynth_skip_bytes (xform, 1);
 				break;
 			case 0xB0:  /* Controller change (two bytes) */

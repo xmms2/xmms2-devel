@@ -95,7 +95,7 @@ xmms_midsquash_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms2.org/");
 	xmms_plugin_info_add (plugin, "Author", "Adam Nielsen <malvineous@shikadi.net>");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 	*/
@@ -330,7 +330,7 @@ xmms_midsquash_init (xmms_xform_t *xform)
 
 		/* Check for a tempo change event */
 		if ((e->offset[0] & 0xF0) == 0xF0) {
-			if (e->offset[1] == 0x51) { // tempo event
+			if (e->offset[1] == 0x51) { /* tempo event */
 				j = 2;
 				len = xmms_midisquash_read_midi_num(e->offset, &j);
 				len += j;

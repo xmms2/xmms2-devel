@@ -75,7 +75,7 @@ xmms_mid1_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms2.org/");
 	xmms_plugin_info_add (plugin, "Author", "Adam Nielsen <malvineous@shikadi.net>");
 	xmms_plugin_info_add (plugin, "License", "LGPL");
 	*/
@@ -223,6 +223,7 @@ xmms_mid1_init (xmms_xform_t *xform)
 
 	guint ticks_per_quarter_note = (buf[8] << 8) | buf[9];
 	if (ticks_per_quarter_note & 0x8000) {
+		/* TODO */
 		xmms_log_error ("SMPTE timing not implemented");
 		goto cleanup;
 	}
@@ -233,10 +234,10 @@ xmms_mid1_init (xmms_xform_t *xform)
 	/* Load all the tracks */
 	while (xmms_xform_read (xform, buf, 8, &error) == 8) {
 		len = (buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
-		XMMS_DBG ("%c%c%c%c len is %lu", buf[0], buf[1], buf[2], buf[3], len);
+		XMMS_DBG ("%.4s len is %lu", buf, len);
 
-		if ((buf[0] != 'M') || (buf[1] != 'T') || (buf[2] != 'r') || (buf[3] != 'k')) {
-			XMMS_DBG ("Ignoring unknown chunk: %c%c%c%c", buf[0], buf[1], buf[2], buf[3]);
+		if (strncmp ((char *)buf, "MTrk", 4) != 0) {
+			XMMS_DBG ("Ignoring unknown chunk: %.4s", buf);
 			/* Skip over the chunk - we don't use seek as it's not always implemented
 			 * by the parent xform.
 			 */
