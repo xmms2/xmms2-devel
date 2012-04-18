@@ -48,11 +48,20 @@ int xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll);
 xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll);
 struct xmmsv_St *xmmsv_coll_idlist_get (xmmsv_coll_t *coll);
 
-void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value);
+void xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value) XMMS_DEPRECATED;
+void xmmsv_coll_attribute_set_string (xmmsv_coll_t *coll, const char *key, const char *value);
+void xmmsv_coll_attribute_set_int (xmmsv_coll_t *coll, const char *key, int32_t value);
+void xmmsv_coll_attribute_set_value (xmmsv_coll_t *coll, const char *key, struct xmmsv_St *value);
+
 int xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key);
-int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value);
+
+int xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value)  XMMS_DEPRECATED;
+int xmmsv_coll_attribute_get_string (xmmsv_coll_t *coll, const char *key, const char **value);
+int xmmsv_coll_attribute_get_int (xmmsv_coll_t *coll, const char *key, int32_t *value);
+int xmmsv_coll_attribute_get_value (xmmsv_coll_t *coll, const char *key, struct xmmsv_St **value);
 
 struct xmmsv_St *xmmsv_coll_attributes_get (xmmsv_coll_t *coll);
+void xmmsv_coll_attributes_set (xmmsv_coll_t *coll, struct xmmsv_St *attributes);
 
 xmmsv_coll_t *xmmsv_coll_universe (void);
 

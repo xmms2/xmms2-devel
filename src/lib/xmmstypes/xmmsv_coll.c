@@ -400,7 +400,27 @@ xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
 }
 
 /**
- * Set an attribute in the given collection.
+ * Replace all attributes in the given collection.
+ *
+ * @param coll The collection in which to set the attribute.
+ * @param attributes The new attributes.
+ */
+void
+xmmsv_coll_attributes_set (xmmsv_coll_t *coll, xmmsv_t *attributes)
+{
+	xmmsv_t *old;
+
+	x_return_if_fail (coll);
+	x_return_if_fail (attributes);
+	x_return_if_fail (xmmsv_is_type (attributes, XMMSV_TYPE_DICT));
+
+	old = coll->attributes;
+	coll->attributes = xmmsv_ref (attributes);
+	xmmsv_unref (old);
+}
+
+/**
+ * Set a string attribute in the given collection.
  *
  * @param coll The collection in which to set the attribute.
  * @param key  The name of the attribute to set.
@@ -409,13 +429,46 @@ xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
 void
 xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value)
 {
-	xmmsv_t *v;
+	xmmsv_coll_attribute_set_string (coll, key, value);
+}
 
-	v = xmmsv_new_string (value);
-	x_return_if_fail (v);
+/**
+ * Set a string attribute in the given collection.
+ *
+ * @param coll The collection in which to set the attribute.
+ * @param key  The name of the attribute to set.
+ * @param value The value of the attribute.
+ */
+void
+xmmsv_coll_attribute_set_string (xmmsv_coll_t *coll, const char *key, const char *value)
+{
+	xmmsv_dict_set_string (coll->attributes, key, value);
+}
 
-	xmmsv_dict_set (coll->attributes, key, v);
-	xmmsv_unref (v);
+/**
+ * Set an integer attribute in the given collection.
+ *
+ * @param coll The collection in which to set the attribute.
+ * @param key  The name of the attribute to set.
+ * @param value The value of the attribute.
+ */
+void
+xmmsv_coll_attribute_set_int (xmmsv_coll_t *coll, const char *key, int32_t value)
+{
+	xmmsv_dict_set_int (coll->attributes, key, value);
+}
+
+/**
+ * Set an attribute in the given collection.
+ *
+ * @param coll The collection in which to set the attribute.
+ * @param key  The name of the attribute to set.
+ * @param value The value of the attribute.
+ */
+void
+xmmsv_coll_attribute_set_value (xmmsv_coll_t *coll, const char *key, xmmsv_t *value)
+{
+	xmmsv_dict_set (coll->attributes, key, value);
 }
 
 /**
@@ -434,10 +487,7 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 }
 
 /**
- * Retrieve the value of the attribute of the given collection.
- * The return value is 1 if the attribute was found and 0 otherwise.
- * The value of the attribute is owned by the collection and must not
- * be freed by the caller.
+ * Retrieve a string attribute from the given collection.
  *
  * @param coll The collection to retrieve the attribute from.
  * @param key  The name of the attribute.
@@ -447,14 +497,50 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
 int
 xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value)
 {
-	if (xmmsv_dict_entry_get_string (coll->attributes, key, value)) {
-		return 1;
-	}
-	*value = NULL;
-	return 0;
+	return xmmsv_coll_attribute_get_string (coll, key, value);
 }
 
+/**
+ * Retrieve a string attribute from the given collection.
+ *
+ * @param coll The collection to retrieve the attribute from.
+ * @param key  The name of the attribute.
+ * @param value The value of the attribute if found (owned by the collection).
+ * @return 1 if the attribute was found, 0 otherwise
+ */
+int
+xmmsv_coll_attribute_get_string (xmmsv_coll_t *coll, const char *key, const char **value)
+{
+	return xmmsv_dict_entry_get_string (coll->attributes, key, value);
+}
 
+/**
+ * Retrieve an integer attribute from the given collection.
+ *
+ * @param coll The collection to retrieve the attribute from.
+ * @param key  The name of the attribute.
+ * @param value The value of the attribute if found (owned by the collection).
+ * @return 1 if the attribute was found, 0 otherwise
+ */
+int
+xmmsv_coll_attribute_get_int (xmmsv_coll_t *coll, const char *key, int32_t *value)
+{
+	return xmmsv_dict_entry_get_int (coll->attributes, key, value);
+}
+
+/**
+ * Retrieve an attribute from the given collection.
+ *
+ * @param coll The collection to retrieve the attribute from.
+ * @param key  The name of the attribute.
+ * @param value The value of the attribute if found (owned by the collection).
+ * @return 1 if the attribute was found, 0 otherwise
+ */
+int
+xmmsv_coll_attribute_get_value (xmmsv_coll_t *coll, const char *key, xmmsv_t **value)
+{
+	return xmmsv_dict_get (coll->attributes, key, value);
+}
 
 /**
  * Return a collection referencing the whole media library.
