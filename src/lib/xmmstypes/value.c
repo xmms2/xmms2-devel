@@ -1547,7 +1547,10 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_list_iter_entry (it, &v);
-		x_return_val_if_fail (xmmsv_is_type (v, type), 0);
+		if (!xmmsv_is_type (v, type)) {
+			xmmsv_list_iter_free (it);
+			return 0;
+		}
 		xmmsv_list_iter_next (it);
 	}
 
