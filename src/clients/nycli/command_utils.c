@@ -384,7 +384,7 @@ coll_apply_default_order (xmmsv_coll_t *query)
 	xmmsv_coll_t *compilation, *compilation_sorted;
 	xmmsv_coll_t *regular, *regular_sorted;
 	xmmsv_coll_t *complement, *concatenated;
-	xmmsv_t *compilation_order, *regular_order;
+	xmmsv_t *fields, *artist_order, *compilation_order, *regular_order;
 
 	/* All various artists entries that match the user query. */
 	compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
@@ -413,12 +413,24 @@ coll_apply_default_order (xmmsv_coll_t *query)
 	xmmsv_coll_unref (compilation);
 	xmmsv_unref (compilation_order);
 
+	fields = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("album_artist_sort"),
+	                           XMMSV_LIST_ENTRY_STR ("album_artist"),
+	                           XMMSV_LIST_ENTRY_STR ("artist_sort"),
+	                           XMMSV_LIST_ENTRY_STR ("artist"),
+	                           XMMSV_LIST_END);
+
+	artist_order = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "value"),
+	                                 XMMSV_DICT_ENTRY ("field", fields),
+	                                 XMMSV_DICT_END);
+
 	regular_order = xmmsv_build_list (
-	        XMMSV_LIST_ENTRY_STR ("artist"),
 	        XMMSV_LIST_ENTRY_STR ("album"),
 	        XMMSV_LIST_ENTRY_STR ("partofset"),
 	        XMMSV_LIST_ENTRY_STR ("tracknr"),
 	        XMMSV_LIST_END);
+
+	xmmsv_list_insert (regular_order, 0, artist_order);
+	xmmsv_unref (artist_order);
 
 	regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
 	xmmsv_coll_unref (regular);
