@@ -1269,14 +1269,25 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 
 		if (!xmmsv_coll_attribute_get (coll, "type", &attr)
 		    || strcmp (attr, "value") == 0) {
+			xmmsv_t *field;
+
 			/* If it's a sorting on values we need a field to sort on */
-			if (!xmmsv_coll_attribute_get (coll, "field", &attr)) {
+			if (!xmmsv_coll_attribute_get_value (coll, "field", &field)) {
 				*err = "Invalid collection: ORDER without required \"field\"-"
 				       "attribute";
 				return FALSE;
 			}
+
+			if (!xmmsv_is_type (field, XMMSV_TYPE_STRING) ||
+			    (xmmsv_is_type (field, XMMSV_TYPE_LIST) &&
+			     !xmmsv_list_has_type (field, XMMSV_TYPE_STRING))) {
+				*err = "Invalid collection: ORDER with \"field\" set to neither "
+				       "a string or a list of strings.";
+
+			}
 		}
 		break;
+
 
 	case XMMS_COLLECTION_TYPE_LIMIT:
 		/* One operand */
