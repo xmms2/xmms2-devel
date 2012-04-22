@@ -1306,6 +1306,13 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 	}
 }
 
+static void
+_xmmsv_list_sort (xmmsv_list_t *l, xmmsv_list_compare_func_t comparator)
+{
+	 qsort (l->list, l->size, sizeof (xmmsv_t *),
+	        (int (*)(const void *, const void *)) comparator);
+}
+
 /**
  * Get the element at the given position in the list #xmmsv_t. This
  * function does not increase the refcount of the element, the
@@ -1463,6 +1470,24 @@ xmmsv_list_clear (xmmsv_t *listv)
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 
 	_xmmsv_list_clear (listv->value.list);
+
+	return 1;
+}
+
+/**
+ * Sort the list using the supplied comparator.
+ *
+ * @param listv A #xmmsv_t containing a list.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_list_sort (xmmsv_t *listv, xmmsv_list_compare_func_t comparator)
+{
+	x_return_val_if_fail (comparator, 0);
+	x_return_val_if_fail (listv, 0);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
+
+	_xmmsv_list_sort (listv->value.list, comparator);
 
 	return 1;
 }

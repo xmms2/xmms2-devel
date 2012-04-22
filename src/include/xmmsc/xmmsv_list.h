@@ -30,6 +30,8 @@ extern "C" {
  * @{
  */
 
+typedef int (*xmmsv_list_compare_func_t)(xmmsv_t **, xmmsv_t **);
+
 xmmsv_t *xmmsv_new_list (void);
 
 int xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val);
@@ -39,6 +41,7 @@ int xmmsv_list_insert (xmmsv_t *listv, int pos, xmmsv_t *val);
 int xmmsv_list_remove (xmmsv_t *listv, int pos);
 int xmmsv_list_move (xmmsv_t *listv, int old_pos, int new_pos);
 int xmmsv_list_clear (xmmsv_t *listv);
+int xmmsv_list_sort (xmmsv_t *listv, xmmsv_list_compare_func_t comparator);
 int xmmsv_list_get_size (xmmsv_t *listv);
 int xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type);
 int xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type);
