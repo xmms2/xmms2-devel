@@ -159,12 +159,11 @@ parse_attributes (xmmsv_coll_t *coll, xmmsv_t *attrs)
 
 	while (xmmsv_dict_iter_valid (it)) {
 		xmmsv_t *entry;
-		const char *key, *value;
+		const char *key;
 
 		assert (xmmsv_dict_iter_pair (it, &key, &entry));
-		assert (xmmsv_get_string (entry, &value));
 
-		xmmsv_coll_attribute_set (coll, key, value);
+		xmmsv_coll_attribute_set_value (coll, key, entry);
 
 		xmmsv_dict_iter_next (it);
 	}
