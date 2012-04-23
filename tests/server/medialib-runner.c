@@ -272,10 +272,14 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);
 
-	if (ordered) {
-		matches = xmmsv_compare (ret, value);
+	if (xmms_error_isok (&err)) {
+		if (ordered) {
+			matches = xmmsv_compare (ret, value);
+		} else {
+			matches = xmmsv_compare_unordered (ret, value);
+		}
 	} else {
-		matches = xmmsv_compare_unordered (ret, value);
+		matches = FALSE;
 	}
 
 	if (matches) {
@@ -292,6 +296,9 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 		} else {
 			g_print ("............................................................ Failure!");
 			g_print ("\r%s \n", name);
+			if (xmms_error_iserror (&err)) {
+				g_printerr ("ERROR: %s\n", xmms_error_message_get (&err));
+			}
 		}
 
 		g_printerr ("The result: ");
