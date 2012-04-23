@@ -128,7 +128,7 @@ def build(bld):
             target = "test_xform",
             source = test_xform_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
             uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None
             )

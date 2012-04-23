@@ -18,6 +18,8 @@
 
 #include <glib.h>
 
+#include <locale.h>
+
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_config.h"
@@ -25,11 +27,17 @@
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_medialib.h"
 
+#include "server-utils/ipc_call.h"
+#include "utils/value_utils.h"
+
 static xmms_medialib_t *medialib;
+static xmms_xform_object_t *xform_object;
 
 SETUP (xform)
 {
 	g_thread_init (0);
+
+	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();
 	xmms_log_init (0);
@@ -37,6 +45,7 @@ SETUP (xform)
 	xmms_config_init ("memory://");
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 
+	xform_object = xmms_xform_object_init ();
 	medialib = xmms_medialib_init ();
 
 	return 1;
@@ -45,6 +54,7 @@ SETUP (xform)
 CLEANUP ()
 {
 	xmms_object_unref (medialib);
+	xmms_object_unref (xform_object);
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 
@@ -181,4 +191,91 @@ CASE(test_xform_metadata)
 
 	g_list_free (goal_format);
 	xmms_object_unref (format);
+}
+
+static gboolean
+xmms_test_browse_init (xmms_xform_t *xform)
+{
+	return TRUE;
+}
+
+static gboolean
+xmms_test_browse_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
+{
+	xmms_xform_browse_add_entry (xform, "file02.mp3", 0);
+	xmms_xform_browse_add_entry_property_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, 2);
+	xmms_xform_browse_add_entry (xform, "Directory1", XMMS_XFORM_BROWSE_FLAG_DIR);
+	xmms_xform_browse_add_entry (xform, "file01.mp3", 0);
+	xmms_xform_browse_add_entry_property_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, 1);
+	xmms_xform_browse_add_entry (xform, "file03.mp3", 0);
+	xmms_xform_browse_add_entry_property_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, 3);
+	xmms_xform_browse_add_entry (xform, "Directory2", XMMS_XFORM_BROWSE_FLAG_DIR);
+	xmms_xform_browse_add_entry (xform, "Last_Directory", XMMS_XFORM_BROWSE_FLAG_DIR);
+	return TRUE;
+}
+
+static gboolean
+xmms_browse_test_xform_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+{
+	xmms_xform_methods_t methods;
+
+	XMMS_XFORM_METHODS_INIT (methods);
+
+	methods.init = xmms_test_browse_init;
+	methods.browse = xmms_test_browse_browse;
+
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_PRIORITY, 0,
+	                              XMMS_STREAM_TYPE_MIMETYPE, "application/x-url",
+	                              XMMS_STREAM_TYPE_URL, "file://*",
+	                              XMMS_STREAM_TYPE_END);
+
+	return TRUE;
+}
+
+XMMS_XFORM_BUILTIN (browse_test_xform,
+                    "browse test xform",
+                    XMMS_VERSION,
+                    "browse test xform",
+                    xmms_browse_test_xform_plugin_setup);
+
+#define CU_ASSERT_BROWSE_ENTRY(list, pos, path, isdir, size) do { \
+		xmmsv_t *entry;                                         \
+		const gchar *_path;                                     \
+		gint _isdir, _size;                                     \
+		_isdir = _size = 0;                                     \
+		xmmsv_list_get (list, pos, &entry);                     \
+		xmmsv_dict_entry_get_string (entry, "path", &_path);    \
+		CU_ASSERT_STRING_EQUAL (path, _path);                   \
+		xmmsv_dict_entry_get_int (entry, "isdir", &_isdir);     \
+		CU_ASSERT_EQUAL (isdir, _isdir);                        \
+		xmmsv_dict_entry_get_int (entry, "size", &_size);       \
+		CU_ASSERT_EQUAL (size, _size);                          \
+	} while (0);
+
+CASE(test_browse)
+{
+	xmmsv_t *result;
+
+	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_CMD_BROWSE,
+	                        xmmsv_new_string ("file:///"));
+	CU_ASSERT_TRUE (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+	xmmsv_unref (result);
+
+	xmms_plugin_load (&xmms_builtin_browse_test_xform, NULL);
+
+	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_CMD_BROWSE,
+	                        xmmsv_new_string ("file:///"));
+	CU_ASSERT_TRUE (xmmsv_is_type (result, XMMSV_TYPE_LIST));
+	CU_ASSERT_TRUE (xmmsv_list_restrict_type (result, XMMSV_TYPE_DICT));
+	CU_ASSERT_EQUAL (6, xmmsv_list_get_size (result));
+	CU_ASSERT_BROWSE_ENTRY (result, 0, "file:///Directory1", 1, 0);
+	CU_ASSERT_BROWSE_ENTRY (result, 1, "file:///Directory2", 1, 0);
+	CU_ASSERT_BROWSE_ENTRY (result, 2, "file:///file01.mp3", 0, 1);
+	CU_ASSERT_BROWSE_ENTRY (result, 3, "file:///file02.mp3", 0, 2);
+	CU_ASSERT_BROWSE_ENTRY (result, 4, "file:///file03.mp3", 0, 3);
+	CU_ASSERT_BROWSE_ENTRY (result, 5, "file:///Last_Directory", 1, 0);
+	xmmsv_unref (result);
 }
