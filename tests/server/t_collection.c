@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include "xcu.h"
 
 #include "xmmspriv/xmms_log.h"
@@ -17,6 +19,8 @@ static xmms_coll_dag_t *dag;
 
 SETUP (coll) {
 	g_thread_init (0);
+
+	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();
 

@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include "xcu.h"
 
 #include "xmmspriv/xmms_log.h"
@@ -35,6 +37,8 @@ setup_default_playlist (void)
 
 SETUP (mlib) {
 	g_thread_init (0);
+
+	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();
 	xmms_log_init (0);
