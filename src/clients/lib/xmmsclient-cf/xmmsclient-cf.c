@@ -16,10 +16,11 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 #include "xmmsclient/xmmsclient.h"
+#include "xmmsclient/xmmsclient-cf.h"
 
 #define	XMMSC_CF_SOURCE_PRIORITY 4
 
-void
+static void
 xmmsc_io_cf_toggle_socket_flags (int toggle, void *userdata)
 {
 	CFSocketRef sockRef = (CFSocketRef) userdata;
