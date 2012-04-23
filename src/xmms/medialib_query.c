@@ -39,6 +39,12 @@
 
 static s4_condition_t *collection_to_condition (xmms_medialib_session_t *s, xmmsv_coll_t *coll, xmms_fetch_info_t *fetch, xmmsv_t *order);
 
+typedef enum xmms_sort_type_St {
+	SORT_TYPE_COLUMN,
+	SORT_TYPE_RANDOM,
+	SORT_TYPE_LIST
+} xmms_sort_type_t;
+
 /* A filter matching everything */
 static gint
 universe_filter (void)
@@ -105,18 +111,6 @@ xmms_medialib_result_sort_idlist (s4_resultset_t *set, xmmsv_t *idlist)
 	return ret;
 }
 
-typedef enum xmms_sort_type_St {
-	SORT_TYPE_ID,
-	SORT_TYPE_VALUE,
-	SORT_TYPE_RANDOM,
-	SORT_TYPE_LIST
-} xmms_sort_type_t;
-
-typedef enum xmms_sort_direction_St {
-	SORT_DIRECTION_ASCENDING,
-	SORT_DIRECTION_DESCENDING
-} xmms_sort_direction_t;
-
 /**
  * Sorts a resultset
  *
@@ -130,12 +124,9 @@ typedef enum xmms_sort_direction_St {
 static s4_resultset_t *
 xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, xmmsv_t *order)
 {
-	gint i, j, stop, size, direction, type;
-	gint *s4_order;
+	gint i, stop, type;
+	s4_order_t *s4_order;
 	xmmsv_t *val;
-
-	size = xmmsv_list_get_size (order);
-	s4_order = g_new0 (int, size + 1);
 
 	/* Find the first idlist-order operand */
 	for (i = 0; xmmsv_list_get (order, i, &val); i++) {
@@ -147,39 +138,41 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 			break;
 		}
 	}
-	/* We will only order by the operands before the idlist */
+
+	/* We willorder by the operands before the idlist */
 	stop = i;
 
-	for (i = 0, j = 0; i < stop && xmmsv_list_get (order, i, &val); i++) {
+	s4_order = s4_order_create ();
+
+	for (i = 0; i < stop && xmmsv_list_get (order, i, &val); i++) {
 		xmmsv_dict_entry_get_int (val, "type", &type);
 
-		if (type == SORT_TYPE_RANDOM) {
-			if (i == 0) {
-				s4_resultset_shuffle (set);
+		if (type == SORT_TYPE_COLUMN) {
+			gint id, j, direction, collation;
+			s4_order_entry_t *entry;
+			xmmsv_t *ids;
+
+			if (!xmmsv_dict_entry_get_int (val, "direction", &direction))
+				direction = S4_ORDER_ASCENDING;
+			if (!xmmsv_dict_entry_get_int (val, "collation", &collation))
+				collation = S4_CMP_COLLATE;
+
+			xmmsv_dict_get (val, "field", &ids);
+
+			entry = s4_order_add_column (s4_order, collation, direction);
+			for (j = 0; xmmsv_list_get_int (ids, j, &id); j++) {
+				s4_order_entry_add_choice (entry, id);
 			}
+		} else if (type == SORT_TYPE_RANDOM) {
+			gint seed;
+			xmmsv_dict_entry_get_int (val, "seed", &seed);
+			s4_order_add_random (s4_order, seed);
 			break;
-		} else {
-			gint field;
-			xmmsv_dict_entry_get_int (val, "field", &field);
-			s4_order[j] = field + 1;
 		}
-
-		if (xmmsv_dict_entry_get_int (val, "direction", &direction)) {
-			if (direction == SORT_DIRECTION_DESCENDING) {
-				s4_order[j] = -s4_order[j];
-			}
-		}
-
-		j++;
 	}
 
-	s4_order[j] = 0;
-
-	if (j > 0) {
-		s4_resultset_sort (set, s4_order);
-	}
-
-	g_free (s4_order);
+	s4_resultset_sort (set, s4_order);
+	s4_order_free (s4_order);
 
 	return set;
 }
@@ -703,6 +696,65 @@ mediaset_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return collection_to_condition (session, operand, fetch, NULL);
 }
 
+static void
+order_condition_by_id (xmmsv_t *entry,
+                       xmms_fetch_info_t *fetch,
+                       s4_sourcepref_t *sourcepref)
+{
+	xmmsv_t *value;
+	gint field;
+
+	field = xmms_fetch_info_add_key (fetch, NULL, "id", sourcepref);
+
+	value = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (field),
+	                          XMMSV_LIST_END);
+
+	xmmsv_dict_set_int (entry, "type", SORT_TYPE_COLUMN);
+	xmmsv_dict_set (entry, "field", value);
+
+	xmmsv_unref (value);
+}
+
+static void
+order_condition_by_value (xmmsv_t *entry,
+                          xmms_fetch_info_t *fetch,
+                          s4_sourcepref_t *sourcepref,
+                          xmmsv_coll_t *coll)
+{
+	xmmsv_t *attrs, *field, *ids;
+	xmmsv_list_iter_t *it;
+
+	attrs = xmmsv_coll_attributes_get (coll);
+	xmmsv_dict_get (attrs, "field", &field);
+
+	if (xmmsv_is_type (field, XMMSV_TYPE_STRING)) {
+		xmmsv_t *list = xmmsv_new_list ();
+		xmmsv_list_append (list, field);
+		xmmsv_dict_set (attrs, "field", list);
+		xmmsv_unref (list);
+		field = list;
+	}
+
+	ids = xmmsv_new_list ();
+
+	xmmsv_get_list_iter (field, &it);
+	while (xmmsv_list_iter_valid (it)) {
+		const gchar *value;
+		gint id;
+
+		xmmsv_list_iter_entry_string (it, &value);
+
+		id = xmms_fetch_info_add_key (fetch, NULL, value, sourcepref);
+		xmmsv_list_append_int (ids, id);
+
+		xmmsv_list_iter_next (it);
+	}
+
+	xmmsv_dict_set_int (entry, "type", SORT_TYPE_COLUMN);
+	xmmsv_dict_set (entry, "field", ids);
+
+	xmmsv_unref (ids);
+}
 
 /**
  * Add a dict to the sort list:
@@ -715,8 +767,7 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	s4_sourcepref_t *sourcepref;
 	xmmsv_coll_t *operand;
 	xmmsv_t *operands, *entry;
-	const gchar *key, *value;
-	gint field;
+	const gchar *key;
 
 	entry = xmmsv_new_dict ();
 
@@ -729,24 +780,19 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	if (strcmp (key, "random") == 0) {
 		xmmsv_dict_set_int (entry, "type", SORT_TYPE_RANDOM);
 	} else if (strcmp (key, "id") == 0) {
-		field = xmms_fetch_info_add_key (fetch, NULL, "id", sourcepref);
-		xmmsv_dict_set_int (entry, "type", SORT_TYPE_ID);
-		xmmsv_dict_set_int (entry, "field", field);
+		order_condition_by_id (entry, fetch, sourcepref);
 	} else {
-		xmmsv_coll_attribute_get (coll, "field", &value);
-		field = xmms_fetch_info_add_key (fetch, NULL, value, sourcepref);
-		xmmsv_dict_set_int (entry, "type", SORT_TYPE_VALUE);
-		xmmsv_dict_set_int (entry, "field", field);
+		order_condition_by_value (entry, fetch, sourcepref, coll);
 	}
 
 	s4_sourcepref_unref (sourcepref);
 
 	if (!xmmsv_coll_attribute_get (coll, "direction", &key)) {
-		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_ASCENDING);
+		xmmsv_dict_set_int (entry, "direction", S4_ORDER_ASCENDING);
 	} else if (strcmp (key, "ASC") == 0) {
-		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_ASCENDING);
+		xmmsv_dict_set_int (entry, "direction", S4_ORDER_ASCENDING);
 	} else {
-		xmmsv_dict_set_int (entry, "direction", SORT_DIRECTION_DESCENDING);
+		xmmsv_dict_set_int (entry, "direction", S4_ORDER_DESCENDING);
 	}
 
 	xmmsv_list_append (order, entry);
