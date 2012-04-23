@@ -245,7 +245,7 @@ xmms_asf_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 static gint64
 xmms_asf_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
-	int64_t position;
+	gint64 position;
 	xmms_asf_data_t *data;
 
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
@@ -551,4 +551,3 @@ xmms_asf_get_track (xmms_xform_t *xform, asf_file_t *file)
 
 	return -1;
 }
-
