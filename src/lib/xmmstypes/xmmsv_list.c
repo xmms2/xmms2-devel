@@ -20,7 +20,14 @@
 #include "xmmspriv/xmmsv.h"
 #include "xmmspriv/xmms_list.h"
 
-struct xmmsv_list_St {
+#include "xmmsc/xmmsv.h"
+
+struct xmmsv_list_iter_St {
+	xmmsv_list_internal_t *parent;
+	int position;
+};
+
+struct xmmsv_list_internal_St {
 	xmmsv_t **list;
 	xmmsv_t *parent_value;
 	int size;
@@ -28,11 +35,6 @@ struct xmmsv_list_St {
 	bool restricted;
 	xmmsv_type_t restricttype;
 	x_list_t *iterators;
-};
-
-struct xmmsv_list_iter_St {
-	xmmsv_list_t *parent;
-	int position;
 };
 
 static void _xmmsv_list_iter_free (xmmsv_list_iter_t *it);
@@ -57,13 +59,12 @@ _xmmsv_list_position_normalize (int *pos, int size, int allow_append)
 	return 1;
 }
 
-
-static xmmsv_list_t *
+static xmmsv_list_internal_t *
 _xmmsv_list_new (void)
 {
-	xmmsv_list_t *list;
+	xmmsv_list_internal_t *list;
 
-	list = x_new0 (xmmsv_list_t, 1);
+	list = x_new0 (xmmsv_list_internal_t, 1);
 	if (!list) {
 		x_oom ();
 		return NULL;
@@ -75,7 +76,7 @@ _xmmsv_list_new (void)
 }
 
 void
-_xmmsv_list_free (xmmsv_list_t *l)
+_xmmsv_list_free (xmmsv_list_internal_t *l)
 {
 	xmmsv_list_iter_t *it;
 	int i;
@@ -96,7 +97,7 @@ _xmmsv_list_free (xmmsv_list_t *l)
 }
 
 static int
-_xmmsv_list_resize (xmmsv_list_t *l, int newsize)
+_xmmsv_list_resize (xmmsv_list_internal_t *l, int newsize)
 {
 	xmmsv_t **newmem;
 
@@ -114,7 +115,7 @@ _xmmsv_list_resize (xmmsv_list_t *l, int newsize)
 }
 
 static int
-_xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
+_xmmsv_list_insert (xmmsv_list_internal_t *l, int pos, xmmsv_t *val)
 {
 	xmmsv_list_iter_t *it;
 	x_list_t *n;
@@ -161,13 +162,13 @@ _xmmsv_list_insert (xmmsv_list_t *l, int pos, xmmsv_t *val)
 }
 
 static int
-_xmmsv_list_append (xmmsv_list_t *l, xmmsv_t *val)
+_xmmsv_list_append (xmmsv_list_internal_t *l, xmmsv_t *val)
 {
 	return _xmmsv_list_insert (l, l->size, val);
 }
 
 static int
-_xmmsv_list_remove (xmmsv_list_t *l, int pos)
+_xmmsv_list_remove (xmmsv_list_internal_t *l, int pos)
 {
 	xmmsv_list_iter_t *it;
 	int half_size;
@@ -208,7 +209,7 @@ _xmmsv_list_remove (xmmsv_list_t *l, int pos)
 }
 
 static int
-_xmmsv_list_move (xmmsv_list_t *l, int old_pos, int new_pos)
+_xmmsv_list_move (xmmsv_list_internal_t *l, int old_pos, int new_pos)
 {
 	xmmsv_t *v;
 	xmmsv_list_iter_t *it;
@@ -260,7 +261,7 @@ _xmmsv_list_move (xmmsv_list_t *l, int old_pos, int new_pos)
 }
 
 static void
-_xmmsv_list_clear (xmmsv_list_t *l)
+_xmmsv_list_clear (xmmsv_list_internal_t *l)
 {
 	xmmsv_list_iter_t *it;
 	x_list_t *n;
@@ -286,7 +287,7 @@ _xmmsv_list_clear (xmmsv_list_t *l)
 }
 
 static void
-_xmmsv_list_sort (xmmsv_list_t *l, xmmsv_list_compare_func_t comparator)
+_xmmsv_list_sort (xmmsv_list_internal_t *l, xmmsv_list_compare_func_t comparator)
 {
 	qsort (l->list, l->size, sizeof (xmmsv_t *),
 	       (int (*)(const void *, const void *)) comparator);
@@ -325,7 +326,7 @@ xmmsv_new_list (void)
 int
 xmmsv_list_get (xmmsv_t *listv, int pos, xmmsv_t **val)
 {
-	xmmsv_list_t *l;
+	xmmsv_list_internal_t *l;
 
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
@@ -357,7 +358,7 @@ int
 xmmsv_list_set (xmmsv_t *listv, int pos, xmmsv_t *val)
 {
 	xmmsv_t *old_val;
-	xmmsv_list_t *l;
+	xmmsv_list_internal_t *l;
 
 	x_return_val_if_fail (listv, 0);
 	x_return_val_if_fail (val, 0);
@@ -582,7 +583,7 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 }
 
 static xmmsv_list_iter_t *
-_xmmsv_list_iter_new (xmmsv_list_t *l)
+_xmmsv_list_iter_new (xmmsv_list_internal_t *l)
 {
 	xmmsv_list_iter_t *it;
 

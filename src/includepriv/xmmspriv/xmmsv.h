@@ -20,8 +20,8 @@
 #include "xmmsc/xmmsv.h"
 #include "xmmsc/xmmsc_stdbool.h"
 
-typedef struct xmmsv_dict_St xmmsv_dict_t;
-typedef struct xmmsv_list_St xmmsv_list_t;
+typedef struct xmmsv_dict_internal_St xmmsv_dict_internal_t;
+typedef struct xmmsv_list_internal_St xmmsv_list_internal_t;
 
 struct xmmsv_St {
 	union {
@@ -35,9 +35,8 @@ struct xmmsv_St {
 			uint32_t len;
 		} bin;
 
-		xmmsv_list_t *list;
-		xmmsv_dict_t *dict;
-
+		xmmsv_list_internal_t *list;
+		xmmsv_dict_internal_t *dict;
 
 		struct {
 			bool ro;
@@ -54,7 +53,7 @@ struct xmmsv_St {
 
 xmmsv_t *_xmmsv_new (xmmsv_type_t type);
 
-void _xmmsv_list_free (xmmsv_list_t *dict);
-void _xmmsv_dict_free (xmmsv_dict_t *dict);
+void _xmmsv_list_free (xmmsv_list_internal_t *dict);
+void _xmmsv_dict_free (xmmsv_dict_internal_t *dict);
 
 #endif

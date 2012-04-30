@@ -26,7 +26,7 @@ typedef struct xmmsv_dict_data_St {
 	xmmsv_t *value;
 } xmmsv_dict_data_t;
 
-struct xmmsv_dict_St {
+struct xmmsv_dict_internal_St {
 	int elems;
 	int size;
 	xmmsv_dict_data_t *data;
@@ -36,7 +36,7 @@ struct xmmsv_dict_St {
 
 struct xmmsv_dict_iter_St {
 	int pos;
-	xmmsv_dict_t *parent;
+	xmmsv_dict_internal_t *parent;
 };
 
 static void _xmmsv_dict_iter_free (xmmsv_dict_iter_t *it);
@@ -105,7 +105,8 @@ _xmmsv_dict_hash (const void *key, int len)
  * Returns 1 if the entry was found, 0 otherwise
  */
 static int
-_xmmsv_dict_search (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int *pos, int *deleted)
+_xmmsv_dict_search (xmmsv_dict_internal_t *dict, xmmsv_dict_data_t data,
+                    int *pos, int *deleted)
 {
 	int bucket = data.hash & HASH_MASK (dict);
 	int stop = bucket;
@@ -146,7 +147,7 @@ _xmmsv_dict_search (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int *pos, int *d
 
 /* Inserts data into the hash table */
 static void
-_xmmsv_dict_insert (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int alloc)
+_xmmsv_dict_insert (xmmsv_dict_internal_t *dict, xmmsv_dict_data_t data, int alloc)
 {
 	int pos, deleted;
 
@@ -171,7 +172,7 @@ _xmmsv_dict_insert (xmmsv_dict_t *dict, xmmsv_dict_data_t data, int alloc)
 /* Remove an entry at the given position
  */
 static void
-_xmmsv_dict_remove (xmmsv_dict_t *dict, int pos)
+_xmmsv_dict_remove (xmmsv_dict_internal_t *dict, int pos)
 {
 	free ((void*)dict->data[pos].str);
 	dict->data[pos].str = DELETED_STR;
@@ -184,7 +185,7 @@ _xmmsv_dict_remove (xmmsv_dict_t *dict, int pos)
  * twice the size of the old one
  */
 static void
-_xmmsv_dict_resize (xmmsv_dict_t *dict)
+_xmmsv_dict_resize (xmmsv_dict_internal_t *dict)
 {
 	int i;
 	xmmsv_dict_data_t *old_data;
@@ -205,12 +206,12 @@ _xmmsv_dict_resize (xmmsv_dict_t *dict)
 	free (old_data);
 }
 
-static xmmsv_dict_t *
+static xmmsv_dict_internal_t *
 _xmmsv_dict_new (void)
 {
-	xmmsv_dict_t *dict;
+	xmmsv_dict_internal_t *dict;
 
-	dict = x_new0 (xmmsv_dict_t, 1);
+	dict = x_new0 (xmmsv_dict_internal_t, 1);
 	if (!dict) {
 		x_oom ();
 		return NULL;
@@ -229,7 +230,7 @@ _xmmsv_dict_new (void)
 }
 
 void
-_xmmsv_dict_free (xmmsv_dict_t *dict)
+_xmmsv_dict_free (xmmsv_dict_internal_t *dict)
 {
 	xmmsv_dict_iter_t *it;
 	int i;
@@ -309,7 +310,7 @@ xmmsv_dict_entry_get_type (xmmsv_t *val, const char *key)
 int
 xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 {
-	xmmsv_dict_t *dict;
+	xmmsv_dict_internal_t *dict;
 	int ret = 0;
 	int pos, deleted;
 
@@ -352,7 +353,7 @@ xmmsv_dict_get (xmmsv_t *dictv, const char *key, xmmsv_t **val)
 int
 xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 {
-	xmmsv_dict_t *dict;
+	xmmsv_dict_internal_t *dict;
 	int ret = 1;
 
 	x_return_val_if_fail (key, 0);
@@ -385,7 +386,7 @@ xmmsv_dict_set (xmmsv_t *dictv, const char *key, xmmsv_t *val)
 int
 xmmsv_dict_remove (xmmsv_t *dictv, const char *key)
 {
-	xmmsv_dict_t *dict;
+	xmmsv_dict_internal_t *dict;
 	int pos, deleted;
 	int ret = 0;
 
@@ -415,7 +416,7 @@ int
 xmmsv_dict_clear (xmmsv_t *dictv)
 {
 	int i;
-	xmmsv_dict_t *dict;
+	xmmsv_dict_internal_t *dict;
 
 	x_return_val_if_fail (dictv, 0);
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
@@ -483,7 +484,7 @@ xmmsv_dict_get_size (xmmsv_t *dictv)
 }
 
 static xmmsv_dict_iter_t *
-_xmmsv_dict_iter_new (xmmsv_dict_t *d)
+_xmmsv_dict_iter_new (xmmsv_dict_internal_t *d)
 {
 	xmmsv_dict_iter_t *it;
 
@@ -609,7 +610,7 @@ void
 xmmsv_dict_iter_first (xmmsv_dict_iter_t *it)
 {
 	x_return_if_fail (it);
-	xmmsv_dict_t *d = it->parent;
+	xmmsv_dict_internal_t *d = it->parent;
 
 	for (it->pos = 0
 		     ; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
@@ -626,7 +627,7 @@ void
 xmmsv_dict_iter_next (xmmsv_dict_iter_t *it)
 {
 	x_return_if_fail (it);
-	xmmsv_dict_t *d = it->parent;
+	xmmsv_dict_internal_t *d = it->parent;
 
 	for (it->pos++
 		     ; it->pos < (1 << d->size) && (d->data[it->pos].str == NULL || d->data[it->pos].str == DELETED_STR)
