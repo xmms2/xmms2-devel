@@ -800,6 +800,23 @@ xmmsv_list_iter_get_parent (const xmmsv_list_iter_t *it)
 }
 
 /**
+ * Replace an element in the list at the position pointed at by the
+ * iterator.
+ *
+ * @param it A #xmmsv_list_iter_t.
+ * @param val The element to insert.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_list_iter_set (xmmsv_list_iter_t *it, xmmsv_t *val)
+{
+	x_return_val_if_fail (it, 0);
+	x_return_val_if_fail (val, 0);
+
+	return xmmsv_list_set (it->parent->parent_value, it->position, val);
+}
+
+/**
  * Insert an element in the list at the position pointed at by the
  * iterator.
  *
