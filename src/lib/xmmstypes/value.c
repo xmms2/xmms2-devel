@@ -1865,7 +1865,8 @@ xmmsv_dict_hash (const void *key, int len)
 
 	while (len >= 4)
 	{
-		uint32_t k = *(uint32_t *)data;
+		uint32_t k;
+		memcpy (&k, data, sizeof (k));
 
 		k *= m;
 		k ^= k >> r;
