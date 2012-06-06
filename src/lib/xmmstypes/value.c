@@ -28,6 +28,7 @@
 #include "xmmsc/xmmsc_errorcodes.h"
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmmspriv/xmmsv.h"
 #include "xmmspriv/xmms_list.h"
 
 /** @file */
@@ -43,16 +44,6 @@ const char *xmmsv_default_source_pref[] = {
 	"*",
 	NULL
 };
-
-
-typedef struct xmmsv_list_St xmmsv_list_t;
-typedef struct xmmsv_dict_St xmmsv_dict_t;
-
-
-typedef struct xmmsv_bin_St {
-	unsigned char *data;
-	uint32_t len;
-} xmmsv_bin_t;
 
 struct xmmsv_list_St {
 	xmmsv_t **list;
@@ -88,32 +79,6 @@ static void xmmsv_list_iter_free (xmmsv_list_iter_t *it);
 
 static xmmsv_dict_iter_t *xmmsv_dict_iter_new (xmmsv_dict_t *d);
 static void xmmsv_dict_iter_free (xmmsv_dict_iter_t *it);
-
-
-
-struct xmmsv_St {
-	union {
-		char *error;
-		int32_t int32;
-		char *string;
-		xmmsv_coll_t *coll;
-		xmmsv_bin_t bin;
-		xmmsv_list_t *list;
-		xmmsv_dict_t *dict;
-
-		struct {
-			bool ro;
-			unsigned char *buf;
-			int alloclen; /* in bits */
-			int len; /* in bits */
-			int pos; /* in bits */
-		} bit;
-	} value;
-	xmmsv_type_t type;
-
-	int ref;  /* refcounting */
-};
-
 
 static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
