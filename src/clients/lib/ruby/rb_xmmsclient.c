@@ -606,7 +606,7 @@ c_playback_volume_set (VALUE self, VALUE channel, VALUE volume)
 
 	res = xmmsc_playback_volume_set (xmms->real,
 	                                 rb_id2name (SYM2ID (channel)),
-	                                 NUM2UINT (volume));
+	                                 NUM2INT (volume));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
@@ -1305,8 +1305,8 @@ c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 	res = xmmsc_coll_query_ids (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
 	                            corder,
-	                            NIL_P (start) ? 0 : NUM2UINT (start),
-	                            NIL_P (start) ? 0 : NUM2UINT (len));
+	                            NIL_P (start) ? 0 : NUM2INT (start),
+	                            NIL_P (start) ? 0 : NUM2INT (len));
 
 	if (corder)
 		xmmsv_unref (corder);
@@ -1346,8 +1346,8 @@ c_coll_query_info (int argc, VALUE *argv, VALUE self)
 	res = xmmsc_coll_query_infos (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
 	                            corder,
-	                            NIL_P (start) ? 0 : NUM2UINT (start),
-	                            NIL_P (start) ? 0 : NUM2UINT (len),
+	                            NIL_P (start) ? 0 : NUM2INT (start),
+	                            NIL_P (start) ? 0 : NUM2INT (len),
 	                            cfetch,
 	                            cgroup);
 	xmmsv_unref (cfetch);

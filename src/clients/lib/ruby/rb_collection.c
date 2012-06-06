@@ -179,7 +179,7 @@ c_coll_type_get (VALUE self)
 
 	COLL_METHOD_ADD_HANDLER_RET (get_type)
 
-	return UINT2NUM (ret);
+	return INT2NUM (ret);
 }
 
 /* call-seq:
