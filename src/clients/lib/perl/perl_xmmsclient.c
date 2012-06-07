@@ -218,7 +218,7 @@ perl_xmmsclient_pack_stringlist (SV *arg) {
 
 		for (i = 0; i <= avlen; ++i) {
 			ssv = av_fetch (av, i, 0);
-			xmmsv_list_append (ret, xmmsv_new_string (SvPV_nolen (*ssv)));
+			xmmsv_list_append_string (ret, SvPV_nolen (*ssv));
 		}
 	}
 	else {
