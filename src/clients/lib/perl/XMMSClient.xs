@@ -1081,9 +1081,12 @@ xmmsc_coll_query_infos (c, coll, ...)
 	C_ARGS:
 		c, coll, order, limit_start, limit_len, fetch, group
 	CLEANUP:
-		xmmsv_unref (order);
-		xmmsv_unref (fetch);
-		xmmsv_unref (group);
+		if (order != NULL)
+			xmmsv_unref (order);
+		if (fetch != NULL)
+			xmmsv_unref (fetch);
+		if (group != NULL)
+			xmmsv_unref (group);
 
 =head2 broadcast_collection_changed
 
