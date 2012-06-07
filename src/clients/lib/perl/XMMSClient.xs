@@ -1088,6 +1088,45 @@ xmmsc_coll_query_infos (c, coll, ...)
 		if (group != NULL)
 			xmmsv_unref (group);
 
+=head2 coll_query
+
+=over 4
+
+=item Arguments: $collection, \@spec
+
+=item Return Value: $result
+
+=back
+
+my $result = $conn->coll_query($collection, \@spec);
+
+List the properties of all media matched by the given collection. The structure
+of the return value is determined by the fetch specification.
+
+=over 4
+
+=item * spec
+
+A collections fetch specification.
+
+=back
+
+The above parameters might be passed either positional or within a hash
+reference.
+
+=cut
+
+xmmsc_result_t *
+xmmsc_coll_query (c, coll, spec)
+		xmmsc_connection_t *c
+		xmmsv_coll_t *coll
+	INIT:
+		xmmsv_t *spec = perl_xmmsclient_pack_fetchspec (ST (2));
+	C_ARGS:
+		c, coll, spec
+	CLEANUP:
+		xmmsv_unref (spec);
+
 =head2 broadcast_collection_changed
 
 =over 4

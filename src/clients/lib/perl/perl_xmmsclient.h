@@ -87,6 +87,8 @@ void perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, void *retval, 
 
 SV *perl_xmmsclient_xmms_result_cast_value (xmmsv_type_t type, const void *value);
 
+xmmsv_t *perl_xmmsclient_pack_fetchspec (SV *hv);
+
 xmmsv_t *perl_xmmsclient_pack_stringlist (SV *sv);
 
 SV *perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen);
