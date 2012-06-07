@@ -18,7 +18,7 @@
 #define __SIGNAL_XMMS_H__
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 20
+#define XMMS_IPC_PROTOCOL_VERSION 21
 
 typedef enum {
 	XMMS_IPC_OBJECT_SIGNAL,
@@ -32,6 +32,7 @@ typedef enum {
 	XMMS_IPC_OBJECT_MEDIAINFO_READER,
 	XMMS_IPC_OBJECT_XFORM,
 	XMMS_IPC_OBJECT_BINDATA,
+	XMMS_IPC_OBJECT_COLL_SYNC,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -134,6 +135,11 @@ typedef enum {
 	XMMS_IPC_CMD_MOVE_URL,
 	XMMS_IPC_CMD_MLIB_ADD_URL
 } xmms_ipc_medialib_cmds_t;
+
+/* Coll sync methods */
+typedef enum {
+	XMMS_IPC_CMD_COLL_SYNC_SYNC = XMMS_IPC_CMD_FIRST
+} xmms_ipc_coll_sync_cmds_t;
 
 /* Collection methods */
 typedef enum {

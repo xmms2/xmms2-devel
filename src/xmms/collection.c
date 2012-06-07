@@ -117,7 +117,6 @@ static void xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *fr
 static xmmsv_t * xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, int limit_start, int limit_len, xmmsv_t *fetch, xmmsv_t *group, xmms_error_t *err);
 static xmmsv_t * xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_t *fetch, xmms_error_t *err);
 static xmmsv_coll_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag, const gchar *mediainfo, xmms_error_t *err);
-static void xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err);
 
 
 #include "collection_ipc.c"
@@ -471,37 +470,6 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 
 	return coll;
 }
-
-
-/** Synchronize collection data to the database (i.e. to disk).
- *
- * @param dag  The collection DAG.
- * @param err  If an error occurs, a message is stored in it.
- */
-
-void
-xmms_collection_sync (xmms_coll_dag_t *dag)
-{
-	gchar *uuid;
-
-	g_return_if_fail (dag);
-
-	uuid = xmms_medialib_uuid (dag->medialib);
-
-	g_mutex_lock (dag->mutex);
-	xmms_collection_dag_save (dag, uuid);
-	g_mutex_unlock (dag->mutex);
-
-	g_free (uuid);
-}
-
-
-void
-xmms_collection_client_sync (xmms_coll_dag_t *dag, xmms_error_t *err)
-{
-	xmms_collection_sync (dag);
-}
-
 
 /** Lists the collections in the given namespace.
  *

@@ -48,6 +48,7 @@ source = """
 ipc_object_files = """
     bindata
     collection
+    collsync
     config
     main
     mediainfo

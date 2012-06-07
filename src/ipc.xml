@@ -1503,11 +1503,6 @@ vim:expandtab
             </return_value>
         </method>
 
-        <method>
-            <name>sync</name>
-            <documentation>FIXME.</documentation>
-        </method>
-
         <broadcast>
             <id>11</id>
             <name>changed</name>
@@ -1834,4 +1829,13 @@ vim:expandtab
             </return_value>
         </method>
     </object>
+
+    <object>
+        <name>coll_sync</name>
+        <method>
+            <name>sync</name>
+            <documentation>Save collections to disk.</documentation>
+        </method>
+    </object>
+
 </ipc>

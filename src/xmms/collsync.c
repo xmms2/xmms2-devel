@@ -23,7 +23,12 @@
 #include "xmmspriv/xmms_collsync.h"
 #include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_thread_name.h"
+#include "xmmspriv/xmms_utils.h"
+
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
+
 #include <glib.h>
 
 #define XMMS_COLL_SYNC_DELAY 10 * G_USEC_PER_SEC
@@ -35,8 +40,19 @@ static void xmms_coll_sync_destroy (xmms_object_t *object);
 static void xmms_coll_sync_start (xmms_coll_sync_t *sync);
 static void xmms_coll_sync_stop (xmms_coll_sync_t *sync);
 
+static void xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err);
+
+typedef enum xmms_coll_sync_state_t {
+	XMMS_COLL_SYNC_STATE_IDLE,
+	XMMS_COLL_SYNC_STATE_DELAYED,
+	XMMS_COLL_SYNC_STATE_IMMEDIATE,
+	XMMS_COLL_SYNC_STATE_SHUTDOWN
+} xmms_coll_sync_state_t;
+
 struct xmms_coll_sync_St {
 	xmms_object_t object;
+
+	xmms_config_property_t *config;
 
 	xmms_coll_dag_t *dag;
 	xmms_playlist_t *playlist;
@@ -47,9 +63,10 @@ struct xmms_coll_sync_St {
 	GMutex *mutex;
 	GCond *cond;
 
-	gboolean want_sync;
-	gboolean keep_running;
+	xmms_coll_sync_state_t state;
 };
+
+#include "collsync_ipc.c"
 
 /**
  * Get the collection-to-database-synchronization thread running.
@@ -58,6 +75,7 @@ xmms_coll_sync_t *
 xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *playlist)
 {
 	xmms_coll_sync_t *sync;
+	gchar *path;
 
 	sync = xmms_object_new (xmms_coll_sync_t, xmms_coll_sync_destroy);
 
@@ -71,6 +89,11 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 
 	xmms_object_ref (playlist);
 	sync->playlist = playlist;
+
+	path = XMMS_BUILD_PATH ("collections", "${uuid}");
+	sync->config = xmms_config_property_register ("collection.directory", path,
+	                                              xmms_coll_sync_schedule_sync, sync);
+	g_free (path);
 
 	/* Connection coll_sync_cb to some signals */
 	xmms_object_connect (XMMS_OBJECT (dag),
@@ -90,6 +113,8 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
 	                     xmms_coll_sync_schedule_sync, sync);
 
+	xmms_coll_sync_register_ipc_commands (XMMS_OBJECT (sync));
+
 	xmms_coll_sync_start (sync);
 
 	return sync;
@@ -106,6 +131,12 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	g_return_if_fail (sync);
 
 	XMMS_DBG ("Deactivating collection synchronizer object.");
+
+	xmms_coll_sync_unregister_ipc_commands ();
+
+	xmms_config_property_callback_remove (sync->config,
+	                                      xmms_coll_sync_schedule_sync,
+	                                      sync);
 
 	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
 	                        XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
@@ -133,14 +164,53 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	g_free (sync->uuid);
 }
 
+static gchar *
+xmms_coll_sync_get_path (xmms_coll_sync_t *sync)
+{
+	const gchar *original;
+	GString *result;
+	gchar **parts;
+	gint i;
+
+	result = g_string_new ("");
+
+	original = xmms_config_property_get_string (sync->config);
+
+	parts = g_strsplit (original, "${uuid}", 0);
+
+	for (i = 0; parts[i] != NULL; i++) {
+		if (*parts[i] == '\0') {
+			g_string_append (result, sync->uuid);
+		} else {
+			g_string_append (result, parts[i]);
+		}
+	}
+
+	g_strfreev (parts);
+
+	return g_string_free (result, FALSE);
+}
+
+static void
+xmms_coll_sync_set_state (xmms_coll_sync_t *sync, xmms_coll_sync_state_t state)
+{
+	g_mutex_lock (sync->mutex);
+
+	if (sync->state != state) {
+		sync->state = state;
+		g_cond_signal (sync->cond);
+	}
+
+	g_mutex_unlock (sync->mutex);
+}
+
 static void
 xmms_coll_sync_start (xmms_coll_sync_t *sync)
 {
 	g_return_if_fail (sync);
 	g_return_if_fail (sync->thread == NULL);
 
-	sync->want_sync = FALSE;
-	sync->keep_running = TRUE;
+	sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 	sync->thread = g_thread_create (xmms_coll_sync_loop, sync, TRUE, NULL);
 }
 
@@ -154,12 +224,7 @@ xmms_coll_sync_stop (xmms_coll_sync_t *sync)
 	g_return_if_fail (sync);
 	g_return_if_fail (sync->thread != NULL);
 
-	g_mutex_lock (sync->mutex);
-
-	sync->keep_running = FALSE;
-	g_cond_signal (sync->cond);
-
-	g_mutex_unlock (sync->mutex);
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_SHUTDOWN);
 
 	g_thread_join (sync->thread);
 
@@ -177,10 +242,40 @@ xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val,
 
 	g_return_if_fail (sync);
 
-	g_mutex_lock (sync->mutex);
-	sync->want_sync = TRUE;
-	g_cond_signal (sync->cond);
-	g_mutex_unlock (sync->mutex);
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_DELAYED);
+}
+
+/**
+ * Schedule a collection-to-database-synchronization right away.
+ */
+static void
+xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err)
+{
+	g_return_if_fail (sync);
+
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_IMMEDIATE);
+}
+
+static void
+xmms_coll_sync_save (xmms_coll_sync_t *sync)
+{
+	gchar *path = xmms_coll_sync_get_path (sync);
+
+	XMMS_DBG ("Syncing collections to '%s'.", path);
+	xmms_collection_dag_save (sync->dag, path);
+
+	g_free (path);
+}
+
+static void
+xmms_coll_sync_restore (xmms_coll_sync_t *sync)
+{
+	gchar *path = xmms_coll_sync_get_path (sync);
+
+	XMMS_DBG ("Restoring collections from '%s'.", path);
+	xmms_collection_dag_restore (sync->dag, path);
+
+	g_free (path);
 }
 
 /**
@@ -195,18 +290,18 @@ xmms_coll_sync_loop (gpointer udata)
 
 	xmms_set_thread_name ("x2 coll sync");
 
+	xmms_coll_sync_restore (sync);
+
 	g_mutex_lock (sync->mutex);
 
-	xmms_collection_dag_restore (sync->dag, sync->uuid);
-
-	while (sync->keep_running) {
-		if (!sync->want_sync) {
+	while (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
+		if (sync->state == XMMS_COLL_SYNC_STATE_IDLE) {
 			g_cond_wait (sync->cond, sync->mutex);
 		}
 
 		/* Wait until no requests have been filed for 10 seconds. */
-		while (sync->keep_running && sync->want_sync) {
-			sync->want_sync = FALSE;
+		while (sync->state == XMMS_COLL_SYNC_STATE_DELAYED) {
+			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 
 			g_get_current_time (&time);
 			g_time_val_add (&time, XMMS_COLL_SYNC_DELAY);
@@ -214,22 +309,22 @@ xmms_coll_sync_loop (gpointer udata)
 			g_cond_timed_wait (sync->cond, sync->mutex, &time);
 		}
 
-		if (sync->keep_running) {
+		if (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
 			/* The dag might be locked when calling schedule_sync, so we need to
-			 * unlock to avoid deadlocks */
+			 * unlock to avoid deadlocks. We also reset state to IDLE to ack that
+			 * the request to sync is being taken care of.
+			 */
+			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
+
 			g_mutex_unlock (sync->mutex);
-
-			XMMS_DBG ("Syncing collections to database.");
-
-			xmms_collection_dag_save (sync->dag, sync->uuid);
-
+			xmms_coll_sync_save (sync);
 			g_mutex_lock (sync->mutex);
 		}
 	}
 
-	xmms_collection_dag_save (sync->dag, sync->uuid);
-
 	g_mutex_unlock (sync->mutex);
+
+	xmms_coll_sync_save (sync);
 
 	return NULL;
 }

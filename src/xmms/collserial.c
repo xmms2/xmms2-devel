@@ -33,15 +33,10 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-
-#define COLL_BUILD_PATH(...) g_build_filename (coll_path, __VA_ARGS__, NULL)
-
 /* If this is set to 1 xmms_collection_dag_save will NOT save anything.
  * This is to prevent overwriting anything if we have trouble opening files.
  */
 int disable_saving = 0;
-char *coll_path = NULL;
-
 
 static xmmsv_coll_t *xmms_collection_read_operator (FILE *file);
 static void xmms_collection_write_operator (xmmsv_coll_t *coll, FILE *file);
@@ -90,53 +85,19 @@ create_dir (const char *path)
 	return 1;
 }
 
-static void
-setup_coll_path (xmms_coll_dag_t *dag, const gchar *uuid)
-{
-	xmms_config_property_t *coll_conf;
-	char *path, *foo, *bar;
-	int uuid_len;
-
-	if (coll_path != NULL)
-		return;
-
-	path = XMMS_BUILD_PATH ("collections", "${uuid}");
-	coll_conf = xmms_config_property_register ("collection.directory",
-	                                           path, NULL, NULL);
-	coll_path = strdup (xmms_config_property_get_string (coll_conf));
-	g_free (path);
-
-	uuid_len = strlen (uuid);
-
-	/* Replace all occurences of ${uuid} with the real uuid */
-	while ((foo = strstr (coll_path, "${uuid}")) != NULL) {
-		int uuid_pos = foo - coll_path;
-
-		bar = malloc (strlen (coll_path) + 1 + uuid_len - 7);
-		memcpy (bar, coll_path, uuid_pos);
-		strcpy (bar + uuid_pos, uuid);
-		strcpy (bar + uuid_pos + uuid_len, foo + 7);
-
-		free (coll_path);
-		coll_path = bar;
-	}
-}
-
 
 /** Save the collection DAG to disc.
  *
  * @param dag  The collection DAG to save.
  */
 void
-xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
+xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *base_path)
 {
 	gint i;
-	char *path, *name;
-	const char *namespace;
+	gchar *path, *name;
+	const gchar *namespace;
 	FILE *file;
 	xmmsv_coll_t *coll;
-
-	setup_coll_path (dag, uuid);
 
 	if (disable_saving)
 		return;
@@ -144,15 +105,15 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
 	/* Write all collections in all namespaces */
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		namespace = xmms_collection_get_namespace_string (i);
-		path = COLL_BUILD_PATH (namespace);
+		path = g_build_filename (base_path, namespace, NULL);
 
 		if (!create_dir (path))
 			return;
 
-		g_free (path);
-
 		xmms_collection_foreach_in_namespace (dag, i, write_operator,
-		                                      (void*)namespace);
+		                                      (void *) path);
+
+		g_free (path);
 	}
 
 	/* We treat the _active entry a bit differently,
@@ -164,8 +125,12 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
 	name = xmms_collection_find_alias (dag,
 	                                   XMMS_COLLECTION_NSID_PLAYLISTS,
 	                                   coll, XMMS_ACTIVE_PLAYLIST);
-	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
-	                        XMMS_ACTIVE_PLAYLIST);
+
+	path = g_build_filename (base_path,
+	                         XMMS_COLLECTION_NS_PLAYLISTS,
+	                         XMMS_ACTIVE_PLAYLIST,
+	                         NULL);
+
 	file = fopen (path, "w");
 
 	if (file == NULL) {
@@ -184,7 +149,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag, const gchar *uuid)
  * @param dag  The collection DAG to restore to.
  */
 void
-xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
+xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *base_path)
 {
 	xmmsv_coll_t *coll = NULL;
 	char *path, buffer[1024];
@@ -193,11 +158,9 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 	FILE *file;
 	int i;
 
-	setup_coll_path (dag, uuid);
-
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		namespace = xmms_collection_get_namespace_string (i);
-		path = COLL_BUILD_PATH (namespace);
+		path = g_build_filename (base_path, namespace, NULL);
 		dir = g_dir_open (path, 0, NULL);
 		g_free (path);
 
@@ -205,7 +168,7 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 			if (strcmp (label, XMMS_ACTIVE_PLAYLIST) == 0)
 				continue;
 
-			path = COLL_BUILD_PATH (namespace, label);
+			path = g_build_filename (base_path, namespace, label, NULL);
 			file = fopen (path, "r");
 
 			if (file == NULL) {
@@ -227,8 +190,11 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag, const gchar *uuid)
 			g_dir_close (dir);
 	}
 
-	path = COLL_BUILD_PATH (XMMS_COLLECTION_NS_PLAYLISTS,
-	                        XMMS_ACTIVE_PLAYLIST);
+	path = g_build_filename (base_path,
+	                         XMMS_COLLECTION_NS_PLAYLISTS,
+	                         XMMS_ACTIVE_PLAYLIST,
+	                         NULL);
+
 	file = fopen (path, "r");
 
 	if (file == NULL) {
@@ -401,8 +367,8 @@ static void
 write_operator (void *key, void *value, void *udata)
 {
 	char *label = key;
-	char *namespace = udata;
-	char *path = COLL_BUILD_PATH (namespace, label);
+	char *base_path = udata;
+	char *path = g_build_filename (base_path, label, NULL);
 	xmmsv_coll_t *coll = value;
 	FILE *file;
 

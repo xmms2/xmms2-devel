@@ -70,8 +70,8 @@ xmmsc_coll_sync (xmmsc_connection_t *conn)
 {
 	x_check_conn (conn, NULL);
 
-	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_SYNC,
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLL_SYNC,
+	                       XMMS_IPC_CMD_COLL_SYNC_SYNC,
 	                       XMMSV_LIST_END);
 }
 
