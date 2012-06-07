@@ -56,6 +56,16 @@ class compiler_flags(object):
         if disable:
             self.conf.env.append_unique("CFLAGS", [disable])
 
+    def enable_cxx_warning(self, warn_name):
+        enable, disable = self.check_cxx("-W", "-Wno-", warn_name)
+        if enable:
+            self.conf.env.append_unique("CXXFLAGS", [enable])
+
+    def disable_cxx_warning(self, warn_name):
+        enable, disable = self.check_cxx("-W", "-Wno-", warn_name)
+        if disable:
+            self.conf.env.append_unique("CXXFLAGS", [disable])
+
     def enable_c_feature(self, feature_name):
         enable, disable = self.check_cc("-f", "-fno-", feature_name)
         if enable:
