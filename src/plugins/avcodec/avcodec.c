@@ -208,7 +208,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		}
 	}
 
-	data->codecctx = avcodec_alloc_context ();
+	data->codecctx = avcodec_alloc_context3 (codec);
 	data->codecctx->sample_rate = data->samplerate;
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
@@ -219,7 +219,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->codec_id = codec->id;
 	data->codecctx->codec_type = codec->type;
 
-	if (avcodec_open (data->codecctx, codec) < 0) {
+	if (avcodec_open2 (data->codecctx, codec, NULL) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
 		goto err;
 	} else {

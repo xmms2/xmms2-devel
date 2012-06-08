@@ -69,3 +69,17 @@ typedef struct AVPacket {
 #if LIBAVCODEC_VERSION_INT >= 0x350400
 # define avcodec_init()
 #endif
+
+/* Map avcodec_alloc_context3 into the deprecated version
+ * avcodec_alloc_context in versions earlier than 53.04 (ffmpeg 0.9) */
+#if LIBAVCODEC_VERSION_INT < 0x350400
+# define avcodec_alloc_context3(codec) \
+    avcodec_alloc_context()
+#endif
+
+/* Map avcodec_open2 into the deprecated version
+ * avcodec_open in versions earlier than 53.04 (ffmpeg 0.9) */
+#if LIBAVCODEC_VERSION_INT < 0x350400
+# define avcodec_open2(avctx, codec, options) \
+    avcodec_open(avctx, codec)
+#endif
