@@ -65,3 +65,7 @@ typedef struct AVPacket {
 # define AVMEDIA_TYPE_AUDIO CODEC_TYPE_AUDIO
 #endif
 
+/* Calling avcodec_init is not necessary after 53.04 (ffmpeg 0.9) */
+#if LIBAVCODEC_VERSION_INT >= 0x350400
+# define avcodec_init()
+#endif
