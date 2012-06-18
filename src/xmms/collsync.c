@@ -26,6 +26,8 @@
 #include "xmms/xmms_log.h"
 #include <glib.h>
 
+#define XMMS_COLL_SYNC_DELAY 10 * G_USEC_PER_SEC
+
 static void xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val, gpointer udata);
 static gpointer xmms_coll_sync_loop (gpointer udata);
 static void xmms_coll_sync_destroy (xmms_object_t *object);
@@ -207,7 +209,7 @@ xmms_coll_sync_loop (gpointer udata)
 			sync->want_sync = FALSE;
 
 			g_get_current_time (&time);
-			g_time_val_add (&time, 10000000);
+			g_time_val_add (&time, XMMS_COLL_SYNC_DELAY);
 
 			g_cond_timed_wait (sync->cond, sync->mutex, &time);
 		}
