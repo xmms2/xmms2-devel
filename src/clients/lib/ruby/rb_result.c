@@ -488,6 +488,17 @@ c_dict_each_value (VALUE self)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  rawdict.to_propdict( src_prefs ) -> propdict
+ *
+ * Transforms a RawDict (key-source-value) to a regular
+ * key-value dict.
+ * The optional src_prefs argument restricts which sources
+ * are considered. The value may be a string or an array
+ * of strings, which may contain wildcards.
+ * Example: rawdict.to_propdict( ['server','plugin/*'] )
+ */
 static VALUE
 c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 {
