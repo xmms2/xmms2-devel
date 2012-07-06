@@ -165,6 +165,11 @@ N: Olle Hällnäs
 E: olle@xmms.org
 D: Better seeking in cli.
 
+N: Hendrik Jaeger
+E: xmms2@henk.geekmail.org
+P: 9914042f, 50F8 BC65 295C F436 8BC9  A3BA E4F3 BFCA 9914 042F
+D: Ruby bindings documentation contributor
+
 N: Armando Jagucki
 E: ajagucki@gmail.com
 D: Python bindings improvements
