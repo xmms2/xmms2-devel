@@ -412,6 +412,7 @@ def configure(conf):
 
     if Options.platform == 'darwin':
         conf.env.append_value('LINKFLAGS', '-multiply_defined_suppress')
+        conf.env.append_value('LINKFLAGS', '-headerpad_max_install_names')
         conf.env.explicit_install_name = True
     else:
         conf.env.explicit_install_name = False
