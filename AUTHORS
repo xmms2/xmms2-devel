@@ -59,6 +59,10 @@ N: Nicolas Botti
 E: r2d@musepack.net
 D: Updates to the musepack plugin to support new APIs.
 
+N: Kyle Brantley
+E: scytheblade1@brantleyonline.com
+D: smb fixes
+
 N: Jan Braun
 E: janbraun@gmx.net
 D: Patch for old cli's output verbosity
