@@ -235,9 +235,9 @@ readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[])
 	/* Fill out the keymap and display it. */
 	g_printf ("\n");
 	for (i = 0; map[i].keyseq; i++) {
-		rl_bind_keyseq_in_map (map[i].keyseq,
-		                       rl_named_function (map[i].named_function),
-		                       stkmap);
+		rl_set_key (map[i].keyseq,
+		            rl_named_function (map[i].named_function),
+		            stkmap);
 		if (map[i].readable_keyseq) {
 			g_printf ("   (%s) %s\n", map[i].readable_keyseq,
 			          map[i].readable_function ? map[i].readable_function
