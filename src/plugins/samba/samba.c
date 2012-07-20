@@ -92,6 +92,27 @@ xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "smb://*", XMMS_STREAM_TYPE_END);
 
 	g_static_mutex_lock (&mutex);
+	if (smbc_set_context (NULL) == NULL) {
+		/* This should really be cleaned up when the program closes.
+		 * However, given that we have no means of doing so, we're
+		 * just going to forget that we ever created it and let the OS
+		 * clean up after us.
+		 */
+		SMBCCTX *ctx = smbc_new_context ();
+		if (ctx == NULL) {
+			xmms_log_error ("Failed to create SMBCCTX.", NULL);
+			return FALSE;
+		}
+		if (smbc_init_context (ctx) == NULL) {
+			xmms_log_error ("Failed to init SMBCCTX.", NULL);
+			smbc_free_context (ctx, 1);
+			return FALSE;
+		}
+		smbc_setOptionUseKerberos (ctx, TRUE);
+		smbc_setOptionFallbackAfterKerberos (ctx, TRUE);
+		smbc_set_context (ctx);
+	}
+
 	err = smbc_init (xmms_samba_auth_fn, 0);
 	g_static_mutex_unlock (&mutex);
 
