@@ -352,6 +352,7 @@ D: Various fixes. Sorting on integers.
 
 N: Christopher Rosell
 E: chrippa@evangelion.se
+E: chrippa@tanuki.se
 D: FreeBSD support in cdae plugin.
 
 N: Fabian Roth
