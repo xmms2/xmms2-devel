@@ -242,8 +242,16 @@ g_mdns_source_prepare (GSource *source, gint *timeout_)
 static gboolean
 g_mdns_source_check (GSource *source)
 {
-	/* Maybe check for errors here? */
-	return TRUE;
+	GSList *list;
+
+	for (list = source->poll_fds; list != NULL; list = list->next) {
+		GPollFD *fd = list->data;
+		if (fd->revents != 0) {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 static gboolean
