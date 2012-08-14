@@ -648,10 +648,19 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
+	/* default to empty order */
+	if (order == NULL) {
+		/* This reference is taken over by xmmsc_send_cmd. */
+		order = xmmsv_new_list ();
+	} else {
+		/* This reference is taken over by xmmsc_send_cmd. */
+		xmmsv_ref (order);
+	}
+
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_COLL (coll),
-	                       XMMSV_LIST_ENTRY (xmmsv_ref (order)),
+	                       XMMSV_LIST_ENTRY (order),
 	                       XMMSV_LIST_END);
 }
 
