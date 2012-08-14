@@ -23,16 +23,12 @@ static xmms_playlist_t *playlist;
 static void
 setup_default_playlist (void)
 {
-	xmmsv_coll_t *coll;
-
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-
-	xmms_collection_dag_replace (colldag, XMMS_COLLECTION_NSID_PLAYLISTS,
-	                             "Default", coll);
-	xmmsv_coll_ref (coll);
-
-	xmms_collection_dag_replace (colldag, XMMS_COLLECTION_NSID_PLAYLISTS,
-	                             XMMS_ACTIVE_PLAYLIST, coll);
+	xmmsv_coll_t *coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
+	xmms_collection_update_pointer (colldag, "Default",
+	                                XMMS_COLLECTION_NSID_PLAYLISTS, coll);
+	xmms_collection_update_pointer (colldag, XMMS_ACTIVE_PLAYLIST,
+	                                XMMS_COLLECTION_NSID_PLAYLISTS, coll);
+	xmmsv_unref (coll);
 }
 
 SETUP (playlist) {

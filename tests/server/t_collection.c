@@ -658,3 +658,59 @@ CASE (test_references)
 	xmmsv_unref (universe);
 	xmmsv_unref (match);
 }
+
+CASE (test_collection_snapshot_restore)
+{
+	xmmsv_t *universe, *playlist, *techno, *reference, *_union, *collections, *playlists, *snapshot, *result, *expected;
+
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	playlist = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (playlist, 1);
+	xmmsv_coll_idlist_append (playlist, 2);
+	xmmsv_coll_idlist_append (playlist, 3);
+
+	techno = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_add_operand (techno, universe);
+	xmmsv_coll_attribute_set_string (techno, "type", "value");
+	xmmsv_coll_attribute_set_string (techno, "field", "genre");
+	xmmsv_coll_attribute_set_string (techno, "value", "techno");
+	xmmsv_unref (universe);
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "Test Playlist");
+
+	_union = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
+	xmmsv_coll_add_operand (_union, techno);
+	xmmsv_coll_add_operand (_union, reference);
+	xmmsv_unref (techno);
+	xmmsv_unref (reference);
+
+	collections = xmmsv_new_dict ();
+	xmmsv_dict_set (collections, "Test Collection", _union);
+	xmmsv_unref (_union);
+
+	playlists = xmmsv_new_dict ();
+	xmmsv_dict_set (playlists, "Test Playlist", playlist);
+	xmmsv_unref (playlist);
+
+	expected = xmmsv_new_dict ();
+	xmmsv_dict_set (expected, "collections", collections);
+	xmmsv_unref (collections);
+	xmmsv_dict_set (expected, "playlists", playlists);
+	xmmsv_unref (playlists);
+	xmmsv_dict_set_string (expected, "active-playlist", "Test Playlist");
+
+	snapshot = xmmsv_copy (expected);
+
+	xmms_collection_restore (dag, snapshot);
+	xmmsv_unref (snapshot);
+
+	result = xmms_collection_snapshot (dag);
+
+	CU_ASSERT (xmmsv_compare (expected, result));
+
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+}

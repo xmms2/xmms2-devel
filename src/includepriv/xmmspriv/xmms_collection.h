@@ -66,7 +66,6 @@ xmmsv_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, const gchar *c
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name, guint nsid, xmmsv_coll_t *newtarget);
 gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsv_coll_t *value, const gchar *key);
 xmms_medialib_entry_t xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source);
-void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, const gchar *key, xmmsv_coll_t *newcoll);
 
 xmms_collection_namespace_id_t xmms_collection_get_namespace_id (const gchar *namespace);
 const gchar *xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
@@ -77,7 +76,8 @@ gboolean xmms_collection_set_int_attr (xmmsv_coll_t *coll, const gchar *attrname
 xmmsv_t *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
 void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, xmmsv_t *dict);
 
-void bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
+xmmsv_t *xmms_collection_snapshot (xmms_coll_dag_t *dag);
+void xmms_collection_restore (xmms_coll_dag_t *dag, xmmsv_t *snapshot);
 
 #define XMMS_COLLECTION_PLAYLIST_CHANGED_MSG(dag, name) xmms_collection_changed_msg_send (dag, xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_UPDATE, name, XMMS_COLLECTION_NS_PLAYLISTS))
 

@@ -27,7 +27,6 @@
 #include <math.h>
 
 #include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_medialib.h"
@@ -84,6 +83,7 @@ typedef struct add_metadata_from_tree_user_data_St {
 
 static void xmms_collection_destroy (xmms_object_t *object);
 
+static void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, const gchar *key, xmmsv_coll_t *newcoll);
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
 static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
 static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid);
@@ -100,6 +100,8 @@ static void rebind_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_c
 static void rename_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
 static void strip_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
 static void check_for_reference (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
+static void bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
+static void unbind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
 
 static void coll_unref (void *coll);
 
@@ -854,7 +856,7 @@ xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name,
 }
 
 /** Update the DAG to update the value of the pair with the given key. */
-void
+static void
 xmms_collection_dag_replace (xmms_coll_dag_t *dag,
                              xmms_collection_namespace_id_t nsid,
                              const gchar *key, xmmsv_coll_t *newcoll)
@@ -1589,11 +1591,152 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
 	return found;
 }
 
+xmmsv_t *
+xmms_collection_snapshot (xmms_coll_dag_t *dag)
+{
+	GHashTableIter iter;
+	xmmsv_t *result, *collections, *playlists, *coll, *active_playlist;
+	gchar *name;
+
+	result = xmmsv_new_dict ();
+
+	collections = xmmsv_new_dict ();
+	xmmsv_dict_set (result, "collections", collections);
+	xmmsv_unref (collections);
+
+	playlists = xmmsv_new_dict ();
+	xmmsv_dict_set (result, "playlists", playlists);
+	xmmsv_unref (playlists);
+
+	g_mutex_lock (dag->mutex);
+
+	xmms_collection_apply_to_all_collections (dag, unbind_all_references, NULL);
+
+	g_hash_table_iter_init (&iter, dag->collrefs[XMMS_COLLECTION_NSID_COLLECTIONS]);
+	while (g_hash_table_iter_next (&iter, (gpointer *) &name, (gpointer *) &coll)) {
+		xmmsv_t *copy = xmmsv_copy (coll);
+		xmmsv_dict_set (collections, name, copy);
+		xmmsv_unref (copy);
+	}
+
+	active_playlist = xmms_collection_get_pointer (dag, XMMS_ACTIVE_PLAYLIST,
+	                                               XMMS_COLLECTION_NSID_PLAYLISTS);
+
+	g_hash_table_iter_init (&iter, dag->collrefs[XMMS_COLLECTION_NSID_PLAYLISTS]);
+	while (g_hash_table_iter_next (&iter, (gpointer *) &name, (gpointer *) &coll)) {
+		if (coll != active_playlist || strcmp (name, XMMS_ACTIVE_PLAYLIST) != 0) {
+			xmmsv_t *copy = xmmsv_copy (coll);
+			xmmsv_dict_set (playlists, name, copy);
+			xmmsv_unref (copy);
+		}
+	}
+
+	name = xmms_collection_find_alias (dag, XMMS_COLLECTION_NSID_PLAYLISTS,
+	                                   active_playlist, XMMS_ACTIVE_PLAYLIST);
+	xmmsv_dict_set_string (result, "active-playlist", name);
+	g_free (name);
+
+	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
+
+	g_mutex_unlock (dag->mutex);
+
+	return result;
+}
+
+static void
+xmms_collection_restore_collection (const gchar *name, xmmsv_t *coll, void *udata)
+{
+	xmms_coll_dag_t *dag = (xmms_coll_dag_t *) udata;
+	xmms_collection_update_pointer (dag, name, XMMS_COLLECTION_NSID_COLLECTIONS, coll);
+}
+
+static void
+xmms_collection_restore_playlist (const gchar *name, xmmsv_t *coll, void *udata)
+{
+	xmms_coll_dag_t *dag = (xmms_coll_dag_t *) udata;
+	xmms_collection_update_pointer (dag, name, XMMS_COLLECTION_NSID_PLAYLISTS, coll);
+}
+
+static void
+xmms_collection_restore_check_collection (const gchar *name, xmmsv_t *coll, void *udata)
+{
+	gboolean *error = (gboolean *) udata;
+	if (!xmmsv_is_type (coll, XMMSV_TYPE_COLL))
+		*error = TRUE;
+}
+
+static void
+xmms_collection_restore_check_playlist (const gchar *name, xmmsv_t *coll, void *udata)
+{
+	gboolean *error = (gboolean *) udata;
+	if (!xmmsv_is_type (coll, XMMSV_TYPE_COLL))
+		*error = TRUE;
+	else if (!xmmsv_coll_is_type (coll, XMMS_COLLECTION_TYPE_IDLIST))
+		*error = TRUE;
+}
+
+void
+xmms_collection_restore (xmms_coll_dag_t *dag, xmmsv_t *snapshot)
+{
+	xmmsv_t *collections, *playlists, *value, *alias;
+	xmmsv_dict_iter_t *it;
+	const gchar *name;
+
+	alias = NULL;
+
+	g_mutex_lock (dag->mutex);
+
+	if (snapshot != NULL && xmmsv_is_type (snapshot, XMMSV_TYPE_DICT)) {
+		if (xmmsv_dict_get (snapshot, "playlists", &playlists) &&
+		    xmmsv_is_type (playlists, XMMSV_TYPE_DICT)) {
+			gboolean error = FALSE;
+			xmmsv_dict_foreach (playlists, xmms_collection_restore_check_playlist, &error);
+			if (error != TRUE)
+				xmmsv_dict_foreach (playlists, xmms_collection_restore_playlist, dag);
+		}
+
+		if (xmmsv_dict_get (snapshot, "collections", &collections) &&
+		    xmmsv_is_type (collections, XMMSV_TYPE_DICT)) {
+			gboolean error = FALSE;
+			xmmsv_dict_foreach (collections, xmms_collection_restore_check_collection, &error);
+			if (error != TRUE)
+				xmmsv_dict_foreach (collections, xmms_collection_restore_collection, dag);
+		}
+
+		if (xmmsv_dict_get (snapshot, "active-playlist", &value) &&
+		    xmmsv_is_type (value, XMMSV_TYPE_STRING)) {
+			xmmsv_get_string (value, &name);
+			alias = xmms_collection_get_pointer (dag, name, XMMS_COLLECTION_NSID_PLAYLISTS);
+		}
+	}
+
+	/* No active playlist found, check if there's a 'Default' playlist. */
+	if (alias == NULL)
+		alias = xmms_collection_get_pointer (dag, "Default", XMMS_COLLECTION_NSID_PLAYLISTS);
+
+	/* Still out of luck, create an empty 'Default' playlist. */
+	if (alias == NULL) {
+		alias = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
+		xmms_collection_update_pointer (dag, "Default", XMMS_COLLECTION_NSID_PLAYLISTS, alias);
+		xmmsv_unref (alias);
+	}
+
+	xmms_collection_update_pointer (dag, XMMS_ACTIVE_PLAYLIST, XMMS_COLLECTION_NSID_PLAYLISTS, alias);
+
+	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
+
+	/* TODO: validate everything and nuke stuff that fails, also take care of
+	 *       creating a default playlist if active is missing
+	 */
+
+	g_mutex_unlock (dag->mutex);
+}
+
 /**
  * If a reference, add the operator of the pointed collection as an
  * operand.
  */
-void
+static void
 bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata)
 {
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
@@ -1620,6 +1763,20 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *par
 		}
 
 		xmmsv_coll_add_operand (coll, target);
+	}
+}
+
+/**
+ * If a reference, remove the operand.
+ */
+static void
+unbind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata)
+{
+	xmmsv_t *list;
+
+	if (xmmsv_coll_is_type (coll, XMMS_COLLECTION_TYPE_REFERENCE)) {
+		list = xmmsv_coll_operands_get (coll);
+		xmmsv_list_clear (list);
 	}
 }
 

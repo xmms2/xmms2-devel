@@ -23,7 +23,6 @@ source = """
     playlist.c
     playlist_updater.c
     collection.c
-    collserial.c
     collsync.c
     ipc.c
     log.c

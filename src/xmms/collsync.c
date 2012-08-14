@@ -21,7 +21,6 @@
  */
 
 #include "xmmspriv/xmms_collsync.h"
-#include "xmmspriv/xmms_collserial.h"
 #include "xmmspriv/xmms_thread_name.h"
 #include "xmmspriv/xmms_utils.h"
 
@@ -29,7 +28,11 @@
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
 
+#include <errno.h>
+
 #include <glib.h>
+#include <glib/gstdio.h>
+
 
 #define XMMS_COLL_SYNC_DELAY 10 * G_USEC_PER_SEC
 
@@ -90,7 +93,7 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 	xmms_object_ref (playlist);
 	sync->playlist = playlist;
 
-	path = XMMS_BUILD_PATH ("collections", "${uuid}");
+	path = XMMS_BUILD_PATH ("collections", "${uuid}.db");
 	sync->config = xmms_config_property_register ("collection.directory", path,
 	                                              xmms_coll_sync_schedule_sync, sync);
 	g_free (path);
@@ -162,6 +165,53 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	g_mutex_free (sync->mutex);
 	g_cond_free (sync->cond);
 	g_free (sync->uuid);
+}
+
+
+static gboolean
+xmms_coll_sync_prepare_path (const gchar *path, GError **error)
+{
+	if (g_file_test (path, G_FILE_TEST_IS_REGULAR))
+		return TRUE;
+
+	if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+		/* TODO: This branch can be removed after release as it will only
+		 * be used for installations that were running development
+		 * builds between 0.8 and 0.9
+		 */
+		gchar *legacy;
+		gint64 now;
+		gint res;
+
+		now = g_get_real_time ();
+
+		legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
+		res = g_rename (path, legacy);
+		g_free (legacy);
+
+		if (res != 0) {
+			g_set_error (error, G_FILE_ERROR,
+			             g_file_error_from_errno (errno),
+			             "%s", g_strerror (errno));
+			return FALSE;
+		}
+	} else {
+		gchar *dirname;
+		gint res;
+
+		dirname = g_path_get_dirname (path);
+		res = g_mkdir_with_parents (dirname, 0755);
+		g_free (dirname);
+
+		if (res != 0) {
+			g_set_error (error, G_FILE_ERROR,
+			             g_file_error_from_errno (errno),
+			             "%s", g_strerror (errno));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
 static gchar *
@@ -259,10 +309,35 @@ xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err)
 static void
 xmms_coll_sync_save (xmms_coll_sync_t *sync)
 {
+	GError *error = NULL;
+
 	gchar *path = xmms_coll_sync_get_path (sync);
 
 	XMMS_DBG ("Syncing collections to '%s'.", path);
-	xmms_collection_dag_save (sync->dag, path);
+
+	if (xmms_coll_sync_prepare_path (path, &error)) {
+		xmmsv_t *snapshot, *serialized;
+		const guchar *buffer;
+		guint length;
+
+		snapshot = xmms_collection_snapshot (sync->dag);
+
+		serialized = xmmsv_serialize (snapshot);
+		xmmsv_unref (snapshot);
+
+		xmmsv_get_bin (serialized, &buffer, &length);
+
+		if (!g_file_set_contents (path, (const gchar *) buffer, (gssize) length, &error)) {
+			xmms_log_error ("Could not save collections to disk.");
+		}
+
+		xmmsv_unref (serialized);
+	}
+
+	if (error != NULL) {
+		XMMS_DBG ("%s", error->message);
+		g_error_free (error);
+	}
 
 	g_free (path);
 }
@@ -270,10 +345,39 @@ xmms_coll_sync_save (xmms_coll_sync_t *sync)
 static void
 xmms_coll_sync_restore (xmms_coll_sync_t *sync)
 {
+	xmmsv_t *snapshot = NULL;
+	GError *error = NULL;
+	gchar *buffer;
+	gsize length;
+
 	gchar *path = xmms_coll_sync_get_path (sync);
 
 	XMMS_DBG ("Restoring collections from '%s'.", path);
-	xmms_collection_dag_restore (sync->dag, path);
+
+	if (xmms_coll_sync_prepare_path (path, &error)) {
+		if (g_file_get_contents (path, &buffer, &length, &error)) {
+			xmmsv_t *serialized;
+
+			serialized = xmmsv_new_bin ((const guchar *) buffer, (guint) length);
+			g_free (buffer);
+
+			snapshot = xmmsv_deserialize (serialized);
+			xmmsv_unref (serialized);
+		}
+	}
+
+	if (error != NULL) {
+		XMMS_DBG ("%s", error->message);
+		g_error_free (error);
+	}
+
+	if (snapshot != NULL) {
+		xmms_collection_restore (sync->dag, snapshot);
+		xmmsv_unref (snapshot);
+	} else {
+		xmms_log_error ("Could not restore collections from disk.");
+		xmms_collection_restore (sync->dag, NULL);
+	}
 
 	g_free (path);
 }
