@@ -689,7 +689,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_coll_t *query;
+	xmmsc_coll_t *query, *ordered_query;
 	xmmsc_result_t *res;
 	xmmsv_t *fetchval;
 	column_display_t *coldisp;
@@ -716,71 +716,24 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	 * grouping.
 	 */
 	if (!command_flag_stringlist_get (ctx, "order", &order)) {
-		xmmsv_coll_t *compilation, *compilation_sorted;
-		xmmsv_coll_t *regular, *regular_sorted;
-		xmmsv_coll_t *complement, *concatenated;
-		xmmsv_t *compilation_order, *regular_order;
-
-		/* All various artists entries that match the user query. */
-		compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
-		xmmsv_coll_add_operand (compilation, query);
-		xmmsv_coll_attribute_set (compilation, "field", "compilation");
-		xmmsv_coll_attribute_set (compilation, "value", "1");
-
-		/* All entries that aren't various artists, or don't match the user query */
-		complement = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-		xmmsv_coll_add_operand (complement, compilation);
-
-		/* All entries that aren't various artists, and match the user query */
-		regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
-		xmmsv_coll_add_operand (regular, query);
-		xmmsv_coll_add_operand (regular, complement);
-		xmmsv_coll_unref (complement);
-
-		compilation_order = xmmsv_build_list (
-			XMMSV_LIST_ENTRY_STR ("album"),
-			XMMSV_LIST_ENTRY_STR ("partofset"),
-			XMMSV_LIST_ENTRY_STR ("tracknr"),
-			XMMSV_LIST_END);
-
-		compilation_sorted = xmmsv_coll_add_order_operators (compilation,
-		                                                     compilation_order);
-		xmmsv_coll_unref (compilation);
-		xmmsv_unref (compilation_order);
-
-		regular_order = xmmsv_build_list (
-			XMMSV_LIST_ENTRY_STR ("artist"),
-			XMMSV_LIST_ENTRY_STR ("album"),
-			XMMSV_LIST_ENTRY_STR ("partofset"),
-			XMMSV_LIST_ENTRY_STR ("tracknr"),
-			XMMSV_LIST_END);
-
-		regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
-		xmmsv_coll_unref (regular);
-		xmmsv_unref (regular_order);
-
-		concatenated = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
-		xmmsv_coll_add_operand (concatenated, regular_sorted);
-		xmmsv_coll_unref (regular_sorted);
-		xmmsv_coll_add_operand (concatenated, compilation_sorted);
-		xmmsv_coll_unref (compilation_sorted);
-
-		res = xmmsc_coll_query_infos (infos->sync, concatenated, NULL,
-		                              0, 0, fetchval, NULL);
-		xmmsv_coll_unref (concatenated);
+		ordered_query = coll_apply_default_order (query);
 	} else {
 		xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
-		res = xmmsc_coll_query_infos (infos->sync, query, orderval,
-		                              0, 0, fetchval, NULL);
+		ordered_query = xmmsv_coll_add_order_operators (query, orderval);
+
 		xmmsv_unref (orderval);
 	}
+
+	res = xmmsc_coll_query_infos (infos->sync, ordered_query, NULL,
+	                              0, 0, fetchval, NULL);
+	xmmsv_coll_unref (ordered_query);
+	xmmsc_coll_unref (query);
 
 	xmmsc_result_wait (res);
 
 	list_print_row (res, NULL, coldisp, TRUE, TRUE);
 
 	xmmsv_unref (fetchval);
-	xmmsc_coll_unref (query);
 
 	g_free (order);
 	g_free (columns);
@@ -1276,9 +1229,21 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 			g_printf (_("Error: failed to parse the pattern!\n"));
 			goto finish;
 		} else {
-			res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+			xmmsv_coll_t *ordered_query;
+
+			if (!order) {
+				ordered_query = coll_apply_default_order (query);
+			} else {
+				xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
+				ordered_query = xmmsv_coll_add_order_operators (query, orderval);
+
+				xmmsv_unref (orderval);
+			}
+
+			res = xmmsc_coll_query_ids (infos->sync, ordered_query, NULL, 0, 0);
 			xmmsc_result_wait (res);
 			add_list (res, infos, playlist, pos);
+			xmmsv_coll_unref (ordered_query);
 			xmmsc_coll_unref (query);
 		}
 	}

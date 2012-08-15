@@ -369,3 +369,66 @@ command_arg_positions_get (command_context_t *ctx, gint at,
 
 	return success;
 }
+
+/**
+ * Apply the default ordering to a collection query, that is, its results will
+ * be ordered by artist, and then album. To make this result more readable,
+ * compilation albums are placed at the end to get proper album grouping.
+ *
+ * @param query A collection to be ordered.
+ * @return The input collection with the default ordering.
+ */
+xmmsv_coll_t *
+coll_apply_default_order (xmmsv_coll_t *query)
+{
+	xmmsv_coll_t *compilation, *compilation_sorted;
+	xmmsv_coll_t *regular, *regular_sorted;
+	xmmsv_coll_t *complement, *concatenated;
+	xmmsv_t *compilation_order, *regular_order;
+
+	/* All various artists entries that match the user query. */
+	compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_add_operand (compilation, query);
+	xmmsv_coll_attribute_set (compilation, "field", "compilation");
+	xmmsv_coll_attribute_set (compilation, "value", "1");
+
+	/* All entries that aren't various artists, or don't match the user query */
+	complement = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+	xmmsv_coll_add_operand (complement, compilation);
+
+	/* All entries that aren't various artists, and match the user query */
+	regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+	xmmsv_coll_add_operand (regular, query);
+	xmmsv_coll_add_operand (regular, complement);
+	xmmsv_coll_unref (complement);
+
+	compilation_order = xmmsv_build_list (
+	        XMMSV_LIST_ENTRY_STR ("album"),
+	        XMMSV_LIST_ENTRY_STR ("partofset"),
+	        XMMSV_LIST_ENTRY_STR ("tracknr"),
+	        XMMSV_LIST_END);
+
+	compilation_sorted = xmmsv_coll_add_order_operators (compilation,
+	                                                     compilation_order);
+	xmmsv_coll_unref (compilation);
+	xmmsv_unref (compilation_order);
+
+	regular_order = xmmsv_build_list (
+	        XMMSV_LIST_ENTRY_STR ("artist"),
+	        XMMSV_LIST_ENTRY_STR ("album"),
+	        XMMSV_LIST_ENTRY_STR ("partofset"),
+	        XMMSV_LIST_ENTRY_STR ("tracknr"),
+	        XMMSV_LIST_END);
+
+	regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
+	xmmsv_coll_unref (regular);
+	xmmsv_unref (regular_order);
+
+	concatenated = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	xmmsv_coll_add_operand (concatenated, regular_sorted);
+	xmmsv_coll_unref (regular_sorted);
+	xmmsv_coll_add_operand (concatenated, compilation_sorted);
+	xmmsv_coll_unref (compilation_sorted);
+
+	return concatenated;
+}
