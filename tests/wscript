@@ -4,8 +4,11 @@ testutils_src = """
 utils/jsonism.c
 utils/value_utils.c
 utils/coll_utils.c
-utils/ipc_call.c
-utils/mlib_utils.c
+""".split()
+
+testserverutils_src = """
+server-utils/ipc_call.c
+server-utils/mlib_utils.c
 """.split()
 
 test_xmmstypes_src = """
@@ -63,7 +66,6 @@ def build(bld):
         add_objects = "testutils_json",
         includes = ". ../src/include ../src/includepriv",
         uselib = "glib2",
-        use = "s4",
         install_path = None
         )
 
@@ -76,60 +78,70 @@ def build(bld):
         install_path = None
         )
 
-    bld(features = 'c cprogram test',
-        target = 'test_server',
-        source = test_server_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = 'xmmstypes xmmsutils s4',
-        uselib = 'cunit ncurses valgrind glib2 gthread2 DISABLE_WRITESTRINGS',
-        install_path = None
-        )
+    if bld.env.BUILD_XMMS2D:
+        bld(features = "c cstlib",
+            target = "testserverutils",
+            source = testserverutils_src,
+            includes = ". ../src/include ../src/includepriv",
+            uselib = "glib2",
+            use = "s4",
+            install_path = None
+            )
 
-    bld(features = "c cprogram test",
-        target = "test_medialib",
-        source = test_mlib_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
-        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None
-        )
+        bld(features = 'c cprogram test',
+            target = 'test_server',
+            source = test_server_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = 'xmmstypes xmmsutils s4',
+            uselib = 'cunit ncurses valgrind glib2 gthread2 DISABLE_WRITESTRINGS',
+            install_path = None
+            )
 
-    bld(features = "c cprogram test",
-        target = "test_playlist",
-        source = test_playlist_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
-        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None
-        )
+        bld(features = "c cprogram test",
+            target = "test_medialib",
+            source = test_mlib_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
+            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            install_path = None
+            )
 
-    bld(features = "c cprogram test",
-        target = "test_collection",
-        source = test_collection_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
-        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None
-        )
+        bld(features = "c cprogram test",
+            target = "test_playlist",
+            source = test_playlist_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
+            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            install_path = None
+            )
 
-    bld(features = "c cprogram test",
-        target = "test_xform",
-        source = test_xform_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
-        uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None
-        )
+        bld(features = "c cprogram test",
+            target = "test_collection",
+            source = test_collection_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
+            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            install_path = None
+            )
 
-    bld(features = "c cprogram test",
-        target = "medialib-runner",
-        source = mlib_runner_src,
-        includes = '. .. runner ../src ../src/includepriv ../src/include',
-        use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
-        uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
-        install_path = None,
-        ut_cwd = "."
-        )
+        bld(features = "c cprogram test",
+            target = "test_xform",
+            source = test_xform_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            install_path = None
+            )
+
+        bld(features = "c cprogram test",
+            target = "medialib-runner",
+            source = mlib_runner_src,
+            includes = '. .. runner ../src ../src/includepriv ../src/include',
+            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils",
+            uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            install_path = None,
+            ut_cwd = "."
+            )
 
 def options(o):
     o.load("unittest", tooldir="waftools")

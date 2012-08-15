@@ -13,8 +13,8 @@
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
-#include "utils/ipc_call.h"
-#include "utils/mlib_utils.h"
+#include "server-utils/ipc_call.h"
+#include "server-utils/mlib_utils.h"
 
 static xmms_medialib_t *medialib;
 static xmms_coll_dag_t *colldag;

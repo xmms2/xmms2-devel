@@ -8,8 +8,8 @@
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
-#include "utils/ipc_call.h"
-#include "utils/mlib_utils.h"
+#include "server-utils/ipc_call.h"
+#include "server-utils/mlib_utils.h"
 
 #define CU_ASSERT_LIST_INT_EQUAL(list, pos, expected) do { \
 		xmmsv_t *item; \
