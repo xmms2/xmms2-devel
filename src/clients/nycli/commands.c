@@ -1076,34 +1076,191 @@ cli_add_parse_attributes (command_context_t *ctx)
 	return result;
 }
 
+/**
+ * Helper function for cli_add.
+ *
+ * Add the contents of a playlist file (specified by a url)
+ * to a playlist at a given position.
+ */
+static void
+cli_add_playlist_file (cli_infos_t *infos, const gchar *url,
+                       const gchar *playlist, gint pos)
+{
+	xmmsc_result_t *res;
+	gchar *decoded = decode_url (url);
+
+	res = xmmsc_coll_idlist_from_playlist_file (infos->sync, decoded);
+	xmmsc_result_wait (res);
+
+	add_pls (res, infos, playlist, pos);
+	g_free (decoded);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Add a file specified by a url to a playlist at a given id.
+ */
+static void
+cli_add_file (cli_infos_t *infos, const gchar *url,
+              const gchar *playlist, gint pos, xmmsv_t *attrs)
+{
+	xmmsc_result_t *res;
+	gchar *decoded = decode_url (url);
+
+	res = xmmsc_playlist_insert_full (infos->sync, playlist, pos, decoded, attrs);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+	g_free (decoded);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Add a directory to a playlist recursively at a given position.
+ */
+static void
+cli_add_dir (cli_infos_t *infos, const gchar *url,
+             const gchar *playlist, gint pos)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist, pos, url);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Process and add file arguments to a playlist at a given position.
+ * The files may be regular or playlist files.
+ */
+static void
+cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
+                  const gchar *playlist, gint pos)
+{
+	gint i;
+	gboolean plsfile, norecurs;
+	xmmsv_t *attributes;
+
+	command_flag_boolean_get (ctx, "pls", &plsfile);
+	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
+	attributes = cli_add_parse_attributes (ctx);
+
+	for (i = 0; i < command_arg_count (ctx); i++) {
+		GList *files, *it;
+		const gchar *path;
+		gchar *formatted, *encoded;
+
+		command_arg_string_get (ctx, i, &path);
+		formatted = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
+		if (formatted == NULL) {
+			g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
+			continue;
+		}
+
+		encoded = encode_url (formatted);
+		files = matching_browse (infos->sync, encoded);
+
+		for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
+			const gchar *url;
+			gboolean is_directory;
+			browse_entry_t *entry = it->data;
+
+			browse_entry_get (entry, &url, &is_directory);
+
+			if (plsfile || guesspls (infos, url)) {
+				if (xmmsv_dict_get_size (attributes) > 0) {
+					g_printf (_("Warning: Skipping attributes together with playlist.\n"));
+				}
+
+				cli_add_playlist_file (infos, url, playlist, pos);
+			} else if (norecurs || !is_directory) {
+				cli_add_file (infos, url, playlist, pos, attributes);
+			} else {
+				if (xmmsv_dict_get_size (attributes) > 0) {
+					g_printf (_("Warning: Skipping attributes together with directory.\n"));
+				}
+
+				cli_add_dir (infos, url, playlist, pos);
+			}
+
+			pos++; /* next insert at next pos, to keep order */
+			browse_entry_free (entry);
+		}
+
+		g_free (encoded);
+		g_free (formatted);
+		g_list_free (files);
+	}
+
+	xmmsv_unref (attributes);
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Process and add pattern arguments to a playlist at a given position.
+ */
+static void
+cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
+                 const gchar *playlist, gint pos)
+{
+	gchar **sortby;
+	gchar *pattern = NULL;
+	xmmsv_t *order = NULL;
+	xmmsv_coll_t *query;
+
+	command_arg_longstring_get_escaped (ctx, 0, &pattern);
+
+	if (!pattern) {
+		g_printf (_("Error: you must provide a pattern to add!\n"));
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+	} else {
+		xmmsc_result_t *res;
+
+		if (command_flag_stringlist_get (ctx, "order", &sortby)) {
+			order = xmmsv_make_stringlist (sortby, -1);
+			g_strfreev (sortby);
+		}
+
+		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+		xmmsc_result_wait (res);
+		add_list (res, infos, playlist, pos);
+		xmmsc_coll_unref (query);
+	}
+
+	g_free (pattern);
+	if (order) xmmsv_unref (order);
+
+	return;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern = NULL;
-	const gchar *sortby = NULL;
-	gchar **properties;
+	gint pos, i;
 	const gchar *playlist;
-	xmmsc_coll_t *query;
-	xmmsc_result_t *res;
-	xmmsv_t *attributes;
-	xmmsv_t *order = NULL;
-	gint pos;
-	const gchar *path;
-	gboolean fileargs;
-	gboolean norecurs;
-	gboolean plsfile;
-	gboolean forceptrn;
-	gint i, count;
+	gboolean forceptrn, plsfile, fileargs;
 
-/*
---file  Add a path from the local filesystem
---non-recursive  Do not add directories recursively.
---playlist  Add to the given playlist.
---next  Add after the current track.
---at  Add media at a given position in the playlist, or at a given offset from the current track.
---order Order media matched by pattern.
-*/
-	attributes = cli_add_parse_attributes (ctx);
+	/*
+	--file  Add a path from the local filesystem
+	--non-recursive  Do not add directories recursively.
+	--playlist  Add to the given playlist.
+	--next  Add after the current track.
+	--at  Add media at a given position in the playlist, or at a given offset from the current track.
+	--order Order media matched by pattern.
+	*/
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
 	if (command_flag_string_get (ctx, "playlist", &playlist)) {
@@ -1121,141 +1278,46 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	command_flag_boolean_get (ctx, "pattern", &forceptrn);
 	command_flag_boolean_get (ctx, "pls", &plsfile);
 	command_flag_boolean_get (ctx, "file", &fileargs);
-	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
-	command_arg_longstring_get_escaped (ctx, 0, &pattern);
-
-	command_flag_string_get (ctx, "order", &sortby);
-	if (sortby) {
-		properties = g_strsplit (sortby, ",", MAX_STRINGLIST_TOKENS);
-		order = xmmsv_make_stringlist (properties, -1);
-
-		g_strfreev (properties);
-	}
-
-	if (forceptrn && (plsfile || fileargs)) {
-		g_printf (_("Error: --pattern is mutually exclusive with "
-		            "--file and --pls!\n"));
-		goto finish;
-	}
-
-	/* We need either a file or a pattern! */
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern or files to add!\n"));
-		goto finish;
-	}
 
 	fileargs = fileargs || plsfile;
+	if (forceptrn && fileargs) {
+		g_printf (_("Error: --pattern is mutually exclusive with "
+		            "--file and --pls!\n"));
+		return FALSE;
+	}
 
 	if (!forceptrn) {
 		/* if any of the arguments is a valid path, we treat them all as files */
-		for (i = 0, count = command_arg_count (ctx); !fileargs && i < count; ++i) {
+		for (i = 0; !fileargs && i < command_arg_count (ctx); i++) {
+			const gchar *path;
+
 			command_arg_string_get (ctx, i, &path);
 			fileargs = fileargs || guessfile (path);
 		}
 	}
 
 	if (fileargs) {
-		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
-			GList *files = NULL, *it;
-			gchar *vpath, *enc;
-
-			command_arg_string_get (ctx, i, &path);
-			vpath = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
-			if (vpath == NULL) {
-				g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
-				continue;
-			}
-
-			enc = encode_url (vpath);
-			files = matching_browse (infos->sync, enc);
-
-			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
-				browse_entry_t *entry = it->data;
-				const gchar *url;
-				gboolean is_directory;
-
-				browse_entry_get (entry, &url, &is_directory);
-
-				if (plsfile || guesspls (infos, url)) {
-					if (xmmsv_dict_get_size (attributes) > 0) {
-						g_printf (_("Warning: Skipping attributes together with playlist."));
-					}
-					xmmsc_result_t *plsres;
-					gchar *decoded = decode_url (url);
-
-					plsres = xmmsc_coll_idlist_from_playlist_file (infos->sync,
-					                                               decoded);
-					xmmsc_result_wait (plsres);
-					add_pls (plsres, infos, playlist, pos);
-					g_free (decoded);
-				} else if (norecurs || !is_directory) {
-					gchar *decoded = decode_url (url);
-					res = xmmsc_playlist_insert_full (infos->sync, playlist,
-					                                  pos, decoded, attributes);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-					g_free (decoded);
-				} else {
-					if (xmmsv_dict_get_size (attributes) > 0) {
-						g_printf (_("Warning: Skipping attributes together with playlist."));
-					}
-					res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist,
-					                                      pos, url);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-				}
-				pos++; /* next insert at next pos, to keep order */
-
-				browse_entry_free (entry);
-			}
-
-			g_free (enc);
-			g_free (vpath);
-			g_list_free (files);
-		}
+		cli_add_fileargs (infos, ctx, playlist, pos);
 	} else {
-		if (xmmsv_dict_get_size (attributes) > 0) {
-			g_printf (_("Warning: Skipping attributes together with pattern."));
-			goto finish;
-		}
+		gboolean norecurs;
+		xmmsv_t *attributes;
 
+		command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 		if (norecurs) {
 			g_printf (_("Error:"
 			            "--non-recursive only applies when passing --file!\n"));
-			goto finish;
+			return FALSE;
 		}
 
-		if (!xmmsc_coll_parse (pattern, &query)) {
-			g_printf (_("Error: failed to parse the pattern!\n"));
-			goto finish;
-		} else {
-			xmmsv_coll_t *ordered_query;
-
-			if (!order) {
-				ordered_query = coll_apply_default_order (query);
-			} else {
-				xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
-				ordered_query = xmmsv_coll_add_order_operators (query, orderval);
-
-				xmmsv_unref (orderval);
-			}
-
-			res = xmmsc_coll_query_ids (infos->sync, ordered_query, NULL, 0, 0);
-			xmmsc_result_wait (res);
-			add_list (res, infos, playlist, pos);
-			xmmsv_coll_unref (ordered_query);
-			xmmsc_coll_unref (query);
+		attributes = cli_add_parse_attributes (ctx);
+		if (xmmsv_dict_get_size (attributes) > 0) {
+			g_printf (_("Warning: Skipping attributes together with pattern.\n"));
 		}
+
+		xmmsv_unref (attributes);
+
+		cli_add_pattern (infos, ctx, playlist, pos);
 	}
-
-	finish:
-
-	if (order) {
-		xmmsv_unref (order);
-	}
-
-	xmmsv_unref (attributes);
-	g_free (pattern);
 
 	return FALSE;
 }
