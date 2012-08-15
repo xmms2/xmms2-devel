@@ -19,6 +19,7 @@
 #define __XMMSV_BUILD_H__
 
 #include "xmmsc/xmmsv_general.h"
+#include "xmmsc/xmmsc_compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +39,7 @@ static inline xmmsv_t *__xmmsv_null_to_none (xmmsv_t *v) { return v ? v : xmmsv_
 #define XMMSV_DICT_ENTRY_STR(k, v) XMMSV_DICT_ENTRY (k, __xmmsv_null_to_none (xmmsv_new_string (v)))
 #define XMMSV_DICT_ENTRY_INT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_int (v))
 #define XMMSV_DICT_END NULL
-xmmsv_t *xmmsv_build_dict (const char *firstkey, ...);
+xmmsv_t *xmmsv_build_dict (const char *firstkey, ...) XMMS_SENTINEL(0);
 xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap);
 
 #define XMMSV_LIST_ENTRY(v) __xmmsv_identity_xmmsv (v)
@@ -47,7 +48,7 @@ xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap);
 #define XMMSV_LIST_ENTRY_COLL(v) XMMSV_LIST_ENTRY (__xmmsv_null_to_none (xmmsv_new_coll (v)))
 #define XMMSV_LIST_END NULL
 
-xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...);
+xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...) XMMS_SENTINEL(0);
 xmmsv_t *xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap);
 
 xmmsv_t *xmmsv_build_empty_organize (void);

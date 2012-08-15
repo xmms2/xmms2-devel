@@ -428,16 +428,17 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 }
 
 xmmsc_result_t *
-xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd,
-                xmmsv_t *first_arg, ...)
+xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd, ...)
 {
+	xmmsv_t *first_arg;
 	xmms_ipc_msg_t *msg;
 	xmmsv_t *args;
 	va_list ap;
 
 	msg = xmms_ipc_msg_new (obj, cmd);
 
-	va_start (ap, first_arg);
+	va_start (ap, cmd);
+	first_arg = va_arg (ap, xmmsv_t *);
 	args = xmmsv_build_list_va (first_arg, ap);
 	va_end (ap);
 

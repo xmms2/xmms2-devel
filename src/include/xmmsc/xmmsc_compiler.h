@@ -21,10 +21,23 @@
 #define inline __inline
 #endif
 
-#if defined (__GNUC__) && __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 1)
-#define XMMS_DEPRECATED __attribute__((deprecated))
+/* for CLANG */
+#ifndef __has_attribute
+#	define __has_attribute(x) 0
+#endif
+
+#if __has_attribute (deprecated) || \
+    (defined (__GNUC__) && __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 1))
+#	define XMMS_DEPRECATED __attribute__((deprecated))
 #else
-#define XMMS_DEPRECATED
+#	define XMMS_DEPRECATED
+#endif
+
+#if __has_attribute (sentinel) || \
+    defined (__GNUC__)
+#	define XMMS_SENTINEL(x) __attribute__((sentinel(x)))
+#else
+#	define XMMS_SENTINEL(x)
 #endif
 
 #endif
