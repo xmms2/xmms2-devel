@@ -174,23 +174,22 @@ properties_init (xmmsc_vis_properties_t *p)
 static gboolean
 property_set (xmmsc_vis_properties_t *p, const gchar* key, const gchar* data)
 {
-
-	if (!g_strcasecmp (key, "type")) {
-		if (!g_strcasecmp (data, "pcm")) {
+	if (!g_ascii_strcasecmp (key, "type")) {
+		if (!g_ascii_strcasecmp (data, "pcm")) {
 			p->type = VIS_PCM;
-		} else if (!g_strcasecmp (data, "spectrum")) {
+		} else if (!g_ascii_strcasecmp (data, "spectrum")) {
 			p->type = VIS_SPECTRUM;
-		} else if (!g_strcasecmp (data, "peak")) {
+		} else if (!g_ascii_strcasecmp (data, "peak")) {
 			p->type = VIS_PEAK;
 		} else {
 			return FALSE;
 		}
-	} else if (!g_strcasecmp (key, "stereo")) {
+	} else if (!g_ascii_strcasecmp (key, "stereo")) {
 		p->stereo = (atoi (data) > 0);
-	} else if (!g_strcasecmp (key, "pcm.hardwire")) {
+	} else if (!g_ascii_strcasecmp (key, "pcm.hardwire")) {
 		p->pcm_hardwire = (atoi (data) > 0);
 	/* TODO: all the stuff following */
-	} else if (!g_strcasecmp (key, "timeframe")) {
+	} else if (!g_ascii_strcasecmp (key, "timeframe")) {
 		p->timeframe = g_strtod (data, NULL);
 		if (p->timeframe == 0.0) {
 			return FALSE;

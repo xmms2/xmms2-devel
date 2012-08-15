@@ -303,7 +303,7 @@ CASE (test_client_list)
 
 CASE (test_client_query_infos)
 {
-	xmms_medialib_entry_t first, second;
+	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
 	xmmsv_coll_t *universe;
 	xmmsv_t *expected, *result, *order, *fetch, *group;
@@ -312,11 +312,11 @@ CASE (test_client_query_infos)
 	limit_start = 0;
 	limit_length = 0;
 
-	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
+	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
+	entry = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
 
 	session = xmms_medialib_session_begin (medialib);
-	xmms_medialib_entry_property_set_str_source (session, second,
+	xmms_medialib_entry_property_set_str_source (session, entry,
 	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
 	                                             "2009", "client/unittest");
 	xmms_medialib_session_commit (session);

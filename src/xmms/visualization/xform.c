@@ -67,12 +67,7 @@ xmms_vis_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 static gboolean
 xmms_vis_init (xmms_xform_t *xform)
 {
-	gint srate;
-
 	g_return_val_if_fail (xform, FALSE);
-
-	srate = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	/* yeah, baby! ask mr. output & calculate your stuff here */
 
 	xmms_xform_outdata_type_copy (xform);
 

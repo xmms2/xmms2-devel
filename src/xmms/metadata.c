@@ -27,7 +27,6 @@
 #include "xmms/xmms_xformplugin.h"
 
 static gboolean xmms_xform_metadata_parse_string (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
-static gboolean xmms_xform_metadata_parse_albumartist (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 
 static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,            xmms_xform_metadata_parse_string      },
