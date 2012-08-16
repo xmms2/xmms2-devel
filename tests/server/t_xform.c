@@ -123,7 +123,7 @@ xmms_metadata_test_xform_init (xmms_xform_t *xform)
 {
 	const gchar *musicbrainz_va_id = "89ad4ac3-39f7-470e-963a-56509c546377";
 	const gchar *title, *rpgain;
-	gint track, compilation;
+	gint track, totaltracks, compilation;
 
 	CU_ASSERT_FALSE (xmms_xform_metadata_mapper_match (xform, "missing", "missing", -1));
 
@@ -135,7 +135,15 @@ xmms_metadata_test_xform_init (xmms_xform_t *xform)
 	/* Mapping track number, without total tracks */
 	CU_ASSERT_TRUE (xmms_xform_metadata_mapper_match (xform, "tracknr", "1", -1));
 	CU_ASSERT_TRUE (xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, &track));
+	CU_ASSERT_FALSE (xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS, &totaltracks));
 	CU_ASSERT_EQUAL (1, track);
+
+	/* Mapping track number, with total tracks */
+	CU_ASSERT_TRUE (xmms_xform_metadata_mapper_match (xform, "tracknr", "1/10", -1));
+	CU_ASSERT_TRUE (xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, &track));
+	CU_ASSERT_TRUE (xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS, &totaltracks));
+	CU_ASSERT_EQUAL (1, track);
+	CU_ASSERT_EQUAL (10, totaltracks);
 
 	/* Broken track number */
 	CU_ASSERT_FALSE (xmms_xform_metadata_mapper_match (xform, "tracknr", "bad", -1));

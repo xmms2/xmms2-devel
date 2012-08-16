@@ -42,6 +42,8 @@ static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
 	{ "Title",                     XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE             },
 	{ "Artist",                    XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST            },
 	{ "Album Artist",              XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST      },
+	{ "Track",                     XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR           },
+	{ "Disc",                      XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET         },
 	{ "Year",                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR              },
 	{ "Composer",                  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER          },
 	{ "Lyricist",                  XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST          },
@@ -72,8 +74,6 @@ static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
 };
 
 static const xmms_xform_metadata_mapping_t mappings[] = {
-	{ "Track",             xmms_apetag_handle_tag_track    },
-	{ "Disc",              xmms_apetag_handle_tag_disc     },
 	{ "Cover Art (Front)", xmms_apetag_handle_tag_coverart }
 };
 

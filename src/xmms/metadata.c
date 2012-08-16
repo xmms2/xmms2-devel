@@ -27,6 +27,9 @@
 #include "xmms/xmms_xformplugin.h"
 
 static gboolean xmms_xform_metadata_parse_string (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+static gboolean xmms_xform_metadata_parse_tracknumber (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+static gboolean xmms_xform_metadata_parse_discnumber (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+static gint xmms_xform_metadata_parse_number_slash_number (const gchar *value, gint *first, gint *second);
 
 static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,            xmms_xform_metadata_parse_string      },
@@ -40,7 +43,7 @@ static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE_SORT,        xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,              xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_ORIGINALYEAR,      xmms_xform_metadata_parse_string      },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,           xmms_xform_metadata_parse_number      },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,           xmms_xform_metadata_parse_tracknumber },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS,       xmms_xform_metadata_parse_number      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,             xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,           xmms_xform_metadata_parse_string      },
@@ -55,7 +58,7 @@ static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,          xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_BPM,               xmms_xform_metadata_parse_number      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR,            xmms_xform_metadata_parse_number      },
-	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET,         xmms_xform_metadata_parse_number      },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET,         xmms_xform_metadata_parse_discnumber  },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET,          xmms_xform_metadata_parse_number      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DESCRIPTION,       xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_GROUPING,          xmms_xform_metadata_parse_string      },
@@ -105,6 +108,76 @@ xmms_xform_metadata_parse_number (xmms_xform_t *xform, const gchar *key,
 		return TRUE;
 	}
 	return FALSE;
+}
+
+/* Parse a string like '1/10' and return how many integers were found */
+static gint
+xmms_xform_metadata_parse_number_slash_number (const gchar *value, gint *first, gint *second)
+{
+	gchar *endptr = NULL;
+	gint ivalue;
+
+	*first = *second = -1;
+
+	ivalue = strtol (value, &endptr, 10);
+	if (!(endptr > value)) {
+		return 0;
+	}
+
+	*first = ivalue;
+
+	if (*endptr != '/') {
+		return 1;
+	}
+
+	value = (const gchar *) endptr + 1;
+
+	ivalue = strtol (value, &endptr, 10);
+	if (!(endptr > value)) {
+		return 1;
+	}
+
+	*second = ivalue;
+
+	return 2;
+}
+
+static gboolean
+xmms_xform_metadata_parse_tracknumber (xmms_xform_t *xform, const gchar *key,
+                                       const gchar *value, gsize length)
+{
+	gint tracknr, tracktotal;
+
+	xmms_xform_metadata_parse_number_slash_number (value, &tracknr, &tracktotal);
+	if (tracknr > 0) {
+		const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR;
+		xmms_xform_metadata_set_int (xform, metakey, tracknr);
+	}
+	if (tracktotal > 0) {
+		const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALTRACKS;
+		xmms_xform_metadata_set_int (xform, metakey, tracktotal);
+	}
+
+	return tracknr > 0;
+}
+
+static gboolean
+xmms_xform_metadata_parse_discnumber (xmms_xform_t *xform, const gchar *key,
+                                      const gchar *value, gsize length)
+{
+	gint partofset, totalset;
+
+	xmms_xform_metadata_parse_number_slash_number (value, &partofset, &totalset);
+	if (partofset > 0) {
+		const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET;
+		xmms_xform_metadata_set_int (xform, metakey, partofset);
+	}
+	if (totalset > 0) {
+		const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TOTALSET;
+		xmms_xform_metadata_set_int (xform, metakey, totalset);
+	}
+
+	return partofset > 0;
 }
 
 gboolean
