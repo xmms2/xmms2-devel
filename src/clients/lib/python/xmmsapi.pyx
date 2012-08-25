@@ -1310,7 +1310,7 @@ cdef class XmmsApi(XmmsCore):
 		@deprecated
 		Use medialib_import_path(path, ...) instead
 		"""
-		return self.medialib_import_path(self, path, cb=cb, encoded=encoded)
+		return self.medialib_import_path(path, cb=cb, encoded=encoded)
 
 	@deprecated
 	def medialib_path_import_encoded(self, path, cb = None):
@@ -1318,7 +1318,7 @@ cdef class XmmsApi(XmmsCore):
 		@deprecated
 		Use medialib_import_path(path, ..., encoded=True) instead
 		"""
-		return self.medialib_import_path(self, path, cb=cb, encoded=True)
+		return self.medialib_import_path(path, cb=cb, encoded=True)
 
 	cpdef XmmsResult medialib_property_set(self, int id, key, value, source=None, cb=None):
 		"""
