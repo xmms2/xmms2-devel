@@ -739,7 +739,6 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
 	}
 
 	xmmsv_get_list_iter (list, &it);
-	xmmsv_list_iter_last (it);
 
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_t *val;
