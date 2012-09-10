@@ -486,60 +486,202 @@ intersection_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	return cond;
 }
 
+/**
+ * Calculate a hash code for the combination of multiple column values.
+ */
+static gint
+limit_condition_calculate_hash (const s4_resultrow_t *row, gint *idx)
+{
+	gint hash = 1;
+	gint i;
+
+	for (i = 0; idx[i] != '\0'; i++) {
+		const s4_result_t *result;
+		const s4_val_t *value;
+		const gchar *string;
+		gint32 number;
+
+		if (!s4_resultrow_get_col (row, idx[i], &result))
+			continue;
+
+		value = s4_result_get_val (result);
+		if (s4_val_get_str (value, &string)) {
+			hash = hash * 31 + g_str_hash (string);
+		} else if (s4_val_get_int (value, &number)) {
+			hash = hash * 31 + (number ^ (number >> 16));
+		}
+	};
+
+	return hash;
+}
+
+static gboolean
+limit_condition_fields (xmms_medialib_session_t *session, const gchar *value,
+                        xmms_fetch_info_t *fetch, gint **result)
+{
+	s4_sourcepref_t *sourcepref;
+	gchar **fields;
+	gint i, length;
+	gint *indices;
+
+	fields = g_strsplit (value, ",", 0);
+	length = g_strv_length (fields);
+
+	sourcepref = xmms_medialib_session_get_source_preferences (session);
+
+	indices = g_new0 (gint, MAX (0, length + 1));
+	for (i = 0; fields[i]; i++) {
+		indices[i] = xmms_fetch_info_add_key (fetch, NULL, fields[i], sourcepref);
+	}
+	*result = indices;
+
+	s4_sourcepref_unref (sourcepref);
+
+	g_strfreev (fields);
+
+	return TRUE;
+}
+
+/**
+ * Limit search result based on row index.
+ * Based on start, length, skip the first few items, and only take
+ * as many as length specifies.
+ */
+static void
+limit_condition_by_position (s4_resultset_t *set, xmmsv_t *id_list, GHashTable *id_table,
+                             gint start, guint length)
+{
+	guint stop = start + length;
+	gint i;
+
+	for (i = start; i < stop; i++) {
+		const s4_resultrow_t *row;
+		const s4_result_t *result;
+		const s4_val_t *value;
+		gint mid;
+
+		if (!s4_resultset_get_row (set, i, &row))
+			break;
+
+		if (!s4_resultrow_get_col (row, 0, &result))
+			continue;
+
+		value = s4_result_get_val (result);
+		if (!s4_val_get_int (value, &mid))
+			continue;
+
+		xmmsv_list_append_int (id_list, mid);
+
+		g_hash_table_insert (id_table,
+		                     GINT_TO_POINTER (mid),
+		                     GINT_TO_POINTER (TRUE));
+	}
+}
+
+/**
+ * Limit search result based on the combined key of multiple fields.
+ * This is useful when grouping is applied on the result and you want
+ * for example to query the second and third albums by an artist.
+ */
+static void
+limit_condition_by_value (s4_resultset_t *set, xmmsv_t *id_list, GHashTable *id_table,
+                          gint start, guint length, gint *indices)
+{
+	GHashTable *group_table, *skip_table;
+	const s4_resultrow_t *row;
+	gint i;
+
+	skip_table = g_hash_table_new (g_direct_hash, g_direct_equal);
+	group_table = g_hash_table_new (g_direct_hash, g_direct_equal);
+
+	for (i = 0; s4_resultset_get_row (set, i, &row); i++) {
+		const s4_result_t *result;
+		const s4_val_t *value;
+		gint hash, mid;
+
+		hash = limit_condition_calculate_hash (row, indices);
+
+		if (g_hash_table_size (skip_table) < start) {
+			g_hash_table_insert (skip_table,
+			                     GINT_TO_POINTER (hash),
+			                     GINT_TO_POINTER (TRUE));
+			continue;
+		}
+
+		if (!g_hash_table_contains (group_table, GINT_TO_POINTER (hash))) {
+			if (g_hash_table_contains (skip_table, GINT_TO_POINTER (hash)))
+				continue;
+
+			if (g_hash_table_size (group_table) >= length)
+				continue;
+
+			g_hash_table_insert (group_table,
+			                     GINT_TO_POINTER (hash),
+			                     GINT_TO_POINTER (TRUE));
+		}
+
+		if (!s4_resultrow_get_col (row, 0, &result))
+			continue;
+
+		value = s4_result_get_val (result);
+		if (!s4_val_get_int (value, &mid))
+			continue;
+
+		xmmsv_list_append_int (id_list, mid);
+
+		g_hash_table_insert (id_table,
+		                     GINT_TO_POINTER (mid),
+		                     GINT_TO_POINTER (TRUE));
+	}
+
+	g_hash_table_unref (group_table);
+	g_hash_table_unref (skip_table);
+}
+
 static s4_condition_t *
 limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	const s4_resultrow_t *row;
-	const s4_result_t *result;
 	s4_resultset_t *set;
 	xmmsv_coll_t *operand;
 	xmmsv_t *operands, *id_list, *child_order;
 	GHashTable *id_table;
-	gint32 ival;
-	guint start, stop;
-	const gchar *key;
+	const gchar *type, *fields;
+	gint start, length;
+	gint *indices;
 
-	if (xmmsv_coll_attribute_get (coll, "start", &key)) {
-		start = atoi (key);
-	} else {
+	if (!xmms_collection_get_int_attr (coll, "start", &start))
 		start = 0;
-	}
 
-	if (xmmsv_coll_attribute_get (coll, "length", &key)) {
-		stop = atoi (key) + start;
-	} else {
-		stop = UINT_MAX;
-	}
+	if (!xmms_collection_get_int_attr (coll, "length", &length))
+		length = G_MAXINT32;
+
+	if (!xmmsv_coll_attribute_get (coll, "type", &type))
+		type = "position";
+
+	xmmsv_coll_attribute_get (coll, "fields", &fields);
 
 	operands = xmmsv_coll_operands_get (coll);
 	xmmsv_list_get_coll (operands, 0, &operand);
 
+	id_list = xmmsv_new_list ();
+	id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
+
 	set = xmms_medialib_query_recurs (session, operand, fetch);
 
-	id_list = xmmsv_new_list ();
-	id_table = g_hash_table_new (NULL, NULL);
-
-	for (; start < stop && s4_resultset_get_row (set, start, &row); start++) {
-		if (!s4_resultrow_get_col (row, 0, &result)) {
-			continue;
-		}
-
-		if (!s4_val_get_int (s4_result_get_val (result), &ival)) {
-			continue;
-		}
-
-		xmmsv_list_append_int (id_list, ival);
-
-		g_hash_table_insert (id_table,
-		                     GINT_TO_POINTER (ival),
-		                     GINT_TO_POINTER (1));
+	if (strcmp ("value", type) == 0 && limit_condition_fields (session, fields, fetch, &indices)) {
+		limit_condition_by_value (set, id_list, id_table, start, length, indices);
+		g_free (indices);
+	} else if (strcmp ("id", type) == 0 && limit_condition_fields (session, "id", fetch, &indices)) {
+		limit_condition_by_value (set, id_list, id_table, start, length, indices);
+		g_free (indices);
+	} else {
+		limit_condition_by_position (set, id_list, id_table, start, length);
 	}
 
 	s4_resultset_free (set);
 
 	/* Need ordering for correct windowing */
-
 	child_order = xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", SORT_TYPE_LIST),
 	                                XMMSV_DICT_ENTRY ("list", id_list),
 	                                XMMSV_DICT_END);
@@ -809,4 +951,3 @@ xmms_medialib_query_recurs (xmms_medialib_session_t *session,
 
 	return ret;
 }
-

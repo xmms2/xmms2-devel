@@ -699,61 +699,43 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	return ret;
 }
 
-xmmsv_t *
-xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
-                                    int limit_start, int limit_len,
-                                    xmmsv_t *fetch,
-                                    xmmsv_t *group, xmms_error_t *err)
+static xmmsv_t *
+xmms_collection_query_infos_spec (xmmsv_t *fields, xmmsv_t *grouping)
 {
-	xmmsv_t *fetch_spec, *org_dict, *org_data, *unflattened, *ret;
-	xmmsv_coll_t *coll3;
+	xmmsv_t *spec, *org_dict, *org_data;
 	xmmsv_list_iter_t *it;
-	int i;
-	const char *str;
+	const gchar *string;
+	gint i;
 
-	if (xmmsv_list_get_size (fetch) == 0) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Empty fetch list");
-	} else if (!xmmsv_list_has_type (fetch, XMMSV_TYPE_STRING)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid fetch list");
-	} else if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid group list");
-	}
-
-	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
-		group = xmmsv_new_list ();
-		xmmsv_list_append (group, xmmsv_new_string ("position"));
-	} else {
-		group = xmmsv_ref (group);
-	}
-
+	/* Contsruct an organize spec for the metadata fields we're interested in */
 	org_data = xmmsv_new_dict ();
-	for (i = 0; xmmsv_list_get_string (fetch, i, &str); i++) {
-		xmmsv_t *meta;
+	for (i = 0; xmmsv_list_get_string (fields, i, &string); i++) {
+		xmmsv_t *metadata;
 
-		if (strcmp (str, "id") == 0) {
-			meta = xmmsv_build_metadata (NULL,
-			                             xmmsv_new_string ("id"),
-			                             "first", NULL);
+		if (strcmp (string, "id") == 0) {
+			metadata = xmmsv_build_metadata (NULL,
+			                                 xmmsv_new_string ("id"),
+			                                 "first", NULL);
 		} else {
-			meta = xmmsv_build_metadata (xmmsv_new_string (str),
-			                             xmmsv_new_string ("value"),
-			                             "first", NULL);
+			metadata = xmmsv_build_metadata (xmmsv_new_string (string),
+			                                 xmmsv_new_string ("value"),
+			                                 "first", NULL);
 		}
 
-		xmmsv_dict_set (org_data, str, meta);
-		xmmsv_unref (meta);
+		xmmsv_dict_set (org_data, string, metadata);
+		xmmsv_unref (metadata);
 	}
 	org_dict = xmmsv_build_organize (org_data);
 
-	fetch_spec = org_dict;
+	spec = org_dict;
 
-	xmmsv_get_list_iter (group, &it);
+	xmmsv_get_list_iter (grouping, &it);
 	xmmsv_list_iter_last (it);
 
+	/* Create grouping by recursing cluster-list specs */
 	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *entry, *cluster_by, *cluster_field = NULL;
 		const char *value;
-		xmmsv_t *entry;
-		xmmsv_t *cluster_by, *cluster_field = NULL;
 
 		xmmsv_list_iter_entry (it, &entry);
 		xmmsv_get_string (entry, &value);
@@ -767,16 +749,75 @@ xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			cluster_field = xmmsv_ref (entry);
 		}
 
-		fetch_spec = xmmsv_build_cluster_list (cluster_by, cluster_field, fetch_spec);
+		spec = xmmsv_build_cluster_list (cluster_by, cluster_field, spec);
 
 		xmmsv_list_iter_prev (it);
 	}
 
-	coll3 = xmmsv_coll_add_limit_operator (coll, limit_start, limit_len);
-	unflattened = xmms_collection_client_query (dag, coll3, fetch_spec, err);
+	return spec;
+}
 
-	xmmsv_coll_unref (coll3);
-	xmmsv_unref (fetch_spec);
+
+xmmsv_t *
+xmms_collection_client_query_infos (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
+                                    int limit_start, int limit_len,
+                                    xmmsv_t *fetch,
+                                    xmmsv_t *group, xmms_error_t *err)
+{
+	xmmsv_t *spec, *unflattened, *ret;
+	xmmsv_coll_t *limited;
+
+	if (xmmsv_list_get_size (fetch) == 0) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Empty fetch list");
+	} else if (!xmmsv_list_has_type (fetch, XMMSV_TYPE_STRING)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid fetch list");
+	} else if (group != NULL && !xmmsv_list_has_type (group, XMMSV_TYPE_STRING)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Invalid group list");
+	}
+
+	limited = xmmsv_coll_add_limit_operator (coll, limit_start, limit_len);
+
+	/* If collection is not the same, we've applied some limits to it, and need
+	 * to take grouping into account when limiting.
+	 */
+	if (coll != limited) {
+		const char *str;
+		GString *sb;
+		int i;
+
+		/* As collection attributes can't hold anything other than strings yet,
+		 * convert the list of grouping attributes to a comma separated string
+		 */
+		sb = g_string_new ("");
+		for (i = 0; xmmsv_list_get_string (group, i, &str); i++) {
+			if (i != 0)
+				g_string_append (sb, ",");
+			g_string_append (sb, str);
+		}
+
+		if (sb->len == 0) {
+			xmmsv_coll_attribute_set (limited, "type", "position");
+		} else {
+			xmmsv_coll_attribute_set (limited, "type", "value");
+			xmmsv_coll_attribute_set (limited, "fields", sb->str);
+		}
+
+		g_string_free (sb, TRUE);
+	}
+
+	if (group == NULL || xmmsv_list_get_size (group) <= 0) {
+		group = xmmsv_new_list ();
+		xmmsv_list_append (group, xmmsv_new_string ("position"));
+	} else {
+		group = xmmsv_ref (group);
+	}
+
+	spec = xmms_collection_query_infos_spec (fetch, group);
+
+	unflattened = xmms_collection_client_query (dag, limited, spec, err);
+
+	xmmsv_coll_unref (limited);
+	xmmsv_unref (spec);
 
 	if (xmmsv_list_get_size (group) > 0) {
 		ret = xmmsv_list_flatten (unflattened, xmmsv_list_get_size (group) - 1);
@@ -1252,6 +1293,14 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 			*err = "Invalid collection: LIMIT with fewer or more than one "
 			       "operand.";
 			return FALSE;
+		}
+		if (xmmsv_coll_attribute_get (coll, "type", &attr) && strcmp ("value", attr) == 0) {
+			/* If it's a limit on values we need a fields to limit on */
+			if (!xmmsv_coll_attribute_get (coll, "fields", &attr)) {
+				*err = "Invalid collection: LIMIT without required \"fields\"-"
+				       "attribute";
+				return FALSE;
+			}
 		}
 		break;
 

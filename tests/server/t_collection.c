@@ -363,3 +363,108 @@ CASE (test_client_query_infos)
 	xmmsv_unref (expected);
 	xmmsv_unref (result);
 }
+
+CASE (test_client_query_infos2)
+{
+	xmmsv_coll_t *universe, *ordered;
+	xmmsv_t *expected, *result, *order, *fetch, *group;
+	gint limit_start, limit_length;
+
+	xmms_mock_entry (medialib, 1, "Beat Bizarre", "If You Knew a Few New", "Scoville Heat Unit");
+	xmms_mock_entry (medialib, 2, "Beat Bizarre", "If You Knew a Few New", "SdrawkcaB");
+	xmms_mock_entry (medialib, 1, "Beat Bizarre", "Lewd", "Pony Sauce");
+	xmms_mock_entry (medialib, 2, "Beat Bizarre", "Lewd", "Monochrome");
+	xmms_mock_entry (medialib, 3, "Beat Bizarre", "Lewd", "Brain Drain (remix)");
+	xmms_mock_entry (medialib, 4, "Beat Bizarre", "Lewd", "Depth Pitch");
+	xmms_mock_entry (medialib, 5, "Beat Bizarre", "Lewd", "The New Breed");
+	xmms_mock_entry (medialib, 6, "Beat Bizarre", "Lewd", "Error");
+	xmms_mock_entry (medialib, 7, "Beat Bizarre", "Lewd", "Funk Fluid");
+	xmms_mock_entry (medialib, 2, "Beat Bizarre", "Pop the Question / Swallow", "Pop the Question");
+	xmms_mock_entry (medialib, 2, "Beat Bizarre", "Pop the Question / Swallow", "Swallow");
+
+	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_END);
+
+	ordered = xmmsv_coll_add_order_operators (universe, order);
+	xmmsv_coll_unref (universe);
+	xmmsv_unref (order);
+
+	fetch = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_END);
+
+	group = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
+	                          XMMSV_LIST_ENTRY_STR ("album"),
+	                          XMMSV_LIST_END);
+
+	limit_start = 0;
+	limit_length = 0;
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	                        xmmsv_new_coll (ordered),
+	                        xmmsv_new_int (limit_start),
+	                        xmmsv_new_int (limit_length),
+	                        xmmsv_ref (fetch), xmmsv_ref (group));
+
+	expected = xmmsv_from_xson ("[{                                       "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'If You Knew a Few New'      "
+	                            "}, {                                     "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'Lewd'                       "
+	                            "}, {                                     "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'Pop the Question / Swallow' "
+	                            "}]                                       ");
+
+
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (expected);
+	xmmsv_unref (result);
+
+	limit_start = 0;
+	limit_length = 2;
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	                        xmmsv_new_coll (ordered),
+	                        xmmsv_new_int (limit_start),
+	                        xmmsv_new_int (limit_length),
+	                        xmmsv_ref (fetch), xmmsv_ref (group));
+
+	expected = xmmsv_from_xson ("[{                                       "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'If You Knew a Few New'      "
+	                            "}, {                                     "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'Lewd'                       "
+	                            "}]                                       ");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (expected);
+	xmmsv_unref (result);
+
+	limit_start = 1;
+	limit_length = 2;
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	                        xmmsv_new_coll (ordered),
+	                        xmmsv_new_int (limit_start),
+	                        xmmsv_new_int (limit_length),
+	                        xmmsv_ref (fetch), xmmsv_ref (group));
+	expected = xmmsv_from_xson ("[{                                       "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'Lewd'                       "
+	                            "}, {                                     "
+	                            "  'artist': 'Beat Bizarre',              "
+	                            "   'album': 'Pop the Question / Swallow' "
+	                            "}]                                       ");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (expected);
+	xmmsv_unref (result);
+
+	xmmsv_unref (fetch);
+	xmmsv_unref (group);
+	xmmsv_coll_unref (ordered);
+}
