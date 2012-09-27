@@ -62,8 +62,6 @@ static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_sessi
 
 #include "medialib_ipc.c"
 
-#define SESSION(x) MEDIALIB_SESSION(medialib, x)
-
 /**
  *
  * @defgroup Medialib Medialib
@@ -567,13 +565,16 @@ xmms_medialib_client_remove_entry (xmms_medialib_t *medialib,
                                    xmms_medialib_entry_t entry,
                                    xmms_error_t *error)
 {
-	MEDIALIB_BEGIN (medialib);
-	if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_entry_remove (session, entry);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+	xmms_medialib_session_t *session;
+
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_entry_remove (session, entry);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 }
 
 /**
@@ -686,39 +687,42 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib,
                              xmms_medialib_entry_t entry,
                              xmms_error_t *error)
 {
-	MEDIALIB_BEGIN (medialib);
-	if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
-	} else if (entry == 0) {
-		s4_sourcepref_t *sourcepref;
-		s4_resultset_t *set;
-		s4_val_t *status;
-		gint i;
+	xmms_medialib_session_t *session;
 
-		sourcepref = xmms_medialib_session_get_source_preferences (session);
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
+		} else if (entry == 0) {
+			s4_sourcepref_t *sourcepref;
+			s4_resultset_t *set;
+			s4_val_t *status;
+			gint i;
 
-		status = s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_OK);
-		set = xmms_medialib_filter (session, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
-		                            status, 0, sourcepref, "song_id", S4_FETCH_PARENT);
-		s4_val_free (status);
-		s4_sourcepref_unref (sourcepref);
+			sourcepref = xmms_medialib_session_get_source_preferences (session);
 
-		for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
-			const s4_result_t *res;
+			status = s4_val_new_int (XMMS_MEDIALIB_ENTRY_STATUS_OK);
+			set = xmms_medialib_filter (session, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS,
+			                            status, 0, sourcepref, "song_id", S4_FETCH_PARENT);
+			s4_val_free (status);
+			s4_sourcepref_unref (sourcepref);
 
-			res = s4_resultset_get_result (set, i, 0);
-			for (; res != NULL; res = s4_result_next (res)) {
-				xmms_medialib_entry_t item;
-				s4_val_get_int (s4_result_get_val (res), &item);
-				xmms_medialib_entry_status_set (session, item, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
+			for (i = 0; i < s4_resultset_get_rowcount (set); i++) {
+				const s4_result_t *res;
+
+				res = s4_resultset_get_result (set, i, 0);
+				for (; res != NULL; res = s4_result_next (res)) {
+					xmms_medialib_entry_t item;
+					s4_val_get_int (s4_result_get_val (res), &item);
+					xmms_medialib_entry_status_set (session, item, XMMS_MEDIALIB_ENTRY_STATUS_REHASH);
+				}
 			}
-		}
 
-		s4_resultset_free (set);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+			s4_resultset_free (set);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 }
 
 /**
@@ -753,8 +757,14 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
 		if (isdir == 1) {
 			process_dir (medialib, entries, str, error);
 		} else {
+			xmms_medialib_session_t *session;
 			xmms_medialib_entry_t entry;
-			SESSION (entry = xmms_medialib_entry_new_encoded (session, str, error));
+
+			do {
+				session = xmms_medialib_session_begin (medialib);
+				entry = xmms_medialib_entry_new_encoded (session, str, error);
+			} while (!xmms_medialib_session_commit (session));
+
 			if (entry) {
 				xmmsv_coll_idlist_append (entries, entry);
 			}
@@ -1025,10 +1035,15 @@ static void
 xmms_medialib_client_add_entry (xmms_medialib_t *medialib, const gchar *url,
                                 xmms_error_t *error)
 {
+	xmms_medialib_session_t *session;
+
 	g_return_if_fail (medialib);
 	g_return_if_fail (url);
 
-	SESSION (xmms_medialib_entry_new_encoded (session, url, error));
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		xmms_medialib_entry_new_encoded (session, url, error);
+	} while (!xmms_medialib_session_commit (session));
 }
 
 /**
@@ -1044,19 +1059,21 @@ xmms_medialib_client_move_entry (xmms_medialib_t *medialib,
                                  xmms_medialib_entry_t entry,
                                  const gchar *url, xmms_error_t *error)
 {
+	xmms_medialib_session_t *session;
 	gchar *encoded;
 
 	encoded = xmms_medialib_url_encode (url);
 
-	MEDIALIB_BEGIN (medialib);
-	if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_entry_property_set_str_source (session, entry,
-		                                             XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
-		                                             encoded, "server");
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_entry_property_set_str_source (session, entry,
+			                                             XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
+			                                             encoded, "server");
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 
 	g_free (encoded);
 }
@@ -1067,16 +1084,19 @@ xmms_medialib_client_set_property_string (xmms_medialib_t *medialib,
                                           const gchar *source, const gchar *key,
                                           const gchar *value, xmms_error_t *error)
 {
-	MEDIALIB_BEGIN (medialib);
-	if (g_ascii_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
-	} else if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_entry_property_set_str_source (session, entry, key,
-		                                             value, source);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+	xmms_medialib_session_t *session;
+
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (g_ascii_strcasecmp (source, "server") == 0) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
+		} else if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_entry_property_set_str_source (session, entry, key,
+			                                             value, source);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 }
 
 static void
@@ -1085,16 +1105,19 @@ xmms_medialib_client_set_property_int (xmms_medialib_t *medialib,
                                        const gchar *source, const gchar *key,
                                        gint32 value, xmms_error_t *error)
 {
-	MEDIALIB_BEGIN (medialib);
-	if (g_ascii_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
-	} else if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_entry_property_set_int_source (session, entry, key,
-		                                             value, source);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+	xmms_medialib_session_t *session;
+
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (g_ascii_strcasecmp (source, "server") == 0) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
+		} else if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_entry_property_set_int_source (session, entry, key,
+			                                             value, source);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 }
 
 static void
@@ -1133,15 +1156,18 @@ xmms_medialib_client_remove_property (xmms_medialib_t *medialib,
                                       const gchar *source, const gchar *key,
                                       xmms_error_t *error)
 {
-	MEDIALIB_BEGIN (medialib);
-	if (g_ascii_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't remove properties set by the server!");
-	} else if (xmms_medialib_check_id (session, entry)) {
-		xmms_medialib_property_remove (session, entry, source, key, error);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
-	}
-	MEDIALIB_COMMIT ();
+	xmms_medialib_session_t *session;
+
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (g_ascii_strcasecmp (source, "server") == 0) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't remove properties set by the server!");
+		} else if (xmms_medialib_check_id (session, entry)) {
+			xmms_medialib_property_remove (session, entry, source, key, error);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 }
 
 /** @} */

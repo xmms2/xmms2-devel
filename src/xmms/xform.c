@@ -728,16 +728,19 @@ xmms_xform_metadata_collect (xmms_medialib_session_t *session,
 static void
 xmms_xform_metadata_update (xmms_xform_t *xform)
 {
+	xmms_medialib_session_t *session;
 	metadata_festate_t info;
 
 	g_return_if_fail (xform->medialib);
 
-	MEDIALIB_BEGIN (xform->medialib);
-	info.entry = xform->entry;
-	info.session = session;
+	do {
+		session = xmms_medialib_session_begin (xform->medialib);
 
-	xmms_xform_metadata_collect_one (xform, &info);
-	MEDIALIB_COMMIT ();
+		info.entry = xform->entry;
+		info.session = session;
+
+		xmms_xform_metadata_collect_one (xform, &info);
+	} while (!xmms_medialib_session_commit (session));
 }
 
 static void
@@ -1395,14 +1398,15 @@ xmms_xform_t *
 xmms_xform_chain_setup (xmms_medialib_t *medialib, xmms_medialib_entry_t entry,
                         GList *goal_formats, gboolean rehash)
 {
+	xmms_medialib_session_t *session;
 	xmms_xform_t *ret = NULL;
 
-	MEDIALIB_BEGIN(medialib);
-	if (ret != NULL) {
-		xmms_object_unref (ret);
-	}
-	ret = xmms_xform_chain_setup_session (medialib, session, entry, goal_formats, rehash);
-	MEDIALIB_COMMIT ();
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (ret != NULL)
+			xmms_object_unref (ret);
+		ret = xmms_xform_chain_setup_session (medialib, session, entry, goal_formats, rehash);
+	} while (!xmms_medialib_session_commit (session));
 
 	return ret;
 }
@@ -1482,15 +1486,16 @@ xmms_xform_chain_setup_url (xmms_medialib_t *medialib,
                             xmms_medialib_entry_t entry, const gchar *url,
                             GList *goal_formats, gboolean rehash)
 {
+	xmms_medialib_session_t *session;
 	xmms_xform_t *ret = NULL;
 
-	MEDIALIB_BEGIN (medialib);
-	if (ret != NULL) {
-		xmms_object_unref (ret);
-	}
-	ret = xmms_xform_chain_setup_url_session (medialib, session, entry, url,
-	                                          goal_formats, rehash);
-	MEDIALIB_COMMIT ();
+	do {
+		session = xmms_medialib_session_begin (medialib);
+		if (ret != NULL)
+			xmms_object_unref (ret);
+		ret = xmms_xform_chain_setup_url_session (medialib, session, entry, url,
+		                                          goal_formats, rehash);
+	} while (!xmms_medialib_session_commit (session));
 
 	return ret;
 }

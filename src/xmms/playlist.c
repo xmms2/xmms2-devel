@@ -697,16 +697,16 @@ static void
 xmms_playlist_client_insert_url (xmms_playlist_t *playlist, const gchar *plname,
                                  gint32 pos, const gchar *url, xmms_error_t *err)
 {
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry = 0;
 
-	MEDIALIB_SESSION (playlist->medialib,
-	                  entry = xmms_medialib_entry_new_encoded (session, url, err));
+	do {
+		session = xmms_medialib_session_begin (playlist->medialib);
+		entry = xmms_medialib_entry_new_encoded (session, url, err);
+	} while (!xmms_medialib_session_commit (session));
 
-	if (!entry) {
-		return;
-	}
-
-	xmms_playlist_insert_entry (playlist, plname, pos, entry, err);
+	if (entry)
+		xmms_playlist_insert_entry (playlist, plname, pos, entry, err);
 }
 
 /**
@@ -800,6 +800,7 @@ xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
                             guint32 pos, xmms_medialib_entry_t file,
                             xmms_error_t *err)
 {
+	xmms_medialib_session_t *session;
 	xmmsv_t *dict;
 	gint currpos;
 	gint len;
@@ -808,7 +809,11 @@ xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname,
 
 	g_mutex_lock (playlist->mutex);
 
-	MEDIALIB_SESSION (playlist->medialib, valid = xmms_medialib_check_id (session, file));
+	do {
+		session = xmms_medialib_session_begin_ro (playlist->medialib);
+		valid = xmms_medialib_check_id (session, file);
+	} while (!xmms_medialib_session_commit (session));
+
 	if (!valid) {
 		g_mutex_unlock (playlist->mutex);
 		xmms_error_set (err, XMMS_ERROR_NOENT,
@@ -864,10 +869,13 @@ void
 xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname,
                               const gchar *nurl, xmms_error_t *err)
 {
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry = 0;
 
-	MEDIALIB_SESSION (playlist->medialib,
-	                  entry = xmms_medialib_entry_new_encoded (session, nurl, err));
+	do {
+		session = xmms_medialib_session_begin (playlist->medialib);
+		entry = xmms_medialib_entry_new_encoded (session, nurl, err);
+	} while (!xmms_medialib_session_commit (session));
 
 	if (entry) {
 		xmms_playlist_add_entry (playlist, plname, entry, err);

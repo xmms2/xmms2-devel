@@ -78,22 +78,6 @@ void xmms_medialib_session_track_garbage (xmms_medialib_session_t *session, xmms
 gint xmms_medialib_session_property_set (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *key, const s4_val_t *value, const gchar *source);
 gint xmms_medialib_session_property_unset (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *key, const s4_val_t *value, const gchar *source);
 
-
-#define MEDIALIB_SESSION(mlib, x) { \
-		xmms_medialib_session_t *session; \
-		do { \
-			session = xmms_medialib_session_begin (mlib); \
-			x; \
-		} while (!xmms_medialib_session_commit (session)); \
-	}
-
-#define MEDIALIB_BEGIN(mlib) { \
-	xmms_medialib_session_t *session; \
-	do { \
-	session = xmms_medialib_session_begin (mlib);
-#define MEDIALIB_COMMIT() } while (!xmms_medialib_session_commit (session)); }
-
-
 #define xmms_medialib_entry_status_set(s, e, st) xmms_medialib_entry_property_set_int_source(s, e, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS, st, "server") /** @todo: hardcoded server id might be bad? */
 
 

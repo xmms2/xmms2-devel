@@ -262,6 +262,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	xmmsv_get_list_iter (list, &it);
 
 	while (xmmsv_list_iter_valid (it)) {
+		xmms_medialib_session_t *session;
 		xmms_medialib_entry_t entry;
 		xmmsv_t *dict, *value;
 		const gchar *realpath;
@@ -277,23 +278,24 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		xmmsv_dict_remove (dict, "realpath");
 		xmmsv_dict_remove (dict, "path");
 
-		MEDIALIB_BEGIN (dag->medialib);
-		entry = xmms_medialib_entry_new_encoded (session, realpath, err);
+		do {
+			session = xmms_medialib_session_begin (dag->medialib);
+			entry = xmms_medialib_entry_new_encoded (session, realpath, err);
 
-		if (entry) {
-			add_metadata_from_tree_user_data_t udata;
-			udata.entry = entry;
-			udata.src = src;
-			udata.session = session;
+			if (entry) {
+				add_metadata_from_tree_user_data_t udata;
+				udata.entry = entry;
+				udata.src = src;
+				udata.session = session;
 
 
-			xmmsv_dict_foreach (dict, add_metadata_from_tree, &udata);
+				xmmsv_dict_foreach (dict, add_metadata_from_tree, &udata);
 
-			xmmsv_coll_idlist_append (coll, entry);
-		} else {
-			xmms_log_error ("couldn't add %s to collection!", realpath);
-		}
-		MEDIALIB_COMMIT ();
+				xmmsv_coll_idlist_append (coll, entry);
+			} else {
+				xmms_log_error ("couldn't add %s to collection!", realpath);
+			}
+		} while (!xmms_medialib_session_commit (session));
 	}
 
 	xmmsv_unref (list);

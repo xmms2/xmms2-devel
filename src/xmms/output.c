@@ -446,13 +446,16 @@ xmms_output_filler (void *arg)
 
 			chain = xmms_xform_chain_setup (output->medialib, entry, output->format_list, FALSE);
 			if (!chain) {
-				MEDIALIB_BEGIN (output->medialib);
-				if (xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
-					xmms_medialib_entry_remove (session, entry);
-				} else {
-					xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
-				}
-				MEDIALIB_COMMIT ();
+				xmms_medialib_session_t *session;
+
+				do {
+					session = xmms_medialib_session_begin (output->medialib);
+					if (xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_STATUS) == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
+						xmms_medialib_entry_remove (session, entry);
+					} else {
+						xmms_medialib_entry_status_set (session, entry, XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
+					}
+				} while (!xmms_medialib_session_commit (session));
 
 				if (!xmms_playlist_advance (output->playlist)) {
 					XMMS_DBG ("End of playlist");
