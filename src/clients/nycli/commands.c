@@ -943,13 +943,7 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 		return FALSE;
 	} else if (next) {
 		playlist_currpos_get (infos, playlist, &tmp);
-		if (tmp >= 0) {
-			*pos = tmp + 1;
-		} else {
-			g_printf (_("Error: --next cannot be used if there is no "
-			            "active track!\n"));
-			return FALSE;
-		}
+		*pos = tmp + 1;
 	} else if (at_isset) {
 		/* FIXME: handle relative values ? */
 		/* beware: int vs uint */
@@ -964,8 +958,8 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 			*pos = at - 1;  /* playlist ids start at 0 */
 		}
 	} else {
-		/* No flag given, no position found! */
-		return FALSE;
+		/* default to append */
+		playlist_length_get (infos, playlist, pos);
 	}
 
 	return TRUE;
@@ -1263,16 +1257,12 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	*/
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
-	if (command_flag_string_get (ctx, "playlist", &playlist)) {
-		if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
-			/* append by default */
-			playlist_length_get (infos, playlist, &pos);
-		}
-	} else {
-		if (!cmd_flag_pos_get (infos, ctx, &pos)) {
-			playlist_length_get (infos, NULL, &pos);
-		}
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
+	}
+
+	if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
+		return FALSE;
 	}
 
 	command_flag_boolean_get (ctx, "pattern", &forceptrn);
