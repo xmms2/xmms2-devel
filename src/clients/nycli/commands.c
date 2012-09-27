@@ -1860,7 +1860,7 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
+	xmmsc_result_t *res = NULL;
 
 	gint i, count;
 	const gchar *path;
@@ -1891,14 +1891,15 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 
 			browse_entry_get (entry, &url, &is_directory);
 
+			if (res != NULL) {
+				/* Clean up any result from the last iteration */
+				xmmsc_result_unref (res);
+			}
+
 			if (norecurs || !is_directory) {
-				res = xmmsc_medialib_add_entry_encoded (infos->sync,
-				                                        url);
-				xmmsc_result_unref (res);
+				res = xmmsc_medialib_add_entry_encoded (infos->sync, url);
 			} else {
-				res = xmmsc_medialib_import_path_encoded (infos->sync,
-				                                          url);
-				xmmsc_result_unref (res);
+				res = xmmsc_medialib_import_path_encoded (infos->sync, url);
 			}
 
 			browse_entry_free (entry);
@@ -1907,6 +1908,12 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		g_free (enc);
 		g_free (vpath);
 		g_list_free (files);
+	}
+
+	if (res != NULL) {
+		/* Wait for the last result to execute until we're done. */
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
 	}
 
 	if (count == 0) {
