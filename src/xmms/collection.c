@@ -835,9 +835,10 @@ xmmsv_t *
 xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
                               xmmsv_t *fetch, xmms_error_t *err)
 {
-	xmmsv_t *ret;
 	const gchar *valerr = "Invalid collection: unknown reason. This is "
 	                      "probably a bug in xmms2d.";
+	xmms_medialib_session_t *session;
+	xmmsv_t *ret;
 
 	/* validate the collection to query */
 	if (!xmms_collection_validate (dag, coll, NULL, NULL, &valerr)) {
@@ -848,8 +849,14 @@ xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_coll_t *coll,
 	}
 
 	g_mutex_lock (dag->mutex);
+
 	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
-	MEDIALIB_SESSION (dag->medialib, ret = xmms_medialib_query (session, coll, fetch, err));
+
+	do {
+		session = xmms_medialib_session_begin_ro (dag->medialib);
+		ret = xmms_medialib_query (session, coll, fetch, err);
+	} while (!xmms_medialib_session_commit (session));
+
 	g_mutex_unlock (dag->mutex);
 
 	return ret;
@@ -995,11 +1002,17 @@ xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
 xmms_medialib_entry_t
 xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_coll_t *source)
 {
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t ret;
 
 	g_mutex_lock (dag->mutex);
 	xmms_collection_apply_to_collection (dag, source, bind_all_references, NULL);
-	MEDIALIB_SESSION (dag->medialib,  ret = xmms_medialib_query_random_id (session, source));
+
+	do {
+		session = xmms_medialib_session_begin_ro (dag->medialib);
+		ret = xmms_medialib_query_random_id (session, source);
+	} while (!xmms_medialib_session_commit (session));
+
 	g_mutex_unlock (dag->mutex);
 
 	return ret;
