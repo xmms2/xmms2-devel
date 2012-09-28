@@ -261,6 +261,7 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url,
 	xmmsv_t *list = NULL;
 
 	if (xmms_xform_plugin_can_browse (xform->plugin)) {
+		xform->browse_list = xmmsv_new_list ();
 		if (!xmms_xform_plugin_browse (xform->plugin, xform, url, error)) {
 			return NULL;
 		}
