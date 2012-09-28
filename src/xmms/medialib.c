@@ -916,9 +916,10 @@ xmms_medialib_client_get_id (xmms_medialib_t *medialib, const gchar *url,
 	xmms_medialib_session_t *session;
 	gint32 ret;
 
-	session = xmms_medialib_session_begin_ro (medialib);
-	ret = xmms_medialib_get_id (session, url, error);
-	xmms_medialib_session_commit (session);
+	do {
+		session = xmms_medialib_session_begin_ro (medialib);
+		ret = xmms_medialib_get_id (session, url, error);
+	} while (!xmms_medialib_session_commit (session));
 
 	return ret;
 }
@@ -1011,13 +1012,14 @@ xmms_medialib_client_get_info (xmms_medialib_t *medialib,
 	xmms_medialib_session_t *session;
 	xmmsv_t *ret = NULL;
 
-	session = xmms_medialib_session_begin_ro (medialib);
-	if (xmms_medialib_check_id (session, entry)) {
-		ret = xmms_medialib_entry_to_tree (session, entry);
-	} else {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry");
-	}
-	xmms_medialib_session_commit (session);
+	do {
+		session = xmms_medialib_session_begin_ro (medialib);
+		if (xmms_medialib_check_id (session, entry)) {
+			ret = xmms_medialib_entry_to_tree (session, entry);
+		} else {
+			xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry");
+		}
+	} while (!xmms_medialib_session_commit (session));
 
 	return ret;
 }
