@@ -147,7 +147,7 @@ static xmmsv_t *
 xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err)
 {
 	xmmsv_t *list = xmmsv_new_list ();
-	xmms_plugin_foreach (type, xmms_main_client_list_foreach, &list);
+	xmms_plugin_foreach (type, xmms_main_client_list_foreach, list);
 	return list;
 }
 
