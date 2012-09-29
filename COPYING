@@ -147,3 +147,5 @@ src/plugins/faad/faad.c
 src/plugins/id3v2/id3.c
 	Licensed under a BSD 3-Clause license
 
+src/plugins/opus/opusfile/*
+	Licensed under a BSD 3-CLause license
