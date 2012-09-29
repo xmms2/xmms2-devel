@@ -331,6 +331,9 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	} else if (g_ascii_strcasecmp (key, "ALBUMARTISTSORT") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT;
 		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_ascii_strcasecmp (key, "ALBUMARTISTSORTORDER") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	} else if (g_ascii_strcasecmp (key, "BARCODE") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BARCODE;
 		xmms_xform_metadata_set_str (xform, metakey, val);
@@ -578,6 +581,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long ('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long ('T','S','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT, NULL },
 	{ quad2long ('X','S','O','P'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_SORT, NULL },
+	{ quad2long ('T','S','O','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ARTIST_SORT, NULL },
 	{ quad2long ('T','C','O','N'), NULL, handle_id3v2_tcon },
 	{ quad2long ('T','B','P',0),   XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
 	{ quad2long ('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
