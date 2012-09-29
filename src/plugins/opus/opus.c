@@ -25,8 +25,6 @@
 #include "opusfile/opusfile.h"
 
 #include "xmms/xmms_xformplugin.h"
-
-#include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
@@ -40,6 +38,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+/* basic_mappings, and mappings, coverart parsing */
+#include "../vorbis_common/metadata.c"
+
 typedef struct xmms_opus_data_St {
 	OggOpusFile *opusfile;
 	OpusFileCallbacks callbacks;
@@ -48,30 +49,6 @@ typedef struct xmms_opus_data_St {
 	gint current;
 	int channels;
 } xmms_opus_data_t;
-
-typedef enum { STRING, INTEGER } ptype;
-typedef struct {
-	const gchar *vname;
-	const gchar *xname;
-	ptype type;
-} props;
-
-#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
-
-/** These are the properties that we extract from the comments */
-static const props properties[] = {
-	{ "title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
-	{ "artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
-	{ "album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },
-	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
-	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
-	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
-	{ "comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
-	{ "discnumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, INTEGER },
-	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
-	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
-	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
-};
 
 /*
  * Function prototypes
@@ -110,6 +87,12 @@ xmms_opus_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.seek = xmms_opus_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_metadata_mapper_init (xform_plugin,
+	                                        basic_mappings,
+	                                        G_N_ELEMENTS (basic_mappings),
+	                                        mappings,
+	                                        G_N_ELEMENTS (mappings));
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -201,132 +184,6 @@ opus_callback_tell (void *datasource)
 	return xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &err);
 }
 
-
-static guint32
-decode_uint32 (guchar **pos)
-{
-	guint32 value;
-	memcpy (&value, *pos, sizeof (guint32));
-	(*pos) += sizeof (guint32);
-	return GUINT32_FROM_BE (value);
-}
-
-static void
-handle_image_comment (xmms_xform_t *xform, const gchar *encoded_value)
-{
-	gsize len;
-	guchar *value;
-
-	guint32 typ, mime_len, desc_len, img_len;
-	guchar *pos, *end, *mime_data, *img_data;
-	gchar hash[33];
-
-#if GLIB_CHECK_VERSION(2,12,0)
-	value = g_base64_decode (encoded_value, &len);
-#else
-	/* TODO: Implement/backport base64 decoding */
-	return;
-#endif
-
-	pos = value;
-	end = value + len;
-
-	if (pos + sizeof (guint32) > end) {
-		XMMS_DBG ("Malformed picture comment");
-		goto finish;
-	}
-
-	typ = decode_uint32 (&pos);
-	if (typ != 0 && typ != 3) {
-		XMMS_DBG ("Picture type %d not handled", typ);
-		goto finish;
-	}
-
-	if (pos + sizeof (guint32) > end) {
-		XMMS_DBG ("Malformed picture comment");
-		goto finish;
-	}
-
-	mime_len = decode_uint32 (&pos);
-	mime_data = pos;
-	pos += mime_len;
-
-	if (pos + sizeof (guint32) > end) {
-		XMMS_DBG ("Malformed picture comment");
-		goto finish;
-	}
-
-	desc_len = decode_uint32 (&pos);
-	pos += desc_len;
-
-	decode_uint32 (&pos); /* width */
-	decode_uint32 (&pos); /* height */
-	decode_uint32 (&pos); /* depth */
-	decode_uint32 (&pos); /* indexed palette length */
-
-	if (pos + sizeof (guint32) > end) {
-		XMMS_DBG ("Malformed picture comment");
-		goto finish;
-	}
-
-	img_len = decode_uint32 (&pos);
-	img_data = pos;
-
-	if (img_data + img_len > end) {
-		XMMS_DBG ("Malformed picture comment");
-		goto finish;
-	}
-
-	if (xmms_bindata_plugin_add (img_data, img_len, hash)) {
-		const gchar *metakey;
-
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT;
-		xmms_xform_metadata_set_str (xform, metakey, hash);
-
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME;
-		mime_data[mime_len] = '\0';
-		xmms_xform_metadata_set_str (xform, metakey, (gchar *)mime_data);
-	}
-
-finish:
-	g_free (value);
-}
-
-
-static void
-handle_comment (xmms_xform_t *xform,
-                const gchar *key, gint key_len,
-                const gchar *value)
-{
-	gint i;
-
-	if (!g_ascii_strncasecmp (key, "METADATA_BLOCK_PICTURE", key_len)) {
-		handle_image_comment (xform, value);
-		return;
-	}
-
-	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-		if (key_len != strlen (properties[i].vname))
-			continue;
-		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
-		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
-			const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION;
-			xmms_xform_metadata_set_int (xform, metakey, 1);
-		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
-			if (properties[i].type == INTEGER) {
-				gint tmp = strtol (value, NULL, 10);
-				xmms_xform_metadata_set_int (xform,
-				                             properties[i].xname,
-				                             tmp);
-			} else {
-				xmms_xform_metadata_set_str (xform,
-				                             properties[i].xname,
-				                             value);
-			}
-		}
-	}
-}
-
 static void
 xmms_opus_read_metadata (xmms_xform_t *xform, xmms_opus_data_t *data)
 {
@@ -340,16 +197,29 @@ xmms_opus_read_metadata (xmms_xform_t *xform, xmms_opus_data_t *data)
 		return;
 
 	for (i = 0; i < data->opustags->comments; i++) {
-		gchar *ptr, *content = data->opustags->user_comments[i];
-		gint key_len;
+		const gchar *ptr, *entry;
+		gsize length;
+		gchar key[64];
 
-		ptr = strchr (content, '=');
-		if (!ptr || ptr == content)
+		entry = data->opustags->user_comments[i];
+		length = data->opustags->comment_lengths[i];
+
+		if (entry == NULL || *entry == '\0')
 			continue;
 
-		key_len = ptr - content;
+		/* check whether it's a valid comment */
+		ptr = memchr (entry, '=', length);
+		if (ptr == NULL)
+			continue;
 
-		handle_comment (xform, content, key_len, ptr + 1);
+		ptr++;
+
+		g_strlcpy (key, entry, MIN (ptr - entry, sizeof (key)));
+
+		if (!xmms_xform_metadata_mapper_match (xform, key, ptr, length - (ptr - entry))) {
+			XMMS_DBG ("Unhandled tag '%s'", entry);
+		}
+
 	}
 }
 
