@@ -180,6 +180,8 @@ xmms_collection_init (xmms_medialib_t *medialib)
 
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
+
+	xmms_object_ref (medialib);
 	ret->medialib = medialib;
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
@@ -1038,6 +1040,7 @@ xmms_collection_destroy (xmms_object_t *object)
 
 	g_return_if_fail (dag);
 
+	xmms_object_unref (dag->medialib);
 	g_mutex_free (dag->mutex);
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {

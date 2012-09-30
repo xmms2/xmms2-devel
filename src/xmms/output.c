@@ -513,7 +513,12 @@ xmms_output_filler (void *arg)
 		}
 
 	}
+
+	if (chain)
+		xmms_object_unref (chain);
+
 	g_mutex_unlock (output->filler_mutex);
+
 	return NULL;
 }
 
@@ -871,6 +876,7 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_format_list_clear (output);
 
 	xmms_object_unref (output->playlist);
+	xmms_object_unref (output->medialib);
 
 	g_mutex_free (output->status_mutex);
 	g_mutex_free (output->playtime_mutex);
@@ -937,7 +943,10 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist, xmms_m
 
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
 
+	xmms_object_ref (playlist);
 	output->playlist = playlist;
+
+	xmms_object_ref (medialib);
 	output->medialib = medialib;
 
 	output->status_mutex = g_mutex_new ();

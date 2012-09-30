@@ -326,6 +326,7 @@ xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url,
 static void
 xmms_xform_object_destroy (xmms_object_t *obj)
 {
+	XMMS_DBG ("Deactivating xform object");
 	xmms_xform_unregister_ipc_commands ();
 }
 

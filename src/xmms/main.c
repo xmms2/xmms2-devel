@@ -270,28 +270,21 @@ static void
 xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
-	xmms_object_cmd_arg_t arg;
 	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
 	do_scriptdir (xmms_config_property_get_string (cv), "stop");
 
-	/* stop output */
-	xmms_object_cmd_arg_init (&arg);
-	arg.args = xmmsv_new_list ();
-	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output_object),
-	                      XMMS_IPC_CMD_STOP, &arg);
-	xmmsv_unref (arg.args);
-
-	g_usleep (G_USEC_PER_SEC); /* wait for the output thread to end */
-
+	xmms_object_unref (mainobj->xform_object);
+	xmms_object_unref (mainobj->visualization_object);
 	xmms_object_unref (mainobj->output_object);
 	xmms_object_unref (mainobj->bindata_object);
-	xmms_object_unref (mainobj->medialib_object);
 	xmms_object_unref (mainobj->playlist_object);
-	xmms_object_unref (mainobj->xform_object);
+	xmms_object_unref (mainobj->colldag_object);
+	xmms_object_unref (mainobj->medialib_object);
 	xmms_object_unref (mainobj->mediainfo_object);
-	xmms_object_unref (mainobj->visualization_object);
+	xmms_object_unref (mainobj->plsupdater_object);
+	xmms_object_unref (mainobj->collsync_object);
 
 	xmms_config_save ();
 
