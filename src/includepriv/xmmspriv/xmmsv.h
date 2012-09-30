@@ -52,4 +52,6 @@ struct xmmsv_St {
 	int ref;  /* refcounting */
 };
 
+xmmsv_t *xmmsv_new (xmmsv_type_t type);
+
 #endif

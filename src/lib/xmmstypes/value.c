@@ -80,7 +80,6 @@ static void xmmsv_list_iter_free (xmmsv_list_iter_t *it);
 static xmmsv_dict_iter_t *xmmsv_dict_iter_new (xmmsv_dict_t *d);
 static void xmmsv_dict_iter_free (xmmsv_dict_iter_t *it);
 
-static xmmsv_t *xmmsv_new (xmmsv_type_t type);
 static void xmmsv_free (xmmsv_t *val);
 static int absolutify_and_validate_pos (int *pos, int size, int allow_append);
 
@@ -280,7 +279,7 @@ xmmsv_unref (xmmsv_t *val)
  * Allocates new #xmmsv_t and references it.
  * @internal
  */
-static xmmsv_t *
+xmmsv_t *
 xmmsv_new (xmmsv_type_t type)
 {
 	xmmsv_t *val;
