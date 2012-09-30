@@ -13,6 +13,7 @@ def build(bld):
     xmmsv_bitbuffer.c
     xmmsv_build.c
     xmmsv_copy.c
+    xmmsv_list.c
     """.split()
 
     bld(features = 'c cstlib',
