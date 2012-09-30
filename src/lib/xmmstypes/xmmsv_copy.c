@@ -66,7 +66,7 @@ xmmsv_copy (xmmsv_t *val)
 			cur_val = xmmsv_new_bin (val->value.bin.data, val->value.bin.len);
 			break;
 		case XMMSV_TYPE_BITBUFFER:
-			cur_val = xmmsv_bitbuffer_new ();
+			cur_val = xmmsv_new_bitbuffer ();
 			xmmsv_bitbuffer_put_data (cur_val, val->value.bit.buf, val->value.bit.len / 8);
 			xmmsv_bitbuffer_goto (cur_val, xmmsv_bitbuffer_pos (val));
 			break;

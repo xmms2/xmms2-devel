@@ -44,7 +44,7 @@ xmms_ipc_msg_alloc (void)
 	static unsigned char empty[16] = {0,};
 
 	msg = x_new0 (xmms_ipc_msg_t, 1);
-	msg->bb = xmmsv_bitbuffer_new ();
+	msg->bb = xmmsv_new_bitbuffer ();
 	xmmsv_bitbuffer_put_data (msg->bb, empty, 16);
 
 	return msg;

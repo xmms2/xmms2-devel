@@ -769,7 +769,7 @@ CASE (test_xmmsv_type_bitbuffer_one_bit)
 	xmmsv_t *value;
 	int r;
 
-	value = xmmsv_bitbuffer_new ();
+	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BITBUFFER, xmmsv_get_type (value));
@@ -818,7 +818,7 @@ CASE (test_xmmsv_type_bitbuffer_8_bits)
 	xmmsv_t *value;
 	int r;
 
-	value = xmmsv_bitbuffer_new ();
+	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BITBUFFER, xmmsv_get_type (value));
@@ -860,7 +860,7 @@ CASE (test_xmmsv_type_bitbuffer)
 	xmmsv_t *value;
 	unsigned char b[4];
 
-	value = xmmsv_bitbuffer_new ();
+	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BITBUFFER, xmmsv_get_type (value));
@@ -884,7 +884,7 @@ CASE (test_xmmsv_type_bitbuffer2)
 	xmmsv_t *value;
 	int r;
 
-	value = xmmsv_bitbuffer_new ();
+	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BITBUFFER, xmmsv_get_type (value));
@@ -907,7 +907,7 @@ CASE (test_xmmsv_type_bitbuffer_ro)
 	unsigned char b[4];
 	int r;
 
-	value = xmmsv_bitbuffer_new_ro (data, 4);
+	value = xmmsv_new_bitbuffer_ro (data, 4);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_BITBUFFER, xmmsv_get_type (value));
@@ -1061,7 +1061,7 @@ CASE (test_xmmsv_deep_copy_bitbuffer)
 {
 	unsigned char b[4];
 	xmmsv_t *value, *val_cpy;
-	value = xmmsv_bitbuffer_new ();
+	value = xmmsv_new_bitbuffer ();
 
 	CU_ASSERT_TRUE (xmmsv_bitbuffer_put_data (value, (unsigned char *)"test", 4));
 

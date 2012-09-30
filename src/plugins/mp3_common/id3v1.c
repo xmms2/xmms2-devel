@@ -110,7 +110,7 @@ xmms_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	xmmsv_t *bb;
 	unsigned char data[32];
 
-	bb = xmmsv_bitbuffer_new_ro (buf, 128);
+	bb = xmmsv_new_bitbuffer_ro (buf, 128);
 
 	xmmsv_bitbuffer_get_data (bb, data, 3);
 
@@ -214,5 +214,3 @@ xmms_id3v1_get_tags (xmms_xform_t *xform)
 
 	return ret;
 }
-
-

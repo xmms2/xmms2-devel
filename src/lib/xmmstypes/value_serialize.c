@@ -656,7 +656,7 @@ xmmsv_serialize (xmmsv_t *v)
 	if (!v)
 		return NULL;
 
-	bb = xmmsv_bitbuffer_new ();
+	bb = xmmsv_new_bitbuffer ();
 
 	if (!xmmsv_bitbuffer_serialize_value (bb, v)) {
 		xmmsv_unref (bb);
@@ -684,7 +684,7 @@ xmmsv_deserialize (xmmsv_t *v)
 		return NULL;
 
 
-	bb = xmmsv_bitbuffer_new_ro (data, len);
+	bb = xmmsv_new_bitbuffer_ro (data, len);
 
 	if (!xmmsv_bitbuffer_deserialize_value (bb, &res)) {
 		xmmsv_unref (bb);
