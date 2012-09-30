@@ -55,5 +55,6 @@ struct xmmsv_St {
 xmmsv_t *xmmsv_new (xmmsv_type_t type);
 
 void _xmmsv_list_free (xmmsv_list_t *dict);
+void _xmmsv_dict_free (xmmsv_dict_t *dict);
 
 #endif
