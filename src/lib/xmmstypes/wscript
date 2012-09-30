@@ -10,6 +10,7 @@ def build(bld):
     value.c
     xlist.c
     value_serialize.c
+    xmmsv_bitbuffer.c
     xmmsv_build.c
     xmmsv_copy.c
     """.split()
