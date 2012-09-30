@@ -31,8 +31,10 @@ extern "C" {
  */
 
 /* Bitbuffer */
-xmmsv_t *xmmsv_bitbuffer_new_ro (const unsigned char *v, int len);
-xmmsv_t *xmmsv_bitbuffer_new (void);
+xmmsv_t *xmmsv_bitbuffer_new_ro (const unsigned char *v, int len) XMMS_DEPRECATED;
+xmmsv_t *xmmsv_bitbuffer_new (void) XMMS_DEPRECATED;
+xmmsv_t *xmmsv_new_bitbuffer_ro (const unsigned char *v, int len);
+xmmsv_t *xmmsv_new_bitbuffer (void);
 int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res);
 int xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len);
 int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d);

@@ -21,8 +21,22 @@
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsc/xmmsc_util.h"
 
+/**
+ * @deprecated
+ */
 xmmsv_t *
 xmmsv_bitbuffer_new_ro (const unsigned char *v, int len)
+{
+	return xmmsv_new_bitbuffer_ro (v, len);
+}
+
+/**
+ * Allocates a new bitbuffer #xmmsv_t.
+ * @return The new #xmmsv_t. Must be unreferenced with
+ * #xmmsv_unref.
+ */
+xmmsv_t *
+xmmsv_new_bitbuffer_ro (const unsigned char *v, int len)
 {
 	xmmsv_t *val;
 
@@ -33,8 +47,22 @@ xmmsv_bitbuffer_new_ro (const unsigned char *v, int len)
 	return val;
 }
 
+/**
+ * @deprecated
+ */
 xmmsv_t *
 xmmsv_bitbuffer_new (void)
+{
+	return xmmsv_new_bitbuffer ();
+}
+
+/**
+ * Allocates a new empty bitbuffer #xmmsv_t.
+ * @return The new #xmmsv_t. Must be unreferenced with
+ * #xmmsv_unref.
+ */
+xmmsv_t *
+xmmsv_new_bitbuffer (void)
 {
 	xmmsv_t *val;
 
@@ -44,7 +72,6 @@ xmmsv_bitbuffer_new (void)
 	val->value.bit.ro = false;
 	return val;
 }
-
 
 int
 xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res)
