@@ -30,6 +30,8 @@ extern "C" {
  * @ingroup ValueType
  * @{
  */
+xmmsv_t *xmmsv_make_stringlist (char *array[], int num);
+
 /* These helps us doing compiletime typechecking */
 static inline const char *__xmmsv_identity_const_charp (const char *v) {return v;}
 static inline xmmsv_t *__xmmsv_identity_xmmsv (xmmsv_t *v) {return v;}

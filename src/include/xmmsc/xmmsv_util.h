@@ -36,8 +36,6 @@ xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
 
 int xmmsv_utf8_validate (const char *str);
 
-xmmsv_t *xmmsv_make_stringlist (char *array[], int num);
-
 xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
 
 int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val);
