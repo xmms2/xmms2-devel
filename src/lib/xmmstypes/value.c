@@ -14,22 +14,14 @@
  *  Lesser General Public License for more details.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
-#include <ctype.h>
-#include <assert.h>
-#include <math.h>
-#include <limits.h>
+
+#include "xmmspriv/xmmsv.h"
+#include "xmmsclientpriv/xmmsclient_util.h"
 
 #include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_errorcodes.h"
-#include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_util.h"
-#include "xmmspriv/xmmsv.h"
-#include "xmmspriv/xmms_list.h"
 
 /** @file */
 
