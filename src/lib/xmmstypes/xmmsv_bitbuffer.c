@@ -231,3 +231,25 @@ xmmsv_bitbuffer_buffer (xmmsv_t *v)
 {
 	return v->value.bit.buf;
 }
+
+/**
+ * Retrieves the bit buffer from the value.
+ *
+ * @param val a #xmmsv_t containing a string.
+ * @param r the return data. This data is owned by the value and will
+ * be freed when the value is freed.
+ * @param rlen the return length of data.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_get_bitbuffer (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen)
+{
+	if (!val || val->type != XMMSV_TYPE_BITBUFFER) {
+		return 0;
+	}
+
+	*r = val->value.bin.data;
+	*rlen = val->value.bin.len;
+
+	return 1;
+}

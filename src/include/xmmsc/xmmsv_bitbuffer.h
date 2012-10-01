@@ -47,7 +47,7 @@ int xmmsv_bitbuffer_rewind (xmmsv_t *v);
 int xmmsv_bitbuffer_end (xmmsv_t *v);
 int xmmsv_bitbuffer_len (xmmsv_t *v);
 const unsigned char *xmmsv_bitbuffer_buffer (xmmsv_t *v);
-
+int xmmsv_get_bitbuffer (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
 int xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v);
 int xmmsv_bitbuffer_deserialize_value (xmmsv_t *bb, xmmsv_t **val);
 
