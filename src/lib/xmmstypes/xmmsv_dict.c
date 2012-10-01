@@ -261,7 +261,7 @@ _xmmsv_dict_free (xmmsv_dict_t *dict)
 xmmsv_t *
 xmmsv_new_dict (void)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_DICT);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_DICT);
 
 	if (val) {
 		val->value.dict = _xmmsv_dict_new ();

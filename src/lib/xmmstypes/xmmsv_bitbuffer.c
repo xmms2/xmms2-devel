@@ -40,7 +40,7 @@ xmmsv_new_bitbuffer_ro (const unsigned char *v, int len)
 {
 	xmmsv_t *val;
 
-	val = xmmsv_new (XMMSV_TYPE_BITBUFFER);
+	val = _xmmsv_new (XMMSV_TYPE_BITBUFFER);
 	val->value.bit.buf = (unsigned char *) v;
 	val->value.bit.len = len * 8;
 	val->value.bit.ro = true;
@@ -66,7 +66,7 @@ xmmsv_new_bitbuffer (void)
 {
 	xmmsv_t *val;
 
-	val = xmmsv_new (XMMSV_TYPE_BITBUFFER);
+	val = _xmmsv_new (XMMSV_TYPE_BITBUFFER);
 	val->value.bit.buf = NULL;
 	val->value.bit.len = 0;
 	val->value.bit.ro = false;

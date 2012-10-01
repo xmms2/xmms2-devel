@@ -300,7 +300,7 @@ _xmmsv_list_sort (xmmsv_list_t *l, xmmsv_list_compare_func_t comparator)
 xmmsv_t *
 xmmsv_new_list (void)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_LIST);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_LIST);
 
 	if (val) {
 		val->value.list = _xmmsv_list_new ();

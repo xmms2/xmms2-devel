@@ -45,7 +45,67 @@ const char *xmmsv_default_source_pref[] = {
 	NULL
 };
 
-static void xmmsv_free (xmmsv_t *val);
+xmmsv_t *
+_xmmsv_new (xmmsv_type_t type)
+{
+	xmmsv_t *val;
+
+	val = x_new0 (xmmsv_t, 1);
+	if (!val) {
+		x_oom ();
+		return NULL;
+	}
+
+	val->type = type;
+
+	return xmmsv_ref (val);
+}
+
+static void
+_xmmsv_free (xmmsv_t *val)
+{
+	x_return_if_fail (val);
+
+	switch (val->type) {
+		case XMMSV_TYPE_NONE :
+		case XMMSV_TYPE_END :
+		case XMMSV_TYPE_INT32 :
+			break;
+		case XMMSV_TYPE_ERROR :
+			free (val->value.error);
+			val->value.error = NULL;
+			break;
+		case XMMSV_TYPE_STRING :
+			free (val->value.string);
+			val->value.string = NULL;
+			break;
+		case XMMSV_TYPE_COLL:
+			xmmsv_coll_unref (val->value.coll);
+			val->value.coll = NULL;
+			break;
+		case XMMSV_TYPE_BIN :
+			free (val->value.bin.data);
+			val->value.bin.len = 0;
+			break;
+		case XMMSV_TYPE_LIST:
+			_xmmsv_list_free (val->value.list);
+			val->value.list = NULL;
+			break;
+		case XMMSV_TYPE_DICT:
+			_xmmsv_dict_free (val->value.dict);
+			val->value.dict = NULL;
+			break;
+		case XMMSV_TYPE_BITBUFFER:
+			if (!val->value.bit.ro && val->value.bit.buf) {
+				free (val->value.bit.buf);
+			}
+			val->value.bit.buf = NULL;
+			break;
+	}
+
+	free (val);
+}
+
 
 /**
  * Allocates a new empty #xmmsv_t.
@@ -55,7 +115,7 @@ static void xmmsv_free (xmmsv_t *val);
 xmmsv_t *
 xmmsv_new_none (void)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_NONE);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_NONE);
 	return val;
 }
 
@@ -69,7 +129,7 @@ xmmsv_new_none (void)
 xmmsv_t *
 xmmsv_new_error (const char *errstr)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_ERROR);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_ERROR);
 
 	if (val) {
 		val->value.error = strdup (errstr);
@@ -87,7 +147,7 @@ xmmsv_new_error (const char *errstr)
 xmmsv_t *
 xmmsv_new_int (int32_t i)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_INT32);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_INT32);
 
 	if (val) {
 		val->value.int32 = i;
@@ -111,7 +171,7 @@ xmmsv_new_string (const char *s)
 	x_return_val_if_fail (s, NULL);
 	x_return_val_if_fail (xmmsv_utf8_validate (s), NULL);
 
-	val = xmmsv_new (XMMSV_TYPE_STRING);
+	val = _xmmsv_new (XMMSV_TYPE_STRING);
 	if (val) {
 		val->value.string = strdup (s);
 	}
@@ -132,7 +192,7 @@ xmmsv_new_coll (xmmsv_coll_t *c)
 
 	x_return_val_if_fail (c, NULL);
 
-	val = xmmsv_new (XMMSV_TYPE_COLL);
+	val = _xmmsv_new (XMMSV_TYPE_COLL);
 	if (val) {
 		val->value.coll = c;
 		xmmsv_coll_ref (c);
@@ -151,7 +211,7 @@ xmmsv_new_coll (xmmsv_coll_t *c)
 xmmsv_t *
 xmmsv_new_bin (const unsigned char *data, unsigned int len)
 {
-	xmmsv_t *val = xmmsv_new (XMMSV_TYPE_BIN);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_BIN);
 
 	if (val) {
 		/* copy the data! */
@@ -197,7 +257,7 @@ xmmsv_unref (xmmsv_t *val)
 
 	val->ref--;
 	if (val->ref == 0) {
-		xmmsv_free (val);
+		_xmmsv_free (val);
 	}
 }
 
@@ -206,72 +266,10 @@ xmmsv_unref (xmmsv_t *val)
  * Allocates new #xmmsv_t and references it.
  * @internal
  */
-xmmsv_t *
-xmmsv_new (xmmsv_type_t type)
-{
-	xmmsv_t *val;
-
-	val = x_new0 (xmmsv_t, 1);
-	if (!val) {
-		x_oom ();
-		return NULL;
-	}
-
-	val->type = type;
-
-	return xmmsv_ref (val);
-}
-
 /**
  * Free a #xmmsv_t along with its internal data.
  * @internal
  */
-static void
-xmmsv_free (xmmsv_t *val)
-{
-	x_return_if_fail (val);
-
-	switch (val->type) {
-		case XMMSV_TYPE_NONE :
-		case XMMSV_TYPE_END :
-		case XMMSV_TYPE_INT32 :
-			break;
-		case XMMSV_TYPE_ERROR :
-			free (val->value.error);
-			val->value.error = NULL;
-			break;
-		case XMMSV_TYPE_STRING :
-			free (val->value.string);
-			val->value.string = NULL;
-			break;
-		case XMMSV_TYPE_COLL:
-			xmmsv_coll_unref (val->value.coll);
-			val->value.coll = NULL;
-			break;
-		case XMMSV_TYPE_BIN :
-			free (val->value.bin.data);
-			val->value.bin.len = 0;
-			break;
-		case XMMSV_TYPE_LIST:
-			_xmmsv_list_free (val->value.list);
-			val->value.list = NULL;
-			break;
-		case XMMSV_TYPE_DICT:
-			_xmmsv_dict_free (val->value.dict);
-			val->value.dict = NULL;
-			break;
-		case XMMSV_TYPE_BITBUFFER:
-			if (!val->value.bit.ro && val->value.bit.buf) {
-				free (val->value.bit.buf);
-			}
-			val->value.bit.buf = NULL;
-			break;
-	}
-
-	free (val);
-}
-
-
 /**
  * Get the type of the value.
  *
