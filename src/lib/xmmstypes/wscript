@@ -6,11 +6,11 @@
 
 def build(bld):
     source = """
-    coll.c
     xlist.c
     value_serialize.c
     xmmsv_bitbuffer.c
     xmmsv_build.c
+    xmmsv_coll.c
     xmmsv_copy.c
     xmmsv_dict.c
     xmmsv_general.c
