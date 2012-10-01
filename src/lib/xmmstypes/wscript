@@ -15,6 +15,7 @@ def build(bld):
     xmmsv_copy.c
     xmmsv_dict.c
     xmmsv_list.c
+    xmmsv_util.c
     """.split()
 
     bld(features = 'c cstlib',
