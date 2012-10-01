@@ -62,9 +62,9 @@ All commands accept the option \fB-h\fR/\fB--help\fR which displays the command'
 \fIposition\fR is a pattern to match playlist positions. When absent in a command, the default is the end of the playlist. (See \fBPOSITION PATTERN\fR below.)
 .SS General Commands
 .T
-\fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR]... ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] \fIarguments\fR...
+\fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR]... ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] [\fB-j\fR] \fIarguments\fR...
 .br
-\fBadd\fR [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] \fIpattern\fR...
+\fBadd\fR [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] [\fB-j\fR] \fIpattern\fR...
 .PP
 .RS 4
 Add media to a playlist. It will attempt to guess whether \fIarguments\fR
@@ -137,6 +137,13 @@ valid when adding new files to the media library.
 .RS 8
 Add media sorted by the given comma-separated list of properties. If a property
 is prefixed by \-, media are sorted in reverse order on that property.
+.RE
+.PP
+.RS 4
+\fB\-j\fR, \fB\-\-jump\fR
+.RE
+.RS 8
+Jump to and start playing the newly-added media.
 .RE
 .PP
 

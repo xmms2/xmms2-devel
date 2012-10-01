@@ -229,10 +229,11 @@ cli_add_setup (command_action_t *action)
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
 		{ "attribute", 'A', 0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Add media with given key=value attribute(s)."), NULL },
 		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
+		{ "jump", 'j', 0, G_OPTION_ARG_NONE, NULL, _("Jump to and start playing the newly-added media."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop[,...]"),
+	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -1245,7 +1246,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint pos, i;
 	const gchar *playlist;
-	gboolean forceptrn, plsfile, fileargs;
+	gboolean forceptrn, plsfile, fileargs, jump;
 
 	/*
 	--file  Add a path from the local filesystem
@@ -1268,6 +1269,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	command_flag_boolean_get (ctx, "pattern", &forceptrn);
 	command_flag_boolean_get (ctx, "pls", &plsfile);
 	command_flag_boolean_get (ctx, "file", &fileargs);
+	command_flag_boolean_get (ctx, "jump", &jump);
 
 	fileargs = fileargs || plsfile;
 	if (forceptrn && fileargs) {
@@ -1307,6 +1309,14 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 		xmmsv_unref (attributes);
 
 		cli_add_pattern (infos, ctx, playlist, pos);
+	}
+
+	if (jump) {
+		xmmsc_result_t *res;
+
+		res = xmmsc_playlist_set_next (infos->sync, pos);
+		xmmsc_result_wait (res);
+		tickle (res, infos);
 	}
 
 	return FALSE;
