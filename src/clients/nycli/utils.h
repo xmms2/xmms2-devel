@@ -60,7 +60,7 @@ void playback_pause (cli_infos_t *infos);
 void playback_toggle (cli_infos_t *infos);
 void set_next_rel (cli_infos_t *infos, gint offset);
 void add_pls (xmmsc_result_t *plsres, cli_infos_t *infos, const gchar *playlist, gint pos);
-void add_list (xmmsc_result_t *matching, cli_infos_t *infos, const gchar *playlist, gint pos);
+void add_list (xmmsv_t *matching, cli_infos_t *infos, const gchar *playlist, gint pos);
 void add_recursive (cli_infos_t *infos, const gchar *playlist, const gchar *path, gint pos, gboolean norecurs);
 void move_entries (xmmsc_result_t *matching, cli_infos_t *infos, const gchar *playlist, gint pos);
 void remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos);

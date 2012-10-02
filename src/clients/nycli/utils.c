@@ -1315,48 +1315,35 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
 	xmmsc_result_unref (plsres);
 }
 
+/**
+ * Add a list of ids to a playlist, starting at a given
+ * position.
+ */
 void
-add_list (xmmsc_result_t *matching, cli_infos_t *infos,
+add_list (xmmsv_t *idlist, cli_infos_t *infos,
           const gchar *playlist, gint pos)
 
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	xmmsc_result_t *insres;
 	gint32 id;
-	gint offset;
-	const gchar *err;
 
-	xmmsv_t *val;
+	xmmsv_list_iter_t *it;
+	xmmsv_get_list_iter (idlist, &it);
 
-	val = xmmsc_result_get_value (matching);
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_t *entry;
+		xmmsv_list_iter_entry (it, &entry);
 
-	offset = 0;
+		if (xmmsv_get_int (entry, &id)) {
+			xmmsc_result_t *res;
+			res = xmmsc_playlist_insert_id (infos->sync, playlist, pos++, id);
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-		g_printf (_("Error retrieving the media matching the pattern!\n"));
-	} else {
-		xmmsv_list_iter_t *it;
-
-		xmmsv_get_list_iter (val, &it);
-
-		/* Loop on the matched media */
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-			xmmsv_t *entry;
-
-			xmmsv_list_iter_entry (it, &entry);
-
-			if (xmmsv_get_int (entry, &id)) {
-				insres = xmmsc_playlist_insert_id (infos->sync, playlist,
-				                                   pos + offset, id);
-				xmmsc_result_wait (insres);
-				xmmsc_result_unref (insres);
-				offset++;
-			}
+			xmmsc_result_wait (res);
+			xmmsc_result_unref (res);
 		}
+
+		xmmsv_list_iter_next (it);
 	}
-	xmmsc_result_unref (matching);
 }
 
 void
@@ -1911,33 +1898,38 @@ decode_url (const gchar *string)
 }
 
 /* Transform a path (possibly absolute or relative) into a valid XMMS2
- * path with protocol prefix. The resulting string must be freed
- * manually.
+ * path with protocol prefix, and applies a file test to it.
+ * The resulting string must be freed manually.
+ *
+ * @return the path in URL format if the test passes, or NULL.
  */
 gchar *
 format_url (const gchar *path, GFileTest test)
 {
 	gchar rpath[XMMS_PATH_MAX];
 	const gchar *p;
-	gchar *url;
 
 	/* Check if path matches "^[a-z]+://" */
 	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
-	if (*p == ':' && *(++p) == '/' && *(++p) == '/') {
-		url = g_strdup (path);
-	} else {
-		/* OK, so this is NOT an valid URL */
 
+	/* If this test passes, path is a valid url and
+	 * p points past its "file://" prefix.
+	 */
+	if (!(*p == ':' && *(++p) == '/' && *(++p) == '/')) {
+
+		/* This is not a valid URL, try to work with
+		 * the absolute path.
+		 */
 		if (!x_realpath (path, rpath)) {
 			return NULL;
 		}
 
-		if (!g_file_test (rpath, test)) {
-			return NULL;
-		}
-
-		url = g_strconcat ("file://", rpath, NULL);
+		p = rpath;
 	}
 
-	return x_path2url (url);
+	if (!g_file_test (p, test)) {
+		return NULL;
+	}
+
+	return g_strconcat ("file://", p, NULL);
 }

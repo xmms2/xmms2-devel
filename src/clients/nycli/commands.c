@@ -1137,13 +1137,15 @@ cli_add_dir (cli_infos_t *infos, const gchar *url,
  *
  * Process and add file arguments to a playlist at a given position.
  * The files may be regular or playlist files.
+ *
+ * @return whether media has been added to the playlist.
  */
-static void
+static gboolean
 cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
                   const gchar *playlist, gint pos)
 {
 	gint i;
-	gboolean plsfile, norecurs;
+	gboolean plsfile, norecurs, ret = FALSE;
 	xmmsv_t *attributes;
 
 	command_flag_boolean_get (ctx, "pls", &plsfile);
@@ -1190,6 +1192,8 @@ cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
 
 			pos++; /* next insert at next pos, to keep order */
 			browse_entry_free (entry);
+
+			ret = TRUE;
 		}
 
 		g_free (encoded);
@@ -1198,15 +1202,17 @@ cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
 	}
 
 	xmmsv_unref (attributes);
-	return;
+	return ret;
 }
 
 /**
  * Helper function for cli_add.
  *
  * Process and add pattern arguments to a playlist at a given position.
+ *
+ * @return Whether any media has been added to the playlist.
  */
-static void
+static gboolean
 cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
                  const gchar *playlist, gint pos)
 {
@@ -1214,6 +1220,7 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 	gchar *pattern = NULL;
 	xmmsv_t *order = NULL;
 	xmmsv_coll_t *query;
+	gboolean ret = FALSE;;
 
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
 
@@ -1222,6 +1229,7 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 	} else if (!xmmsc_coll_parse (pattern, &query)) {
 		g_printf (_("Error: failed to parse the pattern!\n"));
 	} else {
+		xmmsv_t *idlist;
 		xmmsc_result_t *res;
 
 		if (command_flag_stringlist_get (ctx, "order", &sortby)) {
@@ -1231,14 +1239,25 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 
 		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
 		xmmsc_result_wait (res);
-		add_list (res, infos, playlist, pos);
+		idlist = xmmsc_result_get_value (res);
+
+		if (!xmmsv_is_type (idlist, XMMSV_TYPE_LIST)) {
+			g_printf (_("Error retrieving the media matching the pattern!\n"));
+		} else if (!xmmsv_list_get_size (idlist)) {
+			g_printf (_("Warning: pattern didn't resolve to any media.\n"));
+		} else {
+			add_list (idlist, infos, playlist, pos);
+			ret = TRUE;
+		}
+
 		xmmsc_coll_unref (query);
+		xmmsc_result_unref (res);
 	}
 
 	g_free (pattern);
 	if (order) xmmsv_unref (order);
 
-	return;
+	return ret;
 }
 
 gboolean
@@ -1246,7 +1265,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint pos, i;
 	const gchar *playlist;
-	gboolean forceptrn, plsfile, fileargs, jump;
+	gboolean forceptrn, plsfile, fileargs, jump, added;
 
 	/*
 	--file  Add a path from the local filesystem
@@ -1289,7 +1308,7 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (fileargs) {
-		cli_add_fileargs (infos, ctx, playlist, pos);
+		added = cli_add_fileargs (infos, ctx, playlist, pos);
 	} else {
 		gboolean norecurs;
 		xmmsv_t *attributes;
@@ -1308,10 +1327,10 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 		xmmsv_unref (attributes);
 
-		cli_add_pattern (infos, ctx, playlist, pos);
+		added = cli_add_pattern (infos, ctx, playlist, pos);
 	}
 
-	if (jump) {
+	if (added && jump) {
 		xmmsc_result_t *res;
 
 		res = xmmsc_playlist_set_next (infos->sync, pos);
