@@ -270,6 +270,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		const gchar *realpath;
 
 		xmmsv_list_iter_entry (it, &dict);
+		xmmsv_list_iter_next (it);
 
 		if (!xmmsv_dict_get (dict, "realpath", &value)) {
 			xmms_log_error ("Playlist plugin did not set realpath; probably a bug in plugin");
