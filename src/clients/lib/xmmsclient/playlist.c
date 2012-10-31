@@ -750,7 +750,6 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
-	                       XMMSV_LIST_ENTRY_COLL (coll),
 	                       XMMSV_LIST_ENTRY (value),
 	                       XMMSV_LIST_END);
 }
