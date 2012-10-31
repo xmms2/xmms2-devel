@@ -479,9 +479,13 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	ordered = xmmsv_coll_add_order_operators (coll, order);
-	value = xmmsv_new_coll (ordered);
-	xmmsv_coll_unref (ordered);
+	if (order != NULL) {
+		ordered = xmmsv_coll_add_order_operators (coll, order);
+		value = xmmsv_new_coll (ordered);
+		xmmsv_coll_unref (ordered);
+	} else {
+		value = xmmsv_new_coll (coll);
+	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
 	                       XMMS_IPC_CMD_INSERT_COLL,
