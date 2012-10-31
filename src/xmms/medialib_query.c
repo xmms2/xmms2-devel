@@ -608,8 +608,8 @@ limit_condition_by_value (s4_resultset_t *set, xmmsv_t *id_list, GHashTable *id_
 			continue;
 		}
 
-		if (!g_hash_table_contains (group_table, GINT_TO_POINTER (hash))) {
-			if (g_hash_table_contains (skip_table, GINT_TO_POINTER (hash)))
+		if (g_hash_table_lookup (group_table, GINT_TO_POINTER (hash)) == NULL) {
+			if (g_hash_table_lookup (skip_table, GINT_TO_POINTER (hash)) != NULL)
 				continue;
 
 			if (g_hash_table_size (group_table) >= length)
