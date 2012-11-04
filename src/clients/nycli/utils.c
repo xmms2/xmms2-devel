@@ -1908,6 +1908,7 @@ format_url (const gchar *path, GFileTest test)
 {
 	gchar rpath[XMMS_PATH_MAX];
 	const gchar *p;
+	gchar *url;
 
 	/* Check if path matches "^[a-z]+://" */
 	for (p = path; *p >= 'a' && *p <= 'z'; ++p);
@@ -1924,12 +1925,14 @@ format_url (const gchar *path, GFileTest test)
 			return NULL;
 		}
 
-		p = rpath;
+		if (!g_file_test (rpath, test)) {
+			return NULL;
+		}
+
+		url = g_strconcat ("file://", rpath, NULL);
+	} else {
+		url = g_strdup (path);
 	}
 
-	if (!g_file_test (p, test)) {
-		return NULL;
-	}
-
-	return g_strconcat ("file://", p, NULL);
+	return x_path2url (url);
 }
