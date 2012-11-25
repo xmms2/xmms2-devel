@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
+#include <libavutil/mem.h>
 
 #include "avcodec_compat.h"
 
