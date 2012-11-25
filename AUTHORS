@@ -37,6 +37,10 @@ E: xkr47@outerspace.dyndns.org
 W: http://xkr47.outerspace.dyndns.org/
 D: curl_http updated to xforms, icymetaint plugin (extracted from curl)
 
+N: Diego Biurrun
+E: diego@biurrun.de
+D: Support for libav 9 in avcodec plugin
+
 N: Magnus Bjernstad
 E: bjernstad@gmail.com
 D: PythonAPI fixes.
