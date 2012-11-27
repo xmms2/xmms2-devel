@@ -14,6 +14,8 @@
  *  General Public License for more details.
  */
 
+#include <fnmatch.h>
+
 #include "utils.h"
 #include "status.h"
 #include "currently_playing.h"
@@ -259,23 +261,36 @@ void
 print_config (cli_infos_t *infos, const gchar *confname)
 {
 	xmmsc_result_t *res;
-	const gchar *confval;
-	xmmsv_t *val;
+	xmmsv_t *config;
 
-	if (confname == NULL) {
-		res = xmmsc_config_list_values (infos->sync);
-		xmmsc_result_wait (res);
-		val = xmmsc_result_get_value (res);
-		xmmsv_dict_foreach (val, print_config_entry, NULL);
-	} else {
-		res = xmmsc_config_get_value (infos->sync, confname);
-		xmmsc_result_wait (res);
-		val = xmmsc_result_get_value (res);
-		xmmsv_get_string (val, &confval);
-		print_config_entry (confname, val, NULL);
+	res = xmmsc_config_list_values (infos->sync);
+	xmmsc_result_wait (res);
+	config = xmmsc_result_get_value (res);
+
+	if (confname) {
+		/* Filter out keys that don't match the config name after
+		 * shell wildcard expansion.  */
+
+		xmmsv_dict_iter_t *it;
+
+		xmmsv_get_dict_iter (config, &it);
+		while (xmmsv_dict_iter_valid (it)) {
+			xmmsv_t *val;
+			const gchar *key;
+
+			xmmsv_dict_iter_pair (it, &key, &val);
+			if (fnmatch (confname, key, 0)) {
+				xmmsv_dict_iter_remove (it);
+			} else {
+				xmmsv_dict_iter_next (it);
+			}
+		}
 	}
 
+	xmmsv_dict_foreach (config, print_config_entry, NULL);
 	xmmsc_result_unref (res);
+
+	return;
 }
 
 void

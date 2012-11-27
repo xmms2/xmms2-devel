@@ -621,6 +621,9 @@ Get or set configuration values.
 If no name or value is provided, list all configuration values.
 If only a name is provided, display the content of the corresponding configuration value.
 If both name and a value are provided, set the new content of the configuration value.
+
+The name of the configuration value is subject to shell wildcard expansion so
+that multiple values can be queried (but not set) at once.
 .RE
 .PP
 
