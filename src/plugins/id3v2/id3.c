@@ -487,6 +487,11 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	mime = buf;
 	typ = find_nul (buf, &len);
 
+	if (!typ || len == 0) {
+		XMMS_DBG ("Unable to read APIC frame, malformed tag?");
+		return;
+	}
+
 	if (typ[0] != 0x00 && typ[0] != 0x03) {
 		XMMS_DBG ("Picture type %02x not handled", typ[0]);
 		return;
