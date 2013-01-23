@@ -556,13 +556,15 @@ xmms_magic_add (const gchar *desc, const gchar *mime, ...)
 
 		s = g_strdup (s); /* we need our own copy */
 		node = xmms_magic_add_node (tree, s, node);
-		g_free (s);
 
 		if (!node) {
 			xmms_log_error ("invalid magic spec: '%s'", s);
 			ret = FALSE;
+
+			g_free (s);
 			break;
 		}
+		g_free (s);
 	} while ((s = va_arg (ap, gchar *)));
 
 	va_end (ap);
