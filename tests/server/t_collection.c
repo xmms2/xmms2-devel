@@ -80,6 +80,7 @@ CASE (test_client_save) {
 	xmmsv_coll_unref (universe);
 
 	signals = xmms_future_await (future, 2);
+	xmms_future_free (future);
 
 	/* XMMS_COLLECTION_CHANGED_ADD = 0, XMMS_COLLECTION_CHANGED_UPDATE = 1 */
 	expected = xmmsv_from_xson ("[{ 'type': 0, 'namespace': 'Collections', 'name': 'Test' },"
