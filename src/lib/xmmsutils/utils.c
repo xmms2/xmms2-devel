@@ -18,11 +18,13 @@
  * Miscellaneous internal utility functions.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <xmms_configuration.h>
 #include <xmmsc/xmmsc_util.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 /**
  * Get the default connection path.
@@ -44,4 +46,45 @@ xmms_default_ipcpath_get (char *buf, int len)
 	}
 
 	return buf;
+}
+
+/**
+ * vsprintf, but with x_new allocated result
+ */
+char *
+x_vasprintf (const char *fmt, va_list args)
+{
+	char c;
+	char *res;
+	int bound;
+	va_list ap;
+
+	x_return_null_if_fail (fmt);
+
+	va_copy (ap, args);
+	bound = vsnprintf (&c, 1, fmt, ap);
+	va_end (ap);
+
+	x_return_null_if_fail (bound >= 0)
+
+	res = x_new (char, bound + 1);
+	vsnprintf (res, bound+1, fmt, args);
+
+	return res;
+}
+
+/**
+ * sprintf, but with x_new allocated result
+ */
+char *
+x_asprintf (const char *fmt, ...)
+{
+	va_list ap;
+	char *res;
+
+	va_start (ap, fmt);
+	res = x_vasprintf (fmt, ap);
+	va_end (ap);
+
+	return res;
 }

@@ -3,8 +3,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 /* This is not nice but there's no very clean way around the ugly warnings,
  * glibc does about the same but on compile time (this could be moved to waf?) */
@@ -82,5 +84,9 @@ x_print_internal_err (const char *func, const char *msg)
 #define x_new(type, num) malloc (sizeof (type) * (num))
 #define x_malloc0(size) calloc (1, size)
 #define x_malloc(size) malloc (size)
+
+/* utility functions */
+char *x_vasprintf (const char *fmt, va_list args) XMMS_FORMAT(printf, 1, 0);
+char *x_asprintf (const char *fmt, ...) XMMS_FORMAT(printf, 1, 2);
 
 #endif /* __XMMSCPRIV_XMMSC_UTIL_H__ */
