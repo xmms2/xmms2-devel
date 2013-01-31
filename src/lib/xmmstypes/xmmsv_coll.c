@@ -359,7 +359,20 @@ xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
 	return xmmsv_list_get_size (coll->value.coll->idlist);
 }
 
+/**
+ * Check if collection is of specified type.
+ *
+ * @param val #xmmsv_t to check.
+ * @param t #xmmsv_coll_type_t to check for.
+ * @return 1 if value is of specified type, 0 otherwise.
+ */
+int
+xmmsv_coll_is_type (const xmmsv_t *val, xmmsv_coll_type_t t)
+{
+	x_api_error_if (!val, "NULL value", 0);
 
+	return (xmmsv_coll_get_type (val) == t);
+}
 
 /**
  * Return the type of the collection.

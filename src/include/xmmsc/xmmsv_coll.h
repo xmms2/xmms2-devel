@@ -45,6 +45,7 @@ int xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, int index, int32_t *val);
 int xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, int index, int32_t val);
 int xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll);
 
+int xmmsv_coll_is_type (const struct xmmsv_St *val, xmmsv_coll_type_t t);
 xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_coll_t *coll);
 struct xmmsv_St *xmmsv_coll_idlist_get (xmmsv_coll_t *coll);
 
