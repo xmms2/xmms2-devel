@@ -43,9 +43,7 @@ xmms_log_set_format (const gchar *format)
 void
 xmms_log_init (gint verbosity)
 {
-	g_log_set_handler (NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL, xmms_log_handler,
-	                   GINT_TO_POINTER (verbosity));
-
+	g_log_set_default_handler (xmms_log_handler, GINT_TO_POINTER (verbosity));
 	xmms_log_info ("Initialized logging system :)");
 }
 
@@ -91,7 +89,11 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 		logts_buf[0] = '\0';
 	}
 
-	printf ("%s%s: %s\n", logts_buf, level, message);
+	if (log_domain && log_domain[0]) {
+		printf ("%s%s in %s: %s\n", logts_buf, level, log_domain, message);
+	} else {
+		printf ("%s%s: %s\n", logts_buf, level, message);
+	}
 
 	fflush (stdout);
 

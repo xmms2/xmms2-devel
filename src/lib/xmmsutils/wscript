@@ -29,7 +29,8 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
         uselib = 'rt valgrind',
-        install_path = None
+        install_path = None,
+        defines = 'XMMSC_LOG_DOMAIN="xmmsc/xmmsutils"'
         )
 
 

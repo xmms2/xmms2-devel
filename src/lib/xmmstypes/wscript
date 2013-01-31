@@ -24,7 +24,8 @@ def build(bld):
         target = 'xmmstypes',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
-        install_path = None
+        install_path = None,
+        defines= 'XMMSC_LOG_DOMAIN="xmmsc/xmmstypes"'
         )
 
 

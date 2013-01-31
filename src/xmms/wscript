@@ -84,7 +84,8 @@ def build(bld):
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
         uselib = 'glib2 gmodule2 statfs socket shm valgrind',
-        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4'
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4',
+        defines = 'G_LOG_DOMAIN="core"'
     )
 
     objects = []
@@ -97,7 +98,8 @@ def build(bld):
         includes = '. ../.. ../include ../includepriv',
         uselib = 'math glib2 gmodule2 statfs socket shm valgrind s4',
         use = 'xmms2core',
-        add_objects = objects
+        add_objects = objects,
+        defines = 'G_LOG_DOMAIN=""'
     )
 
     bld(features = 'man',

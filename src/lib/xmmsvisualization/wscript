@@ -17,7 +17,8 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include',
         uselib = 'math',
-        install_path = None
+        install_path = None,
+        defines = 'XMMSC_LOG_DOMAIN="xmmsc/xmmsvisualization"'
         )
 
 

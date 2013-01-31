@@ -31,6 +31,7 @@ def plugin(name, source=None, configure=False, build=False,
             use = bld.env.xmms_shared_library and 'xmms2core' or '',
             install_path = '${PLUGINDIR}',
             mac_bundle = bld.env.mac_bundle_enabled,
+            defines = 'G_LOG_DOMAIN="plugin/%s"' % name
         )
 
         if build:

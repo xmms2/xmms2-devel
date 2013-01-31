@@ -20,7 +20,8 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include',
         uselib = 'socket',
-        install_path = None
+        install_path = None,
+        defines = 'XMMSC_LOG_DOMAIN="xmmsc/xmmssocket"'
         )
 
 
