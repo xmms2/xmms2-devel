@@ -17,6 +17,7 @@
 #include "xmmspriv/xmms_fetch_info.h"
 #include "xmms/xmms_log.h"
 #include <string.h>
+#include <stdlib.h>
 
 static gboolean
 metadata_value_from_string (const gchar *name, guint32 *value)

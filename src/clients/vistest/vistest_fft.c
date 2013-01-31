@@ -26,6 +26,7 @@
 #include <glib.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <signal.h>
 
 #include <xmmsclient/xmmsclient.h>

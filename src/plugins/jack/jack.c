@@ -17,6 +17,8 @@
 #include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 
+#include <stdio.h>
+
 #include <glib.h>
 #include <jack/jack.h>
 

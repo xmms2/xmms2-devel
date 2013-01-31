@@ -23,8 +23,8 @@
 #include "xmmsc/xmmsv.h"
 #include "xmmsc/xmmsv_coll.h"
 #include "xmmsc/xmmsc_util.h"
-#include "xmmspriv/xmmsv.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
+#include "xmmscpriv/xmmsv.h"
+#include "xmmscpriv/xmms_list.h"
 
 struct xmmsv_coll_internal_St {
 	xmmsv_coll_type_t type;

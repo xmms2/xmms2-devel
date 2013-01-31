@@ -26,7 +26,7 @@
 
 #include <assert.h>
 
-#include "xmmspriv/xmms_list.h"
+#include "xmmscpriv/xmms_list.h"
 
 #include <stdlib.h>
 

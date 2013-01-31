@@ -27,7 +27,7 @@
 
 #include "xmmsc/xmmsc_ipc_msg.h"
 
-#include "xmmspriv/xmms_list.h"
+#include "xmmscpriv/xmms_list.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_compiler.h"

@@ -25,7 +25,7 @@ def build(bld):
         cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsutils',
         source = source,
-        includes = '. ../../.. ../../include',
+        includes = '. ../../.. ../../include ../../includepriv',
         uselib = 'rt valgrind',
         install_path = None
         )

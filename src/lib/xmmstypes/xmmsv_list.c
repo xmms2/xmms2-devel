@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmmsv.h"
-#include "xmmspriv/xmms_list.h"
+#include "xmmscpriv/xmmsv.h"
+#include "xmmscpriv/xmms_list.h"
 
 #include "xmmsc/xmmsv.h"
 

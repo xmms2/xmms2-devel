@@ -39,7 +39,7 @@
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <glib.h>
 #include <mpg123.h>
 

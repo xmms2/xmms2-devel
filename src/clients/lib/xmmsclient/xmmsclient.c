@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 
-#include "xmmspriv/xmms_list.h"
+#include "xmmscpriv/xmms_list.h"
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"

@@ -17,9 +17,8 @@
 #include <string.h>
 
 #include "xmmsc/xmmsc_stdbool.h"
-#include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsv.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
+#include "xmmscpriv/xmmsc_util.h"
 
 static bool _internal_put_on_bb_bin (xmmsv_t *bb, const unsigned char *data, unsigned int len);
 static bool _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg);

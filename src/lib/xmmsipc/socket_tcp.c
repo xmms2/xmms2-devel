@@ -28,6 +28,8 @@
 #include "url.h"
 #include "socket_tcp.h"
 
+#include "xmmscpriv/xmmsc_util.h"
+
 static void
 xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
 {

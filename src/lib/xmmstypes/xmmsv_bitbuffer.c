@@ -17,9 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "xmmspriv/xmmsv.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
-#include "xmmsc/xmmsc_util.h"
+#include "xmmscpriv/xmmsv.h"
+#include "xmmscpriv/xmmsc_util.h"
 
 /**
  * @deprecated

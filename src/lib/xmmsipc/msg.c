@@ -22,7 +22,7 @@
 #include <time.h>
 #include <assert.h>
 
-#include "xmmspriv/xmms_list.h"
+#include "xmmscpriv/xmms_list.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsc/xmmsc_util.h"

@@ -17,6 +17,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <errno.h>
 
 #include "common.h"
