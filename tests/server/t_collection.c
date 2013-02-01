@@ -36,8 +36,8 @@ SETUP (coll) {
 }
 
 CLEANUP () {
-	xmms_object_unref (medialib);
-	xmms_object_unref (dag);
+	xmms_object_unref (medialib); medialib = NULL;
+	xmms_object_unref (dag); dag = NULL;
 
 	xmms_config_shutdown ();
 

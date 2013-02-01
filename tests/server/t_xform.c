@@ -53,8 +53,8 @@ SETUP (xform)
 
 CLEANUP ()
 {
-	xmms_object_unref (medialib);
-	xmms_object_unref (xform_object);
+	xmms_object_unref (medialib); medialib = NULL;
+	xmms_object_unref (xform_object); xform_object = NULL;
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 

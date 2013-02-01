@@ -56,9 +56,9 @@ SETUP (playlist) {
 }
 
 CLEANUP () {
-	xmms_object_unref (playlist);
-	xmms_object_unref (colldag);
-	xmms_object_unref (medialib);
+	xmms_object_unref (playlist); playlist = NULL;
+	xmms_object_unref (colldag); colldag = NULL;
+	xmms_object_unref (medialib); medialib = NULL;
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 

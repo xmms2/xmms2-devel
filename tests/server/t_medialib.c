@@ -48,7 +48,7 @@ SETUP (mlib) {
 }
 
 CLEANUP () {
-	xmms_object_unref (medialib);
+	xmms_object_unref (medialib); medialib = NULL;
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 
