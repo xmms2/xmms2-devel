@@ -99,7 +99,7 @@ xmms_opus_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "application/opus",
 	                              NULL);
 
-	xmms_magic_add ("ogg/opus header",
+	xmms_magic_add ("Opus header", "ogg/opus header",
 	                "0 string OggS",
 	                ">28 string OpusHead", NULL);
 
