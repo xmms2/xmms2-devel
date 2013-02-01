@@ -69,6 +69,7 @@ static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DJMIXER,           xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER,             xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER,          xmms_xform_metadata_parse_string      },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER,          xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER,         xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER,          xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST,          xmms_xform_metadata_parse_string      },
