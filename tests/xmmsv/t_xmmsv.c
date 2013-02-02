@@ -102,16 +102,16 @@ CASE (test_xmmsv_type_string)
 
 CASE (test_xmmsv_type_coll)
 {
-	xmmsv_coll_t *b, *a = xmmsv_coll_universe ();
+	xmmsv_coll_t *b;
 	xmmsv_t *value;
 
-	value = xmmsv_new_coll (a);
+	value = xmmsv_coll_universe ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_COLL));
-	xmmsv_coll_unref (a);
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_COLL, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
 	CU_ASSERT_TRUE (xmmsv_get_coll (value, &b));
+	CU_ASSERT_TRUE (value == b);
 
 	xmmsv_unref (value);
 }

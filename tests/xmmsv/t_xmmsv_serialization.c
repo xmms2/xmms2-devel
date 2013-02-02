@@ -271,11 +271,8 @@ CASE (test_xmmsv_serialize_coll_match)
 	xmmsv_coll_add_operand (coll, all_media);
 	xmmsv_coll_unref (all_media);
 
-	value = xmmsv_new_coll (coll);
-	xmmsv_coll_unref (coll);
-
-	bin = xmmsv_serialize (value);
-	xmmsv_unref (value);
+	bin = xmmsv_serialize (coll);
+	xmmsv_unref (coll);
 
 	CU_ASSERT_PTR_NOT_NULL (bin);
 

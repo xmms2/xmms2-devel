@@ -145,11 +145,9 @@ filter_testcase (const gchar *path, xmmsv_t *list)
 	g_assert (xmmsv_is_type (data, XMMSV_TYPE_DICT));
 
 	coll = xmmsv_coll_from_dict (data);
-	holder = xmmsv_new_coll (coll);
-	xmmsv_coll_unref (coll);
 
-	xmmsv_dict_set (dict, "collection", holder);
-	xmmsv_unref (holder);
+	xmmsv_dict_set (dict, "collection", coll);
+	xmmsv_unref (coll);
 
 	filename = g_path_get_basename (path);
 	xmmsv_dict_set_string (dict, "name", filename);

@@ -7,7 +7,7 @@ from indenter import Indenter
 c_type_map = {
 	'string': 'const char *',
 	'int': 'gint32',
-	'collection':'xmmsv_coll_t *',
+	'collection':'xmmsv_t *',
 	'binary':'GString *',
 	'list':'xmmsv_t *',
 	'dictionary':'xmmsv_t *',
@@ -19,7 +19,7 @@ c_getter_map = {
 	'string': 'xmmsv_get_string',
 	'list': None,
 	'dictionary': None,
-	'collection': 'xmmsv_get_coll',
+	'collection': None,
 	'binary': 'xmms_bin_to_gstring',
 	'xmmsv' : None,
 }
@@ -29,7 +29,7 @@ c_creator_map = {
 	'string': 'xmms_convert_and_kill_string',
 	'list': None,
 	'dictionary': None,
-	'collection': 'xmmsv_new_coll',
+	'collection': None,
 	'binary': None,
 	'xmmsv' : None,
 }
@@ -39,7 +39,7 @@ c_nullable_type_map = {
 	'string': "gchar *",
 	'list': "xmmsv_t *",
 	'dictionary': "xmmsv_t *",
-	'collection': "xmmsv_coll_t *",
+	'collection': "xmmsv_t *",
 	'binary': "GString *",
 	'xmmsv' : "xmmsv_t *",
 }

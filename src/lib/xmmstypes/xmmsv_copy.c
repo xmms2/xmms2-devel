@@ -176,14 +176,6 @@ xmmsv_coll_copy (xmmsv_coll_t *orig_coll)
 static xmmsv_t *
 duplicate_coll_value (xmmsv_t *val)
 {
-	xmmsv_t *dup_val;
-	xmmsv_coll_t *new_coll, *orig_coll;
-
-	xmmsv_get_coll (val, &orig_coll);
-	assert (orig_coll);
-
-	new_coll = xmmsv_coll_copy (orig_coll);
-	dup_val = xmmsv_new_coll (new_coll);
-
-	return dup_val;
+	x_return_val_if_fail (xmmsv_is_type (val, XMMSV_TYPE_COLL), NULL);
+	return xmmsv_coll_copy (val);
 }

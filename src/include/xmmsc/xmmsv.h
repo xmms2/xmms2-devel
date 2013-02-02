@@ -21,6 +21,7 @@
 
 #include "xmmsc/xmmsv_list.h"
 #include "xmmsc/xmmsv_dict.h"
+#include "xmmsc/xmmsv_coll.h"
 #include "xmmsc/xmmsv_bitbuffer.h"
 
 #include "xmmsc/xmmsv_util.h"

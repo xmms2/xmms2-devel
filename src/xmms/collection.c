@@ -442,13 +442,13 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
  * @param name  The name of the collection to retrieve.
  * @param namespace  The namespace in which to look for the collection.
  * @param err  If an error occurs, a message is stored in it.
- * @returns  The collection structure if found, NULL otherwise.
+ * @returns  A copy of the collection structure if found, NULL otherwise.
  */
 xmmsv_coll_t *
 xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
                             const gchar *namespace, xmms_error_t *err)
 {
-	xmmsv_coll_t *coll = NULL;
+	xmmsv_t *coll, *result = NULL;
 	guint nsid;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
@@ -464,11 +464,13 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 	/* Not found! */
 	if (coll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
+	} else {
+		result = xmmsv_copy (coll);
 	}
 
 	g_mutex_unlock (dag->mutex);
 
-	return coll;
+	return result;
 }
 
 /** Lists the collections in the given namespace.
@@ -1717,9 +1719,7 @@ strip_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent
 
 		xmmsv_list_iter_remove (iter);
 
-		tmp = xmmsv_new_coll (infos->oldtarget);
-		xmmsv_list_iter_insert (iter, tmp);
-		xmmsv_unref (tmp);
+		xmmsv_list_iter_insert (iter, infos->oldtarget);
 	}
 	xmmsv_list_iter_explicit_destroy (iter);
 }

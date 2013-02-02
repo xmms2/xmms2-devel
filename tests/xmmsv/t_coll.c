@@ -149,14 +149,11 @@ CASE (test_coll_operands_list)
 	CU_ASSERT_FALSE (xmmsv_list_append (opl, t));
 
 	for (i = 0; i < 10; i++) {
-		xmmsv_coll_t *o;
-		xmmsv_t *ov;
+		xmmsv_t *o;
 		o = xmmsv_coll_universe ();
 		CU_ASSERT_PTR_NOT_NULL (o);
-		ov = xmmsv_new_coll (o);
-		xmmsv_coll_unref (o);
-		CU_ASSERT_TRUE (xmmsv_list_append (opl, ov));
-		xmmsv_unref (ov);
+		CU_ASSERT_TRUE (xmmsv_list_append (opl, o));
+		xmmsv_unref (o);
 	}
 
 	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);

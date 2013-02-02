@@ -48,19 +48,19 @@ int xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type);
 
 int xmmsv_list_get_string (xmmsv_t *v, int pos, const char **val);
 int xmmsv_list_get_int (xmmsv_t *v, int pos, int32_t *val);
-int xmmsv_list_get_coll (xmmsv_t *v, int pos, xmmsv_coll_t **val);
+int xmmsv_list_get_coll (xmmsv_t *v, int pos, xmmsv_coll_t **val) XMMS_DEPRECATED;
 
 int xmmsv_list_set_string (xmmsv_t *v, int pos, const char *val);
 int xmmsv_list_set_int (xmmsv_t *v, int pos, int32_t val);
-int xmmsv_list_set_coll (xmmsv_t *v, int pos, xmmsv_coll_t *val);
+int xmmsv_list_set_coll (xmmsv_t *v, int pos, xmmsv_coll_t *val) XMMS_DEPRECATED;
 
 int xmmsv_list_insert_string (xmmsv_t *v, int pos, const char *val);
 int xmmsv_list_insert_int (xmmsv_t *v, int pos, int32_t val);
-int xmmsv_list_insert_coll (xmmsv_t *v, int pos, xmmsv_coll_t *val);
+int xmmsv_list_insert_coll (xmmsv_t *v, int pos, xmmsv_coll_t *val) XMMS_DEPRECATED;
 
 int xmmsv_list_append_string (xmmsv_t *v, const char *val);
 int xmmsv_list_append_int (xmmsv_t *v, int32_t val);
-int xmmsv_list_append_coll (xmmsv_t *v, xmmsv_coll_t *val);
+int xmmsv_list_append_coll (xmmsv_t *v, xmmsv_coll_t *val) XMMS_DEPRECATED;
 
 xmmsv_t *xmmsv_list_flatten (xmmsv_t *list, int depth);
 
@@ -92,11 +92,11 @@ int  xmmsv_list_iter_remove (xmmsv_list_iter_t *it);
 
 int xmmsv_list_iter_entry_string (xmmsv_list_iter_t *it, const char **val);
 int xmmsv_list_iter_entry_int (xmmsv_list_iter_t *it, int32_t *val);
-int xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_coll_t **val);
+int xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_coll_t **val) XMMS_DEPRECATED;
 
 int xmmsv_list_iter_insert_string (xmmsv_list_iter_t *it, const char *val);
 int xmmsv_list_iter_insert_int (xmmsv_list_iter_t *it, int32_t val);
-int xmmsv_list_iter_insert_coll (xmmsv_list_iter_t *it, xmmsv_coll_t *val);
+int xmmsv_list_iter_insert_coll (xmmsv_list_iter_t *it, xmmsv_coll_t *val) XMMS_DEPRECATED;
 /** @} */
 
 /** @} */

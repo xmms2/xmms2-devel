@@ -474,7 +474,6 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
 	int32_t i;
 	uint32_t len;
 	char *s;
-	xmmsv_coll_t *c;
 	unsigned char *d;
 
 	switch (type) {
@@ -511,11 +510,9 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
 			break;
 
 		case XMMSV_TYPE_COLL:
-			if (!_internal_get_from_bb_collection_alloc (bb, &c)) {
+			if (!_internal_get_from_bb_collection_alloc (bb, val)) {
 				return false;
 			}
-			*val = xmmsv_new_coll (c);
-			xmmsv_coll_unref (c);
 			break;
 
 		case XMMSV_TYPE_BIN:

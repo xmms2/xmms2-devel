@@ -717,7 +717,12 @@ xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
 
 GEN_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_EXTRACTOR_FUNC (int, int32_t)
-GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+int
+xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **r)
+{
+	return xmmsv_dict_get (val, key, r);
+}
 
 /* macro-magically define dict set functions */
 #define GEN_DICT_SET_FUNC(typename, type)	  \
@@ -736,7 +741,12 @@ GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
 GEN_DICT_SET_FUNC (string, const char *)
 GEN_DICT_SET_FUNC (int, int32_t)
-GEN_DICT_SET_FUNC (coll, xmmsv_coll_t *)
+
+int
+xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_coll_t *elem)
+{
+	return xmmsv_dict_set (dict, key, elem);
+}
 
 /* macro-magically define dict_iter extractors */
 #define GEN_DICT_ITER_EXTRACTOR_FUNC(typename, type)	  \
@@ -758,7 +768,13 @@ GEN_DICT_SET_FUNC (coll, xmmsv_coll_t *)
 
 GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_ITER_EXTRACTOR_FUNC (int, int32_t)
-GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+
+int
+xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key,
+                           xmmsv_coll_t **r)
+{
+	return xmmsv_dict_iter_pair (it, key, r);
+}
 
 /* macro-magically define dict_iter set functions */
 #define GEN_DICT_ITER_SET_FUNC(typename, type)	  \
@@ -777,4 +793,9 @@ GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 
 GEN_DICT_ITER_SET_FUNC (string, const char *)
 GEN_DICT_ITER_SET_FUNC (int, int32_t)
-GEN_DICT_ITER_SET_FUNC (coll, xmmsv_coll_t *)
+
+int
+xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_coll_t *elem)
+{
+	return xmmsv_dict_iter_set (it, elem);
+}

@@ -25,11 +25,11 @@
 extern "C" {
 #endif
 
-typedef struct xmmsv_coll_St xmmsv_coll_t;
+typedef struct xmmsv_St xmmsv_coll_t;
 
-xmmsv_coll_t *xmmsv_coll_new (xmmsv_coll_type_t type);
-xmmsv_coll_t *xmmsv_coll_ref (xmmsv_coll_t *coll);
-void xmmsv_coll_unref (xmmsv_coll_t *coll);
+xmmsv_coll_t *xmmsv_coll_new (xmmsv_coll_type_t type) XMMS_DEPRECATED;
+xmmsv_coll_t *xmmsv_coll_ref (xmmsv_coll_t *coll) XMMS_DEPRECATED;
+void xmmsv_coll_unref (xmmsv_coll_t *coll) XMMS_DEPRECATED;
 
 void xmmsv_coll_set_idlist (xmmsv_coll_t *coll, int ids[]);
 void xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op);

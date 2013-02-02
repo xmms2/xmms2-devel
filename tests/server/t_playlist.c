@@ -259,7 +259,7 @@ CASE(test_client_add_collection)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (universe));
+	                        ordered);
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -268,8 +268,6 @@ CASE(test_client_add_collection)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
 	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
-
-	xmmsv_coll_unref (ordered);
 }
 
 CASE(test_client_add_url)
@@ -310,13 +308,13 @@ CASE(test_client_replace)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_REPLACE,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (empty),
+	                        xmmsv_ref (empty),
 	                        xmmsv_new_int (XMMS_PLAYLIST_CURRENT_ID_FORGET));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
@@ -329,7 +327,7 @@ CASE(test_client_replace)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -386,7 +384,7 @@ CASE(test_client_insert_collection)
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_INSERT_COLL,
 	                        xmmsv_new_string (XMMS_ACTIVE_PLAYLIST),
 	                        xmmsv_new_int (1),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 	xmmsv_coll_unref (ordered);
@@ -434,7 +432,7 @@ CASE(test_client_load)
 	result = XMMS_IPC_CALL (colldag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("New List"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 	xmmsv_coll_unref (coll);
@@ -501,7 +499,7 @@ CASE(test_client_remove_entry)
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 	xmmsv_coll_unref (coll);
@@ -623,7 +621,7 @@ CASE(test_party_shuffle)
 	result = XMMS_IPC_CALL (colldag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Default"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
-	                        xmmsv_new_coll (coll));
+	                        xmmsv_ref (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 	xmmsv_coll_unref (coll);
