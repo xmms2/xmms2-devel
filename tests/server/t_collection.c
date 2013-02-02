@@ -203,6 +203,46 @@ CASE (test_client_rename)
 	xmmsv_unref (result);
 }
 
+CASE (test_client_rename_referenced)
+{
+	xmmsv_t *result, *reference;
+	const char *name;
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Before Rename"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "Before Rename");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Test Reference"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_RENAME,
+	                        xmmsv_new_string ("Before Rename"),
+	                        xmmsv_new_string ("After Rename"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	                        xmmsv_new_string ("Test Reference"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_COLL));
+	CU_ASSERT (xmmsv_coll_attribute_get_string (result, "reference", &name));
+	CU_ASSERT_STRING_EQUAL ("After Rename", name);
+	xmmsv_unref (result);
+}
+
 CASE (test_client_find)
 {
 	xmms_medialib_entry_t entry;
@@ -461,4 +501,160 @@ CASE (test_client_query_infos2)
 	xmmsv_unref (fetch);
 	xmmsv_unref (group);
 	xmmsv_coll_unref (ordered);
+}
+
+CASE (test_reject_direct_cyclic_collections)
+{
+	xmmsv_t *universe, *reference, *match;
+	xmmsv_t *result;
+
+	/* To create a cycle the collection must already exist, check that it fails */
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "Cycle");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Cycle"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+
+	/* Create the non cyclic version and then later update it to be cyclic */
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Cycle"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+
+	/* Overwrite the existing collection with a circular reference */
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "Cycle");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Cycle"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+}
+
+CASE (test_reject_indirect_cyclic_collections)
+{
+	xmmsv_t *universe, *reference, *match, *intersection;
+	xmmsv_t *result;
+
+	/* Create a correct collection pointing to all media */
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("First"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+
+	/* Create a correct collection intersecting the first collection with all media */
+	intersection = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "First");
+	xmmsv_coll_add_operand (intersection, reference);
+	xmmsv_unref (reference);
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
+	xmmsv_coll_add_operand (intersection, reference);
+	xmmsv_unref (reference);
+
+	/* Overwrite the existing collection with a circular reference */
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Second"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (intersection));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+
+	xmmsv_unref (result);
+	xmmsv_unref (intersection);
+
+	/* Update the first collection to point to the second collection thus creating
+	 * an indirect cyclic graph.. which should be rejected */
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "Second");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("First"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
+
+	xmmsv_unref (result);
+	xmmsv_unref (reference);
+}
+
+CASE (test_references)
+{
+	xmmsv_t *universe, *reference, *match;
+	xmmsv_t *result;
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Cycle"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+	xmmsv_coll_unref (reference);
+
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	match = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_attribute_set_string (match, "field", "artist");
+	xmmsv_coll_attribute_set_string (match, "value", "The Doors");
+	xmmsv_coll_add_operand (match, universe);
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("The Doors"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (match));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+
+	xmmsv_unref (result);
+
+	reference = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
+	xmmsv_coll_attribute_set_string (reference, "reference", "The Doors");
+
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	                        xmmsv_new_string ("Test Reference"),
+	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
+	                        xmmsv_ref (reference));
+	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
+	xmmsv_unref (result);
+
+	xmmsv_unref (reference);
+	xmmsv_unref (universe);
+	xmmsv_unref (match);
 }
