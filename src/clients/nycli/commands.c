@@ -710,11 +710,6 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		fetchval = xmmsv_make_stringlist ((gchar **) default_columns, -1);
 	}
 
-	/* If the user hasn't requested any special order, we assume ordering
-	 * search result per artist, and then album. To make this result more
-	 * readable we put the compilation albums at the end to get proper album
-	 * grouping.
-	 */
 	if (!command_flag_stringlist_get (ctx, "order", &order)) {
 		ordered_query = coll_apply_default_order (query);
 	} else {
@@ -1217,9 +1212,11 @@ static gboolean
 cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
                  const gchar *playlist, gint pos)
 {
-	gchar **sortby;
+	xmmsv_coll_t *query, *ordered_query;
+	const gchar **order = NULL;
 	gchar *pattern = NULL;
-	xmmsv_t *query, *order = NULL;
+	xmmsv_t *idlist;
+	xmmsc_result_t *res;
 	gboolean ret = FALSE;;
 
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
@@ -1229,15 +1226,19 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 	} else if (!xmmsc_coll_parse (pattern, &query)) {
 		g_printf (_("Error: failed to parse the pattern!\n"));
 	} else {
-		xmmsv_t *idlist;
-		xmmsc_result_t *res;
+		if (command_flag_stringlist_get (ctx, "order", &order)) {
+			xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
+			ordered_query = xmmsv_coll_add_order_operators (query, orderval);
 
-		if (command_flag_stringlist_get (ctx, "order", &sortby)) {
-			order = xmmsv_make_stringlist (sortby, -1);
-			g_strfreev (sortby);
+			xmmsv_unref (orderval);
+		} else {
+			ordered_query = coll_apply_default_order (query);
 		}
 
-		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+		res = xmmsc_coll_query_ids (infos->sync, ordered_query, NULL, 0, 0);
+		xmmsc_coll_unref (ordered_query);
+		xmmsc_coll_unref (query);
+
 		xmmsc_result_wait (res);
 		idlist = xmmsc_result_get_value (res);
 
@@ -1250,12 +1251,11 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 			ret = TRUE;
 		}
 
-		xmmsv_unref (query);
 		xmmsc_result_unref (res);
 	}
 
 	g_free (pattern);
-	if (order) xmmsv_unref (order);
+	g_free (order);
 
 	return ret;
 }
