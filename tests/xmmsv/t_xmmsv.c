@@ -1080,3 +1080,24 @@ CASE (test_xmmsv_deep_copy_bitbuffer)
 
 	xmmsv_unref (val_cpy);
 }
+
+CASE (test_xmmsv_deep_copy_collection)
+{
+	xmmsv_t *u, *a, *b, *copy;
+
+	a = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	b = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	u = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
+	xmmsv_coll_add_operand (u, a);
+	xmmsv_unref (a);
+	xmmsv_coll_add_operand (u, b);
+	xmmsv_unref (b);
+
+	copy = xmmsv_copy (u);
+
+	CU_ASSERT_EQUAL (XMMS_COLLECTION_TYPE_UNION, xmmsv_coll_get_type (copy));
+
+	xmmsv_unref (u);
+	xmmsv_unref (copy);
+}
