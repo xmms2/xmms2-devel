@@ -88,6 +88,8 @@ xmms_sndfile_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              NULL);
 	xmms_magic_add ("aiff header", "audio/x-aiff",
 	                "0 string FORM", ">8 string AIFF", NULL);
+	xmms_magic_add ("aiff-c header", "audio/x-aiff",
+	                "0 string FORM", ">8 string AIFC", NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -188,7 +190,7 @@ xmms_sndfile_get_media_info (xmms_xform_t *xform)
 	} else {
 		/* Approximate bitrate for compressed formats from the total file
 		 * length and sample rate. */
-		bitrate = filesize / (data->sf_info.frames / data->sf_info.samplerate);
+		bitrate = filesize / playtime;
 	}
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE;
@@ -310,6 +312,7 @@ xmms_sndfile_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
+	sf_command (data->sndfile, SFC_SET_SCALE_FLOAT_INT_READ, NULL, SF_TRUE);
 	xmms_sndfile_get_media_info (xform);
 
 	xmms_xform_outdata_type_add (xform,
