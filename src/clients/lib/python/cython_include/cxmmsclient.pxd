@@ -44,7 +44,6 @@ cdef extern from "xmmsc/xmmsc_util.h":
 
 cdef extern from "xmmsc/xmmsv.h":
 	ctypedef struct xmmsv_t
-	ctypedef struct xmmsv_coll_t
 
 cdef extern from "xmmsc/xmmsc_visualization.h":
 	cdef enum:
@@ -98,8 +97,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_add_url     (xmmsc_connection_t *c, char *playlist, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id      (xmmsc_connection_t *c, char *playlist, int)
 	xmmsc_result_t *xmmsc_playlist_add_encoded (xmmsc_connection_t *c, char *, char *)
-	xmmsc_result_t *xmmsc_playlist_add_idlist  (xmmsc_connection_t *c, char *playlist, xmmsv_coll_t *coll)
-	xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, char *playlist, xmmsv_coll_t *coll, xmmsv_t *order)
+	xmmsc_result_t *xmmsc_playlist_add_idlist  (xmmsc_connection_t *c, char *playlist, xmmsv_t *coll)
+	xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, char *playlist, xmmsv_t *coll, xmmsv_t *order)
 
 	xmmsc_result_t *xmmsc_playlist_remove_entry (xmmsc_connection_t *c, char *playlist, int)
 	xmmsc_result_t *xmmsc_playlist_clear        (xmmsc_connection_t *c, char *playlist)
@@ -116,7 +115,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_insert_url  (xmmsc_connection_t *c, char *playlist, int pos, char *url)
 	xmmsc_result_t *xmmsc_playlist_insert_id   (xmmsc_connection_t *c, char *playlist, int pos, int)
 	xmmsc_result_t *xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, char *playlist, int pos, char *url)
-	xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, char *playlist, int pos, xmmsv_coll_t *coll, xmmsv_t *order)
+	xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, char *playlist, int pos, xmmsv_t *coll, xmmsv_t *order)
 
 	xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *c, char *playlist)
 	xmmsc_result_t *xmmsc_playlist_radd (xmmsc_connection_t *c, char *playlist, char *path)
@@ -215,16 +214,16 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef char *xmmsv_coll_namespace_t # Need to redeclare it
 	xmmsc_result_t *xmmsc_coll_get    (xmmsc_connection_t *c, char *collname, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_list   (xmmsc_connection_t *c, xmmsv_coll_namespace_t ns)
-	xmmsc_result_t *xmmsc_coll_save   (xmmsc_connection_t *c, xmmsv_coll_t *coll, char* name, xmmsv_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_save   (xmmsc_connection_t *c, xmmsv_t *coll, char* name, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_remove (xmmsc_connection_t *c, char* name, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_find   (xmmsc_connection_t *c, int mediaid, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_rename (xmmsc_connection_t *c, char* from_name, char* to_name, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_coll_sync   (xmmsc_connection_t *c)
 
-	xmmsc_result_t *xmmsc_coll_query       (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *fetch)
-	xmmsc_result_t *xmmsc_coll_query_ids   (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len)
-	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *c, xmmsv_coll_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len,  xmmsv_t *fetch, xmmsv_t *group)
+	xmmsc_result_t *xmmsc_coll_query       (xmmsc_connection_t *c, xmmsv_t *coll, xmmsv_t *fetch)
+	xmmsc_result_t *xmmsc_coll_query_ids   (xmmsc_connection_t *c, xmmsv_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len)
+	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *c, xmmsv_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len,  xmmsv_t *fetch, xmmsv_t *group)
 
 	xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c)
 

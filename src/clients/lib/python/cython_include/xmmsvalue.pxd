@@ -2,7 +2,6 @@
 
 cdef extern from "xmmsc/xmmsv.h":
 	ctypedef struct xmmsv_t
-	ctypedef struct xmmsv_coll_t
 	ctypedef struct xmmsv_dict_iter_t
 	ctypedef struct xmmsv_list_iter_t
 
@@ -39,9 +38,9 @@ cdef class XmmsDictIter:
 	cdef xmmsv_dict_iter_t *it
 
 cdef class CollectionRef:
-	cdef xmmsv_coll_t *coll
+	cdef xmmsv_t *coll
 
-	cdef set_collection(self, xmmsv_coll_t *coll)
+	cdef set_collection(self, xmmsv_t *coll)
 
 cdef class Collection(CollectionRef):
 	cdef object _attributes
@@ -57,15 +56,21 @@ cdef class CollectionAttributes(CollectionRef):
 	cpdef iterkeys(self)
 	cpdef keys(self)
 	cpdef itervalues(self)
+	cpdef iterxvalues(self)
 	cpdef values(self)
+	cpdef xvalues(self)
 	cpdef iteritems(self)
+	cpdef iterxitems(self)
 	cpdef items(self)
+	cpdef xitems(self)
 	cpdef clear(self)
 
 cdef enum AttributesIterType:
 	ITER_KEYS = 1
 	ITER_VALUES = 2
 	ITER_ITEMS = 3
+	ITER_XVALUES = 4
+	ITER_XITEMS = 5
 cdef class AttributesIterator:
 	cdef xmmsv_dict_iter_t *diter
 	cdef int itertype
@@ -93,5 +98,5 @@ cdef class CollectionIDList(CollectionRef):
 	cpdef remove(self, int i)
 	cpdef clear(self)
 
-cdef create_coll(xmmsv_coll_t *coll)
+cdef create_coll(xmmsv_t *coll)
 cdef xmmsv_t *create_native_value(value) except NULL
