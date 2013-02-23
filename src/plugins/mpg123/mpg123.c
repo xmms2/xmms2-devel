@@ -1,5 +1,5 @@
 /*  XMMS2 plugin for decoding MPEG audio using libmpg123
- *  Copyright (C) 2007-2012 XMMS2 Team
+ *  Copyright (C) 2007-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *

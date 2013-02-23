@@ -1,7 +1,7 @@
 /** @file daap_cmd.c
  *  Wrapper functions for issuing DAAP commands.
  *
- *  Copyright (C) 2006-2012 XMMS2 Team
+ *  Copyright (C) 2006-2013 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
