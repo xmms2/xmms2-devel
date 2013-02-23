@@ -1,0 +1,15 @@
+def build(bld):
+    bld(features = 'c cprogram',
+        target = '_xmms2-migrate-collections-v0',
+        source = 'migrate-collections.c',
+        includes = '. ../../include ../../includepriv ../../lib/s4/include',
+        use = 'xmmstypes xmmsutils',
+        uselib = 'glib2 gthread2'
+    )
+
+def configure(conf):
+    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0',
+                   uselib_store='gthread2', args='--cflags --libs')
+
+def options(o):
+    pass

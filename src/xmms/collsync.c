@@ -167,7 +167,6 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	g_free (sync->uuid);
 }
 
-
 static gboolean
 xmms_coll_sync_prepare_path (const gchar *path, GError **error)
 {
@@ -179,21 +178,37 @@ xmms_coll_sync_prepare_path (const gchar *path, GError **error)
 		 * be used for installations that were running development
 		 * builds between 0.8 and 0.9
 		 */
-		gchar *legacy;
-		gint64 now;
-		gint res;
+		gint exit_status;
+		gchar *cmdline;
 
-		now = g_get_real_time ();
+		exit_status = 0;
 
-		legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
-		res = g_rename (path, legacy);
-		g_free (legacy);
+		cmdline = g_strdup_printf ("_xmms2-migrate-collections-v0 %s", path);
 
-		if (res != 0) {
-			g_set_error (error, G_FILE_ERROR,
-			             g_file_error_from_errno (errno),
-			             "%s", g_strerror (errno));
-			return FALSE;
+		if (!g_spawn_command_line_sync (cmdline, NULL, NULL, &exit_status, NULL) || exit_status) {
+			xmms_log_fatal ("Could not run \"%s\", try to run it manually", cmdline);
+		}
+
+		/* If migration for some reason failed, just move the failing
+		 * directory and leave room for a fresh one.
+		 */
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			gchar *legacy;
+			gint64 now;
+			gint res;
+
+			now = g_get_real_time ();
+
+			legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
+			res = g_rename (path, legacy);
+			g_free (legacy);
+
+			if (res != 0) {
+				g_set_error (error, G_FILE_ERROR,
+				             g_file_error_from_errno (errno),
+				             "%s", g_strerror (errno));
+				return FALSE;
+			}
 		}
 	} else {
 		gchar *dirname;

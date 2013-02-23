@@ -90,6 +90,7 @@ src/clients/lib/perl
 src/clients/lib/ruby
 src/lib/s4/src/tools/s4
 src/tools/sqlite2s4
+src/tools/migrate-collections
 tests
 pixmaps
 """.split()
