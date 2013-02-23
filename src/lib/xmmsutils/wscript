@@ -21,7 +21,8 @@ def build(bld):
     else:
         source.extend(['stacktrace_dummy.c'])
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsutils',
         source = source,
         includes = '. ../../.. ../../include',

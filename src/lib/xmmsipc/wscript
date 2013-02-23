@@ -17,7 +17,8 @@ def build(bld):
     else:
         source.extend('socket_unix.c transport_unix.c'.split())
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsipc',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',

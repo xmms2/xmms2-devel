@@ -13,7 +13,8 @@ def build(bld):
     else:
         source.extend(['socket_unix.c'])
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmssocket',
         source = source,
         includes = '. ../../.. ../../include',

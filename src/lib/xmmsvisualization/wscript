@@ -10,7 +10,8 @@ def build(bld):
     udp.c
     """.split()
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsvisualization',
         source = source,
         includes = '. ../../.. ../../include',

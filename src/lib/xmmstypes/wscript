@@ -18,7 +18,8 @@ def build(bld):
     xmmsv_util.c
     """.split()
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmstypes',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
