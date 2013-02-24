@@ -11,6 +11,7 @@ def build(bld):
     """.split()
 
     bld.objects(
+        features = 'visibilityhidden',
         cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsvisualization',
         source = source,

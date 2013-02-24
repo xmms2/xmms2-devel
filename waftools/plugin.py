@@ -23,7 +23,7 @@ def plugin(name, source=None, configure=False, build=False,
     def stock_build(bld):
         pat = tool=='c' and '*.c' or '*.cpp'
         obj = bld(
-            features = '%(tool)s %(tool)sshlib' % dict(tool=tool),
+            features = '%(tool)s %(tool)sshlib visibilityhidden' % dict(tool=tool),
             target = 'xmms_%s' % name,
             source = copy(source) or bld.path.ant_glob(pat),
             includes = '../../.. ../../include',

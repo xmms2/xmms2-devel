@@ -344,6 +344,8 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('g++')
 
+    conf.check_tool('visibility', tooldir = os.path.abspath('waftools'))
+
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
 
@@ -402,8 +404,10 @@ def configure(conf):
             conf.env.prepend_value('INCLUDES', os.path.join(d, 'include'))
 
     if Options.platform != 'win32':
-        conf.env.append_unique('CFLAGS_cstlib', ['-fPIC', '-DPIC'])
-        conf.env.append_unique('CPPFLAGS_cxxshlib', ['-fPIC', '-DPIC'])
+        conf.env.CFLAGS_cshlib = ['-fPIC', '-DPIC']
+        conf.env.CFLAGS_cstlib = ['-fPIC', '-DPIC']
+        conf.env.CPPFLAGS_cxxshlib = ['-fPIC', '-DPIC']
+        conf.env.CPPFLAGS_cxxstlib = ['-fPIC', '-DPIC']
     else:
         # As we have to change target platform after the tools
         # have been loaded there are a few variables that needs

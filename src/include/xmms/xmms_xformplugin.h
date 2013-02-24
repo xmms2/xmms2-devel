@@ -20,6 +20,8 @@
 #ifndef __XMMS_XFORMPLUGIN_H__
 #define __XMMS_XFORMPLUGIN_H__
 
+#include "xmmsc/xmmsc_compiler.h"
+
 #include <glib.h>
 #include <string.h>
 
@@ -177,7 +179,7 @@ typedef struct xmms_xform_methods_St {
  *
  * Should be called _once_ from the plugin's setupfunc.
  */
-void xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t *methods);
+void xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t *methods) XMMS_PUBLIC;
 
 
 /**
@@ -187,7 +189,7 @@ void xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_meth
  * @param count the number of properties
  */
 void xmms_xform_plugin_metadata_basic_mapper_init (xmms_xform_plugin_t *xform_plugin,
-                                                   const xmms_xform_metadata_basic_mapping_t *mappings, gint count);
+                                                   const xmms_xform_metadata_basic_mapping_t *mappings, gint count) XMMS_PUBLIC;
 
 /**
  * Configure automatic metadata mapping.
@@ -199,7 +201,7 @@ void xmms_xform_plugin_metadata_basic_mapper_init (xmms_xform_plugin_t *xform_pl
  */
 void xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
                                              const xmms_xform_metadata_basic_mapping_t *basic_mappings, gint basic_count,
-                                             const xmms_xform_metadata_mapping_t *mappings, gint count);
+                                             const xmms_xform_metadata_mapping_t *mappings, gint count) XMMS_PUBLIC;
 
 /**
  * Add a valid input type to the plugin.
@@ -218,7 +220,7 @@ void xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
  *                               "application/example",
  *                               XMMS_STREAM_TYPE_END);
  */
-void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...);
+void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...) XMMS_PUBLIC;
 
 /**
  * Get private data for this xform.
@@ -226,7 +228,7 @@ void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...);
  * @param xform current xform
  * @returns the data set with #xmms_xform_private_data_set
  */
-gpointer xmms_xform_private_data_get (xmms_xform_t *xform);
+gpointer xmms_xform_private_data_get (xmms_xform_t *xform) XMMS_PUBLIC;
 /**
  * Set private data for this xform.
  *
@@ -237,11 +239,11 @@ gpointer xmms_xform_private_data_get (xmms_xform_t *xform);
  * @param xform current xform
  * @param data
  */
-void xmms_xform_private_data_set (xmms_xform_t *xform, gpointer data);
+void xmms_xform_private_data_set (xmms_xform_t *xform, gpointer data) XMMS_PUBLIC;
 
 
-void xmms_xform_outdata_type_add (xmms_xform_t *xform, ...);
-void xmms_xform_outdata_type_copy (xmms_xform_t *xform);
+void xmms_xform_outdata_type_add (xmms_xform_t *xform, ...) XMMS_PUBLIC;
+void xmms_xform_outdata_type_copy (xmms_xform_t *xform) XMMS_PUBLIC;
 
 /**
  * Set numeric metadata for the media transformed by this xform.
@@ -251,7 +253,7 @@ void xmms_xform_outdata_type_copy (xmms_xform_t *xform);
  * @param val
  * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-gboolean xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val);
+gboolean xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val) XMMS_PUBLIC;
 /**
  * Set string metadata for the media transformed by this xform.
  *
@@ -260,13 +262,11 @@ gboolean xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int
  * @param val
  * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-gboolean xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val);
+gboolean xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val) XMMS_PUBLIC;
 
-gboolean xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key);
-gboolean xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key,
-                                      gint *val);
-gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key,
-                                      const gchar **val);
+gboolean xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key) XMMS_PUBLIC;
+gboolean xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key, gint *val) XMMS_PUBLIC;
+gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val) XMMS_PUBLIC;
 
 /**
  * Set numeric metadata for the media by parsing a string value.
@@ -276,7 +276,7 @@ gboolean xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key,
  * @param val The value to parse to an integer.
  * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-gboolean xmms_xform_metadata_parse_number (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+gboolean xmms_xform_metadata_parse_number (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length) XMMS_PUBLIC;
 
 /**
  * Set compliation status by performing a number of probes on a value.
@@ -291,7 +291,7 @@ gboolean xmms_xform_metadata_parse_number (xmms_xform_t *xform, const gchar *key
  * @param val The value to interpret as compliation or not.
  * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-gboolean xmms_xform_metadata_parse_compilation (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+gboolean xmms_xform_metadata_parse_compilation (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length) XMMS_PUBLIC;
 
 /**
  * Set string metadata represesting replay gain for the media by parsing a string value.
@@ -301,7 +301,7 @@ gboolean xmms_xform_metadata_parse_compilation (xmms_xform_t *xform, const gchar
  * @param val The value to interpret as replay gain.
  * @return TRUE if the key now maps to the suggested value, otherwise FALSE.
  */
-gboolean xmms_xform_metadata_parse_replay_gain (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+gboolean xmms_xform_metadata_parse_replay_gain (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length) XMMS_PUBLIC;
 
 
 /**
@@ -312,19 +312,19 @@ gboolean xmms_xform_metadata_parse_replay_gain (xmms_xform_t *xform, const gchar
  * @param length the length of the value, optional for NULL terminated values
  * @return TRUE if the configured metadata mapper marshalled the key/value into a property
  */
-gboolean xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+gboolean xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length) XMMS_PUBLIC;
 
-void xmms_xform_auxdata_barrier (xmms_xform_t *xform);
-void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
-void xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);
-void xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len);
-gboolean xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key);
-gboolean xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val);
-gboolean xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val);
-gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, const guchar **data, gsize *datalen);
+void xmms_xform_auxdata_barrier (xmms_xform_t *xform) XMMS_PUBLIC;
+void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val) XMMS_PUBLIC;
+void xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val) XMMS_PUBLIC;
+void xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, const guchar **data, gsize *datalen) XMMS_PUBLIC;
 
-const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
-gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);
+const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key) XMMS_PUBLIC;
+gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key) XMMS_PUBLIC;
 
 /**
  * Preview data from previous xform.
@@ -342,7 +342,7 @@ gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
  * @param err error container which is filled in if error occours.
  * @returns the number of bytes read or -1 to indicate error and 0 when end of stream.
  */
-gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
+gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err) XMMS_PUBLIC;
 
 /**
  * Read one line from previous xform.
@@ -354,7 +354,7 @@ gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
  * @param err error container which is filled in if error occours.
  * @returns the line read from the parent or NULL to indicate error.
  */
-gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err);
+gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err) XMMS_PUBLIC;
 
 /**
  * Read data from previous xform.
@@ -370,7 +370,7 @@ gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err)
  * @param err error container which is filled in if error occours.
  * @returns the number of bytes read or -1 to indicate error and 0 when end of stream.
  */
-gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
+gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err) XMMS_PUBLIC;
 
 /**
  * Change offset in stream.
@@ -384,25 +384,17 @@ gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
  * @returns new offset in stream, or -1 on error.
  *
  */
-gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
-gboolean xmms_xform_iseos (xmms_xform_t *xform);
+gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err) XMMS_PUBLIC;
+gboolean xmms_xform_iseos (xmms_xform_t *xform) XMMS_PUBLIC;
 
-const xmms_stream_type_t *xmms_xform_get_out_stream_type (xmms_xform_t *xform);
+const xmms_stream_type_t *xmms_xform_get_out_stream_type (xmms_xform_t *xform) XMMS_PUBLIC;
 
-gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...);
-gboolean xmms_magic_extension_add (const gchar *mime, const gchar *ext);
+gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...) XMMS_PUBLIC;
+gboolean xmms_magic_extension_add (const gchar *mime, const gchar *ext) XMMS_PUBLIC;
 
-xmms_config_property_t *xmms_xform_plugin_config_property_register (
-	xmms_xform_plugin_t *xform_plugin,
-	const gchar *name,
-	const gchar *default_value,
-	xmms_object_handler_t cb,
-	gpointer userdata);
-xmms_config_property_t *xmms_xform_plugin_config_lookup (
-	xmms_xform_plugin_t *xform_plugin,
-	const gchar *path);
-xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
-                                                  const gchar *path);
+xmms_config_property_t *xmms_xform_plugin_config_property_register (xmms_xform_plugin_t *xform_plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
+xmms_config_property_t *xmms_xform_plugin_config_lookup (xmms_xform_plugin_t *xform_plugin, const gchar *path) XMMS_PUBLIC;
+xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform, const gchar *path) XMMS_PUBLIC;
 
 /**
  * Get the medialib entry played by this xform.
@@ -410,21 +402,17 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  * @param xform
  * @returns
  */
-xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
-const gchar *xmms_xform_get_url (xmms_xform_t *xform);
+xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform) XMMS_PUBLIC;
+const gchar *xmms_xform_get_url (xmms_xform_t *xform) XMMS_PUBLIC;
 
 #define XMMS_XFORM_BROWSE_FLAG_DIR (1 << 0)
 
-void xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *path, guint32 flags);
-void xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmmsv_t *val);
-void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
-                                               const gchar *key,
-                                               const gchar *value);
-void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
-                                               const gchar *key,
-                                               gint value);
-void xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename, const gchar *url);
-void xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename, const gchar *url, gint nargs, char **args);
+void xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *path, guint32 flags) XMMS_PUBLIC;
+void xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmmsv_t *val) XMMS_PUBLIC;
+void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform, const gchar *key, const gchar *value) XMMS_PUBLIC;
+void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform, const gchar *key, gint value) XMMS_PUBLIC;
+void xmms_xform_browse_add_symlink (xmms_xform_t *xform, const gchar *basename, const gchar *url) XMMS_PUBLIC;
+void xmms_xform_browse_add_symlink_args (xmms_xform_t *xform, const gchar *basename, const gchar *url, gint nargs, char **args) XMMS_PUBLIC;
 
 #define XMMS_XFORM_MAX_LINE_SIZE 1024
 

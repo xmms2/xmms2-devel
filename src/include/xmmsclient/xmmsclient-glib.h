@@ -21,14 +21,15 @@
 #define __XMMSCLIENT_GLIB_H__
 
 #include <glib.h>
+#include "xmmsc/xmmsc_compiler.h"
 #include "xmmsclient/xmmsclient.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *xmmsc_mainloop_gmain_init (xmmsc_connection_t *connection);
-void xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *connection, void *udata);
+void *xmmsc_mainloop_gmain_init (xmmsc_connection_t *connection) XMMS_PUBLIC;
+void xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *connection, void *udata) XMMS_PUBLIC;
 
 #ifdef __cplusplus
 }

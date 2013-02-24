@@ -32,16 +32,16 @@ extern "C" {
 
 #define xmmsv_check_type(type) ((type) > XMMSV_TYPE_NONE && (type) < XMMSV_TYPE_END)
 
-xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
+xmmsv_t *xmmsv_decode_url (const xmmsv_t *url) XMMS_PUBLIC;
 
-int xmmsv_utf8_validate (const char *str);
+int xmmsv_utf8_validate (const char *str) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
+xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs) XMMS_PUBLIC;
 
-int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val);
+int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_serialize (xmmsv_t *v);
-xmmsv_t *xmmsv_deserialize (xmmsv_t *v);
+xmmsv_t *xmmsv_serialize (xmmsv_t *v) XMMS_PUBLIC;
+xmmsv_t *xmmsv_deserialize (xmmsv_t *v) XMMS_PUBLIC;
 
 /** @} */
 

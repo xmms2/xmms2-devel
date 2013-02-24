@@ -243,7 +243,7 @@ typedef struct xmms_output_methods_St {
  * @param output an output plugin object
  * @param methods a struct pointing to the plugin specific functions
  */
-void xmms_output_plugin_methods_set (xmms_output_plugin_t *output, xmms_output_methods_t *methods);
+void xmms_output_plugin_methods_set (xmms_output_plugin_t *output, xmms_output_methods_t *methods) XMMS_PUBLIC;
 
 
 /**
@@ -253,7 +253,7 @@ void xmms_output_plugin_methods_set (xmms_output_plugin_t *output, xmms_output_m
  * @param output an output object
  * @return the private data
  */
-gpointer xmms_output_private_data_get (xmms_output_t *output);
+gpointer xmms_output_private_data_get (xmms_output_t *output) XMMS_PUBLIC;
 
 /**
  * Set the private data for the plugin that can be retrived
@@ -262,7 +262,7 @@ gpointer xmms_output_private_data_get (xmms_output_t *output);
  * @param output an output object
  * @param data the private data
  */
-void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
+void xmms_output_private_data_set (xmms_output_t *output, gpointer data) XMMS_PUBLIC;
 
 /**
  * Add a format that the output plugin can feed the soundcard with.
@@ -294,7 +294,7 @@ void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
  * @param output an output object
  * @param ... pairs of #xmms_stream_type_key_t, value
  */
-void xmms_output_stream_type_add (xmms_output_t *output, ...);
+void xmms_output_stream_type_add (xmms_output_t *output, ...) XMMS_PUBLIC;
 
 /**
  * Read a number of bytes of data from the output buffer into a buffer.
@@ -308,7 +308,7 @@ void xmms_output_stream_type_add (xmms_output_t *output, ...);
  * @param len the number of bytes to read
  * @return the number of bytes read
  */
-gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
+gint xmms_output_read (xmms_output_t *output, char *buffer, gint len) XMMS_PUBLIC;
 
 /**
  * Gets Number of available bytes in the output buffer
@@ -322,7 +322,7 @@ gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
  * @param len the number of bytes to read
  * @return the number of bytes read
  */
-gint xmms_output_bytes_available (xmms_output_t *output);
+gint xmms_output_bytes_available (xmms_output_t *output) XMMS_PUBLIC;
 
 /**
  * Set an error.
@@ -333,7 +333,7 @@ gint xmms_output_bytes_available (xmms_output_t *output);
  * @param output an output object
  * @param error an error object
  */
-void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
+void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error) XMMS_PUBLIC;
 
 /**
  * Check if an output plugin needs format updates on each track change.
@@ -341,7 +341,7 @@ void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
  * @param plugin an output plugin object
  * @return TRUE if the plugin should always be notified, otherwise FALSE
  */
-gboolean xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin);
+gboolean xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin) XMMS_PUBLIC;
 
 /**
  * Register a configuration directive in the plugin setup function.
@@ -357,7 +357,7 @@ gboolean xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin);
  * @param userdata a user specified variable to be passed to the callback
  * @return a #xmms_config_property_t based on the given input
  */
-xmms_config_property_t *xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
 
 /**
  * Register a configuration directive.
@@ -374,7 +374,7 @@ xmms_config_property_t *xmms_output_plugin_config_property_register (xmms_output
  * @return a #xmms_config_property_t based on the given input
  */
 
-xmms_config_property_t *xmms_output_config_property_register (xmms_output_t *output, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_output_config_property_register (xmms_output_t *output, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
 
 /**
  * Lookup a configuration directive for the output plugin.
@@ -383,7 +383,7 @@ xmms_config_property_t *xmms_output_config_property_register (xmms_output_t *out
  * @param path the path to the configuration value
  * @return a #xmms_config_property_t found at the given path
  */
-xmms_config_property_t *xmms_output_config_lookup (xmms_output_t *output, const gchar *path);
+xmms_config_property_t *xmms_output_config_lookup (xmms_output_t *output, const gchar *path) XMMS_PUBLIC;
 
 /**
  * Get the currently medialib id of the currently played entry
@@ -391,7 +391,7 @@ xmms_config_property_t *xmms_output_config_lookup (xmms_output_t *output, const 
  * @param output an output object
  * @return the current entry as #xmms_medialib_entry_t or 0 on error
  */
-xmms_medialib_entry_t xmms_output_current_id (xmms_output_t *output);
+xmms_medialib_entry_t xmms_output_current_id (xmms_output_t *output) XMMS_PUBLIC;
 
 /** @} */
 

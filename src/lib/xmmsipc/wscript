@@ -18,6 +18,7 @@ def build(bld):
         source.extend('socket_unix.c transport_unix.c'.split())
 
     bld.objects(
+        features = 'visibilityhidden',
         cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsipc',
         source = source,

@@ -79,7 +79,7 @@ def build(bld):
         "visualization/%s.c" % bld.env.visualization_impl
     ]
 
-    bld(features='c ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
+    bld(features='c visibilityhidden ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
@@ -91,7 +91,7 @@ def build(bld):
     if bld.env.xmms_icon:
         objects += ['xmms_icon']
 
-    bld(features = 'c cprogram',
+    bld(features = 'c cprogram visibilityhidden',
         target = 'xmms2d',
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',

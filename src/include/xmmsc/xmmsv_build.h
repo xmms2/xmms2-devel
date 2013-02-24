@@ -30,7 +30,7 @@ extern "C" {
  * @ingroup ValueType
  * @{
  */
-xmmsv_t *xmmsv_make_stringlist (char *array[], int num);
+xmmsv_t *xmmsv_make_stringlist (char *array[], int num) XMMS_PUBLIC;
 
 /* These helps us doing compiletime typechecking */
 static inline const char *__xmmsv_identity_const_charp (const char *v) {return v;}
@@ -41,8 +41,8 @@ static inline xmmsv_t *__xmmsv_null_to_none (xmmsv_t *v) { return v ? v : xmmsv_
 #define XMMSV_DICT_ENTRY_STR(k, v) XMMSV_DICT_ENTRY (k, __xmmsv_null_to_none (xmmsv_new_string (v)))
 #define XMMSV_DICT_ENTRY_INT(k, v) XMMSV_DICT_ENTRY (k, xmmsv_new_int (v))
 #define XMMSV_DICT_END NULL
-xmmsv_t *xmmsv_build_dict (const char *firstkey, ...) XMMS_SENTINEL(0);
-xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap);
+xmmsv_t *xmmsv_build_dict (const char *firstkey, ...) XMMS_PUBLIC XMMS_SENTINEL(0);
+xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap) XMMS_PUBLIC;
 
 #define XMMSV_LIST_ENTRY(v) __xmmsv_identity_xmmsv (v)
 #define XMMSV_LIST_ENTRY_STR(v) XMMSV_LIST_ENTRY (__xmmsv_null_to_none (xmmsv_new_string (v)))
@@ -50,15 +50,15 @@ xmmsv_t *xmmsv_build_dict_va (const char *firstkey, va_list ap);
 #define XMMSV_LIST_ENTRY_COLL(v) XMMSV_LIST_ENTRY (__xmmsv_null_to_none (xmmsv_new_coll (v)))
 #define XMMSV_LIST_END NULL
 
-xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...) XMMS_SENTINEL(0);
-xmmsv_t *xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap);
+xmmsv_t *xmmsv_build_list (xmmsv_t *first_entry, ...) XMMS_PUBLIC XMMS_SENTINEL(0);
+xmmsv_t *xmmsv_build_list_va (xmmsv_t *first_entry, va_list ap) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_build_empty_organize (void);
-xmmsv_t *xmmsv_build_organize (xmmsv_t *data);
-xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref);
-xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data);
-xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data);
-xmmsv_t *xmmsv_build_count (void);
+xmmsv_t *xmmsv_build_empty_organize (void) XMMS_PUBLIC;
+xmmsv_t *xmmsv_build_organize (xmmsv_t *data) XMMS_PUBLIC;
+xmmsv_t *xmmsv_build_metadata (xmmsv_t *keys, xmmsv_t *get, const char *aggregate, xmmsv_t *sourcepref) XMMS_PUBLIC;
+xmmsv_t *xmmsv_build_cluster_list (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data) XMMS_PUBLIC;
+xmmsv_t *xmmsv_build_cluster_dict (xmmsv_t *cluster_by, xmmsv_t *cluster_field, xmmsv_t *cluster_data) XMMS_PUBLIC;
+xmmsv_t *xmmsv_build_count (void) XMMS_PUBLIC;
 /** @} */
 
 #ifdef __cplusplus

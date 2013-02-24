@@ -47,31 +47,31 @@ typedef enum {
 
 typedef struct xmmsv_St xmmsv_t;
 
-xmmsv_t *xmmsv_new_none (void);
-xmmsv_t *xmmsv_new_error (const char *errstr); /* FIXME: err id? */
-xmmsv_t *xmmsv_new_int (int32_t i);
-xmmsv_t *xmmsv_new_string (const char *s);
-xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type);
-xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len);
+xmmsv_t *xmmsv_new_none (void) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_error (const char *errstr) XMMS_PUBLIC; /* FIXME: err id? */
+xmmsv_t *xmmsv_new_int (int32_t i) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_string (const char *s) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_copy (xmmsv_t *val);
-xmmsv_coll_t *xmmsv_coll_copy (xmmsv_coll_t *orig_coll)  XMMS_DEPRECATED;
+xmmsv_t *xmmsv_copy (xmmsv_t *val) XMMS_PUBLIC;
+xmmsv_coll_t *xmmsv_coll_copy (xmmsv_coll_t *orig_coll) XMMS_PUBLIC XMMS_DEPRECATED;
 
-xmmsv_t *xmmsv_ref (xmmsv_t *val);
-void xmmsv_unref (xmmsv_t *val);
+xmmsv_t *xmmsv_ref (xmmsv_t *val) XMMS_PUBLIC;
+void xmmsv_unref (xmmsv_t *val) XMMS_PUBLIC;
 
-xmmsv_type_t xmmsv_get_type (const xmmsv_t *val);
-int xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t);
+xmmsv_type_t xmmsv_get_type (const xmmsv_t *val) XMMS_PUBLIC;
+int xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t) XMMS_PUBLIC;
 
-int xmmsv_get_error (const xmmsv_t *val, const char **r);
-int xmmsv_get_int (const xmmsv_t *val, int32_t *r);
-int xmmsv_get_string (const xmmsv_t *val, const char **r);
-int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll) XMMS_DEPRECATED;
-int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
+int xmmsv_get_error (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
+int xmmsv_get_int (const xmmsv_t *val, int32_t *r) XMMS_PUBLIC;
+int xmmsv_get_string (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
+int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll) XMMS_PUBLIC XMMS_DEPRECATED;
+int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen) XMMS_PUBLIC;
 
 
 /* legacy aliases */
-int xmmsv_is_error (const xmmsv_t *val);
+int xmmsv_is_error (const xmmsv_t *val) XMMS_PUBLIC;
 
 /** @} */
 

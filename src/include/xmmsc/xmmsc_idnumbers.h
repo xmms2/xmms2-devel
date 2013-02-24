@@ -17,6 +17,8 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
+#include "xmmsc/xmmsc_compiler.h"
+
 /* Don't forget to up this when protocol changes */
 #define XMMS_IPC_PROTOCOL_VERSION 21
 
@@ -264,7 +266,7 @@ typedef const char* xmmsv_coll_namespace_t;
 #define XMMS_ACTIVE_PLAYLIST "_active"
 
 /* Default source preferences for accessing "propdicts" (decl. in value.c) */
-extern const char *xmmsv_default_source_pref[];
+extern const char *xmmsv_default_source_pref[] XMMS_PUBLIC;
 
 /* compability */
 typedef xmmsv_coll_type_t xmmsc_coll_type_t;

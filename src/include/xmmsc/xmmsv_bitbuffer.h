@@ -31,23 +31,23 @@ extern "C" {
  */
 
 /* Bitbuffer */
-xmmsv_t *xmmsv_bitbuffer_new_ro (const unsigned char *v, int len) XMMS_DEPRECATED;
-xmmsv_t *xmmsv_bitbuffer_new (void) XMMS_DEPRECATED;
-xmmsv_t *xmmsv_new_bitbuffer_ro (const unsigned char *v, int len);
-xmmsv_t *xmmsv_new_bitbuffer (void);
-int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res);
-int xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len);
-int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d);
-int xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset);
-int xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len);
-int xmmsv_bitbuffer_align (xmmsv_t *v);
-int xmmsv_bitbuffer_goto (xmmsv_t *v, int pos);
-int xmmsv_bitbuffer_pos (xmmsv_t *v);
-int xmmsv_bitbuffer_rewind (xmmsv_t *v);
-int xmmsv_bitbuffer_end (xmmsv_t *v);
-int xmmsv_bitbuffer_len (xmmsv_t *v);
-const unsigned char *xmmsv_bitbuffer_buffer (xmmsv_t *v);
-int xmmsv_get_bitbuffer (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen);
+xmmsv_t *xmmsv_bitbuffer_new_ro (const unsigned char *v, int len) XMMS_PUBLIC XMMS_DEPRECATED;
+xmmsv_t *xmmsv_bitbuffer_new (void) XMMS_PUBLIC XMMS_DEPRECATED;
+xmmsv_t *xmmsv_new_bitbuffer_ro (const unsigned char *v, int len) XMMS_PUBLIC;
+xmmsv_t *xmmsv_new_bitbuffer (void) XMMS_PUBLIC;
+int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res) XMMS_PUBLIC;
+int xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len) XMMS_PUBLIC;
+int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d) XMMS_PUBLIC;
+int xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset) XMMS_PUBLIC;
+int xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len) XMMS_PUBLIC;
+int xmmsv_bitbuffer_align (xmmsv_t *v) XMMS_PUBLIC;
+int xmmsv_bitbuffer_goto (xmmsv_t *v, int pos) XMMS_PUBLIC;
+int xmmsv_bitbuffer_pos (xmmsv_t *v) XMMS_PUBLIC;
+int xmmsv_bitbuffer_rewind (xmmsv_t *v) XMMS_PUBLIC;
+int xmmsv_bitbuffer_end (xmmsv_t *v) XMMS_PUBLIC;
+int xmmsv_bitbuffer_len (xmmsv_t *v) XMMS_PUBLIC;
+const unsigned char *xmmsv_bitbuffer_buffer (xmmsv_t *v) XMMS_PUBLIC;
+int xmmsv_get_bitbuffer (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen) XMMS_PUBLIC;
 int xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v);
 int xmmsv_bitbuffer_deserialize_value (xmmsv_t *bb, xmmsv_t **val);
 

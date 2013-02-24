@@ -17,11 +17,13 @@
 #ifndef __XMMS_UTIL_H__
 #define __XMMS_UTIL_H__
 
+#include "xmmsc/xmmsc_compiler.h"
+
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-gchar *xmms_build_playlist_url (const gchar *, const gchar *);
+gchar *xmms_build_playlist_url (const gchar *, const gchar *) XMMS_PUBLIC;
 
 G_END_DECLS
 

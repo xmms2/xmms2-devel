@@ -25,7 +25,7 @@ def build(bld):
     else:
         source.extend(["visualization/dummy.c"])
 
-    obj = bld(features = 'c cshlib',
+    obj = bld(features = 'c cshlib visibilityhidden',
         target = 'xmmsclient',
         includes = '../../../.. ../../../include ../../../includepriv',
         source = source,

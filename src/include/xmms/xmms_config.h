@@ -25,22 +25,20 @@ G_BEGIN_DECLS
 typedef struct xmms_config_St xmms_config_t;
 typedef struct xmms_config_property_St xmms_config_property_t;
 
-xmms_config_property_t *xmms_config_lookup (const gchar *path);
+xmms_config_property_t *xmms_config_lookup (const gchar *path) XMMS_PUBLIC;
 
-const gchar *xmms_config_property_lookup_get_string (xmms_config_t *conf,
-                                                     const gchar *key,
-                                                     xmms_error_t *err);
-const gchar *xmms_config_property_get_string (const xmms_config_property_t *prop);
-gint xmms_config_property_get_int (const xmms_config_property_t *prop);
-gfloat xmms_config_property_get_float (const xmms_config_property_t *prop);
-const gchar *xmms_config_property_get_name (const xmms_config_property_t *prop);
+const gchar *xmms_config_property_lookup_get_string (xmms_config_t *conf, const gchar *key, xmms_error_t *err) XMMS_PUBLIC;
+const gchar *xmms_config_property_get_string (const xmms_config_property_t *prop) XMMS_PUBLIC;
+gint xmms_config_property_get_int (const xmms_config_property_t *prop) XMMS_PUBLIC;
+gfloat xmms_config_property_get_float (const xmms_config_property_t *prop) XMMS_PUBLIC;
+const gchar *xmms_config_property_get_name (const xmms_config_property_t *prop) XMMS_PUBLIC;
 
-xmms_config_property_t *xmms_config_property_register (const gchar *path, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_config_property_register (const gchar *path, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
 
-void xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data);
+void xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data) XMMS_PUBLIC;
 
-void xmms_config_property_callback_set (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
-void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
+void xmms_config_property_callback_set (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
+void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata) XMMS_PUBLIC;
 
 G_END_DECLS
 
