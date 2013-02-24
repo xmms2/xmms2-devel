@@ -7,6 +7,50 @@ class compiler_flags(object):
         if self.conf.check_cxx(cxxflags="-Werror=unknown-warning-option", mandatory=False):
             self.extra["CXXFLAGS"] = ["-Werror=unknown-warning-option"]
 
+        langs = (
+            (self.conf.check_cc, "CFLAGS", "c"),
+            (self.conf.check_cxx, "CXXFLAGS", "cxx")
+        )
+
+        kinds = (
+            ("feature", "-f", "-fno-"),
+            ("warning", "-W", "-Wno-"),
+            ("error", "-Werror=", "-Wno-error=")
+        )
+
+        # Generate functions like flags.enable_cxx_warning(flag_name)
+        for conf_func, flag, lang_name in langs:
+            for kind, enable_prefix, disable_prefix in kinds:
+                for name, func in self._generate_funcs(conf_func, flag, enable_prefix, disable_prefix):
+                    self.__dict__["%s_%s_%s" % (name, lang_name, kind)] = func
+
+        # Generate functions like flags.enable_warning(flag_name) which calls both c and cxx.
+        for action in ("check", "enable", "disable"):
+            for kind, _, _ in kinds:
+                self.__dict__["%s_%s" % (action, kind)] = self._generate_multi_func(action, kind, [lang for _, _, lang in langs])
+
+    def _generate_funcs(self, func, flag, enable_prefix, disable_prefix):
+        def check(flag_name):
+            return self._check(func, flag, enable_prefix, disable_prefix, flag_name)
+
+        def enable(flag_name):
+            enable, disable = check(flag_name)
+            if enable:
+                self.conf.env.append_unique(flag, [enable])
+
+        def disable(flag_name):
+            enable, disable = check(flag_name)
+            if disable:
+                self.conf.env.append_unique(flag, [disable])
+
+        return (("check", check), ("enable", enable), ("disable", disable))
+
+    def _generate_multi_func(self, action, kind, langs):
+        def multi(flag_name):
+            for lang in langs:
+                self.__dict__["%s_%s_%s" % (action, lang, kind)](flag_name)
+        return multi
+
     def _check(self, func, key, enable_prefix, disable_prefix, name):
         enable_flag = enable_prefix + name
         disable_flag = disable_prefix + name
@@ -29,63 +73,3 @@ class compiler_flags(object):
         self.conf.env.append_unique("%s_DISABLE_%s" % (key, uselib), [disable_flag])
 
         return enable_flag, disable_flag
-
-    def check_cc(self, *args):
-        return self._check(self.conf.check_cc, "CFLAGS", *args)
-
-    def check_cxx(self, *args):
-        return self._check(self.conf.check_cxx, "CXXFLAGS", *args)
-
-    def enable_c_error(self, error_name):
-        enable, disable = self.check_cc("-Werror=", "-Wno-error=", error_name)
-        if enable:
-            self.conf.env.append_unique("CFLAGS", [enable])
-
-    def disable_c_error(self, error_name):
-        enable, disable = self.check_cc("-Werror=", "-Wno-error=", error_name)
-        if disable:
-            self.conf.env.append_unique("CFLAGS", [disable])
-
-    def enable_c_warning(self, warn_name):
-        enable, disable = self.check_cc("-W", "-Wno-", warn_name)
-        if enable:
-            self.conf.env.append_unique("CFLAGS", [enable])
-
-    def disable_c_warning(self, warn_name):
-        enable, disable = self.check_cc("-W", "-Wno-", warn_name)
-        if disable:
-            self.conf.env.append_unique("CFLAGS", [disable])
-
-    def enable_cxx_warning(self, warn_name):
-        enable, disable = self.check_cxx("-W", "-Wno-", warn_name)
-        if enable:
-            self.conf.env.append_unique("CXXFLAGS", [enable])
-
-    def disable_cxx_warning(self, warn_name):
-        enable, disable = self.check_cxx("-W", "-Wno-", warn_name)
-        if disable:
-            self.conf.env.append_unique("CXXFLAGS", [disable])
-
-    def enable_c_feature(self, feature_name):
-        enable, disable = self.check_cc("-f", "-fno-", feature_name)
-        if enable:
-            self.conf.env.append_unique("CFLAGS", [enable])
-
-    def disable_c_feature(self, feature_name):
-        enable, disable = self.check_cc("-f", "-fno-", feature_name)
-        if disable:
-            self.conf.env.append_unique("CFLAGS", [disable])
-
-    def enable_cxx_feature(self, feature_name):
-        enable, disable = self.check_cxx("-f", "-fno-", feature_name)
-        if enable:
-            self.conf.env.append_unique("CXXFLAGS", [enable])
-
-    def disable_cxx_feature(self, feature_name):
-        enable, disable = self.check_cxx("-f", "-fno-", feature_name)
-        if disable:
-            self.conf.env.append_unique("CXXFLAGS", [disable])
-
-    def enable_feature(self, feature_name):
-        self.enable_c_feature(feature_name)
-        self.enable_cxx_feature(feature_name)
