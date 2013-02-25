@@ -22,7 +22,7 @@
 
 #include <glib.h>
 
-#include "opusfile/opusfile.h"
+#include <opusfile.h>
 
 #include <xmms/xmms_xformplugin.h>
 #include <xmms/xmms_sample.h>
@@ -122,9 +122,8 @@ xmms_opus_destroy (xmms_xform_t *xform)
 	g_free (data);
 }
 
-static size_t
-opus_callback_read (void *ptr, size_t size, size_t nmemb,
-                      void *datasource)
+static int
+opus_callback_read (void *datasource, unsigned char *ptr, int size)
 {
 	xmms_opus_data_t *data;
 	xmms_xform_t *xform = datasource;
@@ -136,9 +135,9 @@ opus_callback_read (void *ptr, size_t size, size_t nmemb,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
 
-	ret = xmms_xform_read (xform, ptr, size * nmemb, &error);
+	ret = xmms_xform_read (xform, ptr, size, &error);
 
-	return ret / size;
+	return ret;
 }
 
 static int

@@ -1,13 +1,9 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    for pkg in ("opus", "ogg"):
+    for pkg in ("opus", "ogg", "opusfile"):
         if not conf.check_cfg(package=pkg, uselib_store=pkg, args="--cflags --libs"):
             return False
     return True
 
-def plugin_build(bld, obj):
-    obj.source.extend(bld.path.ant_glob("opusfile/*.c"))
-    obj.includes += ' opusfile'
-
-configure, build = plugin('opus', configure=plugin_configure, build=plugin_build, libs=["ogg", "opus"])
+configure, build = plugin('opus', configure=plugin_configure, libs=["ogg", "opus", "opusfile"])
