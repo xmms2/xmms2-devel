@@ -27,13 +27,14 @@ daap_url_append_meta (gchar *url, GSList *meta_list);
 
 guint
 daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err) {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn;
 	cc_data_t *cc_data;
 
 	guint session_id = 0;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+
+	if (!conn) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC,
 		                "Connection to server failed! "
 		                "Please make sure the url is of the form:\n"
@@ -41,14 +42,13 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 		return 0;
 	}
 
-	cc_data = daap_request_data (chan, "/login", host, request_id);
+	cc_data = daap_request_data (conn->chan, "/login", host, request_id);
 	if (cc_data) {
 		session_id = cc_data->session_id;
 		cc_data_free (cc_data);
 	}
 
-	g_io_channel_shutdown (chan, TRUE, NULL);
-	g_io_channel_unref (chan);
+	daap_conn_free (conn);
 
 	return session_id;
 }
@@ -56,27 +56,26 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 guint
 daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn = NULL;
 	gchar *request;
 	cc_data_t *cc_data;
 	guint revision_id = 0;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+	if (!conn) {
 		return 0;
 	}
 
 	request = g_strdup_printf ("/update?session-id=%d", session_id);
 
-	cc_data = daap_request_data (chan, request, host, request_id);
+	cc_data = daap_request_data (conn->chan, request, host, request_id);
 	if (cc_data) {
 		revision_id = cc_data->revision_id;
 		cc_data_free (cc_data);
 	}
 
 	g_free (request);
-	g_io_channel_shutdown (chan, TRUE, NULL);
-	g_io_channel_unref (chan);
+	daap_conn_free (conn);
 
 	return revision_id;
 }
@@ -84,22 +83,21 @@ daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 gboolean
 daap_command_logout (gchar *host, gint port, guint session_id, guint request_id)
 {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn = NULL;
 	gchar *request;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+	if (!conn) {
 		return FALSE;
 	}
 
 	request = g_strdup_printf ("/logout?session-id=%d", session_id);
 
 	/* there is no cc_data generated, so we don't need to store it anywhere */
-	daap_request_data (chan, request, host, request_id);
+	daap_request_data (conn->chan, request, host, request_id);
 
 	g_free (request);
-	g_io_channel_shutdown (chan, TRUE, NULL);
-	g_io_channel_unref (chan);
+	daap_conn_free (conn);
 
 	return TRUE;
 }
@@ -108,28 +106,27 @@ GSList *
 daap_command_db_list (gchar *host, gint port, guint session_id,
                       guint revision_id, guint request_id)
 {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn = NULL;
 	gchar *request;
 	cc_data_t *cc_data;
 	GSList *db_id_list = NULL;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+	if (!conn) {
 		return NULL;
 	}
 
 	request = g_strdup_printf ("/databases?session-id=%d&revision-id=%d",
 	                           session_id, revision_id);
 
-	cc_data = daap_request_data (chan, request, host, request_id);
+	cc_data = daap_request_data (conn->chan, request, host, request_id);
 	g_free (request);
 	if (cc_data) {
 		db_id_list = cc_record_list_deep_copy (cc_data->record_list);
 		cc_data_free (cc_data);
 	}
 
-	g_io_channel_shutdown (chan, TRUE, NULL);
-	g_io_channel_unref (chan);
+	daap_conn_free (conn);
 
 	return db_id_list;
 }
@@ -138,15 +135,15 @@ GSList *
 daap_command_song_list (gchar *host, gint port, guint session_id,
                         guint revision_id, guint request_id, gint db_id)
 {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn = NULL;
 	gchar *request;
 	cc_data_t *cc_data;
 
 	GSList * song_list;
 	GSList * meta_items = NULL;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+	if (!conn) {
 		return NULL;
 	}
 
@@ -165,30 +162,29 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 		request = daap_url_append_meta (request, meta_items);
 	}
 
-	cc_data = daap_request_data (chan, request, host, request_id);
+	cc_data = daap_request_data (conn->chan, request, host, request_id);
 	song_list = cc_record_list_deep_copy (cc_data->record_list);
 
 	g_free (request);
 	cc_data_free (cc_data);
-	g_io_channel_shutdown (chan, TRUE, NULL);
-	g_io_channel_unref (chan);
+	daap_conn_free (conn);
 	g_slist_foreach (meta_items, (GFunc) g_free, NULL);
 	g_slist_free (meta_items);
 
 	return song_list;
 }
 
-GIOChannel *
+xmms_daap_conn_t *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
                           gint dbid, gchar *song, guint *filesize)
 {
-	GIOChannel *chan;
+	xmms_daap_conn_t *conn = NULL;
 	gchar *request;
 	gboolean ok;
 
-	chan = daap_open_connection (host, port);
-	if (!chan) {
+	conn = daap_conn_new (host, port);
+	if (!conn) {
 		return NULL;
 	}
 
@@ -196,14 +192,14 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 	                           "?session-id=%d",
 	                           dbid, song, session_id);
 
-	ok = daap_request_stream (chan, request, host, request_id, filesize);
+	ok = daap_request_stream (conn->chan, request, host, request_id, filesize);
 	g_free (request);
 
 	if (!ok) {
 		return NULL;
 	}
 
-	return chan;
+	return conn;
 }
 
 static cc_data_t *

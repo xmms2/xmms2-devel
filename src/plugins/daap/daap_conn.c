@@ -31,113 +31,86 @@
 #include <xmmsc/xmmsc_ipc_msg.h>
 #include <xmmsc/xmmsc_sockets.h>
 
-GIOChannel *
-daap_open_connection (gchar *host, gint port)
+
+static GIOChannel *
+daap_conn_make_iochannel (GSocketConnection *connection)
 {
-	gint ai_status;
-	gint sockfd;
-	struct sockaddr_in server;
-	struct addrinfo *ai_hint, *ai_result;
-	GIOChannel *sock_chan;
-	GError *err = NULL;
-
-	sockfd = socket (AF_INET, SOCK_STREAM, 0);
-	if (sockfd == -1) {
-		return NULL;
-	}
-
-	sock_chan = g_io_channel_unix_new (sockfd);
-	if (!g_io_channel_get_close_on_unref (sock_chan)) {
-		g_io_channel_set_close_on_unref (sock_chan, TRUE);
-	}
+	GError     *err       = NULL;
+	int         fd        = g_socket_get_fd (g_socket_connection_get_socket (connection));
+	GIOChannel *sock_chan = g_io_channel_unix_new (fd);
 
 	g_io_channel_set_flags (sock_chan, G_IO_FLAG_NONBLOCK, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting nonblock flag: %s\n", err->message);
 		g_io_channel_unref (sock_chan);
+		g_clear_error (&err);
 		return NULL;
-	}
-
-	/* call xmms_getaddrinfo() to convert a hostname to ip */
-
-	ai_hint = g_new0 (struct addrinfo, 1);
-	/* FIXME sometime in the future, we probably want to append
-	 *       " | AF_INET6" for IPv6 support */
-	ai_hint->ai_family = AF_INET;
-
-	while ((ai_status = xmms_getaddrinfo (host, NULL, ai_hint, &ai_result))) {
-		if (ai_status != EAI_AGAIN) {
-			XMMS_DBG ("Error with getaddrinfo(): %s", gai_strerror (ai_status));
-			g_io_channel_unref (sock_chan);
-			return NULL;
-		}
-	}
-
-	memset (&server, 0, sizeof (struct sockaddr_in));
-
-	server.sin_addr = ((struct sockaddr_in *) ai_result->ai_addr)->sin_addr;
-	server.sin_family = AF_INET;
-	server.sin_port = htons (port);
-
-	g_free (ai_hint);
-	xmms_freeaddrinfo (ai_result);
-
-	while (42) {
-		fd_set fds;
-		struct timeval tmout;
-		gint sret;
-		gint err = 0;
-		guint errsize = sizeof (err);
-
-		tmout.tv_sec = 3;
-		tmout.tv_usec = 0;
-
-		sret = connect (sockfd,
-		                (struct sockaddr *) &server,
-		                sizeof (struct sockaddr_in));
-
-		if (sret == 0) {
-			break;
-		} else if (sret == -1 && errno != XMMS_EINPROGRESS) {
-			xmms_log_error ("connect says: %s", strerror (errno));
-			g_io_channel_unref (sock_chan);
-			return NULL;
-		}
-
-		FD_ZERO (&fds);
-		FD_SET (sockfd, &fds);
-
-		sret = select (sockfd + 1, NULL, &fds, NULL, &tmout);
-		if (sret == 0 || sret == SOCKET_ERROR) {
-			g_io_channel_unref (sock_chan);
-			return NULL;
-		}
-
-		/** Haha, lol lol ololo sockets in POSIX */
-		if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, &err, &errsize) < 0) {
-			g_io_channel_unref (sock_chan);
-			return NULL;
-		}
-
-		if (err != 0) {
-			xmms_log_error ("Connect call failed!");
-			g_io_channel_unref (sock_chan);
-			return NULL;
-		}
-
-		if (FD_ISSET (sockfd, &fds)) {
-			break;
-		}
 	}
 
 	g_io_channel_set_encoding (sock_chan, NULL, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting encoding: %s\n", err->message);
 		g_io_channel_unref (sock_chan);
+		g_clear_error (&err);
 		return NULL;
 	}
 
 	return sock_chan;
+}
+
+void
+daap_conn_free (xmms_daap_conn_t *conn)
+{
+	GError *error = NULL;
+
+	g_io_channel_unref (conn->chan);
+	if (!g_io_stream_close (G_IO_STREAM (conn->conn), NULL, &error) && error) {
+		XMMS_DBG ("Error closing IO stream: %s", error->message);
+		g_clear_error (&error);
+	}
+	g_object_unref (conn->conn);
+	g_free (conn);
+}
+
+xmms_daap_conn_t *
+daap_conn_new (gchar *host, gint port)
+{
+	xmms_daap_conn_t         *conn        = NULL;
+	GSocketClient            *client      = NULL;
+	GError                   *error         = NULL;
+
+	conn = g_new0 (xmms_daap_conn_t, 1);
+	client = g_socket_client_new ();
+	conn->conn = g_socket_client_connect_to_host (client, host, port, NULL, &error);
+	g_object_unref (client);
+
+	if (!conn->conn) {
+		if (error)
+			xmms_log_error ("Error with g_socket_client_connect_to_host: %s", error->message);
+		else
+			xmms_log_error ("Error with g_socket_client_connect_to_host");
+		goto err;
+	}
+
+	conn->chan = daap_conn_make_iochannel (conn->conn);
+	if (!conn->chan) {
+		goto err_conn;
+	}
+
+	if (G_IS_TCP_CONNECTION (conn->conn))
+		g_tcp_connection_set_graceful_disconnect (G_TCP_CONNECTION (conn->conn), TRUE);
+
+	return conn;
+
+ err_conn:
+		if (!g_io_stream_close (G_IO_STREAM (conn->conn), NULL, &error) && error) {
+			XMMS_DBG ("Error closing IO stream: %s", error->message);
+			g_clear_error (&error);
+		}
+		g_object_unref (conn->conn);
+ err:
+		g_free (conn);
+		return NULL;
 }
 
 gchar *

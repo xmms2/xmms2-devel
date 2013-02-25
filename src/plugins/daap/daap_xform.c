@@ -24,6 +24,7 @@
 #include "daap_cmd.h"
 #include "daap_util.h"
 #include "daap_mdns_browse.h"
+#include "daap_conn.h"
 
 #include <stdlib.h>
 #include <glib.h>
@@ -39,7 +40,7 @@ typedef struct {
 	gchar *host;
 	guint port;
 
-	GIOChannel *channel;
+	xmms_daap_conn_t *conn;
 
 	xmms_error_t status;
 } xmms_daap_data_t;
@@ -334,12 +335,13 @@ xmms_daap_init (xmms_xform_t *xform)
 	/* XXX: see XXX in the browse function above */
 	dbid = ((cc_item_record_t *) dbid_list->data)->dbid;
 	/* want to request a stream, but don't read the data yet */
-	data->channel = daap_command_init_stream (data->host, data->port,
-	                                          login_data->session_id,
-	                                          login_data->revision_id,
-	                                          login_data->request_id, dbid,
-	                                          command, &filesize);
-	if (! data->channel) {
+	data->conn = daap_command_init_stream (data->host, data->port,
+	                                       login_data->session_id,
+	                                       login_data->revision_id,
+	                                       login_data->request_id, dbid,
+	                                       command, &filesize);
+
+	if (! data->conn) {
 		goto init_error;
 	}
 	login_data->request_id++;
@@ -376,8 +378,7 @@ xmms_daap_destroy (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 
-	g_io_channel_shutdown (data->channel, TRUE, NULL);
-	g_io_channel_unref (data->channel);
+	daap_conn_free (data->conn);
 
 	g_free (data->host);
 	g_free (data);
@@ -394,7 +395,7 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 
 	/* request is performed, header is stripped. now read the data. */
 	while (read_bytes == 0) {
-		status = g_io_channel_read_chars (data->channel, buffer, len,
+		status = g_io_channel_read_chars (data->conn->chan, buffer, len,
 		                                  &read_bytes, NULL);
 		if (status == G_IO_STATUS_EOF || status == G_IO_STATUS_ERROR) {
 			break;

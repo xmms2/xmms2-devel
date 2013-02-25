@@ -19,6 +19,9 @@ def plugin_configure(conf):
     conf.check_cfg(package="avahi-client", uselib_store="avahiclient",
             args="--cflags --libs", mandatory=False)
 
+    conf.check_cfg(package='gio-2.0', atleast_version='2.22.0',
+            uselib_store='gio2', args='--cflags --libs')
+
     # First look for Avahi mdns support
     if conf.env.HAVE_AVAHIGLIB and conf.env.HAVE_AVAHICLIENT:
         conf.env.XMMS_DAAP_BACKEND = "avahi"
@@ -35,6 +38,7 @@ def plugin_build(bld, obj):
     _backend = bld.env.XMMS_DAAP_BACKEND
 
     obj.uselib.append("socket")
+    obj.uselib.append("gio2")
     if _backend == "avahi":
         obj.uselib.extend(["avahiglib", "avahiclient"])
     elif _backend == "dnssd":

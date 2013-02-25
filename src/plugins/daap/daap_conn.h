@@ -16,6 +16,8 @@
 #ifndef DAAP_CONN_H
 #define DAAP_CONN_H
 
+#include <gio/gio.h>
+
 #define MAX_REQUEST_LENGTH 1024
 #define MAX_HEADER_LENGTH (1024 * 16)
 
@@ -38,8 +40,15 @@
 #define USER_AGENT "XMMS2 (dev release)"
 /*#define USER_AGENT "iTunes/4.6 (Windows; N)"*/
 
-GIOChannel *
-daap_open_connection (gchar *host, gint port);
+typedef struct {
+	GIOChannel *chan;
+	GSocketConnection *conn;
+} xmms_daap_conn_t;
+
+void daap_conn_free (xmms_daap_conn_t *conn);
+
+xmms_daap_conn_t *
+daap_conn_new (gchar *host, gint port);
 
 gchar *
 daap_generate_request (const gchar *path, gchar *host, gint request_id);

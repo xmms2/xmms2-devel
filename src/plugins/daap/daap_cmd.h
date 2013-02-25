@@ -18,6 +18,7 @@
 
 #include "cc_handlers.h"
 #include <xmms/xmms_error.h>
+#include "daap_conn.h"
 
 /**
  * Log into a DAAP server.
@@ -103,9 +104,10 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
  * @param dbid the database id
  * @param song a string containing the id and file type of the song to stream
  * @param filesize a pointer to an integer that stores the content length 
- * @return: a GIOChannel corresponding to streaming song data
+ * @return: a xmms_daap_conn_t corresponding to streaming song data
  */
-GIOChannel *
+
+xmms_daap_conn_t *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
                           gint dbid, gchar *song, guint *filesize);
