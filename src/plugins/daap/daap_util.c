@@ -19,7 +19,7 @@
 
 #include "daap_util.h"
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 void
 write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize)

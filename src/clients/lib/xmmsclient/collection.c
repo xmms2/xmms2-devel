@@ -19,9 +19,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 
 /** @defgroup Collections Collections

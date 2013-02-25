@@ -19,10 +19,10 @@
  * http://true-audio.com/TTA_Lossless_Audio_Codec_-_Format_Description
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #define TTA_HEADER_SIZE 22
 

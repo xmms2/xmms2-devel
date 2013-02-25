@@ -25,8 +25,8 @@
 #include <time.h>
 #include <errno.h>
 
-#include "xmms_configuration.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmms_configuration.h>
+#include <xmmsc/xmmsc_util.h>
 
 /**
  * internal function used for the function below.

@@ -18,10 +18,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient_util.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 /**
  * Browse available media in a path.

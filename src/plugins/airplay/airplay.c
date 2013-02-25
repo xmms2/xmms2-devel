@@ -13,9 +13,9 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms_configuration.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms_configuration.h>
 
 #include <glib.h>
 #include <unistd.h>

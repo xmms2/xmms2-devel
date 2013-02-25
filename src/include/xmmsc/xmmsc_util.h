@@ -1,8 +1,8 @@
 #ifndef __XMMS_UTILS_H__
 #define __XMMS_UTILS_H__
 
-#include "xmmsc/xmmsc_stdbool.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_stdbool.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 #define XMMS_STRINGIFY_NOEXPAND(x) #x
 #define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)

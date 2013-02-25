@@ -22,7 +22,7 @@
  * and move on to reading the newer serialization code in collsync.c.
  */
 
-#include "xmmspriv/xmms_collection.h"
+#include <xmmspriv/xmms_collection.h>
 
 #include <ctype.h>
 #include <errno.h>

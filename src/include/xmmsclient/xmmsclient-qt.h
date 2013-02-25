@@ -24,8 +24,8 @@
 #include <qobject.h>
 #include <qlist.h>
 
-#include "xmms/xmmsclient.h"
-#include "xmms/xmmswatch.h"
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmswatch.h>
 
 class XMMSClientWatch : public QObject {
 	Q_OBJECT

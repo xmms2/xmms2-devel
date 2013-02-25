@@ -20,8 +20,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_xform.h"
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_xform.h>
 
 static GList *magic_list, *ext_list;
 

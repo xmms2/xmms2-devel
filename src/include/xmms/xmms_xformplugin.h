@@ -20,7 +20,7 @@
 #ifndef __XMMS_XFORMPLUGIN_H__
 #define __XMMS_XFORMPLUGIN_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 #include <glib.h>
 #include <string.h>
@@ -53,12 +53,12 @@
 
 #define XMMS_XFORM_API_VERSION 7
 
-#include "xmms/xmms_error.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_streamtype.h"
-#include "xmms/xmms_config.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_error.h>
+#include <xmms/xmms_plugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_streamtype.h>
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_medialib.h>
 
 
 G_BEGIN_DECLS

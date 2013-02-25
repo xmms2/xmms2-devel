@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmscpriv/xmmsv.h"
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmmsc_util.h>
 
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsc_util.h>
 
 /** @file */
 

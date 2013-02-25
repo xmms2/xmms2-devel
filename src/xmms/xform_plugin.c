@@ -14,10 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_xform_plugin.h"
-#include "xmmspriv/xmms_metadata_mapper.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_xform_plugin.h>
+#include <xmmspriv/xmms_metadata_mapper.h>
+#include <xmms/xmms_log.h>
 
 struct xmms_xform_plugin_St {
 	xmms_plugin_t plugin;

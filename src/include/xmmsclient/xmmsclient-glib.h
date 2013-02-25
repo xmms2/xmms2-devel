@@ -21,8 +21,8 @@
 #define __XMMSCLIENT_GLIB_H__
 
 #include <glib.h>
-#include "xmmsc/xmmsc_compiler.h"
-#include "xmmsclient/xmmsclient.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsclient/xmmsclient.h>
 
 #ifdef __cplusplus
 extern "C" {

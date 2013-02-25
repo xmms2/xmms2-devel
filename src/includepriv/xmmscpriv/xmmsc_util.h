@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_util.h>
 
 /* This is not nice but there's no very clean way around the ugly warnings,
  * glibc does about the same but on compile time (this could be moved to waf?) */

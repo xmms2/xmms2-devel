@@ -20,7 +20,7 @@
  */
 
 
-#include "xmmspriv/xmms_symlink.h"
+#include <xmmspriv/xmms_symlink.h>
 
 gboolean
 xmms_symlink_file (gchar *source, gchar *dest)

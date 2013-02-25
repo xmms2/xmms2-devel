@@ -18,8 +18,8 @@
 #ifndef __XMMSV_BUILD_H__
 #define __XMMSV_BUILD_H__
 
-#include "xmmsc/xmmsv_general.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsv_general.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 #ifdef __cplusplus
 extern "C" {

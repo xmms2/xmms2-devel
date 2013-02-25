@@ -30,8 +30,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "xmms_configuration.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmms_configuration.h>
+#include <xmmsc/xmmsc_util.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>

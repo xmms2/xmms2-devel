@@ -14,8 +14,8 @@
 
 /* An FLV demuxer plugin */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
 
 #define FLV_HDR_SIZE 9
 #define HAS_AUDIO 0x04

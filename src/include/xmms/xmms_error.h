@@ -21,8 +21,8 @@
 #define __XMMS_ERROR_H__
 
 #include <glib.h>
-#include "xmmsc/xmmsc_errorcodes.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_errorcodes.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 #define XMMS_ERROR_MESSAGE_MAXLEN 255
 

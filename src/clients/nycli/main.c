@@ -31,7 +31,7 @@
 #include "readline.h"
 #include "configuration.h"
 
-#include "xmms_configuration.h"
+#include <xmms_configuration.h>
 
 static void loop_select (cli_infos_t *infos);
 

@@ -22,8 +22,8 @@
 #include "cooler-core.h"
 #include "cooler-media.h"
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
 
 #define DEFAULT_SAMPLERATE 44100
 #define DEFAULT_CHANNELS 2

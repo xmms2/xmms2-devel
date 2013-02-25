@@ -20,8 +20,8 @@
  * http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_bindata.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_bindata.h>
 
 #define APE_TAG_FLAG_HAS_HEADER    0x80000000
 #define APE_TAG_FLAG_HAS_FOOTER    0x40000000

@@ -22,11 +22,11 @@
   * This plugin will provide FTP transport.
   */
 
-#include "xmms/xmms.h"
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/util.h"
-#include "xmms/magic.h"
+#include <xmms/xmms.h>
+#include <xmms/plugin.h>
+#include <xmms/transport.h>
+#include <xmms/util.h>
+#include <xmms/magic.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

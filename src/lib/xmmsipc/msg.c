@@ -22,13 +22,13 @@
 #include <time.h>
 #include <assert.h>
 
-#include "xmmscpriv/xmms_list.h"
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmsc/xmmsc_sockets.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsv_coll.h"
+#include <xmmscpriv/xmms_list.h>
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_sockets.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsv_coll.h>
 
 struct xmms_ipc_msg_St {
 	xmmsv_t *bb;

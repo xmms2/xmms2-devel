@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "xmmsc/xmmsc_visualization.h"
+#include <xmmsc/xmmsc_visualization.h>
 
 /* helper functions to send/receive upd packages */
 

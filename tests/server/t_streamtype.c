@@ -18,9 +18,9 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_sample.h"
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_sample.h>
 
 SETUP (streamtype) {
 	g_thread_init (0);

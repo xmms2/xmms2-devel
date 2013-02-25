@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_xformplugin.h>
 
 /*
  * Function prototypes

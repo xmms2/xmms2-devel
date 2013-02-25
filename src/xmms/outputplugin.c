@@ -14,10 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_outputplugin.h"
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_outputplugin.h>
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
 
 struct xmms_output_plugin_St {
 	xmms_plugin_t plugin;

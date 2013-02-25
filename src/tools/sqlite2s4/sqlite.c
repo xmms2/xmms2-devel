@@ -24,11 +24,11 @@
 #include <string.h>
 #include <glib.h>
 
-#include "xmms/xmms_config.h"
-#include "xmmspriv/xmms_statfs.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmmspriv/xmms_collection.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmms/xmms_config.h>
+#include <xmmspriv/xmms_statfs.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmmspriv/xmms_collection.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 /* increment this whenever there are incompatible db structure changes */
 #define DB_VERSION 36

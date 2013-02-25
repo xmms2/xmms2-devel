@@ -25,12 +25,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsc/xmmsc_ipc_msg.h"
+#include <xmmsc/xmmsc_ipc_msg.h>
 
-#include "xmmscpriv/xmms_list.h"
-#include "xmmsclientpriv/xmmsclient_ipc.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmscpriv/xmms_list.h>
+#include <xmmsclientpriv/xmmsclient_ipc.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 /* needed by connection_St */
 

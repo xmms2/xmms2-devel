@@ -22,13 +22,13 @@
 
 #include <sys/types.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient_ipc.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_errorcodes.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient_ipc.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_errorcodes.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 static void xmmsc_result_restart (xmmsc_result_t *res);
 static void xmmsc_result_notifier_remove (xmmsc_result_t *res, x_list_t *node);

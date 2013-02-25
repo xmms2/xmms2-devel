@@ -13,8 +13,8 @@
  */
 
 #include "s4.h"
-#include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_utils.h"
+#include <xmmspriv/xmms_collection.h>
+#include <xmmspriv/xmms_utils.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

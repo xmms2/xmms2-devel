@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_medialib.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_medialib.h>
+#include <xmms/xmms_object.h>
 #include <string.h>
 
 struct xmms_medialib_session_St {

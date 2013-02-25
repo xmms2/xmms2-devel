@@ -18,12 +18,12 @@
 #ifndef __XMMSC_IPC_H__
 #define __XMMSC_IPC_H__
 
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmsc/xmmsc_stdbool.h>
 //#include <sys/time.h> Should this be in or out?
-#include "xmmsc/xmmsc_ipc_msg.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_sockets.h"
-#include "xmmsclient/xmmsclient.h"
+#include <xmmsc/xmmsc_ipc_msg.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_sockets.h>
+#include <xmmsclient/xmmsclient.h>
 
 #ifdef __cplusplus
 extern "C" {

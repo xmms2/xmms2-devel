@@ -17,9 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmsc/xmmsc_ipc_transport.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
 
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmscpriv/xmmsc_util.h>
 
 #include "socket_unix.h"
 #include "socket_tcp.h"

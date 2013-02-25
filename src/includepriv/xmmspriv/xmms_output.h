@@ -20,9 +20,9 @@
 #ifndef _XMMS_OUTPUT_INT_H_
 #define _XMMS_OUTPUT_INT_H_
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_plugin.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmmspriv/xmms_playlist.h>
+#include <xmmspriv/xmms_plugin.h>
 
 /*
  * Private function prototypes -- do NOT use in plugins.

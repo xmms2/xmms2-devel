@@ -19,9 +19,9 @@
   * @url http://www.mega-nerd.com/libsndfile
   */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #include <glib.h>
 #include <string.h>

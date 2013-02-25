@@ -27,7 +27,7 @@
 #ifndef __X_LIST_H__
 #define __X_LIST_H__
 
-#include "xmmsclientpriv/xmmsclient_util.h"
+#include <xmmsclientpriv/xmmsclient_util.h>
 
 #ifdef __cplusplus
 extern "C" {

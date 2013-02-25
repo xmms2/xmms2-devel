@@ -16,7 +16,7 @@
 
 #include "daap_mdns_browse.h"
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 #include <string.h>
 #include <glib.h>

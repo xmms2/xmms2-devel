@@ -13,7 +13,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
-#include "xmmspriv/xmms_fetch_info.h"
+#include <xmmspriv/xmms_fetch_info.h>
 #include <string.h>
 
 xmms_fetch_info_t *

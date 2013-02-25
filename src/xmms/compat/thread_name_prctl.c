@@ -17,8 +17,8 @@
 #include <sys/prctl.h>
 #include <string.h>
 
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
 
 
 void

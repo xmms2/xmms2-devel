@@ -40,9 +40,9 @@
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
-#include "xmms/xmms_error.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_mediainfo.h"
+#include <xmms/xmms_error.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_mediainfo.h>
 
 /*
  * Public functions

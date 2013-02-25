@@ -1,9 +1,9 @@
 #include <stdlib.h>
-#include "xmmsc/xmmsc_ipc_transport.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
 #include "socket_unix.h"
 #include "socket_tcp.h"
-#include "xmmsc/xmmsc_stringport.h"
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmsc/xmmsc_stringport.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 xmms_ipc_transport_t *
 xmms_ipc_client_init (const char *path)

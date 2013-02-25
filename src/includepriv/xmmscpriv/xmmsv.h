@@ -17,8 +17,8 @@
 #ifndef __XMMSV_INTERNAL_H__
 #define __XMMSV_INTERNAL_H__
 
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 typedef struct xmmsv_dict_internal_St xmmsv_dict_internal_t;
 typedef struct xmmsv_list_internal_St xmmsv_list_internal_t;

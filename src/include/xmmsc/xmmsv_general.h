@@ -19,9 +19,9 @@
 #define __XMMSV_GENERAL_H__
 
 #include <stdarg.h>
-#include "xmmsc/xmmsc_compiler.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsv_coll.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsv_coll.h>
 
 #ifdef __cplusplus
 extern "C" {

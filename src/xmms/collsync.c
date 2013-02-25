@@ -20,13 +20,13 @@
  *  after the last collections-change.
  */
 
-#include "xmmspriv/xmms_collsync.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmmspriv/xmms_utils.h"
+#include <xmmspriv/xmms_collsync.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmmspriv/xmms_utils.h>
 
-#include "xmms/xmms_config.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
 
 #include <errno.h>
 

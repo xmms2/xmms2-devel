@@ -1,8 +1,8 @@
 
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_ringbuf.h"
-#include "xmmspriv/xmms_xform.h"
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_ringbuf.h>
+#include <xmmspriv/xmms_xform.h>
 
 /*
    - producer:

@@ -24,14 +24,14 @@
 
 #include <sys/types.h>
 
-#include "xmmscpriv/xmms_list.h"
+#include <xmmscpriv/xmms_list.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_stringport.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_stringport.h>
+#include <xmmsc/xmmsc_util.h>
 
 
 #define XMMS_MAX_URI_LEN 1024

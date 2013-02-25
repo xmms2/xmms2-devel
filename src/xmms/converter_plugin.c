@@ -16,11 +16,11 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmmspriv/xmms_sample.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmms/xmms_medialib.h"
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmmspriv/xmms_sample.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmms/xmms_medialib.h>
 
 #include <string.h>
 

@@ -19,7 +19,7 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_medialib.h>
 
 xmms_medialib_entry_t xmms_mock_entry (xmms_medialib_t *medialib, gint tracknr, const gchar *artist, const gchar *album, const gchar *title);
 

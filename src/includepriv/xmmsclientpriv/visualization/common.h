@@ -1,7 +1,7 @@
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsc/xmmsc_visualization.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsc/xmmsc_visualization.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 #ifndef __VISUALIZATIONCLIENT_COMMON_H__
 #define __VISUALIZATIONCLIENT_COMMON_H__

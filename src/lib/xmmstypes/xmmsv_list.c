@@ -17,10 +17,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmscpriv/xmmsv.h"
-#include "xmmscpriv/xmms_list.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmms_list.h>
 
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsv.h>
 
 struct xmmsv_list_iter_St {
 	xmmsv_list_internal_t *parent;

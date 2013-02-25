@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "xmmscpriv/xmms_list.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
-#include "xmmsclientpriv/xmmsclient_queue.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmscpriv/xmms_list.h>
+#include <xmmsclientpriv/xmmsclient_util.h>
+#include <xmmsclientpriv/xmmsclient_queue.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 x_queue_t *
 x_queue_new (void)

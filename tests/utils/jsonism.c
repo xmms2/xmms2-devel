@@ -21,7 +21,7 @@
 
 #include <glib.h>
 
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsv.h>
 #include "jsonism.h"
 #include "utils/json.h"
 

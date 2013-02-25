@@ -14,15 +14,15 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms_configuration.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmms/xmms_error.h"
-#include "xmms/xmms_config.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
+#include <xmms_configuration.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmms/xmms_error.h>
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
 
 
 #include <string.h>
@@ -33,8 +33,8 @@
 #include <glib/gstdio.h>
 #include <time.h>
 
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmspriv/xmms_fetch_spec.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmspriv/xmms_fetch_spec.h>
 #include "s4.h"
 
 static s4_condition_t *collection_to_condition (xmms_medialib_session_t *s, xmmsv_coll_t *coll, xmms_fetch_info_t *fetch, xmmsv_t *order);

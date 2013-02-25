@@ -20,12 +20,12 @@
 
 #include <locale.h>
 
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_medialib.h>
 
 #include "server-utils/ipc_call.h"
 #include "utils/value_utils.h"

@@ -28,8 +28,8 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmscpriv/xmmsc_util.h>
 #include "url.h"
 #include "socket_unix.h"
 

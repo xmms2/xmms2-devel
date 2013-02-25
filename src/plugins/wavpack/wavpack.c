@@ -19,9 +19,9 @@
   * @url http://wavpack.com
   */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #include <glib.h>
 #include <math.h>

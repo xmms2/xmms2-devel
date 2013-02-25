@@ -1,5 +1,5 @@
 #include <errno.h>
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmmsc/xmmsc_sockets.h>
 
 
 int xmms_sockets_initialize () {

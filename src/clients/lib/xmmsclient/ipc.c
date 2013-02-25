@@ -18,19 +18,19 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xmmsclient/xmmsclient.h"
+#include <xmmsclient/xmmsclient.h>
 
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
 
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient_ipc.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
-#include "xmmsclientpriv/xmmsclient_queue.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient_ipc.h>
+#include <xmmsclientpriv/xmmsclient_util.h>
+#include <xmmsclientpriv/xmmsclient_queue.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_sockets.h>
 
 
 struct xmmsc_ipc_St {

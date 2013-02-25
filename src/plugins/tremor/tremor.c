@@ -18,7 +18,7 @@
 #include <tremor/ivorbiscodec.h>
 #include <tremor/ivorbisfile.h>
 
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_xformplugin.h>
 
 #include "../vorbis_common/common.c"
 

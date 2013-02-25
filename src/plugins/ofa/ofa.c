@@ -19,8 +19,8 @@
  * Ofa
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
 
 #include <glib.h>
 

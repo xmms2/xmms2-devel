@@ -18,8 +18,8 @@
 #define __SAMPLE_H__
 
 #include <glib.h>
-#include "xmms/xmms_streamtype.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmms/xmms_streamtype.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 G_BEGIN_DECLS
 

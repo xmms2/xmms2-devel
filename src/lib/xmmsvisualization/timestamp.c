@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "xmmsc/xmmsc_visualization.h"
+#include <xmmsc/xmmsc_visualization.h>
 
 /* helper functions to convert timestamps */
 

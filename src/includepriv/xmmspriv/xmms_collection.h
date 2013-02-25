@@ -41,10 +41,10 @@ typedef enum {
 struct xmms_coll_dag_St;
 typedef struct xmms_coll_dag_St xmms_coll_dag_t;
 
-#include "xmms/xmms_error.h"
-#include "xmmsc/xmmsv_coll.h"
-#include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_medialib.h"
+#include <xmms/xmms_error.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmspriv/xmms_playlist.h>
+#include <xmmspriv/xmms_medialib.h>
 
 typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
 

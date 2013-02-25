@@ -15,7 +15,7 @@
  */
 
 
-#include "xmmspriv/xmms_collection.h"
+#include <xmmspriv/xmms_collection.h>
 
 #include <stdio.h>
 #include <string.h>

@@ -26,12 +26,12 @@
 #include <glib.h>
 #include <math.h>
 
-#include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_collection.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
 
 
 /* Internal helper structures */

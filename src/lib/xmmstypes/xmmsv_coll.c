@@ -19,12 +19,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsv_coll.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmscpriv/xmmsv.h"
-#include "xmmscpriv/xmms_list.h"
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmms_list.h>
 
 struct xmmsv_coll_internal_St {
 	xmmsv_coll_type_t type;

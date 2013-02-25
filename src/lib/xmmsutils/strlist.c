@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "xmmsc/xmmsc_strlist.h"
+#include <xmmsc/xmmsc_strlist.h>
 
 /**
  * Convert a list of variable arguments into a list of strings.

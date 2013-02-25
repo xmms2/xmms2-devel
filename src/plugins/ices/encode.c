@@ -27,8 +27,8 @@
 #include <vorbis/vorbisenc.h>
 
 #include "encode.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_sample.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_sample.h>
 
 #define MODULE "encode/"
 

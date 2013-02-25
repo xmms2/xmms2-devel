@@ -17,10 +17,10 @@
 #ifndef __XMMS_PRIV_XFORM_H__
 #define __XMMS_PRIV_XFORM_H__
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmmspriv/xmms_plugin.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmmspriv/xmms_plugin.h>
 
 typedef struct xmms_xform_object_St xmms_xform_object_t;
 

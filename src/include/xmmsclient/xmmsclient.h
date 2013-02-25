@@ -17,12 +17,12 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
-#include "xmmsc/xmmsc_compiler.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsv_coll.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsv_coll.h>
 
 #ifdef __cplusplus
 extern "C" {

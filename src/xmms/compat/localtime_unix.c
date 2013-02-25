@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_localtime.h"
+#include <xmmspriv/xmms_localtime.h>
 
 gboolean
 xmms_localtime (const time_t *tt, struct tm *res)

@@ -20,9 +20,9 @@
 #ifndef __XMMS_PLUGIN_INT_H__
 #define __XMMS_PLUGIN_INT_H__
 
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_config.h"
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_plugin.h>
+#include <xmms/xmms_config.h>
 
 #include <gmodule.h>
 

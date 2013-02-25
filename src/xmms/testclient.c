@@ -4,9 +4,9 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 
-#include "xmms/ipc_transport.h"
-#include "xmms/util.h"
-#include "xmms/ipc_msg.h"
+#include <xmms/ipc_transport.h>
+#include <xmms/util.h>
+#include <xmms/ipc_msg.h>
 
 void xmms_log_debug (const gchar *fmt, ...)
 {

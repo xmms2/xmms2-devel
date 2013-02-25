@@ -1,5 +1,5 @@
 #define _GNU_SOURCE /* semtimedop is a GNU extension */
-#include "xmmsclientpriv/visualization/common.h"
+#include <xmmsclientpriv/visualization/common.h>
 
 #include <sys/shm.h>
 #include <sys/types.h>

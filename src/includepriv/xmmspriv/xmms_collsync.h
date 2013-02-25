@@ -17,7 +17,7 @@
 #ifndef __XMMS_COLLSYNC_H__
 #define __XMMS_COLLSYNC_H__
 
-#include "xmmspriv/xmms_collection.h"
+#include <xmmspriv/xmms_collection.h>
 
 typedef struct xmms_coll_sync_St xmms_coll_sync_t;
 

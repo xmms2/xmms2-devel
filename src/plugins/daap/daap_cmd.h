@@ -17,7 +17,7 @@
 #define DAAP_CMD_H
 
 #include "cc_handlers.h"
-#include "xmms/xmms_error.h"
+#include <xmms/xmms_error.h>
 
 /**
  * Log into a DAAP server.

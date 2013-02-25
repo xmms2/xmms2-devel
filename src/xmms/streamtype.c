@@ -21,9 +21,9 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_xform.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_xform.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_object.h>
 
 
 struct xmms_stream_type_St {

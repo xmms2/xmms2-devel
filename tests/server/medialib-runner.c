@@ -18,10 +18,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_medialib.h>
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"

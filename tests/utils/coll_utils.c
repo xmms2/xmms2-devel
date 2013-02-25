@@ -17,7 +17,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsv.h>
 #include "utils/jsonism.h"
 #include "utils/coll_utils.h"
 #include "utils/value_utils.h"

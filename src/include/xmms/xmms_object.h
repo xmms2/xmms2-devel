@@ -21,10 +21,10 @@
 #define __XMMS_OBJECT_H__
 
 #include <glib.h>
-#include "xmms/xmms_error.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsv_coll.h"
+#include <xmms/xmms_error.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsv_coll.h>
 
 #define XMMS_OBJECT_MID 0x00455574
 

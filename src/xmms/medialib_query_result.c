@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmspriv/xmms_fetch_spec.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmspriv/xmms_fetch_spec.h>
 #include "s4.h"
 
 #include <glib.h>

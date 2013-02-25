@@ -26,10 +26,10 @@
 #include "daap_conn.h"
 #include "daap_util.h"
 
-#include "xmms/xmms_log.h"
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmms/xmms_log.h>
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
+#include <xmmsc/xmmsc_sockets.h>
 
 GIOChannel *
 daap_open_connection (gchar *host, gint port)

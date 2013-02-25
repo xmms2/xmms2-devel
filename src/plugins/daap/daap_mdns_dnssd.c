@@ -19,7 +19,7 @@
 
 #include "daap_mdns_browse.h"
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 typedef struct GMDNS_t GMDNS;
 typedef struct GMDNSServer_t GMDNSServer;

@@ -18,9 +18,9 @@
  */
 
 #include <glib.h>
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_log.h>
 
 static const gchar * const id3_genres[] = {
         "Blues", "Classic Rock", "Country", "Dance",

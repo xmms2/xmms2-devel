@@ -15,7 +15,7 @@
  */
 
 
-#include "xmmspriv/xmms_collection.h"
+#include <xmmspriv/xmms_collection.h>
 #include <sqlite3.h>
 #include <string.h>
 #include <stdlib.h>

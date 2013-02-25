@@ -25,8 +25,8 @@
 #include <glib.h>
 
 
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_statfs.h"
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_statfs.h>
 
 /**
  * This function uses the statfs() call to

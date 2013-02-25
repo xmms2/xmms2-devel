@@ -21,14 +21,14 @@
 #include <signal.h>
 #include <assert.h>
 
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmsc/xmmsc_sockets.h"
-#include "xmmsc/xmmsc_unistd.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_sockets.h>
+#include <xmmsc/xmmsc_unistd.h>
 #include "url.h"
 #include "socket_tcp.h"
 
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmscpriv/xmmsc_util.h>
 
 static void
 xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)

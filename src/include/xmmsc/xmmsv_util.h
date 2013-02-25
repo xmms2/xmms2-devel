@@ -18,7 +18,7 @@
 #ifndef __XMMSV_UTIL_H__
 #define __XMMSV_UTIL_H__
 
-#include "xmmsc/xmmsv_general.h"
+#include <xmmsc/xmmsv_general.h>
 
 #ifdef __cplusplus
 extern "C" {

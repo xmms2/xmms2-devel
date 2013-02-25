@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_thread_name.h"
+#include <xmmspriv/xmms_thread_name.h>
 
 void
 xmms_set_thread_name (const gchar *name)

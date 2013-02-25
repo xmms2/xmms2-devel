@@ -15,8 +15,8 @@
  */
 
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
 
 #include <string.h>
 #include <ao/ao.h>

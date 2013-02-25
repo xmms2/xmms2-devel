@@ -16,7 +16,7 @@
 
 /* Have thread safe localtime when POSIX localtime_r isn't available */
 
-#include "xmmspriv/xmms_localtime.h"
+#include <xmmspriv/xmms_localtime.h>
 
 static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
 

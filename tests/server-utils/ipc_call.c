@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "ipc_call.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_util.h>
 
 struct xmms_future_St {
 	xmms_object_t *object;

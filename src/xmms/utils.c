@@ -24,10 +24,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsc/xmmsc_util.h"
-#include "xmms/xmms_util.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmmsc/xmmsc_strlist.h"
+#include <xmmsc/xmmsc_util.h>
+#include <xmms/xmms_util.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmmsc/xmmsc_strlist.h>
 
 /**
  * Build path to file in xmms2 configuration directory.

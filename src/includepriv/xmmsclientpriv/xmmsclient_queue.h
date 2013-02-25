@@ -2,8 +2,8 @@
 #ifndef __X_QUEUE_H_
 #define __X_QUEUE_H_
 
-#include "xmmsc/xmmsc_stdbool.h"
-#include "xmmscpriv/xmms_list.h"
+#include <xmmsc/xmmsc_stdbool.h>
+#include <xmmscpriv/xmms_list.h>
 
 #ifdef __cplusplus
 extern "C" {

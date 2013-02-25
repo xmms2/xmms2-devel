@@ -20,14 +20,14 @@
 #ifndef __XMMS_PRIV_MEDIALIB_H__
 #define __XMMS_PRIV_MEDIALIB_H__
 
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_medialib.h>
 
 typedef struct xmms_medialib_St xmms_medialib_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
-#include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmspriv/xmms_fetch_spec.h"
+#include <xmmspriv/xmms_collection.h>
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmspriv/xmms_fetch_spec.h>
 #include <s4.h>
 
 xmms_medialib_t *xmms_medialib_init (void);

@@ -18,8 +18,8 @@
 /** @file CoreAudio for MacOSX */
 
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
 
 #undef DEBUG
 #include <CoreServices/CoreServices.h>

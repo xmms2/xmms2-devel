@@ -17,7 +17,7 @@
 #ifndef __XMMS_PLAYLIST_UPDATER_H__
 #define __XMMS_PLAYLIST_UPDATER_H__
 
-#include "xmmspriv/xmms_playlist.h"
+#include <xmmspriv/xmms_playlist.h>
 
 typedef struct xmms_playlist_updater_St xmms_playlist_updater_t;
 

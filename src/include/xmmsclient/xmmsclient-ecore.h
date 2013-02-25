@@ -17,8 +17,8 @@
 #ifndef __XMMSCLIENT_ECORE_H__
 #define __XMMSCLIENT_ECORE_H__
 
-#include "xmmsc/xmmsc_compiler.h"
-#include "xmmsclient/xmmsclient.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsclient/xmmsclient.h>
 
 #ifdef __cplusplus
 extern "C" {

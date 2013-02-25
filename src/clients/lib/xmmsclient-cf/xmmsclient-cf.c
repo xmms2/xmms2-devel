@@ -15,8 +15,8 @@
  */
 
 #include <CoreFoundation/CoreFoundation.h>
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclient/xmmsclient-cf.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-cf.h>
 
 #define	XMMSC_CF_SOURCE_PRIORITY 4
 

@@ -1,7 +1,7 @@
 #ifndef __XMMS_PRIV_UTILS_H__
 #define __XMMS_PRIV_UTILS_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 #define XMMS_BUILD_PATH(...) xmms_build_path (__VA_ARGS__, NULL)
 

@@ -16,7 +16,7 @@
 #ifndef __COLL_UTILS_H__
 #define __COLL_UTILS_H__
 
-#include "xmmsc/xmmsv_coll.h"
+#include <xmmsc/xmmsv_coll.h>
 
 xmmsv_coll_t *xmmsv_coll_from_string (const char *data);
 xmmsv_coll_t *xmmsv_coll_from_dict (xmmsv_t *data);

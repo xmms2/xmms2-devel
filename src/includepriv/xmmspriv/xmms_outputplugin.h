@@ -18,8 +18,8 @@
 #ifndef _XMMS_OUTPUTPLUGIN_INT_H_
 #define _XMMS_OUTPUTPLUGIN_INT_H_
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmmspriv/xmms_plugin.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmmspriv/xmms_plugin.h>
 
 xmms_plugin_t *xmms_output_plugin_new (void);
 gboolean xmms_output_plugin_verify (xmms_plugin_t *_plugin);

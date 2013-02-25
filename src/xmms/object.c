@@ -14,9 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_log.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_log.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 #include <stdarg.h>
 #include <string.h>

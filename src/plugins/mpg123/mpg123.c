@@ -35,9 +35,9 @@
  *  for retrieval here, or just keep the id3 tags there...
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #include <stdio.h>
 #include <glib.h>

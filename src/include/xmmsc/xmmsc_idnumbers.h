@@ -17,7 +17,7 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 /* Don't forget to up this when protocol changes */
 #define XMMS_IPC_PROTOCOL_VERSION 21

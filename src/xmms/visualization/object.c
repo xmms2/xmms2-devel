@@ -18,9 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "xmms/xmms_object.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_sample.h"
+#include <xmms/xmms_object.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_sample.h>
 
 #include "common.h"
 

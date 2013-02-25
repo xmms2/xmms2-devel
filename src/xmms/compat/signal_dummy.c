@@ -20,8 +20,8 @@
  */
 
 
-#include "xmmspriv/xmms_signal.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_signal.h>
+#include <xmms/xmms_object.h>
 
 void
 xmms_signal_block (void)

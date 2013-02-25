@@ -20,9 +20,9 @@
  *  pshuffle.
  */
 
-#include "xmmspriv/xmms_playlist_updater.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_playlist_updater.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
 #include <glib.h>
 
 static void xmms_playlist_updater_destroy (xmms_object_t *object);

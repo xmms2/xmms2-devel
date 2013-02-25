@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "xmmscpriv/xmmsv.h"
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 static xmmsv_t *duplicate_dict_value (xmmsv_t *val);
 static xmmsv_t *duplicate_list_value (xmmsv_t *val);

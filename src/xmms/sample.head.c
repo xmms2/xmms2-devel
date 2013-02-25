@@ -17,10 +17,10 @@
 
 #include <glib.h>
 #include <math.h>
-#include "xmmspriv/xmms_sample.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_sample.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_log.h>
 
 /**
   * @defgroup Sample Sample Converter

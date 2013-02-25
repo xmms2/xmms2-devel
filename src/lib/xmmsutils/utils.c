@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmms_configuration.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmms_configuration.h>
+#include <xmmsc/xmmsc_util.h>
 
 /**
  * Get the default connection path.

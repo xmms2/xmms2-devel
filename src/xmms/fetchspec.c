@@ -13,9 +13,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
-#include "xmmspriv/xmms_fetch_spec.h"
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_fetch_spec.h>
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmms/xmms_log.h>
 #include <string.h>
 #include <stdlib.h>
 

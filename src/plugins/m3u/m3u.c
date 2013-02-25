@@ -17,10 +17,10 @@
 
 
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmms/xmms_util.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmms/xmms_util.h>
+#include <xmms/xmms_log.h>
 
 #include <glib.h>
 #include <string.h>

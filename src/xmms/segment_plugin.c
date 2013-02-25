@@ -16,10 +16,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "xmms/xmms_sample.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_error.h"
+#include <xmms/xmms_sample.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_error.h>
 
 /*
  * Data structure

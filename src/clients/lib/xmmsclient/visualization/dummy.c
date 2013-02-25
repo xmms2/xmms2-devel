@@ -1,4 +1,4 @@
-#include "xmmsclientpriv/visualization/common.h"
+#include <xmmsclientpriv/visualization/common.h>
 
 xmmsc_result_t *
 setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)

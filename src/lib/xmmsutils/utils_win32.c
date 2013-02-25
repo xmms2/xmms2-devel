@@ -22,7 +22,7 @@
 #include <windows.h>
 #include <time.h>
 
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_util.h>
 
 /**
  * Get the absolute path to the user config dir.

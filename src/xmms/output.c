@@ -22,18 +22,18 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "xmmspriv/xmms_output.h"
-#include "xmmspriv/xmms_ringbuf.h"
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_sample.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_outputplugin.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_config.h"
+#include <xmmspriv/xmms_output.h>
+#include <xmmspriv/xmms_ringbuf.h>
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_sample.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_outputplugin.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_config.h>
 
 #define VOLUME_MAX_CHANNELS 128
 

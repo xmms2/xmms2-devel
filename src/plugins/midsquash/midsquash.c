@@ -33,10 +33,10 @@
  *  file joined one after the other, just without the "MTrk" text.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_log.h>
 
 #include <glib.h>
 #include <string.h>

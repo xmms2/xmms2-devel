@@ -17,11 +17,11 @@
 #include <glib.h>
 #include <string.h>
 
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_config.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_config.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
 
 
 /**

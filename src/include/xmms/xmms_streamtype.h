@@ -20,7 +20,7 @@
 #ifndef __XMMS_STREAMTYPE_H__
 #define __XMMS_STREAMTYPE_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 #include <glib.h>
 #include <string.h>

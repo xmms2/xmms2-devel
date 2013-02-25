@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <api68/api68.h>
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_xformplugin.h>
 
 typedef void *(*sc68_alloc_t) (unsigned);
 

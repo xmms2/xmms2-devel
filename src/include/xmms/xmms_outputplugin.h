@@ -23,13 +23,13 @@
 #include <glib.h>
 #include <string.h> /* for memset() */
 
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_error.h"
-#include "xmms/xmms_config.h"
-#include "xmms/xmms_streamtype.h"
-#include "xmms/xmms_medialib.h"
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_plugin.h>
+#include <xmms/xmms_error.h>
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_streamtype.h>
+#include <xmms/xmms_medialib.h>
 
 G_BEGIN_DECLS
 

@@ -24,8 +24,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <glib.h>
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_localtime.h"
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_localtime.h>
 
 static gchar *logts_format = NULL;
 static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);

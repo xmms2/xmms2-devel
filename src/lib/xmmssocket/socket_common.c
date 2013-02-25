@@ -1,5 +1,5 @@
-#include "xmmsc/xmmsc_sockets.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <xmmsc/xmmsc_sockets.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 #ifdef HAVE_WSPIAPI
 #include <wspiapi.h>

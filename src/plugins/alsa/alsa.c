@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
 
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>

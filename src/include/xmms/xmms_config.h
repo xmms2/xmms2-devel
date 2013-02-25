@@ -18,7 +18,7 @@
 #define __XMMS_CONFIG_H__
 
 #include <glib.h>
-#include "xmms/xmms_object.h"
+#include <xmms/xmms_object.h>
 
 G_BEGIN_DECLS
 

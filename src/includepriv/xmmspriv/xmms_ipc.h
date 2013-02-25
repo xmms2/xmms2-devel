@@ -1,7 +1,7 @@
 #ifndef __XMMS_PRIV_IPC_H__
 #define __XMMS_PRIV_IPC_H__
 
-#include "xmms/xmms_ipc.h"
+#include <xmms/xmms_ipc.h>
 
 typedef struct xmms_ipc_St xmms_ipc_t;
 

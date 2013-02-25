@@ -20,7 +20,7 @@
  */
 
 
-#include "xmmspriv/xmms_checkroot.h"
+#include <xmmspriv/xmms_checkroot.h>
 
 #include <unistd.h>
 #include <sys/types.h>

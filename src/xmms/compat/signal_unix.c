@@ -22,10 +22,10 @@
  */
 
 
-#include "xmmspriv/xmms_signal.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_signal.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_object.h>
 
 #include <stdlib.h>
 #include <string.h>

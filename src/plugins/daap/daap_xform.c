@@ -18,8 +18,8 @@
  * of the servers.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
 
 #include "daap_cmd.h"
 #include "daap_util.h"

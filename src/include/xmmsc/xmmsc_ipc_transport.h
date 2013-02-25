@@ -18,8 +18,8 @@
 #ifndef XMMS_IPC_TRANSPORT_H
 #define XMMS_IPC_TRANSPORT_H
 
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_sockets.h>
 
 typedef struct xmms_ipc_transport_St xmms_ipc_transport_t;
 

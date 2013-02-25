@@ -18,10 +18,10 @@
 #ifndef __XMMS_VISUALIZATION_H__
 #define __XMMS_VISUALIZATION_H__
 
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_error.h"
-#include "xmms/xmms_sample.h"
-#include "xmmspriv/xmms_output.h"
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_error.h>
+#include <xmms/xmms_sample.h>
+#include <xmmspriv/xmms_output.h>
 
 struct xmms_visualization_St;
 typedef struct xmms_visualization_St xmms_visualization_t;

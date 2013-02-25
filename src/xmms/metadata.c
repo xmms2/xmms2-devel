@@ -21,11 +21,11 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_metadata_mapper.h"
-#include "xmmspriv/xmms_utils.h"
+#include <xmmspriv/xmms_metadata_mapper.h>
+#include <xmmspriv/xmms_utils.h>
 
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_xformplugin.h>
 
 static gboolean xmms_xform_metadata_parse_string (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 static gboolean xmms_xform_metadata_parse_tracknumber (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);

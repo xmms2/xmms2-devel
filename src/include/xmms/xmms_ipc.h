@@ -18,8 +18,8 @@
 #define __XMMS_IPC_H__
 
 #include <glib.h>
-#include "xmms/xmms_object.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmms/xmms_object.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 G_BEGIN_DECLS
 

@@ -16,8 +16,8 @@
 
 #include <stdio.h>
 
-#include "xmmscpriv/xmmsv.h"
-#include "xmmscpriv/xmmsc_util.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 
 /**

@@ -17,7 +17,7 @@
 #ifndef __XMMS_UTIL_H__
 #define __XMMS_UTIL_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 #include <glib.h>
 

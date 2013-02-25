@@ -18,10 +18,10 @@
 #define __XMMS_PRIV_FETCH_SPEC_H__
 
 #include <glib.h>
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmsc/xmmsv_coll.h"
-#include "xmmsc/xmmsv.h"
-#include "xmms/xmms_error.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsv.h>
+#include <xmms/xmms_error.h>
 
 typedef enum {
 	AGGREGATE_FIRST,

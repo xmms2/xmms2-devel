@@ -17,7 +17,7 @@
 #ifndef __XMMS_BINDATA_H__
 #define __XMMS_BINDATA_H__
 
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 #include <glib.h>
 

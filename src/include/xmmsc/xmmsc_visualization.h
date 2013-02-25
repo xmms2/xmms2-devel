@@ -32,8 +32,8 @@ extern "C" {
 
 #include <sys/time.h>
 
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_sockets.h>
 
 double tv2ts (struct timeval *t);
 double net2ts (int32_t* s);

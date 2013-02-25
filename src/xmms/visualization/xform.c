@@ -19,10 +19,10 @@
  *
  */
 
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_output.h"
-#include "xmmspriv/xmms_visualization.h"
-#include "xmms/xmms_log.h"
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_output.h>
+#include <xmmspriv/xmms_visualization.h>
+#include <xmms/xmms_log.h>
 
 #include <glib.h>
 #include <stdio.h>

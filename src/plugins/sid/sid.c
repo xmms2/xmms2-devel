@@ -15,8 +15,8 @@
  */
 
 
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_xformplugin.h>
 
 
 #include "sidplay_wrapper.h"

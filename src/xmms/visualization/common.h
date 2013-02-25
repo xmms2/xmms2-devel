@@ -19,9 +19,9 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_visualization.h"
-#include "xmmsc/xmmsc_visualization.h"
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_visualization.h>
+#include <xmmsc/xmmsc_visualization.h>
 
 /**
  * The structures for a vis client

@@ -14,10 +14,10 @@
  *  GNU General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_bindata.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_bindata.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
 
 #include <stdio.h>
 #include <stdlib.h>

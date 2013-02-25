@@ -24,7 +24,7 @@
 #include "cc_handlers.h"
 #include "daap_conn.h"
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 #define DMAP_BYTES_REMAINING ((gint) (data_end - current_data))
 
