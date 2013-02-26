@@ -65,7 +65,7 @@ int xmmsv_coll_attribute_get_value (xmmsv_t *coll, const char *key, xmmsv_t **va
 xmmsv_t *xmmsv_coll_attributes_get (xmmsv_t *coll) XMMS_PUBLIC;
 void xmmsv_coll_attributes_set (xmmsv_t *coll, xmmsv_t *attributes) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_coll_universe (void) XMMS_PUBLIC;
+xmmsv_t *xmmsv_coll_universe (void) XMMS_PUBLIC XMMS_DEPRECATED;
 
 xmmsv_t *xmmsv_coll_add_order_operator (xmmsv_t *coll, xmmsv_t *order) XMMS_PUBLIC;
 xmmsv_t *xmmsv_coll_add_order_operators (xmmsv_t *coll, xmmsv_t *order) XMMS_PUBLIC;
