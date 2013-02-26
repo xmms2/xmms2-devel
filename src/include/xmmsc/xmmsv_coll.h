@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-typedef xmmsv_t xmmsv_coll_t;
+typedef xmmsv_t xmmsv_coll_t XMMS_DEPRECATED;
 
 xmmsv_t *xmmsv_coll_new (xmmsv_coll_type_t type) XMMS_PUBLIC XMMS_DEPRECATED;
 xmmsv_t *xmmsv_coll_ref (xmmsv_t *coll) XMMS_PUBLIC XMMS_DEPRECATED;
