@@ -493,7 +493,7 @@ static void
 updater_remove_directory (updater_t *updater, GFile *file)
 {
 	xmmsc_result_t *res;
-	xmmsv_coll_t *univ, *coll;
+	xmmsv_t *univ, *coll;
 	gchar *path, *pattern, *encoded;
 
 	path = g_file_get_path (file);
@@ -503,13 +503,13 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	pattern = g_strdup_printf ("file://%s/*", encoded);
 	g_free (encoded);
 
-	univ = xmmsv_coll_universe ();
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	univ = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
 
 	xmmsv_coll_add_operand (coll, univ);
-	xmmsv_coll_attribute_set (coll, "field", "url");
-	xmmsv_coll_attribute_set (coll, "value", pattern);
-	xmmsv_coll_attribute_set (coll, "case-sensitive", "true");
+	xmmsv_coll_attribute_set_string (coll, "field", "url");
+	xmmsv_coll_attribute_set_string (coll, "value", pattern);
+	xmmsv_coll_attribute_set_string (coll, "case-sensitive", "true");
 
 	g_debug ("remove '%s' from mlib", pattern);
 
@@ -517,8 +517,8 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	xmmsc_result_notifier_set (res, updater_remove_directory_by_id, updater);
 	xmmsc_result_unref (res);
 
-	xmmsv_coll_unref (coll);
-	xmmsv_coll_unref (univ);
+	xmmsv_unref (coll);
+	xmmsv_unref (univ);
 
 	g_free (pattern);
 }
