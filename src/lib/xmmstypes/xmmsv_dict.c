@@ -719,7 +719,7 @@ GEN_DICT_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_EXTRACTOR_FUNC (int, int32_t)
 
 int
-xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_coll_t **r)
+xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_t **r)
 {
 	return xmmsv_dict_get (val, key, r);
 }
@@ -743,7 +743,7 @@ GEN_DICT_SET_FUNC (string, const char *)
 GEN_DICT_SET_FUNC (int, int32_t)
 
 int
-xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_coll_t *elem)
+xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_t *elem)
 {
 	return xmmsv_dict_set (dict, key, elem);
 }
@@ -770,8 +770,7 @@ GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
 GEN_DICT_ITER_EXTRACTOR_FUNC (int, int32_t)
 
 int
-xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key,
-                           xmmsv_coll_t **r)
+xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **r)
 {
 	return xmmsv_dict_iter_pair (it, key, r);
 }
@@ -795,7 +794,7 @@ GEN_DICT_ITER_SET_FUNC (string, const char *)
 GEN_DICT_ITER_SET_FUNC (int, int32_t)
 
 int
-xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_coll_t *elem)
+xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_t *elem)
 {
 	return xmmsv_dict_iter_set (it, elem);
 }

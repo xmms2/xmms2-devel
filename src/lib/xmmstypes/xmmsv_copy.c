@@ -126,10 +126,10 @@ duplicate_list_value (xmmsv_t *val)
 
 }
 
-xmmsv_coll_t *
-xmmsv_coll_copy (xmmsv_coll_t *orig_coll)
+xmmsv_t *
+xmmsv_coll_copy (xmmsv_t *orig_coll)
 {
-	xmmsv_coll_t *new_coll, *coll_elem;
+	xmmsv_t *new_coll;
 	xmmsv_list_iter_t *it;
 	xmmsv_dict_iter_t *itd;
 	xmmsv_t *v, *list, *dict, *copy;
@@ -137,7 +137,7 @@ xmmsv_coll_copy (xmmsv_coll_t *orig_coll)
 	int32_t i;
 	const char *s;
 
-	new_coll = xmmsv_coll_new (xmmsv_coll_get_type (orig_coll));
+	new_coll = xmmsv_new_coll (xmmsv_coll_get_type (orig_coll));
 
 	list = xmmsv_coll_idlist_get (orig_coll);
 	x_return_val_if_fail (xmmsv_get_list_iter (list, &it), NULL);
@@ -153,8 +153,7 @@ xmmsv_coll_copy (xmmsv_coll_t *orig_coll)
 	x_return_val_if_fail (xmmsv_get_list_iter (list, &it), NULL);
 	while (xmmsv_list_iter_valid (it)) {
 		xmmsv_list_iter_entry (it, &v);
-		xmmsv_get_coll (v, &coll_elem);
-		copy = xmmsv_coll_copy (coll_elem);
+		copy = xmmsv_coll_copy (v);
 		xmmsv_coll_add_operand (new_coll, copy);
 		xmmsv_unref (copy);
 		xmmsv_list_iter_next (it);
@@ -166,7 +165,7 @@ xmmsv_coll_copy (xmmsv_coll_t *orig_coll)
 	while (xmmsv_dict_iter_valid (itd)) {
 		xmmsv_dict_iter_pair (itd, &key, &v);
 		xmmsv_get_string (v, &s);
-		xmmsv_coll_attribute_set (new_coll, key, s);
+		xmmsv_coll_attribute_set_string (new_coll, key, s);
 		xmmsv_dict_iter_next (itd);
 	}
 	xmmsv_dict_iter_explicit_destroy (itd);

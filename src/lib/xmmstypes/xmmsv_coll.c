@@ -78,21 +78,21 @@ xmmsv_coll_new (xmmsv_coll_type_t type)
 }
 
 /**
- * Increases the references for the #xmmsv_coll_t
+ * Increases the references for the #xmmsv_t
  *
  * @deprecated Use xmmsv_ref instead.
  *
  * @param coll the collection to reference.
  * @return coll
  */
-xmmsv_coll_t *
-xmmsv_coll_ref (xmmsv_coll_t *coll)
+xmmsv_t *
+xmmsv_coll_ref (xmmsv_t *coll)
 {
 	return xmmsv_ref (coll);
 }
 
 /**
- * Decreases the references for the #xmmsv_coll_t
+ * Decreases the references for the #xmmsv_t
  * When the number of references reaches 0 it will
  * be freed and all its operands unreferenced as well.
  *
@@ -101,7 +101,7 @@ xmmsv_coll_ref (xmmsv_coll_t *coll)
  * @param coll the collection to unref.
  */
 void
-xmmsv_coll_unref (xmmsv_coll_t *coll)
+xmmsv_coll_unref (xmmsv_t *coll)
 {
 	xmmsv_unref (coll);
 }
@@ -168,7 +168,7 @@ _xmmsv_coll_free (xmmsv_coll_internal_t *coll)
  * @param ids  the 0-terminated list of ids to store in the collection.
  */
 void
-xmmsv_coll_set_idlist (xmmsv_coll_t *coll, int ids[])
+xmmsv_coll_set_idlist (xmmsv_t *coll, int ids[])
 {
 	unsigned int i;
 
@@ -179,7 +179,7 @@ xmmsv_coll_set_idlist (xmmsv_coll_t *coll, int ids[])
 }
 
 static int
-_xmmsv_coll_operand_find (xmmsv_list_iter_t *it, xmmsv_coll_t *op)
+_xmmsv_coll_operand_find (xmmsv_list_iter_t *it, xmmsv_t *op)
 {
 	xmmsv_t *v;
 
@@ -199,7 +199,7 @@ _xmmsv_coll_operand_find (xmmsv_list_iter_t *it, xmmsv_coll_t *op)
  * @param op    The operand to add.
  */
 void
-xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
+xmmsv_coll_add_operand (xmmsv_t *coll, xmmsv_t *op)
 {
 	xmmsv_list_iter_t *it;
 	x_return_if_fail (coll);
@@ -226,7 +226,7 @@ xmmsv_coll_add_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
  * @param op    The operand to remove.
  */
 void
-xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
+xmmsv_coll_remove_operand (xmmsv_t *coll, xmmsv_t *op)
 {
 	xmmsv_list_iter_t *it;
 
@@ -252,7 +252,7 @@ xmmsv_coll_remove_operand (xmmsv_coll_t *coll, xmmsv_coll_t *op)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
+xmmsv_coll_idlist_append (xmmsv_t *coll, int id)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -267,7 +267,7 @@ xmmsv_coll_idlist_append (xmmsv_coll_t *coll, int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, int index, int id)
+xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int id)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -282,7 +282,7 @@ xmmsv_coll_idlist_insert (xmmsv_coll_t *coll, int index, int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_move (xmmsv_coll_t *coll, int index, int newindex)
+xmmsv_coll_idlist_move (xmmsv_t *coll, int index, int newindex)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -296,7 +296,7 @@ xmmsv_coll_idlist_move (xmmsv_coll_t *coll, int index, int newindex)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, int index)
+xmmsv_coll_idlist_remove (xmmsv_t *coll, int index)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -309,7 +309,7 @@ xmmsv_coll_idlist_remove (xmmsv_coll_t *coll, int index)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
+xmmsv_coll_idlist_clear (xmmsv_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -324,7 +324,7 @@ xmmsv_coll_idlist_clear (xmmsv_coll_t *coll)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, int index, int32_t *val)
+xmmsv_coll_idlist_get_index (xmmsv_t *coll, int index, int32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -339,7 +339,7 @@ xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, int index, int32_t *val)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, int index, int32_t val)
+xmmsv_coll_idlist_set_index (xmmsv_t *coll, int index, int32_t val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -352,7 +352,7 @@ xmmsv_coll_idlist_set_index (xmmsv_coll_t *coll, int index, int32_t val)
  * @return  The size of the idlist.
  */
 int
-xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
+xmmsv_coll_idlist_get_size (xmmsv_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -367,7 +367,7 @@ xmmsv_coll_idlist_get_size (xmmsv_coll_t *coll)
  * @return 1 if value is of specified type, 0 otherwise.
  */
 int
-xmmsv_coll_is_type (const xmmsv_t *val, xmmsv_coll_type_t t)
+xmmsv_coll_is_type (xmmsv_t *val, xmmsv_coll_type_t t)
 {
 	x_api_error_if (!val, "NULL value", 0);
 
@@ -380,7 +380,7 @@ xmmsv_coll_is_type (const xmmsv_t *val, xmmsv_coll_type_t t)
  * @return The #xmmsv_coll_type_t of the collection, or -1 if invalid.
  */
 xmmsv_coll_type_t
-xmmsv_coll_get_type (xmmsv_coll_t *coll)
+xmmsv_coll_get_type (xmmsv_t *coll)
 {
 	x_return_val_if_fail (coll, -1);
 
@@ -399,7 +399,7 @@ xmmsv_coll_get_type (xmmsv_coll_t *coll)
  * @return The 0-terminated list of ids.
  */
 xmmsv_t *
-xmmsv_coll_idlist_get (xmmsv_coll_t *coll)
+xmmsv_coll_idlist_get (xmmsv_t *coll)
 {
 	x_return_null_if_fail (coll);
 
@@ -407,7 +407,7 @@ xmmsv_coll_idlist_get (xmmsv_coll_t *coll)
 }
 
 xmmsv_t *
-xmmsv_coll_operands_get (xmmsv_coll_t *coll)
+xmmsv_coll_operands_get (xmmsv_t *coll)
 {
 	x_return_val_if_fail (coll, NULL);
 
@@ -415,7 +415,7 @@ xmmsv_coll_operands_get (xmmsv_coll_t *coll)
 }
 
 xmmsv_t *
-xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
+xmmsv_coll_attributes_get (xmmsv_t *coll)
 {
 	x_return_val_if_fail (coll, NULL);
 
@@ -429,7 +429,7 @@ xmmsv_coll_attributes_get (xmmsv_coll_t *coll)
  * @param attributes The new attributes.
  */
 void
-xmmsv_coll_attributes_set (xmmsv_coll_t *coll, xmmsv_t *attributes)
+xmmsv_coll_attributes_set (xmmsv_t *coll, xmmsv_t *attributes)
 {
 	xmmsv_t *old;
 
@@ -450,7 +450,7 @@ xmmsv_coll_attributes_set (xmmsv_coll_t *coll, xmmsv_t *attributes)
  * @param value The value of the attribute.
  */
 void
-xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value)
+xmmsv_coll_attribute_set (xmmsv_t *coll, const char *key, const char *value)
 {
 	xmmsv_coll_attribute_set_string (coll, key, value);
 }
@@ -463,7 +463,7 @@ xmmsv_coll_attribute_set (xmmsv_coll_t *coll, const char *key, const char *value
  * @param value The value of the attribute.
  */
 void
-xmmsv_coll_attribute_set_string (xmmsv_coll_t *coll, const char *key, const char *value)
+xmmsv_coll_attribute_set_string (xmmsv_t *coll, const char *key, const char *value)
 {
 	x_return_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL));
 	xmmsv_dict_set_string (coll->value.coll->attributes, key, value);
@@ -477,7 +477,7 @@ xmmsv_coll_attribute_set_string (xmmsv_coll_t *coll, const char *key, const char
  * @param value The value of the attribute.
  */
 void
-xmmsv_coll_attribute_set_int (xmmsv_coll_t *coll, const char *key, int32_t value)
+xmmsv_coll_attribute_set_int (xmmsv_t *coll, const char *key, int32_t value)
 {
 	x_return_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL));
 	xmmsv_dict_set_int (coll->value.coll->attributes, key, value);
@@ -491,7 +491,7 @@ xmmsv_coll_attribute_set_int (xmmsv_coll_t *coll, const char *key, int32_t value
  * @param value The value of the attribute.
  */
 void
-xmmsv_coll_attribute_set_value (xmmsv_coll_t *coll, const char *key, xmmsv_t *value)
+xmmsv_coll_attribute_set_value (xmmsv_t *coll, const char *key, xmmsv_t *value)
 {
 	x_return_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL));
 	xmmsv_dict_set (coll->value.coll->attributes, key, value);
@@ -507,7 +507,7 @@ xmmsv_coll_attribute_set_value (xmmsv_coll_t *coll, const char *key, xmmsv_t *va
  * @return 1 upon success, 0 otherwise
  */
 int
-xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
+xmmsv_coll_attribute_remove (xmmsv_t *coll, const char *key)
 {
 	return xmmsv_dict_remove (coll->value.coll->attributes, key);
 }
@@ -521,7 +521,7 @@ xmmsv_coll_attribute_remove (xmmsv_coll_t *coll, const char *key)
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **value)
+xmmsv_coll_attribute_get (xmmsv_t *coll, const char *key, const char **value)
 {
 	return xmmsv_coll_attribute_get_string (coll, key, value);
 }
@@ -535,7 +535,7 @@ xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, const char **valu
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get_string (xmmsv_coll_t *coll, const char *key, const char **value)
+xmmsv_coll_attribute_get_string (xmmsv_t *coll, const char *key, const char **value)
 {
 	x_return_val_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL), 0);
 	return xmmsv_dict_entry_get_string (coll->value.coll->attributes, key, value);
@@ -550,7 +550,7 @@ xmmsv_coll_attribute_get_string (xmmsv_coll_t *coll, const char *key, const char
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get_int (xmmsv_coll_t *coll, const char *key, int32_t *value)
+xmmsv_coll_attribute_get_int (xmmsv_t *coll, const char *key, int32_t *value)
 {
 	x_return_val_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL), 0);
 	return xmmsv_dict_entry_get_int (coll->value.coll->attributes, key, value);
@@ -565,7 +565,7 @@ xmmsv_coll_attribute_get_int (xmmsv_coll_t *coll, const char *key, int32_t *valu
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get_value (xmmsv_coll_t *coll, const char *key, xmmsv_t **value)
+xmmsv_coll_attribute_get_value (xmmsv_t *coll, const char *key, xmmsv_t **value)
 {
 	x_return_val_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL), 0);
 	return xmmsv_dict_get (coll->value.coll->attributes, key, value);
@@ -578,7 +578,7 @@ xmmsv_coll_attribute_get_value (xmmsv_coll_t *coll, const char *key, xmmsv_t **v
  *
  * @return a collection containing all media.
  */
-xmmsv_coll_t*
+xmmsv_t*
 xmmsv_coll_universe ()
 {
 	return xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
@@ -631,12 +631,12 @@ xmmsv_coll_normalize_order_arguments (xmmsv_t *value)
  *              Or it can be a dict containing the attributes to set.
  * @return coll with order-operators added
  */
-xmmsv_coll_t *
-xmmsv_coll_add_order_operator (xmmsv_coll_t *coll, xmmsv_t *value)
+xmmsv_t *
+xmmsv_coll_add_order_operator (xmmsv_t *coll, xmmsv_t *value)
 {
 	value = xmmsv_coll_normalize_order_arguments (value);
 	if (value != NULL) {
-		xmmsv_coll_t *ordered;
+		xmmsv_t *ordered;
 
 		ordered = xmmsv_new_coll (XMMS_COLLECTION_TYPE_ORDER);
 		xmmsv_coll_add_operand (ordered, coll);
@@ -658,10 +658,10 @@ xmmsv_coll_add_order_operator (xmmsv_coll_t *coll, xmmsv_t *value)
  *
  * @return	coll with order-operators added
  */
-xmmsv_coll_t *
-xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
+xmmsv_t *
+xmmsv_coll_add_order_operators (xmmsv_t *coll, xmmsv_t *order)
 {
-	xmmsv_coll_t *current;
+	xmmsv_t *current;
 	xmmsv_list_iter_t *it;
 
 	x_api_error_if (coll == NULL, "with a NULL coll", NULL);
@@ -681,7 +681,7 @@ xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
 	xmmsv_list_iter_last (it);
 
 	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_coll_t *ordered;
+		xmmsv_t *ordered;
 		xmmsv_t *value;
 
 		xmmsv_list_iter_entry (it, &value);
@@ -704,10 +704,10 @@ xmmsv_coll_add_order_operators (xmmsv_coll_t *coll, xmmsv_t *order)
  * @param lim_len The length of the interval, or 0 to disable
  * @return A new collection with LIMIT operator added
  */
-xmmsv_coll_t *
-xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
+xmmsv_t *
+xmmsv_coll_add_limit_operator (xmmsv_t *coll, int lim_start, int lim_len)
 {
-	xmmsv_coll_t *ret;
+	xmmsv_t *ret;
 	char str[12];
 
 	x_return_val_if_fail (lim_start >= 0 && lim_len >= 0, NULL);
@@ -722,7 +722,7 @@ xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
 	if (lim_start != 0) {
 		int count = snprintf (str, sizeof (str), "%i", lim_start);
 		if (count > 0 && count < sizeof (str)) {
-			xmmsv_coll_attribute_set (ret, "start", str);
+			xmmsv_coll_attribute_set_string (ret, "start", str);
 		} else {
 			x_api_warning ("could not set collection limit operator start");
 		}
@@ -731,7 +731,7 @@ xmmsv_coll_add_limit_operator (xmmsv_coll_t *coll, int lim_start, int lim_len)
 	if (lim_len != 0) {
 		int count = snprintf (str, sizeof (str), "%i", lim_len);
 		if (count > 0 && count < sizeof (str)) {
-			xmmsv_coll_attribute_set (ret, "length", str);
+			xmmsv_coll_attribute_set_string (ret, "length", str);
 		} else {
 			x_api_warning ("could not set collection limit operator length");
 		}

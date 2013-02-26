@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <xmmsc/xmmsc_compiler.h>
 #include <xmmsc/xmmsc_stdint.h>
-#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +55,7 @@ xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len) XMMS_PUBLIC;
 
 xmmsv_t *xmmsv_copy (xmmsv_t *val) XMMS_PUBLIC;
-xmmsv_coll_t *xmmsv_coll_copy (xmmsv_coll_t *orig_coll) XMMS_PUBLIC XMMS_DEPRECATED;
+xmmsv_t *xmmsv_coll_copy (xmmsv_t *orig_coll) XMMS_PUBLIC XMMS_DEPRECATED;
 
 xmmsv_t *xmmsv_ref (xmmsv_t *val) XMMS_PUBLIC;
 void xmmsv_unref (xmmsv_t *val) XMMS_PUBLIC;
@@ -66,7 +66,7 @@ int xmmsv_is_type (const xmmsv_t *val, xmmsv_type_t t) XMMS_PUBLIC;
 int xmmsv_get_error (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
 int xmmsv_get_int (const xmmsv_t *val, int32_t *r) XMMS_PUBLIC;
 int xmmsv_get_string (const xmmsv_t *val, const char **r) XMMS_PUBLIC;
-int xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **coll) XMMS_PUBLIC XMMS_DEPRECATED;
+int xmmsv_get_coll (const xmmsv_t *val, xmmsv_t **coll) XMMS_PUBLIC XMMS_DEPRECATED;
 int xmmsv_get_bin (const xmmsv_t *val, const unsigned char **r, unsigned int *rlen) XMMS_PUBLIC;
 
 

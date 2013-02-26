@@ -24,7 +24,7 @@ static bool _internal_put_on_bb_bin (xmmsv_t *bb, const unsigned char *data, uns
 static bool _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg);
 static bool _internal_put_on_bb_int32 (xmmsv_t *bb, int32_t v);
 static bool _internal_put_on_bb_string (xmmsv_t *bb, const char *str);
-static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_coll_t *coll);
+static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll);
 static bool _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v);
 static bool _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v);
 
@@ -33,7 +33,7 @@ static bool _internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf, unsigned
 static bool _internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v);
 static bool _internal_get_from_bb_string_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
-static bool _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll);
+static bool _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_t **coll);
 static bool _internal_get_from_bb_value_dict_alloc (xmmsv_t *bb, xmmsv_t **val);
 static bool _internal_get_from_bb_value_list_alloc (xmmsv_t *bb, xmmsv_t **val);
 
@@ -92,14 +92,13 @@ _internal_put_on_bb_string (xmmsv_t *bb, const char *str)
 }
 
 static bool
-_internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
+_internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v;
 	int n;
 	uint32_t ret;
 	int32_t entry;
-	xmmsv_coll_t *op;
 
 	if (!bb || !coll) {
 		return false;
@@ -140,13 +139,13 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_coll_t *coll)
 		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
 
 		while (xmmsv_list_iter_entry (it, &v)) {
-			if (!xmmsv_get_coll (v, &op)) {
+			if (!xmmsv_is_type (v, XMMSV_TYPE_COLL)) {
 				x_api_error ("Non collection operand", 0);
 			}
 
 			_internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
 
-			ret = _internal_put_on_bb_collection (bb, op);
+			ret = _internal_put_on_bb_collection (bb, v);
 			xmmsv_list_iter_next (it);
 		}
 	}
@@ -305,7 +304,7 @@ _internal_get_from_bb_bin_alloc (xmmsv_t *bb,
 }
 
 static bool
-_internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll)
+_internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_t **coll)
 {
 	int i;
 	int32_t type;
@@ -320,7 +319,7 @@ _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll)
 		return false;
 	}
 
-	*coll = xmmsv_coll_new (type);
+	*coll = xmmsv_new_coll (type);
 
 	/* Get the attributes */
 	if (!_internal_get_from_bb_value_dict_alloc (bb, &dict)) {
@@ -368,7 +367,7 @@ _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll)
 	}
 
 	for (i = 0; i < n_items; i++) {
-		xmmsv_coll_t *operand;
+		xmmsv_t *operand;
 
 		if (!_internal_get_from_bb_int32_positive (bb, &type) ||
 		    type != XMMSV_TYPE_COLL ||
@@ -377,7 +376,7 @@ _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_coll_t **coll)
 		}
 
 		xmmsv_coll_add_operand (*coll, operand);
-		xmmsv_coll_unref (operand);
+		xmmsv_unref (operand);
 	}
 
 	return true;
@@ -387,7 +386,7 @@ err:
 		free (idlist);
 	}
 
-	xmmsv_coll_unref (*coll);
+	xmmsv_unref (*coll);
 
 	return false;
 }
@@ -541,7 +540,6 @@ xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 	bool ret;
 	int32_t i;
 	const char *s;
-	xmmsv_coll_t *c;
 	const unsigned char *bc;
 	unsigned int bl;
 	xmmsv_type_t type;
@@ -571,10 +569,7 @@ xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 		ret = _internal_put_on_bb_string (bb, s);
 		break;
 	case XMMSV_TYPE_COLL:
-		if (!xmmsv_get_coll (v, &c)) {
-			return false;
-		}
-		ret = _internal_put_on_bb_collection (bb, c);
+		ret = _internal_put_on_bb_collection (bb, v);
 		break;
 	case XMMSV_TYPE_BIN:
 		if (!xmmsv_get_bin (v, &bc, &bl)) {

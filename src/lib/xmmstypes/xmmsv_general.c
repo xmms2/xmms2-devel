@@ -352,13 +352,13 @@ xmmsv_get_string (const xmmsv_t *val, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **c)
+xmmsv_get_coll (const xmmsv_t *val, xmmsv_t **c)
 {
 	if (!val || val->type != XMMSV_TYPE_COLL) {
 		return 0;
 	}
 
-	*c = (xmmsv_coll_t *) val;
+	*c = (xmmsv_t *) val;
 
 	return 1;
 }
