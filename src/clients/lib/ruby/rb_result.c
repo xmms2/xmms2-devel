@@ -226,12 +226,10 @@ bin_get (xmmsv_t *val)
 static VALUE
 coll_get (xmmsv_t *val)
 {
-	xmmsc_coll_t *coll = NULL;
-
-	if (!xmmsv_get_coll (val, &coll))
+	if (!xmmsv_is_type (val, XMMSV_TYPE_COLL))
 		rb_raise (eValueError, "cannot retrieve value");
 
-	return TO_XMMS_CLIENT_COLLECTION (coll);
+	return TO_XMMS_CLIENT_COLLECTION (val);
 }
 
 static void

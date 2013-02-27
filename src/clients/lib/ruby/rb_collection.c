@@ -56,7 +56,7 @@ static VALUE eCollectionError, eDisconnectedError, eClientError, ePatternError;
 static void
 c_free (RbCollection *coll)
 {
-	xmmsc_coll_unref (coll->real);
+	xmmsv_unref (coll->real);
 
 	free (coll);
 }
@@ -124,7 +124,7 @@ c_coll_init (VALUE self, VALUE type)
 {
 	COLL_METHOD_HANDLER_HEADER
 
-	coll->real = xmmsc_coll_new (check_int32 (type));
+	coll->real = xmmsv_new_coll (check_int32 (type));
 
 	return self;
 }
@@ -142,7 +142,7 @@ c_coll_universe (VALUE klass)
 
 	Data_Get_Struct (obj, RbCollection, coll);
 
-	coll->real = xmmsc_coll_universe ();
+	coll->real = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	return obj;
 }
@@ -255,7 +255,7 @@ c_coll_idlist_set (VALUE self, VALUE ids)
 
 	ary[i] = 0;
 
-	xmmsc_coll_set_idlist (coll->real, ary);
+	xmmsv_coll_set_idlist (coll->real, ary);
 
 	return self;
 }
@@ -339,7 +339,7 @@ c_attrs_aref (VALUE self, VALUE key)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	s = xmmsv_coll_attribute_get (coll->real, StringValuePtr (key), &value);
+	s = xmmsv_coll_attribute_get_string (coll->real, StringValuePtr (key), &value);
 	if (!s)
 		return Qnil;
 
@@ -358,8 +358,8 @@ c_attrs_aset (VALUE self, VALUE key, VALUE value)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsv_coll_attribute_set (coll->real, StringValuePtr (key),
-	                          StringValuePtr (value));
+	xmmsv_coll_attribute_set_string (coll->real, StringValuePtr (key),
+	                                 StringValuePtr (value));
 
 	return Qnil;
 }
@@ -376,7 +376,7 @@ c_attrs_has_key (VALUE self, VALUE key)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	s = xmmsc_coll_attribute_get (coll->real, StringValuePtr (key), NULL);
+	s = xmmsv_coll_attribute_get_string (coll->real, StringValuePtr (key), NULL);
 
 	return s ? Qtrue : Qfalse;
 }
@@ -392,7 +392,7 @@ c_attrs_delete (VALUE self, VALUE key)
 	tmp = rb_iv_get (self, "collection");
 	Data_Get_Struct (tmp, RbCollection, coll);
 
-	xmmsc_coll_attribute_remove (coll->real, StringValuePtr (key));
+	xmmsv_coll_attribute_remove (coll->real, StringValuePtr (key));
 
 	return Qnil;
 }
@@ -490,7 +490,7 @@ c_operands_push (VALUE self, VALUE arg)
 
 	Data_Get_Struct (arg, RbCollection, coll2);
 
-	xmmsc_coll_add_operand (coll->real, coll2->real);
+	xmmsv_coll_add_operand (coll->real, coll2->real);
 
 	return self;
 }
@@ -506,20 +506,15 @@ c_operands_delete (VALUE self, VALUE arg)
 
 	Data_Get_Struct (arg, RbCollection, coll2);
 
-	xmmsc_coll_remove_operand (coll->real, coll2->real);
+	xmmsv_coll_remove_operand (coll->real, coll2->real);
 
 	return Qnil;
 }
 
 static void
-operands_each (xmmsv_t *value, void *user_data)
+operands_each (xmmsv_t *operand, void *user_data)
 {
-	xmmsv_coll_t *operand = NULL;
-
-	xmmsv_get_coll (value, &operand);
-	xmmsc_coll_ref (operand);
-
-	rb_yield (TO_XMMS_CLIENT_COLLECTION (operand));
+	rb_yield (TO_XMMS_CLIENT_COLLECTION (xmmsv_ref (operand)));
 }
 
 static VALUE
