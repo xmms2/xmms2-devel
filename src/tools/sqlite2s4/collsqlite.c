@@ -24,7 +24,7 @@
 struct db_info {
 	sqlite3 *db;
 	GHashTable **ht;
-	xmmsv_coll_t *coll;
+	xmmsv_t *coll;
 };
 
 typedef enum {
@@ -44,13 +44,13 @@ typedef enum {
 } xmmsv_coll1_type_t;
 
 void collection_restore (sqlite3 *db, GHashTable **ht);
-static xmmsv_coll_t *xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type);
+static xmmsv_t *xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type);
 
 /* Creates a coll2 collection from a coll1 type */
-static xmmsv_coll_t*
+static xmmsv_t *
 create_coll (xmmsv_coll1_type_t type)
 {
-	xmmsv_coll_t *ret;
+	xmmsv_t *ret;
 	xmmsv_coll_type_t new_type;
 	const char *idlist_type = NULL;
 
@@ -96,20 +96,20 @@ create_coll (xmmsv_coll1_type_t type)
 	}
 
 	if (idlist_type != NULL) {
-		ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-		xmmsv_coll_attribute_set (ret, "type", idlist_type);
+		ret = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
+		xmmsv_coll_attribute_set_string (ret, "type", idlist_type);
 	} else {
-		ret = xmmsv_coll_new (new_type);
+		ret = xmmsv_new_coll (new_type);
 	}
 
 	return ret;
 }
 
 /* Augment the collection with new attributes needed for coll2 */
-static xmmsv_coll_t*
-augment_coll (xmmsv_coll_t *coll)
+static xmmsv_t *
+augment_coll (xmmsv_t *coll)
 {
-	xmmsv_coll_t *ret = coll;
+	xmmsv_t *ret = coll;
 	const char *key;
 
 	switch (xmmsv_coll_get_type (coll)) {
@@ -122,19 +122,19 @@ augment_coll (xmmsv_coll_t *coll)
 	case XMMS_COLLECTION_TYPE_SMALLEREQ:
 	case XMMS_COLLECTION_TYPE_GREATER:
 	case XMMS_COLLECTION_TYPE_GREATEREQ:
-		if (xmmsv_coll_attribute_get (coll, "field", &key)
+		if (xmmsv_coll_attribute_get_string (coll, "field", &key)
 		    && strcmp (key, "id") == 0) {
-			xmmsv_coll_attribute_set (coll, "type", "id");
+			xmmsv_coll_attribute_set_string (coll, "type", "id");
 		} else {
-			xmmsv_coll_attribute_set (coll, "type", "value");
+			xmmsv_coll_attribute_set_string (coll, "type", "value");
 		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_REFERENCE:
-		if (xmmsv_coll_attribute_get (coll, "reference", &key)
+		if (xmmsv_coll_attribute_get_string (coll, "reference", &key)
 		    && strcmp (key, "All Media") == 0) {
-			ret = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
-			xmmsv_coll_unref (coll);
+			ret = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+			xmmsv_unref (coll);
 		}
 		break;
 
@@ -152,7 +152,7 @@ restore_callback (void *userdata, int columns, char **col_strs, char **col_names
 	static gint previd = -1;
 	gint id, type, nsid, i;
 	const gchar *label;
-	static xmmsv_coll_t *coll = NULL;
+	static xmmsv_t *coll = NULL;
 
 	for (i = 0; i < columns; i++) {
 		if (!strcmp (col_names[i], "id")) {
@@ -172,7 +172,7 @@ restore_callback (void *userdata, int columns, char **col_strs, char **col_names
 		previd = id;
 	}
 	else {
-		xmmsv_coll_ref (coll);  /* New label references the coll */
+		xmmsv_ref (coll);  /* New label references the coll */
 	}
 
 	g_hash_table_replace (info->ht[nsid], g_strdup (label), coll);
@@ -201,7 +201,7 @@ collection_restore (sqlite3 *db, GHashTable **ht)
 static int
 attribute_callback (void *userdata, int cols, char **col_strs, char **col_names)
 {
-	xmmsv_coll_t *coll = userdata;
+	xmmsv_t *coll = userdata;
 	const gchar *key, *value;
 	int i;
 
@@ -212,14 +212,14 @@ attribute_callback (void *userdata, int cols, char **col_strs, char **col_names)
 			value = col_strs[i];
 		}
 	}
-	xmmsv_coll_attribute_set (coll, key, value);
+	xmmsv_coll_attribute_set_string (coll, key, value);
 
 	return 0;
 }
 static int
 idlist_callback (void *userdata, int cols, char **col_strs, char **col_names)
 {
-	xmmsv_coll_t *coll = userdata;
+	xmmsv_t *coll = userdata;
 	int i;
 
 	for (i = 0; i < cols; i++) {
@@ -234,8 +234,8 @@ static int
 operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
 {
 	struct db_info *info = userdata;
-	xmmsv_coll_t *coll = info->coll;
-	xmmsv_coll_t *op;
+	xmmsv_t *coll = info->coll;
+	xmmsv_t *op;
 	int i;
 	gint id;
 	gint type;
@@ -251,15 +251,15 @@ operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
 
 	op = xmms_collection_dbread_operator (info->db, id, type);
 	xmmsv_coll_add_operand (coll, op);
-	xmmsv_coll_unref (op);
+	xmmsv_unref (op);
 
 	return 0;
 }
 
-static xmmsv_coll_t *
+static xmmsv_t *
 xmms_collection_dbread_operator (sqlite3 *db, gint id, xmmsv_coll_type_t type)
 {
-	xmmsv_coll_t *coll;
+	xmmsv_t *coll;
 	gchar query[256];
 	struct db_info info;
 

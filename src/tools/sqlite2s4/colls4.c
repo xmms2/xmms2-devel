@@ -27,7 +27,7 @@
 
 typedef struct {
 	const gchar *key;
-	xmmsv_coll_t *value;
+	xmmsv_t *value;
 } coll_table_pair_t;
 
 /**
@@ -40,7 +40,7 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
 {
         gboolean found = FALSE;
         coll_table_pair_t *pair = (coll_table_pair_t*)udata;
-        xmmsv_coll_t *coll = (xmmsv_coll_t*)val;
+        xmmsv_t *coll = (xmmsv_t*)val;
 
         /* value matching and key not ignored, found! */
         if ((coll == pair->value) &&

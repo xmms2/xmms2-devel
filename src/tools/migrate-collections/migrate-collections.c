@@ -37,7 +37,7 @@
 
 typedef struct {
 	const gchar *key;
-	xmmsv_coll_t *value;
+	xmmsv_t *value;
 } coll_table_pair_t;
 
 /**
@@ -50,7 +50,7 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
 {
 	gboolean found = FALSE;
 	coll_table_pair_t *pair = (coll_table_pair_t*)udata;
-	xmmsv_coll_t *coll = (xmmsv_coll_t*)val;
+	xmmsv_t *coll = (xmmsv_t*)val;
 
 	/* value matching and key not ignored, found! */
 	if ((coll == pair->value) &&
@@ -110,7 +110,7 @@ read_string (FILE *file, char *buffer)
 
 /* Read all the attributes from the file */
 static void
-read_attributes (xmmsv_coll_t *coll, FILE *file)
+read_attributes (xmmsv_t *coll, FILE *file)
 {
 	char key[1024];
 	char val[1024];
@@ -129,7 +129,7 @@ read_attributes (xmmsv_coll_t *coll, FILE *file)
 
 /* Read the idlist */
 static void
-read_idlist (xmmsv_coll_t *coll, FILE *file)
+read_idlist (xmmsv_t *coll, FILE *file)
 {
 	int id, c;
 
@@ -147,11 +147,10 @@ read_idlist (xmmsv_coll_t *coll, FILE *file)
  * @param file The file to read from.
  * @return The collection or NULL on error.
  */
-static xmmsv_coll_t *
+static xmmsv_t *
 collection_read_operator (FILE *file)
 {
-	xmmsv_coll_t *coll;
-	xmmsv_coll_t *op;
+	xmmsv_t *coll, *op;
 	xmmsv_coll_type_t type;
 	int ret = fscanf (file, " ( %i ", (int*)&type);
 
@@ -194,7 +193,7 @@ collection_get_pointer (GHashTable **ht, const gchar *collname, guint nsid)
 static void
 collection_dag_replace (GHashTable **ht,
                         xmms_collection_namespace_id_t nsid,
-                        const gchar *key, xmmsv_coll_t *newcoll)
+                        const gchar *key, xmmsv_t *newcoll)
 {
 	g_hash_table_replace (ht[nsid], g_strdup (key), newcoll);
 }
@@ -206,7 +205,7 @@ collection_dag_replace (GHashTable **ht,
 static gboolean
 collection_dag_restore (GHashTable **ht, const gchar *base_path)
 {
-	xmmsv_coll_t *coll = NULL;
+	xmmsv_t *coll = NULL;
 	gchar *path, buffer[1024];
 	const gchar *label, *namespace;
 	GDir *dir;
