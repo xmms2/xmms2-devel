@@ -731,7 +731,7 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib,
  * @return a reverse sorted list of encoded urls
  */
 static gboolean
-process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
+process_dir (xmms_medialib_t *medialib, xmmsv_t *entries,
              const gchar *directory, xmms_error_t *error)
 {
 	xmmsv_list_iter_t *it;
@@ -787,13 +787,13 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
  *
  * @return an IDLIST collection with the added entries
  */
-xmmsv_coll_t *
+xmmsv_t *
 xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path,
                              xmms_error_t *error)
 {
-	xmmsv_coll_t *entries;
+	xmmsv_t *entries;
 
-	entries = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	entries = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 
 	g_return_val_if_fail (medialib, entries);
 	g_return_val_if_fail (path, entries);
@@ -807,7 +807,7 @@ static void
 xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path,
                                   xmms_error_t *error)
 {
-	xmmsv_coll_unref (xmms_medialib_add_recursive (medialib, path, error));
+	xmmsv_unref (xmms_medialib_add_recursive (medialib, path, error));
 }
 
 static gboolean
@@ -1203,7 +1203,7 @@ xmms_medialib_check_id (xmms_medialib_session_t *session,
  */
 xmms_medialib_entry_t
 xmms_medialib_query_random_id (xmms_medialib_session_t *session,
-                               xmmsv_coll_t *coll)
+                               xmmsv_t *coll)
 {
 	xmms_medialib_entry_t ret;
 	xmmsv_t *spec, *res;
@@ -1393,7 +1393,7 @@ xmms_medialib_url_encode (const gchar *path)
  * @return An xmmsv_t with the structure requested in fetch
  */
 xmmsv_t *
-xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_t *coll,
                      xmmsv_t *fetch, xmms_error_t *err)
 {
 	s4_sourcepref_t *sourcepref;

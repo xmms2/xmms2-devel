@@ -59,12 +59,12 @@ gboolean xmms_medialib_decode_url (char *url);
 
 gboolean xmms_medialib_check_id (xmms_medialib_session_t *s, xmms_medialib_entry_t entry);
 
-xmmsv_coll_t *xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
+xmmsv_t *xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path, xmms_error_t *error);
 
-xmms_medialib_entry_t xmms_medialib_query_random_id (xmms_medialib_session_t *s, xmmsv_coll_t *coll);
+xmms_medialib_entry_t xmms_medialib_query_random_id (xmms_medialib_session_t *s, xmmsv_t *coll);
 
-xmmsv_t *xmms_medialib_query (xmms_medialib_session_t *s, xmmsv_coll_t *coll, xmmsv_t *fetch, xmms_error_t *err);
-s4_resultset_t *xmms_medialib_query_recurs (xmms_medialib_session_t *session, xmmsv_coll_t *coll, xmms_fetch_info_t *fetch);
+xmmsv_t *xmms_medialib_query (xmms_medialib_session_t *s, xmmsv_t *coll, xmmsv_t *fetch, xmms_error_t *err);
+s4_resultset_t *xmms_medialib_query_recurs (xmms_medialib_session_t *session, xmmsv_t *coll, xmms_fetch_info_t *fetch);
 xmmsv_t *xmms_medialib_query_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec);
 
 

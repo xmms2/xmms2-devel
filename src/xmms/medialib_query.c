@@ -37,7 +37,7 @@
 #include <xmmspriv/xmms_fetch_spec.h>
 #include "s4.h"
 
-static s4_condition_t *collection_to_condition (xmms_medialib_session_t *s, xmmsv_coll_t *coll, xmms_fetch_info_t *fetch, xmmsv_t *order);
+static s4_condition_t *collection_to_condition (xmms_medialib_session_t *s, xmmsv_t *coll, xmms_fetch_info_t *fetch, xmmsv_t *order);
 
 typedef enum xmms_sort_type_St {
 	SORT_TYPE_COLUMN,
@@ -181,7 +181,7 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
  * TODO: Move it to the xmmstypes lib?
  */
 static gboolean
-is_universe (xmmsv_coll_t *coll)
+is_universe (xmmsv_t *coll)
 {
 	const gchar *target_name;
 	gboolean ret = FALSE;
@@ -191,7 +191,7 @@ is_universe (xmmsv_coll_t *coll)
 			ret = TRUE;
 			break;
 		case XMMS_COLLECTION_TYPE_REFERENCE:
-			if (xmmsv_coll_attribute_get (coll, "reference", &target_name)
+			if (xmmsv_coll_attribute_get_string (coll, "reference", &target_name)
 			    && strcmp (target_name, "All Media") == 0)
 				ret = TRUE;
 			break;
@@ -204,11 +204,12 @@ is_universe (xmmsv_coll_t *coll)
 
 /* Returns non-zero if the collection has an ordering, 0 otherwise */
 static gboolean
-has_order (xmmsv_coll_t *coll)
+has_order (xmmsv_t *coll)
 {
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
-	xmmsv_coll_t *c;
+	xmmsv_t *operands, *operand;
 	gint i;
+
+	operands = xmmsv_coll_operands_get (coll);
 
 	switch (xmmsv_coll_get_type (coll)) {
 		/* Filter keeps the ordering of the operand */
@@ -223,13 +224,13 @@ has_order (xmmsv_coll_t *coll)
 		case XMMS_COLLECTION_TYPE_GREATEREQ:
 			/* Intersection is orderded if the first operand is ordeed */
 		case XMMS_COLLECTION_TYPE_INTERSECTION:
-			xmmsv_list_get_coll (operands, 0, &c);
-			return has_order (c);
+			xmmsv_list_get (operands, 0, &operand);
+			return has_order (operand);
 
 			/* Union is ordered if all operands are ordered (concat) */
 		case XMMS_COLLECTION_TYPE_UNION:
-			for (i = 0; xmmsv_list_get_coll (operands, i, &c); i++) {
-				if (!has_order (c))
+			for (i = 0; xmmsv_list_get (operands, i, &operand); i++) {
+				if (!has_order (operand))
 					return FALSE;
 			}
 
@@ -241,8 +242,8 @@ has_order (xmmsv_coll_t *coll)
 
 		case XMMS_COLLECTION_TYPE_REFERENCE:
 			if (!is_universe (coll)) {
-				xmmsv_list_get_coll (operands, 0, &c);
-				return has_order (c);
+				xmmsv_list_get (operands, 0, &operand);
+				return has_order (operand);
 			}
 		case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		case XMMS_COLLECTION_TYPE_UNIVERSE:
@@ -273,17 +274,16 @@ create_idlist_filter (xmms_medialib_session_t *session, GHashTable *id_table)
 }
 
 static s4_condition_t *
-complement_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+complement_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                       xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	xmmsv_coll_t *operand;
-	xmmsv_t *operands;
+	xmmsv_t *operands, *operand;
 	s4_condition_t *cond;
 
 	cond = s4_cond_new_combiner (S4_COMBINE_NOT);
 
 	operands = xmmsv_coll_operands_get (coll);
-	if (xmmsv_list_get_coll (operands, 0, &operand)) {
+	if (xmmsv_list_get (operands, 0, &operand)) {
 		s4_condition_t *operand_cond;
 		operand_cond = collection_to_condition (session, operand, fetch, order);
 		s4_cond_add_operand (cond, operand_cond);
@@ -294,7 +294,7 @@ complement_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 }
 
 static s4_filter_type_t
-filter_type_from_collection (xmmsv_coll_t *coll)
+filter_type_from_collection (xmmsv_t *coll)
 {
 	xmmsv_coll_type_t type = xmmsv_coll_get_type (coll);
 
@@ -323,7 +323,7 @@ filter_type_from_collection (xmmsv_coll_t *coll)
 }
 
 static void
-get_filter_type_and_compare_mode (xmmsv_coll_t *coll,
+get_filter_type_and_compare_mode (xmmsv_t *coll,
                                   s4_filter_type_t *type,
                                   s4_cmp_mode_t *cmp_mode)
 {
@@ -331,7 +331,7 @@ get_filter_type_and_compare_mode (xmmsv_coll_t *coll,
 
 	*type = filter_type_from_collection (coll);
 
-	if (!xmmsv_coll_attribute_get (coll, "collation", &value)) {
+	if (!xmmsv_coll_attribute_get_string (coll, "collation", &value)) {
 		/* For <, <=, >= and > we default to natcoll,
 		 * so that strings will order correctly
 		 */
@@ -359,7 +359,7 @@ get_filter_type_and_compare_mode (xmmsv_coll_t *coll,
 
 static s4_condition_t *
 filter_condition (xmms_medialib_session_t *session,
-                  xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
+                  xmmsv_t *coll, xmms_fetch_info_t *fetch,
                   xmmsv_t *order)
 {
 	s4_sourcepref_t *sp;
@@ -367,14 +367,13 @@ filter_condition (xmms_medialib_session_t *session,
 	s4_cmp_mode_t cmp_mode;
 	gint32 ival, flags = 0;
 	const gchar *filter_type, *key, *val;
-	xmmsv_t *operands;
-	xmmsv_coll_t *operand;
+	xmmsv_t *operands, *operand;
 	s4_condition_t *cond;
 	s4_val_t *value = NULL;
 
-	if (!xmmsv_coll_attribute_get (coll, "type", &filter_type) || strcmp (filter_type, "value") == 0) {
+	if (!xmmsv_coll_attribute_get_string (coll, "type", &filter_type) || strcmp (filter_type, "value") == 0) {
 		/* If 'field' is not set, match against every key */
-		if (!xmmsv_coll_attribute_get (coll, "field", &key)) {
+		if (!xmmsv_coll_attribute_get_string (coll, "field", &key)) {
 			key = NULL;
 		}
 	} else {
@@ -382,7 +381,7 @@ filter_condition (xmms_medialib_session_t *session,
 		flags = S4_COND_PARENT;
 	}
 
-	if (xmmsv_coll_attribute_get (coll, "value", &val)) {
+	if (xmmsv_coll_attribute_get_string (coll, "value", &val)) {
 		gchar *endptr;
 
 		ival = strtol (val, &endptr, 10);
@@ -393,7 +392,7 @@ filter_condition (xmms_medialib_session_t *session,
 		}
 	}
 
-	if (xmmsv_coll_attribute_get (coll, "source-preference", &val)) {
+	if (xmmsv_coll_attribute_get_string (coll, "source-preference", &val)) {
 		gchar **prefs;
 		prefs = g_strsplit (val, ":", -1);
 		sp = s4_sourcepref_create ((const gchar **) prefs);
@@ -410,7 +409,7 @@ filter_condition (xmms_medialib_session_t *session,
 	s4_sourcepref_unref (sp);
 
 	operands = xmmsv_coll_operands_get (coll);
-	xmmsv_list_get_coll (operands, 0, &operand);
+	xmmsv_list_get (operands, 0, &operand);
 
 	if (!is_universe (operand)) {
 		s4_condition_t *op_cond = cond;
@@ -427,7 +426,7 @@ filter_condition (xmms_medialib_session_t *session,
 
 static s4_condition_t *
 idlist_condition (xmms_medialib_session_t *session,
-                  xmmsv_coll_t *coll, xmms_fetch_info_t *fetch,
+                  xmmsv_t *coll, xmms_fetch_info_t *fetch,
                   xmmsv_t *order)
 {
 	GHashTable *id_table;
@@ -453,18 +452,17 @@ idlist_condition (xmms_medialib_session_t *session,
 }
 
 static s4_condition_t *
-intersection_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+intersection_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                         xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	s4_condition_t *cond;
-	xmmsv_coll_t *operand;
-	xmmsv_t *operands;
+	xmmsv_t *operands, *operand;
 	gint i;
 
 	operands = xmmsv_coll_operands_get (coll);
 	cond = s4_cond_new_combiner (S4_COMBINE_AND);
 
-	for (i = 0; xmmsv_list_get_coll (operands, i, &operand); i++) {
+	for (i = 0; xmmsv_list_get (operands, i, &operand); i++) {
 		s4_condition_t *op_cond;
 		if (i == 0) {
 			/* We keep the ordering of the first operand */
@@ -632,12 +630,11 @@ limit_condition_by_value (s4_resultset_t *set, xmmsv_t *id_list, GHashTable *id_
 }
 
 static s4_condition_t *
-limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+limit_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	s4_resultset_t *set;
-	xmmsv_coll_t *operand;
-	xmmsv_t *operands, *id_list, *child_order;
+	xmmsv_t *operands, *operand, *id_list, *child_order;
 	GHashTable *id_table;
 	const gchar *type, *fields;
 	gint start, length;
@@ -649,13 +646,13 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	if (!xmms_collection_get_int_attr (coll, "length", &length))
 		length = G_MAXINT32;
 
-	if (!xmmsv_coll_attribute_get (coll, "type", &type))
+	if (!xmmsv_coll_attribute_get_string (coll, "type", &type))
 		type = "position";
 
-	xmmsv_coll_attribute_get (coll, "fields", &fields);
+	xmmsv_coll_attribute_get_string (coll, "fields", &fields);
 
 	operands = xmmsv_coll_operands_get (coll);
-	xmmsv_list_get_coll (operands, 0, &operand);
+	xmmsv_list_get (operands, 0, &operand);
 
 	id_list = xmmsv_new_list ();
 	id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
@@ -686,13 +683,14 @@ limit_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 }
 
 static s4_condition_t *
-mediaset_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+mediaset_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                     xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	xmmsv_t *operands = xmmsv_coll_operands_get (coll);
-	xmmsv_coll_t *operand;
+	xmmsv_t *operands, *operand;
 
-	xmmsv_list_get_coll (operands, 0, &operand);
+	operands = xmmsv_coll_operands_get (coll);
+	xmmsv_list_get (operands, 0, &operand);
+
 	return collection_to_condition (session, operand, fetch, NULL);
 }
 
@@ -719,7 +717,7 @@ static void
 order_condition_by_value (xmmsv_t *entry,
                           xmms_fetch_info_t *fetch,
                           s4_sourcepref_t *sourcepref,
-                          xmmsv_coll_t *coll)
+                          xmmsv_t *coll)
 {
 	xmmsv_t *attrs, *field, *ids;
 	xmmsv_list_iter_t *it;
@@ -761,17 +759,16 @@ order_condition_by_value (xmmsv_t *entry,
  * { "type": (ID|VALUE|RANDOM|LIST), "field": ..., "direction": ... }
  */
 static s4_condition_t *
-order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+order_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                  xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	s4_sourcepref_t *sourcepref;
-	xmmsv_coll_t *operand;
-	xmmsv_t *operands, *entry;
+	xmmsv_t *operands, *operand, *entry;
 	const gchar *key;
 
 	entry = xmmsv_new_dict ();
 
-	if (!xmmsv_coll_attribute_get (coll, "type", &key)) {
+	if (!xmmsv_coll_attribute_get_string (coll, "type", &key)) {
 		key = (gchar *) "value";
 	}
 
@@ -787,7 +784,7 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 
 	s4_sourcepref_unref (sourcepref);
 
-	if (!xmmsv_coll_attribute_get (coll, "direction", &key)) {
+	if (!xmmsv_coll_attribute_get_string (coll, "direction", &key)) {
 		xmmsv_dict_set_int (entry, "direction", S4_ORDER_ASCENDING);
 	} else if (strcmp (key, "ASC") == 0) {
 		xmmsv_dict_set_int (entry, "direction", S4_ORDER_ASCENDING);
@@ -799,13 +796,13 @@ order_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	xmmsv_unref (entry);
 
 	operands = xmmsv_coll_operands_get (coll);
-	xmmsv_list_get_coll (operands, 0, &operand);
+	xmmsv_list_get (operands, 0, &operand);
 
 	return collection_to_condition (session, operand, fetch, order);
 }
 
 static s4_condition_t *
-union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+union_ordered_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                          xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	xmmsv_list_iter_t *it;
@@ -820,10 +817,10 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	while (xmmsv_list_iter_valid (it)) {
 		const s4_resultrow_t *row;
 		s4_resultset_t *set;
-		xmmsv_coll_t *operand;
+		xmmsv_t *operand;
 		gint j;
 
-		xmmsv_list_iter_entry_coll (it, &operand);
+		xmmsv_list_iter_entry (it, &operand);
 
 		/* Query the operand */
 		set = xmms_medialib_query_recurs (session, operand, fetch);
@@ -862,7 +859,7 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 }
 
 static s4_condition_t *
-union_unordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+union_unordered_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                            xmms_fetch_info_t *fetch)
 {
 	xmmsv_list_iter_t *it;
@@ -875,9 +872,9 @@ union_unordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 	xmmsv_get_list_iter (operands, &it);
 	while (xmmsv_list_iter_valid (it)) {
 		s4_condition_t *op_cond;
-		xmmsv_coll_t *operand;
+		xmmsv_t *operand;
 
-		xmmsv_list_iter_entry_coll (it, &operand);
+		xmmsv_list_iter_entry (it, &operand);
 
 		op_cond = collection_to_condition (session, operand, fetch, NULL);
 		s4_cond_add_operand (cond, op_cond);
@@ -890,7 +887,7 @@ union_unordered_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 }
 
 static s4_condition_t *
-universe_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+universe_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                     xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	return s4_cond_new_custom_filter ((filter_function_t) universe_filter, NULL, NULL,
@@ -898,18 +895,17 @@ universe_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
 }
 
 static s4_condition_t *
-reference_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+reference_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                      xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
-	xmmsv_coll_t *reference;
-	xmmsv_t *operands;
+	xmmsv_t *operands, *reference;
 
 	if (is_universe (coll)) {
 		return universe_condition (session, coll, fetch, order);
 	}
 
 	operands = xmmsv_coll_operands_get (coll);
-	if (!xmmsv_list_get_coll (operands, 0, &reference)) {
+	if (!xmmsv_list_get (operands, 0, &reference)) {
 		xmms_log_error ("Collection references not properly bound, bye bye");
 		g_assert_not_reached ();
 	}
@@ -927,7 +923,7 @@ reference_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
  * @return A new S4 condition. Must be freed with s4_cond_free
  */
 static s4_condition_t *
-collection_to_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+collection_to_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                          xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	switch (xmmsv_coll_get_type (coll)) {
@@ -979,7 +975,7 @@ collection_to_condition (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
  */
 s4_resultset_t *
 xmms_medialib_query_recurs (xmms_medialib_session_t *session,
-                            xmmsv_coll_t *coll, xmms_fetch_info_t *fetch)
+                            xmmsv_t *coll, xmms_fetch_info_t *fetch)
 {
 	s4_condition_t *cond;
 	s4_resultset_t *ret;
