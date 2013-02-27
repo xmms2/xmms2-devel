@@ -379,16 +379,15 @@ namespace Xmms
 				xmmsc_result_wait( this->res_ );
 				check( this->res_ );
 
-				xmmsv_coll_t* coll = 0;
 				xmmsv_t *v = xmmsc_result_get_value( this->res_ );
-				if( !xmmsv_get_coll( v, &coll ) ) {
+				if( !xmmsv_is_type( v, XMMSV_TYPE_COLL ) ) {
 					throw value_error( "Invalid collection in value" );
 				}
-				return createColl( coll );
+				return createColl( v );
 			}
 
 			static CollPtr
-			createColl( xmmsv_coll_t* coll )
+			createColl( xmmsv_t* coll )
 			{
 
 				CollPtr collptr;
@@ -465,7 +464,7 @@ namespace Xmms
 					case XMMS_COLLECTION_TYPE_IDLIST: {
 						const char *type = NULL;
 
-						if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
+						if (!xmmsv_coll_attribute_get_string (coll, "type", &type)) {
 							collptr.reset( new Coll::Idlist( coll ) );
 						} else if (!strcmp(type, "queue")) {
 							collptr.reset( new Coll::Queue( coll ) );

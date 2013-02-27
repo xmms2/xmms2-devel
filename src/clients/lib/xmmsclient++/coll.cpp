@@ -34,13 +34,13 @@ namespace Xmms
 
 	Coll::Coll( Type type )
 	{
-		coll_ = xmmsv_coll_new( type );
+		coll_ = xmmsv_new_coll( type );
 		if( !coll_ ) {
 			throw std::runtime_error( "Failed to create a Coll object" );
 		}
 	}
 
-	Coll::Coll( xmmsv_coll_t *coll )
+	Coll::Coll( xmmsv_t *coll )
 		: coll_( coll )
 	{
 		ref();
@@ -67,12 +67,12 @@ namespace Xmms
 
 	void Coll::ref()
 	{
-		xmmsv_coll_ref( coll_ );
+		xmmsv_ref( coll_ );
 	}
 
 	void Coll::unref()
 	{
-		xmmsv_coll_unref( coll_ );
+		xmmsv_unref( coll_ );
 	}
 
 	Type Coll::getType() const {
@@ -91,13 +91,13 @@ namespace Xmms
 
 	void Coll::setAttribute( const string &attrname, const string &value )
 	{
-		xmmsv_coll_attribute_set( coll_, attrname.c_str(), value.c_str() );
+		xmmsv_coll_attribute_set_string( coll_, attrname.c_str(), value.c_str() );
 	}
 
 	string Coll::getAttribute( const string &attrname ) const
 	{
 		const char *val;
-		if( !xmmsv_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
+		if( !xmmsv_coll_attribute_get_string( coll_, attrname.c_str(), &val ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 
@@ -197,7 +197,7 @@ namespace Xmms
 	{
 	}
 
-	Nary::Nary( xmmsv_coll_t* coll )
+	Nary::Nary( xmmsv_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -238,7 +238,7 @@ namespace Xmms
 		setOperand( operand );
 	}
 
-	Unary::Unary( xmmsv_coll_t* coll )
+	Unary::Unary( xmmsv_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -264,20 +264,18 @@ namespace Xmms
 
 	CollPtr Unary::getOperand() const
 	{
-		xmmsv_coll_t *op;
-		xmmsv_t *operands, *val;
+		xmmsv_t *operands, *operand;
 
 		// Find the operand
 		operands = xmmsv_coll_operands_get( coll_ );
-		if( !xmmsv_list_get( operands, 0, &val ) ||
-		    !xmmsv_get_coll( val, &op ) ) {
+		if( !xmmsv_list_get( operands, 0, &operand ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
-		return CollResult::createColl( op );
+		return CollResult::createColl( operand );
 	}
 
-	Filter::Filter( xmmsv_coll_t* coll )
+	Filter::Filter( xmmsv_t* coll )
 		: Unary( coll )
 	{
 	}
@@ -330,7 +328,7 @@ namespace Xmms
 	{
 	}
 
-	Reference::Reference( xmmsv_coll_t* coll )
+	Reference::Reference( xmmsv_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -348,7 +346,7 @@ namespace Xmms
 	}
 
 
-	Universe::Universe( xmmsv_coll_t* coll )
+	Universe::Universe( xmmsv_t* coll )
 		: Coll( coll ) {}
 	Universe::Universe()
 		: Coll( UNIVERSE ) {}
@@ -356,13 +354,13 @@ namespace Xmms
 
 	Union::Union()
 		: Nary( UNION ) {}
-	Union::Union( xmmsv_coll_t* coll )
+	Union::Union( xmmsv_t* coll )
 		: Nary( coll ) {}
 	Union::~Union() {}
 
 	Intersection::Intersection()
 		: Nary( INTERSECTION ) {}
-	Intersection::Intersection( xmmsv_coll_t* coll )
+	Intersection::Intersection( xmmsv_t* coll )
 		: Nary( coll ) {}
 	Intersection::~Intersection() {}
 
@@ -370,7 +368,7 @@ namespace Xmms
 		: Unary( COMPLEMENT ) {}
 	Complement::Complement( Coll& operand )
 		: Unary( COMPLEMENT, operand ) {}
-	Complement::Complement( xmmsv_coll_t* coll )
+	Complement::Complement( xmmsv_t* coll )
 		: Unary( coll ) {}
 	Complement::~Complement() {}
 
@@ -380,13 +378,13 @@ namespace Xmms
 		: Filter( HAS, operand ) {}
 	Has::Has( Coll& operand, const string& field )
 		: Filter( HAS, operand, field ) {}
-	Has::Has( xmmsv_coll_t* coll )
+	Has::Has( xmmsv_t* coll )
 		: Filter( coll ) {}
 	Has::~Has() {}
 
 	Smaller::Smaller()
 		: Filter( SMALLER ) {}
-	Smaller::Smaller( xmmsv_coll_t* coll )
+	Smaller::Smaller( xmmsv_t* coll )
 		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
 		: Filter( SMALLER, operand ) {}
@@ -400,7 +398,7 @@ namespace Xmms
 
 	SmallerEqual::SmallerEqual()
 		: Filter( SMALLEREQ ) {}
-	SmallerEqual::SmallerEqual( xmmsv_coll_t* coll )
+	SmallerEqual::SmallerEqual( xmmsv_t* coll )
 		: Filter( coll ) {}
 	SmallerEqual::SmallerEqual( Coll& operand )
 		: Filter( SMALLEREQ, operand ) {}
@@ -414,7 +412,7 @@ namespace Xmms
 
 	Greater::Greater()
 		: Filter( GREATER ) {}
-	Greater::Greater( xmmsv_coll_t* coll )
+	Greater::Greater( xmmsv_t* coll )
 		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
 		: Filter( GREATER, operand ) {}
@@ -428,7 +426,7 @@ namespace Xmms
 
 	GreaterEqual::GreaterEqual()
 		: Filter( GREATEREQ ) {}
-	GreaterEqual::GreaterEqual( xmmsv_coll_t* coll )
+	GreaterEqual::GreaterEqual( xmmsv_t* coll )
 		: Filter( coll ) {}
 	GreaterEqual::GreaterEqual( Coll& operand )
 		: Filter( GREATEREQ, operand ) {}
@@ -442,7 +440,7 @@ namespace Xmms
 
 	Equals::Equals()
 		: Filter( EQUALS ) {}
-	Equals::Equals( xmmsv_coll_t* coll )
+	Equals::Equals( xmmsv_t* coll )
 		: Filter( coll ) {}
 	Equals::Equals( Coll& operand )
 		: Filter( EQUALS, operand ) {}
@@ -457,7 +455,7 @@ namespace Xmms
 
 	NotEquals::NotEquals()
 		: Filter( NOTEQUAL ) {}
-	NotEquals::NotEquals( xmmsv_coll_t* coll )
+	NotEquals::NotEquals( xmmsv_t* coll )
 		: Filter( coll ) {}
 	NotEquals::NotEquals( Coll& operand )
 		: Filter( NOTEQUAL, operand ) {}
@@ -473,7 +471,7 @@ namespace Xmms
 
 	Match::Match()
 		: Filter( MATCH ) {}
-	Match::Match( xmmsv_coll_t* coll )
+	Match::Match( xmmsv_t* coll )
 		: Filter( coll ) {}
 	Match::Match( Coll& operand )
 		: Filter( MATCH, operand ) {}
@@ -489,7 +487,7 @@ namespace Xmms
 
 	Token::Token()
 			: Filter( TOKEN ) {}
-	Token::Token( xmmsv_coll_t* coll )
+	Token::Token( xmmsv_t* coll )
 			: Filter( coll ) {}
 	Token::Token( Coll& operand )
 			: Filter( TOKEN, operand ) {}
@@ -531,7 +529,7 @@ namespace Xmms
 			setAttribute( "order", "DESC" );
 		}
 	}
-	Order::Order( xmmsv_coll_t* coll )
+	Order::Order( xmmsv_t* coll )
 		: Unary( coll ) {}
 	Order::~Order() {}
 
@@ -551,7 +549,7 @@ namespace Xmms
 		setAttribute( "start", _start.str() );
 		setAttribute( "length", _length.str() );
 	}
-	Limit::Limit( xmmsv_coll_t* coll )
+	Limit::Limit( xmmsv_t* coll )
 		: Unary( coll ) {}
 	Limit::~Limit() {}
 
@@ -559,11 +557,11 @@ namespace Xmms
 			: Unary( MEDIASET ) {}
 	Mediaset::Mediaset( Coll& operand )
 			: Unary( MEDIASET, operand ) {}
-	Mediaset::Mediaset( xmmsv_coll_t* coll )
+	Mediaset::Mediaset( xmmsv_t* coll )
 			: Unary( coll ) {}
 	Mediaset::~Mediaset() {}
 
-	Idlist::Idlist( xmmsv_coll_t* coll )
+	Idlist::Idlist( xmmsv_t* coll )
 		: Coll( coll )
 	{
 	}
@@ -598,7 +596,7 @@ namespace Xmms
 	{
 	}
 
-	Queue::Queue( xmmsv_coll_t* coll )
+	Queue::Queue( xmmsv_t* coll )
 		: Idlist( coll ) {}
 	Queue::Queue( const string& type )
 		: Idlist( type ) {}
@@ -620,7 +618,7 @@ namespace Xmms
 	{
 	}
 
-	PartyShuffle::PartyShuffle( xmmsv_coll_t* coll )
+	PartyShuffle::PartyShuffle( xmmsv_t* coll )
 		: Queue( coll ) {}
 	PartyShuffle::PartyShuffle()
 		: Queue( "partyshuffle" )
@@ -743,17 +741,15 @@ namespace Xmms
 
 	CollPtr PartyShuffle::getOperand() const
 	{
-		xmmsv_coll_t *op;
-		xmmsv_t *operands, *val;
+		xmmsv_t *operands, *operand;
 
 		// Find the operand
 		operands = xmmsv_coll_operands_get( coll_ );
-		if( !xmmsv_list_get( operands, 0, &val ) ||
-		    !xmmsv_get_coll( val, &op ) ) {
+		if( !xmmsv_list_get( operands, 0, &operand ) ) {
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
-		return CollResult::createColl( op );
+		return CollResult::createColl( operand );
 	}
 
 
@@ -819,14 +815,12 @@ namespace Xmms
 
 	CollPtr OperandIterator::operator *() const
 	{
-		xmmsv_t *val;
-		xmmsv_coll_t *op;
-		if( !xmmsv_list_iter_entry( oper_it_, &val ) ||
-		    !xmmsv_get_coll( val, &op ) ) {
+		xmmsv_t *operand;
+		if( !xmmsv_list_iter_entry( oper_it_, &operand ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 
-		return CollResult::createColl( op );
+		return CollResult::createColl( operand );
 	}
 
 

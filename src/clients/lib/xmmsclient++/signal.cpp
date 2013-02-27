@@ -52,11 +52,9 @@ namespace Xmms
 		signals_.clear();
 	}
 
-	Coll::Coll* extract_collection( xmmsv_t* val )
+	Coll::Coll* extract_collection( xmmsv_t* coll )
 	{
 		Coll::Coll* temp = 0;
-		xmmsv_coll_t* coll = 0;
-		xmmsv_get_coll( val, &coll );
 		switch( xmmsv_coll_get_type( coll ) ) {
 
 			case XMMS_COLLECTION_TYPE_REFERENCE: {
@@ -126,7 +124,7 @@ namespace Xmms
 			case XMMS_COLLECTION_TYPE_IDLIST: {
 				const char *type = NULL;
 
-				if (!xmmsv_coll_attribute_get (coll, "type", &type)) {
+				if (!xmmsv_coll_attribute_get_string (coll, "type", &type)) {
 					temp = new Coll::Idlist( coll );
 				} else if (!strcmp(type, "queue")) {
 					temp = new Coll::Queue( coll );
