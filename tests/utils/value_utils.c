@@ -141,12 +141,7 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 		return match;
 	}
 	case XMMSV_TYPE_COLL: {
-		xmmsv_coll_t *ca, *cb;
-
-		xmmsv_get_coll (a, &ca);
-		xmmsv_get_coll (b, &cb);
-
-		return xmmsv_coll_compare (ca, cb);
+		return xmmsv_coll_compare (a, b);
 	}
 	default: {
 		return 0;
@@ -242,9 +237,7 @@ _xmms_dump (xmmsv_t *value, int indent)
 		break;
 	}
 	case XMMSV_TYPE_COLL: {
-		xmmsv_coll_t *coll;
-		xmmsv_get_coll (value, &coll);
-		xmmsv_coll_dump_indented (coll, indent);
+		xmmsv_coll_dump_indented (value, indent);
 		break;
 	}
 	default:

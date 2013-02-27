@@ -56,7 +56,7 @@ CLEANUP () {
 }
 
 static xmmsv_t *
-medialib_query (xmmsv_coll_t *coll, xmmsv_t *spec, xmms_error_t *err)
+medialib_query (xmmsv_t *coll, xmmsv_t *spec, xmms_error_t *err)
 {
 	xmms_medialib_session_t *session;
 	xmmsv_t *ret;
@@ -150,8 +150,7 @@ CASE (test_entry_cleanup)
 {
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
-	xmmsv_coll_t *universe;
-	xmmsv_t *spec, *result;
+	xmmsv_t *universe, *spec, *result;
 	xmms_error_t err;
 	gint count;
 
@@ -171,7 +170,7 @@ CASE (test_entry_cleanup)
 	/* Should be cleaned up to check with _get_value once
 	 * it actually checks the db when getting value by id.
 	 */
-	universe = xmmsv_coll_universe ();
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	spec = xmmsv_from_xson ("{ 'type': 'count' }");
 	result = medialib_query (universe, spec, &err);
@@ -182,7 +181,7 @@ CASE (test_entry_cleanup)
 
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 }
 
 CASE (test_not_resolved)
@@ -217,16 +216,16 @@ CASE (test_query_random_id)
 {
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry, first, second;
-	xmmsv_coll_t *universe;
+	xmmsv_t *universe;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
 
-	universe = xmmsv_coll_universe ();
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	session = xmms_medialib_session_begin (medialib);
 	entry = xmms_medialib_query_random_id (session, universe);
 	xmms_medialib_session_commit (session);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	CU_ASSERT (entry == first || entry == second);
 }
@@ -235,9 +234,8 @@ CASE (test_session)
 {
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t first;
-	xmmsv_coll_t *universe;
 	xmms_error_t err;
-	xmmsv_t *result, *spec;
+	xmmsv_t *universe, *result, *spec;
 	gint tracknr;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
@@ -262,27 +260,25 @@ CASE (test_session)
 	xmms_medialib_session_commit (session);
 	CU_ASSERT_PTR_NULL (result);
 
-	universe = xmmsv_coll_universe ();
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	spec = xmmsv_from_xson ("{ 'type': 'count' }");
 
 	session = xmms_medialib_session_begin (medialib);
 	result = xmms_medialib_query (session, universe, spec, &err);
 	xmms_medialib_session_abort (session);
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 	xmmsv_unref (spec);
 }
 
 CASE (test_metadata_fetch_spec)
 {
-	xmmsv_coll_t *universe;
-	xmmsv_t *spec, *result;
+	xmmsv_t *universe, *spec, *result;
 	xmms_error_t err;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	universe = xmmsv_coll_universe ();
-
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* missing 'get' parameter */
 	spec = xmmsv_from_xson ("{ 'type': 'metadata' }");
@@ -396,18 +392,17 @@ CASE (test_metadata_fetch_spec)
 	xmmsv_unref (spec);
 
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 }
 
 CASE (test_cluster_dict_and_list_fetch_spec)
 {
-	xmmsv_coll_t *universe;
-	xmmsv_t *spec, *result;
+	xmmsv_t *universe, *spec, *result;
 	xmms_error_t err;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	universe = xmmsv_coll_universe ();
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* missing 'cluster-by' parameter, defaults to 'value' */
 	spec = xmmsv_from_xson ("{ 'type': 'cluster-dict', 'cluster-field': 'artist', 'data': { 'type': 'count' } }");
@@ -447,18 +442,17 @@ CASE (test_cluster_dict_and_list_fetch_spec)
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 }
 
 CASE (test_organize_fetch_spec)
 {
-	xmmsv_coll_t *universe;
-	xmmsv_t *spec, *result;
+	xmmsv_t *universe, *spec, *result;
 	xmms_error_t err;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	universe = xmmsv_coll_universe ();
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* missing 'data' entry */
 	spec = xmmsv_from_xson ("{ 'type': 'organize' }");
@@ -486,7 +480,7 @@ CASE (test_organize_fetch_spec)
 	xmmsv_unref (spec);
 	xmmsv_unref (result);
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 }
 
 CASE(test_client_rehash)

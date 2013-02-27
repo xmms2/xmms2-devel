@@ -210,8 +210,7 @@ CASE (test_xmmsv_serialize_string)
 
 CASE (test_xmmsv_serialize_coll_match)
 {
-	xmmsv_t *bin, *value, *tmp, *attrs, *operands;
-	xmmsv_coll_t *coll, *all_media;
+	xmmsv_t *bin, *attrs, *operands, *coll, *all_media;
 	const unsigned char *data;
 	unsigned int length;
 	int i;
@@ -258,18 +257,14 @@ CASE (test_xmmsv_serialize_coll_match)
 		0x00, 0x00, 0x00, 0x00, /* number of operands */
 	};
 
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_attribute_set_string (coll, "field", "artist");
+	xmmsv_coll_attribute_set_string (coll, "value", "*sentenced*");
+	xmmsv_coll_attribute_set_int (coll, "seed", 31337);
 
-	xmmsv_coll_attribute_set (coll, "field", "artist");
-	xmmsv_coll_attribute_set (coll, "value", "*sentenced*");
-
-	/* TODO: Workaround until the attributes API has been reworked. */
-	attrs = xmmsv_coll_attributes_get (coll);
-	xmmsv_dict_set_int (attrs, "seed", 31337);
-
-	all_media = xmmsv_coll_universe ();
+	all_media = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	xmmsv_coll_add_operand (coll, all_media);
-	xmmsv_coll_unref (all_media);
+	xmmsv_unref (all_media);
 
 	bin = xmmsv_serialize (coll);
 	xmmsv_unref (coll);
@@ -280,42 +275,36 @@ CASE (test_xmmsv_serialize_coll_match)
 	CU_ASSERT_EQUAL (length, sizeof (expected));
 	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
 
-	value = xmmsv_deserialize (bin);
+	coll = xmmsv_deserialize (bin);
 	xmmsv_unref (bin);
 
-	CU_ASSERT_PTR_NOT_NULL (value);
-	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_COLL));
-	CU_ASSERT_TRUE (xmmsv_get_coll (value, &coll));
+	CU_ASSERT_PTR_NOT_NULL (coll);
+	CU_ASSERT_TRUE (xmmsv_is_type (coll, XMMSV_TYPE_COLL));
+	CU_ASSERT_TRUE (xmmsv_coll_is_type (coll, XMMS_COLLECTION_TYPE_MATCH));
 
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (coll), XMMS_COLLECTION_TYPE_MATCH);
+	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (coll)), 3);
 
-	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (coll)),
-	                 3);
-
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "field", &s));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (coll, "field", &s));
 	CU_ASSERT_STRING_EQUAL (s, "artist");
 
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (coll, "value", &s));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (coll, "value", &s));
 	CU_ASSERT_STRING_EQUAL (s, "*sentenced*");
 
-	attrs = xmmsv_coll_attributes_get (coll);
-	CU_ASSERT_TRUE (xmmsv_dict_entry_get_int (attrs, "seed", &i));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_int (coll, "seed", &i));
 	CU_ASSERT_EQUAL (i, 31337);
 
 	operands = xmmsv_coll_operands_get (coll);
 
 	CU_ASSERT_EQUAL (xmmsv_list_get_size (operands), 1);
 
-	CU_ASSERT_TRUE (xmmsv_list_get (operands, 0, &tmp));
-	CU_ASSERT_TRUE (xmmsv_get_coll (tmp, &all_media));
-
-	CU_ASSERT_EQUAL (xmmsv_coll_get_type (all_media),
-	                 XMMS_COLLECTION_TYPE_UNIVERSE);
+	CU_ASSERT_TRUE (xmmsv_list_get (operands, 0, &all_media));
+	CU_ASSERT_TRUE (xmmsv_is_type (all_media, XMMSV_TYPE_COLL));
+	CU_ASSERT_TRUE (xmmsv_coll_is_type (all_media, XMMS_COLLECTION_TYPE_UNIVERSE));
 
 	attrs = xmmsv_coll_attributes_get (all_media);
 	CU_ASSERT_EQUAL (xmmsv_dict_get_size (attrs), 0);
 
-	xmmsv_unref (value);
+	xmmsv_unref (coll);
 }
 
 CASE (test_xmmsv_serialize_bin)

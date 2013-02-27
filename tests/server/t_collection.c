@@ -49,12 +49,12 @@ CLEANUP () {
 
 CASE (test_client_save) {
 	xmms_future_t *future;
-	xmmsv_coll_t *universe;
+	xmmsv_t *universe;
 	xmmsv_t *result, *signals, *expected;
 
 	future = XMMS_IPC_CHECK_SIGNAL (dag, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* emits XMMS_COLLECTION_CHANGED_ADD */
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
@@ -64,10 +64,10 @@ CASE (test_client_save) {
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	/* each save requires a new collection, normally handled by IPC deserialization */
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* replace the collection, emits XMMS_COLLECTION_CHANGED_UPDATE */
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
@@ -77,7 +77,7 @@ CASE (test_client_save) {
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	signals = xmms_future_await (future, 2);
 	xmms_future_free (future);
@@ -122,7 +122,7 @@ CASE (test_client_get) {
 CASE (test_client_remove)
 {
 	xmms_future_t *future;
-	xmmsv_coll_t *universe;
+	xmmsv_t *universe;
 	xmmsv_t *result, *signals, *expected;
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_REMOVE,
@@ -133,14 +133,14 @@ CASE (test_client_remove)
 
 	future = XMMS_IPC_CHECK_SIGNAL (dag, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_REMOVE,
 	                        xmmsv_new_string ("Test"),
@@ -179,7 +179,7 @@ CASE (test_client_rename)
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
-	                        xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE));
+	                        xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -246,39 +246,39 @@ CASE (test_client_rename_referenced)
 CASE (test_client_find)
 {
 	xmms_medialib_entry_t entry;
-	xmmsv_coll_t *universe, *equals;
+	xmmsv_t *universe, *equals;
 	xmmsv_t *result;
 	const gchar *string;
 
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	/* should be found */
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	/* should be found */
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	/* should not be found */
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
-	equals = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_attribute_set (equals, "type", "id");
-	xmmsv_coll_attribute_set (equals, "value", "1337");
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	equals = xmmsv_new_coll (XMMS_COLLECTION_TYPE_EQUALS);
+	xmmsv_coll_attribute_set_string (equals, "type", "id");
+	xmmsv_coll_attribute_set_string (equals, "value", "1337");
 	xmmsv_coll_add_operand (equals, universe);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test C"),
@@ -286,7 +286,7 @@ CASE (test_client_find)
 	                        xmmsv_ref (equals));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (equals);
+	xmmsv_unref (equals);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_FIND,
 	                        xmmsv_new_int (entry),
@@ -302,26 +302,26 @@ CASE (test_client_find)
 
 CASE (test_client_list)
 {
-	xmmsv_coll_t *universe, *idlist;
+	xmmsv_t *universe, *idlist;
 	xmmsv_t *result;
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 
-	idlist = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	idlist = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
 	                        xmmsv_ref (idlist));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (idlist);
+	xmmsv_unref (idlist);
 
 	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_LIST,
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
@@ -340,7 +340,7 @@ CASE (test_client_query_infos)
 {
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
-	xmmsv_coll_t *universe, *ordered;
+	xmmsv_t *universe, *ordered;
 	xmmsv_t *expected, *result, *order, *fetch, *group;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
@@ -353,7 +353,7 @@ CASE (test_client_query_infos)
 	xmms_medialib_session_commit (session);
 
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
 	                          XMMSV_LIST_ENTRY_STR ("album"),
@@ -361,7 +361,7 @@ CASE (test_client_query_infos)
 	                          XMMSV_LIST_END);
 
 	ordered = xmmsv_coll_add_order_operators (universe, order);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 	xmmsv_unref (order);
 
 	fetch = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
@@ -400,7 +400,7 @@ CASE (test_client_query_infos)
 
 CASE (test_client_query_infos2)
 {
-	xmmsv_coll_t *universe, *ordered;
+	xmmsv_t *universe, *ordered;
 	xmmsv_t *expected, *result, *order, *fetch, *group;
 	gint limit_start, limit_length;
 
@@ -416,14 +416,14 @@ CASE (test_client_query_infos2)
 	xmms_mock_entry (medialib, 2, "Beat Bizarre", "Pop the Question / Swallow", "Pop the Question");
 	xmms_mock_entry (medialib, 2, "Beat Bizarre", "Pop the Question / Swallow", "Swallow");
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
 	                          XMMSV_LIST_ENTRY_STR ("album"),
 	                          XMMSV_LIST_END);
 
 	ordered = xmmsv_coll_add_order_operators (universe, order);
-	xmmsv_coll_unref (universe);
+	xmmsv_unref (universe);
 	xmmsv_unref (order);
 
 	fetch = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
@@ -500,13 +500,12 @@ CASE (test_client_query_infos2)
 
 	xmmsv_unref (fetch);
 	xmmsv_unref (group);
-	xmmsv_coll_unref (ordered);
+	xmmsv_unref (ordered);
 }
 
 CASE (test_reject_direct_cyclic_collections)
 {
-	xmmsv_t *universe, *reference, *match;
-	xmmsv_t *result;
+	xmmsv_t *reference, *result;
 
 	/* To create a cycle the collection must already exist, check that it fails */
 	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
@@ -553,8 +552,7 @@ CASE (test_reject_direct_cyclic_collections)
 
 CASE (test_reject_indirect_cyclic_collections)
 {
-	xmmsv_t *universe, *reference, *match, *intersection;
-	xmmsv_t *result;
+	xmmsv_t *reference, *intersection, *result;
 
 	/* Create a correct collection pointing to all media */
 	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
@@ -626,7 +624,7 @@ CASE (test_references)
 	                        xmmsv_ref (reference));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (reference);
+	xmmsv_unref (reference);
 
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
@@ -643,7 +641,7 @@ CASE (test_references)
 
 	xmmsv_unref (result);
 
-	reference = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "The Doors");
 
@@ -663,7 +661,7 @@ CASE (test_collection_snapshot_restore)
 {
 	xmmsv_t *universe, *playlist, *techno, *reference, *_union, *collections, *playlists, *snapshot, *result, *expected;
 
-	universe = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNIVERSE);
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	playlist = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 	xmmsv_coll_idlist_append (playlist, 1);

@@ -30,7 +30,7 @@
 typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
 
 typedef void (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
-                                    xmmsv_t *content, xmmsv_coll_t *coll,
+                                    xmmsv_t *content, xmmsv_t *coll,
                                     xmmsv_t *specification, xmmsv_t *expected,
                                     gint format, const gchar *datasetname);
 
@@ -125,8 +125,7 @@ static void
 filter_testcase (const gchar *path, xmmsv_t *list)
 {
 	gchar *content, *filename;
-	xmmsv_t *dict, *data, *holder;
-	xmmsv_coll_t *coll;
+	xmmsv_t *dict, *data, *coll;
 
 	g_assert (g_file_get_contents (path, &content, NULL, NULL));
 	dict = xmmsv_from_json (content);
@@ -244,7 +243,7 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
  */
 static void
 run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
-               xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+               xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                gint format, const gchar *datasetname)
 {
 	gboolean matches, ordered = FALSE;
@@ -318,7 +317,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
  */
 static void
 run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *content,
-                      xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+                      xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                       gint format, const gchar *datasetname)
 {
 	xmms_medialib_session_t *session;
@@ -366,8 +365,7 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
 
 	xmmsv_get_list_iter (testcases, &it);
 	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *dict, *content, *specification, *holder, *expected;
-		xmmsv_coll_t *coll;
+		xmmsv_t *dict, *content, *specification, *expected, *coll;
 		const gchar *name;
 		dict = NULL;
 
@@ -377,10 +375,8 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
 
 		xmmsv_dict_get (dict, "medialib", &content);
 		xmmsv_dict_get (dict, "specification", &specification);
-		xmmsv_dict_get (dict, "collection", &holder);
+		xmmsv_dict_get (dict, "collection", &coll);
 		xmmsv_dict_get (dict, "expected", &expected);
-
-		xmmsv_get_coll (holder, &coll);
 
 		predicate (medialib, name, content, coll, specification,
 		           expected, format, datasetname);

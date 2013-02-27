@@ -22,7 +22,7 @@
 #include "utils/coll_utils.h"
 #include "utils/value_utils.h"
 
-static xmmsv_coll_t *parse_collection (xmmsv_t *attrs);
+static xmmsv_t *parse_collection (xmmsv_t *attrs);
 
 static const char *coll_types[] = {
 	"reference",
@@ -53,10 +53,10 @@ static const char *coll_types[] = {
  *  - attributes, a dict of attributes [optional]
  *  - idlist, a list of media library id's [optional]
  */
-xmmsv_coll_t *
+xmmsv_t *
 xmmsv_coll_from_string (const char *data)
 {
-	xmmsv_coll_t *collection;
+	xmmsv_t *collection;
 	xmmsv_t *dict;
 
 	dict = xmmsv_from_json (data);
@@ -69,7 +69,7 @@ xmmsv_coll_from_string (const char *data)
 /**
  * Build a collection from an already parsed dictionary
  */
-xmmsv_coll_t *
+xmmsv_t *
 xmmsv_coll_from_dict (xmmsv_t *data)
 {
 	return parse_collection (data);
@@ -134,7 +134,7 @@ collection_type_from_string (const char *name, xmmsv_coll_type_t *type)
 
 
 static void
-parse_idlist (xmmsv_coll_t *coll, xmmsv_t *list)
+parse_idlist (xmmsv_t *coll, xmmsv_t *list)
 {
 	xmmsv_list_iter_t *it;
 
@@ -150,7 +150,7 @@ parse_idlist (xmmsv_coll_t *coll, xmmsv_t *list)
 }
 
 static void
-parse_attributes (xmmsv_coll_t *coll, xmmsv_t *attrs)
+parse_attributes (xmmsv_t *coll, xmmsv_t *attrs)
 {
 	xmmsv_dict_iter_t *it;
 
@@ -170,7 +170,7 @@ parse_attributes (xmmsv_coll_t *coll, xmmsv_t *attrs)
 }
 
 static void
-parse_operands (xmmsv_coll_t *coll, xmmsv_t *operands)
+parse_operands (xmmsv_t *coll, xmmsv_t *operands)
 {
 	xmmsv_list_iter_t *it;
 
@@ -178,7 +178,7 @@ parse_operands (xmmsv_coll_t *coll, xmmsv_t *operands)
 	assert (xmmsv_get_list_iter (operands, &it));
 
 	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_coll_t *operand;
+		xmmsv_t *operand;
 		xmmsv_t *entry;
 
 		assert (xmmsv_list_iter_entry (it, &entry));
@@ -186,17 +186,17 @@ parse_operands (xmmsv_coll_t *coll, xmmsv_t *operands)
 		assert (operand != NULL);
 
 		xmmsv_coll_add_operand (coll, operand);
-		xmmsv_coll_unref (operand);
+		xmmsv_unref (operand);
 
 		xmmsv_list_iter_next (it);
 	}
 }
 
-static xmmsv_coll_t *
+static xmmsv_t *
 parse_collection (xmmsv_t *dict)
 {
 	xmmsv_coll_type_t type = 0;
-	xmmsv_coll_t *coll;
+	xmmsv_t *coll;
 	xmmsv_t *attributes, *operands, *list;
 	const char *name;
 
@@ -204,7 +204,7 @@ parse_collection (xmmsv_t *dict)
 	xmmsv_dict_entry_get_string (dict, "type", &name);
 	assert (collection_type_from_string (name, &type));
 
-	coll = xmmsv_coll_new (type);
+	coll = xmmsv_new_coll (type);
 
 	if (xmmsv_dict_get (dict, "attributes", &attributes))
 		parse_attributes (coll, attributes);
@@ -219,7 +219,7 @@ parse_collection (xmmsv_t *dict)
 }
 
 int
-xmmsv_coll_compare (xmmsv_coll_t *a, xmmsv_coll_t *b)
+xmmsv_coll_compare (xmmsv_t *a, xmmsv_t *b)
 {
 	xmmsv_coll_type_t type;
 	xmmsv_t *_a, *_b;
@@ -259,7 +259,7 @@ _xmmsv_coll_dump_indent (int indent)
 }
 
 static void
-_xmms_coll_dump (xmmsv_coll_t *coll, int indent)
+_xmms_coll_dump (xmmsv_t *coll, int indent)
 {
 	xmmsv_t *attributes, *operands, *idlist;
 	const char *type_str;
@@ -298,13 +298,13 @@ _xmms_coll_dump (xmmsv_coll_t *coll, int indent)
 }
 
 void
-xmmsv_coll_dump_indented (xmmsv_coll_t *coll, int indent)
+xmmsv_coll_dump_indented (xmmsv_t *coll, int indent)
 {
 	_xmms_coll_dump (coll, indent);
 }
 
 void
-xmmsv_coll_dump (xmmsv_coll_t *coll)
+xmmsv_coll_dump (xmmsv_t *coll)
 {
 	_xmms_coll_dump (coll, 0);
 	printf ("\n");
