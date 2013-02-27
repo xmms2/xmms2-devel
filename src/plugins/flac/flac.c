@@ -26,33 +26,6 @@
 
 #include <glib.h>
 
-#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
-# define FLAC__STREAM_DECODER_SEEK_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_OK
-# define FLAC__STREAM_DECODER_SEEK_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR
-# define FLAC__STREAM_DECODER_TELL_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_OK
-# define FLAC__STREAM_DECODER_TELL_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_ERROR
-# define FLAC__STREAM_DECODER_LENGTH_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_OK
-# define FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_ERROR
-# define FLAC__STREAM_DECODER_END_OF_STREAM FLAC__SEEKABLE_STREAM_DECODER_END_OF_STREAM
-# define FLAC__StreamDecoder FLAC__SeekableStreamDecoder
-# define FLAC__StreamDecoderState FLAC__SeekableStreamDecoderState
-# define FLAC__StreamDecoderReadStatus FLAC__SeekableStreamDecoderReadStatus
-# define FLAC__StreamDecoderTellStatus FLAC__SeekableStreamDecoderTellStatus
-# define FLAC__StreamDecoderSeekStatus FLAC__SeekableStreamDecoderSeekStatus
-# define FLAC__StreamDecoderLengthStatus FLAC__SeekableStreamDecoderLengthStatus
-# define FLAC__stream_decoder_new FLAC__seekable_stream_decoder_new
-# define FLAC__stream_decoder_set_metadata_respond_all FLAC__seekable_stream_decoder_set_metadata_respond_all
-# define FLAC__stream_decoder_finish FLAC__seekable_stream_decoder_finish
-# define FLAC__stream_decoder_delete FLAC__seekable_stream_decoder_delete
-# define FLAC__stream_decoder_process_single FLAC__seekable_stream_decoder_process_single
-# define FLAC__stream_decoder_get_state FLAC__seekable_stream_decoder_get_state
-# define FLAC__stream_decoder_seek_absolute FLAC__seekable_stream_decoder_seek_absolute
-# define FLAC__stream_decoder_process_until_end_of_metadata FLAC__seekable_stream_decoder_process_until_end_of_metadata
-typedef unsigned read_callback_size_t;
-#else
-typedef size_t read_callback_size_t;
-#endif
-
 typedef struct xmms_flac_data_St {
 	FLAC__StreamDecoder *flacdecoder;
 	FLAC__StreamMetadata *vorbiscomment;
@@ -163,33 +136,20 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 }
 
 static FLAC__StreamDecoderReadStatus
-flac_callback_read (const FLAC__StreamDecoder *flacdecoder,
-                    FLAC__byte buffer[],
-                    read_callback_size_t *bytes,
-                    void *client_data)
+flac_callback_read (const FLAC__StreamDecoder *flacdecoder, FLAC__byte buffer[],
+                    size_t *bytes, void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	xmms_error_t error;
 	gint ret;
 
-#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
-	g_return_val_if_fail (xform,
-	                      FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
-#else
-	g_return_val_if_fail (xform,
-	                      FLAC__STREAM_DECODER_READ_STATUS_ABORT);
-#endif
+	g_return_val_if_fail (xform, FLAC__STREAM_DECODER_READ_STATUS_ABORT);
 
 	ret = xmms_xform_read (xform, (gchar *)buffer, *bytes, &error);
 	*bytes = ret;
 
-#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
-	return (ret <= 0) ? FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR
-	                  : FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_OK;
-#else
 	return (ret <= 0) ? FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
 	                  : FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
-#endif
 }
 
 static FLAC__StreamDecoderWriteStatus
@@ -327,7 +287,6 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 			data->vorbiscomment = FLAC__metadata_object_clone (metadata);
 			break;
-#if defined(FLAC_API_VERSION_CURRENT) && FLAC_API_VERSION_CURRENT > 7
 		case FLAC__METADATA_TYPE_PICTURE: {
 			gchar hash[33];
 			if (metadata->data.picture.type == FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER &&
@@ -344,7 +303,6 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 			}
 			break;
 		}
-#endif
 		/* if we want to support more metadata types here,
 		 * don't forget to add a call to
 		 * FLAC__stream_decoder_set_metadata_respond() below.
@@ -422,11 +380,7 @@ xmms_flac_init (xmms_xform_t *xform)
 	xmms_flac_data_t *data;
 	xmms_sample_format_t sample_fmt;
 	FLAC__bool retval;
-#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
-	FLAC__StreamDecoderState init_status;
-#else
 	FLAC__StreamDecoderInitStatus init_status;
-#endif
 	gint filesize;
 	const gchar *metakey;
 
@@ -441,59 +395,27 @@ xmms_flac_init (xmms_xform_t *xform)
 	/* we don't need to explicitly tell the decoder to respond to
 	 * FLAC__METADATA_TYPE_STREAMINFO here, it always does.
 	 */
-#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
-	FLAC__seekable_stream_decoder_set_metadata_respond (data->flacdecoder,
-	                                                    FLAC__METADATA_TYPE_VORBIS_COMMENT);
-	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder,
-	                                                flac_callback_eof);
-	FLAC__seekable_stream_decoder_set_read_callback (data->flacdecoder,
-	                                                 flac_callback_read);
-	FLAC__seekable_stream_decoder_set_seek_callback (data->flacdecoder,
-	                                                 flac_callback_seek);
-	FLAC__seekable_stream_decoder_set_tell_callback (data->flacdecoder,
-	                                                 flac_callback_tell);
-	FLAC__seekable_stream_decoder_set_write_callback (data->flacdecoder,
-	                                                  flac_callback_write);
-	FLAC__seekable_stream_decoder_set_error_callback (data->flacdecoder,
-	                                                  flac_callback_error);
-	FLAC__seekable_stream_decoder_set_length_callback (data->flacdecoder,
-	                                                   flac_callback_length);
-	FLAC__seekable_stream_decoder_set_metadata_callback (data->flacdecoder,
-	                                                     flac_callback_metadata);
-
-	FLAC__seekable_stream_decoder_set_client_data (data->flacdecoder, xform);
-
-	init_status = FLAC__seekable_stream_decoder_init (data->flacdecoder);
-
-	if (init_status != FLAC__SEEKABLE_STREAM_DECODER_OK) {
-		const gchar *errmsg = FLAC__seekable_stream_decoder_get_resolved_state_string (data->flacdecoder);
-		XMMS_DBG ("FLAC init failed: %s", errmsg);
-		goto err;
-	}
-#else
 	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
 	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
 	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
 	                                           FLAC__METADATA_TYPE_PICTURE);
 
-	init_status =
-		FLAC__stream_decoder_init_stream (data->flacdecoder,
-		                                  flac_callback_read,
-		                                  flac_callback_seek,
-		                                  flac_callback_tell,
-		                                  flac_callback_length,
-		                                  flac_callback_eof,
-		                                  flac_callback_write,
-		                                  flac_callback_metadata,
-		                                  flac_callback_error,
-		                                  xform);
+	init_status = FLAC__stream_decoder_init_stream (data->flacdecoder,
+	                                                flac_callback_read,
+	                                                flac_callback_seek,
+	                                                flac_callback_tell,
+	                                                flac_callback_length,
+	                                                flac_callback_eof,
+	                                                flac_callback_write,
+	                                                flac_callback_metadata,
+	                                                flac_callback_error,
+	                                                xform);
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
 		XMMS_DBG ("FLAC init failed: %s",
 		          FLAC__stream_decoder_get_resolved_state_string (data->flacdecoder));
 		goto err;
 	}
-#endif
 
 	retval = FLAC__stream_decoder_process_until_end_of_metadata (data->flacdecoder);
 	if (!retval)
