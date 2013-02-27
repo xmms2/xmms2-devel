@@ -102,7 +102,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsv_coll_namespace_t ns)
  * @param ns  The namespace in which to save the collection.
  */
 xmmsc_result_t*
-xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_t *coll,
                  const char* name, xmmsv_coll_namespace_t ns)
 {
 	x_check_conn (conn, NULL);
@@ -197,11 +197,10 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  * @param limit_len  The maximum number of entries to retrieve (0 to disable).
  */
 xmmsc_result_t*
-xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_t *coll,
                       xmmsv_t *order, int limit_start, int limit_len)
 {
-	xmmsv_t *spec, *metadata, *get;
-	xmmsv_coll_t *ordered, *limited;
+	xmmsv_t *spec, *metadata, *get, *ordered, *limited;
 	xmmsc_result_t *ret;
 
 	/* Creates the fetchspec to use */
@@ -222,8 +221,8 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	limited = xmmsv_coll_add_limit_operator (ordered, limit_start, limit_len);
 
 	ret = xmmsc_coll_query (conn, limited, spec);
-	xmmsv_coll_unref (ordered);
-	xmmsv_coll_unref (limited);
+	xmmsv_unref (ordered);
+	xmmsv_unref (limited);
 	xmmsv_unref (spec);
 
 	return ret;
@@ -248,12 +247,12 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
  *               #xmmsv_t list of strings.
  */
 xmmsc_result_t*
-xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_t *coll,
                         xmmsv_t *order, int limit_start,
                         int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
-	xmmsv_coll_t *ordered;
+	xmmsv_t *ordered;
 
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
@@ -290,7 +289,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
  * @return An xmmsv_t with the structure specified in fetch.
  */
 xmmsc_result_t*
-xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *fetch)
+xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_t *coll, xmmsv_t *fetch)
 {
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
