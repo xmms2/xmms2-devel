@@ -1,6 +1,6 @@
 TYPEMAP
 xmmsc_connection_t*			XMMSC_CONNECTION_T
-xmmsv_coll_t*				XMMSV_COLL_T
+xmmsv_t*				    XMMSV_T
 xmmsv_coll_type_t			XMMSV_COLL_TYPE_T
 xmms_playback_seek_mode_t	XMMSV_PLAYBACK_SEEK_MODE_T
 xmmsv_coll_namespace_t		T_PV
@@ -23,7 +23,7 @@ XMMSC_CONNECTION_T
 		$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient\");
 	}
 
-XMMSV_COLL_T
+XMMSV_T
 	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
@@ -144,7 +144,7 @@ INPUT
 XMMSC_CONNECTION_T
 	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient\");
 
-XMMSV_COLL_T
+XMMSV_T
 	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T

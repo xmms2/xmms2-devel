@@ -45,16 +45,7 @@ sv_from_value_string (xmmsv_t *val)
 STATIC SV *
 sv_from_value_coll (xmmsv_t *val)
 {
-	int ret;
-	xmmsv_coll_t *coll = NULL;
-
-	ret = xmmsv_get_coll (val, &coll);
-
-	if (ret == 0) {
-		croak("could not fetch collection value");
-	}
-
-	return perl_xmmsclient_new_sv_from_ptr ((void *)coll, "Audio::XMMSClient::Collection");
+	return perl_xmmsclient_new_sv_from_ptr ((void *) xmmsv_ref (val), "Audio::XMMSClient::Collection");
 }
 
 STATIC SV *

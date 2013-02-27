@@ -37,7 +37,7 @@ collections C<%attributes>, if given.
 
 =cut
 
-xmmsv_coll_t *
+xmmsv_t *
 xmmsv_coll_new (class, type, ...)
 		xmmsv_coll_type_t type
 	PREINIT:
@@ -45,7 +45,7 @@ xmmsv_coll_new (class, type, ...)
 		HV *args;
 		HE *iter;
 	CODE:
-		RETVAL = xmmsv_coll_new (type);
+		RETVAL = xmmsv_new_coll (type);
 
 		nargs = items - 2;
 		if (nargs == 1) {
@@ -56,7 +56,7 @@ xmmsv_coll_new (class, type, ...)
 
 			hv_iterinit (args);
 			while ((iter = hv_iternext (args))) {
-				xmmsv_coll_attribute_set (RETVAL, HePV (iter, PL_na), SvPV_nolen (HeVAL (iter)));
+				xmmsv_coll_attribute_set_string (RETVAL, HePV (iter, PL_na), SvPV_nolen (HeVAL (iter)));
 			}
 		}
 		else {
@@ -64,7 +64,7 @@ xmmsv_coll_new (class, type, ...)
 				croak ("expected even number of attributes/values");
 
 			for (i = 2; i <= nargs; i += 2) {
-				xmmsv_coll_attribute_set (RETVAL, SvPV_nolen (ST (i)), SvPV_nolen (ST (i+1)));
+				xmmsv_coll_attribute_set_string (RETVAL, SvPV_nolen (ST (i)), SvPV_nolen (ST (i+1)));
 			}
 		}
 	OUTPUT:
@@ -86,7 +86,7 @@ Try to parse the given C<$pattern> to produce a collection structure.
 
 =cut
 
-xmmsv_coll_t *
+xmmsv_t *
 xmmsv_coll_parse (class, const char *pattern)
 	PREINIT:
 		int ret;
@@ -100,9 +100,9 @@ xmmsv_coll_parse (class, const char *pattern)
 
 void
 DESTROY (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	CODE:
-		xmmsv_coll_unref (coll);
+		xmmsv_unref (coll);
 
 =head2 set_idlist
 
@@ -123,7 +123,7 @@ relevant for idlist collections.
 
 void
 xmmsv_coll_set_idlist (coll, ...)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	PREINIT:
 		int i;
 		int *ids;
@@ -162,8 +162,8 @@ Add the C<$operand> to a given collection.
 
 void
 xmmsv_coll_add_operand (coll, op)
-		xmmsv_coll_t *coll
-		xmmsv_coll_t *op
+		xmmsv_t *coll
+		xmmsv_t *op
 
 =head2 remove_operand
 
@@ -183,8 +183,8 @@ Remove all the occurences of the C<$operand> in the given collection.
 
 void
 xmmsv_coll_remove_operand (coll, op)
-		xmmsv_coll_t *coll
-		xmmsv_coll_t *op
+		xmmsv_t *coll
+		xmmsv_t *op
 
 =head2 idlist_append
 
@@ -204,7 +204,7 @@ Append an C<$id> to the idlist.
 
 int
 xmmsv_coll_idlist_append (coll, id)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		unsigned int id
 	INIT:
 		if (id == 0) {
@@ -229,7 +229,7 @@ Insert an C<$id> at a given C<$index> in the idlist.
 
 int
 xmmsv_coll_idlist_insert (coll, index, id)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		unsigned int index
 		unsigned int id
 	INIT:
@@ -259,7 +259,7 @@ Move a value of the idlist to a new position.
 
 int
 xmmsv_coll_idlist_move (coll, from, to)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		unsigned int from
 		unsigned int to
 	PREINIT:
@@ -293,7 +293,7 @@ Empties the idlist.
 
 int
 xmmsv_coll_idlist_clear (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 
 =head2 idlist_get_index
 
@@ -312,7 +312,7 @@ Retrieves the value at the given C<$index> in the idlist.
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_idlist_get_index (xmmsv_coll_t *coll, unsigned int index, OUTLIST int32_t val)
+xmmsv_coll_idlist_get_index (xmmsv_t *coll, unsigned int index, OUTLIST int32_t val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 
@@ -341,7 +341,7 @@ Sets the C<$value> at the given C<$index> in the idlist.
 
 int
 xmmsv_coll_idlist_set_index (coll, index, val)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		unsigned int index
 		int32_t val
 	PREINIT:
@@ -370,7 +370,7 @@ Get the size of the idlist.
 
 size_t
 xmmsv_coll_idlist_get_size (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 
 =head2 get_type
 
@@ -392,7 +392,7 @@ Return the type of the collection. Valid types are "reference", "union",
 
 xmmsv_coll_type_t
 xmmsv_coll_get_type (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 
 =head2 get_idlist
 
@@ -414,7 +414,7 @@ L<Audio::XMMSClient/coll_query_ids>.
 
 void
 xmmsv_coll_get_idlist (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	PREINIT:
 		xmmsv_list_iter_t *it;
 		int32_t entry;
@@ -451,14 +451,13 @@ Get a list of operands of the collection.
 
 void
 operands (coll)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	ALIAS:
 		operand_list = 1
 	PREINIT:
 		xmmsv_t *operands_list;
 		xmmsv_list_iter_t *it;
 		xmmsv_t *value;
-		xmmsv_coll_t *op;
 	PPCODE:
 		PERL_UNUSED_VAR (ix);
 
@@ -467,9 +466,7 @@ operands (coll)
 		for (xmmsv_get_list_iter (operands_list, &it);
 		     xmmsv_list_iter_entry (it, &value);
 		     xmmsv_list_iter_next (it)) {
-			xmmsv_get_coll (value, &op);
-			xmmsv_coll_ref (op);
-			XPUSHs (sv_2mortal (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection")));
+			XPUSHs (sv_2mortal (perl_xmmsclient_new_sv_from_ptr (xmmsv_ref (value), "Audio::XMMSClient::Collection")));
 		}
 
 		xmmsv_list_iter_explicit_destroy (it);
@@ -492,7 +489,7 @@ Set an attribute C<$key> to C<$value> in the given collection.
 
 void
 xmmsv_coll_attribute_set (coll, key, value)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		const char *key
 		const char *value
 
@@ -504,7 +501,7 @@ xmmsv_coll_attribute_set (coll, key, value)
 
 =item Return Value: $success
 
-=back 
+=back
 
   my $success = $coll->attribute_remove;
 
@@ -515,7 +512,7 @@ indicated whether the attribute was found (and removed).
 
 int
 xmmsv_coll_attribute_remove (coll, key)
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		const char *key
 
 =head2 attribute_get
@@ -530,12 +527,12 @@ xmmsv_coll_attribute_remove (coll, key)
 
   my $value = $coll->attribute_get('field');
 
-Retrieve the C<$value> of the attribute C<$key> of the given collection. 
+Retrieve the C<$value> of the attribute C<$key> of the given collection.
 
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_attribute_get (xmmsv_coll_t *coll, const char *key, OUTLIST const char *val)
+xmmsv_coll_attribute_get (xmmsv_t *coll, const char *key, OUTLIST const char *val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 	POSTCALL:
@@ -559,7 +556,7 @@ Get a hash of all C<%attributes> of the given collection.
 =cut
 
 void
-xmmsv_coll_attribute_list (xmmsv_coll_t *coll)
+xmmsv_coll_attribute_list (xmmsv_t *coll)
 	PREINIT:
 		xmmsv_dict_iter_t *it;
 		const char *key;
@@ -597,7 +594,7 @@ collection.
 
 =cut
 
-xmmsv_coll_t *
+xmmsv_t *
 xmmsv_coll_universe (class="optional")
 	C_ARGS:
 		/* void */

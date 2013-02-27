@@ -286,7 +286,7 @@ xmmsc_result_t *
 xmmsc_playlist_insert_collection (p, pos, collection, order)
 		perl_xmmsclient_playlist_t *p
 		int pos
-		xmmsv_coll_t *collection
+		xmmsv_t *collection
 		xmmsv_t *order = ($type)perl_xmmsclient_pack_stringlist ($arg);
 	C_ARGS:
 		p->conn, p->name, pos, collection, order
@@ -415,7 +415,7 @@ C<\@order> and add the results to the end of the playlist.
 xmmsc_result_t *
 xmmsc_playlist_add_collection (p, collection, order)
 		perl_xmmsclient_playlist_t *p
-		xmmsv_coll_t *collection
+		xmmsv_t *collection
 		xmmsv_t *order = ($type)perl_xmmsclient_pack_stringlist ($arg);
 	C_ARGS:
 		p->conn, p->name, collection, order

@@ -830,7 +830,7 @@ C<$namespace>.
 xmmsc_result_t *
 xmmsc_coll_save (c, coll, name, namespace)
 		xmmsc_connection_t *c
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 		const char *name
 		xmmsv_coll_namespace_t namespace
 
@@ -948,7 +948,7 @@ reference.
 xmmsc_result_t *
 xmmsc_coll_query_ids (c, coll, ...)
 		xmmsc_connection_t *c
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	INIT:
 		xmmsv_t *order = NULL;
 		unsigned int limit_start = 0;
@@ -1038,7 +1038,7 @@ reference.
 xmmsc_result_t *
 xmmsc_coll_query_infos (c, coll, ...)
 		xmmsc_connection_t *c
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	INIT:
 		xmmsv_t *order = NULL;
 		unsigned int limit_start = 0;
@@ -1119,7 +1119,7 @@ reference.
 xmmsc_result_t *
 xmmsc_coll_query (c, coll, spec)
 		xmmsc_connection_t *c
-		xmmsv_coll_t *coll
+		xmmsv_t *coll
 	INIT:
 		xmmsv_t *spec = perl_xmmsclient_pack_fetchspec (ST (2));
 	C_ARGS:
