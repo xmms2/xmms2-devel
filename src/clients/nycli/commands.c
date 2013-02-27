@@ -660,7 +660,7 @@ gboolean
 cli_jump (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	xmmsc_coll_t *query;
+	xmmsv_t *query;
 	gboolean backward = FALSE;
 	playlist_positions_t *positions;
 
@@ -681,7 +681,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 		} else {
 			list_jump (res, infos);
 		}
-		xmmsc_coll_unref (query);
+		xmmsv_unref (query);
 	}
 
 	return FALSE;
@@ -690,9 +690,8 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_coll_t *query, *ordered_query;
+	xmmsv_t *fetchval, *query, *ordered_query;
 	xmmsc_result_t *res;
-	xmmsv_t *fetchval;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
 	const gchar **columns = NULL;
@@ -727,8 +726,8 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 
 	res = xmmsc_coll_query_infos (infos->sync, ordered_query, NULL,
 	                              0, 0, fetchval, NULL);
-	xmmsv_coll_unref (ordered_query);
-	xmmsc_coll_unref (query);
+	xmmsv_unref (ordered_query);
+	xmmsv_unref (query);
 
 	xmmsc_result_wait (res);
 
@@ -746,7 +745,7 @@ gboolean
 cli_list (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *pattern = NULL;
-	xmmsv_coll_t *query = NULL, *filter = NULL, *pl;
+	xmmsv_t *query = NULL, *filter = NULL, *pl;
 	xmmsc_result_t *res;
 	column_display_t *coldisp;
 	playlist_positions_t *positions;
@@ -784,11 +783,11 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	/* Has filter, retrieve ids from intersection */
 	if (query != NULL) {
-		pl = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-		xmmsv_coll_attribute_set (pl, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsv_coll_attribute_set (pl, "reference", playlist);
+		pl = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+		xmmsv_coll_attribute_set_string (pl, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
+		xmmsv_coll_attribute_set_string (pl, "reference", playlist);
 
-		filter = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+		filter = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
 		xmmsv_coll_add_operand (filter, query);
 		xmmsv_coll_add_operand (filter, pl);
 	}
@@ -810,9 +809,9 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (filter != NULL) {
-		xmmsv_coll_unref (filter);
-		xmmsv_coll_unref (query);
-		xmmsv_coll_unref (pl);
+		xmmsv_unref (filter);
+		xmmsv_unref (query);
+		xmmsv_unref (pl);
 	}
 
 	if (filter_by_pos) {
@@ -826,8 +825,8 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_info (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_coll_t *query;
 	xmmsc_result_t *res;
+	xmmsv_t *query;
 	playlist_positions_t *positions;
 
 	/* Select by positions */
@@ -840,8 +839,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		list_print_info (res, infos);
-		xmmsc_coll_unref (query);
-
+		xmmsv_unref (query);
 	/* Default to current song */
 	} else {
 		guint id;
@@ -854,23 +852,27 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	return FALSE;
 }
 
-static xmmsv_coll_t *
-get_coll (cli_infos_t *infos, const gchar *name, xmmsv_coll_namespace_t ns) {
+static xmmsv_t *
+get_coll (cli_infos_t *infos, const gchar *name, xmmsv_coll_namespace_t ns)
+{
 	xmmsc_result_t *res;
-	xmmsv_coll_t *coll;
+	xmmsv_t *val;
+	const gchar *err;
 
 	res = xmmsc_coll_get (infos->sync, name, ns);
 	xmmsc_result_wait (res);
 
-	if (!xmmsv_get_coll (xmmsc_result_get_value (res), &coll)) {
-		g_printf (_("Error: Could not retrieve collection %s.\n"), name);
-		coll = NULL;
+	val = xmmsc_result_get_value (res);
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_ref (val);
 	} else {
-		xmmsv_coll_ref (coll);
+		g_printf (_("Error: Could not retrieve collection %s.\n"), name);
+		val = NULL;
 	}
+
 	xmmsc_result_unref (res);
 
-	return coll;
+	return val;
 }
 
 /* Get current position in @playlist or in active playlist if
@@ -878,7 +880,7 @@ get_coll (cli_infos_t *infos, const gchar *name, xmmsv_coll_namespace_t ns) {
 static gboolean
 playlist_currpos_get (cli_infos_t *infos, const gchar *playlist, gint *pos)
 {
-	xmmsv_coll_t *coll;
+	xmmsv_t *coll;
 	const gchar *str;
 
 	if (playlist) {
@@ -886,13 +888,12 @@ playlist_currpos_get (cli_infos_t *infos, const gchar *playlist, gint *pos)
 		          linear in the size of the playlist.), but I am not aware of a
 		          more efficient IPC-method. */
 		if ((coll = get_coll (infos, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
-			if (xmmsv_dict_entry_get_string (xmmsv_coll_attributes_get (coll),
-		                                     "position", &str)) {
+			if (xmmsv_coll_attribute_get_string (coll, "position", &str)) {
 				*pos = strtol (str, NULL, 10);
 			} else {
 				*pos = -1;
 			}
-			xmmsv_coll_unref (coll);
+			xmmsv_unref (coll);
 		} else {
 			return FALSE;
 		}
@@ -907,7 +908,7 @@ playlist_currpos_get (cli_infos_t *infos, const gchar *playlist, gint *pos)
 static gboolean
 playlist_length_get (cli_infos_t *infos, const gchar *playlist, gint *len)
 {
-	xmmsv_coll_t *coll;
+	xmmsv_t *coll;
 
 	if (playlist) {
 		/* FIXME: Getting the whole playlist is a bit of overkill (at least
@@ -915,7 +916,7 @@ playlist_length_get (cli_infos_t *infos, const gchar *playlist, gint *len)
 		          more efficient IPC-method. */
 		if ((coll = get_coll (infos, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
 			*len = xmmsv_coll_idlist_get_size (coll);
-			xmmsv_coll_unref (coll);
+			xmmsv_unref (coll);
 		} else {
 			return FALSE;
 		}
@@ -1218,8 +1219,7 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 {
 	gchar **sortby;
 	gchar *pattern = NULL;
-	xmmsv_t *order = NULL;
-	xmmsv_coll_t *query;
+	xmmsv_t *query, *order = NULL;
 	gboolean ret = FALSE;;
 
 	command_arg_longstring_get_escaped (ctx, 0, &pattern);
@@ -1250,7 +1250,7 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 			ret = TRUE;
 		}
 
-		xmmsc_coll_unref (query);
+		xmmsv_unref (query);
 		xmmsc_result_unref (res);
 	}
 
@@ -1345,8 +1345,8 @@ gboolean
 cli_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	const gchar *playlist = NULL;
-	xmmsc_coll_t *query;
 	xmmsc_result_t *res, *plres;
+	xmmsv_t *query;
 	playlist_positions_t *positions;
 
 	command_flag_string_get (ctx, "playlist", &playlist);
@@ -1372,7 +1372,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 			xmmsc_result_wait (plres);
 			remove_list (res, plres, infos, playlist);
 		}
-		xmmsc_coll_unref (query);
+		xmmsv_unref (query);
 	}
 
 	return FALSE;
@@ -1396,7 +1396,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 	const gchar *playlist;
 	gint pos;
 	xmmsc_result_t *res;
-	xmmsc_coll_t *query;
+	xmmsv_t *query;
 	playlist_positions_t *positions;
 
 	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
@@ -1418,7 +1418,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, query, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		move_entries (res, infos, playlist, pos);
-		xmmsc_coll_unref (query);
+		xmmsv_unref (query);
 	}
 
 	return FALSE;
@@ -1643,7 +1643,6 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	gint history, upcoming;
 	gboolean modif = FALSE;
 	const gchar *input, *jumplist, *typestr;
-	xmmsv_coll_t *coll;
 	xmmsv_t *val;
 
 	history = -1;
@@ -1684,8 +1683,8 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 		/* Send the previous coll_t for update. */
 		if (typestr == NULL) {
 			val = xmmsc_result_get_value (res);
-			if (xmmsv_get_coll (val, &coll)) {
-				xmmsv_coll_attribute_get (coll, "type", &typestr);
+			if (xmmsv_is_type (val, XMMSV_TYPE_COLL)) {
+				xmmsv_coll_attribute_get_string (val, "type", &typestr);
 			} else {
 				g_printf (_("Cannot find the playlist to configure!\n"));
 				cli_infos_loop_resume (infos);
@@ -1768,7 +1767,7 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_coll_t *coll = NULL;
+	xmmsv_t *coll = NULL;
 	gchar *ns, *name, *pattern = NULL;
 	gboolean force = FALSE, empty = FALSE, copy;
 	const gchar *collection, *fullname;
@@ -1796,7 +1795,6 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		}
 	} else if (copy) {
 		xmmsc_result_t *res;
-		xmmsv_t *val;
 		gchar *from_ns, *from_name;
 
 		coll_name_split (collection, &from_ns, &from_name);
@@ -1804,10 +1802,10 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		/* get collection to copy from */
 		res = xmmsc_coll_get (infos->sync, from_name, from_ns);
 		xmmsc_result_wait (res);
-		val = xmmsc_result_get_value (res);
+		coll = xmmsc_result_get_value (res);
 
-		if (xmmsv_get_coll (val, &coll)) {
-			xmmsv_coll_ref (coll);
+		if (xmmsv_is_type (coll, XMMSV_TYPE_COLL)) {
+			xmmsv_ref (coll);
 		} else {
 			g_printf (_("Error: cannot find collection to copy\n"));
 		}
@@ -1816,21 +1814,21 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 		g_free (from_ns);
 		g_free (from_name);
 	} else if (empty) {
-		xmmsc_coll_t *univ;
+		xmmsv_t *univ;
 
 		/* empty collection == NOT 'All Media' */
-		univ = xmmsc_coll_universe ();
+		univ = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
-		coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-		xmmsc_coll_add_operand (coll, univ);
-		xmmsc_coll_unref (univ);
+		coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_COMPLEMENT);
+		xmmsv_coll_add_operand (coll, univ);
+		xmmsv_unref (univ);
 	} else {
-		coll = xmmsc_coll_universe ();
+		coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	}
 
 	if (coll) {
 		coll_save (infos, coll, ns, name, force);
-		xmmsc_coll_unref (coll);
+		xmmsv_unref (coll);
 	}
 
 	g_free (pattern);
@@ -2060,7 +2058,7 @@ gboolean
 cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	xmmsc_coll_t *coll;
+	xmmsv_t *coll;
 
 	gchar *pattern;
 
@@ -2077,8 +2075,9 @@ cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
 	res = xmmsc_coll_query_ids (infos->sync, coll, NULL, 0, 0);
 	xmmsc_result_wait (res);
 	remove_ids (infos, res);
+	xmmsv_unref (coll);
 
-	finish:
+finish:
 	g_free (pattern);
 
 	return FALSE;
@@ -2088,7 +2087,7 @@ gboolean
 cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsc_result_t *res;
-	xmmsc_coll_t *coll;
+	xmmsv_t *coll;
 
 	gchar *pattern;
 
@@ -2101,6 +2100,7 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 		res = xmmsc_coll_query_ids (infos->sync, coll, NULL, 0, 0);
 		xmmsc_result_wait (res);
 		rehash_ids (infos, res);
+		xmmsv_unref (coll);
 	} else {
 		/* Rehash all media-library */
 		res = xmmsc_medialib_rehash (infos->sync, 0);

@@ -59,6 +59,6 @@ gboolean command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gc
 gboolean command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v);
 gboolean command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v, gboolean warn);
 gboolean command_arg_positions_get (command_context_t *ctx, gint at, playlist_positions_t **p, gint currpos);
-xmmsv_coll_t *coll_apply_default_order (xmmsv_coll_t *query);
+xmmsv_t *coll_apply_default_order (xmmsv_t *query);
 
 #endif /* __COMMAND_UTILS_H__ */

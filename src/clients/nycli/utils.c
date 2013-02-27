@@ -25,17 +25,17 @@
 #include "cli_cache.h"
 #include "column_display.h"
 
-static void coll_int_attribute_set (xmmsv_coll_t *coll, const char *key, gint value);
-static xmmsv_coll_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
+static void coll_int_attribute_set (xmmsv_t *coll, const char *key, gint value);
+static xmmsv_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
 static void coll_print_attributes (const char *key, xmmsv_t *val, void *udata);
 
-static void pl_print_config (xmmsv_coll_t *coll, const char *name);
+static void pl_print_config (xmmsv_t *coll, const char *name);
 
 static void id_print_info (xmmsc_result_t *res, guint id, const gchar *source);
 
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
 
-static void coll_dump (xmmsv_coll_t *coll, guint level);
+static void coll_dump (xmmsv_t *coll, guint level);
 
 typedef enum {
 	IDLIST_CMD_NONE = 0,
@@ -796,9 +796,9 @@ matching_ids_tree (xmmsc_result_t *matching)
 }
 
 void
-list_print_row (xmmsc_result_t *res, xmmsv_coll_t *filter,
+list_print_row (xmmsc_result_t *res, xmmsv_t *filter,
                 column_display_t *coldisp, gboolean is_search,
-				gboolean result_is_infos)
+                gboolean result_is_infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
@@ -888,7 +888,7 @@ coll_rename (cli_infos_t *infos, const gchar *oldname, const gchar *newname,
 }
 
 void
-coll_save (cli_infos_t *infos, xmmsv_coll_t *coll,
+coll_save (cli_infos_t *infos, xmmsv_t *coll,
            xmmsc_coll_namespace_t ns, const gchar *name, gboolean force)
 {
 	xmmsc_result_t *res;
@@ -896,11 +896,10 @@ coll_save (cli_infos_t *infos, xmmsv_coll_t *coll,
 	gboolean save = TRUE;
 
 	if (!force) {
-		xmmsv_coll_t *exists;
 		res = xmmsc_coll_get (infos->sync, name, ns);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
-		if (xmmsv_get_coll (val, &exists)) {
+		if (xmmsv_is_type (val, XMMSV_TYPE_COLL)) {
 			g_printf (_("Error: A collection already exists "
 			            "with the target name!\n"));
 			save = FALSE;
@@ -933,7 +932,7 @@ print_info (const gchar *fmt, ...)
    (must be freed manually!)
    (from src/clients/cli/cmd_coll.c) */
 static GString *
-coll_idlist_to_string (xmmsv_coll_t *coll)
+coll_idlist_to_string (xmmsv_t *coll)
 {
 	xmmsv_list_iter_t *it;
 	gint32 entry;
@@ -968,14 +967,11 @@ static void
 coll_dump_list (xmmsv_t *list, unsigned int level)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_coll_t *operand;
 	xmmsv_t *v;
 
 	xmmsv_get_list_iter (list, &it);
 	while (xmmsv_list_iter_entry (it, &v)) {
-		if (xmmsv_get_coll (v, &operand)) {
-			coll_dump (operand, level);
-		}
+		coll_dump (v, level);
 		xmmsv_list_iter_next (it);
 	}
 
@@ -1009,7 +1005,7 @@ coll_dump_attributes (xmmsv_t *attr, gchar *indent)
 /* Dump the structure of the collection as a string
    (from src/clients/cli/cmd_coll.c) */
 static void
-coll_dump (xmmsv_coll_t *coll, guint level)
+coll_dump (xmmsv_t *coll, guint level)
 {
 	gint i;
 	gchar *indent;
@@ -1024,7 +1020,7 @@ coll_dump (xmmsv_coll_t *coll, guint level)
 	indent[i] = '\0';
 
 	/* type */
-	switch (xmmsc_coll_get_type (coll)) {
+	switch (xmmsv_coll_get_type (coll)) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		type = "Reference";
 		break;
@@ -1111,14 +1107,12 @@ void
 coll_show (cli_infos_t *infos, xmmsc_result_t *res)
 {
 	const gchar *err;
-	xmmsv_coll_t *coll;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_coll (val, &coll);
-		coll_dump (coll, 0);
+		coll_dump (val, 0);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -1312,15 +1306,13 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
          const gchar *playlist, gint pos)
 {
 	xmmsc_result_t *res;
-	xmmsv_coll_t *coll;
 	xmmsv_t *val;
 	const char *err;
 
 	val = xmmsc_result_get_value (plsres);
 
-	if (!xmmsv_get_error (val, &err) &&
-	    xmmsv_get_coll (val, &coll)) {
-		res = xmmsc_playlist_add_idlist (infos->sync, playlist, coll);
+	if (!xmmsv_get_error (val, &err)) {
+		res = xmmsc_playlist_add_idlist (infos->sync, playlist, val);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 	} else {
@@ -1586,14 +1578,13 @@ void
 copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist)
 {
 	xmmsc_result_t *saveres;
-	xmmsv_coll_t *coll;
-
+	const gchar *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_coll (val, &coll)) {
-		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
+	if (!xmmsv_get_error (val, &err)) {
+		saveres = xmmsc_coll_save (infos->sync, val, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (saveres);
 		done (saveres, infos);
@@ -1608,14 +1599,14 @@ void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
                            const gchar *ns, const gchar *name,
                            const gchar *attrname, const gchar *attrvalue)
 {
-	xmmsv_coll_t *coll;
+	const gchar *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_coll (val, &coll)) {
-		xmmsc_coll_attribute_set (coll, attrname, attrvalue);
-		coll_save (infos, coll, ns, name, TRUE);
+	if (!xmmsv_get_error (val, &err)) {
+		xmmsv_coll_attribute_set_string (val, attrname, attrvalue);
+		coll_save (infos, val, ns, name, TRUE);
 	} else {
 		g_printf (_("Invalid collection!\n"));
 	}
@@ -1629,41 +1620,41 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
                     const gchar *input, const gchar *jumplist)
 {
 	xmmsc_result_t *saveres;
-	xmmsv_coll_t *coll;
-	xmmsv_coll_t *newcoll = NULL;
+	const gchar *err;
+	xmmsv_t *newcoll = NULL;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_coll (val, &coll)) {
+	if (!xmmsv_get_error (val, &err)) {
 		if (typestr) {
-			xmmsv_coll_attribute_set (coll, "type", typestr);
+			xmmsv_coll_attribute_set_string (val, "type", typestr);
 		}
 		if (history >= 0) {
-			coll_int_attribute_set (coll, "history", history);
+			coll_int_attribute_set (val, "history", history);
 		}
 		if (upcoming >= 0) {
-			coll_int_attribute_set (coll, "upcoming", upcoming);
+			coll_int_attribute_set (val, "upcoming", upcoming);
 		}
 		if (input) {
 			/* Replace previous operand. */
 			newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
 		} else if (typestr && strcmp (typestr, "pshuffle") == 0 &&
-		           xmmsv_list_get_size (xmmsv_coll_operands_get (coll)) == 0) {
-			newcoll = xmmsv_coll_universe ();
+		           xmmsv_list_get_size (xmmsv_coll_operands_get (val)) == 0) {
+			newcoll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 		}
 
 		if (newcoll) {
-			xmmsv_list_clear (xmmsv_coll_operands_get (coll));
-			xmmsv_coll_add_operand (coll, newcoll);
-			xmmsv_coll_unref (newcoll);
+			xmmsv_list_clear (xmmsv_coll_operands_get (val));
+			xmmsv_coll_add_operand (val, newcoll);
+			xmmsv_unref (newcoll);
 		}
 		if (jumplist) {
 			/* FIXME: Check for the existence of the target ? */
-			xmmsv_coll_attribute_set (coll, "jumplist", jumplist);
+			xmmsv_coll_attribute_set_string (val, "jumplist", jumplist);
 		}
 
-		saveres = xmmsc_coll_save (infos->sync, coll, playlist,
+		saveres = xmmsc_coll_save (infos->sync, val, playlist,
 		                           XMMS_COLLECTION_NS_PLAYLISTS);
 		xmmsc_result_wait (saveres);
 		done (saveres, infos);
@@ -1678,18 +1669,17 @@ void
 collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
                          const gchar *attrname)
 {
-	xmmsv_coll_t *coll;
-	const gchar *attrvalue;
+	const gchar *attrvalue, *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_coll (val, &coll)) {
+	if (!xmmsv_get_error (val, &err)) {
 		if (attrname == NULL) {
-			xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
+			xmmsv_dict_foreach (xmmsv_coll_attributes_get (val),
 			                    coll_print_attributes, NULL);
 		} else {
-			if (xmmsv_coll_attribute_get (coll, attrname, &attrvalue)) {
+			if (xmmsv_coll_attribute_get_string (val, attrname, &attrvalue)) {
 				g_printf ("[%s] %s\n", attrname, attrvalue);
 			} else {
 				g_printf (_("Invalid attribute!\n"));
@@ -1706,13 +1696,13 @@ void
 playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
                        const gchar *playlist)
 {
-	xmmsv_coll_t *coll;
+	const gchar *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
-	if (xmmsv_get_coll (val, &coll)) {
-		pl_print_config (coll, playlist);
+	if (!xmmsv_get_error (val, &err)) {
+		pl_print_config (val, playlist);
 	} else {
 		g_printf (_("Invalid playlist!\n"));
 	}
@@ -1742,22 +1732,22 @@ playlist_exists (cli_infos_t *infos, const gchar *playlist)
 }
 
 static void
-coll_int_attribute_set (xmmsv_coll_t *coll, const char *key, gint value)
+coll_int_attribute_set (xmmsv_t *coll, const char *key, gint value)
 {
 	gchar buf[MAX_INT_VALUE_BUFFER_SIZE + 1];
 
 	g_snprintf (buf, MAX_INT_VALUE_BUFFER_SIZE, "%d", value);
-	xmmsv_coll_attribute_set (coll, key, buf);
+	xmmsv_coll_attribute_set_string (coll, key, buf);
 }
 
-static xmmsv_coll_t *
+static xmmsv_t *
 coll_make_reference (const char *name, xmmsc_coll_namespace_t ns)
 {
-	xmmsv_coll_t *ref;
+	xmmsv_t *ref;
 
-	ref = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsv_coll_attribute_set (ref, "reference", name);
-	xmmsv_coll_attribute_set (ref, "namespace", ns);
+	ref = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (ref, "reference", name);
+	xmmsv_coll_attribute_set_string (ref, "namespace", ns);
 
 	return ref;
 }
@@ -1773,46 +1763,37 @@ coll_print_attributes (const char *key, xmmsv_t *val, void *udata)
 }
 
 static void
-pl_print_config (xmmsv_coll_t *coll, const char *name)
+pl_print_config (xmmsv_t *coll, const char *name)
 {
-	xmmsv_coll_t *op;
-	const gchar *type = NULL;
-	const gchar *upcoming = NULL;
-	const gchar *history = NULL;
-	const gchar *input = NULL;
-	const gchar *input_ns = NULL;
-	const gchar *jumplist = NULL;
-	xmmsv_t *v;
-
-	xmmsv_coll_attribute_get (coll, "type", &type);
-
-	xmmsv_coll_attribute_get (coll, "upcoming", &upcoming);
-	xmmsv_coll_attribute_get (coll, "history", &history);
-	xmmsv_coll_attribute_get (coll, "jumplist", &jumplist);
+	const gchar *type, *upcoming, *history, *jumplist;
+	xmmsv_t *operands, *operand;
 
 	g_printf (_("name: %s\n"), name);
 
-	if (type) {
+	if (xmmsv_coll_attribute_get_string (coll, "type", &type))
 		g_printf (_("type: %s\n"), type);
-	}
-	if (history) {
+
+	if (xmmsv_coll_attribute_get_string (coll, "history", &history))
 		g_printf (_("history: %s\n"), history);
-	}
-	if (upcoming) {
+
+	if (xmmsv_coll_attribute_get_string (coll, "upcoming", &upcoming))
 		g_printf (_("upcoming: %s\n"), upcoming);
+
+	operands = xmmsv_coll_operands_get (coll);
+	if (xmmsv_list_get (operands, 0, &operand)) {
+		if (xmmsv_coll_is_type (operand, XMMS_COLLECTION_TYPE_REFERENCE)) {
+			const gchar *input_ns = NULL;
+			const gchar *input = NULL;
+
+			xmmsv_coll_attribute_get_string (operand, "namespace", &input_ns);
+			xmmsv_coll_attribute_get_string (operand, "reference", &input);
+
+			g_printf (_("input: %s/%s\n"), input_ns, input);
+		}
 	}
 
-	if (xmmsv_list_get (xmmsv_coll_operands_get (coll), 0, &v) &&
-	    xmmsv_get_coll (v, &op)) {
-		/* FIXME: Operand might be something different than a reference */
-		xmmsv_coll_attribute_get (op, "reference", &input);
-		xmmsv_coll_attribute_get (op, "namespace", &input_ns);
-
-		g_printf (_("input: %s/%s\n"), input_ns, input);
-	}
-	if (jumplist) {
+	if (xmmsv_coll_attribute_get_string (coll, "jumplist", &jumplist))
 		g_printf (_("jumplist: %s\n"), jumplist);
-	}
 }
 
 void
