@@ -36,6 +36,7 @@ void xmmsv_coll_set_idlist (xmmsv_t *coll, int ids[]) XMMS_PUBLIC;
 void xmmsv_coll_add_operand (xmmsv_t *coll, xmmsv_t *op) XMMS_PUBLIC;
 void xmmsv_coll_remove_operand (xmmsv_t *coll, xmmsv_t *op) XMMS_PUBLIC;
 xmmsv_t *xmmsv_coll_operands_get (xmmsv_t *coll) XMMS_PUBLIC;
+void xmmsv_coll_operands_set (xmmsv_t *coll, xmmsv_t *operands) XMMS_PUBLIC;
 
 int xmmsv_coll_idlist_append (xmmsv_t *coll, int id) XMMS_PUBLIC;
 int xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int id) XMMS_PUBLIC;

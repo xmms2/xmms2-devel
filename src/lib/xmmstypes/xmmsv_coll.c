@@ -414,6 +414,26 @@ xmmsv_coll_operands_get (xmmsv_t *coll)
 	return coll->value.coll->operands;
 }
 
+/**
+ * Replace all operands in the given collection.
+ *
+ * @param coll The collection in which to set the operands.
+ * @param operands The new operands.
+ */
+void
+xmmsv_coll_operands_set (xmmsv_t *coll, xmmsv_t *operands)
+{
+	xmmsv_t *old;
+
+	x_return_if_fail (coll);
+	x_return_if_fail (operands);
+	x_return_if_fail (xmmsv_list_restrict_type (operands, XMMSV_TYPE_COLL));
+
+	old = coll->value.coll->operands;
+	coll->value.coll->operands = xmmsv_ref (operands);
+	xmmsv_unref (old);
+}
+
 xmmsv_t *
 xmmsv_coll_attributes_get (xmmsv_t *coll)
 {
