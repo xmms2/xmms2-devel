@@ -126,55 +126,33 @@ duplicate_list_value (xmmsv_t *val)
 
 }
 
-xmmsv_t *
-xmmsv_coll_copy (xmmsv_t *orig_coll)
-{
-	xmmsv_t *new_coll;
-	xmmsv_list_iter_t *it;
-	xmmsv_dict_iter_t *itd;
-	xmmsv_t *v, *list, *dict, *copy;
-	const char *key;
-	int32_t i;
-	const char *s;
-
-	new_coll = xmmsv_new_coll (xmmsv_coll_get_type (orig_coll));
-
-	list = xmmsv_coll_idlist_get (orig_coll);
-	x_return_val_if_fail (xmmsv_get_list_iter (list, &it), NULL);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
-		xmmsv_get_int (v, &i);
-		xmmsv_coll_idlist_append (new_coll, i);
-		xmmsv_list_iter_next (it);
-	}
-	xmmsv_list_iter_explicit_destroy (it);
-
-	list = xmmsv_coll_operands_get (orig_coll);
-	x_return_val_if_fail (xmmsv_get_list_iter (list, &it), NULL);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
-		copy = xmmsv_coll_copy (v);
-		xmmsv_coll_add_operand (new_coll, copy);
-		xmmsv_unref (copy);
-		xmmsv_list_iter_next (it);
-	}
-	xmmsv_list_iter_explicit_destroy (it);
-
-	dict = xmmsv_coll_attributes_get (orig_coll);
-	x_return_val_if_fail (xmmsv_get_dict_iter (dict, &itd), NULL);
-	while (xmmsv_dict_iter_valid (itd)) {
-		xmmsv_dict_iter_pair (itd, &key, &v);
-		xmmsv_get_string (v, &s);
-		xmmsv_coll_attribute_set_string (new_coll, key, s);
-		xmmsv_dict_iter_next (itd);
-	}
-	xmmsv_dict_iter_explicit_destroy (itd);
-	return new_coll;
-}
-
 static xmmsv_t *
 duplicate_coll_value (xmmsv_t *val)
 {
-	x_return_val_if_fail (xmmsv_is_type (val, XMMSV_TYPE_COLL), NULL);
-	return xmmsv_coll_copy (val);
+	xmmsv_t *dup_val, *attributes, *operands, *idlist, *copy;
+
+	dup_val = xmmsv_new_coll (xmmsv_coll_get_type (val));
+
+	attributes = xmmsv_coll_attributes_get (val);
+	copy = xmmsv_copy (attributes);
+	xmmsv_coll_attributes_set (dup_val, copy);
+	xmmsv_unref (copy);
+
+	operands = xmmsv_coll_operands_get (val);
+	copy = xmmsv_copy (operands);
+	xmmsv_coll_operands_set (dup_val, copy);
+	xmmsv_unref (copy);
+
+	idlist = xmmsv_coll_idlist_get (val);
+	copy = xmmsv_copy (idlist);
+	xmmsv_coll_idlist_set (dup_val, copy);
+	xmmsv_unref (copy);
+
+	return dup_val;
+}
+
+xmmsv_t *
+xmmsv_coll_copy (xmmsv_t *orig_coll)
+{
+	return duplicate_coll_value (orig_coll);
 }
