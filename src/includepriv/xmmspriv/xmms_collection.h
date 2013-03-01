@@ -58,13 +58,13 @@ xmms_coll_dag_t * xmms_collection_init (xmms_medialib_t *medialib);
 xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_t *coll, xmms_error_t *err);
 
 
-void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
+void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, GHFunc f, void *udata);
 void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
 void xmms_collection_apply_to_collection (xmms_coll_dag_t *dag, xmmsv_t *coll, FuncApplyToColl f, void *udata);
 
 xmmsv_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, const gchar *collname, guint namespace);
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name, xmms_collection_namespace_id_t nsid, xmmsv_t *newtarget);
-gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsv_t *value, const gchar *key);
+gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, xmmsv_t *value, const gchar *key);
 xmms_medialib_entry_t xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_t *source);
 
 xmms_collection_namespace_id_t xmms_collection_get_namespace_id (const gchar *namespace);

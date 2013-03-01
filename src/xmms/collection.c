@@ -85,7 +85,7 @@ static void xmms_collection_destroy (xmms_object_t *object);
 
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsv_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
 static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll, const gchar *save_name, const gchar *save_namespace, const gchar **err);
-static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid);
+static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, xmms_collection_namespace_id_t nsid);
 
 static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsv_t *coll, const gchar *tg_name, const gchar *tg_ns);
 
@@ -323,7 +323,7 @@ void
 xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
                                const gchar *namespace, xmms_error_t *err)
 {
-	guint nsid;
+	xmms_collection_namespace_id_t nsid;
 	gboolean retval = FALSE;
 	guint i;
 
@@ -367,9 +367,9 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 {
 	const gchar *valerr = "Invalid collection: unknown reason. This is "
 	                      "probably a bug in xmms2d.";
+	xmms_collection_namespace_id_t nsid;
 	xmmsv_t *existing;
 	gchar *alias;
-	guint nsid;
 	GList *list, *item;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
@@ -445,8 +445,8 @@ xmmsv_t *
 xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
                             const gchar *namespace, xmms_error_t *err)
 {
+	xmms_collection_namespace_id_t nsid;
 	xmmsv_t *coll, *result = NULL;
-	guint nsid;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -483,8 +483,8 @@ xmmsv_t *
 xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace,
                              xmms_error_t *err)
 {
+	xmms_collection_namespace_id_t nsid;
 	xmmsv_t *result;
-	guint nsid;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
@@ -517,8 +517,8 @@ xmmsv_t *
 xmms_collection_client_find (xmms_coll_dag_t *dag, gint32 mid, const gchar *namespace,
                              xmms_error_t *err)
 {
+	xmms_collection_namespace_id_t nsid;
 	xmmsv_t *result;
-	guint nsid;
 	gchar *open_name;
 	GHashTable *match_table;
 	xmmsv_t *coll, *filter_coll;
@@ -588,7 +588,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
                                const gchar *to_name, const gchar *namespace,
                                xmms_error_t *err)
 {
-	guint nsid;
+	xmms_collection_namespace_id_t nsid;
 	xmmsv_t *from_coll, *to_coll;
 
 	nsid = xmms_collection_get_namespace_id (namespace);
@@ -857,7 +857,7 @@ xmms_collection_update_pointer (xmms_coll_dag_t *dag, const gchar *name,
  */
 xmmsv_t *
 xmms_collection_get_pointer (xmms_coll_dag_t *dag, const gchar *collname,
-                             guint nsid)
+                             xmms_collection_namespace_id_t nsid)
 {
 	gint i;
 	xmmsv_t *coll = NULL;
@@ -938,7 +938,7 @@ xmms_collection_set_int_attr (xmmsv_t *coll, const gchar *attrname,
  * @return A copy of the key of the found pair, needs to be freed.
  */
 gchar *
-xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
+xmms_collection_find_alias (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid,
                             xmmsv_t *value, const gchar *key)
 {
 	gchar *otherkey = NULL;
@@ -1335,7 +1335,8 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
  * @returns  TRUE if a collection was removed, FALSE otherwise.
  */
 static gboolean
-xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid)
+xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name,
+                             xmms_collection_namespace_id_t nsid)
 {
 	xmmsv_t *existing, *active_pl;
 	gboolean retval = FALSE;
@@ -1382,7 +1383,7 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, const gchar *name, guint nsid
 xmms_collection_namespace_id_t
 xmms_collection_get_namespace_id (const gchar *namespace)
 {
-	guint nsid;
+	xmms_collection_namespace_id_t nsid;
 
 	if (strcmp (namespace, XMMS_COLLECTION_NS_ALL) == 0) {
 		nsid = XMMS_COLLECTION_NSID_ALL;
@@ -1456,7 +1457,9 @@ xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsv_t *coll,
  * @param udata  Additional user data parameter passed to the function.
  */
 void
-xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata)
+xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag,
+                                      xmms_collection_namespace_id_t nsid,
+                                      GHFunc f, void *udata)
 {
 	gint i;
 
@@ -1725,10 +1728,10 @@ static void
 bind_all_references (xmms_coll_dag_t *dag, xmmsv_t *coll, xmmsv_t *parent, void *udata)
 {
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmms_collection_namespace_id_t target_nsid;
 		xmmsv_t *target;
 		const gchar *target_name;
 		const gchar *target_namespace;
-		gint   target_nsid;
 
 		xmmsv_coll_attribute_get_string (coll, "reference", &target_name);
 		xmmsv_coll_attribute_get_string (coll, "namespace", &target_namespace);
