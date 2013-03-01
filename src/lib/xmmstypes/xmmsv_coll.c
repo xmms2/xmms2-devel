@@ -406,6 +406,26 @@ xmmsv_coll_idlist_get (xmmsv_t *coll)
 	return coll->value.coll->idlist;
 }
 
+/**
+ * Replace the idlist in the given collection.
+ *
+ * @param coll The collection in which to set the idlist.
+ * @param operands The new idlist.
+ */
+void
+xmmsv_coll_idlist_set (xmmsv_t *coll, xmmsv_t *idlist)
+{
+	xmmsv_t *old;
+
+	x_return_if_fail (coll);
+	x_return_if_fail (idlist);
+	x_return_if_fail (xmmsv_list_restrict_type (idlist, XMMSV_TYPE_INT32));
+
+	old = coll->value.coll->idlist;
+	coll->value.coll->idlist = xmmsv_ref (idlist);
+	xmmsv_unref (old);
+}
+
 xmmsv_t *
 xmmsv_coll_operands_get (xmmsv_t *coll)
 {

@@ -50,6 +50,7 @@ int xmmsv_coll_idlist_get_size (xmmsv_t *coll) XMMS_PUBLIC;
 int xmmsv_coll_is_type (xmmsv_t *val, xmmsv_coll_type_t t) XMMS_PUBLIC;
 xmmsv_coll_type_t xmmsv_coll_get_type (xmmsv_t *coll) XMMS_PUBLIC;
 xmmsv_t *xmmsv_coll_idlist_get (xmmsv_t *coll) XMMS_PUBLIC;
+void xmmsv_coll_idlist_set (xmmsv_t *coll, xmmsv_t *idlist) XMMS_PUBLIC;
 
 void xmmsv_coll_attribute_set (xmmsv_t *coll, const char *key, const char *value) XMMS_PUBLIC XMMS_DEPRECATED;
 void xmmsv_coll_attribute_set_string (xmmsv_t *coll, const char *key, const char *value) XMMS_PUBLIC;
