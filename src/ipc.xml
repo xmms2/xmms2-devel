@@ -1397,6 +1397,7 @@ vim:expandtab
 
                 <type>
                     <dictionary>
+                        <unknown/>
                     </dictionary>
                 </type>
             </argument>
@@ -1405,8 +1406,7 @@ vim:expandtab
                 <documentation>A return value as requested by fetch.</documentation>
 
                 <type>
-                    <xmmsv>
-                    </xmmsv>
+                    <unknown/>
                 </type>
             </return_value>
         </method>
@@ -1468,15 +1468,11 @@ vim:expandtab
                 <documentation>FIXME.</documentation>
 
                 <type>
-                    <xmmsv>
-                    </xmmsv>
-                    <!--
                     <list>
                         <dictionary>
                             <unknown />
                         </dictionary>
                     </list>
-                    -->
                 </type>
             </return_value>
         </method>

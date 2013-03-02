@@ -11,7 +11,7 @@ c_type_map = {
 	'binary':'GString *',
 	'list':'xmmsv_t *',
 	'dictionary':'xmmsv_t *',
-	'xmmsv' : 'xmmsv_t *',
+	'unknown' : 'xmmsv_t *',
 }
 
 c_getter_map = {
@@ -21,7 +21,7 @@ c_getter_map = {
 	'dictionary': None,
 	'collection': None,
 	'binary': 'xmms_bin_to_gstring',
-	'xmmsv' : None,
+	'unknown' : None,
 }
 
 c_creator_map = {
@@ -31,7 +31,7 @@ c_creator_map = {
 	'dictionary': None,
 	'collection': None,
 	'binary': None,
-	'xmmsv' : None,
+	'unknown' : None,
 }
 
 c_nullable_type_map = {
@@ -41,7 +41,7 @@ c_nullable_type_map = {
 	'dictionary': "xmmsv_t *",
 	'collection': "xmmsv_t *",
 	'binary': "GString *",
-	'xmmsv' : "xmmsv_t *",
+	'unknown' : "xmmsv_t *",
 }
 
 def build(object_name, c_type):
