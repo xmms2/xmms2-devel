@@ -85,13 +85,6 @@ def build(bld):
     pure_files = bld.path.ant_glob('xmmsclient/*.py')
 
     bld.install_files('${xmmsclient_PYTHONDIR}', pure_files)
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/__init__.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/sync.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/propdict.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/consts.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/collections.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/glib.py')
-    #bld.install_files('${xmmsclient_PYTHONDIR}', 'xmmsclient/qt3.py')
     # TODO: Distribute .pxd files
 
 def configure(conf):
@@ -111,17 +104,21 @@ def configure(conf):
                   "don't want the python bindings to be installed to %s"
                   % conf.env.PYTHONDIR)
 
+    has_precompiled = len(conf.path.ant_glob('xmms*.c')) > 0
     conf.env.xmmspython_USE_PRECOMPILED = True
-    if not conf.options.no_cython:
+    if not getattr(conf.options, 'no_cython', False):
         try:
             conf.load('cython cython_extra', tooldir = os.path.abspath('waftools'))
             conf.check_cython_version(minver = '0.13')
         except Errors.ConfigurationError:
-            pass
+            if not has_precompiled:
+                raise
         else:
             conf.env.xmmspython_USE_PRECOMPILED = not conf.env.CYTHON
+            if not has_precompiled and not conf.env.CYTHON:
+                conf.fatal('Python bindings require Cython')
 
-    if not conf.env.xmmspython_USE_PRECOMPILED and \
+    if not conf.env.xmmspython_USE_PRECOMPILED and has_precompiled and \
             conf.env.CYTHON_VERSION < CYTHON_PRECOMPILED_VERSION:
         Logs.warn("Your version of cython is older than the one used to "
                   "generate precompiled files. If you did not edit cython "
@@ -129,13 +126,14 @@ def configure(conf):
 
 def options(opt):
     opt.tool_options('cython', tooldir = os.path.abspath('waftools'))
-    opt.add_option('--no-cython', action="store_true",
-            dest="no_cython", default=False,
-            help="Use precompiled cython files even if cython is installed on "
-                 "the system.")
+    if opt.path.ant_glob('xmms*.c'):
+        opt.add_option('--no-cython', action="store_true",
+                dest="no_cython", default=False,
+                help="Use precompiled cython files even if cython is installed on "
+                     "the system.")
     opt.add_option('--cython-copy-files', type="string",
             dest="cython_copy", default="",
             help="Copy generated files in the source tree. "
                  "Works only with the 'build' command. "
                  "Must have the value 'iknowwhatiamdoing' to work. "
-                 "Use this option only if you are a maintainer.")
+                 "This option is intended for releases only.")
