@@ -44,6 +44,15 @@ c_nullable_type_map = {
 	'unknown' : "xmmsv_t *",
 }
 
+c_xmmsv_type_t_map = {
+    'int': 'XMMSV_TYPE_INT32',
+    'string': 'XMMSV_TYPE_STRING',
+    'list': 'XMMSV_TYPE_LIST',
+    'dictionary': 'XMMSV_TYPE_DICT',
+    'collection': 'XMMSV_TYPE_COLL',
+    'binary': 'XMMSV_TYPE_BINDATA'
+}
+
 def build(object_name, c_type):
 	ipc = genipc.parse_xml('../src/ipc.xml')
 
@@ -130,6 +139,12 @@ def emit_method_define_code(object, method, c_type):
 		Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Missing arg %d in %s");' % (i, method.name))
 		Indenter.printline('return;')
 		Indenter.leave("}")
+
+		if a.type[0] == 'list' and len(a.type) > 1 and a.type[1] in c_xmmsv_type_t_map:
+			Indenter.enter('if (!xmmsv_list_restrict_type (t, %s)) {' % (c_xmmsv_type_t_map[a.type[1]]))
+			Indenter.printline('XMMS_DBG("Wrong list content (not %s) for arg %d in %s.");' % (a.type[1], i, method.name))
+			Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Wrong list content (not %s) for arg %d in %s.");' % (a.type[1], i, method.name))
+			Indenter.leave('}')
 
 		if c_getter_map[a.type[0]] is None:
 			Indenter.printline("argval%d = t;" % i)
