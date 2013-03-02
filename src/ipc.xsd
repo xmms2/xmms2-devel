@@ -7,8 +7,8 @@ vim:expandtab
 
 <xs:schema
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    xmlns:xmms="http://numbers.xmms.se/~tilman/ipc.xsd"
-    targetNamespace="http://numbers.xmms.se/~tilman/ipc.xsd"
+    xmlns:xmms="https://xmms2.org/ipc.xsd"
+    targetNamespace="https://xmms2.org/ipc.xsd"
     elementFormDefault="qualified">
 
     <!-- The root node -->

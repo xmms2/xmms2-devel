@@ -3,7 +3,7 @@
 vim:expandtab
 -->
 
-<ipc version="1" xmlns="http://numbers.xmms.se/~tilman/ipc.xsd">
+<ipc version="1" xmlns="https://xmms2.org/ipc.xsd">
 
     <!--
     <enum name="playback_status">
