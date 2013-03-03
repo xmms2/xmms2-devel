@@ -1,0 +1,43 @@
+{
+    "medialib": [
+        { "tracknr": 1, "artist": "The Mystery of the Yeti", "album": "The Mystery of the Yeti, Part 1", "title": "The Call / The Journey"                     },
+        { "tracknr": 2, "artist": "The Mystery of the Yeti", "album": "The Mystery of the Yeti, Part 1", "title": "Tribal Gathering"                           },
+        { "tracknr": 3, "artist": "The Mystery of the Yeti", "album": "The Mystery of the Yeti, Part 1", "title": "The Yeti Revelation / Sacred Communication" },
+        { "tracknr": 4, "artist": "The Mystery of the Yeti", "album": "The Mystery of the Yeti, Part 1", "title": "A 'Welcome' to All Extra Terrestrials"      }
+    ],
+    "collection": {
+        "type": "union",
+        "operands": [{
+            "type": "order",
+            "attributes": {
+                "type": "random",
+                "seed": 31337
+            },
+            "operands": [{
+                "type": "universe"
+            }]
+        }, {
+            "type": "order",
+            "attributes": {
+                "type": "random",
+                "seed": 42
+            },
+            "operands": [{
+                "type": "universe"
+            }]
+        }]
+    },
+    "specification": {
+        "type": "cluster-list",
+        "cluster-by": "position",
+        "data": {
+            "type": "metadata",
+            "get": ["id"],
+            "aggregate": "first"
+        }
+    },
+    "expected": {
+        "ordered": 1,
+        "result": [ 4, 3, 2, 1, 4, 3, 1, 2 ]
+    }
+}

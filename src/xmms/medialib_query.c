@@ -165,7 +165,8 @@ xmms_medialib_result_sort (s4_resultset_t *set, xmms_fetch_info_t *fetch_info, x
 			}
 		} else if (type == SORT_TYPE_RANDOM) {
 			gint seed;
-			xmmsv_dict_entry_get_int (val, "seed", &seed);
+			if (!xmmsv_dict_entry_get_int (val, "seed", &seed))
+				seed = g_random_int_range (G_MININT32, G_MAXINT32);
 			s4_order_add_random (s4_order, seed);
 			break;
 		}
@@ -775,7 +776,10 @@ order_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
 	sourcepref = xmms_medialib_session_get_source_preferences (session);
 
 	if (strcmp (key, "random") == 0) {
+		gint seed;
 		xmmsv_dict_set_int (entry, "type", SORT_TYPE_RANDOM);
+		if (xmms_collection_get_int_attr (coll, "seed", &seed))
+			xmmsv_dict_set_int (entry, "seed", seed);
 	} else if (strcmp (key, "id") == 0) {
 		order_condition_by_id (entry, fetch, sourcepref);
 	} else {
