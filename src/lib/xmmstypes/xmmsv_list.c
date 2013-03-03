@@ -602,6 +602,42 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 	return 1;
 }
 
+/**
+ * Get the index of an element in the list. This function compares the
+ * pointers and not the actual values contained in the elements.
+ *
+ * @param listv The #xmmsv_t containing the list
+ * @param val The element to find
+ * @return The index of the element if found, -1 otherwise
+ */
+int
+xmmsv_list_index_of (xmmsv_t *listv, xmmsv_t *val)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *v;
+	int i = 0, ret = -1;
+
+	x_return_val_if_fail (listv, -1);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), -1);
+
+	if (!xmmsv_get_list_iter (v, &it))
+		return -1;
+
+	while (xmmsv_list_iter_valid (it)) {
+		xmmsv_list_iter_entry (it, &v);
+		if (v == val) {
+			ret = i;
+			break;
+		}
+		xmmsv_list_iter_next (it);
+		i++;
+	}
+
+	xmmsv_list_iter_explicit_destroy (it);
+
+	return ret;
+}
+
 static xmmsv_list_iter_t *
 _xmmsv_list_iter_new (xmmsv_list_internal_t *l)
 {
