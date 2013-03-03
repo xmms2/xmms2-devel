@@ -1732,6 +1732,7 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsv_t *coll, xmmsv_t *parent, void 
 	if (xmmsv_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
 		xmms_collection_namespace_id_t target_nsid;
 		xmmsv_t *target;
+		xmmsv_t *operands;
 		const gchar *target_name;
 		const gchar *target_namespace;
 
@@ -1752,7 +1753,10 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsv_t *coll, xmmsv_t *parent, void 
 			return;
 		}
 
-		xmmsv_coll_add_operand (coll, target);
+		operands = xmmsv_coll_operands_get (coll);
+		if (xmmsv_list_index_of (operands, target) < 0) {
+			xmmsv_coll_add_operand (coll, target);
+		}
 	}
 }
 
