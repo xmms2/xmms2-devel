@@ -38,14 +38,14 @@ typedef int socklen_t;
 typedef int xmms_socket_t;
 #endif
 
-int xmms_sockets_initialize(void) XMMS_PUBLIC;
-int xmms_socket_set_nonblock(xmms_socket_t socket) XMMS_PUBLIC;
-int xmms_socket_valid(xmms_socket_t socket) XMMS_PUBLIC;
-void xmms_socket_invalidate (xmms_socket_t *socket) XMMS_PUBLIC;
-void xmms_socket_close(xmms_socket_t socket) XMMS_PUBLIC;
-int xmms_socket_errno(void) XMMS_PUBLIC;
-bool xmms_socket_error_recoverable(void) XMMS_PUBLIC;
-int xmms_getaddrinfo (const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) XMMS_PUBLIC;
-void xmms_freeaddrinfo (struct addrinfo *res) XMMS_PUBLIC;
+int xmms_sockets_initialize (void);
+int xmms_socket_set_nonblock (xmms_socket_t socket);
+int xmms_socket_valid (xmms_socket_t socket);
+void xmms_socket_invalidate (xmms_socket_t *socket);
+void xmms_socket_close (xmms_socket_t socket);
+int xmms_socket_errno (void);
+bool xmms_socket_error_recoverable (void);
+int xmms_getaddrinfo (const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
+void xmms_freeaddrinfo (struct addrinfo *res);
 
 #endif
