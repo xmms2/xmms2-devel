@@ -86,6 +86,7 @@ static GList *ipc_servers = NULL;
 static GMutex *ipc_object_pool_lock;
 static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 
+static void xmms_ipc_close (void);
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
 static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
@@ -441,7 +442,7 @@ on_config_ipcsocket_change (xmms_object_t *object, xmmsv_t *_data, gpointer udat
 
 	XMMS_DBG ("Shutting down ipc server threads through config property \"core.ipcsocket\" change.");
 
-	xmms_ipc_shutdown ();
+	xmms_ipc_close ();
 	value = xmms_config_property_get_string ((xmms_config_property_t *) object);
 	xmms_ipc_setup_server (value);
 }
@@ -757,12 +758,29 @@ xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 
 }
 
-
 /**
  * Disable IPC
  */
 void
 xmms_ipc_shutdown (void)
+{
+	xmms_ipc_close ();
+
+	g_mutex_free (ipc_servers_lock);
+	ipc_servers_lock = NULL;
+
+	g_mutex_free (ipc_object_pool_lock);
+	ipc_object_pool_lock = NULL;
+
+	g_free (ipc_object_pool);
+	ipc_object_pool = NULL;
+}
+
+/**
+ * Close IPC, with the ability to restart it later.
+ */
+static void
+xmms_ipc_close (void)
 {
 	GList *s = ipc_servers;
 	xmms_ipc_t *ipc;
@@ -775,15 +793,6 @@ xmms_ipc_shutdown (void)
 		xmms_ipc_shutdown_server (ipc);
 	}
 	g_mutex_unlock (ipc_servers_lock);
-
-	g_mutex_free (ipc_servers_lock);
-	ipc_servers_lock = NULL;
-
-	g_mutex_free (ipc_object_pool_lock);
-	ipc_object_pool_lock = NULL;
-
-	g_free (ipc_object_pool);
-	ipc_object_pool = NULL;
 }
 
 /**
@@ -843,4 +852,3 @@ xmms_ipc_setup_server (const gchar *path)
 }
 
 /** @} */
-
