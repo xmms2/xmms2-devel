@@ -888,7 +888,9 @@ xmms_collection_get_int_attr (xmmsv_t *coll, const gchar *attrname, gint *val)
 	const gchar *str;
 	gchar *endptr;
 
-	if (xmmsv_coll_attribute_get_string (coll, attrname, &str)) {
+	if (xmmsv_coll_attribute_get_int (coll, attrname, val)) {
+		retval = TRUE;
+	} else if (xmmsv_coll_attribute_get_string (coll, attrname, &str)) {
 		buf = strtol (str, &endptr, 10);
 
 		/* Valid integer string */
