@@ -154,26 +154,19 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *entry;
-	uint32_t offset, count;
 	bool ret = true;
 
 	if (!xmmsv_get_list_iter (v, &it)) {
 		return false;
 	}
 
-	/* store a dummy value, store the real count once it's known */
-	offset = xmmsv_bitbuffer_pos (bb);
-	xmmsv_bitbuffer_put_bits (bb, 32, 0);
+	/* store size */
+	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (v));
 
-	count = 0;
 	while (xmmsv_list_iter_entry (it, &entry)) {
 		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
 		xmmsv_list_iter_next (it);
-		count++;
 	}
-
-	/* overwrite with real size */
-	xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
 
 	return ret;
 }
@@ -184,26 +177,20 @@ _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	xmmsv_dict_iter_t *it;
 	const char *key;
 	xmmsv_t *entry;
-	uint32_t ret, offset, count;
+	uint32_t ret;
 
 	if (!xmmsv_get_dict_iter (v, &it)) {
 		return false;
 	}
 
-	/* store a dummy value, store the real count once it's known */
-	offset = xmmsv_bitbuffer_pos (bb);
-	xmmsv_bitbuffer_put_bits (bb, 32, 0);
+	/* store size */
+	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_dict_get_size (v));
 
-	count = 0;
 	while (xmmsv_dict_iter_pair (it, &key, &entry)) {
 		ret = _internal_put_on_bb_string (bb, key);
 		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
 		xmmsv_dict_iter_next (it);
-		count++;
 	}
-
-	/* overwrite with real size */
-	xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
 
 	return ret;
 }
