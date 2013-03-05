@@ -137,12 +137,7 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
 
 		while (xmmsv_list_iter_entry (it, &v)) {
-			if (!xmmsv_is_type (v, XMMSV_TYPE_COLL)) {
-				x_api_error ("Non collection operand", 0);
-			}
-
 			_internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
-
 			ret = _internal_put_on_bb_collection (bb, v);
 			xmmsv_list_iter_next (it);
 		}
