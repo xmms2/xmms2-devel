@@ -95,7 +95,7 @@ static bool
 _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *v;
+	xmmsv_t *v, *idlist;
 	int n;
 	uint32_t ret;
 	int32_t entry;
@@ -111,19 +111,17 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 	/* attributes */
 	_internal_put_on_bb_value_dict (bb, xmmsv_coll_attributes_get (coll));
 
+	idlist = xmmsv_coll_idlist_get (coll);
+
 	/* idlist counter and content */
-	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_coll_idlist_get_size (coll));
+	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (idlist));
 
-	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
-	for (xmmsv_list_iter_first (it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-
-		if (!xmmsv_list_iter_entry_int (it, &entry)) {
-			x_api_error ("Non integer in idlist", 0);
-		}
+	xmmsv_get_list_iter (idlist, &it);
+	while (xmmsv_list_iter_entry_int (it, &entry)) {
 		xmmsv_bitbuffer_put_bits (bb, 32, entry);
+		xmmsv_list_iter_next (it);
 	}
+
 	xmmsv_list_iter_explicit_destroy (it);
 
 	/* operands counter and objects */
