@@ -109,7 +109,8 @@ CASE (test_xmmsv_serialize_small_int)
 	unsigned int length;
 	int32_t i;
 	const unsigned char expected[] = {
-		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x2a  /* 42 */
 	};
 
@@ -129,7 +130,7 @@ CASE (test_xmmsv_serialize_small_int)
 	xmmsv_unref (bin);
 
 	CU_ASSERT_PTR_NOT_NULL (value);
-	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT64));
 
 	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
 	CU_ASSERT_EQUAL (i, 42);
@@ -144,7 +145,8 @@ CASE (test_xmmsv_serialize_large_int)
 	unsigned int length;
 	int32_t i;
 	const unsigned char expected[] = {
-		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x00, 0x02, /* XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x25, 0xc3  /* 9667 */
 	};
 
@@ -164,7 +166,7 @@ CASE (test_xmmsv_serialize_large_int)
 	xmmsv_unref (bin);
 
 	CU_ASSERT_PTR_NOT_NULL (value);
-	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_INT64));
 
 	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
 	CU_ASSERT_EQUAL (i, 9667);
@@ -225,6 +227,7 @@ CASE (test_xmmsv_serialize_coll_match)
 		0x00,                   /*             "\0"   */
 
 		0x00, 0x00, 0x00, 0x02, /* attr[0] value type  */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x7a, 0x69, /* attr[0] value 31337 */
 
 		0x00, 0x00, 0x00, 0x06, /* attr[1] key length */
@@ -357,7 +360,8 @@ CASE (test_xmmsv_serialize_list)
 		0x00, 0x00, 0x00, 0x06, /* XMMSV_TYPE_LIST */
 		0x00, 0x00, 0x00, 0x02, /* 2 (number of list items) */
 
-		0x00, 0x00, 0x00, 0x02, /* list[0]: XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x00, 0x02, /* list[0]: XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x2a, /* list[0]: 42 */
 
 		0x00, 0x00, 0x00, 0x03, /* list[1]: XMMSV_TYPE_STRING */
@@ -394,7 +398,7 @@ CASE (test_xmmsv_serialize_list)
 
 	CU_ASSERT_TRUE (xmmsv_list_get (value, 0, &item));
 	CU_ASSERT_PTR_NOT_NULL (item);
-	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT64));
 	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
 	CU_ASSERT_EQUAL (i, 42);
 
@@ -420,13 +424,15 @@ CASE (test_xmmsv_serialize_dict)
 		0x00, 0x00, 0x00, 0x04, /* key[1]: 4 (length of following bytes) */
 		0x66, 0x6f, 0x6f, 0x00, /* key[1]: "foo\0" */
 
-		0x00, 0x00, 0x00, 0x02, /* value[1]: XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x00, 0x02, /* value[1]: XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x2a,  /* value[1]: 42 */
 
 		0x00, 0x00, 0x00, 0x04, /* key[0]: 4 (length of following bytes) */
 		0x62, 0x61, 0x72, 0x00, /* key[0]: "bar\0" */
 
-		0x00, 0x00, 0x00, 0x02, /* value[0]: XMMSV_TYPE_INT32 */
+		0x00, 0x00, 0x00, 0x02, /* value[0]: XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x25, 0xc3  /* value[0]: 9667 */
 	};
 
@@ -459,13 +465,13 @@ CASE (test_xmmsv_serialize_dict)
 
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "foo", &item));
 	CU_ASSERT_PTR_NOT_NULL (item);
-	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT64));
 	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
 	CU_ASSERT_EQUAL (i, 42);
 
 	CU_ASSERT_TRUE (xmmsv_dict_get (value, "bar", &item));
 	CU_ASSERT_PTR_NOT_NULL (item);
-	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT32));
+	CU_ASSERT_TRUE (xmmsv_is_type (item, XMMSV_TYPE_INT64));
 	CU_ASSERT_TRUE (xmmsv_get_int (item, &i));
 	CU_ASSERT_EQUAL (i, 9667);
 

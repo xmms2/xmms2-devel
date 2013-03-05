@@ -766,7 +766,7 @@ CASE (test_xmmsv_list_move) {
 CASE (test_xmmsv_type_bitbuffer_one_bit)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -815,7 +815,7 @@ CASE (test_xmmsv_type_bitbuffer_one_bit)
 CASE (test_xmmsv_type_bitbuffer_8_bits)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -881,7 +881,7 @@ CASE (test_xmmsv_type_bitbuffer)
 CASE (test_xmmsv_type_bitbuffer2)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -904,7 +904,7 @@ CASE (test_xmmsv_type_bitbuffer_ro)
 	xmmsv_t *value;
 	const unsigned char data[4] = {0x12, 0x23, 0x34, 0x45};
 	unsigned char b[4];
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer_ro (data, 4);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));

@@ -39,11 +39,12 @@ int xmmsv_dict_get_size (xmmsv_t *dictv) XMMS_PUBLIC;
 int xmmsv_dict_has_key (xmmsv_t *dictv, const char *key) XMMS_PUBLIC;
 
 int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r) XMMS_PUBLIC;
-int xmmsv_dict_entry_get_int (xmmsv_t *val, const char *key, int32_t *r) XMMS_PUBLIC;
+int xmmsv_dict_entry_get_int32 (xmmsv_t *val, const char *key, int32_t *r) XMMS_PUBLIC;
+int xmmsv_dict_entry_get_int64 (xmmsv_t *val, const char *key, int64_t *r) XMMS_PUBLIC;
 int xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_t **coll) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_dict_set_string (xmmsv_t *val, const char *key, const char *el) XMMS_PUBLIC;
-int xmmsv_dict_set_int (xmmsv_t *val, const char *key, int32_t el) XMMS_PUBLIC;
+int xmmsv_dict_set_int (xmmsv_t *val, const char *key, int64_t el) XMMS_PUBLIC;
 int xmmsv_dict_set_coll (xmmsv_t *val, const char *key, xmmsv_t *el) XMMS_PUBLIC XMMS_DEPRECATED;
 
 /* Utility */
@@ -70,13 +71,22 @@ int  xmmsv_dict_iter_set (xmmsv_dict_iter_t *it, xmmsv_t *val) XMMS_PUBLIC;
 int  xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it) XMMS_PUBLIC;
 
 int xmmsv_dict_iter_pair_string (xmmsv_dict_iter_t *it, const char **key, const char **r) XMMS_PUBLIC;
-int xmmsv_dict_iter_pair_int (xmmsv_dict_iter_t *it, const char **key, int32_t *r) XMMS_PUBLIC;
+int xmmsv_dict_iter_pair_int32 (xmmsv_dict_iter_t *it, const char **key, int32_t *r) XMMS_PUBLIC;
+int xmmsv_dict_iter_pair_int64 (xmmsv_dict_iter_t *it, const char **key, int64_t *r) XMMS_PUBLIC;
 int xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **r) XMMS_PUBLIC XMMS_DEPRECATED;
 
 int xmmsv_dict_iter_set_string (xmmsv_dict_iter_t *it, const char *elem) XMMS_PUBLIC;
-int xmmsv_dict_iter_set_int (xmmsv_dict_iter_t *it, int32_t elem) XMMS_PUBLIC;
+int xmmsv_dict_iter_set_int (xmmsv_dict_iter_t *it, int64_t elem) XMMS_PUBLIC;
 int xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_t *elem) XMMS_PUBLIC XMMS_DEPRECATED;
 /** @} */
+
+#if XMMSV_USE_INT64 == 1
+#define xmmsv_dict_entry_get_int xmmsv_dict_entry_get_int64
+#define xmmsv_dict_iter_pair_int xmmsv_dict_iter_pair_int64
+#else
+#define xmmsv_dict_entry_get_int xmmsv_dict_entry_get_int32
+#define xmmsv_dict_iter_pair_int xmmsv_dict_iter_pair_int32
+#endif
 
 /** @} */
 

@@ -70,7 +70,7 @@ _xmmsv_free (xmmsv_t *val)
 	switch (val->type) {
 		case XMMSV_TYPE_NONE :
 		case XMMSV_TYPE_END :
-		case XMMSV_TYPE_INT32 :
+		case XMMSV_TYPE_INT64 :
 			break;
 		case XMMSV_TYPE_ERROR :
 			free (val->value.error);
@@ -146,12 +146,12 @@ xmmsv_new_error (const char *errstr)
  * #xmmsv_unref.
  */
 xmmsv_t *
-xmmsv_new_int (int32_t i)
+xmmsv_new_int (int64_t i)
 {
-	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_INT32);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_INT64);
 
 	if (val) {
-		val->value.int32 = i;
+		val->value.int64 = i;
 	}
 
 	return val;
@@ -312,15 +312,40 @@ xmmsv_get_error (const xmmsv_t *val, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_get_int (const xmmsv_t *val, int32_t *r)
+xmmsv_get_int32 (const xmmsv_t *val, int32_t *r)
 {
-	if (!val || val->type != XMMSV_TYPE_INT32) {
+	if (!val) {
 		return 0;
 	}
 
-	*r = val->value.int32;
+	if (val->type == XMMSV_TYPE_INT64) {
+		*r = INT64_TO_INT32 (val->value.int64);
+		return 1;
+	}
 
-	return 1;
+	return 0;
+}
+
+/**
+ * Retrieves a signed integer from the value.
+ *
+ * @param val a #xmmsv_t containing an integer.
+ * @param r the return integer.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_get_int64 (const xmmsv_t *val, int64_t *r)
+{
+	if (!val) {
+		return 0;
+	}
+
+	if (val->type == XMMSV_TYPE_INT64) {
+		*r = val->value.int64;
+		return 1;
+	}
+
+	return 0;
 }
 
 /**

@@ -77,7 +77,9 @@ xmms_ipc_msg_update_length (xmmsv_t *bb)
 static uint32_t
 xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg)
 {
-	int len, p;
+	int64_t len;
+	int32_t p;
+
 	x_return_val_if_fail (msg, 0);
 
 	p = xmmsv_bitbuffer_pos (msg->bb);
@@ -90,7 +92,9 @@ xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg)
 uint32_t
 xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg)
 {
-	int obj, p;
+	int64_t obj;
+	int32_t p;
+
 	x_return_val_if_fail (msg, 0);
 
 	p = xmmsv_bitbuffer_pos (msg->bb);
@@ -113,7 +117,9 @@ xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, uint32_t object)
 uint32_t
 xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg)
 {
-	int cmd, p;
+	int64_t cmd;
+	int32_t p;
+
 	x_return_val_if_fail (msg, 0);
 
 	p = xmmsv_bitbuffer_pos (msg->bb);
@@ -144,7 +150,9 @@ xmms_ipc_msg_set_cookie (xmms_ipc_msg_t *msg, uint32_t cookie)
 uint32_t
 xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg)
 {
-	int cookie, p;
+	int64_t cookie;
+	int32_t p;
+
 	x_return_val_if_fail (msg, 0);
 
 	p = xmmsv_bitbuffer_pos (msg->bb);

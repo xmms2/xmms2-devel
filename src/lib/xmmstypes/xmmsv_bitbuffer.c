@@ -73,9 +73,10 @@ xmmsv_new_bitbuffer (void)
 }
 
 int
-xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res)
+xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int64_t *res)
 {
-	int i, t, r;
+	int64_t r, t;
+	int i;
 
 	x_api_error_if (bits < 1, "less than one bit requested", 0);
 
@@ -105,7 +106,7 @@ int
 xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len)
 {
 	while (len) {
-		int t;
+		int64_t t;
 		if (!xmmsv_bitbuffer_get_bits (v, 8, &t))
 			return 0;
 		*b = t;
@@ -116,7 +117,7 @@ xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len)
 }
 
 int
-xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d)
+xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int64_t d)
 {
 	unsigned char t;
 	int pos;
@@ -151,7 +152,7 @@ xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d)
 	}
 
 	for (i = 0; i < bits; i++) {
-		if (!xmmsv_bitbuffer_put_bits (v, 1, !!(d & (1 << (bits-i-1)))))
+		if (!xmmsv_bitbuffer_put_bits (v, 1, !!(d & (1LL << (bits-i-1)))))
 			return 0;
 	}
 
@@ -159,7 +160,7 @@ xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d)
 }
 
 int
-xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset)
+xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int64_t d, int offset)
 {
 	int prevpos;
 	prevpos = xmmsv_bitbuffer_pos (v);

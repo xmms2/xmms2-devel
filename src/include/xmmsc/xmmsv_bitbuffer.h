@@ -35,10 +35,10 @@ xmmsv_t *xmmsv_bitbuffer_new_ro (const unsigned char *v, int len) XMMS_PUBLIC XM
 xmmsv_t *xmmsv_bitbuffer_new (void) XMMS_PUBLIC XMMS_DEPRECATED;
 xmmsv_t *xmmsv_new_bitbuffer_ro (const unsigned char *v, int len) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_bitbuffer (void) XMMS_PUBLIC;
-int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int *res) XMMS_PUBLIC;
+int xmmsv_bitbuffer_get_bits (xmmsv_t *v, int bits, int64_t *res) XMMS_PUBLIC;
 int xmmsv_bitbuffer_get_data (xmmsv_t *v, unsigned char *b, int len) XMMS_PUBLIC;
-int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int d) XMMS_PUBLIC;
-int xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int d, int offset) XMMS_PUBLIC;
+int xmmsv_bitbuffer_put_bits (xmmsv_t *v, int bits, int64_t d) XMMS_PUBLIC;
+int xmmsv_bitbuffer_put_bits_at (xmmsv_t *v, int bits, int64_t d, int offset) XMMS_PUBLIC;
 int xmmsv_bitbuffer_put_data (xmmsv_t *v, const unsigned char *b, int len) XMMS_PUBLIC;
 int xmmsv_bitbuffer_align (xmmsv_t *v) XMMS_PUBLIC;
 int xmmsv_bitbuffer_goto (xmmsv_t *v, int pos) XMMS_PUBLIC;

@@ -24,9 +24,15 @@
 #  define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #endif
 
+#ifndef MAX
+#  define MAX(a, b)  (((a) > (b)) ? (a) : (b))
+#endif
+
 #ifndef X_N_ELEMENTS
 #  define X_N_ELEMENTS(a)  (sizeof (a) / sizeof ((a)[0]))
 #endif
+
+#define INT64_TO_INT32(val) MAX (INT32_MIN, MIN (INT32_MAX, val))
 
 typedef int (*XCompareFunc) (const void *a, const void *b);
 typedef int (*XCompareDataFunc) (const void *a, const void *b, void *user_data);

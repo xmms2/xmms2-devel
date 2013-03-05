@@ -35,7 +35,7 @@ xmmsv_copy (xmmsv_t *val)
 {
 	xmmsv_t *cur_val = NULL;
 	xmmsv_type_t type;
-	int32_t i;
+	int64_t i;
 	const char *s;
 
 	x_return_val_if_fail (val, 0);
@@ -47,7 +47,7 @@ xmmsv_copy (xmmsv_t *val)
 		case XMMSV_TYPE_LIST:
 			cur_val = duplicate_list_value (val);
 			break;
-		case XMMSV_TYPE_INT32:
+		case XMMSV_TYPE_INT64:
 			xmmsv_get_int (val, &i);
 			cur_val = xmmsv_new_int (i);
 			break;

@@ -17,6 +17,8 @@
 #ifndef __XMMSV_INTERNAL_H__
 #define __XMMSV_INTERNAL_H__
 
+#include <stdint.h>
+
 #include <xmmsc/xmmsv.h>
 #include <xmmsc/xmmsc_stdbool.h>
 
@@ -27,7 +29,7 @@ typedef struct xmmsv_coll_internal_St xmmsv_coll_internal_t;
 struct xmmsv_St {
 	union {
 		char *error;
-		int32_t int32;
+		int64_t int64;
 		char *string;
 		xmmsv_coll_internal_t *coll;
 		xmmsv_list_internal_t *list;

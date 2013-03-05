@@ -129,7 +129,7 @@ _xmmsv_coll_new (xmmsv_coll_type_t type)
 	coll->type = type;
 
 	coll->idlist = xmmsv_new_list ();
-	xmmsv_list_restrict_type (coll->idlist, XMMSV_TYPE_INT32);
+	xmmsv_list_restrict_type (coll->idlist, XMMSV_TYPE_INT64);
 
 	coll->operands = xmmsv_new_list ();
 	xmmsv_list_restrict_type (coll->operands, XMMSV_TYPE_COLL);
@@ -252,7 +252,7 @@ xmmsv_coll_remove_operand (xmmsv_t *coll, xmmsv_t *op)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_append (xmmsv_t *coll, int id)
+xmmsv_coll_idlist_append (xmmsv_t *coll, int64_t id)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -267,7 +267,7 @@ xmmsv_coll_idlist_append (xmmsv_t *coll, int id)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int id)
+xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int64_t id)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -324,10 +324,28 @@ xmmsv_coll_idlist_clear (xmmsv_t *coll)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_get_index (xmmsv_t *coll, int index, int32_t *val)
+xmmsv_coll_idlist_get_index_int32 (xmmsv_t *coll, int index, int32_t *val)
+{
+	int64_t raw_val;
+	x_return_val_if_fail (coll, 0);
+	if (xmmsv_list_get_int (coll->value.coll->idlist, index, &raw_val)) {
+		*val = INT64_TO_INT32 (raw_val);
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Retrieves the value at the given position in the idlist.
+ * @param coll  The collection to update.
+ * @param index The position of the value to retrieve.
+ * @param val   The pointer at which to store the found value.
+ * @return TRUE on success, false otherwise.
+ */
+int
+xmmsv_coll_idlist_get_index_int64 (xmmsv_t *coll, int index, int64_t *val)
 {
 	x_return_val_if_fail (coll, 0);
-
 	return xmmsv_list_get_int (coll->value.coll->idlist, index, val);
 }
 
@@ -339,7 +357,7 @@ xmmsv_coll_idlist_get_index (xmmsv_t *coll, int index, int32_t *val)
  * @return  TRUE on success, false otherwise.
  */
 int
-xmmsv_coll_idlist_set_index (xmmsv_t *coll, int index, int32_t val)
+xmmsv_coll_idlist_set_index (xmmsv_t *coll, int index, int64_t val)
 {
 	x_return_val_if_fail (coll, 0);
 
@@ -419,7 +437,7 @@ xmmsv_coll_idlist_set (xmmsv_t *coll, xmmsv_t *idlist)
 
 	x_return_if_fail (coll);
 	x_return_if_fail (idlist);
-	x_return_if_fail (xmmsv_list_restrict_type (idlist, XMMSV_TYPE_INT32));
+	x_return_if_fail (xmmsv_list_restrict_type (idlist, XMMSV_TYPE_INT64));
 
 	old = coll->value.coll->idlist;
 	coll->value.coll->idlist = xmmsv_ref (idlist);
@@ -517,7 +535,7 @@ xmmsv_coll_attribute_set_string (xmmsv_t *coll, const char *key, const char *val
  * @param value The value of the attribute.
  */
 void
-xmmsv_coll_attribute_set_int (xmmsv_t *coll, const char *key, int32_t value)
+xmmsv_coll_attribute_set_int (xmmsv_t *coll, const char *key, int64_t value)
 {
 	x_return_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL));
 	xmmsv_dict_set_int (coll->value.coll->attributes, key, value);
@@ -590,7 +608,27 @@ xmmsv_coll_attribute_get_string (xmmsv_t *coll, const char *key, const char **va
  * @return 1 if the attribute was found, 0 otherwise
  */
 int
-xmmsv_coll_attribute_get_int (xmmsv_t *coll, const char *key, int32_t *value)
+xmmsv_coll_attribute_get_int32 (xmmsv_t *coll, const char *key, int32_t *val)
+{
+	int64_t raw_val;
+	x_return_val_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL), 0);
+	if (xmmsv_dict_entry_get_int (coll->value.coll->attributes, key, &raw_val)) {
+		*val = INT64_TO_INT32 (raw_val);
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Retrieve an integer attribute from the given collection.
+ *
+ * @param coll The collection to retrieve the attribute from.
+ * @param key  The name of the attribute.
+ * @param value The value of the attribute if found (owned by the collection).
+ * @return 1 if the attribute was found, 0 otherwise
+ */
+int
+xmmsv_coll_attribute_get_int64 (xmmsv_t *coll, const char *key, int64_t *value)
 {
 	x_return_val_if_fail (xmmsv_is_type (coll, XMMSV_TYPE_COLL), 0);
 	return xmmsv_dict_entry_get_int (coll->value.coll->attributes, key, value);

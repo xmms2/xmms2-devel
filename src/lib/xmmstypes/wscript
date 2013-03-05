@@ -20,7 +20,7 @@ def build(bld):
 
     bld.objects(
         features = 'visibilityhidden',
-        cflags=bld.env.CFLAGS_cshlib,
+        cflags=bld.env.CFLAGS_cshlib + ['-DXMMSV_USE_INT64=1'],
         target = 'xmmstypes',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',

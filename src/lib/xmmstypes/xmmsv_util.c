@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <xmmscpriv/xmmsv.h>
 #include <xmmscpriv/xmmsc_util.h>
@@ -243,7 +244,7 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 		xmmsv_get_dict_iter (val, &it);
 
 		if (strcmp (key, "seconds") == 0) {
-			int duration;
+			int64_t duration;
 
 			if (xmmsv_dict_iter_find (it, "duration")) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
@@ -255,14 +256,14 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
-				char seconds[10];
+				char seconds[21];
 				/* rounding */
 				duration += 500;
-				snprintf (seconds, sizeof (seconds), "%02d", (duration/1000)%60);
+				snprintf (seconds, sizeof (seconds), "%02" PRId64, (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
 		} else if (strcmp (key, "minutes") == 0) {
-			int duration;
+			int64_t duration;
 
 			if (xmmsv_dict_iter_find (it, "duration")) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
@@ -274,15 +275,15 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
-				char minutes[10];
+				char minutes[21];
 				/* rounding */
 				duration += 500;
-				snprintf (minutes, sizeof (minutes), "%02d", duration/60000);
+				snprintf (minutes, sizeof (minutes), "%02" PRId64, duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
 			const char *result = NULL;
-			char tmp[17];
+			char tmp[21];
 
 			if (xmmsv_dict_iter_find (it, key)) {
 				xmmsv_dict_iter_pair (it, NULL, &v);
@@ -290,10 +291,10 @@ xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val)
 				xmmsv_type_t type = xmmsv_get_type (v);
 				if (type == XMMSV_TYPE_STRING) {
 					xmmsv_get_string (v, &result);
-				} else if (type == XMMSV_TYPE_INT32) {
-					int32_t i;
+				} else if (type == XMMSV_TYPE_INT64) {
+					int64_t i;
 					xmmsv_get_int (v, &i);
-					snprintf (tmp, 12, "%d", i);
+					snprintf (tmp, 21, "%" PRId64, i);
 					result = tmp;
 				}
 			}

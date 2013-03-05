@@ -38,13 +38,14 @@ void xmmsv_coll_remove_operand (xmmsv_t *coll, xmmsv_t *op) XMMS_PUBLIC;
 xmmsv_t *xmmsv_coll_operands_get (xmmsv_t *coll) XMMS_PUBLIC;
 void xmmsv_coll_operands_set (xmmsv_t *coll, xmmsv_t *operands) XMMS_PUBLIC;
 
-int xmmsv_coll_idlist_append (xmmsv_t *coll, int id) XMMS_PUBLIC;
-int xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int id) XMMS_PUBLIC;
+int xmmsv_coll_idlist_append (xmmsv_t *coll, int64_t id) XMMS_PUBLIC;
+int xmmsv_coll_idlist_insert (xmmsv_t *coll, int index, int64_t id) XMMS_PUBLIC;
 int xmmsv_coll_idlist_move (xmmsv_t *coll, int index, int newindex) XMMS_PUBLIC;
 int xmmsv_coll_idlist_remove (xmmsv_t *coll, int index) XMMS_PUBLIC;
 int xmmsv_coll_idlist_clear (xmmsv_t *coll) XMMS_PUBLIC;
-int xmmsv_coll_idlist_get_index (xmmsv_t *coll, int index, int32_t *val) XMMS_PUBLIC;
-int xmmsv_coll_idlist_set_index (xmmsv_t *coll, int index, int32_t val) XMMS_PUBLIC;
+int xmmsv_coll_idlist_get_index_int32 (xmmsv_t *coll, int index, int32_t *val) XMMS_PUBLIC;
+int xmmsv_coll_idlist_get_index_int64 (xmmsv_t *coll, int index, int64_t *val) XMMS_PUBLIC;
+int xmmsv_coll_idlist_set_index (xmmsv_t *coll, int index, int64_t val) XMMS_PUBLIC;
 int xmmsv_coll_idlist_get_size (xmmsv_t *coll) XMMS_PUBLIC;
 
 int xmmsv_coll_is_type (xmmsv_t *val, xmmsv_coll_type_t t) XMMS_PUBLIC;
@@ -54,14 +55,15 @@ void xmmsv_coll_idlist_set (xmmsv_t *coll, xmmsv_t *idlist) XMMS_PUBLIC;
 
 void xmmsv_coll_attribute_set (xmmsv_t *coll, const char *key, const char *value) XMMS_PUBLIC XMMS_DEPRECATED;
 void xmmsv_coll_attribute_set_string (xmmsv_t *coll, const char *key, const char *value) XMMS_PUBLIC;
-void xmmsv_coll_attribute_set_int (xmmsv_t *coll, const char *key, int32_t value) XMMS_PUBLIC;
+void xmmsv_coll_attribute_set_int (xmmsv_t *coll, const char *key, int64_t value) XMMS_PUBLIC;
 void xmmsv_coll_attribute_set_value (xmmsv_t *coll, const char *key, xmmsv_t *value) XMMS_PUBLIC;
 
 int xmmsv_coll_attribute_remove (xmmsv_t *coll, const char *key) XMMS_PUBLIC;
 
 int xmmsv_coll_attribute_get (xmmsv_t *coll, const char *key, const char **value) XMMS_PUBLIC XMMS_DEPRECATED;
 int xmmsv_coll_attribute_get_string (xmmsv_t *coll, const char *key, const char **value) XMMS_PUBLIC;
-int xmmsv_coll_attribute_get_int (xmmsv_t *coll, const char *key, int32_t *value) XMMS_PUBLIC;
+int xmmsv_coll_attribute_get_int32 (xmmsv_t *coll, const char *key, int32_t *value) XMMS_PUBLIC;
+int xmmsv_coll_attribute_get_int64 (xmmsv_t *coll, const char *key, int64_t *value) XMMS_PUBLIC;
 int xmmsv_coll_attribute_get_value (xmmsv_t *coll, const char *key, xmmsv_t **value) XMMS_PUBLIC;
 
 xmmsv_t *xmmsv_coll_attributes_get (xmmsv_t *coll) XMMS_PUBLIC;
@@ -102,7 +104,13 @@ typedef xmmsv_t xmmsc_coll_t;
 
 #define xmmsc_coll_universe xmmsv_coll_universe
 
-
+#if XMMSV_USE_INT64 == 1
+#define xmmsv_coll_idlist_get_index xmmsv_coll_idlist_get_index_int64
+#define xmmsv_coll_attribute_get_int xmmsv_coll_attribute_get_int64
+#else
+#define xmmsv_coll_idlist_get_index xmmsv_coll_idlist_get_index_int32
+#define xmmsv_coll_attribute_get_int xmmsv_coll_attribute_get_int32
+#endif
 
 #ifdef __cplusplus
 }
