@@ -96,7 +96,7 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *v, *idlist;
-	int n;
+	int count, offset;
 	uint32_t ret;
 	int32_t entry;
 
@@ -124,23 +124,26 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 
 	xmmsv_list_iter_explicit_destroy (it);
 
-	/* operands counter and objects */
-	n = 0;
+	/* operands counter and content */
+	ret = offset = xmmsv_bitbuffer_pos (bb);
+	xmmsv_bitbuffer_put_bits (bb, 32, 0);
+
 	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		n = xmmsv_list_get_size (xmmsv_coll_operands_get (coll));
-	}
+		xmmsv_t *operands;
 
-	ret = xmmsv_bitbuffer_pos (bb);
-	xmmsv_bitbuffer_put_bits (bb, 32, n);
+		operands = xmmsv_coll_operands_get (coll);
+		count = xmmsv_list_get_size (operands);
 
-	if (n > 0) {
-		xmmsv_get_list_iter (xmmsv_coll_operands_get (coll), &it);
+		xmmsv_get_list_iter (operands, &it);
 
 		while (xmmsv_list_iter_entry (it, &v)) {
 			_internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
 			ret = _internal_put_on_bb_collection (bb, v);
 			xmmsv_list_iter_next (it);
 		}
+
+		/* overwrite with real size */
+		xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
 	}
 
 	return ret;
