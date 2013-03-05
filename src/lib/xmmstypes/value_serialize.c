@@ -166,8 +166,7 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 	xmmsv_bitbuffer_put_bits (bb, 32, 0);
 
 	count = 0;
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &entry);
+	while (xmmsv_list_iter_entry (it, &entry)) {
 		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
 		xmmsv_list_iter_next (it);
 		count++;
@@ -196,8 +195,7 @@ _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	xmmsv_bitbuffer_put_bits (bb, 32, 0);
 
 	count = 0;
-	while (xmmsv_dict_iter_valid (it)) {
-		xmmsv_dict_iter_pair (it, &key, &entry);
+	while (xmmsv_dict_iter_pair (it, &key, &entry)) {
 		ret = _internal_put_on_bb_string (bb, key);
 		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
 		xmmsv_dict_iter_next (it);
