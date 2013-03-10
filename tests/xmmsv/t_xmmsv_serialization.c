@@ -358,6 +358,7 @@ CASE (test_xmmsv_serialize_list)
 	const char *s;
 	const unsigned char expected[] = {
 		0x00, 0x00, 0x00, 0x06, /* XMMSV_TYPE_LIST */
+		0x00, 0x00, 0x00, 0x00, /* restrict to XMMSV_TYPE_NONE */
 		0x00, 0x00, 0x00, 0x02, /* 2 (number of list items) */
 
 		0x00, 0x00, 0x00, 0x02, /* list[0]: XMMSV_TYPE_INT64 */
@@ -410,6 +411,60 @@ CASE (test_xmmsv_serialize_list)
 
 	xmmsv_unref (value);
 }
+
+CASE (test_xmmsv_serialize_restricted_list)
+{
+	xmmsv_t *bin, *value;
+	const unsigned char *data;
+	unsigned int length;
+	xmmsv_type_t type;
+	int32_t i;
+
+	const unsigned char expected[] = {
+		0x00, 0x00, 0x00, 0x06, /* XMMSV_TYPE_LIST */
+		0x00, 0x00, 0x00, 0x02, /* restrict to XMMSV_TYPE_INT64 */
+		0x00, 0x00, 0x00, 0x02, /* 2 (number of list items) */
+
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x2a, /* list[0]: 42 */
+
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x17  /* list[1]: 23 */
+	};
+
+	value = xmmsv_new_list ();
+	xmmsv_list_restrict_type (value, XMMSV_TYPE_INT64);
+	xmmsv_list_append_int (value, 42);
+	xmmsv_list_append_int (value, 23);
+
+	bin = xmmsv_serialize (value);
+	xmmsv_unref (value);
+
+	CU_ASSERT_PTR_NOT_NULL (bin);
+
+	CU_ASSERT_TRUE (xmmsv_get_bin (bin, &data, &length));
+	CU_ASSERT_EQUAL (length, sizeof (expected));
+
+	CU_ASSERT_EQUAL (memcmp (data, expected, length), 0);
+
+	value = xmmsv_deserialize (bin);
+	xmmsv_unref (bin);
+
+	CU_ASSERT_PTR_NOT_NULL (value);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_LIST));
+	CU_ASSERT_EQUAL (xmmsv_list_get_size (value), 2);
+	CU_ASSERT_TRUE (xmmsv_list_get_type (value, &type));
+	CU_ASSERT_EQUAL (XMMSV_TYPE_INT32, type);
+
+	CU_ASSERT_TRUE (xmmsv_list_get_int (value, 0, &i));
+	CU_ASSERT_EQUAL (i, 42);
+
+	CU_ASSERT_TRUE (xmmsv_list_get_int (value, 1, &i));
+	CU_ASSERT_EQUAL (i, 23);
+
+	xmmsv_unref (value);
+}
+
 
 CASE (test_xmmsv_serialize_dict)
 {

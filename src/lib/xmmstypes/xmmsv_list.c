@@ -549,6 +549,25 @@ xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
 }
 
 /**
+ * Gets the current type restriction of a list.
+ *
+ * @param listv The list to Check
+ * @return the xmmsv_type_t of the restricted type, or XMMSV_TYPE_NONE if no restriction.
+ */
+int
+xmmsv_list_get_type (xmmsv_t *listv, xmmsv_type_t *type)
+{
+	x_return_val_if_fail (listv, false);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), false);
+	if (listv->value.list->restricted) {
+		*type = listv->value.list->restricttype;
+	} else {
+		*type = XMMSV_TYPE_NONE;
+	}
+	return true;
+}
+
+/**
  * Checks if all elements in the list has the given type
  *
  * @param listv The list to check

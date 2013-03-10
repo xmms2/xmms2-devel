@@ -29,6 +29,8 @@ static bool _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll);
 static bool _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v);
 static bool _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v);
 
+static bool _internal_put_on_bb_value_of_type (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t *val);
+
 static bool _internal_get_from_bb_bin_alloc (xmmsv_t *bb, unsigned char **buf, unsigned int *len);
 static bool _internal_get_from_bb_error_alloc (xmmsv_t *bb, char **buf, unsigned int *len);
 static bool _internal_get_from_bb_int32 (xmmsv_t *bb, int32_t *v);
@@ -161,6 +163,7 @@ static bool
 _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_type_t type;
 	xmmsv_t *entry;
 	bool ret = true;
 
@@ -168,12 +171,25 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 		return false;
 	}
 
+	if (!xmmsv_list_get_type (v, &type)) {
+		return false;
+	}
+
+	xmmsv_bitbuffer_put_bits (bb, 32, type);
+
 	/* store size */
 	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (v));
 
-	while (xmmsv_list_iter_entry (it, &entry)) {
-		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
-		xmmsv_list_iter_next (it);
+	if (type != XMMSV_TYPE_NONE) {
+		while (xmmsv_list_iter_entry (it, &entry)) {
+			ret = _internal_put_on_bb_value_of_type (bb, type, entry);
+			xmmsv_list_iter_next (it);
+		}
+	} else {
+		while (xmmsv_list_iter_entry (it, &entry)) {
+			ret = xmmsv_bitbuffer_serialize_value (bb, entry);
+			xmmsv_list_iter_next (it);
+		}
 	}
 
 	return ret;
@@ -438,22 +454,39 @@ static bool
 _internal_get_from_bb_value_list_alloc (xmmsv_t *bb, xmmsv_t **val)
 {
 	xmmsv_t *list;
-	int32_t len;
+	int32_t len, type;
 
 	list = xmmsv_new_list ();
+
+	if (!_internal_get_from_bb_int32_positive (bb, &type)) {
+		goto err;
+	}
 
 	if (!_internal_get_from_bb_int32_positive (bb, &len)) {
 		goto err;
 	}
 
-	while (len--) {
-		xmmsv_t *v;
-		if (xmmsv_bitbuffer_deserialize_value (bb, &v)) {
+	/* If list is restricted, avoid reading type for each entry */
+	if (type != XMMSV_TYPE_NONE) {
+		xmmsv_list_restrict_type (list, type);
+
+		while (len--) {
+			xmmsv_t *v;
+			if (!_internal_get_from_bb_value_of_type_alloc (bb, type, &v)) {
+				goto err;
+			}
 			xmmsv_list_append (list, v);
-		} else {
-			goto err;
+			xmmsv_unref (v);
 		}
-		xmmsv_unref (v);
+	} else {
+		while (len--) {
+			xmmsv_t *v;
+			if (!xmmsv_bitbuffer_deserialize_value (bb, &v)) {
+				goto err;
+			}
+			xmmsv_list_append (list, v);
+			xmmsv_unref (v);
+		}
 	}
 
 	*val = list;
@@ -533,22 +566,14 @@ _internal_get_from_bb_value_of_type_alloc (xmmsv_t *bb, xmmsv_type_t type,
 	return true;
 }
 
-
-
-int
-xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
+static bool
+_internal_put_on_bb_value_of_type (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t *v)
 {
-	bool ret;
+	bool ret = true;
 	int64_t i;
 	const char *s;
 	const unsigned char *bc;
 	unsigned int bl;
-	xmmsv_type_t type;
-
-	type = xmmsv_get_type (v);
-	ret = _internal_put_on_bb_int32 (bb, type);
-	if (!ret)
-		return ret;
 
 	switch (type) {
 	case XMMSV_TYPE_ERROR:
@@ -594,6 +619,19 @@ xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
 
 	return ret;
 }
+
+int
+xmmsv_bitbuffer_serialize_value (xmmsv_t *bb, xmmsv_t *v)
+{
+	int32_t type = xmmsv_get_type (v);
+
+	if (!_internal_put_on_bb_int32 (bb, type)) {
+		return false;
+	}
+
+	return _internal_put_on_bb_value_of_type (bb, type, v);
+}
+
 
 int
 xmmsv_bitbuffer_deserialize_value (xmmsv_t *bb, xmmsv_t **val)

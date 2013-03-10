@@ -45,6 +45,7 @@ int xmmsv_list_sort (xmmsv_t *listv, xmmsv_list_compare_func_t comparator) XMMS_
 int xmmsv_list_get_size (xmmsv_t *listv) XMMS_PUBLIC;
 int xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type) XMMS_PUBLIC;
 int xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type) XMMS_PUBLIC;
+int xmmsv_list_get_type (xmmsv_t *listv, xmmsv_type_t *type) XMMS_PUBLIC;
 
 int xmmsv_list_get_string (xmmsv_t *v, int pos, const char **val) XMMS_PUBLIC;
 int xmmsv_list_get_int32 (xmmsv_t *v, int pos, int32_t *val) XMMS_PUBLIC;
