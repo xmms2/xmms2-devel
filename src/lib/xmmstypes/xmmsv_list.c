@@ -540,7 +540,8 @@ int
 xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
 {
 	x_return_val_if_fail (xmmsv_list_has_type (listv, type), 0);
-	x_return_val_if_fail (!listv->value.list->restricted, 0);
+	x_return_val_if_fail (!listv->value.list->restricted ||
+	                      listv->value.list->restricttype == type, 0);
 
 	listv->value.list->restricted = true;
 	listv->value.list->restricttype = type;
