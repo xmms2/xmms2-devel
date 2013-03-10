@@ -104,56 +104,30 @@ _internal_put_on_bb_string (xmmsv_t *bb, const char *str)
 static bool
 _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 {
-	xmmsv_list_iter_t *it;
-	xmmsv_t *v, *idlist;
-	int count, offset;
-	uint32_t ret;
-	int64_t entry;
+	uint32_t ret = true;
 
 	if (!bb || !coll) {
 		return false;
 	}
 
 	/* push type */
-	if (!xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_coll_get_type (coll)))
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_coll_get_type (coll))) {
 		return false;
-
-	/* attributes */
-	_internal_put_on_bb_value_dict (bb, xmmsv_coll_attributes_get (coll));
-
-	idlist = xmmsv_coll_idlist_get (coll);
-
-	/* idlist counter and content */
-	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (idlist));
-
-	xmmsv_get_list_iter (idlist, &it);
-	while (xmmsv_list_iter_entry_int (it, &entry)) {
-		xmmsv_bitbuffer_put_bits (bb, 32, entry);
-		xmmsv_list_iter_next (it);
 	}
 
-	xmmsv_list_iter_explicit_destroy (it);
+	/* attributes */
+	ret &= _internal_put_on_bb_value_dict (bb, xmmsv_coll_attributes_get (coll));
 
-	/* operands counter and content */
-	ret = offset = xmmsv_bitbuffer_pos (bb);
-	xmmsv_bitbuffer_put_bits (bb, 32, 0);
+	/* idlist */
+	ret &= _internal_put_on_bb_value_list (bb, xmmsv_coll_idlist_get (coll));
 
-	if (xmmsv_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsv_t *operands;
-
-		operands = xmmsv_coll_operands_get (coll);
-		count = xmmsv_list_get_size (operands);
-
-		xmmsv_get_list_iter (operands, &it);
-
-		while (xmmsv_list_iter_entry (it, &v)) {
-			_internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
-			ret = _internal_put_on_bb_collection (bb, v);
-			xmmsv_list_iter_next (it);
-		}
-
-		/* overwrite with real size */
-		xmmsv_bitbuffer_put_bits_at (bb, 32, count, offset);
+	/* operands, unless a reference */
+	if (xmmsv_coll_is_type (coll, XMMS_COLLECTION_TYPE_REFERENCE)) {
+		/* dummy 'list'.. restrict type, and 0 length */
+		ret &= _internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
+		ret &= _internal_put_on_bb_int32 (bb, 0);
+	} else {
+		ret &= _internal_put_on_bb_value_list (bb, xmmsv_coll_operands_get (coll));
 	}
 
 	return ret;
@@ -323,13 +297,8 @@ _internal_get_from_bb_bin_alloc (xmmsv_t *bb,
 static bool
 _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_t **coll)
 {
-	int i;
+	xmmsv_t *dict, *list;
 	int32_t type;
-	int32_t n_items;
-	int id;
-	int32_t *idlist = NULL;
-	xmmsv_t *dict, *attrs;
-	xmmsv_dict_iter_t *it;
 
 	/* Get the type and create the collection */
 	if (!_internal_get_from_bb_int32_positive (bb, &type)) {
@@ -340,69 +309,26 @@ _internal_get_from_bb_collection_alloc (xmmsv_t *bb, xmmsv_t **coll)
 
 	/* Get the attributes */
 	if (!_internal_get_from_bb_value_dict_alloc (bb, &dict)) {
-		return false;
+		goto err;
 	}
-
-	attrs = xmmsv_coll_attributes_get (*coll);
-
-	xmmsv_get_dict_iter (dict, &it);
-	while (xmmsv_dict_iter_valid (it)) {
-		const char *key;
-		xmmsv_t *value;
-		xmmsv_dict_iter_pair (it, &key, &value);
-		xmmsv_dict_set (attrs, key, value);
-		xmmsv_dict_iter_next (it);
-	}
-
+	xmmsv_coll_attributes_set (*coll, dict);
 	xmmsv_unref (dict);
 
-	/* Get the idlist */
-	if (!_internal_get_from_bb_int32_positive (bb, &n_items)) {
+	if (!_internal_get_from_bb_value_list_alloc (bb, &list)) {
 		goto err;
 	}
+	xmmsv_coll_idlist_set (*coll, list);
+	xmmsv_unref (list);
 
-	if (!(idlist = x_new (int32_t, n_items + 1))) {
+	if (!_internal_get_from_bb_value_list_alloc (bb, &list)) {
 		goto err;
 	}
-
-	for (i = 0; i < n_items; i++) {
-		if (!_internal_get_from_bb_int32 (bb, &id)) {
-			goto err;
-		}
-
-		idlist[i] = id;
-	}
-
-	idlist[i] = 0;
-	xmmsv_coll_set_idlist (*coll, idlist);
-	free (idlist);
-	idlist = NULL;
-
-	/* Get the operands */
-	if (!_internal_get_from_bb_int32_positive (bb, &n_items)) {
-		goto err;
-	}
-
-	for (i = 0; i < n_items; i++) {
-		xmmsv_t *operand;
-
-		if (!_internal_get_from_bb_int32_positive (bb, &type) ||
-		    type != XMMSV_TYPE_COLL ||
-		    !_internal_get_from_bb_collection_alloc (bb, &operand)) {
-			goto err;
-		}
-
-		xmmsv_coll_add_operand (*coll, operand);
-		xmmsv_unref (operand);
-	}
+	xmmsv_coll_operands_set (*coll, list);
+	xmmsv_unref (list);
 
 	return true;
 
 err:
-	if (idlist != NULL) {
-		free (idlist);
-	}
-
 	xmmsv_unref (*coll);
 
 	return false;
