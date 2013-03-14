@@ -163,7 +163,7 @@ struct xmms_coll_dag_St {
 
 	GHashTable *collrefs[XMMS_COLLECTION_NUM_NAMESPACES];
 
-	GMutex *mutex;
+	GMutex mutex;
 
 	xmms_medialib_t *medialib;
 };
@@ -179,7 +179,7 @@ xmms_collection_init (xmms_medialib_t *medialib)
 	gint i;
 
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
-	ret->mutex = g_mutex_new ();
+	g_mutex_init (&ret->mutex);
 
 	xmms_object_ref (medialib);
 	ret->medialib = medialib;
@@ -333,7 +333,7 @@ xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
 		return;
 	}
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	/* Unreference the matching collection(s) */
 	if (nsid == XMMS_COLLECTION_NSID_ALL) {
@@ -344,7 +344,7 @@ xmms_collection_client_remove (xmms_coll_dag_t *dag, const gchar *name,
 		retval = xmms_collection_unreference (dag, name, nsid);
 	}
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	if (retval == FALSE) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Failed to remove this collection!");
@@ -387,7 +387,7 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 		return;
 	}
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	/* Unreference previously saved collection */
 	existing = xmms_collection_get_pointer (dag, name, nsid);
@@ -427,7 +427,7 @@ xmms_collection_client_save (xmms_coll_dag_t *dag, const gchar *name, const gcha
 		                             name, namespace);
 	}
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 }
 
 
@@ -454,7 +454,7 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 		return NULL;
 	}
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	coll = xmms_collection_get_pointer (dag, name, nsid);
 
@@ -465,7 +465,7 @@ xmms_collection_client_get (xmms_coll_dag_t *dag, const gchar *name,
 		result = xmmsv_copy (coll);
 	}
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	return result;
 }
@@ -494,12 +494,12 @@ xmms_collection_client_list (xmms_coll_dag_t *dag, const gchar *namespace,
 
 	result = xmmsv_new_list ();
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	/* Get the list of collections in the given namespace */
 	xmms_collection_foreach_in_namespace (dag, nsid, prepend_key_string, result);
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	return result;
 }
@@ -600,7 +600,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		return;
 	}
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	from_coll = xmms_collection_get_pointer (dag, from_name, nsid);
 	to_coll   = xmms_collection_get_pointer (dag, to_name, nsid);
@@ -631,7 +631,7 @@ xmms_collection_client_rename (xmms_coll_dag_t *dag, const gchar *from_name,
 		xmms_collection_changed_msg_send (dag, dict);
 	}
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 }
 
@@ -818,7 +818,7 @@ xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_t *coll,
 		return NULL;
 	}
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
 
@@ -827,7 +827,7 @@ xmms_collection_client_query (xmms_coll_dag_t *dag, xmmsv_t *coll,
 		ret = xmms_medialib_query (session, coll, fetch, err);
 	} while (!xmms_medialib_session_commit (session));
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	return ret;
 }
@@ -968,7 +968,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_t *source)
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t ret;
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 	xmms_collection_apply_to_collection (dag, source, bind_all_references, NULL);
 
 	do {
@@ -976,7 +976,7 @@ xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsv_t *source)
 		ret = xmms_medialib_query_random_id (session, source);
 	} while (!xmms_medialib_session_commit (session));
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	return ret;
 }
@@ -1000,7 +1000,7 @@ xmms_collection_destroy (xmms_object_t *object)
 	g_return_if_fail (dag);
 
 	xmms_object_unref (dag->medialib);
-	g_mutex_free (dag->mutex);
+	g_mutex_clear (&dag->mutex);
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		g_hash_table_destroy (dag->collrefs[i]);  /* dag is freed here */
@@ -1098,10 +1098,10 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 				return FALSE;
 			}
 
-			g_mutex_lock (dag->mutex);
+			g_mutex_lock (&dag->mutex);
 			ref = xmms_collection_get_pointer (dag, attr, nsid);
 			if (ref == NULL) {
-				g_mutex_unlock (dag->mutex);
+				g_mutex_unlock (&dag->mutex);
 				*err = "Invalid collection: REFERENCE refers to inexistent "
 				       "collection.";
 				return FALSE;
@@ -1112,7 +1112,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 				if (strcmp (attr, save_name) == 0 &&
 				    strcmp (attr2, save_namespace) == 0) {
 
-					g_mutex_unlock (dag->mutex);
+					g_mutex_unlock (&dag->mutex);
 					*err = "Invalid collection: cycle detected: REFERENCE "
 					       "refers to intended name and namespace.";
 					return FALSE;
@@ -1120,7 +1120,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 				/* check if the referenced coll references this one (loop!) */
 				} else if (xmms_collection_has_reference_to (dag, ref, save_name,
 				                                             save_namespace)) {
-					g_mutex_unlock (dag->mutex);
+					g_mutex_unlock (&dag->mutex);
 					*err = "Invalid collection: cycle detected: REFERENCE "
 					       "refers to collection that (possibly indirectly) "
 					       "refers to intended name and namespace.";
@@ -1128,7 +1128,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 				}
 			}
 
-			g_mutex_unlock (dag->mutex);
+			g_mutex_unlock (&dag->mutex);
 		} else {
 			/* "All Media" reference, so no referenced coll pointer */
 			ref = NULL;
@@ -1599,7 +1599,7 @@ xmms_collection_snapshot (xmms_coll_dag_t *dag)
 	xmmsv_dict_set (result, "playlists", playlists);
 	xmmsv_unref (playlists);
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	xmms_collection_apply_to_all_collections (dag, unbind_all_references, NULL);
 
@@ -1629,7 +1629,7 @@ xmms_collection_snapshot (xmms_coll_dag_t *dag)
 
 	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 
 	return result;
 }
@@ -1674,7 +1674,7 @@ xmms_collection_restore (xmms_coll_dag_t *dag, xmmsv_t *snapshot)
 
 	alias = NULL;
 
-	g_mutex_lock (dag->mutex);
+	g_mutex_lock (&dag->mutex);
 
 	if (snapshot != NULL && xmmsv_is_type (snapshot, XMMSV_TYPE_DICT)) {
 		if (xmmsv_dict_get (snapshot, "playlists", &playlists) &&
@@ -1719,7 +1719,7 @@ xmms_collection_restore (xmms_coll_dag_t *dag, xmmsv_t *snapshot)
 	 *       creating a default playlist if active is missing
 	 */
 
-	g_mutex_unlock (dag->mutex);
+	g_mutex_unlock (&dag->mutex);
 }
 
 /**

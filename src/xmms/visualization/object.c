@@ -113,7 +113,7 @@ xmms_visualization_t *
 xmms_visualization_new (xmms_output_t *output)
 {
 	vis = xmms_object_new (xmms_visualization_t, xmms_visualization_destroy);
-	vis->clientlock = g_mutex_new ();
+	g_mutex_init (&vis->clientlock);
 	vis->clientc = 0;
 	vis->output = output;
 
@@ -139,7 +139,7 @@ xmms_visualization_destroy (xmms_object_t *object)
 	xmms_object_unref (vis->output);
 
 	/* TODO: assure that the xform is already dead! */
-	g_mutex_free (vis->clientlock);
+	g_mutex_clear (&vis->clientlock);
 	xmms_log_debug ("starting cleanup of %d vis clients", vis->clientc);
 	for (; vis->clientc > 0; --vis->clientc) {
 		delete_client (vis->clientc - 1);
@@ -206,7 +206,7 @@ xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err
 	int32_t id;
 	xmms_vis_client_t *c;
 
-	g_mutex_lock (vis->clientlock);
+	g_mutex_lock (&vis->clientlock);
 	id = create_client ();
 	if (id < 0) {
 		xmms_error_set (err, XMMS_ERROR_OOM, "could not allocate dataset");
@@ -217,7 +217,7 @@ xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err
 		c->format = 0;
 		properties_init (&c->prop);
 	}
-	g_mutex_unlock (vis->clientlock);
+	g_mutex_unlock (&vis->clientlock);
 	return id;
 }
 
@@ -297,9 +297,9 @@ xmms_visualization_client_init_udp (xmms_visualization_t *vis, int32_t id, xmms_
 static void
 xmms_visualization_client_shutdown (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 {
-	g_mutex_lock (vis->clientlock);
+	g_mutex_lock (&vis->clientlock);
 	delete_client (id);
-	g_mutex_unlock (vis->clientlock);
+	g_mutex_unlock (&vis->clientlock);
 }
 
 static gboolean
@@ -336,13 +336,13 @@ send_data (int channels, int size, short *buf)
 		time.tv_usec -= 1000000;
 	}
 
-	g_mutex_lock (vis->clientlock);
+	g_mutex_lock (&vis->clientlock);
 	for (i = 0; i < vis->clientc; ++i) {
 		if (vis->clientv[i]) {
 			package_write (vis->clientv[i], i, &time, channels, size, buf);
 		}
 	}
-	g_mutex_unlock (vis->clientlock);
+	g_mutex_unlock (&vis->clientlock);
 }
 
 /** @} */

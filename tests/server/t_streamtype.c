@@ -23,7 +23,6 @@
 #include <xmms/xmms_sample.h>
 
 SETUP (streamtype) {
-	g_thread_init (0);
 	return 0;
 }
 
@@ -315,4 +314,3 @@ CASE (test_coerce)
 	xmms_object_unref (from);
 	xmms_object_unref (to);
 }
-

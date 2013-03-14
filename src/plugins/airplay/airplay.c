@@ -42,7 +42,7 @@ typedef enum {
  */
 typedef struct xmms_airplay_data_St {
 	GThread *thread;
-	GMutex *raop_mutex;
+	GMutex raop_mutex;
 	gint wake_pipe[2];
 	xmms_airplay_state_t state;
 	gdouble volume;
@@ -119,7 +119,7 @@ xmms_airplay_new (xmms_output_t *output)
 	data = g_new0 (xmms_airplay_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	data->raop_mutex = g_mutex_new ();
+	g_mutex_init (&data->raop_mutex);
 	xmms_output_private_data_set (output, data);
 
 	/* We only do 44.1KHz, 16-bit, stereo */
@@ -128,8 +128,7 @@ xmms_airplay_new (xmms_output_t *output)
 	if (pipe (data->wake_pipe) < 0)
 		return FALSE;
 
-	data->thread = g_thread_create (xmms_airplay_thread,
-	                                (gpointer) output, TRUE, NULL);
+	data->thread = g_thread_new ("x2 airplay", xmms_airplay_thread, (gpointer) output);
 
 	return TRUE;
 }
@@ -146,14 +145,14 @@ xmms_airplay_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	g_mutex_lock (data->raop_mutex);
+	g_mutex_lock (&data->raop_mutex);
 	data->state = STATE_QUIT;
 	write (data->wake_pipe[1], "X", 1);
-	g_mutex_unlock (data->raop_mutex);
+	g_mutex_unlock (&data->raop_mutex);
 
 	g_thread_join (data->thread);
 
-	g_mutex_free (data->raop_mutex);
+	g_mutex_clear (&data->raop_mutex);
 	g_free (data);
 }
 
@@ -194,11 +193,11 @@ xmms_airplay_thread (gpointer arg)
 	if (ret != RAOP_EOK)
 		return NULL;
 
-	g_mutex_lock (data->raop_mutex);
+	g_mutex_lock (&data->raop_mutex);
 	while (data->state != STATE_QUIT) {
 		switch (data->state) {
 		case STATE_IDLE:
-			g_mutex_unlock (data->raop_mutex);
+			g_mutex_unlock (&data->raop_mutex);
 			FD_ZERO (&rfds);
 			FD_SET (wake_fd, &rfds);
 			select (wake_fd+1, &rfds, NULL, NULL, NULL);
@@ -206,15 +205,15 @@ xmms_airplay_thread (gpointer arg)
 				char cmd;
 				read (wake_fd, &cmd, 1);
 			}
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			break;
 		case STATE_CONNECT:
-			g_mutex_unlock (data->raop_mutex);
+			g_mutex_unlock (&data->raop_mutex);
 			val = xmms_output_config_lookup (output, "airport_address");
 			tmp = xmms_config_property_get_string (val);
 			XMMS_DBG ("Connecting to %s", tmp);
 			ret = raop_client_connect (rc, tmp, RAOP_DEFAULT_PORT);
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			if (ret == RAOP_EOK) {
 				raop_client_set_stream_cb (rc, xmms_airplay_stream_cb, output);
 				raop_client_get_volume (rc, &data->volume);
@@ -226,25 +225,25 @@ xmms_airplay_thread (gpointer arg)
 				data->state = STATE_IDLE;
 				xmms_error_set (&error, XMMS_ERROR_GENERIC,
 				                "Error connecting");
-				g_mutex_unlock (data->raop_mutex);
+				g_mutex_unlock (&data->raop_mutex);
 				xmms_output_set_error (output, &error);
-				g_mutex_lock (data->raop_mutex);
+				g_mutex_lock (&data->raop_mutex);
 			}
 			break;
 		case STATE_RUNNING:
 			break;
 		case STATE_FLUSH:
 			XMMS_DBG ("Flushing...");
-			g_mutex_unlock (data->raop_mutex);
+			g_mutex_unlock (&data->raop_mutex);
 			raop_client_flush (rc);
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			data->state = STATE_RUNNING;
 			break;
 		case STATE_DISCONNECT:
 			XMMS_DBG ("Disconnecting...");
-			g_mutex_unlock (data->raop_mutex);
+			g_mutex_unlock (&data->raop_mutex);
 			raop_client_disconnect (rc);
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			data->state = STATE_IDLE;
 			break;
 		default:
@@ -261,7 +260,7 @@ xmms_airplay_thread (gpointer arg)
 			continue;
 		}
 
-		g_mutex_unlock (data->raop_mutex);
+		g_mutex_unlock (&data->raop_mutex);
 
 		FD_ZERO (&rfds);
 		FD_ZERO (&wfds);
@@ -291,7 +290,7 @@ xmms_airplay_thread (gpointer arg)
 		max_fd = MAX (wake_fd, MAX (rtsp_fd, stream_fd));
 		ret = select (max_fd + 1, &rfds, &wfds, &efds, &timeout);
 		if (ret <= 0) {
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			if (!(ret == -1 && errno == EINTR)) {
 				data->state = STATE_DISCONNECT;
 			}
@@ -300,7 +299,7 @@ xmms_airplay_thread (gpointer arg)
 		if (FD_ISSET (wake_fd, &rfds)) {
 			char cmd;
 			read (wake_fd, &cmd, 1);
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			continue;
 		}
 
@@ -310,9 +309,9 @@ xmms_airplay_thread (gpointer arg)
 			raop_client_handle_io (rc, rtsp_fd, G_IO_OUT);
 		if (FD_ISSET (rtsp_fd, &efds)) {
 			raop_client_handle_io (rc, rtsp_fd, G_IO_ERR);
-			g_mutex_lock (data->raop_mutex);
+			g_mutex_lock (&data->raop_mutex);
 			data->state = STATE_DISCONNECT;
-			g_mutex_unlock (data->raop_mutex);
+			g_mutex_unlock (&data->raop_mutex);
 		}
 		if (stream_fd != -1) {
 			if (FD_ISSET (stream_fd, &rfds))
@@ -321,14 +320,14 @@ xmms_airplay_thread (gpointer arg)
 				raop_client_handle_io (rc, stream_fd, G_IO_OUT);
 			if (FD_ISSET (stream_fd, &efds)) {
 				raop_client_handle_io (rc, stream_fd, G_IO_ERR);
-				g_mutex_lock (data->raop_mutex);
+				g_mutex_lock (&data->raop_mutex);
 				data->state = STATE_DISCONNECT;
-				g_mutex_unlock (data->raop_mutex);
+				g_mutex_unlock (&data->raop_mutex);
 			}
 		}
-		g_mutex_lock (data->raop_mutex);
+		g_mutex_lock (&data->raop_mutex);
 	}
-	g_mutex_unlock (data->raop_mutex);
+	g_mutex_unlock (&data->raop_mutex);
 	raop_client_destroy (rc);
 
 	XMMS_DBG ("Airplay thread exit");
@@ -346,19 +345,19 @@ xmms_airplay_status (xmms_output_t *output, xmms_playback_status_t status)
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		XMMS_DBG ("STARTING PLAYBACK!");
-		g_mutex_lock (data->raop_mutex);
+		g_mutex_lock (&data->raop_mutex);
 		if (data->state == STATE_IDLE) {
 			data->state = STATE_CONNECT;
 			write (data->wake_pipe[1], "X", 1);
 		}
-		g_mutex_unlock (data->raop_mutex);
+		g_mutex_unlock (&data->raop_mutex);
 	} else {
-		g_mutex_lock (data->raop_mutex);
+		g_mutex_lock (&data->raop_mutex);
 		if (data->state == STATE_RUNNING) {
 			data->state = STATE_DISCONNECT;
 			write (data->wake_pipe[1], "X", 1);
 		}
-		g_mutex_unlock (data->raop_mutex);
+		g_mutex_unlock (&data->raop_mutex);
 	}
 	return TRUE;
 }
@@ -376,10 +375,10 @@ xmms_airplay_volume_set (xmms_output_t *output,
 
 	v = (100.0 - volume) * RAOP_MIN_VOLUME / 100;
 
-	g_mutex_lock (data->raop_mutex);
+	g_mutex_lock (&data->raop_mutex);
 	data->volume = v;
 	write (data->wake_pipe[1], "X", 1);
-	g_mutex_unlock (data->raop_mutex);
+	g_mutex_unlock (&data->raop_mutex);
 
 	return TRUE;
 }
@@ -424,12 +423,12 @@ xmms_airplay_flush (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	XMMS_DBG ("Airplay flushing requested");
-	g_mutex_lock (data->raop_mutex);
+	g_mutex_lock (&data->raop_mutex);
 	if (data->state == STATE_RUNNING) {
 		data->state = STATE_FLUSH;
 		write (data->wake_pipe[1], "X", 1);
 	}
-	g_mutex_unlock (data->raop_mutex);
+	g_mutex_unlock (&data->raop_mutex);
 }
 
 static guint

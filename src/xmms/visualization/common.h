@@ -61,15 +61,15 @@ short fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, in
 
 /* never call a fetch without a guaranteed release following! */
 #define x_fetch_client(id) \
-	g_mutex_lock (vis->clientlock); \
+	g_mutex_lock (&vis->clientlock); \
 	c = get_client (id); \
 	if (!c) { \
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid server-side identifier provided"); \
-		g_mutex_unlock (vis->clientlock); \
+		g_mutex_unlock (&vis->clientlock); \
 		return -1; \
 	}
 #define x_release_client() \
-	g_mutex_unlock (vis->clientlock);
+	g_mutex_unlock (&vis->clientlock);
 
 /**
  * The structures for the vis module
@@ -81,7 +81,7 @@ struct xmms_visualization_St {
 	xmms_socket_t socket;
 	GIOChannel *socketio;
 
-	GMutex *clientlock;
+	GMutex clientlock;
 	int32_t clientc;
 	xmms_vis_client_t **clientv;
 };

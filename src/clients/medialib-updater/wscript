@@ -5,7 +5,7 @@ def build(bld):
         target = 'xmms2-mlib-updater',
         source = ['main.c'],
         includes = '. ../../.. ../../include',
-        uselib = 'glib2 gio2 gthread2',
+        uselib = 'glib2 gio2',
         use = 'xmmsclient-glib xmmsclient'
         )
 
@@ -20,8 +20,6 @@ def build(bld):
 
 def configure(conf):
     conf.check_cfg(package="gio-2.0", uselib_store='gio2',
-            args="--cflags --libs")
-    conf.check_cfg(package="gthread-2.0", uselib_store='gthread2',
             args="--cflags --libs")
 
     conf.check_cc(function_name="g_file_query_file_type",

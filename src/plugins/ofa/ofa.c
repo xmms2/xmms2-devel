@@ -41,8 +41,8 @@ typedef struct xmms_ofa_data_St {
 	gboolean run_ofa;
 	gboolean done;
 
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 	GThread *thread;
 	xmms_ofa_thread_state_t thread_state;
 
@@ -103,7 +103,6 @@ xmms_ofa_init (xmms_xform_t *xform)
 {
 	xmms_ofa_data_t *data;
 	xmms_medialib_entry_t entry;
-	GError *error = NULL;
 	char *fp;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -111,16 +110,14 @@ xmms_ofa_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_ofa_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	data->mutex = g_mutex_new ();
-	data->cond = g_cond_new ();
-	data->thread = g_thread_create (xmms_ofa_thread, data, TRUE, &error);
+	data->thread = g_thread_new ("x2 ofa calc", xmms_ofa_thread, data);
 	if (!data->thread) {
-		g_mutex_free (data->mutex);
 		g_free (data);
 		return FALSE;
 	}
 
-	g_thread_set_priority (data->thread, G_THREAD_PRIORITY_LOW);
+	g_mutex_init (&data->mutex);
+	g_cond_init (&data->cond);
 
 	data->bytes_to_read = 44100 * 135 * 4;
 	data->buf = g_malloc (data->bytes_to_read);
@@ -154,14 +151,14 @@ xmms_ofa_destroy (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 
-	g_mutex_lock (data->mutex);
+	g_mutex_lock (&data->mutex);
 	data->thread_state = XMMS_OFA_ABORT;
-	g_cond_signal (data->cond);
-	g_mutex_unlock (data->mutex);
+	g_cond_signal (&data->cond);
+	g_mutex_unlock (&data->mutex);
 
 	g_thread_join (data->thread);
-	g_cond_free (data->cond);
-	g_mutex_free (data->mutex);
+	g_cond_clear (&data->cond);
+	g_mutex_clear (&data->mutex);
 
 	if (data->fp)
 		g_free (data->fp);
@@ -188,22 +185,22 @@ xmms_ofa_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		memcpy (data->buf + data->pos, buf, l);
 		data->pos += l;
 		if (data->pos == data->bytes_to_read) {
-			g_mutex_lock (data->mutex);
+			g_mutex_lock (&data->mutex);
 			data->thread_state = XMMS_OFA_CALCULATE;
-			g_cond_signal (data->cond);
-			g_mutex_unlock (data->mutex);
+			g_cond_signal (&data->cond);
+			g_mutex_unlock (&data->mutex);
 			data->run_ofa = FALSE;
 		}
 	} else if (data->pos == data->bytes_to_read){
 		if (!data->done) {
-			g_mutex_lock (data->mutex);
+			g_mutex_lock (&data->mutex);
 			if (data->thread_state == XMMS_OFA_DONE) {
 				xmms_xform_metadata_set_str (xform,
 				                             "ofa_fingerprint",
 				                             data->fp);
 				data->done = TRUE;
 			}
-			g_mutex_unlock (data->mutex);
+			g_mutex_unlock (&data->mutex);
 		}
 	}
 
@@ -231,15 +228,15 @@ xmms_ofa_thread (gpointer arg)
 	xmms_ofa_data_t *data = (xmms_ofa_data_t *)arg;
 	const char *fp;
 
-	g_mutex_lock (data->mutex);
+	g_mutex_lock (&data->mutex);
 	while (data->thread_state == XMMS_OFA_WAIT) {
-		g_cond_wait (data->cond, data->mutex);
+		g_cond_wait (&data->cond, &data->mutex);
 	}
 	if (data->thread_state == XMMS_OFA_ABORT) {
-		g_mutex_unlock (data->mutex);
+		g_mutex_unlock (&data->mutex);
 		return NULL;
 	}
-	g_mutex_unlock (data->mutex);
+	g_mutex_unlock (&data->mutex);
 
 	XMMS_DBG ("Calculating fingerprint... (will consume CPU)");
 
@@ -253,10 +250,10 @@ xmms_ofa_thread (gpointer arg)
 	                       44100,
 	                       1);
 
-	g_mutex_lock (data->mutex);
+	g_mutex_lock (&data->mutex);
 	data->thread_state = XMMS_OFA_DONE;
 	data->fp = g_strdup (fp);
-	g_mutex_unlock (data->mutex);
+	g_mutex_unlock (&data->mutex);
 
 	XMMS_DBG ("Fingerprint calculated: %s", fp);
 	return NULL;

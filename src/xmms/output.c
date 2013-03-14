@@ -108,7 +108,7 @@ struct xmms_output_St {
 	gpointer plugin_data;
 
 	/* */
-	GMutex *playtime_mutex;
+	GMutex playtime_mutex;
 	guint played;
 	guint played_time;
 	xmms_medialib_entry_t current_entry;
@@ -116,9 +116,9 @@ struct xmms_output_St {
 
 	/* */
 	GThread *filler_thread;
-	GMutex *filler_mutex;
+	GMutex filler_mutex;
 
-	GCond *filler_state_cond;
+	GCond filler_state_cond;
 	xmms_output_filler_state_t filler_state;
 
 	xmms_ringbuf_t *filler_buffer;
@@ -127,7 +127,7 @@ struct xmms_output_St {
 
 	/** Internal status, tells which state the
 	    output really is in */
-	GMutex *status_mutex;
+	GMutex status_mutex;
 	guint status;
 
 	xmms_playlist_t *playlist;
@@ -223,9 +223,9 @@ update_playtime (xmms_output_t *output, int advance)
 {
 	guint buffersize = 0;
 
-	g_mutex_lock (output->playtime_mutex);
+	g_mutex_lock (&output->playtime_mutex);
 	output->played += advance;
-	g_mutex_unlock (output->playtime_mutex);
+	g_mutex_unlock (&output->playtime_mutex);
 
 	buffersize = xmms_output_plugin_method_latency_get (output->plugin, output);
 
@@ -233,7 +233,7 @@ update_playtime (xmms_output_t *output, int advance)
 		buffersize = output->played;
 	}
 
-	g_mutex_lock (output->playtime_mutex);
+	g_mutex_lock (&output->playtime_mutex);
 
 	if (output->format) {
 		guint ms = xmms_sample_bytes_to_ms (output->format,
@@ -247,7 +247,7 @@ update_playtime (xmms_output_t *output, int advance)
 
 	}
 
-	g_mutex_unlock (output->playtime_mutex);
+	g_mutex_unlock (&output->playtime_mutex);
 
 }
 
@@ -326,10 +326,10 @@ seek_done (void *data)
 {
 	xmms_output_t *output = (xmms_output_t *)data;
 
-	g_mutex_lock (output->playtime_mutex);
+	g_mutex_lock (&output->playtime_mutex);
 	output->played = output->filler_seek * xmms_sample_frame_size_get (output->format);
 	output->toskip = output->filler_skip * xmms_sample_frame_size_get (output->format);
-	g_mutex_unlock (output->playtime_mutex);
+	g_mutex_unlock (&output->playtime_mutex);
 
 	xmms_output_flush (output);
 	return TRUE;
@@ -339,7 +339,7 @@ static void
 xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state_t state)
 {
 	output->filler_state = state;
-	g_cond_signal (output->filler_state_cond);
+	g_cond_signal (&output->filler_state_cond);
 	if (state == FILLER_QUIT || state == FILLER_STOP || state == FILLER_KILL) {
 		xmms_ringbuf_clear (output->filler_buffer);
 	}
@@ -351,18 +351,18 @@ xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state
 static void
 xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state)
 {
-	g_mutex_lock (output->filler_mutex);
+	g_mutex_lock (&output->filler_mutex);
 	xmms_output_filler_state_nolock (output, state);
-	g_mutex_unlock (output->filler_mutex);
+	g_mutex_unlock (&output->filler_mutex);
 }
 static void
 xmms_output_filler_seek_state (xmms_output_t *output, guint32 samples)
 {
-	g_mutex_lock (output->filler_mutex);
+	g_mutex_lock (&output->filler_mutex);
 	output->filler_state = FILLER_SEEK;
 	output->filler_seek = samples;
-	g_cond_signal (output->filler_state_cond);
-	g_mutex_unlock (output->filler_mutex);
+	g_cond_signal (&output->filler_state_cond);
+	g_mutex_unlock (&output->filler_mutex);
 }
 
 static void *
@@ -377,9 +377,7 @@ xmms_output_filler (void *arg)
 
 	xmms_error_reset (&err);
 
-	xmms_set_thread_name ("x2 out filler");
-
-	g_mutex_lock (output->filler_mutex);
+	g_mutex_lock (&output->filler_mutex);
 	while (output->filler_state != FILLER_QUIT) {
 		if (output->filler_state == FILLER_STOP) {
 			if (chain) {
@@ -387,7 +385,7 @@ xmms_output_filler (void *arg)
 				chain = NULL;
 			}
 			xmms_ringbuf_set_eos (output->filler_buffer, TRUE);
-			g_cond_wait (output->filler_state_cond, output->filler_mutex);
+			g_cond_wait (&output->filler_state_cond, &output->filler_mutex);
 			last_was_kill = FALSE;
 			continue;
 		}
@@ -434,13 +432,13 @@ xmms_output_filler (void *arg)
 			xmms_medialib_entry_t entry;
 			xmms_output_song_changed_arg_t *hsarg;
 
-			g_mutex_unlock (output->filler_mutex);
+			g_mutex_unlock (&output->filler_mutex);
 
 			entry = xmms_playlist_current_entry (output->playlist);
 			if (!entry) {
 				XMMS_DBG ("No entry from playlist!");
 				output->filler_state = FILLER_STOP;
-				g_mutex_lock (output->filler_mutex);
+				g_mutex_lock (&output->filler_mutex);
 				continue;
 			}
 
@@ -461,7 +459,7 @@ xmms_output_filler (void *arg)
 					XMMS_DBG ("End of playlist");
 					output->filler_state = FILLER_STOP;
 				}
-				g_mutex_lock (output->filler_mutex);
+				g_mutex_lock (&output->filler_mutex);
 				continue;
 			}
 
@@ -473,21 +471,21 @@ xmms_output_filler (void *arg)
 
 			last_was_kill = FALSE;
 
-			g_mutex_lock (output->filler_mutex);
+			g_mutex_lock (&output->filler_mutex);
 			xmms_ringbuf_hotspot_set (output->filler_buffer, song_changed, song_changed_arg_free, hsarg);
 		}
 
-		xmms_ringbuf_wait_free (output->filler_buffer, sizeof (buf), output->filler_mutex);
+		xmms_ringbuf_wait_free (output->filler_buffer, sizeof (buf), &output->filler_mutex);
 
 		if (output->filler_state != FILLER_RUN) {
 			XMMS_DBG ("State changed while waiting...");
 			continue;
 		}
-		g_mutex_unlock (output->filler_mutex);
+		g_mutex_unlock (&output->filler_mutex);
 
 		ret = xmms_xform_this_read (chain, buf, sizeof (buf), &err);
 
-		g_mutex_lock (output->filler_mutex);
+		g_mutex_lock (&output->filler_mutex);
 
 		if (ret > 0) {
 			gint skip = MIN (ret, output->toskip);
@@ -497,7 +495,7 @@ xmms_output_filler (void *arg)
 				xmms_ringbuf_write_wait (output->filler_buffer,
 				                         buf + skip,
 				                         ret - skip,
-				                         output->filler_mutex);
+				                         &output->filler_mutex);
 			}
 		} else {
 			if (ret == -1) {
@@ -517,7 +515,7 @@ xmms_output_filler (void *arg)
 	if (chain)
 		xmms_object_unref (chain);
 
-	g_mutex_unlock (output->filler_mutex);
+	g_mutex_unlock (&output->filler_mutex);
 
 	return NULL;
 }
@@ -533,15 +531,15 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	g_return_val_if_fail (output, -1);
 	g_return_val_if_fail (buffer, -1);
 
-	g_mutex_lock (output->filler_mutex);
-	xmms_ringbuf_wait_used (output->filler_buffer, len, output->filler_mutex);
+	g_mutex_lock (&output->filler_mutex);
+	xmms_ringbuf_wait_used (output->filler_buffer, len, &output->filler_mutex);
 	ret = xmms_ringbuf_read (output->filler_buffer, buffer, len);
 	if (ret == 0 && xmms_ringbuf_iseos (output->filler_buffer)) {
 		xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
-		g_mutex_unlock (output->filler_mutex);
+		g_mutex_unlock (&output->filler_mutex);
 		return -1;
 	}
-	g_mutex_unlock (output->filler_mutex);
+	g_mutex_unlock (&output->filler_mutex);
 
 	update_playtime (output, ret);
 
@@ -608,12 +606,12 @@ xmms_playback_client_seek_ms (xmms_output_t *output, gint32 ms, gint32 whence, x
 	g_return_if_fail (output);
 
 	if (whence == XMMS_PLAYBACK_SEEK_CUR) {
-		g_mutex_lock (output->playtime_mutex);
+		g_mutex_lock (&output->playtime_mutex);
 		ms += output->played_time;
 		if (ms < 0) {
 			ms = 0;
 		}
-		g_mutex_unlock (output->playtime_mutex);
+		g_mutex_unlock (&output->playtime_mutex);
 	}
 
 	if (output->format) {
@@ -628,12 +626,12 @@ static void
 xmms_playback_client_seek_samples (xmms_output_t *output, gint32 samples, gint32 whence, xmms_error_t *error)
 {
 	if (whence == XMMS_PLAYBACK_SEEK_CUR) {
-		g_mutex_lock (output->playtime_mutex);
+		g_mutex_lock (&output->playtime_mutex);
 		samples += output->played / xmms_sample_frame_size_get (output->format);
 		if (samples < 0) {
 			samples = 0;
 		}
-		g_mutex_unlock (output->playtime_mutex);
+		g_mutex_unlock (&output->playtime_mutex);
 	}
 
 	/* "just" tell filler */
@@ -678,9 +676,9 @@ xmms_playback_client_status (xmms_output_t *output, xmms_error_t *error)
 	gint32 ret;
 	g_return_val_if_fail (output, XMMS_PLAYBACK_STATUS_STOP);
 
-	g_mutex_lock (output->status_mutex);
+	g_mutex_lock (&output->status_mutex);
 	ret = output->status;
-	g_mutex_unlock (output->status_mutex);
+	g_mutex_unlock (&output->status_mutex);
 	return ret;
 }
 
@@ -779,9 +777,9 @@ xmms_playback_client_playtime (xmms_output_t *output, xmms_error_t *error)
 	guint32 ret;
 	g_return_val_if_fail (output, 0);
 
-	g_mutex_lock (output->playtime_mutex);
+	g_mutex_lock (&output->playtime_mutex);
 	ret = output->played_time;
-	g_mutex_unlock (output->playtime_mutex);
+	g_mutex_unlock (&output->playtime_mutex);
 
 	return ret;
 }
@@ -822,7 +820,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 		return FALSE;
 	}
 
-	g_mutex_lock (output->status_mutex);
+	g_mutex_lock (&output->status_mutex);
 
 	if (output->status != status) {
 		if (status == XMMS_PLAYBACK_STATUS_PAUSE &&
@@ -848,7 +846,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 		}
 	}
 
-	g_mutex_unlock (output->status_mutex);
+	g_mutex_unlock (&output->status_mutex);
 
 	return ret;
 }
@@ -878,10 +876,10 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_object_unref (output->playlist);
 	xmms_object_unref (output->medialib);
 
-	g_mutex_free (output->status_mutex);
-	g_mutex_free (output->playtime_mutex);
-	g_mutex_free (output->filler_mutex);
-	g_cond_free (output->filler_state_cond);
+	g_mutex_clear (&output->status_mutex);
+	g_mutex_clear (&output->playtime_mutex);
+	g_mutex_clear (&output->filler_mutex);
+	g_cond_clear (&output->filler_state_cond);
 	xmms_ringbuf_destroy (output->filler_buffer);
 
 	xmms_playback_unregister_ipc_commands ();
@@ -904,7 +902,7 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_output_plugin_t *new_plug
 
 	xmms_playback_client_stop (output, NULL);
 
-	g_mutex_lock (output->status_mutex);
+	g_mutex_lock (&output->status_mutex);
 
 	old_plugin = output->plugin;
 
@@ -922,7 +920,7 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_output_plugin_t *new_plug
 		set_plugin (output, old_plugin);
 	}
 
-	g_mutex_unlock (output->status_mutex);
+	g_mutex_unlock (&output->status_mutex);
 
 	return ret;
 }
@@ -949,18 +947,18 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist, xmms_m
 	xmms_object_ref (medialib);
 	output->medialib = medialib;
 
-	output->status_mutex = g_mutex_new ();
-	output->playtime_mutex = g_mutex_new ();
+	g_mutex_init (&output->status_mutex);
+	g_mutex_init (&output->playtime_mutex);
 
 	prop = xmms_config_property_register ("output.buffersize", "32768", NULL, NULL);
 	size = xmms_config_property_get_int (prop);
 	XMMS_DBG ("Using buffersize %d", size);
 
-	output->filler_mutex = g_mutex_new ();
+	g_mutex_init (&output->filler_mutex);
 	output->filler_state = FILLER_STOP;
-	output->filler_state_cond = g_cond_new ();
+	g_cond_init (&output->filler_state_cond);
 	output->filler_buffer = xmms_ringbuf_new (size);
-	output->filler_thread = g_thread_create (xmms_output_filler, output, TRUE, NULL);
+	output->filler_thread = g_thread_new ("x2 out filler", xmms_output_filler, output);
 
 	xmms_config_property_register ("output.flush_on_pause", "1", NULL, NULL);
 
@@ -1064,8 +1062,9 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 		output->plugin = NULL;
 	} else if (!output->monitor_volume_thread) {
 		output->monitor_volume_running = TRUE;
-		output->monitor_volume_thread = g_thread_create (xmms_output_monitor_volume_thread,
-		                                                 output, TRUE, NULL);
+		output->monitor_volume_thread = g_thread_new ("x2 volume mon",
+		                                              xmms_output_monitor_volume_thread,
+		                                              output);
 	}
 
 	return ret;
@@ -1175,8 +1174,6 @@ xmms_output_monitor_volume_thread (gpointer data)
 	if (!xmms_output_plugin_method_volume_get_available (output->plugin)) {
 		return NULL;
 	}
-
-	xmms_set_thread_name ("x2 volume mon");
 
 	xmms_volume_map_init (&old);
 	xmms_volume_map_init (&cur);

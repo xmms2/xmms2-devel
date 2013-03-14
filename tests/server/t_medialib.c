@@ -33,8 +33,6 @@
 static xmms_medialib_t *medialib;
 
 SETUP (mlib) {
-	g_thread_init (0);
-
 	xmms_ipc_init ();
 
 	xmms_log_init (0);

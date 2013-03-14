@@ -32,8 +32,6 @@ setup_default_playlist (void)
 }
 
 SETUP (playlist) {
-	g_thread_init (0);
-
 	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();

@@ -35,8 +35,6 @@ static xmms_xform_object_t *xform_object;
 
 SETUP (xform)
 {
-	g_thread_init (0);
-
 	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();

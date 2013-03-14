@@ -143,8 +143,6 @@ int main (int argc, char *argv[])
 		exit (1);
 	}
 
-	g_thread_init (NULL);
-
 	ret = sqlite3_open (argv[1], &db);
 	if (ret) {
 		fprintf (stderr, "Can't open database: %s\n", sqlite3_errmsg(db));

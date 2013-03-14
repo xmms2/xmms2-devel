@@ -18,8 +18,6 @@ static xmms_medialib_t *medialib;
 static xmms_coll_dag_t *dag;
 
 SETUP (coll) {
-	g_thread_init (0);
-
 	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();

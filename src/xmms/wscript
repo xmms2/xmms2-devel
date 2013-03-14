@@ -75,7 +75,6 @@ def build(bld):
         "compat/signal_%s.c" % bld.env.compat_impl,
         "compat/symlink_%s.c" % bld.env.compat_impl,
         "compat/checkroot_%s.c" % bld.env.compat_impl,
-        "compat/thread_name_%s.c" % bld.env.thread_name_impl,
         "visualization/%s.c" % bld.env.visualization_impl
     ]
 
@@ -83,7 +82,7 @@ def build(bld):
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'glib2 gmodule2 gthread2 statfs socket shm valgrind',
+        uselib = 'glib2 gmodule2 statfs socket shm valgrind',
         use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4'
     )
 
@@ -95,7 +94,7 @@ def build(bld):
         target = 'xmms2d',
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'math glib2 gmodule2 gthread2 statfs socket shm valgrind s4',
+        uselib = 'math glib2 gmodule2 statfs socket shm valgrind s4',
         use = 'xmms2core',
         add_objects = objects
     )
@@ -165,17 +164,6 @@ def get_localtime_impl(conf):
     else:
         return 'unix'
 
-# Get the implementation variant for changing thread name.
-def get_thread_name_impl(conf):
-    try:
-        conf.check(header_name='sys/prctl.h')
-        conf.check_cc(fragment=prctl_fragment,
-                      msg="Checking for prctl(PR_SET_NAME)")
-    except Errors.ConfigurationError:
-        return 'dummy'
-    else:
-        return 'prctl'
-
 # Get the implementation variant for signals, symlinks and uid check.
 def get_compat_impl(conf):
     if Options.platform == 'win32':
@@ -204,10 +192,8 @@ def get_visualization_impl(conf):
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
 
-    conf.check_cfg(package='gmodule-2.0', atleast_version='2.6.0',
+    conf.check_cfg(package='gmodule-2.0', atleast_version='2.32.0',
             uselib_store='gmodule2', args='--cflags --libs')
-    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0',
-            uselib_store='gthread2', args='--cflags --libs')
 
     # Check for the sin function in the math lib
     conf.check_cc(lib='m', function_name='sin', header_name='math.h',
@@ -216,7 +202,6 @@ def configure(conf):
     conf.env.compat_impl = get_compat_impl(conf)
     conf.env.statfs_impl = get_statfs_impl(conf)
     conf.env.localtime_impl = get_localtime_impl(conf)
-    conf.env.thread_name_impl = get_thread_name_impl(conf)
     conf.env.visualization_impl = get_visualization_impl(conf)
 
     if conf.env.visualization_impl == 'dummy':

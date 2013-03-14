@@ -11,14 +11,12 @@ def build(bld):
         source = sqlite2s4_source,
         includes = '. ../../include ../../includepriv',
         use = 's4 xmmstypes xmmsutils',
-        uselib = 'glib2 gthread2 sqlite3'
+        uselib = 'glib2 sqlite3'
         )
 
 def configure(conf):
     conf.check_cfg(package='sqlite3', atleast_version='3.5',
             uselib_store='sqlite3', args='--cflags --libs')
-    conf.check_cfg(package='gthread-2.0', atleast_version='2.6.0',
-            uselib_store='gthread2', args='--cflags --libs')
 
 def options(o):
     pass

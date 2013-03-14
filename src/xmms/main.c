@@ -501,8 +501,6 @@ main (int argc, char **argv)
 		print_version ();
 	}
 
-	g_thread_init (NULL);
-
 	g_random_set_seed (time (NULL));
 
 	xmms_log_init (loglevel);

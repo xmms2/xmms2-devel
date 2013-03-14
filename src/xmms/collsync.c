@@ -21,7 +21,6 @@
  */
 
 #include <xmmspriv/xmms_collsync.h>
-#include <xmmspriv/xmms_thread_name.h>
 #include <xmmspriv/xmms_utils.h>
 
 #include <xmms/xmms_config.h>
@@ -34,7 +33,7 @@
 #include <glib/gstdio.h>
 
 
-#define XMMS_COLL_SYNC_DELAY 10 * G_USEC_PER_SEC
+#define XMMS_COLL_SYNC_DELAY 10 * G_TIME_SPAN_SECOND
 
 static void xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val, gpointer udata);
 static gpointer xmms_coll_sync_loop (gpointer udata);
@@ -63,8 +62,8 @@ struct xmms_coll_sync_St {
 	gchar *uuid;
 
 	GThread *thread;
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 
 	xmms_coll_sync_state_t state;
 };
@@ -84,8 +83,8 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 
 	sync->uuid = g_strdup (uuid);
 
-	sync->cond = g_cond_new ();
-	sync->mutex = g_mutex_new ();
+	g_cond_init (&sync->cond);
+	g_mutex_init (&sync->mutex);
 
 	xmms_object_ref (dag);
 	sync->dag = dag;
@@ -162,8 +161,8 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	xmms_object_unref (sync->playlist);
 	xmms_object_unref (sync->dag);
 
-	g_mutex_free (sync->mutex);
-	g_cond_free (sync->cond);
+	g_mutex_clear (&sync->mutex);
+	g_cond_clear (&sync->cond);
 	g_free (sync->uuid);
 }
 
@@ -259,14 +258,14 @@ xmms_coll_sync_get_path (xmms_coll_sync_t *sync)
 static void
 xmms_coll_sync_set_state (xmms_coll_sync_t *sync, xmms_coll_sync_state_t state)
 {
-	g_mutex_lock (sync->mutex);
+	g_mutex_lock (&sync->mutex);
 
 	if (sync->state != state) {
 		sync->state = state;
-		g_cond_signal (sync->cond);
+		g_cond_signal (&sync->cond);
 	}
 
-	g_mutex_unlock (sync->mutex);
+	g_mutex_unlock (&sync->mutex);
 }
 
 static void
@@ -276,7 +275,7 @@ xmms_coll_sync_start (xmms_coll_sync_t *sync)
 	g_return_if_fail (sync->thread == NULL);
 
 	sync->state = XMMS_COLL_SYNC_STATE_IDLE;
-	sync->thread = g_thread_create (xmms_coll_sync_loop, sync, TRUE, NULL);
+	sync->thread = g_thread_new (	"x2 coll sync", xmms_coll_sync_loop, sync);
 }
 
 
@@ -405,27 +404,25 @@ static gpointer
 xmms_coll_sync_loop (gpointer udata)
 {
 	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
-	GTimeVal time;
-
-	xmms_set_thread_name ("x2 coll sync");
 
 	xmms_coll_sync_restore (sync);
 
-	g_mutex_lock (sync->mutex);
+	g_mutex_lock (&sync->mutex);
 
 	while (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
 		if (sync->state == XMMS_COLL_SYNC_STATE_IDLE) {
-			g_cond_wait (sync->cond, sync->mutex);
+			g_cond_wait (&sync->cond, &sync->mutex);
 		}
 
 		/* Wait until no requests have been filed for 10 seconds. */
 		while (sync->state == XMMS_COLL_SYNC_STATE_DELAYED) {
+			gint64 end_time;
+
 			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 
-			g_get_current_time (&time);
-			g_time_val_add (&time, XMMS_COLL_SYNC_DELAY);
+			end_time = g_get_monotonic_time () + XMMS_COLL_SYNC_DELAY;
 
-			g_cond_timed_wait (sync->cond, sync->mutex, &time);
+			g_cond_wait_until (&sync->cond, &sync->mutex, end_time);
 		}
 
 		if (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
@@ -435,13 +432,13 @@ xmms_coll_sync_loop (gpointer udata)
 			 */
 			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 
-			g_mutex_unlock (sync->mutex);
+			g_mutex_unlock (&sync->mutex);
 			xmms_coll_sync_save (sync);
-			g_mutex_lock (sync->mutex);
+			g_mutex_lock (&sync->mutex);
 		}
 	}
 
-	g_mutex_unlock (sync->mutex);
+	g_mutex_unlock (&sync->mutex);
 
 	xmms_coll_sync_save (sync);
 

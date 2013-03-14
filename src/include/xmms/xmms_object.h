@@ -40,7 +40,7 @@ typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
   */
 struct xmms_object_St {
 	guint32 id;
-	GMutex *mutex;
+	GMutex mutex;
 
 	GTree *signals;
 	GTree *cmds;

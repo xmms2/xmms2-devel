@@ -42,7 +42,9 @@ struct xmms_ringbuf_St {
 
 	GQueue *hotspots;
 
-	GCond *free_cond, *used_cond, *eos_cond;
+	GCond free_cond;
+	GCond used_cond;
+	GCond eos_cond;
 };
 
 typedef struct xmms_ringbuf_hotspot_St {
@@ -88,9 +90,9 @@ xmms_ringbuf_new (guint size)
 	ringbuf->buffer_size = size + 1;
 	ringbuf->buffer = g_malloc (ringbuf->buffer_size);
 
-	ringbuf->free_cond = g_cond_new ();
-	ringbuf->used_cond = g_cond_new ();
-	ringbuf->eos_cond = g_cond_new ();
+	g_cond_init (&ringbuf->free_cond);
+	g_cond_init (&ringbuf->used_cond);
+	g_cond_init (&ringbuf->eos_cond);
 
 	ringbuf->hotspots = g_queue_new ();
 
@@ -105,9 +107,9 @@ xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 {
 	g_return_if_fail (ringbuf);
 
-	g_cond_free (ringbuf->eos_cond);
-	g_cond_free (ringbuf->used_cond);
-	g_cond_free (ringbuf->free_cond);
+	g_cond_clear (&ringbuf->eos_cond);
+	g_cond_clear (&ringbuf->used_cond);
+	g_cond_clear (&ringbuf->free_cond);
 
 	g_queue_free (ringbuf->hotspots);
 	g_free (ringbuf->buffer);
@@ -132,7 +134,7 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 			hs->destroy (hs->arg);
 		g_free (hs);
 	}
-	g_cond_signal (ringbuf->free_cond);
+	g_cond_signal (&ringbuf->free_cond);
 }
 
 /**
@@ -233,7 +235,7 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint len)
 	ringbuf->rd_index %= ringbuf->buffer_size;
 
 	if (r) {
-		g_cond_broadcast (ringbuf->free_cond);
+		g_cond_broadcast (&ringbuf->free_cond);
 	}
 
 	return r;
@@ -280,7 +282,7 @@ xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
 			break;
 		}
 		if (!res)
-			g_cond_wait (ringbuf->used_cond, mtx);
+			g_cond_wait (&ringbuf->used_cond, mtx);
 	}
 
 	return r;
@@ -339,7 +341,7 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data,
 	}
 
 	if (w) {
-		g_cond_broadcast (ringbuf->used_cond);
+		g_cond_broadcast (&ringbuf->used_cond);
 	}
 
 	return w;
@@ -367,7 +369,7 @@ xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data,
 			break;
 		}
 
-		g_cond_wait (ringbuf->free_cond, mtx);
+		g_cond_wait (&ringbuf->free_cond, mtx);
 	}
 
 	return w;
@@ -377,7 +379,7 @@ xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data,
  * Block until we have free space in the ringbuffer.
  */
 void
-xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
+xmms_ringbuf_wait_free (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (len > 0);
@@ -385,7 +387,7 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (mtx);
 
 	while ((xmms_ringbuf_bytes_free (ringbuf) < len) && !ringbuf->eos) {
-		g_cond_wait (ringbuf->free_cond, mtx);
+		g_cond_wait (&ringbuf->free_cond, mtx);
 	}
 }
 
@@ -394,7 +396,7 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
  */
 
 void
-xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
+xmms_ringbuf_wait_used (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (len > 0);
@@ -402,7 +404,7 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (mtx);
 
 	while ((xmms_ringbuf_bytes_used (ringbuf) < len) && !ringbuf->eos) {
-		g_cond_wait (ringbuf->used_cond, mtx);
+		g_cond_wait (&ringbuf->used_cond, mtx);
 	}
 }
 
@@ -431,9 +433,9 @@ xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 	ringbuf->eos = eos;
 
 	if (eos) {
-		g_cond_broadcast (ringbuf->eos_cond);
-		g_cond_broadcast (ringbuf->used_cond);
-		g_cond_broadcast (ringbuf->free_cond);
+		g_cond_broadcast (&ringbuf->eos_cond);
+		g_cond_broadcast (&ringbuf->used_cond);
+		g_cond_broadcast (&ringbuf->free_cond);
 	}
 }
 
@@ -442,13 +444,13 @@ xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
  * Block until we are EOSed
  */
 void
-xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
+xmms_ringbuf_wait_eos (xmms_ringbuf_t *ringbuf, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (mtx);
 
 	while (!xmms_ringbuf_iseos (ringbuf)) {
-		g_cond_wait (ringbuf->eos_cond, mtx);
+		g_cond_wait (&(ringbuf->eos_cond), mtx);
 	}
 
 }
@@ -472,5 +474,3 @@ xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, gboolean (*cb) (void *), void
 
 	g_queue_push_tail (ringbuf->hotspots, hs);
 }
-
-

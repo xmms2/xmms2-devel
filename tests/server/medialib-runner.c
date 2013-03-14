@@ -502,8 +502,6 @@ main (gint argc, gchar **argv)
 	xmmsv_t *testcases, *databases;
 	xmms_test_args_t args = { 0 };
 
-	g_thread_init (0);
-
 	xmms_log_init (0);
 
 	parse_command_line (argc, argv, &args);

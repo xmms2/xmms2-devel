@@ -664,7 +664,6 @@ main (int argc, char **argv)
 	GMainLoop *ml;
 
 	g_type_init ();
-	g_thread_init (NULL);
 
 	ml = g_main_loop_new (NULL, FALSE);
 

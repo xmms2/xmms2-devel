@@ -39,11 +39,11 @@ void xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, gboolean (*cb) (void *),
 guint xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length);
 guint xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length, GMutex *mtx);
 
-void xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
-void xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
+void xmms_ringbuf_wait_free (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
+void xmms_ringbuf_wait_used (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
 
 gboolean xmms_ringbuf_iseos (const xmms_ringbuf_t *ringbuf);
 void xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos);
-void xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx);
+void xmms_ringbuf_wait_eos (xmms_ringbuf_t *ringbuf, GMutex *mtx);
 
 #endif /* __XMMS_RINGBUF_H__ */

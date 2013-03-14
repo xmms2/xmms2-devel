@@ -28,7 +28,7 @@ typedef struct GMDNSUserData_t GMDNSUserData;
 typedef void (*GMDNSFunc)(GMDNS *, gint, GMDNSServer *, gpointer);
 
 struct GMDNS_t {
-	GMutex *mutex;
+	GMutex mutex;
 	GSList *service_list;
 
 	GMDNSFunc callback;
@@ -89,9 +89,9 @@ qr_reply (DNSServiceRef sdRef,
 	ud->server->address = g_strdup (addr);
 
 	XMMS_DBG ("adding server %s %s", ud->server->mdnsname, ud->server->address);
-	g_mutex_lock (ud->mdns->mutex);
+	g_mutex_lock (&ud->mdns->mutex);
 	ud->mdns->service_list = g_slist_prepend (ud->mdns->service_list, ud->server);
-	g_mutex_unlock (ud->mdns->mutex);
+	g_mutex_unlock (&ud->mdns->mutex);
 
 	if (ud->mdns->callback) {
 		ud->mdns->callback (ud->mdns, G_MDNS_SERVER_ADD, ud->server, ud->mdns->user_data);
@@ -198,20 +198,20 @@ browse_reply (DNSServiceRef client,
 		g_mdns_poll_add (ud->mdns, ud2, ud2->client);
 	} else {
 		GSList *n, *nxt;
-		g_mutex_lock (ud->mdns->mutex);
+		g_mutex_lock (&ud->mdns->mutex);
 		for (n = ud->mdns->service_list; n; n = nxt) {
 			nxt = g_slist_next (n);
 			GMDNSServer *server = n->data;
 			if (strcmp (server->mdnsname, replyName) == 0) {
 				n = ud->mdns->service_list = g_slist_remove (ud->mdns->service_list, server);
-				g_mutex_unlock (ud->mdns->mutex);
+				g_mutex_unlock (&ud->mdns->mutex);
 				if (ud->mdns->callback)
 					ud->mdns->callback (ud->mdns, G_MDNS_SERVER_REMOVE, server, ud->mdns->user_data);
 				g_mdns_server_destroy (server);
-				g_mutex_lock (ud->mdns->mutex);
+				g_mutex_lock (&ud->mdns->mutex);
 			}
 		}
-		g_mutex_unlock (ud->mdns->mutex);
+		g_mutex_unlock (&ud->mdns->mutex);
 	}
 
 }
@@ -382,7 +382,7 @@ daap_mdns_get_server_list ()
 	GSList *ret=NULL, *n;
 	daap_mdns_server_t *server;
 
-	g_mutex_lock (g_mdns->mutex);
+	g_mutex_lock (&g_mdns->mutex);
 	for (n = g_mdns->service_list; n; n = g_slist_next (n)) {
 		GMDNSServer *s = n->data;
 		server = g_new0 (daap_mdns_server_t, 1);
@@ -392,7 +392,7 @@ daap_mdns_get_server_list ()
 		server->address = s->address;
 		ret = g_slist_append (ret, server);
 	}
-	g_mutex_unlock (g_mdns->mutex);
+	g_mutex_unlock (&g_mdns->mutex);
 
 	return ret;
 }
@@ -408,12 +408,12 @@ daap_mdns_destroy ()
 
 	g_mdns_stop_browsing (g_mdns);
 
-	g_mutex_lock (g_mdns->mutex);
+	g_mutex_lock (&g_mdns->mutex);
 	for (n = g_mdns->service_list; n; n = g_slist_next (n)) {
 		g_mdns_server_destroy (n->data);
 	}
-	g_mutex_unlock (g_mdns->mutex);
-	g_mutex_free (g_mdns->mutex);
+	g_mutex_unlock (&g_mdns->mutex);
+	g_mutex_clear (&g_mdns->mutex);
 
 	g_free (g_mdns);
 }
@@ -422,7 +422,7 @@ gboolean
 daap_mdns_setup ()
 {
 	g_mdns = g_new0 (GMDNS, 1);
-	g_mdns->mutex = g_mutex_new ();
+	g_mutex_init (&g_mdns->mutex);
 	return g_mdns_browse (g_mdns, "_daap._tcp", NULL, NULL);
 }
 

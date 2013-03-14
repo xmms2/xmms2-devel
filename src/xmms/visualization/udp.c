@@ -39,17 +39,17 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			printf ("Client address: %s:%d, %d\n", inet_ntop (AF_INET6, &a->sin6_addr,
 					adrb, INET6_ADDRSTRLEN), a->sin6_port, id);
 			 debug code ends */
-			g_mutex_lock (vis->clientlock);
+			g_mutex_lock (&vis->clientlock);
 			c = get_client (id);
 			if (!c || c->type != VIS_UDP) {
-				g_mutex_unlock (vis->clientlock);
+				g_mutex_unlock (&vis->clientlock);
 				return TRUE;
 			}
 			/* save client address according to id */
 			memcpy (&c->transport.udp.addr, &from, sizeof (from));
 			c->transport.udp.socket[0] = 1;
 			c->transport.udp.grace = 2000;
-			g_mutex_unlock (vis->clientlock);
+			g_mutex_unlock (&vis->clientlock);
 		} else if (*packet_d.__unaligned_type == 'T') {
 			struct timeval time;
 			xmms_vis_client_t *c;
@@ -58,15 +58,15 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			XMMSC_VIS_UNALIGNED_READ (id, packet_d.__unaligned_id, int32_t);
 			id = ntohl (id);
 
-			g_mutex_lock (vis->clientlock);
+			g_mutex_lock (&vis->clientlock);
 			c = get_client (id);
 			if (!c || c->type != VIS_UDP) {
-				g_mutex_unlock (vis->clientlock);
+				g_mutex_unlock (&vis->clientlock);
 				free (packet);
 				return TRUE;
 			}
 			c->transport.udp.grace = 2000;
-			g_mutex_unlock (vis->clientlock);
+			g_mutex_unlock (&vis->clientlock);
 
 			/* give pong */
 			gettimeofday (&time, NULL);

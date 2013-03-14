@@ -38,8 +38,8 @@ struct xmms_playlist_updater_St {
 	xmms_playlist_t *playlist;
 
 	GThread *thread;
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 
 	gboolean keep_running;
 
@@ -56,8 +56,8 @@ xmms_playlist_updater_init (xmms_playlist_t *playlist)
 	updater = xmms_object_new (xmms_playlist_updater_t,
 	                           xmms_playlist_updater_destroy);
 
-	updater->cond = g_cond_new ();
-	updater->mutex = g_mutex_new ();
+	g_cond_init (&updater->cond);
+	g_mutex_init (&updater->mutex);
 
 	xmms_object_ref (playlist);
 	updater->playlist = playlist;
@@ -115,8 +115,8 @@ xmms_playlist_updater_destroy (xmms_object_t *object)
 	}
 	g_list_free (updater->stack);
 
-	g_mutex_free (updater->mutex);
-	g_cond_free (updater->cond);
+	g_mutex_clear (&updater->mutex);
+	g_cond_clear (&updater->cond);
 }
 
 /**
@@ -129,8 +129,9 @@ xmms_playlist_updater_start (xmms_playlist_updater_t *updater)
 	g_return_if_fail (updater->thread == NULL);
 
 	updater->keep_running = TRUE;
-	updater->thread = g_thread_create ((GThreadFunc) xmms_playlist_updater_loop,
-	                                   updater, TRUE, NULL);
+	updater->thread = g_thread_new ("x2 pls updater",
+	                                (GThreadFunc) xmms_playlist_updater_loop,
+	                                updater);
 }
 
 /**
@@ -142,12 +143,12 @@ xmms_playlist_updater_stop (xmms_playlist_updater_t *updater)
 	g_return_if_fail (updater != NULL);
 	g_return_if_fail (updater->thread != NULL);
 
-	g_mutex_lock (updater->mutex);
+	g_mutex_lock (&updater->mutex);
 
 	updater->keep_running = FALSE;
-	g_cond_signal (updater->cond);
+	g_cond_signal (&updater->cond);
 
-	g_mutex_unlock (updater->mutex);
+	g_mutex_unlock (&updater->mutex);
 
 	g_thread_join (updater->thread);
 
@@ -163,23 +164,21 @@ xmms_playlist_updater_loop (xmms_playlist_updater_t *updater)
 {
 	gchar *plname;
 
-	xmms_set_thread_name ("x2 pls updater");
-
-	g_mutex_lock (updater->mutex);
+	g_mutex_lock (&updater->mutex);
 
 	while (updater->keep_running) {
 		if (!updater->stack) {
-			g_cond_wait (updater->cond, updater->mutex);
+			g_cond_wait (&updater->cond, &updater->mutex);
 		} else {
 			plname = xmms_playlist_updater_pop (updater);
-			g_mutex_unlock (updater->mutex);
+			g_mutex_unlock (&updater->mutex);
 			xmms_playlist_update (updater->playlist, plname);
-			g_mutex_lock (updater->mutex);
+			g_mutex_lock (&updater->mutex);
 			g_free (plname);
 		}
 	}
 
-	g_mutex_unlock (updater->mutex);
+	g_mutex_unlock (&updater->mutex);
 
 	return NULL;
 }
@@ -230,13 +229,13 @@ xmms_playlist_updater_push (xmms_playlist_updater_t *updater,
 	g_return_if_fail (updater);
 	g_return_if_fail (plname);
 
-	g_mutex_lock (updater->mutex);
+	g_mutex_lock (&updater->mutex);
 
 	/* don't schedule the playlist if it's already scheduled */
 	if (!g_list_find_custom (updater->stack, plname, (GCompareFunc) g_strcmp0)) {
 		updater->stack = g_list_prepend (updater->stack, g_strdup (plname));
-		g_cond_signal (updater->cond);
+		g_cond_signal (&updater->cond);
 	}
 
-	g_mutex_unlock (updater->mutex);
+	g_mutex_unlock (&updater->mutex);
 }

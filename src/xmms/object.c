@@ -76,7 +76,7 @@ xmms_object_cleanup (xmms_object_t *object)
 		g_tree_destroy (object->cmds);
 	}
 
-	g_mutex_free (object->mutex);
+	g_mutex_clear (&object->mutex);
 }
 
 static gint
@@ -148,7 +148,7 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 	g_return_if_fail (handler);
 
-	g_mutex_lock (object->mutex);
+	g_mutex_lock (&object->mutex);
 
 	if (object->signals) {
 		list = g_tree_lookup (object->signals,
@@ -170,7 +170,7 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 		}
 	}
 
-	g_mutex_unlock (object->mutex);
+	g_mutex_unlock (&object->mutex);
 
 	g_return_if_fail (node);
 
@@ -195,7 +195,7 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data)
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 
-	g_mutex_lock (object->mutex);
+	g_mutex_lock (&object->mutex);
 
 	if (object->signals) {
 		list = g_tree_lookup (object->signals,
@@ -208,7 +208,7 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data)
 		}
 	}
 
-	g_mutex_unlock (object->mutex);
+	g_mutex_unlock (&object->mutex);
 
 	while (list2) {
 		entry = list2->data;
@@ -347,7 +347,7 @@ __int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
 	ret->destroy_func = destfunc;
 	ret->id = XMMS_OBJECT_MID;
 
-	ret->mutex = g_mutex_new ();
+	g_mutex_init (&ret->mutex);
 
 	/* don't create the trees for the signals and the commands yet.
 	 * instead we instantiate those when we need them the first
@@ -358,4 +358,3 @@ __int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
 
 	return ret;
 }
-

@@ -29,7 +29,6 @@
 #include <xmmspriv/xmms_mediainfo.h>
 #include <xmmspriv/xmms_medialib.h>
 #include <xmmspriv/xmms_xform.h>
-#include <xmmspriv/xmms_thread_name.h>
 
 
 #include <glib.h>
@@ -48,8 +47,8 @@ struct xmms_mediainfo_reader_St {
 	xmms_object_t object;
 
 	GThread *thread;
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 
 	gboolean running;
 
@@ -81,10 +80,10 @@ xmms_mediainfo_reader_start (xmms_medialib_t *medialib)
 
 	xmms_mediainfo_reader_register_ipc_commands (XMMS_OBJECT (mrt));
 
-	mrt->mutex = g_mutex_new ();
-	mrt->cond = g_cond_new ();
+	g_mutex_init (&mrt->mutex);
+	g_cond_init (&mrt->cond);
 	mrt->running = TRUE;
-	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, TRUE, NULL);
+	mrt->thread = g_thread_new ("x2 media info", xmms_mediainfo_reader_thread, mrt);
 
 	xmms_object_ref (medialib);
 	mrt->medialib = medialib;
@@ -111,17 +110,17 @@ xmms_mediainfo_reader_stop (xmms_object_t *o)
 
 	XMMS_DBG ("Deactivating mediainfo object.");
 
-	g_mutex_lock (mir->mutex);
+	g_mutex_lock (&mir->mutex);
 	mir->running = FALSE;
-	g_cond_signal (mir->cond);
-	g_mutex_unlock (mir->mutex);
+	g_cond_signal (&mir->cond);
+	g_mutex_unlock (&mir->mutex);
 
 	xmms_mediainfo_reader_unregister_ipc_commands ();
 
 	g_thread_join (mir->thread);
 
-	g_cond_free (mir->cond);
-	g_mutex_free (mir->mutex);
+	g_cond_clear (&mir->cond);
+	g_mutex_clear (&mir->mutex);
 
 	xmms_object_disconnect (XMMS_OBJECT (mir->medialib),
 	                        XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
@@ -143,9 +142,9 @@ xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
 {
 	g_return_if_fail (mr);
 
-	g_mutex_lock (mr->mutex);
-	g_cond_signal (mr->cond);
-	g_mutex_unlock (mr->mutex);
+	g_mutex_lock (&mr->mutex);
+	g_cond_signal (&mr->cond);
+	g_mutex_unlock (&mr->mutex);
 }
 
 /** @} */
@@ -157,8 +156,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 	GTimeVal timeval;
 	xmms_stream_type_t *f;
 	guint num = 0;
-
-	xmms_set_thread_name ("x2 media info");
 
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
@@ -188,9 +185,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 			                  XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 			                  xmmsv_new_int (XMMS_MEDIAINFO_READER_STATUS_IDLE));
 
-			g_mutex_lock (mrt->mutex);
-			g_cond_wait (mrt->cond, mrt->mutex);
-			g_mutex_unlock (mrt->mutex);
+			g_mutex_lock (&mrt->mutex);
+			g_cond_wait (&mrt->cond, &mrt->mutex);
+			g_mutex_unlock (&mrt->mutex);
 
 			num = 0;
 
