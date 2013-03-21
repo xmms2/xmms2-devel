@@ -358,8 +358,16 @@ def configure(conf):
         conf.msg("uncommited changed", changed and "yes" or "no")
         conf.env.VERSION = "%s (git commit: %s%s)" % (BASEVERSION, nam, dirty)
 
-    conf.env.append_unique('CFLAGS', ['-g', '-O0'])
-    conf.env.append_unique('CXXFLAGS', ['-g', '-O0'])
+    for env in ('CFLAGS', 'CXXFLAGS'):
+        # Makes sure the env variable exists and is a list
+        conf.env.append_unique(env, [])
+        hasoptim=False
+        for f in conf.env[env]:
+            if f.startswith('-O'):
+                hasoptim=True
+                break
+        if not hasoptim:
+            conf.env.append_unique(env, ['-g', '-O0'])
 
     if conf.options.enable_gcov:
         conf.env.enable_gcov = True
