@@ -27,7 +27,7 @@
 /**
  * @defgroup StatsFunctions StatsFunctions
  * @ingroup XMMSClient
- * @brief This module contains functions to access informations and statistics of the XMMS server.
+ * @brief This module contains functions to access information and statistics of the XMMS server.
  *
  * @{
  */
