@@ -55,13 +55,12 @@ enter commands at a prompt and have the usual cool features such as pathname
 expansion and line editing.
 .SH COMMANDS
 .PP
-All commands accept the option \fB-h\fR/\fB--help\fR which displays the command's help.
+All commands accept the option \fB\-h\fR/\fB\-\-help\fR which displays the command's help.
 .PP
 \fIpattern\fR refers to a collection definition. (See \fBPATTERN\fR below.)
 .PP
 \fIposition\fR is a pattern to match playlist positions. When absent in a command, the default is the end of the playlist. (See \fBPOSITION PATTERN\fR below.)
 .SS General Commands
-.T
 \fBadd\fR [ \fB\-f\fR [\fB\-N\fR] [\fB\-P\fR] [\fB\-A\fR \fIkey=value\fR]... ] [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] [\fB-j\fR] \fIarguments\fR...
 .br
 \fBadd\fR [\fB\-p\fR \fIplaylist\fR] [\fB\-n\fR | \fB\-a\fR \fIposition\fR] [\fB-o\fR \fIprop\fR[,...]] [\fB-j\fR] \fIpattern\fR...
@@ -159,7 +158,7 @@ Exit the shell-like interface.
 \fBhelp\fR [\fB\-a\fR] \fIcommand\fR
 .PP
 .RS 4
-Show the help on \fIcommand\fR. This is equivalent to \fBcommand -h\fR.
+Show the help on \fIcommand\fR. This is equivalent to \fBcommand \-h\fR.
 If \fIcommand\fR is an alias, show the alias definition.
 If no command is provided, list all available commands.
 .RE
@@ -802,7 +801,6 @@ Match songs in the given collection. The namespace may be \fIPlaylists\fR, or \f
 Match the complement of the pattern.
 .RE
 
-.T
 <pattern> <pattern>
 .br
 <pattern> \fBAND\fR <pattern>
