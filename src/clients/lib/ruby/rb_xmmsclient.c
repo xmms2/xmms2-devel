@@ -1286,14 +1286,12 @@ c_coll_rename (int argc, VALUE *argv, VALUE self)
 static int
 parse_fetch_spec_foreach (VALUE key, VALUE value, VALUE udata)
 {
-	const char *val_error = "Value must be hash, string, or array of strings.";
-	const char *key_error = "Key must be string";
 	xmmsv_t *spec = (xmmsv_t *) udata;
 	xmmsv_t *elem;
 	int i;
 
 	if (NIL_P (rb_check_string_type (key))) {
-		rb_raise (rb_eArgError, key_error);
+		rb_raise (rb_eArgError, "Key must be string");
 	}
 
 	if (!NIL_P (rb_check_string_type (value))) {
@@ -1313,11 +1311,11 @@ parse_fetch_spec_foreach (VALUE key, VALUE value, VALUE udata)
 		for (i = 0; i < RARRAY_LEN (value); i++) {
 			VALUE entry = RARRAY_PTR (value)[i];
 			if (NIL_P (rb_check_string_type (entry)))
-				rb_raise (rb_eArgError, val_error);
+				rb_raise (rb_eArgError, "Value must be hash, string, or array of strings.");
 			xmmsv_list_append_string (elem, StringValuePtr (entry));
 		}
 	} else {
-		rb_raise (rb_eArgError, val_error);
+		rb_raise (rb_eArgError, "Value must be hash, string, or array of strings.");
 	}
 
 	return 0;
