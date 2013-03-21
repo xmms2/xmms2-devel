@@ -52,8 +52,9 @@ _internal_put_on_bb_bin (xmmsv_t *bb,
                          const unsigned char *data,
                          unsigned int len)
 {
-	if (!xmmsv_bitbuffer_put_bits (bb, 32, len))
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, len)) {
 		return false;
+	}
 
 	return xmmsv_bitbuffer_put_data (bb, data, len);
 }
@@ -69,8 +70,9 @@ _internal_put_on_bb_error (xmmsv_t *bb, const char *errmsg)
 		return xmmsv_bitbuffer_put_bits (bb, 32, 0);
 	}
 
-	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (errmsg) + 1))
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (errmsg) + 1)) {
 		return false;
+	}
 
 	return xmmsv_bitbuffer_put_data (bb, (const unsigned char *) errmsg, strlen (errmsg) + 1);
 }
@@ -119,8 +121,9 @@ _internal_put_on_bb_string (xmmsv_t *bb, const char *str)
 		return xmmsv_bitbuffer_put_bits (bb, 32, 0);
 	}
 
-	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (str) + 1))
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, strlen (str) + 1)) {
 		return false;
+	}
 
 	return xmmsv_bitbuffer_put_data (bb, (const unsigned char *) str, strlen (str) + 1);
 }
@@ -128,8 +131,6 @@ _internal_put_on_bb_string (xmmsv_t *bb, const char *str)
 static bool
 _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 {
-	uint32_t ret = true;
-
 	if (!bb || !coll) {
 		return false;
 	}
@@ -140,21 +141,31 @@ _internal_put_on_bb_collection (xmmsv_t *bb, xmmsv_t *coll)
 	}
 
 	/* attributes */
-	ret &= _internal_put_on_bb_value_dict (bb, xmmsv_coll_attributes_get (coll));
+	if (!_internal_put_on_bb_value_dict (bb, xmmsv_coll_attributes_get (coll))) {
+		return false;
+	}
 
 	/* idlist */
-	ret &= _internal_put_on_bb_value_list (bb, xmmsv_coll_idlist_get (coll));
+	if (!_internal_put_on_bb_value_list (bb, xmmsv_coll_idlist_get (coll))) {
+		return false;
+	}
 
 	/* operands, unless a reference */
 	if (xmmsv_coll_is_type (coll, XMMS_COLLECTION_TYPE_REFERENCE)) {
 		/* dummy 'list'.. restrict type, and 0 length */
-		ret &= _internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL);
-		ret &= _internal_put_on_bb_int32 (bb, 0);
+		if (!_internal_put_on_bb_int32 (bb, XMMSV_TYPE_COLL)) {
+			return false;
+		}
+		if (!_internal_put_on_bb_int32 (bb, 0)) {
+			return false;
+		}
 	} else {
-		ret &= _internal_put_on_bb_value_list (bb, xmmsv_coll_operands_get (coll));
+		if (!_internal_put_on_bb_value_list (bb, xmmsv_coll_operands_get (coll))) {
+			return false;
+		}
 	}
 
-	return ret;
+	return true;
 }
 
 static bool
@@ -163,7 +174,6 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 	xmmsv_list_iter_t *it;
 	xmmsv_type_t type;
 	xmmsv_t *entry;
-	bool ret = true;
 
 	if (!xmmsv_get_list_iter (v, &it)) {
 		return false;
@@ -173,24 +183,32 @@ _internal_put_on_bb_value_list (xmmsv_t *bb, xmmsv_t *v)
 		return false;
 	}
 
-	xmmsv_bitbuffer_put_bits (bb, 32, type);
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, type)) {
+		return false;
+	}
 
 	/* store size */
-	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (v));
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_list_get_size (v))) {
+		return false;
+	}
 
 	if (type != XMMSV_TYPE_NONE) {
 		while (xmmsv_list_iter_entry (it, &entry)) {
-			ret = _internal_put_on_bb_value_of_type (bb, type, entry);
+			if (!_internal_put_on_bb_value_of_type (bb, type, entry)) {
+				return false;
+			}
 			xmmsv_list_iter_next (it);
 		}
 	} else {
 		while (xmmsv_list_iter_entry (it, &entry)) {
-			ret = xmmsv_bitbuffer_serialize_value (bb, entry);
+			if (!xmmsv_bitbuffer_serialize_value (bb, entry)) {
+				return false;
+			}
 			xmmsv_list_iter_next (it);
 		}
 	}
 
-	return ret;
+	return true;
 }
 
 static bool
@@ -199,29 +217,35 @@ _internal_put_on_bb_value_dict (xmmsv_t *bb, xmmsv_t *v)
 	xmmsv_dict_iter_t *it;
 	const char *key;
 	xmmsv_t *entry;
-	uint32_t ret;
 
 	if (!xmmsv_get_dict_iter (v, &it)) {
 		return false;
 	}
 
 	/* store size */
-	xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_dict_get_size (v));
+	if (!xmmsv_bitbuffer_put_bits (bb, 32, xmmsv_dict_get_size (v))) {
+		return false;
+	}
 
 	while (xmmsv_dict_iter_pair (it, &key, &entry)) {
-		ret = _internal_put_on_bb_string (bb, key);
-		ret = xmmsv_bitbuffer_serialize_value (bb, entry);
+		if (!_internal_put_on_bb_string (bb, key)) {
+			return false;
+		}
+		if (!xmmsv_bitbuffer_serialize_value (bb, entry)) {
+			return false;
+		}
 		xmmsv_dict_iter_next (it);
 	}
 
-	return ret;
+	return true;
 }
 
 static bool
 _internal_get_from_bb_data (xmmsv_t *bb, void *buf, unsigned int len)
 {
-	if (!bb)
+	if (!bb) {
 		return false;
+	}
 
 	return xmmsv_bitbuffer_get_data (bb, buf, len);
 }
@@ -250,8 +274,9 @@ _internal_get_from_bb_int32_positive (xmmsv_t *bb, int32_t *v)
 {
 	bool ret;
 	ret = _internal_get_from_bb_int32 (bb, v);
-	if (ret && *v < 0)
+	if (ret && *v < 0) {
 		ret = false;
+	}
 	return ret;
 }
 
@@ -598,7 +623,6 @@ _internal_put_on_bb_value_of_type (xmmsv_t *bb, xmmsv_type_t type, xmmsv_t *v)
 	case XMMSV_TYPE_DICT:
 		ret = _internal_put_on_bb_value_dict (bb, v);
 		break;
-
 	case XMMSV_TYPE_NONE:
 		break;
 	default:
