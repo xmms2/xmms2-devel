@@ -167,6 +167,96 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 }
 
 static gboolean
+xmms_coll_sync_move_to_legacy_path (const gchar *path, GError **error)
+{
+	gchar *legacy;
+	gint64 now;
+	gint res;
+
+	now = g_get_real_time ();
+
+	legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
+	res = g_rename (path, legacy);
+	g_free (legacy);
+
+	if (res != 0) {
+		g_set_error (error, G_FILE_ERROR,
+		             g_file_error_from_errno (errno),
+		             "%s", g_strerror (errno));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/* TODO: Remove me before release */
+static gboolean
+xmms_coll_sync_sorry_to_revert_your_collections (const gchar *path)
+{
+	const gchar *legacy;
+	gchar *directory, *basename;
+	GDir *dir;
+	GError *error = NULL;
+	gboolean success = TRUE;
+
+	basename = g_path_get_basename (path);
+	directory = g_path_get_dirname (path);
+
+	if (!xmms_coll_sync_move_to_legacy_path (path, &error)) {
+		success = FALSE;
+		goto cleanup;
+	}
+
+	dir = g_dir_open (directory, 0, &error);
+	if (dir == NULL) {
+		success = FALSE;
+		goto cleanup;
+	}
+
+	while ((legacy = g_dir_read_name (dir)) != NULL) {
+		gchar *legacy_path;
+		gint res;
+
+		if (!g_str_has_prefix (legacy, basename))
+			continue;
+		if (!g_str_has_suffix (legacy, ".legacy"))
+			continue;
+
+		legacy_path = g_build_filename (directory, legacy, NULL);
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			g_free (legacy_path);
+			continue;
+		}
+
+		res = g_rename (legacy_path, path);
+		g_free (legacy_path);
+
+		if (res != 0) {
+			g_set_error (&error, G_FILE_ERROR,
+			             g_file_error_from_errno (errno),
+			             "%s", g_strerror (errno));
+			success = FALSE;
+		}
+		break;
+	}
+
+	g_dir_close (dir);
+
+cleanup:
+	if (success == FALSE) {
+		xmms_log_error ("Could not ressurect collections, sorry...");
+		if (error != NULL) {
+			XMMS_DBG ("%s", error->message);
+		}
+	}
+
+	g_free (basename);
+	g_free (directory);
+
+	return success;
+}
+
+static gboolean
 xmms_coll_sync_prepare_path (const gchar *path, GError **error)
 {
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR))
@@ -191,24 +281,8 @@ xmms_coll_sync_prepare_path (const gchar *path, GError **error)
 		/* If migration for some reason failed, just move the failing
 		 * directory and leave room for a fresh one.
 		 */
-		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
-			gchar *legacy;
-			gint64 now;
-			gint res;
-
-			now = g_get_real_time ();
-
-			legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
-			res = g_rename (path, legacy);
-			g_free (legacy);
-
-			if (res != 0) {
-				g_set_error (error, G_FILE_ERROR,
-				             g_file_error_from_errno (errno),
-				             "%s", g_strerror (errno));
-				return FALSE;
-			}
-		}
+		if (g_file_test (path, G_FILE_TEST_IS_DIR))
+			return xmms_coll_sync_move_to_legacy_path (path, error);
 	} else {
 		gchar *dirname;
 		gint res;
@@ -357,7 +431,7 @@ xmms_coll_sync_save (xmms_coll_sync_t *sync)
 }
 
 static void
-xmms_coll_sync_restore (xmms_coll_sync_t *sync)
+xmms_coll_sync_restore (xmms_coll_sync_t *sync, gboolean sad_hack)
 {
 	xmmsv_t *snapshot = NULL;
 	GError *error = NULL;
@@ -377,6 +451,21 @@ xmms_coll_sync_restore (xmms_coll_sync_t *sync)
 
 			snapshot = xmmsv_deserialize (serialized);
 			xmmsv_unref (serialized);
+
+			/* TODO: Remove me, nasty hack because the new serialization
+			 * got merged a bit too early and now is not the time to add
+			 * versioning, should be removed before release.
+			 *
+			 * Move the collection database to deprecated path, and re-run
+			 * the migration from the first new version..
+			 *
+			 * sorry for the lost changes folks <3
+			 */
+			if (snapshot == NULL && sad_hack != TRUE) {
+				xmms_coll_sync_sorry_to_revert_your_collections (path);
+				xmms_coll_sync_restore (sync, TRUE);
+				return;
+			}
 		}
 	}
 
@@ -405,7 +494,7 @@ xmms_coll_sync_loop (gpointer udata)
 {
 	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
 
-	xmms_coll_sync_restore (sync);
+	xmms_coll_sync_restore (sync, FALSE);
 
 	g_mutex_lock (&sync->mutex);
 
