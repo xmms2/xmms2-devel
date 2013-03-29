@@ -44,7 +44,7 @@ create_data (int type, const char *data, uint32_t len)
 		case JSON_INT:
 			return xmmsv_new_int (atoi(data));
 		case JSON_FLOAT:
-			return xmmsv_new_error ("Float type not supported");
+			return xmmsv_new_float (strtof (data, NULL));
 		case JSON_NULL:
 			return xmmsv_new_none ();
 		case JSON_TRUE:

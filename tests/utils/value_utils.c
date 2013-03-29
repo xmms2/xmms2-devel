@@ -67,6 +67,17 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 
 			break;
 		}
+		case XMMSV_TYPE_FLOAT: {
+			float fa, fb;
+
+			if (!xmmsv_get_float (a, &fa) || !xmmsv_get_float (b, &fb))
+				return 0;
+
+			if (fa != fb)
+				return 0;
+
+			break;
+		}
 		case XMMSV_TYPE_DICT: {
 			xmmsv_dict_iter_t *it;
 
