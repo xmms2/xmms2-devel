@@ -279,11 +279,11 @@ namespace Xmms
 			 */
 			IntSignal broadcastEntryAdded() const;
 
-			/** Request the medialib entry changed broadcast.
+			/** Request the medialib entry updated broadcast.
 			 *
-			 *  This will be called if a entry changes on the serverside.
-			 *  The argument will be an medialib id. 
-			 *  
+			 *  This will be called if an entry is updated serverside.
+			 *  The argument will be an medialib id.
+			 *
 			 *  @param slot Function pointer to a function taking a
 			 *              const int& and returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -291,7 +291,21 @@ namespace Xmms
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
-			IntSignal broadcastEntryChanged() const;
+			IntSignal broadcastEntryChanged() const XMMS_DEPRECATED;
+
+			/** Request the medialib entry updated broadcast.
+			 *
+			 *  This will be called if an entry is updated serverside.
+			 *  The argument will be an medialib id.
+			 *
+			 *  @param slot Function pointer to a function taking a
+			 *              const int& and returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			IntSignal broadcastEntryUpdated() const;
 
 			/** Request the medialib entry removed broadcast.
 			 *

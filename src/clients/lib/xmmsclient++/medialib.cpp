@@ -214,7 +214,16 @@ namespace Xmms
 		using boost::bind;
 		xmmsc_result_t* res =
 		    call( connected_,
-		          bind( xmmsc_broadcast_medialib_entry_changed, conn_ ) );
+		          bind( xmmsc_broadcast_medialib_entry_updated, conn_ ) );
+		return IntSignal( res, ml_ );
+	}
+
+	IntSignal Medialib::broadcastEntryUpdated() const
+	{
+		using boost::bind;
+		xmmsc_result_t* res =
+			call( connected_,
+			      bind( xmmsc_broadcast_medialib_entry_updated, conn_ ) );
 		return IntSignal( res, ml_ );
 	}
 
@@ -233,4 +242,3 @@ namespace Xmms
 	}
 
 }
-
