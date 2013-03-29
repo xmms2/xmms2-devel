@@ -341,6 +341,19 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 }
 
 /**
+ * Request the medialib_entry_removed broadcast. This will be called
+ * if a entry is removed on the serverside. The argument will be an medialib
+ * id.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_medialib_entry_removed (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED);
+}
+
+/**
  * Associate a int value with a medialib entry. Uses default
  * source which is client/&lt;clientname&gt;
  */
