@@ -243,7 +243,8 @@ xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash) X
 xmmsc_result_t *xmmsc_bindata_list (xmmsc_connection_t *c) XMMS_PUBLIC;
 
 /* broadcasts */
-xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c) XMMS_PUBLIC  XMMS_DEPRECATED;
+xmmsc_result_t *xmmsc_broadcast_medialib_entry_updated (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_removed (xmmsc_connection_t *c) XMMS_PUBLIC;
 

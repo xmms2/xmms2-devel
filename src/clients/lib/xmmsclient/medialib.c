@@ -328,12 +328,25 @@ xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 }
 
 /**
- * Request the medialib_entry_changed broadcast. This will be called
+ * Request the medialib_entry_updated broadcast. This will be called
  * if a entry changes on the serverside. The argument will be an medialib
  * id.
  */
 xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+}
+
+/**
+ * Request the medialib_entry_updated broadcast. This will be called
+ * if a entry changes on the serverside. The argument will be an medialib
+ * id.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_medialib_entry_updated (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
