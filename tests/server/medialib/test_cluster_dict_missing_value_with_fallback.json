@@ -9,6 +9,7 @@
         "type": "cluster-dict",
         "cluster-by": "value",
         "cluster-field": "album",
+        "cluster-fallback": "<Unknown Album>",
         "data": {
             "type": "metadata",
             "fields": ["title"],
@@ -18,7 +19,8 @@
     },
     "expected": {
         "result": {
-            "Lungs for Life": ["Decade", "Breathing Place"]
+            "Lungs for Life": ["Decade", "Breathing Place"],
+            "<Unknown Album>": ["Prehistoric Dog"]
         }
     }
 }

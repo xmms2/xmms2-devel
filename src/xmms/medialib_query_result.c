@@ -486,7 +486,7 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec,
 	for (position = 0; s4_resultset_get_row (set, position, &row); position++) {
 		s4_resultset_t *cluster;
 		const s4_result_t *res;
-		const gchar *value = "(No value)"; /* Used to represent NULL */
+		const gchar *value = spec->data.cluster.fallback;
 		gchar buf[12];
 
 		if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
@@ -500,6 +500,11 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec,
 				g_snprintf (buf, sizeof (buf), "%i", ival);
 				value = buf;
 			}
+		}
+
+		if (value == NULL) {
+			/* value not found, and no fallback provided */
+			continue;
 		}
 
 		cluster = g_hash_table_lookup (table, value);

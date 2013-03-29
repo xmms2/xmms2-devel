@@ -344,6 +344,7 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	s4_sourcepref_t *sp;
 	const gchar *value = NULL;
 	const gchar *field = NULL;
+	const gchar *fallback = NULL;
 	gint cluster_type;
 
 	if (!xmmsv_dict_get (fetch, "cluster-by", &cluster_by)) {
@@ -380,6 +381,14 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
+	if (xmmsv_dict_entry_get_type (fetch, "cluster-fallback") == XMMSV_TYPE_NONE) {
+		fallback = NULL;
+	} else if (!xmmsv_dict_entry_get_string (fetch, "cluster-fallback", &fallback)) {
+		const gchar *message = "Optional field 'default' must be a string.";
+		xmms_error_set (err, XMMS_ERROR_INVAL, message);
+		return NULL;
+	}
+
 	sp = normalize_source_preferences (fetch, prefs, err);
 	if (xmms_error_iserror (err)) {
 		return NULL;
@@ -394,6 +403,7 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 	spec = g_new0 (xmms_fetch_spec_t, 1);
 	spec->data.cluster.data = data;
 	spec->data.cluster.type = cluster_type;
+	spec->data.cluster.fallback = fallback;
 
 	switch (spec->data.cluster.type) {
 		case CLUSTER_BY_ID:

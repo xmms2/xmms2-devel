@@ -52,6 +52,7 @@ struct xmms_fetch_spec_St {
 				CLUSTER_BY_VALUE,
 			} type;
 			int column;
+			const gchar *fallback;
 			xmms_fetch_spec_t *data;
 		} cluster;
 		struct {
