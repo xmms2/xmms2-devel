@@ -17,6 +17,11 @@
 #ifndef __RB_XMMSCLIENT_H
 #define __RB_XMMSCLIENT_H
 
+#include <xmmsc/xmmsc_util.h>
+
+#define DEPRECATED(func1,func2) \
+	rb_warning (XMMS_STRINGIFY (func1) " is deprecated use " XMMS_STRINGIFY (func2) " instead") \
+
 #define CHECK_DELETED(xmms) \
 	if (xmms->deleted) \
 		rb_raise (eDisconnectedError, "client deleted");

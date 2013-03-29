@@ -693,7 +693,20 @@ c_broadcast_playlist_loaded (VALUE self)
 static VALUE
 c_broadcast_medialib_entry_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_medialib_entry_changed);
+	DEPRECATED (broadcast_medialib_entry_changed, broadcast_medialib_entry_updated);
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_updated);
+}
+
+/*
+ * call-seq:
+ *  xc.broadcast_medialib_entry_changed -> result
+ *
+ * Retrieves the id of a changed medialib entry as a broadcast.
+ */
+static VALUE
+c_broadcast_medialib_entry_updated (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_updated);
 }
 
 /*
@@ -1622,6 +1635,8 @@ Init_Client (VALUE mXmms)
 	                  c_broadcast_playlist_loaded, 0);
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
+	rb_define_method (c, "broadcast_medialib_entry_updated",
+	                  c_broadcast_medialib_entry_updated, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
 	                  c_broadcast_medialib_entry_added, 0);
 	rb_define_method (c, "broadcast_medialib_entry_removed",
