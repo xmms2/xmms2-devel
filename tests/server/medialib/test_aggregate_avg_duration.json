@@ -1,8 +1,7 @@
 {
     "medialib": [
-        { "duration": 10 },
-        { "duration": 20 },
-        { "duration": 30 }
+        { "duration": 1 },
+        { "duration": 2 }
     ],
     "collection": {
         "type": "universe"
@@ -14,6 +13,6 @@
         "aggregate": "avg"
     },
     "expected": {
-        "result": 20
+        "result": 1.5
     }
 }
