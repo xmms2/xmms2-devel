@@ -45,107 +45,107 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 		return 0;
 
 	switch (type) {
-	case XMMSV_TYPE_STRING: {
-		const char *sa, *sb;
+		case XMMSV_TYPE_STRING: {
+			const char *sa, *sb;
 
-		if (!xmmsv_get_string (a, &sa) || !xmmsv_get_string (b, &sb))
-			return 0;
-
-		if (strcmp (sa, sb) != 0)
-			return 0;
-
-		break;
-	}
-	case XMMSV_TYPE_INT32: {
-		int ia, ib;
-
-		if (!xmmsv_get_int (a, &ia) || !xmmsv_get_int (b, &ib))
-			return 0;
-
-		if (ia != ib)
-			return 0;
-
-		break;
-	}
-	case XMMSV_TYPE_DICT: {
-		xmmsv_dict_iter_t *it;
-
-		if (xmmsv_dict_get_size (a) != xmmsv_dict_get_size (b))
-			return 0;
-
-		xmmsv_get_dict_iter (a, &it);
-		while (xmmsv_dict_iter_valid (it)) {
-			xmmsv_t *ea, *eb;
-			const char *key;
-
-			xmmsv_dict_iter_pair (it, &key, &ea);
-
-			if (!xmmsv_dict_get (b, key, &eb))
+			if (!xmmsv_get_string (a, &sa) || !xmmsv_get_string (b, &sb))
 				return 0;
 
-			if (!_xmmsv_compare (ea, eb, ordered))
+			if (strcmp (sa, sb) != 0)
 				return 0;
 
-			xmmsv_dict_iter_next (it);
+			break;
 		}
-		xmmsv_dict_iter_explicit_destroy (it);
+		case XMMSV_TYPE_INT32: {
+			int ia, ib;
 
-		break;
-	}
-	case XMMSV_TYPE_LIST: {
-		int size, i, j;
-		int match = 1;
-		char *matched = NULL;
+			if (!xmmsv_get_int (a, &ia) || !xmmsv_get_int (b, &ib))
+				return 0;
 
-		size = xmmsv_list_get_size (a);
-		if (size != xmmsv_list_get_size (b))
-			return 0;
+			if (ia != ib)
+				return 0;
 
-		if (size && !ordered) {
-			matched = (char *) calloc (size, sizeof (char));
+			break;
 		}
+		case XMMSV_TYPE_DICT: {
+			xmmsv_dict_iter_t *it;
 
-		for (i = 0; i < size; i++) {
-			xmmsv_t *ea, *eb;
+			if (xmmsv_dict_get_size (a) != xmmsv_dict_get_size (b))
+				return 0;
 
-			if (!xmmsv_list_get (a, i, &ea) || !xmmsv_list_get (b, i, &eb)) {
-				match = 0;
-				break;
-			}
+			xmmsv_get_dict_iter (a, &it);
+			while (xmmsv_dict_iter_valid (it)) {
+				xmmsv_t *ea, *eb;
+				const char *key;
 
-			if (ordered) {
-				match = _xmmsv_compare (ea, eb, ordered);
-				if (!match)
-					break;
-			} else {
-				match = 0;
-				for (j = 0; j < size; j++) {
-					if (matched[j])
-						continue;
-					if (!xmmsv_list_get (b, j, &eb))
-						break;
-					if (_xmmsv_compare (ea, eb, ordered)) {
-						matched[j] = 1;
-						match = 1;
-						break;
-					}
-				}
-				if (!match)
+				xmmsv_dict_iter_pair (it, &key, &ea);
+
+				if (!xmmsv_dict_get (b, key, &eb))
 					return 0;
+
+				if (!_xmmsv_compare (ea, eb, ordered))
+					return 0;
+
+				xmmsv_dict_iter_next (it);
 			}
+			xmmsv_dict_iter_explicit_destroy (it);
+
+			break;
 		}
+		case XMMSV_TYPE_LIST: {
+			int size, i, j;
+			int match = 1;
+			char *matched = NULL;
 
-		if (matched)
-			free (matched);
+			size = xmmsv_list_get_size (a);
+			if (size != xmmsv_list_get_size (b))
+				return 0;
 
-		return match;
-	}
-	case XMMSV_TYPE_COLL: {
-		return xmmsv_coll_compare (a, b);
-	}
-	default: {
-		return 0;
-	}
+			if (size && !ordered) {
+				matched = (char *) calloc (size, sizeof (char));
+			}
+
+			for (i = 0; i < size; i++) {
+				xmmsv_t *ea, *eb;
+
+				if (!xmmsv_list_get (a, i, &ea) || !xmmsv_list_get (b, i, &eb)) {
+					match = 0;
+					break;
+				}
+
+				if (ordered) {
+					match = _xmmsv_compare (ea, eb, ordered);
+					if (!match)
+						break;
+				} else {
+					match = 0;
+					for (j = 0; j < size; j++) {
+						if (matched[j])
+							continue;
+						if (!xmmsv_list_get (b, j, &eb))
+							break;
+						if (_xmmsv_compare (ea, eb, ordered)) {
+							matched[j] = 1;
+							match = 1;
+							break;
+						}
+					}
+					if (!match)
+						return 0;
+				}
+			}
+
+			if (matched)
+				free (matched);
+
+			return match;
+		}
+		case XMMSV_TYPE_COLL: {
+			return xmmsv_coll_compare (a, b);
+		}
+		default: {
+			return 0;
+		}
 	}
 
 	return 1;
