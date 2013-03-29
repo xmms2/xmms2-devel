@@ -44,6 +44,7 @@ cdef extern from "xmmsc/xmmsv.h":
 		XMMSV_TYPE_NONE
 		XMMSV_TYPE_ERROR
 		XMMSV_TYPE_INT32
+		XMMSV_TYPE_FLOAT
 		XMMSV_TYPE_STRING
 		XMMSV_TYPE_COLL
 		XMMSV_TYPE_BIN
@@ -70,6 +71,7 @@ cdef extern from "xmmsc/xmmsv.h":
 
 	bint xmmsv_get_error  (xmmsv_t *value, const_char **r)
 	bint xmmsv_get_int    (xmmsv_t *res, int *r)
+	bint xmmsv_get_float  (xmmsv_t *res, float *r)
 	bint xmmsv_get_string (xmmsv_t *res, const_char **r)
 	bint xmmsv_get_bin    (xmmsv_t *res, const_uchar **r, unsigned int *rlen)
 

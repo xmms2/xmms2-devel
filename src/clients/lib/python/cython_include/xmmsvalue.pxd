@@ -17,6 +17,7 @@ cdef class XmmsValue:
 	cpdef is_error(self)
 	cpdef get_error(self)
 	cpdef get_int(self)
+	cpdef get_float(self)
 	cpdef get_string(self)
 	cpdef get_bin(self)
 	cpdef get_coll(self)

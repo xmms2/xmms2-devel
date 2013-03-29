@@ -10,6 +10,7 @@ from cxmmsvalue cimport *
 VALUE_TYPE_NONE   = XMMSV_TYPE_NONE
 VALUE_TYPE_ERROR  = XMMSV_TYPE_ERROR
 VALUE_TYPE_INT32  = XMMSV_TYPE_INT32
+VALUE_TYPE_FLOAT  = XMMSV_TYPE_FLOAT
 VALUE_TYPE_STRING = XMMSV_TYPE_STRING
 VALUE_TYPE_COLL   = XMMSV_TYPE_COLL
 VALUE_TYPE_BIN    = XMMSV_TYPE_BIN
@@ -153,6 +154,16 @@ cdef class XmmsValue:
 			raise ValueError("Failed to retrieve value")
 		return ret
 
+	cpdef get_float(self):
+		"""
+		Get data from the result structure as an float.
+		@rtype: float
+		"""
+		cdef float ret = 0
+		if not xmmsv_get_float(self.val, &ret):
+			raise ValueError("Failed to retrieve value")
+		return ret
+
 	cpdef get_string(self):
 		"""
 		Get data from the result structure as a string.
@@ -231,6 +242,8 @@ cdef class XmmsValue:
 			return self.get_error()
 		elif vtype == XMMSV_TYPE_INT32:
 			return self.get_int()
+		elif vtype == XMMSV_TYPE_FLOAT:
+			return self.get_float()
 		elif vtype == XMMSV_TYPE_STRING:
 			return self.get_string()
 		elif vtype == XMMSV_TYPE_COLL:
@@ -255,7 +268,7 @@ cdef class XmmsListIter:
 	def __cinit__(self):
 		self.val = NULL
 		self.it = NULL
-	
+
 	def __dealloc__(self):
 		if self.it != NULL:
 			xmmsv_list_iter_explicit_destroy(self.it)
@@ -311,7 +324,7 @@ cdef class XmmsDictIter:
 		if not xmmsv_get_dict_iter(self.val, &self.it):
 			raise RuntimeError("Failed to initialize the iterator.")
 		self.sourcepref = value.sourcepref
-	
+
 	def __iter__(self):
 		return self
 
@@ -399,7 +412,7 @@ cdef class Collection(CollectionRef):
 				raise TypeError("Can't set idlist for this type of collection")
 			elif self._idlist is ids:
 				pass
-			else: 
+			else:
 				self._idlist.clear()
 				self._idlist.extend(ids)
 
