@@ -150,6 +150,7 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult medialib_property_remove(self, int id, key, source=*, cb=*)
 	cpdef XmmsResult broadcast_medialib_entry_added(self, cb=*)
 	cpdef XmmsResult broadcast_medialib_entry_changed(self, cb=*)
+	cpdef XmmsResult broadcast_medialib_entry_removed(self, cb=*)
 	cpdef XmmsResult broadcast_collection_changed(self, cb=*)
 	cpdef XmmsResult signal_mediainfo_reader_unindexed(self, cb=*)
 	cpdef XmmsResult broadcast_mediainfo_reader_status(self, cb=*)
@@ -181,4 +182,3 @@ cdef class XmmsApi(XmmsCore):
 cdef class XmmsLoop(XmmsApi):
 	cdef bint do_loop
 	cdef object wakeup
-

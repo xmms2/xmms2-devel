@@ -1384,6 +1384,16 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_changed(self.conn))
 
+	cpdef XmmsResult broadcast_medialib_entry_removed(self, cb = None):
+		"""
+		broadcast_medialib_entry_removed(cb=None) -> XmmsResult
+
+		Set a method to handle the medialib entry removed broadcast
+		from the XMMS2 daemon. (i.e. an entry has been removed)
+		@rtype: L{XmmsResult}
+		"""
+		return self.create_result(cb, xmmsc_broadcast_medialib_entry_removed(self.conn))
+
 	cpdef XmmsResult broadcast_collection_changed(self, cb = None):
 		"""
 		broadcast_collection_changed(cb=None) -> XmmsResult
