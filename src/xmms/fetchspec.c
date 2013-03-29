@@ -231,9 +231,14 @@ normalize_aggregate_function (xmmsv_t *fetch, xmms_error_t *err)
 	const gchar *name;
 	guint32 aggregate;
 
+	if (xmmsv_dict_entry_get_type (fetch, "aggregate") == XMMSV_TYPE_NONE) {
+		xmmsv_dict_set_string (fetch, "aggregate", "first");
+	}
+
 	/* Default to first as the aggregation function */
 	if (!xmmsv_dict_entry_get_string (fetch, "aggregate", &name)) {
-		name = "first";
+		xmms_error_set (err, XMMS_ERROR_INVAL, "'aggregate' must be a string.");
+		return -1;
 	}
 
 	if (!aggregate_value_from_string (name, &aggregate)) {
@@ -528,8 +533,13 @@ xmms_fetch_spec_new (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		return NULL;
 	}
 
+	if (xmmsv_dict_entry_get_type (fetch, "type") == XMMSV_TYPE_NONE) {
+		xmmsv_dict_set_string (fetch, "type", "metadata");
+	}
+
 	if (!xmmsv_dict_entry_get_string (fetch, "type", &type)) {
-		type = "metadata";
+		xmms_error_set (err, XMMS_ERROR_INVAL, "A fetch specification must have a type.");
+		return NULL;
 	}
 
 	if (strcmp (type, "metadata") == 0) {

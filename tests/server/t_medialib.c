@@ -278,6 +278,12 @@ CASE (test_metadata_fetch_spec)
 
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
+	/* missing 'type' parameter */
+	spec = xmmsv_from_xson ("{ 'notype': 'metadata' }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
+
 	/* missing 'get' parameter */
 	spec = xmmsv_from_xson ("{ 'type': 'metadata' }");
 	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
@@ -382,6 +388,11 @@ CASE (test_metadata_fetch_spec)
 	CU_ASSERT_TRUE (xmms_error_iserror (&err));
 	xmmsv_unref (spec);
 
+	/* invalid aggregate parameter */
+	spec = xmmsv_from_xson ("{ 'type': 'metadata', 'get': ['value'], 'aggregate': ['avg'] }");
+	CU_ASSERT_PTR_NULL (medialib_query (universe, spec, &err));
+	CU_ASSERT_TRUE (xmms_error_iserror (&err));
+	xmmsv_unref (spec);
 
 	/* invalid aggregate function */
 	spec = xmmsv_from_xson ("{ 'type': 'metadata', 'get': ['value'], 'aggregate': 'sausage' }");
