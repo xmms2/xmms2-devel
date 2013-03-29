@@ -710,6 +710,18 @@ c_broadcast_medialib_entry_added (VALUE self)
 
 /*
  * call-seq:
+ *  xc.broadcast_medialib_entry_removed -> result
+ *
+ * Retrieves the id of an removed medialib entry as a broadcast.
+ */
+static VALUE
+c_broadcast_medialib_entry_removed (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_removed);
+}
+
+/*
+ * call-seq:
  *  xc.playlist_set_next(pos) -> result
  *
  * Sets the next song to be played to _pos_ (an absolute position).
@@ -1612,6 +1624,8 @@ Init_Client (VALUE mXmms)
 	                  c_broadcast_medialib_entry_changed, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
 	                  c_broadcast_medialib_entry_added, 0);
+	rb_define_method (c, "broadcast_medialib_entry_removed",
+	                  c_broadcast_medialib_entry_removed, 0);
 
 	rb_define_method (c, "playlist", c_playlist, -1);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
