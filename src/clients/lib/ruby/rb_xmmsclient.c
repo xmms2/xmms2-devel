@@ -1341,6 +1341,7 @@ static VALUE
 c_coll_query_cleanup (VALUE args)
 {
 	xmmsv_unref ((xmmsv_t *) args);
+	return Qnil;
 }
 
 /*
