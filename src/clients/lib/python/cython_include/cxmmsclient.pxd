@@ -208,7 +208,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_bindata_list     (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added   (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_medialib_entry_updated (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_removed (xmmsc_connection_t *c)
 
 	# Collections

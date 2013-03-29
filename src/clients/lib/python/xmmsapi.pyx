@@ -1372,17 +1372,24 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_added(self.conn))
 
-	cpdef XmmsResult broadcast_medialib_entry_changed(self, cb = None):
+	@deprecated
+	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
-		broadcast_medialib_entry_changed(cb=None) -> XmmsResult
+        Use broadcast_medialib_entry_updated(self, cb = None) instead
+		"""
+		return self.broadcast_medialib_entry_updated(cb)
 
-		Set a method to handle the medialib entry changed broadcast
+	cpdef XmmsResult broadcast_medialib_entry_updated(self, cb = None):
+		"""
+		broadcast_medialib_entry_updated(cb=None) -> XmmsResult
+
+		Set a method to handle the medialib entry updated broadcast
 		from the XMMS2 daemon.
 		Updated data is sent when the metadata for a song is updated
 		in the medialib.
 		@rtype: L{XmmsResult}
 		"""
-		return self.create_result(cb, xmmsc_broadcast_medialib_entry_changed(self.conn))
+		return self.create_result(cb, xmmsc_broadcast_medialib_entry_updated(self.conn))
 
 	cpdef XmmsResult broadcast_medialib_entry_removed(self, cb = None):
 		"""
