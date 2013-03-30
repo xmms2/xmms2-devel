@@ -53,6 +53,8 @@ XMMSV_TYPE_T
 			sv_setpv ($arg, \"error\");
 		} else if ($var == XMMSV_TYPE_INT32) {
 			sv_setpv ($arg, \"int\");
+        } else if ($var == XMMSV_TYPE_FLOAT) {
+			sv_setpv ($arg, \"float\");
 		} else if ($var == XMMSV_TYPE_STRING) {
 			sv_setpv ($arg, \"string\");
 		} else if ($var == XMMSV_TYPE_DICT) {

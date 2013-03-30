@@ -28,6 +28,21 @@ sv_from_value_int (xmmsv_t *val)
 }
 
 STATIC SV *
+sv_from_value_float (xmmsv_t *val)
+{
+	float num;
+	int ret;
+
+	ret = xmmsv_get_float (val, &num);
+
+	if (ret == 0) {
+		croak("could not fetch int value");
+	}
+
+	return newSVnv ((double) num);
+}
+
+STATIC SV *
 sv_from_value_string (xmmsv_t *val)
 {
 	int ret;
@@ -141,6 +156,9 @@ value_to_sv (xmmsv_t *value) {
 			break;
 		case XMMSV_TYPE_INT32:
 			ret = sv_from_value_int (value);
+			break;
+		case XMMSV_TYPE_FLOAT:
+			ret = sv_from_value_float (value);
 			break;
 		case XMMSV_TYPE_STRING:
 			ret = sv_from_value_string (value);
