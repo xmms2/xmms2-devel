@@ -9,7 +9,7 @@ from cxmmsvalue cimport *
 
 VALUE_TYPE_NONE   = XMMSV_TYPE_NONE
 VALUE_TYPE_ERROR  = XMMSV_TYPE_ERROR
-VALUE_TYPE_INT32  = XMMSV_TYPE_INT32
+VALUE_TYPE_INT64  = XMMSV_TYPE_INT64
 VALUE_TYPE_FLOAT  = XMMSV_TYPE_FLOAT
 VALUE_TYPE_STRING = XMMSV_TYPE_STRING
 VALUE_TYPE_COLL   = XMMSV_TYPE_COLL
@@ -149,8 +149,8 @@ cdef class XmmsValue:
 		Get data from the result structure as an int.
 		@rtype: int
 		"""
-		cdef int ret = 0
-		if not xmmsv_get_int(self.val, &ret):
+		cdef int64_t ret = 0
+		if not xmmsv_get_int64(self.val, &ret):
 			raise ValueError("Failed to retrieve value")
 		return ret
 
@@ -240,7 +240,7 @@ cdef class XmmsValue:
 			return None
 		elif vtype == XMMSV_TYPE_ERROR:
 			return self.get_error()
-		elif vtype == XMMSV_TYPE_INT32:
+		elif vtype == XMMSV_TYPE_INT64:
 			return self.get_int()
 		elif vtype == XMMSV_TYPE_FLOAT:
 			return self.get_float()

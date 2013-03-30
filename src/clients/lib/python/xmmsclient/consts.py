@@ -1,7 +1,8 @@
 
 from xmmsvalue import VALUE_TYPE_NONE
 from xmmsvalue import VALUE_TYPE_ERROR
-from xmmsvalue import VALUE_TYPE_INT32
+from xmmsvalue import VALUE_TYPE_INT64 as VALUE_TYPE_INT32
+from xmmsvalue import VALUE_TYPE_INT64
 from xmmsvalue import VALUE_TYPE_STRING
 from xmmsvalue import VALUE_TYPE_COLL
 from xmmsvalue import VALUE_TYPE_BIN

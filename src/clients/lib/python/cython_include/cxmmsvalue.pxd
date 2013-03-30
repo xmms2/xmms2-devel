@@ -1,3 +1,5 @@
+from libc.stdint cimport int64_t
+
 cdef extern from *:
 	ctypedef char const_char "const char"
 	ctypedef unsigned char const_uchar "const unsigned char"
@@ -43,7 +45,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	ctypedef enum xmmsv_type_t:
 		XMMSV_TYPE_NONE
 		XMMSV_TYPE_ERROR
-		XMMSV_TYPE_INT32
+		XMMSV_TYPE_INT64
 		XMMSV_TYPE_FLOAT
 		XMMSV_TYPE_STRING
 		XMMSV_TYPE_COLL
@@ -70,7 +72,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	bint         xmmsv_is_type  (xmmsv_t *val, xmmsv_type_t t)
 
 	bint xmmsv_get_error  (xmmsv_t *value, const_char **r)
-	bint xmmsv_get_int    (xmmsv_t *res, int *r)
+	bint xmmsv_get_int64  (xmmsv_t *res, int64_t *r)
 	bint xmmsv_get_float  (xmmsv_t *res, float *r)
 	bint xmmsv_get_string (xmmsv_t *res, const_char **r)
 	bint xmmsv_get_bin    (xmmsv_t *res, const_uchar **r, unsigned int *rlen)
@@ -94,7 +96,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	bint xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 
 	bint xmmsv_list_get_string (xmmsv_t *v, int pos, const_char **val)
-	bint xmmsv_list_get_int    (xmmsv_t *v, int pos, int *val)
+	bint xmmsv_list_get_int64  (xmmsv_t *v, int pos, int64_t *val)
 
 	bint xmmsv_list_set_string (xmmsv_t *v, int pos, const_char *val)
 	bint xmmsv_list_set_int    (xmmsv_t *v, int pos, int val)
@@ -147,7 +149,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	bint xmmsv_dict_has_key  (xmmsv_t *dictv, const_char *key)
 
 	bint xmmsv_dict_entry_get_string (xmmsv_t *val, const_char *key, const_char **r)
-	bint xmmsv_dict_entry_get_int    (xmmsv_t *val, const_char *key, int *r)
+	bint xmmsv_dict_entry_get_int64    (xmmsv_t *val, const_char *key, int64_t *r)
 
 	bint xmmsv_dict_set_string (xmmsv_t *val, const_char *key, const_char *el)
 	bint xmmsv_dict_set_int    (xmmsv_t *val, const_char *key, int el)
@@ -204,7 +206,7 @@ cdef extern from "xmmsc/xmmsv.h":
 	bint xmmsv_coll_attribute_remove     (xmmsv_t *coll, char *key)
 
 	bint xmmsv_coll_attribute_get_string (xmmsv_t *coll, char *key, const_char **value)
-	bint xmmsv_coll_attribute_get_int    (xmmsv_t *coll, char *key, int *value)
+	bint xmmsv_coll_attribute_get_int64    (xmmsv_t *coll, char *key, int64_t *value)
 	bint xmmsv_coll_attribute_get_value  (xmmsv_t *coll, char *key, xmmsv_t **value)
 
 	xmmsv_t *xmmsv_coll_attributes_get (xmmsv_t *coll)
