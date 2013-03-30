@@ -160,7 +160,7 @@ XMMSC_RESULT_PROPDICT_T
 
 XMMS_PLUGIN_TYPE_T
 	{
-		char *plugin_type = NULL;
+		const char *plugin_type = NULL;
 		if ($arg == NULL) {
 			plugin_type = \"\";
 		} else {
