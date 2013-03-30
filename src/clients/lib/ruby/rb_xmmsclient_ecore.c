@@ -22,6 +22,8 @@
 
 #include "rb_xmmsclient.h"
 
+void Init_xmmsclient_ecore (void);
+
 static VALUE
 c_add_to_ecore_mainloop (VALUE self)
 {
