@@ -74,6 +74,9 @@ XMMSV_COLL_TYPE_T
 		if ($var == XMMS_COLLECTION_TYPE_REFERENCE) {
 			sv_setpv ($arg, \"reference\");
 		}
+		else if ($var == XMMS_COLLECTION_TYPE_UNIVERSE) {
+			sv_setpv ($arg, \"universe\");
+		}
 		else if ($var == XMMS_COLLECTION_TYPE_UNION) {
 			sv_setpv ($arg, \"union\");
 		}
@@ -187,6 +190,9 @@ XMMSV_COLL_TYPE_T
 
 		if (strcmp (coll_type, \"reference\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_REFERENCE;
+		}
+		else if (strcmp (coll_type, \"universe\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_UNIVERSE;
 		}
 		else if (strcmp (coll_type, \"union\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_UNION;
