@@ -30,6 +30,8 @@ typedef struct {
 	xmmsv_t *value;
 } coll_table_pair_t;
 
+void collection_dag_save (GHashTable **ht, const char *path);
+
 /**
  * Returns TRUE if the value of the pair is equal to the value stored
  * in the udata structure, and save the corresponding key in that
