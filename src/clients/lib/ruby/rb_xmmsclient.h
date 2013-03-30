@@ -19,7 +19,7 @@
 
 #include <xmmsc/xmmsc_util.h>
 
-#define DEPRECATED(func1,func2) \
+#define RB_XMMS_DEPRECATED(func1,func2) \
 	rb_warning (XMMS_STRINGIFY (func1) " is deprecated use " XMMS_STRINGIFY (func2) " instead") \
 
 #define CHECK_DELETED(xmms) \

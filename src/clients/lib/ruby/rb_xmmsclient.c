@@ -693,7 +693,7 @@ c_broadcast_playlist_loaded (VALUE self)
 static VALUE
 c_broadcast_medialib_entry_changed (VALUE self)
 {
-	DEPRECATED (broadcast_medialib_entry_changed, broadcast_medialib_entry_updated);
+	RB_XMMS_DEPRECATED (broadcast_medialib_entry_changed, broadcast_medialib_entry_updated);
 	METHOD_ADD_HANDLER (broadcast_medialib_entry_updated);
 }
 
