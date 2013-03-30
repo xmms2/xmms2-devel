@@ -575,7 +575,7 @@ xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_added (c)
 		xmmsc_connection_t *c
 
-=head2 broadcast_medialib_entry_changed
+=head2 broadcast_medialib_entry_updated
 
 =over 4
 
@@ -593,8 +593,13 @@ changes on the serverside.
 =cut
 
 xmmsc_result_t *
-xmmsc_broadcast_medialib_entry_changed (c)
+xmmsc_broadcast_medialib_entry_updated (c)
 		xmmsc_connection_t *c
+	ALIAS:
+		Audio::XMMSClient::broadcast_medialib_entry_changed = 1
+	INIT:
+		if (ix == 1)
+			warn ("Audio::XMMSClient::broadcast_medialib_entry_changed is deprecated, use Audio::XMMSClient::broadcast_medialib_entry_updated instead.");
 
 =head2 medialib_entry_property_set_int
 
