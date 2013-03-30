@@ -16,9 +16,10 @@ notifyer_cb (xmmsv_t *val, void *user_data)
 STATIC SV *
 sv_from_value_int (xmmsv_t *val)
 {
-	int ret, num;
+	int64_t num;
+	int ret;
 
-	ret = xmmsv_get_int (val, &num);
+	ret = xmmsv_get_int64 (val, &num);
 
 	if (ret == 0) {
 		croak("could not fetch int value");
@@ -154,7 +155,7 @@ value_to_sv (xmmsv_t *value) {
 		case XMMSV_TYPE_ERROR:
 			croak_value_error (value);
 			break;
-		case XMMSV_TYPE_INT32:
+		case XMMSV_TYPE_INT64:
 			ret = sv_from_value_int (value);
 			break;
 		case XMMSV_TYPE_FLOAT:
