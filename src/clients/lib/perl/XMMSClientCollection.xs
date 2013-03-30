@@ -230,8 +230,8 @@ Insert an C<$id> at a given C<$index> in the idlist.
 int
 xmmsv_coll_idlist_insert (coll, index, id)
 		xmmsv_t *coll
-		unsigned int index
-		unsigned int id
+		int index
+		int id
 	INIT:
 		if (index > xmmsv_coll_idlist_get_size (coll)) {
 			croak ("inserting id after end of idlist");
@@ -312,7 +312,7 @@ Retrieves the value at the given C<$index> in the idlist.
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_idlist_get_index (xmmsv_t *coll, unsigned int index, OUTLIST int32_t val)
+xmmsv_coll_idlist_get_index (xmmsv_t *coll, int index, OUTLIST int32_t val)
 	INIT:
 		PERL_UNUSED_VAR (targ);
 
@@ -488,10 +488,14 @@ Set an attribute C<$key> to C<$value> in the given collection.
 =cut
 
 void
-xmmsv_coll_attribute_set (coll, key, value)
+xmmsv_coll_attribute_set_string (coll, key, value)
 		xmmsv_t *coll
 		const char *key
 		const char *value
+	ALIAS:
+		Audio::XMMSClient::Collection::attribute_set = 1
+	INIT:
+		PERL_UNUSED_VAR (ix);
 
 =head2 attribute_remove
 
@@ -532,9 +536,12 @@ Retrieve the C<$value> of the attribute C<$key> of the given collection.
 =cut
 
 NO_OUTPUT int
-xmmsv_coll_attribute_get (xmmsv_t *coll, const char *key, OUTLIST const char *val)
+xmmsv_coll_attribute_get_string (xmmsv_t *coll, const char *key, OUTLIST const char *val)
+	ALIAS:
+		Audio::XMMSClient::Collection::attribute_get = 1
 	INIT:
 		PERL_UNUSED_VAR (targ);
+		PERL_UNUSED_VAR (ix);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -596,8 +603,11 @@ collection.
 
 xmmsv_t *
 xmmsv_coll_universe (class="optional")
-	C_ARGS:
-		/* void */
+	CODE:
+		warn ("Audio::XMMSClientCollection::universe is deprecated, use Audio::XMMSClientCollection::new(\"universe\") instead.");
+		RETVAL = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	OUTPUT:
+		RETVAL
 
 =head1 AUTHOR
 

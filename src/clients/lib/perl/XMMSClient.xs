@@ -8,7 +8,7 @@ disconnect_callback_set_cb (void *userdata)
 	perl_xmmsclient_callback_invoke (cb, NULL);
 }
 
-void
+STATIC void
 perl_xmmsclient_xmmsc_io_need_out_callback_set_cb (int flag, void *userdata)
 {
 	PerlXMMSClientCallback *cb = (PerlXMMSClientCallback *)userdata;
@@ -465,7 +465,7 @@ playlist(c, playlist=XMMS_ACTIVE_PLAYLIST)
 	OUTPUT:
 		RETVAL
 
-=head2 medialib_path_import
+=head2 medialib_import_path
 
 =over 4
 
@@ -475,7 +475,7 @@ playlist(c, playlist=XMMS_ACTIVE_PLAYLIST)
 
 =back
 
-  my $result = $conn->medialib_path_import('file:///media/music/');
+  my $result = $conn->medialib_import_path('file:///media/music/');
 
 Import a all files recursivly from C<$path>. C<$path> must include the
 protocol, i.e. file://.
@@ -483,11 +483,16 @@ protocol, i.e. file://.
 =cut
 
 xmmsc_result_t *
-xmmsc_medialib_path_import (c, path)
+xmmsc_medialib_import_path (c, path)
 		xmmsc_connection_t *c
 		const char *path
+	ALIAS:
+		Audio::XMMSClient::medialib_path_import = 1
+	INIT:
+		if (ix == 1)
+			warn ("Audio::XMMSClient::medialib_path_import is deprecated, use Audio::XMMSClient::medialib_import_path instead.");
 
-=head2 medialib_path_import_encoded
+=head2 medialib_import_path_encoded
 
 =over 4
 
@@ -497,18 +502,23 @@ xmmsc_medialib_path_import (c, path)
 
 =back
 
-  my $result = $conn->medialib_path_import_encoded($path);
+  my $result = $conn->medialib_import_path_encoded($path);
 
-Same as L</medialib_path_import> except it expects C<$path> to be url encoded.
-You probably want to use L</medialib_path_import> unless you want to add a path
+Same as L</medialib_import_path> except it expects C<$path> to be url encoded.
+You probably want to use L</medialib_import_path> unless you want to add a path
 that comes as a result from the daemon, such as from C</xform_media_browse>.
 
 =cut
 
 xmmsc_result_t *
-xmmsc_medialib_path_import_encoded (c, path)
+xmmsc_medialib_import_path_encoded (c, path)
 		xmmsc_connection_t *c
 		const char *path
+	ALIAS:
+		Audio::XMMSClient::medialib_path_import_encoded = 1
+	INIT:
+		if (ix == 1)
+			warn ("Audio::XMMSClient::medialib_path_import_encoded is deprecated, use Audio::XMMSClient::medialib_import_path_encoded instead.");
 
 =head2 medialib_rehash
 
