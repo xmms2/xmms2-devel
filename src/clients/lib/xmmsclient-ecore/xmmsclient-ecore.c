@@ -21,7 +21,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient-ecore.h>
 
-static int
+static Eina_Bool
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;
