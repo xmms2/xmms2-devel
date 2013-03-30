@@ -110,6 +110,7 @@ def configure(conf):
         try:
             conf.load('cython cython_extra', tooldir = os.path.abspath('waftools'))
             conf.check_cython_version(minver = '0.13')
+            conf.env.append_unique('CYTHONFLAGS', '-Xembedsignature=True')
         except Errors.ConfigurationError:
             if not has_precompiled:
                 raise
