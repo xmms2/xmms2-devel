@@ -205,7 +205,7 @@ perl_xmmsclient_pack_fetchspec (SV *arg) {
 	char *key;
 	HV *hv;
 	SV *val;
-	int len;
+	I32 len;
 
 	if (!SvOK (arg) || !SvROK (arg) || SvTYPE (SvRV (arg)) != SVt_PVHV) {
 		croak ("not a valid fetch specification");
