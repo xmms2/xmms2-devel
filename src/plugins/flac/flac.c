@@ -480,7 +480,6 @@ xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 {
 	FLAC__StreamDecoderState state;
 	xmms_flac_data_t *data;
-	gboolean ret;
 	guint32 size;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -491,7 +490,14 @@ xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	size = MIN (data->buffer->len, len);
 
 	if (size <= 0) {
-		ret = FLAC__stream_decoder_process_single (data->flacdecoder);
+		if (!FLAC__stream_decoder_process_single (data->flacdecoder)) {
+			switch (FLAC__stream_decoder_get_state (data->flacdecoder)) {
+				case FLAC__STREAM_DECODER_END_OF_STREAM:
+					return 0;
+				default:
+					return -1;
+			}
+		}
 	}
 
 	state = FLAC__stream_decoder_get_state (data->flacdecoder);
