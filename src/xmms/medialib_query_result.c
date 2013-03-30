@@ -114,7 +114,7 @@ aggregate_set (xmmsv_t **current, gint int_value, const gchar *str_value)
 static gboolean
 aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
 {
-	gint old_value = 0;
+	int64_t old_value = 0;
 
 	if (str_value != NULL) {
 		/* 'sum' only applies to numbers */
@@ -122,7 +122,7 @@ aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
 	}
 
 	if (*current != NULL) {
-		xmmsv_get_int (*current, &old_value);
+		xmmsv_get_int64 (*current, &old_value);
 		xmmsv_unref (*current);
 	}
 
