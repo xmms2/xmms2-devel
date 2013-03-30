@@ -218,6 +218,14 @@ namespace Xmms
 		return IntSignal( res, ml_ );
 	}
 
+	IntSignal Medialib::broadcastEntryRemoved() const
+	{
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_broadcast_medialib_entry_removed, conn_ ) );
+		return IntSignal( res, ml_ );
+	}
+
 	Medialib::Medialib( xmmsc_connection_t*& conn, bool& connected,
 	                    MainloopInterface*& ml ) :
 		conn_( conn ), connected_( connected ), ml_( ml )

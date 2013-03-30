@@ -293,6 +293,20 @@ namespace Xmms
 			 */
 			IntSignal broadcastEntryChanged() const;
 
+			/** Request the medialib entry removed broadcast.
+			 *
+			 *  This will be called if a new entry is removed from
+			 *  the medialib serverside.
+			 *
+			 *  @param slot Function pointer to a function taking a
+			 *              const int& and returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			IntSignal broadcastEntryRemoved() const;
+
 		/** @cond */
 		private:
 			friend class Client;
