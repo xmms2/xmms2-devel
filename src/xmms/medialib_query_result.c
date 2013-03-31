@@ -243,11 +243,24 @@ static void *
 result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
                  xmms_fetch_spec_t *spec)
 {
+	static gboolean (*aggregate_functions[AGGREGATE_END])(xmmsv_t **c, gint i, const gchar *s) = {
+		aggregate_first,
+		aggregate_sum,
+		aggregate_max,
+		aggregate_min,
+		aggregate_set,
+		aggregate_list,
+		aggregate_random,
+		aggregate_average
+	};
 	const s4_val_t *val;
 	xmmsv_t *dict, *current;
 	const gchar *str_value, *key = NULL;
 	gint32 i, int_value;
 	gboolean changed;
+
+	g_return_val_if_fail (spec->data.metadata.aggr_func >= 0, ret);
+	g_return_val_if_fail (spec->data.metadata.aggr_func < AGGREGATE_END, ret);
 
 	/* Loop through all the values the column has */
 	while (res != NULL) {
@@ -257,6 +270,7 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 		/* Loop through the list of what to get ("key", "source", ..) */
 		for (i = 0; i < spec->data.metadata.get_size; i++) {
 			str_value = NULL;
+			int_value = 0;
 
 			/* Fill str_value with the correct value if it is a string
 			 * or int_value if it is an integer
@@ -318,34 +332,7 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 			}
 		}
 
-		changed = 0;
-
-		switch (spec->data.metadata.aggr_func) {
-			case AGGREGATE_FIRST:
-				changed = aggregate_first (&current, int_value, str_value);
-				break;
-			case AGGREGATE_LIST:
-				changed = aggregate_list (&current, int_value, str_value);
-				break;
-			case AGGREGATE_SET:
-				changed = aggregate_set (&current, int_value, str_value);
-				break;
-			case AGGREGATE_SUM:
-				changed = aggregate_sum (&current, int_value, str_value);
-				break;
-			case AGGREGATE_MIN:
-				changed = aggregate_min (&current, int_value, str_value);
-				break;
-			case AGGREGATE_MAX:
-				changed = aggregate_max (&current, int_value, str_value);
-				break;
-			case AGGREGATE_RANDOM:
-				changed = aggregate_random (&current, int_value, str_value);
-				break;
-			case AGGREGATE_AVG:
-				changed = aggregate_average (&current, int_value, str_value);
-				break;
-		}
+		changed = aggregate_functions[spec->data.metadata.aggr_func](&current, int_value, str_value);
 
 		/* Update the previous dict (if there is one) */
 		if (i > 1 && changed) {
@@ -403,6 +390,8 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 				ret = xmmsv_new_float (avg_data->n ? avg_data->sum * 1.0 / avg_data->n : 0);
 			}
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	xmmsv_unref (value);

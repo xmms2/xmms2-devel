@@ -31,7 +31,8 @@ typedef enum {
 	AGGREGATE_SET,
 	AGGREGATE_LIST,
 	AGGREGATE_RANDOM,
-	AGGREGATE_AVG
+	AGGREGATE_AVG,
+	AGGREGATE_END
 } aggregate_function_t;
 
 typedef struct xmms_fetch_spec_St xmms_fetch_spec_t;
