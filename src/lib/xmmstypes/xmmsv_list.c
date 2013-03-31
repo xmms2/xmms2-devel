@@ -620,7 +620,7 @@ xmmsv_list_index_of (xmmsv_t *listv, xmmsv_t *val)
 	x_return_val_if_fail (listv, -1);
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), -1);
 
-	if (!xmmsv_get_list_iter (v, &it))
+	if (!xmmsv_get_list_iter (listv, &it))
 		return -1;
 
 	while (xmmsv_list_iter_valid (it)) {
