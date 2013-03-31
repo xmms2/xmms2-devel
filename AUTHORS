@@ -235,6 +235,10 @@ N: Bernhard Leiner
 E: bleiner@gmail.com
 D: Sun output updates.
 
+N: William Light
+E: wrl@illest.net
+D: nycli search-add default ordering
+
 N: Michael Lindgren
 E: lindgren@debian.as
 D: Curl. HTML pls plugin. Various fixes.
