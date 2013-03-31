@@ -259,6 +259,8 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 	gint32 i, int_value;
 	gboolean changed;
 
+	g_return_val_if_fail (spec->data.metadata.get_size > 0, ret);
+	g_return_val_if_fail (spec->data.metadata.get_size <= METADATA_END, ret);
 	g_return_val_if_fail (spec->data.metadata.aggr_func >= 0, ret);
 	g_return_val_if_fail (spec->data.metadata.aggr_func < AGGREGATE_END, ret);
 
@@ -294,6 +296,8 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 						s4_val_get_str (val, &str_value);
 					}
 					break;
+				default:
+					g_assert_not_reached ();
 			}
 
 			/* If this is not the last property to get we use this property
@@ -613,6 +617,8 @@ xmms_medialib_query_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 
 			g_hash_table_destroy (set_table);
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	return ret;

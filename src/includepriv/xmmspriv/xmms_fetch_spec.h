@@ -43,7 +43,8 @@ struct xmms_fetch_spec_St {
 		FETCH_CLUSTER_DICT,
 		FETCH_ORGANIZE,
 		FETCH_METADATA,
-		FETCH_COUNT
+		FETCH_COUNT,
+		FETCH_END
 	} type;
 	union {
 		struct {
@@ -51,6 +52,7 @@ struct xmms_fetch_spec_St {
 				CLUSTER_BY_ID,
 				CLUSTER_BY_POSITION,
 				CLUSTER_BY_VALUE,
+				CLUSTER_BY_END
 			} type;
 			int column;
 			const gchar *fallback;
@@ -61,8 +63,9 @@ struct xmms_fetch_spec_St {
 				METADATA_ID,
 				METADATA_KEY,
 				METADATA_VALUE,
-				METADATA_SOURCE
-			} get[5];
+				METADATA_SOURCE,
+				METADATA_END
+			} get[METADATA_END];
 			int get_size;
 			int col_count;
 			int *cols;

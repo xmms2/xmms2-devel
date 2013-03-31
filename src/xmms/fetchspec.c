@@ -418,6 +418,8 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 		case CLUSTER_BY_POSITION:
 			/* do nothing */
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	s4_sourcepref_unref (sp);
@@ -595,6 +597,8 @@ xmms_fetch_spec_free (xmms_fetch_spec_t *spec)
 			break;
 		case FETCH_COUNT: /* Nothing to free */
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	g_free (spec);
