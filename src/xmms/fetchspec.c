@@ -578,23 +578,23 @@ xmms_fetch_spec_free (xmms_fetch_spec_t *spec)
 		return;
 
 	switch (spec->type) {
-	case FETCH_METADATA:
-		g_free (spec->data.metadata.cols);
-		break;
-	case FETCH_CLUSTER_DICT:
-	case FETCH_CLUSTER_LIST:
-		xmms_fetch_spec_free (spec->data.cluster.data);
-		break;
-	case FETCH_ORGANIZE:
-		for (i = 0; i < spec->data.organize.count; i++) {
-			xmms_fetch_spec_free (spec->data.organize.data[i]);
-		}
+		case FETCH_METADATA:
+			g_free (spec->data.metadata.cols);
+			break;
+		case FETCH_CLUSTER_DICT:
+		case FETCH_CLUSTER_LIST:
+			xmms_fetch_spec_free (spec->data.cluster.data);
+			break;
+		case FETCH_ORGANIZE:
+			for (i = 0; i < spec->data.organize.count; i++) {
+				xmms_fetch_spec_free (spec->data.organize.data[i]);
+			}
 
-		g_free (spec->data.organize.keys);
-		g_free (spec->data.organize.data);
-		break;
-	case FETCH_COUNT: /* Nothing to free */
-		break;
+			g_free (spec->data.organize.keys);
+			g_free (spec->data.organize.data);
+			break;
+		case FETCH_COUNT: /* Nothing to free */
+			break;
 	}
 
 	g_free (spec);
