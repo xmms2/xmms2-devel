@@ -2255,7 +2255,7 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 	const gchar *channel;
 	gint volume;
 	const gchar *volstr;
-	bool relative_vol;
+	bool relative_vol = false;
 
 	if (!command_flag_string_get (ctx, "channel", &channel)) {
 		channel = NULL;
