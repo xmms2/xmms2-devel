@@ -1212,7 +1212,7 @@ static gboolean
 cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
                  const gchar *playlist, gint pos)
 {
-	xmmsv_coll_t *query, *ordered_query;
+	xmmsv_t *query, *ordered_query;
 	const gchar **order = NULL;
 	gchar *pattern = NULL;
 	xmmsv_t *idlist;
@@ -1236,8 +1236,8 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 		}
 
 		res = xmmsc_coll_query_ids (infos->sync, ordered_query, NULL, 0, 0);
-		xmmsc_coll_unref (ordered_query);
-		xmmsc_coll_unref (query);
+		xmmsv_unref (ordered_query);
+		xmmsv_unref (query);
 
 		xmmsc_result_wait (res);
 		idlist = xmmsc_result_get_value (res);
