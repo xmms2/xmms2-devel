@@ -143,17 +143,17 @@ xmms_future_await (xmms_future_t *future, gint count)
 	g_time_val_add (&timeout, future->timeout);
 
 	while (xmmsv_list_get_size (future->result) < count) {
-		GTimeVal now, wait;
+		GTimeVal now;
+		gint64 end_time;
 
 		g_get_current_time (&now);
 		if (now.tv_sec >= timeout.tv_sec && now.tv_usec > timeout.tv_usec) {
 			break;
 		}
 
-		g_get_current_time (&wait);
-		g_time_val_add (&wait, future->delay);
+		end_time = g_get_monotonic_time () + future->delay;
 
-		g_cond_timed_wait (&future->cond, &future->mutex, &wait);
+		g_cond_wait_until (&future->cond, &future->mutex, end_time);
 	}
 
 	result = xmmsv_new_list ();
