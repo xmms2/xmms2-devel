@@ -80,17 +80,14 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 		}
 		case XMMSV_TYPE_DICT: {
 			xmmsv_dict_iter_t *it;
+			xmmsv_t *ea, *eb;
+			const char *key;
 
 			if (xmmsv_dict_get_size (a) != xmmsv_dict_get_size (b))
 				return 0;
 
 			xmmsv_get_dict_iter (a, &it);
-			while (xmmsv_dict_iter_valid (it)) {
-				xmmsv_t *ea, *eb;
-				const char *key;
-
-				xmmsv_dict_iter_pair (it, &key, &ea);
-
+			while (xmmsv_dict_iter_pair (it, &key, &ea)) {
 				if (!xmmsv_dict_get (b, key, &eb))
 					return 0;
 
@@ -204,16 +201,13 @@ _xmms_dump (xmmsv_t *value, int indent)
 	}
 	case XMMSV_TYPE_LIST: {
 		xmmsv_list_iter_t *iter;
+		xmmsv_t *item;
+
 		xmmsv_get_list_iter (value, &iter);
 
 		printf ("[");
-		while (xmmsv_list_iter_valid (iter)) {
-			xmmsv_t *item;
-
-			xmmsv_list_iter_entry (iter, &item);
-
+		while (xmmsv_list_iter_entry (iter, &item)) {
 			_xmms_dump (item, indent + 1);
-
 			xmmsv_list_iter_next (iter);
 			if (xmmsv_list_iter_valid (iter))
 				printf (", ");

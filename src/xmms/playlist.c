@@ -722,6 +722,7 @@ static void
 xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar *plname, gint32 pos,
                               const gchar *path, xmms_error_t *err)
 {
+	xmms_medialib_entry_t entry;
 	xmmsv_t *idlist;
 	xmmsv_list_iter_t *it;
 	xmmsv_t *list;
@@ -731,15 +732,8 @@ xmms_playlist_client_rinsert (xmms_playlist_t *playlist, const gchar *plname, gi
 
 	xmmsv_get_list_iter (list, &it);
 	xmmsv_list_iter_last (it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmms_medialib_entry_t entry;
-		xmmsv_t *value;
-
-		xmmsv_list_iter_entry (it, &value);
-		xmmsv_get_int (value, &entry);
-
+	while (xmmsv_list_iter_entry_int (it, &entry)) {
 		xmms_playlist_insert_entry (playlist, plname, pos, entry, err);
-
 		xmmsv_list_iter_prev (it);
 	}
 
@@ -760,6 +754,7 @@ static void
 xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *plname,
                                         gint32 pos, xmmsv_t *coll, xmms_error_t *err)
 {
+	xmms_medialib_entry_t mid;
 	xmmsv_list_iter_t *it;
 	xmmsv_t *list;
 
@@ -772,15 +767,8 @@ xmms_playlist_client_insert_collection (xmms_playlist_t *playlist, const gchar *
 
 	xmmsv_list_iter_last (it);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmms_medialib_entry_t mid;
-		xmmsv_t *entry;
-
-		xmmsv_list_iter_entry (it, &entry);
-		xmmsv_get_int (entry, &mid);
-
+	while (xmmsv_list_iter_entry_int (it, &mid)) {
 		xmms_playlist_insert_entry (playlist, plname, pos, mid, err);
-
 		xmmsv_list_iter_prev (it);
 	}
 
@@ -895,6 +883,7 @@ static void
 xmms_playlist_client_radd (xmms_playlist_t *playlist, const gchar *plname,
                            const gchar *path, xmms_error_t *err)
 {
+	xmms_medialib_entry_t entry;
 	xmmsv_t *idlist;
 	xmmsv_list_iter_t *it;
 	xmmsv_t *list;
@@ -903,15 +892,8 @@ xmms_playlist_client_radd (xmms_playlist_t *playlist, const gchar *plname,
 	list = xmmsv_coll_idlist_get (idlist);
 
 	xmmsv_get_list_iter (list, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmms_medialib_entry_t entry;
-		xmmsv_t *value;
-
-		xmmsv_list_iter_entry (it, &value);
-		xmmsv_get_int (value, &entry);
-
+	while (xmmsv_list_iter_entry_int (it, &entry)) {
 		xmms_playlist_add_entry (playlist, plname, entry, err);
-
 		xmmsv_list_iter_next (it);
 	}
 

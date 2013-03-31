@@ -446,15 +446,11 @@ static int
 updater_remove_directory_by_id (xmmsv_t *value, void *udata)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_t *item;
 
 	xmmsv_get_list_iter (value, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *item;
-
-		if (xmmsv_list_iter_entry (it, &item)) {
-			updater_remove_file_by_id (item, udata);
-		}
-
+	while (xmmsv_list_iter_entry (it, &item)) {
+		updater_remove_file_by_id (item, udata);
 		xmmsv_list_iter_next (it);
 	}
 	return TRUE;

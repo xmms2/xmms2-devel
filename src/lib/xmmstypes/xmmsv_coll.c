@@ -183,8 +183,7 @@ _xmmsv_coll_operand_find (xmmsv_list_iter_t *it, xmmsv_t *op)
 {
 	xmmsv_t *v;
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		if (v == op) {
 			return 1;
 		}
@@ -739,8 +738,8 @@ xmmsv_coll_add_order_operator (xmmsv_t *coll, xmmsv_t *value)
 xmmsv_t *
 xmmsv_coll_add_order_operators (xmmsv_t *coll, xmmsv_t *order)
 {
-	xmmsv_t *current;
 	xmmsv_list_iter_t *it;
+	xmmsv_t *current, *value;
 
 	x_api_error_if (coll == NULL, "with a NULL coll", NULL);
 
@@ -758,11 +757,8 @@ xmmsv_coll_add_order_operators (xmmsv_t *coll, xmmsv_t *order)
 	xmmsv_get_list_iter (order, &it);
 	xmmsv_list_iter_last (it);
 
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &value)) {
 		xmmsv_t *ordered;
-		xmmsv_t *value;
-
-		xmmsv_list_iter_entry (it, &value);
 
 		ordered = xmmsv_coll_add_order_operator (current, value);
 		xmmsv_unref (current);

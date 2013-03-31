@@ -2007,7 +2007,7 @@ cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
 {
 	xmmsv_list_iter_t *it;
 	xmmsc_result_t *res;
-	xmmsv_t *value;
+	xmmsv_t *value, *dict;
 	const gchar *message, *url;
 
 	if (!command_arg_string_get (ctx, 0, &url)) {
@@ -2027,12 +2027,9 @@ cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
 
 	xmmsv_get_list_iter (value, &it);
 
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &dict)) {
 		const gchar *path;
-		xmmsv_t *dict;
 		gboolean isdir;
-
-		xmmsv_list_iter_entry (it, &dict);
 
 		/* Use realpath instead of path, good for playlists */
 		if (!xmmsv_dict_entry_get_string (dict, "realpath", &path)) {

@@ -233,7 +233,7 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 	xmms_stream_type_t *stream_type;
 	xmms_xform_t *xform;
 	GList *stream_types;
-	xmmsv_t *list, *coll;
+	xmmsv_t *dict, *list, *coll;
 	xmmsv_list_iter_t *it;
 	const gchar* src;
 
@@ -262,13 +262,12 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 
 	xmmsv_get_list_iter (list, &it);
 
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &dict)) {
 		xmms_medialib_session_t *session;
 		xmms_medialib_entry_t entry;
-		xmmsv_t *dict, *value;
+		xmmsv_t *value;
 		const gchar *realpath;
 
-		xmmsv_list_iter_entry (it, &dict);
 		xmmsv_list_iter_next (it);
 
 		if (!xmmsv_dict_get (dict, "realpath", &value)) {
@@ -673,7 +672,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_t *coll,
 static xmmsv_t *
 xmms_collection_query_infos_spec (xmmsv_t *fields, xmmsv_t *grouping)
 {
-	xmmsv_t *spec, *org_dict, *org_data;
+	xmmsv_t *entry, *spec, *org_dict, *org_data;
 	xmmsv_list_iter_t *it;
 	const gchar *string;
 	gint i;
@@ -704,11 +703,10 @@ xmms_collection_query_infos_spec (xmmsv_t *fields, xmmsv_t *grouping)
 	xmmsv_list_iter_last (it);
 
 	/* Create grouping by recursing cluster-list specs */
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *entry, *cluster_by, *cluster_field = NULL;
+	while (xmmsv_list_iter_entry (it, &entry)) {
+		xmmsv_t *cluster_by, *cluster_field = NULL;
 		const char *value;
 
-		xmmsv_list_iter_entry (it, &entry);
 		xmmsv_get_string (entry, &value);
 
 		if (strcmp (value, "position") == 0) {

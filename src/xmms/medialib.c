@@ -735,7 +735,7 @@ process_dir (xmms_medialib_t *medialib, xmmsv_t *entries,
              const gchar *directory, xmms_error_t *error)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *list;
+	xmmsv_t *list, *val;
 
 	list = xmms_xform_browse (directory, error);
 	if (!list) {
@@ -744,12 +744,9 @@ process_dir (xmms_medialib_t *medialib, xmmsv_t *entries,
 
 	xmmsv_get_list_iter (list, &it);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *val;
+	while (xmmsv_list_iter_entry (it, &val)) {
 		const gchar *str;
 		gint isdir;
-
-		xmmsv_list_iter_entry (it, &val);
 
 		xmmsv_dict_entry_get_string (val, "path", &str);
 		xmmsv_dict_entry_get_int (val, "isdir", &isdir);

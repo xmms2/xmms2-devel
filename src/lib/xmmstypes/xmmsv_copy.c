@@ -94,8 +94,7 @@ duplicate_dict_value (xmmsv_t *val)
 
 	x_return_val_if_fail (xmmsv_get_dict_iter (val, &it), NULL);
 	dup_val = xmmsv_new_dict ();
-	while (xmmsv_dict_iter_valid (it)) {
-		xmmsv_dict_iter_pair (it, &key, &v);
+	while (xmmsv_dict_iter_pair (it, &key, &v)) {
 		new_elem = xmmsv_copy (v);
 		xmmsv_dict_set (dup_val, key, new_elem);
 		xmmsv_unref (new_elem);
@@ -117,8 +116,7 @@ duplicate_list_value (xmmsv_t *val)
 
 	x_return_val_if_fail (xmmsv_get_list_iter (val, &it), NULL);
 	dup_val = xmmsv_new_list ();
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		new_elem = xmmsv_copy (v);
 		xmmsv_list_append (dup_val, new_elem);
 		xmmsv_unref (new_elem);

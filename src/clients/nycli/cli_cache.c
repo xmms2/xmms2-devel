@@ -118,10 +118,11 @@ static gint
 refresh_active_playlist (xmmsv_t *val, void *udata)
 {
 	cli_cache_t *cache = (cli_cache_t *) udata;
-	xmmsv_list_iter_t *it;
-	gint32 id;
 
 	if (!xmmsv_is_error (val)) {
+		xmmsv_list_iter_t *it;
+		gint32 id;
+
 		/* Reset array */
 		if (cache->active_playlist->len > 0) {
 			gint len = cache->active_playlist->len;
@@ -132,10 +133,7 @@ refresh_active_playlist (xmmsv_t *val, void *udata)
 		xmmsv_get_list_iter (val, &it);
 
 		/* .. and refill it */
-		while (xmmsv_list_iter_valid (it)) {
-			xmmsv_t *entry;
-			xmmsv_list_iter_entry (it, &entry);
-			xmmsv_get_int (entry, &id);
+		while (xmmsv_list_iter_entry_int (it, &id)) {
 			g_array_append_val (cache->active_playlist, id);
 
 			xmmsv_list_iter_next (it);

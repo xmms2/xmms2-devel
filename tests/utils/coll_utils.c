@@ -137,13 +137,12 @@ static void
 parse_idlist (xmmsv_t *coll, xmmsv_t *list)
 {
 	xmmsv_list_iter_t *it;
+	int32_t id;
 
 	assert (xmmsv_is_type (list, XMMSV_TYPE_LIST));
 	assert (xmmsv_get_list_iter (list, &it));
 
-	while (xmmsv_list_iter_valid (it)) {
-		int32_t id;
-		assert (xmmsv_list_iter_entry_int (it, &id));
+	while (xmmsv_list_iter_entry_int (it, &id)) {
 		assert (xmmsv_coll_idlist_append (coll, id));
 		xmmsv_list_iter_next (it);
 	}
@@ -153,18 +152,14 @@ static void
 parse_attributes (xmmsv_t *coll, xmmsv_t *attrs)
 {
 	xmmsv_dict_iter_t *it;
+	xmmsv_t *entry;
+	const char *key;
 
 	assert (xmmsv_is_type (attrs, XMMSV_TYPE_DICT));
 	assert (xmmsv_get_dict_iter (attrs, &it));
 
-	while (xmmsv_dict_iter_valid (it)) {
-		xmmsv_t *entry;
-		const char *key;
-
-		assert (xmmsv_dict_iter_pair (it, &key, &entry));
-
+	while (xmmsv_dict_iter_pair (it, &key, &entry)) {
 		xmmsv_coll_attribute_set_value (coll, key, entry);
-
 		xmmsv_dict_iter_next (it);
 	}
 }
@@ -173,15 +168,14 @@ static void
 parse_operands (xmmsv_t *coll, xmmsv_t *operands)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_t *entry;
 
 	assert (xmmsv_is_type (operands, XMMSV_TYPE_LIST));
 	assert (xmmsv_get_list_iter (operands, &it));
 
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &entry)) {
 		xmmsv_t *operand;
-		xmmsv_t *entry;
 
-		assert (xmmsv_list_iter_entry (it, &entry));
 		operand = parse_collection (entry);
 		assert (operand != NULL);
 

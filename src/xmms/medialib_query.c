@@ -722,6 +722,7 @@ order_condition_by_value (xmmsv_t *entry,
 {
 	xmmsv_t *attrs, *field, *ids;
 	xmmsv_list_iter_t *it;
+	const gchar *value;
 
 	attrs = xmmsv_coll_attributes_get (coll);
 	xmmsv_dict_get (attrs, "field", &field);
@@ -737,15 +738,9 @@ order_condition_by_value (xmmsv_t *entry,
 	ids = xmmsv_new_list ();
 
 	xmmsv_get_list_iter (field, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		const gchar *value;
-		gint id;
-
-		xmmsv_list_iter_entry_string (it, &value);
-
-		id = xmms_fetch_info_add_key (fetch, NULL, value, sourcepref);
+	while (xmmsv_list_iter_entry_string (it, &value)) {
+		gint id = xmms_fetch_info_add_key (fetch, NULL, value, sourcepref);
 		xmmsv_list_append_int (ids, id);
-
 		xmmsv_list_iter_next (it);
 	}
 
@@ -810,7 +805,7 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                          xmms_fetch_info_t *fetch, xmmsv_t *order)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *operands, *id_list, *entry;
+	xmmsv_t *operands, *operand, *id_list, *entry;
 	GHashTable *id_table;
 
 	id_list = xmmsv_new_list ();
@@ -818,13 +813,10 @@ union_ordered_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
 	operands = xmmsv_coll_operands_get (coll);
 
 	xmmsv_get_list_iter (operands, &it);
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &operand)) {
 		const s4_resultrow_t *row;
 		s4_resultset_t *set;
-		xmmsv_t *operand;
 		gint j;
-
-		xmmsv_list_iter_entry (it, &operand);
 
 		/* Query the operand */
 		set = xmms_medialib_query_recurs (session, operand, fetch);
@@ -867,18 +859,15 @@ union_unordered_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
                            xmms_fetch_info_t *fetch)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *operands;
+	xmmsv_t *operands, *operand;
 	s4_condition_t *cond;
 
 	cond = s4_cond_new_combiner (S4_COMBINE_OR);
 	operands = xmmsv_coll_operands_get (coll);
 
 	xmmsv_get_list_iter (operands, &it);
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry (it, &operand)) {
 		s4_condition_t *op_cond;
-		xmmsv_t *operand;
-
-		xmmsv_list_iter_entry (it, &operand);
 
 		op_cond = collection_to_condition (session, operand, fetch, NULL);
 		s4_cond_add_operand (cond, op_cond);

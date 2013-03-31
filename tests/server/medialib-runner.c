@@ -166,18 +166,18 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry = 0;
 	xmmsv_list_iter_t *lit;
+	xmmsv_t *dict;
 
 	session = xmms_medialib_session_begin (medialib);
 
 	xmmsv_get_list_iter (content, &lit);
-	while (xmmsv_list_iter_valid (lit)) {
+	while (xmmsv_list_iter_entry (lit, &dict)) {
 		xmmsv_dict_iter_t *dit;
 		xmms_error_t err;
-		xmmsv_t *dict;
+		xmmsv_t *container;
+		const gchar *key;
 
 		xmms_error_reset (&err);
-
-		xmmsv_list_iter_entry (lit, &dict);
 
 		if (xmmsv_dict_has_key (dict, "url")) {
 			const gchar *url;
@@ -192,12 +192,9 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 
 		xmmsv_get_dict_iter (dict, &dit);
 
-		while (xmmsv_dict_iter_valid (dit)) {
-			const gchar *key, *source;
+		while (xmmsv_dict_iter_pair (dit, &key, &container)) {
+			const gchar *source;
 			gchar **parts;
-			xmmsv_t *container;
-
-			xmmsv_dict_iter_pair (dit, &key, &container);
 
 			parts = g_strsplit (key, "/", 2);
 
@@ -362,14 +359,12 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
            gint format, const gchar *datasetname)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_t *dict;
 
 	xmmsv_get_list_iter (testcases, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *dict, *content, *specification, *expected, *coll;
+	while (xmmsv_list_iter_entry (it, &dict)) {
+		xmmsv_t *content, *specification, *expected, *coll;
 		const gchar *name;
-		dict = NULL;
-
-		g_assert (xmmsv_list_iter_entry (it, &dict));
 
 		xmmsv_dict_entry_get_string (dict, "name", &name);
 
@@ -390,13 +385,11 @@ static void
 run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 {
 	xmmsv_list_iter_t *it;
+	const gchar *filename;
 
 	xmmsv_get_list_iter (databases, &it);
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry_string (it, &filename)) {
 		xmms_medialib_t *medialib;
-		const gchar *filename;
-
-		xmmsv_list_iter_entry_string (it, &filename);
 
 		if (format == FORMAT_PRETTY)
 			g_print ("Running suite with: %s\n", filename);

@@ -509,8 +509,7 @@ xmmsv_list_foreach (xmmsv_t *listv, xmmsv_list_foreach_func func,
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		func (v, user_data);
 		xmmsv_list_iter_next (it);
 	}
@@ -588,8 +587,7 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 		return listv->value.list->restricttype == type;
 
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		if (!xmmsv_is_type (v, type)) {
 			_xmmsv_list_iter_free (it);
 			return 0;
@@ -623,8 +621,7 @@ xmmsv_list_index_of (xmmsv_t *listv, xmmsv_t *val)
 	if (!xmmsv_get_list_iter (listv, &it))
 		return -1;
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		if (v == val) {
 			ret = i;
 			break;

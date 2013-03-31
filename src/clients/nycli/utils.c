@@ -272,13 +272,11 @@ print_config (cli_infos_t *infos, const gchar *confname)
 		 * shell wildcard expansion.  */
 
 		xmmsv_dict_iter_t *it;
+		const gchar *key;
+		xmmsv_t *val;
 
 		xmmsv_get_dict_iter (config, &it);
-		while (xmmsv_dict_iter_valid (it)) {
-			xmmsv_t *val;
-			const gchar *key;
-
-			xmmsv_dict_iter_pair (it, &key, &val);
+		while (xmmsv_dict_iter_pair (it, &key, &val)) {
 			if (fnmatch (confname, key, 0)) {
 				xmmsv_dict_iter_remove (it);
 			} else {
@@ -555,21 +553,17 @@ list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
 		xmmsv_list_iter_t *it;
 
 		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_valid (it)) {
-			xmmsv_t *entry;
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			infores = xmmsc_medialib_get_info (infos->sync, id);
+			xmmsc_result_wait (infores);
 
-			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_int (entry, &id)) {
-				infores = xmmsc_medialib_get_info (infos->sync, id);
-				xmmsc_result_wait (infores);
-
-				if (!first) {
-					g_printf ("\n");
-				} else {
-					first = FALSE;
-				}
-				id_print_info (infores, id, NULL);
+			if (!first) {
+				g_printf ("\n");
+			} else {
+				first = FALSE;
 			}
+			id_print_info (infores, id, NULL);
+
 			xmmsv_list_iter_next (it);
 		}
 
@@ -706,9 +700,7 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
                       column_display_t *coldisp, gboolean is_search)
 {
 	cli_infos_t *infos = column_display_infos_get (coldisp);
-	pl_pos_udata_t udata = { infos, coldisp, NULL, NULL, 0, 0};
 	xmmsv_t *val;
-	GArray *entries;
 
 	gint32 id;
 	const gchar *err;
@@ -718,29 +710,28 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
+		pl_pos_udata_t udata = { infos, coldisp, NULL, NULL, 0, 0};
 		xmmsv_list_iter_t *it;
+
 		column_display_prepare (coldisp);
 
 		if (is_search) {
 			column_display_print_header (coldisp);
 		}
 
-		entries = g_array_sized_new (FALSE, FALSE, sizeof (guint),
+		udata.entries = g_array_sized_new (FALSE, FALSE, sizeof (guint),
 		                             xmmsv_list_get_size (val));
 
-		for (xmmsv_get_list_iter (val, &it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-			xmmsv_t *entry;
-			xmmsv_list_iter_entry (it, &entry);
-			if (xmmsv_get_int (entry, &id)) {
-				g_array_append_val (entries, id);
-			}
+		xmmsv_get_list_iter (val, &it);
+
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			g_array_append_val (udata.entries, id);
+			xmmsv_list_iter_next (it);
 		}
 
-		udata.entries = entries;
 		playlist_positions_foreach (positions, pos_print_row_cb, TRUE, &udata);
 
+		g_array_free (udata.entries, TRUE);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -753,7 +744,6 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 	}
 
 	column_display_free (coldisp);
-	g_array_free (entries, TRUE);
 	xmmsc_result_unref (res);
 }
 
@@ -813,6 +803,8 @@ list_print_row (xmmsc_result_t *res, xmmsv_t *filter,
 
 	if (!xmmsv_get_error (val, &err)) {
 		xmmsv_list_iter_t *it;
+		xmmsv_t *entry;
+
 		column_display_prepare (coldisp);
 
 		if (filter != NULL) {
@@ -829,10 +821,7 @@ list_print_row (xmmsc_result_t *res, xmmsv_t *filter,
 		}
 
 		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_valid (it)) {
-			xmmsv_t *entry;
-			xmmsv_list_iter_entry (it, &entry);
-
+		while (xmmsv_list_iter_entry (it, &entry)) {
 			column_display_set_position (coldisp, i);
 
 			if (result_is_infos) {
@@ -1132,11 +1121,9 @@ print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
 	if (!xmmsv_get_error (val, &err)) {
 		xmmsv_list_iter_t *it;
 		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_valid (it)) {
-			xmmsv_t *entry;
-			xmmsv_list_iter_entry (it, &entry);
+		while (xmmsv_list_iter_entry_string (it, &s)) {
 			/* Skip hidden playlists if all is FALSE*/
-			if (xmmsv_get_string (entry, &s) && ((*s != '_') || all)) {
+			if ((*s != '_') || all) {
 				/* Highlight active playlist */
 				if (mark && strcmp (s, mark) == 0) {
 					g_printf ("* %s\n", s);
@@ -1337,17 +1324,12 @@ add_list (xmmsv_t *idlist, cli_infos_t *infos,
 	xmmsv_list_iter_t *it;
 	xmmsv_get_list_iter (idlist, &it);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *entry;
-		xmmsv_list_iter_entry (it, &entry);
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		xmmsc_result_t *res;
+		res = xmmsc_playlist_insert_id (infos->sync, playlist, pos++, id);
 
-		if (xmmsv_get_int (entry, &id)) {
-			xmmsc_result_t *res;
-			res = xmmsc_playlist_insert_id (infos->sync, playlist, pos++, id);
-
-			xmmsc_result_wait (res);
-			xmmsc_result_unref (res);
-		}
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
 
 		xmmsv_list_iter_next (it);
 	}
