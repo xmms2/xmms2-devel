@@ -32,6 +32,8 @@ extern "C" {
 
 #define xmmsv_check_type(type) ((type) > XMMSV_TYPE_NONE && (type) < XMMSV_TYPE_END)
 
+char *xmmsv_encode_url (const char *url) XMMS_PUBLIC;
+char *xmmsv_encode_url_full (const char *url, xmmsv_t *args) XMMS_PUBLIC;
 xmmsv_t *xmmsv_decode_url (const xmmsv_t *url) XMMS_PUBLIC;
 
 int xmmsv_utf8_validate (const char *str) XMMS_PUBLIC;

@@ -68,8 +68,8 @@ const char *xmmsc_userconfdir_get (char *buf, int len) XMMS_PUBLIC;
 
 
 /* Encoding of urls */
-char *xmmsc_medialib_encode_url_full (const char *url, xmmsv_t *args) XMMS_PUBLIC;
-char *xmmsc_medialib_encode_url (const char *url) XMMS_PUBLIC;
+char *xmmsc_medialib_encode_url_full (const char *url, xmmsv_t *args) XMMS_PUBLIC XMMS_DEPRECATED;
+char *xmmsc_medialib_encode_url (const char *url) XMMS_PUBLIC XMMS_DEPRECATED;
 
 
 /*
