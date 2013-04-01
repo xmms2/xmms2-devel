@@ -464,7 +464,7 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	gchar *path, *pattern, *encoded;
 
 	path = g_file_get_path (file);
-	encoded = xmmsc_medialib_encode_url (path);
+	encoded = xmmsv_encode_url (path);
 	g_free (path);
 
 	pattern = g_strdup_printf ("file://%s/*", encoded);

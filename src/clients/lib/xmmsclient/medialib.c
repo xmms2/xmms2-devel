@@ -52,7 +52,7 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 	char *enc_url;
 	x_check_conn (conn, NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url);
+	enc_url = xmmsv_encode_url (url);
 	if (!enc_url)
 		return NULL;
 
@@ -172,7 +172,7 @@ xmmsc_medialib_add_entry_full (xmmsc_connection_t *conn, const char *url, xmmsv_
 
 	x_check_conn (conn, NULL);
 
-	enc_url = xmmsc_medialib_encode_url_full (url, args);
+	enc_url = xmmsv_encode_url_full (url, args);
 	if (!enc_url)
 		return NULL;
 
@@ -219,7 +219,7 @@ xmmsc_medialib_import_path (xmmsc_connection_t *conn, const char *path)
 
 	x_check_conn (conn, NULL);
 
-	enc_path = xmmsc_medialib_encode_url (path);
+	enc_path = xmmsv_encode_url (path);
 	if (!enc_path)
 		return NULL;
 
