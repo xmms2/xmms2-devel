@@ -155,7 +155,7 @@ void
 list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 {
 	const gchar *name, *desc, *err;
-	xmmsv_t *val;
+	xmmsv_t *val, *elem;
 
 	val = xmmsc_result_get_value (res);
 
@@ -164,16 +164,13 @@ list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
 
 		xmmsv_get_list_iter (val, &it);
 
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-			xmmsv_t *elem;
-
-			xmmsv_list_iter_entry (it, &elem);
+		while (xmmsv_list_iter_entry (it, &elem)) {
 			xmmsv_dict_entry_get_string (elem, "shortname", &name);
 			xmmsv_dict_entry_get_string (elem, "description", &desc);
 
 			g_printf ("%s - %s\n", name, desc);
+
+			xmmsv_list_iter_next (it)) {
 		}
 	} else {
 		g_printf (_("Server error: %s\n"), err);
@@ -287,6 +284,7 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 {
 	const gchar *err;
 	xmmsv_t *val;
+	gint32 id;
 
 	val = xmmsc_result_get_value (res);
 
@@ -295,16 +293,8 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 
 		xmmsv_get_list_iter (val, &it);
 
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-			xmmsv_t *entry;
-			gint32 id;
-
-			xmmsv_list_iter_entry (it, &entry);
-
-			if (xmmsv_get_int (entry, &id)) {
-				switch (cmd) {
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			switch (cmd) {
 				case IDLIST_CMD_REHASH:
 					XMMS_CALL (xmmsc_medialib_rehash, infos->sync, id);
 					break;
@@ -313,8 +303,8 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 					break;
 				default:
 					break;
-				}
 			}
+			xmmsv_list_iter_next (it);
 		}
 	} else {
 		g_printf (_("Server error: %s\n"), err);
@@ -409,23 +399,20 @@ adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 		return;
 	}
 
-	for (xmmsv_get_dict_iter (val, &it);
-	     xmmsv_dict_iter_valid (it);
-	     xmmsv_dict_iter_next (it)) {
-		xmmsv_dict_iter_pair_int (it, &innerchan, &volume);
+	xmmsv_get_dict_iter (val, &it);
 
-		if (channel && strcmp (channel, innerchan) != 0) {
-			continue;
+	while (xmmsv_dict_iter_pair_int (it, &innerchan, &volume)) {
+		if (channel && strcmp (channel, innerchan) == 0) {
+			volume += relative;
+			if (volume > 100) {
+				volume = 100;
+			} else if (volume < 0) {
+				volume = 0;
+			}
+
+			XMMS_CALL (xmmsc_playback_volume_set, infos->sync, innerchan, volume);
 		}
-
-		volume += relative;
-		if (volume > 100) {
-			volume = 100;
-		} else if (volume < 0) {
-			volume = 0;
-		}
-
-		XMMS_CALL (xmmsc_playback_volume_set, infos->sync, innerchan, volume);
+		xmmsv_dict_iter_next (it);
 	}
 
 	xmmsc_result_unref (res);
@@ -713,23 +700,15 @@ matching_ids_tree (xmmsc_result_t *matching)
 		g_printf (_("Error retrieving the media matching the pattern!\n"));
 	} else {
 		xmmsv_list_iter_t *it;
-		xmmsv_t *entry;
 
 		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
 
 		xmmsv_get_list_iter (val, &it);
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-
-			xmmsv_list_iter_entry (it, &entry);
-
-			if (xmmsv_get_int (entry, &id)) {
-				guint *tid;
-				tid = g_new (guint, 1);
-				*tid = id;
-				g_tree_insert (list, tid, tid);
-			}
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			guint *tid = g_new (guint, 1);
+			*tid = id;
+			g_tree_insert (list, tid, tid);
+			xmmsv_list_iter_next (it);
 		}
 	}
 
@@ -873,10 +852,7 @@ coll_idlist_to_string (xmmsv_t *coll)
 	s = g_string_new ("(");
 
 	xmmsv_get_list_iter (xmmsv_coll_idlist_get (coll), &it);
-	for (xmmsv_list_iter_first (it);
-	     xmmsv_list_iter_valid (it);
-	     xmmsv_list_iter_next (it)) {
-
+	while (xmmsv_list_iter_entry_int (it, &entry)) {
 		if (first) {
 			first = FALSE;
 		} else {
@@ -885,6 +861,8 @@ coll_idlist_to_string (xmmsv_t *coll)
 
 		xmmsv_list_iter_entry_int (it, &entry);
 		g_string_append_printf (s, "%d", entry);
+
+		xmmsv_list_iter_next (it);
 	}
 	xmmsv_list_iter_explicit_destroy (it);
 
@@ -1128,23 +1106,16 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 
 		/* Loop on the playlist */
 		for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
-
 			/* Loop on the matched media */
-			for (xmmsv_list_iter_first (it);
-			     xmmsv_list_iter_valid (it);
-			     xmmsv_list_iter_next (it)) {
-				xmmsv_t *entry;
-
-				xmmsv_list_iter_entry (it, &entry);
-
+			while (xmmsv_list_iter_entry_int (it, &id)) {
 				/* If both match, jump! */
-				if (xmmsv_get_int (entry, &id)
-				    && g_array_index (playlist, guint, i) == id) {
+				if (g_array_index (playlist, guint, i) == id) {
 					jumpres = xmmsc_playlist_set_next (infos->sync, i);
 					xmmsc_result_wait (jumpres);
 					tickle (jumpres, infos);
 					goto finish;
 				}
+				xmmsv_list_iter_next (it);
 			}
 		}
 	}
@@ -1246,7 +1217,6 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			g_printf (_("Error retrieving playlist entries\n"));
 	} else {
 		xmmsv_list_iter_t *it;
-		xmmsv_t *entry;
 
 		/* store matching mediaids in a tree (faster lookup) */
 		list = matching_ids_tree (matching);
@@ -1256,17 +1226,11 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 		inc = 0;
 		up = TRUE;
 		xmmsv_get_list_iter (lisval, &it);
-		for (xmmsv_list_iter_first (it);
-		     xmmsv_list_iter_valid (it);
-		     xmmsv_list_iter_next (it)) {
-
-			xmmsv_list_iter_entry (it, &entry);
-
+		while (xmmsv_list_iter_entry_int (it, &id)) {
 			if (curr == pos) {
 				up = FALSE;
 			}
-			if (xmmsv_get_int (entry, &id) &&
-			    g_tree_lookup (list, &id) != NULL) {
+			if (g_tree_lookup (list, &id) != NULL) {
 				if (up) {
 					/* moving forward */
 					XMMS_CALL (xmmsc_playlist_move_entry,
@@ -1279,6 +1243,8 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 				inc++;
 			}
 			curr++;
+
+			xmmsv_list_iter_next (it);
 		}
 		g_tree_destroy (list);
 	}
@@ -1350,18 +1316,14 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 			plid = g_array_index (playlist, guint, i);
 
 			/* Loop on the matched media */
-			for (xmmsv_list_iter_first (it);
-			     xmmsv_list_iter_valid (it);
-			     xmmsv_list_iter_next (it)) {
-				xmmsv_t *entry;
-
-				xmmsv_list_iter_entry (it, &entry);
-
+			while (xmmsv_list_iter_entry_int (it, &id)) {
 				/* If both match, remove! */
-				if (xmmsv_get_int (entry, &id) && plid == id) {
+				if (plid == id) {
 					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync, NULL, i);
 					break;
 				}
+
+				xmmsv_list_iter_next (it);
 			}
 		}
 	}
@@ -1398,35 +1360,21 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 		xmmsv_get_list_iter (plistval, &plistit);
 
 		/* Loop on the playlist */
-		for (xmmsv_list_iter_first (plistit);
-		     xmmsv_list_iter_valid (plistit);
-		     xmmsv_list_iter_next (plistit)) {
-			xmmsv_t *plist_entry;
-
-			xmmsv_list_iter_entry (plistit, &plist_entry);
-
-			if (!xmmsv_get_int (plist_entry, &plid)) {
-				plid = 0;  /* failed to get id, should not happen */
-			}
-
+		while (xmmsv_list_iter_entry_int (plistit, &plid)) {
 			/* Loop on the matched media */
-			for (xmmsv_list_iter_first (matchit);
-			     xmmsv_list_iter_valid (matchit);
-			     xmmsv_list_iter_next (matchit)) {
-				xmmsv_t *match_entry;
-
-				xmmsv_list_iter_entry (matchit, &match_entry);
-
+			while (xmmsv_list_iter_entry_int (matchit, &id)) {
 				/* If both match, jump! */
-				if (xmmsv_get_int (match_entry, &id) && plid == id) {
+				if (plid == id) {
 					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync,
 					           playlist, i - offset);
 					offset++;
 					break;
 				}
+				xmmsv_list_iter_next (matchit);
 			}
 
 			i++;
+			xmmsv_list_iter_next (plistit);
 		}
 	}
 	xmmsc_result_unref (matchres);
