@@ -26,7 +26,26 @@
 #include "column_display.h"
 #include "playlist_positions.h"
 
-void done (xmmsc_result_t *res, cli_infos_t *infos);
+#define XMMS_CALL_NO_CHECK(fun, ...) do { \
+		xmmsc_result_t *__result; \
+		__result = fun (__VA_ARGS__); \
+		xmmsc_result_wait (__result); \
+		xmmsc_result_unref (__result); \
+	} while (0);
+
+#define XMMS_CALL(fun, ...) do { \
+		xmmsc_result_t *__result; \
+		const gchar *__message; \
+		xmmsv_t *__value; \
+		__result = fun (__VA_ARGS__); \
+		xmmsc_result_wait (__result); \
+		__value = xmmsc_result_get_value (__result); \
+		if (xmmsv_get_error (__value, &__message)) { \
+			g_printf (_("Server error: %s\n"), __message); \
+		} \
+		xmmsc_result_unref (__result); \
+	} while (0);
+
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
 void list_plugins (cli_infos_t *infos, xmmsc_result_t *res);
 void print_stats (cli_infos_t *infos, xmmsc_result_t *res);
@@ -55,9 +74,6 @@ void collection_print_config (xmmsc_result_t *res, cli_infos_t *infos, const gch
 void coll_rename (cli_infos_t *infos, const gchar *oldname, const gchar *newname, xmmsc_coll_namespace_t ns, gboolean force);
 void coll_save (cli_infos_t *infos, xmmsc_coll_t *coll, xmmsc_coll_namespace_t ns, const gchar *name, gboolean force);
 void coll_show (cli_infos_t *infos, xmmsc_result_t *res);
-void playback_play (cli_infos_t *infos);
-void playback_pause (cli_infos_t *infos);
-void playback_toggle (cli_infos_t *infos);
 void set_next_rel (cli_infos_t *infos, gint offset);
 void add_pls (xmmsc_result_t *plsres, cli_infos_t *infos, const gchar *playlist, gint pos);
 void add_list (xmmsv_t *matching, cli_infos_t *infos, const gchar *playlist, gint pos);

@@ -134,37 +134,16 @@ compare_uint (gconstpointer a, gconstpointer b, gpointer userdata)
 	}
 }
 
-
-/* Dummy callback that resets the action status as finished. */
-void
-done (xmmsc_result_t *res, cli_infos_t *infos)
-{
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (xmmsv_get_error (val, &err)) {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
-}
-
 void
 tickle (xmmsc_result_t *res, cli_infos_t *infos)
 {
-	xmmsc_result_t *res2;
-
 	const gchar *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		res2 = xmmsc_playback_tickle (infos->sync);
-		xmmsc_result_wait (res2);
-		done (res2, infos);
+		XMMS_CALL (xmmsc_playback_tickle, infos->sync);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -307,7 +286,6 @@ static void
 apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 {
 	const gchar *err;
-	xmmsc_result_t *cmdres;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
@@ -328,16 +306,14 @@ apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
 			if (xmmsv_get_int (entry, &id)) {
 				switch (cmd) {
 				case IDLIST_CMD_REHASH:
-					cmdres = xmmsc_medialib_rehash (infos->sync, id);
+					XMMS_CALL (xmmsc_medialib_rehash, infos->sync, id);
 					break;
 				case IDLIST_CMD_REMOVE:
-					cmdres = xmmsc_medialib_remove_entry (infos->sync, id);
+					XMMS_CALL (xmmsc_medialib_remove_entry, infos->sync, id);
 					break;
 				default:
 					break;
 				}
-				xmmsc_result_wait (cmdres);
-				xmmsc_result_unref (cmdres);
 			}
 		}
 	} else {
@@ -357,12 +333,8 @@ remove_ids (cli_infos_t *infos, xmmsc_result_t *res)
 static void
 pos_remove_cb (gint pos, void *userdata)
 {
-	xmmsc_result_t *res;
 	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
-
-	res = xmmsc_playlist_remove_entry (pack->infos->sync, pack->playlist, pos);
-	xmmsc_result_wait (res);
-	xmmsc_result_unref (res);
+	XMMS_CALL (xmmsc_playlist_remove_entry, pack->infos->sync, pack->playlist, pos);
 }
 
 void
@@ -419,8 +391,8 @@ dict_keys (const gchar *key, xmmsv_t *val, void *udata)
 void
 adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 {
-	xmmsc_result_t *res, *innerres;
-	xmmsv_t *val,  *innerval;
+	xmmsc_result_t *res;
+	xmmsv_t *val;
 	xmmsv_dict_iter_t *it;
 	const gchar *innerchan;
 	const gchar *err;
@@ -453,17 +425,7 @@ adjust_volume (cli_infos_t *infos, const gchar *channel, gint relative)
 			volume = 0;
 		}
 
-		innerres = xmmsc_playback_volume_set (infos->sync, innerchan, volume);
-		xmmsc_result_wait (innerres);
-		innerval = xmmsc_result_get_value (innerres);
-		if (xmmsv_get_error (innerval, &err)) {
-			g_printf (_("Server error: %s\n"), err);
-
-			xmmsc_result_unref (res);
-			xmmsc_result_unref (innerres);
-			return;
-		}
-		xmmsc_result_unref (innerres);
+		XMMS_CALL (xmmsc_playback_volume_set, infos->sync, innerchan, volume);
 	}
 
 	xmmsc_result_unref (res);
@@ -489,21 +451,10 @@ set_volume (cli_infos_t *infos, const gchar *channel, gint volume)
 
 	/* set volumes for channels in list */
 	for (it = g_list_first (channels); it != NULL; it = g_list_next (it)) {
-		res = xmmsc_playback_volume_set (infos->sync, it->data, volume);
-		xmmsc_result_wait (res);
-		if (xmmsc_result_iserror (res)) {
-			const char *err;
-
-			xmmsv_get_error (xmmsc_result_get_value (res), &err);
-			g_printf (_("Server error: %s\n"), err);
-		}
-		xmmsc_result_unref (res);
-
-		/* free channel string */
-		g_free (it->data);
+		XMMS_CALL (xmmsc_playback_volume_set, infos->sync, it->data, volume);
 	}
 
-	g_list_free (channels);
+	g_list_free_full (channels, g_free);
 }
 
 void
@@ -862,18 +813,11 @@ void
 coll_rename (cli_infos_t *infos, const gchar *oldname, const gchar *newname,
              xmmsc_coll_namespace_t ns, gboolean force)
 {
-	xmmsc_result_t *res;
-
 	if (force) {
-		res = xmmsc_coll_remove (infos->sync, newname, ns);
-		xmmsc_result_wait (res);
-		/* FIXME(g): check something? */
-		xmmsc_result_unref (res);
+		XMMS_CALL_NO_CHECK (xmmsc_coll_remove, infos->sync, newname, ns);
 	}
 
-	res = xmmsc_coll_rename (infos->sync, oldname, newname, ns);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_coll_rename, infos->sync, oldname, newname, ns);
 }
 
 void
@@ -897,9 +841,7 @@ coll_save (cli_infos_t *infos, xmmsv_t *coll,
 	}
 
 	if (save) {
-		res = xmmsc_coll_save (infos->sync, coll, name, ns);
-		xmmsc_result_wait (res);
-		done (res, infos);
+		XMMS_CALL (xmmsc_coll_save, infos->sync, coll, name, ns);
 	}
 }
 
@@ -1245,63 +1187,16 @@ position_jump (cli_infos_t *infos, playlist_positions_t *positions)
 }
 
 void
-playback_play (cli_infos_t *infos)
-{
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_start (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
-}
-
-void
-playback_pause (cli_infos_t *infos)
-{
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_pause (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
-}
-
-void
-playback_toggle (cli_infos_t *infos)
-{
-	guint status;
-
-	status = infos->cache->playback_status;
-
-	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-		playback_pause (infos);
-	} else {
-		playback_play (infos);
-	}
-}
-
-void
-set_next_rel (cli_infos_t *infos, gint offset)
-{
-	xmmsc_result_t *res;
-
-	res = xmmsc_playlist_set_next_rel (infos->sync, offset);
-	xmmsc_result_wait (res);
-	tickle (res, infos);
-}
-
-void
 add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
          const gchar *playlist, gint pos)
 {
-	xmmsc_result_t *res;
-	xmmsv_t *val;
 	const char *err;
+	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (plsres);
 
 	if (!xmmsv_get_error (val, &err)) {
-		res = xmmsc_playlist_add_idlist (infos->sync, playlist, val);
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
+		XMMS_CALL (xmmsc_playlist_add_idlist, infos->sync, playlist, val);
 	} else {
 		g_printf (_("Server error: %s\n"), err);
 	}
@@ -1318,19 +1213,13 @@ add_list (xmmsv_t *idlist, cli_infos_t *infos,
           const gchar *playlist, gint pos)
 
 {
-	/* FIXME: w00t at code copy-paste, please modularize */
+	xmmsv_list_iter_t *it;
 	gint32 id;
 
-	xmmsv_list_iter_t *it;
 	xmmsv_get_list_iter (idlist, &it);
 
 	while (xmmsv_list_iter_entry_int (it, &id)) {
-		xmmsc_result_t *res;
-		res = xmmsc_playlist_insert_id (infos->sync, playlist, pos++, id);
-
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
-
+		XMMS_CALL (xmmsc_playlist_insert_id, infos->sync, playlist, pos++, id);
 		xmmsv_list_iter_next (it);
 	}
 }
@@ -1339,7 +1228,7 @@ void
 move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
               const gchar *playlist, gint pos)
 {
-	xmmsc_result_t *movres, *lisres;
+	xmmsc_result_t *lisres;
 	guint curr;
 	gint32 id;
 	gint inc;
@@ -1380,15 +1269,13 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 			    g_tree_lookup (list, &id) != NULL) {
 				if (up) {
 					/* moving forward */
-					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
-					                                    curr - inc, pos - 1);
+					XMMS_CALL (xmmsc_playlist_move_entry,
+					           infos->sync, playlist, curr - inc, pos - 1);
 				} else {
 					/* moving backward */
-					movres = xmmsc_playlist_move_entry (infos->sync, playlist,
-					                                    curr, pos + inc);
+					XMMS_CALL (xmmsc_playlist_move_entry,
+					           infos->sync, playlist, curr, pos + inc);
 				}
-				xmmsc_result_wait (movres);
-				xmmsc_result_unref (movres);
 				inc++;
 			}
 			curr++;
@@ -1403,7 +1290,6 @@ move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
 static void
 pos_move_cb (gint curr, void *userdata)
 {
-	xmmsc_result_t *movres;
 	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
 
 	/* Entries are moved in descending order, pack->inc is used as
@@ -1415,18 +1301,15 @@ pos_move_cb (gint curr, void *userdata)
 		if (pack->inc >= 0) {
 			pack->inc = -1; /* start inc at -1, decrement */
 		}
-		movres = xmmsc_playlist_move_entry (pack->infos->sync, pack->playlist,
-		                                    curr, pack->pos + pack->inc);
+		XMMS_CALL (xmmsc_playlist_move_entry, pack->infos->sync,
+		           pack->playlist, curr, pack->pos + pack->inc);
 		pack->inc--;
 	} else {
 		/* moving backward */
-		movres = xmmsc_playlist_move_entry (pack->infos->sync, pack->playlist,
-		                                    curr + pack->inc, pack->pos);
+		XMMS_CALL (xmmsc_playlist_move_entry, pack->infos->sync,
+		           pack->playlist, curr + pack->inc, pack->pos);
 		pack->inc++;
 	}
-
-	xmmsc_result_wait (movres);
-	xmmsc_result_unref (movres);
 }
 
 void
@@ -1441,7 +1324,6 @@ void
 remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	xmmsc_result_t *rmres;
 	guint plid;
 	gint32 id;
 	gint plsize;
@@ -1477,9 +1359,7 @@ remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
 
 				/* If both match, remove! */
 				if (xmmsv_get_int (entry, &id) && plid == id) {
-					rmres = xmmsc_playlist_remove_entry (infos->sync, NULL, i);
-					xmmsc_result_wait (rmres);
-					xmmsc_result_unref (rmres);
+					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync, NULL, i);
 					break;
 				}
 			}
@@ -1493,7 +1373,6 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
                 cli_infos_t *infos, const gchar *playlist)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
-	xmmsc_result_t *rmres;
 	gint32 plid, id;
 	guint i;
 	gint offset;
@@ -1540,10 +1419,8 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 
 				/* If both match, jump! */
 				if (xmmsv_get_int (match_entry, &id) && plid == id) {
-					rmres = xmmsc_playlist_remove_entry (infos->sync, playlist,
-					                                     i - offset);
-					xmmsc_result_wait (rmres);
-					xmmsc_result_unref (rmres);
+					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync,
+					           playlist, i - offset);
 					offset++;
 					break;
 				}
@@ -1559,17 +1436,13 @@ remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
 void
 copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist)
 {
-	xmmsc_result_t *saveres;
 	const gchar *err;
 	xmmsv_t *val;
 
 	val = xmmsc_result_get_value (res);
 
 	if (!xmmsv_get_error (val, &err)) {
-		saveres = xmmsc_coll_save (infos->sync, val, playlist,
-		                           XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_wait (saveres);
-		done (saveres, infos);
+		XMMS_CALL (xmmsc_coll_save, infos->sync, val, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 	} else {
 		g_printf (_("Cannot find the playlist to copy!\n"));
 	}
@@ -1601,7 +1474,6 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
                     gint history, gint upcoming, const gchar *typestr,
                     const gchar *input, const gchar *jumplist)
 {
-	xmmsc_result_t *saveres;
 	const gchar *err;
 	xmmsv_t *newcoll = NULL;
 	xmmsv_t *val;
@@ -1635,11 +1507,7 @@ configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playli
 			/* FIXME: Check for the existence of the target ? */
 			xmmsv_coll_attribute_set_string (val, "jumplist", jumplist);
 		}
-
-		saveres = xmmsc_coll_save (infos->sync, val, playlist,
-		                           XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsc_result_wait (saveres);
-		done (saveres, infos);
+		XMMS_CALL (xmmsc_coll_save, infos->sync, val, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 	} else {
 		g_printf (_("Cannot find the playlist to configure!\n"));
 	}

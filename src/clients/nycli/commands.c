@@ -555,51 +555,45 @@ create_list_column_display (cli_infos_t *infos)
 gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
 {
-	playback_play (infos);
+	XMMS_CALL (xmmsc_playback_start, infos->sync);
 	return FALSE;
 }
 
 gboolean
 cli_pause (cli_infos_t *infos, command_context_t *ctx)
 {
-	playback_pause (infos);
+	XMMS_CALL (xmmsc_playback_pause, infos->sync);
 	return FALSE;
 }
 
 gboolean
 cli_toggle (cli_infos_t *infos, command_context_t *ctx)
 {
-	playback_toggle (infos);
+	guint status = infos->cache->playback_status;
+
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+		XMMS_CALL (xmmsc_playback_pause, infos->sync);
+	} else {
+		XMMS_CALL (xmmsc_playback_start, infos->sync);
+	}
 	return FALSE;
 }
 
 gboolean
 cli_stop (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_stop (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
-
+	XMMS_CALL (xmmsc_playback_stop, infos->sync);
 	return FALSE;
 }
 
 gboolean
 cli_seek (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	command_arg_time_t t;
 
 	if (command_arg_time_get (ctx, 0, &t)) {
-		if (t.type == COMMAND_ARG_TIME_OFFSET) {
-			res = xmmsc_playback_seek_ms (infos->sync, t.value.offset * 1000, XMMS_PLAYBACK_SEEK_CUR);
-		} else {
-			res = xmmsc_playback_seek_ms (infos->sync, t.value.pos * 1000, XMMS_PLAYBACK_SEEK_SET);
-		}
-
-		xmmsc_result_wait (res);
-		done (res, infos);
+		gint offset = t.type == COMMAND_ARG_TIME_OFFSET ? t.value.offset : t.value.pos;
+		XMMS_CALL (xmmsc_playback_seek_ms, infos->sync, offset * 1000, XMMS_PLAYBACK_SEEK_CUR);
 	} else {
 		g_printf (_("Error: failed to parse the time argument!\n"));
 	}
@@ -630,13 +624,13 @@ gboolean
 cli_prev (cli_infos_t *infos, command_context_t *ctx)
 {
 	gint n;
-	gint offset = 1;
+	gint offset = -1;
 
 	if (command_arg_int_get (ctx, 0, &n)) {
-		offset = n;
+		offset = -n;
 	}
 
-	set_next_rel (infos, - offset);
+	XMMS_CALL (xmmsc_playlist_set_next_rel, infos->sync, offset);
 
 	return FALSE;
 }
@@ -651,7 +645,7 @@ cli_next (cli_infos_t *infos, command_context_t *ctx)
 		offset = n;
 	}
 
-	set_next_rel (infos, offset);
+	XMMS_CALL (xmmsc_playlist_set_next_rel, infos->sync, offset);
 
 	return FALSE;
 }
@@ -1098,16 +1092,9 @@ static void
 cli_add_file (cli_infos_t *infos, const gchar *url,
               const gchar *playlist, gint pos, xmmsv_t *attrs)
 {
-	xmmsc_result_t *res;
 	gchar *decoded = decode_url (url);
-
-	res = xmmsc_playlist_insert_full (infos->sync, playlist, pos, decoded, attrs);
-	xmmsc_result_wait (res);
-	xmmsc_result_unref (res);
-
+	XMMS_CALL (xmmsc_playlist_insert_full, infos->sync, playlist, pos, decoded, attrs);
 	g_free (decoded);
-
-	return;
 }
 
 /**
@@ -1119,13 +1106,7 @@ static void
 cli_add_dir (cli_infos_t *infos, const gchar *url,
              const gchar *playlist, gint pos)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist, pos, url);
-	xmmsc_result_wait (res);
-	xmmsc_result_unref (res);
-
-	return;
+	XMMS_CALL (xmmsc_playlist_rinsert_encoded, infos->sync, playlist, pos, url);
 }
 
 /**
@@ -1445,7 +1426,6 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gchar *playlist;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
@@ -1453,9 +1433,7 @@ cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_load (infos->sync, playlist);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_playlist_load, infos->sync, playlist);
 
 	g_free (playlist);
 
@@ -1492,15 +1470,11 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 		copy_playlist (res, infos, newplaylist);
 	} else {
 		/* Simply create a new empty playlist */
-		res = xmmsc_playlist_create (infos->sync, newplaylist);
-		xmmsc_result_wait (res);
-		done (res, infos);
+		XMMS_CALL (xmmsc_playlist_create, infos->sync, newplaylist);
 	}
 
 	if (switch_to) {
-		res = xmmsc_playlist_load (infos->sync, newplaylist);
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
+		XMMS_CALL (xmmsc_playlist_load, infos->sync, newplaylist);
 	}
 
 	g_free (newplaylist);
@@ -1540,7 +1514,6 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gchar *playlist;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
@@ -1555,9 +1528,7 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	res = xmmsc_playlist_remove (infos->sync, playlist);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_playlist_remove, infos->sync, playlist);
 
 	g_free (playlist);
 
@@ -1567,16 +1538,13 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gchar *playlist;
 
 	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
 		playlist = g_strdup (infos->cache->active_playlist_name);
 	}
 
-	res = xmmsc_playlist_clear (infos->sync, playlist);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_playlist_clear, infos->sync, playlist);
 
 	g_free (playlist);
 
@@ -1586,21 +1554,14 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-	gchar *playlist;
-	gboolean free_playlist = TRUE;
+	gchar *playlist = infos->cache->active_playlist_name;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
-		playlist = infos->cache->active_playlist_name;
-		free_playlist = FALSE;
-	}
-
-	res = xmmsc_playlist_shuffle (infos->sync, playlist);
-	xmmsc_result_wait (res);
-	done (res, infos);
-
-	if (free_playlist)
+	if (command_arg_longstring_get (ctx, 0, &playlist)) {
+		XMMS_CALL (xmmsc_playlist_shuffle, infos->sync, playlist);
 		g_free (playlist);
+	} else {
+		XMMS_CALL (xmmsc_playlist_shuffle, infos->sync, playlist);
+	}
 
 	return FALSE;
 }
@@ -1608,7 +1569,6 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	xmmsv_t *orderval;
 	const gchar *playlist;
 
@@ -1626,9 +1586,7 @@ cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
 		orderval = xmmsv_make_stringlist (order, -1);
 	}
 
-	res = xmmsc_playlist_sort (infos->sync, playlist, orderval);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_playlist_sort, infos->sync, playlist, orderval);
 
 	xmmsv_unref (orderval);
 
@@ -1879,7 +1837,6 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	gchar *collection, *name, *ns;
 
 	if (!command_arg_longstring_get (ctx, 0, &collection)) {
@@ -1889,13 +1846,11 @@ cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
 
 	coll_name_split (collection, &ns, &name);
 
-	res = xmmsc_coll_remove (infos->sync, name, ns);
-	xmmsc_result_wait (res);
-	done (res, infos);
+	XMMS_CALL (xmmsc_coll_remove, infos->sync, name, ns);
 
 	g_free (ns);
 	g_free (name);
-    g_free (collection);
+	g_free (collection);
 
 	return FALSE;
 }
@@ -2100,10 +2055,7 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 		xmmsv_unref (coll);
 	} else {
 		/* Rehash all media-library */
-		res = xmmsc_medialib_rehash (infos->sync, 0);
-		xmmsc_result_wait (res);
-		done (res, infos);
-
+		XMMS_CALL (xmmsc_medialib_rehash, infos->sync, 0);
 		pattern = NULL;
 	}
 
@@ -2116,7 +2068,6 @@ cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
 	const gchar *confname, *confval;
 
 	if (!command_arg_string_get (ctx, 0, &confname)) {
@@ -2127,9 +2078,7 @@ cli_server_config (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (confval) {
-		res = xmmsc_config_set_value (infos->sync, confname, confval);
-		xmmsc_result_wait (res);
-		done (res, infos);
+		XMMS_CALL (xmmsc_config_set_value, infos->sync, confname, confval);
 	} else {
 		print_config (infos, confname);
 	}
@@ -2186,12 +2135,8 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 			g_printf (_("Error: you must provide a property to delete!\n"));
 			goto finish;
 		}
-		res = xmmsc_medialib_entry_property_remove_with_source (infos->sync,
-		                                                        mid,
-		                                                        source,
-		                                                        propname);
-		xmmsc_result_wait (res);
-		done (res, infos);
+		XMMS_CALL (xmmsc_medialib_entry_property_remove_with_source,
+		           infos->sync, mid, source, propname);
 	} else if (!propval) {
 		res = xmmsc_medialib_get_info (infos->sync, mid);
 		xmmsc_result_wait (res);
@@ -2212,21 +2157,12 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		fint = cons | fint;
 
 		if (fint) {
-			res = xmmsc_medialib_entry_property_set_int_with_source (infos->sync,
-			                                                         mid,
-			                                                         source,
-			                                                         propname,
-			                                                         value);
+			XMMS_CALL (xmmsc_medialib_entry_property_set_int_with_source,
+			           infos->sync, mid, source, propname, value);
 		} else {
-			res = xmmsc_medialib_entry_property_set_str_with_source (infos->sync,
-			                                                         mid,
-			                                                         source,
-			                                                         propname,
-			                                                         propval);
+			XMMS_CALL (xmmsc_medialib_entry_property_set_str_with_source,
+			           infos->sync, mid, source, propname, propval);
 		}
-
-		xmmsc_result_wait (res);
-		done (res, infos);
 	}
 
 finish:
@@ -2295,12 +2231,7 @@ cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_coll_sync (infos->sync);
-	xmmsc_result_wait (res);
-	done (res, infos);
-
+	XMMS_CALL (xmmsc_coll_sync, infos->sync);
 	return FALSE;
 }
 
@@ -2308,12 +2239,8 @@ cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
-
 	if (infos->sync) {
-		res = xmmsc_quit (infos->sync);
-		xmmsc_result_wait (res);
-		done (res, infos);
+		XMMS_CALL (xmmsc_quit, infos->sync);
 	}
 	return FALSE;
 }

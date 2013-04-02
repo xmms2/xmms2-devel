@@ -20,6 +20,7 @@
 #include "utils.h"
 #include "status.h"
 #include "cli_infos.h"
+#include "cli_cache.h"
 #include "cmdnames.h"
 
 #include "command_trie.h"
@@ -49,21 +50,27 @@ readline_status_quit (gint count, gint key)
 static gint
 readline_next_song (gint count, gint key)
 {
-	set_next_rel (readline_cli_infos, 1);
+	XMMS_CALL (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, 1);
 	return 0;
 }
 
 static gint
 readline_previous_song (gint count, gint key)
 {
-	set_next_rel (readline_cli_infos, -1);
+	XMMS_CALL (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, -1);
 	return 0;
 }
 
 static gint
 readline_toggle_playback (gint count, gint key)
 {
-	playback_toggle (readline_cli_infos);
+	guint status = readline_cli_infos->cache->playback_status;
+
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+		XMMS_CALL (xmmsc_playback_pause, readline_cli_infos->sync);
+	} else {
+		XMMS_CALL (xmmsc_playback_start, readline_cli_infos->sync);
+	}
 	return 0;
 }
 
