@@ -151,34 +151,6 @@ tickle (xmmsc_result_t *res, cli_infos_t *infos)
 	xmmsc_result_unref (res);
 }
 
-void
-list_plugins (cli_infos_t *infos, xmmsc_result_t *res)
-{
-	const gchar *name, *desc, *err;
-	xmmsv_t *val, *elem;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_list_iter_t *it;
-
-		xmmsv_get_list_iter (val, &it);
-
-		while (xmmsv_list_iter_entry (it, &elem)) {
-			xmmsv_dict_entry_get_string (elem, "shortname", &name);
-			xmmsv_dict_entry_get_string (elem, "description", &desc);
-
-			g_printf ("%s - %s\n", name, desc);
-
-			xmmsv_list_iter_next (it)) {
-		}
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
-}
-
 static void
 print_server_stats (xmmsc_result_t *res)
 {

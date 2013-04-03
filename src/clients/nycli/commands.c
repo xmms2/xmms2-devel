@@ -2171,14 +2171,43 @@ finish:
 	return FALSE;
 }
 
+static gint
+cli_server_plugins_sortfunc (xmmsv_t **a, xmmsv_t **b)
+{
+	const gchar *an, *bn;
+	xmmsv_dict_entry_get_string (*a, "shortname", &an);
+	xmmsv_dict_entry_get_string (*b, "shortname", &bn);
+	return g_strcmp0 (an, bn);
+}
+
 gboolean
 cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
 {
+	const gchar *name, *desc, *err;
+	xmmsv_t *value, *elem;
 	xmmsc_result_t *res;
 
 	res = xmmsc_main_list_plugins (infos->sync, XMMS_PLUGIN_TYPE_ALL);
 	xmmsc_result_wait (res);
-	list_plugins (infos, res);
+
+	value = xmmsc_result_get_value (res);
+	if (!xmmsv_get_error (value, &err)) {
+		xmmsv_list_iter_t *it;
+
+		xmmsv_list_sort (value, cli_server_plugins_sortfunc);
+
+		xmmsv_get_list_iter (value, &it);
+		while (xmmsv_list_iter_entry (it, &elem)) {
+			xmmsv_dict_entry_get_string (elem, "shortname", &name);
+			xmmsv_dict_entry_get_string (elem, "description", &desc);
+			g_printf ("%-15s - %s\n", name, desc);
+			xmmsv_list_iter_next (it);
+		}
+	} else {
+		g_printf (_("Server error: %s\n"), err);
+	}
+
+	xmmsc_result_unref (res);
 
 	return FALSE;
 }
