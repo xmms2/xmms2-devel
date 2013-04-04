@@ -593,17 +593,35 @@ xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
 static gboolean
 xmms_alsa_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 {
-	gint err;
+	gint err = 0;
 	xmms_alsa_data_t *data;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	/* Get rid of old cow if any */
-	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_RUNNING) {
-		err = snd_pcm_drain (data->pcm);
-		XMMS_DBG ("did we drain? --> %s", snd_strerror (err));
+	switch (snd_pcm_state (data->pcm)) {
+		case SND_PCM_STATE_OPEN:
+		case SND_PCM_STATE_SETUP:
+		case SND_PCM_STATE_PREPARED:
+			break;
+		case SND_PCM_STATE_XRUN:
+			err = snd_pcm_recover (data->pcm, -ESTRPIPE, 0);
+			break;
+		case SND_PCM_STATE_SUSPENDED:
+			err = snd_pcm_recover (data->pcm, -EPIPE, 0);
+			break;
+		case SND_PCM_STATE_RUNNING:
+			err = snd_pcm_drain (data->pcm);
+			break;
+		default:
+			XMMS_DBG ("Got unexpected PCM state: %d", snd_pcm_state (data->pcm));
+			return FALSE;
+	}
+
+	if (err < 0) {
+		xmms_log_error ("Unable to prepare PCM device new format: %s", snd_strerror (err));
+		return FALSE;
 	}
 
 	/* Set new audio format*/
