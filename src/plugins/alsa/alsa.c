@@ -83,7 +83,6 @@ static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
                              xmms_error_t *err);
-static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output, gint err);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
@@ -786,44 +785,6 @@ xmms_alsa_flush (xmms_output_t *output)
 	}
 }
 
-
-
-/**
- * XRUN recovery.
- * Checks if any buffer underrun has happened and performes the
- * necessary 'repairs'. Straight from alsa pcm.c example.
- *
- * @param data The private plugin data.
- */
-static void
-xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
-{
-	g_return_if_fail (data);
-
-	if (err == -EPIPE) {
-		err = snd_pcm_prepare (data->pcm);
-		if (err < 0) {
-			xmms_log_error ("Unable to recover from underrun, prepare failed: "
-			                "%s", snd_strerror (err));
-		}
-	}
-	else if (err == -ESTRPIPE) {
-		while ((err = snd_pcm_resume (data->pcm)) == -EAGAIN) {
-			sleep (1); /* wait until the suspend flag is released */
-		}
-
-		if (err < 0) {
-			err = snd_pcm_prepare (data->pcm);
-			if (err < 0) {
-				xmms_log_error ("Can't recovery from suspend, prepare failed: "
-				                "%s\n", snd_strerror (err));
-			}
-		}
-	}
-}
-
-
-
 /**
  * Write buffer to the audio device.
  *
@@ -833,7 +794,7 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
  */
 static void
 xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
-                 xmms_error_t *err)
+                 xmms_error_t *error)
 {
 	gint written;
 	gint frames;
@@ -856,9 +817,15 @@ xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
 		} else if (written == -EAGAIN || written == -EINTR) {
 			snd_pcm_wait (data->pcm, 100);
 		} else if (written == -EPIPE || written == -ESTRPIPE) {
-			xmms_alsa_xrun_recover (data, written);
+			if (snd_pcm_recover (data->pcm, written, 0) < 0) {
+				gchar *message = g_strdup_printf ("Could not recover PCM device (%s)", snd_strerror (written));
+				xmms_error_set (error, XMMS_ERROR_GENERIC, message);
+				g_free (message);
+			}
 		} else {
-			xmms_log_fatal ("ALSA's doing some funky shit.. please report (%s)", snd_strerror (written));
+			gchar *message = g_strdup_printf ("Unexpected error from ALSA (%s)", snd_strerror (written));
+			xmms_error_set (error, XMMS_ERROR_GENERIC, message);
+			g_free (message);
 		}
 	}
 }
