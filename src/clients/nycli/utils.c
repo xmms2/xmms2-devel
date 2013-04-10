@@ -30,13 +30,7 @@ static void coll_int_attribute_set (xmmsv_t *coll, const char *key, gint value);
 static xmmsv_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);
 static void coll_print_attributes (const char *key, xmmsv_t *val, void *udata);
 
-static void pl_print_config (xmmsv_t *coll, const char *name);
-
-static void id_print_info (xmmsc_result_t *res, guint id, const gchar *source);
-
 static gint compare_uint (gconstpointer a, gconstpointer b, gpointer userdata);
-
-static void coll_dump (xmmsv_t *coll, guint level);
 
 typedef enum {
 	IDLIST_CMD_NONE = 0,
@@ -136,47 +130,16 @@ compare_uint (gconstpointer a, gconstpointer b, gpointer userdata)
 }
 
 void
-tickle (xmmsc_result_t *res, cli_infos_t *infos)
+print_stats (xmmsv_t *val)
 {
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		XMMS_CALL (xmmsc_playback_tickle, infos->sync);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
-}
-
-static void
-print_server_stats (xmmsc_result_t *res)
-{
+	const gchar *version;
 	gint uptime;
-	const gchar *version, *err;
 
-	xmmsv_t *val;
+	xmmsv_dict_entry_get_string (val, "version", &version);
+	xmmsv_dict_entry_get_int (val, "uptime", &uptime);
 
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_dict_entry_get_string (val, "version", &version);
-		xmmsv_dict_entry_get_int (val, "uptime", &uptime);
-		g_printf ("uptime = %d\n"
-		          "version = %s\n", uptime, version);
-	} else {
-		g_printf ("Server error: %s\n", err);
-	}
-}
-
-void
-print_stats (cli_infos_t *infos, xmmsc_result_t *res)
-{
-	print_server_stats (res);
-	xmmsc_result_unref (res);
+	g_printf ("uptime = %d\n"
+	          "version = %s\n", uptime, version);
 }
 
 static void
@@ -241,11 +204,11 @@ print_config (cli_infos_t *infos, const gchar *confname)
 }
 
 void
-print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
+print_property (cli_infos_t *infos, xmmsv_t *dict, guint id,
                 const gchar *source, const gchar *property)
 {
 	if (property == NULL) {
-		id_print_info (res, id, source);
+		xmmsv_dict_foreach (dict, propdict_dump, (void *) source);
 	} else {
 		/* FIXME(g): print if given an specific property */
 	}
@@ -253,45 +216,33 @@ print_property (cli_infos_t *infos, xmmsc_result_t *res, guint id,
 
 /* Apply operation to an idlist */
 static void
-apply_ids (cli_infos_t *infos, xmmsc_result_t *res, idlist_command_t cmd)
+apply_ids (cli_infos_t *infos, xmmsv_t *val, idlist_command_t cmd)
 {
-	const gchar *err;
-	xmmsv_t *val;
+	xmmsv_list_iter_t *it;
 	gint32 id;
 
-	val = xmmsc_result_get_value (res);
+	xmmsv_get_list_iter (val, &it);
 
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_list_iter_t *it;
-
-		xmmsv_get_list_iter (val, &it);
-
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			switch (cmd) {
-				case IDLIST_CMD_REHASH:
-					XMMS_CALL (xmmsc_medialib_rehash, infos->sync, id);
-					break;
-				case IDLIST_CMD_REMOVE:
-					XMMS_CALL (xmmsc_medialib_remove_entry, infos->sync, id);
-					break;
-				default:
-					break;
-			}
-			xmmsv_list_iter_next (it);
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		switch (cmd) {
+			case IDLIST_CMD_REHASH:
+				XMMS_CALL (xmmsc_medialib_rehash, infos->sync, id);
+				break;
+			case IDLIST_CMD_REMOVE:
+				XMMS_CALL (xmmsc_medialib_remove_entry, infos->sync, id);
+				break;
+			default:
+				break;
 		}
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+		xmmsv_list_iter_next (it);
 	}
-
-	xmmsc_result_unref (res);
 }
 
 void
-remove_ids (cli_infos_t *infos, xmmsc_result_t *res)
+remove_ids (cli_infos_t *infos, xmmsv_t *list)
 {
-	apply_ids (infos, res, IDLIST_CMD_REMOVE);
+	apply_ids (infos, list, IDLIST_CMD_REMOVE);
 }
-
 
 static void
 pos_remove_cb (gint pos, void *userdata)
@@ -309,9 +260,9 @@ positions_remove (cli_infos_t *infos, const gchar *playlist,
 }
 
 void
-rehash_ids (cli_infos_t *infos, xmmsc_result_t *res)
+rehash_ids (cli_infos_t *infos, xmmsv_t *list)
 {
-	apply_ids (infos, res, IDLIST_CMD_REHASH);
+	apply_ids (infos, list, IDLIST_CMD_REHASH);
 }
 
 static void
@@ -327,20 +278,9 @@ print_volume_entry (const gchar *key, xmmsv_t *val, void *udata)
 }
 
 void
-print_volume (xmmsc_result_t *res, cli_infos_t *infos, const gchar *channel)
+print_volume (xmmsv_t *dict, const gchar *channel)
 {
-	xmmsv_t *val;
-	const gchar *err;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_dict_foreach (val, print_volume_entry, (void *) channel);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
+	xmmsv_dict_foreach (dict, print_volume_entry, (void *) channel);
 }
 
 static void
@@ -432,63 +372,31 @@ currently_playing_mode (cli_infos_t *infos, const gchar *format, gint refresh)
 	}
 }
 
-static void
-id_print_info (xmmsc_result_t *res, guint id, const gchar *source)
-{
-	xmmsv_t *val;
-	const gchar *err;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_dict_foreach (val, propdict_dump, (void *) source);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
-}
-
 void
-list_print_info (xmmsc_result_t *res, cli_infos_t *infos)
+list_print_info (xmmsv_t *val, cli_infos_t *infos)
 {
-	xmmsc_result_t *infores = NULL;
-	xmmsv_t *val;
-	const gchar *err;
-	gint32 id;
+	xmmsv_list_iter_t *it;
 	gboolean first = TRUE;
+	gint32 id;
 
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_list_iter_t *it;
-
-		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			infores = xmmsc_medialib_get_info (infos->sync, id);
-			xmmsc_result_wait (infores);
-
-			if (!first) {
-				g_printf ("\n");
-			} else {
-				first = FALSE;
-			}
-			id_print_info (infores, id, NULL);
-
-			xmmsv_list_iter_next (it);
+	xmmsv_get_list_iter (val, &it);
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		if (!first) {
+			g_printf ("\n");
+		} else {
+			first = FALSE;
 		}
 
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, infos->sync, id),
+		                 FUNC_CALL_P (xmmsv_dict_foreach, XMMS_PREV_VALUE, propdict_dump, NULL));
 
-	xmmsc_result_unref (res);
+		xmmsv_list_iter_next (it);
+	}
 }
 
 static void
 pos_print_info_cb (gint pos, void *userdata)
 {
-	xmmsc_result_t *infores;
 	pl_pos_udata_t *pack = (pl_pos_udata_t *) userdata;
 	guint id;
 
@@ -499,16 +407,15 @@ pos_print_info_cb (gint pos, void *userdata)
 
 	id = g_array_index (pack->infos->cache->active_playlist, guint, pos);
 
-	infores = xmmsc_medialib_get_info (pack->infos->sync, id);
-	xmmsc_result_wait (infores);
-
 	/* Do not prepend newline before the first entry */
 	if (pack->inc > 0) {
 		g_printf ("\n");
 	} else {
 		pack->inc++;
 	}
-	id_print_info (infores, id, NULL);
+
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, pack->infos->sync, id),
+	                 FUNC_CALL_P (xmmsv_dict_foreach, XMMS_PREV_VALUE, propdict_dump, NULL));
 }
 
 void
@@ -607,45 +514,36 @@ pos_print_row_cb (gint pos, void *userdata)
 }
 
 void
-positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
+positions_print_list (xmmsv_t *val, playlist_positions_t *positions,
                       column_display_t *coldisp, gboolean is_search)
 {
 	cli_infos_t *infos = column_display_infos_get (coldisp);
-	xmmsv_t *val;
-
+	pl_pos_udata_t udata = { infos, coldisp, NULL, NULL, 0, 0};
+	xmmsv_list_iter_t *it;
 	gint32 id;
-	const gchar *err;
 
 	/* FIXME: separate function or merge
 	   with list_print_row (lot of if(positions))? */
-	val = xmmsc_result_get_value (res);
 
-	if (!xmmsv_get_error (val, &err)) {
-		pl_pos_udata_t udata = { infos, coldisp, NULL, NULL, 0, 0};
-		xmmsv_list_iter_t *it;
+	column_display_prepare (coldisp);
 
-		column_display_prepare (coldisp);
-
-		if (is_search) {
-			column_display_print_header (coldisp);
-		}
-
-		udata.entries = g_array_sized_new (FALSE, FALSE, sizeof (guint),
-		                             xmmsv_list_get_size (val));
-
-		xmmsv_get_list_iter (val, &it);
-
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			g_array_append_val (udata.entries, id);
-			xmmsv_list_iter_next (it);
-		}
-
-		playlist_positions_foreach (positions, pos_print_row_cb, TRUE, &udata);
-
-		g_array_free (udata.entries, TRUE);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+	if (is_search) {
+		column_display_print_header (coldisp);
 	}
+
+	udata.entries = g_array_sized_new (FALSE, FALSE, sizeof (guint),
+	                                   xmmsv_list_get_size (val));
+
+	xmmsv_get_list_iter (val, &it);
+
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		g_array_append_val (udata.entries, id);
+		xmmsv_list_iter_next (it);
+	}
+
+	playlist_positions_foreach (positions, pos_print_row_cb, TRUE, &udata);
+
+	g_array_free (udata.entries, TRUE);
 
 	if (is_search) {
 		column_display_print_footer (coldisp);
@@ -655,93 +553,76 @@ positions_print_list (xmmsc_result_t *res, playlist_positions_t *positions,
 	}
 
 	column_display_free (coldisp);
-	xmmsc_result_unref (res);
 }
 
 /* Returned tree must be freed by the caller */
 static GTree *
-matching_ids_tree (xmmsc_result_t *matching)
+matching_ids_tree (xmmsv_t *matching)
 {
+	xmmsv_list_iter_t *it;
 	xmmsv_t *val;
 	gint32 id;
 	GTree *list = NULL;
-	const gchar *err;
 
-	val = xmmsc_result_get_value (matching);
+	list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-		g_printf (_("Error retrieving the media matching the pattern!\n"));
-	} else {
-		xmmsv_list_iter_t *it;
-
-		list = g_tree_new_full (compare_uint, NULL, g_free, NULL);
-
-		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			guint *tid = g_new (guint, 1);
-			*tid = id;
-			g_tree_insert (list, tid, tid);
-			xmmsv_list_iter_next (it);
-		}
+	xmmsv_get_list_iter (matching, &it);
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		guint *tid = g_new (guint, 1);
+		*tid = id;
+		g_tree_insert (list, tid, tid);
+		xmmsv_list_iter_next (it);
 	}
 
 	return list;
 }
 
 void
-list_print_row (xmmsc_result_t *res, xmmsv_t *filter,
+list_print_row (xmmsv_t *val, xmmsv_t *filter,
                 column_display_t *coldisp, gboolean is_search,
                 gboolean result_is_infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
 	cli_infos_t *infos = column_display_infos_get (coldisp);
-	xmmsv_t *val;
+	xmmsv_list_iter_t *it;
+	xmmsv_t *entry;
 	GTree *list = NULL;
 
-	const gchar *err;
-	gint32 id;
+	gint id;
 	gint i = 0;
 
-	val = xmmsc_result_get_value (res);
+	column_display_prepare (coldisp);
 
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_list_iter_t *it;
-		xmmsv_t *entry;
+	if (filter != NULL) {
+		xmmsc_result_t *filres;
+		xmmsv_t *filval;
+		filres = xmmsc_coll_query_ids (infos->sync, filter, NULL, 0, 0);
+		xmmsc_result_wait (filres);
+		filval = xmmsc_result_get_value (filres);
+		if ((list = matching_ids_tree (filval)) == NULL) {
+			goto finish;
+		}
+	}
 
-		column_display_prepare (coldisp);
+	if (is_search) {
+		column_display_print_header (coldisp);
+	}
 
-		if (filter != NULL) {
-			xmmsc_result_t *filres;
-			filres = xmmsc_coll_query_ids (infos->sync, filter, NULL, 0, 0);
-			xmmsc_result_wait (filres);
-			if ((list = matching_ids_tree (filres)) == NULL) {
-				goto finish;
+	xmmsv_get_list_iter (val, &it);
+	while (xmmsv_list_iter_entry (it, &entry)) {
+		column_display_set_position (coldisp, i);
+
+		if (result_is_infos) {
+			enrich_mediainfo (entry);
+			column_display_print (coldisp, entry);
+		} else {
+			if (xmmsv_get_int (entry, &id) &&
+			    (!list || g_tree_lookup (list, &id) != NULL)) {
+				id_coldisp_print_info (infos, coldisp, id);
 			}
 		}
-
-		if (is_search) {
-			column_display_print_header (coldisp);
-		}
-
-		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_entry (it, &entry)) {
-			column_display_set_position (coldisp, i);
-
-			if (result_is_infos) {
-				enrich_mediainfo (entry);
-				column_display_print (coldisp, entry);
-			} else {
-				if (xmmsv_get_int (entry, &id) &&
-					(!list || g_tree_lookup (list, &id) != NULL)) {
-					id_coldisp_print_info (infos, coldisp, id);
-				}
-			}
-			xmmsv_list_iter_next (it);
-			i++;
-		}
-
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+		xmmsv_list_iter_next (it);
+		i++;
 	}
 
 	if (is_search) {
@@ -752,24 +633,10 @@ list_print_row (xmmsc_result_t *res, xmmsv_t *filter,
 	}
 
 finish:
-
 	if (list) {
 		g_tree_destroy (list);
 	}
 	column_display_free (coldisp);
-
-	xmmsc_result_unref (res);
-}
-
-void
-coll_rename (cli_infos_t *infos, const gchar *oldname, const gchar *newname,
-             xmmsc_coll_namespace_t ns, gboolean force)
-{
-	if (force) {
-		XMMS_CALL_NO_CHECK (xmmsc_coll_remove, infos->sync, newname, ns);
-	}
-
-	XMMS_CALL (xmmsc_coll_rename, infos->sync, oldname, newname, ns);
 }
 
 void
@@ -886,7 +753,7 @@ coll_dump_attributes (xmmsv_t *attr, gchar *indent)
 
 /* Dump the structure of the collection as a string
    (from src/clients/cli/cmd_coll.c) */
-static void
+void
 coll_dump (xmmsv_t *coll, guint level)
 {
 	gint i;
@@ -983,80 +850,48 @@ coll_dump (xmmsv_t *coll, guint level)
 	/* Operands */
 	coll_dump_list (xmmsv_coll_operands_get (coll), level + 1);
 }
-/*  */
-
-void
-coll_show (cli_infos_t *infos, xmmsc_result_t *res)
-{
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		coll_dump (val, 0);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (res);
-}
 
 static void
-print_collections_list (xmmsc_result_t *res, cli_infos_t *infos,
+print_collections_list (xmmsv_t *val, cli_infos_t *infos,
                         const gchar *mark, gboolean all)
 {
-	const gchar *s, *err;
-	xmmsv_t *val;
+	xmmsv_list_iter_t *it;
+	const gchar *s;
 
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_list_iter_t *it;
-		xmmsv_get_list_iter (val, &it);
-		while (xmmsv_list_iter_entry_string (it, &s)) {
-			/* Skip hidden playlists if all is FALSE*/
-			if ((*s != '_') || all) {
-				/* Highlight active playlist */
-				if (mark && strcmp (s, mark) == 0) {
-					g_printf ("* %s\n", s);
-				} else {
-					g_printf ("  %s\n", s);
-				}
+	xmmsv_get_list_iter (val, &it);
+	while (xmmsv_list_iter_entry_string (it, &s)) {
+		/* Skip hidden playlists if all is FALSE*/
+		if ((*s != '_') || all) {
+			/* Highlight active playlist */
+			if (mark && strcmp (s, mark) == 0) {
+				g_printf ("* %s\n", s);
+			} else {
+				g_printf ("  %s\n", s);
 			}
-			xmmsv_list_iter_next (it);
 		}
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+		xmmsv_list_iter_next (it);
 	}
-	xmmsc_result_unref (res);
 }
 
 void
-list_print_collections (xmmsc_result_t *res, cli_infos_t *infos)
+list_print_collections (xmmsv_t *list, cli_infos_t *infos)
 {
-	print_collections_list (res, infos, NULL, TRUE);
+	print_collections_list (list, infos, NULL, TRUE);
 }
 
 void
-list_print_playlists (xmmsc_result_t *res, cli_infos_t *infos, gboolean all)
+list_print_playlists (xmmsv_t *list, cli_infos_t *infos, gboolean all)
 {
-	print_collections_list (res, infos,
+	print_collections_list (list, infos,
 	                        infos->cache->active_playlist_name, all);
 }
 
 /* Abstract jump, use inc to choose the direction. */
 static void
-list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
+list_jump_rel (xmmsv_t *val, cli_infos_t *infos, gint inc)
 {
-	guint i;
-	gint32 id;
-	xmmsc_result_t *jumpres = NULL;
-	xmmsv_t *val;
-	const gchar *err;
-
-	gint currpos;
-	gint plsize;
+	xmmsv_list_iter_t *it;
+	gint i, id, currpos, plsize;
 	GArray *playlist;
 
 	currpos = infos->cache->currpos;
@@ -1068,84 +903,38 @@ list_jump_rel (xmmsc_result_t *res, cli_infos_t *infos, gint inc)
 		currpos = 0;
 	}
 
-	val = xmmsc_result_get_value (res);
+	inc += plsize; /* magic trick so we can loop in either direction */
 
-	if (!xmmsv_get_error (val, &err) && xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-		xmmsv_list_iter_t *it;
+	xmmsv_get_list_iter (val, &it);
 
-		xmmsv_get_list_iter (val, &it);
-
-		inc += plsize; /* magic trick so we can loop in either direction */
-
-		/* Loop on the playlist */
-		for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
-			/* Loop on the matched media */
-			while (xmmsv_list_iter_entry_int (it, &id)) {
-				/* If both match, jump! */
-				if (g_array_index (playlist, guint, i) == id) {
-					jumpres = xmmsc_playlist_set_next (infos->sync, i);
-					xmmsc_result_wait (jumpres);
-					tickle (jumpres, infos);
-					goto finish;
-				}
-				xmmsv_list_iter_next (it);
+	/* Loop on the playlist */
+	for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
+		/* Loop on the matched media */
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			/* If both match, jump! */
+			if (g_array_index (playlist, guint, i) == id) {
+				XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next, infos->sync, i),
+				                 XMMS_CALL_P (xmmsc_playback_tickle, infos->sync));
+				return;
 			}
+			xmmsv_list_iter_next (it);
 		}
 	}
 
-	finish:
-
 	/* No matching media found, don't jump */
-	if (!jumpres) {
-		g_printf (_("No media matching the pattern in the playlist!\n"));
-	}
-
-	xmmsc_result_unref (res);
+	g_printf (_("No media matching the pattern in the playlist!\n"));
 }
 
 void
-list_jump_back (xmmsc_result_t *res, cli_infos_t *infos)
+list_jump_back (xmmsv_t *res, cli_infos_t *infos)
 {
 	list_jump_rel (res, infos, -1);
 }
 
 void
-list_jump (xmmsc_result_t *res, cli_infos_t *infos)
+list_jump (xmmsv_t *res, cli_infos_t *infos)
 {
 	list_jump_rel (res, infos, 1);
-}
-
-void
-position_jump (cli_infos_t *infos, playlist_positions_t *positions)
-{
-	xmmsc_result_t *jumpres;
-	int pos;
-
-	if (playlist_positions_get_single (positions, &pos)) {
-		jumpres = xmmsc_playlist_set_next (infos->sync, pos);
-		xmmsc_result_wait (jumpres);
-		tickle (jumpres, infos);
-	} else {
-		g_printf (_("Cannot jump to several positions!\n"));
-	}
-}
-
-void
-add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
-         const gchar *playlist, gint pos)
-{
-	const char *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (plsres);
-
-	if (!xmmsv_get_error (val, &err)) {
-		XMMS_CALL (xmmsc_playlist_add_idlist, infos->sync, playlist, val);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
-	}
-
-	xmmsc_result_unref (plsres);
 }
 
 /**
@@ -1154,7 +943,7 @@ add_pls (xmmsc_result_t *plsres, cli_infos_t *infos,
  */
 void
 add_list (xmmsv_t *idlist, cli_infos_t *infos,
-          const gchar *playlist, gint pos)
+          const gchar *playlist, gint pos, gint32 *count)
 
 {
 	xmmsv_list_iter_t *it;
@@ -1166,64 +955,50 @@ add_list (xmmsv_t *idlist, cli_infos_t *infos,
 		XMMS_CALL (xmmsc_playlist_insert_id, infos->sync, playlist, pos++, id);
 		xmmsv_list_iter_next (it);
 	}
+
+	*count = xmmsv_list_get_size (idlist);
 }
 
 void
-move_entries (xmmsc_result_t *matching, cli_infos_t *infos,
+move_entries (xmmsv_t *matching, xmmsv_t *lisval, cli_infos_t *infos,
               const gchar *playlist, gint pos)
 {
-	xmmsc_result_t *lisres;
-	guint curr;
-	gint32 id;
-	gint inc;
+	xmmsv_list_iter_t *it;
+	gint curr, id, inc;
 	gboolean up;
 	GTree *list;
 
-	xmmsv_t *lisval;
-	const gchar *err;
+	/* store matching mediaids in a tree (faster lookup) */
+	list = matching_ids_tree (matching);
 
-	lisres = xmmsc_playlist_list_entries (infos->sync, playlist);
-	xmmsc_result_wait (lisres);
-	lisval = xmmsc_result_get_value (lisres);
+	/* move matched playlist items */
+	curr = 0;
+	inc = 0;
+	up = TRUE;
 
-	if (xmmsv_get_error (lisval, &err) || !xmmsv_is_type (lisval, XMMSV_TYPE_LIST)) {
-			g_printf (_("Error retrieving playlist entries\n"));
-	} else {
-		xmmsv_list_iter_t *it;
-
-		/* store matching mediaids in a tree (faster lookup) */
-		list = matching_ids_tree (matching);
-
-		/* move matched playlist items */
-		curr = 0;
-		inc = 0;
-		up = TRUE;
-		xmmsv_get_list_iter (lisval, &it);
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			if (curr == pos) {
-				up = FALSE;
-			}
-			if (g_tree_lookup (list, &id) != NULL) {
-				if (up) {
-					/* moving forward */
-					XMMS_CALL (xmmsc_playlist_move_entry,
-					           infos->sync, playlist, curr - inc, pos - 1);
-				} else {
-					/* moving backward */
-					XMMS_CALL (xmmsc_playlist_move_entry,
-					           infos->sync, playlist, curr, pos + inc);
-				}
-				inc++;
-			}
-			curr++;
-
-			xmmsv_list_iter_next (it);
+	xmmsv_get_list_iter (lisval, &it);
+	while (xmmsv_list_iter_entry_int (it, &id)) {
+		if (curr == pos) {
+			up = FALSE;
 		}
-		g_tree_destroy (list);
+		if (g_tree_lookup (list, &id) != NULL) {
+			if (up) {
+				/* moving forward */
+				XMMS_CALL (xmmsc_playlist_move_entry,
+				           infos->sync, playlist, curr - inc, pos - 1);
+			} else {
+				/* moving backward */
+				XMMS_CALL (xmmsc_playlist_move_entry,
+				           infos->sync, playlist, curr, pos + inc);
+			}
+			inc++;
+		}
+		curr++;
+
+		xmmsv_list_iter_next (it);
 	}
 
-	xmmsc_result_unref (matching);
-	xmmsc_result_unref (lisres);
+	g_tree_destroy (list);
 }
 
 static void
@@ -1260,225 +1035,140 @@ positions_move (cli_infos_t *infos, const gchar *playlist,
 }
 
 void
-remove_cached_list (xmmsc_result_t *matching, cli_infos_t *infos)
+remove_cached_list (xmmsv_t *matching, cli_infos_t *infos)
 {
 	/* FIXME: w00t at code copy-paste, please modularize */
+	xmmsv_list_iter_t *it;
 	guint plid;
 	gint32 id;
 	gint plsize;
 	GArray *playlist;
 	gint i;
 
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (matching);
-
 	plsize = infos->cache->active_playlist->len;
 	playlist = infos->cache->active_playlist;
 
-	if (xmmsv_get_error (val, &err) || !xmmsv_is_type (val, XMMSV_TYPE_LIST)) {
-		g_printf (_("Error retrieving the media matching the pattern!\n"));
-	} else {
-		xmmsv_list_iter_t *it;
+	xmmsv_get_list_iter (matching, &it);
 
-		xmmsv_get_list_iter (val, &it);
+	/* Loop on the playlist (backward, easier to remove) */
+	for (i = plsize - 1; i >= 0; i--) {
+		plid = g_array_index (playlist, guint, i);
 
-		/* Loop on the playlist (backward, easier to remove) */
-		for (i = plsize - 1; i >= 0; i--) {
-			plid = g_array_index (playlist, guint, i);
-
-			/* Loop on the matched media */
-			while (xmmsv_list_iter_entry_int (it, &id)) {
-				/* If both match, remove! */
-				if (plid == id) {
-					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync, NULL, i);
-					break;
-				}
-
-				xmmsv_list_iter_next (it);
+		/* Loop on the matched media */
+		while (xmmsv_list_iter_entry_int (it, &id)) {
+			/* If both match, remove! */
+			if (plid == id) {
+				XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync, NULL, i);
+				break;
 			}
+
+			xmmsv_list_iter_next (it);
 		}
 	}
-	xmmsc_result_unref (matching);
 }
 
 void
-remove_list (xmmsc_result_t *matchres, xmmsc_result_t *plistres,
-                cli_infos_t *infos, const gchar *playlist)
+remove_list (xmmsv_t *matchval, xmmsv_t *plistval,
+             cli_infos_t *infos, const gchar *playlist)
 {
+	xmmsv_list_iter_t *matchit, *plistit;
 	/* FIXME: w00t at code copy-paste, please modularize */
 	gint32 plid, id;
 	guint i;
 	gint offset;
 
-	const gchar *err;
-	xmmsv_t *matchval, *plistval;
+	/* FIXME: Can we use a GList to remove more safely in the rev order? */
+	offset = 0;
+	i = 0;
 
-	matchval = xmmsc_result_get_value (matchres);
-	plistval = xmmsc_result_get_value (plistres);
+	xmmsv_get_list_iter (matchval, &matchit);
+	xmmsv_get_list_iter (plistval, &plistit);
 
-	if (xmmsv_get_error (matchval, &err) || !xmmsv_is_type (matchval, XMMSV_TYPE_LIST)) {
-		g_printf (_("Error retrieving the media matching the pattern!\n"));
-	} else if (xmmsv_get_error (plistval, &err) || !xmmsv_is_type (plistval, XMMSV_TYPE_LIST)) {
-		g_printf (_("Error retrieving the playlist!\n"));
-	} else {
-		xmmsv_list_iter_t *matchit, *plistit;
-
-		/* FIXME: Can we use a GList to remove more safely in the rev order? */
-		offset = 0;
-		i = 0;
-
-		xmmsv_get_list_iter (matchval, &matchit);
-		xmmsv_get_list_iter (plistval, &plistit);
-
-		/* Loop on the playlist */
-		while (xmmsv_list_iter_entry_int (plistit, &plid)) {
-			/* Loop on the matched media */
-			while (xmmsv_list_iter_entry_int (matchit, &id)) {
-				/* If both match, jump! */
-				if (plid == id) {
-					XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync,
-					           playlist, i - offset);
-					offset++;
-					break;
-				}
-				xmmsv_list_iter_next (matchit);
+	/* Loop on the playlist */
+	while (xmmsv_list_iter_entry_int (plistit, &plid)) {
+		/* Loop on the matched media */
+		while (xmmsv_list_iter_entry_int (matchit, &id)) {
+			/* If both match, jump! */
+			if (plid == id) {
+				XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync,
+				           playlist, i - offset);
+				offset++;
+				break;
 			}
-
-			i++;
-			xmmsv_list_iter_next (plistit);
+			xmmsv_list_iter_next (matchit);
 		}
+
+		i++;
+		xmmsv_list_iter_next (plistit);
 	}
-	xmmsc_result_unref (matchres);
-	xmmsc_result_unref (plistres);
 }
 
-void
-copy_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist)
-{
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		XMMS_CALL (xmmsc_coll_save, infos->sync, val, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-	} else {
-		g_printf (_("Cannot find the playlist to copy!\n"));
-	}
-
-	xmmsc_result_unref (res);
-}
-
-void configure_collection (xmmsc_result_t *res, cli_infos_t *infos,
+void configure_collection (xmmsv_t *val, cli_infos_t *infos,
                            const gchar *ns, const gchar *name,
                            const gchar *attrname, const gchar *attrvalue)
 {
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_coll_attribute_set_string (val, attrname, attrvalue);
-		coll_save (infos, val, ns, name, TRUE);
-	} else {
-		g_printf (_("Invalid collection!\n"));
-	}
-
-	xmmsc_result_unref (res);
+	xmmsv_coll_attribute_set_string (val, attrname, attrvalue);
+	coll_save (infos, val, ns, name, TRUE);
 }
 
 void
-configure_playlist (xmmsc_result_t *res, cli_infos_t *infos, const gchar *playlist,
+configure_playlist (xmmsv_t *val, cli_infos_t *infos, const gchar *playlist,
                     gint history, gint upcoming, const gchar *typestr,
                     const gchar *input, const gchar *jumplist)
 {
-	const gchar *err;
 	xmmsv_t *newcoll = NULL;
-	xmmsv_t *val;
 
-	val = xmmsc_result_get_value (res);
+	/* If no type string passed, and collection didn't have any, there's no point
+	 * in configuring the other attributes.
+	 */
+	if (typestr == NULL && !xmmsv_coll_attribute_get_string (val, "type", &typestr))
+		return;
 
-	if (!xmmsv_get_error (val, &err)) {
-		if (typestr) {
-			xmmsv_coll_attribute_set_string (val, "type", typestr);
-		}
-		if (history >= 0) {
-			coll_int_attribute_set (val, "history", history);
-		}
-		if (upcoming >= 0) {
-			coll_int_attribute_set (val, "upcoming", upcoming);
-		}
-		if (input) {
-			/* Replace previous operand. */
-			newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
-		} else if (typestr && strcmp (typestr, "pshuffle") == 0 &&
-		           xmmsv_list_get_size (xmmsv_coll_operands_get (val)) == 0) {
-			newcoll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
-		}
-
-		if (newcoll) {
-			xmmsv_list_clear (xmmsv_coll_operands_get (val));
-			xmmsv_coll_add_operand (val, newcoll);
-			xmmsv_unref (newcoll);
-		}
-		if (jumplist) {
-			/* FIXME: Check for the existence of the target ? */
-			xmmsv_coll_attribute_set_string (val, "jumplist", jumplist);
-		}
-		XMMS_CALL (xmmsc_coll_save, infos->sync, val, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
-	} else {
-		g_printf (_("Cannot find the playlist to configure!\n"));
+	if (typestr) {
+		xmmsv_coll_attribute_set_string (val, "type", typestr);
+	}
+	if (history >= 0) {
+		coll_int_attribute_set (val, "history", history);
+	}
+	if (upcoming >= 0) {
+		coll_int_attribute_set (val, "upcoming", upcoming);
+	}
+	if (input) {
+		/* Replace previous operand. */
+		newcoll = coll_make_reference (input, XMMS_COLLECTION_NS_COLLECTIONS);
+	} else if (typestr && strcmp (typestr, "pshuffle") == 0 &&
+	           xmmsv_list_get_size (xmmsv_coll_operands_get (val)) == 0) {
+		newcoll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	}
 
-	xmmsc_result_unref (res);
+	if (newcoll) {
+		xmmsv_list_clear (xmmsv_coll_operands_get (val));
+		xmmsv_coll_add_operand (val, newcoll);
+		xmmsv_unref (newcoll);
+	}
+	if (jumplist) {
+		/* FIXME: Check for the existence of the target ? */
+		xmmsv_coll_attribute_set_string (val, "jumplist", jumplist);
+	}
+
+	XMMS_CALL (xmmsc_coll_save, infos->sync, val, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 }
 
 void
-collection_print_config (xmmsc_result_t *res, cli_infos_t *infos,
-                         const gchar *attrname)
+collection_print_config (xmmsv_t *coll, const gchar *attrname)
 {
-	const gchar *attrvalue, *err;
-	xmmsv_t *val;
+	const gchar *attrvalue;
 
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		if (attrname == NULL) {
-			xmmsv_dict_foreach (xmmsv_coll_attributes_get (val),
-			                    coll_print_attributes, NULL);
+	if (attrname == NULL) {
+		xmmsv_dict_foreach (xmmsv_coll_attributes_get (coll),
+		                    coll_print_attributes, NULL);
+	} else {
+		if (xmmsv_coll_attribute_get_string (coll, attrname, &attrvalue)) {
+			g_printf ("[%s] %s\n", attrname, attrvalue);
 		} else {
-			if (xmmsv_coll_attribute_get_string (val, attrname, &attrvalue)) {
-				g_printf ("[%s] %s\n", attrname, attrvalue);
-			} else {
-				g_printf (_("Invalid attribute!\n"));
-			}
+			g_printf (_("Invalid attribute!\n"));
 		}
-	} else {
-		g_printf (_("Invalid collection!\n"));
 	}
-
-	xmmsc_result_unref (res);
-}
-
-void
-playlist_print_config (xmmsc_result_t *res, cli_infos_t *infos,
-                       const gchar *playlist)
-{
-	const gchar *err;
-	xmmsv_t *val;
-
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		pl_print_config (val, playlist);
-	} else {
-		g_printf (_("Invalid playlist!\n"));
-	}
-
-	xmmsc_result_unref (res);
 }
 
 gboolean
@@ -1533,8 +1223,8 @@ coll_print_attributes (const char *key, xmmsv_t *val, void *udata)
 	}
 }
 
-static void
-pl_print_config (xmmsv_t *coll, const char *name)
+void
+playlist_print_config (xmmsv_t *coll, const gchar *name)
 {
 	const gchar *type, *upcoming, *history, *jumplist;
 	xmmsv_t *operands, *operand;
