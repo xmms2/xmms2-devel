@@ -24,6 +24,7 @@
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "column_display.h"
+#include "xmmscall.h"
 
 static void coll_int_attribute_set (xmmsv_t *coll, const char *key, gint value);
 static xmmsv_t *coll_make_reference (const char *name, xmmsc_coll_namespace_t ns);

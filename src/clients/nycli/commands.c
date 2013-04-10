@@ -25,6 +25,7 @@
 #include "utils.h"
 #include "column_display.h"
 #include "matching_browse.h"
+#include "xmmscall.h"
 
 #include <sys/stat.h>
 

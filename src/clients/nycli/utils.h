@@ -33,19 +33,6 @@
 		xmmsc_result_unref (__result); \
 	} while (0);
 
-#define XMMS_CALL(fun, ...) do { \
-		xmmsc_result_t *__result; \
-		const gchar *__message; \
-		xmmsv_t *__value; \
-		__result = fun (__VA_ARGS__); \
-		xmmsc_result_wait (__result); \
-		__value = xmmsc_result_get_value (__result); \
-		if (xmmsv_get_error (__value, &__message)) { \
-			g_printf (_("Server error: %s\n"), __message); \
-		} \
-		xmmsc_result_unref (__result); \
-	} while (0);
-
 void tickle (xmmsc_result_t *res, cli_infos_t *infos);
 void print_stats (cli_infos_t *infos, xmmsc_result_t *res);
 void print_config (cli_infos_t *infos, const gchar *confname);
