@@ -27,6 +27,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef DISCID_HAVE_SPARSE_READ
+#define discid_read_sparse(disc, dev, i) discid_read(disc, dev)
+#endif
+
 typedef struct {
 	CdIo_t *cdio;
 	cdrom_drive_t *drive;
@@ -424,7 +428,7 @@ get_disc_ids (const gchar *device, gchar **disc_id,
 	DiscId *disc = discid_new ();
 	g_return_val_if_fail (disc, FALSE);
 
-	if (discid_read (disc, device) == 0) {
+	if (discid_read_sparse (disc, device, 0) == 0) {
 		xmms_log_error ("Could not read disc: %s", discid_get_error_msg (disc));
 		discid_free (disc);
 		return FALSE;
