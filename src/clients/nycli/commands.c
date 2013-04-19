@@ -197,10 +197,11 @@ cli_search_setup (command_action_t *action)
 	const GOptionEntry flags[] = {
 		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop[,...]" },
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop[,...]" },
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read pattern from stdin (inline mode only)"), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "search", (command_exec_func) &cli_search, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-o <prop[,...]>] [-l <prop[,...]>] <pattern>"),
+	                     _("[-i] [-o <prop[,...]>] [-l <prop[,...]>] <pattern>"),
 	                     _("Search and print all media matching the pattern."));
 }
 
@@ -233,10 +234,11 @@ cli_add_setup (command_action_t *action)
 		{ "attribute", 'A', 0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Add media with given key=value attribute(s)."), NULL },
 		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
 		{ "jump", 'j', 0, G_OPTION_ARG_NONE, NULL, _("Jump to and start playing the newly-added media."), NULL },
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read pattern from stdin. (inline mode only, implies --pattern)"), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", (command_exec_func) &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
+	                     _("[-t | -i | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -326,10 +328,11 @@ cli_coll_create_setup (command_action_t *action)
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force creating of the collection, overwrite an existing collection if needed."), NULL},
 		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Copy an existing collection to the new one."), "name"},
 		{ "empty", 'e', 0, G_OPTION_ARG_NONE, NULL, _("Initialize an empty collection."), NULL},
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read the pattern from stdin (inline mode only)."), NULL},
 		{ NULL }
 	};
 	command_action_fill (action, "collection create", (command_exec_func) &cli_coll_create, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-f] [-e] [-c <collection>] <name> [pattern]"),
+	                     _("[-f] [-e] [-i] [-c <collection>] <name> [pattern]"),
 	                     _("Create a new collection.\nIf pattern is provided, it is used to define the collection."
 	                       "\nOtherwise, the new collection contains the whole media library."));
 }

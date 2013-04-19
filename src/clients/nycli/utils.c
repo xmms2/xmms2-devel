@@ -277,6 +277,30 @@ xmmsv_coll_apply_default_order (xmmsv_t *query)
 	return concatenated;
 }
 
+/** Try to retrieve and parse a collection pattern from stdin and return
+ *  the collection after parsing.
+ *
+ *  @return The parsed collection from stdin or NULL if an error occured.
+ */
+xmmsv_t *
+xmmsv_coll_from_stdin ()
+{
+	gchar *pattern = NULL;
+	GError *error = NULL;
+	xmmsv_t *ret = NULL;
+	if (!g_file_get_contents("/dev/stdin", &pattern, NULL, &error)) {
+		g_fprintf (stderr, "Error: Can't read pattern from stdin. ('%s')\n",
+		           error->message);
+		g_error_free (error);
+	} else if (!xmmsv_coll_parse (pattern, &ret)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+	}
+
+	g_free (pattern);
+
+	return ret;
+}
+
 gchar *
 decode_url (const gchar *string)
 {

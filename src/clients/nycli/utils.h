@@ -23,6 +23,7 @@
 
 xmmsv_t *xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist);
 xmmsv_t *xmmsv_coll_apply_default_order (xmmsv_t *query);
+xmmsv_t *xmmsv_coll_from_stdin (void);
 void xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val);
 
 void print_padding (gint length, const gchar padchar);

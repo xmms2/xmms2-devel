@@ -57,6 +57,7 @@ cli_search (cli_context_t *ctx, command_t *cmd)
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	configuration_t *config = cli_context_config (ctx);
 	gint current_position = cli_context_current_position (ctx);
+	gboolean pattern_from_stdin;
 	xmmsv_t *fetchval, *query, *ordered_query;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
@@ -64,7 +65,18 @@ cli_search (cli_context_t *ctx, command_t *cmd)
 	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
 
-	if (!command_arg_pattern_get (cmd, 0, &query, TRUE)) {
+	command_flag_boolean_get(cmd, "stdin", &pattern_from_stdin);
+
+
+	if (cli_context_in_mode(ctx, CLI_EXECUTION_MODE_SHELL) && pattern_from_stdin) {
+		g_printf (_("Error: --stdin can be used in inline mode only.\n"));
+		return FALSE;
+	} else if (pattern_from_stdin) {
+		query = xmmsv_coll_from_stdin();
+		if (!query) {
+			return FALSE;
+		}
+	} else if (!command_arg_pattern_get (cmd, 0, &query, TRUE)) {
 		return FALSE;
 	}
 
@@ -355,7 +367,7 @@ cli_coll_create (cli_context_t *ctx, command_t *cmd)
 {
 	xmmsv_t *coll = NULL;
 	gchar *ns, *name, *pattern = NULL;
-	gboolean force = FALSE, empty = FALSE, copy;
+	gboolean force = FALSE, empty = FALSE, pattern_from_stdin = FALSE, copy;
 	const gchar *collection, *fullname;
 
 	if (!command_arg_string_get (cmd, 0, &fullname)) {
@@ -365,10 +377,19 @@ cli_coll_create (cli_context_t *ctx, command_t *cmd)
 
 	command_flag_boolean_get (cmd, "empty", &empty);
 	copy = command_flag_string_get (cmd, "collection", &collection);
+	command_flag_boolean_get (cmd, "stdin", &pattern_from_stdin);
 	command_arg_longstring_get_escaped (cmd, 1, &pattern);
 
-	if ((empty && copy) || (empty && pattern) || (copy && pattern)) {
-		g_printf (_("Error: -e, -c and pattern are mutually exclusive!"));
+	if ((empty && copy) || ((pattern || pattern_from_stdin) && (empty || copy))) {
+		g_printf (_("Error: -e, -c and pattern are mutually exclusive!\n"));
+		g_free (pattern);
+		return FALSE;
+	} else if (pattern && pattern_from_stdin) {
+		g_printf (_("Error: inline pattern and --stdin are mutually exclusive!\n"));
+		g_free (pattern);
+		return FALSE;
+	} else if (cli_context_in_mode(ctx, CLI_EXECUTION_MODE_SHELL) && pattern_from_stdin) {
+		g_printf (_("Error: --stdin can be used in inline mode only.\n"));
 		return FALSE;
 	}
 
@@ -379,6 +400,8 @@ cli_coll_create (cli_context_t *ctx, command_t *cmd)
 		if (!xmmsc_coll_parse (pattern, &coll)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
 		}
+	} else if (pattern_from_stdin) {
+		coll = xmmsv_coll_from_stdin();
 	} else if (copy) {
 		xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 		xmmsc_result_t *res;

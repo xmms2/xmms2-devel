@@ -608,21 +608,23 @@ cli_add_collection (cli_context_t *ctx, xmmsv_t *ids, xmmsv_t *query,
  */
 static gboolean
 cli_add_pattern (cli_context_t *ctx, command_t *cmd,
-                 const gchar *playlist, gint pos)
+                 const gchar *playlist, gint pos, gboolean _stdin)
 {
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
-	xmmsv_t *query, *ordered_query;
+	xmmsv_t *query = NULL, *ordered_query;
 	const gchar **order = NULL;
 	gchar *pattern = NULL;
 	gboolean success = FALSE;
 
+	if (_stdin) {
+		query = xmmsv_coll_from_stdin();
+	} else {
+		command_arg_pattern_get (cmd, 0, &query, TRUE);
+	}
+
 	command_arg_longstring_get_escaped (cmd, 0, &pattern);
 
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern to add!\n"));
-	} else if (!xmmsc_coll_parse (pattern, &query)) {
-		g_printf (_("Error: failed to parse the pattern!\n"));
-	} else {
+	if (query) {
 		if (command_flag_stringlist_get (cmd, "order", &order)) {
 			xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
 			ordered_query = xmmsv_coll_add_order_operators (query, orderval);
@@ -651,7 +653,7 @@ cli_add (cli_context_t *ctx, command_t *cmd)
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint pos, i;
 	const gchar *playlist;
-	gboolean forceptrn, plsfile, fileargs, jump, added;
+	gboolean forceptrn, plsfile, fileargs, jump, added, pattern_from_stdin;
 
 	/*
 	  --file  Add a path from the local filesystem
@@ -660,6 +662,7 @@ cli_add (cli_context_t *ctx, command_t *cmd)
 	  --next  Add after the current track.
 	  --at  Add media at a given position in the playlist, or at a given offset from the current track.
 	  --order Order media matched by pattern.
+	  --stdin  Get pattern from stdin (inline mode only)
 	*/
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
@@ -671,15 +674,20 @@ cli_add (cli_context_t *ctx, command_t *cmd)
 		return FALSE;
 	}
 
+	command_flag_boolean_get (cmd, "stdin", &pattern_from_stdin);
 	command_flag_boolean_get (cmd, "pattern", &forceptrn);
 	command_flag_boolean_get (cmd, "pls", &plsfile);
 	command_flag_boolean_get (cmd, "file", &fileargs);
 	command_flag_boolean_get (cmd, "jump", &jump);
 
 	fileargs = fileargs || plsfile;
+	forceptrn = forceptrn || pattern_from_stdin;
 	if (forceptrn && fileargs) {
 		g_printf (_("Error: --pattern is mutually exclusive with "
 		            "--file and --pls!\n"));
+		return FALSE;
+	} else if (cli_context_in_mode(ctx, CLI_EXECUTION_MODE_SHELL) && pattern_from_stdin) {
+		g_printf (_("Error: --stdin can be used in inline mode only.\n"));
 		return FALSE;
 	}
 
@@ -713,7 +721,7 @@ cli_add (cli_context_t *ctx, command_t *cmd)
 
 		xmmsv_unref (attributes);
 
-		added = cli_add_pattern (ctx, cmd, playlist, pos);
+		added = cli_add_pattern (ctx, cmd, playlist, pos, pattern_from_stdin);
 	}
 
 	if (added && jump) {
