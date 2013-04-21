@@ -14,6 +14,8 @@
  *  General Public License for more details.
  */
 
+#include <string.h>
+
 #include "cli_cache.h"
 #include "cli_infos.h"
 

@@ -17,11 +17,7 @@
 #ifndef __CLI_CACHE_H__
 #define __CLI_CACHE_H__
 
-#include <xmmsclient/xmmsclient.h>
-
 #include <glib.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "main.h"
 

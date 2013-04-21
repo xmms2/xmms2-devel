@@ -6,6 +6,10 @@ cli_infos.c
 cli_cache.c
 command_trie.c
 commands.c
+commands_coll.c
+commands_playback.c
+commands_playlist.c
+commands_server.c
 matching_browse.c
 command_utils.c
 cmdnames.c

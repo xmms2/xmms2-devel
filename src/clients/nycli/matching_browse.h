@@ -17,6 +17,9 @@
 #ifndef __MATCHING_BROWSE_H_
 #define __MATCHING_BROWSE_H_
 
+#include <glib.h>
+#include <xmmsclient/xmmsclient.h>
+
 typedef struct browse_entry_St browse_entry_t;
 
 void browse_entry_get (browse_entry_t *data, const gchar **url, gboolean *is_directory);

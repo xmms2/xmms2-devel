@@ -20,7 +20,6 @@
 #include <xmmsclient/xmmsclient.h>
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "main.h"
 
@@ -40,13 +39,12 @@ typedef enum {
 	COLUMN_DEF_SIZE_AUTO
 } column_def_size_t;
 
-column_display_t *column_display_init (cli_infos_t *infos);
+column_display_t *column_display_init (void);
 void column_display_add_separator (column_display_t *disp, const gchar *sep);
 void column_display_add_property (column_display_t *disp, const gchar *label, const gchar *prop, guint size, column_def_size_t size_type, column_def_align_t align);
 void column_display_add_format (column_display_t *disp, const gchar *label, const gchar *format, guint size, column_def_size_t size_type, column_def_align_t align);
 void column_display_add_special (column_display_t *disp, const gchar *label, void *userdata, guint size, column_def_size_t size_type, column_def_align_t align, column_display_rendering_f render);
 void column_display_free (column_display_t *disp);
-cli_infos_t *column_display_infos_get (column_display_t *disp);
 void column_display_prepare (column_display_t *disp);
 void column_display_print (column_display_t *disp, xmmsv_t *res);
 void column_display_print_header (column_display_t *disp);
@@ -64,5 +62,7 @@ gint column_display_render_format (column_display_t *disp, column_def_t *coldef,
 void column_display_set_position (column_display_t *disp, gint pos);
 
 void column_display_set_list_marker (column_display_t *disp, const gchar *marker);
+
+column_display_t *column_display_build (const gchar **columns, const gchar *playlist_marker, gint current_position);
 
 #endif /* __COLUMN_DISPLAY_H__ */

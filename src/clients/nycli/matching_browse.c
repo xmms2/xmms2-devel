@@ -15,6 +15,9 @@
  */
 
 #include <string.h>
+
+#include <glib.h>
+
 #include "commands.h"
 #include "matching_browse.h"
 

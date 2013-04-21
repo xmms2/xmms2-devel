@@ -43,7 +43,8 @@
 		xmmsv_t *__value; \
 		__result = func (__VA_ARGS__); \
 		xmmsc_result_wait (__result); \
-		xmmsv_unref (XMMS_PREV_VALUE); \
+		if (XMMS_PREV_VALUE != NULL) \
+			xmmsv_unref (XMMS_PREV_VALUE); \
 		XMMS_PREV_VALUE = NULL; \
 		__value = xmmsc_result_get_value (__result); \
 		if (xmmsv_get_error (__value, &__message)) { \

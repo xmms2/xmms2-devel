@@ -18,7 +18,6 @@
 #define __ALIAS_H__
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "main.h"
 
@@ -28,9 +27,7 @@ struct alias_define_St {
 	GList *tokens;
 };
 
-gboolean alias_action (cli_infos_t *infos, command_context_t *ctx);
 void alias_setup (command_action_t *action, alias_define_t *alias);
-GList* alias_tokenize (const gchar *define);
 void alias_free (alias_define_t *alias);
 alias_define_t *alias_init (gchar *name, gchar *define);
 alias_define_t *alias_list (GHashTable *hash);

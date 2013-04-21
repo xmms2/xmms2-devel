@@ -17,8 +17,6 @@
 #ifndef __COMMAND_TRIE_H__
 #define __COMMAND_TRIE_H__
 
-#include <xmmsclient/xmmsclient.h>
-
 #include <glib.h>
 
 #include "main.h"

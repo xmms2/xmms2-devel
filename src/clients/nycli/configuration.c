@@ -14,6 +14,12 @@
  *  General Public License for more details.
  */
 
+#include <string.h>
+
+#include <glib.h>
+#include <glib/gprintf.h>
+#include <xmmsclient/xmmsclient.h>
+
 #include "configuration.h"
 
 const gchar *const default_config =

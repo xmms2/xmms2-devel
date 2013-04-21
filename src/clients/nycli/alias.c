@@ -14,8 +14,13 @@
  *  General Public License for more details.
  */
 
+#include <stdlib.h>
+#include <string.h>
+
+#include <glib.h>
+#include <glib/gprintf.h>
+
 #include "cli_infos.h"
-#include "commands.h"
 #include "command_utils.h"
 #include "command_trie.h"
 #include "configuration.h"
@@ -25,6 +30,29 @@ static void
 free_token (gpointer data, gpointer udata)
 {
 	g_free (data);
+}
+
+static GList *
+tokenize (const gchar *define)
+{
+	GList *tokens;
+	gchar *tok, *def;
+
+	tokens = NULL;
+
+	def = g_strdup (define);
+
+	/* FIXME: join consecutive strings without '$' char */
+	tok = strtok (def, " ");
+	while (tok != NULL) {
+		tokens = g_list_prepend (tokens, g_strdup (tok));
+		tok = strtok (NULL, " ");
+	}
+	tokens = g_list_reverse (tokens);
+
+	g_free (def);
+
+	return tokens;
 }
 
 static gboolean
@@ -37,7 +65,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, const gchar *line, gchar **
 	GList *tokens, *it;
 
 	/* Substitute parameters: $0: line, $@: line, $1: field 1, $2: field 2, ... */
-	tokens = alias_tokenize (def);
+	tokens = tokenize (def);
 
 	len = g_list_length (tokens);
 
@@ -90,7 +118,7 @@ finish:
 	return retval;;
 }
 
-gboolean
+static gboolean
 alias_action (cli_infos_t *infos, command_context_t *ctx)
 {
 	gchar *runnable, *def, *line;
@@ -122,29 +150,6 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 	g_free (runnable);
 
 	return retval;
-}
-
-GList *
-alias_tokenize (const gchar *define)
-{
-	GList *tokens;
-	gchar *tok, *def;
-
-	tokens = NULL;
-
-	def = g_strdup (define);
-
-	/* FIXME: join consecutive strings without '$' char */
-	tok = strtok (def, " ");
-	while (tok != NULL) {
-		tokens = g_list_prepend (tokens, g_strdup (tok));
-		tok = strtok (NULL, " ");
-	}
-	tokens = g_list_reverse (tokens);
-
-	g_free (def);
-
-	return tokens;
 }
 
 void

@@ -17,6 +17,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <glib.h>
+
 #define CLI_CLIENTNAME "xmms2-cli"
 
 /* FIXME: shall be loaded from config when config exists */

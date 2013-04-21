@@ -27,6 +27,8 @@
 #include "readline.h"
 #include "cli_cache.h"
 #include "cli_infos.h"
+#include "compat.h"
+#include "xmmscall.h"
 
 struct currently_playing_St {
 	xmmsv_t *data;
@@ -35,143 +37,106 @@ struct currently_playing_St {
 typedef struct currently_playing_St currently_playing_t;
 
 static void
-currently_playing_update_playback (cli_infos_t *infos, currently_playing_t *entry)
+currently_playing_update_status (currently_playing_t *entry, xmmsv_t *value)
 {
-	xmmsc_result_t *res;
-	xmmsv_t *val;
-	xmmsv_t *pt;
-	gint32 status;
-	const gchar *playback;
-	const gchar *err;
+	const gchar *status_name;
+	gint status = -1;
 
-	res = xmmsc_playback_status (infos->sync);
-	xmmsc_result_wait (res);
-	val = xmmsc_result_get_value (res);
+	xmmsv_get_int (value, &status);
 
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_int (val, &status);
-
-		switch (status) {
+	switch (status) {
 		case XMMS_PLAYBACK_STATUS_STOP:
-			playback = _("Stopped");
+			status_name = _("Stopped");
 			break;
 		case XMMS_PLAYBACK_STATUS_PLAY:
-			playback = _("Playing");
+			status_name = _("Playing");
 			break;
 		case XMMS_PLAYBACK_STATUS_PAUSE:
-			playback = _("Paused");
+			status_name = _("Paused");
 			break;
 		default:
-			playback = _("Unknown");
-		}
-
-		pt = xmmsv_new_string (playback);
-		xmmsv_dict_set (entry->data, "playback_status", pt);
-		xmmsv_unref (pt);
-
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+			status_name = _("Unknown");
+			break;
 	}
 
-	xmmsc_result_unref (res);
+	xmmsv_dict_set_string (entry->data, "playback_status", status_name);
 }
 
 static void
-currently_playing_update_info (cli_infos_t *infos,
-                               currently_playing_t *entry)
+currently_playing_request_status (cli_infos_t *infos, currently_playing_t *entry)
 {
-	xmmsc_result_t *res;
-	xmmsv_t *val;
-	guint currid;
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, infos->sync),
+	                 FUNC_CALL_P (currently_playing_update_status, entry, XMMS_PREV_VALUE));
+}
+
+static void
+currently_playing_update_info (currently_playing_t *entry, xmmsv_t *value)
+{
+	const gchar *noinfo_fields[] = { "playback_status", "playtime", "position"};
+	const gchar *time_fields[] = { "duration"};
+	xmmsv_t *info;
 	gint i;
 
-	const gchar *time_fields[] = { "duration"};
-	const gchar *noinfo_fields[] = { "playback_status", "playtime", "position"};
-	const gchar *err;
+	info = xmmsv_propdict_to_dict (value, NULL);
 
-	currid = infos->cache->currid;
-	/* Don't bother if it's 0 */
-	if (!currid) {
-		return;
+	enrich_mediainfo (info);
+
+	/* copy over fields that are not from metadata */
+	for (i = 0; i < G_N_ELEMENTS (noinfo_fields); i++) {
+		xmmsv_t *copy;
+		if (xmmsv_dict_get (entry->data, noinfo_fields[i], &copy)) {
+			xmmsv_dict_set (info, noinfo_fields[i], copy);
+		}
 	}
 
-	res = xmmsc_medialib_get_info (infos->sync, currid);
-	xmmsc_result_wait (res);
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_t *info;
-
-		info = xmmsv_propdict_to_dict (val, NULL);
-		enrich_mediainfo (info);
-
-		/* copy over fields that are not from metadata */
-		for (i = 0; i < G_N_ELEMENTS (noinfo_fields); i++) {
-			xmmsv_t *copy;
-			if (xmmsv_dict_get (entry->data, noinfo_fields[i], &copy)) {
-				xmmsv_dict_set (info, noinfo_fields[i], copy);
-			}
+	/* pretty format time fields */
+	for (i = 0; i < G_N_ELEMENTS (time_fields); i++) {
+		gint32 tim;
+		if (xmmsv_dict_entry_get_int (info, time_fields[i], &tim)) {
+			gchar *p = format_time (tim, FALSE);
+			xmmsv_dict_set_string (info, time_fields[i], p);
+			g_free (p);
 		}
-
-		/* pretty format time fields */
-		for (i = 0; i < G_N_ELEMENTS (time_fields); i++) {
-			gint32 tim;
-			if (xmmsv_dict_entry_get_int (info, time_fields[i], &tim)) {
-				gchar *p;
-				xmmsv_t *pt;
-				p = format_time (tim, FALSE);
-				pt = xmmsv_new_string (p);
-				xmmsv_dict_set (info, time_fields[i], pt);
-				xmmsv_unref (pt);
-				g_free (p);
-			}
-		}
-		xmmsv_unref (entry->data);
-		entry->data = info;
-	} else {
-		g_printf (_("Server error: %s\n"), err);
 	}
 
-	xmmsc_result_unref (res);
+	xmmsv_unref (entry->data);
+	entry->data = info;
 }
 
 static void
-currently_playing_update_playtime (cli_infos_t *infos,
-                                   currently_playing_t *entry)
+currently_playing_request_info (cli_infos_t *infos, currently_playing_t *entry)
 {
-	xmmsc_result_t *res;
-	xmmsv_t *val;
-	gint32 playtime;
-	const gchar *err;
-
-	res = xmmsc_playback_playtime (infos->sync);
-	xmmsc_result_wait (res);
-	val = xmmsc_result_get_value (res);
-
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_get_int (val, &playtime);
-		gchar *p;
-		xmmsv_t *pt;
-		p = format_time (playtime, FALSE);
-		pt = xmmsv_new_string (p);
-		xmmsv_dict_set (entry->data, "playtime", pt);
-		xmmsv_unref (pt);
-		g_free (p);
-	} else {
-		g_printf (_("Server error: %s\n"), err);
+	if (infos->cache->currid > 0) {
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, infos->sync, infos->cache->currid),
+		                 FUNC_CALL_P (currently_playing_update_info, entry, XMMS_PREV_VALUE));
 	}
+}
 
-	xmmsc_result_unref (res);
+static void
+currently_playing_update_playtime (currently_playing_t *entry, xmmsv_t *value)
+{
+	gchar *formatted;
+	gint playtime;
+
+	xmmsv_get_int (value, &playtime);
+
+	formatted = format_time (playtime, FALSE);
+	xmmsv_dict_set_string (entry->data, "playtime", formatted);
+	g_free (formatted);
+}
+
+static void
+currently_playing_request_playtime (cli_infos_t *infos, currently_playing_t *entry)
+{
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, infos->sync),
+	                 FUNC_CALL_P (currently_playing_update_playtime, entry, XMMS_PREV_VALUE));
 }
 
 static void
 currently_playing_update_position (cli_infos_t *infos,
                                    currently_playing_t *entry)
 {
-	xmmsv_t *p;
-	p = xmmsv_new_int (infos->cache->currpos);
-	xmmsv_dict_set (entry->data, "position", p);
-	xmmsv_unref (p);
+	xmmsv_dict_set_int (entry->data, "position", infos->cache->currpos);
 }
 
 static void
@@ -187,10 +152,10 @@ currently_playing_free (gpointer udata)
 static void
 currently_playing_update_all (cli_infos_t *infos, currently_playing_t *entry)
 {
-	currently_playing_update_playback (infos, entry);
+	currently_playing_request_status (infos, entry);
 	currently_playing_update_position (infos, entry);
-	currently_playing_update_info (infos, entry);
-	currently_playing_update_playtime (infos, entry);
+	currently_playing_request_info (infos, entry);
+	currently_playing_request_playtime (infos, entry);
 }
 
 static void

@@ -14,6 +14,8 @@
  *  General Public License for more details.
  */
 
+#include <stdlib.h>
+
 #include "readline.h"
 #include "configuration.h"
 
@@ -22,7 +24,7 @@
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "cmdnames.h"
-
+#include "xmmscall.h"
 #include "command_trie.h"
 
 static gchar *readline_keymap;
@@ -50,14 +52,16 @@ readline_status_quit (gint count, gint key)
 static gint
 readline_next_song (gint count, gint key)
 {
-	XMMS_CALL (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, 1);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, 1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, readline_cli_infos->sync));
 	return 0;
 }
 
 static gint
 readline_previous_song (gint count, gint key)
 {
-	XMMS_CALL (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, -1);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, -1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, readline_cli_infos->sync));
 	return 0;
 }
 

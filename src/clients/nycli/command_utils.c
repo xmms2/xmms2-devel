@@ -14,6 +14,12 @@
  *  General Public License for more details.
  */
 
+#include <stdlib.h>
+#include <string.h>
+
+#include <glib.h>
+#include <glib/gprintf.h>
+
 #include "command_utils.h"
 
 #include "cli_infos.h"
@@ -368,79 +374,4 @@ command_arg_positions_get (command_context_t *ctx, gint at,
 	g_free (expression);
 
 	return success;
-}
-
-/**
- * Apply the default ordering to a collection query, that is, its results will
- * be ordered by artist, and then album. To make this result more readable,
- * compilation albums are placed at the end to get proper album grouping.
- *
- * @param query A collection to be ordered.
- * @return The input collection with the default ordering.
- */
-xmmsv_t *
-coll_apply_default_order (xmmsv_t *query)
-{
-	xmmsv_t *compilation, *compilation_sorted;
-	xmmsv_t *regular, *regular_sorted;
-	xmmsv_t *complement, *concatenated;
-	xmmsv_t *fields, *artist_order, *compilation_order, *regular_order;
-
-	/* All various artists entries that match the user query. */
-	compilation = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
-	xmmsv_coll_add_operand (compilation, query);
-	xmmsv_coll_attribute_set_string (compilation, "field", "compilation");
-	xmmsv_coll_attribute_set_string (compilation, "value", "1");
-
-	/* All entries that aren't various artists, or don't match the user query */
-	complement = xmmsv_new_coll (XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsv_coll_add_operand (complement, compilation);
-
-	/* All entries that aren't various artists, and match the user query */
-	regular = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
-	xmmsv_coll_add_operand (regular, query);
-	xmmsv_coll_add_operand (regular, complement);
-	xmmsv_unref (complement);
-
-	compilation_order = xmmsv_build_list (
-	        XMMSV_LIST_ENTRY_STR ("album"),
-	        XMMSV_LIST_ENTRY_STR ("partofset"),
-	        XMMSV_LIST_ENTRY_STR ("tracknr"),
-	        XMMSV_LIST_END);
-
-	compilation_sorted = xmmsv_coll_add_order_operators (compilation,
-	                                                     compilation_order);
-	xmmsv_unref (compilation);
-	xmmsv_unref (compilation_order);
-
-	fields = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("album_artist_sort"),
-	                           XMMSV_LIST_ENTRY_STR ("album_artist"),
-	                           XMMSV_LIST_ENTRY_STR ("artist_sort"),
-	                           XMMSV_LIST_ENTRY_STR ("artist"),
-	                           XMMSV_LIST_END);
-
-	artist_order = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("type", "value"),
-	                                 XMMSV_DICT_ENTRY ("field", fields),
-	                                 XMMSV_DICT_END);
-
-	regular_order = xmmsv_build_list (
-	        XMMSV_LIST_ENTRY_STR ("album"),
-	        XMMSV_LIST_ENTRY_STR ("partofset"),
-	        XMMSV_LIST_ENTRY_STR ("tracknr"),
-	        XMMSV_LIST_END);
-
-	xmmsv_list_insert (regular_order, 0, artist_order);
-	xmmsv_unref (artist_order);
-
-	regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
-	xmmsv_unref (regular);
-	xmmsv_unref (regular_order);
-
-	concatenated = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
-	xmmsv_coll_add_operand (concatenated, regular_sorted);
-	xmmsv_unref (regular_sorted);
-	xmmsv_coll_add_operand (concatenated, compilation_sorted);
-	xmmsv_unref (compilation_sorted);
-
-	return concatenated;
 }

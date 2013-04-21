@@ -17,11 +17,7 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 
-#include <xmmsclient/xmmsclient.h>
-#include <string.h>
-
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "main.h"
 

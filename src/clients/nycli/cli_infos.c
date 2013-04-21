@@ -14,6 +14,8 @@
  *  General Public License for more details.
  */
 
+#include <stdlib.h>
+
 #include "readline.h"
 
 #include "cli_infos.h"

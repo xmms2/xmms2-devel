@@ -14,9 +14,12 @@
  *  General Public License for more details.
  */
 
+#include <glib/gprintf.h>
+
 #include "column_display.h"
 #include "utils.h"
 #include "string.h"
+#include "compat.h"
 
 struct column_display_St {
 	guint num_cols;
@@ -261,12 +264,11 @@ column_def_free (column_def_t *coldef)
 }
 
 column_display_t *
-column_display_init (cli_infos_t *infos)
+column_display_init (void)
 {
 	column_display_t *disp;
 
 	disp = g_new0 (column_display_t, 1);
-	disp->infos = infos;
 	disp->cols = g_array_new (TRUE, TRUE, sizeof (column_def_t *));
 	disp->counter = 0;
 	disp->total_time = 0;
@@ -342,12 +344,6 @@ column_display_free (column_display_t *disp)
 	g_free (disp->list_marker_pad);
 	g_free (disp->buffer);
 	g_free (disp);
-}
-
-cli_infos_t *
-column_display_infos_get (column_display_t *disp)
-{
-	return disp->infos;
 }
 
 void
@@ -633,4 +629,61 @@ column_display_set_list_marker (column_display_t *disp, const gchar *marker)
 	for (ansi_seq = marker_pad->str; *ansi_seq; *ansi_seq++ = ' ');
 	disp->list_marker_pad = marker_pad->str;
 	g_string_free (marker_pad, FALSE);
+}
+
+column_display_t *
+column_display_build (const gchar **columns, const gchar *playlist_marker,
+                      gint current_position)
+{
+	column_display_t *coldisp;
+	const gchar *nextsep = NULL;
+	gint i;
+
+	coldisp = column_display_init ();
+	column_display_set_list_marker (coldisp, playlist_marker);
+
+	for (i = 0; columns[i]; ++i) {
+		/* Separator between columns */
+		if (nextsep) {
+			column_display_add_separator (coldisp, nextsep);
+		}
+
+		nextsep = "| ";
+
+		if (strcmp (columns[i], "id") == 0) {
+			column_display_add_property (coldisp, columns[i], columns[i], 5,
+			                             COLUMN_DEF_SIZE_FIXED,
+			                             COLUMN_DEF_ALIGN_LEFT);
+		} else if (strcmp (columns[i], "pos") == 0) {
+			column_display_add_special (coldisp, "pos", NULL, 5,
+			                            COLUMN_DEF_SIZE_FIXED,
+			                            COLUMN_DEF_ALIGN_RIGHT,
+			                            column_display_render_position);
+			nextsep = "/";
+		} else if (strcmp (columns[i], "curr") == 0) {
+			column_display_add_special (coldisp, "",
+			                            GINT_TO_POINTER(current_position),
+			                            2,
+			                            COLUMN_DEF_SIZE_FIXED,
+			                            COLUMN_DEF_ALIGN_LEFT,
+			                            column_display_render_highlight);
+			nextsep = NULL;
+		} else if (strcmp (columns[i], "next") == 0) {
+			/* If no currpos, start counting from the beginning */
+			if (current_position < 0) {
+				current_position = 0;
+			}
+			column_display_add_special (coldisp, "next",
+			                            GINT_TO_POINTER(current_position), 4,
+			                            COLUMN_DEF_SIZE_FIXED,
+			                            COLUMN_DEF_ALIGN_RIGHT,
+			                            column_display_render_next);
+		} else {
+			column_display_add_property (coldisp, columns[i], columns[i], 20,
+			                             COLUMN_DEF_SIZE_RELATIVE,
+			                             COLUMN_DEF_ALIGN_LEFT);
+		}
+	}
+
+	return coldisp;
 }
