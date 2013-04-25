@@ -32,11 +32,11 @@ typedef struct xmms_ringbuf_priv_St {
 	GThread *thread;
 
 	xmms_ringbuf_t *buffer;
-	GMutex *buffer_lock;
+	GMutex buffer_lock;
 
 	xmms_buffer_state_t state;
-	GCond *state_cond;
-	GMutex *state_lock;
+	GCond state_cond;
+	GMutex state_lock;
 } xmms_ringbuf_priv_t;
 
 static xmms_xform_plugin_t *ringbuf_plugin;
@@ -52,12 +52,13 @@ xmms_ringbuf_plugin_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, priv);
 
-	priv->buffer = xmms_ringbuf_new (4096*8);
-	priv->buffer_lock = g_mutex_new ();
+	g_cond_init (&priv->state_cond);
+	g_mutex_init (&priv->state_lock);
+	g_mutex_init (&priv->buffer_lock);
+
 	priv->state = STATE_WANT_BUFFER;
-	priv->state_cond = g_cond_new ();
-	priv->state_lock = g_mutex_new ();
-	priv->thread = g_thread_create (xmms_ringbuf_xform_thread, xform, TRUE, NULL);
+	priv->buffer = xmms_ringbuf_new (4096*8);
+	priv->thread = g_thread_new ("x2 ringbuf", xmms_ringbuf_xform_thread, xform);
 
 	xmms_xform_outdata_type_copy (xform);
 
@@ -70,13 +71,13 @@ xmms_ringbuf_plugin_destroy (xmms_xform_t *xform)
 	xmms_ringbuf_priv_t *priv;
 	priv = xmms_xform_private_data_get (xform);
 
-	g_mutex_lock (priv->state_lock);
+	g_mutex_lock (&priv->state_lock);
 	xmms_ringbuf_clear (priv->buffer);
 	while (priv->state != STATE_IS_STOPPED) {
 		priv->state = STATE_WANT_STOP;
-		g_cond_wait (priv->state_cond, priv->state_lock);
+		g_cond_wait (&priv->state_cond, &priv->state_lock);
 	}
-	g_mutex_unlock (priv->state_lock);
+	g_mutex_unlock (&priv->state_lock);
 
 	g_thread_join (priv->thread);
 
@@ -89,7 +90,7 @@ xmms_ringbuf_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_erro
 	xmms_ringbuf_priv_t *priv;
 	priv = xmms_xform_private_data_get (xform);
 
-	return xmms_ringbuf_read_wait (priv->buffer, buffer, len, priv->buffer_lock);
+	return xmms_ringbuf_read_wait (priv->buffer, buffer, len, &priv->buffer_lock);
 }
 
 
@@ -108,19 +109,13 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                              XMMS_STREAM_TYPE_END);
+
 	ringbuf_plugin = xform_plugin;
 
 	return TRUE;
-}
-
-static xmms_xform_t *
-xmms_ringbuf_xform_new (xmms_xform_t *prev, xmms_medialib_t *medialib, xmms_medialib_entry_t entry, GList *gt)
-{
-	xmms_xform_t *xform;
-
-	xform = xmms_xform_new (ringbuf_plugin, prev, medialib, entry, gt);
-
-	return xform;
 }
 
 static void
@@ -132,10 +127,10 @@ fill (xmms_xform_t *xform, xmms_ringbuf_priv_t *priv)
 
 	res = xmms_xform_read (xform, buf, sizeof (buf), &err);
 	if (res > 0) {
-		xmms_ringbuf_write_wait (priv->buffer, buf, res, priv->buffer_lock);
+		xmms_ringbuf_write_wait (priv->buffer, buf, res, &priv->buffer_lock);
 	} else if (res == -1) {
 		/* XXX copy error */
-		g_mutex_lock (priv->state_lock);
+		g_mutex_lock (&priv->state_lock);
 		priv->state = STATE_WANT_STOP;
 	} else {
 		xmms_ringbuf_set_eos (priv->buffer, TRUE);
@@ -151,29 +146,29 @@ xmms_ringbuf_xform_thread (gpointer data)
 
 	priv = xmms_xform_private_data_get (xform);
 
-	g_mutex_lock (priv->state_lock);
+	g_mutex_lock (&priv->state_lock);
 	while (priv->state != STATE_WANT_STOP) {
 		if (priv->state == STATE_WANT_BUFFER) {
 			priv->state = STATE_BUFFERING;
-			g_cond_signal (priv->state_cond);
+			g_cond_signal (&priv->state_cond);
 			while (priv->state == STATE_BUFFERING) {
-				g_mutex_unlock (priv->state_lock);
+				g_mutex_unlock (&priv->state_lock);
 				fill (xform, priv);
-				g_mutex_lock (priv->state_lock);
+				g_mutex_lock (&priv->state_lock);
 			}
 		} else if (priv->state == STATE_WANT_SEEK) {
 			/** **/
 			priv->state = STATE_SEEK_DONE;
-			g_cond_signal (priv->state_cond);
+			g_cond_signal (&priv->state_cond);
 			while (priv->state == STATE_SEEK_DONE) {
-				g_cond_wait (priv->state_cond, priv->state_lock);
+				g_cond_wait (&priv->state_cond, &priv->state_lock);
 			}
 		}
 		XMMS_DBG ("thread: state: %d", priv->state);
 	}
 	priv->state = STATE_IS_STOPPED;
-	g_cond_signal (priv->state_cond);
-	g_mutex_unlock (priv->state_lock);
+	g_cond_signal (&priv->state_cond);
+	g_mutex_unlock (&priv->state_lock);
 
 	return NULL;
 }
