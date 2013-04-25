@@ -46,18 +46,24 @@ static gpointer xmms_ringbuf_xform_thread (gpointer data);
 static gboolean
 xmms_ringbuf_plugin_init (xmms_xform_t *xform)
 {
+	xmms_config_property_t *config;
 	xmms_ringbuf_priv_t *priv;
+	gint buffer_size;
 
 	priv = g_new0 (xmms_ringbuf_priv_t, 1);
 
 	xmms_xform_private_data_set (xform, priv);
+
+	config = xmms_xform_config_lookup (xform, "buffersize");
+	buffer_size = xmms_config_property_get_int (config);
 
 	g_cond_init (&priv->state_cond);
 	g_mutex_init (&priv->state_lock);
 	g_mutex_init (&priv->buffer_lock);
 
 	priv->state = STATE_WANT_BUFFER;
-	priv->buffer = xmms_ringbuf_new (4096*8);
+	priv->buffer = xmms_ringbuf_new (MAX (4096, buffer_size));
+
 	priv->thread = g_thread_new ("x2 ringbuf", xmms_ringbuf_xform_thread, xform);
 
 	xmms_xform_outdata_type_copy (xform);
@@ -108,6 +114,10 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	*/
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_config_property_register (xform_plugin,
+	                                            "buffersize", "1048576",
+	                                            NULL, NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
