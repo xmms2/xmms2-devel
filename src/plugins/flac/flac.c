@@ -146,10 +146,14 @@ flac_callback_read (const FLAC__StreamDecoder *flacdecoder, FLAC__byte buffer[],
 	g_return_val_if_fail (xform, FLAC__STREAM_DECODER_READ_STATUS_ABORT);
 
 	ret = xmms_xform_read (xform, (gchar *)buffer, *bytes, &error);
-	*bytes = ret;
-
-	return (ret <= 0) ? FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
-	                  : FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+	if (ret == 0) {
+		return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+	} else if (ret < 0) {
+		return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
+	} else {
+		*bytes = ret;
+		return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+	}
 }
 
 static FLAC__StreamDecoderWriteStatus
