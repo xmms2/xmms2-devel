@@ -139,11 +139,11 @@ static void
 cli_jump_relative (cli_infos_t *infos, gint inc, xmmsv_t *value)
 {
 	xmmsv_list_iter_t *it;
-	gint i, id, currpos, plsize;
-	GArray *playlist;
+	gint i, plid, id, currpos, plsize;
+	xmmsv_t *playlist;
 
 	currpos = infos->cache->currpos;
-	plsize = infos->cache->active_playlist->len;
+	plsize = xmmsv_list_get_size (infos->cache->active_playlist);
 	playlist = infos->cache->active_playlist;
 
 	/* If no currpos, start jump from beginning */
@@ -160,10 +160,12 @@ cli_jump_relative (cli_infos_t *infos, gint inc, xmmsv_t *value)
 	for (i = (currpos + inc) % plsize; i != currpos; i = (i + inc) % plsize) {
 		xmmsv_list_iter_first (it);
 
+		xmmsv_list_get_int (playlist, i, &plid);
+
 		/* Loop on the matched media */
 		while (xmmsv_list_iter_entry_int (it, &id)) {
 			/* If both match, jump! */
-			if (g_array_index (playlist, guint, i) == id) {
+			if (plid == id) {
 				XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next, infos->sync, i),
 				                 XMMS_CALL_P (xmmsc_playback_tickle, infos->sync));
 				return;

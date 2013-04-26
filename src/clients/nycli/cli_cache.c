@@ -122,24 +122,8 @@ refresh_active_playlist (xmmsv_t *val, void *udata)
 	cli_cache_t *cache = (cli_cache_t *) udata;
 
 	if (!xmmsv_is_error (val)) {
-		xmmsv_list_iter_t *it;
-		gint32 id;
-
-		/* Reset array */
-		if (cache->active_playlist->len > 0) {
-			gint len = cache->active_playlist->len;
-			cache->active_playlist = g_array_remove_range (cache->active_playlist,
-			                                               0, len);
-		}
-
-		xmmsv_get_list_iter (val, &it);
-
-		/* .. and refill it */
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			g_array_append_val (cache->active_playlist, id);
-
-			xmmsv_list_iter_next (it);
-		}
+		xmmsv_unref (cache->active_playlist);
+		cache->active_playlist = xmmsv_ref (val);
 	}
 
 	freshness_received (&cache->freshness_active_playlist);
@@ -170,21 +154,21 @@ update_active_playlist (xmmsv_t *val, void *udata)
 	/* Apply changes to the cached playlist */
 	switch (type) {
 	case XMMS_PLAYLIST_CHANGED_ADD:
-		g_array_append_val (cache->active_playlist, id);
+		xmmsv_list_append_int (cache->active_playlist, id);
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_INSERT:
-		g_array_insert_val (cache->active_playlist, pos, id);
+		xmmsv_list_insert_int (cache->active_playlist, pos, id);
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_MOVE:
 		xmmsv_dict_entry_get_int (val, "newposition", &newpos);
-		g_array_remove_index (cache->active_playlist, pos);
-		g_array_insert_val (cache->active_playlist, newpos, id);
+		xmmsv_list_remove (cache->active_playlist, pos);
+		xmmsv_list_insert_int (cache->active_playlist, newpos, id);
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_REMOVE:
-		g_array_remove_index (cache->active_playlist, pos);
+		xmmsv_list_remove (cache->active_playlist, pos);
 		break;
 
 	case XMMS_PLAYLIST_CHANGED_SHUFFLE:
@@ -259,7 +243,7 @@ cli_cache_init ()
 	cache->currpos = -1;
 	cache->currid = 0;
 	cache->playback_status = 0;
-	cache->active_playlist = g_array_new (FALSE, TRUE, sizeof (guint));
+	cache->active_playlist = xmmsv_new_list ();
 	cache->active_playlist_name = NULL;
 
 	/* Init the freshness state */
@@ -355,6 +339,6 @@ void
 cli_cache_free (cli_cache_t *cache)
 {
 	g_free (cache->active_playlist_name);
-	g_array_free (cache->active_playlist, TRUE);
+	xmmsv_unref (cache->active_playlist);
 	g_free (cache);
 }

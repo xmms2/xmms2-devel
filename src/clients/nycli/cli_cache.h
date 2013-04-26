@@ -18,6 +18,7 @@
 #define __CLI_CACHE_H__
 
 #include <glib.h>
+#include <xmmsclient/xmmsclient.h>
 
 #include "main.h"
 
@@ -39,7 +40,7 @@ struct cli_cache_St {
 	gint32 currpos;
 	gint32 currid;
 	gint32 playback_status;
-	GArray *active_playlist;
+	xmmsv_t *active_playlist;
 	gchar *active_playlist_name;
 
 	/* Freshness of each attribute */

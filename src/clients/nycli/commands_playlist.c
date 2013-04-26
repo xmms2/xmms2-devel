@@ -143,7 +143,7 @@ playlist_length_get (cli_infos_t *infos, const gchar *playlist, gint *len)
 			return FALSE;
 		}
 	} else {
-		*len = infos->cache->active_playlist->len;
+		*len = xmmsv_list_get_size (infos->cache->active_playlist);
 	}
 
 	return TRUE;
@@ -826,38 +826,6 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 }
 
 static void
-cli_remove_ids_cached (cli_infos_t *infos, xmmsv_t *matching)
-{
-	xmmsv_list_iter_t *it;
-	gint plsize, i, id;
-	guint plid;
-	GArray *playlist;
-
-	plsize = infos->cache->active_playlist->len;
-	playlist = infos->cache->active_playlist;
-
-	xmmsv_get_list_iter (matching, &it);
-
-	/* Loop on the playlist (backward, easier to remove) */
-	for (i = plsize - 1; i >= 0; i--) {
-		plid = g_array_index (playlist, guint, i);
-
-		xmmsv_list_iter_first (it);
-
-		/* Loop on the matched media */
-		while (xmmsv_list_iter_entry_int (it, &id)) {
-			/* If both match, remove! */
-			if (plid == id) {
-				XMMS_CALL (xmmsc_playlist_remove_entry, infos->sync, XMMS_ACTIVE_PLAYLIST, i);
-				break;
-			}
-
-			xmmsv_list_iter_next (it);
-		}
-	}
-}
-
-static void
 cli_remove_ids (cli_infos_t *infos, const gchar *playlist,
                 xmmsv_t *matchval, xmmsv_t *plistval)
 {
@@ -917,7 +885,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
 		if (!playlist) {
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, infos->sync, query, NULL, 0, 0),
-			                 FUNC_CALL_P (cli_remove_ids_cached, infos, XMMS_PREV_VALUE));
+			                 FUNC_CALL_P (cli_remove_ids, infos, playlist, XMMS_PREV_VALUE, infos->cache->active_playlist));
 		} else {
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, infos->sync, query, NULL, 0, 0),
 			                 XMMS_CALL_P (xmmsc_playlist_list_entries, infos->sync, playlist),

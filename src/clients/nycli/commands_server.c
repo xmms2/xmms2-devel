@@ -82,14 +82,12 @@ static void
 cli_info_print_position (gint pos, void *userdata)
 {
 	cli_info_print_positions_t *pack = (cli_info_print_positions_t *) userdata;
-	guint id;
+	gint id;
 
 	/* Skip if outside of playlist */
-	if (pos >= pack->infos->cache->active_playlist->len) {
+	if (!xmmsv_list_get_int (pack->infos->cache->active_playlist, pos, &id)) {
 		return;
 	}
-
-	id = g_array_index (pack->infos->cache->active_playlist, guint, pos);
 
 	/* Do not prepend newline before the first entry */
 	if (pack->inc > 0) {
