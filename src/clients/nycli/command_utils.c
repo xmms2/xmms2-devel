@@ -26,6 +26,156 @@
 
 #define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
 
+static void command_argument_free (void *x);
+
+
+typedef union {
+	gboolean vbool;
+	gint vint;
+	gchar *vstring;
+	gchar **vstringv;
+} command_argument_value_t;
+
+typedef enum {
+	COMMAND_ARGUMENT_TYPE_BOOLEAN = G_OPTION_ARG_NONE,
+	COMMAND_ARGUMENT_TYPE_INT = G_OPTION_ARG_INT,
+	COMMAND_ARGUMENT_TYPE_STRING = G_OPTION_ARG_STRING,
+	COMMAND_ARGUMENT_TYPE_STRING_ARRAY = G_OPTION_ARG_STRING_ARRAY,
+} command_argument_type_t;
+
+typedef struct {
+	command_argument_type_t type;
+	command_argument_value_t value;
+} command_argument_t;
+
+struct command_context_St {
+	gchar *name;
+	gint argc;
+	gchar **argv;
+	GHashTable *flags;
+};
+
+/* Parse the argv array with GOptionContext, using the given argument
+ * definitions, and return a command context structure containing
+ * argument values.
+ * Note: The lib doesn't like argv starting with a flag, so keep a
+ * token before that to avoid problems.
+ *
+ * The passed argv should be an array of length argc+1. (So that a terminating
+ * NULL-pointer can be added in argv[argc].)
+ */
+command_context_t *
+command_context_new (argument_t *argdefs, gint argc, gchar **argv)
+{
+	command_context_t *ctx;
+	GOptionContext *context;
+	GError *error = NULL;
+	gint i;
+
+	ctx = g_new0 (command_context_t, 1);
+	ctx->argc = argc;
+	ctx->argv = argv;
+	ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                    g_free, command_argument_free);
+
+	for (i = 0; argdefs && argdefs[i].long_name; ++i) {
+		command_argument_t *arg = g_new (command_argument_t, 1);
+
+		switch (argdefs[i].arg) {
+			case G_OPTION_ARG_NONE:
+				arg->type = COMMAND_ARGUMENT_TYPE_BOOLEAN;
+				arg->value.vbool = FALSE;
+				argdefs[i].arg_data = &arg->value.vbool;
+				break;
+
+			case G_OPTION_ARG_INT:
+				arg->type = COMMAND_ARGUMENT_TYPE_INT;
+				arg->value.vint = -1;
+				argdefs[i].arg_data = &arg->value.vint;
+				break;
+
+			case G_OPTION_ARG_STRING:
+				arg->type = COMMAND_ARGUMENT_TYPE_STRING;
+				arg->value.vstring = NULL;
+				argdefs[i].arg_data = &arg->value.vstring;
+				break;
+
+			case G_OPTION_ARG_STRING_ARRAY:
+				arg->type = COMMAND_ARGUMENT_TYPE_STRING_ARRAY;
+				arg->value.vstringv = NULL;
+				argdefs[i].arg_data = &arg->value.vstringv;
+				break;
+
+			default:
+				g_printf (_("Trying to register a flag '%s' of invalid type!"),
+				          argdefs[i].long_name);
+				break;
+		}
+
+		g_hash_table_insert (ctx->flags,
+		                     g_strdup (argdefs[i].long_name), arg);
+	}
+
+	context = g_option_context_new (NULL);
+	g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
+	g_option_context_set_ignore_unknown_options (context, TRUE);
+	g_option_context_add_main_entries (context, argdefs, NULL);
+	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
+	g_option_context_free (context);
+
+	if (error) {
+		g_printf (_("Error: %s\n"), error->message);
+		g_error_free (error);
+		command_context_free (ctx);
+		return NULL;
+	}
+
+	/* strip --, check for unknown options before it */
+	/* FIXME: We do not parse options elsewhere, do we? */
+	for (i = 0; i < ctx->argc; i++) {
+		if (strcmp (ctx->argv[i], "--") == 0) {
+			break;
+		}
+		if (ctx->argv[i][0] == '-' && ctx->argv[i][1] != '\0' &&
+		    !(ctx->argv[i][1] >= '0' && ctx->argv[i][1] <= '9')) {
+
+			g_printf (_("Error: Unknown option '%s'\n"), ctx->argv[i]);
+			command_context_free (ctx);
+			return NULL;
+		}
+	}
+	if (i != ctx->argc) {
+		for (i++; i < ctx->argc; i++) {
+			argv[i-1] = argv[i];
+		}
+		ctx->argc--;
+	}
+
+	/* Some functions rely on NULL-termination. */
+	ctx->argv[ctx->argc] = NULL;
+	return ctx;
+}
+
+
+static void
+command_argument_free (void *x)
+{
+	command_argument_t *arg = (command_argument_t *)x;
+
+	if (arg->type == COMMAND_ARGUMENT_TYPE_STRING && arg->value.vstring) {
+		g_free (arg->value.vstring);
+	}
+	g_free (arg);
+}
+
+void
+command_context_free (command_context_t *ctx)
+{
+	g_hash_table_destroy (ctx->flags);
+	g_free (ctx->name);
+	g_free (ctx);
+}
+
 gboolean
 command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v)
 {
@@ -102,6 +252,12 @@ command_flag_stringarray_get (command_context_t *ctx, const gchar *name, const g
 	}
 
 	return retval;
+}
+
+void
+command_name_set (command_context_t *ctx, const gchar *name)
+{
+	ctx->name = g_strdup (name);
 }
 
 gchar *

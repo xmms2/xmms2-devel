@@ -40,11 +40,15 @@ struct command_arg_time_St {
 	command_arg_time_type_t type;
 };
 
+command_context_t *command_context_new (argument_t *argdefs, gint argc, gchar **argv);
+void command_context_free (command_context_t *ctx);
+
 gboolean command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v);
 gboolean command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v);
 gboolean command_flag_string_get (command_context_t *ctx, const gchar *name, const gchar **v);
 gboolean command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v);
 gboolean command_flag_stringarray_get (command_context_t *ctx, const gchar *name, const gchar ***v);
+void command_name_set (command_context_t *ctx, const gchar *name);
 gchar *command_name_get (command_context_t *ctx);
 gint command_arg_count (command_context_t *ctx);
 gchar** command_argv_get (command_context_t *ctx);

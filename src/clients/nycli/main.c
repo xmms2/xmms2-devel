@@ -72,40 +72,6 @@ command_run (cli_infos_t *infos, gchar *input)
 	}
 }
 
-static void
-command_argument_free (void *x)
-{
-	command_argument_t *arg = (command_argument_t *)x;
-
-	if (arg->type == COMMAND_ARGUMENT_TYPE_STRING && arg->value.vstring) {
-		g_free (arg->value.vstring);
-	}
-	g_free (arg);
-}
-
-static command_context_t *
-command_context_init (gint argc, gchar **argv)
-{
-	command_context_t *ctx;
-	ctx = g_new0 (command_context_t, 1);
-
-	/* Register a hashtable to receive flag values and pass them on */
-	ctx->argc = argc;
-	ctx->argv = argv;
-	ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                    g_free, command_argument_free);
-
-	return ctx;
-}
-
-static void
-command_context_free (command_context_t *ctx)
-{
-	g_hash_table_destroy (ctx->flags);
-	g_free (ctx->name);
-	g_free (ctx);
-}
-
 
 static gboolean
 command_runnable (cli_infos_t *infos, command_action_t *action)
@@ -139,103 +105,6 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 	}
 
 	return TRUE;
-}
-
-/* Parse the argv array with GOptionContext, using the given argument
- * definitions, and return a command context structure containing
- * argument values.
- * Note: The lib doesn't like argv starting with a flag, so keep a
- * token before that to avoid problems.
- *
- * The passed argv should be an array of length argc+1. (So that a terminating
- * NULL-pointer can be added in argv[argc].)
- */
-static command_context_t *
-init_context_from_args (argument_t *argdefs, gint argc, gchar **argv)
-{
-	command_context_t *ctx;
-	GOptionContext *context;
-	GError *error = NULL;
-	gint i;
-
-	ctx = command_context_init (argc, argv);
-
-	for (i = 0; argdefs && argdefs[i].long_name; ++i) {
-		command_argument_t *arg = g_new (command_argument_t, 1);
-
-		switch (argdefs[i].arg) {
-		case G_OPTION_ARG_NONE:
-			arg->type = COMMAND_ARGUMENT_TYPE_BOOLEAN;
-			arg->value.vbool = FALSE;
-			argdefs[i].arg_data = &arg->value.vbool;
-			break;
-
-		case G_OPTION_ARG_INT:
-			arg->type = COMMAND_ARGUMENT_TYPE_INT;
-			arg->value.vint = -1;
-			argdefs[i].arg_data = &arg->value.vint;
-			break;
-
-		case G_OPTION_ARG_STRING:
-			arg->type = COMMAND_ARGUMENT_TYPE_STRING;
-			arg->value.vstring = NULL;
-			argdefs[i].arg_data = &arg->value.vstring;
-			break;
-
-		case G_OPTION_ARG_STRING_ARRAY:
-			arg->type = COMMAND_ARGUMENT_TYPE_STRING_ARRAY;
-			arg->value.vstringv = NULL;
-			argdefs[i].arg_data = &arg->value.vstringv;
-			break;
-
-		default:
-			g_printf (_("Trying to register a flag '%s' of invalid type!"),
-			          argdefs[i].long_name);
-			break;
-		}
-
-		g_hash_table_insert (ctx->flags,
-		                     g_strdup (argdefs[i].long_name), arg);
-	}
-
-	context = g_option_context_new (NULL);
-	g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
-	g_option_context_set_ignore_unknown_options (context, TRUE);
-	g_option_context_add_main_entries (context, argdefs, NULL);
-	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
-	g_option_context_free (context);
-
-	if (error) {
-		g_printf (_("Error: %s\n"), error->message);
-		g_error_free (error);
-		command_context_free (ctx);
-		return NULL;
-	}
-
-	/* strip --, check for unknown options before it */
-	/* FIXME: We do not parse options elsewhere, do we? */
-	for (i = 0; i < ctx->argc; i++) {
-		if (strcmp (ctx->argv[i], "--") == 0) {
-			break;
-		}
-		if (ctx->argv[i][0] == '-' && ctx->argv[i][1] != '\0' &&
-		    !(ctx->argv[i][1] >= '0' && ctx->argv[i][1] <= '9')) {
-
-			g_printf (_("Error: Unknown option '%s'\n"), ctx->argv[i]);
-			command_context_free (ctx);
-			return NULL;
-		}
-	}
-	if (i != ctx->argc) {
-		for (i++; i < ctx->argc; i++) {
-			argv[i-1] = argv[i];
-		}
-		ctx->argc--;
-	}
-
-	/* Some functions rely on NULL-termination. */
-	ctx->argv[ctx->argc] = NULL;
-	return ctx;
 }
 
 /* Switch function which should only be called with 'raw' (i.e. inline
@@ -274,7 +143,7 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	 * the option parser does not parse commands starting with a
 	 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 	 * command utils. */
-	ctx = init_context_from_args (flagdefs, in_argc + 1, in_argv - 1);
+	ctx = command_context_new (flagdefs, in_argc + 1, in_argv - 1);
 
 	if (!ctx) {
 		/* An error message has already been printed, so we just return. */
@@ -282,8 +151,8 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	}
 
 	if (command_flag_boolean_get (ctx, "help", &check) && check) {
-		if (ctx->argc > 1) {
-			help_command (infos, infos->cmdnames, ctx->argv + 1, ctx->argc - 1,
+		if (command_arg_count (ctx) >= 1) {
+			help_command (infos, infos->cmdnames, command_argv_get (ctx), command_arg_count (ctx),
 			              CMD_TYPE_COMMAND);
 		} else {
 			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
@@ -349,7 +218,7 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		 * the option parser does not parse commands starting with a
 		 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 		 * command utils. */
-		ctx = init_context_from_args (action->argdefs, argc + 1, argv - 1);
+		ctx = command_context_new (action->argdefs, argc + 1, argv - 1);
 
 		if (ctx) {
 			if (command_flag_boolean_get (ctx, "help", &help) && help) {
@@ -358,7 +227,7 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 				help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
 			} else if (command_runnable (infos, action)) {
 				/* All fine, run the command */
-				ctx->name = g_strdup (action->name);
+				command_name_set (ctx, action->name);
 				cli_infos_loop_suspend (infos);
 				need_io = action->callback (infos, ctx);
 				if (!need_io) {

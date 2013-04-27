@@ -40,7 +40,6 @@ typedef struct status_entry_St status_entry_t;
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
 typedef struct command_context_St command_context_t;
-typedef struct command_argument_St command_argument_t;
 typedef struct configuration_St configuration_t;
 typedef struct alias_define_St alias_define_t;
 typedef struct keymap_entry_St keymap_entry_t;
@@ -62,13 +61,6 @@ typedef enum {
 	COMMAND_REQ_CACHE        = 4   /* need cache */
 } command_req_t;
 
-struct command_context_St {
-	gchar *name;
-	gint argc;
-	gchar **argv;
-	GHashTable *flags;
-};
-
 struct command_action_St {
 	gchar *name;
 	gchar *usage;
@@ -76,25 +68,6 @@ struct command_action_St {
 	command_exec_func callback;
 	command_req_t req;
 	argument_t *argdefs;
-};
-
-typedef enum {
-	COMMAND_ARGUMENT_TYPE_BOOLEAN = G_OPTION_ARG_NONE,
-	COMMAND_ARGUMENT_TYPE_INT = G_OPTION_ARG_INT,
-	COMMAND_ARGUMENT_TYPE_STRING = G_OPTION_ARG_STRING,
-	COMMAND_ARGUMENT_TYPE_STRING_ARRAY = G_OPTION_ARG_STRING_ARRAY,
-} command_argument_type_t;
-
-typedef union {
-	gboolean vbool;
-	gint vint;
-	gchar *vstring;
-	gchar **vstringv;
-} command_argument_value_t;
-
-struct command_argument_St {
-	command_argument_type_t type;
-	command_argument_value_t value;
 };
 
 struct keymap_entry_St {
