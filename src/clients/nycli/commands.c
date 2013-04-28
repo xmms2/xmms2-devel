@@ -178,7 +178,7 @@ CLI_SIMPLE_SETUP("server shutdown", cli_server_shutdown,
 void
 cli_help_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "alias", 'a', 0, G_OPTION_ARG_NONE, NULL, _("List aliases, or alias definition."), NULL },
 		{ NULL }
 	};
@@ -190,7 +190,7 @@ cli_help_setup (command_action_t *action)
 void
 cli_jump_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first media matching the pattern"), NULL },
 		{ NULL }
 	};
@@ -202,7 +202,7 @@ cli_jump_setup (command_action_t *action)
 void
 cli_search_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop[,...]" },
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop[,...]" },
 		{ NULL }
@@ -215,7 +215,7 @@ cli_search_setup (command_action_t *action)
 void
 cli_list_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "playlist",   'p', 0, G_OPTION_ARG_STRING, NULL, _("List the given playlist."), "name" },
 		{ NULL }
 	};
@@ -230,7 +230,7 @@ void
 cli_add_setup (command_action_t *action)
 {
 	/* FIXME: support collection ? */
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "file", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Treat the arguments as file paths instead of a pattern."), "path" },
 		{ "pls", 'P', 0, G_OPTION_ARG_NONE, NULL, _("Treat the files as playlist files (implies --file.)"), "path" },
 		{ "pattern", 't', 0, G_OPTION_ARG_NONE, NULL, _("Force treating arguments as pattern."), "pattern" },
@@ -252,7 +252,7 @@ void
 cli_remove_setup (command_action_t *action)
 {
 	/* FIXME: support collection ? */
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Remove from the given playlist, instead of the active playlist."), "name" },
 		{ NULL }
 	};
@@ -264,7 +264,7 @@ cli_remove_setup (command_action_t *action)
 void
 cli_move_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Playlist to act on."), "name" },
 		{ "next", 'n', 0, G_OPTION_ARG_NONE, NULL, _("Move the matching tracks after the current track."), NULL },
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Move the matching tracks by an offset or to a position."), "pos|offset"},
@@ -278,7 +278,7 @@ cli_move_setup (command_action_t *action)
 void
 cli_current_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "refresh", 'r', 0, G_OPTION_ARG_INT, NULL, _("Delay between each refresh of the status. If 0, the status is only printed once (default)."), "time" },
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
@@ -291,7 +291,7 @@ cli_current_setup (command_action_t *action)
 void
 cli_pl_create_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "switch", 's', 0, G_OPTION_ARG_NONE, NULL, _("Switch to the newly created playlist."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Copy the content of the playlist into the new playlist."), "name" },
 		{ NULL }
@@ -304,7 +304,7 @@ cli_pl_create_setup (command_action_t *action)
 void
 cli_pl_rename_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force the rename of the collection, overwrite an existing collection if needed."), NULL },
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
@@ -317,7 +317,7 @@ cli_pl_rename_setup (command_action_t *action)
 void
 cli_pl_sort_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
 	};
@@ -330,7 +330,7 @@ cli_pl_sort_setup (command_action_t *action)
 void
 cli_coll_create_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force creating of the collection, overwrite an existing collection if needed."), NULL},
 		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Copy an existing collection to the new one."), "name"},
 		{ "empty", 'e', 0, G_OPTION_ARG_NONE, NULL, _("Initialize an empty collection."), NULL},
@@ -345,7 +345,7 @@ cli_coll_create_setup (command_action_t *action)
 void
 cli_coll_rename_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force renaming of the collection, overwrite an existing collection if needed."), NULL},
 		{ NULL }
 	};
@@ -357,7 +357,7 @@ cli_coll_rename_setup (command_action_t *action)
 void
 cli_pl_config_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "type",    't', 0, G_OPTION_ARG_STRING, NULL, _("Change the type of the playlist: list, queue, pshuffle."), "type" },
 		{ "history", 's', 0, G_OPTION_ARG_INT, NULL, _("Size of the history of played tracks (for queue, pshuffle)."), "n" },
 		{ "upcoming",'u', 0, G_OPTION_ARG_INT, NULL, _("Number of upcoming tracks to maintain (for pshuffle)."), "n" },
@@ -373,7 +373,7 @@ cli_pl_config_setup (command_action_t *action)
 void
 cli_pl_list_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "all",  'a', 0, G_OPTION_ARG_NONE, NULL, _("Include hidden playlists."), NULL },
 		{ NULL }
 	};
@@ -385,7 +385,7 @@ cli_pl_list_setup (command_action_t *action)
 void
 cli_server_import_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "non-recursive", 'N',  0, G_OPTION_ARG_NONE, NULL, _("Do not import directories recursively."), NULL },
 		{ NULL }
 	};
@@ -398,7 +398,7 @@ cli_server_import_setup (command_action_t *action)
 void
 cli_server_property_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "int",    'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as integer."), NULL },
 		{ "string", 's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
 		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
@@ -420,7 +420,7 @@ cli_server_property_setup (command_action_t *action)
 void
 cli_server_volume_setup (command_action_t *action)
 {
-	const argument_t flags[] = {
+	const GOptionEntry flags[] = {
 		{ "channel", 'c',  0, G_OPTION_ARG_STRING, NULL, _("Get or set the volume only for one channel."), "name" },
 		{ NULL }
 	};

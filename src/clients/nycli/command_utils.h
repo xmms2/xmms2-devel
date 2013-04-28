@@ -40,7 +40,7 @@ struct command_arg_time_St {
 	command_arg_time_type_t type;
 };
 
-command_context_t *command_context_new (argument_t *argdefs, gint argc, gchar **argv);
+command_context_t *command_context_new (GOptionEntry *argdefs, gint argc, gchar **argv);
 void command_context_free (command_context_t *ctx);
 
 gboolean command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v);

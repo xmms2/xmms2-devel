@@ -44,8 +44,6 @@ typedef struct configuration_St configuration_t;
 typedef struct alias_define_St alias_define_t;
 typedef struct keymap_entry_St keymap_entry_t;
 
-typedef GOptionEntry argument_t;
-
 typedef void (*command_setup_func)(command_action_t *action);
 typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
 
@@ -67,7 +65,7 @@ struct command_action_St {
 	gchar *description;
 	command_exec_func callback;
 	command_req_t req;
-	argument_t *argdefs;
+	GOptionEntry *argdefs;
 };
 
 struct keymap_entry_St {

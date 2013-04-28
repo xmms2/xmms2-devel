@@ -33,7 +33,7 @@ void command_trie_free (command_trie_t *trie);
 gboolean command_trie_insert (command_trie_t* trie, command_action_t *action);
 command_trie_match_type_t command_trie_find (command_trie_t *trie, gchar ***input, gint *num, gboolean auto_complete, command_action_t **action, GList **completions);
 
-void command_action_fill (command_action_t *action, const gchar *name, command_exec_func cmd, command_req_t req, const argument_t flags[], const gchar *usage, const gchar *description);
+void command_action_fill (command_action_t *action, const gchar *name, command_exec_func cmd, command_req_t req, const GOptionEntry flags[], const gchar *usage, const gchar *description);
 
 command_action_t *command_action_alloc (void);
 void command_action_free (command_action_t *action);

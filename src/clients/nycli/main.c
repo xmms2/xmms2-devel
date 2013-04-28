@@ -131,7 +131,7 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	command_context_t *ctx;
 	gboolean check;
 
-	argument_t flagdefs[] = {
+	GOptionEntry flagdefs[] = {
 		{ "help",    'h', 0, G_OPTION_ARG_NONE, NULL,
 		             _("Display this help and exit."), NULL },
 		{ "version", 'v', 0, G_OPTION_ARG_NONE, NULL,

@@ -65,7 +65,7 @@ struct command_context_St {
  * NULL-pointer can be added in argv[argc].)
  */
 command_context_t *
-command_context_new (argument_t *argdefs, gint argc, gchar **argv)
+command_context_new (GOptionEntry *argdefs, gint argc, gchar **argv)
 {
 	command_context_t *ctx;
 	GOptionContext *context;
