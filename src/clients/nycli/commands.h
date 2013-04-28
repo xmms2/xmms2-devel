@@ -25,6 +25,11 @@
 #include "cli_infos.h"
 #include "command_utils.h"
 
+typedef enum {
+	CMD_TYPE_COMMAND,
+	CMD_TYPE_ALIAS,
+} cmd_type_t;
+
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);

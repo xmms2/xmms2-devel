@@ -23,7 +23,6 @@
 #include "command_utils.h"
 #include "main.h"
 
-
 #define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
 
 static void command_argument_free (void *x);

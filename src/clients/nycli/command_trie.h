@@ -19,7 +19,30 @@
 
 #include <glib.h>
 
-#include "main.h"
+#include "cli_infos.h"
+#include "command_utils.h"
+
+typedef struct command_trie_St command_trie_t;
+typedef struct command_action_St command_action_t;
+
+typedef void (*command_setup_func)(command_action_t *action);
+typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
+
+typedef enum {
+	COMMAND_REQ_NONE         = 0,
+	COMMAND_REQ_CONNECTION   = 1,  /* need server connection */
+	COMMAND_REQ_NO_AUTOSTART = 2,  /* don't start server if not running */
+	COMMAND_REQ_CACHE        = 4   /* need cache */
+} command_req_t;
+
+struct command_action_St {
+	gchar *name;
+	gchar *usage;
+	gchar *description;
+	command_exec_func callback;
+	command_req_t req;
+	GOptionEntry *argdefs;
+};
 
 typedef enum {
 	COMMAND_TRIE_MATCH_NONE,

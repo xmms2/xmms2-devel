@@ -21,9 +21,6 @@
 
 #include <glib.h>
 
-#include "main.h"
-
-
 typedef struct column_display_St column_display_t;
 typedef struct column_def_St column_def_t;
 typedef gint (*column_display_rendering_f)(column_display_t *disp, column_def_t *coldef, xmmsv_t *val);

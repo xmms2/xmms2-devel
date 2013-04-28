@@ -17,13 +17,14 @@
 #ifndef __CLI_CACHE_H__
 #define __CLI_CACHE_H__
 
+typedef struct cli_cache_St cli_cache_t;
+typedef struct freshness_St freshness_t;
+typedef enum cli_cache_status_St cli_cache_status_t;
+
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
-#include "main.h"
-
-typedef struct freshness_St freshness_t;
-typedef enum cli_cache_status_St cli_cache_status_t;
+#include "cli_infos.h"
 
 enum cli_cache_status_St {
 	CLI_CACHE_NOT_INIT,

@@ -17,11 +17,15 @@
 #ifndef __CLI_INFOS_H__
 #define __CLI_INFOS_H__
 
-#include <xmmsclient/xmmsclient.h>
+typedef struct cli_infos_St cli_infos_t;
 
 #include <glib.h>
+#include <xmmsclient/xmmsclient.h>
 
-#include "main.h"
+#include "status.h"
+#include "cli_cache.h"
+#include "command_trie.h"
+#include "configuration.h"
 
 typedef enum {
 	CLI_EXECUTION_MODE_INLINE,

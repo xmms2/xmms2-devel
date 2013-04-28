@@ -19,7 +19,7 @@
 
 #include <glib.h>
 
-#include "main.h"
+typedef struct configuration_St configuration_t;
 
 gchar *configuration_get_filename (void);
 configuration_t* configuration_init (const gchar *path);

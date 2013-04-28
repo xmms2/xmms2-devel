@@ -19,7 +19,9 @@
 
 #include <glib.h>
 
-#include "main.h"
+#include "command_trie.h"
+
+typedef struct alias_define_St alias_define_t;
 
 struct alias_define_St {
 	gchar *name;

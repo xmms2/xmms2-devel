@@ -19,6 +19,7 @@
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
+#include "main.h"
 #include "cli_cache.h"
 #include "cli_infos.h"
 #include "column_display.h"

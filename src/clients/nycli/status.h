@@ -17,7 +17,19 @@
 #ifndef __STATUS_H__
 #define __STATUS_H__
 
-#include "main.h"
+typedef struct status_entry_St status_entry_t;
+typedef struct keymap_entry_St keymap_entry_t;
+
+#include <glib.h>
+
+#include "cli_infos.h"
+
+struct keymap_entry_St {
+	const gchar *keyseq;
+	const gchar *readable_keyseq;   /* or NULL to not display */
+	const gchar *named_function;    /* as named in readline_init */
+	const gchar *readable_function; /* or NULL to use named_function */
+};
 
 typedef void (*status_free_func_t) (gpointer udata);
 typedef void (*status_refresh_func_t) (cli_infos_t *infos, gpointer udata,

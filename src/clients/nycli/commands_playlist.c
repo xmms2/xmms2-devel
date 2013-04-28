@@ -21,6 +21,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "main.h"
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "configuration.h"

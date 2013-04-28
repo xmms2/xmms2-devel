@@ -18,6 +18,7 @@
 
 #include "readline.h"
 
+#include "main.h"
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "commands.h"

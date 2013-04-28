@@ -14,11 +14,13 @@
  *  General Public License for more details.
  */
 
+#include <string.h>
 #include <glib/gprintf.h>
 
+#include "main.h"
+#include "cli_infos.h"
 #include "column_display.h"
 #include "utils.h"
-#include "string.h"
 #include "compat.h"
 
 struct column_display_St {

@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <unistd.h>
 
+#include "main.h"
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "status.h"
@@ -34,6 +36,8 @@
 #include <xmms_configuration.h>
 
 static void loop_select (cli_infos_t *infos);
+static void command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
+static void flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv);
 
 void
 command_run (cli_infos_t *infos, gchar *input)
@@ -125,7 +129,7 @@ command_or_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 /* Dispatch actions according to program flags (NOT commands or
  * command options).
  */
-void
+static void
 flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
 	command_context_t *ctx;
@@ -180,8 +184,7 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	command_context_free (ctx);
 }
 
-
-void
+static void
 command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
 	command_action_t *action;
@@ -276,9 +279,9 @@ loop_select (cli_infos_t *infos)
 	if ((infos->mode == CLI_EXECUTION_MODE_SHELL &&
 	     infos->status == CLI_ACTION_STATUS_READY) ||
 	     infos->status == CLI_ACTION_STATUS_REFRESH) {
-		FD_SET(STDINFD, &rfds);
-		if (maxfds < STDINFD) {
-			maxfds = STDINFD;
+		FD_SET(STDIN_FILENO, &rfds);
+		if (maxfds < STDIN_FILENO) {
+			maxfds = STDIN_FILENO;
 		}
 	}
 
@@ -311,7 +314,7 @@ loop_select (cli_infos_t *infos)
 		/* User input found, read it */
 		if ((infos->mode == CLI_EXECUTION_MODE_SHELL ||
 		     infos->status == CLI_ACTION_STATUS_REFRESH) &&
-		    FD_ISSET(STDINFD, &rfds)) {
+		    FD_ISSET(STDIN_FILENO, &rfds)) {
 			rl_callback_read_char ();
 		}
 	}

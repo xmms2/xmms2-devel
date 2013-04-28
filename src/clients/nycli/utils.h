@@ -21,7 +21,6 @@
 
 #include <glib.h>
 
-#include "main.h"
 #include "column_display.h"
 #include "playlist_positions.h"
 

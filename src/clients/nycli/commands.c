@@ -19,8 +19,8 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "main.h"
 #include "commands.h"
-
 #include "cli_infos.h"
 #include "cli_cache.h"
 #include "command_trie.h"

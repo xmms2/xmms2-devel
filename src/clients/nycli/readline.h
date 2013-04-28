@@ -21,7 +21,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "main.h"
+#include "cli_infos.h"
+#include "status.h"
 
 void readline_init (cli_infos_t *infos);
 void readline_suspend (cli_infos_t *infos);

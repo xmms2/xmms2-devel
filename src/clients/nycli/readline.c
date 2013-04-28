@@ -19,6 +19,7 @@
 #include "readline.h"
 #include "configuration.h"
 
+#include "main.h"
 #include "utils.h"
 #include "status.h"
 #include "cli_infos.h"
