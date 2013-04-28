@@ -21,8 +21,8 @@
 #include <glib/gprintf.h>
 
 #include "command_utils.h"
+#include "main.h"
 
-#include "cli_infos.h"
 
 #define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
 

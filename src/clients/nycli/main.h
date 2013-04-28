@@ -19,6 +19,8 @@
 
 #include <glib.h>
 
+#include "command_utils.h"
+
 #define CLI_CLIENTNAME "xmms2-cli"
 
 /* FIXME: shall be loaded from config when config exists */
@@ -39,7 +41,6 @@ typedef struct cli_cache_St cli_cache_t;
 typedef struct status_entry_St status_entry_t;
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
-typedef struct command_context_St command_context_t;
 typedef struct configuration_St configuration_t;
 typedef struct alias_define_St alias_define_t;
 typedef struct keymap_entry_St keymap_entry_t;

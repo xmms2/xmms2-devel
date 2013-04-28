@@ -20,10 +20,11 @@
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
-#include "main.h"
 #include "playlist_positions.h"
 
 #define MAX_STRINGLIST_TOKENS 10
+
+typedef struct command_context_St command_context_t;
 
 typedef struct command_arg_time_St command_arg_time_t;
 

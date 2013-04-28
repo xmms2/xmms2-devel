@@ -22,7 +22,8 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
-#include "main.h"
+#include "cli_infos.h"
+#include "command_utils.h"
 
 gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
 gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
