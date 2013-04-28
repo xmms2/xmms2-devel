@@ -14,18 +14,15 @@
  *  General Public License for more details.
  */
 
-#include "commands.h"
-
 #include "cli_infos.h"
 #include "cli_cache.h"
-
-#include "configuration.h"
 #include "command_utils.h"
-
-#include "xmmscall.h"
-
-#include "status.h"
+#include "commands.h"
+#include "configuration.h"
 #include "currently_playing.h"
+#include "status.h"
+#include "utils.h"
+#include "xmmscall.h"
 
 gboolean
 cli_play (cli_infos_t *infos, command_context_t *ctx)
@@ -199,6 +196,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 		playlist_positions_free (positions);
 		/* Select by pattern */
 	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+		query = xmmsv_coll_intersect_with_playlist (query, XMMS_ACTIVE_PLAYLIST);
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, infos->sync, query, NULL, 0, 0),
 		                 FUNC_CALL_P (cli_jump_relative, infos, (backward ? -1 : 1), XMMS_PREV_VALUE));
 		xmmsv_unref (query);

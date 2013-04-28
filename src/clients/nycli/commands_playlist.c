@@ -354,20 +354,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 
 	/* Has filter, retrieve ids from intersection */
 	if (query != NULL) {
-		xmmsv_t *reference, *intersection;
-
-		reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
-		xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
-		xmmsv_coll_attribute_set_string (reference, "reference", playlist);
-
-		intersection = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
-		xmmsv_coll_add_operand (intersection, query);
-		xmmsv_coll_add_operand (intersection, reference);
-
-		xmmsv_unref (query);
-		xmmsv_unref (reference);
-
-		query = intersection;
+		query = xmmsv_coll_intersect_with_playlist (query, playlist);
 	}
 
 	column_style = !configuration_get_boolean (infos->config, "CLASSIC_LIST");
@@ -887,6 +874,7 @@ cli_remove (cli_infos_t *infos, command_context_t *ctx)
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, infos->sync, query, NULL, 0, 0),
 			                 FUNC_CALL_P (cli_remove_ids, infos, playlist, XMMS_PREV_VALUE, infos->cache->active_playlist));
 		} else {
+			query = xmmsv_coll_intersect_with_playlist (query, playlist);
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, infos->sync, query, NULL, 0, 0),
 			                 XMMS_CALL_P (xmmsc_playlist_list_entries, infos->sync, playlist),
 			                 FUNC_CALL_P (cli_remove_ids, infos, playlist, XMMS_FIRST_VALUE, XMMS_SECOND_VALUE));

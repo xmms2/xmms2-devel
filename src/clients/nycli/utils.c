@@ -186,6 +186,25 @@ format_time (guint64 duration, gboolean use_hours)
 	return time;
 }
 
+xmmsv_t *
+xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist)
+{
+	xmmsv_t *intersection, *reference;
+
+	reference = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsv_coll_attribute_set_string (reference, "reference", playlist);
+
+	intersection = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
+	xmmsv_coll_add_operand (intersection, coll);
+	xmmsv_coll_add_operand (intersection, reference);
+
+	xmmsv_unref (coll);
+	xmmsv_unref (reference);
+
+	return intersection;
+}
+
 /**
  * Apply the default ordering to a collection query, that is, its results will
  * be ordered by artist, and then album. To make this result more readable,

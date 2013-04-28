@@ -25,6 +25,7 @@
 #include "column_display.h"
 #include "playlist_positions.h"
 
+xmmsv_t *xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist);
 xmmsv_t *xmmsv_coll_apply_default_order (xmmsv_t *query);
 void xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val);
 
