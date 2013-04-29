@@ -22,8 +22,6 @@ typedef struct keymap_entry_St keymap_entry_t;
 
 #include <glib.h>
 
-#include "cli_infos.h"
-
 struct keymap_entry_St {
 	const gchar *keyseq;
 	const gchar *readable_keyseq;   /* or NULL to not display */
@@ -32,20 +30,18 @@ struct keymap_entry_St {
 };
 
 typedef void (*status_free_func_t) (gpointer udata);
-typedef void (*status_refresh_func_t) (cli_infos_t *infos, gpointer udata,
-                                       gboolean first, gboolean last);
-typedef gint (*status_callback_func_t) (cli_infos_t *infos, gint i, gpointer udata);
+typedef void (*status_refresh_func_t) (gpointer udata, gboolean first, gboolean last);
+typedef gint (*status_callback_func_t) (gint i, gpointer udata);
 
 status_entry_t *status_init (status_free_func_t free_func,
                              status_refresh_func_t refresh_func,
                              status_callback_func_t callback_func,
                              const keymap_entry_t map[],
                              gpointer udata, gint refresh);
-void status_refresh (cli_infos_t *infos, status_entry_t *entry,
-                     gboolean first, gboolean last);
+void status_refresh (status_entry_t *entry, gboolean first, gboolean last);
 void status_free (status_entry_t *entry);
 gint status_get_refresh_interval (const status_entry_t *entry);
 const keymap_entry_t *status_get_keymap (const status_entry_t *entry);
-gint status_call_callback (const status_entry_t *entry, gint i, cli_infos_t *infos);
+gint status_call_callback (const status_entry_t *entry, gint i);
 
 #endif /* __STATUS_H__ */

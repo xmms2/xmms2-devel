@@ -25,12 +25,12 @@
 #include "currently_playing.h"
 #include "utils.h"
 #include "readline.h"
-#include "cli_cache.h"
 #include "cli_infos.h"
 #include "compat.h"
 #include "xmmscall.h"
 
 struct currently_playing_St {
+	cli_infos_t *infos;
 	xmmsv_t *data;
 	gchar *format;
 };
@@ -63,9 +63,10 @@ currently_playing_update_status (currently_playing_t *entry, xmmsv_t *value)
 }
 
 static void
-currently_playing_request_status (cli_infos_t *infos, currently_playing_t *entry)
+currently_playing_request_status (currently_playing_t *entry)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, cli_infos_xmms_sync (infos)),
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, conn),
 	                 FUNC_CALL_P (currently_playing_update_status, entry, XMMS_PREV_VALUE));
 }
 
@@ -104,10 +105,13 @@ currently_playing_update_info (currently_playing_t *entry, xmmsv_t *value)
 }
 
 static void
-currently_playing_request_info (cli_infos_t *infos, currently_playing_t *entry)
+currently_playing_request_info (currently_playing_t *entry)
 {
-	if (cli_infos_current_id (infos) > 0) {
-		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, cli_infos_xmms_sync (infos), cli_infos_current_id (infos)),
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
+	gint current_id = cli_infos_current_id (entry->infos);
+
+	if (current_id > 0) {
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, current_id),
 		                 FUNC_CALL_P (currently_playing_update_info, entry, XMMS_PREV_VALUE));
 	}
 }
@@ -126,17 +130,18 @@ currently_playing_update_playtime (currently_playing_t *entry, xmmsv_t *value)
 }
 
 static void
-currently_playing_request_playtime (cli_infos_t *infos, currently_playing_t *entry)
+currently_playing_request_playtime (currently_playing_t *entry)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, cli_infos_xmms_sync (infos)),
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, conn),
 	                 FUNC_CALL_P (currently_playing_update_playtime, entry, XMMS_PREV_VALUE));
 }
 
 static void
-currently_playing_update_position (cli_infos_t *infos,
-                                   currently_playing_t *entry)
+currently_playing_update_position (currently_playing_t *entry)
 {
-	xmmsv_dict_set_int (entry->data, "position", cli_infos_current_position (infos));
+	gint current_position = cli_infos_current_position (entry->infos);
+	xmmsv_dict_set_int (entry->data, "position", current_position);
 }
 
 static void
@@ -150,12 +155,12 @@ currently_playing_free (gpointer udata)
 }
 
 static void
-currently_playing_update_all (cli_infos_t *infos, currently_playing_t *entry)
+currently_playing_update_all (currently_playing_t *entry)
 {
-	currently_playing_request_status (infos, entry);
-	currently_playing_update_position (infos, entry);
-	currently_playing_request_info (infos, entry);
-	currently_playing_request_playtime (infos, entry);
+	currently_playing_request_status (entry);
+	currently_playing_update_position (entry);
+	currently_playing_request_info (entry);
+	currently_playing_request_playtime (entry);
 }
 
 static void
@@ -179,12 +184,12 @@ currently_playing_print_entry (currently_playing_t *entry)
 }
 
 static void
-currently_playing_refresh (cli_infos_t *infos, gpointer udata,
-                           gboolean first, gboolean last) {
+currently_playing_refresh (gpointer udata, gboolean first, gboolean last)
+{
 	currently_playing_t *entry = (currently_playing_t *)udata;
 
 	if (first || !last) {
-		currently_playing_update_all (infos, entry);
+		currently_playing_update_all (entry);
 	}
 
 	if (!first) { g_printf ("\r"); }
@@ -204,13 +209,14 @@ static const keymap_entry_t currently_playing_keymap[] = {
 };
 
 status_entry_t *
-currently_playing_init (const gchar *format, gint refresh)
+currently_playing_init (cli_infos_t *infos, const gchar *format, gint refresh)
 {
 	currently_playing_t *entry;
 
 	entry = g_new0 (currently_playing_t, 1);
 	entry->data = xmmsv_new_dict ();
 	entry->format = g_strdup (format);
+	entry->infos = infos;
 
 	return status_init (currently_playing_free,
 	                    currently_playing_refresh,

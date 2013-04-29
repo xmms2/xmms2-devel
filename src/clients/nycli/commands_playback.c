@@ -20,6 +20,7 @@
 #include "commands.h"
 #include "configuration.h"
 #include "currently_playing.h"
+#include "main.h"
 #include "status.h"
 #include "utils.h"
 #include "xmmscall.h"
@@ -90,12 +91,12 @@ cli_current (cli_infos_t *infos, command_context_t *ctx)
 		format = configuration_get_string (config, "STATUS_FORMAT");
 	}
 
-	status = currently_playing_init (format, refresh);
+	status = currently_playing_init (infos, format, refresh);
 
 	if (refresh > 0) {
 		cli_infos_status_mode (infos, status);
 	} else {
-		status_refresh (infos, status, TRUE, TRUE);
+		status_refresh (status, TRUE, TRUE);
 		status_free (status);
 	}
 

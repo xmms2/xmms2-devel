@@ -22,10 +22,6 @@
 
 #include "main.h"
 #include "status.h"
-#include "utils.h"
-#include "readline.h"
-#include "cli_cache.h"
-#include "cli_infos.h"
 
 struct status_entry_St {
 	status_free_func_t free_func;
@@ -64,9 +60,9 @@ status_free (status_entry_t *entry)
 }
 
 void
-status_refresh (cli_infos_t *infos, status_entry_t *entry, gboolean first, gboolean last)
+status_refresh (status_entry_t *entry, gboolean first, gboolean last)
 {
-	entry->refresh_func (infos, entry->udata, first, last);
+	entry->refresh_func (entry->udata, first, last);
 }
 
 gint
@@ -81,10 +77,10 @@ status_get_keymap (const status_entry_t *entry) {
 }
 
 gint
-status_call_callback (const status_entry_t *entry, gint i, cli_infos_t *infos)
+status_call_callback (const status_entry_t *entry, gint i)
 {
 	if (entry->callback_func) {
-		return entry->callback_func (infos, i, entry->udata);
+		return entry->callback_func (i, entry->udata);
 	} else {
 		return 1;
 	}

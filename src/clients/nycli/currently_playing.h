@@ -17,8 +17,11 @@
 #ifndef __CURRENTLY_PLAYING_H__
 #define __CURRENTLY_PLAYING_H__
 
-#include "main.h"
+#include <glib.h>
 
-status_entry_t *currently_playing_init (const gchar *format, gint refresh);
+#include "cli_infos.h"
+#include "status.h"
+
+status_entry_t *currently_playing_init (cli_infos_t *infos, const gchar *format, gint refresh);
 
 #endif /* __CURRENTLY_PLAYING_H__ */

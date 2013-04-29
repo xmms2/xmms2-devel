@@ -86,8 +86,7 @@ readline_toggle_playback (gint count, gint key)
 static gint \
 readline_status_callback##i (gint count, gint key) \
 { \
-	return status_call_callback (cli_infos_status_entry (readline_cli_infos), i, \
-	                             readline_cli_infos); \
+	return status_call_callback (cli_infos_status_entry (readline_cli_infos), i); \
 }
 
 create_callback(0)

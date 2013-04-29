@@ -62,7 +62,7 @@ cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry)
 	infos->status = CLI_ACTION_STATUS_REFRESH;
 	infos->status_entry = entry;
 	readline_status_mode (infos, status_get_keymap (entry));
-	status_refresh (infos, entry, TRUE, FALSE);
+	status_refresh (entry, TRUE, FALSE);
 }
 
 void
@@ -139,7 +139,7 @@ cli_infos_disconnect_callback (xmmsv_t *val, void *userdata)
 	infos->sync = NULL;
 
 	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
-		status_refresh (infos, infos->status_entry, FALSE, TRUE);
+		status_refresh (infos->status_entry, FALSE, TRUE);
 		readline_status_mode_exit ();
 	}
 	cli_infos_loop_resume (infos);
@@ -361,7 +361,7 @@ cli_infos_in_status (cli_infos_t *infos, action_status_t status)
 void
 cli_infos_refresh_status (cli_infos_t *infos)
 {
-	status_refresh (infos, infos->status_entry, FALSE, FALSE);
+	status_refresh (infos->status_entry, FALSE, FALSE);
 }
 
 gint

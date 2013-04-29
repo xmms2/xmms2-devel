@@ -26,11 +26,12 @@
 #include "cli_cache.h"
 #include "configuration.h"
 #include "command_utils.h"
-#include "xmmscall.h"
-#include "status.h"
 #include "currently_playing.h"
+#include "main.h"
 #include "matching_browse.h"
+#include "status.h"
 #include "utils.h"
+#include "xmmscall.h"
 
 typedef struct cli_info_print_positions_St {
 	cli_infos_t *infos;
