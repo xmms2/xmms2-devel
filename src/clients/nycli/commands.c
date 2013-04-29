@@ -531,13 +531,7 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args,
 	gint i, k;
 	gint padding, max_flag_len = 0;
 
-	gchar **argv = cmd;
-	gint argc = num_args;
-	gboolean auto_complete = configuration_get_boolean (infos->config,
-	                                                    "AUTO_UNIQUE_COMPLETE");
-
-	match = command_trie_find (infos->commands, &argv, &argc,
-	                           auto_complete, &action, NULL);
+	match = cli_infos_find_command (infos, &cmd, &num_args, &action);
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 		g_printf (_("usage: %s"), action->name);
 		if (action->usage) {
@@ -590,16 +584,19 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args,
 gboolean
 cli_help (cli_infos_t *infos, command_context_t *ctx)
 {
+	cmd_type_t cmdtype;
+	GList *names;
 	gint num_args;
 	gboolean alias;
-	GList *names = infos->cmdnames;
-	cmd_type_t cmdtype = CMD_TYPE_COMMAND;
 
 	num_args = command_arg_count (ctx);
 
 	if (command_flag_boolean_get (ctx, "alias", &alias) && alias) {
-		names = infos->aliasnames;
+		names = cli_infos_alias_names (infos);
 		cmdtype = CMD_TYPE_ALIAS;
+	} else {
+		names = cli_infos_command_names (infos);
+		cmdtype = CMD_TYPE_COMMAND;
 	}
 
 	/* No argument, display the list of commands */

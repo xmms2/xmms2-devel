@@ -40,20 +40,6 @@ typedef enum {
 	CLI_ACTION_STATUS_ALIAS
 } action_status_t;
 
-struct cli_infos_St {
-	xmmsc_connection_t *conn;
-	xmmsc_connection_t *sync;
-	execution_mode_t mode;
-	action_status_t status;
-	command_trie_t *commands;
-	GList *cmdnames;   /* List of command names, faster help. */
-	GList *aliasnames;
-	configuration_t *config;
-	cli_cache_t *cache;
-	status_entry_t *status_entry;
-	gint alias_count;  /* For recursive aliases */
-};
-
 cli_infos_t* cli_infos_init (gint argc, gchar **argv);
 gboolean cli_infos_connect (cli_infos_t *infos, gboolean autostart);
 void cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry);
@@ -64,5 +50,31 @@ void cli_infos_loop_suspend (cli_infos_t *infos);
 void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);
 void cli_infos_free (cli_infos_t *infos);
+
+xmmsc_connection_t *cli_infos_xmms_sync (cli_infos_t *infos);
+xmmsc_connection_t *cli_infos_xmms_async (cli_infos_t *infos);
+configuration_t *cli_infos_config (cli_infos_t *infos);
+
+GList *cli_infos_command_names (cli_infos_t *infos);
+GList *cli_infos_alias_names (cli_infos_t *infos);
+
+gboolean cli_infos_in_mode (cli_infos_t *infos, execution_mode_t mode);
+gboolean cli_infos_in_status (cli_infos_t *infos, action_status_t status);
+
+void cli_infos_refresh_status (cli_infos_t *infos);
+gint cli_infos_refresh_interval (cli_infos_t *infos);
+
+command_trie_match_type_t cli_infos_find_command (cli_infos_t *infos, gchar ***argv, gint *argc, command_action_t **action);
+command_trie_match_type_t cli_infos_complete_command (cli_infos_t *infos, gchar ***argv, gint *argc, command_action_t **action, GList **suffixes);
+
+void cli_infos_cache_refresh (cli_infos_t *infos);
+gboolean cli_infos_cache_refreshing (cli_infos_t *infos);
+status_entry_t *cli_infos_status_entry (cli_infos_t *infos);
+
+gint cli_infos_current_position (cli_infos_t *infos);
+gint cli_infos_current_id (cli_infos_t *infos);
+gint cli_infos_playback_status (cli_infos_t *infos);
+xmmsv_t *cli_infos_active_playlist (cli_infos_t *infos);
+const gchar *cli_infos_active_playlist_name (cli_infos_t *infos);
 
 #endif /* __CLI_INFOS_H__ */

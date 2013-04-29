@@ -18,7 +18,6 @@
 #include <glib/gprintf.h>
 
 #include "main.h"
-#include "cli_infos.h"
 #include "column_display.h"
 #include "utils.h"
 #include "compat.h"
@@ -26,7 +25,6 @@
 struct column_display_St {
 	guint num_cols;
 	GArray *cols;
-	cli_infos_t *infos;  /* Not really needed, but easier to carry around. */
 	gint counter;
 	guint64 total_time;
 	gint termwidth;

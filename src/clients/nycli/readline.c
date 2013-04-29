@@ -53,28 +53,31 @@ readline_status_quit (gint count, gint key)
 static gint
 readline_next_song (gint count, gint key)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, 1),
-	                 XMMS_CALL_P (xmmsc_playback_tickle, readline_cli_infos->sync));
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, 1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
 }
 
 static gint
 readline_previous_song (gint count, gint key)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, readline_cli_infos->sync, -1),
-	                 XMMS_CALL_P (xmmsc_playback_tickle, readline_cli_infos->sync));
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, -1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
 }
 
 static gint
 readline_toggle_playback (gint count, gint key)
 {
-	guint status = readline_cli_infos->cache->playback_status;
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
+	guint status = cli_infos_playback_status (readline_cli_infos);
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-		XMMS_CALL (xmmsc_playback_pause, readline_cli_infos->sync);
+		XMMS_CALL (xmmsc_playback_pause, conn);
 	} else {
-		XMMS_CALL (xmmsc_playback_start, readline_cli_infos->sync);
+		XMMS_CALL (xmmsc_playback_start, conn);
 	}
 	return 0;
 }
@@ -83,7 +86,7 @@ readline_toggle_playback (gint count, gint key)
 static gint \
 readline_status_callback##i (gint count, gint key) \
 { \
-	return status_call_callback (readline_cli_infos->status_entry, i, \
+	return status_call_callback (cli_infos_status_entry (readline_cli_infos), i, \
 	                             readline_cli_infos); \
 }
 
@@ -153,17 +156,14 @@ command_tab_completion (const gchar *text, gint state)
 	if (!state) {
 		command_action_t *action;
 		gchar **args, **tokens;
-		gboolean auto_complete;
 		gchar *buffer = rl_line_buffer;
 
-		auto_complete = configuration_get_boolean (readline_cli_infos->config,
-		                                           "AUTO_UNIQUE_COMPLETE");
 		suffixes = NULL;
 		while (*buffer == ' ' && *buffer != '\0') ++buffer; /* skip initial spaces */
 		args = tokens = g_strsplit (buffer, " ", 0);
 		count = g_strv_length (tokens);
-		match = command_trie_find (readline_cli_infos->commands, &args, &count,
-		                           auto_complete, &action, &suffixes);
+		match = cli_infos_complete_command (readline_cli_infos, &args, &count,
+		                                    &action, &suffixes);
 		g_strfreev (tokens);
 	}
 
@@ -224,8 +224,8 @@ readline_suspend (cli_infos_t *infos)
 void
 readline_resume (cli_infos_t *infos)
 {
-	rl_callback_handler_install (configuration_get_string (infos->config,
-	                                                       "PROMPT"),
+	configuration_t *config = cli_infos_config (infos);
+	rl_callback_handler_install (configuration_get_string (config, "PROMPT"),
 	                             &readline_callback);
 }
 
@@ -266,7 +266,7 @@ readline_status_mode_exit (void)
 {
 	Keymap active;
 
-	g_assert (readline_cli_infos->status == CLI_ACTION_STATUS_REFRESH);
+	g_assert (cli_infos_in_status (readline_cli_infos, CLI_ACTION_STATUS_REFRESH));
 
 	active = rl_get_keymap ();
 
@@ -275,7 +275,7 @@ readline_status_mode_exit (void)
 
 	rl_callback_handler_remove ();
 	g_free (readline_keymap);
-	status_free (readline_cli_infos->status_entry);
+	status_free (cli_infos_status_entry (readline_cli_infos)); // TODO: handle via cli_infos_free or somesuch?
 	cli_infos_status_mode_exit (readline_cli_infos);
 }
 

@@ -53,6 +53,9 @@ cli_search_print (xmmsv_t *list, column_display_t *coldisp)
 gboolean
 cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	configuration_t *config = cli_infos_config (infos);
+	gint current_position = cli_infos_current_position (infos);
 	xmmsv_t *fetchval, *query, *ordered_query;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
@@ -78,15 +81,15 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 		ordered_query = xmmsv_coll_apply_default_order (query);
 	}
 
-	playlist_marker = configuration_get_string (infos->config, "PLAYLIST_MARKER");
+	playlist_marker = configuration_get_string (config, "PLAYLIST_MARKER");
 
 	if (columns != NULL) {
-		coldisp = column_display_build (columns, playlist_marker, infos->cache->currpos);
+		coldisp = column_display_build (columns, playlist_marker, current_position);
 	} else {
-		coldisp = column_display_build (default_columns, playlist_marker, infos->cache->currpos);
+		coldisp = column_display_build (default_columns, playlist_marker, current_position);
 	}
 
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_infos, infos->sync, ordered_query, NULL, 0, 0, fetchval, NULL),
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_infos, conn, ordered_query, NULL, 0, 0, fetchval, NULL),
 	                 FUNC_CALL_P (cli_search_print, XMMS_PREV_VALUE, coldisp));
 
 	xmmsv_unref (ordered_query);
@@ -103,12 +106,13 @@ static void
 coll_save (cli_infos_t *infos, xmmsv_t *coll,
            xmmsc_coll_namespace_t ns, const gchar *name, gboolean force)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	xmmsc_result_t *res;
 	xmmsv_t *val;
 	gboolean save = TRUE;
 
 	if (!force) {
-		res = xmmsc_coll_get (infos->sync, name, ns);
+		res = xmmsc_coll_get (conn, name, ns);
 		xmmsc_result_wait (res);
 		val = xmmsc_result_get_value (res);
 		if (xmmsv_is_type (val, XMMSV_TYPE_COLL)) {
@@ -120,7 +124,7 @@ coll_save (cli_infos_t *infos, xmmsv_t *coll,
 	}
 
 	if (save) {
-		XMMS_CALL (xmmsc_coll_save, infos->sync, coll, name, ns);
+		XMMS_CALL (xmmsc_coll_save, conn, coll, name, ns);
 	}
 }
 
@@ -140,7 +144,8 @@ cli_coll_list_print (xmmsv_t *list)
 gboolean
 cli_coll_list (cli_infos_t *infos, command_context_t *ctx)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_list, infos->sync, XMMS_COLLECTION_NS_COLLECTIONS),
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_list, conn, XMMS_COLLECTION_NS_COLLECTIONS),
 	                 FUNC_CALL_P (cli_coll_list_print, XMMS_PREV_VALUE));
 	return FALSE;
 }
@@ -324,6 +329,7 @@ coll_dump (xmmsv_t *coll, guint level)
 gboolean
 cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *collection, *name, *ns;
 
 	if (!command_arg_longstring_get (ctx, 0, &collection)) {
@@ -333,7 +339,7 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 
 	coll_name_split (collection, &ns, &name);
 
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, infos->sync, name, ns),
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, name, ns),
 	                 FUNC_CALL_P (coll_dump, XMMS_PREV_VALUE, 0));
 
 	g_free (ns);
@@ -373,13 +379,14 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 			g_printf (_("Error: failed to parse the pattern!\n"));
 		}
 	} else if (copy) {
+		xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 		xmmsc_result_t *res;
 		gchar *from_ns, *from_name;
 
 		coll_name_split (collection, &from_ns, &from_name);
 
 		/* get collection to copy from */
-		res = xmmsc_coll_get (infos->sync, from_name, from_ns);
+		res = xmmsc_coll_get (conn, from_name, from_ns);
 		xmmsc_result_wait (res);
 		coll = xmmsc_result_get_value (res);
 
@@ -420,6 +427,7 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gboolean force;
 	gchar *from_ns, *to_ns, *from_name, *to_name;
 	const gchar *oldname, *newname;
@@ -445,10 +453,10 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 		g_printf ("Error: collections namespaces can't be different!\n");
 	} else {
 		if (force) {
-			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, infos->sync, newname, to_ns),
-			                 XMMS_CALL_P (xmmsc_coll_remove, infos->sync, newname, to_ns));
+			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, newname, to_ns),
+			                 XMMS_CALL_P (xmmsc_coll_remove, conn, newname, to_ns));
 		}
-		XMMS_CALL (xmmsc_coll_rename, infos->sync, oldname, newname, to_ns);
+		XMMS_CALL (xmmsc_coll_rename, conn, oldname, newname, to_ns);
 	}
 
 	g_free (from_ns);
@@ -462,6 +470,7 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *collection, *name, *ns;
 
 	if (!command_arg_longstring_get (ctx, 0, &collection)) {
@@ -471,7 +480,7 @@ cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
 
 	coll_name_split (collection, &ns, &name);
 
-	XMMS_CALL (xmmsc_coll_remove, infos->sync, name, ns);
+	XMMS_CALL (xmmsc_coll_remove, conn, name, ns);
 
 	g_free (ns);
 	g_free (name);
@@ -519,6 +528,7 @@ collection_print_config (xmmsv_t *coll, const gchar *attrname)
 gboolean
 cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *name, *ns;
 	const gchar *collection, *attrname, *attrvalue;
 
@@ -537,10 +547,10 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	if (attrvalue) {
-		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, infos->sync, name, ns),
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, name, ns),
 		                 FUNC_CALL_P (configure_collection, XMMS_PREV_VALUE, infos, ns, name, attrname, attrvalue));
 	} else {
-		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, infos->sync, name, ns),
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, name, ns),
 		                 FUNC_CALL_P (collection_print_config, XMMS_PREV_VALUE, attrname));
 	}
 

@@ -19,14 +19,9 @@
 #include <fnmatch.h>
 #include <glib/gprintf.h>
 
-#include "utils.h"
-#include "status.h"
-#include "currently_playing.h"
 #include "compat.h"
-
-#include "cli_infos.h"
-#include "cli_cache.h"
-#include "column_display.h"
+#include "main.h"
+#include "utils.h"
 #include "xmmscall.h"
 
 #define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) ||	\

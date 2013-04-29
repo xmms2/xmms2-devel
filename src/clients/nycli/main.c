@@ -45,7 +45,7 @@ command_run (cli_infos_t *infos, gchar *input)
 	while (input && *input == ' ') ++input;
 
 	if (input == NULL) {
-		if (infos->status != CLI_ACTION_STATUS_ALIAS) {
+		if (!cli_infos_in_status (infos, CLI_ACTION_STATUS_ALIAS)) {
 			/* End of stream, quit */
 			cli_infos_loop_stop (infos);
 			g_printf ("\n");
@@ -60,7 +60,7 @@ command_run (cli_infos_t *infos, gchar *input)
 		}
 
 		if (g_shell_parse_argv (input, &argc, &argv, &error)) {
-			if (infos->status != CLI_ACTION_STATUS_ALIAS) {
+			if (!cli_infos_in_status (infos, CLI_ACTION_STATUS_ALIAS)) {
 				add_history (input);
 			}
 			command_dispatch (infos, argc, argv);
@@ -80,10 +80,11 @@ command_run (cli_infos_t *infos, gchar *input)
 static gboolean
 command_runnable (cli_infos_t *infos, command_action_t *action)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_async (infos);
 	gint n = 0;
 
 	/* Require connection, abort on failure */
-	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CONNECTION) && !infos->conn) {
+	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CONNECTION) && !conn) {
 		gboolean autostart;
 		autostart = !COMMAND_REQ_CHECK(action, COMMAND_REQ_NO_AUTOSTART);
 		if (!cli_infos_connect (infos, autostart) && autostart) {
@@ -94,10 +95,10 @@ command_runnable (cli_infos_t *infos, command_action_t *action)
 	/* Get the cache ready if needed */
 	if (COMMAND_REQ_CHECK(action, COMMAND_REQ_CACHE)) {
 		/* If executing an alias have to refresh manually */
-		if (infos->status == CLI_ACTION_STATUS_ALIAS) {
-			cli_cache_refresh (infos);
+		if (cli_infos_in_status (infos, CLI_ACTION_STATUS_ALIAS)) {
+			cli_infos_cache_refresh (infos);
 		}
-		while (!cli_cache_is_fresh (infos->cache)) {
+		while (cli_infos_cache_refreshing (infos)) {
 			/* Obviously, there is a problem with updating the cache, abort */
 			if (n == MAX_CACHE_REFRESH_LOOP) {
 				g_printf (_("Failed to update the cache!"));
@@ -156,7 +157,8 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 
 	if (command_flag_boolean_get (ctx, "help", &check) && check) {
 		if (command_arg_count (ctx) >= 1) {
-			help_command (infos, infos->cmdnames, command_argv_get (ctx), command_arg_count (ctx),
+			help_command (infos, cli_infos_command_names (infos),
+			              command_argv_get (ctx), command_arg_count (ctx),
 			              CMD_TYPE_COMMAND);
 		} else {
 			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
@@ -178,7 +180,8 @@ flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	} else {
 		/* Call help to print the "no such command" error */
 		/* FIXME: Could be a more helpful "invalid flag"?*/
-		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
+		help_command (infos, cli_infos_command_names (infos),
+		              in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
 
 	command_context_free (ctx);
@@ -193,8 +196,6 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	gchar *tmp_argv[in_argc+1];
 	gchar **argv;
 
-	gboolean auto_complete;
-
 	/* The arguments will be updated by command_trie_find and
 	 * init_context_from_args, so we make a copy. */
 	memcpy (tmp_argv, in_argv, in_argc * sizeof (gchar *));
@@ -203,16 +204,10 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	argc = in_argc;
 	argv = tmp_argv;
 
-	auto_complete = configuration_get_boolean (infos->config,
-	                                           "AUTO_UNIQUE_COMPLETE");
-
 	/* This updates argv and argc so that they start at the first non-command
 	 * token. */
-	match = command_trie_find (infos->commands, &argv, &argc,
-	                           auto_complete, &action, NULL);
-
+	match = cli_infos_find_command (infos, &argv, &argc, &action);
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
-
 		gboolean help;
 		gboolean need_io;
 		command_context_t *ctx;
@@ -227,7 +222,8 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 			if (command_flag_boolean_get (ctx, "help", &help) && help) {
 				/* Help flag passed, bypass action and show help */
 				/* FIXME(g): select aliasnames list if it's an alias */
-				help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
+				help_command (infos, cli_infos_command_names (infos),
+				              in_argv, in_argc, CMD_TYPE_COMMAND);
 			} else if (command_runnable (infos, action)) {
 				/* All fine, run the command */
 				command_name_set (ctx, action->name);
@@ -242,13 +238,15 @@ command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		}
 	} else {
 		/* Call help to print the "no such command" error */
-		help_command (infos, infos->cmdnames, in_argv, in_argc, CMD_TYPE_COMMAND);
+		help_command (infos, cli_infos_command_names (infos),
+		              in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
 }
 
 static void
 loop_select (cli_infos_t *infos)
 {
+	xmmsc_connection_t *conn = cli_infos_xmms_async (infos);
 	fd_set rfds, wfds;
 	gint modfds;
 	gint xmms2fd;
@@ -258,15 +256,15 @@ loop_select (cli_infos_t *infos)
 	FD_ZERO(&wfds);
 
 	/* Listen to xmms2 if connected */
-	if (infos->conn) {
-		xmms2fd = xmmsc_io_fd_get (infos->conn);
+	if (conn) {
+		xmms2fd = xmmsc_io_fd_get (conn);
 		if (xmms2fd == -1) {
 			g_printf (_("Error: failed to retrieve XMMS2 file descriptor!"));
 			return;
 		}
 
 		FD_SET(xmms2fd, &rfds);
-		if (xmmsc_io_want_out (infos->conn)) {
+		if (xmmsc_io_want_out (conn)) {
 			FD_SET(xmms2fd, &wfds);
 		}
 
@@ -276,18 +274,18 @@ loop_select (cli_infos_t *infos)
 	}
 
 	/* Listen to readline in shell mode or status mode */
-	if ((infos->mode == CLI_EXECUTION_MODE_SHELL &&
-	     infos->status == CLI_ACTION_STATUS_READY) ||
-	     infos->status == CLI_ACTION_STATUS_REFRESH) {
+	if ((cli_infos_in_mode (infos, CLI_EXECUTION_MODE_SHELL) &&
+	     cli_infos_in_status (infos, CLI_ACTION_STATUS_READY)) ||
+	     cli_infos_in_status (infos, CLI_ACTION_STATUS_REFRESH)) {
 		FD_SET(STDIN_FILENO, &rfds);
 		if (maxfds < STDIN_FILENO) {
 			maxfds = STDIN_FILENO;
 		}
 	}
 
-	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
+	if (cli_infos_in_status (infos, CLI_ACTION_STATUS_REFRESH)) {
 		struct timeval refresh;
-		refresh.tv_sec = status_get_refresh_interval (infos->status_entry);
+		refresh.tv_sec = cli_infos_refresh_interval (infos);
 		refresh.tv_usec = 0;
 		modfds = select (maxfds + 1, &rfds, &wfds, NULL, &refresh);
 	} else {
@@ -299,21 +297,21 @@ loop_select (cli_infos_t *infos)
 		return;
 	} else if (modfds != 0) {
 		/* Get/send data to xmms2 */
-		if (infos->conn) {
+		if (conn) {
 			if (FD_ISSET(xmms2fd, &rfds) &&
-			    !xmmsc_io_in_handle (infos->conn)) {
+			    !xmmsc_io_in_handle (conn)) {
 				return;
 			}
 
 			if (FD_ISSET(xmms2fd, &wfds) &&
-			    !xmmsc_io_out_handle (infos->conn)) {
+			    !xmmsc_io_out_handle (conn)) {
 				return;
 			}
 		}
 
 		/* User input found, read it */
-		if ((infos->mode == CLI_EXECUTION_MODE_SHELL ||
-		     infos->status == CLI_ACTION_STATUS_REFRESH) &&
+		if ((cli_infos_in_mode (infos, CLI_EXECUTION_MODE_SHELL) ||
+		     cli_infos_in_status (infos, CLI_ACTION_STATUS_REFRESH)) &&
 		    FD_ISSET(STDIN_FILENO, &rfds)) {
 			rl_callback_read_char ();
 		}
@@ -323,8 +321,8 @@ loop_select (cli_infos_t *infos)
 	   Ask theefer: use callbacks for update and -refresh only for print?
 	   Nesciens: Yes, please!
 	*/
-	if (infos->status == CLI_ACTION_STATUS_REFRESH) {
-		status_refresh (infos, infos->status_entry, FALSE, FALSE);
+	if (cli_infos_in_status (infos, CLI_ACTION_STATUS_REFRESH)) {
+		cli_infos_refresh_status (infos);
 	}
 }
 
@@ -333,8 +331,8 @@ loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 {
 	command_or_flag_dispatch (infos, argc, argv);
 
-	while (infos->status == CLI_ACTION_STATUS_BUSY ||
-	       infos->status == CLI_ACTION_STATUS_REFRESH) {
+	while (cli_infos_in_status (infos, CLI_ACTION_STATUS_BUSY) ||
+	       cli_infos_in_status (infos, CLI_ACTION_STATUS_REFRESH)) {
 		loop_select (infos);
 	}
 }
@@ -342,7 +340,7 @@ loop_once (cli_infos_t *infos, gint argc, gchar **argv)
 static void
 loop_run (cli_infos_t *infos)
 {
-	while (infos->status != CLI_ACTION_STATUS_FINISH) {
+	while (!cli_infos_in_status (infos, CLI_ACTION_STATUS_FINISH)) {
 		loop_select (infos);
 	}
 }
@@ -360,13 +358,13 @@ main (gint argc, gchar **argv)
 
 	/* Execute command, if connection status is ok */
 	if (cli_infos) {
-		if (cli_infos->mode == CLI_EXECUTION_MODE_INLINE) {
+		if (cli_infos_in_mode (cli_infos, CLI_EXECUTION_MODE_INLINE)) {
 			loop_once (cli_infos, argc - 1, argv + 1);
 		} else {
+			configuration_t *config = cli_infos_config (cli_infos);
 			gchar *filename;
 
-			filename = configuration_get_string (cli_infos->config,
-			                                     "HISTORY_FILE");
+			filename = configuration_get_string (config, "HISTORY_FILE");
 
 			read_history (filename);
 			using_history ();

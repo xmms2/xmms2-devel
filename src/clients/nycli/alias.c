@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "main.h"
 #include "cli_infos.h"
 #include "command_utils.h"
 #include "command_trie.h"
@@ -121,12 +122,13 @@ finish:
 static gboolean
 alias_action (cli_infos_t *infos, command_context_t *ctx)
 {
+	configuration_t *config = cli_infos_config (infos);
 	gchar *runnable, *def, *line;
 	gboolean retval = TRUE;
 	gchar **argv;
 	gint argc;
 
-	def = g_hash_table_lookup (configuration_get_aliases (infos->config),
+	def = g_hash_table_lookup (configuration_get_aliases (config),
 	                           command_name_get (ctx));
 
 	argc = command_arg_count (ctx);

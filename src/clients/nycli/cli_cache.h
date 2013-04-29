@@ -24,8 +24,6 @@ typedef enum cli_cache_status_St cli_cache_status_t;
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
-#include "cli_infos.h"
-
 enum cli_cache_status_St {
 	CLI_CACHE_NOT_INIT,
 	CLI_CACHE_PENDING,
@@ -38,6 +36,8 @@ struct freshness_St {
 };
 
 struct cli_cache_St {
+	xmmsc_connection_t *conn;
+
 	gint32 currpos;
 	gint32 currid;
 	gint32 playback_status;
@@ -53,9 +53,9 @@ struct cli_cache_St {
 };
 
 cli_cache_t *cli_cache_init (void);
-void cli_cache_start (cli_infos_t *infos);
+void cli_cache_start (cli_cache_t *cache, xmmsc_connection_t *conn);
 gboolean cli_cache_is_fresh (cli_cache_t *cache);
-void cli_cache_refresh (cli_infos_t *infos);
+void cli_cache_refresh (cli_cache_t *cache);
 void cli_cache_free (cli_cache_t *cache);
 
 #endif /* __CLI_INFOS_H__ */

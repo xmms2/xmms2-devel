@@ -28,6 +28,20 @@
 #include "alias.h"
 #include "status.h"
 
+struct cli_infos_St {
+	xmmsc_connection_t *conn;
+	xmmsc_connection_t *sync;
+	execution_mode_t mode;
+	action_status_t status;
+	command_trie_t *commands;
+	GList *cmdnames;   /* List of command names, faster help. */
+	GList *aliasnames;
+	configuration_t *config;
+	cli_cache_t *cache;
+	status_entry_t *status_entry;
+	gint alias_count;  /* For recursive aliases */
+};
+
 static gboolean
 cli_infos_autostart (cli_infos_t *infos, gchar *path)
 {
@@ -203,7 +217,7 @@ cli_infos_connect (cli_infos_t *infos, gboolean autostart)
 	xmmsc_result_notifier_set (res, &cli_infos_disconnect_callback, infos);
 	xmmsc_result_unref (res);
 
-	cli_cache_start (infos);
+	cli_cache_start (infos->cache, infos->conn);
 
 	return TRUE;
 }
@@ -299,4 +313,122 @@ cli_infos_free (cli_infos_t *infos)
 	cmdnames_free (infos->cmdnames);
 
 	g_free (infos);
+}
+
+
+xmmsc_connection_t *
+cli_infos_xmms_sync (cli_infos_t *infos)
+{
+	return infos->sync;
+}
+
+xmmsc_connection_t *
+cli_infos_xmms_async (cli_infos_t *infos)
+{
+	return infos->conn;
+}
+
+configuration_t *
+cli_infos_config (cli_infos_t *infos)
+{
+	return infos->config;
+}
+
+GList *
+cli_infos_command_names (cli_infos_t *infos)
+{
+	return infos->cmdnames;
+}
+
+GList *
+cli_infos_alias_names (cli_infos_t *infos)
+{
+	return infos->aliasnames;
+}
+
+gboolean
+cli_infos_in_mode (cli_infos_t *infos, execution_mode_t mode)
+{
+	return infos->mode == mode;
+}
+
+gboolean
+cli_infos_in_status (cli_infos_t *infos, action_status_t status)
+{
+	return infos->status == status;
+}
+
+void
+cli_infos_refresh_status (cli_infos_t *infos)
+{
+	status_refresh (infos, infos->status_entry, FALSE, FALSE);
+}
+
+gint
+cli_infos_refresh_interval (cli_infos_t *infos)
+{
+	return status_get_refresh_interval (infos->status_entry);
+}
+
+command_trie_match_type_t
+cli_infos_find_command (cli_infos_t *infos, gchar ***argv, gint *argc,
+                        command_action_t **action)
+{
+	return cli_infos_complete_command (infos, argv, argc, action, NULL);
+}
+
+command_trie_match_type_t
+cli_infos_complete_command (cli_infos_t *infos, gchar ***argv, gint *argc,
+                            command_action_t **action, GList **suffixes)
+{
+	gboolean auto_complete = configuration_get_boolean (infos->config, "AUTO_UNIQUE_COMPLETE");
+	return command_trie_find (infos->commands, argv, argc, auto_complete, action, suffixes);
+}
+
+void
+cli_infos_cache_refresh (cli_infos_t *infos)
+{
+	cli_cache_refresh (infos->cache);
+}
+
+gboolean
+cli_infos_cache_refreshing (cli_infos_t *infos)
+{
+	return !cli_cache_is_fresh (infos->cache);
+}
+
+status_entry_t *
+cli_infos_status_entry (cli_infos_t *infos)
+{
+	return infos->status_entry;
+}
+
+gint
+cli_infos_current_position (cli_infos_t *infos)
+{
+	return infos->cache->currpos;
+}
+
+gint
+cli_infos_current_id (cli_infos_t *infos)
+{
+	return infos->cache->currid;
+}
+
+gint
+cli_infos_playback_status (cli_infos_t *infos)
+{
+	return infos->cache->playback_status;
+}
+
+xmmsv_t *
+cli_infos_active_playlist (cli_infos_t *infos)
+{
+	return infos->cache->active_playlist;
+}
+
+const gchar *
+cli_infos_active_playlist_name (cli_infos_t *infos)
+{
+	return infos->cache->active_playlist_name;
 }

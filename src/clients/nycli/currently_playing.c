@@ -65,7 +65,7 @@ currently_playing_update_status (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_status (cli_infos_t *infos, currently_playing_t *entry)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, infos->sync),
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, cli_infos_xmms_sync (infos)),
 	                 FUNC_CALL_P (currently_playing_update_status, entry, XMMS_PREV_VALUE));
 }
 
@@ -106,8 +106,8 @@ currently_playing_update_info (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_info (cli_infos_t *infos, currently_playing_t *entry)
 {
-	if (infos->cache->currid > 0) {
-		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, infos->sync, infos->cache->currid),
+	if (cli_infos_current_id (infos) > 0) {
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, cli_infos_xmms_sync (infos), cli_infos_current_id (infos)),
 		                 FUNC_CALL_P (currently_playing_update_info, entry, XMMS_PREV_VALUE));
 	}
 }
@@ -128,7 +128,7 @@ currently_playing_update_playtime (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_playtime (cli_infos_t *infos, currently_playing_t *entry)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, infos->sync),
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, cli_infos_xmms_sync (infos)),
 	                 FUNC_CALL_P (currently_playing_update_playtime, entry, XMMS_PREV_VALUE));
 }
 
@@ -136,7 +136,7 @@ static void
 currently_playing_update_position (cli_infos_t *infos,
                                    currently_playing_t *entry)
 {
-	xmmsv_dict_set_int (entry->data, "position", infos->cache->currpos);
+	xmmsv_dict_set_int (entry->data, "position", cli_infos_current_position (infos));
 }
 
 static void
