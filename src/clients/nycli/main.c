@@ -14,18 +14,19 @@
  *  General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
-
-#include <glib.h>
-#include <glib/gprintf.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <unistd.h>
+
+#include <glib.h>
+#include <glib/gi18n.h>
+#include <glib/gprintf.h>
+
+#include <xmmsclient/xmmsclient.h>
 
 #include "main.h"
 #include "cli_infos.h"
-#include "cli_cache.h"
 #include "status.h"
 #include "commands.h"
 #include "command_trie.h"

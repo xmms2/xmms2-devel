@@ -19,11 +19,12 @@
 
 #include <glib.h>
 
-#include "cli_infos.h"
-#include "command_utils.h"
-
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
+typedef enum command_trie_match_type_St  command_trie_match_type_t;
+
+#include "cli_infos.h"
+#include "command_utils.h"
 
 typedef void (*command_setup_func)(command_action_t *action);
 typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
@@ -44,11 +45,11 @@ struct command_action_St {
 	GOptionEntry *argdefs;
 };
 
-typedef enum {
+enum command_trie_match_type_St {
 	COMMAND_TRIE_MATCH_NONE,
 	COMMAND_TRIE_MATCH_ACTION,
 	COMMAND_TRIE_MATCH_SUBTRIE
-} command_trie_match_type_t;
+};
 
 command_trie_t* command_trie_alloc (void);
 command_trie_t* command_trie_new (gchar c);

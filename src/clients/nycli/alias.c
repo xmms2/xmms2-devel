@@ -20,12 +20,12 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
-#include "main.h"
-#include "cli_infos.h"
-#include "command_utils.h"
-#include "command_trie.h"
-#include "configuration.h"
 #include "alias.h"
+#include "cli_infos.h"
+#include "command_trie.h"
+#include "command_utils.h"
+#include "configuration.h"
+#include "main.h"
 
 static void
 free_token (gpointer data, gpointer udata)

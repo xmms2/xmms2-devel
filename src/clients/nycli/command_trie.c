@@ -14,7 +14,9 @@
  *  General Public License for more details.
  */
 
-#include "main.h"
+#include <glib.h>
+#include <glib/gi18n.h>
+
 #include "command_trie.h"
 
 #define MAX_COMPLETION 256

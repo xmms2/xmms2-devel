@@ -14,19 +14,20 @@
  *  General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <glib/gprintf.h>
 
-#include "main.h"
-#include "status.h"
-#include "currently_playing.h"
-#include "utils.h"
-#include "readline.h"
+#include <xmmsclient/xmmsclient.h>
+
 #include "cli_infos.h"
 #include "compat.h"
+#include "currently_playing.h"
+#include "readline.h"
+#include "status.h"
+#include "utils.h"
 #include "xmmscall.h"
 
 struct currently_playing_St {
@@ -200,12 +201,12 @@ currently_playing_refresh (gpointer udata, gboolean first, gboolean last)
 }
 
 static const keymap_entry_t currently_playing_keymap[] = {
-	{"n"    , "n"       , "next-song"       , _("jump to next song")},
-	{"p"    , "p"       , "previous-song"   , _("jump to previous song")},
-	{" "    , _("SPACE"), "toggle-playback" , _("toggle playback")},
-	{"\\C-j", _("ENTER"), "quit-status-mode", _("exit status mode")},
-	{"\\C-m", NULL      , "quit-status-mode", NULL},
-	{NULL, NULL, NULL, NULL}
+	{ "n"    , "n"        , "next-song"       , N_("jump to next song")     },
+	{ "p"    , "p"        , "previous-song"   , N_("jump to previous song") },
+	{ " "    , N_("SPACE"), "toggle-playback" , N_("toggle playback")       },
+	{ "\\C-j", N_("ENTER"), "quit-status-mode", N_("exit status mode")      },
+	{ "\\C-m", NULL       , "quit-status-mode", NULL                        },
+	{ NULL   , NULL       , NULL              , NULL                        }
 };
 
 status_entry_t *

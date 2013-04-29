@@ -17,10 +17,7 @@
 #ifndef __COMMANDS_H__
 #define __COMMANDS_H__
 
-#include <xmmsclient/xmmsclient.h>
-
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "cli_infos.h"
 #include "command_utils.h"

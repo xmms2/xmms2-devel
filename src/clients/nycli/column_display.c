@@ -15,12 +15,14 @@
  */
 
 #include <string.h>
-#include <glib/gprintf.h>
 
-#include "main.h"
+#include <glib.h>
+#include <glib/gprintf.h>
+#include <glib/gi18n.h>
+
 #include "column_display.h"
-#include "utils.h"
 #include "compat.h"
+#include "utils.h"
 
 struct column_display_St {
 	guint num_cols;

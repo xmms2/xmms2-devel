@@ -17,10 +17,12 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
+#include <glib/gprintf.h>
+
 #include <xmmsclient/xmmsclient.h>
 
 #include "main.h"
-#include "cli_cache.h"
 #include "cli_infos.h"
 #include "column_display.h"
 #include "configuration.h"

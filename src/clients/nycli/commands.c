@@ -17,22 +17,15 @@
 #include <stdlib.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <glib/gprintf.h>
 
-#include "main.h"
-#include "commands.h"
 #include "cli_infos.h"
-#include "cli_cache.h"
-#include "command_trie.h"
-#include "command_utils.h"
 #include "cmdnames.h"
-#include "configuration.h"
+#include "commands.h"
+#include "command_utils.h"
+#include "main.h"
 #include "utils.h"
-#include "column_display.h"
-#include "matching_browse.h"
-#include "xmmscall.h"
-
-#include <sys/stat.h>
 
 #define COMMAND_HELP_DESCRIPTION_INDENT 2
 

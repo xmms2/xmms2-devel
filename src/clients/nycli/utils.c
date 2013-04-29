@@ -14,13 +14,15 @@
  *  General Public License for more details.
  */
 
-#include <string.h>
-#include <stdlib.h>
 #include <fnmatch.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gi18n.h>
 
 #include "compat.h"
-#include "main.h"
 #include "utils.h"
 #include "xmmscall.h"
 

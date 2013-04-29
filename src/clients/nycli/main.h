@@ -27,12 +27,6 @@
 #define MAX_CACHE_REFRESH_LOOP 200
 #define MAX_INT_VALUE_BUFFER_SIZE 64
 
-/* FIXME: Change this to use gettext later on */
-#define _(String) (String)
-#define N_(String) String
-#define textdomain(Domain)
-#define bindtextdomain(Package, Directory)
-
 #define COMMAND_REQ_CHECK(action, reqmask) (((reqmask) & (action)->req) == (reqmask))
 
 void command_run (cli_infos_t *infos, gchar *input);

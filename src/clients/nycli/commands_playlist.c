@@ -19,19 +19,21 @@
 #include <sys/stat.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <glib/gprintf.h>
+
+#include <xmmsclient/xmmsclient.h>
 
 #include "main.h"
 #include "cli_infos.h"
-#include "cli_cache.h"
-#include "configuration.h"
+#include "column_display.h"
 #include "command_utils.h"
 #include "commands.h"
-#include "column_display.h"
+#include "configuration.h"
+#include "matching_browse.h"
 #include "playlist_positions.h"
 #include "xmmscall.h"
 #include "utils.h"
-#include "matching_browse.h"
 
 typedef struct cli_move_positions_St {
 	xmmsc_connection_t *sync;

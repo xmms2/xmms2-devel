@@ -18,10 +18,10 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <glib/gprintf.h>
 
 #include "command_utils.h"
-#include "main.h"
 
 #define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
 

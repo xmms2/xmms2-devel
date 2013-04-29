@@ -19,11 +19,13 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <glib/gprintf.h>
+
+#include <xmmsclient/xmmsclient.h>
 
 #include "commands.h"
 #include "cli_infos.h"
-#include "cli_cache.h"
 #include "configuration.h"
 #include "command_utils.h"
 #include "currently_playing.h"

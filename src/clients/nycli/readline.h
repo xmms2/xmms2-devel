@@ -14,10 +14,6 @@
  *  General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
-
-#include <glib.h>
-#include <glib/gprintf.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 

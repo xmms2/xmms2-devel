@@ -16,7 +16,9 @@
 
 #include <string.h>
 
-#include "main.h"
+#include <glib.h>
+#include <glib/gi18n.h>
+
 #include "cli_cache.h"
 #include "xmmscall.h"
 

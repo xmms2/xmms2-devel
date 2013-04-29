@@ -23,7 +23,6 @@ typedef struct cli_infos_St cli_infos_t;
 #include <xmmsclient/xmmsclient.h>
 
 #include "status.h"
-#include "cli_cache.h"
 #include "command_trie.h"
 #include "configuration.h"
 

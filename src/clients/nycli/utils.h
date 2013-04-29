@@ -21,22 +21,14 @@
 
 #include <glib.h>
 
-#include "column_display.h"
-#include "playlist_positions.h"
-
 xmmsv_t *xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist);
 xmmsv_t *xmmsv_coll_apply_default_order (xmmsv_t *query);
 void xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val);
-
-void list_print_row (xmmsv_t *list, column_display_t *coldisp);
-
-void positions_print_list (xmmsv_t *res, playlist_positions_t *positions, column_display_t *coldisp, gboolean is_search);
 
 void print_padding (gint length, const gchar padchar);
 
 gchar *format_time (guint64 duration, gboolean use_hours);
 void enrich_mediainfo (xmmsv_t *val);
-
 
 gchar *decode_url (const gchar *string);
 gchar *encode_url (gchar *url);

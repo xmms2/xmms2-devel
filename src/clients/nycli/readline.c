@@ -16,17 +16,18 @@
 
 #include <stdlib.h>
 
-#include "readline.h"
-#include "configuration.h"
+#include <glib.h>
+#include <glib/gi18n.h>
+#include <glib/gprintf.h>
 
-#include "main.h"
-#include "utils.h"
-#include "status.h"
+#include <xmmsclient/xmmsclient.h>
+
 #include "cli_infos.h"
-#include "cli_cache.h"
-#include "cmdnames.h"
+#include "configuration.h"
+#include "main.h"
+#include "readline.h"
+#include "status.h"
 #include "xmmscall.h"
-#include "command_trie.h"
 
 static gchar *readline_keymap;
 static cli_infos_t *readline_cli_infos;

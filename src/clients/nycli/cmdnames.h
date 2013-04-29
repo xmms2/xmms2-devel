@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 typedef struct command_name_St command_name_t;
 struct command_name_St {
