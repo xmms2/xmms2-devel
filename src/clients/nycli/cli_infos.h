@@ -26,6 +26,8 @@ typedef struct cli_infos_St cli_infos_t;
 #include "command_trie.h"
 #include "configuration.h"
 
+#define CLI_CLIENTNAME "xmms2-cli"
+
 typedef enum {
 	CLI_EXECUTION_MODE_INLINE,
 	CLI_EXECUTION_MODE_SHELL
@@ -39,7 +41,7 @@ typedef enum {
 	CLI_ACTION_STATUS_ALIAS
 } action_status_t;
 
-cli_infos_t* cli_infos_init (gint argc, gchar **argv);
+cli_infos_t* cli_infos_init (void);
 gboolean cli_infos_connect (cli_infos_t *infos, gboolean autostart);
 void cli_infos_status_mode (cli_infos_t *infos, status_entry_t *entry);
 void cli_infos_status_mode_exit (cli_infos_t *infos);
@@ -49,6 +51,9 @@ void cli_infos_loop_suspend (cli_infos_t *infos);
 void cli_infos_loop_resume (cli_infos_t *infos);
 void cli_infos_loop_stop (cli_infos_t *infos);
 void cli_infos_free (cli_infos_t *infos);
+void cli_infos_loop (cli_infos_t *infos, gint argc, gchar **argv);
+
+void cli_infos_execute_command (cli_infos_t *infos, gchar *input);
 
 xmmsc_connection_t *cli_infos_xmms_sync (cli_infos_t *infos);
 xmmsc_connection_t *cli_infos_xmms_async (cli_infos_t *infos);

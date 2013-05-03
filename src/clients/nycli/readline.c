@@ -24,7 +24,6 @@
 
 #include "cli_infos.h"
 #include "configuration.h"
-#include "main.h"
 #include "readline.h"
 #include "status.h"
 #include "xmmscall.h"
@@ -35,7 +34,7 @@ static cli_infos_t *readline_cli_infos;
 static void
 readline_callback (gchar *input)
 {
-	command_run (readline_cli_infos, input);
+	cli_infos_execute_command (readline_cli_infos, input);
 }
 
 static void

@@ -24,7 +24,6 @@
 #include "cmdnames.h"
 #include "commands.h"
 #include "command_utils.h"
-#include "main.h"
 #include "utils.h"
 
 #define COMMAND_HELP_DESCRIPTION_INDENT 2

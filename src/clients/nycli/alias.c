@@ -25,7 +25,6 @@
 #include "command_trie.h"
 #include "command_utils.h"
 #include "configuration.h"
-#include "main.h"
 
 static void
 free_token (gpointer data, gpointer udata)
@@ -144,7 +143,7 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 	}
 
 	cli_infos_alias_begin (infos);
-	command_run (infos, runnable);
+	cli_infos_execute_command (infos, runnable);
 	cli_infos_alias_end (infos);
 
 	finish:

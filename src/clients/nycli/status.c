@@ -20,7 +20,6 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
-#include "main.h"
 #include "status.h"
 
 struct status_entry_St {

@@ -29,7 +29,6 @@
 #include "configuration.h"
 #include "command_utils.h"
 #include "currently_playing.h"
-#include "main.h"
 #include "matching_browse.h"
 #include "status.h"
 #include "utils.h"
