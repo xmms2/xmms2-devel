@@ -394,7 +394,7 @@ command_trie_find_completions_recurse (command_trie_t *trie, gchar *buf,
 	GList *l;
 
 	/* add valid match to the list */
-	if (trie->match.type != COMMAND_TRIE_MATCH_NONE) {
+	if (trie->match.type != COMMAND_TRIE_MATCH_NONE && offset > 0) {
 		buf[offset] = '\0';
 		res = g_list_prepend (res, g_strdup (buf));
 	}
