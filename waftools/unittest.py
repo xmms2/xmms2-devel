@@ -99,6 +99,9 @@ def monkey_patch_test_runner():
                 "--log-file=%s.log" % self.inputs[0].abspath(),
                 "--leak-check=full",
                 "--suppressions=%s" % suppression,
+                "--num-callers=20",
+                "--malloc-fill=0xa1",
+                "--free-fill=0xa1",
                 self.inputs[0].abspath()
             ]
         original(self)
