@@ -22,7 +22,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "compat.h"
 #include "currently_playing.h"
 #include "readline.h"
@@ -31,7 +31,7 @@
 #include "xmmscall.h"
 
 struct currently_playing_St {
-	cli_infos_t *infos;
+	cli_context_t *ctx;
 	xmmsv_t *data;
 	gchar *format;
 };
@@ -66,7 +66,7 @@ currently_playing_update_status (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_status (currently_playing_t *entry)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (entry->ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_status, conn),
 	                 FUNC_CALL_P (currently_playing_update_status, entry, XMMS_PREV_VALUE));
 }
@@ -108,8 +108,8 @@ currently_playing_update_info (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_info (currently_playing_t *entry)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
-	gint current_id = cli_infos_current_id (entry->infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (entry->ctx);
+	gint current_id = cli_context_current_id (entry->ctx);
 
 	if (current_id > 0) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, current_id),
@@ -133,7 +133,7 @@ currently_playing_update_playtime (currently_playing_t *entry, xmmsv_t *value)
 static void
 currently_playing_request_playtime (currently_playing_t *entry)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (entry->infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (entry->ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_playtime, conn),
 	                 FUNC_CALL_P (currently_playing_update_playtime, entry, XMMS_PREV_VALUE));
 }
@@ -141,7 +141,7 @@ currently_playing_request_playtime (currently_playing_t *entry)
 static void
 currently_playing_update_position (currently_playing_t *entry)
 {
-	gint current_position = cli_infos_current_position (entry->infos);
+	gint current_position = cli_context_current_position (entry->ctx);
 	xmmsv_dict_set_int (entry->data, "position", current_position);
 }
 
@@ -210,14 +210,14 @@ static const keymap_entry_t currently_playing_keymap[] = {
 };
 
 status_entry_t *
-currently_playing_init (cli_infos_t *infos, const gchar *format, gint refresh)
+currently_playing_init (cli_context_t *ctx, const gchar *format, gint refresh)
 {
 	currently_playing_t *entry;
 
 	entry = g_new0 (currently_playing_t, 1);
 	entry->data = xmmsv_new_dict ();
 	entry->format = g_strdup (format);
-	entry->infos = infos;
+	entry->ctx = ctx;
 
 	return status_init (currently_playing_free,
 	                    currently_playing_refresh,

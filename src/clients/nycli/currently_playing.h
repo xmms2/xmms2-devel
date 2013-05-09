@@ -19,9 +19,9 @@
 
 #include <glib.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "status.h"
 
-status_entry_t *currently_playing_init (cli_infos_t *infos, const gchar *format, gint refresh);
+status_entry_t *currently_playing_init (cli_context_t *ctx, const gchar *format, gint refresh);
 
 #endif /* __CURRENTLY_PLAYING_H__ */

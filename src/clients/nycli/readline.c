@@ -22,19 +22,19 @@
 
 #include <xmmsclient/xmmsclient.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "configuration.h"
 #include "readline.h"
 #include "status.h"
 #include "xmmscall.h"
 
 static gchar *readline_keymap;
-static cli_infos_t *readline_cli_infos;
+static cli_context_t *readline_cli_ctx;
 
 static void
 readline_callback (gchar *input)
 {
-	cli_infos_execute_command (readline_cli_infos, input);
+	cli_context_execute_command (readline_cli_ctx, input);
 }
 
 static void
@@ -53,7 +53,7 @@ readline_status_quit (gint count, gint key)
 static gint
 readline_next_song (gint count, gint key)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, 1),
 	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
@@ -62,7 +62,7 @@ readline_next_song (gint count, gint key)
 static gint
 readline_previous_song (gint count, gint key)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, -1),
 	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
@@ -71,8 +71,8 @@ readline_previous_song (gint count, gint key)
 static gint
 readline_toggle_playback (gint count, gint key)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (readline_cli_infos);
-	guint status = cli_infos_playback_status (readline_cli_infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
+	guint status = cli_context_playback_status (readline_cli_ctx);
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		XMMS_CALL (xmmsc_playback_pause, conn);
@@ -86,7 +86,7 @@ readline_toggle_playback (gint count, gint key)
 static gint \
 readline_status_callback##i (gint count, gint key) \
 { \
-	return status_call_callback (cli_infos_status_entry (readline_cli_infos), i); \
+	return status_call_callback (cli_context_status_entry (readline_cli_ctx), i); \
 }
 
 create_callback(0)
@@ -161,7 +161,7 @@ command_tab_completion (const gchar *text, gint state)
 		while (*buffer == ' ' && *buffer != '\0') ++buffer; /* skip initial spaces */
 		args = tokens = g_strsplit (buffer, " ", 0);
 		count = g_strv_length (tokens);
-		match = cli_infos_complete_command (readline_cli_infos, &args, &count,
+		match = cli_context_complete_command (readline_cli_ctx, &args, &count,
 		                                    &action, &suffixes);
 		g_strfreev (tokens);
 	}
@@ -191,9 +191,9 @@ command_tab_completion (const gchar *text, gint state)
 }
 
 void
-readline_init (cli_infos_t *infos)
+readline_init (cli_context_t *ctx)
 {
-	readline_cli_infos = infos;
+	readline_cli_ctx = ctx;
 
 	/* correctly quote filenames with double-quotes */
 	rl_filename_quote_characters = " ";
@@ -215,26 +215,26 @@ readline_init (cli_infos_t *infos)
 }
 
 void
-readline_suspend (cli_infos_t *infos)
+readline_suspend (cli_context_t *ctx)
 {
 	rl_callback_handler_remove ();
 }
 
 void
-readline_resume (cli_infos_t *infos)
+readline_resume (cli_context_t *ctx)
 {
-	configuration_t *config = cli_infos_config (infos);
+	configuration_t *config = cli_context_config (ctx);
 	rl_callback_handler_install (configuration_get_string (config, "PROMPT"),
 	                             &readline_callback);
 }
 
 void
-readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[])
+readline_status_mode (cli_context_t *ctx, const keymap_entry_t map[])
 {
 	int i;
 	Keymap stkmap;
 
-	readline_cli_infos = infos;
+	readline_cli_ctx = ctx;
 	rl_callback_handler_install (NULL, &readline_status_callback);
 
 	/* Backup current keymap-name */
@@ -265,7 +265,7 @@ readline_status_mode_exit (void)
 {
 	Keymap active;
 
-	g_assert (cli_infos_in_status (readline_cli_infos, CLI_ACTION_STATUS_REFRESH));
+	g_assert (cli_context_in_status (readline_cli_ctx, CLI_ACTION_STATUS_REFRESH));
 
 	active = rl_get_keymap ();
 
@@ -274,8 +274,8 @@ readline_status_mode_exit (void)
 
 	rl_callback_handler_remove ();
 	g_free (readline_keymap);
-	status_free (cli_infos_status_entry (readline_cli_infos)); // TODO: handle via cli_infos_free or somesuch?
-	cli_infos_status_mode_exit (readline_cli_infos);
+	status_free (cli_context_status_entry (readline_cli_ctx)); // TODO: handle via cli_context_free or somesuch?
+	cli_context_status_mode_exit (readline_cli_ctx);
 }
 
 void

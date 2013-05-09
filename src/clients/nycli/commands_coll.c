@@ -22,7 +22,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "column_display.h"
 #include "configuration.h"
 #include "commands.h"
@@ -52,11 +52,11 @@ cli_search_print (xmmsv_t *list, column_display_t *coldisp)
 }
 
 gboolean
-cli_search (cli_infos_t *infos, command_t *cmd)
+cli_search (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
-	configuration_t *config = cli_infos_config (infos);
-	gint current_position = cli_infos_current_position (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
+	configuration_t *config = cli_context_config (ctx);
+	gint current_position = cli_context_current_position (ctx);
 	xmmsv_t *fetchval, *query, *ordered_query;
 	column_display_t *coldisp;
 	const gchar **order = NULL;
@@ -104,10 +104,10 @@ cli_search (cli_infos_t *infos, command_t *cmd)
 }
 
 static void
-coll_save (cli_infos_t *infos, xmmsv_t *coll,
+coll_save (cli_context_t *ctx, xmmsv_t *coll,
            xmmsc_coll_namespace_t ns, const gchar *name, gboolean force)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsc_result_t *res;
 	xmmsv_t *val;
 	gboolean save = TRUE;
@@ -143,9 +143,9 @@ cli_coll_list_print (xmmsv_t *list)
 }
 
 gboolean
-cli_coll_list (cli_infos_t *infos, command_t *cmd)
+cli_coll_list (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_list, conn, XMMS_COLLECTION_NS_COLLECTIONS),
 	                 FUNC_CALL_P (cli_coll_list_print, XMMS_PREV_VALUE));
 	return FALSE;
@@ -328,9 +328,9 @@ coll_dump (xmmsv_t *coll, guint level)
 }
 
 gboolean
-cli_coll_show (cli_infos_t *infos, command_t *cmd)
+cli_coll_show (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gchar *collection, *name, *ns;
 
 	if (!command_arg_longstring_get (cmd, 0, &collection)) {
@@ -351,7 +351,7 @@ cli_coll_show (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_coll_create (cli_infos_t *infos, command_t *cmd)
+cli_coll_create (cli_context_t *ctx, command_t *cmd)
 {
 	xmmsv_t *coll = NULL;
 	gchar *ns, *name, *pattern = NULL;
@@ -380,7 +380,7 @@ cli_coll_create (cli_infos_t *infos, command_t *cmd)
 			g_printf (_("Error: failed to parse the pattern!\n"));
 		}
 	} else if (copy) {
-		xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+		xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 		xmmsc_result_t *res;
 		gchar *from_ns, *from_name;
 
@@ -414,7 +414,7 @@ cli_coll_create (cli_infos_t *infos, command_t *cmd)
 	}
 
 	if (coll) {
-		coll_save (infos, coll, ns, name, force);
+		coll_save (ctx, coll, ns, name, force);
 		xmmsv_unref (coll);
 	}
 
@@ -426,9 +426,9 @@ cli_coll_create (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_coll_rename (cli_infos_t *infos, command_t *cmd)
+cli_coll_rename (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gboolean force;
 	gchar *from_ns, *to_ns, *from_name, *to_name;
 	const gchar *oldname, *newname;
@@ -469,9 +469,9 @@ cli_coll_rename (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_coll_remove (cli_infos_t *infos, command_t *cmd)
+cli_coll_remove (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gchar *collection, *name, *ns;
 
 	if (!command_arg_longstring_get (cmd, 0, &collection)) {
@@ -491,12 +491,12 @@ cli_coll_remove (cli_infos_t *infos, command_t *cmd)
 }
 
 static void
-configure_collection (xmmsv_t *val, cli_infos_t *infos,
+configure_collection (xmmsv_t *val, cli_context_t *ctx,
                       const gchar *ns, const gchar *name,
                       const gchar *attrname, const gchar *attrvalue)
 {
 	xmmsv_coll_attribute_set_string (val, attrname, attrvalue);
-	coll_save (infos, val, ns, name, TRUE);
+	coll_save (ctx, val, ns, name, TRUE);
 }
 
 static void
@@ -527,9 +527,9 @@ collection_print_config (xmmsv_t *coll, const gchar *attrname)
 }
 
 gboolean
-cli_coll_config (cli_infos_t *infos, command_t *cmd)
+cli_coll_config (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gchar *name, *ns;
 	const gchar *collection, *attrname, *attrvalue;
 
@@ -549,7 +549,7 @@ cli_coll_config (cli_infos_t *infos, command_t *cmd)
 
 	if (attrvalue) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, name, ns),
-		                 FUNC_CALL_P (configure_collection, XMMS_PREV_VALUE, infos, ns, name, attrname, attrvalue));
+		                 FUNC_CALL_P (configure_collection, XMMS_PREV_VALUE, ctx, ns, name, attrname, attrvalue));
 	} else {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, name, ns),
 		                 FUNC_CALL_P (collection_print_config, XMMS_PREV_VALUE, attrname));

@@ -21,7 +21,7 @@
 #include <glib/gprintf.h>
 
 #include "alias.h"
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "command_trie.h"
 #include "command.h"
 #include "configuration.h"
@@ -119,9 +119,9 @@ finish:
 }
 
 static gboolean
-alias_action (cli_infos_t *infos, command_t *cmd)
+alias_action (cli_context_t *ctx, command_t *cmd)
 {
-	configuration_t *config = cli_infos_config (infos);
+	configuration_t *config = cli_context_config (ctx);
 	gchar *runnable, *def, *line;
 	gboolean retval = TRUE;
 	gchar **argv;
@@ -142,9 +142,9 @@ alias_action (cli_infos_t *infos, command_t *cmd)
 		goto finish;
 	}
 
-	cli_infos_alias_begin (infos);
-	cli_infos_execute_command (infos, runnable);
-	cli_infos_alias_end (infos);
+	cli_context_alias_begin (ctx);
+	cli_context_execute_command (ctx, runnable);
+	cli_context_alias_end (ctx);
 
 	finish:
 	g_free (line);

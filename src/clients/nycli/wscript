@@ -1,7 +1,7 @@
 from waflib import Options, Errors
 
 source = """
-cli_infos.c
+cli_context.c
 cli_cache.c
 command_trie.c
 commands.c

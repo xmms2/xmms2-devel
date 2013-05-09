@@ -19,18 +19,18 @@
 
 #include <glib.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 
 gint
 main (gint argc, gchar **argv)
 {
-	cli_infos_t *infos;
+	cli_context_t *ctx;
 
 	setlocale (LC_ALL, "");
 
-	infos = cli_infos_init ();
-	cli_infos_loop (infos, argc - 1, argv + 1);
-	cli_infos_free (infos);
+	ctx = cli_context_init ();
+	cli_context_loop (ctx, argc - 1, argv + 1);
+	cli_context_free (ctx);
 
 	return EXIT_SUCCESS;
 }

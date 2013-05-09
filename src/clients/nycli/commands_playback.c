@@ -19,7 +19,7 @@
 
 #include <xmmsclient/xmmsclient.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "command.h"
 #include "commands.h"
 #include "configuration.h"
@@ -29,43 +29,43 @@
 #include "xmmscall.h"
 
 gboolean
-cli_play (cli_infos_t *infos, command_t *cmd)
+cli_play (cli_context_t *ctx, command_t *cmd)
 {
-	XMMS_CALL (xmmsc_playback_start, cli_infos_xmms_sync (infos));
+	XMMS_CALL (xmmsc_playback_start, cli_context_xmms_sync (ctx));
 	return FALSE;
 }
 
 gboolean
-cli_pause (cli_infos_t *infos, command_t *cmd)
+cli_pause (cli_context_t *ctx, command_t *cmd)
 {
-	XMMS_CALL (xmmsc_playback_pause, cli_infos_xmms_sync (infos));
+	XMMS_CALL (xmmsc_playback_pause, cli_context_xmms_sync (ctx));
 	return FALSE;
 }
 
 gboolean
-cli_toggle (cli_infos_t *infos, command_t *cmd)
+cli_toggle (cli_context_t *ctx, command_t *cmd)
 {
-	guint status = cli_infos_playback_status (infos);
+	guint status = cli_context_playback_status (ctx);
 
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
-		XMMS_CALL (xmmsc_playback_pause, cli_infos_xmms_sync (infos));
+		XMMS_CALL (xmmsc_playback_pause, cli_context_xmms_sync (ctx));
 	} else {
-		XMMS_CALL (xmmsc_playback_start, cli_infos_xmms_sync (infos));
+		XMMS_CALL (xmmsc_playback_start, cli_context_xmms_sync (ctx));
 	}
 	return FALSE;
 }
 
 gboolean
-cli_stop (cli_infos_t *infos, command_t *cmd)
+cli_stop (cli_context_t *ctx, command_t *cmd)
 {
-	XMMS_CALL (xmmsc_playback_stop, cli_infos_xmms_sync (infos));
+	XMMS_CALL (xmmsc_playback_stop, cli_context_xmms_sync (ctx));
 	return FALSE;
 }
 
 gboolean
-cli_seek (cli_infos_t *infos, command_t *cmd)
+cli_seek (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	command_arg_time_t t;
 
 	if (command_arg_time_get (cmd, 0, &t)) {
@@ -79,7 +79,7 @@ cli_seek (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_current (cli_infos_t *infos, command_t *cmd)
+cli_current (cli_context_t *ctx, command_t *cmd)
 {
 	status_entry_t *status;
 	const gchar *format;
@@ -90,14 +90,14 @@ cli_current (cli_infos_t *infos, command_t *cmd)
 	}
 
 	if (!command_flag_string_get (cmd, "format", &format)) {
-		configuration_t *config = cli_infos_config (infos);
+		configuration_t *config = cli_context_config (ctx);
 		format = configuration_get_string (config, "STATUS_FORMAT");
 	}
 
-	status = currently_playing_init (infos, format, refresh);
+	status = currently_playing_init (ctx, format, refresh);
 
 	if (refresh > 0) {
-		cli_infos_status_mode (infos, status);
+		cli_context_status_mode (ctx, status);
 	} else {
 		status_refresh (status, TRUE, TRUE);
 		status_free (status);
@@ -107,9 +107,9 @@ cli_current (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_prev (cli_infos_t *infos, command_t *cmd)
+cli_prev (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint n;
 	gint offset = -1;
 
@@ -124,9 +124,9 @@ cli_prev (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_next (cli_infos_t *infos, command_t *cmd)
+cli_next (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint offset = 1;
 	gint n;
 
@@ -141,15 +141,15 @@ cli_next (cli_infos_t *infos, command_t *cmd)
 }
 
 static void
-cli_jump_relative (cli_infos_t *infos, gint inc, xmmsv_t *value)
+cli_jump_relative (cli_context_t *ctx, gint inc, xmmsv_t *value)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_list_iter_t *it;
 	gint i, plid, id, currpos, plsize;
 	xmmsv_t *playlist;
 
-	currpos = cli_infos_current_position (infos);
-	playlist = cli_infos_active_playlist (infos);
+	currpos = cli_context_current_position (ctx);
+	playlist = cli_context_active_playlist (ctx);
 	plsize = xmmsv_list_get_size (playlist);
 
 	/* If no currpos, start jump from beginning */
@@ -185,9 +185,9 @@ cli_jump_relative (cli_infos_t *infos, gint inc, xmmsv_t *value)
 }
 
 gboolean
-cli_jump (cli_infos_t *infos, command_t *cmd)
+cli_jump (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_t *query;
 	gboolean backward = FALSE;
 	playlist_positions_t *positions;
@@ -195,7 +195,7 @@ cli_jump (cli_infos_t *infos, command_t *cmd)
 	command_flag_boolean_get (cmd, "backward", &backward);
 
 	/* Select by positions */
-	if (command_arg_positions_get (cmd, 0, &positions, cli_infos_current_position (infos))) {
+	if (command_arg_positions_get (cmd, 0, &positions, cli_context_current_position (ctx))) {
 		gint pos;
 		if (playlist_positions_get_single (positions, &pos)) {
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next, conn, pos),
@@ -208,7 +208,7 @@ cli_jump (cli_infos_t *infos, command_t *cmd)
 	} else if (command_arg_pattern_get (cmd, 0, &query, TRUE)) {
 		query = xmmsv_coll_intersect_with_playlist (query, XMMS_ACTIVE_PLAYLIST);
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, query, NULL, 0, 0),
-		                 FUNC_CALL_P (cli_jump_relative, infos, (backward ? -1 : 1), XMMS_PREV_VALUE));
+		                 FUNC_CALL_P (cli_jump_relative, ctx, (backward ? -1 : 1), XMMS_PREV_VALUE));
 		xmmsv_unref (query);
 	}
 

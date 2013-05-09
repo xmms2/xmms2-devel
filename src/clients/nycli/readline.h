@@ -17,12 +17,12 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "status.h"
 
-void readline_init (cli_infos_t *infos);
-void readline_suspend (cli_infos_t *infos);
-void readline_resume (cli_infos_t *infos);
-void readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[]);
+void readline_init (cli_context_t *ctx);
+void readline_suspend (cli_context_t *ctx);
+void readline_resume (cli_context_t *ctx);
+void readline_status_mode (cli_context_t *ctx, const keymap_entry_t map[]);
 void readline_status_mode_exit (void);
 void readline_free (void);

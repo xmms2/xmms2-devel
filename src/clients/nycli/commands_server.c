@@ -25,7 +25,7 @@
 #include <xmmsclient/xmmsclient.h>
 
 #include "commands.h"
-#include "cli_infos.h"
+#include "cli_context.h"
 #include "configuration.h"
 #include "command.h"
 #include "currently_playing.h"
@@ -35,7 +35,7 @@
 #include "xmmscall.h"
 
 typedef struct cli_info_print_positions_St {
-	cli_infos_t *infos;
+	cli_context_t *ctx;
 	gint inc;
 	gint pos;
 } cli_info_print_positions_t;
@@ -59,9 +59,9 @@ cli_info_print (xmmsv_t *propdict)
 }
 
 static void
-cli_info_print_list (cli_infos_t *infos, xmmsv_t *val)
+cli_info_print_list (cli_context_t *ctx, xmmsv_t *val)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_list_iter_t *it;
 	gboolean first = TRUE;
 	gint32 id;
@@ -85,8 +85,8 @@ static void
 cli_info_print_position (gint pos, void *userdata)
 {
 	cli_info_print_positions_t *pack = (cli_info_print_positions_t *) userdata;
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (pack->infos);
-	xmmsv_t *playlist = cli_infos_active_playlist (pack->infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (pack->ctx);
+	xmmsv_t *playlist = cli_context_active_playlist (pack->ctx);
 	gint id;
 
 	/* Skip if outside of playlist */
@@ -106,9 +106,9 @@ cli_info_print_position (gint pos, void *userdata)
 }
 
 static void
-cli_info_print_positions (cli_infos_t *infos, playlist_positions_t *positions)
+cli_info_print_positions (cli_context_t *ctx, playlist_positions_t *positions)
 {
-	cli_info_print_positions_t udata = { infos, 0, 0 };
+	cli_info_print_positions_t udata = { ctx, 0, 0 };
 	playlist_positions_foreach (positions, cli_info_print_position, TRUE, &udata);
 }
 
@@ -117,21 +117,21 @@ cli_info_print_positions (cli_infos_t *infos, playlist_positions_t *positions)
  *       do the printing
  */
 gboolean
-cli_info (cli_infos_t *infos, command_t *cmd)
+cli_info (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	playlist_positions_t *positions;
 	xmmsv_t *query;
 
-	gint current_position = cli_infos_current_position (infos);
-	gint current_id = cli_infos_current_id (infos);
+	gint current_position = cli_context_current_position (ctx);
+	gint current_id = cli_context_current_id (ctx);
 
 	if (command_arg_positions_get (cmd, 0, &positions, current_position)) {
-		cli_info_print_positions (infos, positions);
+		cli_info_print_positions (ctx, positions);
 		playlist_positions_free (positions);
 	} else if (command_arg_pattern_get (cmd, 0, &query, FALSE)) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, query, NULL, 0, 0);
-		                 FUNC_CALL_P (cli_info_print_list, infos, XMMS_PREV_VALUE));
+		                 FUNC_CALL_P (cli_info_print_list, ctx, XMMS_PREV_VALUE));
 		xmmsv_unref (query);
 	} else {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, current_id),
@@ -142,9 +142,9 @@ cli_info (cli_infos_t *infos, command_t *cmd)
 }
 
 gboolean
-cli_server_import (cli_infos_t *infos, command_t *cmd)
+cli_server_import (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsc_result_t *res = NULL;
 
 	gint i, count;
@@ -237,9 +237,9 @@ cli_server_browse_print (xmmsv_t *list)
 }
 
 gboolean
-cli_server_browse (cli_infos_t *infos, command_t *cmd)
+cli_server_browse (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	const gchar *url;
 
 	if (!command_arg_string_get (cmd, 0, &url)) {
@@ -252,9 +252,9 @@ cli_server_browse (cli_infos_t *infos, command_t *cmd)
 }
 
 static void
-cli_server_remove_ids (cli_infos_t *infos, xmmsv_t *list)
+cli_server_remove_ids (cli_context_t *ctx, xmmsv_t *list)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_list_iter_t *it;
 	gint32 id;
 
@@ -266,9 +266,9 @@ cli_server_remove_ids (cli_infos_t *infos, xmmsv_t *list)
 }
 
 gboolean
-cli_server_remove (cli_infos_t *infos, command_t *cmd)
+cli_server_remove (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gchar *pattern;
 	xmmsv_t *coll;
 
@@ -283,7 +283,7 @@ cli_server_remove (cli_infos_t *infos, command_t *cmd)
 	}
 
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, coll, NULL, 0, 0),
-	                 FUNC_CALL_P (cli_server_remove_ids, infos, XMMS_PREV_VALUE));
+	                 FUNC_CALL_P (cli_server_remove_ids, ctx, XMMS_PREV_VALUE));
 	xmmsv_unref (coll);
 
 finish:
@@ -293,9 +293,9 @@ finish:
 }
 
 static void
-cli_server_rehash_ids (cli_infos_t *infos, xmmsv_t *list)
+cli_server_rehash_ids (cli_context_t *ctx, xmmsv_t *list)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_list_iter_t *it;
 	gint32 id;
 
@@ -307,9 +307,9 @@ cli_server_rehash_ids (cli_infos_t *infos, xmmsv_t *list)
 }
 
 gboolean
-cli_server_rehash (cli_infos_t *infos, command_t *cmd)
+cli_server_rehash (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gchar *pattern = NULL;
 	xmmsv_t *coll;
 
@@ -318,7 +318,7 @@ cli_server_rehash (cli_infos_t *infos, command_t *cmd)
 			g_printf (_("Error: failed to parse the pattern!\n"));
 		} else {
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, coll, NULL, 0, 0),
-			                 FUNC_CALL_P (cli_server_rehash_ids, infos, XMMS_PREV_VALUE));
+			                 FUNC_CALL_P (cli_server_rehash_ids, ctx, XMMS_PREV_VALUE));
 			xmmsv_unref (coll);
 		}
 	} else {
@@ -367,9 +367,9 @@ cli_server_config_print (xmmsv_t *config, const gchar *confname)
 }
 
 gboolean
-cli_server_config (cli_infos_t *infos, command_t *cmd)
+cli_server_config (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	const gchar *confname, *confval;
 
 	if (!command_arg_string_get (cmd, 0, &confname)) {
@@ -410,9 +410,9 @@ cli_server_property_print (xmmsv_t *propdict, const gchar *filter)
 }
 
 gboolean
-cli_server_property (cli_infos_t *infos, command_t *cmd)
+cli_server_property (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint mid;
 	gchar *default_source = NULL;
 	gboolean delete, fint, fstring;
@@ -519,9 +519,9 @@ cli_server_plugins_print (xmmsv_t *value)
 }
 
 gboolean
-cli_server_plugins (cli_infos_t *infos, command_t *cmd)
+cli_server_plugins (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_main_list_plugins, conn, XMMS_PLUGIN_TYPE_ALL),
 	                 FUNC_CALL_P (cli_server_plugins_print, XMMS_PREV_VALUE));
 	return FALSE;
@@ -546,9 +546,9 @@ cli_server_volume_print (xmmsv_t *dict, const gchar *channel)
 }
 
 static void
-cli_server_volume_adjust (cli_infos_t *infos, xmmsv_t *val, const gchar *channel, gint relative)
+cli_server_volume_adjust (cli_context_t *ctx, xmmsv_t *val, const gchar *channel, gint relative)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsv_dict_iter_t *it;
 	const gchar *innerchan;
 
@@ -579,9 +579,9 @@ cli_server_volume_collect_channels (const gchar *key, xmmsv_t *val, void *udata)
 }
 
 static void
-cli_server_volume_set (cli_infos_t *infos, const gchar *channel, gint volume)
+cli_server_volume_set (cli_context_t *ctx, const gchar *channel, gint volume)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	xmmsc_result_t *res;
 	xmmsv_t *val;
 	GList *it, *channels = NULL;
@@ -606,9 +606,9 @@ cli_server_volume_set (cli_infos_t *infos, const gchar *channel, gint volume)
 }
 
 gboolean
-cli_server_volume (cli_infos_t *infos, command_t *cmd)
+cli_server_volume (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	const gchar *channel;
 	gint volume;
 	const gchar *volstr;
@@ -627,9 +627,9 @@ cli_server_volume (cli_infos_t *infos, command_t *cmd)
 		}
 		if (relative_vol) {
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_volume_get, conn),
-			                 FUNC_CALL_P (cli_server_volume_adjust, infos, XMMS_PREV_VALUE, channel, volume));
+			                 FUNC_CALL_P (cli_server_volume_adjust, ctx, XMMS_PREV_VALUE, channel, volume));
 		} else {
-			cli_server_volume_set (infos, channel, volume);
+			cli_server_volume_set (ctx, channel, volume);
 		}
 	}
 
@@ -650,25 +650,25 @@ cli_server_stats_print (xmmsv_t *val)
 }
 
 gboolean
-cli_server_stats (cli_infos_t *infos, command_t *cmd)
+cli_server_stats (cli_context_t *ctx, command_t *cmd)
 {
-	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_main_stats, cli_infos_xmms_sync (infos)),
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_main_stats, cli_context_xmms_sync (ctx)),
 	                 FUNC_CALL_P (cli_server_stats_print, XMMS_PREV_VALUE));
 	return FALSE;
 }
 
 gboolean
-cli_server_sync (cli_infos_t *infos, command_t *cmd)
+cli_server_sync (cli_context_t *ctx, command_t *cmd)
 {
-	XMMS_CALL (xmmsc_coll_sync, cli_infos_xmms_sync (infos));
+	XMMS_CALL (xmmsc_coll_sync, cli_context_xmms_sync (ctx));
 	return FALSE;
 }
 
 /* The loop is resumed in the disconnect callback */
 gboolean
-cli_server_shutdown (cli_infos_t *infos, command_t *cmd)
+cli_server_shutdown (cli_context_t *ctx, command_t *cmd)
 {
-	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	if (conn != NULL) {
 		XMMS_CALL (xmmsc_quit, conn);
 	}
