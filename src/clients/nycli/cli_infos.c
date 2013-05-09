@@ -411,7 +411,7 @@ cli_infos_command_or_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in
 static void
 cli_infos_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 {
-	command_context_t *ctx;
+	command_t *cmd;
 	gboolean check;
 
 	GOptionEntry flagdefs[] = {
@@ -426,17 +426,17 @@ cli_infos_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	 * the option parser does not parse commands starting with a
 	 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 	 * command utils. */
-	ctx = command_context_new (flagdefs, in_argc + 1, in_argv - 1);
+	cmd = command_new (flagdefs, in_argc + 1, in_argv - 1);
 
-	if (!ctx) {
+	if (!cmd) {
 		/* An error message has already been printed, so we just return. */
 		return;
 	}
 
-	if (command_flag_boolean_get (ctx, "help", &check) && check) {
-		if (command_arg_count (ctx) >= 1) {
+	if (command_flag_boolean_get (cmd, "help", &check) && check) {
+		if (command_arg_count (cmd) >= 1) {
 			help_command (infos, cli_infos_command_names (infos),
-			              command_argv_get (ctx), command_arg_count (ctx),
+			              command_argv_get (cmd), command_arg_count (cmd),
 			              CMD_TYPE_COMMAND);
 		} else {
 			/* FIXME: explain -h and -v flags here (reuse help_command code?) */
@@ -447,7 +447,7 @@ cli_infos_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 			g_printf (_("If not, enters a shell-like interface to execute commands.\n\n"));
 			g_printf (_("Type 'help <command>' for detailed help about a command.\n"));
 		}
-	} else if (command_flag_boolean_get (ctx, "version", &check) && check) {
+	} else if (command_flag_boolean_get (cmd, "version", &check) && check) {
 		g_printf (_("XMMS2 CLI version " XMMS_VERSION "\n"));
 		g_printf (_("Copyright (C) 2008 XMMS2 Team\n"));
 		g_printf (_("This is free software; see the source for copying conditions.\n"));
@@ -462,7 +462,7 @@ cli_infos_flag_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 		              in_argv, in_argc, CMD_TYPE_COMMAND);
 	}
 
-	command_context_free (ctx);
+	command_free (cmd);
 }
 
 static void
@@ -488,31 +488,31 @@ cli_infos_command_dispatch (cli_infos_t *infos, gint in_argc, gchar **in_argv)
 	if (match == COMMAND_TRIE_MATCH_ACTION) {
 		gboolean help;
 		gboolean need_io;
-		command_context_t *ctx;
+		command_t *cmd;
 
 		/* Include one command token as a workaround for the bug that
 		 * the option parser does not parse commands starting with a
 		 * flag properly (e.g. "-p foo arg1"). Will be skipped by the
 		 * command utils. */
-		ctx = command_context_new (action->argdefs, argc + 1, argv - 1);
+		cmd = command_new (action->argdefs, argc + 1, argv - 1);
 
-		if (ctx) {
-			if (command_flag_boolean_get (ctx, "help", &help) && help) {
+		if (cmd) {
+			if (command_flag_boolean_get (cmd, "help", &help) && help) {
 				/* Help flag passed, bypass action and show help */
 				/* FIXME(g): select aliasnames list if it's an alias */
 				help_command (infos, cli_infos_command_names (infos),
 				              in_argv, in_argc, CMD_TYPE_COMMAND);
 			} else if (cli_infos_command_runnable (infos, action)) {
 				/* All fine, run the command */
-				command_name_set (ctx, action->name);
+				command_name_set (cmd, action->name);
 				cli_infos_loop_suspend (infos);
-				need_io = action->callback (infos, ctx);
+				need_io = action->callback (infos, cmd);
 				if (!need_io) {
 					cli_infos_loop_resume (infos);
 				}
 			}
 
-			command_context_free (ctx);
+			command_free (cmd);
 		}
 	} else {
 		/* Call help to print the "no such command" error */

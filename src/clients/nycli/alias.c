@@ -23,7 +23,7 @@
 #include "alias.h"
 #include "cli_infos.h"
 #include "command_trie.h"
-#include "command_utils.h"
+#include "command.h"
 #include "configuration.h"
 
 static void
@@ -119,7 +119,7 @@ finish:
 }
 
 static gboolean
-alias_action (cli_infos_t *infos, command_context_t *ctx)
+alias_action (cli_infos_t *infos, command_t *cmd)
 {
 	configuration_t *config = cli_infos_config (infos);
 	gchar *runnable, *def, *line;
@@ -128,12 +128,12 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 	gint argc;
 
 	def = g_hash_table_lookup (configuration_get_aliases (config),
-	                           command_name_get (ctx));
+	                           command_name_get (cmd));
 
-	argc = command_arg_count (ctx);
-	argv = command_argv_get (ctx);
+	argc = command_arg_count (cmd);
+	argv = command_argv_get (cmd);
 
-	if (!command_arg_longstring_get_escaped (ctx, 0, &line)) {
+	if (!command_arg_longstring_get_escaped (cmd, 0, &line)) {
 		line = NULL;
 	}
 

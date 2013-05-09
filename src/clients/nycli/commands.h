@@ -20,57 +20,57 @@
 #include <glib.h>
 
 #include "cli_infos.h"
-#include "command_utils.h"
+#include "command.h"
 
 typedef enum {
 	CMD_TYPE_COMMAND,
 	CMD_TYPE_ALIAS,
 } cmd_type_t;
 
-gboolean cli_play (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pause (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_stop (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_toggle(cli_infos_t *infos, command_context_t *ctx); /* <<<<<< */
-gboolean cli_seek (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_current (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_prev (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_next (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_jump (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_search (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_info (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_list (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_add (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_remove (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_move (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_kill (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_exit (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_help (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_list (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_switch (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_create (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_rename (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_remove (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_clear (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_sort (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_pl_config (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_list (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_show (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_create (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_rename (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_remove (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_coll_config (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_browse (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_import (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_remove (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_rehash (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_config (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_property (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_plugins (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_volume (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_stats (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_sync (cli_infos_t *infos, command_context_t *ctx);
-gboolean cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx);
+gboolean cli_play (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pause (cli_infos_t *infos, command_t *cmd);
+gboolean cli_stop (cli_infos_t *infos, command_t *cmd);
+gboolean cli_toggle(cli_infos_t *infos, command_t *cmd); /* <<<<<< */
+gboolean cli_seek (cli_infos_t *infos, command_t *cmd);
+gboolean cli_current (cli_infos_t *infos, command_t *cmd);
+gboolean cli_prev (cli_infos_t *infos, command_t *cmd);
+gboolean cli_next (cli_infos_t *infos, command_t *cmd);
+gboolean cli_jump (cli_infos_t *infos, command_t *cmd);
+gboolean cli_search (cli_infos_t *infos, command_t *cmd);
+gboolean cli_info (cli_infos_t *infos, command_t *cmd);
+gboolean cli_list (cli_infos_t *infos, command_t *cmd);
+gboolean cli_add (cli_infos_t *infos, command_t *cmd);
+gboolean cli_remove (cli_infos_t *infos, command_t *cmd);
+gboolean cli_move (cli_infos_t *infos, command_t *cmd);
+gboolean cli_kill (cli_infos_t *infos, command_t *cmd);
+gboolean cli_exit (cli_infos_t *infos, command_t *cmd);
+gboolean cli_help (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_list (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_switch (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_create (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_rename (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_remove (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_clear (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_shuffle (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_sort (cli_infos_t *infos, command_t *cmd);
+gboolean cli_pl_config (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_list (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_show (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_create (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_rename (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_remove (cli_infos_t *infos, command_t *cmd);
+gboolean cli_coll_config (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_browse (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_import (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_remove (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_rehash (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_config (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_property (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_plugins (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_volume (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_stats (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_sync (cli_infos_t *infos, command_t *cmd);
+gboolean cli_server_shutdown (cli_infos_t *infos, command_t *cmd);
 
 void cli_play_setup (command_action_t *action);
 void cli_pause_setup (command_action_t *action);

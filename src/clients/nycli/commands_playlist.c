@@ -26,7 +26,7 @@
 
 #include "cli_infos.h"
 #include "column_display.h"
-#include "command_utils.h"
+#include "command.h"
 #include "commands.h"
 #include "configuration.h"
 #include "matching_browse.h"
@@ -154,15 +154,15 @@ playlist_length_get (cli_infos_t *infos, const gchar *playlist, gint *len)
 }
 
 static gboolean
-cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
+cmd_flag_pos_get_playlist (cli_infos_t *infos, command_t *cmd,
                            gint *pos, const gchar *playlist)
 {
 	gboolean next, at_isset;
 	gint at;
 	gint tmp;
 
-	at_isset = command_flag_int_get (ctx, "at", &at);
-	command_flag_boolean_get (ctx, "next", &next);
+	at_isset = command_flag_int_get (cmd, "at", &at);
+	command_flag_boolean_get (cmd, "next", &next);
 
 	if (next && at_isset) {
 		g_printf (_("Error: --next and --at are mutually exclusive!\n"));
@@ -330,7 +330,7 @@ cli_list_print (cli_infos_t *infos, xmmsv_t *list,
 }
 
 gboolean
-cli_list (cli_infos_t *infos, command_context_t *ctx)
+cli_list (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	configuration_t *config = cli_infos_config (infos);
@@ -344,7 +344,7 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 	gint pos;
 
 	/* Default to active playlist (from cache) */
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_flag_string_get (cmd, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
@@ -353,9 +353,9 @@ cli_list (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	if (command_arg_positions_get (ctx, 0, &positions, pos)) {
+	if (command_arg_positions_get (cmd, 0, &positions, pos)) {
 		filter_by_pos = TRUE;
-	} else if (command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+	} else if (command_arg_longstring_get_escaped (cmd, 0, &pattern)) {
 		if (!xmmsv_coll_parse (pattern, &query)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
 			g_free (pattern);
@@ -452,7 +452,7 @@ cli_add_guessfile (const gchar *pattern)
  * @return a dict with 0..n attributes.
  */
 static xmmsv_t *
-cli_add_parse_attributes (command_context_t *ctx)
+cli_add_parse_attributes (command_t *cmd)
 {
 	const gchar **attributes;
 	xmmsv_t *result;
@@ -460,7 +460,7 @@ cli_add_parse_attributes (command_context_t *ctx)
 
 	result = xmmsv_new_dict ();
 
-	if (command_flag_stringarray_get (ctx, "attribute", &attributes)) {
+	if (command_flag_stringarray_get (cmd, "attribute", &attributes)) {
 		for (i = 0; attributes[i] != NULL; i++) {
 			gchar **parts = g_strsplit (attributes[i], "=", 2);
 			if (parts[0] != NULL && parts[1] != NULL) {
@@ -527,7 +527,7 @@ cli_add_dir (cli_infos_t *infos, const gchar *url,
  * @return whether media has been added to the playlist.
  */
 static gboolean
-cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
+cli_add_fileargs (cli_infos_t *infos, command_t *cmd,
                   const gchar *playlist, gint pos)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
@@ -535,16 +535,16 @@ cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
 	gboolean plsfile, norecurs, ret = FALSE;
 	xmmsv_t *attributes;
 
-	command_flag_boolean_get (ctx, "pls", &plsfile);
-	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
-	attributes = cli_add_parse_attributes (ctx);
+	command_flag_boolean_get (cmd, "pls", &plsfile);
+	command_flag_boolean_get (cmd, "non-recursive", &norecurs);
+	attributes = cli_add_parse_attributes (cmd);
 
-	for (i = 0; i < command_arg_count (ctx); i++) {
+	for (i = 0; i < command_arg_count (cmd); i++) {
 		GList *files, *it;
 		const gchar *path;
 		gchar *formatted, *encoded;
 
-		command_arg_string_get (ctx, i, &path);
+		command_arg_string_get (cmd, i, &path);
 		formatted = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
 		if (formatted == NULL) {
 			g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
@@ -618,7 +618,7 @@ cli_add_collection (cli_infos_t *infos, xmmsv_t *ids, xmmsv_t *query,
  * @return Whether any media has been added to the playlist.
  */
 static gboolean
-cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
+cli_add_pattern (cli_infos_t *infos, command_t *cmd,
                  const gchar *playlist, gint pos)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
@@ -627,14 +627,14 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 	gchar *pattern = NULL;
 	gboolean success = FALSE;
 
-	command_arg_longstring_get_escaped (ctx, 0, &pattern);
+	command_arg_longstring_get_escaped (cmd, 0, &pattern);
 
 	if (!pattern) {
 		g_printf (_("Error: you must provide a pattern to add!\n"));
 	} else if (!xmmsc_coll_parse (pattern, &query)) {
 		g_printf (_("Error: failed to parse the pattern!\n"));
 	} else {
-		if (command_flag_stringlist_get (ctx, "order", &order)) {
+		if (command_flag_stringlist_get (cmd, "order", &order)) {
 			xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
 			ordered_query = xmmsv_coll_add_order_operators (query, orderval);
 
@@ -657,7 +657,7 @@ cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
 }
 
 gboolean
-cli_add (cli_infos_t *infos, command_context_t *ctx)
+cli_add (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gint pos, i;
@@ -674,18 +674,18 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 	*/
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_flag_string_get (cmd, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
+	if (!cmd_flag_pos_get_playlist (infos, cmd, &pos, playlist)) {
 		return FALSE;
 	}
 
-	command_flag_boolean_get (ctx, "pattern", &forceptrn);
-	command_flag_boolean_get (ctx, "pls", &plsfile);
-	command_flag_boolean_get (ctx, "file", &fileargs);
-	command_flag_boolean_get (ctx, "jump", &jump);
+	command_flag_boolean_get (cmd, "pattern", &forceptrn);
+	command_flag_boolean_get (cmd, "pls", &plsfile);
+	command_flag_boolean_get (cmd, "file", &fileargs);
+	command_flag_boolean_get (cmd, "jump", &jump);
 
 	fileargs = fileargs || plsfile;
 	if (forceptrn && fileargs) {
@@ -696,35 +696,35 @@ cli_add (cli_infos_t *infos, command_context_t *ctx)
 
 	if (!forceptrn) {
 		/* if any of the arguments is a valid path, we treat them all as files */
-		for (i = 0; !fileargs && i < command_arg_count (ctx); i++) {
+		for (i = 0; !fileargs && i < command_arg_count (cmd); i++) {
 			const gchar *path;
 
-			command_arg_string_get (ctx, i, &path);
+			command_arg_string_get (cmd, i, &path);
 			fileargs = fileargs || cli_add_guessfile (path);
 		}
 	}
 
 	if (fileargs) {
-		added = cli_add_fileargs (infos, ctx, playlist, pos);
+		added = cli_add_fileargs (infos, cmd, playlist, pos);
 	} else {
 		gboolean norecurs;
 		xmmsv_t *attributes;
 
-		command_flag_boolean_get (ctx, "non-recursive", &norecurs);
+		command_flag_boolean_get (cmd, "non-recursive", &norecurs);
 		if (norecurs) {
 			g_printf (_("Error:"
 			            "--non-recursive only applies when passing --file!\n"));
 			return FALSE;
 		}
 
-		attributes = cli_add_parse_attributes (ctx);
+		attributes = cli_add_parse_attributes (cmd);
 		if (xmmsv_dict_get_size (attributes) > 0) {
 			g_printf (_("Warning: Skipping attributes together with pattern.\n"));
 		}
 
 		xmmsv_unref (attributes);
 
-		added = cli_add_pattern (infos, ctx, playlist, pos);
+		added = cli_add_pattern (infos, cmd, playlist, pos);
 	}
 
 	if (added && jump) {
@@ -803,7 +803,7 @@ cli_move_entries (xmmsv_t *matching, xmmsv_t *lisval, cli_infos_t *infos,
 }
 
 gboolean
-cli_move (cli_infos_t *infos, command_context_t *ctx)
+cli_move (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	playlist_positions_t *positions;
@@ -811,16 +811,16 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 	xmmsv_t *query;
 	gint pos;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_flag_string_get (cmd, "playlist", &playlist)) {
 		playlist = NULL;
 	}
 
-	if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
+	if (!cmd_flag_pos_get_playlist (infos, cmd, &pos, playlist)) {
 		g_printf (_("Error: you must provide a position to move entries to!\n"));
 		return FALSE;
 	}
 
-	if (command_arg_positions_get (ctx, 0, &positions, cli_infos_current_position (infos))) {
+	if (command_arg_positions_get (cmd, 0, &positions, cli_infos_current_position (infos))) {
 		cli_move_positions_t udata = {
 			.sync = conn,
 			.playlist = playlist,
@@ -829,7 +829,7 @@ cli_move (cli_infos_t *infos, command_context_t *ctx)
 		};
 		playlist_positions_foreach (positions, cli_move_positions, FALSE, &udata);
 		playlist_positions_free (positions);
-	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	} else if (command_arg_pattern_get (cmd, 0, &query, TRUE)) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, query, NULL, 0, 0),
 		                 XMMS_CALL_P (xmmsc_playlist_list_entries, conn, playlist),
 		                 FUNC_CALL_P (cli_move_entries, XMMS_FIRST_VALUE, XMMS_SECOND_VALUE, infos, playlist, pos));
@@ -879,25 +879,25 @@ cli_remove_positions_each (gint pos, void *udata)
 }
 
 gboolean
-cli_remove (cli_infos_t *infos, command_context_t *ctx)
+cli_remove (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	const gchar *playlist;
 	xmmsv_t *query;
 	playlist_positions_t *positions;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_flag_string_get (cmd, "playlist", &playlist)) {
 		playlist = cli_infos_active_playlist_name (infos);
 	}
 
-	if (command_arg_positions_get (ctx, 0, &positions, cli_infos_current_position (infos))) {
+	if (command_arg_positions_get (cmd, 0, &positions, cli_infos_current_position (infos))) {
 		cli_remove_positions_t udata = {
 			.sync = conn,
 			.playlist = playlist
 		};
 		playlist_positions_foreach (positions, cli_remove_positions_each, FALSE, &udata);
 		playlist_positions_free (positions);
-	} else if (command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	} else if (command_arg_pattern_get (cmd, 0, &query, TRUE)) {
 		if (!playlist) {
 			xmmsv_t *entries = cli_infos_active_playlist (infos);
 			XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, query, NULL, 0, 0),
@@ -938,14 +938,14 @@ cli_pl_list_print (xmmsv_t *list, cli_infos_t *infos, gboolean show_hidden)
 }
 
 gboolean
-cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_list (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gboolean all;
 
 	/* FIXME: support pattern argument (only display playlist containing matching media) */
 
-	command_flag_boolean_get (ctx, "all", &all);
+	command_flag_boolean_get (cmd, "all", &all);
 
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_list, conn),
 	                 FUNC_CALL_P (cli_pl_list_print, XMMS_PREV_VALUE, infos, all));
@@ -954,12 +954,12 @@ cli_pl_list (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_switch (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_switch (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *playlist;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+	if (!command_arg_longstring_get (cmd, 0, &playlist)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
 		return FALSE;
 	}
@@ -993,19 +993,19 @@ cli_pl_create_check_exists (cli_infos_t *infos, const gchar *playlist)
 }
 
 gboolean
-cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_create (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gboolean switch_to;
 	gchar *newplaylist;
 	const gchar *copy;
 
-	if (!command_arg_longstring_get (ctx, 0, &newplaylist)) {
+	if (!command_arg_longstring_get (cmd, 0, &newplaylist)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
 		return FALSE;
 	}
 
-	if (!command_flag_boolean_get (ctx, "switch", &switch_to)) {
+	if (!command_flag_boolean_get (cmd, "switch", &switch_to)) {
 		switch_to = FALSE;
 	}
 
@@ -1015,7 +1015,7 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	if (command_flag_string_get (ctx, "playlist", &copy)) {
+	if (command_flag_string_get (cmd, "playlist", &copy)) {
 		/* Copy the given playlist. */
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, copy, XMMS_COLLECTION_NS_PLAYLISTS),
 		                 XMMS_CALL_P (xmmsc_coll_save, conn, XMMS_PREV_VALUE, newplaylist, XMMS_COLLECTION_NS_PLAYLISTS));
@@ -1034,23 +1034,23 @@ cli_pl_create (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_rename (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gboolean force;
 	const gchar *oldname;
 	gchar *newname;
 
-	if (!command_flag_boolean_get (ctx, "force", &force)) {
+	if (!command_flag_boolean_get (cmd, "force", &force)) {
 		force = FALSE;
 	}
 
-	if (!command_arg_longstring_get (ctx, 0, &newname)) {
+	if (!command_arg_longstring_get (cmd, 0, &newname)) {
 		g_printf (_("Error: failed to read new playlist name!\n"));
 		return FALSE;
 	}
 
-	if (!command_flag_string_get (ctx, "playlist", &oldname)) {
+	if (!command_flag_string_get (cmd, "playlist", &oldname)) {
 		oldname = cli_infos_active_playlist_name (infos);
 	}
 
@@ -1067,12 +1067,12 @@ cli_pl_rename (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_remove (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *playlist;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+	if (!command_arg_longstring_get (cmd, 0, &playlist)) {
 		g_printf (_("Error: failed to read the playlist name!\n"));
 		return FALSE;
 	}
@@ -1092,12 +1092,12 @@ cli_pl_remove (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_clear (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *playlist;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+	if (!command_arg_longstring_get (cmd, 0, &playlist)) {
 		playlist = g_strdup (cli_infos_active_playlist_name (infos));
 	}
 
@@ -1109,12 +1109,12 @@ cli_pl_clear (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_shuffle (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *playlist;
 
-	if (!command_arg_longstring_get (ctx, 0, &playlist)) {
+	if (!command_arg_longstring_get (cmd, 0, &playlist)) {
 		playlist = g_strdup (cli_infos_active_playlist_name (infos));
 	}
 
@@ -1125,23 +1125,23 @@ cli_pl_shuffle (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_pl_sort (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_sort (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	xmmsv_t *orderval;
 	const gchar *playlist;
 
-	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
+	if (!command_flag_string_get (cmd, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	if (command_arg_count (ctx) == 0) {
+	if (command_arg_count (cmd) == 0) {
 		orderval = xmmsv_new_list ();
 		xmmsv_list_append_string (orderval, "artist");
 		xmmsv_list_append_string (orderval, "album");
 		xmmsv_list_append_string (orderval, "tracknr");
 	} else {
-		gchar **order = command_argv_get (ctx);
+		gchar **order = command_argv_get (cmd);
 		orderval = xmmsv_make_stringlist (order, -1);
 	}
 
@@ -1233,7 +1233,7 @@ cli_pl_config_apply (xmmsv_t *val, cli_infos_t *infos, const gchar *playlist,
 }
 
 gboolean
-cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
+cli_pl_config (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	const gchar *playlist;
@@ -1248,29 +1248,29 @@ cli_pl_config (cli_infos_t *infos, command_context_t *ctx)
 	jumplist = NULL;
 
 	/* Convert type string to type id */
-	if (command_flag_string_get (ctx, "type", &typestr)) {
+	if (command_flag_string_get (cmd, "type", &typestr)) {
 		modif = TRUE;
 	} else {
 		typestr = NULL;
 	}
 
-	if (command_flag_int_get (ctx, "history", &history)) {
+	if (command_flag_int_get (cmd, "history", &history)) {
 		modif = TRUE;
 	}
-	if (command_flag_int_get (ctx, "upcoming", &upcoming)) {
+	if (command_flag_int_get (cmd, "upcoming", &upcoming)) {
 		modif = TRUE;
 	}
 
 	/* FIXME: extract namespace too */
-	if (command_flag_string_get (ctx, "input", &input)) {
+	if (command_flag_string_get (cmd, "input", &input)) {
 		modif = TRUE;
 	}
 
-	if (command_flag_string_get (ctx, "jumplist", &jumplist)) {
+	if (command_flag_string_get (cmd, "jumplist", &jumplist)) {
 		modif = TRUE;
 	}
 
-	if (command_arg_longstring_get (ctx, 0, &ptr)) {
+	if (command_arg_longstring_get (cmd, 0, &ptr)) {
 		playlist = ptr;
 	} else {
 		playlist = cli_infos_active_playlist_name (infos);

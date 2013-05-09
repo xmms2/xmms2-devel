@@ -27,7 +27,7 @@
 #include "commands.h"
 #include "cli_infos.h"
 #include "configuration.h"
-#include "command_utils.h"
+#include "command.h"
 #include "currently_playing.h"
 #include "matching_browse.h"
 #include "status.h"
@@ -117,7 +117,7 @@ cli_info_print_positions (cli_infos_t *infos, playlist_positions_t *positions)
  *       do the printing
  */
 gboolean
-cli_info (cli_infos_t *infos, command_context_t *ctx)
+cli_info (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	playlist_positions_t *positions;
@@ -126,10 +126,10 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 	gint current_position = cli_infos_current_position (infos);
 	gint current_id = cli_infos_current_id (infos);
 
-	if (command_arg_positions_get (ctx, 0, &positions, current_position)) {
+	if (command_arg_positions_get (cmd, 0, &positions, current_position)) {
 		cli_info_print_positions (infos, positions);
 		playlist_positions_free (positions);
-	} else if (command_arg_pattern_get (ctx, 0, &query, FALSE)) {
+	} else if (command_arg_pattern_get (cmd, 0, &query, FALSE)) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_query_ids, conn, query, NULL, 0, 0);
 		                 FUNC_CALL_P (cli_info_print_list, infos, XMMS_PREV_VALUE));
 		xmmsv_unref (query);
@@ -142,7 +142,7 @@ cli_info (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_server_import (cli_infos_t *infos, command_context_t *ctx)
+cli_server_import (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	xmmsc_result_t *res = NULL;
@@ -151,15 +151,15 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 	const gchar *path;
 	gboolean norecurs;
 
-	if (!command_flag_boolean_get (ctx, "non-recursive", &norecurs)) {
+	if (!command_flag_boolean_get (cmd, "non-recursive", &norecurs)) {
 		norecurs = FALSE;
 	}
 
-	for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
+	for (i = 0, count = command_arg_count (cmd); i < count; ++i) {
 		GList *files = NULL, *it;
 		gchar *vpath, *enc;
 
-		command_arg_string_get (ctx, i, &path);
+		command_arg_string_get (cmd, i, &path);
 		vpath = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
 		if (vpath == NULL) {
 			g_printf (_ ("Warning: Skipping invalid url: '%s'"), path);
@@ -237,12 +237,12 @@ cli_server_browse_print (xmmsv_t *list)
 }
 
 gboolean
-cli_server_browse (cli_infos_t *infos, command_context_t *ctx)
+cli_server_browse (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	const gchar *url;
 
-	if (!command_arg_string_get (ctx, 0, &url)) {
+	if (!command_arg_string_get (cmd, 0, &url)) {
 		return FALSE;
 	}
 
@@ -266,13 +266,13 @@ cli_server_remove_ids (cli_infos_t *infos, xmmsv_t *list)
 }
 
 gboolean
-cli_server_remove (cli_infos_t *infos, command_context_t *ctx)
+cli_server_remove (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *pattern;
 	xmmsv_t *coll;
 
-	if (!command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+	if (!command_arg_longstring_get_escaped (cmd, 0, &pattern)) {
 		g_printf (_("Error: you must provide a pattern!\n"));
 		return FALSE;
 	}
@@ -307,13 +307,13 @@ cli_server_rehash_ids (cli_infos_t *infos, xmmsv_t *list)
 }
 
 gboolean
-cli_server_rehash (cli_infos_t *infos, command_context_t *ctx)
+cli_server_rehash (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *pattern = NULL;
 	xmmsv_t *coll;
 
-	if (command_arg_longstring_get_escaped (ctx, 0, &pattern)) {
+	if (command_arg_longstring_get_escaped (cmd, 0, &pattern)) {
 		if (!xmmsc_coll_parse (pattern, &coll)) {
 			g_printf (_("Error: failed to parse the pattern!\n"));
 		} else {
@@ -367,15 +367,15 @@ cli_server_config_print (xmmsv_t *config, const gchar *confname)
 }
 
 gboolean
-cli_server_config (cli_infos_t *infos, command_context_t *ctx)
+cli_server_config (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	const gchar *confname, *confval;
 
-	if (!command_arg_string_get (ctx, 0, &confname)) {
+	if (!command_arg_string_get (cmd, 0, &confname)) {
 		confname = NULL;
 		confval = NULL;
-	} else if (!command_arg_string_get (ctx, 1, &confval)) {
+	} else if (!command_arg_string_get (cmd, 1, &confval)) {
 		confval = NULL;
 	}
 
@@ -410,7 +410,7 @@ cli_server_property_print (xmmsv_t *propdict, const gchar *filter)
 }
 
 gboolean
-cli_server_property (cli_infos_t *infos, command_context_t *ctx)
+cli_server_property (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gint mid;
@@ -420,9 +420,9 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 
 	delete = fint = fstring = FALSE;
 
-	command_flag_boolean_get (ctx, "delete", &delete);
-	command_flag_boolean_get (ctx, "int", &fint);
-	command_flag_boolean_get (ctx, "string", &fstring);
+	command_flag_boolean_get (cmd, "delete", &delete);
+	command_flag_boolean_get (cmd, "int", &fint);
+	command_flag_boolean_get (cmd, "string", &fstring);
 
 	if (delete && (fint || fstring)) {
 		g_printf ("Error: --int and --string flags are invalid with --delete!\n");
@@ -434,21 +434,21 @@ cli_server_property (cli_infos_t *infos, command_context_t *ctx)
 		return FALSE;
 	}
 
-	if (!command_arg_int_get (ctx, 0, &mid)) {
+	if (!command_arg_int_get (cmd, 0, &mid)) {
 		g_printf ("Error: you must provide a media-id!\n");
 		return FALSE;
 	}
 
 	default_source = g_strdup_printf ("client/%s", CLI_CLIENTNAME);
 
-	if (!command_flag_string_get (ctx, "source", &source)) {
+	if (!command_flag_string_get (cmd, "source", &source)) {
 		source = default_source;
 	}
 
-	if (!command_arg_string_get (ctx, 1, &propname)) {
+	if (!command_arg_string_get (cmd, 1, &propname)) {
 		propname = NULL;
 		propval = NULL;
-	} else if (!command_arg_string_get (ctx, 2, &propval)) {
+	} else if (!command_arg_string_get (cmd, 2, &propval)) {
 		propval = NULL;
 	}
 
@@ -519,7 +519,7 @@ cli_server_plugins_print (xmmsv_t *value)
 }
 
 gboolean
-cli_server_plugins (cli_infos_t *infos, command_context_t *ctx)
+cli_server_plugins (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_main_list_plugins, conn, XMMS_PLUGIN_TYPE_ALL),
@@ -606,7 +606,7 @@ cli_server_volume_set (cli_infos_t *infos, const gchar *channel, gint volume)
 }
 
 gboolean
-cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
+cli_server_volume (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	const gchar *channel;
@@ -614,15 +614,15 @@ cli_server_volume (cli_infos_t *infos, command_context_t *ctx)
 	const gchar *volstr;
 	bool relative_vol = false;
 
-	if (!command_flag_string_get (ctx, "channel", &channel)) {
+	if (!command_flag_string_get (cmd, "channel", &channel)) {
 		channel = NULL;
 	}
 
-	if (!command_arg_int_get (ctx, 0, &volume)) {
+	if (!command_arg_int_get (cmd, 0, &volume)) {
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playback_volume_get, conn),
 		                 FUNC_CALL_P (cli_server_volume_print, XMMS_PREV_VALUE, channel));
 	} else {
-		if (command_arg_string_get (ctx, 0, &volstr)) {
+		if (command_arg_string_get (cmd, 0, &volstr)) {
 			relative_vol = (volstr[0] == '+') || volume < 0;
 		}
 		if (relative_vol) {
@@ -650,7 +650,7 @@ cli_server_stats_print (xmmsv_t *val)
 }
 
 gboolean
-cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
+cli_server_stats (cli_infos_t *infos, command_t *cmd)
 {
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_main_stats, cli_infos_xmms_sync (infos)),
 	                 FUNC_CALL_P (cli_server_stats_print, XMMS_PREV_VALUE));
@@ -658,7 +658,7 @@ cli_server_stats (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
+cli_server_sync (cli_infos_t *infos, command_t *cmd)
 {
 	XMMS_CALL (xmmsc_coll_sync, cli_infos_xmms_sync (infos));
 	return FALSE;
@@ -666,7 +666,7 @@ cli_server_sync (cli_infos_t *infos, command_context_t *ctx)
 
 /* The loop is resumed in the disconnect callback */
 gboolean
-cli_server_shutdown (cli_infos_t *infos, command_context_t *ctx)
+cli_server_shutdown (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	if (conn != NULL) {

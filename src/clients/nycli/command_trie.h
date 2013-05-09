@@ -24,10 +24,10 @@ typedef struct command_action_St command_action_t;
 typedef enum command_trie_match_type_St  command_trie_match_type_t;
 
 #include "cli_infos.h"
-#include "command_utils.h"
+#include "command.h"
 
 typedef void (*command_setup_func)(command_action_t *action);
-typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_context_t *ctx);
+typedef gboolean (*command_exec_func)(cli_infos_t *infos, command_t *cmd);
 
 typedef enum {
 	COMMAND_REQ_NONE         = 0,

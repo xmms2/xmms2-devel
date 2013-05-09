@@ -10,7 +10,7 @@ commands_playback.c
 commands_playlist.c
 commands_server.c
 matching_browse.c
-command_utils.c
+command.c
 cmdnames.c
 configuration.c
 status.c

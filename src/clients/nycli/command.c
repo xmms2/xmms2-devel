@@ -21,9 +21,9 @@
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
 
-#include "command_utils.h"
+#include "command.h"
 
-#define command_arg_get(ctx, at) (ctx)->argv[(at) + 1]
+#define command_arg_get(cmd, at) (cmd)->argv[(at) + 1]
 
 static void command_argument_free (void *x);
 
@@ -47,7 +47,7 @@ typedef struct {
 	command_argument_value_t value;
 } command_argument_t;
 
-struct command_context_St {
+struct command_St {
 	gchar *name;
 	gint argc;
 	gchar **argv;
@@ -63,18 +63,18 @@ struct command_context_St {
  * The passed argv should be an array of length argc+1. (So that a terminating
  * NULL-pointer can be added in argv[argc].)
  */
-command_context_t *
-command_context_new (GOptionEntry *argdefs, gint argc, gchar **argv)
+command_t *
+command_new (GOptionEntry *argdefs, gint argc, gchar **argv)
 {
-	command_context_t *ctx;
+	command_t *cmd;
 	GOptionContext *context;
 	GError *error = NULL;
 	gint i;
 
-	ctx = g_new0 (command_context_t, 1);
-	ctx->argc = argc;
-	ctx->argv = argv;
-	ctx->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
+	cmd = g_new0 (command_t, 1);
+	cmd->argc = argc;
+	cmd->argv = argv;
+	cmd->flags = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                    g_free, command_argument_free);
 
 	for (i = 0; argdefs && argdefs[i].long_name; ++i) {
@@ -111,7 +111,7 @@ command_context_new (GOptionEntry *argdefs, gint argc, gchar **argv)
 				break;
 		}
 
-		g_hash_table_insert (ctx->flags,
+		g_hash_table_insert (cmd->flags,
 		                     g_strdup (argdefs[i].long_name), arg);
 	}
 
@@ -119,40 +119,40 @@ command_context_new (GOptionEntry *argdefs, gint argc, gchar **argv)
 	g_option_context_set_help_enabled (context, FALSE);  /* runs exit(0)! */
 	g_option_context_set_ignore_unknown_options (context, TRUE);
 	g_option_context_add_main_entries (context, argdefs, NULL);
-	g_option_context_parse (context, &ctx->argc, &ctx->argv, &error);
+	g_option_context_parse (context, &cmd->argc, &cmd->argv, &error);
 	g_option_context_free (context);
 
 	if (error) {
 		g_printf (_("Error: %s\n"), error->message);
 		g_error_free (error);
-		command_context_free (ctx);
+		command_free (cmd);
 		return NULL;
 	}
 
 	/* strip --, check for unknown options before it */
 	/* FIXME: We do not parse options elsewhere, do we? */
-	for (i = 0; i < ctx->argc; i++) {
-		if (strcmp (ctx->argv[i], "--") == 0) {
+	for (i = 0; i < cmd->argc; i++) {
+		if (strcmp (cmd->argv[i], "--") == 0) {
 			break;
 		}
-		if (ctx->argv[i][0] == '-' && ctx->argv[i][1] != '\0' &&
-		    !(ctx->argv[i][1] >= '0' && ctx->argv[i][1] <= '9')) {
+		if (cmd->argv[i][0] == '-' && cmd->argv[i][1] != '\0' &&
+		    !(cmd->argv[i][1] >= '0' && cmd->argv[i][1] <= '9')) {
 
-			g_printf (_("Error: Unknown option '%s'\n"), ctx->argv[i]);
-			command_context_free (ctx);
+			g_printf (_("Error: Unknown option '%s'\n"), cmd->argv[i]);
+			command_free (cmd);
 			return NULL;
 		}
 	}
-	if (i != ctx->argc) {
-		for (i++; i < ctx->argc; i++) {
+	if (i != cmd->argc) {
+		for (i++; i < cmd->argc; i++) {
 			argv[i-1] = argv[i];
 		}
-		ctx->argc--;
+		cmd->argc--;
 	}
 
 	/* Some functions rely on NULL-termination. */
-	ctx->argv[ctx->argc] = NULL;
-	return ctx;
+	cmd->argv[cmd->argc] = NULL;
+	return cmd;
 }
 
 
@@ -168,20 +168,20 @@ command_argument_free (void *x)
 }
 
 void
-command_context_free (command_context_t *ctx)
+command_free (command_t *cmd)
 {
-	g_hash_table_destroy (ctx->flags);
-	g_free (ctx->name);
-	g_free (ctx);
+	g_hash_table_destroy (cmd->flags);
+	g_free (cmd->name);
+	g_free (cmd);
 }
 
 gboolean
-command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v)
+command_flag_boolean_get (command_t *cmd, const gchar *name, gboolean *v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
 
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	arg = (command_argument_t *) g_hash_table_lookup (cmd->flags, name);
 	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_BOOLEAN) {
 		*v = arg->value.vbool;
 		retval = TRUE;
@@ -191,13 +191,13 @@ command_flag_boolean_get (command_context_t *ctx, const gchar *name, gboolean *v
 }
 
 gboolean
-command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
+command_flag_int_get (command_t *cmd, const gchar *name, gint *v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
 
 	/* A negative value means the value was not set. */
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	arg = (command_argument_t *) g_hash_table_lookup (cmd->flags, name);
 	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_INT && arg->value.vint >= 0) {
 		*v = arg->value.vint;
 		retval = TRUE;
@@ -207,12 +207,12 @@ command_flag_int_get (command_context_t *ctx, const gchar *name, gint *v)
 }
 
 gboolean
-command_flag_string_get (command_context_t *ctx, const gchar *name, const gchar **v)
+command_flag_string_get (command_t *cmd, const gchar *name, const gchar **v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
 
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	arg = (command_argument_t *) g_hash_table_lookup (cmd->flags, name);
 	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING && arg->value.vstring) {
 		*v = arg->value.vstring;
 		retval = TRUE;
@@ -224,12 +224,12 @@ command_flag_string_get (command_context_t *ctx, const gchar *name, const gchar 
 /* Extract the flag value as a list of string items.
  * Warning: the resulting string must be freed using g_strfreev() !*/
 gboolean
-command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gchar ***v)
+command_flag_stringlist_get (command_t *cmd, const gchar *name, const gchar ***v)
 {
 	const gchar *full;
 	gboolean retval = FALSE;
 
-	if (command_flag_string_get (ctx, name, &full) && full) {
+	if (command_flag_string_get (cmd, name, &full) && full) {
 		/* Force cast to suppress warning, Don't panic! */
 		*v = (const gchar **) g_strsplit (full, ",", MAX_STRINGLIST_TOKENS);
 		retval = TRUE;
@@ -239,12 +239,12 @@ command_flag_stringlist_get (command_context_t *ctx, const gchar *name, const gc
 }
 
 gboolean
-command_flag_stringarray_get (command_context_t *ctx, const gchar *name, const gchar ***v)
+command_flag_stringarray_get (command_t *cmd, const gchar *name, const gchar ***v)
 {
 	command_argument_t *arg;
 	gboolean retval = FALSE;
 
-	arg = (command_argument_t *) g_hash_table_lookup (ctx->flags, name);
+	arg = (command_argument_t *) g_hash_table_lookup (cmd->flags, name);
 	if (arg && arg->type == COMMAND_ARGUMENT_TYPE_STRING_ARRAY && arg->value.vstringv) {
 		*v = (const gchar **) arg->value.vstringv;
 		retval = TRUE;
@@ -254,36 +254,36 @@ command_flag_stringarray_get (command_context_t *ctx, const gchar *name, const g
 }
 
 void
-command_name_set (command_context_t *ctx, const gchar *name)
+command_name_set (command_t *cmd, const gchar *name)
 {
-	ctx->name = g_strdup (name);
+	cmd->name = g_strdup (name);
 }
 
 gchar *
-command_name_get (command_context_t *ctx)
+command_name_get (command_t *cmd)
 {
-	return ctx->name;
+	return cmd->name;
 }
 
 gint
-command_arg_count (command_context_t *ctx)
+command_arg_count (command_t *cmd)
 {
-	return ctx->argc - 1;
+	return cmd->argc - 1;
 }
 
 gchar **
-command_argv_get (command_context_t *ctx)
+command_argv_get (command_t *cmd)
 {
-	return ctx->argv + 1;
+	return cmd->argv + 1;
 }
 
 gboolean
-command_arg_int_get (command_context_t *ctx, gint at, gint *v)
+command_arg_int_get (command_t *cmd, gint at, gint *v)
 {
 	gboolean retval = FALSE;
 
-	if (at < command_arg_count (ctx)) {
-		*v = strtol (command_arg_get (ctx, at), NULL, 10);
+	if (at < command_arg_count (cmd)) {
+		*v = strtol (command_arg_get (cmd, at), NULL, 10);
 		retval = TRUE;
 	}
 
@@ -291,12 +291,12 @@ command_arg_int_get (command_context_t *ctx, gint at, gint *v)
 }
 
 gboolean
-command_arg_string_get (command_context_t *ctx, gint at, const gchar **v)
+command_arg_string_get (command_t *cmd, gint at, const gchar **v)
 {
 	gboolean retval = FALSE;
 
-	if (at < command_arg_count (ctx)) {
-		*v = command_arg_get (ctx, at);
+	if (at < command_arg_count (cmd)) {
+		*v = command_arg_get (cmd, at);
 		retval = TRUE;
 	}
 
@@ -307,12 +307,12 @@ command_arg_string_get (command_context_t *ctx, gint at, const gchar **v)
  * Warning: the string must be freed manually afterwards!
  */
 gboolean
-command_arg_longstring_get (command_context_t *ctx, gint at, gchar **v)
+command_arg_longstring_get (command_t *cmd, gint at, gchar **v)
 {
 	gboolean retval = FALSE;
 
-	if (at < command_arg_count (ctx)) {
-		*v = g_strjoinv (" ", &(command_arg_get (ctx, at)));
+	if (at < command_arg_count (cmd)) {
+		*v = g_strjoinv (" ", &(command_arg_get (cmd, at)));
 		retval = TRUE;
 	}
 
@@ -351,18 +351,18 @@ strescape (gchar *s, const gchar *toescape, gchar escape_char)
 /* Like command_arg_longstring_get but escape spaces with '\'.
  */
 gboolean
-command_arg_longstring_get_escaped (command_context_t *ctx, gint at, gchar **v)
+command_arg_longstring_get_escaped (command_t *cmd, gint at, gchar **v)
 {
 	gboolean retval = FALSE;
 	gchar **args;
-	gint i, len, count = command_arg_count (ctx);
+	gint i, len, count = command_arg_count (cmd);
 
 	len = count-at+1;
 	if (at < count) {
 		args = g_new0 (gchar *, len);
 		args[len-1] = NULL;
 		for (i = at; i < count; i++) {
-			args[i-at] = strescape (command_arg_get (ctx, i), " ", '\\');
+			args[i-at] = strescape (command_arg_get (cmd, i), " ", '\\');
 		}
 		*v = g_strjoinv (" ", args);
 
@@ -445,7 +445,7 @@ parse_time (gchar *s, gchar **endptr, const gint *mul, const gchar **sep)
 
 /* Parse a time value, either an absolute position or an offset. */
 gboolean
-command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
+command_arg_time_get (command_t *cmd, gint at, command_arg_time_t *v)
 {
 	gboolean retval = FALSE;
 	const gchar *s;
@@ -454,7 +454,7 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
 	const gchar *separators[] = {"hour", "h", "min", "m", "sec", "s", NULL};
 	const gint multipliers[] = {3600, 3600, 60, 60, 1, 1};
 
-	if (at < command_arg_count (ctx) && command_arg_string_get (ctx, at, &s)) {
+	if (at < command_arg_count (cmd) && command_arg_string_get (cmd, at, &s)) {
 		gchar *time_arg = g_strdup (s);
 		if (*time_arg == '+' || *time_arg == '-') {
 			v->type = COMMAND_ARG_TIME_OFFSET;
@@ -487,7 +487,7 @@ command_arg_time_get (command_context_t *ctx, gint at, command_arg_time_t *v)
  *  stdout.
  */
 gboolean
-command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
+command_arg_pattern_get (command_t *cmd, gint at, xmmsc_coll_t **v,
                          gboolean warn)
 {
 	gchar *pattern = NULL;
@@ -496,7 +496,7 @@ command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
 	/* FIXME: Need a more elegant error system. */
 	/* FIXME(g): Escape tokens? command_arg_longstring_get_escaped ? */
 
-	command_arg_longstring_get_escaped (ctx, at, &pattern);
+	command_arg_longstring_get_escaped (cmd, at, &pattern);
 	if (!pattern) {
 		if (warn) g_printf (_("Error: you must provide a pattern!\n"));
 		success = FALSE;
@@ -515,13 +515,13 @@ command_arg_pattern_get (command_context_t *ctx, gint at, xmmsc_coll_t **v,
  *  argument.
  */
 gboolean
-command_arg_positions_get (command_context_t *ctx, gint at,
+command_arg_positions_get (command_t *cmd, gint at,
                            playlist_positions_t **p, gint currpos)
 {
 	gchar *expression = NULL;
 	gboolean success = TRUE;
 
-	command_arg_longstring_get_escaped (ctx, at, &expression);
+	command_arg_longstring_get_escaped (cmd, at, &expression);
 	if (!expression || !playlist_positions_parse (expression, p, currpos)) {
 		success = FALSE;
 	}

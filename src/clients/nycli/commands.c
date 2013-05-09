@@ -23,7 +23,7 @@
 #include "cli_infos.h"
 #include "cmdnames.h"
 #include "commands.h"
-#include "command_utils.h"
+#include "command.h"
 #include "utils.h"
 
 #define COMMAND_HELP_DESCRIPTION_INDENT 2
@@ -426,7 +426,7 @@ cli_server_volume_setup (command_action_t *action)
 /* Define commands */
 
 gboolean
-cli_exit (cli_infos_t *infos, command_context_t *ctx)
+cli_exit (cli_infos_t *infos, command_t *cmd)
 {
 	cli_infos_loop_stop (infos);
 	return FALSE;
@@ -574,16 +574,16 @@ help_command (cli_infos_t *infos, GList *cmdnames, gchar **cmd, gint num_args,
 }
 
 gboolean
-cli_help (cli_infos_t *infos, command_context_t *ctx)
+cli_help (cli_infos_t *infos, command_t *cmd)
 {
 	cmd_type_t cmdtype;
 	GList *names;
 	gint num_args;
 	gboolean alias;
 
-	num_args = command_arg_count (ctx);
+	num_args = command_arg_count (cmd);
 
-	if (command_flag_boolean_get (ctx, "alias", &alias) && alias) {
+	if (command_flag_boolean_get (cmd, "alias", &alias) && alias) {
 		names = cli_infos_alias_names (infos);
 		cmdtype = CMD_TYPE_ALIAS;
 	} else {
@@ -595,7 +595,7 @@ cli_help (cli_infos_t *infos, command_context_t *ctx)
 	if (num_args == 0) {
 		help_list (names, NULL, cmdtype);
 	} else {
-		help_command (infos, names, command_argv_get (ctx), num_args, cmdtype);
+		help_command (infos, names, command_argv_get (cmd), num_args, cmdtype);
 	}
 
 	/* No data pending */

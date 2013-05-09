@@ -26,7 +26,7 @@
 #include "column_display.h"
 #include "configuration.h"
 #include "commands.h"
-#include "command_utils.h"
+#include "command.h"
 #include "utils.h"
 #include "xmmscall.h"
 
@@ -52,7 +52,7 @@ cli_search_print (xmmsv_t *list, column_display_t *coldisp)
 }
 
 gboolean
-cli_search (cli_infos_t *infos, command_context_t *ctx)
+cli_search (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	configuration_t *config = cli_infos_config (infos);
@@ -64,17 +64,17 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	const gchar **columns = NULL;
 	const gchar *default_columns[] = { "id", "artist", "album", "title", NULL };
 
-	if (!command_arg_pattern_get (ctx, 0, &query, TRUE)) {
+	if (!command_arg_pattern_get (cmd, 0, &query, TRUE)) {
 		return FALSE;
 	}
 
-	if (command_flag_stringlist_get (ctx, "columns", &columns)) {
+	if (command_flag_stringlist_get (cmd, "columns", &columns)) {
 		fetchval = xmmsv_make_stringlist ((gchar **) columns, -1);
 	} else {
 		fetchval = xmmsv_make_stringlist ((gchar **) default_columns, -1);
 	}
 
-	if (command_flag_stringlist_get (ctx, "order", &order)) {
+	if (command_flag_stringlist_get (cmd, "order", &order)) {
 		xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
 		ordered_query = xmmsv_coll_add_order_operators (query, orderval);
 		xmmsv_unref (orderval);
@@ -143,7 +143,7 @@ cli_coll_list_print (xmmsv_t *list)
 }
 
 gboolean
-cli_coll_list (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_list (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_list, conn, XMMS_COLLECTION_NS_COLLECTIONS),
@@ -328,12 +328,12 @@ coll_dump (xmmsv_t *coll, guint level)
 }
 
 gboolean
-cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_show (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *collection, *name, *ns;
 
-	if (!command_arg_longstring_get (ctx, 0, &collection)) {
+	if (!command_arg_longstring_get (cmd, 0, &collection)) {
 		g_printf (_("Error: You must provide a collection!\n"));
 		return FALSE;
 	}
@@ -351,28 +351,28 @@ cli_coll_show (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_create (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsv_t *coll = NULL;
 	gchar *ns, *name, *pattern = NULL;
 	gboolean force = FALSE, empty = FALSE, copy;
 	const gchar *collection, *fullname;
 
-	if (!command_arg_string_get (ctx, 0, &fullname)) {
+	if (!command_arg_string_get (cmd, 0, &fullname)) {
 		g_printf (_("Error: You must provide a collection name!\n"));
 		return FALSE;
 	}
 
-	command_flag_boolean_get (ctx, "empty", &empty);
-	copy = command_flag_string_get (ctx, "collection", &collection);
-	command_arg_longstring_get_escaped (ctx, 1, &pattern);
+	command_flag_boolean_get (cmd, "empty", &empty);
+	copy = command_flag_string_get (cmd, "collection", &collection);
+	command_arg_longstring_get_escaped (cmd, 1, &pattern);
 
 	if ((empty && copy) || (empty && pattern) || (copy && pattern)) {
 		g_printf (_("Error: -e, -c and pattern are mutually exclusive!"));
 		return FALSE;
 	}
 
-	command_flag_boolean_get (ctx, "force", &force);
+	command_flag_boolean_get (cmd, "force", &force);
 	coll_name_split (fullname, &ns, &name);
 
 	if (pattern) {
@@ -426,23 +426,23 @@ cli_coll_create (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_rename (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gboolean force;
 	gchar *from_ns, *to_ns, *from_name, *to_name;
 	const gchar *oldname, *newname;
 
-	if (!command_flag_boolean_get (ctx, "force", &force)) {
+	if (!command_flag_boolean_get (cmd, "force", &force)) {
 		force = FALSE;
 	}
 
-	if (!command_arg_string_get (ctx, 0, &oldname)) {
+	if (!command_arg_string_get (cmd, 0, &oldname)) {
 		g_printf (_("Error: failed to read collection name!\n"));
 		return FALSE;
 	}
 
-	if (!command_arg_string_get (ctx, 1, &newname)) {
+	if (!command_arg_string_get (cmd, 1, &newname)) {
 		g_printf (_("Error: failed to read collection new name!\n"));
 		return FALSE;
 	}
@@ -469,12 +469,12 @@ cli_coll_rename (cli_infos_t *infos, command_context_t *ctx)
 }
 
 gboolean
-cli_coll_remove (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_remove (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *collection, *name, *ns;
 
-	if (!command_arg_longstring_get (ctx, 0, &collection)) {
+	if (!command_arg_longstring_get (cmd, 0, &collection)) {
 		g_printf (_("Error: failed to read the collection name!\n"));
 		return FALSE;
 	}
@@ -527,23 +527,23 @@ collection_print_config (xmmsv_t *coll, const gchar *attrname)
 }
 
 gboolean
-cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
+cli_coll_config (cli_infos_t *infos, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_infos_xmms_sync (infos);
 	gchar *name, *ns;
 	const gchar *collection, *attrname, *attrvalue;
 
-	if (!command_arg_string_get (ctx, 0, &collection)) {
+	if (!command_arg_string_get (cmd, 0, &collection)) {
 		g_printf (_("Error: you must provide a collection!\n"));
 		return FALSE;
 	}
 
 	coll_name_split (collection, &ns, &name);
 
-	if (!command_arg_string_get (ctx, 1, &attrname)) {
+	if (!command_arg_string_get (cmd, 1, &attrname)) {
 		attrname = NULL;
 		attrvalue = NULL;
-	} else if (!command_arg_string_get (ctx, 2, &attrvalue)) {
+	} else if (!command_arg_string_get (cmd, 2, &attrvalue)) {
 		attrvalue = NULL;
 	}
 
