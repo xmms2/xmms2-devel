@@ -43,6 +43,10 @@ mlib_runner_src = """
 server/medialib-runner.c
 """.split()
 
+test_cli_src = """
+client/t_command_trie.c
+"""
+
 def configure(conf):
     conf.load("unittest", tooldir="waftools")
 
@@ -141,6 +145,16 @@ def build(bld):
             uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None,
             ut_cwd = "."
+            )
+
+    if "src/clients/nycli" in bld.env.XMMS_OPTIONAL_BUILD:
+        bld(features = 'c cprogram test',
+            target = 'test_cli',
+            source = test_cli_src,
+            includes = '. .. runner ../src/include ../src/clients/nycli',
+            use = 'xmmsutils xmmsclient xmmscli',
+            uselib = 'cunit ncurses valgrind glib2 DISABLE_WRITESTRINGS',
+            install_path = None
             )
 
 def options(o):
