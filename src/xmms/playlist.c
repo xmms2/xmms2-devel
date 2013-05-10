@@ -474,9 +474,6 @@ xmms_playlist_client_current_pos (xmms_playlist_t *playlist, const gchar *plname
 	}
 
 	pos = xmms_playlist_coll_get_currpos (plcoll);
-	if (pos == -1) {
-		xmms_error_set (err, XMMS_ERROR_GENERIC, "no current entry");
-	}
 
 	g_mutex_unlock (&playlist->mutex);
 
