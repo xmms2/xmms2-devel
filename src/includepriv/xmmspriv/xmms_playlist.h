@@ -58,7 +58,7 @@ void xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, const gchar *p
 GList * xmms_playlist_list (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 
 void xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
-void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
+void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
 
 /*
  * Entry modifications
