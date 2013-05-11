@@ -82,28 +82,15 @@ g_tree_new_from_xmmsv (xmmsv_t *list)
 	return tree;
 }
 
-static xmmsv_t *
-get_coll (cli_context_t *ctx, const gchar *name, xmmsv_coll_namespace_t ns)
+static void
+playlist_coll_attribute_get_position (xmmsv_t *coll, gint *pos)
 {
-	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
-	xmmsc_result_t *res;
-	xmmsv_t *val;
-	const gchar *err;
-
-	res = xmmsc_coll_get (conn, name, ns);
-	xmmsc_result_wait (res);
-
-	val = xmmsc_result_get_value (res);
-	if (!xmmsv_get_error (val, &err)) {
-		xmmsv_ref (val);
+	const gchar *str = NULL;
+	if (xmmsv_coll_attribute_get_string (coll, "position", &str)) {
+		*pos = strtol (str, NULL, 10);
 	} else {
-		g_printf (_("Error: Could not retrieve collection %s.\n"), name);
-		val = NULL;
+		*pos = -1;
 	}
-
-	xmmsc_result_unref (res);
-
-	return val;
 }
 
 /* Get current position in @playlist or in active playlist if
@@ -111,20 +98,11 @@ get_coll (cli_context_t *ctx, const gchar *name, xmmsv_coll_namespace_t ns)
 static gboolean
 playlist_currpos_get (cli_context_t *ctx, const gchar *playlist, gint *pos)
 {
-	xmmsv_t *coll;
-	const gchar *str;
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 
 	if (playlist) {
-		if ((coll = get_coll (ctx, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
-			if (xmmsv_coll_attribute_get_string (coll, "position", &str)) {
-				*pos = strtol (str, NULL, 10);
-			} else {
-				*pos = -1;
-			}
-			xmmsv_unref (coll);
-		} else {
-			return FALSE;
-		}
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS),
+		                 FUNC_CALL_P (playlist_coll_attribute_get_position, XMMS_PREV_VALUE, pos));
 	} else {
 		*pos = cli_context_current_position (ctx);
 	}
@@ -132,25 +110,29 @@ playlist_currpos_get (cli_context_t *ctx, const gchar *playlist, gint *pos)
 	return TRUE;
 }
 
+static void
+playlist_coll_idlist_get_size (xmmsv_t *coll, gint *length)
+{
+	*length = xmmsv_coll_idlist_get_size (coll);
+}
+
 /* Get length of @playlist or of active playlist if @playlist == NULL. */
 static gboolean
-playlist_length_get (cli_context_t *ctx, const gchar *playlist, gint *len)
+playlist_length_get (cli_context_t *ctx, const gchar *playlist, gint *length)
 {
-	xmmsv_t *coll;
+	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
+
+	*length = -1;
 
 	if (playlist) {
-		if ((coll = get_coll (ctx, playlist, XMMS_COLLECTION_NS_PLAYLISTS))) {
-			*len = xmmsv_coll_idlist_get_size (coll);
-			xmmsv_unref (coll);
-		} else {
-			return FALSE;
-		}
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_coll_get, conn, playlist, XMMS_COLLECTION_NS_PLAYLISTS),
+		                 FUNC_CALL_P (playlist_coll_idlist_get_size, XMMS_PREV_VALUE, length));
 	} else {
 		xmmsv_t *entries = cli_context_active_playlist (ctx);
-		*len = xmmsv_list_get_size (entries);
+		*length = xmmsv_list_get_size (entries);
 	}
 
-	return TRUE;
+	return *length >= 0;
 }
 
 static gboolean
