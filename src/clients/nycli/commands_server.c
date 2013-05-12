@@ -343,27 +343,52 @@ cli_server_config_print_entry (const gchar *confname, xmmsv_t *val, void *udata)
 		g_printf ("%s = %d\n", confname, number);
 }
 
+static gint
+cli_server_config_sort (xmmsv_t **a, xmmsv_t **b)
+{
+	const gchar *as, *bs;
+
+	as = bs = NULL;
+
+	xmmsv_get_string (*a, &as);
+	xmmsv_get_string (*b, &bs);
+
+	return g_strcmp0 (as, bs);
+}
+
 static void
 cli_server_config_print (xmmsv_t *config, const gchar *confname)
 {
-	if (confname) {
-		/* Filter out keys that don't match the config name after
-		 * shell wildcard expansion.  */
-		xmmsv_dict_iter_t *it;
-		const gchar *key;
-		xmmsv_t *val;
+	xmmsv_dict_iter_t *dit;
+	xmmsv_list_iter_t *lit;
+	const gchar *key;
+	xmmsv_t *value, *list;
 
-		xmmsv_get_dict_iter (config, &it);
-		while (xmmsv_dict_iter_pair (it, &key, &val)) {
-			if (fnmatch (confname, key, 0)) {
-				xmmsv_dict_iter_remove (it);
-			} else {
-				xmmsv_dict_iter_next (it);
-			}
+	list = xmmsv_new_list ();
+
+	xmmsv_get_dict_iter (config, &dit);
+	while (xmmsv_dict_iter_pair (dit, &key, &value)) {
+		/* Filter out keys that don't match the config name after
+		 * shell wildcard expansion.
+		 */
+		if (confname != NULL && fnmatch (confname, key, 0)) {
+			xmmsv_dict_iter_remove (dit);
+		} else {
+			xmmsv_list_append_string (list, key);
+			xmmsv_dict_iter_next (dit);
 		}
 	}
 
-	xmmsv_dict_foreach (config, cli_server_config_print_entry, NULL);
+	xmmsv_list_sort (list, cli_server_config_sort);
+
+	xmmsv_get_list_iter (list, &lit);
+	while (xmmsv_list_iter_entry_string (lit, &key)) {
+		xmmsv_dict_get (config, key, &value);
+		cli_server_config_print_entry (key, value, NULL);
+		xmmsv_list_iter_next (lit);
+	}
+
+	xmmsv_unref (list);
 }
 
 gboolean
