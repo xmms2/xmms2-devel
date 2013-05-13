@@ -151,7 +151,14 @@ cmd_flag_pos_get_playlist (cli_context_t *ctx, command_t *cmd,
 		return FALSE;
 	} else if (next) {
 		playlist_currpos_get (ctx, playlist, &tmp);
-		*pos = tmp + 1;
+		if (tmp == -1) {
+			/* no current position, next == append */
+			if (!playlist_length_get (ctx, playlist, pos)) {
+				return FALSE;
+			}
+		} else {
+			*pos = tmp + 1;
+		}
 	} else if (at_isset) {
 		if (!playlist_length_get (ctx, playlist, &tmp)) {
 			return FALSE;
