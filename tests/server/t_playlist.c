@@ -284,8 +284,8 @@ CASE(test_client_add_url)
 CASE(test_client_replace)
 {
 	xmms_medialib_entry_t first;
-	xmmsv_t *coll, *empty;
-	xmmsv_t *result;
+	xmms_future_t *future1, *future2;
+	xmmsv_t *coll, *empty, *result, *expected;
 
 	empty = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 
@@ -306,12 +306,31 @@ CASE(test_client_replace)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
+	future1 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	future2 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
+
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_REPLACE,
 	                        xmmsv_new_string ("Default"),
 	                        xmmsv_ref (empty),
 	                        xmmsv_new_int (XMMS_PLAYLIST_CURRENT_ID_FORGET));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
+
+	/* verify that we don't get any id with the changed message */
+	result = xmms_future_await (future1, 1);
+	expected = xmmsv_from_xson ("[{ 'type': 7, 'name': 'Default' }]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+	xmms_future_free (future1);
+
+	/* ..and that position is -1 */
+	result = xmms_future_await (future2, 1);
+	expected = xmmsv_from_xson ("[{ 'name': 'Default', 'position': -1 }]");
+	CU_ASSERT (xmmsv_compare (expected, result));
+	xmmsv_unref (result);
+	xmmsv_unref (expected);
+	xmms_future_free (future2);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
