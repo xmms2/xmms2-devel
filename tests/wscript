@@ -64,6 +64,15 @@ def build(bld):
         install_path = None,
         )
 
+    bld(features = 'c',
+        target = 'memorystatus',
+        source = ['runner/memory_status.c'],
+        includes = 'utils',
+        uselib = 'valgrind DISABLE_UNUSEDBUTSETVARIABLE',
+        defines = ["HAVE_VALGRIND=%d" % int(bld.env.HAVE_VALGRIND)],
+        install_path = None,
+    )
+
     bld(features = "c cstlib",
         target = "testutils",
         source = testutils_src,
@@ -78,7 +87,7 @@ def build(bld):
         source = test_xmmstypes_src,
         includes = '. .. runner ../src ../src/include',
         use = 'xmmstypes xmmsutils',
-        uselib = 'cunit ncurses valgrind DISABLE_WRITESTRINGS',
+        uselib = 'cunit ncurses DISABLE_WRITESTRINGS',
         install_path = None
         )
 
@@ -97,7 +106,7 @@ def build(bld):
             source = test_server_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = 'xmmstypes xmmsutils s4',
-            uselib = 'cunit ncurses valgrind glib2 gthread2 DISABLE_WRITESTRINGS',
+            uselib = 'cunit ncurses glib2 gthread2 DISABLE_WRITESTRINGS',
             install_path = None
             )
 
@@ -106,7 +115,7 @@ def build(bld):
             source = test_mlib_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -115,7 +124,7 @@ def build(bld):
             source = test_playlist_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -124,7 +133,7 @@ def build(bld):
             source = test_collection_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -133,7 +142,7 @@ def build(bld):
             source = test_xform_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses valgrind glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -153,7 +162,7 @@ def build(bld):
             source = test_cli_src,
             includes = '. .. runner ../src/include ../src/clients/nycli',
             use = 'xmmsutils xmmsclient xmmscli',
-            uselib = 'cunit ncurses valgrind glib2 DISABLE_WRITESTRINGS',
+            uselib = 'cunit ncurses glib2 DISABLE_WRITESTRINGS',
             install_path = None
             )
 

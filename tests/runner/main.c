@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <xcu_valgrind.h>
+#include <memory_status.h>
 
 @@DECLARE_TEST_CASES@@
 
@@ -35,14 +35,20 @@ segvhandler(int s)
 int
 xcu_pre_case (const char *name)
 {
-	xcu_valgrind_pre_case ();
+	memory_status_calibrate ();
 	return 1;
 }
 
 void
 xcu_post_case (const char *name)
 {
-	xcu_valgrind_post_case ();
+	int status = memory_status_verify ();
+	if (status & MEMORY_LEAK) {
+		CU_FAIL ("Memory leak detected");
+	}
+	if (status & MEMORY_ERROR) {
+		CU_FAIL ("Memory error detected");
+	}
 }
 
 int

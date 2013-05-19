@@ -14,10 +14,24 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XCU_VALGRIND_H
-#define __XCU_VALGRIND_H
+#ifndef __MEMORY_STATUS_H__
+#define __MEMORY_STATUS_H__
 
-void xcu_valgrind_pre_case (void);
-void xcu_valgrind_post_case (void);
+typedef enum memory_status_St {
+	MEMORY_OK    = 1 << 0,
+	MEMORY_LEAK  = 1 << 1,
+	MEMORY_ERROR = 1 << 2
+} memory_status_t;
+
+/**
+ * Gather a baseline for leaks and errors.
+ */
+void memory_status_calibrate (void);
+
+/**
+ * Check if any leaks or errors have been introduced since baseline.
+ * @return status flag of memory_status_t.
+ */
+int memory_status_verify (void);
 
 #endif

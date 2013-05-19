@@ -58,11 +58,6 @@ def generate_runner(self):
             suites.append(result)
 
     if suites:
-        # Make sure stuff in runner directory gets build (for example
-        # valgrind_object is in there)
-        directory = self.bld.srcnode.find_dir(os.path.join("tests", "runner"))
-        self.bld.recurse (directory.abspath())
-
         # Generate and add runner
         test_runner_template = os.path.join("tests", "runner", "main.c")
         runner = self.bld.srcnode.find_resource(test_runner_template)
@@ -74,11 +69,7 @@ def generate_runner(self):
         self.source += [target]
 
         # link valgrind_object in
-        self.add_objects += ["valgrind_object"]
-
-        # Set HAVE_VALGRIND-define
-        if self.env.HAVE_VALGRIND:
-            self.defines = ["HAVE_VALGRIND=1"]
+        self.add_objects += ["memorystatus"]
 
 def monkey_patch_test_runner():
     original = Task.classes["utest"].run
