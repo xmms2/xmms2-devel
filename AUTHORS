@@ -103,6 +103,10 @@ N: Hugh Davenport
 E: hugh@davenport.ath.cx
 D: Alsa plugin fix.
 
+N: Johannes Dewender
+E: xmms@JonnyJD.net
+D: CDDA plugin patches
+
 N: Frank Dischner
 E: phaedrus961@gmail.com
 D: multichannel fixes
