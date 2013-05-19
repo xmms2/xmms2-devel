@@ -31,10 +31,10 @@
 
 typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
 
-typedef void (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
-                                    xmmsv_t *content, xmmsv_t *coll,
-                                    xmmsv_t *specification, xmmsv_t *expected,
-                                    gint format, const gchar *datasetname);
+typedef gboolean (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
+                                        xmmsv_t *content, xmmsv_t *coll,
+                                        xmmsv_t *specification, xmmsv_t *expected,
+                                        gint format, const gchar *datasetname);
 
 typedef struct xmms_test_args_St {
 	enum {
@@ -240,7 +240,7 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 /**
  * Unit test predicate
  */
-static void
+static gboolean
 run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
                xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                gint format, const gchar *datasetname)
@@ -322,13 +322,15 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmms_object_unref (medialib);
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
+
+	return matches && status == MEMORY_OK;
 }
 
 
 /**
  * Performance test predicate
  */
-static void
+static gboolean
 run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *content,
                       xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                       gint format, const gchar *datasetname)
@@ -367,15 +369,18 @@ run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *con
 	}
 
 	xmmsv_unref (ret);
+
+	return TRUE;
 }
 
 
-static void
+static gboolean
 run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate predicate,
            gint format, const gchar *datasetname)
 {
 	xmmsv_list_iter_t *it;
 	xmmsv_t *dict;
+	gboolean result = TRUE;
 
 	xmmsv_get_list_iter (testcases, &it);
 	while (xmmsv_list_iter_entry (it, &dict)) {
@@ -389,15 +394,17 @@ run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate pr
 		xmmsv_dict_get (dict, "collection", &coll);
 		xmmsv_dict_get (dict, "expected", &expected);
 
-		predicate (medialib, name, content, coll, specification,
-		           expected, format, datasetname);
+		result &= predicate (medialib, name, content, coll, specification,
+		                     expected, format, datasetname);
 
 		xmmsv_list_iter_next (it);
 	}
+
+	return result;
 }
 
 
-static void
+static gboolean
 run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 {
 	xmmsv_list_iter_t *it;
@@ -428,6 +435,8 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 
 		xmmsv_list_iter_next (it);
 	}
+
+	return TRUE;
 }
 
 
@@ -510,6 +519,7 @@ main (gint argc, gchar **argv)
 {
 	xmmsv_t *testcases, *databases;
 	xmms_test_args_t args = { 0 };
+	gint exit_code = EXIT_SUCCESS;
 
 	xmms_log_init (0);
 
@@ -538,10 +548,11 @@ main (gint argc, gchar **argv)
 			g_print ("\"test\",\"success\"\n");
 		else
 			g_print (" - Running Unit Test -\n");
-		run_tests (NULL, testcases, run_unit_test, args.format, NULL);
+		if (!run_tests (NULL, testcases, run_unit_test, args.format, NULL))
+			exit_code = EXIT_FAILURE;
 	}
 
 	xmmsv_unref (testcases);
 
-	return EXIT_SUCCESS;
+	return exit_code;
 }
