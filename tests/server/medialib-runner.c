@@ -23,9 +23,11 @@
 #include <xmmspriv/xmms_config.h>
 #include <xmmspriv/xmms_medialib.h>
 
-#include "utils/jsonism.h"
-#include "utils/value_utils.h"
-#include "utils/coll_utils.h"
+#include <utils/jsonism.h>
+#include <utils/value_utils.h>
+#include <utils/coll_utils.h>
+
+#include <memory_status.h>
 
 typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
 
@@ -248,6 +250,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmms_error_t err;
 	xmms_medialib_t *medialib;
 	xmms_medialib_session_t *session;
+	gint status;
 
 	g_debug ("Running test: %s", name);
 
@@ -259,9 +262,13 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 
 	populate_medialib (medialib, content);
 
+	memory_status_calibrate ();
+
 	session = xmms_medialib_session_begin (medialib);
 	ret = xmms_medialib_query (session, coll, specification, &err);
 	xmms_medialib_session_commit (session);
+
+	status = memory_status_verify ();
 
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);
@@ -276,7 +283,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 		matches = FALSE;
 	}
 
-	if (matches) {
+	if (matches && status == MEMORY_OK) {
 		if (format == FORMAT_CSV) {
 			g_print ("\"%s\", 1\n", name);
 		} else {
@@ -289,16 +296,25 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 			g_print ("\"%s\", 0\n", name);
 		} else {
 			g_print ("............................................................ Failure!");
+			if (status & MEMORY_LEAK) {
+				g_print (" Memory Leaks!");
+			}
+			if (status & MEMORY_ERROR) {
+				g_print (" Memory errors!");
+			}
+
 			g_print ("\r%s \n", name);
 			if (xmms_error_iserror (&err)) {
 				g_printerr ("ERROR: %s\n", xmms_error_message_get (&err));
 			}
 		}
 
-		g_printerr ("The result: ");
-		xmmsv_dump (ret);
-		g_printerr ("Does not equal: ");
-		xmmsv_dump (value);
+		if (!matches) {
+			g_printerr ("The result: ");
+			xmmsv_dump (ret);
+			g_printerr ("Does not equal: ");
+			xmmsv_dump (value);
+		}
 	}
 
 	xmmsv_unref (ret);
