@@ -9,44 +9,37 @@
         { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" }
     ],
     "collection": {
-        "type": "order",
-        "attributes": { "type": "position" },
+        "type": "union",
         "operands": [{
-            "type": "union",
-            "operands": [
-                {
-                    "type": "order",
-                    "attributes": {
-                        "type": "value",
-                        "field": "tracknr"
-                    },
-                    "operands": [{
-                        "type": "equals",
-                        "attributes": {
-                            "type": "value",
-                            "field": "artist",
-                            "value": "Vibrasphere"
-                        },
-                        "operands": [{ "type": "universe" }]
-                    }]
+            "type": "order",
+            "attributes": {
+                "type": "value",
+                "field": "tracknr"
+            },
+            "operands": [{
+                "type": "equals",
+                "attributes": {
+                    "type": "value",
+                    "field": "artist",
+                    "value": "Vibrasphere"
                 },
-                {
-                    "type": "order",
-                    "attributes": {
-                        "type": "value",
-                        "field": "tracknr"
-                    },
-                    "operands": [{
-                        "type": "equals",
-                        "attributes": {
-                            "type": "value",
-                            "field": "artist",
-                            "value": "Red Fang"
-                        },
-                        "operands": [{ "type": "universe" }]
-                    }]
-                }
-            ]
+                "operands": [{ "type": "universe" }]
+            }]
+        }, {
+            "type": "order",
+            "attributes": {
+                "type": "value",
+                "field": "tracknr"
+            },
+            "operands": [{
+                "type": "equals",
+                "attributes": {
+                    "type": "value",
+                    "field": "artist",
+                    "value": "Red Fang"
+                },
+                "operands": [{ "type": "universe" }]
+            }]
         }]
     },
     "specification": {
