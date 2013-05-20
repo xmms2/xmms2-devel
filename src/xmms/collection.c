@@ -1248,8 +1248,11 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 			return FALSE;
 		}
 
-		if (!xmmsv_coll_attribute_get_string (coll, "type", &attr)
-		    || strcmp (attr, "value") == 0) {
+		if (!xmmsv_coll_attribute_get_string (coll, "type", &attr)) {
+			attr = "value";
+		}
+
+		if (strcmp (attr, "value") == 0) {
 			xmmsv_t *field;
 
 			/* If it's a sorting on values we need a field to sort on */
@@ -1266,6 +1269,10 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsv_t *coll,
 				       "a string or a list of strings.";
 
 			}
+		} else if (strcmp (attr, "id") != 0 && strcmp (attr, "random") != 0) {
+			*err = "Invalid collection: ORDER must have \"type\" set to either "
+			       "\"id\", \"value\", or \"random\"";
+			return FALSE;
 		}
 		break;
 
