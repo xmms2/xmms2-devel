@@ -27,6 +27,8 @@
 #include <utils/value_utils.h>
 #include <utils/coll_utils.h>
 
+#include <server-utils/ipc_call.h>
+
 #include <memory_status.h>
 
 typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
@@ -247,9 +249,8 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 {
 	gboolean matches, ordered = FALSE;
 	xmmsv_t *ret, *value;
-	xmms_error_t err;
 	xmms_medialib_t *medialib;
-	xmms_medialib_session_t *session;
+	xmms_coll_dag_t *dag;
 	gint status;
 
 	g_debug ("Running test: %s", name);
@@ -259,21 +260,22 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 
 	medialib = xmms_medialib_init ();
+	dag = xmms_collection_init (medialib);
 
 	populate_medialib (medialib, content);
 
 	memory_status_calibrate (name);
 
-	session = xmms_medialib_session_begin (medialib);
-	ret = xmms_medialib_query (session, coll, specification, &err);
-	xmms_medialib_session_commit (session);
+	ret = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY,
+	                     xmmsv_ref (coll),
+	                     xmmsv_ref (specification));
 
 	status = memory_status_verify (name);
 
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);
 
-	if (xmms_error_isok (&err)) {
+	if (!xmmsv_is_type (ret, XMMSV_TYPE_ERROR)) {
 		if (ordered) {
 			matches = xmmsv_compare (ret, value);
 		} else {
@@ -304,15 +306,12 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 			}
 
 			g_print ("\r%s \n", name);
-			if (xmms_error_iserror (&err)) {
-				g_printerr ("ERROR: %s\n", xmms_error_message_get (&err));
-			}
 		}
 
 		if (!matches) {
-			g_printerr ("The result: ");
+			g_printerr ("The result:\n");
 			xmmsv_dump (ret);
-			g_printerr ("Does not equal: ");
+			g_printerr ("Does not equal:\n");
 			xmmsv_dump (value);
 		}
 	}
@@ -320,6 +319,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmmsv_unref (ret);
 
 	xmms_object_unref (medialib);
+	xmms_object_unref (dag);
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 
