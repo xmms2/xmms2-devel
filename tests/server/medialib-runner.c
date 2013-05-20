@@ -262,13 +262,13 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 
 	populate_medialib (medialib, content);
 
-	memory_status_calibrate ();
+	memory_status_calibrate (name);
 
 	session = xmms_medialib_session_begin (medialib);
 	ret = xmms_medialib_query (session, coll, specification, &err);
 	xmms_medialib_session_commit (session);
 
-	status = memory_status_verify ();
+	status = memory_status_verify (name);
 
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);

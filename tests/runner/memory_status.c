@@ -25,9 +25,11 @@ static int _memory_baseline_leaks;
 static int _memory_baseline_errors;
 
 void
-memory_status_calibrate (void)
+memory_status_calibrate (const char *marker)
 {
 	int l, d, r, s;
+
+	VALGRIND_PRINTF ("Calibrating: %s\n", marker);
 
 	VALGRIND_DO_LEAK_CHECK;
 	VALGRIND_COUNT_LEAKS(l, d, r, s);
@@ -37,9 +39,11 @@ memory_status_calibrate (void)
 }
 
 int
-memory_status_verify (void)
+memory_status_verify (const char *marker)
 {
 	int l, d, r, s, status;
+
+	VALGRIND_PRINTF ("Verifying: %s\n", marker);
 
 	status = MEMORY_OK;
 
@@ -57,11 +61,11 @@ memory_status_verify (void)
 
 #else
 
-void memory_status_calibrate (void)
+void memory_status_calibrate (const char *marker)
 {
 }
 
-int memory_status_verify (void)
+int memory_status_verify (const char *marker)
 {
 	return MEMORY_OK;
 }

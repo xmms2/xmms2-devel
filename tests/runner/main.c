@@ -35,14 +35,14 @@ segvhandler(int s)
 int
 xcu_pre_case (const char *name)
 {
-	memory_status_calibrate ();
+	memory_status_calibrate (name);
 	return 1;
 }
 
 void
 xcu_post_case (const char *name)
 {
-	int status = memory_status_verify ();
+	int status = memory_status_verify (name);
 	if (status & MEMORY_LEAK) {
 		CU_FAIL ("Memory leak detected");
 	}

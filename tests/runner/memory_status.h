@@ -25,13 +25,23 @@ typedef enum memory_status_St {
 
 /**
  * Gather a baseline for leaks and errors.
+ *
+ * If marker is not NULL a message to the memory status log
+ * will be added.
+ *
+ * @param marker a marker describing the calibration point.
  */
-void memory_status_calibrate (void);
+void memory_status_calibrate (const char *marker);
 
 /**
  * Check if any leaks or errors have been introduced since baseline.
+ *
+ * If marker is not NULL a message to the memory status log
+ * will be added.
+ *
+ * @param marker a marker describing the verify point.
  * @return status flag of memory_status_t.
  */
-int memory_status_verify (void);
+int memory_status_verify (const char *marker);
 
 #endif
