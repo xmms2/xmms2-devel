@@ -19,15 +19,14 @@
 
 #include <glib.h>
 
+#include "command.h"
+
 typedef struct command_trie_St command_trie_t;
 typedef struct command_action_St command_action_t;
 typedef enum command_trie_match_type_St  command_trie_match_type_t;
 
-#include "cli_context.h"
-#include "command.h"
-
 typedef void (*command_setup_func)(command_action_t *action);
-typedef gboolean (*command_exec_func)(cli_context_t *ctx, command_t *cmd);
+typedef gboolean (*command_exec_func)(gpointer ctx, command_t *cmd);
 
 typedef enum {
 	COMMAND_REQ_NONE         = 0,

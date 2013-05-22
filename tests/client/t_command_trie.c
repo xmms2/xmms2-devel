@@ -51,7 +51,7 @@
 static command_trie_t *trie;
 
 static gboolean
-cmd_dummy (cli_context_t *infos, command_t *cmd)
+cmd_dummy (void *ctx, command_t *cmd)
 {
 	return FALSE;
 }
