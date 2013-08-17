@@ -483,6 +483,7 @@ xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 	xmms_ipc_t *ipc = (xmms_ipc_t *) data;
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_client_t *client;
+	GThread * client_thread;
 
 	if (!(cond & G_IO_IN)) {
 		xmms_log_error ("IPC listener got error/hup");
@@ -509,7 +510,9 @@ xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 	/* Now that the client has been registered in the ipc->clients list
 	 * we may safely start its thread.
 	 */
-	g_thread_new ("x2 client", xmms_ipc_client_thread, client);
+	client_thread = g_thread_new ("x2 client", xmms_ipc_client_thread, client);
+	/* let the thread free it's resources once it is finished */
+	g_thread_unref (client_thread);
 
 	return TRUE;
 }

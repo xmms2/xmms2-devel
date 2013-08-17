@@ -102,5 +102,8 @@ xmms_signal_restore (void)
 void
 xmms_signal_init (xmms_object_t *obj)
 {
-	g_thread_new ("x2 sig waiter", sigwaiter, obj);
+	GThread * sigwaiter_thread;
+
+	sigwaiter_thread = g_thread_new ("x2 sig waiter", sigwaiter, obj);
+	g_thread_unref (sigwaiter_thread);
 }
