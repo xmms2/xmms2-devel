@@ -582,7 +582,7 @@ cli_server_volume_adjust (cli_context_t *ctx, xmmsv_t *val, const gchar *channel
 	xmmsv_get_dict_iter (val, &it);
 
 	while (xmmsv_dict_iter_pair_int (it, &innerchan, &volume)) {
-		if (channel && strcmp (channel, innerchan) == 0) {
+		if (channel == NULL || strcmp (channel, innerchan) == 0) {
 			volume += relative;
 			if (volume > 100) {
 				volume = 100;
