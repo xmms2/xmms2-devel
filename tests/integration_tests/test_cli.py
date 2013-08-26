@@ -420,6 +420,30 @@ class TestServer(BasicPlaylist):
         self.assertTrue("output.buffersize" in result.stdout)
 
 
+class TestPlayback(BasicPlaylist):
+    def testPlaybackToggle(self):
+        self.assertTrue(cmd("stop").success)
+        self.assertEquals(cmd("current", "-f", "${playback_status}").stdout.strip(), "Stopped")
+        self.assertTrue(cmd("play").success)
+        self.assertEquals(cmd("current", "-f", "${playback_status}").stdout.strip(), "Playing")
+        self.assertTrue(cmd("stop").success)
+
+    def testPlaybackSeek(self):
+        def pos():
+            minutes, seconds = cmd("current", "-f", "${playtime}").stdout.strip().split(":")
+            return int(minutes) * 60 + int(seconds)
+
+        self.assertTrue(cmd("stop").success)
+        self.assertTrue(cmd("play").success)
+        # TODO: Use await() here
+        time.sleep(0.2)
+        self.assertEquals(0, pos())
+        self.assertTrue(cmd("seek", "20").success)
+        self.assertEquals(20, pos())
+        self.assertTrue(cmd("seek", "0").success)
+        # TODO: Use await() here
+        time.sleep(0.2)
+        self.assertTrue(pos() < 20)
 
 if __name__ == '__main__':
     unittest.main()
