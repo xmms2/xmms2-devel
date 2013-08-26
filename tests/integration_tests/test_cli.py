@@ -378,6 +378,14 @@ class TestServer(unittest.TestCase):
         volume = Volume.fetch()
         self.assertEqual(set([0]), set(volume.values()))
 
+        cmd("server", "volume", "+10")
+        volume = Volume.fetch()
+        self.assertEqual(set([10]), set(volume.values()))
+
+        cmd("server", "volume", "-5")
+        volume = Volume.fetch()
+        self.assertEqual(set([5]), set(volume.values()))
+
         volume = Volume.fetch()
         channel = volume.iterkeys().next()
         cmd("server", "volume", "-c", channel, "42")
