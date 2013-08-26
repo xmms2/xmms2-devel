@@ -68,11 +68,15 @@ cli_seek (cli_context_t *ctx, command_t *cmd)
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	command_arg_time_t t;
 
-	if (command_arg_time_get (cmd, 0, &t)) {
-		gint offset = t.type == COMMAND_ARG_TIME_OFFSET ? t.value.offset : t.value.pos;
-		XMMS_CALL (xmmsc_playback_seek_ms, conn, offset * 1000, XMMS_PLAYBACK_SEEK_CUR);
-	} else {
+	if (!command_arg_time_get (cmd, 0, &t)) {
 		g_printf (_("Error: failed to parse the time argument!\n"));
+		return FALSE;
+	}
+
+	if (t.type == COMMAND_ARG_TIME_OFFSET) {
+		XMMS_CALL (xmmsc_playback_seek_ms, conn, t.value.offset * 1000, XMMS_PLAYBACK_SEEK_CUR);
+	} else {
+		XMMS_CALL (xmmsc_playback_seek_ms, conn, t.value.pos * 1000, XMMS_PLAYBACK_SEEK_SET);
 	}
 
 	return FALSE;
