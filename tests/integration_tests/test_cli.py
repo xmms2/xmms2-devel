@@ -181,37 +181,39 @@ class Config(object):
     def fetch():
         return KeyValue.parse(cmd("server", "config").stdout)
 
-class TestPlaylist(unittest.TestCase):
+class BasicPlaylist(unittest.TestCase):
     TEST_PLAYLIST_1 = "cli-test-1"
     TEST_PLAYLIST_2 = "cli-test-2"
     TEST_PLAYLIST_3 = "cli-test-3"
     TEST_PLAYLIST_4 = "cli-test-4"
 
     def setUp(self):
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
+        cmd("playlist", "create", BasicPlaylist.TEST_PLAYLIST_1)
+        cmd("playlist", "clear", BasicPlaylist.TEST_PLAYLIST_1)
+        cmd("add", "-p", BasicPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
 
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
+        cmd("playlist", "create", BasicPlaylist.TEST_PLAYLIST_2)
+        cmd("playlist", "clear", BasicPlaylist.TEST_PLAYLIST_2)
+        cmd("add", "-p", BasicPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
 
         self.previous_playlist = Collections.fetch_playlists().active
 
-        cmd("playlist", "switch", TestPlaylist.TEST_PLAYLIST_1)
+        cmd("playlist", "switch", BasicPlaylist.TEST_PLAYLIST_1)
 
     def tearDown(self):
         cmd("playlist", "switch", self.previous_playlist)
 
         playlists = (
-            TestPlaylist.TEST_PLAYLIST_1,
-            TestPlaylist.TEST_PLAYLIST_2,
-            TestPlaylist.TEST_PLAYLIST_3,
-            TestPlaylist.TEST_PLAYLIST_4
+            BasicPlaylist.TEST_PLAYLIST_1,
+            BasicPlaylist.TEST_PLAYLIST_2,
+            BasicPlaylist.TEST_PLAYLIST_3,
+            BasicPlaylist.TEST_PLAYLIST_4
         )
         for playlist in playlists:
             cmd("playlist", "remove", playlist)
 
+
+class TestPlaylist(BasicPlaylist):
     def testListEntries(self):
         # list active playlist
         playlist = Playlist.parse(cmd("list").stdout)
@@ -335,32 +337,7 @@ class TestPlaylist(unittest.TestCase):
         self.assertTrue(TestPlaylist.TEST_PLAYLIST_2 in result.stdout)
         self.assertTrue("_active" in result.stdout)
 
-class TestServer(unittest.TestCase):
-    def setUp(self):
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
-
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
-
-        self.previous_playlist = Collections.fetch_playlists().active
-
-        cmd("playlist", "switch", TestPlaylist.TEST_PLAYLIST_1)
-
-    def tearDown(self):
-        cmd("playlist", "switch", self.previous_playlist)
-
-        playlists = (
-            TestPlaylist.TEST_PLAYLIST_1,
-            TestPlaylist.TEST_PLAYLIST_2,
-            TestPlaylist.TEST_PLAYLIST_3,
-            TestPlaylist.TEST_PLAYLIST_4
-        )
-        for playlist in playlists:
-            cmd("playlist", "remove", playlist)
-
+class TestServer(BasicPlaylist):
     def testBrowse(self):
         self.assertTrue("file://" in cmd("server", "browse", "file:///").stdout)
 
