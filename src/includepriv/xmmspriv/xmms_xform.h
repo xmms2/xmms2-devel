@@ -22,9 +22,7 @@
 #include <xmmspriv/xmms_streamtype.h>
 #include <xmmspriv/xmms_plugin.h>
 
-typedef struct xmms_xform_object_St xmms_xform_object_t;
-
-xmms_xform_object_t *xmms_xform_object_init (void);
+#define xmms_xform_find_plugin(name) (xmms_xform_plugin_t *) xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name)
 
 xmms_xform_t *xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_t *medialib, xmms_medialib_entry_t entry, GList *goal_hints);
 const gchar *xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);

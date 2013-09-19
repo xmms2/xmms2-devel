@@ -22,6 +22,7 @@
 
 #include <xmmspriv/xmms_plugin.h>
 #include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_xform_object.h>
 #include <xmmspriv/xmms_config.h>
 #include <xmmspriv/xmms_log.h>
 #include <xmmspriv/xmms_ipc.h>

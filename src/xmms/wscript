@@ -30,6 +30,7 @@ source = """
     magic.c
     ringbuf.c
     xform.c
+    xform_object.c
     xform_plugin.c
     streamtype.c
     converter_plugin.c
