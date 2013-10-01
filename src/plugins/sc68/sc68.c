@@ -38,10 +38,10 @@ static gint xmms_sc68_read (xmms_xform_t *xform, gpointer buffer, gint length,
 static int sc68_load_track (api68_disk_t disk, int track, xmms_error_t *error);
 static const char *sc68_error (void);
 
-XMMS_XFORM_PLUGIN ("sc68","Atari ST and Amiga decoder",
-                   XMMS_VERSION,
-                   "Atari ST and Amiga decoder based on sc68",
-                   xmms_sc68_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("sc68","Atari ST and Amiga decoder",
+                          XMMS_VERSION,
+                          "Atari ST and Amiga decoder based on sc68",
+                          xmms_sc68_plugin_setup);
 
 static gboolean
 xmms_sc68_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -263,4 +263,3 @@ sc68_error (void)
 
 	return error;
 }
-

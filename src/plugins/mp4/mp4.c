@@ -105,10 +105,10 @@ static const xmms_xform_metadata_mapping_t mappings[] = {
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("mp4",
-                   "MP4 Demuxer", XMMS_VERSION,
-                   "MPEG-4 Part 14 file format demuxer",
-                   xmms_mp4_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mp4",
+                          "MP4 Demuxer", XMMS_VERSION,
+                          "MPEG-4 Part 14 file format demuxer",
+                          xmms_mp4_plugin_setup);
 
 static gboolean
 xmms_mp4_plugin_setup (xmms_xform_plugin_t *xform_plugin)

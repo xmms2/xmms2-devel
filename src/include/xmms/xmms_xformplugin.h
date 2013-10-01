@@ -82,14 +82,14 @@ typedef struct xmms_xform_plugin_St xmms_xform_plugin_t;
  *
  *
  * example:
- * XMMS_XFORM_PLUGIN("example",
- *                   "Example decoder",
- *                   "1.3.37-beta",
- *                   "Decoder for playing example files",
- *                   xmms_example_setup);
+ * XMMS_XFORM_PLUGIN_DEFINE("example",
+ *                          "Example decoder",
+ *                          "1.3.37-beta",
+ *                          "Decoder for playing example files",
+ *                          xmms_example_setup);
  *
  */
-#define XMMS_XFORM_PLUGIN(shname, name, ver, desc, setupfunc) XMMS_PLUGIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
+#define XMMS_XFORM_PLUGIN_DEFINE(shname, name, ver, desc, setupfunc) XMMS_PLUGIN_DEFINE(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 /* */
 

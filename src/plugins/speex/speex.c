@@ -57,10 +57,10 @@ static void xmms_speex_read_metadata (xmms_xform_t *xform, xmms_speex_data_t *da
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("speex",
-                   "Speex Decoder", XMMS_VERSION,
-                   "Speex decoder",
-                   xmms_speex_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("speex",
+                          "Speex Decoder", XMMS_VERSION,
+                          "Speex decoder",
+                          xmms_speex_plugin_setup);
 
 static gboolean
 xmms_speex_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -300,4 +300,3 @@ xmms_speex_read_metadata (xmms_xform_t *xform, xmms_speex_data_t *data)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             data->speexheader->bitrate);
 }
-

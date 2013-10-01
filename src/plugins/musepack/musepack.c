@@ -117,9 +117,9 @@ static const xmms_xform_metadata_mapping_t mappings[] = {
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("musepack", "Musepack decoder", XMMS_VERSION,
-                   "Musepack Living Audio Compression",
-                   xmms_mpc_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("musepack", "Musepack decoder", XMMS_VERSION,
+                          "Musepack Living Audio Compression",
+                          xmms_mpc_plugin_setup);
 
 static gboolean
 xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)

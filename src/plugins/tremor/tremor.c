@@ -22,10 +22,10 @@
 
 #include "../vorbis_common/common.c"
 
-XMMS_XFORM_PLUGIN ("tremor",
-                   "Vorbis Decoder (tremor)", XMMS_VERSION,
-                   "Xiph's Ogg/Vorbis decoder (integer-only version)",
-                   xmms_vorbis_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("tremor",
+                          "Vorbis Decoder (tremor)", XMMS_VERSION,
+                          "Xiph's Ogg/Vorbis decoder (integer-only version)",
+                          xmms_vorbis_plugin_setup);
 
 static void
 xmms_vorbis_set_duration (xmms_xform_t *xform, guint dur)

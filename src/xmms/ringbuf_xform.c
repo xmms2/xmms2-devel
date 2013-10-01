@@ -183,8 +183,8 @@ xmms_ringbuf_xform_thread (gpointer data)
 	return NULL;
 }
 
-XMMS_XFORM_BUILTIN (ringbuf,
-                    "Ringbuffer",
-                    XMMS_VERSION,
-                    "Buffer",
-                    xmms_ringbuf_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (ringbuf,
+                           "Ringbuffer",
+                           XMMS_VERSION,
+                           "Buffer",
+                           xmms_ringbuf_plugin_setup);

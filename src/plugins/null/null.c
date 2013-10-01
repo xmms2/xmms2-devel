@@ -43,7 +43,7 @@ static gboolean xmms_null_format_set (xmms_output_t *output,
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("null", "Null Output", XMMS_VERSION,
+XMMS_OUTPUT_PLUGIN_DEFINE ("null", "Null Output", XMMS_VERSION,
                     "null output plugin",
                     xmms_null_plugin_setup);
 

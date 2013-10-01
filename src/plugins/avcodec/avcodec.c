@@ -69,10 +69,10 @@ static xmms_sample_format_t xmms_avcodec_translate_sample_format (enum AVSampleF
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("avcodec",
-                   "AVCodec Decoder", XMMS_VERSION,
-                   "ffmpeg libavcodec decoder",
-                   xmms_avcodec_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("avcodec",
+                          "AVCodec Decoder", XMMS_VERSION,
+                          "ffmpeg libavcodec decoder",
+                          xmms_avcodec_plugin_setup);
 
 static gboolean
 xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)

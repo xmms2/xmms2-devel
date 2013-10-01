@@ -39,7 +39,7 @@ typedef struct xmms_plugin_desc_St {
 	gboolean (*setup_func)(gpointer);
 } xmms_plugin_desc_t;
 
-#define XMMS_PLUGIN(type, api_ver, shname, name, ver, desc, setupfunc)	\
+#define XMMS_PLUGIN_DEFINE(type, api_ver, shname, name, ver, desc, setupfunc)	\
 	xmms_plugin_desc_t XMMS_PUBLIC XMMS_PLUGIN_DESC = { \
 		type,							\
 		api_ver,						\

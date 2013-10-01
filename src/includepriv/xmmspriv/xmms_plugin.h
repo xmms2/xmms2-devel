@@ -60,7 +60,7 @@ xmms_config_property_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const 
 xmms_config_property_t *xmms_plugin_config_property_register (xmms_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
 
-#define XMMS_BUILTIN(type, api_ver, shname, name, ver, desc, setupfunc)	\
+#define XMMS_BUILTIN_DEFINE(type, api_ver, shname, name, ver, desc, setupfunc)	\
 	const xmms_plugin_desc_t xmms_builtin_##shname = {			\
 		type,							\
 		api_ver,						\

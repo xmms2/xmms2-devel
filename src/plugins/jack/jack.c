@@ -73,9 +73,9 @@ static gboolean xmms_jack_connect (xmms_output_t *output);
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("jack", "Jack Output", XMMS_VERSION,
-                    "Jack audio server output plugin",
-                    xmms_jack_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("jack", "Jack Output", XMMS_VERSION,
+                           "Jack audio server output plugin",
+                           xmms_jack_plugin_setup);
 
 static gboolean
 xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)

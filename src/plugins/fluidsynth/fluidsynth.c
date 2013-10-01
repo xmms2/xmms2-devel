@@ -108,11 +108,11 @@ static const struct {
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("fluidsynth",
-                   "FluidSynth synthesiser ",
-                   XMMS_VERSION,
-                   "MIDI synthesiser",
-                   xmms_fluidsynth_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("fluidsynth",
+                          "FluidSynth synthesiser ",
+                          XMMS_VERSION,
+                          "MIDI synthesiser",
+                          xmms_fluidsynth_plugin_setup);
 
 static gboolean
 xmms_fluidsynth_plugin_setup (xmms_xform_plugin_t *xform_plugin)

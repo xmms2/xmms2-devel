@@ -114,9 +114,9 @@ static snd_mixer_selem_channel_id_t lookup_channel (const gchar *name);
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN ("alsa", "ALSA Output", XMMS_VERSION,
-                    "Advanced Linux Sound Architecture output plugin",
-                    xmms_alsa_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("alsa", "ALSA Output", XMMS_VERSION,
+                           "Advanced Linux Sound Architecture output plugin",
+                           xmms_alsa_plugin_setup);
 
 static gboolean
 xmms_alsa_plugin_setup (xmms_output_plugin_t *plugin)

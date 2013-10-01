@@ -100,11 +100,11 @@ static guint xmms_nms_latency_get (xmms_output_t *output);
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN ("nms",
-                    "NMS output",
-                    XMMS_VERSION,
-                    "Neuros output plugin",
-                    xmms_nms_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("nms",
+                           "NMS output",
+                           XMMS_VERSION,
+                           "Neuros output plugin",
+                           xmms_nms_plugin_setup);
 
 static gboolean
 xmms_nms_plugin_setup (xmms_output_plugin_t *plugin)

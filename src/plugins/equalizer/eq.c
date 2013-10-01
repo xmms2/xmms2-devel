@@ -47,11 +47,11 @@ typedef struct xmms_equalizer_priv_St {
 	gboolean enabled;
 } xmms_equalizer_data_t;
 
-XMMS_XFORM_PLUGIN ("equalizer",
-                   "Equalizer effect",
-                   XMMS_VERSION,
-                   "Equalizer effect",
-                   xmms_eq_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("equalizer",
+                          "Equalizer effect",
+                          XMMS_VERSION,
+                          "Equalizer effect",
+                          xmms_eq_plugin_setup);
 
 static gboolean
 xmms_eq_plugin_setup (xmms_xform_plugin_t *xform_plugin)

@@ -174,8 +174,8 @@ xmms_converter_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
 }
 */
 
-XMMS_XFORM_BUILTIN (converter,
-                    "Sample format converter",
-                    XMMS_VERSION,
-                    "Sample format converter",
-                    xmms_converter_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (converter,
+                           "Sample format converter",
+                           XMMS_VERSION,
+                           "Sample format converter",
+                           xmms_converter_plugin_setup);

@@ -95,11 +95,11 @@ static void xmms_curl_free_data (xmms_curl_data_t *data);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("curl",
-                   "Curl Transport for HTTP",
-                   XMMS_VERSION,
-                   "HTTP transport using CURL",
-                   xmms_curl_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("curl",
+                          "Curl Transport for HTTP",
+                          XMMS_VERSION,
+                          "HTTP transport using CURL",
+                          xmms_curl_plugin_setup);
 
 static gboolean
 xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin)

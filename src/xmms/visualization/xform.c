@@ -112,10 +112,10 @@ xmms_vis_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence
 }
 
 
-XMMS_XFORM_BUILTIN (visualization,
-                    "visualization hook",
-                    XMMS_VERSION,
-                    "visualization hook",
-                    xmms_vis_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (visualization,
+                           "visualization hook",
+                           XMMS_VERSION,
+                           "visualization hook",
+                           xmms_vis_plugin_setup);
 
 /** @} */

@@ -22,10 +22,10 @@
 
 #include "../vorbis_common/common.c"
 
-XMMS_XFORM_PLUGIN ("vorbis",
-                   "Vorbis Decoder", XMMS_VERSION,
-                   "Xiph's Ogg/Vorbis decoder",
-                   xmms_vorbis_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("vorbis",
+                          "Vorbis Decoder", XMMS_VERSION,
+                          "Xiph's Ogg/Vorbis decoder",
+                          xmms_vorbis_plugin_setup);
 
 static void
 xmms_vorbis_set_duration (xmms_xform_t *xform, guint dur)

@@ -58,10 +58,10 @@ static gint64 xmms_gme_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_see
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("gme",
-                   "Game Music decoder", XMMS_VERSION,
-                   "Game Music Emulator music decoder",
-                   xmms_gme_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("gme",
+                          "Game Music decoder", XMMS_VERSION,
+                          "Game Music Emulator music decoder",
+                          xmms_gme_plugin_setup);
 
 static gboolean
 xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)

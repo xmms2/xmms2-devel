@@ -55,11 +55,11 @@ static gint64 xmms_mid1_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_se
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("mid1",
-                   "MIDI file format-1 demuxer",
-                   XMMS_VERSION,
-                   "MIDI file format-1 demuxer",
-                   xmms_mid1_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mid1",
+                          "MIDI file format-1 demuxer",
+                          XMMS_VERSION,
+                          "MIDI file format-1 demuxer",
+                          xmms_mid1_plugin_setup);
 
 static gboolean
 xmms_mid1_plugin_setup (xmms_xform_plugin_t *xform_plugin)

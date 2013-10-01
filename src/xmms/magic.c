@@ -636,8 +636,8 @@ xmms_magic_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
-XMMS_XFORM_BUILTIN (magic,
-                    "Magic file identifier",
-                    XMMS_VERSION,
-                    "Magic file identifier",
-                    xmms_magic_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (magic,
+                           "Magic file identifier",
+                           XMMS_VERSION,
+                           "Magic file identifier",
+                           xmms_magic_plugin_setup);

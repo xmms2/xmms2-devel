@@ -50,6 +50,6 @@ xmmsv_t *xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_e
 
 const char *xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 
-#define XMMS_XFORM_BUILTIN(shname, name, ver, desc, setupfunc) XMMS_BUILTIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
+#define XMMS_XFORM_BUILTIN_DEFINE(shname, name, ver, desc, setupfunc) XMMS_BUILTIN_DEFINE(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 #endif

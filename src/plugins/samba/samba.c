@@ -59,9 +59,9 @@ static gboolean xmms_samba_browse (xmms_xform_t *xform, const gchar *url, xmms_e
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("smb", "SMB/CIFS Transport", XMMS_VERSION,
-                   "Access SMB/CIFS fileshares over a network",
-                   xmms_samba_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("smb", "SMB/CIFS Transport", XMMS_VERSION,
+                          "Access SMB/CIFS fileshares over a network",
+                          xmms_samba_plugin_setup);
 
 static void
 xmms_samba_auth_fn (const gchar *server, const gchar *share,

@@ -55,11 +55,11 @@ static gint xmms_normalize_read (xmms_xform_t *xform, xmms_sample_t *buf,
                                  gint len, xmms_error_t *error);
 static void xmms_normalize_config_changed (xmms_object_t *obj, xmmsv_t *value, gpointer udata);
 
-XMMS_XFORM_PLUGIN ("normalize",
-                   "Volume normalizer",
-                   XMMS_VERSION,
-                   "Volume normalizer",
-                   xmms_normalize_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("normalize",
+                          "Volume normalizer",
+                          XMMS_VERSION,
+                          "Volume normalizer",
+                          xmms_normalize_plugin_setup);
 
 static gboolean
 xmms_normalize_plugin_setup (xmms_xform_plugin_t *xform_plugin)

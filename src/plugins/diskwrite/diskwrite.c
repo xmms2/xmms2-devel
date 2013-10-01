@@ -82,9 +82,9 @@ static void finalize_wave (xmms_diskwrite_data_t *data);
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("diskwrite", "Diskwriter Output", XMMS_VERSION,
-                    "Dumps audio data to disk",
-                    xmms_null_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("diskwrite", "Diskwriter Output", XMMS_VERSION,
+                           "Dumps audio data to disk",
+                           xmms_null_plugin_setup);
 
 static gboolean
 xmms_null_plugin_setup (xmms_output_plugin_t *plugin)

@@ -56,9 +56,9 @@ static gint64 xmms_tta_seek (xmms_xform_t *xform, gint64 samples,
                              xmms_xform_seek_mode_t whence,
                              xmms_error_t *err);
 
-XMMS_XFORM_PLUGIN ("tta", "TTA parser", XMMS_VERSION,
-                   "True Audio Codec TTA file format parser",
-                   xmms_tta_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("tta", "TTA parser", XMMS_VERSION,
+                          "True Audio Codec TTA file format parser",
+                          xmms_tta_plugin_setup);
 
 static guint16
 get_le16 (guchar *data)

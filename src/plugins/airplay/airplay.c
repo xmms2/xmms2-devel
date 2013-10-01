@@ -72,9 +72,9 @@ static int xmms_airplay_stream_cb (void *arg, guchar *buf, int len);
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("airplay", "AirPlay Output", XMMS_VERSION,
-                    "Airport Express output plugin",
-                    xmms_airplay_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("airplay", "AirPlay Output", XMMS_VERSION,
+                           "Airport Express output plugin",
+                           xmms_airplay_plugin_setup);
 
 static gboolean
 xmms_airplay_plugin_setup (xmms_output_plugin_t *plugin)

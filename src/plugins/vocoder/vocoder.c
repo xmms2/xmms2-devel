@@ -62,10 +62,10 @@ static gint64 xmms_vocoder_seek (xmms_xform_t *xform, gint64 offset,
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("vocoder",
-                   "Vocoder effect", XMMS_VERSION,
-                   "Phase vocoder effect plugin",
-                   xmms_vocoder_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("vocoder",
+                          "Vocoder effect", XMMS_VERSION,
+                          "Phase vocoder effect plugin",
+                          xmms_vocoder_plugin_setup);
 
 static gboolean
 xmms_vocoder_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -313,4 +313,3 @@ xmms_vocoder_seek (xmms_xform_t *xform, gint64 offset,
 {
 	return xmms_xform_seek (xform, offset, whence, err);
 }
-

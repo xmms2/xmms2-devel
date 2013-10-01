@@ -112,9 +112,9 @@ get_be64 (guint8 *b)
 	return (guint64)get_be32 (b) << 32 | (guint64)get_be32 (b + 4);
 }
 
-XMMS_XFORM_PLUGIN ("flv", "FLV demuxer", XMMS_VERSION,
-                   "Extracts an audio stream from an FLV",
-                   xmms_flv_setup)
+XMMS_XFORM_PLUGIN_DEFINE ("flv", "FLV demuxer", XMMS_VERSION,
+                          "Extracts an audio stream from an FLV",
+                          xmms_flv_setup)
 
 static gboolean
 xmms_flv_setup (xmms_xform_plugin_t *xform)

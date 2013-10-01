@@ -87,11 +87,11 @@ static void apply_double (void *buf, gint len, gfloat gain);
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("replaygain",
-                   "Replaygain effect",
-                   XMMS_VERSION,
-                   "Replaygain effect",
-                   xmms_replaygain_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("replaygain",
+                          "Replaygain effect",
+                          XMMS_VERSION,
+                          "Replaygain effect",
+                          xmms_replaygain_plugin_setup);
 
 static gboolean
 xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -459,4 +459,3 @@ apply_double (void *buf, gint len, gfloat gain)
 		samples[i] *= gain;
 	}
 }
-

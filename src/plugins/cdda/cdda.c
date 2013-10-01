@@ -57,11 +57,11 @@ static CdIo_t *open_cd (xmms_xform_t *xform);
 static gboolean get_disc_ids (const gchar *device, gchar **disc_id,
                               gchar **cddb_id, track_t *tracks);
 
-XMMS_XFORM_PLUGIN ("cdda",
-                   "CD Digital Audio transport",
-                   XMMS_VERSION,
-                   "CD Digital Audio Transport",
-                   xmms_cdda_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("cdda",
+                          "CD Digital Audio transport",
+                          XMMS_VERSION,
+                          "CD Digital Audio Transport",
+                          xmms_cdda_plugin_setup);
 
 static void
 log_handler (cdio_log_level_t level, const char *message)

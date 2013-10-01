@@ -61,11 +61,11 @@ static void xmms_modplug_config_changed (xmms_object_t *obj, xmmsv_t *_value, gp
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("modplug",
-                   "MODPLUG decoder ",
-                   XMMS_VERSION,
-                   "Module file decoder",
-                   xmms_modplug_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("modplug",
+                          "MODPLUG decoder ",
+                          XMMS_VERSION,
+                          "Module file decoder",
+                          xmms_modplug_plugin_setup);
 
 static gboolean
 xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)

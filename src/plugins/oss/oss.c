@@ -105,11 +105,11 @@ static gboolean xmms_oss_volume_get (xmms_output_t *output,
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN ("oss",
-                    "OSS Output",
-                    XMMS_VERSION,
-                    "OpenSoundSystem output plugin",
-                    xmms_oss_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("oss",
+                           "OSS Output",
+                           XMMS_VERSION,
+                           "OpenSoundSystem output plugin",
+                           xmms_oss_plugin_setup);
 
 static gboolean
 xmms_oss_plugin_setup (xmms_output_plugin_t *plugin)

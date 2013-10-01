@@ -49,11 +49,11 @@ static guint find_offset (xmms_xform_t *xform);
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("nulstripper",
-                   "nulstripper",
-                   XMMS_VERSION,
-                   "Strips leading NUL bytes",
-                   xmms_nulstripper_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("nulstripper",
+                          "nulstripper",
+                          XMMS_VERSION,
+                          "Strips leading NUL bytes",
+                          xmms_nulstripper_plugin_setup);
 
 static gboolean
 xmms_nulstripper_plugin_setup (xmms_xform_plugin_t *xform_plugin)

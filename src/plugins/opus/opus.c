@@ -69,10 +69,10 @@ static gint64 xmms_opus_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_se
  */
 
 
-XMMS_XFORM_PLUGIN ("opus",
-                   "Opus Decoder", XMMS_VERSION,
-                   "Xiph's Ogg/Opus decoder",
-                   xmms_opus_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("opus",
+                          "Opus Decoder", XMMS_VERSION,
+                          "Xiph's Ogg/Opus decoder",
+                          xmms_opus_plugin_setup);
 
 
 static gboolean

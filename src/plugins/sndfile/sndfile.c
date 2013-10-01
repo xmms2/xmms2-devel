@@ -63,10 +63,10 @@ static sf_count_t xmms_sf_virtual_write (void const *buffer, sf_count_t count, v
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("sndfile",
-                   "Libsndfile decoder", XMMS_VERSION,
-                   "Libsndfile decoder",
-                   xmms_sndfile_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("sndfile",
+                          "Libsndfile decoder", XMMS_VERSION,
+                          "Libsndfile decoder",
+                          xmms_sndfile_plugin_setup);
 
 static gboolean
 xmms_sndfile_plugin_setup (xmms_xform_plugin_t *xform_plugin)

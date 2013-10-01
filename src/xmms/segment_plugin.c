@@ -276,9 +276,8 @@ xmms_segment_seek (xmms_xform_t *xform,
 	return res - tmp;
 }
 
-XMMS_XFORM_BUILTIN (segment,
-                    "Segment Effect",
-                    XMMS_VERSION,
-                    "Handling segment information specified by startms/stopms",
-                    xmms_segment_plugin_setup);
-
+XMMS_XFORM_BUILTIN_DEFINE (segment,
+                           "Segment Effect",
+                           XMMS_VERSION,
+                           "Handling segment information specified by startms/stopms",
+                           xmms_segment_plugin_setup);

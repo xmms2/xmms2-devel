@@ -80,10 +80,10 @@ static void xmms_mac_get_media_info (xmms_xform_t *decoder);
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("mac",
-                   "Monkey's Audio", XMMS_VERSION,
-                   "Monkey's Audio Decoder",
-                   xmms_mac_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mac",
+                          "Monkey's Audio", XMMS_VERSION,
+                          "Monkey's Audio Decoder",
+                          xmms_mac_plugin_setup);
 
 static gboolean
 xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -172,7 +172,7 @@ xmms_mac_destroy (xmms_xform_t *xform)
 	if (data->p_decompress) {
 		delete data->p_decompress;
 	}
-	
+
 	g_free (data);
 }
 
@@ -306,7 +306,7 @@ xmms_mac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 {
 	xmms_mac_data_t *data;
 	gint64 blocks;
-	
+
 	g_return_val_if_fail (xform, FALSE);
 
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);

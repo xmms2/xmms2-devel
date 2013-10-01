@@ -68,9 +68,9 @@ static gboolean xmms_ca_format_set (xmms_output_t *output,
  */
 
 
-XMMS_OUTPUT_PLUGIN ("coreaudio", "CoreAudio Output", XMMS_VERSION,
-                    "MacOSX CoreAudio output plugin",
-                    xmms_ca_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("coreaudio", "CoreAudio Output", XMMS_VERSION,
+                           "MacOSX CoreAudio output plugin",
+                           xmms_ca_plugin_setup);
 
 
 static gboolean

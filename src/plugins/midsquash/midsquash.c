@@ -75,11 +75,11 @@ static gint xmms_midsquash_sort_events(gconstpointer a, gconstpointer b);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("midsquash",
-                   "Multitrack MIDI squasher",
-                   XMMS_VERSION,
-                   "Multitrack MIDI squasher",
-                   xmms_midsquash_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("midsquash",
+                          "Multitrack MIDI squasher",
+                          XMMS_VERSION,
+                          "Multitrack MIDI squasher",
+                          xmms_midsquash_plugin_setup);
 
 static gboolean
 xmms_midsquash_plugin_setup (xmms_xform_plugin_t *xform_plugin)
