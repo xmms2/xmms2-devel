@@ -23,16 +23,23 @@ def plugin(name, source=None, configure=False, build=False,
     def stock_build(bld):
         pat = tool=='c' and '*.c' or '*.cpp'
         obj = bld(
-            features = '%(tool)s %(tool)sshlib visibilityhidden' % dict(tool=tool),
+            features = '%(tool)s visibilityhidden' % dict(tool=tool),
             target = 'xmms_%s' % name,
             source = copy(source) or bld.path.ant_glob(pat),
             includes = '../../.. ../../include',
             uselib = ['glib2'] + libs,
-            use = bld.env.xmms_shared_library and 'xmms2core' or '',
-            install_path = '${PLUGINDIR}',
-            mac_bundle = bld.env.mac_bundle_enabled,
             defines = 'G_LOG_DOMAIN="plugin/%s"' % name
         )
+
+        if name in bld.env.XMMS_PLUGINS_BUILTIN:
+            obj.defines = ["XMMS_PLUGIN_DESC_SYMBOL_NAME=XMMS_PLUGIN_DESC_" + name.upper()]
+            obj.install_path = None
+        else: # plugin target is shared library
+            obj.features += ' %(tool)sshlib' % dict(tool=tool)
+            obj.defines = ["XMMS_PLUGIN_DESC_SYMBOL_NAME=XMMS_PLUGIN_DESC"]
+            obj.use = bld.env.xmms_shared_library and 'xmms2core' or ''
+            obj.mac_bundle = bld.env.mac_bundle_enabled
+            obj.install_path = '${PLUGINDIR}'
 
         if build:
             build(bld, obj)

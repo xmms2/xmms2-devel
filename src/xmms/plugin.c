@@ -39,6 +39,7 @@
 #define get_module_ext(dir) g_module_build_path (dir, "*")
 #endif
 
+extern xmms_plugin_desc_t *xmms_builtin_plugins[];
 
 /*
  * Global variables
@@ -195,6 +196,8 @@ xmms_plugin_description_get (const xmms_plugin_t *plugin)
 static void
 xmms_plugin_add_builtin_plugins (void)
 {
+	gint i;
+
 	extern const xmms_plugin_desc_t xmms_builtin_magic;
 	extern const xmms_plugin_desc_t xmms_builtin_converter;
 	extern const xmms_plugin_desc_t xmms_builtin_segment;
@@ -206,6 +209,10 @@ xmms_plugin_add_builtin_plugins (void)
 	xmms_plugin_load (&xmms_builtin_segment, NULL);
 	xmms_plugin_load (&xmms_builtin_visualization, NULL);
 	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
+
+	/* load static plugins */
+	for (i = 0; xmms_builtin_plugins[i]; i++)
+		xmms_plugin_load (xmms_builtin_plugins[i], NULL);
 }
 
 

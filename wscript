@@ -197,23 +197,24 @@ def _configure_optionals(conf):
 
 def _configure_plugins(conf):
     """Process ll xmms2d plugins"""
-    def _check_exist(plugins, msg):
-        unknown_plugins = plugins.difference(all_plugins)
+    def _check_exist(universe, plugins, msg):
+        unknown_plugins = plugins.difference(universe)
         if unknown_plugins:
             conf.fatal(msg%dict(unknown_plugins=', '.join(unknown_plugins)))
             raise SystemExit(1)
         return plugins
 
     conf.env.XMMS_PLUGINS_ENABLED = []
+    conf.env.XMMS_PLUGINS_BUILTIN = []
 
     if conf.options.enable_plugins is not None:
-        selected_plugins = _check_exist(set(conf.options.enable_plugins),
+        selected_plugins = _check_exist(all_plugins, set(conf.options.enable_plugins),
                 "The following plugin(s) were requested, "
                 "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     elif conf.options.disable_plugins is not None:
-        disabled_plugins = _check_exist(set(conf.options.disable_plugins),
+        disabled_plugins = _check_exist(all_plugins, set(conf.options.disable_plugins),
                 "The following plugin(s) were disabled, "
                 "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
@@ -227,9 +228,15 @@ def _configure_plugins(conf):
         disabled_plugins = set()
         plugins_must_work = False
 
-    def disable_plugin(plugin, exc = None):
+    if conf.options.builtin_plugins:
+        builtin_plugins = _check_exist(selected_plugins, set(conf.options.builtin_plugins),
+                                      "The following plugin(s) were requested to be built-in, "
+                                      "but weren't enabled: %(unknown_plugins)s")
+        conf.env.XMMS_PLUGINS_BUILTIN = builtin_plugins
+
+    def disable_plugin(plugin, must_work, exc = None):
         disabled_plugins.add(plugin)
-        if plugins_must_work:
+        if must_work:
              if exc:
                  conf.fatal("The required plugin %s failed to configure: %s"
                          % (plugin, exc))
@@ -238,16 +245,15 @@ def _configure_plugins(conf):
                          % plugin)
 
     for plugin in selected_plugins:
+        must_work = plugins_must_work or plugin in conf.env.XMMS_PLUGINS_BUILTIN
         try:
             conf.sub_config("src/plugins/%s" % plugin)
-            if (not conf.env.XMMS_PLUGINS_ENABLED or
-                    (len(conf.env.XMMS_PLUGINS_ENABLED) > 0 and
-                        conf.env.XMMS_PLUGINS_ENABLED[-1] != plugin)):
-                disable_plugin(plugin)
+            if plugin not in conf.env.XMMS_PLUGINS_ENABLED[-1:]:
+                disable_plugin(plugin, must_work)
         except Errors.ConfigurationError:
-            disable_plugin(plugin, sys.exc_info()[1])
+            disable_plugin(plugin, must_work, sys.exc_info()[1])
 
-    return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins
+    return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins, conf.env.XMMS_PLUGINS_BUILTIN
 
 def check_git_submodules():
     submodules = gittools.get_submodules()
@@ -272,7 +278,7 @@ def check_git_submodules():
                 "Some submodules are not up-to-date. You may need to run "
                 "`git submodule update` and reconfigure.")
 
-def _output_summary(enabled_plugins, disabled_plugins,
+def _output_summary(enabled_plugins, disabled_plugins, builtin_plugins,
                     enabled_optionals, disabled_optionals,
                     output_plugins, warning_cache):
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
@@ -300,6 +306,8 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Logs.pprint('BLUE', ', '.join(sorted(enabled_plugins)))
     Logs.pprint('Normal', 'Disabled: ', sep='')
     Logs.pprint('BLUE', ', '.join(sorted(disabled_plugins)))
+    Logs.pprint('Normal', 'Built-ins: ', sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(builtin_plugins)))
 
     if len(warning_cache) > 0:
         fmter = Logs.formatter();
@@ -509,7 +517,7 @@ int main() { return 0; }
     # it at top-level so each consumer don't have to bother.
     conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
 
-    enabled_plugins, disabled_plugins = _configure_plugins(conf)
+    enabled_plugins, disabled_plugins, builtin_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
 
     plugins = conf.env.XMMS_PLUGINS_ENABLED
@@ -524,7 +532,7 @@ int main() { return 0; }
     output_plugins = [name for x, name in conf.env.XMMS_OUTPUT_PLUGINS if x > 0]
 
     _output_summary(
-            enabled_plugins, disabled_plugins,
+            enabled_plugins, disabled_plugins, builtin_plugins,
             enabled_optionals, disabled_optionals,
             output_plugins, warning_cache)
 
@@ -554,6 +562,8 @@ def options(opt):
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                    type="string", dest="disable_plugins", default=None,
                    help="Comma separated list of plugins to skip")
+    opt.add_option('--with-builtin-plugins', action="callback", callback=_list_cb,
+                   type="string", dest="builtin_plugins", default=["replaygain"])
     opt.add_option('--with-default-output-plugin', type='string',
                    dest='default_output_plugin',
                    help="Force a default output plugin")
