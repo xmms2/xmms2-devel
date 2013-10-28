@@ -34,5 +34,6 @@ void enrich_mediainfo (xmmsv_t *val);
 gchar *decode_url (const gchar *string);
 gchar *encode_url (gchar *url);
 gchar *format_url (const gchar *path, GFileTest test);
+void breakdown_timespan (int64_t span, gint *days, gint *hours, gint *minutes, gint *seconds);
 
 #endif /* __UTILS_H__ */

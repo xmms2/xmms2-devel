@@ -412,3 +412,18 @@ format_url (const gchar *path, GFileTest test)
 
 	return x_path2url (url);
 }
+
+#define MSEC_PER_SEC  (1000L)
+#define MSEC_PER_MIN  (MSEC_PER_SEC * 60L)
+#define MSEC_PER_HOUR (MSEC_PER_MIN * 60L)
+#define MSEC_PER_DAY  (MSEC_PER_HOUR * 24L)
+
+void
+breakdown_timespan (int64_t span, gint *days, gint *hours,
+                    gint *minutes, gint *seconds)
+{
+	*days = span / MSEC_PER_DAY;
+	*hours = (span % MSEC_PER_DAY) / MSEC_PER_HOUR;
+	*minutes = ((span % MSEC_PER_DAY) % MSEC_PER_HOUR) / MSEC_PER_MIN;
+	*seconds = (((span % MSEC_PER_DAY) % MSEC_PER_HOUR) % MSEC_PER_MIN) / MSEC_PER_SEC;
+}

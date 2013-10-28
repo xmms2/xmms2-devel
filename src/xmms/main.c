@@ -108,6 +108,104 @@ static GMainLoop *mainloop;
 /** The path of the configfile */
 static gchar *conffile = NULL;
 
+static void
+query_total_size_duration (xmms_main_t *mainobj, xmms_error_t *error,
+                                      int64_t *size, int64_t *duration)
+{
+	xmmsv_t *coll, *universe, *spec, *ret;
+	xmms_medialib_session_t *session;
+
+	/* Fetch the size in bytes and duration in milliseconds for the whole media library */
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_attribute_set_string (coll, "field", "status");
+	xmmsv_coll_attribute_set_string (coll, "value", "1");
+	xmmsv_coll_add_operand (coll, universe);
+	xmmsv_unref (universe);
+
+	spec = xmmsv_build_dict (
+		XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+		XMMSV_DICT_ENTRY ("fields", xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("duration"),
+			XMMSV_LIST_ENTRY_STR ("size"),
+			XMMSV_LIST_END)),
+		XMMSV_DICT_ENTRY ("get", xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("field"),
+			XMMSV_LIST_ENTRY_STR ("value"),
+			XMMSV_LIST_END)),
+		XMMSV_DICT_ENTRY_STR ("aggregate", "sum"),
+		XMMSV_DICT_END);
+
+	do {
+		session = xmms_medialib_session_begin_ro (mainobj->medialib_object);
+		ret = xmms_medialib_query (session, coll, spec, error);
+	} while (!xmms_medialib_session_commit (session));
+
+	xmmsv_dict_entry_get_int64 (ret, "size", size);
+	xmmsv_dict_entry_get_int64 (ret, "duration", duration);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (ret);
+}
+
+static void
+query_total_playtime (xmms_main_t *mainobj, xmms_error_t *error,
+                                 int64_t *playtime)
+{
+	xmmsv_t *coll, *universe, *spec, *ret, *value;
+	xmms_medialib_session_t *session;
+	xmmsv_dict_iter_t *iter;
+	const gchar *key;
+
+	/* Fetch the sum of duration clustered by timesplayed, for timesplayed > 0 */
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_GREATER);
+	xmmsv_coll_attribute_set_string (coll, "field", "timesplayed");
+	xmmsv_coll_attribute_set_string (coll, "value", "0");
+	xmmsv_coll_add_operand (coll, universe);
+	xmmsv_unref (universe);
+
+	spec = xmmsv_build_dict (
+		XMMSV_DICT_ENTRY_STR ("type", "cluster-dict"),
+		XMMSV_DICT_ENTRY_STR ("cluster-by", "value"),
+		XMMSV_DICT_ENTRY_STR ("cluster-field", "timesplayed"),
+		XMMSV_DICT_ENTRY ("data", xmmsv_build_dict (
+			XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+			XMMSV_DICT_ENTRY ("fields", xmmsv_build_list (
+				XMMSV_LIST_ENTRY_STR ("duration"),
+				XMMSV_LIST_END)),
+			XMMSV_DICT_ENTRY ("get", xmmsv_build_list (
+				XMMSV_LIST_ENTRY_STR ("value"),
+				XMMSV_LIST_END)),
+			XMMSV_DICT_ENTRY_STR ("aggregate", "sum"),
+			XMMSV_DICT_END)),
+		XMMSV_DICT_END);
+
+	do {
+		session = xmms_medialib_session_begin_ro (mainobj->medialib_object);
+		ret = xmms_medialib_query (session, coll, spec, error);
+	} while (!xmms_medialib_session_commit (session));
+
+	xmmsv_get_dict_iter (ret, &iter);
+	while (xmmsv_dict_iter_pair (iter, &key, &value)) {
+		int64_t sum, timesplayed;
+		gchar *endptr = NULL;
+
+		if (xmmsv_get_int64 (value, &sum)) {
+			timesplayed = strtol (key, &endptr, 10);
+			if (*endptr == '\0')
+				*playtime += timesplayed * sum;
+		}
+
+		xmmsv_dict_iter_next (iter);
+	}
+
+	xmmsv_unref (spec);
+	xmmsv_unref (ret);
+}
+
 /**
  * This returns the main stats for the server
  */
@@ -116,9 +214,18 @@ xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	gint uptime = time (NULL) - mainobj->starttime;
+	int64_t size, duration, playtime;
+
+	size = duration = playtime = 0;
+
+	query_total_playtime (mainobj, error, &playtime);
+	query_total_size_duration (mainobj, error, &size, &duration);
 
 	return xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("version", XMMS_VERSION),
 	                         XMMSV_DICT_ENTRY_INT ("uptime", uptime),
+	                         XMMSV_DICT_ENTRY_INT ("size", size),
+	                         XMMSV_DICT_ENTRY_INT ("duration", duration),
+	                         XMMSV_DICT_ENTRY_INT ("playtime", playtime),
 	                         XMMSV_DICT_END);
 }
 

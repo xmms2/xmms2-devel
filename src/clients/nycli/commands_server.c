@@ -757,13 +757,33 @@ static void
 cli_server_stats_print (xmmsv_t *val)
 {
 	const gchar *version;
+	gint d_days, d_hours, d_minutes, d_seconds;
+	gint p_days, p_hours, p_minutes, p_seconds;
 	gint uptime;
+	int64_t size, duration, playtime;
+	double size_gib;
+
+	size = duration = playtime = 0;
 
 	xmmsv_dict_entry_get_string (val, "version", &version);
 	xmmsv_dict_entry_get_int (val, "uptime", &uptime);
+	xmmsv_dict_entry_get_int64 (val, "size", &size);
+	xmmsv_dict_entry_get_int64 (val, "duration", &duration);
+	xmmsv_dict_entry_get_int64 (val, "playtime", &playtime);
+
+	size_gib = size * 1.0 / 1024 / 1024 / 1024;
+
+	breakdown_timespan (duration, &d_days, &d_hours, &d_minutes, &d_seconds);
+	breakdown_timespan (playtime, &p_days, &p_hours, &p_minutes, &p_seconds);
 
 	g_printf ("uptime = %d\n"
-	          "version = %s\n", uptime, version);
+	          "version = %s\n"
+	          "size = %.2fGiB\n"
+	          "duration = %d days, %d hours, %d minutes, and %d seconds\n"
+	          "playtime = %d days, %d hours, %d minutes, and %d seconds\n",
+	          uptime, version, size_gib,
+	          d_days, d_hours, d_minutes, d_seconds,
+	          p_days, p_hours, p_minutes, p_seconds);
 }
 
 gboolean
