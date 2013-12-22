@@ -124,7 +124,7 @@ xmms_avcodec_destroy (xmms_xform_t *xform)
 
 	avcodec_close (data->codecctx);
 	av_free (data->codecctx);
-	avcodec_free_frame (&data->read_out_frame);
+	av_frame_free (&data->read_out_frame);
 
 	g_string_free (data->outbuf, TRUE);
 	g_free (data->buffer);
@@ -150,7 +150,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->buffer_size = AVCODEC_BUFFER_SIZE;
 	data->codecctx = NULL;
 
-	data->read_out_frame = avcodec_alloc_frame ();
+	data->read_out_frame = av_frame_alloc ();
 
 	xmms_xform_private_data_set (xform, data);
 
@@ -231,7 +231,6 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->extradata_size = data->extradata_size;
 	data->codecctx->codec_id = codec->id;
 	data->codecctx->codec_type = codec->type;
-	data->codecctx->refcounted_frames = 0;
 
 	if (avcodec_open2 (data->codecctx, codec, NULL) < 0) {
 		XMMS_DBG ("Opening decoder '%s' failed", codec->name);
@@ -473,7 +472,8 @@ xmms_avcodec_internal_decode_some (xmms_avcodec_data_t *data)
 	packet.data = data->buffer;
 	packet.size = data->buffer_length;
 
-	avcodec_get_frame_defaults (data->read_out_frame);
+	/* clear buffers and reset fields to defaults */
+	av_frame_unref (data->read_out_frame);
 
 	bytes_read = avcodec_decode_audio4 (
 		data->codecctx, data->read_out_frame, &got_frame, &packet);

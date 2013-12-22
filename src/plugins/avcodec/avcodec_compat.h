@@ -83,3 +83,17 @@ typedef struct AVPacket {
 # define avcodec_open2(avctx, codec, options) \
     avcodec_open(avctx, codec)
 #endif
+
+/* Map avcodec_free_frame to av_freep if the former doesn't exist.
+ * (This is in versions earlier than 54.28.0 (libav) or 54.59.100 (ffmpeg)) */
+#if ! HAVE_AVCODEC_FREE_FRAME
+# define avcodec_free_frame av_freep
+#endif
+
+/* Map av_frame_alloc, av_frame_unref, av_frame_free into their
+ * deprecated versions in versions earlier than 55.28.1 */
+#if LIBAVCODEC_VERSION_INT < 0x371c01
+# define av_frame_alloc avcodec_alloc_frame
+# define av_frame_unref avcodec_get_frame_defaults
+# define av_frame_free avcodec_free_frame
+#endif
