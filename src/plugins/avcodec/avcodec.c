@@ -154,7 +154,6 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	avcodec_init ();
 	avcodec_register_all ();
 
 	mimetype = xmms_xform_indata_get_str (xform,
@@ -225,7 +224,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->codecctx->sample_rate = data->samplerate;
 	data->codecctx->channels = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
-	CONTEXT_BPS (data->codecctx) = data->samplebits;
+	data->codecctx->bits_per_coded_sample = data->samplebits;
 	data->codecctx->block_align = data->block_align;
 	data->codecctx->extradata = data->extradata;
 	data->codecctx->extradata_size = data->extradata_size;
