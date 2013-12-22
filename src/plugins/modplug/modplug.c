@@ -9,13 +9,14 @@
 #include <xmms/xmms_sample.h>
 #include <xmms/xmms_medialib.h>
 #include <xmms/xmms_log.h>
-#include <modplug.h>
 
 #include <glib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "modplug_compat.h"
 
 /*
  * Type definitions

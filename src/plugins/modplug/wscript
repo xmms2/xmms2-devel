@@ -8,6 +8,14 @@ def plugin_configure(conf):
     except Errors.ConfigurationError:
         conf.check_cfg(package="libmodplug", uselib_store="modplug",
                 args="--cflags --libs")
+    try:
+        conf.check_cc(header_name="modplug.h",
+                      uselib="modplug",
+                      type="cshlib")
+    except Errors.ConfigurationError:
+        conf.check_cc(header_name="libmodplug/modplug.h",
+                      uselib="modplug",
+                      type="cshlib")
 
 configure, build = plugin("modplug", configure=plugin_configure,
         libs=["modplug"])
