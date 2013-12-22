@@ -100,6 +100,16 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-ffmpeg-*",
 	                              NULL);
 
+	XMMS_DBG ("avcodec version at build time is %d.%d.%d",
+	          (LIBAVCODEC_VERSION_INT >> 16),
+	          (LIBAVCODEC_VERSION_INT >> 8) & 0xff,
+	          LIBAVCODEC_VERSION_INT & 0xff);
+	XMMS_DBG ("avcodec version at run time is %d.%d.%d",
+	          (avcodec_version() >> 16),
+	          (avcodec_version() >> 8) & 0xff,
+	          avcodec_version() & 0xff);
+	XMMS_DBG ("avcodec configuration is %s", avcodec_configuration());
+
 	return TRUE;
 }
 
