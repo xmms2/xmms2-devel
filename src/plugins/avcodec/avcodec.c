@@ -268,7 +268,10 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	                             data->samplerate,
 	                             XMMS_STREAM_TYPE_END);
 
-	XMMS_DBG ("Decoder '%s' initialized successfully!", codec->name);
+	XMMS_DBG ("Decoder %s at rate %d with %d channels of format %s initialized",
+	          codec->name, data->codecctx->sample_rate,
+	          data->codecctx->channels,
+	          av_get_sample_fmt_name (data->codecctx->sample_fmt));
 
 	return TRUE;
 
