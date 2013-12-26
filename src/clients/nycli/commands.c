@@ -391,22 +391,31 @@ void
 cli_server_property_setup (command_action_t *action)
 {
 	const GOptionEntry flags[] = {
-		{ "int",    'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as integer."), NULL },
-		{ "string", 's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
-		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
-		{ "source", 'S',  0, G_OPTION_ARG_STRING, NULL, _("Property source."), NULL },
+		{ "int",        'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as an integer."), NULL },
+		{ "string",     's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
+		{ "delete",     'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
+		{ "long",       'l',  0, G_OPTION_ARG_NONE, NULL, _("Source to use when setting or deleting. Source preference when showing."), NULL },
+		{ "all",        'a',  0, G_OPTION_ARG_NONE, NULL, _("Show values from all sources."), NULL },
+		{ "almost-all", 'A',  0, G_OPTION_ARG_NONE, NULL, _("Show values from all tied preferred sources."), NULL },
+		{ "source",     'S',  0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Property source."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "server property", (command_exec_func) &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-i | -s | -D] [-S] <mid> [name [value]]"),
-	                     _("Get or set properties for a given media.\n"
-	                     "If no name or value is provided, list all properties.\n"
-	                     "If only a name is provided, display the value of the property.\n"
+	                     _("[-i | -s | -D | [-l] [-a | -A] ] [-S ...] <id> [name [value]]"),
+	                     _("Show, set or delete properties for a given media id.\n\n"
+	                     "If no name or value is provided, show properties.\n"
+	                     "If only a name is provided, show the named property.\n"
 	                     "If both a name and a value are provided, set the new value of the property.\n\n"
-	                     "By default, set operations use source \"client/" CLI_CLIENTNAME "\", while list and display operations use source-preference.\n"
-	                     "Use the --source option to override this behaviour.\n\n"
-	                     "By default, the value will be used to determine whether it should be saved as a string or an integer.\n"
-	                     "Use the --int or --string flag to override this behaviour."));
+	                     "When showing properties, several --source options may be passed, which will specify the source preference.\n"
+	                     "In this case the final character of a --source option may be the wildcard '*'.\n"
+	                     "If no --source flags are passed, the default source preference is used.\n"
+	                     "For every property at most one value is shown, as determined by source preference.\n"
+	                     "In case of source ties, the value from an arbitrary preferred source is shown.\n"
+	                     "Use --all or --almost-all to override this behavior.\n\n"
+	                     "When setting of deleting, the --source option specifies the source of the property that is to be set or deleted.\n"
+	                     "The default is \"client/" CLI_CLIENTNAME "\".\n\n"
+	                     "When setting, the value will be used to determine whether the value should be saved as a string or an integer.\n"
+	                     "Use the --int or --string flag to override this behavior."));
 }
 
 void

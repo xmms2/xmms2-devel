@@ -415,23 +415,91 @@ cli_server_config (cli_context_t *ctx, command_t *cmd)
 }
 
 static void
-cli_server_property_print (xmmsv_t *propdict, const gchar *filter)
+cli_server_property_print_one (xmmsv_t *dict,
+                               gboolean show_source,
+                               const gchar *key,
+                               const gchar **sourcepref, const guint *len,
+                               gboolean all_tied, gboolean all)
 {
-	xmmsv_dict_iter_t *pit, *dit;
-	xmmsv_t *dict, *value;
-	const gchar *source, *key;
+	gint i;
+	xmmsv_dict_iter_t *it;
+	const gchar *source;
+	xmmsv_t *value;
+	gboolean printed = FALSE;
 
-	xmmsv_get_dict_iter (propdict, &pit);
-	while (xmmsv_dict_iter_pair (pit, &source, &dict)) {
-		if (strcmp (source, filter) == 0) {
-			xmmsv_get_dict_iter (dict, &dit);
-			while (xmmsv_dict_iter_pair (dit, &key, &value)) {
-				xmmsv_print_value (source, key, value);
-				xmmsv_dict_iter_next (dit);
+	if (all)
+		all_tied = TRUE;
+
+	for (i = 0; sourcepref[i]; i++) {
+		xmmsv_get_dict_iter (dict, &it);
+		while (xmmsv_dict_iter_pair (it, &source, &value)) {
+			if (0 == g_ascii_strncasecmp (sourcepref[i], source, len[i])) {
+				xmmsv_print_value (show_source ? source : NULL, key, value);
+				printed = TRUE;
+				xmmsv_dict_iter_remove (it);
+			} else {
+				xmmsv_dict_iter_next (it);
 			}
+
+			if (printed && !all_tied)
+				break;
 		}
-		xmmsv_dict_iter_next (pit);
+		xmmsv_dict_iter_explicit_destroy (it);
+
+		if (printed && !all)
+			break;
 	}
+
+	if (all) {
+		xmmsv_get_dict_iter (dict, &it);
+		while (xmmsv_dict_iter_pair (it, &source, &value)) {
+			xmmsv_print_value (show_source ? source : NULL, key, value);
+			xmmsv_dict_iter_next(it);
+		}
+		xmmsv_dict_iter_explicit_destroy (it);
+	}
+}
+
+
+static void
+cli_server_property_print (xmmsv_t *propdict,
+                           gboolean show_source,
+                           const gchar *propname,
+                           const gchar **sourcepref,
+                           gboolean all_tied, gboolean all)
+{
+	gint i;
+	guint *len;
+	xmmsv_dict_iter_t *it;
+	xmmsv_t *dict;
+	const gchar *key;
+
+	if (!sourcepref) { sourcepref = xmmsv_default_source_pref; }
+
+	len = g_malloc_n (g_strv_length ((gchar **)sourcepref), sizeof(guint));
+	for (i = 0; sourcepref[i]; i++) {
+		guint tmp = strlen (sourcepref[i]);
+		len[i] = (tmp > 0 && sourcepref[i][tmp-1] == '*') ? tmp - 1 : tmp + 1;
+	}
+
+	if (propname) {
+		if (xmmsv_dict_get (propdict, propname, &dict)) {
+			cli_server_property_print_one (dict, show_source, NULL,
+			                               sourcepref, len,
+			                               all_tied, all);
+		}
+	} else {
+		xmmsv_get_dict_iter (propdict, &it);
+		while (xmmsv_dict_iter_pair (it, &key, &dict)) {
+			cli_server_property_print_one (dict, show_source, key,
+			                               sourcepref, len,
+			                               all_tied, all);
+			xmmsv_dict_iter_next (it);
+		}
+		xmmsv_dict_iter_explicit_destroy (it);
+	}
+
+	g_free (len);
 }
 
 gboolean
@@ -439,37 +507,24 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint mid;
-	gchar *default_source = NULL;
-	gboolean delete, fint, fstring;
+	gboolean delete, fint, fstring, flong, fall, falmostall;
 	const gchar *source, *propname, *propval;
+	const gchar **sourcepref = NULL;
 
-	delete = fint = fstring = FALSE;
+	delete = fint = fstring = flong = fall = falmostall = FALSE;
 
+	/* get arguments */
 	command_flag_boolean_get (cmd, "delete", &delete);
 	command_flag_boolean_get (cmd, "int", &fint);
 	command_flag_boolean_get (cmd, "string", &fstring);
-
-	if (delete && (fint || fstring)) {
-		g_printf ("Error: --int and --string flags are invalid with --delete!\n");
-		return FALSE;
-	}
-
-	if (fint && fstring) {
-		g_printf ("Error: --int and --string flags are mutually exclusive!\n");
-		return FALSE;
-	}
-
+	command_flag_boolean_get (cmd, "long", &flong);
+	command_flag_boolean_get (cmd, "all", &fall);
+	command_flag_boolean_get (cmd, "almost-all", &falmostall);
+	command_flag_stringarray_get (cmd, "source", &sourcepref);
 	if (!command_arg_int_get (cmd, 0, &mid)) {
 		g_printf ("Error: you must provide a media-id!\n");
 		return FALSE;
 	}
-
-	default_source = g_strdup_printf ("client/%s", CLI_CLIENTNAME);
-
-	if (!command_flag_string_get (cmd, "source", &source)) {
-		source = default_source;
-	}
-
 	if (!command_arg_string_get (cmd, 1, &propname)) {
 		propname = NULL;
 		propval = NULL;
@@ -477,41 +532,78 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 		propval = NULL;
 	}
 
-	if (delete) {
-		if (!propname) {
-			g_printf (_("Error: you must provide a property to delete!\n"));
-			goto finish;
-		}
-		XMMS_CALL (xmmsc_medialib_entry_property_remove_with_source,
-		           conn, mid, source, propname);
-	} else if (!propval) {
-		const gchar *filter = source == default_source ? NULL : source;
-		/* use source-preference when printing and user hasn't set --source */
-		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, mid),
-		                 FUNC_CALL_P (cli_server_property_print, XMMS_PREV_VALUE, filter));
+	if (sourcepref && sourcepref[0]) {
+		source = sourcepref[0];
 	} else {
-		gint value;
-		gboolean cons;
-		gchar *endptr;
+		sourcepref = NULL;
+		source = "client/" CLI_CLIENTNAME;
+	}
 
-		value = strtol (propval, &endptr, 0);
+	/* Do action */
+	if (propname && propval) { /* Set */
+		gboolean set_as_int;
 
-		/* determine save-type of the property */
-		cons = endptr == '\0';
-		fstring =  !cons & !fint;
-		fint = cons | fint;
+		if (delete || flong || fall || falmostall) {
+			g_printf ("Error: Flags -D, -l, -a, and -A not allowed when setting property!\n");
+			return FALSE;
+		}
+		if (fint && fstring) {
+			g_printf ("Error: Flags -s and -i are mutually exclusive!\n");
+			return FALSE;
+		}
+		if (sourcepref && sourcepref[0] && sourcepref[1]) {
+			g_printf ("Error: Only one -S option allowed when deleting value!\n");
+			return FALSE;
+		}
 
-		if (fint) {
+		if (fstring) {
+			set_as_int = FALSE;
+		} else {
+			char *end;
+			strtol (propval, &end, 0);
+			if (*end != '\0' && fint) {
+				g_printf ("Error: Flag -i used, but value is not an integer!\n");
+				return FALSE;
+			}
+			set_as_int = (*end == '\0');
+		}
+		if (set_as_int) {
 			XMMS_CALL (xmmsc_medialib_entry_property_set_int_with_source,
-			           conn, mid, source, propname, value);
+			           conn, mid, source, propname, strtol (propval, NULL, 0));
 		} else {
 			XMMS_CALL (xmmsc_medialib_entry_property_set_str_with_source,
 			           conn, mid, source, propname, propval);
 		}
-	}
+	} else if (delete) { /* Delete */
+		if (fint || fstring || flong || fall || falmostall) {
+			g_printf ("Error: Flags -i, -s, -l, -a, and -A not allowed when deleting value!\n");
+			return FALSE;
+		}
+		if (sourcepref && sourcepref[0] && sourcepref[1]) {
+			g_printf ("Error: Only one -S option allowed when deleting value!\n");
+			return FALSE;
+		}
+		if (!propname) {
+			g_printf ("Error: Property name mandatory when deleting value!\n");
+			return FALSE;
+		}
 
-finish:
-	g_free (default_source);
+		XMMS_CALL (xmmsc_medialib_entry_property_remove_with_source,
+		           conn, mid, source, propname);
+	} else { /* Show */
+		if (delete || fint || fstring) {
+			g_printf ("Error: Flags -D, -s and -i not allowed when showing properties!\n");
+			return FALSE;
+		}
+		if (fall && falmostall) {
+			g_printf ("Error: Flags -a and -A are mutually exclusive!\n");
+			return FALSE;
+		}
+
+		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, mid),
+		                 FUNC_CALL_P (cli_server_property_print,
+		                              XMMS_PREV_VALUE, flong, propname, sourcepref, falmostall, fall));
+	}
 
 	return FALSE;
 }

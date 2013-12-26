@@ -40,54 +40,54 @@
 void
 xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val)
 {
+	if (source) {
+		g_printf ("[%s] ", source);
+	}
+	if (key) {
+		g_printf ("%s = ", key);
+	}
 	switch (xmmsv_get_type (val)) {
 		case XMMSV_TYPE_INT32: {
 			gint value;
 			xmmsv_get_int (val, &value);
-			g_printf (_("[%s] %s = %u\n"), source, key, value);
+			g_printf ("%d\n", value);
 			break;
 		}
 		case XMMSV_TYPE_FLOAT: {
 			float value;
 			xmmsv_get_float (val, &value);
-			g_printf (_("[%s] %s = %f\n"), source, key, value);
+			g_printf ("%f\n", value);
 			break;
 		}
 		case XMMSV_TYPE_STRING: {
 			const gchar *value;
 			xmmsv_get_string (val, &value);
-			if (g_strcmp0 ("url", key) == 0) {
-				gchar *url = decode_url (value);
-				g_printf (_("[%s] %s = %s\n"), source, key, url);
-				g_free (url);
-			} else {
-				/* FIXME: special handling for url, guess charset, see common.c:print_entry */
-				g_printf (_("[%s] %s = %s\n"), source, key, value);
-			}
+			g_printf ("%s\n", value);
 			break;
 		}
 		case XMMSV_TYPE_LIST:
-			g_printf (_("[%s] %s = <list>\n"), source, key);
+			g_printf (_("<list>\n"));
 			break;
 		case XMMSV_TYPE_DICT:
-			g_printf (_("[%s] %s = <dict>\n"), source, key);
+			g_printf (_("<dict>\n"));
 			break;
 		case XMMSV_TYPE_COLL:
-			g_printf (_("[%s] %s = <coll>\n"), source, key);
+			g_printf (_("<coll>\n"));
 			break;
 		case XMMSV_TYPE_BIN:
-			g_printf (_("[%s] %s = <bin>\n"), source, key);
+			g_printf (_("<bin>\n"));
 			break;
 		case XMMSV_TYPE_END:
-			g_printf (_("[%s] %s = <end>\n"), source, key);
+			g_printf (_("<end>\n"));
 			break;
 		case XMMSV_TYPE_NONE:
-			g_printf (_("[%s] %s = <none>\n"), source, key);
+			g_printf (_("<none>\n"));
 			break;
 		case XMMSV_TYPE_ERROR:
-			g_printf (_("[%s] %s = <error>\n"), source, key);
+			g_printf (_("<error>\n"));
 			break;
 		default:
+			g_printf (_("<unhandled type!>\n"));
 			break;
 	}
 }
