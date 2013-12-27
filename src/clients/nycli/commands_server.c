@@ -552,7 +552,7 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 			return FALSE;
 		}
 		if (sourcepref && sourcepref[0] && sourcepref[1]) {
-			g_printf ("Error: Only one -S option allowed when deleting value!\n");
+			g_printf ("Error: Only one -S option allowed when setting value!\n");
 			return FALSE;
 		}
 
