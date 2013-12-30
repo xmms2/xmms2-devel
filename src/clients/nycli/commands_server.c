@@ -507,11 +507,11 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 {
 	xmmsc_connection_t *conn = cli_context_xmms_sync (ctx);
 	gint mid;
-	gboolean delete, fint, fstring, flong, fall, falmostall;
+	gboolean delete, fint, fstring, flong, fall, falltied;
 	const gchar *source, *propname, *propval;
 	const gchar **sourcepref = NULL;
 
-	delete = fint = fstring = flong = fall = falmostall = FALSE;
+	delete = fint = fstring = flong = fall = falltied = FALSE;
 
 	/* get arguments */
 	command_flag_boolean_get (cmd, "delete", &delete);
@@ -519,7 +519,7 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 	command_flag_boolean_get (cmd, "string", &fstring);
 	command_flag_boolean_get (cmd, "long", &flong);
 	command_flag_boolean_get (cmd, "all", &fall);
-	command_flag_boolean_get (cmd, "almost-all", &falmostall);
+	command_flag_boolean_get (cmd, "all-tied", &falltied);
 	command_flag_stringarray_get (cmd, "source", &sourcepref);
 	if (!command_arg_int_get (cmd, 0, &mid)) {
 		g_printf ("Error: you must provide a media-id!\n");
@@ -543,7 +543,7 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 	if (propname && propval) { /* Set */
 		gboolean set_as_int;
 
-		if (delete || flong || fall || falmostall) {
+		if (delete || flong || fall || falltied) {
 			g_printf ("Error: Flags -D, -l, -a, and -A not allowed when setting property!\n");
 			return FALSE;
 		}
@@ -575,7 +575,7 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 			           conn, mid, source, propname, propval);
 		}
 	} else if (delete) { /* Delete */
-		if (fint || fstring || flong || fall || falmostall) {
+		if (fint || fstring || flong || fall || falltied) {
 			g_printf ("Error: Flags -i, -s, -l, -a, and -A not allowed when deleting value!\n");
 			return FALSE;
 		}
@@ -595,14 +595,14 @@ cli_server_property (cli_context_t *ctx, command_t *cmd)
 			g_printf ("Error: Flags -D, -s and -i not allowed when showing properties!\n");
 			return FALSE;
 		}
-		if (fall && falmostall) {
+		if (fall && falltied) {
 			g_printf ("Error: Flags -a and -A are mutually exclusive!\n");
 			return FALSE;
 		}
 
 		XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_medialib_get_info, conn, mid),
 		                 FUNC_CALL_P (cli_server_property_print,
-		                              XMMS_PREV_VALUE, flong, propname, sourcepref, falmostall, fall));
+		                              XMMS_PREV_VALUE, flong, propname, sourcepref, falltied, fall));
 	}
 
 	return FALSE;
