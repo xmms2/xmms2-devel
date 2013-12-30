@@ -315,8 +315,6 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
-			gint32 temp, toskip = 0;
-
 			if (data->samplerate != frameInfo.samplerate ||
 			    data->channels != frameInfo.channels) {
 				/* We should inform output to change parameters somehow */
@@ -325,18 +323,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 				data->channels = frameInfo.channels;
 			}
 
-			if (xmms_xform_auxdata_get_int (xform, "frame_offset", &temp)) {
-				toskip = (temp * frameInfo.channels *
-				          xmms_sample_size_get (data->sampleformat));
-			}
-
-			if (xmms_xform_auxdata_get_int (xform, "frame_duration", &temp)) {
-				bytes_read = (temp * frameInfo.channels *
-				              xmms_sample_size_get (data->sampleformat));
-			}
-
-			g_string_append_len (data->outbuf, sample_buffer + toskip,
-			                     bytes_read - toskip);
+			g_string_append_len (data->outbuf, sample_buffer, bytes_read);
 		} else if (frameInfo.error > 0) {
 			XMMS_DBG ("ERROR %d in faad decoding: %s", frameInfo.error,
 			          NeAACDecGetErrorMessage (frameInfo.error));

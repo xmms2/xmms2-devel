@@ -264,7 +264,7 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	while (size == 0) {
 		guchar *tmpbuf;
 		guint tmpbuflen;
-		gint duration, offset;
+		gint duration;
 
 		if (data->sampleid >= data->numsamples) {
 			XMMS_DBG ("MP4 EOF");
@@ -274,13 +274,10 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
 		                                data->sampleid, &tmpbuf,
 		                                &tmpbuflen);
-		offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
-		                                  data->sampleid);
 		duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
 		                                      data->sampleid);
 		data->sampleid++;
 
-		xmms_xform_auxdata_set_int (xform, "frame_offset", offset);
 		xmms_xform_auxdata_set_int (xform, "frame_duration", duration);
 
 		if (bytes_read > 0) {
@@ -308,8 +305,7 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	sampleid_candidate = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
-	                                                    samples, &toskip);
+	sampleid_candidate = mp4ff_find_sample(data->mp4ff, data->track, samples, &toskip);
 
 	if (sampleid_candidate < 0) {
 		return -1;
@@ -359,8 +355,7 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) > 0) {
 		glong srate = temp;
 
-		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff,
-		                                                  data->track)) >= 0) {
+		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track)) >= 0) {
 			glong msec = ((gint64) temp) * 1000 / srate;
 
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
