@@ -31,10 +31,10 @@
 
 static sXYData data_history[EQ_MAX_BANDS][EQ_CHANNELS] __attribute__((aligned));
 static sXYData data_history2[EQ_MAX_BANDS][EQ_CHANNELS] __attribute__((aligned));
-float gain[EQ_MAX_BANDS][EQ_CHANNELS] __attribute__((aligned));
+static float gain[EQ_MAX_BANDS][EQ_CHANNELS] __attribute__((aligned));
 /* random noise */
-sample_t dither[256];
-int di;
+static sample_t dither[256];
+static int di;
 
 void set_gain(int index, int chn, float val)
 {

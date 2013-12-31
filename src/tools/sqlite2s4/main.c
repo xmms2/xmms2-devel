@@ -26,6 +26,8 @@ extern gboolean try_upgrade (sqlite3 *sql);
 extern void collection_restore (sqlite3 *db, GHashTable **ht);
 extern void collection_dag_save (GHashTable **ht, const char *bdir);
 
+static s4_t *s4;
+
 /**
  * Check if a string is a number, if it is save it in val
  *
@@ -80,7 +82,6 @@ static int source_callback (void *u, int argc, char *argv[], char *col[])
 	return 0;
 }
 
-s4_t *s4;
 static int media_callback (void *u, int argc, char *argv[], char *col[])
 {
 	GTree *sources = u;

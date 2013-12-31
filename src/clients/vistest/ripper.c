@@ -60,12 +60,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	exit (EXIT_FAILURE);
 
 #define READ 512
-signed char readbuffer[READ*4]; /* out of the data segment, not the stack */
+
+static signed char readbuffer[READ*4]; /* out of the data segment, not the stack */
 
 /* XMMS2 */
-xmmsc_connection_t *x_connection;
-int x_vis;
-int intr = 0;
+static xmmsc_connection_t *x_connection;
+static int x_vis;
+static int intr = 0;
 
 static void
 quit (int signum)

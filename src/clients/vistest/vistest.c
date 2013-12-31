@@ -32,12 +32,12 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient-glib.h>
 
-GMainLoop *mainloop;
-xmmsc_connection_t *connection;
-int vis;
+static GMainLoop *mainloop;
+static xmmsc_connection_t *connection;
+static int vis;
 
-short data[2];
-char buf[38+38];
+static short data[2];
+static char buf[38+38];
 
 static void
 draw (void) {

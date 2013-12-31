@@ -36,7 +36,7 @@
 
 /* Gain for each band
  * values should be between -0.2 and 1.0 */
-union f4vector gain[MAX_SSE_VECTORS][EQ_CHANNELS];
+static union f4vector gain[MAX_SSE_VECTORS][EQ_CHANNELS];
 static sSupport support;
 static sHistory history[EQ_CHANNELS];
 static sPtrs ptrs;

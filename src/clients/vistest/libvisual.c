@@ -26,8 +26,8 @@
 	exit (EXIT_FAILURE);
 
 /* XMMS2 */
-xmmsc_connection_t *x_connection;
-int x_vis;
+static xmmsc_connection_t *x_connection;
+static int x_vis;
 
 static void
 xmms2_quit (void)

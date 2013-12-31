@@ -37,7 +37,7 @@ static xmmsc_connection_t *connection;
 static int vis;
 static int height;
 
-short data[256];
+static short data[256];
 
 static void
 draw (void) {
