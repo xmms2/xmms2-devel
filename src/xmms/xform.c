@@ -94,7 +94,6 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
                                             GList *goal_formats,
                                             const gchar *name);
 static void xmms_xform_destroy (xmms_object_t *object);
-static void effect_callbacks_init (void);
 
 void
 xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
