@@ -80,28 +80,23 @@ def build(bld):
         "visualization/%s.c" % bld.env.visualization_impl
     ]
 
-    extra = ''
-    if bld.env.XMMS_PLUGINS_BUILTIN:
-        env = bld.env.derive()
-        env.GENPY_ARGS = ','.join(bld.env.XMMS_PLUGINS_BUILTIN)
-        bld(features = 'c',
-            target = 'xmms_builtin_plugins',
-            source = 'builtin_plugins.genpy',
-            includes = '. ../.. ../include ../includepriv',
-            uselib = 'glib2',
-            env = env
-        )
-
-        extra = ' xmms_builtin_plugins'
-        for builtin in bld.env.XMMS_PLUGINS_BUILTIN:
-            extra += ' xmms_' + builtin
+    builtin_env = bld.env.derive()
+    builtin_env.GENPY_ARGS = ' '.join(bld.env.XMMS_PLUGINS_BUILTIN)
+    bld(features = 'c',
+        target = 'xmms_builtin_plugins',
+        source = 'builtin_plugins.genpy',
+        includes = '. ../.. ../include ../includepriv',
+        uselib = 'glib2',
+        use = ' '.join(['xmms_' + x for x in bld.env.XMMS_PLUGINS_BUILTIN]),
+        env = builtin_env
+    )
 
     bld(features='c visibilityhidden ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
         uselib = 'glib2 gmodule2 statfs socket shm valgrind',
-        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4 xmmsc-glib' + extra,
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4 xmmsc-glib xmms_builtin_plugins',
         defines = 'G_LOG_DOMAIN="core"'
     )
 

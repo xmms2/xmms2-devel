@@ -542,12 +542,25 @@ int main() { return 0; }
 ## Options
 ####
 def _list_cb(option, opt, value, parser):
-    """Callback that lets you specify lists of targets."""
-    vals = value.replace(' ','').split(',')
-    if vals == ['']:
+    """
+    Callback for specifying a comma seperated lists of strings.
+
+    If the string value is empty, set the option to []. If the string value
+    starts with a comma, augment the pre-existing option (if any) with the list
+    represented by the string value[1::]. Otherwise set the option to the list
+    represented by the string value.
+
+    Before the above delete any space from the string value.
+    """
+    value = value.replace(' ','')
+    if value == '':
         vals = []
-    if getattr(parser.values, option.dest):
-        vals += getattr(parser.values, option.dest)
+    elif value[0] == ',':
+        vals = value[1::].split(',')
+        if getattr(parser.values, option.dest):
+           vals = getattr(parser.values, option.dest) + vals
+    else:
+        vals = value.split(',')
     setattr(parser.values, option.dest, vals)
 
 def options(opt):
@@ -563,7 +576,9 @@ def options(opt):
                    type="string", dest="disable_plugins", default=None,
                    help="Comma separated list of plugins to skip")
     opt.add_option('--with-builtin-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="builtin_plugins", default=["replaygain"])
+                   type="string", dest="builtin_plugins", default=["replaygain"],
+                   help="Comma separated list of plugins to link statically "
+                        "into daemon. [Default: replaygain]")
     opt.add_option('--with-default-output-plugin', type='string',
                    dest='default_output_plugin',
                    help="Force a default output plugin")

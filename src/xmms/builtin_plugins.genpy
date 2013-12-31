@@ -1,7 +1,7 @@
 import sys
 
 plugins = []
-for plugin in sys.argv[1].split(','):
+for plugin in sys.argv[1::]:
     plugins.append('XMMS_PLUGIN_DESC_' + plugin.upper().strip())
 
 print '#include <xmmspriv/xmms_plugin.h>'
