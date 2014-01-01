@@ -20,6 +20,32 @@
 #include "xmmscpriv/xmmsc_log.h"
 #include "xmmscpriv/xmmsc_util.h"
 
+static xmmsc_log_handler_t log_handler_f = xmmsc_log_default_handler;
+static void *log_handler_udata = NULL;
+
+/**
+ * Set callback for receiving xmmsc_log-messages
+ * WARNING: This is not thread-safe!
+ */
+void
+xmmsc_log_handler_set (xmmsc_log_handler_t f, void *udata)
+{
+	log_handler_f = f;
+	log_handler_udata = udata;
+}
+
+/**
+ * Get xmmsc_log-callback and -userdata
+ */
+void
+xmmsc_log_handler_get (xmmsc_log_handler_t *f, void **udata)
+{
+	if (f)
+		*f = log_handler_f;
+	if (udata)
+		*udata = log_handler_udata;
+}
+
 static const char * log_level_to_str[XMMS_LOG_LEVEL_COUNT]
 	= {"???", "FATAL", "FAIL", "ERROR", "INFO", "DEBUG"};
 
@@ -28,7 +54,7 @@ static const char * log_level_to_str[XMMS_LOG_LEVEL_COUNT]
  * Writes the error message @msg to stderr, prepending @level and @domain if appropriate
  */
 void
-xmmsc_log_default_handler (const char *domain, xmmsc_log_level_t level, const char *msg)
+xmmsc_log_default_handler (const char *domain, xmmsc_log_level_t level, const char *msg, void *unused)
 {
 	if (level < 0 || level >= XMMS_LOG_LEVEL_COUNT) {
 		fprintf (stderr, "*** invalid log level! ***\n");
@@ -48,7 +74,7 @@ static void
 xmmsc_log_va (const char *domain, xmmsc_log_level_t level, const char *fmt, va_list ap)
 {
 	char *msg = x_vasprintf (fmt, ap);
-	xmmsc_log_default_handler (domain, level, msg);
+	log_handler_f (domain, level, msg, log_handler_udata);
 	free (msg);
 }
 
