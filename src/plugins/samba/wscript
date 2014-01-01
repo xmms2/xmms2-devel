@@ -1,8 +1,17 @@
 from waftools.plugin import plugin
+from waflib import Errors
 
 def plugin_configure(conf):
-    conf.check_cc(header_name="libsmbclient.h")
-    conf.check(lib="smbclient", uselib_store="smbclient")
+    try:
+        conf.check_cfg(package="smbclient", uselib_store="smbclient",
+                       args="--cflags --libs")
+    except Errors.ConfigurationError:
+        conf.check_cc(header_name="libsmbclient.h",
+                      uselib="smbclient",
+                      type="cshlib")
+        conf.check(lib="smbclient", uselib_store="smbclient",
+                   uselib="smbclient",
+                   type="cshlib")
 
 configure, build = plugin("samba", configure=plugin_configure,
         libs=["smbclient"])
