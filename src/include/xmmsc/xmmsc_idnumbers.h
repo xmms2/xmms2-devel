@@ -257,6 +257,16 @@ typedef enum {
 	XMMS_MEDIALIB_ENTRY_STATUS_REHASH
 } xmmsc_medialib_entry_status_t;
 
+typedef enum {
+	XMMS_LOG_LEVEL_UNKNOWN,
+	XMMS_LOG_LEVEL_FATAL,
+	XMMS_LOG_LEVEL_FAIL,
+	XMMS_LOG_LEVEL_ERROR,
+	XMMS_LOG_LEVEL_INFO,
+	XMMS_LOG_LEVEL_DEBUG,
+	XMMS_LOG_LEVEL_COUNT /* must be last */
+} xmmsc_log_level_t;
+
 typedef const char* xmmsv_coll_namespace_t;
 #define	XMMS_COLLECTION_NS_ALL          "*"
 #define XMMS_COLLECTION_NS_COLLECTIONS  "Collections"

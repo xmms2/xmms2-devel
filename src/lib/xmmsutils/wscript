@@ -10,6 +10,7 @@ def build(bld):
     source = """
     strlist.c
     utils.c
+    log.c
     """.split()
     if bld.env.util_impl == 'win32':
         source.extend(['utils_win32.c'])
