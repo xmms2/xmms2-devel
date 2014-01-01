@@ -26,6 +26,8 @@
 #include <glib.h>
 #include <xmmspriv/xmms_log.h>
 #include <xmmspriv/xmms_localtime.h>
+#include <xmmsc/xmmsc_log.h>
+#include <xmmsc/xmmsc-glib.h>
 
 static gchar *logts_format = NULL;
 static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);
@@ -43,6 +45,7 @@ xmms_log_set_format (const gchar *format)
 void
 xmms_log_init (gint verbosity)
 {
+	xmmsc_log_handler_set (xmmsc_log_glib_handler, NULL);
 	g_log_set_default_handler (xmms_log_handler, GINT_TO_POINTER (verbosity));
 	xmms_log_info ("Initialized logging system :)");
 }

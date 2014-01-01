@@ -84,7 +84,7 @@ def build(bld):
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
         uselib = 'glib2 gmodule2 statfs socket shm valgrind',
-        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4',
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4 xmmsc-glib',
         defines = 'G_LOG_DOMAIN="core"'
     )
 
