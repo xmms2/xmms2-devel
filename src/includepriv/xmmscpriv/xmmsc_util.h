@@ -1,12 +1,14 @@
 #ifndef __XMMSCPRIV_XMMSC_UTIL_H__
 #define __XMMSCPRIV_XMMSC_UTIL_H__
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 #include <xmmsc/xmmsc_util.h>
 #include <xmmsc/xmmsc_compiler.h>
+#include <xmmscpriv/xmmsc_log.h>
+
+void xmms_dump_stack (void);
 
 /* This is not nice but there's no very clean way around the ugly warnings,
  * glibc does about the same but on compile time (this could be moved to waf?) */
@@ -46,38 +48,16 @@ typedef int  (*XHRFunc) (void *key, void *value, void *user_data);
 typedef void (*XDestroyNotify) (void *data);
 
 /* errors and warnings */
-void xmms_dump_stack (void);
-
-static inline void
-x_print_err (const char *func, const char *msg)
-{
-	fprintf (stderr, " ******\n");
-	fprintf (stderr, " * %s was called %s\n", func, msg);
-	fprintf (stderr, " * This is probably an error in the application using libxmmsclient\n");
-	fprintf (stderr, " ******\n");
-	xmms_dump_stack ();
-}
-
-static inline void
-x_print_internal_err (const char *func, const char *msg)
-{
-	fprintf (stderr, " ******\n");
-	fprintf (stderr, " * %s raised a fatal error: %s\n", func, msg);
-	fprintf (stderr, " * This is probably a bug in XMMS2\n");
-	fprintf (stderr, " ******\n");
-	xmms_dump_stack ();
-}
-
-#define x_return_if_fail(expr) if (!(expr)) { fprintf (stderr, "Failed in file " __FILE__ " on  row %d\n", __LINE__); xmms_dump_stack (); return; }
-#define x_return_val_if_fail(expr, val) if (!(expr)) { fprintf (stderr, "Failed in file " __FILE__ " on  row %d\n", __LINE__); xmms_dump_stack (); return val; }
+#define x_return_if_fail(expr) if (!(expr)) { xmmsc_log_fail ("Check '%s' failed in %s at %s:%d", XMMS_STRINGIFY (expr), __FUNCTION__, __FILE__, __LINE__); return; }
+#define x_return_val_if_fail(expr, val) if (!(expr)) { xmmsc_log_fail ("Check '%s' failed in %s at %s:%d", XMMS_STRINGIFY (expr), __FUNCTION__, __FILE__, __LINE__); return (val); }
 #define x_return_null_if_fail(expr) x_return_val_if_fail (expr, NULL)
-#define x_oom() do { fprintf(stderr, "Out of memory in " __FILE__ "on row %d\n", __LINE__); xmms_dump_stack (); } while (0)
+#define x_oom() xmmsc_log_fail ("Out of memory in %s at %s:%d", __FUNCTION__, __FILE__, __LINE__)
 
-#define x_api_warning(msg) do { x_print_err (__FUNCTION__, msg); } while(0)
-#define x_api_warning_if(cond, msg) do { if (cond) { x_print_err (__FUNCTION__, msg); } } while(0)
-#define x_api_error(msg, retval) do { x_print_err (__FUNCTION__, msg); return retval; } while(0)
-#define x_api_error_if(cond, msg, retval) do { if (cond) { x_print_err (__FUNCTION__, msg); return retval;} } while(0)
-#define x_internal_error(msg) do { x_print_internal_err (__FUNCTION__, msg); } while(0)
+#define x_api_warning(msg) xmmsc_log_fail ("%s was called %s", __FUNCTION__, (msg))
+#define x_api_warning_if(cond, msg) if (cond) { x_api_warning (msg); }
+#define x_api_error(msg, retval) do { x_api_warning (msg); return retval; } while(0)
+#define x_api_error_if(cond, msg, retval) if (cond) { x_api_warning (msg); return retval; }
+#define x_internal_error(msg) xmmsc_log_fail("%s raised an error: %s", __FUNCTION__, (msg))
 
 /* allocation */
 #define x_new0(type, num) calloc (1, sizeof (type) * (num))
