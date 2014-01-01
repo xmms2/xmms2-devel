@@ -56,8 +56,12 @@ typedef struct {
 static gboolean xmms_faad_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_faad_init (xmms_xform_t *xform);
 static void xmms_faad_destroy (xmms_xform_t *xform);
+static gint xmms_faad_read_some (xmms_xform_t *xform, xmms_error_t *err);
 static gint xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
+static gint xmms_faad_get_framesize (xmms_xform_t *xform);
+static gint xmms_faad_get_framesize_upper_bound (xmms_xform_t *xform);
 static gint64 xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
+static gboolean xmms_faad_gapless_try (xmms_xform_t *xform);
 static void xmms_faad_get_mediainfo (xmms_xform_t *xform);
 
 /*
@@ -121,6 +125,7 @@ xmms_faad_init (xmms_xform_t *xform)
 	gint bytes_read;
 	gulong samplerate;
 	guchar channels;
+	const gchar *mime;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -231,25 +236,34 @@ xmms_faad_init (xmms_xform_t *xform)
 	data->samplerate = samplerate;
 	data->channels = channels;
 
-	/* Because for HE AAC files some versions of libfaad return the wrong
-	 * samplerate in init, we have to do one read and let it decide the
-	 * real parameters. After changing sample parameters and format is
-	 * supported, this hack should be removed and handled in read instead. */
-	{
-		gchar tmpbuf[1024];
+	/* XXX: Because of decoder delay the first frame is bad (as is the first
+	 * frame after seek). Frame 0 gets automatically discarded by libfaad2 (but
+	 * not the first frame after seek). However frame 0 is included in gapless
+	 * and durations calculations... So we cheat and tell libfaad2 we're feeding
+	 * it frame 1.
+	 */
+	NeAACDecPostSeekReset (data->decoder, 1);
 
-		xmms_error_reset (&error);
-		bytes_read = xmms_faad_read (xform, tmpbuf, 1024, &error);
-		if (bytes_read <= 0) {
-			XMMS_DBG ("First read from faad decoder failed!");
-			return FALSE;
-		}
-		g_string_prepend_len (data->outbuf, tmpbuf, bytes_read);
+	/* FIXME: Because for HE AAC files some versions of libfaad return the wrong
+	 * samplerate in init, we have to do one read and let it decide the real
+	 * parameters. After changing sample parameters and format is supported,
+	 * this hack should be removed and handled in read instead.
+	 */
+	xmms_error_reset (&error);
+	if (xmms_faad_read_some (xform, &error) <= 0) {
+		XMMS_DBG ("First read from faad decoder failed!");
+		return FALSE;
+	}
+
+	if (xmms_faad_gapless_try (xform)) {
+		mime = "audio/x-uncut-pcm";
+	} else {
+		mime = "audio/pcm";
 	}
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "audio/pcm",
+	                             mime,
 	                             XMMS_STREAM_TYPE_FMT_FORMAT,
 	                             data->sampleformat,
 	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
@@ -270,20 +284,18 @@ err:
 }
 
 static gint
-xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
+xmms_faad_read_some (xmms_xform_t *xform, xmms_error_t *err)
 {
 	xmms_faad_data_t *data;
-	xmms_error_t error;
-
 	NeAACDecFrameInfo frameInfo;
 	gpointer sample_buffer;
-	guint size, bytes_read = 0;
+	guint bytes_read = 0;
 
+	g_return_val_if_fail (xform, -1);
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	size = MIN (data->outbuf->len, len);
-	while (size == 0) {
+	while (data->outbuf->len == 0) {
 		gboolean need_read;
 
 		/* MP4 demuxer always gives full packets so we need different handling */
@@ -296,7 +308,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			bytes_read = xmms_xform_read (xform,
 			                              (gchar *) data->buffer + data->buffer_length,
 			                              data->buffer_size - data->buffer_length,
-			                              &error);
+			                              err);
 
 			if (bytes_read <= 0 && data->buffer_length == 0) {
 				XMMS_DBG ("EOF");
@@ -318,24 +330,87 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			if (data->samplerate != frameInfo.samplerate ||
 			    data->channels != frameInfo.channels) {
 				/* We should inform output to change parameters somehow */
-				XMMS_DBG ("Output format changed in the middle of a read!");
+				xmms_log_error ("Output format changed in the middle of a read!");
 				data->samplerate = frameInfo.samplerate;
 				data->channels = frameInfo.channels;
 			}
-
 			g_string_append_len (data->outbuf, sample_buffer, bytes_read);
 		} else if (frameInfo.error > 0) {
-			XMMS_DBG ("ERROR %d in faad decoding: %s", frameInfo.error,
-			          NeAACDecGetErrorMessage (frameInfo.error));
+			xmms_log_error ("ERROR %d in faad decoding: %s", frameInfo.error,
+			                NeAACDecGetErrorMessage (frameInfo.error));
 			return -1;
 		}
+	}
+	return data->outbuf->len;
+}
 
-		size = MIN (data->outbuf->len, len);
+static gint
+xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
+{
+	xmms_faad_data_t *data;
+	gint ret;
+	guint size;
+
+	g_return_val_if_fail (xform, -1);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
+
+	while (data->outbuf->len == 0) {
+		ret = xmms_faad_read_some (xform, err);
+		if (ret < 0) { return ret; }
+		if (ret == 0) { break; /* EOF */ }
 	}
 
+	size = MIN (data->outbuf->len, len);
 	memcpy (buf, data->outbuf->str, size);
 	g_string_erase (data->outbuf, 0, size);
 	return size;
+}
+
+static gint
+xmms_faad_get_framesize (xmms_xform_t *xform) {
+	xmms_faad_data_t *data;
+	const guchar *tmpbuf;
+	gsize tmpbuflen;
+	guchar *copy;
+	mp4AudioSpecificConfig mp4ASC;
+
+	g_return_val_if_fail (xform, 0);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, 0);
+
+	if (data->filetype != FAAD_TYPE_MP4) {
+		return 0;
+	}
+
+	if (!xmms_xform_auxdata_get_bin (xform, "decoder_config", &tmpbuf,
+	                                 &tmpbuflen)) {
+		xmms_log_error ("ERROR: Cannot get AAC decoder config, but filetype is FAAD_TYPE_MP4!");
+		return 0;
+	}
+	copy = g_memdup (tmpbuf, tmpbuflen);
+	if ((signed char)NeAACDecAudioSpecificConfig (copy, tmpbuflen, &mp4ASC) < 0) {
+		/* FIXME: That function ^^^ returns char. How can it signal errors when
+		 * char is unsigned?!
+		 */
+		g_free (copy);
+		XMMS_DBG ("ERROR: Could not get mp4ASC!");
+		return 0;
+	}
+	g_free (copy);
+
+	return ((mp4ASC.frameLengthFlag == 1) ? 960 : 1024)
+	       * ((mp4ASC.sbr_present_flag == 1) ? 2 : 1);
+}
+
+static gint
+xmms_faad_get_framesize_upper_bound (xmms_xform_t *xform)
+{
+	gint ret = xmms_faad_get_framesize (xform);
+	if (ret == 0) {
+		return 2048; /* FIXME: This is a guess. Find real upper bound. */
+	}
+	return ret;
 }
 
 static gint64
@@ -348,20 +423,57 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	g_return_val_if_fail (xform, -1);
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, FALSE);
+	g_return_val_if_fail (data, -1);
 
 	/* Seeking only supported on MP4 AAC right now */
 	if (data->filetype == FAAD_TYPE_MP4) {
-		ret = xmms_xform_seek (xform, samples, whence, err);
-		if (ret >= 0) {
-			NeAACDecPostSeekReset (data->decoder, -1);
+		gint64 location;
 
+		/* Seek to some time before samples, to take care of decoder delay */
+		location = samples - xmms_faad_get_framesize_upper_bound (xform);
+		if (location < 0) { location = 0; }
+
+		location = xmms_xform_seek (xform, location, whence, err);
+		if (location >= 0) {
 			data->buffer_length = 0;
 			g_string_erase (data->outbuf, 0, -1);
+
+			NeAACDecPostSeekReset (data->decoder, -1);
+			ret = location;
 		}
 	}
 
 	return ret;
+}
+
+static gboolean
+xmms_faad_gapless_try (xmms_xform_t *xform)
+{
+	xmms_faad_data_t *data;
+	gint64 start = 0, stop = 0;
+
+	g_return_val_if_fail (xform, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, FALSE);
+
+	xmms_xform_auxdata_get_int64 (xform, "startsamples", &start);
+	if (start == 0) {
+		XMMS_DBG ("First frame of AAC should be ignored, but is not. Trying to fix.");
+		start = xmms_faad_get_framesize (xform);
+		if (start == 0) {
+			XMMS_DBG ("No luck. Couldn't get the framesize.");
+		}
+	}
+	if (start != 0) {
+		xmms_xform_auxdata_set_int (xform, "startsamples", start);
+	}
+
+	xmms_xform_auxdata_get_int64 (xform, "stopsamples", &stop);
+	if (stop != 0) {
+		xmms_xform_auxdata_set_int (xform, "stopsamples", stop);
+	}
+
+	return (start != 0) || (stop != 0);
 }
 
 static void
