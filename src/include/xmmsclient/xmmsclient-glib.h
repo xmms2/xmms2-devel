@@ -23,6 +23,7 @@
 #include <glib.h>
 #include <xmmsc/xmmsc_compiler.h>
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsc/xmmsc-glib.h>
 
 #ifdef __cplusplus
 extern "C" {

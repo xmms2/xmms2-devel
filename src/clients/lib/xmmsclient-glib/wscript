@@ -6,7 +6,7 @@ def build(bld):
         includes = '../../../.. ../../../include',
         source = 'xmmsclient-glib.c',
         uselib = 'glib2',
-        use = 'xmmsclient',
+        use = 'xmmsclient xmmsc-glib',
         vnum = '1.0.0',
         defines = 'G_LOG_DOMAIN="xmmsclient-glib"'
         )

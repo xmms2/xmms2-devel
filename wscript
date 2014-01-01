@@ -64,6 +64,7 @@ src/lib/s4/tests
 
 subdirs = """
 src/lib/xmmstypes
+src/lib/xmmsc-glib
 src/lib/xmmssocket
 src/lib/xmmsipc
 src/lib/xmmsutils

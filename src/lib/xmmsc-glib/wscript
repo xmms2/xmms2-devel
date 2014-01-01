@@ -1,0 +1,27 @@
+# encoding: utf-8
+#
+# WAF build scripts for XMMS2
+# Copyright (C) 2006-2012 XMMS2 Team
+#
+
+def build(bld):
+    source = """
+    xmmsc-glib.c
+    """.split()
+
+    bld(features = 'c cstlib',
+        target = 'xmmsc-glib',
+        source = source,
+        includes = '. ../../.. ../../include ../../includepriv',
+        install_path = None,
+        use = 'glib2',
+        defines= ['XMMSC_LOG_DOMAIN="xmmsc-glib"', 'G_LOG_DOMAIN="xmmsc-glib"']
+        )
+
+
+def configure(conf):
+    return True
+
+
+def options(opt):
+    pass
