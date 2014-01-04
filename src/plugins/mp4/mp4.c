@@ -196,7 +196,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	data->sampleid = 1;
+	data->sampleid = 0;
 	data->numsamples = 0;
 
 	bytes_read = xmms_xform_read (xform,
