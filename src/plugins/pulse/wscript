@@ -3,5 +3,5 @@ from waftools.plugin import plugin
 def plugin_configure(conf):
     conf.check_cfg(package="libpulse", args="--cflags --libs", uselib_store="pulse")
 
-configure, build = plugin("pulse", configure=plugin_configure, output_prio=25,
+configure, build = plugin("pulse", configure=plugin_configure, output_prio=45,
         libs=["pulse"])
