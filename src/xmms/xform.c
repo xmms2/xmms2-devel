@@ -729,7 +729,7 @@ xmms_xform_auxdata_barrier (xmms_xform_t *xform)
 }
 
 void
-xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, int intval)
+xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, gint64 intval)
 {
 	xmmsv_t *val = xmmsv_new_int (intval);
 	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
@@ -794,34 +794,20 @@ xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key)
 	return !!xmms_xform_auxdata_get_val (xform, key);
 }
 
-gboolean
-xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
-{
-	const xmmsv_t *obj;
-
-	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_INT32) {
-		xmmsv_get_int (obj, val);
-		return TRUE;
+/* macro-magically define auxdata extractors */
+#define GEN_AUXDATA_EXTRACTOR_FUNC(typename, xmmsvtypename, type) \
+	gboolean \
+	xmms_xform_auxdata_get_##typename (xmms_xform_t *xform, const gchar *key, \
+	                                   type *val) \
+	{ \
+		const xmmsv_t *obj; \
+		obj = xmms_xform_auxdata_get_val (xform, key); \
+		return obj && xmmsv_get_##xmmsvtypename (obj, val); \
 	}
 
-	return FALSE;
-}
-
-gboolean
-xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
-                            const gchar **val)
-{
-	const xmmsv_t *obj;
-
-	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_STRING) {
-		xmmsv_get_string (obj, val);
-		return TRUE;
-	}
-
-	return FALSE;
-}
+GEN_AUXDATA_EXTRACTOR_FUNC (int32, int32, gint32);
+GEN_AUXDATA_EXTRACTOR_FUNC (int64, int64, gint64);
+GEN_AUXDATA_EXTRACTOR_FUNC (str, string, const gchar *);
 
 gboolean
 xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,

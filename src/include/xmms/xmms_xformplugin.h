@@ -315,13 +315,21 @@ gboolean xmms_xform_metadata_parse_replay_gain (xmms_xform_t *xform, const gchar
 gboolean xmms_xform_metadata_mapper_match (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length) XMMS_PUBLIC;
 
 void xmms_xform_auxdata_barrier (xmms_xform_t *xform) XMMS_PUBLIC;
-void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val) XMMS_PUBLIC;
+void xmms_xform_auxdata_set_int (xmms_xform_t *xform, const gchar *key, gint64 val) XMMS_PUBLIC;
 void xmms_xform_auxdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val) XMMS_PUBLIC;
 void xmms_xform_auxdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len) XMMS_PUBLIC;
 gboolean xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key) XMMS_PUBLIC;
-gboolean xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_get_int32 (xmms_xform_t *xform, const gchar *key, gint32 *val) XMMS_PUBLIC;
+gboolean xmms_xform_auxdata_get_int64 (xmms_xform_t *xform, const gchar *key, gint64 *val) XMMS_PUBLIC;
 gboolean xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val) XMMS_PUBLIC;
 gboolean xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key, const guchar **data, gsize *datalen) XMMS_PUBLIC;
+
+/* legacy alias */
+#if XMMS_XFORM_AUXDATA_USE_INT64 == 1
+#define xmms_xform_auxdata_get_int xmms_xform_auxdata_get_int64
+#else
+#define xmms_xform_auxdata_get_int xmms_xform_auxdata_get_int32
+#endif
 
 const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key) XMMS_PUBLIC;
 gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key) XMMS_PUBLIC;
