@@ -4,13 +4,13 @@ plugins = []
 for plugin in sys.argv[1::]:
     plugins.append('XMMS_PLUGIN_DESC_' + plugin.upper().strip())
 
-print '#include <xmmspriv/xmms_plugin.h>'
+print('#include <xmmspriv/xmms_plugin.h>')
 
 for plugin in plugins:
-    print 'extern xmms_plugin_desc_t %s;' % plugin
+    print('extern xmms_plugin_desc_t %s;' % plugin)
 
-print 'const xmms_plugin_desc_t *xmms_builtin_plugins[] = {'
+print('const xmms_plugin_desc_t *xmms_builtin_plugins[] = {')
 for plugin in plugins:
-    print '\t&%s,' % plugin
-print '\tNULL'
-print '};'
+    print('\t&%s,' % plugin)
+print('\tNULL')
+print('};')
