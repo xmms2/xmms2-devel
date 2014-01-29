@@ -82,14 +82,11 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 	local_prefs = src_prefs ? src_prefs : xmmsv_default_source_pref;
 
 	xmmsv_get_dict_iter (propdict, &key_it);
-	while (xmmsv_dict_iter_valid (key_it)) {
-		xmmsv_dict_iter_pair (key_it, &key, &source_dict);
-
+	while (xmmsv_dict_iter_pair (key_it, &key, &source_dict)) {
 		best_value = NULL;
 		best_index = -1;
 		xmmsv_get_dict_iter (source_dict, &source_it);
-		while (xmmsv_dict_iter_valid (source_it)) {
-			xmmsv_dict_iter_pair (source_it, &source, &value);
+		while (xmmsv_dict_iter_pair (source_it, &source, &value)) {
 			match_index = find_match_index (source, local_prefs);
 			/* keep first match or better match */
 			if (match_index >= 0 && (best_index < 0 ||
@@ -127,7 +124,7 @@ _sum_len_string_dict (const char *key, xmmsv_t *val, void *userdata)
 	const char *arg;
 	int *extra = (int *) userdata;
 
-	if (xmmsv_get_type (val) == XMMSV_TYPE_NONE) {
+	if (xmmsv_is_type (val, XMMSV_TYPE_NONE)) {
 		*extra += strlen (key) + 1; /* Leave room for the ampersand. */
 	} else if (xmmsv_get_string (val, &arg)) {
 		/* Leave room for the equals sign and ampersand. */
@@ -152,7 +149,6 @@ xmmsv_encode_url_full (const char *url, xmmsv_t *args)
 	static const char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0, extra = 0, l;
 	char *res;
-	xmmsv_dict_iter_t *it;
 
 	x_api_error_if (!url, "with a NULL url", NULL);
 
@@ -183,14 +179,14 @@ xmmsv_encode_url_full (const char *url, xmmsv_t *args)
 	}
 
 	if (args) {
+		xmmsv_dict_iter_t *it;
+		const char *arg, *key;
+		xmmsv_t *val;
+
 		for (xmmsv_get_dict_iter (args, &it), i = 0;
-		     xmmsv_dict_iter_valid (it);
+		     xmmsv_dict_iter_pair (it, &key, &val);
 		     xmmsv_dict_iter_next (it), i++) {
 
-			const char *arg, *key;
-			xmmsv_t *val;
-
-			xmmsv_dict_iter_pair (it, &key, &val);
 			l = strlen (key);
 			res[j] = (i == 0) ? '?' : '&';
 			j++;
