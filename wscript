@@ -96,6 +96,11 @@ tests
 pixmaps
 """.split()
 
+builtin_plugins_defaults = """
+equalizer
+replaygain
+""".split()
+
 def is_plugin(x):
     return os.path.exists(os.path.join("src/plugins", x, "wscript"))
 
@@ -211,6 +216,7 @@ def _configure_plugins(conf):
         selected_plugins = _check_exist(all_plugins, set(conf.options.enable_plugins),
                 "The following plugin(s) were requested, "
                 "but don't exist: %(unknown_plugins)s")
+
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     elif conf.options.disable_plugins is not None:
@@ -228,8 +234,13 @@ def _configure_plugins(conf):
         disabled_plugins = set()
         plugins_must_work = False
 
-    if conf.options.builtin_plugins:
-        builtin_plugins = _check_exist(selected_plugins, set(conf.options.builtin_plugins),
+    if conf.options.builtin_plugins is None:
+        builtin_plugins = selected_plugins.intersection(builtin_plugins_defaults)
+    else:
+        builtin_plugins = conf.options.builtin_plugins
+
+    if builtin_plugins and not conf.options.without_xmms2d:
+        builtin_plugins = _check_exist(selected_plugins, set(builtin_plugins),
                                       "The following plugin(s) were requested to be built-in, "
                                       "but weren't enabled: %(unknown_plugins)s")
         conf.env.XMMS_PLUGINS_BUILTIN = builtin_plugins
@@ -575,9 +586,9 @@ def options(opt):
                    type="string", dest="disable_plugins", default=None,
                    help="Comma separated list of plugins to skip")
     opt.add_option('--with-builtin-plugins', action="callback", callback=_list_cb,
-                   type="string", dest="builtin_plugins", default=["replaygain"],
+                   type="string", dest="builtin_plugins", default=None,
                    help="Comma separated list of plugins to link statically "
-                        "into daemon. [Default: replaygain]")
+                        "into daemon. [Default: %s]" % ','.join(builtin_plugins_defaults))
     opt.add_option('--with-default-output-plugin', type='string',
                    dest='default_output_plugin',
                    help="Force a default output plugin")
