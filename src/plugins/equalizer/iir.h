@@ -57,13 +57,13 @@ void set_gain(int index, int chn, float val);
 void set_preamp(int chn, float val);
 
 
-__inline__ int iir(void *d, int length, int nch, int extra_filtering);
+int iir(void *d, int length, int nch, int extra_filtering);
 
 #ifdef ARCH_X86
-__inline__ int round_trick(float floatvalue_to_round);
+int round_trick(float floatvalue_to_round);
 #endif
 #ifdef ARCH_PPC
-__inline__ int round_ppc(float x);
+int round_ppc(float x);
 #endif
 
 #define EQ_CHANNELS 2

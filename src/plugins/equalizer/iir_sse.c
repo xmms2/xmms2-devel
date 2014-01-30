@@ -100,7 +100,7 @@ static void setup_gain(int count_start)
       gain[count_start/4][j].f[count_start%4] = 0.;
 }
 
-__inline__ int iir(void *d, int length, int nch, int extra_filtering)
+int iir(void *d, int length, int nch, int extra_filtering)
 {
   /* Turn ON Flush-to-zero mode to avoid exceptions on underflow */
   FTZ_ON;

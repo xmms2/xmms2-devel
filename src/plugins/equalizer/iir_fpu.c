@@ -55,7 +55,7 @@ void clean_history(void)
   di = 0;
 }
 
-__inline__ int iir(void *d, int length, int nch, int extra_filtering)
+int iir(void *d, int length, int nch, int extra_filtering)
 {
 /*  FTZ_ON; */
   short *data = d;

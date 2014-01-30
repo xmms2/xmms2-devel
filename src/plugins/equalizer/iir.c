@@ -65,7 +65,7 @@ void config_iir(int srate, int bands, int original)
 /* Round function provided by Frank Klemm which saves around 100K
  * CPU cycles in my PIII for each call to the IIR function with 4K samples
  */
-__inline__ int round_trick(float floatvalue_to_round)
+int round_trick(float floatvalue_to_round)
 {
   float   floattmp ;
   int     rounded_value ;
