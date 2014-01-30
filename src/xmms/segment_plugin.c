@@ -26,6 +26,7 @@
  */
 typedef struct xmms_segment_data_St {
 	gint64 start_bytes;
+	gint64 seek_bytes;
 	gint64 current_bytes;
 	gint64 stop_bytes;
 } xmms_segment_data_t;
@@ -84,7 +85,7 @@ xmms_segment_init (xmms_xform_t *xform)
 	xmms_error_t error;
 	xmms_segment_data_t *data;
 	xmms_stream_type_t *ot;
-	gint64 samples;
+	gint64 res;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -92,14 +93,14 @@ xmms_segment_init (xmms_xform_t *xform)
 
 	/* get startms */
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_STARTMS;
-	if (!xmms_xform_metadata_get_str (xform, metakey, &nptr)) {
-		return TRUE;
-	}
-
-	startms = (gint) strtol (nptr, &endptr, 10);
-	if (*endptr != '\0') {
-		XMMS_DBG ("\"startms\" has garbage!");
-		return TRUE;
+	if (xmms_xform_metadata_get_str (xform, metakey, &nptr)) {
+		startms = (gint) strtol (nptr, &endptr, 10);
+		if (*endptr != '\0') {
+			XMMS_DBG ("\"startms\" has garbage, ignoring");
+			startms = 0;
+		}
+	} else {
+		startms = 0;
 	}
 
 	/* get stopms */
@@ -112,6 +113,8 @@ xmms_segment_init (xmms_xform_t *xform)
 		}
 	} else {
 		/* This is the last track, stopms is the playback duration */
+		/* FIXME: What if duration is not an integral number of ms? Then we end
+		   up chopping part off the song at the end. */
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		if (!xmms_xform_metadata_get_int (xform, metakey, &stopms)) {
 			XMMS_DBG ("\"duration\" doesnt exist, ignore stopms.");
@@ -122,6 +125,10 @@ xmms_segment_init (xmms_xform_t *xform)
 
 	/* set the correct duration */
 	if (stopms != INT_MAX) {
+		if (stopms < startms) {
+			xmms_log_error ("Negative duration requested, rejecting.");
+			return FALSE;
+		}
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		xmms_xform_metadata_set_int (xform, metakey, stopms - startms);
 	}
@@ -131,15 +138,27 @@ xmms_segment_init (xmms_xform_t *xform)
 
 	/* allocate and set data */
 	data = g_new0 (xmms_segment_data_t, 1);
-	data->current_bytes = data->start_bytes = xmms_sample_ms_to_bytes (ot, startms);
-	data->stop_bytes = xmms_sample_ms_to_bytes (ot, stopms);
+	data->start_bytes = xmms_sample_ms_to_bytes (ot, startms);
+	if (stopms == INT_MAX) {
+		data->stop_bytes = G_MAXINT64;
+	} else {
+		data->stop_bytes = xmms_sample_ms_to_bytes (ot, stopms);
+	}
+	data->current_bytes = data->seek_bytes = 0;
 
 	xmms_xform_private_data_set (xform, data);
 
-	/* Now seek to startms */
-
-	samples = xmms_sample_ms_to_samples (ot, startms);
-	xmms_xform_seek (xform, samples, XMMS_XFORM_SEEK_SET, &error);
+	/* Now seek to start of desired data */
+	if (data->start_bytes > 0) {
+		xmms_error_reset (&error);
+		res = xmms_segment_seek (xform, 0, XMMS_XFORM_SEEK_SET, &error);
+		if (res == -1) {
+			xmms_log_error ("Couldn't seek, assuming we're at 0. Error is '%s'",
+			                xmms_error_message_get (&error));
+			data->current_bytes = 0;
+			data->seek_bytes = data->start_bytes;
+		}
+	}
 
 	return TRUE;
 }
@@ -162,19 +181,26 @@ xmms_segment_read (xmms_xform_t *xform,
 {
 	xmms_segment_data_t *data;
 	gint res;
+	gint64 hi, lo;
 
+	g_return_val_if_fail(xform, -1);
 	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail(data, -1);
 
-	if (data && (data->current_bytes + len >= data->stop_bytes)) {
-		len = data->stop_bytes - data->current_bytes;
-	}
-
-	res = xmms_xform_read (xform, buf, len, error);
-	if (data && (res > 0)) {
+	do {
+		if (data->current_bytes >= data->stop_bytes) {
+			return 0; /* EOF */
+		}
+		res = xmms_xform_read (xform, buf, len, error);
+		if (res == 0) {
+			return 0; /* EOF */
+		}
+		lo = MAX(0,   data->seek_bytes - data->current_bytes);
+		hi = MIN(res, data->stop_bytes - data->current_bytes);
 		data->current_bytes += res;
-	}
-
-	return res;
+	} while (lo >= hi);
+	memmove (buf, buf + lo, hi-lo);
+	return hi-lo;
 }
 
 static gint64
@@ -185,34 +211,45 @@ xmms_segment_seek (xmms_xform_t *xform,
 {
 	xmms_segment_data_t *data;
 	xmms_stream_type_t *ot;
-	gint64 res;
-	gint64 tmp;
+	gint64 bytes, res;
 
-	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail(xform, -1);
 	ot = xmms_xform_outtype_get (xform);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail(data, -1);
 
-	if (!data) {
-		return xmms_xform_seek (xform, samples, whence, error);
+	bytes = xmms_sample_samples_to_bytes(ot, samples);
+	switch (whence) {
+	case XMMS_XFORM_SEEK_CUR:
+		bytes += data->current_bytes;
+		break;
+	case XMMS_XFORM_SEEK_SET:
+		bytes += data->start_bytes;
+		break;
+	case XMMS_XFORM_SEEK_END:
+		if (data->stop_bytes == G_MAXINT64) {
+			xmms_error_set (error, XMMS_ERROR_INVAL,
+			                "Cannot seek relative to end without stop_bytes");
+			return -1;
+		}
+		bytes += data->stop_bytes;
 	}
 
-	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
-
-	if (samples < 0 ||
-	    samples > xmms_sample_bytes_to_samples (ot, data->stop_bytes
-	                                                - data->start_bytes)) {
-		xmms_error_set (error,
-		                XMMS_ERROR_INVAL,
-		                "Seeking out of range");
+	if (bytes < data->start_bytes || bytes > data->stop_bytes) {
+		xmms_error_set (error, XMMS_ERROR_INVAL, "Seeking out of range");
 		return -1;
 	}
 
-	tmp = xmms_sample_bytes_to_samples (ot, data->start_bytes);
-	res = xmms_xform_seek (xform,
-	                       samples + tmp,
-	                       whence,
-	                       error);
+	res = xmms_xform_seek (xform, xmms_sample_bytes_to_samples (ot, bytes),
+	                       XMMS_XFORM_SEEK_SET, error);
+	if (res == -1) {
+		return -1;
+	}
+
 	data->current_bytes = xmms_sample_samples_to_bytes (ot, res);
-	return res - tmp;
+	data->seek_bytes = MAX(bytes, data->current_bytes);
+
+	return xmms_sample_bytes_to_samples (ot, data->seek_bytes - data->start_bytes);
 }
 
 XMMS_XFORM_BUILTIN_DEFINE (segment,
