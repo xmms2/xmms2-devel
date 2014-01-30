@@ -18,7 +18,7 @@
 
 #include <xmmspriv/xmms_xform.h>
 #include <xmmspriv/xmms_streamtype.h>
-#include <xmmspriv/xmms_sample.h>
+#include <xmmspriv/xmms_converter.h>
 #include <xmmspriv/xmms_xform.h>
 #include <xmms/xmms_medialib.h>
 
@@ -153,9 +153,9 @@ xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/pcm",
 	                              XMMS_STREAM_TYPE_PRIORITY,
-				      100,
+	                              100,
 	                              XMMS_STREAM_TYPE_NAME,
-				      "generic-pcmdata",
+	                              "generic-pcmdata",
 	                              XMMS_STREAM_TYPE_END);
 
 	converter_plugin = xform_plugin;

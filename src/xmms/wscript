@@ -38,7 +38,8 @@ source = """
     ringbuf_xform.c
     outputplugin.c
     bindata.c
-    sample.genpy
+    sample.c
+    converter.genpy
     utils.c
     visualization/format.c
     visualization/object.c

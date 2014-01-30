@@ -36,8 +36,6 @@ typedef enum {
 	/* DO NOT CHANGE ORDER! Just add to the end! */
 } xmms_sample_format_t;
 
-typedef struct xmms_sample_converter_St xmms_sample_converter_t;
-
 
 typedef gint8 xmms_samples8_t;
 #define XMMS_SAMPLES8_MIN -128
@@ -58,6 +56,9 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
+gint xmms_sample_frame_size_get (const xmms_stream_type_t *st) XMMS_PUBLIC;
+guint xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint ms) XMMS_PUBLIC;
+guint xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
 guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
 
 static inline gint

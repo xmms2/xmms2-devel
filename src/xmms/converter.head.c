@@ -17,7 +17,7 @@
 
 #include <glib.h>
 #include <math.h>
-#include <xmmspriv/xmms_sample.h>
+#include <xmmspriv/xmms_converter.h>
 #include <xmms/xmms_medialib.h>
 #include <xmms/xmms_object.h>
 #include <xmms/xmms_log.h>
@@ -169,47 +169,6 @@ xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_
 #endif
 }
 
-
-/**
- * convert from milliseconds to samples for this format.
- */
-guint
-xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint milliseconds)
-{
-	gint rate;
-	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	return (guint)(((gdouble) rate) * milliseconds / 1000);
-}
-
-/**
- * Convert from samples to milliseconds for this format
- */
-guint
-xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples)
-{
-	gint rate;
-	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	return (guint) (((gdouble)samples) * 1000.0 / rate);
-}
-
-/**
- * Convert from bytes to milliseconds for this format
- */
-guint
-xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint bytes)
-{
-	guint samples = bytes / xmms_sample_frame_size_get (st);
-	return xmms_sample_samples_to_ms (st, samples);
-}
-
-gint
-xmms_sample_frame_size_get (const xmms_stream_type_t *st)
-{
-	gint format, channels;
-	format = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_FORMAT);
-	channels = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	return xmms_sample_size_get (format) * channels;
-}
 
 static void
 recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)

@@ -14,19 +14,17 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XMMS_PRIV_SAMPLE_H__
-#define __XMMS_PRIV_SAMPLE_H__
+#ifndef __XMMS_PRIV_CONVERTER_H__
+#define __XMMS_PRIV_CONVERTER_H__
 
 #include <xmmspriv/xmms_streamtype.h>
 #include <xmms/xmms_sample.h>
 #include <xmms/xmms_medialib.h>
 
+typedef struct xmms_sample_converter_St xmms_sample_converter_t;
 typedef guint (*xmms_sample_conv_func_t) (xmms_sample_converter_t *, xmms_sample_t *, guint , xmms_sample_t *);
 
 xmms_sample_converter_t *xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to);
-gint xmms_sample_frame_size_get (const xmms_stream_type_t *st);
-guint xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint ms);
-guint xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples);
 
 gint64 xmms_sample_convert_scale (xmms_sample_converter_t *conv, gint64 samples);
 gint64 xmms_sample_convert_rev_scale (xmms_sample_converter_t *conv, gint64 samples);
