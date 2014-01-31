@@ -275,7 +275,7 @@ xmms_ca_new (xmms_output_t *output)
 
 	data = g_new0 (xmms_ca_data_t, 1);
 
-	res = OpenAComponent (comp, &data->au);
+	OpenAComponent (comp, &data->au);
 	if (comp == NULL) {
 		xmms_log_error ("Opening component failed!");
 		g_free (data);
