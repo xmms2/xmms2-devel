@@ -180,7 +180,7 @@ static gboolean
 xmms_gme_init (xmms_xform_t *xform)
 {
 	xmms_gme_data_t *data;
-	gme_err_t init_error;
+	gme_err_t error;
 	GString *file_contents; /* The raw data from the file. */
 	gme_info_t *metadata = NULL;
 	xmms_config_property_t *val;
@@ -234,12 +234,12 @@ xmms_gme_init (xmms_xform_t *xform)
 		g_string_append_len (file_contents, buf, ret);
 	}
 
-	init_error = gme_open_data (file_contents->str, file_contents->len, &data->emu, samplerate);
+	error = gme_open_data (file_contents->str, file_contents->len, &data->emu, samplerate);
 
 	g_string_free (file_contents, TRUE);
 
-	if (init_error) {
-		XMMS_DBG ("gme_open_data returned an error: %s", init_error);
+	if (error) {
+		XMMS_DBG ("gme_open_data returned an error: %s", error);
 		return FALSE;
 	}
 
@@ -257,10 +257,9 @@ xmms_gme_init (xmms_xform_t *xform)
 	/*
 	 *  Get metadata here
 	 */
-	init_error = gme_track_info (data->emu, &metadata, subtune);
-	if (init_error) {
-		XMMS_DBG ("Couldn't get GME track info: %s", init_error);
-		init_error = "";
+	error = gme_track_info (data->emu, &metadata, subtune);
+	if (error) {
+		XMMS_DBG ("Couldn't get GME track info: %s", error);
 	} else {
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, metadata->song);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, metadata->author);
@@ -306,9 +305,9 @@ xmms_gme_init (xmms_xform_t *xform)
 		XMMS_DBG ("gme.stereodepth = %f out of range 0.0 - 1.0; not setting.", stereodepth);
 	}
 
-	init_error = gme_start_track (data->emu, subtune);
-	if (init_error) {
-		XMMS_DBG ("gme_start_track returned an error: %s", init_error);
+	error = gme_start_track (data->emu, subtune);
+	if (error) {
+		XMMS_DBG ("gme_start_track returned an error: %s", error);
 		gme_free_info (metadata);
 		return FALSE;
 	}
