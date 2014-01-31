@@ -141,7 +141,7 @@ cmd_flag_pos_get_playlist (cli_context_t *ctx, command_t *cmd,
 {
 	gboolean next, at_isset;
 	gint at;
-	gint tmp;
+	gint tmp = -1;
 
 	at_isset = command_flag_int_get (cmd, "at", &at);
 	command_flag_boolean_get (cmd, "next", &next);
