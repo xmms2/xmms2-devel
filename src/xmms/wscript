@@ -34,7 +34,7 @@ source = """
     xform_plugin.c
     streamtype.c
     converter_plugin.c
-    segment_plugin.c
+    cutter_plugins.c
     ringbuf_xform.c
     outputplugin.c
     bindata.c

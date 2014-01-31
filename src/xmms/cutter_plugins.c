@@ -24,33 +24,32 @@
 /*
  * Data structure
  */
-typedef struct xmms_segment_data_St {
+typedef struct xmms_cutter_data_St {
 	gint64 start_bytes;
 	gint64 seek_bytes;
 	gint64 current_bytes;
 	gint64 stop_bytes;
-} xmms_segment_data_t;
+} xmms_cutter_data_t;
 
 
 /*
  * Function prototypes
  */
 
-static gboolean xmms_segment_init (xmms_xform_t *xform);
-static void xmms_segment_destroy (xmms_xform_t *xform);
 static gboolean xmms_segment_plugin_setup (xmms_xform_plugin_t *xform_plugin);
-static gint xmms_segment_read (xmms_xform_t *xform,
-                               xmms_sample_t *buf,
-                               gint len,
-                               xmms_error_t *error);
-static gint64 xmms_segment_seek (xmms_xform_t *xform,
-                                 gint64 samples,
-                                 xmms_xform_seek_mode_t whence,
-                                 xmms_error_t *error);
+static gboolean xmms_segment_init (xmms_xform_t *xform);
+
+static gboolean xmms_nibbler_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_nibbler_init (xmms_xform_t *xform);
+
+static gboolean xmms_cutter_init (xmms_xform_t *xform, gint64 start_bytes, gint64 stop_bytes);
+static void xmms_cutter_destroy (xmms_xform_t *xform);
+static gint xmms_cutter_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *error);
+static gint64 xmms_cutter_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *error);
 
 
 /*
- * Plugin header
+ * Segment specific functions
  */
 
 static gboolean
@@ -60,9 +59,9 @@ xmms_segment_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_segment_init;
-	methods.destroy = xmms_segment_destroy;
-	methods.read = xmms_segment_read;
-	methods.seek = xmms_segment_seek;
+	methods.destroy = xmms_cutter_destroy;
+	methods.read = xmms_cutter_read;
+	methods.seek = xmms_cutter_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -79,13 +78,10 @@ xmms_segment_init (xmms_xform_t *xform)
 {
 	const gchar *nptr;
 	char *endptr;
-	gint startms;
-	gint stopms;
+	gint startms, stopms;
+	gint64 startbytes, stopbytes;
 	const gchar *metakey;
-	xmms_error_t error;
-	xmms_segment_data_t *data;
-	xmms_stream_type_t *ot;
-	gint64 res;
+	xmms_stream_type_t *intype;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -123,35 +119,123 @@ xmms_segment_init (xmms_xform_t *xform)
 		}
 	}
 
-	/* set the correct duration */
-	if (stopms != INT_MAX) {
-		if (stopms < startms) {
+	/* some calculation */
+	intype = xmms_xform_intype_get (xform);
+
+	startbytes = xmms_sample_ms_to_bytes (intype, startms);
+	if (stopms == INT_MAX) {
+		stopbytes = G_MAXINT64;
+	} else {
+		stopbytes = xmms_sample_ms_to_bytes (intype, stopms);
+	}
+
+	return xmms_cutter_init (xform, startbytes, stopbytes);
+}
+
+
+/*
+ * Nibbler specific functions
+ */
+
+static gboolean
+xmms_nibbler_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+{
+	xmms_xform_methods_t methods;
+
+	XMMS_XFORM_METHODS_INIT (methods);
+	methods.init = xmms_nibbler_init;
+	methods.destroy = xmms_cutter_destroy;
+	methods.read = xmms_cutter_read;
+	methods.seek = xmms_cutter_seek;
+
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-uncut-pcm",
+	                              XMMS_STREAM_TYPE_NAME,
+	                              "pcm with startsamples/stopsamples auxdata",
+	                              XMMS_STREAM_TYPE_END);
+
+	return TRUE;
+}
+
+static gboolean
+xmms_nibbler_init (xmms_xform_t *xform)
+{
+	gint64 tmp, startbytes, stopbytes;
+	xmms_stream_type_t *intype;
+
+	g_return_val_if_fail (xform, FALSE);
+	intype = xmms_xform_intype_get (xform);
+
+	if (xmms_xform_auxdata_get_int64 (xform, "startsamples", &tmp)) {
+		startbytes = xmms_sample_samples_to_bytes (intype, tmp);
+	} else {
+		startbytes = 0;
+	}
+	if (xmms_xform_auxdata_get_int64 (xform, "stopsamples", &tmp)) {
+		stopbytes = xmms_sample_samples_to_bytes (intype, tmp);
+	} else {
+		stopbytes = G_MAXINT64;
+	}
+
+	return xmms_cutter_init (xform, startbytes, stopbytes);
+}
+
+/*
+ * Shared functions
+ */
+
+static gboolean
+xmms_cutter_init (xmms_xform_t *xform, gint64 start_bytes, gint64 stop_bytes)
+{
+	gint fmt, chans, srate;
+	xmms_cutter_data_t *data;
+	xmms_error_t error;
+	gint64 res;
+
+	g_return_val_if_fail (xform, FALSE);
+
+	/* Set outdata_type */
+	fmt   = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_FORMAT);
+	chans = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	srate = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT, fmt,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS, chans,
+	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE, srate,
+	                             XMMS_STREAM_TYPE_END);
+
+	/* Set duration */
+	if (stop_bytes != G_MAXINT64) {
+		const gchar *metakey;
+		gint64 dur;
+
+		if (stop_bytes < start_bytes) {
 			xmms_log_error ("Negative duration requested, rejecting.");
 			return FALSE;
 		}
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
-		xmms_xform_metadata_set_int (xform, metakey, stopms - startms);
+		dur = xmms_sample_bytes_to_ms (xmms_xform_outtype_get (xform),
+		                               stop_bytes - start_bytes);
+		xmms_xform_metadata_set_int (xform, metakey, dur);
 	}
-
-	/* some calculation */
-	ot = xmms_xform_outtype_get (xform);
 
 	/* allocate and set data */
-	data = g_new0 (xmms_segment_data_t, 1);
-	data->start_bytes = xmms_sample_ms_to_bytes (ot, startms);
-	if (stopms == INT_MAX) {
-		data->stop_bytes = G_MAXINT64;
-	} else {
-		data->stop_bytes = xmms_sample_ms_to_bytes (ot, stopms);
-	}
-	data->current_bytes = data->seek_bytes = 0;
+	data = g_new0 (xmms_cutter_data_t, 1);
+	data->start_bytes   = start_bytes;
+	data->seek_bytes    = 0;
+	data->current_bytes = 0;
+	data->stop_bytes    = stop_bytes;
 
 	xmms_xform_private_data_set (xform, data);
 
 	/* Now seek to start of desired data */
 	if (data->start_bytes > 0) {
 		xmms_error_reset (&error);
-		res = xmms_segment_seek (xform, 0, XMMS_XFORM_SEEK_SET, &error);
+		res = xmms_cutter_seek (xform, 0, XMMS_XFORM_SEEK_SET, &error);
 		if (res == -1) {
 			xmms_log_error ("Couldn't seek, assuming we're at 0. Error is '%s'",
 			                xmms_error_message_get (&error));
@@ -162,11 +246,10 @@ xmms_segment_init (xmms_xform_t *xform)
 
 	return TRUE;
 }
-
 static void
-xmms_segment_destroy (xmms_xform_t *xform)
+xmms_cutter_destroy (xmms_xform_t *xform)
 {
-	xmms_segment_data_t *data;
+	xmms_cutter_data_t *data;
 
 	data = xmms_xform_private_data_get (xform);
 	if (data)
@@ -174,12 +257,10 @@ xmms_segment_destroy (xmms_xform_t *xform)
 }
 
 static gint
-xmms_segment_read (xmms_xform_t *xform,
-                   xmms_sample_t *buf,
-                   gint len,
-                   xmms_error_t *error)
+xmms_cutter_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                  xmms_error_t *error)
 {
-	xmms_segment_data_t *data;
+	xmms_cutter_data_t *data;
 	gint res;
 	gint64 hi, lo;
 
@@ -204,12 +285,10 @@ xmms_segment_read (xmms_xform_t *xform,
 }
 
 static gint64
-xmms_segment_seek (xmms_xform_t *xform,
-                   gint64 samples,
-                   xmms_xform_seek_mode_t whence,
-                   xmms_error_t *error)
+xmms_cutter_seek (xmms_xform_t *xform, gint64 samples,
+                  xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
-	xmms_segment_data_t *data;
+	xmms_cutter_data_t *data;
 	xmms_stream_type_t *ot;
 	gint64 bytes, res;
 
@@ -252,8 +331,19 @@ xmms_segment_seek (xmms_xform_t *xform,
 	return xmms_sample_bytes_to_samples (ot, data->seek_bytes - data->start_bytes);
 }
 
+
+/*
+ * Setup of plugins
+ */
+
 XMMS_XFORM_BUILTIN_DEFINE (segment,
                            "Segment Effect",
                            XMMS_VERSION,
                            "Handling segment information specified by startms/stopms",
                            xmms_segment_plugin_setup);
+
+XMMS_XFORM_BUILTIN_DEFINE (nibbler,
+                           "Nibbler",
+                           XMMS_VERSION,
+                           "Discarding padding using auxdata startsamples/stopsamples",
+                           xmms_nibbler_plugin_setup);

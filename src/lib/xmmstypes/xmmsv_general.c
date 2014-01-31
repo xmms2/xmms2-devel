@@ -30,8 +30,9 @@ const char *xmmsv_default_source_pref[] = {
 	"server",
 	"client/*",
 	"plugin/playlist",
-	"plugin/id3v2",
 	"plugin/segment",
+	"plugin/nibbler",
+	"plugin/id3v2",
 	"plugin/*",
 	"*",
 	NULL
