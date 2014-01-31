@@ -63,13 +63,13 @@ simple_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 	}
 
 	if (args->debug && (log_level & G_LOG_LEVEL_DEBUG)) {
-		g_print ("DEBUG: %s\n", message);
+		g_print ("DEBUG: %s: %s\n", log_domain, message);
 	} else if (log_level & ~G_LOG_LEVEL_DEBUG) {
 		if (log_level & (G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_INFO |
 		                 G_LOG_LEVEL_MESSAGE)) {
-			g_print ("%s\n", message);
+			g_print ("%s: %s\n", log_domain, message);
 		} else {
-			g_printerr ("xmms2-launcher: %s\n", message);
+			g_printerr ("%s: %s\n", log_domain, message);
 		}
 	}
 
