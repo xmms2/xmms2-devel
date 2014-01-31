@@ -82,18 +82,6 @@ struct xmms_medialib_St {
 	s4_sourcepref_t *default_sp;
 };
 
-static const gchar *source_pref[] = {
-	"server",
-	"client/*",
-	"plugin/playlist",
-	"plugin/segment",
-	"plugin/nibbler",
-	"plugin/id3v2",
-	"plugin/*",
-	"*",
-	NULL
-};
-
 static void
 xmms_medialib_destroy (xmms_object_t *object)
 {
@@ -145,7 +133,7 @@ xmms_medialib_init (void)
 
 	medialib_path = xmms_config_property_get_string (cfg);
 	medialib->s4 = xmms_medialib_database_open (medialib_path, indices);
-	medialib->default_sp = s4_sourcepref_create (source_pref);
+	medialib->default_sp = s4_sourcepref_create (xmmsv_default_source_pref);
 
 	return medialib;
 }
