@@ -32,6 +32,8 @@ xmmsv_t *xmmsv_coll_new (xmmsv_coll_type_t type) XMMS_PUBLIC XMMS_DEPRECATED;
 xmmsv_t *xmmsv_coll_ref (xmmsv_t *coll) XMMS_PUBLIC XMMS_DEPRECATED;
 void xmmsv_coll_unref (xmmsv_t *coll) XMMS_PUBLIC XMMS_DEPRECATED;
 
+xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type) XMMS_PUBLIC;
+
 void xmmsv_coll_set_idlist (xmmsv_t *coll, int ids[]) XMMS_PUBLIC;
 void xmmsv_coll_add_operand (xmmsv_t *coll, xmmsv_t *op) XMMS_PUBLIC;
 void xmmsv_coll_remove_operand (xmmsv_t *coll, xmmsv_t *op) XMMS_PUBLIC;

@@ -58,7 +58,6 @@ xmmsv_t *xmmsv_new_error (const char *errstr) XMMS_PUBLIC; /* FIXME: err id? */
 xmmsv_t *xmmsv_new_int (int64_t i) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_float (float i) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_string (const char *s) XMMS_PUBLIC;
-xmmsv_t *xmmsv_new_coll (xmmsv_coll_type_t type) XMMS_PUBLIC;
 xmmsv_t *xmmsv_new_bin (const unsigned char *data, unsigned int len) XMMS_PUBLIC;
 
 xmmsv_t *xmmsv_copy (xmmsv_t *val) XMMS_PUBLIC;
