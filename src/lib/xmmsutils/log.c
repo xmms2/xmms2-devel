@@ -71,10 +71,16 @@ xmmsc_log_default_handler (const char *domain, xmmsc_log_level_t level, const ch
 }
 
 static void
+xmmsc_log_handle (const char *domain, xmmsc_log_level_t level, const char *msg)
+{
+	log_handler_f (domain, level, msg, log_handler_udata);
+}
+
+static void
 xmmsc_log_va (const char *domain, xmmsc_log_level_t level, const char *fmt, va_list ap)
 {
 	char *msg = x_vasprintf (fmt, ap);
-	log_handler_f (domain, level, msg, log_handler_udata);
+	xmmsc_log_handle (domain, level, msg);
 	free (msg);
 }
 
