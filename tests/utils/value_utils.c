@@ -138,8 +138,11 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 							break;
 						}
 					}
-					if (!match)
+					if (!match) {
+						if (matched != NULL)
+							free (matched);
 						return 0;
+					}
 				}
 			}
 
