@@ -439,7 +439,9 @@ cdef class XmmsCore:
 		if clientname is None:
 			clientname = "UnnamedPythonClient"
 		self.clientname = clientname
-		self.source_preference = XmmsSourcePreference(["client/"+clientname, "server", "plugins/*", "client/*", "*"])
+		default_sp = get_default_source_pref()
+		default_sp.insert(0, enforce_unicode("client/"+clientname))
+		self.source_preference = XmmsSourcePreference(default_sp)
 		self.result_tracker = XmmsResultTracker() # Keep track of all results that set a notifier.
 		self.new_connection()
 

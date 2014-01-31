@@ -101,3 +101,4 @@ cdef class CollectionIDList(CollectionRef):
 
 cdef create_coll(xmmsv_t *coll)
 cdef xmmsv_t *create_native_value(value) except NULL
+cdef get_default_source_pref()

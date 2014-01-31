@@ -933,4 +933,12 @@ def coll_parse(pattern):
 		raise ValueError("Unable to parse the pattern")
 	return create_coll(coll)
 
+cdef get_default_source_pref():
+	cdef int i = 0
+	sourcepref = []
+	while xmmsv_default_source_pref[i] != NULL:
+		sourcepref.append(to_unicode(xmmsv_default_source_pref[i]))
+		i += 1
+	return sourcepref
+
 XMMSValue = XmmsValue

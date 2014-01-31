@@ -38,6 +38,8 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	enum:
 		XMMS_ACTIVE_PLAYLIST
 
+	const_char *xmmsv_default_source_pref[]
+
 cdef extern from "xmmsc/xmmsv.h":
 
 	# xmmsc/xmmsv_general.h
