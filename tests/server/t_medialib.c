@@ -262,7 +262,7 @@ CASE (test_session)
 	spec = xmmsv_from_xson ("{ 'type': 'count' }");
 
 	session = xmms_medialib_session_begin (medialib);
-	result = xmms_medialib_query (session, universe, spec, &err);
+	xmms_medialib_query (session, universe, spec, &err);
 	xmms_medialib_session_abort (session);
 
 	xmmsv_unref (universe);
