@@ -169,6 +169,11 @@ xmms_mid1_init (xmms_xform_t *xform)
 	xmms_xform_private_data_set (xform, data);
 
 	ret = xmms_xform_read (xform, buf, 4, &error);
+	if (ret != 4) {
+		xmms_log_error ("Could read MIDI file type");
+		goto cleanup;
+	}
+
 	if (strncmp ((char *)buf, "RIFF", 4) == 0) {
 		/* This is an .rmi file, find the data chunk */
 		gboolean is_rmid = FALSE;
@@ -187,6 +192,10 @@ xmms_mid1_init (xmms_xform_t *xform)
 				 * check the RIFF header above.) */
 				is_rmid = TRUE;
 				ret = xmms_xform_read (xform, buf, 4, &error);
+				if (ret != 4) {
+					xmms_log_error ("Could not read MThd signature");
+					goto cleanup;
+				}
 				break;
 			}
 
@@ -207,6 +216,11 @@ xmms_mid1_init (xmms_xform_t *xform)
 
 	/* Once we get here we're just after the MThd signature */
 	ret = xmms_xform_read (xform, buf, 10, &error);
+	if (ret != 10) {
+		xmms_log_error ("Could not read MThd header");
+		goto cleanup;
+	}
+
 	gint header_len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
 	if (header_len != 6) {
 		xmms_log_error ("Unexpected MThd header length");
