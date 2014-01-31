@@ -121,12 +121,14 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd, xmm
 		return FALSE;
 	}
 
-	if (port_ptr) {
-		*host = g_strndup (stripped, port_ptr - stripped);
-	} else if (cmd_ptr) {
-		*host = g_strndup (stripped, cmd_ptr - stripped);
-	} else {
-		*host = g_strdup (stripped);
+	if (host) {
+		if (port_ptr) {
+			*host = g_strndup (stripped, port_ptr - stripped);
+		} else if (cmd_ptr) {
+			*host = g_strndup (stripped, cmd_ptr - stripped);
+		} else {
+			*host = g_strdup (stripped);
+		}
 	}
 
 	return TRUE;
