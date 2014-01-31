@@ -272,7 +272,7 @@ init_err:
 static gint
 read_audio_tag_header (xmms_xform_t *xform)
 {
-	gint ret;
+	gint ret = 0;
 	xmms_flv_data_t *data;
 	guint8 header[FLV_TAG_SIZE + 1];
 	xmms_error_t err;
