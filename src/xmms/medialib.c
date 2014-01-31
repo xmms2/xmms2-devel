@@ -959,7 +959,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 {
 	s4_resultset_t *set;
 	s4_val_t *song_id;
-	xmmsv_t *ret, *v_entry;
+	xmmsv_t *ret, *id;
 	gint i;
 
 	song_id = s4_val_new_int (entry);
@@ -974,6 +974,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 
 		res = s4_resultset_get_result (set, 0, 0);
 		while (res != NULL) {
+			xmmsv_t *v_entry = NULL;
 			const s4_val_t *val;
 			const char *s;
 			gint32 i;
@@ -994,9 +995,10 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	}
 
 	s4_resultset_free (set);
-	v_entry = xmmsv_new_int (entry);
-	xmms_medialib_tree_add_tuple (ret, "id", "server", v_entry);
-	xmmsv_unref (v_entry);
+
+	id = xmmsv_new_int (entry);
+	xmms_medialib_tree_add_tuple (ret, "id", "server", id);
+	xmmsv_unref (id);
 
 	return ret;
 }
