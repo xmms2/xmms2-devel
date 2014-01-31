@@ -239,7 +239,7 @@ command_trie_elem_insert (command_trie_t* node, gchar c)
 			node->next = g_list_prepend (curr, t);
 		} else {
 			/* Insert at the correct position (assign to suppress warning) */
-			prev = g_list_insert_before (prev, curr, t);
+			g_list_insert_before (prev, curr, t);
 		}
 	}
 
