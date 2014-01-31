@@ -38,60 +38,55 @@ typedef struct {
 	xmmsv_t *list;
 } set_data_t;
 
-static gboolean
-aggregate_first (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_first (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
-	if (*current != NULL) {
-		return FALSE;
+	if (current != NULL) {
+		return current;
 	}
 
 	if (str_value != NULL) {
-		*current = xmmsv_new_string (str_value);
+		current = xmmsv_new_string (str_value);
 	} else {
-		*current = xmmsv_new_int (int_value);
+		current = xmmsv_new_int (int_value);
 	}
 
-	return TRUE;
+	return current;
 }
 
-static gboolean
-aggregate_list (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_list (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
-	gboolean created = FALSE;
-
-	if (*current == NULL) {
-		*current = xmmsv_new_list ();
-		created = TRUE;
+	if (current == NULL) {
+		current = xmmsv_new_list ();
 	}
 
 	if (str_value != NULL) {
-		xmmsv_list_append_string (*current, str_value);
+		xmmsv_list_append_string (current, str_value);
 	} else {
-		xmmsv_list_append_int (*current, int_value);
+		xmmsv_list_append_int (current, int_value);
 	}
 
-	return created;
+	return current;
 }
 
-static gboolean
-aggregate_set (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_set (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
-	gboolean created = FALSE;
 	set_data_t *data;
 	xmmsv_t *value;
 	gpointer key;
 	guint length;
 
-	if (*current == NULL) {
+	if (current == NULL) {
 		set_data_t init = {
 			.ht = g_hash_table_new (NULL, NULL),
 			.list = xmmsv_new_list ()
 		};
-		*current = xmmsv_new_bin ((guchar *) &init, sizeof (set_data_t));
-		created = TRUE;
+		current = xmmsv_new_bin ((guchar *) &init, sizeof (set_data_t));
 	}
 
-	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+	xmmsv_get_bin (current, (const guchar **) &data, &length);
 
 	if (str_value != NULL) {
 		value = xmmsv_new_string (str_value);
@@ -108,95 +103,84 @@ aggregate_set (xmmsv_t **current, gint int_value, const gchar *str_value)
 
 	xmmsv_unref (value);
 
-	return created;
+	return current;
 }
 
-static gboolean
-aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_sum (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
 	int64_t old_value = 0;
 
 	if (str_value != NULL) {
 		/* 'sum' only applies to numbers */
-		return FALSE;
+		return current;
 	}
 
-	if (*current != NULL) {
-		xmmsv_get_int64 (*current, &old_value);
-		xmmsv_unref (*current);
+	if (current != NULL) {
+		xmmsv_get_int64 (current, &old_value);
 	}
 
-	*current = xmmsv_new_int (old_value + int_value);
-
-	return TRUE;
+	return xmmsv_new_int (old_value + int_value);
 }
 
-static gboolean
-aggregate_min (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_min (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
 	gint old_value;
 
 	if (str_value != NULL) {
 		/* 'min' only applies to numbers */
-		return FALSE;
+		return current;
 	}
 
-	if (*current == NULL) {
-		*current = xmmsv_new_int (int_value);
-		return TRUE;
+	if (current == NULL) {
+		return xmmsv_new_int (int_value);
 	}
 
-	xmmsv_get_int (*current, &old_value);
+	xmmsv_get_int (current, &old_value);
 
 	if (old_value > int_value) {
-		xmmsv_unref (*current);
-		*current = xmmsv_new_int (int_value);
-		return TRUE;
+		return xmmsv_new_int (int_value);
 	}
 
-	return FALSE;
+	return current;
 }
 
-static gboolean
-aggregate_max (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_max (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
 	gint old_value;
 
 	if (str_value != NULL) {
 		/* 'max' only applies to numbers */
-		return FALSE;
+		return current;
 	}
 
-	if (*current == NULL) {
-		*current = xmmsv_new_int (int_value);
-		return TRUE;
+	if (current == NULL) {
+		return xmmsv_new_int (int_value);
 	}
 
-	xmmsv_get_int (*current, &old_value);
+	xmmsv_get_int (current, &old_value);
 
-	if (old_value > int_value) {
-		xmmsv_unref (*current);
-		*current = xmmsv_new_int (int_value);
-		return TRUE;
+	if (old_value < int_value) {
+		return xmmsv_new_int (int_value);
 	}
 
-	return FALSE;
+	return current;
 }
 
-static gboolean
-aggregate_random (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_random (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
-	gboolean created = FALSE;
 	random_data_t *data;
 	guint length;
 
-	if (*current == NULL) {
+	if (current == NULL) {
 		random_data_t init = { 0 };
-		*current = xmmsv_new_bin ((guchar *) &init, sizeof (random_data_t));
-		created = TRUE;
+		current = xmmsv_new_bin ((guchar *) &init, sizeof (random_data_t));
 	}
 
-	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+	xmmsv_get_bin (current, (const guchar **) &data, &length);
 
 	data->n++;
 
@@ -212,30 +196,28 @@ aggregate_random (xmmsv_t **current, gint int_value, const gchar *str_value)
 		}
 	}
 
-	return created;
+	return current;
 }
 
-static gboolean
-aggregate_average (xmmsv_t **current, gint int_value, const gchar *str_value)
+static xmmsv_t *
+aggregate_average (xmmsv_t *current, gint int_value, const gchar *str_value)
 {
-	gboolean created = FALSE;
 	avg_data_t *data;
 	guint length;
 
-	if (*current == NULL) {
+	if (current == NULL) {
 		avg_data_t init = { 0 };
-		*current = xmmsv_new_bin ((guchar *) &init, sizeof (avg_data_t));
-		created = TRUE;
+		current = xmmsv_new_bin ((guchar *) &init, sizeof (avg_data_t));
 	}
 
-	xmmsv_get_bin (*current, (const guchar **) &data, &length);
+	xmmsv_get_bin (current, (const guchar **) &data, &length);
 
 	if (str_value == NULL) {
 		data->n++;
 		data->sum += int_value;
 	}
 
-	return created;
+	return current;
 }
 
 /* Converts an S4 result (a column) into an xmmsv values */
@@ -243,7 +225,7 @@ static void *
 result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
                  xmms_fetch_spec_t *spec)
 {
-	static gboolean (*aggregate_functions[AGGREGATE_END])(xmmsv_t **c, gint i, const gchar *s) = {
+	static xmmsv_t * (*aggregate_functions[AGGREGATE_END])(xmmsv_t *c, gint i, const gchar *s) = {
 		aggregate_first,
 		aggregate_sum,
 		aggregate_max,
@@ -257,7 +239,7 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 	xmmsv_t *dict, *current;
 	const gchar *str_value, *key = NULL;
 	gint32 i, int_value;
-	gboolean changed;
+	xmmsv_t *newval;
 
 	g_return_val_if_fail (spec->data.metadata.get_size > 0, ret);
 	g_return_val_if_fail (spec->data.metadata.get_size <= METADATA_END, ret);
@@ -336,14 +318,19 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 			}
 		}
 
-		changed = aggregate_functions[spec->data.metadata.aggr_func](&current, int_value, str_value);
+		newval = aggregate_functions[spec->data.metadata.aggr_func](current, int_value, str_value);
 
 		/* Update the previous dict (if there is one) */
-		if (i > 1 && changed) {
-			xmmsv_dict_set (dict, key, current);
-			xmmsv_unref (current);
-		} else if (changed) {
-			ret = current;
+		if (newval != current) {
+			if (i > 1) {
+				xmmsv_dict_set (dict, key, newval);
+				xmmsv_unref (newval);
+			} else {
+				ret = newval;
+				if (current != NULL) {
+					xmmsv_unref (current);
+				}
+			}
 		}
 
 		res = s4_result_next (res);

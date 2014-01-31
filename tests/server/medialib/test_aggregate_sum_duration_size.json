@@ -1,0 +1,22 @@
+{
+    "medialib": [
+        { "duration": 10, "size": 11 },
+        { "duration": 20, "size": 12 },
+        { "duration": 30, "size": 13 }
+    ],
+    "collection": {
+        "type": "universe"
+    },
+    "specification": {
+        "type": "metadata",
+        "fields": ["duration", "size"],
+        "get": ["field", "value"],
+        "aggregate": "sum"
+    },
+    "expected": {
+        "result": {
+            "size": 36,
+            "duration": 60
+        }
+    }
+}
