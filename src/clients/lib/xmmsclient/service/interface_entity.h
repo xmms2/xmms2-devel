@@ -33,7 +33,7 @@ xmmsc_sc_namespace_t *xmmsc_sc_interface_entity_get_namespace (xmmsc_sc_interfac
 xmmsc_sc_interface_entity_type_t xmmsc_sc_interface_entity_get_type (xmmsc_sc_interface_entity_t *ifent);
 
 /* broadcasts */
-void xmmsc_sc_interface_entity_broadcast_add_id (xmmsc_sc_interface_entity_t *bcast, int64_t id);
+void xmmsc_sc_interface_entity_broadcast_add_id (xmmsc_sc_interface_entity_t *bcast, int id);
 xmmsv_t *xmmsc_sc_interface_entity_broadcast_get_ids (xmmsc_sc_interface_entity_t *bcast);
 xmmsv_t *xmmsc_sc_interface_entity_broadcast_introspect (xmmsc_sc_interface_entity_t *bcast);
 

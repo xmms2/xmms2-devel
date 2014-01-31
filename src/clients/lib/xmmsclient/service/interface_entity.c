@@ -532,7 +532,7 @@ xmmsc_sc_interface_entity_method_introspect (xmmsc_sc_interface_entity_t *method
  */
 void
 xmmsc_sc_interface_entity_broadcast_add_id (xmmsc_sc_interface_entity_t *bcast,
-                                            int64_t id)
+                                            int id)
 {
 	xmmsv_t *idval;
 

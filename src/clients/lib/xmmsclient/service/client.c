@@ -20,7 +20,7 @@
 
 #define XMMSC_SC_ENTITY_NAME_PATTERN "[_a-zA-Z][_a-zA-Z0-9]*"
 
-static xmmsc_result_t *introspect_internal (xmmsc_connection_t *c, int64_t dest, xmmsv_t *entity, bool enforce_type, xmmsc_sc_interface_entity_type_t type, xmmsv_t *keyfilter);
+static xmmsc_result_t *introspect_internal (xmmsc_connection_t *c, int dest, xmmsv_t *entity, bool enforce_type, xmmsc_sc_interface_entity_type_t type, xmmsv_t *keyfilter);
 static bool validate_entity_name (const char *name);
 
 /**
@@ -32,7 +32,7 @@ static bool validate_entity_name (const char *name);
  * @param nargs A dict of named arguments. May be NULL.
  */
 xmmsc_result_t *
-xmmsc_sc_call (xmmsc_connection_t *c, int64_t dest, xmmsv_t *method,
+xmmsc_sc_call (xmmsc_connection_t *c, int dest, xmmsv_t *method,
                xmmsv_t *pargs, xmmsv_t *nargs)
 {
 	xmmsc_result_t *res;
@@ -88,7 +88,7 @@ xmmsc_sc_call (xmmsc_connection_t *c, int64_t dest, xmmsv_t *method,
  * \sa xmmsc_result_notifier_set_default and others.
  */
 xmmsc_result_t *
-xmmsc_sc_broadcast_subscribe (xmmsc_connection_t *c, int64_t dest,
+xmmsc_sc_broadcast_subscribe (xmmsc_connection_t *c, int dest,
                               xmmsv_t *broadcast)
 {
 	xmmsv_t *msg;
@@ -166,7 +166,7 @@ xmmsc_sc_broadcast_emit (xmmsc_connection_t *c, xmmsv_t *broadcast,
 
 #define GEN_SC_INTROSPECT_FUNC(entity, type) \
 xmmsc_result_t * \
-xmmsc_sc_introspect_##entity (xmmsc_connection_t *c, int64_t dest, \
+xmmsc_sc_introspect_##entity (xmmsc_connection_t *c, int dest, \
                               xmmsv_t *entity) \
 { \
 	x_check_conn (c, NULL); \
@@ -238,7 +238,7 @@ GEN_SC_INTROSPECT_FUNC(broadcast, XMMSC_SC_INTERFACE_ENTITY_TYPE_BROADCAST);
  * @param key The key to the constant.
  */
 xmmsc_result_t *
-xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int64_t dest, xmmsv_t *nms,
+xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int dest, xmmsv_t *nms,
                               const char *key)
 {
 	xmmsv_t *keyfilter;
@@ -272,7 +272,7 @@ xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int64_t dest, xmmsv_t *nms,
  * @param path The path to the remote entity.
  */
 xmmsc_result_t *
-xmmsc_sc_introspect_docstring (xmmsc_connection_t *c, int64_t dest, xmmsv_t *path)
+xmmsc_sc_introspect_docstring (xmmsc_connection_t *c, int dest, xmmsv_t *path)
 {
 	xmmsv_t *keyfilter;
 	xmmsc_result_t *res;
@@ -506,7 +506,7 @@ xmmsc_sc_namespace_add_broadcast (xmmsc_sc_namespace_t *nms,
  * \sa command_introspect
  */
 static xmmsc_result_t *
-introspect_internal (xmmsc_connection_t *c, int64_t dest, xmmsv_t *entity,
+introspect_internal (xmmsc_connection_t *c, int dest, xmmsv_t *entity,
                      bool enforce_type, xmmsc_sc_interface_entity_type_t type,
                      xmmsv_t *keyfilter)
 {

@@ -27,7 +27,7 @@
  * @param payload The contents of the message.
  */
 xmmsc_result_t *
-xmmsc_c2c_send (xmmsc_connection_t *c, int64_t dest,
+xmmsc_c2c_send (xmmsc_connection_t *c, int dest,
                 xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
 {
 	uint32_t cookie;
@@ -71,7 +71,7 @@ xmmsc_c2c_send (xmmsc_connection_t *c, int64_t dest,
  * @param payload The contents of the reply.
  */
 xmmsc_result_t *
-xmmsc_c2c_reply (xmmsc_connection_t *c, int64_t msgid,
+xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid,
                  xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
 {
 	uint32_t cookie;

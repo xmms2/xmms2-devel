@@ -83,11 +83,11 @@ typedef struct xmms_ipc_client_St {
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
 	GList *broadcasts[XMMS_IPC_SIGNAL_END];
 
-	gint64 id;
+	gint32 id;
 } xmms_ipc_client_t;
 
 /* id 0 is reserved for the server */
-static gint64 next_client_id = 1;
+static gint32 next_client_id = 1;
 
 static GMutex ipc_servers_lock;
 static GList *ipc_servers = NULL;
@@ -100,7 +100,7 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 static void xmms_ipc_close (void);
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
-static xmms_ipc_client_t *xmms_ipc_lookup_client (gint64 clientid);
+static xmms_ipc_client_t *xmms_ipc_lookup_client (gint32 clientid);
 
 static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
 static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
@@ -130,7 +130,7 @@ xmms_ipc_register_signal (xmms_ipc_client_t *client,
 		return;
 	}
 
-	r = xmmsv_get_int (arg, &signalid);
+	r = xmmsv_get_int32 (arg, &signalid);
 
 	if (!r) {
 		xmms_log_error ("Cannot extract signal id from value");
@@ -160,7 +160,7 @@ xmms_ipc_register_broadcast (xmms_ipc_client_t *client,
 		return;
 	}
 
-	r = xmmsv_get_int (arg, &broadcastid);
+	r = xmmsv_get_int32 (arg, &broadcastid);
 
 	if (!r) {
 		xmms_log_error ("Cannot extract broadcast id from value");
@@ -481,7 +481,7 @@ on_config_ipcsocket_change (xmms_object_t *object, xmmsv_t *_data, gpointer udat
  * Format and send a broadcast to a single client.
  */
 void
-xmms_ipc_send_broadcast (guint broadcastid, gint64 clientid, xmmsv_t *arg,
+xmms_ipc_send_broadcast (guint broadcastid, gint32 clientid, xmmsv_t *arg,
                          xmms_error_t *err)
 {
 	gboolean ret;
@@ -508,7 +508,7 @@ xmms_ipc_send_broadcast (guint broadcastid, gint64 clientid, xmmsv_t *arg,
  * Send an ipc message to a client.
  */
 void
-xmms_ipc_send_message (gint64 clientid, xmms_ipc_msg_t *msg, xmms_error_t *err)
+xmms_ipc_send_message (gint32 clientid, xmms_ipc_msg_t *msg, xmms_error_t *err)
 {
 	gboolean ret;
 	xmms_ipc_client_t *cli;
@@ -534,7 +534,7 @@ xmms_ipc_send_message (gint64 clientid, xmms_ipc_msg_t *msg, xmms_error_t *err)
  * Look up a client based on its id.
  */
 static xmms_ipc_client_t *
-xmms_ipc_lookup_client (gint64 id)
+xmms_ipc_lookup_client (gint32 id)
 {
 	GList *c, *s;
 	xmms_ipc_t *ipc;

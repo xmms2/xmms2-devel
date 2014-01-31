@@ -20,6 +20,6 @@
 #include "xmmsc/xmmsv_c2c.h"
 #include "xmmsc/xmmsc_stdint.h"
 
-xmmsv_t *xmmsv_c2c_message_format (int64_t sender, int64_t dest, int64_t id, xmmsv_t *payload);
+xmmsv_t *xmmsv_c2c_message_format (int sender, int dest, int id, xmmsv_t *payload);
 
 #endif

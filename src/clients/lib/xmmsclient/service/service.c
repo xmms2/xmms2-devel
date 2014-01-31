@@ -18,7 +18,7 @@
 
 /* commands */
 static xmmsv_t *command_call (xmmsc_connection_t *c, xmmsv_t *call);
-static xmmsv_t *command_broadcast_subscribe (xmmsc_connection_t *c, xmmsv_t *name, int64_t msgid);
+static xmmsv_t *command_broadcast_subscribe (xmmsc_connection_t *c, xmmsv_t *name, int msgid);
 static xmmsv_t *command_introspect (xmmsc_connection_t *c, xmmsv_t *args);
 
 /* utility functions */
@@ -51,7 +51,7 @@ xmmsc_sc_init (xmmsc_connection_t *c)
 static int
 on_message_received (xmmsv_t *c2c_msg, void *userdata)
 {
-	int64_t cmd, msgid;
+	int cmd, msgid;
 	xmmsc_connection_t *c;
 	xmmsv_t *payload, *sc_args, *reply;
 
@@ -70,7 +70,7 @@ on_message_received (xmmsv_t *c2c_msg, void *userdata)
 	}
 
 	/* Parse the command and arguments out of the payload */
-	if (!xmmsv_dict_entry_get_int64 (payload, XMMSC_SC_CMD_KEY, &cmd)) {
+	if (!xmmsv_dict_entry_get_int32 (payload, XMMSC_SC_CMD_KEY, &cmd)) {
 		reply = xmmsv_new_error ("failed to parse command");
 		goto send_reply;
 	}
@@ -158,7 +158,7 @@ command_call (xmmsc_connection_t *c, xmmsv_t *call)
  * This command expects a path to a broadcast as its argument.
  */
 static xmmsv_t *
-command_broadcast_subscribe (xmmsc_connection_t *c, xmmsv_t *path, int64_t msgid)
+command_broadcast_subscribe (xmmsc_connection_t *c, xmmsv_t *path, int msgid)
 {
 	xmmsc_sc_interface_entity_t *broadcast;
 

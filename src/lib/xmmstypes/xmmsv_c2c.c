@@ -43,7 +43,7 @@ xmmsv_c2c_message_get_##field (xmmsv_t *msg) \
  * @return The id upon success, -1 upon failure.
  */
 
-GEN_C2C_FIELD_GET_FUNC (id, xmmsv_dict_entry_get_int64, int64_t, -1)
+GEN_C2C_FIELD_GET_FUNC (id, xmmsv_dict_entry_get_int32, int, -1)
 
 /**
  * Extract the sender id from a c2c message.
@@ -52,7 +52,7 @@ GEN_C2C_FIELD_GET_FUNC (id, xmmsv_dict_entry_get_int64, int64_t, -1)
  * @return The sender id upon success, -1 upon failure.
  */
 
-GEN_C2C_FIELD_GET_FUNC (sender, xmmsv_dict_entry_get_int64, int64_t, -1)
+GEN_C2C_FIELD_GET_FUNC (sender, xmmsv_dict_entry_get_int32, int, -1)
 
 /**
  * Extract the destination id from a c2c message.
@@ -61,7 +61,7 @@ GEN_C2C_FIELD_GET_FUNC (sender, xmmsv_dict_entry_get_int64, int64_t, -1)
  * @return The destination id upon success, -1 upon failure.
  */
 
-GEN_C2C_FIELD_GET_FUNC (destination, xmmsv_dict_entry_get_int64, int64_t, -1)
+GEN_C2C_FIELD_GET_FUNC (destination, xmmsv_dict_entry_get_int32, int, -1)
 
 /**
  * Extract the payload from a c2c message.
@@ -91,7 +91,7 @@ GEN_C2C_FIELD_GET_FUNC (payload, xmmsv_dict_get, xmmsv_t *, NULL)
  * @note Increases the refcount of payload.
  */
 xmmsv_t *
-xmmsv_c2c_message_format (int64_t sender, int64_t dest, int64_t id,
+xmmsv_c2c_message_format (int sender, int dest, int id,
                           xmmsv_t *payload)
 {
 	xmmsv_ref (payload);

@@ -22,9 +22,9 @@ extern "C" {
 #endif
 
 /* Helper functions to extract fields from c2c messages */
-int64_t xmmsv_c2c_message_get_sender (xmmsv_t *c2c_msg);
-int64_t xmmsv_c2c_message_get_id (xmmsv_t *c2c_msg);
-int64_t xmmsv_c2c_message_get_destination (xmmsv_t *c2c_msg);
+int xmmsv_c2c_message_get_sender (xmmsv_t *c2c_msg);
+int xmmsv_c2c_message_get_id (xmmsv_t *c2c_msg);
+int xmmsv_c2c_message_get_destination (xmmsv_t *c2c_msg);
 xmmsv_t *xmmsv_c2c_message_get_payload (xmmsv_t *c2c_msg);
 
 #ifdef __cplusplus

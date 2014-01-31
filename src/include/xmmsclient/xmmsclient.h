@@ -321,8 +321,8 @@ xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c) XMMS_
  */
 
 /* methods */
-xmmsc_result_t *xmmsc_c2c_send (xmmsc_connection_t *c, int64_t dest, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int64_t msgid, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_send (xmmsc_connection_t *c, int dest, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
 int32_t xmmsc_c2c_get_own_id (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c) XMMS_PUBLIC;
 
@@ -380,18 +380,18 @@ void xmmsc_sc_namespace_remove (xmmsc_sc_namespace_t *nms, xmmsv_t *path) XMMS_P
 
 /* broadcasts */
 bool xmmsc_sc_broadcast_emit (xmmsc_connection_t *c, xmmsv_t *broadcast, xmmsv_t *value) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_sc_broadcast_subscribe (xmmsc_connection_t *c, int64_t dest, xmmsv_t *broadcast) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_broadcast_subscribe (xmmsc_connection_t *c, int dest, xmmsv_t *broadcast) XMMS_PUBLIC;
 
 /* method call */
-xmmsc_result_t *xmmsc_sc_call (xmmsc_connection_t *c, int64_t dest, xmmsv_t *method, xmmsv_t *pargs, xmmsv_t *nargs) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_call (xmmsc_connection_t *c, int dest, xmmsv_t *method, xmmsv_t *pargs, xmmsv_t *nargs) XMMS_PUBLIC;
 
 /* introspection */
-xmmsc_result_t *xmmsc_sc_introspect_namespace (xmmsc_connection_t *c, int64_t dest, xmmsv_t *nms) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_sc_introspect_method (xmmsc_connection_t *c, int64_t dest, xmmsv_t *method) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_sc_introspect_broadcast (xmmsc_connection_t *c, int64_t dest, xmmsv_t *broadcast) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int64_t dest, xmmsv_t *nms, const char *key) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_introspect_namespace (xmmsc_connection_t *c, int dest, xmmsv_t *nms) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_introspect_method (xmmsc_connection_t *c, int dest, xmmsv_t *method) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_introspect_broadcast (xmmsc_connection_t *c, int dest, xmmsv_t *broadcast) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int dest, xmmsv_t *nms, const char *key) XMMS_PUBLIC;
 
-xmmsc_result_t *xmmsc_sc_introspect_docstring (xmmsc_connection_t *c, int64_t dest, xmmsv_t *path) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_sc_introspect_docstring (xmmsc_connection_t *c, int dest, xmmsv_t *path) XMMS_PUBLIC;
 
 /*
  * MACROS

@@ -36,8 +36,8 @@
  * is expecting a reply from the recipient.
  */
 typedef struct {
-	gint64 sender;
-	gint64 destination;
+	gint32 sender;
+	gint32 destination;
 	uint32_t cookie;
 	xmmsc_c2c_reply_policy_t reply_policy;
 } xmms_courier_pending_msg_t;
@@ -70,17 +70,17 @@ static xmms_courier_pending_pool_t *xmms_courier_pending_pool_init (void);
 static void xmms_courier_pending_pool_destroy (xmms_courier_pending_pool_t *pending);
 
 /* Public methods */
-static void xmms_courier_client_send_message (xmms_courier_t *courier, gint64 dest, int reply_policy, xmmsv_t *payload, gint64 client, uint32_t cookie, xmms_error_t *err);
-static void xmms_courier_client_reply (xmms_courier_t *courier, gint32 msgid, int reply_policy, xmmsv_t *payload, gint64 sender, uint32_t cookie, xmms_error_t *err);
+static void xmms_courier_client_send_message (xmms_courier_t *courier, gint32 dest, int reply_policy, xmmsv_t *payload, gint32 client, uint32_t cookie, xmms_error_t *err);
+static void xmms_courier_client_reply (xmms_courier_t *courier, gint32 msgid, int reply_policy, xmmsv_t *payload, gint32 sender, uint32_t cookie, xmms_error_t *err);
 static xmmsv_t *xmms_courier_client_get_connected_clients (xmms_courier_t *courier, xmms_error_t *err);
 
 /* Private methods */
-static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint64 sender, gint64 dest, uint32_t cookie, xmmsc_c2c_reply_policy_t reply_policy);
+static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender, gint32 dest, uint32_t cookie, xmmsc_c2c_reply_policy_t reply_policy);
 static xmms_courier_pending_msg_t *xmms_courier_get_pending (xmms_courier_t *courier, gint32 msgid);
 static void xmms_courier_remove_pending (xmms_courier_t *courier, gint32 msgid);
 
 /* Helper functions */
-static void write_reply (gint64 dest, xmmsv_t *c2c_msg, uint32_t cookie, xmms_error_t *err);
+static void write_reply (gint32 dest, xmmsv_t *c2c_msg, uint32_t cookie, xmms_error_t *err);
 static gint compare_int32 (gconstpointer a, gconstpointer b, gpointer unused);
 static void client_connected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata);
 static void client_disconnected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata);
@@ -189,8 +189,8 @@ send_internal (xmms_courier_t *courier,
                uint32_t scookie, xmms_error_t *err)
 {
 	int msgid = xmmsv_c2c_message_get_id (c2c_msg);
-	gint64 sender = xmmsv_c2c_message_get_sender (c2c_msg);
-	gint64 dest = xmmsv_c2c_message_get_destination (c2c_msg);
+	gint32 sender = xmmsv_c2c_message_get_sender (c2c_msg);
+	gint32 dest = xmmsv_c2c_message_get_destination (c2c_msg);
 
 	if (is_reply) {
 		write_reply (dest, c2c_msg, dcookie, err);
@@ -270,8 +270,8 @@ send_msg (xmms_courier_t *courier,
  */
 static void
 xmms_courier_client_send_message (xmms_courier_t *courier,
-                                  gint64 dest, int reply_policy,
-                                  xmmsv_t *payload, gint64 sender,
+                                  gint32 dest, int reply_policy,
+                                  xmmsv_t *payload, gint32 sender,
                                   uint32_t cookie, xmms_error_t *err)
 {
 	gint32 msgid;
@@ -299,12 +299,12 @@ xmms_courier_client_send_message (xmms_courier_t *courier,
  */
 static void
 xmms_courier_client_reply (xmms_courier_t *courier, gint32 reply_to,
-                           int reply_policy, xmmsv_t *payload, gint64 sender,
+                           int reply_policy, xmmsv_t *payload, gint32 sender,
                            uint32_t cookie, xmms_error_t *err)
 {
 	xmmsv_t *c2c_msg;
 	xmms_courier_pending_msg_t *context;
-	gint64 dest;
+	gint32 dest;
 	gint32 msgid;
 
 	/* Restore the context of the original message from the pending pool */
@@ -372,8 +372,8 @@ xmms_courier_client_get_connected_clients (xmms_courier_t *courier,
  * @return the id of the message
  */
 static gint32
-xmms_courier_store_pending (xmms_courier_t *courier, gint64 sender,
-                            gint64 dest, uint32_t cookie,
+xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender,
+                            gint32 dest, uint32_t cookie,
                             xmmsc_c2c_reply_policy_t reply_policy)
 {
 	gint32 msgid;
@@ -447,7 +447,7 @@ xmms_courier_remove_pending (xmms_courier_t *courier, gint32 msgid)
  * \sa xmms_ipc_send_message
  */
 static void
-write_reply (gint64 dest, xmmsv_t *c2c_msg, uint32_t cookie,
+write_reply (gint32 dest, xmmsv_t *c2c_msg, uint32_t cookie,
              xmms_error_t *err)
 {
 	xmms_ipc_msg_t *ipc_msg;
@@ -469,10 +469,10 @@ write_reply (gint64 dest, xmmsv_t *c2c_msg, uint32_t cookie,
 static void
 client_connected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata)
 {
-	gint64 id;
+	gint32 id;
 	xmms_courier_t *courier;
 
-	xmmsv_get_int64 (val, &id);
+	xmmsv_get_int32 (val, &id);
 	courier = (xmms_courier_t *) userdata;
 
 	g_mutex_lock (&courier->clients_lock);
@@ -491,12 +491,12 @@ client_connected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata)
 static void
 client_disconnected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata)
 {
-	gint64 id;
+	gint32 id;
 	guint remove_count;
 	GList *to_remove, *node;
 	xmms_courier_t *courier;
 
-	xmmsv_get_int64 (val, &id);
+	xmmsv_get_int32 (val, &id);
 	courier = (xmms_courier_t *) userdata;
 
 	g_mutex_lock (&courier->clients_lock);
@@ -532,7 +532,7 @@ client_disconnected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata)
 static gboolean
 client_disconnected_foreach (gpointer key, gpointer value, gpointer userdata)
 {
-	gint64 client;
+	gint32 client;
 	GList *last, **to_remove;
 	xmmsv_t *err_reply;
 	xmms_error_t err;
