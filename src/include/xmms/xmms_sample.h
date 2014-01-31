@@ -57,9 +57,12 @@ typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
 gint xmms_sample_frame_size_get (const xmms_stream_type_t *st) XMMS_PUBLIC;
-guint xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint ms) XMMS_PUBLIC;
-guint xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
-guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
+gint64 xmms_sample_ms_to_samples (const xmms_stream_type_t *st, gint64 ms) XMMS_PUBLIC;
+gint64 xmms_sample_samples_to_ms (const xmms_stream_type_t *st, gint64 samples) XMMS_PUBLIC;
+gint64 xmms_sample_samples_to_bytes (const xmms_stream_type_t *st, gint64 samples) XMMS_PUBLIC;
+gint64 xmms_sample_bytes_to_samples (const xmms_stream_type_t *st, gint64 bytes) XMMS_PUBLIC;
+gint64 xmms_sample_ms_to_bytes (const xmms_stream_type_t *st, gint64 ms) XMMS_PUBLIC;
+gint64 xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, gint64 bytes) XMMS_PUBLIC;
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)

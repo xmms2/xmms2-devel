@@ -19,37 +19,10 @@
 #include <xmms/xmms_sample.h>
 
 /**
- * convert from milliseconds to samples for this format.
+ * Get number of bytes used for one sample length worth of music.
+ *
+ * That is, (size of one sample) * channels.
  */
-guint
-xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint milliseconds)
-{
-	gint rate;
-	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	return (guint)(((gdouble) rate) * milliseconds / 1000);
-}
-
-/**
- * Convert from samples to milliseconds for this format
- */
-guint
-xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples)
-{
-	gint rate;
-	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	return (guint) (((gdouble)samples) * 1000.0 / rate);
-}
-
-/**
- * Convert from bytes to milliseconds for this format
- */
-guint
-xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint bytes)
-{
-	guint samples = bytes / xmms_sample_frame_size_get (st);
-	return xmms_sample_samples_to_ms (st, samples);
-}
-
 gint
 xmms_sample_frame_size_get (const xmms_stream_type_t *st)
 {
@@ -57,4 +30,64 @@ xmms_sample_frame_size_get (const xmms_stream_type_t *st)
 	format = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_FORMAT);
 	channels = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_CHANNELS);
 	return xmms_sample_size_get (format) * channels;
+}
+
+/**
+ * convert from milliseconds to samples for this format.
+ */
+gint64
+xmms_sample_ms_to_samples (const xmms_stream_type_t *st, gint64 milliseconds)
+{
+	gint rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (rate * milliseconds) / 1000;
+}
+
+/**
+ * Convert from samples to milliseconds for this format
+ */
+gint64
+xmms_sample_samples_to_ms (const xmms_stream_type_t *st, gint64 samples)
+{
+	gint rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (samples * 1000) / rate;
+}
+
+/**
+ * Convert from samples to bytes for this format
+ */
+gint64
+xmms_sample_samples_to_bytes (const xmms_stream_type_t *st, gint64 samples)
+{
+	return samples * xmms_sample_frame_size_get (st);
+}
+
+/**
+ * Convert from bytes to samples for this format
+ */
+gint64
+xmms_sample_bytes_to_samples (const xmms_stream_type_t *st, gint64 bytes)
+{
+	gint fs = xmms_sample_frame_size_get (st);
+	if (bytes % fs != 0) {
+		g_error ("xmms_bytes_to_samples with non-integral number of samples!");
+	}
+	return bytes / fs;
+}
+
+/**
+ * Convert from bytes to milliseconds for this format
+ */
+gint64
+xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, gint64 bytes)
+{
+	return xmms_sample_samples_to_ms (st, xmms_sample_bytes_to_samples (st, bytes));
+}
+
+/**
+ * Convert from bytes to milliseconds for this format
+ */
+gint64
+xmms_sample_ms_to_bytes (const xmms_stream_type_t *st, gint64 ms)
+{
+	return xmms_sample_samples_to_bytes (st, xmms_sample_ms_to_samples (st, ms));
 }
