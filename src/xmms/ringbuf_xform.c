@@ -37,6 +37,10 @@ typedef struct xmms_ringbuf_priv_St {
 	xmms_buffer_state_t state;
 	GCond state_cond;
 	GMutex state_lock;
+
+	gint64 seek_offset;
+	xmms_xform_seek_mode_t seek_whence;
+	gint64 seek_res;
 } xmms_ringbuf_priv_t;
 
 static xmms_xform_plugin_t *ringbuf_plugin;
@@ -99,6 +103,34 @@ xmms_ringbuf_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_erro
 	return xmms_ringbuf_read_wait (priv->buffer, buffer, len, &priv->buffer_lock);
 }
 
+static gint64
+xmms_ringbuf_plugin_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error)
+{
+	xmms_ringbuf_priv_t *priv;
+	gint64 res = -1;
+
+	priv = xmms_xform_private_data_get (xform);
+
+	g_mutex_lock (&priv->state_lock);
+	if (priv->state == STATE_BUFFERING) {
+		priv->state = STATE_WANT_SEEK;
+		priv->seek_offset = offset;
+		priv->seek_whence = whence;
+		xmms_ringbuf_set_eos (priv->buffer, TRUE);
+		while (priv->state == STATE_WANT_SEEK) {
+			g_cond_wait (&priv->state_cond, &priv->state_lock);
+		}
+		xmms_ringbuf_set_eos (priv->buffer, FALSE);
+		if (priv->state == STATE_SEEK_DONE) {
+			res = priv->seek_res;
+			priv->state = STATE_WANT_BUFFER;
+		}
+	}
+	g_cond_signal (&priv->state_cond);
+	g_mutex_unlock (&priv->state_lock);
+
+	return res;
+}
 
 static gboolean
 xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -109,9 +141,7 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_ringbuf_plugin_init;
 	methods.destroy = xmms_ringbuf_plugin_destroy;
 	methods.read = xmms_ringbuf_plugin_read;
-	/*
-	  methods.seek
-	*/
+	methods.seek = xmms_ringbuf_plugin_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -148,6 +178,20 @@ fill (xmms_xform_t *xform, xmms_ringbuf_priv_t *priv)
 	}
 }
 
+static void
+seek (xmms_xform_t *xform, xmms_ringbuf_priv_t *priv)
+{
+	xmms_error_t err;
+	gint64 res;
+
+	res = xmms_xform_seek (xform, priv->seek_offset, priv->seek_whence, &err);
+	if (res > 0) {
+		xmms_ringbuf_clear (priv->buffer);
+	}
+
+	priv->seek_res = res;
+}
+
 static gpointer
 xmms_ringbuf_xform_thread (gpointer data)
 {
@@ -167,8 +211,10 @@ xmms_ringbuf_xform_thread (gpointer data)
 				g_mutex_lock (&priv->state_lock);
 			}
 		} else if (priv->state == STATE_WANT_SEEK) {
-			/** **/
+			seek (xform, priv);
 			priv->state = STATE_SEEK_DONE;
+			priv->seek_whence = XMMS_XFORM_SEEK_CUR;
+			priv->seek_offset = 0;
 			g_cond_signal (&priv->state_cond);
 			while (priv->state == STATE_SEEK_DONE) {
 				g_cond_wait (&priv->state_cond, &priv->state_lock);
