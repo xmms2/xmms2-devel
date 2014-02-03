@@ -1526,8 +1526,8 @@ c_broadcast_coll_changed (VALUE self)
 VALUE
 check_int32 (VALUE arg)
 {
-	VALUE int32_max = INT2NUM (2147483647);
-	VALUE int32_min = INT2NUM (-2147483647);
+	VALUE int32_max = INT2NUM (INT_MAX);
+	VALUE int32_min = INT2NUM (INT_MIN);
 
 	if (!rb_obj_is_kind_of (arg, rb_cInteger))
 		rb_raise (rb_eTypeError,
