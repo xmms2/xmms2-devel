@@ -23,7 +23,7 @@ def build(bld):
             t.install_path = None
 
 
-    if bld.env.LIB_vorbisenc:
+    if bld.env.LIB_vorbisenc and bld.env.LIB_vorbis and bld.env.LIB_ogg:
         t = bld(features = 'c cprogram',
             target = 'xmms2-ripper',
             source = 'ripper.c',
@@ -53,12 +53,12 @@ def configure(conf):
 
     conf.check_cc(lib="m", uselib_store="math", mandatory=False)
 
-    if conf.check_cfg(package='vorbisenc', uselib_store='vorbisenc',
-            args='--cflags --libs', mandatory=False):
-        conf.check_cfg(package='vorbis', uselib_store='vorbis',
-                args='--cflags --libs', mandatory=True)
-        conf.check_cfg(package='ogg', uselib_store='ogg',
-                args='--cflags --libs', mandatory=True)
+    conf.check_cfg(package='vorbisenc', uselib_store='vorbisenc',
+            args='--cflags --libs', mandatory=False)
+    conf.check_cfg(package='vorbis', uselib_store='vorbis',
+            args='--cflags --libs', mandatory=False)
+    conf.check_cfg(package='ogg', uselib_store='ogg',
+            args='--cflags --libs', mandatory=False)
 
 
     if conf.check_cfg(package='libvisual-0.4', uselib_store='visual',
