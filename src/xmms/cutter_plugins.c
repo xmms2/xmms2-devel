@@ -108,15 +108,7 @@ xmms_segment_init (xmms_xform_t *xform)
 			stopms = INT_MAX;
 		}
 	} else {
-		/* This is the last track, stopms is the playback duration */
-		/* FIXME: What if duration is not an integral number of ms? Then we end
-		   up chopping part off the song at the end. */
-		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
-		if (!xmms_xform_metadata_get_int (xform, metakey, &stopms)) {
-			XMMS_DBG ("\"duration\" doesnt exist, ignore stopms.");
-			/* ignore stopms by setting it to the maximum value */
-			stopms = INT_MAX;
-		}
+		stopms = INT_MAX;
 	}
 
 	/* some calculation */
