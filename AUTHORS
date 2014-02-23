@@ -446,6 +446,10 @@ N: Frank Terbeck
 E: ft@bewatermyfriend.org
 D: cli fixes
 
+N: Pascal Terjan
+E: pterjan@google.com
+D: bugfix in vistest wscript
+
 N: Cole Thompson
 E: cole.thompson@gmail.com
 D: DAAP xform.
