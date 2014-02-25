@@ -48,7 +48,7 @@ def build(bld):
             )
 
 def configure(conf):
-    conf.check_tool("ruby")
+    conf.load("ruby")
     conf.check_ruby_version((1,8,0))
     conf.check_ruby_ext_devel()
 
@@ -70,4 +70,4 @@ def configure(conf):
     return True
 
 def options(opt):
-    opt.tool_options('ruby', tdir=os.path.abspath('waftools'))
+    opt.load('ruby')

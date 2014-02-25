@@ -3,6 +3,6 @@ def configure(conf):
 def options(conf):
     pass
 def build(bld):
-    bld.add_subdirs("xmmspriv")
-    bld.add_subdirs("xmmscpriv")
-    bld.add_subdirs("xmmsclientpriv")
+    bld.recurse("xmmspriv")
+    bld.recurse("xmmscpriv")
+    bld.recurse("xmmsclientpriv")

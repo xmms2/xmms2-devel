@@ -1,4 +1,4 @@
-import Options
+from waflib import Options
 
 def build(bld):
     t = bld(features = 'c cprogram',

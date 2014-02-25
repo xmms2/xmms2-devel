@@ -1,6 +1,6 @@
 from waftools.plugin import plugin
 
-import Options
+from waflib import Options
 
 def plugin_configure(conf):
     conf.check_cfg(package="libcdio_cdda", args="--cflags --libs", uselib_store="cdda")

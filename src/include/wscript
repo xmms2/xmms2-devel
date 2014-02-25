@@ -9,15 +9,8 @@ def build(bld):
         if f:
             bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', rpath), f)
 
-    #paths = ['xmms', 'xmmsc', 'xmmsclient', 'xmmsclient/xmmsclient++']
-    #for p in paths:
-        #bld.add_subdirs(p)
-        #lst = os.listdir(os.path.join('src', 'include', p))
-        #f = [os.path.join(p, a) for a in lst if a.endswith('.h')]
-        #bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', p), " ".join(f))
-
 def configure(conf):
-    conf.sub_config("xmms")
+    conf.recurse("xmms")
 
     return True
 

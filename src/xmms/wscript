@@ -209,7 +209,7 @@ def get_visualization_impl(conf):
     return 'dummy'
 
 def configure(conf):
-    conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
+    conf.load('python-generator', tooldir='waftools')
 
     conf.check_cfg(package='gmodule-2.0', atleast_version='2.32.0',
             uselib_store='gmodule2', args='--cflags --libs')

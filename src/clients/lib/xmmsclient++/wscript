@@ -40,4 +40,4 @@ def configure(conf):
     return True
 
 def options(opt):
-    opt.tool_options('boost')
+    opt.load('boost')

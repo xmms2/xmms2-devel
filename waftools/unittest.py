@@ -1,5 +1,5 @@
 from waflib import Task, Logs, Errors, Options, Utils
-from TaskGen import feature, before_method
+from waflib.TaskGen import feature, before_method
 import os
 import re
 
@@ -85,7 +85,7 @@ def monkey_patch_test_runner():
             os.environ["G_DEBUG"] = "gc-friendly"
 
             suppression = os.path.join(os.getcwd(), "utils", "valgrind-suppressions")
-            self.ut_exec = [
+            self.generator.ut_exec = [
                 "valgrind",
                 "--log-file=%s.log" % self.inputs[0].abspath(),
                 "--leak-check=full",

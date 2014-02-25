@@ -37,11 +37,10 @@ def build(bld):
 
 
 def configure(conf):
-    conf.check_tool('perl')
+    conf.load('perl')
     conf.check_perl_version((5,7,3))
     conf.check_perl_ext_devel()
     conf.load('podselect', tooldir='waftools')
-    conf.check_tool('podselect')
 
     if not os.path.commonprefix([conf.env.ARCHDIR_PERL, conf.env.PREFIX]).startswith(conf.env.PREFIX):
         Logs.warn("Default perl libdir is not under PREFIX. specify the path "
@@ -54,4 +53,4 @@ def configure(conf):
 
 
 def options(opt):
-    opt.tool_options('perl')
+    opt.load('perl')

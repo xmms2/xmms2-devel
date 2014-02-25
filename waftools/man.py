@@ -1,8 +1,8 @@
-from waflib import Task, Errors, Utils
+from waflib import Task, Errors
 import os
 import gzip
 
-from TaskGen import feature,before_method
+from waflib.TaskGen import feature,before_method
 
 def gzip_func(task):
     infile = task.inputs[0].abspath()

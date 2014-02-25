@@ -88,7 +88,7 @@ def build(bld):
     # TODO: Distribute .pxd files
 
 def configure(conf):
-    conf.check_tool('python')
+    conf.load('python')
     if not conf.env.PYTHON:
         conf.fatal("python not found")
 
@@ -108,7 +108,7 @@ def configure(conf):
     conf.env.xmmspython_USE_PRECOMPILED = True
     if not getattr(conf.options, 'no_cython', False):
         try:
-            conf.load('cython cython_extra', tooldir = os.path.abspath('waftools'))
+            conf.load('cython cython_extra', tooldir='waftools')
             conf.check_cython_version(minver = '0.13')
             conf.env.append_unique('CYTHONFLAGS', '-Xembedsignature=True')
         except Errors.ConfigurationError:
@@ -126,7 +126,7 @@ def configure(conf):
                   "files, you should consider reconfiguring with --no-cython")
 
 def options(opt):
-    opt.tool_options('cython', tooldir = os.path.abspath('waftools'))
+    opt.load('cython', tooldir='waftools')
     if opt.path.ant_glob('xmms*.c'):
         opt.add_option('--no-cython', action="store_true",
                 dest="no_cython", default=False,

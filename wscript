@@ -26,7 +26,7 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x01060700
+_waf_hexversion = 0x1070f00
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
@@ -128,9 +128,9 @@ def build(bld):
         bld.fatal("You need to run waf configure")
         raise SystemExit()
 
-    bld.add_subdirs(subdirs)
-    bld.add_subdirs(plugindirs)
-    bld.add_subdirs(optionaldirs)
+    bld.recurse(subdirs)
+    bld.recurse(plugindirs)
+    bld.recurse(optionaldirs)
 
     for name, lib in bld.env.XMMS_PKGCONF_FILES:
         bld(features = 'subst',
@@ -184,7 +184,7 @@ def _configure_optionals(conf):
     for o in selected_optionals:
         x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
         try:
-            conf.sub_config(x)
+            conf.recurse(x)
             conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
             succeeded_optionals.add(o)
         except Errors.ConfigurationError:
@@ -258,7 +258,7 @@ def _configure_plugins(conf):
     for plugin in selected_plugins:
         must_work = plugins_must_work or plugin in conf.env.XMMS_PLUGINS_BUILTIN
         try:
-            conf.sub_config("src/plugins/%s" % plugin)
+            conf.recurse("src/plugins/%s" % plugin)
             if plugin not in conf.env.XMMS_PLUGINS_ENABLED[-1:]:
                 disable_plugin(plugin, must_work)
         except Errors.ConfigurationError:
@@ -358,13 +358,13 @@ def configure(conf):
 
     conf.env.BUILD_SUBDIRS = subdirs
 
-    conf.check_tool('gnu_dirs')
-    conf.check_tool('man', tooldir=os.path.abspath('waftools'))
-    conf.check_tool('misc')
-    conf.check_tool('gcc')
-    conf.check_tool('g++')
+    conf.load('gnu_dirs')
+    conf.load('man', tooldir='waftools')
+    conf.load('misc')
+    conf.load('gcc')
+    conf.load('g++')
 
-    conf.check_tool('visibility', tooldir = os.path.abspath('waftools'))
+    conf.load('visibility', tooldir='waftools')
 
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
@@ -508,7 +508,7 @@ int main() { return 0; }
     conf.env.xmms_icon = False
     if Options.platform == 'win32':
         try:
-            conf.check_tool('winres')
+            conf.load('winres')
         except Errors.ConfigurationError:
             pass
         else:
@@ -536,7 +536,7 @@ int main() { return 0; }
     newest = get_newest(subdirs, plugindirs, optionaldirs)
     conf.env.NEWEST_WSCRIPT_SUBDIR = newest
 
-    [conf.sub_config(s) for s in subdirs]
+    [conf.recurse(s) for s in subdirs]
     conf.write_config_header('xmms_configuration.h')
 
     output_plugins = [name for x, name in conf.env.XMMS_OUTPUT_PLUGINS if x > 0]
@@ -574,8 +574,8 @@ def _list_cb(option, opt, value, parser):
     setattr(parser.values, option.dest, vals)
 
 def options(opt):
-    opt.tool_options('gnu_dirs')
-    opt.tool_options('gcc')
+    opt.load('gnu_dirs')
+    opt.load('gcc')
 
     opt.add_option('--with-custom-version', type='string',
                    dest='customversion', help="Override git commit hash version")
@@ -617,9 +617,9 @@ def options(opt):
     opt.add_option('--without-ldconfig', action='store_false',
                    dest='ldconfig', help="Don't run ldconfig after install")
 
-    opt.sub_options("src/xmms")
+    opt.recurse("src/xmms")
     for o in optional_subdirs + subdirs:
-        opt.sub_options(o)
+        opt.recurse(o)
 
 def shutdown(ctx):
     if ctx.cmd != 'install':

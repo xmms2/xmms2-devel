@@ -1,4 +1,3 @@
-import Utils
 import os
 
 def add_install_flag(bld, obj):

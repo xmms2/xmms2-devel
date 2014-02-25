@@ -1,6 +1,4 @@
-import Task
-import TaskGen
-from TaskGen import extension
+from waflib import TaskGen
 import sys
 
 TaskGen.declare_chain(
