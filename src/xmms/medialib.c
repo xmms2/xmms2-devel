@@ -1412,6 +1412,14 @@ xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_t *coll,
 	xmms_fetch_spec_free (spec);
 	xmms_fetch_info_free (info);
 
+	if (ret == NULL) {
+		if (err) {
+			xmms_error_set (err, XMMS_ERROR_NOENT, "Failed to retrieve query "
+			                "result. This is probably a bug in xmms2d.");
+		}
+		return NULL;
+	}
+
 	xmms_medialib_session_track_garbage (session, ret);
 
 	return ret;

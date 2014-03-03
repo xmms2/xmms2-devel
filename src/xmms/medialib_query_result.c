@@ -361,31 +361,51 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 		case AGGREGATE_MIN:
 		case AGGREGATE_MAX:
 		case AGGREGATE_SUM:
+			if (value != NULL) {
+				ret = xmmsv_ref (value);
+			} else {
+				ret = xmmsv_new_none ();
+			}
+			break;
 		case AGGREGATE_LIST:
-			ret = xmmsv_ref (value);
+			if (value != NULL) {
+				ret = xmmsv_ref (value);
+			} else {
+				ret = xmmsv_new_list ();
+			}
 			break;
 		case AGGREGATE_RANDOM:
 			random_data = data;
 			if (random_data != NULL) {
 				ret = random_data->data;
+			} else {
+				ret = xmmsv_new_none ();
 			}
 			break;
 		case AGGREGATE_SET:
 			set_data = data;
-			g_hash_table_destroy (set_data->ht);
-			ret = set_data->list;
+			if (set_data != NULL) {
+				g_hash_table_destroy (set_data->ht);
+				ret = set_data->list;
+			} else {
+				ret = xmmsv_new_list ();
+			}
 			break;
 		case AGGREGATE_AVG:
 			avg_data = data;
 			if (avg_data != NULL) {
 				ret = xmmsv_new_float (avg_data->n ? avg_data->sum * 1.0 / avg_data->n : 0);
+			} else {
+				ret = xmmsv_new_none ();
 			}
 			break;
 		default:
 			g_assert_not_reached ();
 	}
 
-	xmmsv_unref (value);
+	if (value != NULL) {
+		xmmsv_unref (value);
+	}
 
 	return ret;
 }
@@ -396,12 +416,12 @@ aggregate_result (xmmsv_t *val, gint depth, aggregate_function_t aggr_func)
 {
 	xmmsv_dict_iter_t *it;
 
-	if (val == NULL) {
-		return NULL;
-	}
-
 	if (depth == 0) {
 		return aggregate_data (val, aggr_func);
+	}
+
+	if (val == NULL && depth > 0) {
+		return xmmsv_new_dict();
 	}
 
 	/* If it's a dict we call this function recursively on all its values */
