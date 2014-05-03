@@ -113,8 +113,7 @@ def build(bld):
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',
         uselib = 'math glib2 gmodule2 statfs socket shm valgrind s4',
-        use = 'xmms2core',
-        add_objects = objects,
+        use = ['xmms2core'] + objects,
         defines = 'G_LOG_DOMAIN=""'
     )
 

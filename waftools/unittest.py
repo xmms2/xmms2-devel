@@ -47,9 +47,9 @@ def scrape_test_cases(node):
 def generate_runner(self):
     self.source = self.to_nodes(self.source)
     try:
-        self.add_objects = self.to_list(self.add_objects)
+        self.use = self.to_list(self.use)
     except (AttributeError):
-        self.add_objects = []
+        self.use = []
 
     suites = []
     for node in self.source:
@@ -69,7 +69,8 @@ def generate_runner(self):
         self.source += [target]
 
         # link valgrind_object in
-        self.add_objects += ["memorystatus"]
+        self.use += ["memorystatus"]
+
 
 def monkey_patch_test_runner():
     original = Task.classes["utest"].run

@@ -74,7 +74,7 @@ def build(bld):
     bld(features = "c cstlib",
         target = "testutils",
         source = testutils_src,
-        add_objects = "testutils_json",
+        use = "testutils_json",
         includes = ". ../src/include ../src/includepriv",
         uselib = "glib2",
         install_path = None
