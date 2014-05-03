@@ -8,9 +8,9 @@ VISIBILITY_FEATURE = '-fvisibility=hidden'
 @feature('visibilityhidden')
 @after_method('propagate_uselib_vars')
 def add_visibility_hidden_flag(task):
-    if task.env.HAVE_VISIBILITY_CFLAG:
+    if task.env.have_visibility_cflag:
         task.env.append_unique('CFLAGS', VISIBILITY_FEATURE)
-    if task.env.HAVE_VISIBILITY_CXXFLAG:
+    if task.env.have_visibility_cxxflag:
         task.env.append_unique('CXXFLAGS', VISIBILITY_FEATURE)
 
 def configure(ctx):
@@ -32,5 +32,5 @@ def configure(ctx):
 
     ctx.env.revert()
 
-    ctx.env.HAVE_VISIBILITY_CFLAG = have_cflag
-    ctx.env.HAVE_VISIBILITY_CXXFLAG = have_cxxflag
+    ctx.env.have_visibility_cflag = have_cflag
+    ctx.env.have_visibility_cxxflag = have_cxxflag

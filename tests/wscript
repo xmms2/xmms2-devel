@@ -54,8 +54,6 @@ def configure(conf):
     conf.check_cc(lib="cunit", uselib_store="cunit")
     conf.check_cc(lib="ncurses", uselib_store="ncurses", mandatory=False)
 
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
-
 def build(bld):
     bld(features = "c",
         target = "testutils_json",
@@ -69,7 +67,7 @@ def build(bld):
         source = ['runner/memory_status.c'],
         includes = 'utils',
         uselib = 'valgrind DISABLE_UNUSEDBUTSETVARIABLE',
-        defines = ["HAVE_VALGRIND=%d" % int(bld.env.HAVE_VALGRIND)],
+        defines = ["HAVE_VALGRIND=%d" % int(bld.env.have_valgrind)],
         install_path = None,
     )
 

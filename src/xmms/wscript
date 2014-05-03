@@ -194,19 +194,24 @@ def get_visualization_impl(conf):
     if conf.options.without_unixshmserver:
         return 'dummy'
 
-    conf.check_cc(function_name='semctl',
-                  header_name=['sys/types.h','sys/ipc.h','sys/sem.h'],
-                  mandatory=False)
+    try:
+        conf.check_cc(function_name='semctl',
+                      header_name=['sys/types.h','sys/ipc.h','sys/sem.h'])
+    except:
+        have_semctl = False
+    else:
+        have_semctl = True
+
     try:
         conf.check_cc(fragment=semun_fragment, uselib_store="semun",
                       msg = "Checking for union semun")
     except Errors.ConfigurationError:
         conf.env.append_value('DEFINES_shm', "_SEM_SEMUN_UNDEFINED")
 
-    if conf.env.HAVE_SEMCTL:
+    if have_semctl:
         return 'unixshm'
-
-    return 'dummy'
+    else:
+        return 'dummy'
 
 def configure(conf):
     conf.load('python-generator', tooldir='waftools')
@@ -234,9 +239,6 @@ def configure(conf):
     conf.env.xmms_shared_library = (Options.platform == 'win32')
 
     conf.env.XMMS_PKGCONF_FILES.append(('xmms2-plugin', ''))
-
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags',
-                   mandatory=False)
 
     return True
 

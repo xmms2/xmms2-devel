@@ -25,7 +25,7 @@ def build(bld):
     visualization/udp.c
     """.split()
 
-    if bld.env.HAVE_SEMTIMEDOP:
+    if bld.env.have_semtimedop:
         source.extend(["visualization/unixshm.c"])
     else:
         source.extend(["visualization/dummy.c"])
@@ -45,11 +45,15 @@ def build(bld):
 def configure(conf):
     conf.env.XMMS_PKGCONF_FILES.append(("xmms2-client", "-lxmmsclient"))
 
-    conf.check_cc(function_name="semtimedop",
-            header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"],
-            defines=["_GNU_SOURCE=1"], mandatory=False)
-    if not conf.env.HAVE_SEMTIMEDOP:
+    try:
+        conf.check_cc(function_name="semtimedop",
+                header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"],
+                defines=["_GNU_SOURCE=1"])
+    except Errors.ConfigurationError:
         Logs.warn("Compiling visualization without shm support!")
+        conf.env.have_semtimedop = False
+    else:
+        conf.env.have_semtimedop = True
 
     return True
 

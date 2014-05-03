@@ -17,7 +17,7 @@ def build(bld):
     else:
         source.extend(['utils_unix.c'])
 
-    if bld.env.HAVE_VALGRIND:
+    if bld.env.have_valgrind:
         source.extend(['stacktrace.c'])
     else:
         source.extend(['stacktrace_dummy.c'])

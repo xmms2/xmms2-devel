@@ -35,17 +35,6 @@ configure build install'
 """
 
 ####
-## Patch undefine so that HAVE_* envs are still defined after
-## we write the configuration header file.
-####
-@Configure.conf
-def undefine(self, key):
-    ban = key + '='
-    lst = [x for x in self.env['DEFINES'] if not x.startswith(ban)]
-    self.env['DEFINES'] = lst
-    self.env.append_unique('define_key', key)
-
-####
 ## Initialization
 ####
 def init(ctx):
@@ -457,9 +446,6 @@ def configure(conf):
 
     if Options.platform == 'sunos':
         conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
-        if not conf.env.HAVE_SOCKET:
-            conf.fatal("xmms2 requires libsocket on Solaris.")
-            raise SystemExit(1)
         conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CFLAGS', '-std=gnu99')
@@ -525,7 +511,13 @@ int main() { return 0; }
 
     # Valgrind can be used for debugging here and there, so lets check
     # it at top-level so each consumer don't have to bother.
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
+    try:
+        conf.check_cfg(package='valgrind', uselib_store='valgrind',
+                       args='--cflags')
+    except Errors.ConfigurationError:
+        conf.env.have_valgrind = False
+    else:
+        conf.env.have_valgrind = True
 
     enabled_plugins, disabled_plugins, builtin_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
