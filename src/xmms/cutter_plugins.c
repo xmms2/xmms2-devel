@@ -228,7 +228,7 @@ xmms_cutter_init (xmms_xform_t *xform, gint64 start_bytes, gint64 stop_bytes)
 	if (data->start_bytes > 0) {
 		xmms_error_reset (&error);
 		res = xmms_cutter_seek (xform, 0, XMMS_XFORM_SEEK_SET, &error);
-		if (res == -1) {
+		if (res == -1 || xmms_error_iserror (&error)) {
 			xmms_log_error ("Couldn't seek, assuming we're at 0. Error is '%s'",
 			                xmms_error_message_get (&error));
 			data->current_bytes = 0;
@@ -256,6 +256,7 @@ xmms_cutter_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	gint res;
 	gint64 hi, lo;
 
+	g_return_val_if_fail(error, -1);
 	g_return_val_if_fail(xform, -1);
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail(data, -1);
@@ -265,7 +266,7 @@ xmms_cutter_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 			return 0; /* EOF */
 		}
 		res = xmms_xform_read (xform, buf, len, error);
-		if (res == 0) {
+		if (res == 0 || xmms_error_iserror (error)) {
 			return 0; /* EOF */
 		}
 		lo = MAX(0,   data->seek_bytes - data->current_bytes);
@@ -282,8 +283,9 @@ xmms_cutter_seek (xmms_xform_t *xform, gint64 samples,
 {
 	xmms_cutter_data_t *data;
 	xmms_stream_type_t *ot;
-	gint64 bytes, res;
+	gint64 bytes, res, outer_samples;
 
+	g_return_val_if_fail(error, -1);
 	g_return_val_if_fail(xform, -1);
 	ot = xmms_xform_outtype_get (xform);
 	data = xmms_xform_private_data_get (xform);
@@ -311,16 +313,24 @@ xmms_cutter_seek (xmms_xform_t *xform, gint64 samples,
 		return -1;
 	}
 
-	res = xmms_xform_seek (xform, xmms_sample_bytes_to_samples (ot, bytes),
+	res = xmms_xform_seek (xform, xmms_sample_bytes_to_samples_inexact (ot, bytes),
 	                       XMMS_XFORM_SEEK_SET, error);
-	if (res == -1) {
+	if (res == -1 || xmms_error_iserror (error)) {
 		return -1;
 	}
 
 	data->current_bytes = xmms_sample_samples_to_bytes (ot, res);
 	data->seek_bytes = MAX(bytes, data->current_bytes);
 
-	return xmms_sample_bytes_to_samples (ot, data->seek_bytes - data->start_bytes);
+	outer_samples = xmms_sample_bytes_to_samples (ot,
+			data->seek_bytes - data->start_bytes, error);
+	if (xmms_error_iserror (error)) {
+		/* The running assumption is that seek_bytes and start_bytes make sense
+		   in samples. If that is not the case something is very wrong. */
+		xmms_log_error ("seek_bytes - start_bytes impossible! Please report this!");
+		return -1;
+	}
+	return outer_samples;
 }
 
 
