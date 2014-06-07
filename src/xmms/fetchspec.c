@@ -407,8 +407,7 @@ xmms_fetch_spec_new_cluster (xmmsv_t *fetch, xmms_fetch_info_t *info,
 
 	switch (spec->data.cluster.type) {
 		case CLUSTER_BY_ID:
-			/* Media library id is always found at the first column */
-			spec->data.cluster.column = 0;
+			spec->data.cluster.column = xmms_fetch_info_add_song_id(info, cluster_field);
 			break;
 		case CLUSTER_BY_VALUE:
 			xmmsv_dict_get (fetch, "cluster-field", &cluster_field);

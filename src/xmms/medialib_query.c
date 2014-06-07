@@ -74,7 +74,6 @@ idlist_filter (const s4_val_t *value, s4_condition_t *cond)
  * Creates a new resultset where the order is the same as in the idlist
  *
  * @param set The resultset to sort. It will be freed by this function
- * @param id_pos The position of the "id" column
  * @param idlist The idlist to order by
  * @return A new set with the same order as the idlist
  */
@@ -703,7 +702,7 @@ order_condition_by_id (xmmsv_t *entry,
 	xmmsv_t *value;
 	gint field;
 
-	field = xmms_fetch_info_add_key (fetch, NULL, "id", sourcepref);
+	field = xmms_fetch_info_add_song_id (fetch, NULL);
 
 	value = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (field),
 	                          XMMSV_LIST_END);

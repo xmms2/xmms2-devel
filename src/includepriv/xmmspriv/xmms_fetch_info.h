@@ -29,6 +29,7 @@ struct xmms_fetch_info_St {
 
 xmms_fetch_info_t *xmms_fetch_info_new (s4_sourcepref_t *prefs);
 void xmms_fetch_info_free (xmms_fetch_info_t *info);
+int xmms_fetch_info_add_song_id (xmms_fetch_info_t *info, void *object);
 int xmms_fetch_info_add_key (xmms_fetch_info_t *info, void *object, const gchar *key, s4_sourcepref_t *prefs);
 int xmms_fetch_info_get_index (xmms_fetch_info_t *info, void *object, const gchar *key);
 
