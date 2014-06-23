@@ -719,6 +719,7 @@ xmms_collection_query_infos_spec (xmmsv_t *fields, xmmsv_t *grouping)
 		}
 
 		spec = xmmsv_build_cluster_list (cluster_by, cluster_field, spec);
+		xmmsv_dict_set_string (spec, "cluster-fallback", "");
 
 		xmmsv_list_iter_prev (it);
 	}
