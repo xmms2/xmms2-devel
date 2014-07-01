@@ -48,7 +48,6 @@ def init(ctx):
 xmms2d_dirs = """
 src/xmms
 src/lib/s4/src/lib
-src/lib/s4/tests
 """.split()
 
 subdirs = """
@@ -79,6 +78,7 @@ src/clients/lib/python
 src/clients/lib/perl
 src/clients/lib/ruby
 src/lib/s4/src/tools/s4
+src/lib/s4/tests
 src/tools/sqlite2s4
 src/tools/migrate-collections
 tests
@@ -170,17 +170,17 @@ def _configure_optionals(conf):
 
     succeeded_optionals = set()
 
-    for o in selected_optionals:
-        x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
+    for o in optional_subdirs:
+        if os.path.basename(o) not in selected_optionals:
+            continue
         try:
-            conf.recurse(x)
-            conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
+            conf.recurse(o)
+            conf.env.append_value('XMMS_OPTIONAL_BUILD', o)
             succeeded_optionals.add(o)
         except Errors.ConfigurationError:
             if optionals_must_work:
                 # This raises a new exception:
-                conf.fatal("The required optional %s failed to configure: %s"
-                        % (o, sys.exc_info()[1]))
+                conf.fatal("The required optional %s failed to configure: %s" % (o, sys.exc_info()[1]))
             else:
                 pass
 
