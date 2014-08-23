@@ -41,7 +41,7 @@ from propdict import PropDict # xmmsclient.propdict
 
 
 cdef xmmsv_t *create_native_value(value) except NULL:
-	cdef xmmsv_t *ret=NULL
+	cdef xmmsv_t *ret = NULL
 	cdef xmmsv_t *v
 	cdef XmmsValue xv
 
@@ -76,6 +76,7 @@ cdef xmmsv_t *create_native_value(value) except NULL:
 				xmmsv_unref(v) # the list took its own reference
 	return ret
 
+class XmmsError(Exception): pass
 
 cdef class XmmsValue:
 	#cdef object sourcepref
@@ -87,7 +88,7 @@ cdef class XmmsValue:
 		self.val = xmmsv_new_none()
 		self.ispropdict = 0
 
-	def __init__(self, sourcepref=None, pyval=None):
+	def __init__(self, sourcepref = None, pyval = None):
 		cdef xmmsv_t *v
 		self.sourcepref = sourcepref
 
@@ -99,7 +100,7 @@ cdef class XmmsValue:
 			xmmsv_unref(self.val)
 			self.val = NULL
 
-	cdef set_value(self, xmmsv_t *value, int ispropdict=-1):
+	cdef set_value(self, xmmsv_t *value, int ispropdict = -1):
 		if self.val != NULL:
 			xmmsv_unref(self.val)
 		xmmsv_ref(value)
@@ -108,6 +109,7 @@ cdef class XmmsValue:
 			self.ispropdict = ispropdict
 
 	cpdef set_pyval(self, pyval):
+		cdef xmmsv_t *v
 		v = create_native_value(pyval)
 		self.set_value(v)
 		xmmsv_unref(v)
@@ -142,7 +144,7 @@ cdef class XmmsValue:
 		cdef char *ret = NULL
 		if not xmmsv_get_error(self.val, <const_char **>&ret):
 			raise ValueError("Failed to retrieve value")
-		return to_unicode(ret)
+		return XmmsError(to_unicode(ret))
 
 	cpdef get_int(self):
 		"""
@@ -259,6 +261,27 @@ cdef class XmmsValue:
 		else:
 			raise TypeError("Unknown value type from the server: %d" % vtype)
 
+	cpdef copy(self, cls=None):
+		if cls is None:
+			cls = XmmsValue
+		elif not issubclass(cls, XmmsValue):
+			raise TypeError("Custom class must be a subclass of XmmsValue")
+		return cls(sourcepref = self.sourcepref, pyval = self)
+
+	def __iter__(self):
+		vtype = self.get_type()
+
+		if vtype == XMMSV_TYPE_LIST:
+			return self.get_list_iter()
+		elif vtype == XMMSV_TYPE_DICT:
+			return self.get_dict_iter()
+		elif vtype == XMMSV_TYPE_STRING:
+			return iter(self.get_string())
+		elif vtype == XMMSV_TYPE_BIN:
+			return iter(self.get_bin())
+		raise TypeError("Value type not iterable")
+
+
 
 cdef class XmmsListIter:
 	#cdef object sourcepref
@@ -361,7 +384,9 @@ cdef class CollectionRef:
 		self.coll = coll
 
 
-cdef _idlist_types = [XMMS_COLLECTION_TYPE_IDLIST]
+cdef _idlist_types = (
+		XMMS_COLLECTION_TYPE_IDLIST,
+		)
 cdef class Collection(CollectionRef):
 	#cdef object _attributes
 	#cdef object _operands
@@ -379,7 +404,6 @@ cdef class Collection(CollectionRef):
 		if self._operands is None and self.coll != NULL:
 			self._operands = CollectionOperands(self)
 
-	# Define read-only properties so that thoses appear in dir().
 	property attributes:
 		def __get__(self):
 			self.init_attributes()
@@ -416,30 +440,52 @@ cdef class Collection(CollectionRef):
 				self._idlist.clear()
 				self._idlist.extend(ids)
 
+	cpdef copy(self):
+		cdef xmmsv_t *newcoll = xmmsv_copy(<xmmsv_t *>self.coll)
+		coll = create_coll(newcoll)
+		xmmsv_unref(newcoll)
+		return coll
+
 	def __repr__(self):
 		atr = []
+		operands = []
 		if self.ids is not None:
-			atr.append(repr(self.ids))
+			atr.append("ids=%r" % self.ids)
+		for o in self.operands:
+			operands.append(repr(o))
+		if operands:
+			atr.append("operands=[%s]" % ", ".join(operands))
 		for k,v in self.attributes.iteritems():
 			atr.append("%s=%s" % (k, repr(v)))
 		return "%s(%s)" % (self.__class__.__name__, ", ".join(atr))
 
 	def __or__(self, other): # |
-		if not (isinstance(self, Collection) and isinstance(self, Collection)):
-			raise NotImplemented()
-		# TODO: merge union (e.g. a|b|c -> Union(a, b, c)
-		return Union(self, other)
+		if not (isinstance(self, Collection) and isinstance(other, Collection)):
+			raise TypeError("Unsupported operand type(s) for |: %r and %r"
+				% (self.__class__.__name__, other.__class__.__name__))
+		u = Union()
+		for op in (self, other):
+			if isinstance(op, Union):
+				u.operands.extend(op.operands)
+			else:
+				u.operands.append(op)
+		return u
 
 	def __and__(self, other): # &
-		if not (isinstance(self, Collection) and isinstance(self, Collection)):
-			raise NotImplemented()
-		# TODO: merge intersection (e.g. a&b&c -> Intersection(a, b, c)
-		return Intersection(self, other)
+		if not (isinstance(self, Collection) and isinstance(other, Collection)):
+			raise TypeError("Unsupported operand type(s) for &: %r and %r"
+				% (self.__class__.__name__, other.__class__.__name__))
+		i = Intersection()
+		for op in (self, other):
+			if isinstance(op, Intersection):
+				i.operands.extend(op.operands)
+			else:
+				i.operands.append(op)
+		return i
 
 	def __invert__(self): #~
-		if not isinstance(self, Collection):
-			return NotImplemented()
-		# TODO: Unpack redundant complement (e.g. ~~a is a)
+		if isinstance(self, Complement):
+			return self.operands[0]
 		return Complement(self)
 
 
@@ -473,7 +519,7 @@ cdef class AttributesIterator:
 		cdef char *key = NULL
 		cdef xmmsv_t *value = NULL
 		if self.diter != NULL and xmmsv_dict_iter_valid(self.diter):
-			xmmsv_dict_iter_pair (self.diter, <const_char **>&key, &value)
+			xmmsv_dict_iter_pair(self.diter, <const_char **>&key, &value)
 			k = to_unicode(key)
 			if self.itertype == ITER_KEYS:
 				ret = k
@@ -513,7 +559,7 @@ cdef class CollectionAttributes(CollectionRef):
 		return AttributesIterator(self, ITER_KEYS)
 
 	cpdef keys(self):
-		return [k for k in self.iterkeys()]
+		return list(self.iterkeys())
 
 	cpdef itervalues(self):
 		return AttributesIterator(self, ITER_VALUES)
@@ -522,10 +568,10 @@ cdef class CollectionAttributes(CollectionRef):
 		return AttributesIterator(self, ITER_XVALUES)
 
 	cpdef values(self):
-		return [v for v in self.itervalues()]
+		return list(self.itervalues())
 
 	cpdef xvalues(self):
-		return [v for v in self.iterxvalues()]
+		return list(self.iterxvalues())
 
 	cpdef iteritems(self):
 		return AttributesIterator(self, ITER_ITEMS)
@@ -534,10 +580,14 @@ cdef class CollectionAttributes(CollectionRef):
 		return AttributesIterator(self, ITER_XITEMS)
 
 	cpdef items(self):
-		return [i for i in self.iteritems()]
+		return list(self.iteritems())
 
 	cpdef xitems(self):
-		return [i for i in self.iterxitems()]
+		return list(self.iterxitems())
+
+	def __contains__(self, name):
+		cdef xmmsv_t *value = NULL
+		return xmmsv_coll_attribute_get_value(self.coll, name, &value)
 
 	def __iter__(self):
 		return self.iterkeys()
@@ -563,7 +613,7 @@ cdef class CollectionAttributes(CollectionRef):
 		if not xmmsv_coll_attribute_remove(self.coll, <char *>n):
 			raise KeyError("The attribute '%s' doesn't exist" % name)
 
-	def get(self, name, default=None):
+	def get(self, name, default = None):
 		try:
 			return self.xget(name).value()
 		except KeyError:
@@ -583,19 +633,20 @@ cdef class CollectionAttributes(CollectionRef):
 		for k in self.keys():
 			xmmsv_coll_attribute_remove(self.coll, k)
 
-	def update(self, d, **kargs):
-		if hasattr(d, 'keys') and hasattr(d.keys, '__call__'):
-			for k in d.keys():
-				self[k] = d[k]
-		else:
-			for k, v in d:
-				self[k] = v
+	def update(self, *a, **kargs):
+		for d in a:
+			if hasattr(d, 'keys') and hasattr(d.keys, '__call__'):
+				for k in d.keys():
+					self[k] = d[k]
+			else:
+				for k, v in d:
+					self[k] = v
 		for k in kargs:
 			self[k] = kargs[k]
 
-	def __contains__(self, name):
-		cdef xmmsv_t *value = NULL
-		return xmmsv_coll_attribute_get_value(self.coll, name, &value)
+	def copy(self):
+		return self.get_dict()
+
 
 cdef class CollectionOperands(CollectionRef):
 	#cdef object pylist
@@ -667,27 +718,24 @@ cdef class CollectionIDList(CollectionRef):
 	def __len__(self):
 		return xmmsv_coll_idlist_get_size(self.coll)
 
-	cpdef list(self):
-		"""Returns a _COPY_ of the idlist as an ordinary list"""
-		cdef int x
+	def __iter__(self):
+		"""Iterate over ids"""
+		cdef int x = -1
 		cdef int l
-		cdef int i
+		cdef int i = 0
 		l = xmmsv_coll_idlist_get_size(self.coll)
-		i = 0
-		res = []
 		while i < l:
-			x = -1
 			if not xmmsv_coll_idlist_get_index(self.coll, i, &x):
 				raise RuntimeError("Failed to retrieve id at index %d" % i)
-			res.append(x)
-			i = i + 1
-		return res
+			yield x
+			i += 1
+
+	def list(self):
+		"""Returns a _COPY_ of the idlist as an ordinary list"""
+		return list(self)
 
 	def __repr__(self):
 		return repr(self.list())
-
-	def __iter__(self):
-		return iter(self.list())
 
 	cpdef append(self, int v):
 		"""Appends an id to the idlist"""
@@ -695,6 +743,7 @@ cdef class CollectionIDList(CollectionRef):
 			raise RuntimeError("Failed to append an id")
 
 	cpdef extend(self, v):
+		cdef int a
 		for a in v:
 			self.append(a)
 
@@ -715,6 +764,12 @@ cdef class CollectionIDList(CollectionRef):
 			i = len(self) + i
 		if not xmmsv_coll_idlist_remove(self.coll, i):
 			raise IndexError("Index out of range")
+
+	cpdef pop(self, int i = -1):
+		"""Remove an id at specified position and return it"""
+		x = self[i]
+		self.remove(i)
+		return x
 
 	def __delitem__(self, int i):
 		if i < 0:
@@ -753,113 +808,177 @@ class BaseCollection(CollectionWrapper):
 		operands = kargs.pop("operands", None)
 		if operands:
 			self.operands = operands
+
 		ids = kargs.pop("ids", None)
 		if ids:
 			try:
 				self.ids = ids
 			except TypeError: # Just ignore idlist when illegal
 				pass
-		for k in kargs:
-			self.attributes[k] = kargs[k]
+
+		self.attributes.update(kargs)
 
 class Reference(BaseCollection):
-	def __init__(Collection self, ref, ns="Collections"):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE,
-				namespace=ns, reference=ref)
+	def __init__(Collection self, ref = None, ns = "Collections", **kargs):
+		kargs.update(
+				namespace = kargs.get('namespace', ns),
+				reference = kargs.get('reference', ref)
+				)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE, **kargs)
 
 class Universe(Reference):
 	def __init__(self):
-		Reference.__init__(self, "All Media")
+		Reference.__init__(self, reference = "All Media")
+
+	def __repr__(self):
+		return "%s()" % self.__class__.__name__
 
 class FilterCollection(BaseCollection):
-	def __init__(Collection self, operation, parent=None, **kv):
-		if parent is None:
-			parent = Universe()
-		BaseCollection.__init__(self, operation, operands=[parent], **kv)
+	def __init__(Collection self, _operation, parent = None, **kargs):
+		if 'operands' in kargs:
+			operands = kargs
+		elif parent is None:
+			operands = [Universe()]
+		else:
+			operands = [parent]
+
+		BaseCollection.__init__(self, _operation,
+				operands = operands,
+				**kargs)
 
 class Equals(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_EQUALS, parent, **kargs)
 
 class NotEqual(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_NOTEQUAL, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_NOTEQUAL, parent, **kargs)
 
 class Smaller(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER, parent, **kargs)
 
 class SmallerEqual(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLEREQ, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLEREQ, parent, **kargs)
 
 class Greater(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER, parent, **kargs)
 
 class GreaterEqual(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATEREQ, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATEREQ, parent, **kargs)
 
 class Match(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH, parent, **kargs)
 
 class Token(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_TOKEN, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_TOKEN, parent, **kargs)
 
 class Has(FilterCollection):
-	def __init__(Collection self, parent=None, **kv):
-		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kv)
+	def __init__(Collection self, parent = None, **kargs):
+		FilterCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS, parent, **kargs)
 
 class Order(BaseCollection):
-	def __init__(Collection self, operand, field=None, ascending=True):
-		kv = dict(operands=[operand], direction="ASC" if ascending else "DESC")
-		if field:
-			kv["field"] = field
-			kv["type"] = "value"
+	def __init__(Collection self, operand = None, field = None, direction = 0, **kargs):
+		if isinstance(direction, int):
+			kargs['direction'] = 'ASC' if direction >= 0 else 'DESC'
 		else:
-			kv["type"] = "random"
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_ORDER, **kv)
+			direction = str(direction).upper()
+			if direction not in ('ASC', 'DESC'):
+				raise TypeError("'direction' must be an integer or one of 'ASC', 'DESC'")
+			kargs['direction'] = direction
+
+		kargs['operands'] = kargs.get('operands', [operand or Universe()])
+
+		if field == 'id':
+			kargs["type"] = "id"
+		elif field:
+			kargs["field"] = field
+			kargs["type"] = "value"
+		else:
+			kargs["type"] = kargs.get('type', "random")
+
+		if kargs["type"] == "random":
+			del kargs['direction']
+
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_ORDER, **kargs)
 
 class Mediaset(BaseCollection):
-	def __init__(Collection self, operand):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MEDIASET,
-				operands=[operand])
+	def __init__(Collection self, operand = None, **kargs):
+		kargs['operands'] = kargs.get('operands', [operand or Universe()])
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MEDIASET, **kargs)
 
 class Limit(BaseCollection):
-	def __init__(Collection self, operand, start=0, length=0):
-		kv = dict(operands=[operand], start=str(start), length=str(length))
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_LIMIT, **kv)
+	def __init__(Collection self, operand = None, start = 0, length = 0, **kargs):
+		kargs.update(
+				operands = kargs.get('operands', [operand or Universe()]),
+				start = int(start),
+				length = int(length)
+				)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_LIMIT, **kargs)
 
 class IDList(BaseCollection):
-	def __init__(Collection self, ids = None):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, type="list", ids=ids)
+	def __init__(Collection self, ids = None, **kargs):
+		kargs.update(
+				type = kargs.get('type', 'list'),
+				ids = ids
+				)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, **kargs)
 
-class Queue(BaseCollection):
-	def __init__(Collection self, ids = None):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, type="queue", ids=ids)
+class Queue(IDList):
+	def __init__(Collection self, ids = None, **kargs):
+		kargs.update(
+				type = kargs.get('type', 'queue')
+				)
+		IDList.__init__(self, ids, **kargs)
 
-class PShuffle(BaseCollection):
-	def __init__(Collection self, parent = None, ids = None):
-		if parent is None:
-			parent = Universe()
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST, type="pshuffle", operands=[parent], ids=ids)
+class PShuffle(IDList):
+	def __init__(Collection self, ids = None, parent = None, **kargs):
+		kargs.update(
+				type = kargs.get('type', 'pshuffle'),
+				operands = kargs.get('operands', [parent or Universe()])
+				)
+		IDList.__init__(self, ids, **kargs)
 
 class Union(BaseCollection):
-	def __init__(Collection self, *a):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, operands=a)
+	def __init__(Collection self, *a, **kargs):
+		kargs['operands'] = kargs.get('operands', list(a))
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION, **kargs)
 
 class Intersection(BaseCollection):
-	def __init__(Collection self, *a):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, operands=a)
+	def __init__(Collection self, *a, **kargs):
+		kargs['operands'] = kargs.get('operands', list(a))
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION, **kargs)
 
 class Complement(BaseCollection):
-	def __init__(Collection self, op):
-		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])
+	def __init__(Collection self, operand = None, **kargs):
+		kargs['operands'] = kargs.get('operands', [operand or Universe()])
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, **kargs)
 
-
+cdef _collclass = {
+		XMMS_COLLECTION_TYPE_REFERENCE: Reference,
+		XMMS_COLLECTION_TYPE_UNIVERSE: Universe,
+		XMMS_COLLECTION_TYPE_UNION: Union,
+		XMMS_COLLECTION_TYPE_INTERSECTION: Intersection,
+		XMMS_COLLECTION_TYPE_COMPLEMENT: Complement,
+		XMMS_COLLECTION_TYPE_HAS: Has,
+		XMMS_COLLECTION_TYPE_EQUALS: Equals,
+		XMMS_COLLECTION_TYPE_NOTEQUAL: NotEqual,
+		XMMS_COLLECTION_TYPE_MATCH: Match,
+		XMMS_COLLECTION_TYPE_TOKEN: Token,
+		XMMS_COLLECTION_TYPE_SMALLER: Smaller,
+		XMMS_COLLECTION_TYPE_SMALLEREQ: SmallerEqual,
+		XMMS_COLLECTION_TYPE_GREATER: Greater,
+		XMMS_COLLECTION_TYPE_GREATEREQ: GreaterEqual,
+		XMMS_COLLECTION_TYPE_ORDER: Order,
+		XMMS_COLLECTION_TYPE_MEDIASET: Mediaset,
+		XMMS_COLLECTION_TYPE_LIMIT: Limit,
+		XMMS_COLLECTION_TYPE_IDLIST: IDList,
+		}
 cdef create_coll(xmmsv_t *coll):
 	cdef xmmsv_coll_type_t colltype
 	cdef Collection c
@@ -868,51 +987,8 @@ cdef create_coll(xmmsv_t *coll):
 
 	colltype = xmmsv_coll_get_type(coll)
 	c = CollectionWrapper()
-	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
-		c.__class__ = Reference
-	elif colltype == XMMS_COLLECTION_TYPE_UNIVERSE: # coll_parse() needs this
-		c.__class__ = Universe
-	elif colltype == XMMS_COLLECTION_TYPE_UNION:
-		c.__class__ = Union
-	elif colltype == XMMS_COLLECTION_TYPE_INTERSECTION:
-		c.__class__ = Intersection
-	elif colltype == XMMS_COLLECTION_TYPE_COMPLEMENT:
-		c.__class__ = Complement
-	elif colltype == XMMS_COLLECTION_TYPE_HAS:
-		c.__class__ = Has
-	elif colltype == XMMS_COLLECTION_TYPE_EQUALS:
-		c.__class__ = Equals
-	elif colltype == XMMS_COLLECTION_TYPE_NOTEQUAL:
-		c.__class__ = NotEqual
-	elif colltype == XMMS_COLLECTION_TYPE_MATCH:
-		c.__class__ = Match
-	elif colltype == XMMS_COLLECTION_TYPE_TOKEN:
-		c.__class__ = Token
-	elif colltype == XMMS_COLLECTION_TYPE_SMALLER:
-		c.__class__ = Smaller
-	elif colltype == XMMS_COLLECTION_TYPE_SMALLEREQ:
-		c.__class__ = SmallerEqual
-	elif colltype == XMMS_COLLECTION_TYPE_GREATER:
-		c.__class__ = Greater
-	elif colltype == XMMS_COLLECTION_TYPE_GREATEREQ:
-		c.__class__ = GreaterEqual
-	elif colltype == XMMS_COLLECTION_TYPE_ORDER:
-		c.__class__ = Order
-	elif colltype == XMMS_COLLECTION_TYPE_MEDIASET:
-		c.__class__ = Mediaset
-	elif colltype == XMMS_COLLECTION_TYPE_LIMIT:
-		c.__class__ = Limit
-	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
-		if xmmsv_coll_attribute_get_string(coll, "type", &idlist_type):
-			idtype_uni = to_unicode(idlist_type)
-		else:
-			idtype_uni = "list"
-		if idtype_uni == "queue":
-			c.__class__ = Queue
-		elif idtype_uni == "pshuffle":
-			c.__class__ = PShuffle
-		else:
-			c.__class__ = IDList
+	if colltype in _collclass:
+		c.__class__ = _collclass[colltype]
 	else:
 		raise RuntimeError("Unknown collection type")
 
@@ -921,6 +997,13 @@ cdef create_coll(xmmsv_t *coll):
 	if colltype == XMMS_COLLECTION_TYPE_REFERENCE:
 		if c.attributes.get("reference", "") == "All Media":
 			c.__class__ = Universe
+	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
+		if xmmsv_coll_attribute_get_string(coll, "type", &idlist_type):
+			idtype_uni = to_unicode(idlist_type)
+			if idtype_uni == "queue":
+				c.__class__ = Queue
+			elif idtype_uni == "pshuffle":
+				c.__class__ = PShuffle
 
 	return c
 
@@ -940,5 +1023,3 @@ cdef get_default_source_pref():
 		sourcepref.append(to_unicode(xmmsv_default_source_pref[i]))
 		i += 1
 	return sourcepref
-
-XMMSValue = XmmsValue

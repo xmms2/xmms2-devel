@@ -20,7 +20,6 @@ cdef class XmmsResult:
 	cdef xmmsc_result_t *res
 	cdef object _cb
 	cdef bint _cb_issetup
-	cdef object _exc
 	cdef XmmsSourcePreference source_pref
 	cdef int ispropdict
 	cdef XmmsResultTracker result_tracker
@@ -32,9 +31,7 @@ cdef class XmmsResult:
 	cpdef disconnect(self)
 	cpdef wait(self)
 	cpdef is_error(self)
-	cpdef iserror(self)
 	cpdef xmmsvalue(self)
-	cpdef _value(self)
 	cpdef value(self)
 
 ctypedef int VisResultCommand

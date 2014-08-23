@@ -27,6 +27,7 @@ cdef class XmmsValue:
 	cpdef get_list(self)
 	cpdef get_list_iter(self)
 	cpdef value(self)
+	cpdef copy(self, cls=*)
 
 cdef class XmmsListIter:
 	cdef object sourcepref
@@ -51,6 +52,8 @@ cdef class Collection(CollectionRef):
 	cdef init_idlist(self)
 	cdef init_attributes(self)
 	cdef init_operands(self)
+
+	cpdef copy(self)
 
 cdef class CollectionAttributes(CollectionRef):
 	cpdef get_dict(self)
@@ -92,11 +95,11 @@ cdef class CollectionOperands(CollectionRef):
 
 
 cdef class CollectionIDList(CollectionRef):
-	cpdef list(self)
 	cpdef append(self, int v)
 	cpdef extend(self, v)
 	cpdef insert(self, int v, int i)
 	cpdef remove(self, int i)
+	cpdef pop(self, int i = *)
 	cpdef clear(self)
 
 cdef create_coll(xmmsv_t *coll)
