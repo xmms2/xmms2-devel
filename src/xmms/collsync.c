@@ -44,6 +44,8 @@ static void xmms_coll_sync_stop (xmms_coll_sync_t *sync);
 
 static void xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err);
 
+static void xmms_coll_sync_restore (xmms_coll_sync_t *sync, gboolean sad_hack);
+
 typedef enum xmms_coll_sync_state_t {
 	XMMS_COLL_SYNC_STATE_IDLE,
 	XMMS_COLL_SYNC_STATE_DELAYED,
@@ -116,6 +118,9 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 	                     xmms_coll_sync_schedule_sync, sync);
 
 	xmms_coll_sync_register_ipc_commands (XMMS_OBJECT (sync));
+
+	/* First restore synchronously to make sure we are in a sensible state. */
+	xmms_coll_sync_restore (sync, FALSE);
 
 	xmms_coll_sync_start (sync);
 
@@ -493,8 +498,6 @@ static gpointer
 xmms_coll_sync_loop (gpointer udata)
 {
 	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
-
-	xmms_coll_sync_restore (sync, FALSE);
 
 	g_mutex_lock (&sync->mutex);
 
