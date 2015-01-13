@@ -1,4 +1,4 @@
-from waflib import Options
+from waflib import Options, Errors
 from waftools.plugin import plugin
 
 source = """

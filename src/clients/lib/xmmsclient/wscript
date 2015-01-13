@@ -1,4 +1,4 @@
-from waflib import Logs
+from waflib import Logs, Errors
 from waftools import tool
 
 def build(bld):
