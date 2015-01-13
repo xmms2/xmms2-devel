@@ -1,7 +1,8 @@
-All the code except the files listed below is "Copyright (C) 2003-2009
-XMMS2 Team" and is licensed under the "GNU Lesser General Public
-License" (LGPL) version 2.1 or later. The full LGPL license text is
-available in COPYING.LGPL.
+All the code except the files listed below is
+  Copyright (C) 2003-2015 XMMS2 Team
+and is licensed under the "GNU Lesser General Public License" (LGPL)
+version 2.1 or later. The full LGPL license text is available in
+COPYING.LGPL.
 
 IMPORTANT! Plugins do NOT constitute derived work, they are just using
 XMMS2 as a library! This means that you can add a non open source
