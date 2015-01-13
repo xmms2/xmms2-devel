@@ -1,7 +1,7 @@
 /** @file avcodec_compat.h
  *  Compatibility header for libavcodec backwards compatibility
  *
- *  Copyright (C) 2011-2014 XMMS2 Team
+ *  Copyright (C) 2011-2015 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

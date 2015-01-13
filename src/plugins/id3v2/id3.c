@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2011-2014 XMMS2 Team
+ *  Copyright (C) 2011-2015 XMMS2 Team
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
