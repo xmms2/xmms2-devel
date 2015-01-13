@@ -1,0 +1,11 @@
+language: c
+
+before_script:
+  - echo "deb http://us.archive.ubuntu.com/ubuntu/ utopic main restricted universe multiverse" | sudo tee /etc/apt/sources.list
+  - sudo apt-get -q update
+  - sudo apt-get -q --force-yes install libao-dev libasound2-dev libavahi-client-dev libavahi-glib-dev libavcodec-dev libboost-dev libboost-signals-dev libcdio-cdda-dev libcurl4-openssl-dev libssl-dev libdiscid0-dev libexpat1-dev libfaad-dev libfftw3-dev libflac-dev libgamin-dev libglib2.0-dev libgme-dev libjack-dev libmad0-dev libmms-dev libmodplug-dev libmpcdec-dev libmpg123-dev libofa0-dev libperl-dev libpulse-dev libreadline-dev libresid-builder-dev libsamplerate-dev libsdl1.2-dev libshout-dev libsidplay2-dev libsmbclient-dev libsndfile1-dev libsqlite3-dev libvisual-0.4-dev libvorbis-dev libwavpack-dev libxml2-dev python-all-dev cython libcunit1-dev valgrind libfluidsynth-dev libopusfile-dev
+
+script:
+  - ./waf configure --prefix=/usr --without-optionals=ruby
+  - ./waf build
+  - sudo ./waf install
