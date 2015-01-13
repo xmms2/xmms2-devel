@@ -1,9 +1,11 @@
-XMMS2 is a music player.
+XMMS2 is a music player
+=======================
 
-<insert one line sales pitch here>
+{{ insert one line sales pitch here }}
 
 
-==VERSION==
+VERSION
+-------
 
 This README file is for the "Developer Release" series of XMMS2.
 
@@ -15,31 +17,36 @@ anyone is allowed to try it out, but don't expect everything to work flawlessly
 just yet. This is a good thing if you don't mind getting your hands dirty.
 
 
-==INSTALLING==
+INSTALLING
+----------
 
 See INSTALL file.
 (for the impatient people: ./waf configure && ./waf && sudo ./waf install)
 
 
-==COPYRIGHT==
+COPYRIGHT
+---------
 
 See COPYING for details.
 (for the ones who don't care about details: LGPL)
 
-==CREDITS==
+CREDITS
+-------
 
 See the AUTHORS file.
 (for the people not in AUTHORS: like everyone but you - help and you will be
 included as well)
 
 
-==HELPING==
+HELPING
+-------
 
 Please send patches to the mailing list or bug tracker! A good starting point
 for further info might be: http://xmms2.org/wiki/Developer_Corner
 
 
-==CONTACT==
+CONTACT
+-------
 
 Feel free to post any questions/patches/whatever to the mailing list:
 xmms2-devel@lists.xmms2.org
