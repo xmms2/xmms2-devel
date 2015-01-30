@@ -1,3 +1,7 @@
+env:
+    global:
+        - secure: "YS7oBoXRQ9/PpiMOPFo0TftWozQo9gACzNZKdRMSt2i7L8pe8Zn46OVkjWDAsg1IhgdQjPHcmQ+XJriwRdihH17jSTVnxOSJW2L8KBR7ClNaMiRbiVCecudIub2uy++9C/b+9z+G6ag++7Xtn2j9T+rOTH7KVM2MQ29jTJrZ/M8="
+
 language: c
 
 before_script:
@@ -13,3 +17,12 @@ script:
   - ./waf configure --prefix=/usr --without-optionals=ruby,s4 --enable-gcov --generate-coverage
   - ./waf build --generate-coverage --alltests
   - coveralls -x .c -b _build_ -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'
+
+addons:
+    coverity_scan:
+        project:
+            name: xmms2/xmms2-devel
+        notification_email: coverity-notification@xmms2.org
+        build_command_prepare: ./waf configure --without-optionals=ruby
+        build_command: ./waf configure build --without-optionals=ruby
+        branch_pattern: coverity_scan
