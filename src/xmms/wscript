@@ -99,7 +99,7 @@ def build(bld):
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'glib2 gmodule2 statfs socket shm valgrind',
+        uselib = 'glib2 gmodule2 math s4 shm socket statfs valgrind',
         use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4 xmmsc-glib xmms_builtin_plugins',
         defines = 'G_LOG_DOMAIN="core"'
     )
@@ -112,7 +112,6 @@ def build(bld):
         target = 'xmms2d',
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',
-        uselib = 'math glib2 gmodule2 statfs socket shm valgrind s4',
         use = ['xmms2core'] + objects,
         defines = 'G_LOG_DOMAIN=""'
     )

@@ -26,7 +26,7 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x1070f00
+_waf_hexversion = 0x1080b00
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
@@ -176,7 +176,7 @@ def _configure_optionals(conf):
         try:
             conf.recurse(o)
             conf.env.append_value('XMMS_OPTIONAL_BUILD', o)
-            succeeded_optionals.add(o)
+            succeeded_optionals.add(os.path.basename(o))
         except Errors.ConfigurationError:
             if optionals_must_work:
                 # This raises a new exception:
@@ -349,11 +349,11 @@ def configure(conf):
 
     conf.load('gnu_dirs')
     conf.load('man', tooldir='waftools')
-    conf.load('misc')
-    conf.load('gcc')
-    conf.load('g++')
+    conf.load('compiler_c')
+    conf.load('compiler_cxx')
 
     conf.load('visibility', tooldir='waftools')
+    conf.load('localdeps', tooldir='waftools')
 
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
@@ -567,7 +567,8 @@ def _list_cb(option, opt, value, parser):
 
 def options(opt):
     opt.load('gnu_dirs')
-    opt.load('gcc')
+    opt.load('compiler_c')
+    opt.load('compiler_cxx')
 
     opt.add_option('--with-custom-version', type='string',
                    dest='customversion', help="Override git commit hash version")

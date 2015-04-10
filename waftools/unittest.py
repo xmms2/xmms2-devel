@@ -87,7 +87,7 @@ def monkey_patch_test_runner():
 
             suppression = os.path.join(os.getcwd(), "utils", "valgrind-suppressions")
             self.generator.ut_exec = [
-                "valgrind",
+                self.env.VALGRIND[0],
                 "--log-file=%s.log" % self.inputs[0].abspath(),
                 "--leak-check=full",
                 "--suppressions=%s" % suppression,
@@ -130,14 +130,14 @@ def generate_coverage(bld):
         if not (bld.env.LCOV and bld.env.GENHTML):
             raise Errors.WafError("Could not generate coverage as the tools are missing.")
 
-        cmd = [bld.env.LCOV, "-c", "-b", ".", "-d", ".", "-o", "coverage.info"]
+        cmd = [bld.env.LCOV[0], "-c", "-b", ".", "-d", ".", "-o", "coverage.info"]
         (stdout, stderr, code) = run(cmd, bld.bldnode.abspath())
 
         if code != 0:
             err = "stdout: %s\nstderr: %s" % (stdout, stderr)
             raise Errors.WafError("Could not run coverage analysis tool!\n%s" % err)
 
-        cmd = [bld.env.GENHTML, "-o", "coverage", "coverage.info"]
+        cmd = [bld.env.GENHTML[0], "-o", "coverage", "coverage.info"]
         (stdout, stderr, code) = run(cmd, bld.bldnode.abspath())
 
         if code != 0:

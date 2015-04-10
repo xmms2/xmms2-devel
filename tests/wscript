@@ -18,8 +18,6 @@ xmmsv/t_xmmsv_serialization.c
 """.split()
 
 test_server_src = """
-../src/xmms/streamtype.c
-../src/xmms/object.c
 server/t_streamtype.c
 """.split()
 
@@ -49,7 +47,6 @@ client/t_command_trie.c
 
 def configure(conf):
     conf.load("unittest", tooldir="waftools")
-
     conf.check_cc(header_name="CUnit/CUnit.h")
     conf.check_cc(lib="cunit", uselib_store="cunit")
     conf.check_cc(lib="ncurses", uselib_store="ncurses", mandatory=False)
@@ -95,7 +92,7 @@ def build(bld):
             source = testserverutils_src,
             includes = ". ../src/include ../src/includepriv",
             uselib = "glib2",
-            use = "s4",
+            use = "xmms2core",
             install_path = None
             )
 
@@ -103,8 +100,8 @@ def build(bld):
             target = 'test_server',
             source = test_server_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = 'xmmstypes xmmsutils s4',
-            uselib = 'cunit ncurses glib2 gthread2 DISABLE_WRITESTRINGS',
+            use = 'xmms2core',
+            uselib = 'cunit ncurses DISABLE_WRITESTRINGS',
             install_path = None
             )
 
@@ -112,8 +109,8 @@ def build(bld):
             target = "test_medialib",
             source = test_mlib_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            use = "testutils testserverutils",
+            uselib = "cunit ncurses DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -121,8 +118,8 @@ def build(bld):
             target = "test_playlist",
             source = test_playlist_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            use = "testutils testserverutils",
+            uselib = "cunit ncurses DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -130,8 +127,8 @@ def build(bld):
             target = "test_collection",
             source = test_collection_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            use = "testutils testserverutils",
+            uselib = "cunit ncurses DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -139,8 +136,8 @@ def build(bld):
             target = "test_xform",
             source = test_xform_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils",
-            uselib = "cunit ncurses glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            use = "testutils testserverutils",
+            uselib = "cunit ncurses DISABLE_WRITESTRINGS",
             install_path = None
             )
 
@@ -148,8 +145,7 @@ def build(bld):
             target = "medialib-runner",
             source = mlib_runner_src,
             includes = '. .. runner ../src ../src/includepriv ../src/include',
-            use = "xmms2core xmmsipc xmmssocket xmmstypes xmmsutils s4 testutils testserverutils memorystatus",
-            uselib = "glib2 gmodule2 gthread2 DISABLE_WRITESTRINGS",
+            use = "testutils testserverutils memorystatus",
             install_path = None,
             ut_cwd = "."
             )
@@ -159,8 +155,8 @@ def build(bld):
             target = 'test_cli',
             source = test_cli_src,
             includes = '. .. runner ../src/include ../src/clients/nycli',
-            use = 'xmmsutils xmmsclient xmmscli',
-            uselib = 'cunit ncurses glib2 DISABLE_WRITESTRINGS',
+            use = 'xmmsutils xmmscli',
+            uselib = 'cunit ncurses DISABLE_WRITESTRINGS',
             install_path = None
             )
 

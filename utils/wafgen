@@ -63,6 +63,11 @@ gen_waf() {
   { ./configure && ./waf "$@" ; } || error
   cp waf "$topdir" || error
 }
+update_wscript() {
+  [[ -f "$topdir/wscript" ]] || return 0
+  echo "Update waf version check in main wscript" >&2
+  sed -ri 's/^_waf_hexversion = 0x[0-f]+$/_waf_hexversion = '"$1/" "$topdir/wscript"
+}
 
 _conf="$(dirname "$0")/wafgen.conf"
 [ -f "$_conf" ] || error "'$_conf' doesn't exist."
@@ -72,6 +77,11 @@ _conf="$(dirname "$0")/wafgen.conf"
 [[ -z "${waf_sha1:-}" ]] && echo "Warning: No checksum provided." >&2
 waf_extras="--tools=${waf_extras:-}"
 
-url="http://waf.googlecode.com/files/waf-${waf_version}.tar.bz2"
+url="https://waf.io/waf-${waf_version}.tar.bz2"
+waf_hexver="$(printf "0x%x%02x%02x00" ${waf_version//./ })"
 
-( gen_waf "$url" "$waf_sha1" "$waf_extras" ) && clean_waf
+( set -e;
+  gen_waf "$url" "$waf_sha1" "$waf_extras";
+  update_wscript "$waf_hexver";
+) && clean_waf
+

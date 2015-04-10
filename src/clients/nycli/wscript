@@ -30,6 +30,7 @@ def build(bld):
         source = source + compat,
         includes = '. ../../../ ../../include',
         uselib = 'glib2 readline readline_ncurses',
+        use = 'xmmsclient',
         defines = 'GETTEXT_PACKAGE=\"xmms2\"',
         install_path = None
     )
@@ -38,7 +39,7 @@ def build(bld):
         target = 'xmms2',
         source = 'main.c',
         includes = '. ../../../ ../../include',
-        use = 'xmmscli xmmsclient'
+        use = 'xmmscli'
     )
 
     bld(features = 'man',

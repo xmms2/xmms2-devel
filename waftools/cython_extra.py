@@ -60,7 +60,7 @@ def check_cython_version(self, version=None, minver=None, maxver=None):
 	except NameError:
 		u = str
 
-	cmd = [self.env.CYTHON, '--version']
+	cmd = [self.env.CYTHON[0], '--version']
 	o = u(check_output(cmd, stderr=STDOUT), 'UTF-8').strip()
 	m = cython_ver_re.match(o)
 	self.start_msg('Checking for cython version')
