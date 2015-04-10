@@ -95,7 +95,7 @@ def build(bld):
         env = builtin_env
     )
 
-    bld(features='c visibilityhidden ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
+    bld(features='c visibilityhidden ' + (bld.env.xmms_shared_library and 'cshlib' or ''),
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
