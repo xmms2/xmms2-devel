@@ -14,7 +14,7 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
         install_path = None,
-        use = 'glib2',
+        uselib = 'glib2',
         defines= ['XMMSC_LOG_DOMAIN="xmmsc-glib"', 'G_LOG_DOMAIN="xmmsc-glib"']
         )
 
