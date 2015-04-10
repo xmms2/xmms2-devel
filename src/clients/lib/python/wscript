@@ -126,6 +126,7 @@ def configure(conf):
                   "files, you should consider reconfiguring with --no-cython")
 
 def options(opt):
+    opt.load('python')
     opt.load('cython', tooldir='waftools')
     if opt.path.ant_glob('xmms*.c'):
         opt.add_option('--no-cython', action="store_true",
