@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec @PRG_PATH@/xmms2-mlib-updater
+exec @BINDIR@/xmms2-mlib-updater

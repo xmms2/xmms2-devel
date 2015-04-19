@@ -14,7 +14,6 @@ def build(bld):
         source = 'xmms2-mdns-launcher.sh.in',
         install_path = '${SCRIPTDIR}',
         chmod = Utils.O755,
-        PRG_PATH=bld.env.BINDIR
         )
 
     bld(features = 'c cprogram',

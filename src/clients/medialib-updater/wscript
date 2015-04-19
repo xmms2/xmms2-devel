@@ -14,7 +14,6 @@ def build(bld):
         source = 'xmms2-mlib-updater.sh.in',
         install_path = '${SCRIPTDIR}',
         chmod = Utils.O755,
-        PRG_PATH=bld.env.BINDIR
         )
 
 
