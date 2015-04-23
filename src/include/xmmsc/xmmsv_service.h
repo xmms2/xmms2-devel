@@ -21,12 +21,12 @@
 extern "C" {
 #endif
 
-xmmsv_t *xmmsv_sc_argument_new (const char *name, const char *docstring, xmmsv_type_t type, xmmsv_t *default_value);
+xmmsv_t *xmmsv_sc_argument_new (const char *name, const char *docstring, xmmsv_type_t type, xmmsv_t *default_value) XMMS_PUBLIC;
 
-const char * xmmsv_sc_argument_get_name (xmmsv_t *arg);
-const char * xmmsv_sc_argument_get_docstring (xmmsv_t *arg);
-int64_t xmmsv_sc_argument_get_type (xmmsv_t *arg);
-xmmsv_t * xmmsv_sc_argument_get_default_value (xmmsv_t *arg);
+const char * xmmsv_sc_argument_get_name (xmmsv_t *arg) XMMS_PUBLIC;
+const char * xmmsv_sc_argument_get_docstring (xmmsv_t *arg) XMMS_PUBLIC;
+int64_t xmmsv_sc_argument_get_type (xmmsv_t *arg) XMMS_PUBLIC;
+xmmsv_t * xmmsv_sc_argument_get_default_value (xmmsv_t *arg) XMMS_PUBLIC;
 
 #ifdef __cplusplus
 }
