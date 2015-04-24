@@ -40,6 +40,21 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 
 	const_char *xmmsv_default_source_pref[]
 
+cdef extern from "xmmsc/xmmsv_c2c.h":
+	int xmmsv_c2c_message_get_sender (xmmsv_t *c2c_msg)
+	int xmmsv_c2c_message_get_id (xmmsv_t *c2c_msg)
+	int xmmsv_c2c_message_get_destination (xmmsv_t *c2c_msg)
+	xmmsv_t *xmmsv_c2c_message_get_payload (xmmsv_t *c2c_msg)
+
+cdef extern from "xmmsc/xmmsv_service.h":
+	xmmsv_t *xmmsv_sc_argument_new (const_char *name, const_char *docstring, xmmsv_type_t type, xmmsv_t *default_value)
+
+	const_char *xmmsv_sc_argument_get_name (xmmsv_t *arg)
+	const_char *xmmsv_sc_argument_get_docstring (xmmsv_t *arg)
+	int xmmsv_sc_argument_get_type (xmmsv_t *arg)
+	xmmsv_t *xmmsv_sc_argument_get_default_value (xmmsv_t *arg)
+
+
 cdef extern from "xmmsc/xmmsv.h":
 
 	# xmmsc/xmmsv_general.h

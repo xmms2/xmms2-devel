@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 
 import xmmsapi, xmmsvalue
 from xmmsapi import Xmms, XmmsLoop, XmmsResult, userconfdir_get
-from xmmsvalue import XmmsValue
+from xmmsvalue import XmmsValue, XmmsValueC2C
 from xmmsvalue import coll_parse
 from sync import XmmsSync, XmmsError
 from propdict import PropDict

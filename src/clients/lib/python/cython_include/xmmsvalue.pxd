@@ -29,6 +29,9 @@ cdef class XmmsValue:
 	cpdef value(self)
 	cpdef copy(self, cls=*)
 
+cdef class XmmsValueC2C(XmmsValue):
+	pass
+
 cdef class XmmsListIter:
 	cdef object sourcepref
 	cdef xmmsv_t *val

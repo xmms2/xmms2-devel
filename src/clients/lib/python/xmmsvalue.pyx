@@ -44,12 +44,16 @@ cdef xmmsv_t *create_native_value(value) except NULL:
 	cdef xmmsv_t *ret = NULL
 	cdef xmmsv_t *v
 	cdef XmmsValue xv
+	cdef Collection c
 
 	if value is None:
 		ret = xmmsv_new_none()
 	elif isinstance(value, XmmsValue):
 		xv = value
 		ret = xmmsv_copy(xv.val) # Prevent side effects.
+	elif isinstance(value, Collection):
+		c = value
+		ret = xmmsv_copy(<xmmsv_t *>c.coll) #Prevent side effects.
 	elif isinstance(value, int):
 		ret = xmmsv_new_int(value)
 	elif isinstance(value, (unicode, str)):
@@ -280,6 +284,40 @@ cdef class XmmsValue:
 		elif vtype == XMMSV_TYPE_BIN:
 			return iter(self.get_bin())
 		raise TypeError("Value type not iterable")
+
+
+
+cdef class XmmsValueC2C(XmmsValue):
+	property sender:
+		def __get__(self):
+			if xmmsv_get_type(self.val) != XMMSV_TYPE_DICT:
+				return -1
+			return xmmsv_c2c_message_get_sender(self.val)
+
+	property id:
+		def __get__(self):
+			if xmmsv_get_type(self.val) != XMMSV_TYPE_DICT:
+				return -1
+			return xmmsv_c2c_message_get_id(self.val)
+
+	property destination:
+		def __get__(self):
+			if xmmsv_get_type(self.val) != XMMSV_TYPE_DICT:
+				return -1
+			return xmmsv_c2c_message_get_destination(self.val)
+
+	property payload:
+		def __get__(self):
+			cdef xmmsv_t *payload
+			cdef XmmsValue value
+			if xmmsv_get_type(self.val) != XMMSV_TYPE_DICT:
+				return None
+			payload = xmmsv_c2c_message_get_payload(self.val)
+			if payload == NULL:
+				return None
+			value = XmmsValue()
+			value.set_value(payload)
+			return value
 
 
 

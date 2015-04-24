@@ -59,6 +59,57 @@ cdef class XmmsVisChunk:
 	cpdef get_buffer(self)
 	cpdef get_data(self)
 
+cdef class XmmsCore
+cdef class XmmsServiceNamespace:
+	cdef readonly XmmsCore xmms
+	cdef readonly XmmsServiceNamespace parent
+	cdef bint registered
+	cdef object _bound_methods
+
+	cpdef _walk(self, namespace=*, constant=*, method=*, broadcast=*, path=*, other=*, depth=*, deep=*)
+	cpdef register_namespace(self, path, instance, infos)
+	cpdef register_constant(self, path, instance, infos)
+	cpdef register_method(self, path, instance, infos)
+	cpdef register_broadcast(self, path, instance, infos)
+	cpdef register(self)
+
+cdef class service_broadcast:
+	cdef public object name
+	cdef public object doc
+	cdef readonly XmmsServiceNamespace namespace
+	cdef bind(self, XmmsServiceNamespace namespace, name=*)
+	cpdef emit(self, value=*)
+
+cdef xmmsv_t *service_method_proxy(xmmsv_t *pargs, xmmsv_t *nargs, void *udata)
+cdef xmmsc_sc_namespace_t *_namespace_get(xmmsc_connection_t *c, path, bint create)
+
+cdef class _XmmsServiceClient
+cdef class client_broadcast:
+	cdef XmmsCore _xmms
+	cdef bint _async
+	cdef readonly object _path
+	cdef readonly int _clientid
+	cdef readonly object name
+	cdef readonly object docstring
+
+cdef class client_method:
+	cdef _XmmsServiceClient _parent
+	cdef object _callback
+	cdef readonly object _path
+	cdef readonly int _clientid
+	cdef readonly object name
+	cdef readonly object docstring
+	cdef readonly object inspect
+
+cdef class _XmmsServiceClient:
+	cdef readonly object _path
+	cdef readonly bint _async
+	cdef readonly XmmsCore _xmms
+	cdef readonly int _clientid
+
+cdef class XmmsProxy:
+	cdef XmmsCore _get_xmms(self)
+
 cdef class XmmsCore:
 	cdef xmmsc_connection_t *conn
 	cdef int isconnected
@@ -89,6 +140,7 @@ cdef void python_disconnect_fun(void *obj)
 cpdef userconfdir_get()
 
 cdef class XmmsApi(XmmsCore):
+	cpdef int c2c_get_own_id(self)
 	cpdef XmmsResult quit(self, cb=*)
 	cpdef XmmsResult plugin_list(self, typ, cb=*)
 	cpdef XmmsResult playback_start(self, cb=*)
@@ -161,6 +213,29 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_query(self, Collection coll, fetch, cb=*)
 	cpdef XmmsResult coll_query_ids(self, Collection coll, start=*, leng=*, order=*, cb=*)
 	cpdef XmmsResult coll_query_infos(self, Collection coll, fields, start=*, leng=*, order=*, groupby=*, cb=*)
+	#C2C
+	#Low level API (internal ?) that should not be used directly.
+	#cdef xmmsc_c2c_reply_policy_t get_c2c_policy(self, reply_policy=*)
+	#cpdef XmmsResult c2c_send(self, int dest, payload, reply_policy=*, cb=*)
+	#cpdef XmmsResult c2c_reply(self, int msgid, payload, reply_policy=*, cb=*)
+	#cpdef XmmsResult broadcast_c2c_message(self, cb=*)
+	cpdef XmmsResult c2c_ready(self, cb=*)
+	cpdef XmmsResult c2c_get_connected_clients(self, cb=*)
+	cpdef XmmsResult c2c_get_ready_clients(self, cb=*)
+	cpdef XmmsResult broadcast_c2c_ready(self, cb=*)
+	cpdef XmmsResult broadcast_c2c_client_connected(self, cb=*)
+	cpdef XmmsResult broadcast_c2c_client_disconnected(self, cb=*)
+	#Services
+	cpdef bint sc_init(self)
+	cpdef bint sc_broadcast_emit(self, broadcast, value=*)
+	cpdef XmmsResult sc_broadcast_subscribe(self, int dest, broadcast, cb=*)
+	cpdef XmmsResult sc_call(self, int dest, method, args=*, kargs=*, cb=*)
+	cpdef XmmsResult sc_introspect_namespace(self, int dest, path=*, cb=*)
+	cpdef XmmsResult sc_introspect_method(self, int dest, path, cb=*)
+	cpdef XmmsResult sc_introspect_broadcast(self, int dest, path, cb=*)
+	cpdef XmmsResult sc_introspect_constant(self, int dest, path, cb=*)
+	cpdef XmmsResult sc_introspect_docstring(self, int dest, path, cb=*)
+	#
 	cpdef XmmsResult bindata_add(self, data, cb=*)
 	cpdef XmmsResult bindata_retrieve(self, hash, cb=*)
 	cpdef XmmsResult bindata_remove(self, hash, cb=*)

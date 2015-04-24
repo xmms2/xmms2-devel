@@ -38,6 +38,11 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_PLAYBACK_SEEK_CUR
 		XMMS_PLAYBACK_SEEK_SET
 
+	ctypedef enum xmmsc_c2c_reply_policy_t:
+		XMMS_C2C_REPLY_POLICY_NO_REPLY
+		XMMS_C2C_REPLY_POLICY_SINGLE_REPLY
+		XMMS_C2C_REPLY_POLICY_MULTI_REPLY
+
 cdef extern from "xmmsc/xmmsc_util.h":
 	cdef enum:
 		XMMS_PATH_MAX
@@ -227,6 +232,68 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *c, xmmsv_t *coll, xmmsv_t *order, unsigned int limit_start, unsigned int limit_len,  xmmsv_t *fetch, xmmsv_t *group)
 
 	xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c)
+
+
+	# C2C
+	xmmsc_result_t *xmmsc_c2c_send  (xmmsc_connection_t *c, int dest, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
+	xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
+	int xmmsc_c2c_get_own_id (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_c2c_ready (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_c2c_get_ready_clients (xmmsc_connection_t *c)
+
+	xmmsc_result_t *xmmsc_broadcast_c2c_message (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_c2c_ready (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_c2c_client_connected (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_c2c_client_disconnected (xmmsc_connection_t *c)
+
+
+	# Service
+	ctypedef enum xmmsc_sc_command_t:
+		XMMSC_SC_CALL
+		XMMSC_SC_BROADCAST_SUBSCRIBE
+		XMMSC_SC_INTROSPECT
+
+	# XXX Requires an explicit cast to <char *> when used
+	enum:
+		XMMSC_SC_CMD_KEY
+		XMMSC_SC_ARGS_KEY
+		XMMSC_SC_CALL_METHOD_KEY
+		XMMSC_SC_CALL_PARGS_KEY
+		XMMSC_SC_CALL_NARGS_KEY
+		XMMSC_SC_INSTROSPECT_PATH_KEY
+		XMMSC_SC_INSTROSPECT_TYPE_KEY
+		XMMSC_SC_INSTROSPECT_KEYFILTER_KEY
+
+	ctypedef struct xmmsc_sc_namespace_t
+	ctypedef xmmsv_t *(*xmmsc_sc_method_t) (xmmsv_t *pargs, xmmsv_t *nargs, void *udata)
+
+	xmmsc_sc_namespace_t *xmmsc_sc_init (xmmsc_connection_t *c)
+
+	xmmsc_sc_namespace_t *xmmsc_sc_namespace_root (xmmsc_connection_t *c)
+	xmmsc_sc_namespace_t *xmmsc_sc_namespace_lookup (xmmsc_connection_t *c, xmmsv_t *nms)
+	xmmsc_sc_namespace_t *xmmsc_sc_namespace_new (xmmsc_sc_namespace_t *parent, const_char *name, const_char *docstring)
+	xmmsc_sc_namespace_t *xmmsc_sc_namespace_get (xmmsc_sc_namespace_t *parent, const_char *name)
+	bint xmmsc_sc_namespace_add_constant (xmmsc_sc_namespace_t *nms, const_char *key, xmmsv_t *value)
+	void xmmsc_sc_namespace_remove_constant (xmmsc_sc_namespace_t *nms, const char *key)
+
+	bint xmmsc_sc_namespace_add_method (xmmsc_sc_namespace_t *nmd, xmmsc_sc_method_t method, const_char *name, const_char *docstring, xmmsv_t *pargs, xmmsv_t *nargs, bint va_pos, bint va_named, void *udata)
+	bint xmmsc_sc_namespace_add_method_noarg (xmmsc_sc_namespace_t *nms, xmmsc_sc_method_t method, const_char *name, const_char *docstring, void * udata)
+
+	bint xmmsc_sc_namespace_add_broadcast (xmmsc_sc_namespace_t *nms, const_char *name, const_char *docstring)
+
+	void xmmsc_sc_namespace_remove (xmmsc_sc_namespace_t *nms, xmmsv_t *path)
+	bint xmmsc_sc_broadcast_emit (xmmsc_connection_t *c, xmmsv_t *broadcast, xmmsv_t *value)
+	xmmsc_result_t *xmmsc_sc_broadcast_subscribe (xmmsc_connection_t *c, int dest, xmmsv_t *broadcast)
+
+	xmmsc_result_t *xmmsc_sc_call (xmmsc_connection_t *c, int dest, xmmsv_t *method, xmmsv_t *pargs, xmmsv_t *nargs)
+
+	xmmsc_result_t *xmmsc_sc_introspect_namespace (xmmsc_connection_t *c, int dest, xmmsv_t *nms)
+	xmmsc_result_t *xmmsc_sc_introspect_method (xmmsc_connection_t *c, int dest, xmmsv_t *method)
+	xmmsc_result_t *xmmsc_sc_introspect_broadcast (xmmsc_connection_t *c, int dest, xmmsv_t *broadcast)
+	xmmsc_result_t *xmmsc_sc_introspect_constant (xmmsc_connection_t *c, int dest, xmmsv_t *nms, const_char *key)
+	xmmsc_result_t *xmmsc_sc_introspect_docstring (xmmsc_connection_t *c, int dest, xmmsv_t *path)
+
 
 	# Results
 	ctypedef bint (*xmmsc_result_notifier_t) (xmmsv_t *val, void *user_data)

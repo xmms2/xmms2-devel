@@ -380,6 +380,480 @@ class VisualizationError(Exception):
 	pass
 
 
+def _noop(*a, **kw):
+	pass
+def _setcb(f, fb=_noop):
+	return hasattr(f, '__call__') and f or fb
+
+class method_arg:
+	TYPES = {
+		'integer': XMMSV_TYPE_INT64,
+		'i': XMMSV_TYPE_INT64,
+		'float': XMMSV_TYPE_FLOAT,
+		'f': XMMSV_TYPE_FLOAT,
+		'string': XMMSV_TYPE_STRING,
+		's': XMMSV_TYPE_STRING,
+		'coll': XMMSV_TYPE_COLL,
+		'c': XMMSV_TYPE_COLL,
+		'list': XMMSV_TYPE_LIST,
+		'l': XMMSV_TYPE_LIST,
+		'dict': XMMSV_TYPE_DICT,
+		'd': XMMSV_TYPE_DICT,
+		}
+	def __init__(self, name, type = '', doc = '', **kw):
+		for key, value in kw.items():
+			setattr(self, key, value)
+		self.name = name
+		self.type = type.lower()
+		if type not in self.TYPES:
+			raise TypeError("Unsupported argument type %s" % type)
+		self._x_type = self.TYPES.get(type, XMMSV_TYPE_NONE)
+		self.doc = doc
+
+class method_varg:
+	def __init__(self, doc = '', **kw):
+		self.doc = doc
+		for key, value in kw.items():
+			setattr(self, key, value)
+
+class service_method:
+	def __init__(self, positional = None, named = None, name = None, doc = None):
+		self.positional = positional or ()
+		self.named = named or ()
+		self.name = name
+		self.doc = doc
+
+	def __call__(self, f):
+		f._xmms_service_entity = dict(
+				entity = 'method',
+				positional = self.positional,
+				named = self.named,
+				name = self.name or f.__name__,
+				doc = self.doc or f.__doc__,
+				)
+		return f
+
+cdef class service_broadcast:
+	def __init__(self, name = None, doc = None):
+		self.name = name
+		self.doc = doc
+
+	cdef bind(self, XmmsServiceNamespace namespace, name = None):
+		cdef service_broadcast obj
+		obj = service_broadcast(self.name or name, self.doc)
+		obj.namespace = namespace
+		return obj
+
+	cpdef emit(self, value = None):
+		if not self.namespace:
+			raise RuntimeError("No namespace bound to broadcast")
+		path = self.namespace.path + (self.name,)
+		return self.namespace.xmms.sc_broadcast_emit(path, value)
+
+	def __call__(self, value = None):
+		return self.emit(value)
+
+class service_constant:
+	def __init__(self, value):
+		self.value = value
+
+cdef class XmmsServiceNamespace:
+	namespace_path = ()
+
+	property path:
+		def __get__(self):
+			if self.parent:
+				path = self.parent.path
+			else:
+				path = ()
+			return path + self.namespace_path
+
+	def __cinit__(self, XmmsCore xmms, *a, **ka):
+		cdef service_broadcast bc_obj
+		self.parent = ka.get('parent', None)
+		self.xmms = xmms
+		self._xmms_service_constants = set()
+		self._bound_methods = dict()
+
+		for attr in dir(self):
+			if attr[0] == '_':
+				continue
+			obj = getattr(self, attr)
+
+			if isinstance(obj, service_constant):
+				self._xmms_service_constants.add(attr)
+				setattr(self, attr, obj.value)
+				continue
+
+			if isinstance(obj, service_broadcast):
+				bc_obj = obj
+				setattr(self, attr, bc_obj.bind(self, attr))
+				continue
+
+			try:
+				if issubclass(obj, XmmsServiceNamespace):
+					inst = obj(self.xmms, parent = self)
+					inst.namespace_path = (attr,)
+
+					setattr(self, attr, inst)
+					inst._xmms_service_entity = dict(
+							entity = 'namespace',
+							name = attr,
+							doc = inst.__doc__
+							)
+			except TypeError:
+				pass
+
+	cpdef _walk(self, namespace = None, constant = None, method = None, broadcast = None, path = (), other = _noop, depth = -1, deep = False):
+		callbacks = dict(
+				namespace = _setcb(namespace, other),
+				constant = _setcb(constant, other),
+				method = _setcb(method, other),
+				broadcast = _setcb(broadcast, other),
+				)
+
+		for attr in dir(self):
+			if attr[0] == '_':
+				continue
+			obj = getattr(self, attr)
+			if attr in self._xmms_service_constants:
+				entity = dict(
+						entity = 'constant',
+						name = attr,
+						)
+			elif isinstance(obj, service_broadcast):
+				entity = dict(
+						entity = 'broadcast',
+						name = obj.name or attr,
+						doc = obj.doc
+						)
+			else:
+				entity = getattr(obj, '_xmms_service_entity', None)
+
+			if not isinstance(entity, dict):
+				continue
+
+			entity_type = entity.get('entity', '')
+
+			if entity_type not in callbacks:
+				continue
+
+			if not deep:
+				callbacks[entity_type](path, obj, entity)
+			if entity_type == 'namespace' and depth:
+				obj._walk(path = path + (entity['name'] or attr,), depth = depth - 1, **callbacks)
+			if deep:
+				callbacks[entity_type](path, obj, entity)
+
+	cpdef register_namespace(self, path, instance, infos):
+		cdef xmmsc_sc_namespace_t *ns
+		name = from_unicode(infos.get('name', ""))
+		if not name: #root namespace already exists
+			return
+		doc = from_unicode(infos.get('doc', ""))
+		ns = _namespace_get(self.xmms.conn, path, True)
+		xmmsc_sc_namespace_new(ns, <char *>name, <char *>doc)
+
+	cpdef register_constant(self, path, value, infos):
+		cdef xmmsc_sc_namespace_t *ns
+		cdef xmmsv_t *val
+		name = from_unicode(infos.get('name', ""))
+		if not name:
+			return
+		ns = _namespace_get(self.xmms.conn, path, True)
+		val = create_native_value(value)
+		xmmsc_sc_namespace_add_constant(ns, <char *>name, val)
+		xmmsv_unref(val)
+
+	cpdef register_method(self, path, meth, infos):
+		cdef xmmsc_sc_namespace_t *ns
+		cdef xmmsv_t *positional
+		cdef xmmsv_t *named
+		cdef xmmsv_t *x_arg
+		cdef bint va_pos
+		cdef bint va_named
+		cdef xmmsv_t *a_default
+		cdef xmmsv_type_t a_type
+
+		positional = xmmsv_new_list()
+		named = xmmsv_new_list()
+
+		name = from_unicode(infos.get('name') or "")
+		if not name:
+			return
+		doc = from_unicode(infos.get('doc') or "")
+		for arg in infos.get('positional', ()):
+			if isinstance(arg, method_varg):
+				va_pos = True
+				break
+			if hasattr(arg, 'default'):
+				a_default = create_native_value(arg.default)
+			else:
+				a_default = NULL
+			a_type = arg._x_type
+			a_name = from_unicode(arg.name)
+			a_doc = from_unicode(arg.doc)
+			x_arg = xmmsv_sc_argument_new(<char *>a_name, <char *>a_doc, a_type, a_default)
+			xmmsv_list_append(positional, x_arg)
+			xmmsv_unref(x_arg)
+
+		for arg in infos.get('named', ()):
+			if isinstance(arg, method_varg):
+				va_named = True
+				break
+			if hasattr(arg, 'default'):
+				a_default = create_native_value(arg.default)
+			else:
+				a_default = NULL
+			a_type = arg._x_type
+			a_name = from_unicode(arg.name)
+			a_doc = from_unicode(arg.doc)
+			x_arg = xmmsv_sc_argument_new(<char *>a_name, <char *>a_doc, a_type, a_default)
+			xmmsv_list_append(named, x_arg)
+			xmmsv_unref(x_arg)
+
+		ns = _namespace_get(self.xmms.conn, path, True)
+
+		# We need this to prevent bound function wrapper to be recycled on
+		# return, leading to weird behaviour
+		self._bound_methods[name] = meth
+
+		xmmsc_sc_namespace_add_method(ns, service_method_proxy, <char *>name, <char *>doc, positional, named, va_pos, va_named, <void *>meth)
+		xmmsv_unref(positional)
+		xmmsv_unref(named)
+
+	cpdef register_broadcast(self, path, bc, infos):
+		cdef xmmsc_sc_namespace_t *ns
+		name = from_unicode(infos.get('name') or "")
+		if not name:
+			return
+		doc = from_unicode(infos.get('doc') or "")
+		ns = _namespace_get(self.xmms.conn, path, True)
+		xmmsc_sc_namespace_add_broadcast(ns, <char *>name, <char *>doc)
+
+	cpdef register(self):
+		if self.registered:
+			return
+
+		self.xmms.sc_init()
+
+		_path = self.path
+		self.register_namespace(_path[:-1], self, dict(
+			name = _path and _path[-1] or "",
+			doc = self.__doc__ or ""
+			))
+
+		self._walk( path = _path,
+			namespace = self.register_namespace,
+			constant = self.register_constant,
+			method = self.register_method,
+			broadcast = self.register_broadcast)
+
+		self.xmms.c2c_ready()
+
+		self.registered = True
+
+
+cdef xmmsc_sc_namespace_t *_namespace_get(xmmsc_connection_t *c, path, bint create):
+	cdef xmmsc_sc_namespace_t *ns
+	cdef xmmsc_sc_namespace_t *child_ns
+
+	ns = xmmsc_sc_namespace_root(c)
+
+	for p in path:
+		p = from_unicode(p)
+		doc = from_unicode("")
+		child_ns = xmmsc_sc_namespace_get(ns, <char *>p)
+		if child_ns == NULL:
+			if not create:
+				break
+			child_ns = xmmsc_sc_namespace_new(ns, <char *>p, <char *>doc)
+		ns = child_ns
+
+	return ns
+
+cdef xmmsv_t *service_method_proxy(xmmsv_t *pargs, xmmsv_t *nargs, void *udata):
+	cdef object method
+	cdef XmmsValue args
+	cdef XmmsValue kargs
+	cdef xmmsv_t *res
+
+	method = <object> udata
+	args = XmmsValue()
+	args.set_value(pargs)
+	kargs = XmmsValue()
+	kargs.set_value(nargs)
+	try:
+		ret = method(*args.get_list(), **kargs.get_dict())
+		res = create_native_value(ret)
+	except:
+		import traceback, sys
+		exc = sys.exc_info()
+		traceback.print_exception(*exc)
+		s = from_unicode("%s"%exc[1])
+		res = xmmsv_new_error(<char *>s)
+	return res
+
+
+cdef class client_broadcast:
+	def __cinit__(self, _XmmsServiceClient parent, name, docstring):
+		if not parent._async:
+			raise RuntimeError("Broadcast is available only on asynchronous connections")
+		self._xmms = parent._xmms
+		self._clientid = parent._clientid
+		self._path = parent._path + (name,)
+		self.name = name
+		self.docstring = docstring
+
+	def subscribe(self, cb = None):
+		return self._xmms.sc_broadcast_subscribe(self._clientid, self._path, cb = cb)
+
+	def __call__(self, cb = None):
+		return self.subscribe(cb = cb)
+
+	def __repr__(self):
+		return "<broadcast '%s' on client #%d>" % (".".join(self._path), self._clientid)
+
+
+cdef class client_method:
+	def __cinit__(self, _XmmsServiceClient parent, name, docstring, inspect, cb = None):
+		self._parent = parent
+		self._callback = cb
+		self._path = parent._path + (name,)
+		self._clientid = parent._clientid
+		self.name = name
+		self.docstring = docstring
+		self.inspect = inspect
+
+	def with_callback(self, cb):
+		if not self._parent._async:
+			raise NotImplementedError()
+		return client_method(self._parent, self.name, self.docstring, self.inspect, cb)
+
+	def call(self, args, kargs, cb = None):
+		res = self._parent._xmms.sc_call(self._clientid, self._path, args, kargs, cb = self._parent._async and cb or None)
+
+		if self._parent._async:
+			return res
+
+		res.wait()
+		xvalue = res.xvalue
+		if xvalue.is_error():
+			raise xvalue.get_error()
+		cxvalue = XmmsValueC2C(pyval = xvalue)
+		payload = cxvalue.payload
+		if payload is not None:
+			if payload.is_error():
+				raise payload.get_error()
+			payload = payload.value()
+		return payload
+
+	def __call__(self, *args, **kargs):
+		return self.call(args, kargs, cb = self._callback)
+
+	def __repr__(self):
+		return "<method '%s' on client #%d>" % (".".join(self._path), self._clientid)
+
+
+cdef class _XmmsServiceClient:
+	def __cinit__(self, xmms, int clientid, *a, **ka):
+		cdef XmmsProxy _proxy
+
+		if isinstance(xmms, XmmsCore):
+			self._xmms = xmms
+			self._async = ka.get('_async', True)
+		elif isinstance(xmms, XmmsProxy):
+			_proxy = xmms
+			self._xmms = _proxy._get_xmms()
+			self._async = False
+		else:
+			raise TypeError("Not a valid Xmms client instance")
+
+		self._path = tuple(ka.get('path', ()))
+		self._clientid = clientid
+
+	def __repr__(self):
+		return "<namespace '%s' on client #%d>" % (".".join(self._path), self._clientid)
+
+class XmmsServiceClient(_XmmsServiceClient):
+	def _update_api(self, xvalue, recursive = False, cb = None):
+		cdef XmmsValueC2C cxvalue
+		cxvalue = XmmsValueC2C(pyval = xvalue)
+
+		if cxvalue.sender != self._clientid:
+			# ignore bad sender
+			return
+
+		payload = cxvalue.payload
+		if payload and payload.get_type() == XMMSV_TYPE_DICT:
+			payload = payload.get_dict()
+		else:
+			return
+
+		self.__doc__ = payload.get('docstring', '')
+
+		try:
+			for c, v in payload.get('constants', {}).items():
+				if hasattr(self.__class__, c):
+					continue
+				setattr(self, c, v)
+		except (AttributeError, TypeError):
+			pass
+
+		if self._async:
+			# Expose broadcasts only for asynchronous connections.
+			for bc in payload.get('broadcasts', []):
+				try:
+					name = bc['name']
+					doc = bc.get('docstring')
+				except (TypeError, AttributeError, KeyError):
+					continue
+				if hasattr(self.__class__, name):
+					continue
+				setattr(self, name, client_broadcast(self, name, doc))
+
+		for m in payload.get('methods', []):
+			try:
+				name = m['name']
+				doc = m.get('docstring')
+			except (TypeError, AttributeError, KeyError):
+				continue
+			if hasattr(self.__class__, name):
+				continue
+			setattr(self, name, client_method(self, name, doc, m))
+
+		for ns in payload.get('namespaces', []):
+			if hasattr(self.__class__, ns):
+				continue
+			sc = XmmsServiceClient(self._xmms, self._clientid,
+					path = self._path + (ns,),
+					_async = self._async)
+			setattr(self, ns, sc)
+			if recursive:
+				sc(recursive, cb)
+
+	def _update_api_callback(self, cb = None, recursive = False):
+		def _update_api(xvalue):
+			self._update_api(xvalue, recursive, cb)
+			if cb:
+				cb(self, xvalue)
+		return _update_api
+
+	def __call__(self, recursive = False, cb = None):
+		cdef XmmsResult res
+		cb = self._update_api_callback(cb, recursive)
+		res = self._xmms.sc_introspect_namespace(self._clientid, self._path, cb = self._async and cb or None)
+
+		if self._async:
+			return res
+
+		res.wait()
+		xvalue = res.xvalue
+		if xvalue.is_error():
+			raise xvalue.get_error()
+		cb(xvalue)
+
+
 cdef void python_need_out_fun(int i, void *obj):
 	cdef object o
 	o = <object> obj
@@ -415,6 +889,13 @@ cdef object check_playlist(object pls, bint None_is_active):
 	if pls is None and not None_is_active:
 		raise TypeError("expected str, %s found" % pls.__class__.__name__)
 	return from_unicode(pls or ACTIVE_PLAYLIST)
+
+cdef class XmmsProxy:
+	def __init__(self, xmms):
+		self._xmms = xmms
+
+	cdef XmmsCore _get_xmms(self):
+		return self._xmms
 
 cdef class XmmsCore:
 	"""
@@ -584,6 +1065,13 @@ cdef class XmmsCore:
 
 
 cdef class XmmsApi(XmmsCore):
+	property client_id:
+		def __get__(self):
+			return self.c2c_get_own_id()
+
+	cpdef int c2c_get_own_id(self):
+		return xmmsc_c2c_get_own_id(self.conn)
+
 	cpdef XmmsResult quit(self, cb = None):
 		"""
 		Tell the XMMS2 daemon to quit.
@@ -1442,6 +1930,210 @@ cdef class XmmsApi(XmmsCore):
 		xmmsv_unref(order_val)
 		xmmsv_unref(fields_val)
 		xmmsv_unref(groupby_val)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult c2c_ready(self, cb = None):
+		"""
+		Notify the server that client services are ready for query.
+		This method is called XmmsServiceNamespace.register() and don't need to
+		be called explicitly.
+
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		if not cb:
+			cb = _noop
+
+		res = xmmsc_c2c_ready(self.conn)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult c2c_get_connected_clients(self, cb = None):
+		"""
+		Get a list of clients connected to the xmms2 server
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		res = xmmsc_c2c_get_connected_clients (self.conn)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult c2c_get_ready_clients(self, cb = None):
+		"""
+		Get a list of clients connected to the xmms2 server
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		res = xmmsc_c2c_get_ready_clients (self.conn)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult broadcast_c2c_ready(self, cb = None):
+		"""
+		Broadcast reveiced whenever a client's service api is ready
+		@rtype: L{XmmsResult}
+		@return: the result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		res = xmmsc_broadcast_c2c_ready(self.conn)
+		return self.create_result(cb, res)
+
+
+	cpdef XmmsResult broadcast_c2c_client_connected(self, cb = None):
+		"""
+		Broadcast received whenever a new client connects to the server
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		res = xmmsc_broadcast_c2c_client_connected(self.conn)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult broadcast_c2c_client_disconnected(self, cb = None):
+		"""
+		Broadcast received whenever a client disconnects from the server
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsc_result_t *res
+
+		res = xmmsc_broadcast_c2c_client_disconnected(self.conn)
+		return self.create_result(cb, res)
+
+	cpdef bint sc_init(self):
+		"""
+		Initialize client-to-client features.
+		Client-to-client features won't work with the synchronous client wrapper
+		@rtype: L{bool}
+		@return: whether client-to-client is initialized.
+		"""
+		return xmmsc_sc_init(self.conn) != NULL
+
+	cpdef bint sc_broadcast_emit(self, broadcast, value = None):
+		"""
+		Emit a broadcast message to subscribed clients
+		@rtype: L{bool}
+		@return: whether notifications were successfully queued
+		"""
+		cdef xmmsv_t *val
+		cdef xmmsv_t *bc_path
+		cdef bint ret
+
+		bc_path = create_native_value(broadcast)
+		val = create_native_value(value)
+		ret = xmmsc_sc_broadcast_emit(self.conn, bc_path, val)
+		xmmsv_unref(bc_path)
+		xmmsv_unref(val)
+		return ret
+
+	cpdef XmmsResult sc_broadcast_subscribe(self, int dest, broadcast, cb = None):
+		"""
+		Subscribe to a broadcast from another client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *bc_path
+		cdef xmmsc_result_t *res
+
+		bc_path = create_native_value(broadcast)
+		res = xmmsc_sc_broadcast_subscribe(self.conn, dest, bc_path)
+		xmmsv_unref(bc_path)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_call(self, int dest, method, args = (), kargs = dict(), cb = None):
+		"""
+		Call a remote method
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *m_path
+		cdef xmmsv_t *m_pos
+		cdef xmmsv_t *m_named
+		cdef xmmsc_result_t *res
+
+		m_path = create_native_value(method)
+		m_pos = create_native_value(args)
+		m_named = create_native_value(kargs)
+		res = xmmsc_sc_call(self.conn, dest, m_path, m_pos, m_named)
+		xmmsv_unref(m_path)
+		xmmsv_unref(m_pos)
+		xmmsv_unref(m_named)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_introspect_namespace(self, int dest, path = (), cb = None):
+		"""
+		Get informations about a namespace on a remote client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *i_path
+		cdef xmmsc_result_t *res
+
+		i_path = create_native_value(path)
+		res = xmmsc_sc_introspect_namespace(self.conn, dest, i_path)
+		xmmsv_unref(i_path)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_introspect_method(self, int dest, path, cb = None):
+		"""
+		Get informations about a method on a remote client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *i_path
+		cdef xmmsc_result_t *res
+
+		i_path = create_native_value(path)
+		res = xmmsc_sc_introspect_method(self.conn, dest, i_path)
+		xmmsv_unref(i_path)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_introspect_broadcast(self, int dest, path, cb = None):
+		"""
+		Get informations about a broadcast on a remote client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *i_path
+		cdef xmmsc_result_t *res
+
+		i_path = create_native_value(path)
+		res = xmmsc_sc_introspect_broadcast(self.conn, dest, i_path)
+		xmmsv_unref(i_path)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_introspect_constant(self, int dest, path, cb = None):
+		"""
+		Get informations about a constant on a remote client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *i_path
+		cdef xmmsc_result_t *res
+		ns = path[:-1]
+		key = from_unicode(path[-1])
+		i_path = create_native_value(ns)
+		res = xmmsc_sc_introspect_constant(self.conn, dest, i_path, <char *>key)
+		xmmsv_unref(i_path)
+		return self.create_result(cb, res)
+
+	cpdef XmmsResult sc_introspect_docstring(self, int dest, path, cb = None):
+		"""
+		Get the docstring for a given path on a remote client
+		@rtype: L{XmmsResult}
+		@return: The result of the operation.
+		"""
+		cdef xmmsv_t *i_path
+		cdef xmmsc_result_t *res
+
+		i_path = create_native_value(path)
+		res = xmmsc_sc_introspect_docstring(self.conn, dest, i_path)
+		xmmsv_unref(i_path)
 		return self.create_result(cb, res)
 
 	cpdef XmmsResult bindata_add(self, data, cb = None):

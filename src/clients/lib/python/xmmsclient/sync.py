@@ -1,7 +1,7 @@
 
 import xmmsapi
 
-class XmmsSync:
+class XmmsSync(xmmsapi.XmmsProxy):
 	"""
 	A wrapper for the xmmsclient.XMMS class which simplifies synchronous
 	communication with the XMMS2 daemon.
@@ -20,12 +20,16 @@ class XmmsSync:
 		default to "Unnamed Python Client"
 		"""
 		if xmms is None:
-			self.__xmms = xmmsapi.Xmms(clientname)
-		else:
-			self.__xmms = xmms
+			xmms = xmmsapi.Xmms(clientname)
+		super(XmmsSync, self).__init__(xmms)
 
 	def __getattr__(self, name):
-		attr = getattr(self.__xmms, name)
+		try:
+			return super(XmmsSync, self).__getattr__(name)
+		except AttributeError:
+			pass
+
+		attr = getattr(self._xmms, name)
 		if hasattr(attr, '__call__'):
 			def _(*args, **kwargs):
 				ret = attr(*args, **kwargs)
@@ -45,6 +49,6 @@ class XmmsSync:
 			return attr
 
 	def __dir__(self):
-		return dir(self.__xmms)
+		return dir(self._xmms)
 
 from xmmsvalue import XmmsError
