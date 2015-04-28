@@ -325,7 +325,9 @@ xmmsc_sc_namespace_lookup (xmmsc_connection_t *c, xmmsv_t *nms)
 	                "with invalid type in path (string expected).", NULL);
 
 	ifent = xmmsc_sc_locate_interface_entity (c, nms);
-	x_return_null_if_fail (ifent);
+	if (!ifent) {
+		return NULL;
+	}
 
 	return xmmsc_sc_interface_entity_get_namespace (ifent);
 }
@@ -381,7 +383,9 @@ xmmsc_sc_namespace_get (xmmsc_sc_namespace_t *parent, const char *name)
 	relpath = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (name), XMMSV_LIST_END);
 	ifent = xmmsc_sc_namespace_resolve_path (parent, relpath, NULL);
 	xmmsv_unref (relpath);
-	x_return_null_if_fail (ifent);
+	if (!ifent) {
+		return NULL;
+	}
 
 	return xmmsc_sc_interface_entity_get_namespace (ifent);
 }
