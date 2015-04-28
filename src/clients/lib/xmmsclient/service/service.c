@@ -39,11 +39,10 @@ xmmsc_sc_init (xmmsc_connection_t *c)
 
 	if (!c->sc_root) {
 		xmmsc_sc_create_root_namespace (c);
+		res = xmmsc_broadcast_c2c_message (c);
+		xmmsc_result_notifier_set_c2c (res, on_message_received, c);
+		xmmsc_result_unref (res);
 	}
-
-	res = xmmsc_broadcast_c2c_message (c);
-	xmmsc_result_notifier_set_c2c (res, on_message_received, c);
-	xmmsc_result_unref (res);
 
 	return xmmsc_sc_interface_entity_get_namespace (c->sc_root);
 }
