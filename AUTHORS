@@ -63,6 +63,10 @@ N: Nicolas Botti
 E: r2d@musepack.net
 D: Updates to the musepack plugin to support new APIs.
 
+N: Carlo Bramini
+E: carlo.bramix@libero.it
+D: Minor Windows fixes.
+
 N: Kyle Brantley
 E: scytheblade1@brantleyonline.com
 D: smb fixes
