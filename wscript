@@ -455,7 +455,7 @@ def configure(conf):
             major, minor = [int(x) for x in Options.options.winver.split('.')]
         else:
             try:
-                majot, minor = sys.getwindowsversion()[:2]
+                major, minor = sys.getwindowsversion()[:2]
             except AttributeError:
                 Logs.warn("No Windows version found and no version set. "
                           "Defaulting to 5.1 (XP). You will not be able to use "
