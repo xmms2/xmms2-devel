@@ -31,8 +31,8 @@ class XmmsSync:
 				ret = attr(*args, **kwargs)
 				if isinstance(ret, xmmsapi.XmmsResult):
 					ret.wait()
-					if ret.iserror():
-						raise ret.get_error()
+					if ret.is_error():
+						raise ret.xvalue.get_error()
 					return ret.value()
 				return ret
 			try:
