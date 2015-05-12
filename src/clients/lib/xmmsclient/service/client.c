@@ -533,7 +533,7 @@ introspect_internal (xmmsc_connection_t *c, int dest, xmmsv_t *entity,
 	                        XMMSV_DICT_ENTRY (XMMSC_SC_ARGS_KEY, args),
 	                        XMMSV_DICT_END);
 
-	res = xmmsc_c2c_send (c, dest, XMMS_C2C_REPLY_POLICY_MULTI_REPLY, msg);
+	res = xmmsc_c2c_send (c, dest, XMMS_C2C_REPLY_POLICY_SINGLE_REPLY, msg);
 	xmmsv_unref (msg);
 
 	return res;
