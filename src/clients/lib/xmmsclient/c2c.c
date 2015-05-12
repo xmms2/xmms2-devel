@@ -127,6 +127,18 @@ xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c)
 }
 
 /**
+ * Notify the client's api is ready for query
+ */
+xmmsc_result_t *
+xmmsc_c2c_ready (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_COURIER,
+	                              XMMS_IPC_CMD_SERVICE_READY);
+}
+
+/**
  * Request the client-to-client message broadcast.
  * This broadcast gets triggered when messages from other clients are received.
  * @param c The connection to the server.
@@ -143,6 +155,24 @@ xmmsc_broadcast_c2c_message (xmmsc_connection_t *c)
 	if (res) {
 		xmmsc_result_c2c_set (res);
 	}
+
+	return res;
+}
+
+/**
+ * Request the client service ready broadcast.
+ * This broadcast gets triggered when a client notify the server its api is
+ * ready.
+ * @param c The connection to the server.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_c2c_ready (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+
+	x_check_conn (c, NULL);
+
+	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_COURIER_READY);
 
 	return res;
 }

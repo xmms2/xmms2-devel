@@ -73,6 +73,7 @@ static void xmms_courier_pending_pool_destroy (xmms_courier_pending_pool_t *pend
 static void xmms_courier_client_send_message (xmms_courier_t *courier, gint32 dest, int reply_policy, xmmsv_t *payload, gint32 client, uint32_t cookie, xmms_error_t *err);
 static void xmms_courier_client_reply (xmms_courier_t *courier, gint32 msgid, int reply_policy, xmmsv_t *payload, gint32 sender, uint32_t cookie, xmms_error_t *err);
 static xmmsv_t *xmms_courier_client_get_connected_clients (xmms_courier_t *courier, xmms_error_t *err);
+static void xmms_courier_client_ready (xmms_courier_t *courier, gint32 clientid, xmms_error_t *err);
 
 /* Private methods */
 static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender, gint32 dest, uint32_t cookie, xmmsc_c2c_reply_policy_t reply_policy);
@@ -278,6 +279,7 @@ xmms_courier_client_send_message (xmms_courier_t *courier,
 	xmmsv_t *c2c_msg;
 
 	msgid = 0;
+
 	if (reply_policy != XMMS_C2C_REPLY_POLICY_NO_REPLY) {
 		msgid = xmms_courier_store_pending (courier, sender, dest, cookie,
 		                                    reply_policy);
@@ -360,6 +362,18 @@ xmms_courier_client_get_connected_clients (xmms_courier_t *courier,
 	}
 
 	return ret;
+}
+
+/**
+ * A client notifies its service api is ready for query.
+ * Forward the notification to other clients.
+ */
+static void
+xmms_courier_client_ready (xmms_courier_t *courier,
+                           gint32 clientid, xmms_error_t *err)
+{
+	xmms_object_emit(XMMS_OBJECT(courier), XMMS_IPC_SIGNAL_COURIER_READY,
+	                 xmmsv_new_int(clientid));
 }
 
 /**

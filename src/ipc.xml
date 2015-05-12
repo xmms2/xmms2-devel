@@ -1926,6 +1926,11 @@ vim:expandtab
             </return_value>
         </method>
 
+        <method need_client="true">
+            <name>ready</name>
+            <documentation>Notify the server that the client's api is ready for query.</documentation>
+        </method>
+
         <broadcast>
             <id>15</id>
             <name>message</name>
@@ -1938,6 +1943,18 @@ vim:expandtab
                     <dictionary>
                         <unknown />
                     </dictionary>
+                </type>
+            </return_value>
+        </broadcast>
+
+        <broadcast>
+            <id>18</id>
+            <name>ready</name>
+            <documentation>This broadcast is emitted when a client's services are ready.</documentation>
+            <return_value>
+                <documentation>The client's id.</documentation>
+                <type>
+                    <int />
                 </type>
             </return_value>
         </broadcast>

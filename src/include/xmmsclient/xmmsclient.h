@@ -193,7 +193,7 @@ xmmsc_result_t *xmmsc_visualization_properties_set (xmmsc_connection_t *c, int v
 /*
  * drawtime: expected time needed to process the data in milliseconds after collecting it
     if >= 0, the data is returned as soon as currenttime >= (playtime - drawtime);
-	         data is thrown away if playtime < currenttime, but not if playtime < currenttime - drawtime
+             data is thrown away if playtime < currenttime, but not if playtime < currenttime - drawtime
     if  < 0, the data is returned as soon as available, and no old data is thrown away
  * blocking: time limit given in ms to wait for data. The process will sleep until new data is available, or the
              limit is reached. But if data is found, it could still wait until it is current (see drawtime).
@@ -325,9 +325,11 @@ xmmsc_result_t *xmmsc_c2c_send (xmmsc_connection_t *c, int dest, xmmsc_c2c_reply
 xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
 int32_t xmmsc_c2c_get_own_id (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_ready (xmmsc_connection_t *c) XMMS_PUBLIC;
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_c2c_message (xmmsc_connection_t *c) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_broadcast_c2c_ready (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_broadcast_c2c_client_connected (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_broadcast_c2c_client_disconnected (xmmsc_connection_t *c) XMMS_PUBLIC;
 
