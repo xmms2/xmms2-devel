@@ -83,8 +83,10 @@ def build(bld):
         build_cython(bld)
 
     pure_files = bld.path.ant_glob('xmmsclient/*.py')
+    sample_files = bld.path.ant_glob('xmmsclient/samples/*.py')
 
     bld.install_files('${xmmsclient_PYTHONDIR}', pure_files)
+    bld.install_files('${xmmsclient_PYTHONDIR}/samples', sample_files)
     # TODO: Distribute .pxd files
 
 def configure(conf):
