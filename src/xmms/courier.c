@@ -356,10 +356,12 @@ xmms_courier_client_get_connected_clients (xmms_courier_t *courier,
 	xmmsv_t *ret;
 
 	ret = xmmsv_new_list();
+	g_mutex_lock (&courier->clients_lock);
 	/* Build a list of xmmsv ints from the list of connected clients */
 	for (next = courier->clients; next; next = g_list_next (next)) {
 		xmmsv_list_append_int(ret, GPOINTER_TO_INT(next->data));
 	}
+	g_mutex_unlock (&courier->clients_lock);
 
 	return ret;
 }
