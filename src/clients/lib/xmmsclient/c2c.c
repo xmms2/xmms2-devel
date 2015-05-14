@@ -139,6 +139,19 @@ xmmsc_c2c_ready (xmmsc_connection_t *c)
 }
 
 /**
+ * Request a list of clients ready for c2c communication.
+ * @param c The connection to the server.
+ */
+xmmsc_result_t *
+xmmsc_c2c_get_ready_clients (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_COURIER,
+	                              XMMS_IPC_CMD_GET_READY_CLIENTS);
+}
+
+/**
  * Request the client-to-client message broadcast.
  * This broadcast gets triggered when messages from other clients are received.
  * @param c The connection to the server.

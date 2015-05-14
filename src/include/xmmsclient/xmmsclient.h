@@ -326,6 +326,7 @@ xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmmsc_c2c_rep
 int32_t xmmsc_c2c_get_own_id (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_ready (xmmsc_connection_t *c) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_get_ready_clients (xmmsc_connection_t *c) XMMS_PUBLIC;
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_c2c_message (xmmsc_connection_t *c) XMMS_PUBLIC;

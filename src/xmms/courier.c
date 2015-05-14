@@ -60,6 +60,7 @@ struct xmms_courier_St {
 	xmms_ipc_manager_t *manager;
 
 	GList *clients;
+	GList *ready;
 	GMutex clients_lock;
 	xmms_courier_pending_pool_t *pending_pool;
 };
@@ -74,6 +75,7 @@ static void xmms_courier_client_send_message (xmms_courier_t *courier, gint32 de
 static void xmms_courier_client_reply (xmms_courier_t *courier, gint32 msgid, int reply_policy, xmmsv_t *payload, gint32 sender, uint32_t cookie, xmms_error_t *err);
 static xmmsv_t *xmms_courier_client_get_connected_clients (xmms_courier_t *courier, xmms_error_t *err);
 static void xmms_courier_client_ready (xmms_courier_t *courier, gint32 clientid, xmms_error_t *err);
+static xmmsv_t *xmms_courier_client_get_ready_clients (xmms_courier_t *courier, xmms_error_t *err);
 
 /* Private methods */
 static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender, gint32 dest, uint32_t cookie, xmmsc_c2c_reply_policy_t reply_policy);
@@ -129,6 +131,7 @@ xmms_courier_destroy (xmms_object_t *object)
 
 	courier = (xmms_courier_t *) object;
 	g_list_free (courier->clients);
+	g_list_free (courier->ready);
 	g_mutex_clear (&courier->clients_lock);
 	xmms_courier_pending_pool_destroy (courier->pending_pool);
 
@@ -374,8 +377,35 @@ static void
 xmms_courier_client_ready (xmms_courier_t *courier,
                            gint32 clientid, xmms_error_t *err)
 {
+	g_mutex_lock (&courier->clients_lock);
+	if (g_list_index (courier->ready, GINT_TO_POINTER (clientid)) < 0) {
+		courier->ready = g_list_prepend (courier->ready, GINT_TO_POINTER (clientid));
+	}
+	g_mutex_unlock (&courier->clients_lock);
+	
 	xmms_object_emit(XMMS_OBJECT(courier), XMMS_IPC_SIGNAL_COURIER_READY,
 	                 xmmsv_new_int(clientid));
+}
+
+/**
+ * Get a list of ids of clients ready for c2c communication.
+ */
+static xmmsv_t *
+xmms_courier_client_get_ready_clients (xmms_courier_t *courier,
+                                       xmms_error_t *err)
+{
+	GList *next;
+	xmmsv_t *ret;
+
+	ret = xmmsv_new_list();
+	g_mutex_lock (&courier->clients_lock);
+	/* Build a list of xmmsv ints from the list of connected clients */
+	for (next = courier->ready; next; next = g_list_next (next)) {
+		xmmsv_list_append_int(ret, GPOINTER_TO_INT(next->data));
+	}
+	g_mutex_unlock (&courier->clients_lock);
+
+	return ret;
 }
 
 /**
@@ -517,6 +547,7 @@ client_disconnected_cb (xmms_object_t *unused, xmmsv_t *val, gpointer userdata)
 
 	g_mutex_lock (&courier->clients_lock);
 	courier->clients = g_list_remove (courier->clients, GINT_TO_POINTER (id));
+	courier->ready = g_list_remove (courier->ready, GINT_TO_POINTER (id));
 	g_mutex_unlock (&courier->clients_lock);
 
 	/* Prepare a list with the disconnected client's id */

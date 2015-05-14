@@ -1931,6 +1931,20 @@ vim:expandtab
             <documentation>Notify the server that the client's api is ready for query.</documentation>
         </method>
 
+        <method>
+            <name>get_ready_clients</name>
+            <documentation>Return a list of clients ready for c2c communication</documentation>
+
+            <return_value>
+                <documentation>A list of ids.</documentation>
+                <type>
+                    <list>
+                        <int/>
+                    </list>
+                </type>
+            </return_value>
+        </method>
+
         <broadcast>
             <id>15</id>
             <name>message</name>
