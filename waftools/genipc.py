@@ -106,6 +106,9 @@ class IpcMethodArgument(NamedElement, DocumentedElement, TypedElement):
 		NamedElement.__init__(self, xml_element)
 		DocumentedElement.__init__(self, xml_element)
 		TypedElement.__init__(self, xml_element)
+		default_elements = xml_element.getElementsByTagName('default-hint')
+		if default_elements:
+			self.default_hint = default_elements[0].firstChild.data.strip()
 
 class IpcReturnValue(DocumentedElement, TypedElement):
 	def __init__(self, xml_element):
