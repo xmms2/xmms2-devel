@@ -142,11 +142,11 @@ vim:expandtab
 
         <method>
             <name>replace</name>
-            <documentation>Queries a collection and replaces the playlist with the result.</documentation>
+            <documentation>Queries ids from a collection and replaces the playlist with the result.</documentation>
 
             <argument>
-                <name>playlist</name>
-                <documentation>The name of the playlist that will be shuffled.</documentation>
+                <name>name</name>
+                <documentation>The name of the playlist to replace.</documentation>
 
                 <type>
                     <string />
@@ -155,7 +155,7 @@ vim:expandtab
 
             <argument>
               <name>replacement</name>
-              <documentation>The collection to replace the playlist with.</documentation>
+              <documentation>The collection to query.</documentation>
 
               <type>
                 <collection />
@@ -272,7 +272,7 @@ vim:expandtab
             <documentation>Removes an entry from the given playlist.</documentation>
 
             <argument>
-                <name>playlist</name>
+                <name>name</name>
                 <documentation>The playlist whose entry is to be removed.</documentation>
 
                 <type>
@@ -295,7 +295,7 @@ vim:expandtab
             <documentation>Moves a playlist entry to a new position (absolute move).</documentation>
 
             <argument>
-                <name>playlist</name>
+                <name>name</name>
                 <documentation>The playlist whose entry is to be moved.</documentation>
 
                 <type>
@@ -304,7 +304,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>current_position</name>
+                <name>position</name>
                 <documentation>The current position of the entry to move.</documentation>
 
                 <type>
@@ -542,7 +542,7 @@ vim:expandtab
 
                 <type>
                     <dictionary>
-                        <int />
+                        <unknown />
                     </dictionary>
                 </type>
             </return_value>
@@ -751,7 +751,7 @@ vim:expandtab
             <documentation>Seeks to a position in the currently played song (given in milliseconds).</documentation>
 
             <argument>
-                <name>offset_milliseconds</name>
+                <name>offset</name>
                 <documentation>The position in the song in milliseconds.</documentation>
 
                 <type>
@@ -774,7 +774,7 @@ vim:expandtab
             <documentation>Seeks to a position in the currently played song (given in samples).</documentation>
 
             <argument>
-                <name>offset_samples</name>
+                <name>offset</name>
                 <documentation>The position in the song in samples.</documentation>
 
                 <type>
@@ -825,7 +825,7 @@ vim:expandtab
 
             <argument>
                 <name>channel</name>
-                <documentation>The name of the channel whose volume is set.</documentation>
+                <documentation>The name of the channel of which the volume is set.</documentation>
 
                 <type>
                     <string />
@@ -844,7 +844,7 @@ vim:expandtab
 
         <method>
             <name>volume_get</name>
-            <documentation>Retrieves the volume for all available channel.</documentation>
+            <documentation>Retrieves the volume of all available channels.</documentation>
 
             <return_value>
                 <documentation>A dictionary that maps the volume channels to the current playback volume.</documentation>
@@ -1004,7 +1004,7 @@ vim:expandtab
             <documentation>Removes an entry from the medialib.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The ID of the medialib entry to remove.</documentation>
 
                 <type>
@@ -1018,7 +1018,7 @@ vim:expandtab
             <documentation>Sets a medialib property to a string value.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The ID of the medialib entry to manipulate.</documentation>
 
                 <type>
@@ -1059,7 +1059,7 @@ vim:expandtab
             <documentation>Sets a medialib property to an integer value.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The ID of the medialib entry to manipulate.</documentation>
 
                 <type>
@@ -1100,7 +1100,7 @@ vim:expandtab
             <documentation>Removes a propert from a medialib entry.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The ID of the medialib entry to manipulate.</documentation>
 
                 <type>
@@ -1132,7 +1132,7 @@ vim:expandtab
             <documentation>Updates the URL of a medialib entry that has been moved to a new location.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The ID of the medialib entry to move.</documentation>
 
                 <type>
@@ -1224,7 +1224,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace in which to look for the collection.</documentation>
 
                 <type>
@@ -1246,7 +1246,7 @@ vim:expandtab
             <documentation>Lists the collections in the given namespace.</documentation>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace to list collections from.</documentation>
 
                 <type>
@@ -1279,7 +1279,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace in which to save the collection.</documentation>
 
                 <type>
@@ -1311,7 +1311,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace where the collection to remove is.</documentation>
 
                 <type>
@@ -1325,7 +1325,7 @@ vim:expandtab
             <documentation>Find all collections in the given namespace that contain a given media.</documentation>
 
             <argument>
-                <name>entry</name>
+                <name>id</name>
                 <documentation>The id of the media.</documentation>
 
                 <type>
@@ -1334,7 +1334,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace in which to look for collections.</documentation>
 
                 <type>
@@ -1358,7 +1358,7 @@ vim:expandtab
             <documentation>Rename a collection in the given namespace.</documentation>
 
             <argument>
-                <name>original_name</name>
+                <name>name</name>
                 <documentation>The name of the collection to rename.</documentation>
 
                 <type>
@@ -1376,7 +1376,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>name_space</name>
+                <name>namespace</name>
                 <documentation>The namespace to consider.</documentation>
 
                 <type>
@@ -1432,7 +1432,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>lim_start</name>
+                <name>limit_start</name>
                 <documentation>FIXME.</documentation>
 
                 <type>
@@ -1441,7 +1441,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>lim_len</name>
+                <name>limit_length</name>
                 <documentation>FIXME.</documentation>
 
                 <type>
@@ -1450,7 +1450,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>fetch</name>
+                <name>properties</name>
                 <documentation>The list of properties to be retrieved (may not be empty).</documentation>
 
                 <type>
@@ -1461,7 +1461,7 @@ vim:expandtab
             </argument>
 
             <argument>
-                <name>group</name>
+                <name>group_by</name>
                 <documentation>The list of properties to group by.</documentation>
 
                 <type>
@@ -1489,7 +1489,7 @@ vim:expandtab
             <documentation>FIXME.</documentation>
 
             <argument>
-                <name>path</name>
+                <name>url</name>
                 <documentation>The URL of the playlist.</documentation>
 
                 <type>
@@ -1849,8 +1849,8 @@ vim:expandtab
             <documentation>Assemble and send a client-to-client message.</documentation>
 
             <argument>
-                <name>dest</name>
-                <documentation>The destination client.</documentation>
+                <name>to_client</name>
+                <documentation>The destination client id.</documentation>
 
                 <type>
                     <int />
@@ -1883,7 +1883,7 @@ vim:expandtab
             <documentation>Assemble and send a reply to a client-to-client message</documentation>
 
             <argument>
-                <name>msgid</name>
+                <name>message_id</name>
                 <documentation>The id of the message.</documentation>
 
                 <type>
