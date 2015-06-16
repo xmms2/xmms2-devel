@@ -93,6 +93,9 @@ vim:expandtab
 
             <!-- One type element is required -->
             <xs:element name="type" type="xmms:argument_type" minOccurs="1" maxOccurs="1"/>
+
+            <!-- Arguments may optionally hint for a default value -->
+            <xs:element name="default-hint" type="xs:string" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
     </xs:complexType>
 

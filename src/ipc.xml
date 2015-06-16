@@ -82,6 +82,7 @@ vim:expandtab
                 <type>
                     <int />
                 </type>
+                <default-hint>0</default-hint>
             </argument>
 
             <return_value>
@@ -151,6 +152,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -173,6 +175,7 @@ vim:expandtab
               <type>
                 <int />
               </type>
+              <default-hint>0</default-hint>
             </argument>
         </method>
 
@@ -231,6 +234,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -254,6 +258,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -278,6 +283,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -301,6 +307,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -333,6 +340,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <return_value>
@@ -357,6 +365,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <return_value>
@@ -394,6 +403,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -426,6 +436,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -458,6 +469,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
         </method>
 
@@ -472,6 +484,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -495,6 +508,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>_active</default-hint>
             </argument>
 
             <argument>
@@ -766,6 +780,7 @@ vim:expandtab
                 <type>
                     <int />
                 </type>
+                <default-hint>2</default-hint>
             </argument>
         </method>
 
@@ -789,6 +804,7 @@ vim:expandtab
                 <type>
                     <int />
                 </type>
+                <default-hint>2</default-hint>
             </argument>
         </method>
 
@@ -974,6 +990,7 @@ vim:expandtab
                 <type>
                     <int />
                 </type>
+                <default-hint>0</default-hint>
             </argument>
         </method>
 
@@ -1230,6 +1247,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
 
             <return_value>
@@ -1252,6 +1270,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
 
             <return_value>
@@ -1285,6 +1304,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
 
             <argument>
@@ -1317,6 +1337,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
         </method>
 
@@ -1340,6 +1361,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
 
             <return_value>
@@ -1382,6 +1404,7 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+                <default-hint>Collections</default-hint>
             </argument>
         </method>
 
