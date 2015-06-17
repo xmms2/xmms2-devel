@@ -315,7 +315,7 @@ song_changed (void *data)
 		xmms_output_flush (arg->output);
 
 	xmms_object_emit (XMMS_OBJECT (arg->output),
-	                  XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                  XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                  xmmsv_new_int (entry));
 
 	return TRUE;

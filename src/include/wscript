@@ -4,10 +4,18 @@ def build(bld):
     # FIXME: This is a test that should work.
     for d in bld.path.ant_glob('**', dir=True, src=False):
         rpath = d.path_from(bld.path)
+        instpath = os.path.join(bld.env.INCLUDEDIR, 'xmms2', rpath)
         bld.recurse(rpath)
+        for script in d.ant_glob('*.py'):
+            target = script.change_ext('.h')
+            bld(source = ['../ipc.xml', script],
+                target = target,
+                rule = '${PYTHON} ${SRC[1].abspath()} > ${TGT}',
+            )
+            bld.install_files(instpath, target)
         f = d.ant_glob('*.h')
         if f:
-            bld.install_files(os.path.join(bld.env.INCLUDEDIR, 'xmms2', rpath), f)
+            bld.install_files(instpath, f)
 
 def configure(conf):
     conf.recurse("xmms")

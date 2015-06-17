@@ -321,8 +321,8 @@ xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c) XMMS_
  */
 
 /* methods */
-xmmsc_result_t *xmmsc_c2c_send (xmmsc_connection_t *c, int dest, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
-xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_send (xmmsc_connection_t *c, int dest, xmms_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
+xmmsc_result_t *xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid, xmms_c2c_reply_policy_t reply_policy, xmmsv_t *payload) XMMS_PUBLIC;
 int32_t xmmsc_c2c_get_own_id (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c) XMMS_PUBLIC;
 xmmsc_result_t *xmmsc_c2c_ready (xmmsc_connection_t *c) XMMS_PUBLIC;

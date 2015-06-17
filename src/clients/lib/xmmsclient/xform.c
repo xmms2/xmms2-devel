@@ -66,6 +66,6 @@ xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_XFORM, XMMS_IPC_CMD_BROWSE,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_XFORM, XMMS_IPC_COMMAND_XFORM_BROWSE,
 	                       XMMSV_LIST_ENTRY_STR (url), XMMSV_LIST_END);
 }

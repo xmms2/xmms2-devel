@@ -127,7 +127,7 @@ xmmsc_send_hello (xmmsc_connection_t *c)
 {
 	const int protocol_version = XMMS_IPC_PROTOCOL_VERSION;
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_COMMAND_MAIN_HELLO,
 	                       XMMSV_LIST_ENTRY_INT (protocol_version),
 	                       XMMSV_LIST_ENTRY_STR (c->clientname),
 	                       XMMSV_LIST_END);
@@ -302,7 +302,7 @@ xmmsc_quit (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_COMMAND_MAIN_QUIT);
 }
 
 /**
@@ -314,7 +314,7 @@ xmmsc_broadcast_quit (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_QUIT);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MAIN_QUIT);
 }
 
 /**
@@ -358,7 +358,7 @@ xmmsc_write_msg_to_ipc (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 xmmsc_result_t *
 xmmsc_send_broadcast_msg (xmmsc_connection_t *c, int signalid)
 {
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_BROADCAST,
 	                       XMMSV_LIST_ENTRY_INT (signalid),
 	                       XMMSV_LIST_END);
 }
@@ -371,7 +371,7 @@ xmmsc_write_signal_msg (xmmsc_connection_t *c, int signalid)
 	xmmsv_t *args;
 	uint32_t cookie;
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_SIGNAL);
 
 	args = xmmsv_build_list (XMMSV_LIST_ENTRY_INT (signalid),
 	                         XMMSV_LIST_END);
@@ -389,7 +389,7 @@ xmmsc_send_signal_msg (xmmsc_connection_t *c, int signalid)
 {
 	xmmsc_result_t *res;
 
-	res = xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL,
+	res = xmmsc_send_cmd (c, XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_SIGNAL,
 	                      XMMSV_LIST_ENTRY_INT (signalid), XMMSV_LIST_END);
 
 	xmmsc_result_restartable (res, signalid);
@@ -425,9 +425,9 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	type = XMMSC_RESULT_CLASS_DEFAULT;
 	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL) {
-		if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
+		if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_COMMAND_SIGNAL) {
 			type = XMMSC_RESULT_CLASS_SIGNAL;
-		} else if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
+		} else if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_COMMAND_BROADCAST) {
 			type = XMMSC_RESULT_CLASS_BROADCAST;
 		}
 	}

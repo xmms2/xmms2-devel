@@ -53,7 +53,8 @@ xmmsc_visualization_version (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_QUERY_VERSION);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_VISUALIZATION,
+	                              XMMS_IPC_COMMAND_VISUALIZATION_QUERY_VERSION);
 }
 
 /**
@@ -80,7 +81,8 @@ xmmsc_visualization_init (xmmsc_connection_t *c)
 		} else {
 			c->visv[vv]->idx = vv;
 			c->visv[vv]->state = VIS_NEW;
-			res = xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_VISUALIZATION, XMMS_IPC_CMD_VISUALIZATION_REGISTER);
+			res = xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_VISUALIZATION,
+			                             XMMS_IPC_COMMAND_VISUALIZATION_REGISTER);
 			if (res) {
 				xmmsc_result_visc_set (res, c->visv[vv]);
 			}
@@ -190,7 +192,7 @@ xmmsc_visualization_start_handle (xmmsc_connection_t *c, xmmsc_result_t *res)
 			v->type = VIS_NONE;
 
 			xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
-			                XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN,
+			                XMMS_IPC_COMMAND_VISUALIZATION_SHUTDOWN,
 			                XMMSV_LIST_ENTRY_INT (v->id),
 			                XMMSV_LIST_END);
 		} else {
@@ -242,7 +244,7 @@ xmmsc_visualization_property_set (xmmsc_connection_t *c, int vv, const char *key
 	x_api_error_if (!v, "with unregistered visualization dataset", NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
-	                       XMMS_IPC_CMD_VISUALIZATION_PROPERTY,
+	                       XMMS_IPC_COMMAND_VISUALIZATION_SET_PROPERTY,
 	                       XMMSV_LIST_ENTRY_INT (v->id),
 	                       XMMSV_LIST_ENTRY_STR (key),
 	                       XMMSV_LIST_ENTRY_STR (value),
@@ -264,7 +266,7 @@ xmmsc_visualization_properties_set (xmmsc_connection_t *c, int vv, xmmsv_t *prop
 	x_api_error_if (xmmsv_get_type (props) != XMMSV_TYPE_DICT, "with property list of invalid type", NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
-	                       XMMS_IPC_CMD_VISUALIZATION_PROPERTIES,
+	                       XMMS_IPC_COMMAND_VISUALIZATION_SET_PROPERTIES,
 	                       XMMSV_LIST_ENTRY_INT (v->id),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (props)),
 	                       XMMSV_LIST_END);
@@ -284,7 +286,7 @@ xmmsc_visualization_shutdown (xmmsc_connection_t *c, int vv)
 	x_api_error_if (!v, "with unregistered visualization dataset",);
 
 	xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
-	                XMMS_IPC_CMD_VISUALIZATION_SHUTDOWN,
+	                XMMS_IPC_COMMAND_VISUALIZATION_SHUTDOWN,
 	                XMMSV_LIST_ENTRY_INT (v->id), XMMSV_LIST_END);
 
 	/* detach from shm, close socket.. */

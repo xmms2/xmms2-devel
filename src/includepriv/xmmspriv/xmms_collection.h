@@ -73,7 +73,7 @@ const gchar *xmms_collection_get_namespace_string (xmms_collection_namespace_id_
 gboolean xmms_collection_get_int_attr (xmmsv_t *coll, const gchar *attrname, gint *val);
 gboolean xmms_collection_set_int_attr (xmmsv_t *coll, const gchar *attrname, gint newval);
 
-xmmsv_t *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
+xmmsv_t *xmms_collection_changed_msg_new (xmms_collection_changed_action_t type, const gchar *plname, const gchar *namespace);
 void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, xmmsv_t *dict);
 
 xmmsv_t *xmms_collection_snapshot (xmms_coll_dag_t *dag);

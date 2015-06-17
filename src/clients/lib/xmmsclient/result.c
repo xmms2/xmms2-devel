@@ -216,7 +216,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 static bool
 xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 {
-	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
+	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_COMMAND_ERROR) {
 		/* If special error msg, extract the error and save in result */
 		const char *errstr;
 		xmmsv_t *error;

@@ -54,7 +54,7 @@ xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
 	x_api_error_if (!collname, "with a NULL name", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_GET,
+	                       XMMS_IPC_COMMAND_COLLECTION_GET,
 	                       XMMSV_LIST_ENTRY_STR (collname),
 	                       XMMSV_LIST_ENTRY_STR (ns),
 	                       XMMSV_LIST_END);
@@ -71,7 +71,7 @@ xmmsc_coll_sync (xmmsc_connection_t *conn)
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLL_SYNC,
-	                       XMMS_IPC_CMD_COLL_SYNC_SYNC,
+	                       XMMS_IPC_COMMAND_COLL_SYNC_SYNC,
 	                       XMMSV_LIST_END);
 }
 
@@ -87,7 +87,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsv_coll_namespace_t ns)
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_LIST,
+	                       XMMS_IPC_COMMAND_COLLECTION_LIST,
 	                       XMMSV_LIST_ENTRY_STR (ns),
 	                       XMMSV_LIST_END);
 }
@@ -110,7 +110,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_t *coll,
 	x_api_error_if (!name, "with a NULL name", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_SAVE,
+	                       XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                       XMMSV_LIST_ENTRY_STR (name),
 	                       XMMSV_LIST_ENTRY_STR (ns),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
@@ -132,7 +132,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 	x_api_error_if (!name, "with a NULL name", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_REMOVE,
+	                       XMMS_IPC_COMMAND_COLLECTION_REMOVE,
 	                       XMMSV_LIST_ENTRY_STR (name),
 	                       XMMSV_LIST_ENTRY_STR (ns),
 	                       XMMSV_LIST_END);
@@ -153,7 +153,7 @@ xmmsc_coll_find (xmmsc_connection_t *conn, int mediaid, xmmsv_coll_namespace_t n
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_FIND,
+	                       XMMS_IPC_COMMAND_COLLECTION_FIND,
 	                       XMMSV_LIST_ENTRY_INT (mediaid),
 	                       XMMSV_LIST_ENTRY_STR (ns),
 	                       XMMSV_LIST_END);
@@ -177,7 +177,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
 	x_api_error_if (!to_name, "with a NULL to_name", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_RENAME,
+	                       XMMS_IPC_COMMAND_COLLECTION_RENAME,
 	                       XMMSV_LIST_ENTRY_STR (from_name),
 	                       XMMSV_LIST_ENTRY_STR (to_name),
 	                       XMMSV_LIST_ENTRY_STR (ns),
@@ -268,7 +268,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_t *coll,
 	ordered = xmmsv_coll_add_order_operators (coll, order);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_QUERY_INFOS,
+	                       XMMS_IPC_COMMAND_COLLECTION_QUERY_INFOS,
 	                       XMMSV_LIST_ENTRY (ordered),
 	                       XMMSV_LIST_ENTRY_INT (limit_start),
 	                       XMMSV_LIST_ENTRY_INT (limit_len),
@@ -296,7 +296,7 @@ xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_t *coll, xmmsv_t *fetch)
 	x_api_error_if (!fetch, "with a NULL fetch specification", NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_QUERY,
+	                       XMMS_IPC_COMMAND_COLLECTION_QUERY,
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
 	                       XMMSV_LIST_END);
@@ -332,7 +332,7 @@ xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, const char *path
 	enc_url = xmmsv_encode_url (path);
 
 	res = xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                      XMMS_IPC_CMD_IDLIST_FROM_PLS,
+	                      XMMS_IPC_COMMAND_COLLECTION_IDLIST_FROM_PLAYLIST,
 	                      XMMSV_LIST_ENTRY_STR (enc_url),
 	                      XMMSV_LIST_END);
 

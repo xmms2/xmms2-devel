@@ -40,7 +40,7 @@ setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)
 
 	/* send packet */
 	res = xmmsc_send_cmd (c, XMMS_IPC_OBJECT_VISUALIZATION,
-	                      XMMS_IPC_CMD_VISUALIZATION_INIT_SHM,
+	                      XMMS_IPC_COMMAND_VISUALIZATION_INIT_SHM,
 	                      XMMSV_LIST_ENTRY_INT (v->id),
 	                      XMMSV_LIST_ENTRY_STR (shmidstr),
 	                      XMMSV_LIST_END);

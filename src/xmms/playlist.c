@@ -73,7 +73,7 @@ static void xmms_playlist_current_pos_msg_send (xmms_playlist_t *playlist, xmmsv
 static xmmsv_t *xmms_playlist_current_pos_msg_new (xmms_playlist_t *playlist, gint32 pos, const gchar *plname);
 
 static void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, xmmsv_t *dict);
-static xmmsv_t *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_actions_t type, xmms_medialib_entry_t id, const gchar *plname);
+static xmmsv_t *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_playlist_changed_action_t type, xmms_medialib_entry_t id, const gchar *plname);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (playlist, type, id, name))
 #define XMMS_PLAYLIST_CURRPOS_MSG(pos, name) xmms_playlist_current_pos_msg_send (playlist, xmms_playlist_current_pos_msg_new (playlist, pos, name))
@@ -1290,7 +1290,7 @@ xmms_playlist_coll_get_size (xmmsv_t *plcoll)
 
 xmmsv_t *
 xmms_playlist_changed_msg_new (xmms_playlist_t *playlist,
-                               xmms_playlist_changed_actions_t type,
+                               xmms_playlist_changed_action_t type,
                                xmms_medialib_entry_t id, const gchar *plname)
 {
 	gchar *cannonical_name;

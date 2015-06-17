@@ -194,7 +194,7 @@ xmms_ices_new (xmms_output_t *output)
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, 2, 44100);
 
 	xmms_object_connect (XMMS_OBJECT (output),
-	                     XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                     XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                     on_playlist_entry_changed,
 	                     data);
 
@@ -210,7 +210,7 @@ xmms_ices_destroy (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	xmms_object_disconnect (XMMS_OBJECT (output),
-	                        XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                        XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                        on_playlist_entry_changed,
 	                        data);
 

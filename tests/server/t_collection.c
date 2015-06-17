@@ -60,7 +60,7 @@ CASE (test_client_save) {
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* emits XMMS_COLLECTION_CHANGED_ADD */
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -73,7 +73,7 @@ CASE (test_client_save) {
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
 	/* replace the collection, emits XMMS_COLLECTION_CHANGED_UPDATE */
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -96,26 +96,26 @@ CASE (test_client_save) {
 CASE (test_client_get) {
 	xmmsv_t *result;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("whatever"),
 	                        xmmsv_new_string ("invalid namespace"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("missing collection"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_COLL));
@@ -128,7 +128,7 @@ CASE (test_client_remove)
 	xmmsv_t *universe;
 	xmmsv_t *result, *signals, *expected;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_REMOVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_REMOVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
@@ -137,7 +137,7 @@ CASE (test_client_remove)
 	future = XMMS_IPC_CHECK_SIGNAL (dag, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -145,7 +145,7 @@ CASE (test_client_remove)
 	xmmsv_unref (result);
 	xmmsv_unref (universe);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_REMOVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_REMOVE,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
@@ -161,7 +161,7 @@ CASE (test_client_remove)
 	xmmsv_unref (expected);
 	xmms_future_free (future);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("Test"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
@@ -172,34 +172,34 @@ CASE (test_client_rename)
 {
 	xmmsv_t *result;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_RENAME,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_RENAME,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_RENAME,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_RENAME,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_COLL));
@@ -211,7 +211,7 @@ CASE (test_client_rename_referenced)
 	xmmsv_t *result, *reference;
 	const char *name;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Before Rename"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE));
@@ -222,7 +222,7 @@ CASE (test_client_rename_referenced)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "Before Rename");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test Reference"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -230,14 +230,14 @@ CASE (test_client_rename_referenced)
 	xmmsv_unref (result);
 	xmmsv_unref (reference);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_RENAME,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_RENAME,
 	                        xmmsv_new_string ("Before Rename"),
 	                        xmmsv_new_string ("After Rename"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_GET,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_GET,
 	                        xmmsv_new_string ("Test Reference"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_COLL));
@@ -257,7 +257,7 @@ CASE (test_client_find)
 
 	/* should be found */
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -267,7 +267,7 @@ CASE (test_client_find)
 
 	/* should be found */
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -283,7 +283,7 @@ CASE (test_client_find)
 	xmmsv_coll_add_operand (equals, universe);
 	xmmsv_unref (universe);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test C"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (equals));
@@ -291,7 +291,7 @@ CASE (test_client_find)
 	xmmsv_unref (result);
 	xmmsv_unref (equals);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_FIND,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_FIND,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
@@ -309,7 +309,7 @@ CASE (test_client_list)
 	xmmsv_t *result;
 
 	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test A"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (universe));
@@ -318,7 +318,7 @@ CASE (test_client_list)
 	xmmsv_unref (universe);
 
 	idlist = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test B"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS),
 	                        xmmsv_ref (idlist));
@@ -326,13 +326,13 @@ CASE (test_client_list)
 	xmmsv_unref (result);
 	xmmsv_unref (idlist);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_LIST,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_LIST,
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
 	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_LIST,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_LIST,
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_PLAYLISTS));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
 	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
@@ -377,7 +377,7 @@ CASE (test_client_query_infos)
 	group = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("position"),
 	                          XMMSV_LIST_END);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_QUERY_INFOS,
 	                        ordered,
 	                        xmmsv_new_int (0), xmmsv_new_int (0),
 	                        fetch, group);
@@ -441,7 +441,7 @@ CASE (test_client_query_infos2)
 	limit_start = 0;
 	limit_length = 0;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_QUERY_INFOS,
 	                        xmmsv_ref (ordered),
 	                        xmmsv_new_int (limit_start),
 	                        xmmsv_new_int (limit_length),
@@ -466,7 +466,7 @@ CASE (test_client_query_infos2)
 	limit_start = 0;
 	limit_length = 2;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_QUERY_INFOS,
 	                        xmmsv_ref (ordered),
 	                        xmmsv_new_int (limit_start),
 	                        xmmsv_new_int (limit_length),
@@ -486,7 +486,7 @@ CASE (test_client_query_infos2)
 	limit_start = 1;
 	limit_length = 2;
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY_INFOS,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_QUERY_INFOS,
 	                        xmmsv_ref (ordered),
 	                        xmmsv_new_int (limit_start),
 	                        xmmsv_new_int (limit_length),
@@ -516,7 +516,7 @@ CASE (test_reject_direct_cyclic_collections)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "Cycle");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Cycle"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -530,7 +530,7 @@ CASE (test_reject_direct_cyclic_collections)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Cycle"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -544,7 +544,7 @@ CASE (test_reject_direct_cyclic_collections)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "Cycle");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Cycle"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -563,7 +563,7 @@ CASE (test_reject_indirect_cyclic_collections)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("First"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -588,7 +588,7 @@ CASE (test_reject_indirect_cyclic_collections)
 	xmmsv_unref (reference);
 
 	/* Overwrite the existing collection with a circular reference */
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Second"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (intersection));
@@ -603,7 +603,7 @@ CASE (test_reject_indirect_cyclic_collections)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "Second");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("First"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -622,7 +622,7 @@ CASE (test_references)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "All Media");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Cycle"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -637,7 +637,7 @@ CASE (test_references)
 	xmmsv_coll_attribute_set_string (match, "value", "The Doors");
 	xmmsv_coll_add_operand (match, universe);
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("The Doors"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (match));
@@ -649,7 +649,7 @@ CASE (test_references)
 	xmmsv_coll_attribute_set_string (reference, "namespace", XMMS_COLLECTION_NS_COLLECTIONS);
 	xmmsv_coll_attribute_set_string (reference, "reference", "The Doors");
 
-	result = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_COLLECTION_SAVE,
+	result = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_SAVE,
 	                        xmmsv_new_string ("Test Reference"),
 	                        xmmsv_new_string (XMMS_COLLECTION_NS_COLLECTIONS),
 	                        xmmsv_ref (reference));
@@ -752,7 +752,7 @@ CASE (test_collection_idlist_from_playlist)
 
 	xmms_plugin_load (&xmms_builtin_test_xform, NULL);
 
-	idlist = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_IDLIST_FROM_PLS,
+	idlist = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_IDLIST_FROM_PLAYLIST,
 	                        xmmsv_new_string ("test://example.com/foo1.mp3"));
 
 	CU_ASSERT_EQUAL (1, xmmsv_coll_idlist_get_size (idlist));

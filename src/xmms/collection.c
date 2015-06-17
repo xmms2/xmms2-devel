@@ -123,7 +123,7 @@ static xmmsv_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *da
 #include "collection_ipc.c"
 
 xmmsv_t *
-xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
+xmms_collection_changed_msg_new (xmms_collection_changed_action_t type,
                                  const gchar *plname, const gchar *namespace)
 {
 	return xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", type),

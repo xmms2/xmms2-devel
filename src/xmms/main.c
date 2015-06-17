@@ -431,7 +431,7 @@ kill_server (gpointer object) {
 	gint uptime = time (NULL) - mainobj->starttime;
 
 	xmms_object_emit (XMMS_OBJECT (object),
-	                  XMMS_IPC_SIGNAL_QUIT,
+	                  XMMS_IPC_SIGNAL_MAIN_QUIT,
 	                  xmmsv_new_int (uptime));
 
 	xmms_object_unref (object);

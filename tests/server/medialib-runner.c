@@ -266,7 +266,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 
 	memory_status_calibrate (name);
 
-	ret = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY,
+	ret = XMMS_IPC_CALL (dag, XMMS_IPC_COMMAND_COLLECTION_QUERY,
 	                     xmmsv_ref (coll),
 	                     xmmsv_ref (specification));
 

@@ -23,12 +23,12 @@
 
 G_BEGIN_DECLS
 
-void xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object) XMMS_PUBLIC;
-void xmms_ipc_object_unregister (xmms_ipc_objects_t objectid) XMMS_PUBLIC;
-void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid) XMMS_PUBLIC;
-void xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid) XMMS_PUBLIC;
-void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid) XMMS_PUBLIC;
-void xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid) XMMS_PUBLIC;
+void xmms_ipc_object_register (xmms_ipc_object_t objectid, xmms_object_t *object) XMMS_PUBLIC;
+void xmms_ipc_object_unregister (xmms_ipc_object_t objectid) XMMS_PUBLIC;
+void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signal_t signalid) XMMS_PUBLIC;
+void xmms_ipc_broadcast_unregister (xmms_ipc_signal_t signalid) XMMS_PUBLIC;
+void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signal_t signalid) XMMS_PUBLIC;
+void xmms_ipc_signal_unregister (xmms_ipc_signal_t signalid) XMMS_PUBLIC;
 
 G_END_DECLS
 

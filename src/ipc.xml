@@ -3,34 +3,145 @@
 vim:expandtab
 -->
 
-<ipc version="1" xmlns="https://xmms2.org/ipc.xsd">
+<ipc version="24" xmlns="https://xmms2.org/ipc.xsd">
+    <constant>
+        <name>IPC_COMMAND_FIRST</name>
+        <value type="integer">32</value>
+    </constant>
 
-    <!--
-    <enum name="playback_status">
-        <prop name="STOP" />
-        <prop name="START" />
-        <prop name="PAUSE" />
+    <enum>
+        <name>ipc_command_special</name>
+        <namespace-hint>IPC_COMMAND</namespace-hint>
+
+        <member>REPLY</member>
+        <member>ERROR</member>
+    </enum>
+    <enum>
+        <name>ipc_command_signal</name>
+        <namespace-hint>IPC_COMMAND</namespace-hint>
+
+        <member ref-value="IPC_COMMAND_FIRST" ref-type="constant">SIGNAL</member>
+        <member>BROADCAST</member>
     </enum>
 
-    <enum name="output_cmd">
-        <prop name="START" />
-        <prop name="STOP" />
-        <prop name="PAUSE" />
-        <prop name="STATUS" />
+    <enum>
+        <name>c2c_reply_policy</name>
+
+        <member>NO_REPLY</member>
+        <member>SINGLE_REPLY</member>
+        <member>MULTI_REPLY</member>
     </enum>
 
-    <enum name="playlist_cmd">
-        <prop name="ADD_ID" />
-        <prop name="CURRENT_POS" />
-        <prop name="LIST_ENTRIES" />
-        <prop name="CLEAR" />
+    <enum>
+        <name>collection_changed_action</name>
+        <namespace-hint>COLLECTION_CHANGED</namespace-hint>
+
+        <member>ADD</member>
+        <member>UPDATE</member>
+        <member>RENAME</member>
+        <member>REMOVE</member>
     </enum>
 
-    <enum name="message">
-        <prop name="REPLY" />
-        <prop name="ERROR" />
+    <enum>
+        <name>collection_type</name>
+
+        <member>REFERENCE</member>
+        <member>UNIVERSE</member>
+        <member>UNION</member>
+        <member>INTERSECTION</member>
+        <member>COMPLEMENT</member>
+        <member>HAS</member>
+        <member>MATCH</member>
+        <member>TOKEN</member>
+        <member>EQUALS</member>
+        <member>NOTEQUAL</member>
+        <member>SMALLER</member>
+        <member>SMALLEREQ</member>
+        <member>GREATER</member>
+        <member>GREATEREQ</member>
+        <member>ORDER</member>
+        <member>LIMIT</member>
+        <member>MEDIASET</member>
+        <member>IDLIST</member>
+        <member ref-value="IDLIST">LAST</member>
     </enum>
-    -->
+
+    <enum>
+        <name>log_level</name>
+
+        <member>UNKNOWN</member>
+        <member>FATAL</member>
+        <member>FAIL</member>
+        <member>ERROR</member>
+        <member>INFO</member>
+        <member>DEBUG</member>
+        <member>COUNT</member>
+    </enum>
+
+    <enum>
+        <name>medialib_entry_status</name>
+
+        <member>NEW</member>
+        <member>OK</member>
+        <member>RESOLVING</member>
+        <member>NOT_AVAILABLE</member>
+        <member>REHASH</member>
+    </enum>
+
+    <enum>
+        <name>mediainfo_reader_status</name>
+
+        <member>IDLE</member>
+        <member>RUNNING</member>
+    </enum>
+
+    <enum>
+        <name>playback_seek_mode</name>
+        <namespace-hint>PLAYBACK_SEEK</namespace-hint>
+
+        <member value="1">CUR</member>
+        <member>SET</member>
+    </enum>
+
+    <enum>
+        <name>playback_status</name>
+
+        <member>STOP</member>
+        <member>PLAY</member>
+        <member>PAUSE</member>
+    </enum>
+
+    <enum>
+        <name>playlist_position_action</name>
+        <namespace-hint>PLAYLIST_CURRENT_ID</namespace-hint>
+
+        <member>FORGET</member>
+        <member>KEEP</member>
+        <member>MOVE_TO_FRONT</member>
+    </enum>
+
+    <enum>
+        <name>playlist_changed_action</name>
+        <namespace-hint>PLAYLIST_CHANGED</namespace-hint>
+
+        <member>ADD</member>
+        <member>INSERT</member>
+        <member>SHUFFLE</member>
+        <member>REMOVE</member>
+        <member>CLEAR</member>
+        <member>MOVE</member>
+        <member>SORT</member>
+        <member>UPDATE</member>
+        <member>REPLACE</member>
+    </enum>
+
+    <enum>
+        <name>plugin_type</name>
+
+        <member>ALL</member>
+        <member>OUTPUT</member>
+        <member>XFORM</member>
+    </enum>
 
     <object>
         <name>main</name>
@@ -80,9 +191,9 @@ vim:expandtab
                 <documentation>The type of plugins to retrieve.</documentation>
 
                 <type>
-                    <int />
+                    <enum-value name="plugin_type" />
                 </type>
-                <default-hint>0</default-hint>
+                <default-hint>ALL</default-hint>
             </argument>
 
             <return_value>
@@ -114,7 +225,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>12</id>
             <name>quit</name>
             <documentation>This broadcast is triggered when the daemon is shutting down.</documentation>
 
@@ -130,16 +240,6 @@ vim:expandtab
 
     <object>
         <name>playlist</name>
-
-        <!--
-        <prop name="pos">
-            <readable />
-            <writeable />
-            <type>
-                <int />
-            </type>
-        </prop>
-        -->
 
         <method>
             <name>replace</name>
@@ -173,9 +273,9 @@ vim:expandtab
                 * XMMS_PLAYLIST_CURRENT_ID_MOVE_TO_FRONT moves the id of the current position to the beginning of the new playlist, or resets position to -1 if the id is not found.
               </documentation>
               <type>
-                <int />
+                <enum-value name="playlist_position_action" />
               </type>
-              <default-hint>0</default-hint>
+              <default-hint>FORGET</default-hint>
             </argument>
         </method>
 
@@ -531,8 +631,7 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>0</id>
-            <name>playlist_changed</name>
+            <name>changed</name>
             <documentation>This broadcast is triggered when the playlist changes.</documentation>
 
             <return_value>
@@ -547,7 +646,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>6</id>
             <name>current_pos</name>
             <documentation>This broadcast is triggered when the position in the playlist changes.</documentation>
 
@@ -563,7 +661,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>7</id>
             <name>loaded</name>
             <documentation>This broadcast is triggered when another playlist is loaded.</documentation>
 
@@ -672,7 +769,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>1</id>
             <name>value_changed</name>
             <documentation>This broadcast is triggered when the value of any config property changes.</documentation>
 
@@ -688,44 +784,8 @@ vim:expandtab
         </broadcast>
     </object>
 
-    <!--
-    <object name="playback" type="client">
-        <prop name="status">
-            <readable />
-            <type>
-                <enum name="playback_status" />
-            </type>
-        </prop>
-
-        <method name="stop">
-            <return_value>
-                <type>
-                    <none />
-                </type>
-            </return_value>
-        </method>
-
-        <method name="start">
-            <return_value>
-                <type>
-                    <none />
-                </type>
-            </return_value>
-        </method>
-    </object>
-    -->
-
     <object>
         <name>playback</name>
-
-        <!--
-        <prop name="playtime">
-            <readable />
-            <type>
-                <int />
-            </type>
-        </prop>
-        -->
 
         <method>
             <name>start</name>
@@ -778,9 +838,9 @@ vim:expandtab
                 <documentation>Specifies how the absolute position in milliseconds is determined. If whence is XMMS_PLAYBACK_SEEK_SET, the argument is treated as an absolute value. If whence is XMMS_PLAYBACK_SEEK_CUR, the new position is computed by adding the argument to the current position.</documentation>
 
                 <type>
-                    <int />
+                    <enum-value name="playback_seek_mode" />
                 </type>
-                <default-hint>2</default-hint>
+                <default-hint>SET</default-hint>
             </argument>
         </method>
 
@@ -802,9 +862,9 @@ vim:expandtab
                 <documentation>Specifies how the absolute position in samples is determined. If whence is XMMS_PLAYBACK_SEEK_SET, the argument is treated as an absolute value. If whence is XMMS_PLAYBACK_SEEK_CUR, the new position is computed by adding the argument to the current position.</documentation>
 
                 <type>
-                    <int />
+                    <enum-value name="playback_seek_mode" />
                 </type>
-                <default-hint>2</default-hint>
+                <default-hint>SET</default-hint>
             </argument>
         </method>
 
@@ -816,8 +876,7 @@ vim:expandtab
                 <documentation>The current playback status.</documentation>
 
                 <type>
-                    <!-- FIXME: link to enum playback_status -->
-                    <int />
+                    <enum-value name="playback_status" />
                 </type>
             </return_value>
         </method>
@@ -874,7 +933,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>2</id>
             <name>status</name>
             <documentation>This broadcast is triggered when the playback status changes.</documentation>
 
@@ -882,14 +940,12 @@ vim:expandtab
                 <documentation>The current playback status.</documentation>
 
                 <type>
-                    <!-- FIXME: link to enum playback_status -->
-                    <int />
+                    <enum-value name="playback_status" />
                 </type>
             </return_value>
         </broadcast>
 
         <broadcast>
-            <id>3</id>
             <name>volume_changed</name>
             <documentation>This broadcast is triggered when the playback volume changes.</documentation>
 
@@ -905,7 +961,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>5</id>
             <name>current_id</name>
             <documentation>This broadcast is triggered when the played song's media ID changes.</documentation>
 
@@ -919,7 +974,6 @@ vim:expandtab
         </broadcast>
 
         <signal>
-            <id>4</id>
             <name>playtime</name>
             <documentation>Emits the current playtime.</documentation>
 
@@ -1182,7 +1236,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>8</id>
             <name>entry_added</name>
             <documentation>This broadcast is triggered when an entry is added to the medialib.</documentation>
 
@@ -1196,7 +1249,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>9</id>
             <name>entry_changed</name>
             <documentation>This broadcast is triggered when the properties of a medialib entry are changed.</documentation>
 
@@ -1210,7 +1262,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-          <id>10</id>
           <name>entry_removed</name>
           <documentation>This broadcast is triggered when a medialib entry is removed.</documentation>
 
@@ -1530,7 +1581,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>11</id>
             <name>changed</name>
             <documentation>This broadcast is triggered when a collection is changed.</documentation>
 
@@ -1720,7 +1770,6 @@ vim:expandtab
         <name>mediainfo_reader</name>
 
         <broadcast>
-            <id>13</id>
             <name>status</name>
             <documentation>This broadcast is triggered when the status of the mediainfo reader changes.</documentation>
 
@@ -1728,14 +1777,12 @@ vim:expandtab
                 <documentation>The current status of the mediainfo reader.</documentation>
 
                 <type>
-                    <!-- FIXME: link to enum mediainfo_reader_status -->
-                    <int />
+                    <enum-value name="mediainfo_reader_status" />
                 </type>
             </return_value>
         </broadcast>
 
         <signal>
-            <id>14</id>
             <name>unindexed</name>
             <documentation>Emits the number of unresolved medialib entries.</documentation>
 
@@ -1885,7 +1932,7 @@ vim:expandtab
                 <documentation>The reply policy for this message</documentation>
 
                 <type>
-                    <int />
+                    <enum-value name="c2c_reply_policy" />
                 </type>
            </argument>
 
@@ -1919,7 +1966,7 @@ vim:expandtab
                 <documentation>The reply policy for this message.</documentation>
 
                 <type>
-                    <int />
+                    <enum-value name="c2c_reply_policy" />
                 </type>
             </argument>
 
@@ -1969,7 +2016,6 @@ vim:expandtab
         </method>
 
         <broadcast>
-            <id>15</id>
             <name>message</name>
             <documentation>This broadcast carries client-to-client messages.</documentation>
 
@@ -1985,7 +2031,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>18</id>
             <name>ready</name>
             <documentation>This broadcast is emitted when a client's services are ready.</documentation>
             <return_value>
@@ -2001,7 +2046,6 @@ vim:expandtab
         <name>ipc_manager</name>
 
         <broadcast>
-            <id>16</id>
             <name>client_connected</name>
             <documentation>This broadcast is emitted when a new client connects.</documentation>
 
@@ -2015,7 +2059,6 @@ vim:expandtab
         </broadcast>
 
         <broadcast>
-            <id>17</id>
             <name>client_disconnected</name>
             <documentation>This broadcast is emitted when a client disconnects.</documentation>
 

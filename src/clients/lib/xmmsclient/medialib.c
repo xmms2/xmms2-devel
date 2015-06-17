@@ -76,7 +76,7 @@ xmmsc_medialib_get_id_encoded (xmmsc_connection_t *conn, const char *url)
 {
 	x_check_conn (conn, NULL);
 
-	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
+	return do_methodcall (conn, XMMS_IPC_COMMAND_MEDIALIB_GET_ID, url);
 }
 
 /**
@@ -93,7 +93,7 @@ xmmsc_medialib_move_entry (xmmsc_connection_t *conn, int entry, const char *url)
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_MOVE_URL,
+	                       XMMS_IPC_COMMAND_MEDIALIB_MOVE_ENTRY,
 	                       XMMSV_LIST_ENTRY_INT (entry),
 	                       XMMSV_LIST_ENTRY_STR (url),
 	                       XMMSV_LIST_END);
@@ -110,7 +110,7 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int entry)
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_REMOVE_ID,
+	                       XMMS_IPC_COMMAND_MEDIALIB_REMOVE_ENTRY,
 	                       XMMSV_LIST_ENTRY_INT (entry),
 	                       XMMSV_LIST_END);
 }
@@ -201,7 +201,7 @@ xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	return do_methodcall (conn, XMMS_IPC_CMD_MLIB_ADD_URL, url);
+	return do_methodcall (conn, XMMS_IPC_COMMAND_MEDIALIB_ADD_ENTRY, url);
 }
 
 /**
@@ -250,7 +250,7 @@ xmmsc_medialib_import_path_encoded (xmmsc_connection_t *conn,
 	if (!_xmmsc_medialib_verify_url (path))
 		x_api_error ("with a non encoded url", NULL);
 
-	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
+	return do_methodcall (conn, XMMS_IPC_COMMAND_MEDIALIB_IMPORT_PATH, path);
 }
 
 /**
@@ -298,7 +298,7 @@ xmmsc_medialib_rehash (xmmsc_connection_t *conn, int id)
 	x_check_conn (conn, NULL);
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_REHASH,
+	                       XMMS_IPC_COMMAND_MEDIALIB_REHASH,
 	                       XMMSV_LIST_ENTRY_INT (id),
 	                       XMMSV_LIST_END);
 }
@@ -311,7 +311,8 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, int id)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
+	                       XMMS_IPC_COMMAND_MEDIALIB_GET_INFO,
 	                       XMMSV_LIST_ENTRY_INT (id), XMMSV_LIST_END);
 }
 
@@ -337,20 +338,23 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_CHANGED);
 }
 
 /**
  * Request the medialib_entry_updated broadcast. This will be called
  * if a entry changes on the serverside. The argument will be an medialib
  * id.
+ *
+ * FIXME: same as entry_changed() above. Calls to this function should be
+ *        replaced and the function removed.
  */
 xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_updated (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_CHANGED);
 }
 
 /**
@@ -399,7 +403,7 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                       XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                       XMMSV_LIST_ENTRY_INT (id),
 	                       XMMSV_LIST_ENTRY_STR (source),
 	                       XMMSV_LIST_ENTRY_STR (key),
@@ -440,7 +444,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                       XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_STRING,
 	                       XMMSV_LIST_ENTRY_INT (id),
 	                       XMMSV_LIST_ENTRY_STR (source),
 	                       XMMSV_LIST_ENTRY_STR (key),
@@ -479,7 +483,7 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MEDIALIB,
-	                       XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                       XMMS_IPC_COMMAND_MEDIALIB_REMOVE_PROPERTY,
 	                       XMMSV_LIST_ENTRY_INT (id),
 	                       XMMSV_LIST_ENTRY_STR (source),
 	                       XMMSV_LIST_ENTRY_STR (key),

@@ -48,7 +48,7 @@ xmmsc_playlist_current_pos (xmmsc_connection_t *c, const char *playlist)
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_CURRENT_POS,
+	                       XMMS_IPC_COMMAND_PLAYLIST_CURRENT_POS,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_END);
 }
@@ -61,7 +61,8 @@ xmmsc_playlist_current_active (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_ACTIVE);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                              XMMS_IPC_COMMAND_PLAYLIST_CURRENT_ACTIVE);
 }
 
 /**
@@ -119,7 +120,7 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist)
 	xmmsv_coll_add_operand (shuffled, reference);
 	xmmsv_unref (reference);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REPLACE,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_COMMAND_PLAYLIST_REPLACE,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (shuffled),
 	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYLIST_CURRENT_ID_MOVE_TO_FRONT),
@@ -156,7 +157,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, xmmsv_t *prope
 	ordered = xmmsv_coll_add_order_operators (reference, properties);
 	xmmsv_unref (reference);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REPLACE,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_COMMAND_PLAYLIST_REPLACE,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (ordered),
 	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYLIST_CURRENT_ID_KEEP),
@@ -180,7 +181,7 @@ xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist)
 
 	empty = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REPLACE,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_COMMAND_PLAYLIST_REPLACE,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (empty),
 	                       XMMSV_LIST_ENTRY_INT (XMMS_PLAYLIST_CURRENT_ID_FORGET),
@@ -202,7 +203,7 @@ xmmsc_playlist_replace (xmmsc_connection_t *c, const char *playlist,
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REPLACE,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_COMMAND_PLAYLIST_REPLACE,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
 	                       XMMSV_LIST_ENTRY_INT (action),
@@ -233,7 +234,8 @@ xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist)
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_LIST_ENTRIES,
 	                       XMMSV_LIST_ENTRY_STR (playlist), XMMSV_LIST_END);
 }
 
@@ -261,7 +263,8 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, 
 	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 	xmmsv_coll_idlist_append (coll, id);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_COLL,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_INSERT_COLLECTION,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_ENTRY (coll),
@@ -343,7 +346,7 @@ xmmsc_playlist_rinsert_encoded (xmmsc_connection_t *c, const char *playlist, int
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RINSERT,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_COMMAND_PLAYLIST_RINSERT,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_ENTRY_STR (url),
@@ -431,7 +434,7 @@ xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, const char *playlist, int 
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_INSERT_URL,
+	                       XMMS_IPC_COMMAND_PLAYLIST_INSERT_URL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_ENTRY_STR (url),
@@ -466,7 +469,7 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 	ordered = xmmsv_coll_add_order_operators (coll, order);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_INSERT_COLL,
+	                       XMMS_IPC_COMMAND_PLAYLIST_INSERT_COLLECTION,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_ENTRY (ordered),
@@ -497,7 +500,8 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, int id)
 	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 	xmmsv_coll_idlist_append (coll, id);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_ADD_COLLECTION,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (coll),
 	                       XMMSV_LIST_END);
@@ -577,7 +581,8 @@ xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *playlist, const 
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RADD,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_RADD,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_STR (url),
 	                       XMMSV_LIST_END);
@@ -663,7 +668,8 @@ xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const c
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_URL,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_ADD_URL,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_STR (url),
 	                       XMMSV_LIST_END);
@@ -688,7 +694,7 @@ xmmsc_playlist_add_idlist (xmmsc_connection_t *c, const char *playlist,
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_ADD_COLL,
+	                       XMMS_IPC_COMMAND_PLAYLIST_ADD_COLLECTION,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
 	                       XMMSV_LIST_END);
@@ -719,7 +725,8 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 
 	ordered = xmmsv_coll_add_order_operators (coll, order);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_ADD_COLLECTION,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY (ordered),
 	                       XMMSV_LIST_END);
@@ -740,7 +747,7 @@ xmmsc_playlist_move_entry (xmmsc_connection_t *c, const char *playlist,
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_MOVE_ENTRY,
+	                       XMMS_IPC_COMMAND_PLAYLIST_MOVE_ENTRY,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (cur_pos),
 	                       XMMSV_LIST_ENTRY_INT (new_pos),
@@ -768,7 +775,7 @@ xmmsc_playlist_remove_entry (xmmsc_connection_t *c, const char *playlist,
 	}
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_REMOVE_ENTRY,
+	                       XMMS_IPC_COMMAND_PLAYLIST_REMOVE_ENTRY,
 	                       XMMSV_LIST_ENTRY_STR (playlist),
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_END);
@@ -807,7 +814,8 @@ xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SET_POS,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_SET_NEXT,
 	                       XMMSV_LIST_ENTRY_INT (pos), XMMSV_LIST_END);
 }
 
@@ -821,7 +829,7 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, int pos)
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
-	                       XMMS_IPC_CMD_SET_POS_REL,
+	                       XMMS_IPC_COMMAND_PLAYLIST_SET_NEXT_REL,
 	                       XMMSV_LIST_ENTRY_INT (pos),
 	                       XMMSV_LIST_END);
 }
@@ -834,7 +842,8 @@ xmmsc_playlist_load (xmmsc_connection_t *c, const char *name)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LOAD,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_PLAYLIST,
+	                       XMMS_IPC_COMMAND_PLAYLIST_LOAD,
 	                       XMMSV_LIST_ENTRY_STR (name), XMMSV_LIST_END);
 }
 

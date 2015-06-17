@@ -500,7 +500,7 @@ CASE(test_client_rehash)
 	gint status;
 
 	/* rehashing missing id should fail */
-	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (1));
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REHASH, xmmsv_new_int (1));
 	CU_ASSERT (xmmsv_is_type (value, XMMSV_TYPE_ERROR));
 	xmmsv_unref (value);
 
@@ -519,7 +519,7 @@ CASE(test_client_rehash)
 	xmms_medialib_session_abort (session);
 
 	/* rehash first entry */
-	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (first));
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REHASH, xmmsv_new_int (first));
 	CU_ASSERT (xmmsv_is_type (value, XMMSV_TYPE_NONE));
 	xmmsv_unref (value);
 
@@ -535,7 +535,7 @@ CASE(test_client_rehash)
 	xmms_medialib_session_abort (session);
 
 	/* rehash all entries */
-	value = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REHASH, xmmsv_new_int (0));
+	value = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REHASH, xmmsv_new_int (0));
 	xmmsv_unref (value);
 
 	/* verify that both entries have rehash status */
@@ -557,15 +557,15 @@ CASE(test_client_get_info)
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (0));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (0));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (1337));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (1337));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (1));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (1));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
 	CU_ASSERT (xmmsv_dict_get (title, "server", &server));
@@ -583,7 +583,7 @@ CASE(test_client_entry_add)
 	CU_ASSERT_FALSE (xmms_medialib_check_id (session, 1));
 	xmms_medialib_session_abort (session);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MLIB_ADD_URL, xmmsv_new_string ("file:///apankorv.mp3"));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_ADD_ENTRY, xmmsv_new_string ("file:///apankorv.mp3"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -599,7 +599,7 @@ CASE(test_client_entry_remove)
 	xmms_medialib_entry_t entry;
 	xmmsv_t *result;
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REMOVE_ID, xmmsv_new_int (1337));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REMOVE_ENTRY, xmmsv_new_int (1337));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
@@ -609,7 +609,7 @@ CASE(test_client_entry_remove)
 	CU_ASSERT_TRUE (xmms_medialib_check_id (session, entry));
 	xmms_medialib_session_abort (session);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_REMOVE_ID, xmmsv_new_int (entry));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REMOVE_ENTRY, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -626,7 +626,7 @@ CASE(test_client_get_id)
 
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_GET_ID, xmmsv_new_string ("Red+FangRed+FangPrehistoric+Dog"));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_ID, xmmsv_new_string ("Red+FangRed+FangPrehistoric+Dog"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_INT32));
 	CU_ASSERT (xmmsv_get_int (result, &mid));
 	CU_ASSERT_EQUAL (entry, mid);
@@ -643,7 +643,7 @@ CASE(test_client_property_set)
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	/* clients must not overwrite server properties */
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("server"),
 	                        xmmsv_new_string ("tracknr"),
@@ -651,7 +651,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                        xmmsv_new_int (0),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"),
@@ -659,7 +659,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                        xmmsv_new_int (1337),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"),
@@ -667,7 +667,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"),
@@ -676,7 +676,7 @@ CASE(test_client_property_set)
 	xmmsv_unref (result);
 
 	/* clients must not overwrite server properties */
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_STRING,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("server"),
 	                        xmmsv_new_string ("title"),
@@ -684,7 +684,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_STRING,
 	                        xmmsv_new_int (0),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("title"),
@@ -692,7 +692,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_STRING,
 	                        xmmsv_new_int (1337),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("title"),
@@ -700,7 +700,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_STR,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_STRING,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("title"),
@@ -708,7 +708,7 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 
 	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
@@ -733,7 +733,7 @@ CASE(test_client_property_remove)
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
 	/* clients must not remove server properties */
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REMOVE_PROPERTY,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("server"),
 	                        xmmsv_new_string ("tracknr"));
@@ -741,14 +741,14 @@ CASE(test_client_property_remove)
 	xmmsv_unref (result);
 
 	/* removing properties from non-existing entries should fail */
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REMOVE_PROPERTY,
 	                        xmmsv_new_int (1337),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_SET_INT,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_SET_PROPERTY_INT,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"),
@@ -756,7 +756,7 @@ CASE(test_client_property_remove)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
 	CU_ASSERT (xmmsv_dict_get (tracknr, "client/unittest", &client));
@@ -764,14 +764,14 @@ CASE(test_client_property_remove)
 	CU_ASSERT_EQUAL (2, int_value);
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_PROPERTY_REMOVE,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_REMOVE_PROPERTY,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("client/unittest"),
 	                        xmmsv_new_string ("tracknr"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_INFO, xmmsv_new_int (entry));
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
 	CU_ASSERT_FALSE (xmmsv_dict_get (tracknr, "client/unittest", &client));
@@ -788,13 +788,13 @@ CASE(test_client_move_entry)
 
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_URL,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_MOVE_ENTRY,
 	                        xmmsv_new_int (0),
 	                        xmmsv_new_string ("file://test.mp3"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_URL,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_MOVE_ENTRY,
 	                        xmmsv_new_int (1337),
 	                        xmmsv_new_string ("file://test.mp3"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
@@ -806,7 +806,7 @@ CASE(test_client_move_entry)
 	xmms_medialib_session_abort (session);
 	g_free (string);
 
-	result = XMMS_IPC_CALL (medialib, XMMS_IPC_CMD_MOVE_URL,
+	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_MOVE_ENTRY,
 	                        xmmsv_new_int (entry),
 	                        xmmsv_new_string ("file://test.mp3"));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));

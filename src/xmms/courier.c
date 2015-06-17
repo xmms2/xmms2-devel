@@ -39,7 +39,7 @@ typedef struct {
 	gint32 sender;
 	gint32 destination;
 	uint32_t cookie;
-	xmmsc_c2c_reply_policy_t reply_policy;
+	xmms_c2c_reply_policy_t reply_policy;
 } xmms_courier_pending_msg_t;
 
 /**
@@ -78,7 +78,7 @@ static void xmms_courier_client_ready (xmms_courier_t *courier, gint32 clientid,
 static xmmsv_t *xmms_courier_client_get_ready_clients (xmms_courier_t *courier, xmms_error_t *err);
 
 /* Private methods */
-static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender, gint32 dest, uint32_t cookie, xmmsc_c2c_reply_policy_t reply_policy);
+static gint32 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender, gint32 dest, uint32_t cookie, xmms_c2c_reply_policy_t reply_policy);
 static xmms_courier_pending_msg_t *xmms_courier_get_pending (xmms_courier_t *courier, gint32 msgid);
 static void xmms_courier_remove_pending (xmms_courier_t *courier, gint32 msgid);
 
@@ -420,7 +420,7 @@ xmms_courier_client_get_ready_clients (xmms_courier_t *courier,
 static gint32
 xmms_courier_store_pending (xmms_courier_t *courier, gint32 sender,
                             gint32 dest, uint32_t cookie,
-                            xmmsc_c2c_reply_policy_t reply_policy)
+                            xmms_c2c_reply_policy_t reply_policy)
 {
 	gint32 msgid;
 	xmms_courier_pending_msg_t *entry;
@@ -499,7 +499,7 @@ write_reply (gint32 dest, xmmsv_t *c2c_msg, uint32_t cookie,
 	xmms_ipc_msg_t *ipc_msg;
 
 	ipc_msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COURIER,
-	                            XMMS_IPC_CMD_REPLY);
+	                            XMMS_IPC_COMMAND_REPLY);
 
 	xmms_ipc_msg_set_cookie (ipc_msg, cookie);
 	xmms_ipc_msg_put_value (ipc_msg, c2c_msg);

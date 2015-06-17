@@ -15,6 +15,8 @@ vim:expandtab
     <xs:element name="ipc">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="constant" type="xmms:constant" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element name="enum" type="xmms:enum" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element name="object" type="xmms:object" minOccurs="1" maxOccurs="unbounded" />
             </xs:sequence>
 
@@ -22,6 +24,55 @@ vim:expandtab
             <xs:attribute name="version" type="xs:positiveInteger" use="required"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:complexType name="constant">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="value" type="xmms:constant_value" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="constant_value">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="type" type="xmms:constant_type"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="constant_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="integer" />
+            <xs:enumeration value="string" />
+            <xs:enumeration value="float" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="enum">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="namespace-hint" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="member" type="xmms:enum_member" minOccurs="1" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="enum_member">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="value" type="xs:integer"/>
+                <xs:attribute name="ref-type" type="xmms:enum_ref_type"/>
+                <xs:attribute name="ref-source" type="xs:string"/>
+                <xs:attribute name="ref-value" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="enum_ref_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="enum" />
+            <xs:enumeration value="constant" />
+        </xs:restriction>
+    </xs:simpleType>
 
     <!-- An object (playlist, medialib, ...) -->
     <xs:complexType name="object">
@@ -69,7 +120,7 @@ vim:expandtab
     <xs:complexType name="broadcast_or_signal">
         <xs:sequence>
             <!-- Broadcasts need an unique ID -->
-            <xs:element name="id" type="xs:integer"/>
+            <!--xs:element name="id" type="xs:string"/-->
 
             <!-- Broadcasts need a name -->
             <xs:element name="name" type="xs:string"/>
@@ -132,6 +183,7 @@ vim:expandtab
             <xs:element name="collection" type="xmms:value_collection"/>
             <xs:element name="list" type="xmms:value_list"/>
             <xs:element name="dictionary" type="xmms:value_dictionary"/>
+            <xs:element name="enum-value" type="xmms:value_enum"/>
         </xs:choice>
     </xs:group>
 
@@ -160,5 +212,9 @@ vim:expandtab
 
     <xs:complexType name="value_dictionary">
         <xs:group ref="xmms:value_types" />
+    </xs:complexType>
+
+    <xs:complexType name="value_enum">
+        <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
 </xs:schema>

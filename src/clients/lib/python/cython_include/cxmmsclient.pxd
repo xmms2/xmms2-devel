@@ -6,7 +6,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_PLAYBACK_STATUS_PLAY
 		XMMS_PLAYBACK_STATUS_PAUSE
 
-	ctypedef enum xmms_playlist_changed_actions_t:
+	ctypedef enum xmms_playlist_changed_action_t:
 		XMMS_PLAYLIST_CHANGED_ADD
 		XMMS_PLAYLIST_CHANGED_INSERT
 		XMMS_PLAYLIST_CHANGED_SHUFFLE
