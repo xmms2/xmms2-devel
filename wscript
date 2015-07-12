@@ -361,7 +361,7 @@ def configure(conf):
     nam,changed = gittools.get_info()
     conf.msg("git commit id", nam)
     if conf.options.customversion:
-        conf.env.VERSION = "%s (%s + %s)" % (BASEVERSION, nam, conf.options.customversion)
+        conf.env.VERSION = "%s (%s)" % (BASEVERSION, conf.options.customversion)
     else:
         dirty = changed and "-dirty" or ""
         conf.msg("uncommited changed", changed and "yes" or "no")
