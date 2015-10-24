@@ -28,7 +28,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE
 		XMMS_MEDIALIB_ENTRY_STATUS_REHASH
 
-	ctypedef enum xmmsc_collection_changed_actions_t:
+	ctypedef enum xmms_collection_changed_action_t:
 		XMMS_COLLECTION_CHANGED_ADD
 		XMMS_COLLECTION_CHANGED_UPDATE
 		XMMS_COLLECTION_CHANGED_RENAME
