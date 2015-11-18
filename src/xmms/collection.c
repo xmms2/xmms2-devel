@@ -276,6 +276,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 
 		xmmsv_get_string (value, &realpath);
+		xmmsv_ref (value);
+
 		xmmsv_dict_remove (dict, "realpath");
 		xmmsv_dict_remove (dict, "path");
 
@@ -297,6 +299,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 				xmms_log_error ("couldn't add %s to collection!", realpath);
 			}
 		} while (!xmms_medialib_session_commit (session));
+
+		xmmsv_unref (value);
 	}
 
 	xmmsv_unref (list);
