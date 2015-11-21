@@ -31,12 +31,7 @@ destroy (xmms_object_t *obj)
 {
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *) obj;
 
-	while (plugin->in_types) {
-		xmms_object_unref (plugin->in_types->data);
-
-		plugin->in_types = g_list_delete_link (plugin->in_types,
-		                                       plugin->in_types);
-	}
+	g_list_free_full (plugin->in_types, xmms_object_unref);
 
 	if (plugin->metadata_mapper != NULL) {
 		g_hash_table_unref (plugin->metadata_mapper);
