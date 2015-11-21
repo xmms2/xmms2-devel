@@ -91,21 +91,12 @@ void xmms_object_cmd_add (xmms_object_t *object, guint cmdid, const xmms_object_
 
 void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg);
 
+gpointer xmms_object_ref (gpointer obj) XMMS_PUBLIC;
 
-void __int_xmms_object_unref (xmms_object_t *object) XMMS_PUBLIC;
+void xmms_object_unref (gpointer obj) XMMS_PUBLIC;
+
 xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc) XMMS_PUBLIC;
 
-#define xmms_object_ref(obj) do { \
-	if (obj && XMMS_IS_OBJECT (obj)) { \
-		g_atomic_int_inc (&(XMMS_OBJECT (obj)->ref)); \
-	} \
-} while (0)
-
-#define xmms_object_unref(obj) do { \
-	if (obj && XMMS_IS_OBJECT (obj)) { \
-		__int_xmms_object_unref (XMMS_OBJECT (obj)); \
-	} \
-} while (0)
 
 #define xmms_object_new(objtype,destroyfunc) (objtype *) __int_xmms_object_new (sizeof (objtype), destroyfunc)
 

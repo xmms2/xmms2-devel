@@ -35,7 +35,7 @@ struct xmms_xform_St {
 	xmms_object_t obj;
 	struct xmms_xform_St *prev;
 
-	const xmms_xform_plugin_t *plugin;
+	xmms_xform_plugin_t *plugin;
 	xmms_medialib_entry_t entry;
 
 	xmms_medialib_t *medialib;
@@ -328,8 +328,13 @@ xmms_xform_destroy (xmms_object_t *object)
 
 	g_free (xform->buffer);
 
-	xmms_object_unref (xform->out_type);
-	xmms_object_unref (xform->plugin);
+	if (xform->out_type) {
+		xmms_object_unref (xform->out_type);
+	}
+
+	if (xform->plugin) {
+		xmms_object_unref (xform->plugin);
+	}
 
 	if (xform->prev) {
 		xmms_object_unref (xform->prev);
@@ -346,8 +351,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 
 	xform = xmms_object_new (xmms_xform_t, xmms_xform_destroy);
 
-	xmms_object_ref (plugin);
-	xform->plugin = plugin;
+	xform->plugin = plugin ? xmms_object_ref (plugin) : NULL;
 	xform->entry = entry;
 	xform->medialib = medialib;
 	xform->goal_hints = goal_hints;

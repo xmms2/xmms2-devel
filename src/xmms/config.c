@@ -656,7 +656,7 @@ static GTree *
 create_tree (void)
 {
 	return g_tree_new_full (compare_key, NULL, g_free,
-	                        (GDestroyNotify) __int_xmms_object_unref);
+	                        xmms_object_unref);
 }
 
 /**

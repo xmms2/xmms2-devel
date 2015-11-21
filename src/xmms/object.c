@@ -326,10 +326,29 @@ dummy_identity (xmmsv_t *value, xmmsv_t **arg)
 	return 1;
 }
 
-void
-__int_xmms_object_unref (xmms_object_t *object)
+gpointer
+xmms_object_ref (gpointer obj)
 {
+	xmms_object_t *object;
+
+	g_return_val_if_fail (obj && XMMS_IS_OBJECT (obj), obj);
+
+	object = XMMS_OBJECT (obj);
+	g_atomic_int_inc (&(object->ref));
+
+	return obj;
+}
+
+void
+xmms_object_unref (gpointer obj)
+{
+	xmms_object_t *object;
+
+	g_return_if_fail (obj && XMMS_IS_OBJECT (obj));
+
+	object = XMMS_OBJECT (obj);
 	g_return_if_fail (object->ref > 0);
+
 	if (g_atomic_int_dec_and_test (&(object->ref))) {
 		if (object->destroy_func)
 			object->destroy_func (object);
