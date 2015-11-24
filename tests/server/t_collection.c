@@ -7,6 +7,9 @@
 #include <xmmspriv/xmms_config.h>
 #include <xmmspriv/xmms_medialib.h>
 #include <xmmspriv/xmms_collection.h>
+#include <xmmspriv/xmms_xform.h>
+
+#include <xmms/xmms_xformplugin.h>
 
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
@@ -38,6 +41,8 @@ CLEANUP () {
 	xmms_object_unref (dag); dag = NULL;
 
 	xmms_config_shutdown ();
+
+	xmms_plugin_shutdown ();
 
 	xmms_ipc_shutdown ();
 
@@ -710,4 +715,46 @@ CASE (test_collection_snapshot_restore)
 
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
+}
+
+static gboolean
+test_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
+{
+	xmms_xform_browse_add_symlink (xform, NULL, url);
+	return TRUE;
+}
+
+static gboolean
+test_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+{
+	xmms_xform_methods_t methods;
+	XMMS_XFORM_METHODS_INIT (methods);
+	methods.browse = test_browse;
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE, "application/x-url",
+	                              XMMS_STREAM_TYPE_URL, "test://*",
+	                              XMMS_STREAM_TYPE_END);
+	xmms_xform_plugin_set_out_stream_type (xform_plugin,
+	                                       XMMS_STREAM_TYPE_MIMETYPE,
+	                                       "application/x-xmms2-playlist-entries",
+	                                       XMMS_STREAM_TYPE_END);
+	return TRUE;
+}
+
+XMMS_XFORM_BUILTIN_DEFINE (test_xform, "test xform",
+                           XMMS_VERSION, "test xform",
+                           test_plugin_setup);
+
+CASE (test_collection_idlist_from_playlist)
+{
+	xmmsv_t *idlist;
+
+	xmms_plugin_load (&xmms_builtin_test_xform, NULL);
+
+	idlist = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_IDLIST_FROM_PLS,
+	                        xmmsv_new_string ("test://example.com/foo1.mp3"));
+
+	CU_ASSERT_EQUAL (1, xmmsv_coll_idlist_get_size (idlist));
+	xmmsv_unref (idlist);
 }
