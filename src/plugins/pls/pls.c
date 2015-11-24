@@ -34,9 +34,7 @@
 
 /*static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);*/
 static gboolean xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin);
-static gboolean xmms_pls_init (xmms_xform_t *xform);
 static gboolean xmms_pls_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
-static void xmms_pls_destroy (xmms_xform_t *xform);
 
 /*
  * Plugin header
@@ -53,8 +51,6 @@ xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_methods_t methods;
 
 	XMMS_XFORM_METHODS_INIT (methods);
-	methods.init = xmms_pls_init;
-	methods.destroy = xmms_pls_destroy;
 	methods.browse = xmms_pls_browse;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
@@ -64,6 +60,11 @@ xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-scpls",
 	                              NULL);
 
+	xmms_xform_plugin_set_out_stream_type (xform_plugin,
+	                                       XMMS_STREAM_TYPE_MIMETYPE,
+	                                       "application/x-xmms2-playlist-entries",
+	                                       XMMS_STREAM_TYPE_END);
+
 	xmms_magic_add ("pls header",
 	                "audio/x-scpls",
 	                "0 string [playlist]\r\n",
@@ -72,21 +73,6 @@ xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_magic_extension_add ("audio/x-scpls", "*.pls");
 
 	return TRUE;
-}
-
-static gboolean
-xmms_pls_init (xmms_xform_t *xform)
-{
-	xmms_xform_outdata_type_add (xform,
-	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "application/x-xmms2-playlist-entries",
-	                             XMMS_STREAM_TYPE_END);
-	return TRUE;
-}
-
-static void
-xmms_pls_destroy (xmms_xform_t *xform)
-{
 }
 
 /*

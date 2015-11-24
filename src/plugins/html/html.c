@@ -21,7 +21,6 @@
 
 /* xform methods */
 static gboolean xmms_html_setup (xmms_xform_plugin_t *xform);
-static gboolean xmms_html_init (xmms_xform_t *xform);
 static gboolean xmms_html_browse (xmms_xform_t *xform,
                                   const gchar *url, xmms_error_t *error);
 
@@ -36,24 +35,29 @@ XMMS_XFORM_PLUGIN_DEFINE ("html",
                           xmms_html_setup);
 
 static gboolean
-xmms_html_setup (xmms_xform_plugin_t *xform)
+xmms_html_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
+
 	XMMS_XFORM_METHODS_INIT (methods);
-
-	methods.init = xmms_html_init;
 	methods.browse = xmms_html_browse;
-	xmms_xform_plugin_methods_set (xform, &methods);
 
-	xmms_xform_plugin_indata_add (xform,
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "text/html",
 	                              XMMS_STREAM_TYPE_END);
 
-	xmms_xform_plugin_indata_add (xform,
+	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-xmms2-xml+html",
 	                              XMMS_STREAM_TYPE_END);
+
+	xmms_xform_plugin_set_out_stream_type (xform_plugin,
+	                                       XMMS_STREAM_TYPE_MIMETYPE,
+	                                       "application/x-xmms2-playlist-entries",
+	                                       XMMS_STREAM_TYPE_END);
 
 	xmms_magic_extension_add ("text/html", "*.html");
 	xmms_magic_extension_add ("text/html", "*.xhtml");
@@ -70,16 +74,6 @@ xmms_html_setup (xmms_xform_plugin_t *xform)
 	                "0 string/c <head ",
 	                NULL);
 
-	return TRUE;
-}
-
-static gboolean
-xmms_html_init (xmms_xform_t *xform)
-{
-	xmms_xform_outdata_type_add (xform,
-	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "application/x-xmms2-playlist-entries",
-	                             XMMS_STREAM_TYPE_END);
 	return TRUE;
 }
 
