@@ -246,7 +246,9 @@ xmms_xform_plugin_can_destroy (const xmms_xform_plugin_t *plugin)
 gboolean
 xmms_xform_plugin_init (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform)
 {
-	return plugin->methods.init (xform);
+	if (plugin->methods.init)
+		return plugin->methods.init (xform);
+	return TRUE;
 }
 
 gint
