@@ -1183,6 +1183,8 @@ xmms_xform_iseos (xmms_xform_t *xform)
 static xmms_stream_type_t *
 xmms_xform_get_out_stream_type (xmms_xform_t *xform)
 {
+	if (!xform->out_type)
+		return xmms_xform_plugin_get_out_stream_type (xform->plugin);
 	return xform->out_type;
 }
 

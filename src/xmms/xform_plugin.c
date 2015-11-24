@@ -24,6 +24,7 @@ struct xmms_xform_plugin_St {
 	xmms_xform_methods_t methods;
 	GHashTable *metadata_mapper;
 	GList *in_types;
+	xmms_stream_type_t *default_out_type;
 };
 
 static void
@@ -32,6 +33,7 @@ destroy (xmms_object_t *obj)
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *) obj;
 
 	g_list_free_full (plugin->in_types, xmms_object_unref);
+	xmms_object_unref (plugin->default_out_type);
 
 	if (plugin->metadata_mapper != NULL) {
 		g_hash_table_unref (plugin->metadata_mapper);
@@ -98,6 +100,23 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 	g_free (config_key);
 
 	plugin->in_types = g_list_prepend (plugin->in_types, t);
+}
+
+void
+xmms_xform_plugin_set_out_stream_type (xmms_xform_plugin_t *plugin, ...)
+{
+	va_list ap;
+
+	va_start (ap, plugin);
+	plugin->default_out_type = xmms_stream_type_parse (ap);
+	va_end (ap);
+}
+
+
+xmms_stream_type_t *
+xmms_xform_plugin_get_out_stream_type (xmms_xform_plugin_t *plugin)
+{
+	return plugin->default_out_type;
 }
 
 gboolean

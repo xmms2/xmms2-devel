@@ -223,6 +223,26 @@ void xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
 void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...) XMMS_PUBLIC;
 
 /**
+ * Set a static output type to the plugin.
+ *
+ * The output stream type is used as a default if the plugin doesn't
+ * override this at runtime.
+ *
+ * Should be called from the plugin's setupfunc.
+ *
+ * @param plugin the plugin
+ * @param ... variable length arguments, terminated with XMMS_STREAM_TYPE_END
+ *
+ * example:
+ * xmms_xform_plugin_set_out_stream_type (plugin,
+ *                                        XMMS_STREAM_TYPE_MIMETYPE,
+ *                                        "application/x-xmms2-playlist-entries",
+ *                                        XMMS_STREAM_TYPE_END);
+ */
+
+void xmms_xform_plugin_set_out_stream_type (xmms_xform_plugin_t *plugin, ...) XMMS_PUBLIC;
+
+/**
  * Get private data for this xform.
  *
  * @param xform current xform
