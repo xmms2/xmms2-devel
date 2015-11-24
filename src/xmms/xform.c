@@ -94,6 +94,7 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
                                             GList *goal_formats,
                                             const gchar *name);
 static void xmms_xform_destroy (xmms_object_t *object);
+static xmms_stream_type_t *xmms_xform_get_out_stream_type (xmms_xform_t *xform);
 
 void
 xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
@@ -377,7 +378,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev,
 			return NULL;
 		}
 		xform->inited = TRUE;
-		g_return_val_if_fail (xform->out_type, NULL);
+		g_return_val_if_fail (xmms_xform_get_out_stream_type (xform), NULL);
 	}
 
 	xform->buffer = g_malloc (READ_CHUNK);
@@ -416,15 +417,15 @@ xmms_xform_outdata_type_add (xmms_xform_t *xform, ...)
 void
 xmms_xform_outdata_type_set (xmms_xform_t *xform, xmms_stream_type_t *type)
 {
-	xmms_object_ref (type);
-	xform->out_type = type;
+	g_return_if_fail (xform->out_type == NULL);
+	xform->out_type = xmms_object_ref (type);
 }
 
 void
 xmms_xform_outdata_type_copy (xmms_xform_t *xform)
 {
-	xmms_object_ref (xform->prev->out_type);
-	xform->out_type = xform->prev->out_type;
+	xmms_stream_type_t *st = xmms_xform_get_out_stream_type (xform->prev);
+	xmms_xform_outdata_type_set (xform, st);
 }
 
 const char *
@@ -463,18 +464,18 @@ xmms_xform_intype_get (xmms_xform_t *xform)
 	return xmms_xform_outtype_get (xform->prev);
 }
 
-
-
 const char *
 xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
-	return xmms_stream_type_get_str (xform->out_type, key);
+	const xmms_stream_type_t *st = xmms_xform_get_out_stream_type (xform);
+	return xmms_stream_type_get_str (st, key);
 }
 
 gint
 xmms_xform_outtype_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
-	return xmms_stream_type_get_int (xform->out_type, key);
+	const xmms_stream_type_t *st = xmms_xform_get_out_stream_type (xform);
+	return xmms_stream_type_get_int (st, key);
 }
 
 gboolean
@@ -1108,7 +1109,7 @@ xmms_xform_get_url (xmms_xform_t *xform)
 
 typedef struct match_state_St {
 	xmms_xform_plugin_t *match;
-	xmms_stream_type_t *out_type;
+	const xmms_stream_type_t *out_type;
 	gint priority;
 } match_state_t;
 
@@ -1152,7 +1153,7 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
 	match_state_t state;
 	xmms_xform_t *xform = NULL;
 
-	state.out_type = prev->out_type;
+	state.out_type = xmms_xform_get_out_stream_type (prev);
 	state.match = NULL;
 	state.priority = -1;
 
@@ -1179,7 +1180,7 @@ xmms_xform_iseos (xmms_xform_t *xform)
 	return ret;
 }
 
-const xmms_stream_type_t *
+static xmms_stream_type_t *
 xmms_xform_get_out_stream_type (xmms_xform_t *xform)
 {
 	return xform->out_type;
@@ -1222,9 +1223,9 @@ outdata_type_metadata_collect (xmms_xform_t *xform)
 {
 	gint val;
 	const char *mime;
-	xmms_stream_type_t *type;
+	const xmms_stream_type_t *type;
 
-	type = xform->out_type;
+	type = xmms_xform_get_out_stream_type (xform);
 	mime = xmms_stream_type_get_str (type, XMMS_STREAM_TYPE_MIMETYPE);
 	if (strcmp (mime, "audio/pcm") != 0) {
 		return;
@@ -1409,8 +1410,8 @@ xmms_xform_chain_setup_url_session (xmms_medialib_t *medialib,
 	/* if segment plugin input is the same as current output, include it
 	 * for collecting additional duration metadata on audio entries */
 	if (xform_plugin) {
-		add_segment = xmms_xform_plugin_supports (xform_plugin,
-		                                          last->out_type,
+		const xmms_stream_type_t *st = xmms_xform_get_out_stream_type (last);
+		add_segment = xmms_xform_plugin_supports (xform_plugin, st,
 		                                          &priority);
 		xmms_object_unref (plugin);
 	}

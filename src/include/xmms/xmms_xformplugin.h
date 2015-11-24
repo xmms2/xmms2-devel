@@ -395,8 +395,6 @@ gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err) XMMS_PUBLIC;
 gboolean xmms_xform_iseos (xmms_xform_t *xform) XMMS_PUBLIC;
 
-const xmms_stream_type_t *xmms_xform_get_out_stream_type (xmms_xform_t *xform) XMMS_PUBLIC;
-
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...) XMMS_PUBLIC;
 gboolean xmms_magic_extension_add (const gchar *mime, const gchar *ext) XMMS_PUBLIC;
 
