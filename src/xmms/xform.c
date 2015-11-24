@@ -430,8 +430,7 @@ xmms_xform_outdata_type_copy (xmms_xform_t *xform)
 const char *
 xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
-	const gchar *r;
-	r = xmms_stream_type_get_str (xform->prev->out_type, key);
+	const gchar *r = xmms_xform_indata_get_str (xform, key);
 	if (r) {
 		return r;
 	} else if (xform->prev) {
@@ -443,13 +442,13 @@ xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
 const char *
 xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
-	return xmms_stream_type_get_str (xform->prev->out_type, key);
+	return xmms_xform_outtype_get_str (xform->prev, key);
 }
 
 gint
 xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
-	return xmms_stream_type_get_int (xform->prev->out_type, key);
+	return xmms_xform_outtype_get_int (xform->prev, key);
 }
 
 xmms_stream_type_t *
