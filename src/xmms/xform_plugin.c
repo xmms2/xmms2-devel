@@ -101,7 +101,7 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 }
 
 gboolean
-xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, xmms_stream_type_t *st,
+xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, const xmms_stream_type_t *st,
                             gint *priority)
 {
 	GList *t;

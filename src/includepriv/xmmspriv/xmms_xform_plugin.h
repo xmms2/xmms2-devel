@@ -29,6 +29,6 @@ gint64 xmms_xform_plugin_seek (const xmms_xform_plugin_t *plugin, xmms_xform_t *
 gboolean xmms_xform_plugin_browse (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 void xmms_xform_plugin_destroy (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform);
 
-gboolean xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, xmms_stream_type_t *st, gint *priority);
+gboolean xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, const xmms_stream_type_t *st, gint *priority);
 
 #endif
