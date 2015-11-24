@@ -85,42 +85,42 @@ xmms_gme_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-spc",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-nsf",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-nsfe",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-gbs",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-gym",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-vgm",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-sap",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-ay",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	/* todo: add other magic */
 	xmms_magic_add ("SPC700 save state",

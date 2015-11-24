@@ -128,8 +128,10 @@ xmms_flv_setup (xmms_xform_plugin_t *xform)
 
 	xmms_xform_plugin_methods_set (xform, &methods);
 
-	xmms_xform_plugin_indata_add (xform, XMMS_STREAM_TYPE_MIMETYPE,
-	                              "video/x-flv", NULL);
+	xmms_xform_plugin_indata_add (xform,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "video/x-flv",
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("FLV header", "video/x-flv", "0 string FLV", NULL);
 	xmms_magic_extension_add ("video/x-flv", "*.flv");

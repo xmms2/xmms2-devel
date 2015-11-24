@@ -72,7 +72,7 @@ xmms_nulstripper_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-nul-padded",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("NUL padded", "application/x-nul-padded",
 	                "0 byte 0x0", NULL);

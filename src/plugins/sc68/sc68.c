@@ -74,8 +74,10 @@ xmms_sc68_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_magic_add ("sndh header", "audio/stsound",
 	                "0 string ICE!", NULL);
 
-	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
-	                              "audio/stsound", NULL);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/stsound",
+	                              XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }

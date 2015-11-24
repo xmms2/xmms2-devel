@@ -97,7 +97,7 @@ xmms_opus_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/ogg; codecs=opus",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("Opus header", "audio/ogg; codecs=opus",
 	                "0 string OggS",

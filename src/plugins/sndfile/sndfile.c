@@ -85,7 +85,7 @@ xmms_sndfile_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-aiff",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_magic_add ("aiff header", "audio/x-aiff",
 	                "0 string FORM", ">8 string AIFF", NULL);
 	xmms_magic_add ("aiff-c header", "audio/x-aiff",
@@ -94,21 +94,21 @@ xmms_sndfile_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-au",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_magic_add ("au header", "audio/x-au",
 	                "0 string .snd", NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-caf",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_magic_add ("caf header", "audio/x-caf",
 	                "0 string caff", ">8 string desc", NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-paf",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_magic_add ("paf header", "audio/x-paf",
 	                "0 byte 0x20", ">1 string paf", NULL);
 

@@ -138,7 +138,7 @@ xmms_fluidsynth_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/rawmidi",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	for (i = 0; i < G_N_ELEMENTS (config_params); i++) {
 		xmms_xform_plugin_config_property_register (xform_plugin,

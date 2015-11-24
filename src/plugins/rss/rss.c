@@ -50,7 +50,7 @@ xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-xmms2-xml+rss",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_extension_add ("application/xml", "*.rss");
 

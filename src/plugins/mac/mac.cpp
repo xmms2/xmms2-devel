@@ -104,7 +104,7 @@ xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-ape",
 	                              XMMS_STREAM_TYPE_PRIORITY,
 	                              60,
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("Monkey's Audio Magic", "audio/x-ape",
 	                "0 string MAC ", NULL);

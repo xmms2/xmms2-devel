@@ -140,8 +140,10 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                                        mappings,
 	                                        G_N_ELEMENTS (mappings));
 
-	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
-	                              "audio/x-mpc", NULL);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-mpc",
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("mpc header", "audio/x-mpc", "0 string MP+", NULL);
 

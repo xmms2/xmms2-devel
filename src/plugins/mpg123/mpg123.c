@@ -113,7 +113,7 @@ xmms_mpg123_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/mpeg",
 	                              XMMS_STREAM_TYPE_PRIORITY,
 	                              40,
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	/* Well, I usually only see mp3 and mp2 ... layer 1 files
 	 * are quite rare.

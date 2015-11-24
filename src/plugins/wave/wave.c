@@ -116,7 +116,7 @@ xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-wav",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("wave header", "audio/x-wav",
 	                "0 string RIFF", ">8 string WAVE",

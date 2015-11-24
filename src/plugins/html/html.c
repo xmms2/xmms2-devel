@@ -48,12 +48,12 @@ xmms_html_setup (xmms_xform_plugin_t *xform)
 	xmms_xform_plugin_indata_add (xform,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "text/html",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_xform_plugin_indata_add (xform,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
-				      "application/x-xmms2-xml+html",
-				      NULL);
+	                              "application/x-xmms2-xml+html",
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_extension_add ("text/html", "*.html");
 	xmms_magic_extension_add ("text/html", "*.xhtml");

@@ -114,8 +114,10 @@ xmms_tta_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
-	                              "audio/x-tta", NULL);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-tta",
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("TTA header", "audio/x-tta", "0 string TTA1", NULL);
 

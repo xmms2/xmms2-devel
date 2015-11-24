@@ -90,31 +90,31 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/mod",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/xm",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/s3m",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/it",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/med",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/amf",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/umx",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("Fasttracker II module", "audio/xm",
 	                "0 string Extended Module:", NULL);
