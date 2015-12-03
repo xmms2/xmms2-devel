@@ -1,28 +1,92 @@
-env:
-    global:
-        - secure: "YS7oBoXRQ9/PpiMOPFo0TftWozQo9gACzNZKdRMSt2i7L8pe8Zn46OVkjWDAsg1IhgdQjPHcmQ+XJriwRdihH17jSTVnxOSJW2L8KBR7ClNaMiRbiVCecudIub2uy++9C/b+9z+G6ag++7Xtn2j9T+rOTH7KVM2MQ29jTJrZ/M8="
+sudo: required
+dist: trusty
 
-language: c
+env:
+  global:
+    - secure: "YS7oBoXRQ9/PpiMOPFo0TftWozQo9gACzNZKdRMSt2i7L8pe8Zn46OVkjWDAsg1IhgdQjPHcmQ+XJriwRdihH17jSTVnxOSJW2L8KBR7ClNaMiRbiVCecudIub2uy++9C/b+9z+G6ag++7Xtn2j9T+rOTH7KVM2MQ29jTJrZ/M8="
+  matrix:
+    - BUILD_MODE=regular
+    - BUILD_MODE=coverage
+
+compiler:
+  - gcc
+  - clang
+
+language:
+  - c
+  - c
+
+
+matrix:
+  exclude:
+    - env: BUILD_MODE=coverage
+      compiler: clang
 
 before_script:
-  - echo "deb http://us.archive.ubuntu.com/ubuntu/ utopic main restricted universe multiverse" | sudo tee /etc/apt/sources.list
-  - sudo apt-get -q update
-  - sudo apt-get -q --force-yes install libao-dev libasound2-dev libavahi-client-dev libavahi-glib-dev libavcodec-dev libboost-dev libboost-signals-dev libcdio-cdda-dev libcurl4-openssl-dev libssl-dev libdiscid0-dev libexpat1-dev libfaad-dev libfftw3-dev libflac-dev libgamin-dev libglib2.0-dev libgme-dev libjack-dev libmad0-dev libmms-dev libmodplug-dev libmpcdec-dev libmpg123-dev libofa0-dev libperl-dev libpulse-dev libreadline-dev libresid-builder-dev libsamplerate-dev libsdl1.2-dev libshout-dev libsidplay2-dev libsmbclient-dev libsndfile1-dev libsqlite3-dev libvisual-0.4-dev libvorbis-dev libwavpack-dev libxml2-dev python-all-dev cython libcunit1-dev valgrind libfluidsynth-dev libopusfile-dev lcov
+  # Should be removed once the packages enter the apt-addon whitelist, in progress.
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libavahi-client-dev libavahi-glib-dev libcdio-cdda-dev libdiscid0-dev libmpg123-dev libopusfile-dev
   - sudo pip install git+git://github.com/dsvensson/cpp-coveralls.git
 
 script:
-  - ./waf configure --prefix=/usr --without-optionals=ruby
-  - ./waf build
-  - sudo ./waf install
-  - ./waf configure --prefix=/usr --without-optionals=ruby,s4 --enable-gcov --generate-coverage
-  - ./waf build --generate-coverage --alltests
-  - coveralls -x .c -b _build_ -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'
+  - if [[ "$BUILD_MODE" == "regular"  ]]; then ./waf configure -o build-regular-$CC --prefix=/usr; ./waf build; ./waf install --destdir=destdir-regular-$CC; fi
+  - if [[ "$BUILD_MODE" == "coverage" ]]; then ./waf configure -o build-coverage  --prefix=/usr --without-optionals=s4 --enable-gcov --generate-coverage; ./waf build --generate-coverage --alltests; coveralls -x .c -b build-coverage -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'; fi
 
 addons:
-    coverity_scan:
-        project:
-            name: xmms2/xmms2-devel
-        notification_email: coverity-notification@xmms2.org
-        build_command_prepare: ./waf configure --without-optionals=ruby
-        build_command: ./waf configure build --without-optionals=ruby
-        branch_pattern: coverity_scan
+  apt:
+    packages:
+      - cython
+      - lcov
+      - libao-dev
+      - libasound2-dev
+      #- libavahi-client-dev
+      #- libavahi-glib-dev
+      - libavcodec-dev
+      - libboost-dev
+      - libboost-signals-dev
+      #- libcdio-cdda-dev
+      - libcunit1-dev
+      - libcurl4-gnutls-dev
+      #- libdiscid0-dev
+      - libecore-dev
+      - libexpat1-dev
+      - libfaad-dev
+      - libfftw3-dev
+      - libflac-dev
+      - libfluidsynth-dev
+      - libgamin-dev
+      - libglib2.0-dev
+      - libgme-dev
+      - libjack-dev
+      - libmad0-dev
+      - libmms-dev
+      - libmodplug-dev
+      - libmpcdec-dev
+      #- libmpg123-dev
+      - libofa0-dev
+      #- libopusfile-dev
+      - libperl-dev
+      - libpulse-dev
+      - libreadline-dev
+      - libresid-builder-dev
+      - libsamplerate0-dev
+      - libsdl1.2-dev
+      - libshout3-dev
+      - libsidplay2-dev
+      - libsmbclient-dev
+      - libsndfile1-dev
+      - libsqlite3-dev
+      - libssl-dev
+      - libvisual-0.4-dev
+      - libvorbis-dev
+      - libwavpack-dev
+      - libxml2-dev
+      - python-dev
+      - python-all-dev
+      - valgrind
+  coverity_scan:
+    project:
+      name: xmms2/xmms2-devel
+    notification_email: coverity-notification@xmms2.org
+    build_command_prepare: ./waf configure
+    build_command: ./waf configure build
+    branch_pattern: coverity_scan
