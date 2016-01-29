@@ -18,19 +18,19 @@
 
 #include <xmmspriv/xmms_localtime.h>
 
-static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+G_LOCK_DEFINE_STATIC (mutex);
 
 gboolean
 xmms_localtime (const time_t *tt, struct tm *res)
 {
 	struct tm *ret = NULL;
 
-	g_static_mutex_lock (&mutex);
+	G_LOCK (mutex);
 	if ((ret = localtime (tt))) {
 		memcpy (res, ret, sizeof (struct tm));
 		ret = res;
 	}
-	g_static_mutex_unlock (&mutex);
+	G_UNLOCK (mutex);
 
 	if (ret) {
 		return TRUE;

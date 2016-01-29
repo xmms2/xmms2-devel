@@ -39,7 +39,7 @@ typedef struct {
 } browse_callback_userdata_t;
 
 static GSList *g_server_list = NULL;
-static GStaticMutex serv_list_mut = G_STATIC_MUTEX_INIT;
+G_LOCK_DEFINE_STATIC (serv_list_mut);
 static AvahiGLibPoll *gl_poll = NULL;
 static AvahiClient *client = NULL;
 static AvahiServiceBrowser *browser = NULL;
@@ -99,9 +99,9 @@ daap_mdns_resolve_browser_new_cb (
 			server->mdns_hostname = g_strdup (hostname);
 			server->port = port;
 
-			g_static_mutex_lock (&serv_list_mut);
+			G_LOCK (serv_list_mut);
 			g_server_list = g_slist_prepend (g_server_list, server);
-			g_static_mutex_unlock (&serv_list_mut);
+			G_UNLOCK (serv_list_mut);
 			break;
 
 		case AVAHI_RESOLVER_FAILURE:
@@ -140,9 +140,9 @@ daap_mdns_resolve_browser_remove_cb (
 		case AVAHI_RESOLVER_FOUND:
 			avahi_address_snprint (ad, sizeof (ad), addr);
 
-			g_static_mutex_lock (&serv_list_mut);
+			G_LOCK (serv_list_mut);
 			g_server_list = daap_mdns_serv_remove (g_server_list, ad, port);
-			g_static_mutex_unlock (&serv_list_mut);
+			G_UNLOCK (serv_list_mut);
 			break;
 
 		case AVAHI_RESOLVER_FAILURE:
@@ -284,9 +284,9 @@ GSList *
 daap_mdns_get_server_list ()
 {
 	GSList * l;
-	g_static_mutex_lock (&serv_list_mut);
+	G_LOCK (serv_list_mut);
 	l = g_slist_copy (g_server_list);
-	g_static_mutex_unlock (&serv_list_mut);
+	G_UNLOCK (serv_list_mut);
 	return l;
 }
 
