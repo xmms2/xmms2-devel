@@ -250,7 +250,7 @@ xmms_visualization_client_set_properties (xmms_visualization_t *vis, int32_t id,
 
 	x_fetch_client (id);
 
-	if (!xmmsv_get_type (prop) == XMMSV_TYPE_DICT) {
+	if (!xmmsv_is_type (prop, XMMSV_TYPE_DICT)) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "properties must be sent as a dict!");
 	} else {
 		/* record every pair */
