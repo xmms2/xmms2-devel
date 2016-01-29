@@ -70,8 +70,6 @@ xmms_gvfs_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	gint j;
 	xmms_xform_methods_t methods;
 
-	g_type_init ();
-
 	vfs = g_vfs_get_default ();
 	if (!g_vfs_is_active (vfs)) {
 		xmms_log_info ("GVfs not active - disabling gvfs transport");

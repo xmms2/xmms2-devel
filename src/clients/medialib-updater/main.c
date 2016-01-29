@@ -630,8 +630,6 @@ main (int argc, char **argv)
 	updater_t *updater;
 	GMainLoop *ml;
 
-	g_type_init ();
-
 	ml = g_main_loop_new (NULL, FALSE);
 
 	updater = updater_new ();
