@@ -538,6 +538,8 @@ int main() { return 0; }
             enabled_optionals, disabled_optionals,
             output_plugins, warning_cache)
 
+    conf.env.DEFINES += ["XMMS_DISABLE_DEPRECATION_WARNINGS"]
+
     return True
 
 ####
