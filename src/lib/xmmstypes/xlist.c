@@ -1,5 +1,5 @@
 /* GLIB - Library of useful routines for C programming
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

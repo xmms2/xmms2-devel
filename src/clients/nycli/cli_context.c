@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -449,7 +449,7 @@ cli_context_flag_dispatch (cli_context_t *ctx, gint in_argc, gchar **in_argv)
 		}
 	} else if (command_flag_boolean_get (cmd, "version", &check) && check) {
 		g_printf (_("XMMS2 CLI version " XMMS_VERSION "\n"));
-		g_printf (_("Copyright (C) 2008-2015 XMMS2 Team\n"));
+		g_printf (_("Copyright (C) 2008-2016 XMMS2 Team\n"));
 		g_printf (_("This is free software; see the source for copying conditions.\n"));
 		g_printf (_("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n"
 		            "PARTICULAR PURPOSE.\n"));
