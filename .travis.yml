@@ -1,35 +1,37 @@
-sudo: required
-dist: trusty
+language:
+  - c
 
 env:
   global:
     - secure: "YS7oBoXRQ9/PpiMOPFo0TftWozQo9gACzNZKdRMSt2i7L8pe8Zn46OVkjWDAsg1IhgdQjPHcmQ+XJriwRdihH17jSTVnxOSJW2L8KBR7ClNaMiRbiVCecudIub2uy++9C/b+9z+G6ag++7Xtn2j9T+rOTH7KVM2MQ29jTJrZ/M8="
-  matrix:
-    - BUILD_MODE=regular
-    - BUILD_MODE=coverage
-
-compiler:
-  - gcc
-  - clang
-
-language:
-  - c
-  - c
-
 
 matrix:
-  exclude:
-    - env: BUILD_MODE=coverage
+  include:
+    - env: BUILD_MODE=regular
+      os: linux
+      sudo: true
+      dist: trusty
+      compiler: gcc
+    - env: BUILD_MODE=regular
+      os: linux
+      sudo: true
+      dist: trusty
       compiler: clang
+    - env: BUILD_MODE=regular
+      os: osx
+      osx_image: xcode7.2
+      compiler: clang
+    - env: BUILD_MODE=coverage
+      os: linux
+      sudo: true
+      dist: trusty
+      compiler: gcc
 
 before_script:
-  # Should be removed once the packages enter the apt-addon whitelist, in progress.
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libavahi-client-dev libavahi-glib-dev libcdio-cdda-dev libdiscid0-dev libmpg123-dev libopusfile-dev
-  - sudo pip install git+git://github.com/dsvensson/cpp-coveralls.git
+  - utils/travis-build.sh install
 
 script:
-  - if [[ "$BUILD_MODE" == "regular"  ]]; then ./waf configure -o build-regular-$CC --prefix=/usr; ./waf build; ./waf install --destdir=destdir-regular-$CC; fi
-  - if [[ "$BUILD_MODE" == "coverage" ]]; then ./waf configure -o build-coverage  --prefix=/usr --without-optionals=s4 --enable-gcov --generate-coverage; ./waf build --generate-coverage --alltests; coveralls -x .c -b build-coverage -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'; fi
+  - utils/travis-build.sh build
 
 addons:
   apt:
