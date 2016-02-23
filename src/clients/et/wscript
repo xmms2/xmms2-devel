@@ -1,4 +1,4 @@
-from waflib import Utils, Options
+from waflib import Utils, Options, Utils
 
 def build(bld):
     bld(features = 'c cprogram',
@@ -22,9 +22,9 @@ def build(bld):
 
 
 def configure(conf):
-    if Options.platform == "win32":
+    if Utils.unversioned_sys_platform() == "win32":
         conf.fatal("Not supported on Windows")
-    elif Options.platform == "sunos":
+    elif Utils.unversioned_sys_platform() == "sunos":
         conf.check_cc(lib="resolv", uselib_store="resolv", mandatory=True)
     return True
 

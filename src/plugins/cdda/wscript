@@ -1,11 +1,11 @@
 from waftools.plugin import plugin
 
-from waflib import Options
+from waflib import Options, Utils
 
 def plugin_configure(conf):
     conf.check_cfg(package="libcdio_cdda", args="--cflags --libs", uselib_store="cdda")
     conf.check_cfg(package="libdiscid", args="--cflags --libs", uselib_store="discid")
-    if Options.platform == "win32":
+    if Utils.unversioned_sys_platform() == "win32":
         conf.check_cc(lib="winmm", uselib_store="winmm", args="--cflags --libs")
 
 configure, build = plugin("cdda", configure=plugin_configure,

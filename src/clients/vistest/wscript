@@ -1,4 +1,4 @@
-from waflib import Options
+from waflib import Options, Utils
 
 def build(bld):
     t = bld(features = 'c cprogram',
@@ -46,7 +46,7 @@ def build(bld):
             t.install_path = None
 
 def configure(conf):
-    if Options.platform == "win32":
+    if Utils.unversioned_sys_platform() == "win32":
         conf.fatal("visualisation clients not supported on windows")
 
     conf.env.INSTALL_VIS_REFERENCE_CLIENTS = conf.options.with_vis_clients

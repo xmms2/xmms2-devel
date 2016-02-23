@@ -147,7 +147,7 @@ def build(bld):
             includes = '. .. runner ../src ../src/includepriv ../src/include',
             use = "testutils testserverutils memorystatus",
             install_path = None,
-            ut_cwd = "."
+            ut_cwd = ".."
             )
 
     if "src/clients/nycli" in bld.env.XMMS_OPTIONAL_BUILD:

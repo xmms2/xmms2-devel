@@ -1,4 +1,4 @@
-from waflib import Options
+from waflib import Options, Utils
 
 def build(bld):
     bld(features = 'c cprogram',
@@ -14,7 +14,7 @@ def build(bld):
         )
 
 def configure(conf):
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         conf.fatal("Not supported on Windows")
 
 def options(opt):

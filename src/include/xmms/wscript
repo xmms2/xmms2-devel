@@ -1,5 +1,5 @@
 import os, sys
-from waflib import Options, Logs
+from waflib import Options, Logs, Utils
 
 def build(bld):
     pass
@@ -20,7 +20,7 @@ def configure(conf):
         else:
             conf.fatal('The "%s" output plugin could not be found.' % (preferred))
 
-    if Options.platform == 'darwin':
+    if Utils.unversioned_sys_platform() == 'darwin':
         uconf = 'Library/xmms2'
         ucache = 'Library/xmms2/logs'
     else:
@@ -28,7 +28,7 @@ def configure(conf):
         ucache = '.cache/xmms2'
 
     sharedir = os.path.join(conf.env.DATADIR, 'xmms2')
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         # The plugin path in Windows should be relative, not absolute
         conf.env.PLUGINDIR = 'Plugins/'
     else:

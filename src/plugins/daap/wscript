@@ -1,4 +1,4 @@
-from waflib import Options, Errors
+from waflib import Options, Errors, Utils
 from waftools.plugin import plugin
 
 source = """
@@ -39,7 +39,7 @@ def plugin_configure(conf):
     elif conf.check(header_name="dns_sd.h", mandatory=False):
         # We might have dnssd support. If we're not on OSX, check for the
         # presence of the lib.
-        if Options.platform == "darwin":
+        if Utils.unversioned_sys_platform() == "darwin":
             conf.env.XMMS_DAAP_BACKEND = "dnssd"
         elif conf.check(lib='dns_sd', uselib_store='dnssd', mandatory=False):
             conf.env.XMMS_DAAP_BACKEND = "dnssd"

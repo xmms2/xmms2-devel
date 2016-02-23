@@ -18,7 +18,7 @@ def build(bld):
 
 
 def configure(conf):
-  if Options.platform == "darwin":
+  if Utils.unversioned_sys_platform() == "darwin":
     return
 
   conf.check_cc(

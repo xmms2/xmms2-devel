@@ -4,7 +4,7 @@
 # Copyright (C) 2006-2016 XMMS2 Team
 #
 
-from waflib import Options, Logs, Errors
+from waflib import Options, Logs, Errors, Utils
 
 def build(bld):
     source = """
@@ -35,7 +35,7 @@ def build(bld):
 
 
 def configure(conf):
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         conf.env.util_impl = 'win32'
     else:
         conf.env.util_impl = 'unix'

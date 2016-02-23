@@ -5,7 +5,7 @@
 #
 
 import os
-from waflib import Options, Logs, Errors
+from waflib import Options, Logs, Errors, Utils
 
 source = """
     config.c
@@ -147,7 +147,7 @@ int main() {
 
 def get_statfs_impl(conf):
     # Detect the type of stat call used
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         return 'dummy'
     else:
         try:
@@ -167,7 +167,7 @@ def get_statfs_impl(conf):
                 else:
                     return 'bsd'
         else:
-            if Options.platform == 'sunos':
+            if Utils.unversioned_sys_platform() == 'sunos':
                 return 'solaris'
             else:
                 return 'linux'
@@ -183,7 +183,7 @@ def get_localtime_impl(conf):
 
 # Get the implementation variant for signals, symlinks and uid check.
 def get_compat_impl(conf):
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         return 'dummy'
     else:
         return 'unix'
@@ -228,11 +228,11 @@ def configure(conf):
         Logs.warn("Compiling visualization without shm support")
 
     # Add Darwin stuff
-    if Options.platform == 'darwin':
+    if Utils.unversioned_sys_platform() == 'darwin':
         conf.env.append_value('LINKFLAGS', ['-framework', 'CoreFoundation'])
         conf.env.append_value('DEFINES', 'USE_BUNDLES')
 
-    conf.env.xmms_shared_library = (Options.platform == 'win32')
+    conf.env.xmms_shared_library = (Utils.unversioned_sys_platform() == 'win32')
 
     conf.env.XMMS_PKGCONF_FILES.append(('xmms2-plugin', ''))
 
