@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmmsc/xmmsc_util.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 void
 xmms_dump_stack (void)
