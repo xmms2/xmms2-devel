@@ -354,6 +354,7 @@ def configure(conf):
 
     conf.load('visibility', tooldir='waftools')
     conf.load('localdeps', tooldir='waftools')
+    conf.load('python-generator', tooldir='waftools')
 
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
