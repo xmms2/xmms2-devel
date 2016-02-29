@@ -359,14 +359,14 @@ def configure(conf):
     if conf.options.target_platform:
         Utils.unversioned_sys_platform = lambda : conf.options.target_platform
 
-    nam,changed = gittools.get_info()
+    nam, changed = gittools.get_info()
     conf.msg("git commit id", nam)
-    if conf.options.customversion:
-        conf.env.VERSION = "%s (%s)" % (BASEVERSION, conf.options.customversion)
-    else:
-        dirty = changed and "-dirty" or ""
-        conf.msg("uncommited changed", changed and "yes" or "no")
-        conf.env.VERSION = "%s (git commit: %s%s)" % (BASEVERSION, nam, dirty)
+    conf.msg("uncommited changed", changed and "yes" or "no")
+
+    conf.env.VERSION = conf.options.customversion % {
+        "commit": nam + (changed and "-dirty" or ""),
+        "version": BASEVERSION
+    }
 
     for env in ('CFLAGS', 'CXXFLAGS'):
         # Makes sure the env variable exists and is a list
@@ -574,7 +574,8 @@ def options(opt):
     opt.load('compiler_cxx')
 
     opt.add_option('--with-custom-version', type='string',
-                   dest='customversion', help="Override git commit hash version")
+                   dest='customversion', default="%(version)s (git commit: %(commit)s)",
+                   help="Override git commit hash version, may use %(version)s, %(commit)s")
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
                    type="string", dest="enable_plugins", default=None,
                    help="Comma separated list of plugins to build")
