@@ -53,7 +53,7 @@ def build_precompiled(bld):
             target = t,
             use = 'xmmsclient',
             includes = '../../../.. ../../../include ../../../includepriv',
-            install_path = '${xmmsclient_PYTHONDIR}',
+            install_path = '${xmmsclient_PYTHONARCHDIR}',
             mac_bundle = bld.env.mac_bundle_enabled
             )
 
@@ -65,7 +65,7 @@ def build_cython(bld):
             target = t,
             use = 'xmmsclient',
             includes = '../../../.. ../../../include ../../../includepriv',
-            install_path = '${xmmsclient_PYTHONDIR}',
+            install_path = '${xmmsclient_PYTHONARCHDIR}',
             mac_bundle = bld.env.mac_bundle_enabled,
             cython_includes = ['cython_include']
             )
@@ -85,8 +85,8 @@ def build(bld):
     pure_files = bld.path.ant_glob('xmmsclient/*.py')
     sample_files = bld.path.ant_glob('xmmsclient/samples/*.py')
 
-    bld.install_files('${xmmsclient_PYTHONDIR}', pure_files)
-    bld.install_files('${xmmsclient_PYTHONDIR}/samples', sample_files)
+    bld.install_files('${xmmsclient_PYTHONARCHDIR}', pure_files)
+    bld.install_files('${xmmsclient_PYTHONARCHDIR}/samples', sample_files)
     # TODO: Distribute .pxd files
 
 def configure(conf):
@@ -97,14 +97,14 @@ def configure(conf):
     conf.check_python_version()
     conf.check_python_headers()
 
-    conf.env.xmmsclient_PYTHONDIR = os.path.join(conf.env.PYTHONDIR, 'xmmsclient')
+    conf.env.xmmsclient_PYTHONARCHDIR = os.path.join(conf.env.PYTHONARCHDIR, 'xmmsclient')
 
-    prefix = os.path.commonprefix([conf.env.PYTHONDIR, conf.env.PREFIX])
+    prefix = os.path.commonprefix([conf.env.PYTHONARCHDIR, conf.env.PREFIX])
     if prefix != conf.env.PREFIX:
         Logs.warn("Default python libdir is not under PREFIX. Specify path "
-                  "manually using the PYTHONDIR environment variable if you "
+                  "manually using the PYTHONARCHDIR environment variable if you "
                   "don't want the python bindings to be installed to %s"
-                  % conf.env.PYTHONDIR)
+                  % conf.env.PYTHONARCHDIR)
 
     has_precompiled = len(conf.path.ant_glob('xmms*.c')) > 0
     conf.env.xmmspython_USE_PRECOMPILED = True
