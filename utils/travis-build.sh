@@ -77,14 +77,19 @@ function linux_install {
 }
 
 function linux_build_regular {
+    export PATH=/usr/bin:$PATH
+
     ./waf configure -o build-regular-$CC --prefix=/usr
     ./waf build
     ./waf install --destdir=destdir-regular-$CC
 }
 
 function linux_build_coverage {
+    export PATH=/usr/bin:$PATH
+
     ./waf configure -o build-coverage  --prefix=/usr --without-optionals=s4 --enable-gcov --generate-coverage
     ./waf build --generate-coverage --alltests
+
     upload_coverage
 }
 
