@@ -53,14 +53,14 @@ MACPORTS_PKGS=(
     "wavpack"
 )
 
-function upload_coverage {
+function retry {
     success=0
     for backoff in 0 5 25 30 60 120 180; do
         if (( $backoff > 0 )); then
-            echo "Upload of coverage metrics failed, retry in $backoff seconds..."
+            echo "$2 failed, retry in $backoff seconds..."
             sleep $backoff
         fi
-        if coveralls -x .c -b build-coverage -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'; then
+        if eval $1; then
             success=1
             break
         fi
@@ -90,7 +90,17 @@ function linux_build_coverage {
     ./waf configure -o build-coverage  --prefix=/usr --without-optionals=s4 --enable-gcov --generate-coverage
     ./waf build --generate-coverage --alltests
 
-    upload_coverage
+    function upload_coverage {
+        coveralls -x .c \
+                  -b build-coverage \
+                  -i src/xmms \
+                  -i src/lib \
+                  -e src/lib/s4/src/tools \
+                  -E '.*test.*' \
+                  --gcov-options '\-lp'
+    }
+
+    retry "upload_coverage" "Upload of coverage metrics"
 }
 
 function darwin_install {
