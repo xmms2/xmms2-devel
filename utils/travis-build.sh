@@ -103,6 +103,47 @@ function linux_build_coverage {
     retry "upload_coverage" "Upload of coverage metrics"
 }
 
+function linux_build_analysis {
+    export PATH=/usr/bin:$PATH
+    config="-analyzer-config stable-report-filename=true"
+
+    # TODO: Should really be in install, needs to be made conditional, and really
+    #       via addons: as it is for precise, see apt-source-whitelist #199.
+    echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main" | sudo tee -a /etc/apt/sources.list
+    sudo apt-get update -q
+    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.7
+
+    scan-build-3.7 $config -o build-analysis/clang \
+                   ./waf configure -o build-analysis --without-optionals=python --with-custom-version=clang-analysis
+
+    # wipe the report from the configure phase, just need to set the tool paths.
+    rm -rf build-analysis/clang
+
+    scan-build-3.7 $config -o build-analysis/clang \
+                   ./waf build --notests
+
+    if [[ -n $CI_USER_TOKEN ]]; then
+        function github_docs_clone {
+            git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs
+        }
+
+        retry "github_docs_clone" "Fetching xmms2/docs.git repo"
+
+        rm -rf github-docs/clang
+        mv build-analysis/clang/* github-docs/clang
+
+        cd github-docs
+        git add clang
+        git commit -a -m "Automatic update of Clang Static Analysis"
+
+        function github_docs_push {
+            git push
+        }
+
+        retry "github_docs_push" "Pushing to xmms2/docs.git repo"
+    fi
+}
+
 function darwin_install {
     filename=MacPorts-2.3.4-10.11-ElCapitan.pkg
     curl -O "https://distfiles.macports.org/MacPorts/$filename"
@@ -154,6 +195,8 @@ case "$1" in
                 esac ;;
             "coverage")
                 linux_build_coverage ;;
+            "analysis")
+                linux_build_analysis ;;
             *)
                 echo "ERROR: No build:coverage target for '$TARGET_OS_NAME'"
                 exit 1 ;;

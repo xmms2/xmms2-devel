@@ -4,6 +4,7 @@ language:
 env:
   global:
     - secure: "YS7oBoXRQ9/PpiMOPFo0TftWozQo9gACzNZKdRMSt2i7L8pe8Zn46OVkjWDAsg1IhgdQjPHcmQ+XJriwRdihH17jSTVnxOSJW2L8KBR7ClNaMiRbiVCecudIub2uy++9C/b+9z+G6ag++7Xtn2j9T+rOTH7KVM2MQ29jTJrZ/M8="
+    - secure: "lodjVMbITogvx6e+zwhwuFIIdxvVD4WIkvwbkp8ARw9qoDG+fCRe/CA/9wowjPhL/q02BYVkyZCPkkM3g722KHl9V2LSBBSBhIstSVRardXjbjZsnwX3vfL+bau04h2DkX28P35DoB+aeBrLqycqz6ToaKU/QSBk27ZfAJ2PTQo="
 
 matrix:
   include:
@@ -20,6 +21,11 @@ matrix:
     - env: BUILD_MODE=regular
       os: osx
       osx_image: xcode7.2
+      compiler: clang
+    - env: BUILD_MODE=analysis
+      os: linux
+      sudo: true
+      dist: trusty
       compiler: clang
     - env: BUILD_MODE=coverage
       os: linux
