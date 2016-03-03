@@ -81,7 +81,7 @@ function linux_build_regular {
 
     ./waf configure -o build-regular-$CC --prefix=/usr
     ./waf build
-    ./waf install --destdir=destdir-regular-$CC
+    ./waf install --destdir=build-regular-$CC/tmp
 }
 
 function linux_build_coverage {
@@ -116,7 +116,7 @@ function darwin_build_regular {
 
     ./waf configure --conf-prefix=/opt/local -o build-regular-$CC --prefix=/usr
     ./waf build
-    ./waf install --destdir=destdir-regular-$CC
+    ./waf install --destdir=build-regular-$CC/tmp
 }
 
 case "$1" in
