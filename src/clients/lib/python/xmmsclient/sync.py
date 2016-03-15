@@ -3,14 +3,19 @@ import xmmsapi
 
 class XmmsSync(xmmsapi.XmmsProxy):
 	"""
-	A wrapper for the xmmsclient.XMMS class which simplifies synchronous
+	A wrapper for the `xmmsclient.Xmms` class which simplifies synchronous
 	communication with the XMMS2 daemon.
 
-	Instances of this class may be used just like regular xmmsclient.XMMS
-	objects, except that instead of returning an XMMSResult instance, the
-	value associated with the result is returned.  If the XMMSResult
-	indicates an error, an XMMSError is raised instead of returning the
+	Instances of this class may be used just like regular `xmmsclient.Xmms`
+	objects, except that instead of returning an `XmmsResult` instance, the
+	value associated with the result is returned.  If the `XmmsResult`
+	indicates an error, an `XmmsError` is raised instead of returning the
 	value.
+
+	>>> import xmmsclient
+	>>> xc = xmmsclient.XmmsSync('clientname')
+	>>> xc.connect()
+	>>> xc.playback_start()
 	"""
 	def __init__(self, clientname=None, xmms=None):
 		"""

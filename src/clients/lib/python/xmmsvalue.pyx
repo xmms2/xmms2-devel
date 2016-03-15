@@ -121,29 +121,30 @@ cdef class XmmsValue:
 	cpdef get_type(self):
 		"""
 		Return the type of the value.
-		The return value is one of the VALUE_TYPE_* constants.
+
+		:return: The return value is one of the VALUE_TYPE_* constants.
 		"""
 		return xmmsv_get_type(self.val)
 
 	cpdef iserror(self):
 		"""
-		@deprecated
-		@return: Whether the value represents an error or not.
-		@rtype: Boolean
+		:deprecated: Use `XmmsValue.is_error` instead.
+		:return: Whether the value represents an error or not.
+		:rtype: bool
 		"""
 		return self.is_error()
 
 	cpdef is_error(self):
 		"""
-		@return: Whether the value represents an error or not.
-		@rtype: Boolean
+		:return: Whether the value represents an error or not.
+		:rtype: Boolean
 		"""
 		return xmmsv_is_type(self.val, XMMSV_TYPE_ERROR)
 
 	cpdef get_error(self):
 		"""
-		@return: Error string from the result.
-		@rtype: String
+		:return: Error string from the result.
+		:rtype: String
 		"""
 		cdef char *ret = NULL
 		if not xmmsv_get_error(self.val, <const_char **>&ret):
@@ -153,7 +154,9 @@ cdef class XmmsValue:
 	cpdef get_int(self):
 		"""
 		Get data from the result structure as an int.
-		@rtype: int
+
+		:return: An integer from the result.
+		:rtype: int
 		"""
 		cdef int64_t ret = 0
 		if not xmmsv_get_int64(self.val, &ret):
@@ -163,7 +166,9 @@ cdef class XmmsValue:
 	cpdef get_float(self):
 		"""
 		Get data from the result structure as an float.
-		@rtype: float
+
+		:return: A float from the result.
+		:rtype: float
 		"""
 		cdef float ret = 0
 		if not xmmsv_get_float(self.val, &ret):
@@ -173,7 +178,9 @@ cdef class XmmsValue:
 	cpdef get_string(self):
 		"""
 		Get data from the result structure as a string.
-		@rtype: string
+
+		:return: A string from the result.
+		:rtype: string
 		"""
 		cdef char *ret = NULL
 		if not xmmsv_get_string(self.val, <const_char **>&ret):
@@ -183,7 +190,9 @@ cdef class XmmsValue:
 	cpdef get_bin(self):
 		"""
 		Get data from the result structure as binary data.
-		@rtype: string
+
+		:return: The binary data as bytes.
+		:rtype: bytes
 		"""
 		cdef char *ret = NULL
 		cdef unsigned int rlen = 0
@@ -194,7 +203,8 @@ cdef class XmmsValue:
 	cpdef get_coll(self):
 		"""
 		Get data from the result structure as a Collection.
-		@rtype: Collection
+
+		:rtype: Collection
 		"""
 		if not xmmsv_is_type(self.val, XMMSV_TYPE_COLL):
 			raise ValueError("The value is not a collection")
@@ -202,19 +212,19 @@ cdef class XmmsValue:
 
 	cpdef get_dict(self):
 		"""
-		@return: A dictionary containing media info.
+		:return: A dictionary containing media info.
 		"""
 		return dict([(k, v.value()) for k,v in self.get_dict_iter()])
 
 	cpdef get_dict_iter(self):
 		"""
-		@return: An iterator on dict items ((key, value) pairs).
+		:return: An iterator on dict items ((key, value) pairs).
 		"""
 		return XmmsDictIter(self)
 
 	cpdef get_propdict(self):
 		"""
-		@return: A source dict.
+		:return: A source dict.
 		"""
 		ret = PropDict(self.sourcepref)
 		for key, values in self.get_dict_iter():
@@ -224,20 +234,21 @@ cdef class XmmsValue:
 
 	cpdef get_list(self):
 		"""
-		@return: A list of dicts from the result structure.
+		:return: A list of dicts from the result structure.
 		"""
 		return [v.value() for v in self.get_list_iter()]
 
 	cpdef get_list_iter(self):
 		"""
-		@return: An iterator on a list.
+		:return: An iterator on a list.
 		"""
 		return XmmsListIter(self)
 
 	cpdef value(self):
 		"""
-		Return value of appropriate data type contained in this result.
 		This can be used instead of most get_* functions in this class.
+
+		:return: Return value of appropriate data type contained in this result.
 		"""
 		cdef xmmsv_type_t vtype
 		vtype = self.get_type()

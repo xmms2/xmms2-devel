@@ -195,8 +195,7 @@ cdef class XmmsResult:
 	@deprecated
 	def _callback(self):
 		"""
-		@deprecated
-		Use __call__ instead.
+		:deprecated: Use `__call__` instead.
 		"""
 		try:
 			ret = self()
@@ -224,16 +223,16 @@ cdef class XmmsResult:
 
 	cpdef is_error(self):
 		"""
-		@return: Whether the result represents an error or not.
-		@rtype: Boolean
+
+		:return: Whether the result represents an error or not.
+		:rtype: bool
 		"""
 		return self.xmmsvalue().is_error()
 
 	@deprecated
 	def iserror(self):
 		"""
-		@deprecated
-		Use is_error() instead.
+		:deprecated: Use `XmmsResult.is_error` instead.
 		"""
 		return self.is_error()
 
@@ -254,8 +253,7 @@ cdef class XmmsResult:
 	@deprecated
 	def _value(self):
 		"""
-		@deprecated
-		Use xmmsvalue() or the xvalue property.
+		:deprecated: Use `xmmsvalue` or the xvalue property.
 		"""
 		return self.xmmsvalue()
 
@@ -359,8 +357,8 @@ cdef class XmmsVisChunk:
 	cpdef get_buffer(self):
 		"""
 		Get the chunk buffer
-		@rtype: L{bytes}
-		@return chunk data as a string
+
+		:return: chunk data as a string
 		"""
 		if self.data == NULL:
 			raise RuntimeError("chunk data not initialized")
@@ -369,8 +367,8 @@ cdef class XmmsVisChunk:
 	cpdef get_data(self):
 		"""
 		Get chunk data as a list.
-		@rtype: L{list}
-		@return A list of int
+
+		:return: A list of int
 		"""
 		if self.data == NULL:
 			raise RuntimeError("chunk data not initialized")
@@ -1002,8 +1000,9 @@ cdef class XmmsCore:
 		the XMMS2 daemon. You can use this in a client to ensure that
 		the IPC link is still active and safe to use.(e.g by calling
 		select() or poll())
-		@rtype: int
-		@return: IPC file descriptor
+
+		:return: IPC file descriptor
+		:rtype: int
 		"""
 		return xmmsc_io_fd_get(self.conn)
 
@@ -1013,19 +1012,15 @@ cdef class XmmsCore:
 		XMMS2 daemon. This path defaults to /tmp/xmms-ipc-<username> if
 		not specified. Call this once you have instantiated the object:
 
-		C{import xmmsclient}
-
-		C{xmms = xmmsclient.XMMS()}
-
-		C{xmms.connect()}
-
-		...
+		>>> import xmmsclient
+		>>> xc = xmmsclient.Xmms('clientname')
+		>>> xc.connect()
 
 		You can provide a disconnect callback function to be activated
 		when the daemon disconnects.(e.g. daemon quit) This function
 		typically has to exit the main loop used by your application.
-		For example, if using L{loop}, your callback should call
-		L{exit_loop} at some point.
+		For example, if using `loop`, your callback should call
+		`exit_loop` at some point.
 		"""
 		if path:
 			p = from_unicode(path)
@@ -1075,16 +1070,16 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult quit(self, cb = None):
 		"""
 		Tell the XMMS2 daemon to quit.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_quit(self.conn))
 
 	cpdef XmmsResult plugin_list(self, typ, cb = None):
 		"""
 		Get a list of loaded plugins from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_main_list_plugins(self.conn, typ))
 
@@ -1092,8 +1087,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Instruct the XMMS2 daemon to start playing the currently
 		selected file from the playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_playback_start(self.conn))
 
@@ -1101,39 +1096,39 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Instruct the XMMS2 daemon to stop playing the file
 		currently being played.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_playback_stop(self.conn))
 
 	cpdef XmmsResult playback_tickle(self, cb = None):
 		"""
 		Instruct the XMMS2 daemon to move on to the next playlist item.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_playback_tickle(self.conn))
 
 	cpdef XmmsResult playback_pause(self, cb = None):
 		"""
 		Instruct the XMMS2 daemon to pause playback.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_playback_pause(self.conn))
 
 	cpdef XmmsResult playback_current_id(self, cb = None):
 		"""
-		@rtype: L{XmmsResult}(UInt)
-		@return: The medialib id of the item currently selected.
+
+		:return: The medialib id of the item currently selected.
 		"""
 		return self.create_result(cb, xmmsc_playback_current_id(self.conn))
 
 	cpdef XmmsResult playback_seek_ms(self, int ms, xmms_playback_seek_mode_t whence = PLAYBACK_SEEK_SET, cb = None):
 		"""
 		Seek to a time position in the current file or stream in playback.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		if whence == PLAYBACK_SEEK_SET or whence == PLAYBACK_SEEK_CUR:
 			return self.create_result(cb, xmmsc_playback_seek_ms(self.conn, ms, whence))
@@ -1143,8 +1138,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playback_seek_samples(self, int samples, xmms_playback_seek_mode_t whence = PLAYBACK_SEEK_SET, cb = None):
 		"""
 		Seek to a number of samples in the current file or stream in playback.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		if whence == PLAYBACK_SEEK_SET or whence == PLAYBACK_SEEK_CUR:
 			return self.create_result(cb, xmmsc_playback_seek_samples(self.conn, samples, whence))
@@ -1155,11 +1150,11 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
-		L{broadcast_playback_status}. Possible return values are:
-		L{PLAYBACK_STATUS_STOP}, L{PLAYBACK_STATUS_PLAY},
-		L{PLAYBACK_STATUS_PAUSE}
-		@rtype: L{XmmsResult}(UInt)
-		@return: Current playback status(UInt)
+		`broadcast_playback_status`. Possible return values are:
+		`PLAYBACK_STATUS_STOP`, `PLAYBACK_STATUS_PLAY`,
+		`PLAYBACK_STATUS_PAUSE`
+
+		:return: Current playback status
 		"""
 		return self.create_result(cb, xmmsc_playback_status(self.conn))
 
@@ -1167,7 +1162,6 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the playback status broadcast from the
 		XMMS2 daemon.
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playback_status(self.conn))
 
@@ -1175,16 +1169,15 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the playback id broadcast from the
 		XMMS2 daemon.
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playback_current_id(self.conn))
 
 	cpdef XmmsResult playback_playtime(self, cb = None):
 		"""
 		Return playtime on current file/stream. This is essentially a
-		more direct version of L{signal_playback_playtime}
-		@rtype: L{XmmsResult}(UInt)
-		@return: The result of the operation.(playtime in milliseconds)
+		more direct version of `signal_playback_playtime`
+
+		:return: The result of the operation (playtime in milliseconds).
 		"""
 		return self.create_result(cb, xmmsc_playback_playtime(self.conn))
 
@@ -1192,14 +1185,12 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the playback playtime signal from the
 		XMMS2 daemon.
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_signal_playback_playtime(self.conn))
 
 	cpdef XmmsResult playback_volume_set(self, channel, int volume, cb = None):
 		"""
 		Set the playback volume for specified channel
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		c = from_unicode(channel)
 		return self.create_result(cb, xmmsc_playback_volume_set(self.conn, c, volume))
@@ -1207,29 +1198,26 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playback_volume_get(self, cb = None):
 		"""
 		Get the playback for all channels
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_playback_volume_get(self.conn))
 
 	cpdef XmmsResult broadcast_playback_volume_changed(self, cb = None):
 		"""
 		Set a broadcast callback for volume updates
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playback_volume_changed(self.conn))
 
 	cpdef XmmsResult broadcast_playlist_loaded(self, cb = None):
 		"""
 		Set a broadcast callback for loaded playlist event
-		@rtype: L{XmmsResult}(UInt)
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playlist_loaded(self.conn))
 
 	cpdef XmmsResult playlist_load(self, playlist, cb = None):
 		"""
 		Load the playlist as current playlist
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, False)
 		return self.create_result(cb, xmmsc_playlist_load(self.conn, <char *>p))
@@ -1237,16 +1225,16 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_list(self, cb = None):
 		"""
 		Lists the playlists
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_playlist_list(self.conn))
 
 	cpdef XmmsResult playlist_remove(self, playlist, cb = None):
 		"""
 		Remove the playlist from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, False)
 		return self.create_result(cb, xmmsc_playlist_remove(self.conn, <char *>p))
@@ -1254,8 +1242,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_shuffle(self, playlist = None, cb = None):
 		"""
 		Instruct the XMMS2 daemon to shuffle the playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_shuffle(self.conn, <char *>p))
@@ -1264,8 +1252,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Insert a directory in the playlist.
 		Requires an int 'pos' and a string 'url' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1281,8 +1269,7 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def playlist_rinsert_encoded(self, int pos, url, playlist = None, cb = None):
 		"""
-		@deprecated
-		Use playlist_rinsert(pos, url, ..., encoded = True) instead
+		:deprecated: Use `playlist_rinsert` instead.
 		"""
 		return self.playlist_rinsert(pos, url, playlist, cb = cb, encoded = True)
 
@@ -1291,8 +1278,8 @@ cdef class XmmsApi(XmmsCore):
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		Requires an int 'pos' and a string 'url' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1308,8 +1295,7 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def playlist_insert_encoded(self, int pos, url, playlist = None, cb = None):
 		"""
-		@deprecated
-		Use playlist_insert_url(pos, url, ..., encoded = True) instead
+		:deprecated: Use `playlist_insert_url` instead.
 		"""
 		return self.playlist_insert_url(pos, url, playlist, cb = cb, encoded = True)
 
@@ -1317,9 +1303,9 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_insert_id(self, int pos, int id, playlist = None, cb = None):
 		"""
 		Insert a medialib to the playlist.
-		Requires an int 'pos' and an int 'id' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+		Requires an int `pos` and an int `id` as argument.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_insert_id(self.conn, <char *>p, pos, id))
@@ -1329,8 +1315,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Insert the content of a collection to the playlist.
 		Requires an int 'pos' and an int 'id' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *order_val
 		cdef xmmsc_result_t *res
@@ -1347,8 +1333,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1363,8 +1349,7 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def playlist_radd_encoded(self, url, playlist = None, cb = None):
 		"""
-		@deprecated
-		Use playlist_radd(url, ..., encoded = True) instead
+		:deprecated: Use `playlist_radd` instead.
 		"""
 		return self.playlist_radd(url, playlist, cb = cb, encoded = True)
 
@@ -1373,8 +1358,8 @@ cdef class XmmsApi(XmmsCore):
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
 		Requires a string 'url' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1389,16 +1374,15 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def playlist_add_encoded(self, url, playlist = None, cb = None):
 		"""
-		@deprecated
-		Use playlist_add_url(url, ..., encoded = True) instead
+		:deprecated: Use `playlist_add_url` instead.
 		"""
 		return self.playlist_add_url(url, playlist, cb = cb, encoded = True)
 
 	cpdef XmmsResult playlist_add_id(self, int id, playlist = None, cb = None):
 		"""
 		Add a medialib id to the playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_add_id(self.conn, <char *>p, id))
@@ -1406,8 +1390,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_add_collection(self, Collection coll, order = None, playlist = None, cb = None):
 		"""
 		Add the content of a collection to the playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *order_val
 		cdef xmmsc_result_t *res
@@ -1424,8 +1408,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Remove a certain media item from the playlist.
 		Requires a number 'id' as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_remove_entry(self.conn, <char *>p, id))
@@ -1433,8 +1417,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_clear(self, playlist = None, cb = None):
 		"""
 		Clear the playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_clear(self.conn, <char *>p))
@@ -1443,9 +1427,9 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
-		L{medialib_get_info} to retrieve more specific information.
-		@rtype: L{XmmsResult}(UIntList)
-		@return: The current playlist.
+		`medialib_get_info` to retrieve more specific information.
+
+		:return: The current playlist.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_list_entries(self.conn, <char *>p))
@@ -1453,8 +1437,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_sort(self, props, playlist = None, cb = None):
 		"""
 		Sorts the playlist according to the properties specified.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *props_val
 		cdef xmmsc_result_t *res
@@ -1467,26 +1451,24 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult playlist_set_next_rel(self, int position, cb = None):
 		"""
-		Sets the position in the playlist. Same as L{playlist_set_next}
+		Sets the position in the playlist. Same as `playlist_set_next`
 		but sets the next position relative to the current position.
 		You can do set_next_rel(-1) to move backwards for example.
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_playlist_set_next_rel(self.conn, position))
 
 	cpdef XmmsResult playlist_set_next(self, int position, cb = None):
 		"""
 		Sets the position to move to, next, in the playlist. Calling
-		L{playback_tickle} will perform the jump to that position.
-		@rtype: L{XmmsResult}
+		`playback_tickle` will perform the jump to that position.
 		"""
 		return self.create_result(cb, xmmsc_playlist_set_next(self.conn, position))
 
 	cpdef XmmsResult playlist_move(self, int cur_pos, int new_pos, playlist = None, cb = None):
 		"""
 		Moves a playlist entry to a new position.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_move_entry(self.conn, <char *>p, cur_pos, new_pos))
@@ -1494,8 +1476,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_create(self, playlist, cb = None):
 		"""
 		Create a new playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = check_playlist(playlist, False)
 		return self.create_result(cb, xmmsc_playlist_create(self.conn, <char *>p))
@@ -1505,7 +1487,6 @@ cdef class XmmsApi(XmmsCore):
 		Returns the current position in the playlist. This value will
 		always be equal to, or larger than 0. The first entry in the
 		list is 0.
-		@rtype: L{XmmsResult}
 		"""
 		p = check_playlist(playlist, True)
 		return self.create_result(cb, xmmsc_playlist_current_pos(self.conn, <char *>p))
@@ -1513,7 +1494,6 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult playlist_current_active(self, cb = None):
 		"""
 		Returns the name of the current active playlist
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_playlist_current_active(self.conn))
 
@@ -1523,7 +1503,6 @@ cdef class XmmsApi(XmmsCore):
 		from the XMMS2 daemon. This is triggered whenever the daemon
 		jumps from one playlist position to another. (not when moving
 		a playlist item from one position to another)
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playlist_current_pos(self.conn))
 
@@ -1532,7 +1511,6 @@ cdef class XmmsApi(XmmsCore):
 		Set a method to handle the playlist changed broadcast from the
 		XMMS2 daemon. Updated data is sent whenever the daemon's
 		playlist changes.
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_playlist_changed(self.conn))
 
@@ -1542,15 +1520,16 @@ cdef class XmmsApi(XmmsCore):
 		from the XMMS2 daemon.(i.e. some configuration value has
 		been modified) Updated data is sent whenever a config
 		value is modified.
-		@rtype: L{XmmsResult} (the modified config key and its value)
+
+		:return: The modified config key and its value.
 		"""
 		return self.create_result(cb, xmmsc_broadcast_config_value_changed(self.conn))
 
 	cpdef XmmsResult config_set_value(self, key, val, cb = None):
 		"""
 		Set a configuration value on the daemon, given a key.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		k = from_unicode(key)
 		v = from_unicode(val)
@@ -1559,8 +1538,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult config_get_value(self, key, cb = None):
 		"""
 		Get the configuration value of a given key, from the daemon.
-		@rtype: L{XmmsResult}(String)
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		k = from_unicode(key)
 		return self.create_result(cb, xmmsc_config_get_value(self.conn, <char *>k))
@@ -1568,10 +1547,10 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult config_list_values(self, cb = None):
 		"""
 		Get list of configuration keys on the daemon. Use
-		L{config_get_value} to retrieve the values corresponding to the
+		`config_get_value` to retrieve the values corresponding to the
 		configuration keys.
-		@rtype: L{XmmsResult}(StringList)
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_config_list_values(self.conn))
 
@@ -1580,8 +1559,8 @@ cdef class XmmsApi(XmmsCore):
 		Register a new configvalue.
 		This should be called in the initcode as XMMS2 won't allow
 		set/get on values that haven't been registered.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		v = from_unicode(valuename)
 		dv = from_unicode(defaultvalue)
@@ -1590,8 +1569,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult medialib_add_entry(self, path, cb = None, encoded = False):
 		"""
 		Add an entry to the MediaLib.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		p = from_unicode(path)
@@ -1604,24 +1583,23 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def medialib_add_entry_encoded(self, path, cb = None):
 		"""
-		@deprecated
-		Use medialib_add_entry(file, ..., encoded = True) instead
+		:deprecated: Use `medialib_add_entry` instead.
 		"""
 		return self.medialib_add_entry(path, cb = cb, encoded = True)
 
 	cpdef XmmsResult medialib_remove_entry(self, int id, cb = None):
 		"""
 		Remove an entry from the medialib.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_medialib_remove_entry(self.conn, id))
 
 	cpdef XmmsResult medialib_move_entry(self, int id,  url, cb = None, encoded = False):
 		"""
 		Set a new url for an entry in the medialib.
-		@rtype: L{XmmsResult}
-		@return The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		if encoded:
 			try:
@@ -1634,9 +1612,8 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult medialib_get_info(self, int id, cb = None):
 		"""
-		@rtype: L{XmmsResult}(HashTable)
-		@return: Information about the medialib entry position
-		specified.
+
+		:return: Information about the medialib entry position specified.
 		"""
 		cdef XmmsResult res
 		res = self.create_result(cb, xmmsc_medialib_get_info(self.conn, id))
@@ -1645,19 +1622,17 @@ cdef class XmmsApi(XmmsCore):
 
 	cpdef XmmsResult medialib_rehash(self, int id = 0, cb = None):
 		"""
-		Force the medialib to check that metadata stored is up to
-		date.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+		Force the medialib to check that metadata stored is up to date.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_medialib_rehash(self.conn, id))
 
 	cpdef XmmsResult medialib_get_id(self, url, cb = None, encoded = False):
 		"""
-		Search for an entry (URL) in the medialib and return its ID
-		number.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+		Search for an entry (URL) in the medialib and return its ID number.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		u = from_unicode(url)
@@ -1671,8 +1646,8 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Import metadata from all files recursively from the directory
 		passed as argument.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		p = from_unicode(path)
@@ -1685,24 +1660,22 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def medialib_path_import(self, path, cb = None, encoded = False):
 		"""
-		@deprecated
-		Use medialib_import_path(path, ...) instead
+		:deprecated: Use `medialib_import_path` instead.
 		"""
 		return self.medialib_import_path(path, cb = cb, encoded = encoded)
 
 	@deprecated
 	def medialib_path_import_encoded(self, path, cb = None):
 		"""
-		@deprecated
-		Use medialib_import_path(path, ..., encoded = True) instead
+		:deprecated: Use `medialib_import_path` instead.
 		"""
 		return self.medialib_import_path(path, cb = cb, encoded = True)
 
 	cpdef XmmsResult medialib_property_set(self, int id, key, value, source = None, cb = None):
 		"""
 		Associate a value with a medialib entry. Source is optional.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		k = from_unicode(key)
@@ -1724,8 +1697,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult medialib_property_remove(self, int id, key, source = None, cb = None):
 		"""
 		Remove a value from a medialib entry. Source is optional.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		k = from_unicode(key)
@@ -1740,15 +1713,13 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the medialib entry added broadcast
 		from the XMMS2 daemon. (i.e. a new entry has been added)
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_added(self.conn))
 
 	@deprecated
 	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
-		@deprecated
-		Use broadcast_medialib_entry_updated(self, cb = None) instead
+		:deprecated: Use `broadcast_medialib_entry_updated` instead.
 		"""
 		return self.broadcast_medialib_entry_updated(cb)
 
@@ -1758,7 +1729,6 @@ cdef class XmmsApi(XmmsCore):
 		from the XMMS2 daemon.
 		Updated data is sent when the metadata for a song is updated
 		in the medialib.
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_updated(self.conn))
 
@@ -1766,7 +1736,6 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the medialib entry removed broadcast
 		from the XMMS2 daemon. (i.e. an entry has been removed)
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_medialib_entry_removed(self.conn))
 
@@ -1774,31 +1743,30 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Set a method to handle the collection changed broadcast
 		from the XMMS2 daemon.
-		@rtype: L{XmmsResult}
 		"""
 		return self.create_result(cb, xmmsc_broadcast_collection_changed(self.conn))
 
 	cpdef XmmsResult signal_mediainfo_reader_unindexed(self, cb = None):
 		"""
 		Tell daemon to send you the number of unindexed files in the mlib
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_signal_mediainfo_reader_unindexed(self.conn))
 
 	cpdef XmmsResult broadcast_mediainfo_reader_status(self, cb = None):
 		"""
 		Tell daemon to send you the status of the mediainfo reader
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_broadcast_mediainfo_reader_status(self.conn))
 
 	cpdef XmmsResult xform_media_browse(self, url, cb = None, encoded = False):
 		"""
 		Browse files from xform plugins.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 		u = from_unicode(url)
@@ -1811,16 +1779,15 @@ cdef class XmmsApi(XmmsCore):
 	@deprecated
 	def xform_media_browse_encoded(self, url, cb = None):
 		"""
-		@deprecated
-		Use xform_media_browse(url, ..., encoded = True) instead
+		:deprecated: Use `xform_media_browse` instead.
 		"""
 		return self.xform_media_browse(url, cb = cb, encoded = True)
 
 	cpdef XmmsResult coll_get(self, name, ns = "Collections", cb = None):
 		"""
 		Retrieve a Collection
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *n
 		n = check_namespace(ns, False)
@@ -1830,8 +1797,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_list(self, ns = "Collections", cb = None):
 		"""
 		List collections
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *n
 		n = check_namespace(ns, False)
@@ -1840,8 +1807,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_save(self, Collection coll, name, ns = "Collections", cb = None):
 		"""
 		Save a collection on server.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *n
 		n = check_namespace(ns, False)
@@ -1851,8 +1818,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_remove(self, name, ns = "Collections", cb = None):
 		"""
 		Remove a collection on server.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *n
 		n = check_namespace(ns, False)
@@ -1862,8 +1829,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_rename(self, oldname, newname, ns = "Collections", cb = None):
 		"""
 		Rename a collection.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *n
 		n = check_namespace(ns, False)
@@ -1875,8 +1842,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_idlist_from_playlist_file(self, path, cb = None):
 		"""
 		Create an idlist from a playlist.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		p = from_unicode(path)
 		return self.create_result(cb, xmmsc_coll_idlist_from_playlist_file(self.conn, <char *>p))
@@ -1884,8 +1851,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_query(self, Collection coll, fetch, cb = None):
 		"""
 		Retrive a list of ids of the media matching the collection
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *fetch_val
 		fetch_val = create_native_value(fetch)
@@ -1895,8 +1862,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_query_ids(self, Collection coll, start = 0, leng = 0, order = None, cb = None):
 		"""
 		Retrive a list of ids of the media matching the collection
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *order_val
 		cdef xmmsc_result_t *res
@@ -1911,8 +1878,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult coll_query_infos(self, Collection coll, fields, start = 0, leng = 0, order = None, groupby = None, cb = None):
 		"""
 		Retrive a list of mediainfo of the media matching the collection
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *order_val
 		cdef xmmsv_t *fields_val
@@ -1935,11 +1902,10 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult c2c_ready(self, cb = None):
 		"""
 		Notify the server that client services are ready for query.
-		This method is called XmmsServiceNamespace.register() and don't need to
+		This method is called `XmmsServiceNamespace.register()` and don't need to
 		be called explicitly.
 
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1952,8 +1918,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult c2c_get_connected_clients(self, cb = None):
 		"""
 		Get a list of clients connected to the xmms2 server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1963,8 +1929,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult c2c_get_ready_clients(self, cb = None):
 		"""
 		Get a list of clients connected to the xmms2 server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1974,8 +1940,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult broadcast_c2c_ready(self, cb = None):
 		"""
 		Broadcast reveiced whenever a client's service api is ready
-		@rtype: L{XmmsResult}
-		@return: the result of the operation.
+
+		:return: the result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1986,8 +1952,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult broadcast_c2c_client_connected(self, cb = None):
 		"""
 		Broadcast received whenever a new client connects to the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -1997,8 +1963,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult broadcast_c2c_client_disconnected(self, cb = None):
 		"""
 		Broadcast received whenever a client disconnects from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsc_result_t *res
 
@@ -2009,16 +1975,16 @@ cdef class XmmsApi(XmmsCore):
 		"""
 		Initialize client-to-client features.
 		Client-to-client features won't work with the synchronous client wrapper
-		@rtype: L{bool}
-		@return: whether client-to-client is initialized.
+
+		:return: whether client-to-client is initialized.
 		"""
 		return xmmsc_sc_init(self.conn) != NULL
 
 	cpdef bint sc_broadcast_emit(self, broadcast, value = None):
 		"""
 		Emit a broadcast message to subscribed clients
-		@rtype: L{bool}
-		@return: whether notifications were successfully queued
+
+		:return: whether notifications were successfully queued
 		"""
 		cdef xmmsv_t *val
 		cdef xmmsv_t *bc_path
@@ -2034,8 +2000,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_broadcast_subscribe(self, int dest, broadcast, cb = None):
 		"""
 		Subscribe to a broadcast from another client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *bc_path
 		cdef xmmsc_result_t *res
@@ -2048,8 +2014,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_call(self, int dest, method, args = (), kargs = dict(), cb = None):
 		"""
 		Call a remote method
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *m_path
 		cdef xmmsv_t *m_pos
@@ -2068,8 +2034,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_introspect_namespace(self, int dest, path = (), cb = None):
 		"""
 		Get informations about a namespace on a remote client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *i_path
 		cdef xmmsc_result_t *res
@@ -2082,8 +2048,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_introspect_method(self, int dest, path, cb = None):
 		"""
 		Get informations about a method on a remote client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *i_path
 		cdef xmmsc_result_t *res
@@ -2096,8 +2062,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_introspect_broadcast(self, int dest, path, cb = None):
 		"""
 		Get informations about a broadcast on a remote client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *i_path
 		cdef xmmsc_result_t *res
@@ -2110,8 +2076,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_introspect_constant(self, int dest, path, cb = None):
 		"""
 		Get informations about a constant on a remote client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *i_path
 		cdef xmmsc_result_t *res
@@ -2125,8 +2091,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult sc_introspect_docstring(self, int dest, path, cb = None):
 		"""
 		Get the docstring for a given path on a remote client
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef xmmsv_t *i_path
 		cdef xmmsc_result_t *res
@@ -2139,8 +2105,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_add(self, data, cb = None):
 		"""
 		Add a datafile to the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		cdef char *t
 		t = <char *>data
@@ -2149,8 +2115,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_retrieve(self, hash, cb = None):
 		"""
 		Retrieve a datafile from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		h = from_unicode(hash)
 		return self.create_result(cb, xmmsc_bindata_retrieve(self.conn, <char *>h))
@@ -2158,8 +2124,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_remove(self, hash, cb = None):
 		"""
 		Remove a datafile from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		h = from_unicode(hash)
 		return self.create_result(cb, xmmsc_bindata_remove(self.conn, <char *>h))
@@ -2167,64 +2133,64 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult bindata_list(self, cb = None):
 		"""
 		List all bindata hashes stored on the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_bindata_list(self.conn))
 
 	cpdef XmmsResult stats(self, cb = None):
 		"""
 		Get statistics information from the server
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_main_stats(self.conn))
 
 	cpdef XmmsResult visualization_version(self, cb = None):
 		"""
 		Get the version of the visualization plugin installed on the server.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation.
+
+		:return: The result of the operation.
 		"""
 		return self.create_result(cb, xmmsc_visualization_version(self.conn))
 
 	cpdef XmmsResult visualization_init(self, cb = None):
 		"""
 		Get a new visualization handle.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation
+
+		:return: The result of the operation
 		"""
 		return self.create_vis_result(cb, xmmsc_visualization_init(self.conn), VIS_RESULT_CMD_INIT)
 
 	cpdef XmmsResult visualization_start(self, int handle, cb = None):
 		"""
 		Starts the visualization.
-		@rtype: L{XmmsResult}
-		@return: The result of the operation
+
+		:return: The result of the operation
 		"""
 		return self.create_vis_result(cb, xmmsc_visualization_start(self.conn, handle), VIS_RESULT_CMD_START)
 
 	cpdef bint visualization_started(self, int handle):
 		"""
 		Whether the visualization is started or not.
-		@rtype: L{bool}
-		@return: True if the visualization is started, False otherwise.
+
+		:return: True if the visualization is started, False otherwise.
 		"""
 		return xmmsc_visualization_started(self.conn, handle)
 
 	cpdef bint visualization_errored(self, int handle):
 		"""
 		Whether the visualization got an error.
-		@rtype: L{bool}
-		@return: True if the visualization got an error, False otherwise.
+
+		:return: True if the visualization got an error, False otherwise.
 		"""
 		return xmmsc_visualization_errored(self.conn, handle)
 
 	cpdef XmmsResult visualization_property_set(self, int handle, key, value, cb = None):
 		"""
 		Set a visualization's property.
-		@rtype: L{bool}
-		@return: The result of the operation
+
+		:return: The result of the operation
 		"""
 		k = from_unicode(key)
 		v = from_unicode(value)
@@ -2233,8 +2199,8 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsResult visualization_properties_set(self, int handle, props = {}, cb = None):
 		"""
 		Set visualization's properties.
-		@rtype: L{bool}
-		@return: The result of the operation
+
+		:return: The result of the operation
 		"""
 		cdef xmmsv_t *_props
 		cdef xmmsc_result_t *res
@@ -2247,8 +2213,9 @@ cdef class XmmsApi(XmmsCore):
 	cpdef XmmsVisChunk visualization_chunk_get(self, int handle, int drawtime = 0, bint blocking = False):
 		"""
 		Fetches the next available data chunk
-		@rtype: L{XmmsVisChunk}
-		@return: Visualization chunk.
+
+
+		:return: Visualization chunk.
 		"""
 		cdef short *buf
 		cdef int size
@@ -2276,6 +2243,17 @@ class XmmsDisconnectException(Exception):
 	pass
 
 cdef class XmmsLoop(XmmsApi):
+	"""
+	A simple main loop to drive async communication.
+
+	>>> import xmmsclient
+	>>> def handle_stats(result):
+	>>>   print(result.value())
+	>>> xc = xmmsclient.XmmsLoop('clientname')
+	>>> xc.connect()
+	>>> xc.stats(cb=handle_stats)
+	>>> xc.loop()
+	"""
 	#cdef bint do_loop
 	#cdef object wakeup
 
@@ -2305,7 +2283,7 @@ cdef class XmmsLoop(XmmsApi):
 
 	def exit_loop(self):
 		"""
-		Exits from the L{loop} call
+		Exits from the `loop` call
 		"""
 		self.do_loop = False
 		self.loop_tickle()
@@ -2320,8 +2298,9 @@ cdef class XmmsLoop(XmmsApi):
 		"""
 		Run one iteration of the main loop. Should be overridden to add
 		custom operations in the main loop.
-		@return The tuple returned by select.select() to be used by overridding
-		methods in subclasses.
+
+		:return: The tuple returned by `select.select` to be used by overridding
+		         methods in subclasses.
 		"""
 		cdef int fd
 		fd = xmmsc_io_fd_get(self.conn)
@@ -2356,7 +2335,7 @@ cdef class XmmsLoop(XmmsApi):
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
-		until L{exit_loop} is called. One can override L {loop_iter} to
+		until `exit_loop` is called. One can override `loop_iter` to
 		perform extra processing.
 		"""
 		from os import pipe, read
