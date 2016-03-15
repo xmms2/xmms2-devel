@@ -457,8 +457,7 @@ xmmsv_dict_foreach (xmmsv_t *dictv, xmmsv_dict_foreach_func func,
 	x_return_val_if_fail (xmmsv_is_type (dictv, XMMSV_TYPE_DICT), 0);
 	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
 
-	while (xmmsv_dict_iter_valid (it)) {
-		xmmsv_dict_iter_pair (it, &key, &v);
+	while (xmmsv_dict_iter_pair (it, &key, &v)) {
 		func (key, v, user_data);
 		xmmsv_dict_iter_next (it);
 	}
