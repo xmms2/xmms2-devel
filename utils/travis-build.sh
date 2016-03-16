@@ -122,6 +122,11 @@ function linux_build_analysis {
     scan-build-3.7 $config -o build-analysis/clang \
                    ./waf build --notests
 
+    # Generate core / clientlib documentation, strip timestamps
+    echo "</body></html>" > /tmp/footer.html
+    (cat Doxyfile && echo "HTML_FOOTER=/tmp/footer.html") | doxygen -
+    (cd src/clients/lib/xmmsclient && (cat Doxyfile && echo "HTML_FOOTER=/tmp/footer.html") | doxygen -)
+
     if [[ -n $CI_USER_TOKEN ]]; then
         function github_docs_clone {
             git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs
@@ -129,12 +134,17 @@ function linux_build_analysis {
 
         retry "github_docs_clone" "Fetching xmms2/docs.git repo"
 
-        rm -rf github-docs/clang
+        rm -rf github-docs/clang github-docs/api
+
         mv build-analysis/clang/* github-docs/clang
 
+        mkdir github-docs/api
+        mv doc/xmms2/html github-docs/api/xmms2
+        mv doc/xmmsclient/html github-docs/api/xmmsclient
+
         cd github-docs
-        git add clang
-        git commit -a -m "Automatic update of Clang Static Analysis"
+        git add clang api
+        git commit -a -m "Automatic update of API docs / Clang Static Analysis"
 
         function github_docs_push {
             git push

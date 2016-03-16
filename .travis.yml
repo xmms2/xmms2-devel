@@ -43,6 +43,7 @@ addons:
   apt:
     packages:
       - cython
+      - doxygen
       - lcov
       - libao-dev
       - libasound2-dev
