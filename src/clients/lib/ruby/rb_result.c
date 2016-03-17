@@ -367,7 +367,7 @@ c_dict_inspect (VALUE self)
 {
 	return rb_protect_inspect (dict_inspect, self, 0);
 }
-#endif /* HAVE_RB_PROTECT_INSPECT */
+#endif
 
 static VALUE
 c_dict_size (VALUE self)
@@ -544,6 +544,10 @@ c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 void
 Init_Result (VALUE mXmms)
 {
+#if RDOC_CAN_PARSE_DOCUMENTATION
+	mXmms= rb_define_module("Xmms");
+#endif
+
 	cResult = rb_define_class_under (mXmms, "Result", rb_cObject);
 
 	/* ugh, we have to define the "new" method,
@@ -576,7 +580,7 @@ Init_Result (VALUE mXmms)
 
 #ifdef HAVE_RB_PROTECT_INSPECT
 	rb_define_method (cDict, "inspect", c_dict_inspect, 0);
-#endif /* HAVE_RB_PROTECT_INSPECT */
+#endif
 
 	rb_define_method (cDict, "size", c_dict_size, 0);
 	rb_define_method (cDict, "empty?", c_dict_empty, 0);

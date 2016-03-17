@@ -25,10 +25,6 @@
 #include "rb_result.h"
 #include "rb_collection.h"
 
-#define DEF_CONST(mod, prefix, name) \
-	rb_define_const ((mod), #name, \
-	                 INT2FIX (prefix##name));
-
 #define PLAYLIST_METHOD_HANDLER_HEADER \
 	RbPlaylist *pl = NULL; \
 	RbXmmsClient *xmms = NULL; \
@@ -108,6 +104,7 @@ c_alloc (VALUE klass)
 /*
  * call-seq:
  *  pl = Xmms::Playlist.new(xc, [name])
+ *
  * Initializes a new Xmms::Playlist using the playlist named _name_ and the
  * Xmms::Client instance _xc_. Xmms::Client#playlist(name) is a useful
  * shortcut. _name_ is is the name of the playlist and the active playlist will
@@ -142,6 +139,7 @@ c_init (int argc, VALUE *argv, VALUE self)
 /*
  * call-seq:
  *  pl.name -> string
+ *
  * Returns the name of the playlist in the medialib as a String.
  */
 static VALUE
@@ -384,6 +382,10 @@ c_add_collection (int argc, VALUE *argv, VALUE self)
 VALUE
 Init_Playlist (VALUE mXmms)
 {
+#if RDOC_CAN_PARSE_DOCUMENTATION
+	mXmms= rb_define_module("Xmms");
+#endif
+
 	VALUE c;
 
 	c = rb_define_class_under (mXmms, "Playlist", rb_cObject);
@@ -406,16 +408,24 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "remove", c_remove, 0);
 	rb_define_method (c, "add_collection", c_add_collection, -1);
 
-	rb_define_const (c, "ACTIVE_NAME", INT2FIX (XMMS_ACTIVE_PLAYLIST));
-
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, ADD);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, INSERT);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SHUFFLE);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, REMOVE);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, CLEAR);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, MOVE);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, SORT);
-	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, UPDATE);
+	rb_define_const (c, "ACTIVE_NAME",
+	                 INT2FIX (XMMS_ACTIVE_PLAYLIST));
+	rb_define_const (c, "ADD",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_ADD));
+	rb_define_const (c, "INSERT",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_INSERT));
+	rb_define_const (c, "SHUFFLE",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_SHUFFLE));
+	rb_define_const (c, "REMOVE",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_REMOVE));
+	rb_define_const (c, "CLEAR",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_CLEAR));
+	rb_define_const (c, "MOVE",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_MOVE));
+	rb_define_const (c, "SORT",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_SORT));
+	rb_define_const (c, "UPDATE",
+	                 INT2FIX (XMMS_PLAYLIST_CHANGED_UPDATE));
 
 	ePlaylistError = rb_define_class_under (c, "PlaylistError",
 	                                        rb_eStandardError);

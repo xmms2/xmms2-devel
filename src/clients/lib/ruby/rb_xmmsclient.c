@@ -346,7 +346,7 @@ c_io_in_handle (VALUE self)
  *  xc.io_out_handle -> nil
  *
  * Sends one outgoing (to server) clientlib command. You should check
- * Xmms::Client#io_want_out before calling this method.
+ * #io_want_out before calling this method.
  */
 static VALUE
 c_io_out_handle (VALUE self)
@@ -785,7 +785,7 @@ c_playlist_set_next_rel (VALUE self, VALUE pos)
 /* call-seq:
  * xc.playlist([name]) -> p
  *
- * Shortcut for Xmms::Playlist#new(xc, [name]). Creates a new Xmms::Playlist
+ * Shortcut for Xmms::Playlist.new. Creates a new Xmms::Playlist
  * object tied to the current Xmms::Client instance. _name_ is is the name of
  * the playlist and the active playlist will be used if it is not specified.
  * Raises PlaylistError if the playlist name is invalid.
@@ -843,7 +843,7 @@ c_medialib_get_info (VALUE self, VALUE id)
  * Write info to the medialib at _id_. _source_ is an optional argument that
  * describes where to write the mediainfo. If _source_ is omitted, the
  * mediainfo is written to "client/<yourclient>" where <yourclient> is the
- * name you specified in _Xmms::Client.new(name)_.
+ * name you specified in ::new.
  */
 static VALUE
 c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
@@ -900,8 +900,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
  * Remove a custom field in the medialib associated with the entry _id_.
  * _source_ is an optional argument that describes where to write the
  * mediainfo. If _source_ is omitted, "client/<yourclient>" is used,
- * where <yourclient> is the name you specified in
- * _Xmms::Client.new(name)_.
+ * where <yourclient> is the name you specified in ::new.
  */
 static VALUE
 c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
@@ -1221,7 +1220,7 @@ c_coll_get (int argc, VALUE *argv, VALUE self)
  *
  * Retrieves an array of the names of all the collections stored in the
  * medialib under the namespace _ns_. If _ns_ is not specified, it defaults to
- * ALL.
+ * Xmms::Collection::NS_ALL.
  */
 static VALUE
 c_coll_list (int argc, VALUE *argv, VALUE self)
@@ -1603,6 +1602,10 @@ parse_string_array2 (VALUE value)
 void
 Init_Client (VALUE mXmms)
 {
+#if RDOC_CAN_PARSE_DOCUMENTATION
+	mXmms= rb_define_module("Xmms");
+#endif
+
 	VALUE c;
 
 	c = rb_define_class_under (mXmms, "Client", rb_cObject);

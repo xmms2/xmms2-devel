@@ -24,10 +24,6 @@
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
-#define DEF_CONST(mod, prefix, name) \
-	rb_define_const ((mod), #name, \
-	                 INT2FIX (prefix##name));
-
 #define CHECK_IS_COLL(o) \
 	if (!rb_obj_is_kind_of ((o), cColl)) \
 		rb_raise (rb_eTypeError, \
@@ -537,6 +533,10 @@ c_operands_each (VALUE self)
 void
 Init_Collection (VALUE mXmms)
 {
+#if RDOC_CAN_PARSE_DOCUMENTATION
+	mXmms= rb_define_module("Xmms");
+#endif
+
 	cColl = rb_define_class_under (mXmms, "Collection", rb_cObject);
 
 	rb_define_alloc_func (cColl, c_alloc);
@@ -559,33 +559,56 @@ Init_Collection (VALUE mXmms)
 	/* attribute methods */
 	rb_define_method (cColl, "attributes", c_coll_attributes, 0);
 
-	rb_define_const (cColl, "NS_ALL", rb_str_new2 (XMMS_COLLECTION_NS_ALL));
+	rb_define_const (cColl, "NS_ALL",
+	                 rb_str_new2 (XMMS_COLLECTION_NS_ALL));
 	rb_define_const (cColl, "NS_COLLECTIONS",
 	                 rb_str_new2 (XMMS_COLLECTION_NS_COLLECTIONS));
 	rb_define_const (cColl, "NS_PLAYLISTS",
 	                 rb_str_new2 (XMMS_COLLECTION_NS_PLAYLISTS));
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_REFERENCE)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_UNIVERSE)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_UNION)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_INTERSECTION)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_COMPLEMENT)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_HAS)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_MATCH)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_TOKEN)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_EQUALS)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_NOTEQUAL)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_SMALLER)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_SMALLEREQ)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_GREATER)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_GREATEREQ)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_ORDER)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_LIMIT)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_MEDIASET)
-	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_IDLIST)
-	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, ADD)
-	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, UPDATE)
-	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, RENAME)
-	DEF_CONST (cColl, XMMS_COLLECTION_CHANGED_, REMOVE)
+	rb_define_const (cColl, "TYPE_REFERENCE",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_REFERENCE));
+	rb_define_const (cColl, "TYPE_UNIVERSE",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_UNIVERSE));
+	rb_define_const (cColl, "TYPE_UNION",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_UNION));
+	rb_define_const (cColl, "TYPE_INTERSECTION",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_INTERSECTION));
+	rb_define_const (cColl, "TYPE_COMPLEMENT",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_COMPLEMENT));
+	rb_define_const (cColl, "TYPE_HAS",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_HAS));
+	rb_define_const (cColl, "TYPE_MATCH",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_MATCH));
+	rb_define_const (cColl, "TYPE_TOKEN",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_TOKEN));
+	rb_define_const (cColl, "TYPE_EQUALS",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_EQUALS));
+	rb_define_const (cColl, "TYPE_NOTEQUAL",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_NOTEQUAL));
+	rb_define_const (cColl, "TYPE_SMALLER",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_SMALLER));
+	rb_define_const (cColl, "TYPE_SMALLEREQ",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_SMALLEREQ));
+	rb_define_const (cColl, "TYPE_GREATER",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_GREATER));
+	rb_define_const (cColl, "TYPE_GREATEREQ",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_GREATEREQ));
+	rb_define_const (cColl, "TYPE_ORDER",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_ORDER));
+	rb_define_const (cColl, "TYPE_LIMIT",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_LIMIT));
+	rb_define_const (cColl, "TYPE_MEDIASET",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_MEDIASET));
+	rb_define_const (cColl, "TYPE_IDLIST",
+	                 INT2FIX (XMMS_COLLECTION_TYPE_IDLIST));
+	rb_define_const (cColl, "ADD",
+	                 INT2FIX (XMMS_COLLECTION_CHANGED_ADD));
+	rb_define_const (cColl, "UPDATE",
+	                 INT2FIX (XMMS_COLLECTION_CHANGED_UPDATE));
+	rb_define_const (cColl, "RENAME",
+	                 INT2FIX (XMMS_COLLECTION_CHANGED_RENAME));
+	rb_define_const (cColl, "REMOVE",
+	                 INT2FIX (XMMS_COLLECTION_CHANGED_REMOVE));
 
 	ePatternError = rb_define_class_under (cColl, "PatternError",
 	                                       rb_eStandardError);
