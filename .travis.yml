@@ -91,6 +91,7 @@ addons:
       - libxml2-dev
       - python-dev
       - python-all-dev
+      - ruby-all-dev
       - valgrind
   coverity_scan:
     project:
