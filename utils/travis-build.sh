@@ -138,6 +138,9 @@ function linux_build_analysis {
     perl -MPod::Simple::HTMLBatch -e Pod::Simple::HTMLBatch::go build-analysis/src/clients/lib/perl doc/perl
     sed -i 's/<br >[^<]*//g' doc/perl/index.html
 
+    # Remove all HTML comments, saves some space and removes some dynamic content.
+    find doc -name '*.html' -exec sed -i -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' {} \;
+
     if [[ -n $CI_USER_TOKEN ]]; then
         function github_docs_clone {
             git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs
