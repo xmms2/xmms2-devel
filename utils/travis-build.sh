@@ -133,6 +133,11 @@ function linux_build_analysis {
     rdoc src/clients/lib/ruby/*.{c,rb} -o doc/ruby
     find doc/ruby \( -name 'created.rid' -or -name '*.gz' \) -delete
 
+    # Generate perl bindings docs, strip timestamps
+    mkdir doc/perl
+    perl -MPod::Simple::HTMLBatch -e Pod::Simple::HTMLBatch::go build-analysis/src/clients/lib/perl doc/perl
+    sed -i 's/<br >[^<]*//g' doc/perl/index.html
+
     if [[ -n $CI_USER_TOKEN ]]; then
         function github_docs_clone {
             git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs
@@ -148,6 +153,7 @@ function linux_build_analysis {
         mv doc/xmms2/html github-docs/api/xmms2
         mv doc/xmmsclient/html github-docs/api/xmmsclient
         mv doc/ruby github-docs/api/ruby
+        mv doc/perl github-docs/api/perl
 
         cd github-docs
         git add clang api
