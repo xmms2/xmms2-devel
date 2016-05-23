@@ -26,6 +26,19 @@
 #include "utils.h"
 #include "xmmscall.h"
 
+gint
+xmmsv_strcmp (xmmsv_t **a, xmmsv_t **b)
+{
+	const gchar *as, *bs;
+
+	as = bs = NULL;
+
+	xmmsv_get_string (*a, &as);
+	xmmsv_get_string (*b, &bs);
+
+	return g_strcmp0 (as, bs);
+}
+
 #define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) ||	\
                      (((a) >= 'A') && ((a) <= 'Z')) ||	\
                      (((a) >= '0') && ((a) <= '9')) ||	\

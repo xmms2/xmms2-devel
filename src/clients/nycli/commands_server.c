@@ -343,19 +343,6 @@ cli_server_config_print_entry (const gchar *confname, xmmsv_t *val, void *udata)
 		g_printf ("%s = %d\n", confname, number);
 }
 
-static gint
-cli_server_config_sort (xmmsv_t **a, xmmsv_t **b)
-{
-	const gchar *as, *bs;
-
-	as = bs = NULL;
-
-	xmmsv_get_string (*a, &as);
-	xmmsv_get_string (*b, &bs);
-
-	return g_strcmp0 (as, bs);
-}
-
 static void
 cli_server_config_print (xmmsv_t *config, const gchar *confname)
 {
@@ -379,7 +366,7 @@ cli_server_config_print (xmmsv_t *config, const gchar *confname)
 		}
 	}
 
-	xmmsv_list_sort (list, cli_server_config_sort);
+	xmmsv_list_sort (list, xmmsv_strcmp);
 
 	xmmsv_get_list_iter (list, &lit);
 	while (xmmsv_list_iter_entry_string (lit, &key)) {
