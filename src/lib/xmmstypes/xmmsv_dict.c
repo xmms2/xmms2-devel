@@ -278,6 +278,61 @@ xmmsv_dict_has_key (xmmsv_t *dictv, const char *key)
 }
 
 /**
+ * Get a #XMMSV_TYPE_LIST of all the keys.
+ *
+ * @param val A xmmsv_t containing a dict.
+ * @param keys Pointer that will own the reference
+ *             to the new list containing the dict keys.
+ * @return 1 upon success otherwise 0
+ */
+int xmmsv_dict_keys (xmmsv_t *dictv, xmmsv_t **keys)
+{
+	xmmsv_dict_iter_t *it;
+	const char *key;
+
+	x_return_val_if_fail (keys, 0);
+	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
+
+	*keys = xmmsv_new_list ();
+	xmmsv_list_restrict_type (*keys, XMMSV_TYPE_STRING);
+	while (xmmsv_dict_iter_pair (it, &key, NULL)) {
+		xmmsv_list_append_string (*keys, key);
+		xmmsv_dict_iter_next (it);
+	}
+
+	xmmsv_dict_iter_explicit_destroy (it);
+
+	return 1;
+}
+
+/**
+ * Get a #XMMSV_TYPE_LIST of all the values.
+ *
+ * @param val A xmmsv_t containing a dict.
+ * @param keys Pointer that will own the reference
+ *             to the new list containing the dict values.
+ * @return 1 upon success otherwise 0
+ */
+int xmmsv_dict_values (xmmsv_t *dictv, xmmsv_t **values)
+{
+	xmmsv_dict_iter_t *it;
+	xmmsv_t *value;
+
+	x_return_val_if_fail (values, 0);
+	x_return_val_if_fail (xmmsv_get_dict_iter (dictv, &it), 0);
+
+	*values = xmmsv_new_list ();
+	while (xmmsv_dict_iter_pair (it, NULL, &value)) {
+		xmmsv_list_append (*values, value);
+		xmmsv_dict_iter_next (it);
+	}
+
+	xmmsv_dict_iter_explicit_destroy (it);
+
+	return 1;
+}
+
+/**
  * Gets the type of a dict entry.
  *
  * @param val A xmmsv_t containing a dict.

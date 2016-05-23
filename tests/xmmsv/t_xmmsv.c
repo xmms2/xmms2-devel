@@ -658,6 +658,45 @@ CASE (test_xmmsv_type_dict)
 	xmmsv_unref (value);
 }
 
+CASE (test_xmmsv_dict_keys) {
+	xmmsv_t *val, *keys;
+	const char *fst, *snd;
+
+	val = xmmsv_new_dict ();
+	CU_ASSERT_TRUE (xmmsv_dict_set_int (val, "a", 1));
+	CU_ASSERT_TRUE (xmmsv_dict_set_int (val, "b", 2));
+
+	CU_ASSERT_TRUE (xmmsv_dict_keys (val, &keys));
+	CU_ASSERT_TRUE (xmmsv_list_has_type (keys, XMMSV_TYPE_STRING));
+	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (keys));
+	CU_ASSERT_TRUE (xmmsv_list_get_string (keys, 0, &fst));
+	CU_ASSERT_TRUE (xmmsv_list_get_string (keys, 1, &snd));
+	CU_ASSERT_TRUE ((strcmp ("a", fst) == 0 && strcmp ("b", snd) == 0) ||
+	                (strcmp ("a", snd) == 0 && strcmp ("b", fst) == 0));
+
+	xmmsv_unref (keys);
+	xmmsv_unref (val);
+}
+
+CASE (test_xmmsv_dict_values) {
+	xmmsv_t *val, *values;
+	const char *fst, *snd;
+
+	val = xmmsv_new_dict ();
+	CU_ASSERT_TRUE (xmmsv_dict_set_string (val, "1", "a"));
+	CU_ASSERT_TRUE (xmmsv_dict_set_string (val, "2", "b"));
+
+	CU_ASSERT_TRUE (xmmsv_dict_values (val, &values));
+	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (values));
+	CU_ASSERT_TRUE (xmmsv_list_get_string (values, 0, &fst));
+	CU_ASSERT_TRUE (xmmsv_list_get_string (values, 1, &snd));
+	CU_ASSERT_TRUE ((strcmp ("a", fst) == 0 && strcmp ("b", snd) == 0) ||
+	                (strcmp ("a", snd) == 0 && strcmp ("b", fst) == 0));
+
+	xmmsv_unref (values);
+	xmmsv_unref (val);
+}
+
 CASE (test_xmmsv_dict_format) {
 	xmmsv_t *val;
 	char *buf;
