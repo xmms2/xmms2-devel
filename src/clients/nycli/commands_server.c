@@ -41,21 +41,56 @@ typedef struct cli_info_print_positions_St {
 } cli_info_print_positions_t;
 
 static void
+cli_info_pad_source (GString *sb, gint source_width, const gchar *source)
+{
+	gint i, length;
+
+	g_string_truncate (sb, 0);
+
+	length = strlen (source);
+	for (i = 0; i < (source_width - length); i++) {
+		g_string_insert_c (sb, i, ' ');
+	}
+	g_string_insert (sb, i, source);
+}
+
+static void
 cli_info_print (xmmsv_t *propdict)
 {
-	xmmsv_dict_iter_t *pit, *dit;
-	xmmsv_t *dict, *value;
-	const gchar *source, *key;
+	xmmsv_t *properties, *sourcedict, *sources, *value;
+	xmmsv_list_iter_t *pit, *sit;
+	const gchar *source, *property;
+	gint source_width;
+	GString *sb;
 
-	xmmsv_get_dict_iter (propdict, &pit);
-	while (xmmsv_dict_iter_pair (pit, &key, &dict)) {
-		xmmsv_get_dict_iter (dict, &dit);
-		while (xmmsv_dict_iter_pair (dit, &source, &value)) {
-			xmmsv_print_value (source, key, value);
-			xmmsv_dict_iter_next (dit);
-		}
-		xmmsv_dict_iter_next (pit);
+	if (!xmmsv_propdict_lengths (propdict, NULL, &source_width)) {
+		return;
 	}
+
+	sb = g_string_sized_new (source_width);
+
+	xmmsv_dict_keys (propdict, &properties);
+	xmmsv_list_sort (properties, xmmsv_strcmp);
+
+	xmmsv_get_list_iter (properties, &pit);
+	while (xmmsv_list_iter_entry_string (pit, &property)) {
+		if (xmmsv_dict_get (propdict, property, &sourcedict)) {
+			xmmsv_dict_keys (sourcedict, &sources);
+			xmmsv_list_sort (sources, xmmsv_strcmp);
+
+			xmmsv_get_list_iter (sources, &sit);
+			while (xmmsv_list_iter_entry_string (sit, &source)) {
+				if (xmmsv_dict_get (sourcedict, source, &value)) {
+					cli_info_pad_source (sb, source_width, source);
+					xmmsv_print_value (sb->str, property, value);
+				}
+				xmmsv_list_iter_next (sit);
+			}
+		}
+		xmmsv_list_iter_next (pit);
+	}
+
+	g_string_free (sb, TRUE);
 }
 
 static void
