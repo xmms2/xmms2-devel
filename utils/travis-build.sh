@@ -109,17 +109,17 @@ function linux_build_analysis {
 
     # TODO: Should really be in install, needs to be made conditional, and really
     #       via addons: as it is for precise, see apt-source-whitelist #199.
-    echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main" | sudo tee -a /etc/apt/sources.list
+    echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list
     sudo apt-get update -q
-    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.7
+    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.9
 
-    scan-build-3.7 $config -o build-analysis/clang \
+    scan-build-3.9 $config -o build-analysis/clang \
                    ./waf configure -o build-analysis --without-optionals=python --with-custom-version=clang-analysis
 
     # wipe the report from the configure phase, just need to set the tool paths.
     rm -rf build-analysis/clang
 
-    scan-build-3.7 $config -o build-analysis/clang \
+    scan-build-3.9 $config -o build-analysis/clang \
                    ./waf build --notests
 
     # Generate core / clientlib documentation, strip timestamps
