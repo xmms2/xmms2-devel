@@ -138,6 +138,22 @@ function linux_build_analysis {
     perl -MPod::Simple::HTMLBatch -e Pod::Simple::HTMLBatch::go build-analysis/src/clients/lib/perl doc/perl
     sed -i 's/<br >[^<]*//g' doc/perl/index.html
 
+    # Generate python bindings
+    ./waf configure -o build-python --without-xmms2d --with-optionals=python
+    ./waf build
+    ./waf install --destdir=build-python/tmp
+    pip install --user sphinx
+    pip install --user sphinx_py3doc_enhanced_theme
+    (export LD_LIBRARY_PATH=build-python/tmp/usr/local/lib
+     export PYTHONPATH=build-python/tmp/usr/local/lib/python2.7/dist-packages
+     python src/clients/lib/python/sphinx-generator.py doc/python 0.8DrO_o+WiP
+     ~/.local/bin/sphinx-build doc/python doc/python/html
+     rm -rf \
+        doc/python/html/.buildinfo \
+        doc/python/html/.doctrees \
+        doc/python/html/_sources \
+        doc/python/html/objects.inv)
+
     # Remove all HTML comments, saves some space and removes some dynamic content.
     find doc -name '*.html' -exec sed -i -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' {} \;
 
@@ -157,6 +173,7 @@ function linux_build_analysis {
         mv doc/xmmsclient/html github-docs/api/xmmsclient
         mv doc/ruby github-docs/api/ruby
         mv doc/perl github-docs/api/perl
+        mv doc/python/html github-docs/api/python
 
         cd github-docs
         git add clang api
