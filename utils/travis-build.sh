@@ -180,7 +180,7 @@ function linux_build_analysis {
 
         cd github-docs
         git add clang api
-        git commit -a -m "Automatic update of API docs / Clang Static Analysis"
+        git commit -a -m "Automatic update of API docs / Clang Static Analysis" || true
 
         function github_docs_push {
             git push &> /dev/null
