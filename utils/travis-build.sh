@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 trap exit ERR
 
@@ -162,7 +162,7 @@ function linux_build_analysis {
 
     if [[ -n $CI_USER_TOKEN ]]; then
         function github_docs_clone {
-            git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs
+            git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs &> /dev/null
         }
 
         retry "github_docs_clone" "Fetching xmms2/docs.git repo"
@@ -183,7 +183,7 @@ function linux_build_analysis {
         git commit -a -m "Automatic update of API docs / Clang Static Analysis"
 
         function github_docs_push {
-            git push
+            git push &> /dev/null
         }
 
         retry "github_docs_push" "Pushing to xmms2/docs.git repo"
