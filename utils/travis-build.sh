@@ -122,6 +122,9 @@ function linux_build_analysis {
     scan-build-3.9 $config -o build-analysis/clang \
                    ./waf build --notests
 
+    # remove dynamic parts of the report
+    sed -i -r 's/(<tr><th>(User|Date):<\/th><td>)([^<]+)(<\/td><\/tr>)/\1\4/g' build-analysis/clang/*/index.html
+
     # Generate core / clientlib documentation, strip timestamps
     echo "</body></html>" > /tmp/footer.html
     (cat Doxyfile && echo "HTML_FOOTER=/tmp/footer.html") | doxygen -
