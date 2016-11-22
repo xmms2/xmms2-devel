@@ -431,6 +431,10 @@ E: syscrash2k@gmail.com
 W: http://syscrash.ca
 D: Volume normalization plugin
 
+N: Sebastian Andrzej Siewior
+E: sebastian@breakpoint.cc
+D: airplay/openssl
+
 N: Ben Slote
 E: bslote@gmail.com
 D: Pythonbindings fix
