@@ -1,6 +1,6 @@
 /** @file asf.c
  *  Demuxer plugin for ASF audio format
- *  Copyright (C) 2003-2016 XMMS2 Team
+ *  Copyright (C) 2003-2017 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
