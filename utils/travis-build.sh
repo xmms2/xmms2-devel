@@ -163,7 +163,7 @@ function linux_build_analysis {
     # Remove all HTML comments, saves some space and removes some dynamic content.
     find doc -name '*.html' -exec sed -i -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' {} \;
 
-    if [[ -n $CI_USER_TOKEN ]]; then
+    if [[ $UPLOAD_DOCS = 1 ]]; then
         function github_docs_clone {
             git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs &> /dev/null
         }
