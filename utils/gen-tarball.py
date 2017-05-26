@@ -24,7 +24,7 @@ def add_files(ball, prefix, template, files):
         if os.path.exists(path):
             os.unlink(path)
 
-        fd = file(path, "w+")
+        fd = open(path, "wb+")
         fd.write(content)
         fd.close()
 
@@ -32,13 +32,13 @@ def add_files(ball, prefix, template, files):
         for key, value in template.items():
             setattr(tinfo, key, value)
 
-        fd = file(path)
+        fd = open(path, "rb")
         tfile.addfile(tinfo, fileobj=fd)
         fd.close()
 
     tfile.close()
 
-VERSION = check_output(["git", "describe"]).strip()
+VERSION = check_output(["git", "describe"]).decode().strip()
 
 # TODO: derive paths from submodule configuration
 TUTORIAL_DIR="doc/tutorial"

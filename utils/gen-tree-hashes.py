@@ -6,7 +6,7 @@ import os
 def collect_hashes(*paths):
     hashes = []
     for path in paths:
-        data = check_output("git --git-dir=%s/.git ls-tree -r HEAD" % path, shell=True)
+        data = check_output("git --git-dir=%s/.git ls-tree -r HEAD" % path, shell=True).decode()
         for line in data.split("\n"):
             line = line.strip()
             if line:
@@ -19,6 +19,6 @@ def collect_hashes(*paths):
 
     return "\n".join(result)
 
-print check_output("git describe", shell=True)
-print collect_hashes(".", "doc/tutorial")
-print collect_hashes(".", "src/lib/s4")
+print(check_output("git describe", shell=True).decode())
+print(collect_hashes(".", "doc/tutorial"))
+print(collect_hashes(".", "src/lib/s4"))
