@@ -38,11 +38,11 @@ for line in check_output("git log --pretty=format:'%t\t%an\t%ai\t%s'", shell=Tru
         authors = list(authorchanges.keys())
         authors.sort()
         for a in authors:
-            print(" %s:" % a)
+            print(" %s:" % a.encode("utf-8"))
             changes = authorchanges[a]
             changes.sort()
             for c in changes:
-                print("  * %s" % c)
+                print("  * %s" % c.encode("utf-8"))
             print
         print
         print
