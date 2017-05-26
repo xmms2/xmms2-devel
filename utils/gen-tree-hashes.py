@@ -21,3 +21,4 @@ def collect_hashes(*paths):
 
 print check_output("git describe", shell=True)
 print collect_hashes(".", "doc/tutorial")
+print collect_hashes(".", "src/lib/s4")
