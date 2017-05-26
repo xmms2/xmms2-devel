@@ -194,7 +194,7 @@ function linux_build_analysis {
 }
 
 function darwin_install {
-    filename=MacPorts-2.3.4-10.11-ElCapitan.pkg
+    filename=MacPorts-2.4.1-10.11-ElCapitan.pkg
     curl -O "https://distfiles.macports.org/MacPorts/$filename"
     sudo installer -pkg $filename -target /
 
@@ -204,7 +204,7 @@ function darwin_install {
     sudo port selfupdate
     for pkg in "${MACPORTS_PKGS[@]}"
     do
-        sudo port install --no-rev-upgrade $pkg
+        sudo port -N install --no-rev-upgrade $pkg
     done
 
     sudo port select --set python python27
