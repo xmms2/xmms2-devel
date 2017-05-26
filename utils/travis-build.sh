@@ -107,19 +107,22 @@ function linux_build_analysis {
     export PATH=/usr/bin:$PATH
     config="-analyzer-config stable-report-filename=true"
 
+    clang_version="4.0"
+    scan_build="scan-build-$clang_version"
+
     # TODO: Should really be in install, needs to be made conditional, and really
     #       via addons: as it is for precise, see apt-source-whitelist #199.
-    echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list
+    echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-$clang_version main" | sudo tee -a /etc/apt/sources.list
     sudo apt-get update -q
-    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.9
+    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-$clang_version
 
-    scan-build-3.9 $config -o build-analysis/clang \
+    $scan_build $config -o build-analysis/clang \
                    ./waf configure -o build-analysis --without-optionals=python --with-custom-version=clang-analysis
 
     # wipe the report from the configure phase, just need to set the tool paths.
     rm -rf build-analysis/clang
 
-    scan-build-3.9 $config -o build-analysis/clang \
+    $scan_build $config -o build-analysis/clang \
                    ./waf build --notests
 
     # remove dynamic parts of the report
