@@ -20,7 +20,7 @@ matrix:
       compiler: clang
     - env: BUILD_MODE=regular
       os: osx
-      osx_image: xcode7.2
+      osx_image: xcode7.3
       compiler: clang
     - env: BUILD_MODE=analysis
       os: linux
