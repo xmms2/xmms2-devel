@@ -66,8 +66,10 @@ _xmmsv_dict_hash (const void *key, int len)
 
 	while (len >= 4)
 	{
-		uint32_t k;
-		memcpy (&k, data, sizeof (k));
+		uint32_t k = data [0]
+			| data [1] << 8
+			| data [2] << 16
+			| data [3] << 24;
 
 		k *= m;
 		k ^= k >> r;
