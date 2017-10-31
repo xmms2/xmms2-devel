@@ -85,7 +85,7 @@ typedef struct xmms_xform_hotspot_St {
 
 static gboolean xmms_xform_match (xmms_plugin_t *plugin, gpointer user_data);
 xmms_xform_t *xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
-                               GList *goal_hints);
+                               GList *goal_hints, gboolean want_chain);
 static gboolean has_goalformat (xmms_xform_t *xform, GList *goal_formats);
 const char *xmms_xform_shortname (xmms_xform_t *xform);
 static xmms_xform_t *add_effects (xmms_xform_t *last,
@@ -290,7 +290,7 @@ xmms_xform_browse (const gchar *url, xmms_error_t *error)
 	                             durl,
 	                             XMMS_STREAM_TYPE_END);
 
-	xform2 = xmms_xform_find (xform, 0, NULL);
+	xform2 = xmms_xform_find (xform, 0, NULL, FALSE);
 	if (xform2) {
 		XMMS_DBG ("found xform %s", xmms_xform_shortname (xform2));
 	} else {
@@ -1119,6 +1119,7 @@ typedef struct match_state_St {
 	GList *goal_hints;
 	const gchar *chain_title;  /* Name of partial xform chain being built */
 	gint depth;                /* Maximum recursion depth */
+	gboolean want_chain;       /* FALSE to get just one xform, not a full chain */
 } match_state_t;
 
 /* State information for inner loop */
@@ -1302,6 +1303,14 @@ xmms_xform_submatch (xmms_plugin_t *plugin, gpointer user_data)
 	if (xform_test) {
 		/* Got an xform that can handle this format */
 		substate->matched = TRUE;
+
+		if (!substate->state->want_chain) {
+			/* Only a single xform is wanted, so don't build a whole chain */
+			substate->state->final_xform = xform_test;
+			substate->state->final_xform_priority = this_priority;
+			return FALSE;
+		}
+
 		if (!has_goalformat (xform_test, substate->state->goal_hints)) {
 			GString *chain_title;
 			match_state_t nextState;
@@ -1336,6 +1345,7 @@ xmms_xform_submatch (xmms_plugin_t *plugin, gpointer user_data)
 			nextState.goal_hints = substate->state->goal_hints;
 			nextState.chain_title = chain_title->str;
 			nextState.depth = substate->state->depth + 1;
+			nextState.want_chain = substate->state->want_chain;
 
 			xmms_xform_match(NULL, &nextState);
 
@@ -1433,14 +1443,15 @@ xmms_xform_match (xmms_plugin_t *plugin, gpointer user_data)
 	if (state->out_type == NULL) {
 		xmms_log_error ("[chain %s] Asked to find xform for NULL target type",
 		                state->chain_title);
-		return FALSE;
+		out_type_str = "<any>";
+	} else {
+		out_type_str = xmms_stream_type_get_str(state->out_type, XMMS_STREAM_TYPE_MIMETYPE);
 	}
 
-	out_type_str = xmms_stream_type_get_str(state->out_type, XMMS_STREAM_TYPE_MIMETYPE);
 	XMMS_DBG ("[chain %s] Looking for xform with priority >= %d, that can handle '%s'",
 	          state->chain_title,
 	          state->final_xform_priority,
-	          out_type_str ? out_type_str : "<null>");
+	          out_type_str);
 
 	substate.state = state;
 	substate.limit_priority = 200;
@@ -1452,7 +1463,6 @@ xmms_xform_match (xmms_plugin_t *plugin, gpointer user_data)
 		substate.matched = FALSE;
 
 		initial_limit_priority = substate.limit_priority;
-		const char *out_type_str = xmms_stream_type_get_str(state->out_type, XMMS_STREAM_TYPE_MIMETYPE);
 		XMMS_DBG ("[chain %s] Searching all plugins for '%s' handler with "
 		          "priority <= %d",
 		          state->chain_title,
@@ -1487,14 +1497,14 @@ xmms_xform_match (xmms_plugin_t *plugin, gpointer user_data)
 	XMMS_DBG ("[chain %s] Finished looking for xform with priority >= %d, that can handle '%s'",
 	          state->chain_title,
 	          state->final_xform_priority,
-	          out_type_str ? out_type_str : "<null>");
+	          out_type_str);
 
 	return TRUE;
 }
 
 xmms_xform_t *
 xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
-                 GList *goal_hints)
+                 GList *goal_hints, gboolean want_chain)
 {
 	match_state_t state;
 
@@ -1507,6 +1517,7 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry,
 	state.goal_hints = goal_hints;
 	state.chain_title = "";
 	state.depth = 0;
+	state.want_chain = want_chain;
 
 	xmms_xform_match(NULL, &state);
 
@@ -1656,7 +1667,7 @@ chain_setup (xmms_medialib_t *medialib, xmms_medialib_entry_t entry,
 
 
 	last = xform;
-	xform = xmms_xform_find (last, entry, goal_formats);
+	xform = xmms_xform_find (last, entry, goal_formats, TRUE);
 	xmms_object_unref (last);
 	if (!xform) {
 		xmms_log_error ("Couldn't set up chain for '%s' (%d)",
