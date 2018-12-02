@@ -1,7 +1,39 @@
+from waflib import Errors
 from waftools.plugin import plugin
 
-def plugin_configure(conf):
-    conf.check_cfg(path="sc68-config", package="sc68", uselib_store="sc68",
-            atleast_version="2.3.0", args="--cflags --libs")
+## Code fragments for configuration
+sc68_error_no_arg_fragment = """
+#ifdef HAVE_SC68_OLD
+# include "api68/api68.h"
+#else
+# include "sc68/sc68.h"
+#endif
+int main(void) {
+    const char *err;
 
-configure, build = plugin('sc68', configure=plugin_configure, libs=["sc68"])
+#ifdef HAVE_SC68_OLD
+    err = api68_error();
+#else
+    err = sc68_error();
+#endif
+
+    return 0;
+}
+"""
+
+def plugin_configure(conf):
+    try:
+        conf.check_cfg(path="sc68-config", package="sc68", uselib_store="sc68",
+                       atleast_version="2.3.0", args="--cflags --libs",
+                       defines="HAVE_SC68_OLD")
+    except Errors.ConfigurationError:
+        conf.check_cfg(package="sc68", uselib_store="sc68",
+                       atleast_version="0.29", args="--cflags --libs")
+
+    conf.check_cc(fragment=sc68_error_no_arg_fragment, uselib="sc68",
+                  uselib_store="sc68_error_no_arg",
+                  msg="Checking if sc68_error() takes an argument",
+                  mandatory=False)
+
+configure, build = plugin('sc68', configure=plugin_configure,
+                          source=['sc68.c', 'sc68_compat.c'], libs=["sc68"])
