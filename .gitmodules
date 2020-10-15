@@ -1,6 +1,6 @@
 [submodule "doc/tutorial"]
 	path = doc/tutorial
-	url = git://git.xmms2.org/xmms2/xmms2-tutorial.git
+	url = https://github.com/xmms2/xmms2-tutorial
 [submodule "src/lib/s4"]
 	path = src/lib/s4
-	url = git://git.xmms2.org/xmms2/s4.git
+	url = https://github.com/xmms2/s4
