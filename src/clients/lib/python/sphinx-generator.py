@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2017 XMMS2 Team
+# Copyright (C) 2003-2020 XMMS2 Team
 #
 # As sphinx doesn't detect constants in modules we have to
 # generate parts of the documentation. To keep it all in the

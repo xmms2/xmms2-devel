@@ -6,7 +6,7 @@ from indenter import Indenter
 
 HEADER_PROLOG = """
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2017 XMMS2 Team
+ *  Copyright (C) 2003-2020 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *

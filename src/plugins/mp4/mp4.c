@@ -1,7 +1,7 @@
 /** @file mp4.c
  *  Decoder plugin for MP4 audio format
  *
- *  Copyright (C) 2005-2017 XMMS2 Team
+ *  Copyright (C) 2005-2020 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
