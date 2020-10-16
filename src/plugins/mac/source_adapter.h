@@ -38,7 +38,13 @@ public:
 	~CSourceAdapter () {};
 
 	// open / close
-	int Open (const wchar_t * pName) { return ERROR_SUCCESS; }
+#if MAC_DLL_INTERFACE_VERSION_NUMBER >= 1000
+	int Open (const wchar_t * pName, BOOL bOpenReadOnly = FALSE)
+#else
+	int Open (const wchar_t * pName)
+#endif
+	{ return ERROR_SUCCESS; }
+
 	int Close () { return ERROR_SUCCESS; }
 
 	// read / write

@@ -210,8 +210,12 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 				gchar *name;
 
 				field_name = pTagField->GetFieldName ();
-				name = (gchar *)GetUTF8FromUTF16 (field_name);
 
+#if MAC_DLL_INTERFACE_VERSION_NUMBER >= 1000
+				name = (gchar *)CAPECharacterHelper::GetUTF8FromUTF16 (field_name);
+#else
+				name = (gchar *)GetUTF8FromUTF16 (field_name);
+#endif
 				memset (field_value, 0, 255);
 				int size = 255;
 				p_ape_tag->GetFieldString (field_name, (char *)field_value, &size, TRUE);
