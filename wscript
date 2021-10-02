@@ -377,7 +377,7 @@ def configure(conf):
                 hasoptim=True
                 break
         if not hasoptim:
-            conf.env.append_unique(env, ['-g', '-O0'])
+            conf.env.append_unique(env, ['-g', '-O2'])
 
     if conf.options.enable_gcov:
         conf.env.enable_gcov = True
