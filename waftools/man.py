@@ -14,7 +14,12 @@ def gzip_func(task):
     try:
         input = open(infile, 'rb')
         outf = open(outfile, 'wb')
-        output = gzip.GzipFile(os.path.basename(infile), fileobj=outf)
+        # Allow building deterministic manpages:
+        #   https://reproducible-builds.org/docs/source-date-epoch/
+        mtime = os.environ.get('SOURCE_DATE_EPOCH')
+        if mtime:
+            mtime = int(mtime)
+        output = gzip.GzipFile(os.path.basename(infile), fileobj=outf, mtime=mtime)
         output.write(input.read())
     finally:
         if input:
