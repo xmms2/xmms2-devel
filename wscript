@@ -26,7 +26,11 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x1090900
+# How to update waf:
+# 1. update utils/wafgen.conf
+# 2. run ./utils/wafgen
+# 3. fix version here
+_waf_hexversion = 0x2001600 # 2.0.22
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
