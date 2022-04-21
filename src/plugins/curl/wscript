@@ -16,7 +16,14 @@ def plugin_configure(conf):
     # This is a function this plugin uses and that was added to curl in
     # version 7.12.0. We cannot check for the curl version as curl-config
     # did not support version tests before version 7.15.0
-    conf.check_cc(function_name="curl_multi_strerror",
+    fragment = """
+    #include <curl/curl.h>
+    int main(void) {
+        return curl_multi_strerror(0) != 0;
+    }
+    """
+
+    conf.check_cc(fragment=fragment,
             header_name="curl/curl.h", uselib="curl")
 
 configure, build = plugin('curl', configure=plugin_configure,

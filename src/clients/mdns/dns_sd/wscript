@@ -21,10 +21,18 @@ def configure(conf):
   if Utils.unversioned_sys_platform() == "darwin":
     return
 
+  fragment = """
+  #include <dns_sd.h>
+  int main(void) {
+      DNSServiceRegister(0,0,0,0,0,0,0,0,0,0,0,0);
+      return 0;
+  }
+  """
+
   conf.check_cc(
           lib="dns_sd",
           header_name="dns_sd.h",
-          function_name="DNSServiceRegister",
+          fragment=fragment,
           uselib_store="dnssd"
           )
 

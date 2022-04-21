@@ -4,9 +4,27 @@ def plugin_build(bld, obj):
     obj.source.append('browse/fstatat.c')
 
 def plugin_configure(conf):
-    conf.check_cc(function_name='fstatat', header_name=['fcntl.h','sys/stat.h'],
+    fstatat_fragment = """
+    #include <fcntl.h>
+    #include <sys/stat.h>
+    int main(void) {
+        struct stat s;
+        return fstatat(0,"path",&s,0);
+    }
+    """
+    conf.check_cc(fragment=fstatat_fragment, header_name=['fcntl.h','sys/stat.h'],
             defines=['_ATFILE_SOURCE=1'])
-    conf.check_cc(function_name='dirfd', header_name=['dirent.h','sys/types.h'])
+
+    dirfd_fragment = """
+    #include <dirent.h>
+    #include <sys/types.h>
+    int main(void) {
+        DIR * d;
+        d = opendir("/");
+        return dirfd(d);
+    }
+    """
+    conf.check_cc(fragment=dirfd_fragment, header_name=['dirent.h','sys/types.h'])
 
 configure, build = plugin("file",
         configure=plugin_configure, build=plugin_build,

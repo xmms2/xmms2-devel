@@ -39,10 +39,17 @@ def configure(conf):
         conf.env.util_impl = 'win32'
     else:
         conf.env.util_impl = 'unix'
+
+        nanosleep_fragment = """
+        #include <time.h>
+        int main(void) {
+            return nanosleep(0,0);
+        }
+        """
         try:
-            conf.check_cc(function_name="nanosleep", header_name="time.h")
+            conf.check_cc(fragment=nanosleep_fragment, header_name="time.h")
         except Errors.ConfigurationError:
-            conf.check_cc(function_name="nanosleep", header_name="time.h",
+            conf.check_cc(fragment=nanosleep_fragment, header_name="time.h",
                     lib="rt", uselib_store="rt")
     return True
 

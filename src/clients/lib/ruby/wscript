@@ -52,7 +52,16 @@ def configure(conf):
     conf.check_ruby_version((1,8,0))
     conf.check_ruby_ext_devel()
 
-    conf.check_cc(function_name="rb_protect_inspect", header_name="ruby.h",
+    # TODO: port from rb_protect_inspect() to rb_exec_recursive():
+    #    https://github.com/ruby/ruby/commit/70bbad3cfd5a692c8e78ccf750eed3f1c7f186db
+    fragment = """
+    #include <ruby.h>
+    int main(void) {
+        rb_protect_inspect(0,0,0);
+        return 0;
+    }
+    """
+    conf.check_cc(fragment=fragment, header_name="ruby.h",
             uselib="RUBYEXT", mandatory=False)
 
     prefix = os.path.commonprefix([conf.env.ARCHDIR_RUBY, conf.env.PREFIX])

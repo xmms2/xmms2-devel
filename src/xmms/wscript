@@ -175,7 +175,13 @@ def get_statfs_impl(conf):
 # Get the implementation variant for the localtime_r function.
 def get_localtime_impl(conf):
     try:
-        conf.check_cc(function_name='localtime_r', header_name='time.h')
+        localtime_r_fragment = """
+        #include <time.h>
+        int main(void) {
+            return localtime_r(0, 0) != 0;
+        }
+        """
+        conf.check_cc(fragment=localtime_r_fragment, header_name='time.h')
     except Errors.ConfigurationError:
         return 'dummy'
     else:
@@ -193,7 +199,13 @@ def get_visualization_impl(conf):
         return 'dummy'
 
     try:
-        conf.check_cc(function_name='semctl',
+        semctl_fragment = """
+        #include <sys/sem.h>
+        int main(void) {
+            return semctl(0,0,0,0);
+        }
+        """
+        conf.check_cc(fragment=semctl_fragment,
                       header_name=['sys/types.h','sys/ipc.h','sys/sem.h'])
     except:
         have_semctl = False
@@ -216,7 +228,13 @@ def configure(conf):
             uselib_store='gmodule2', args='--cflags --libs')
 
     # Check for the sin function in the math lib
-    conf.check_cc(lib='m', function_name='sin', header_name='math.h',
+    sin_fragment = """
+    #include <math.h>
+    int main(void) {
+        return sin(0.5);
+    }
+    """
+    conf.check_cc(lib='m', fragment=sin_fragment, header_name='math.h',
                   uselib_store="math")
 
     conf.env.compat_impl = get_compat_impl(conf)

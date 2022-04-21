@@ -450,7 +450,13 @@ def configure(conf):
         conf.env.explicit_install_name = False
 
     if Utils.unversioned_sys_platform() == 'sunos':
-        conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
+        socket_fragment = """
+        #include <sys/socket.h>
+        int main(void) {
+          return socket(0,0,0);
+        }
+        """
+        conf.check_cc(fragment=socket_fragment, lib='socket', header_name='sys/socket.h', uselib_store='socket')
         conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CFLAGS', '-std=gnu99')

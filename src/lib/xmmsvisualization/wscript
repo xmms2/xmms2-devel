@@ -24,7 +24,13 @@ def build(bld):
 
 def configure(conf):
     # Check for the modf function in the math lib
-    conf.check_cc(function_name="modf", header_name="math.h",
+    modf_fragment = """
+    #include <math.h>
+    int main(void) {
+        return modf(0.0, 0);
+    }
+    """
+    conf.check_cc(fragment=modf_fragment, header_name="math.h",
             lib="m", uselib_store="math")
     return True
 

@@ -21,7 +21,14 @@ def configure(conf):
     conf.check_cfg(package="gio-2.0", uselib_store='gio2',
             args="--cflags --libs")
 
-    conf.check_cc(function_name="g_file_query_file_type",
+    fragment = """
+    #include <gio/gio.h>
+    int main(void) {
+        g_file_query_file_type(0,0,0);
+        return 0;
+    }
+    """
+    conf.check_cc(fragment=fragment,
             header_name="gio/gio.h", uselib="gio2", mandatory=False)
 
 
