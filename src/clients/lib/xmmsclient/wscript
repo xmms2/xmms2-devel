@@ -46,7 +46,13 @@ def configure(conf):
     conf.env.XMMS_PKGCONF_FILES.append(("xmms2-client", "-lxmmsclient"))
 
     try:
-        conf.check_cc(function_name="semtimedop",
+        semtimedop_fragment = """
+        #include <sys/sem.h>
+        int main(void) {
+            return semtimedop(0,0,0,0);
+        }
+        """
+        conf.check_cc(fragment=semtimedop_fragment,
                 header_name=["sys/types.h", "sys/ipc.h", "sys/sem.h"],
                 defines=["_GNU_SOURCE=1"])
     except Errors.ConfigurationError:
