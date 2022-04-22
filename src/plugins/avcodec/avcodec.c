@@ -31,6 +31,7 @@
 
 typedef struct {
 	AVCodecContext *codecctx;
+	AVPacket packet;
 
 	guchar *buffer;
 	guint buffer_length;
@@ -149,12 +150,11 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	data->buffer = g_malloc (AVCODEC_BUFFER_SIZE);
 	data->buffer_size = AVCODEC_BUFFER_SIZE;
 	data->codecctx = NULL;
+	data->packet.size = 0;
 
 	data->read_out_frame = av_frame_alloc ();
 
 	xmms_xform_private_data_set (xform, data);
-
-	avcodec_register_all ();
 
 	mimetype = xmms_xform_indata_get_str (xform,
 	                                      XMMS_STREAM_TYPE_MIMETYPE);
@@ -466,45 +466,37 @@ FF_INPUT_BUFFER_PADDING_SIZE long.
 static gint
 xmms_avcodec_internal_decode_some (xmms_avcodec_data_t *data)
 {
-	int got_frame = 0;
-	gint bytes_read = 0;
-	AVPacket packet;
+	int rc = 0;
 
-	av_init_packet (&packet);
-	packet.data = data->buffer;
-	packet.size = data->buffer_length;
+	if (data->packet.size == 0) {
+		av_init_packet (&data->packet);
+		data->packet.data = data->buffer;
+		data->packet.size = data->buffer_length;
 
-	/* clear buffers and reset fields to defaults */
-	av_frame_unref (data->read_out_frame);
-
-	bytes_read = avcodec_decode_audio4 (
-		data->codecctx, data->read_out_frame, &got_frame, &packet);
-
-	/* The DTS decoder of ffmpeg is buggy and always returns
-	 * the input buffer length, get frame length from header */
-	/* FIXME: Is ^^^^ still true? */
-	if (!strcmp (data->codec_id, "dca") && bytes_read > 0) {
-		bytes_read = ((int)data->buffer[5] << 12) |
-		             ((int)data->buffer[6] << 4) |
-		             ((int)data->buffer[7] >> 4);
-		bytes_read = (bytes_read & 0x3fff) + 1;
+		rc = avcodec_send_packet(data->codecctx, &data->packet);
+		if (rc == AVERROR_EOF)
+			rc = 0;
 	}
 
-	if (bytes_read < 0 || bytes_read > data->buffer_length) {
+	if (rc == 0) {
+		rc = avcodec_receive_frame(data->codecctx, data->read_out_frame);
+		if (rc < 0) {
+			data->packet.size = 0;
+			data->buffer_length = 0;
+			if (rc == AVERROR(EAGAIN)) rc = 0;
+			else if (rc == AVERROR_EOF) rc = 1;
+		}
+		else
+			rc = 1;
+	}
+
+	if (rc < 0) {
+		data->packet.size = 0;
 		XMMS_DBG ("Error decoding data!");
 		return -1;
 	}
 
-	if (bytes_read < data->buffer_length) {
-		data->buffer_length -= bytes_read;
-		g_memmove (data->buffer,
-		           data->buffer + bytes_read,
-		           data->buffer_length);
-	} else {
-		data->buffer_length = 0;
-	}
-
-	return got_frame ? 1 : 0;
+	return rc;
 }
 
 static void
