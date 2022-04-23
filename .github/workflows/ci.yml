@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # When set to true, GitHub cancels
+      # all in-progress jobs if any matrix job fails.
+      fail-fast: false
+
+      matrix:
+
+        include:
+          - name: linux-latest
+            os: ubuntu-latest
+            # local variables
+            build_mode: regular
+            os_name: linux
+
+          - name: macos-latest
+            os: macos-latest
+            # local variables
+            build_mode: regular
+            os_name: osx
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Setup apt cache (Linux)
+        if: startsWith(runner.os, 'Linux')
+        uses: actions/cache@v2
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-cache-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-apt-cache-${{ matrix.os }}-
+            ${{ runner.os }}-apt-cache-
+
+      - name: Setup Prerequisites
+        run: |
+          case ${{ runner.os }} in
+            Linux*)
+              sudo apt update
+              packages=(
+                cython
+                doxygen
+                lcov
+                libao-dev
+                libasound2-dev
+                #libavahi-client-dev
+                #libavahi-glib-dev
+                libavcodec-dev
+                libboost-dev
+                #libcdio-cdda-dev
+                libcunit1-dev
+                libcurl4-gnutls-dev
+                #libdiscid0-dev
+                libefl-all-dev
+                libexpat1-dev
+                libfaad-dev
+                libfftw3-dev
+                libflac-dev
+                libfluidsynth-dev
+                libgamin-dev
+                libglib2.0-dev
+                libgme-dev
+                libjack-dev
+                libmad0-dev
+                libmms-dev
+                libmodplug-dev
+                libmpcdec-dev
+                #libmpg123-dev
+                libofa0-dev
+                #libopusfile-dev
+                libperl-dev
+                libpulse-dev
+                libreadline-dev
+                libresid-builder-dev
+                libsamplerate0-dev
+                libsdl1.2-dev
+                libshout3-dev
+                libsidplay2-dev
+                libsmbclient-dev
+                libsndfile1-dev
+                libsqlite3-dev
+                libssl-dev
+                libvisual-0.4-dev
+                libvorbis-dev
+                libwavpack-dev
+                libxml2-dev
+                python-dev
+                python-all-dev
+                ruby-all-dev
+                valgrind
+              )
+              sudo apt install "${packages[@]}"
+              ;;
+            macOS*)
+              # TODO
+              ;;
+          esac
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Build
+        env:
+          BUILD_MODE: ${{ matrix.build_mode }}
+          TRAVIS_OS_NAME: ${{ matrix.os_name }}
+        run: utils/travis-build.sh build
