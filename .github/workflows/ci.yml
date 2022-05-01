@@ -21,17 +21,29 @@ jobs:
       matrix:
 
         include:
-          - name: linux-latest
+          - name: linux-latest-gcc
             os: ubuntu-latest
             # local variables
             build_mode: regular
             os_name: linux
+            cc: gcc
+            cxx: g++
 
-          - name: macos-latest
+          - name: linux-latest-clang
+            os: ubuntu-latest
+            # local variables
+            build_mode: regular
+            os_name: linux
+            cc: clang
+            cxx: clang++
+
+          - name: macos-latest-clang
             os: macos-latest
             # local variables
             build_mode: regular
             os_name: osx
+            cc: clang
+            cxx: clang++
 
     steps:
       - name: Checkout Code
@@ -55,6 +67,8 @@ jobs:
             Linux*)
               sudo apt update
               packages=(
+                clang
+
                 cython
                 doxygen
                 lcov
@@ -122,4 +136,6 @@ jobs:
         env:
           BUILD_MODE: ${{ matrix.build_mode }}
           TRAVIS_OS_NAME: ${{ matrix.os_name }}
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
         run: utils/travis-build.sh build
