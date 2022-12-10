@@ -8,7 +8,9 @@ except NameError:
 class PropDict(dict):
 	def __init__(self, srcs):
 		dict.__init__(self)
-		self._sources = srcs
+		self._sources = list(srcs)
+		if len(self._sources) == 0:
+			self._sources = ['*']
 
 	def set_source_preference(self, sources):
 		"""
@@ -56,6 +58,9 @@ class PropDict(dict):
 	def _set_sources(self, val):
 		if isinstance(val, basestring):
 			raise TypeError("Need a sequence of sources")
+		val = list(val)
+		if len(val) == 0:
+			val = ['*']
 		for i in val:
 			if not isinstance(i, basestring):
 				raise TypeError("Sources need to be strings")
