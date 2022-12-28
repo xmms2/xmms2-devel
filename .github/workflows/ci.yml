@@ -122,7 +122,12 @@ jobs:
                 python3-dev
                 python3-all-dev
                 ruby-all-dev
-                valgrind
+
+                # CI's valgrind can't parse dwarf output produced by clang:
+                #  # unhandled dwarf2 abbrev form code 0x1b
+                #  Valgrind: debuginfo reader: Possibly corrupted debuginfo file.
+                # Disable it for now.
+                #valgrind
               )
               sudo apt install "${packages[@]}" || for p in "${packages[@]}"; do
                 # Install packages one by one if the whole bundle failed.
