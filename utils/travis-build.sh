@@ -80,7 +80,17 @@ function linux_build_regular {
     export PATH=/usr/bin:$PATH
 
     ./waf configure -o build-regular-$CC --prefix=/usr
-    ./waf build
+
+    failed_build=no
+    ./waf build || failed_build=yes
+    if [[ $failed_build = yes ]]; then
+        for l in build-regular-$CC/tests/*.log; do
+            echo "Test '$l' log:"
+            cat "$l"
+        done
+        exit 1
+    fi
+
     ./waf install --destdir=build-regular-$CC/tmp
 }
 
