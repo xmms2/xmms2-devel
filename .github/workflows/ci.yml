@@ -82,7 +82,7 @@ jobs:
                 libcunit1-dev
                 libcurl4-gnutls-dev
                 #libdiscid0-dev
-                libefl-all-dev
+                #libefl-all-dev
                 libexpat1-dev
                 libfaad-dev
                 libfftw3-dev
