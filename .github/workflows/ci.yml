@@ -69,7 +69,7 @@ jobs:
               packages=(
                 clang
 
-                cython
+                cython3
                 doxygen
                 lcov
                 libao-dev
@@ -82,7 +82,7 @@ jobs:
                 libcunit1-dev
                 libcurl4-gnutls-dev
                 #libdiscid0-dev
-                libefl-all-dev
+                #libefl-all-dev
                 libexpat1-dev
                 libfaad-dev
                 libfftw3-dev
@@ -115,12 +115,22 @@ jobs:
                 libvorbis-dev
                 libwavpack-dev
                 libxml2-dev
-                python-dev
-                python-all-dev
+
+                # for podselect
+                libpod-parser-perl
+
+                python3-dev
+                python3-all-dev
                 ruby-all-dev
                 valgrind
               )
-              sudo apt install "${packages[@]}"
+              sudo apt install "${packages[@]}" || for p in "${packages[@]}"; do
+                # Install packages one by one if the whole bundle failed.
+                # That should ease detection of individual problematic package
+                # that pulls in conflicting depend.
+                echo "Installing $p"
+                sudo apt install "$p" || exit 1
+              done
               ;;
             macOS*)
               # TODO
