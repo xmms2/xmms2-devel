@@ -120,7 +120,13 @@ jobs:
                 ruby-all-dev
                 valgrind
               )
-              sudo apt install "${packages[@]}"
+              sudo apt install "${packages[@]}" || for p in "${packages[@]}"; do
+                # Install packages one by one if the whole bundle failed.
+                # That should ease detection of individual problematic package
+                # that pulls in conflicting depend.
+                echo "Installing $p"
+                sudo apt install "$p" || exit 1
+              done
               ;;
             macOS*)
               # TODO
