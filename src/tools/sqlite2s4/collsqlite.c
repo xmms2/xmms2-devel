@@ -51,7 +51,7 @@ static xmmsv_t *
 create_coll (xmmsv_coll1_type_t type)
 {
 	xmmsv_t *ret;
-	xmmsv_coll_type_t new_type;
+	xmmsv_coll_type_t new_type = XMMS_COLLECTION1_TYPE_REFERENCE;
 	const char *idlist_type = NULL;
 
 	switch (type) {
@@ -150,8 +150,8 @@ restore_callback (void *userdata, int columns, char **col_strs, char **col_names
 {
 	struct db_info *info = userdata;
 	static gint previd = -1;
-	gint id, type, nsid, i;
-	const gchar *label;
+	gint id = 0, type = 0, nsid = 0, i;
+	const gchar *label = NULL;
 	static xmmsv_t *coll = NULL;
 
 	for (i = 0; i < columns; i++) {
@@ -202,7 +202,7 @@ static int
 attribute_callback (void *userdata, int cols, char **col_strs, char **col_names)
 {
 	xmmsv_t *coll = userdata;
-	const gchar *key, *value;
+	const gchar *key = NULL, *value = NULL;
 	int i;
 
 	for (i = 0; i < cols; i++) {
@@ -237,8 +237,8 @@ operator_callback (void *userdata, int cols, char **col_strs, char **col_names)
 	xmmsv_t *coll = info->coll;
 	xmmsv_t *op;
 	int i;
-	gint id;
-	gint type;
+	gint id = 0;
+	gint type = 0;
 
 	for (i = 0; i < cols; i++) {
 		if (!strcmp (col_names[i], "id")) {
