@@ -217,7 +217,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_removed (xmmsc_connection_t *c)
 
 	# Collections
-	ctypedef char *xmmsv_coll_namespace_t # Need to redeclare it
 	xmmsc_result_t *xmmsc_coll_get    (xmmsc_connection_t *c, char *collname, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_list   (xmmsc_connection_t *c, xmmsv_coll_namespace_t ns)
 	xmmsc_result_t *xmmsc_coll_save   (xmmsc_connection_t *c, xmmsv_t *coll, char* name, xmmsv_coll_namespace_t ns)
