@@ -43,7 +43,7 @@ find_terminal_width_from_environment (void)
 	colstr = getenv ("COLUMNS");
 	if (colstr != NULL) {
 		columns = strtol (colstr, &endptr, 10);
-		if (endptr != '\0') {
+		if (*endptr == '\0') {
 			return columns;
 		}
 	}
