@@ -67,7 +67,7 @@ static int source_callback (void *u, int argc, char *argv[], char *col[])
 {
 	GTree *sources = u;
 	int i;
-	char *src;
+	char *src = NULL;
 	int *id = malloc (sizeof (int));
 
 	for (i = 0; i < argc; i++) {
@@ -85,8 +85,8 @@ static int source_callback (void *u, int argc, char *argv[], char *col[])
 static int media_callback (void *u, int argc, char *argv[], char *col[])
 {
 	GTree *sources = u;
-	int id, src_id, i, intval;
-	char *key, *val, *intrepr, *src;
+	int id = 0, src_id = 0, i, intval;
+	char *key = NULL, *val = NULL, *intrepr = NULL, *src;
 	s4_val_t *id_val, *val_val;
 	s4_transaction_t *trans;
 
