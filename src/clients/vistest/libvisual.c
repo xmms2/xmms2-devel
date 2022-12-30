@@ -127,7 +127,7 @@ struct {
 } v;
 
 static void v_init (int, char**);
-static uint v_render (void);
+static void v_render (void);
 static void v_resize (int, int);
 
 static void
@@ -162,14 +162,18 @@ main (int argc, char** argv)
     v_init (argc, argv);
 
     //main loop
-    uint render_time = 10;
 	int samples = 0;
 
     while (samples > -1 && sdl_event_handler()) {
-		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, render_time, 250);
-		if (samples == 1024) {
-			render_time = v_render();
+		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, 0, 20);
+
+		if (samples != 1024) {  // e.g. when playpack is stopped
+		    memset(v.pcm_data, 0, sizeof(v.pcm_data));
 		}
+
+		v_render();
+
+		SDL_Delay(1);  // to avoid 100% CPU usage
     }
 
     return EXIT_SUCCESS;
@@ -412,7 +416,7 @@ v_init (int argc, char **argv)
 	/*printf ("Libvisual version %s; bpp: %d %s\n", visual_get_version(), v.video->bpp, (v.pluginIsGL ? "(GL)\n" : ""));*/
 }
 
-uint
+void
 v_render(void)
 {
 	/* On depth change */
@@ -427,8 +431,6 @@ v_render(void)
 		sdl_unlock ();
 	}
 
-	long ticks = -SDL_GetTicks ();
-
 	if (v.pluginIsGL) {
 		visual_bin_run (v.bin);
 		SDL_GL_SwapBuffers ();
@@ -442,7 +444,4 @@ v_render(void)
 		sdl_set_pal ();
 		SDL_Flip (screen);
 	}
-
-	ticks += SDL_GetTicks ();
-	return ticks;
 }
