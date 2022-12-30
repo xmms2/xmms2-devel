@@ -1,0 +1,39 @@
+xmms2 news related to releases. History of user visible changes.
+
+Version 0.9.1 DrPong (2022-05-02)
+
+11 years since the previous xmms2 release. The git history has
+accumulated over 600 commits.
+
+Notable changes:
+
+* Bundled waf was updated to version 2.0.22. It now requires python3.
+
+* The ffmpeg plugin was updated to support upstream API changes.
+
+* The medialib database backend switched from sqlite3 to s4, which was
+  created specifically for xmms2.
+
+  For typical xmms2 setups that run in home directories, the medialib
+  migration will happen automatically: once the new version of `xmms2d`
+  starts, it will convert the ~/.config/xmms2/medialib.db sqlite
+  database to the ~/.config/xmms2/medialib.s4 s4 database by running the
+  `sqlite2s4` tool.
+
+  In daemon logs you should be able to find messages similar to the
+  following:
+
+    20:49:30  INFO ... Attempting to migrate database to new format
+    20:46:30  INFO ... Migration successful.
+
+  Conversion takes a while. While it happens, most operations on the
+  medialib are blocked. For an example library of 30000 entries (~78MB
+  medialib.db), it took 8 minutes to migrate to s4 on SSD. The
+  conversion uses fsync() calls extensively and might take longer on
+  HDD.
+
+  Once the conversion is done, the sqlite database will move to
+  ~/.config/xmms2/medialib.db.obsolete.
+
+* The new `sqlite2s4` tool was added. `xmms2d` expects its presence in
+  `PATH` to perform automatic medialib conversion to the s4 format.
