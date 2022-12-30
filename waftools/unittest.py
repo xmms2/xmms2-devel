@@ -146,7 +146,8 @@ def generate_coverage(bld):
 
 def configure(conf):
     conf.load("waf_unit_test")
-    conf.find_program("valgrind", var="VALGRIND", mandatory=False)
+    if conf.options.enable_valgrind is True:
+        conf.find_program("valgrind", var="VALGRIND", mandatory=False)
     conf.find_program("lcov", var="LCOV", mandatory=False)
     conf.find_program("genhtml", var="GENHTML", mandatory=False)
 

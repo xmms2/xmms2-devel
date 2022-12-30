@@ -623,6 +623,10 @@ def options(opt):
                    dest='ldconfig', help="Run ldconfig after install even if not root")
     opt.add_option('--without-ldconfig', action='store_false',
                    dest='ldconfig', help="Don't run ldconfig after install")
+    opt.add_option('--with-valgrind', action='store_true', default=None,
+                   dest='enable_valgrind', help="Run testsuite under valgrind (if present).")
+    opt.add_option('--without-valgrind', action='store_false', default=None,
+                   dest='enable_valgrind', help="Don't run testsuite under valgrind.")
 
     opt.recurse("src/xmms")
     for o in optional_subdirs + subdirs:
