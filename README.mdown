@@ -53,7 +53,7 @@ xmms2-devel@lists.xmms2.org
 (http://lists.xmms2.org/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
 
 The IRC channel is usually fairly active as well, chat away at: #xmms2 on
-freenode (irc.freenode.net)
+libera (irc.libera.chat).
 
 Report bugs to the bug tracker at: http://bugs.xmms2.org/ (account registration
 required - Linus, you can just post the reports to the mailing list)
