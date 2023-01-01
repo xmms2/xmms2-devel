@@ -39,6 +39,7 @@ def add_files(ball, prefix, template, files):
     tfile.close()
 
 VERSION = check_output(["git", "describe"]).decode().strip()
+print("Found %s version" % VERSION)
 
 # TODO: derive paths from submodule configuration
 TUTORIAL_DIR="doc/tutorial"
@@ -69,23 +70,26 @@ if os.path.exists(DIST_TUTORIAL):
 if os.path.exists(DIST_S4):
     os.unlink(DIST_S4)
 
-# Tar up XMMS2
+print("Create %s" % DIST_XMMS2)
 call("git archive --format=tar --prefix=%s/ HEAD > %s" % (PREFIX, DIST_XMMS2), shell=True)
 
-# Checkout and tar up the tutorials
 call("git submodule init", shell=True)
 call("git submodule update", shell=True)
+print("Create %s" % DIST_TUTORIAL)
 call("git --git-dir=%s/.git archive --format=tar --prefix=%s/ HEAD > %s" % (TUTORIAL_DIR, PREFIX_TUTORIAL, DIST_TUTORIAL), shell=True)
+print("Create %s" % DIST_S4)
 call("git --git-dir=%s/.git archive --format=tar --prefix=%s/ HEAD > %s" % (S4_DIR, PREFIX_S4, DIST_S4), shell=True)
 
-# Append the tutorials and s4 to the XMMS2 archive
+print("Append %s to %s" % (DIST_TUTORIAL, DIST_XMMS2))
 call("tar -Af %s %s" % (DIST_XMMS2, DIST_TUTORIAL), shell=True)
+print("Append %s to %s" % (DIST_S4, DIST_XMMS2))
 call("tar -Af %s %s" % (DIST_XMMS2, DIST_S4), shell=True)
 
-# Append ChangeLog and a summary of all file hashes."
+print("Append ChangeLong and hashed to %s" % DIST_XMMS2)
 add_files(DIST_XMMS2, PREFIX, get_template(DIST_XMMS2, os.path.join(PREFIX, "wscript")), [
         ("xmms2-%s.ChangeLog" % VERSION, check_output("utils/gen-changelog.py")),
         ("checksums", check_output("utils/gen-tree-hashes.py"))
 ])
 
+print("Compress %s" % DIST_XMMS2)
 call("bzip2 %s" % DIST_XMMS2, shell=True)
