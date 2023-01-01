@@ -92,4 +92,4 @@ add_files(DIST_XMMS2, PREFIX, get_template(DIST_XMMS2, os.path.join(PREFIX, "wsc
 ])
 
 print("Compress %s" % DIST_XMMS2)
-call("bzip2 %s" % DIST_XMMS2, shell=True)
+call("xz %s" % DIST_XMMS2, shell=True)
