@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2020 XMMS2 Team
+# Copyright (C) 2006-2023 XMMS2 Team
 #
 
 from waflib import Options, Logs, Errors, Utils
