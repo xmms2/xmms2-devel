@@ -2,6 +2,12 @@ xmms2 news related to releases. History of user visible changes.
 
 Version 0.9.2 DrPong (TODO)
 
+Configuration changes:
+
+* New --disable-valgrind option was added. Sometimes installed system
+  `valgrind` is not capable of tracing binaries. This option disables
+  use of `valgrind` without the need to uninstall it.
+
 Bug fixes:
 
 * The flac plugin was fixed to work with flac-1.4.0 decoder library.
