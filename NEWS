@@ -13,6 +13,9 @@ Bug fixes:
 * The flac plugin was fixed to work with flac-1.4.0 decoder library.
   Before the fix some FLAC files were never finished decoding.
 
+* The libvisual client render loop was extended to handle stopped
+  playback thanks to Sebastian Pipping.
+
 Version 0.9.1 DrPong (2022-05-02)
 
 11 years since the previous xmms2 release. The git history has
