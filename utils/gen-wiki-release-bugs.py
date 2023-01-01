@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 
 if len(sys.argv) != 2 and len(sys.argv) != 3:
-    print "usage: %s <from> [<to>]" % sys.argv[0]
+    print("usage: %s <from> [<to>]" % sys.argv[0])
     raise SystemExit(1)
 
 rev_start = sys.argv[1]
@@ -20,7 +20,7 @@ else:
 command = ["git", "log", "--pretty=%H☃%an☃%s", rev_start + "..." + rev_end]
 
 commits = defaultdict(lambda : defaultdict(list))
-for line in subprocess.check_output(command).split("\n"):
+for line in subprocess.check_output(command).decode('utf-8').split("\n"):
     if not line:
         continue
     commit, author, comment = line.split("☃")
@@ -28,15 +28,15 @@ for line in subprocess.check_output(command).split("\n"):
         continue
     match = re.findall("(FEATURE|BUG)\(([0-9]+)\).+", comment)
     if len(match) != 1 and len(match[0]) != 2:
-        print "skipping", match
+        print("skipping", match)
 
     _, bug_id = match[0]
 
     commits[author][int(bug_id)].append(commit)
 
 for author in sorted(commits.keys()):
-    print "'''%s'''" % author
+    print("'''%s'''" % author)
     for bugid in sorted(commits[author].keys()):
-        print "* <mantis>%s</mantis>" % bugid
+        print("* <mantis>%s</mantis>" % bugid)
         for commit in commits[author][bugid]:
-            print "** <git norepo=1 repo='xmms2-devel.git'>%s</git>" % commit
+            print("** <git norepo=1 repo='xmms2-devel.git'>%s</git>" % commit)
