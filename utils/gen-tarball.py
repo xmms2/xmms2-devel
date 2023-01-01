@@ -53,7 +53,7 @@ DIST_DIR="dist"
 DIST_XMMS2="%s/xmms2-%s.tar" % (DIST_DIR, VERSION)
 DIST_XMMS2_BZ2="%s/xmms2-%s.tar.bz2" % (DIST_DIR, VERSION)
 DIST_TUTORIAL="%s/xmms2-tutorial-%s.tar" % (DIST_DIR, VERSION)
-DIST_S4="%s/xmms2-tutorial-%s.tar" % (DIST_DIR, VERSION)
+DIST_S4="%s/xmms2-s4-%s.tar" % (DIST_DIR, VERSION)
 
 if not os.path.exists(DIST_DIR):
     os.mkdir(DIST_DIR)
