@@ -156,27 +156,27 @@ main (int argc, char** argv)
 	}
 	v.pluginIsGL = 0;
 
-    //init
+	//init
 	xmms2_init ();
-    sdl_init ();
-    v_init (argc, argv);
+	sdl_init ();
+	v_init (argc, argv);
 
-    //main loop
+	//main loop
 	int samples = 0;
 
-    while (samples > -1 && sdl_event_handler()) {
+	while (samples > -1 && sdl_event_handler()) {
 		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, 0, 20);
 
 		if (samples != 1024) {  // e.g. when playpack is stopped
-		    memset(v.pcm_data, 0, sizeof(v.pcm_data));
+			memset(v.pcm_data, 0, sizeof(v.pcm_data));
 		}
 
 		v_render();
 
 		SDL_Delay(1);  // to avoid 100% CPU usage
-    }
+	}
 
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
 
 void
