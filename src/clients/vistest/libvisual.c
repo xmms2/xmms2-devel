@@ -357,13 +357,13 @@ v_init (int argc, char **argv)
 	visual_init (&argc, &argv);
 	visual_log_set_verboseness (VISUAL_LOG_VERBOSENESS_LOW);
 
-	v.bin    = visual_bin_new ();
+	v.bin  = visual_bin_new ();
 	depth  = visual_video_depth_enum_from_value( 24 );
 
 	if (!v.plugin) {
 		puts ("Available plugins:");
-        while ((v.plugin = visual_actor_get_next_by_name (v.plugin))) {
-            printf (" * %s\n", v.plugin);
+		while ((v.plugin = visual_actor_get_next_by_name (v.plugin))) {
+			printf (" * %s\n", v.plugin);
 		}
 		v.plugin = visual_actor_get_next_by_name (0);
 	}
