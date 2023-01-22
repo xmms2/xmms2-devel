@@ -126,6 +126,7 @@ struct {
 	int16_t     pcm_data[1024];
 } v;
 
+static void v_load_plugins (const char *);
 static void v_init (int, char**);
 static void v_render (void);
 static void v_resize (int, int);
@@ -147,6 +148,9 @@ v_cycleActor (int prev)
 int
 main (int argc, char** argv)
 {
+	puts ("Supported options:");
+	puts ("    --libvisual-plugins=<path> - extra path to libvisual plugins.");
+	puts ("");
 	puts ("Controls: Arrow keys switch between plugins, TAB toggles fullscreen, ESC quits.");
 	puts ("          Each plugin can has its own mouse/key bindings, too.");
 	if (argc > 1) {
@@ -349,10 +353,48 @@ v_resize( int width, int height )
 	visual_bin_sync( v.bin, 0 );
 }
 
+
+void
+v_load_plugins (const char * base_path)
+{
+	char * path = malloc (strlen (base_path) + 1 + strlen ("transform") + 1);
+	if (path == NULL) {
+		return;
+	}
+
+	static const char * flavours[] = {
+		"actor",
+		"input",
+		"morph",
+		"transform",
+	};
+
+	for (int i = 0; i < sizeof (flavours) / sizeof (flavours[0]); i++) {
+		int r;
+		sprintf (path, "%s/%s", base_path, flavours[i]);
+		printf ("Loading '%s' plugin path\n", path);
+		r = visual_init_path_add (path);
+		if (r != VISUAL_OK) {
+			fprintf (stderr, "Failed to load '%s' plugin\n", path);
+		}
+	}
+
+	free (path);
+}
+
 void
 v_init (int argc, char **argv)
 {
 	VisVideoDepth depth;
+
+	for (int i = 0; i < argc; i++) {
+		const char * a = argv[i];
+		const char * opt = "--libvisual-plugins=";
+		if (strncmp (a, opt, strlen (opt)) != 0) {
+			continue;
+		}
+		v_load_plugins (a + strlen (opt));
+	}
 
 	visual_init (&argc, &argv);
 	visual_log_set_verboseness (VISUAL_LOG_VERBOSENESS_LOW);
