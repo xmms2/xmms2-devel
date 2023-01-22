@@ -37,7 +37,10 @@ def build(bld):
         uselib = 'socket time',
         use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization',
         vnum = '6.0.0',
-        defines = 'XMMSC_LOG_DOMAIN="xmmsclient"'
+        defines = [
+            'XMMSC_LOG_DOMAIN="xmmsclient"',
+            "HAVE_SEMTIMEDOP=%d" % int(bld.env.have_semtimedop),
+        ]
         )
 
     tool.add_install_flag(bld, obj)
