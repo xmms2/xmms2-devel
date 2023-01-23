@@ -21,7 +21,8 @@ udp_timediff (int32_t id, int socket) {
 	for (i = 0; i < 10; ++i) {
 		send (socket, packet, packet_d.size, 0);
 	}
-	printf ("Syncing ");
+	printf ("Syncing UDP time ");
+	fflush (stdout);
 	do {
 		if ((recv (socket, packet, packet_d.size, 0) == packet_d.size) && (*packet_d.__unaligned_type == 'T')) {
 			struct timeval rtv;
@@ -45,6 +46,7 @@ udp_timediff (int32_t id, int socket) {
 			       net2ts (packet_d.serverstamp), net2ts (packet_d.clientstamp), tv2ts (&time));
 			 end of debug */
 			putchar('.');
+			fflush (stdout);
 		}
 	} while (diffc < 10);
 	free (packet);
