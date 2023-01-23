@@ -150,14 +150,24 @@ main (int argc, char** argv)
 {
 	puts ("Supported options:");
 	puts ("    --libvisual-plugins=<path> - extra path to libvisual plugins.");
+	puts ("    <plugin>                   - set starting plugin to <plugin>.");
 	puts ("");
 	puts ("Controls: Arrow keys switch between plugins, TAB toggles fullscreen, ESC quits.");
 	puts ("          Each plugin can has its own mouse/key bindings, too.");
-	if (argc > 1) {
-		v.plugin = argv[1];
-	} else {
-		puts ("Note: you can give your favourite libvisual plugin as command line argument.");
+
+	// Handle commandline options
+	for (int i = 1; i < argc; i++) {
+		const char * a = argv[i];
+		const char * opt = "--libvisual-plugins=";
+		if (strncmp (a, opt, strlen (opt)) == 0) {
+			v_load_plugins (a + strlen (opt));
+			continue;
+		}
+
+		// If it's not a "--<option>" then it's a plugin name.
+		v.plugin = a;
 	}
+
 	v.pluginIsGL = 0;
 
 	//init
@@ -387,15 +397,7 @@ v_init (int argc, char **argv)
 {
 	VisVideoDepth depth;
 
-	for (int i = 0; i < argc; i++) {
-		const char * a = argv[i];
-		const char * opt = "--libvisual-plugins=";
-		if (strncmp (a, opt, strlen (opt)) != 0) {
-			continue;
-		}
-		v_load_plugins (a + strlen (opt));
-	}
-
+	// argc and argv are used only got program name
 	visual_init (&argc, &argv);
 	visual_log_set_verboseness (VISUAL_LOG_VERBOSENESS_LOW);
 
