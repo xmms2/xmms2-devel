@@ -154,6 +154,10 @@ main (int argc, char** argv)
 	puts ("");
 	puts ("Controls: Arrow keys switch between plugins, TAB toggles fullscreen, ESC quits.");
 	puts ("          Each plugin can has its own mouse/key bindings, too.");
+	puts ("");
+	puts ("In order to get the visualization streamed you also");
+	puts ("need to enable 'visualization' effect. For example:");
+	puts ("    xmms2 server config effect.order.0 = visualization");
 
 	// Handle commandline options
 	for (int i = 1; i < argc; i++) {
