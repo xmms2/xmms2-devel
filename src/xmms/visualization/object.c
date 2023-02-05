@@ -97,7 +97,9 @@ delete_client (int32_t id)
 	if (c->type == VIS_UNIXSHM) {
 		cleanup_shm (&c->transport.shm);
 	} else if (c->type == VIS_UDP) {
-		cleanup_udp (&c->transport.udp, vis->socket);
+		if (c->server) {
+			cleanup_udp (&c->transport.udp, c->server->socket);
+		}
 	}
 
 	g_free (c);
@@ -116,12 +118,11 @@ xmms_visualization_new (xmms_output_t *output)
 	g_mutex_init (&vis->clientlock);
 	vis->clientc = 0;
 	vis->output = output;
+	vis->serverc = 0;
 
 	xmms_object_ref (output);
 
 	xmms_visualization_register_ipc_commands (XMMS_OBJECT (vis));
-
-	xmms_socket_invalidate (&vis->socket);
 
 	return vis;
 }
@@ -134,6 +135,8 @@ xmms_visualization_new (xmms_output_t *output)
 static void
 xmms_visualization_destroy (xmms_object_t *object)
 {
+	int32_t i;
+
 	XMMS_DBG ("Deactivating visualization object.");
 
 	xmms_object_unref (vis->output);
@@ -145,11 +148,13 @@ xmms_visualization_destroy (xmms_object_t *object)
 		delete_client (vis->clientc - 1);
 	}
 
-	if (xmms_socket_valid (vis->socket)) {
+	for (i = 0; i < vis->serverc; i++) {
+		xmms_vis_server_t *s = &vis->serverv[1];
 		/* it seems there is no way to remove the watch */
-		g_io_channel_shutdown (vis->socketio, FALSE, NULL);
-		xmms_socket_close (vis->socket);
+		g_io_channel_shutdown (s->socketio, FALSE, NULL);
+		xmms_socket_close (s->socket);
 	}
+	g_free (vis->serverv);
 
 	xmms_visualization_unregister_ipc_commands ();
 }
@@ -214,6 +219,7 @@ xmms_visualization_client_register (xmms_visualization_t *vis, xmms_error_t *err
 		/* do necessary initialisations here */
 		c = get_client (id);
 		c->type = VIS_NONE;
+		c->server = NULL;
 		c->format = 0;
 		properties_init (&c->prop);
 	}
@@ -308,7 +314,9 @@ package_write (xmms_vis_client_t *c, int32_t id, struct timeval *time, int chann
 	if (c->type == VIS_UNIXSHM) {
 		return write_shm (&c->transport.shm, c, id, time, channels, size, buf);
 	} else if (c->type == VIS_UDP) {
-		return write_udp (&c->transport.udp, c, id, time, channels, size, buf, vis->socket);
+		if (c->server) {
+			return write_udp (&c->transport.udp, c, id, time, channels, size, buf, c->server->socket);
+		}
 	}
 	return FALSE;
 }

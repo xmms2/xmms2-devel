@@ -24,7 +24,20 @@
 #include <xmmsc/xmmsc_visualization.h>
 
 /**
- * The structures for a vis client
+ * The structure for a vis server socket and related state.
+ */
+
+typedef struct {
+	xmms_socket_t socket;
+	GIOChannel *socketio;
+
+	/* Refer back to the whole vis object. Needed for existing
+	 * clients lookup on incoming packets. */
+	xmms_visualization_t *vis;
+} xmms_vis_server_t;
+
+/**
+ * The structures for a vis client.
  */
 
 typedef struct {
@@ -33,6 +46,7 @@ typedef struct {
 		xmmsc_vis_udp_t udp;
 	} transport;
 	xmmsc_vis_transport_t type;
+	xmms_vis_server_t *server;
 	unsigned short format;
 	xmmsc_vis_properties_t prop;
 } xmms_vis_client_t;
@@ -78,8 +92,9 @@ short fill_buffer (int16_t *dest, xmmsc_vis_properties_t* prop, int channels, in
 struct xmms_visualization_St {
 	xmms_object_t object;
 	xmms_output_t *output;
-	xmms_socket_t socket;
-	GIOChannel *socketio;
+	/* Server sockets */
+	int32_t serverc;
+	xmms_vis_server_t *serverv;
 
 	GMutex clientlock;
 	int32_t clientc;

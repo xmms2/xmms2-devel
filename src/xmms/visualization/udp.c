@@ -19,13 +19,13 @@
 #include "common.h"
 
 static gboolean
-udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
+udpwatcher (GIOChannel *src, GIOCondition cond, xmms_vis_server_t *s)
 {
 	struct sockaddr_storage from;
 	socklen_t sl = sizeof (from);
 	xmmsc_vis_udp_timing_t packet_d;
 	char* packet = packet_init_timing (&packet_d);
-	if ((recvfrom (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, &sl)) > 0) {
+	if ((recvfrom (s->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, &sl)) > 0) {
 		if (*packet_d.__unaligned_type == 'H') {
 			xmms_vis_client_t *c;
 			int32_t id;
@@ -33,23 +33,18 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			XMMSC_VIS_UNALIGNED_READ (id, packet_d.__unaligned_id, int32_t);
 			id = ntohl (id);
 
-			/* debug code starts
-			char adrb[INET6_ADDRSTRLEN];
-			struct sockaddr_in6 *a = (struct sockaddr_in6 *)&from;
-			printf ("Client address: %s:%d, %d\n", inet_ntop (AF_INET6, &a->sin6_addr,
-					adrb, INET6_ADDRSTRLEN), a->sin6_port, id);
-			 debug code ends */
-			g_mutex_lock (&vis->clientlock);
+			g_mutex_lock (&s->vis->clientlock);
 			c = get_client (id);
 			if (!c || c->type != VIS_UDP) {
-				g_mutex_unlock (&vis->clientlock);
+				g_mutex_unlock (&s->vis->clientlock);
 				return TRUE;
 			}
 			/* save client address according to id */
 			memcpy (&c->transport.udp.addr, &from, sizeof (from));
+			c->server = s;
 			c->transport.udp.socket[0] = 1;
 			c->transport.udp.grace = 2000;
-			g_mutex_unlock (&vis->clientlock);
+			g_mutex_unlock (&s->vis->clientlock);
 		} else if (*packet_d.__unaligned_type == 'T') {
 			struct timeval time;
 			xmms_vis_client_t *c;
@@ -58,15 +53,15 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			XMMSC_VIS_UNALIGNED_READ (id, packet_d.__unaligned_id, int32_t);
 			id = ntohl (id);
 
-			g_mutex_lock (&vis->clientlock);
+			g_mutex_lock (&s->vis->clientlock);
 			c = get_client (id);
 			if (!c || c->type != VIS_UDP) {
-				g_mutex_unlock (&vis->clientlock);
+				g_mutex_unlock (&s->vis->clientlock);
 				free (packet);
 				return TRUE;
 			}
 			c->transport.udp.grace = 2000;
-			g_mutex_unlock (&vis->clientlock);
+			g_mutex_unlock (&s->vis->clientlock);
 
 			/* give pong */
 			gettimeofday (&time, NULL);
@@ -90,11 +85,7 @@ udpwatcher (GIOChannel *src, GIOCondition cond, xmms_visualization_t *vis)
 			XMMSC_VIS_UNALIGNED_WRITE (&packet_d.__unaligned_serverstamp[1],
 			                           (int32_t)htonl (sts.tv_usec), int32_t);
 
-			sendto (vis->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, sl);
-
-			/* new debug:
-			printf ("Timings: local %f, remote %f, diff %f\n", tv2ts (&time), net2ts (packet_d.clientstamp), net2ts (packet_d.clientstamp) - tv2ts (&time));
-			 ends */
+			sendto (s->socket, packet, packet_d.size, 0, (struct sockaddr *)&from, sl);
 		} else {
 			xmms_log_error ("Received invalid UDP package!");
 		}
@@ -111,10 +102,16 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 	xmms_vis_client_t *c;
 
 	// setup socket if needed
-	if (!xmms_socket_valid (vis->socket)) {
+	// TODO: isn't there a race of multiple clients tying to bind()?
+	if (vis->serverv == NULL) {
 		struct addrinfo hints;
 		struct addrinfo *result, *rp;
-		int s;
+		int status;
+
+		int32_t possible_servers = 0;
+		int32_t opened_servers = 0;
+		int32_t i;
+		xmms_vis_server_t *servers = NULL;
 
 		memset (&hints, 0, sizeof (hints));
 		hints.ai_family = AF_UNSPEC;
@@ -122,41 +119,76 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 		hints.ai_flags = AI_PASSIVE;
 		hints.ai_protocol = 0;
 
-		if ((s = getaddrinfo (NULL, G_STRINGIFY (XMMS_DEFAULT_UDP_PORT), &hints, &result)) != 0)
+		if ((status = getaddrinfo (NULL, G_STRINGIFY (XMMS_DEFAULT_UDP_PORT), &hints, &result)) != 0)
 		{
-			xmms_log_error ("Could not setup socket! getaddrinfo: %s", gai_strerror (s));
+			xmms_log_error ("Could not setup socket! getaddrinfo: %s", gai_strerror (status));
 			xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "Could not setup socket!");
 			return -1;
 		}
 
 		for (rp = result; rp != NULL; rp = rp->ai_next) {
-			vis->socket = socket (rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-			if (!xmms_socket_valid (vis->socket)) {
+			possible_servers++;
+		}
+		servers = g_new0 (xmms_vis_server_t, possible_servers);
+		if (servers == NULL) {
+			xmms_log_error ("Could not allocate memory!");
+			xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "Could not allocate memory!");
+			freeaddrinfo (result);
+			return -1;
+		}
+
+		for (rp = result; rp != NULL; rp = rp->ai_next) {
+			int sock;
+			xmms_vis_server_t *s = &servers[opened_servers];
+
+			sock = socket (rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+			if (!xmms_socket_valid (sock)) {
 				continue;
 			}
-			if (bind (vis->socket, rp->ai_addr, rp->ai_addrlen) != -1) {
-				break;
-			} else {
-				close (vis->socket);
+			if (bind (sock, rp->ai_addr, rp->ai_addrlen) == -1) {
+				/* In case we already bound v4 socket
+				 * and v6 are attempting to set up
+				 * dual-stack v4+v6. Try again v6-only
+				 * mode. */
+				if (rp->ai_family == AF_INET6 && errno == EADDRINUSE) {
+					int v6only = 1;
+					if (setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof (v6only)) == -1) {
+						close (socket);
+						continue;
+					}
+					if (bind (sock, rp->ai_addr, rp->ai_addrlen) == -1) {
+						close (socket);
+						continue;
+					}
+				} else {
+					close (socket);
+					continue;
+				}
 			}
+			opened_servers++;
+			s->socket = sock;
 		}
-		if (rp == NULL) {
-			xmms_log_error ("Could not bind socket!");
-			xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "Could not bind socket!");
+		if (opened_servers == 0) {
+			xmms_log_error ("Could not bind any vis sockets!");
+			xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "Could not bind any vis sockets!");
 			freeaddrinfo (result);
 			return -1;
 		}
 		freeaddrinfo (result);
 
-		/* register into mainloop: */
-/* perhaps needed, perhaps not .. #ifdef __WIN32__
-		vis->socketio = g_io_channel_win32_new_socket (vis->socket);
-#else */
-		vis->socketio = g_io_channel_unix_new (vis->socket);
-/*#endif */
-		g_io_channel_set_encoding (vis->socketio, NULL, NULL);
-		g_io_channel_set_buffered (vis->socketio, FALSE);
-		g_io_add_watch (vis->socketio, G_IO_IN, (GIOFunc) udpwatcher, vis);
+		for (i = 0; i < opened_servers; i++) {
+			xmms_vis_server_t *s = &servers[i];
+			/* register into mainloop: */
+			// TODO: on windows
+			// vis->socketio = g_io_channel_win32_new_socket (vis->socket);
+			s->socketio = g_io_channel_unix_new (s->socket);
+			s->vis = vis;
+			g_io_channel_set_encoding (s->socketio, NULL, NULL);
+			g_io_channel_set_buffered (s->socketio, FALSE);
+			g_io_add_watch (s->socketio, G_IO_IN, (GIOFunc) udpwatcher, s);
+		}
+		vis->serverc = opened_servers;
+		vis->serverv = servers;
 	}
 
 	/* set up client structure */
