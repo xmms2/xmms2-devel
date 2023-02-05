@@ -107,7 +107,7 @@ int32_t
 init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 {
 	// TODO: we need the currently used port, not only the default one! */
-	int32_t port = XMMS_DEFAULT_TCP_PORT;
+	int32_t port = XMMS_DEFAULT_UDP_PORT;
 	xmms_vis_client_t *c;
 
 	// setup socket if needed
@@ -122,7 +122,7 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 		hints.ai_flags = AI_PASSIVE;
 		hints.ai_protocol = 0;
 
-		if ((s = getaddrinfo (NULL, G_STRINGIFY (XMMS_DEFAULT_TCP_PORT), &hints, &result)) != 0)
+		if ((s = getaddrinfo (NULL, G_STRINGIFY (XMMS_DEFAULT_UDP_PORT), &hints, &result)) != 0)
 		{
 			xmms_log_error ("Could not setup socket! getaddrinfo: %s", gai_strerror (s));
 			xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "Could not setup socket!");
