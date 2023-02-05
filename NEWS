@@ -16,6 +16,14 @@ Bug fixes:
 * The libvisual client render loop was extended to handle stopped
   playback thanks to Sebastian Pipping.
 
+* The visualization client library now correctly detects shared memory
+  support on linux. In xmms2-0.9.1 client always fell back to UDP.
+
+* The visualization server side now opens both IPv4 and IPv6 UDP sockets
+  if both are available. Previous versions sometimes opened IPv4-only or
+  IPv6-only socket. Sometimes that did not match defaults from client
+  side and visualization client did not work at all.
+
 Version 0.9.1 DrPong (2022-05-02)
 
 11 years since the previous xmms2 release. The git history has
