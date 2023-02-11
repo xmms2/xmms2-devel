@@ -1,0 +1,16 @@
+XMMS2 maintenance notes
+=======================
+
+How to update waf
+-----------------
+
+Here is the step-by-step:
+
+1. Add new version and (invalid) hash to `utils/wafgen.conf`
+2. Run `utils/wafgen`
+3. Update `utils/wafgen.conf` with a new hash
+4. Run `utils/wafgen`
+5. Update `_waf_hexversion = ` in `wscript`.
+6. Commit the result: `git commit utils/wafgen.conf wscript waf`
+
+Done!
