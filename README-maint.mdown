@@ -14,3 +14,18 @@ Here is the step-by-step:
 6. Commit the result: `git commit utils/wafgen.conf wscript waf`
 
 Done!
+
+How to cut a new release
+------------------------
+
+There are a few steps as well:
+
+1. Update `BASEVERSION=` in wscript to name new release.
+2. Update `NEWS` file to mention highlights.
+3. Run `utils/tag-xmms2.sh`: it will extract the tag from `BASEVERSION`
+   and will propose `git `commands to run.
+4. Run proposed `git` commands to create the commit and a tag.
+5. Run `utils/gen-tarball.py` to generate release tarball.
+6. Push the release commit and tag: `git push --tags origin master`.
+7. Create the release out of pushed tag and upload resulting release
+   tarball via github UI.
