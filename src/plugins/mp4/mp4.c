@@ -540,8 +540,8 @@ xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length)
 	}
 
 	ret = MIN (length, data->buffer_length);
-	g_memmove (buffer, data->buffer, ret);
-	g_memmove (data->buffer, data->buffer + ret, data->buffer_length - ret);
+	memmove (buffer, data->buffer, ret);
+	memmove (data->buffer, data->buffer + ret, data->buffer_length - ret);
 	data->buffer_length -= ret;
 
 	return ret;

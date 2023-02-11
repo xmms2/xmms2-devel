@@ -466,7 +466,7 @@ xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 	if (data->buffer_length > 0) {
 		memcpy (buffer, data->buffer, size);
 		data->buffer_length -= size;
-		g_memmove (data->buffer, data->buffer + size, data->buffer_length);
+		memmove (data->buffer, data->buffer + size, data->buffer_length);
 
 		/* the buffer is only needed in special cases, free when not used
 		 * (it can be over half megabytes big so we don't want to keep it

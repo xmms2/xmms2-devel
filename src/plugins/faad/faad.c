@@ -194,7 +194,7 @@ xmms_faad_init (xmms_xform_t *xform)
 		for (i=0; i<data->buffer_length-1; i++) {
 			if (data->buffer[i] == 0xff && (data->buffer[i+1]&0xf6) == 0xf0) {
 				data->filetype = FAAD_TYPE_ADTS;
-				g_memmove (data->buffer, data->buffer+i, data->buffer_length-i);
+				memmove (data->buffer, data->buffer+i, data->buffer_length-i);
 				data->buffer_length -= i;
 				break;
 			}
@@ -229,7 +229,7 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	/* Get mediainfo and skip the possible header */
 	xmms_faad_get_mediainfo (xform);
-	g_memmove (data->buffer, data->buffer + bytes_read,
+	memmove (data->buffer, data->buffer + bytes_read,
 	           data->buffer_length - bytes_read);
 	data->buffer_length -= bytes_read;
 
@@ -321,7 +321,7 @@ xmms_faad_read_some (xmms_xform_t *xform, xmms_error_t *err)
 		sample_buffer = NeAACDecDecode (data->decoder, &frameInfo, data->buffer,
 		                               data->buffer_length);
 
-		g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
+		memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
 		           data->buffer_length - frameInfo.bytesconsumed);
 		data->buffer_length -= frameInfo.bytesconsumed;
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);

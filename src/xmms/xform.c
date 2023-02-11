@@ -973,7 +973,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
 					                           xform->buffersize);
 				}
 
-				g_memmove (xform->buffer + xform->buffered, buf + read, res);
+				memmove (xform->buffer + xform->buffered, buf + read, res);
 				xform->buffered += res;
 				break;
 			}

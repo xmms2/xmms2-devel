@@ -194,7 +194,7 @@ xmms_ao_new (xmms_output_t *output)
 							if (ao_close (data->device) == 0) {
 								xmms_log_error ("Failed to close libao device");
 							}
-							g_memmove (&data->format, &format,
+							memmove (&data->format, &format,
 							           sizeof (ao_sample_format));
 							xmms_output_format_add (output, formats[i], j + 1,
 							                        rates[k]);
@@ -305,7 +305,7 @@ xmms_ao_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 
 	XMMS_DBG ("Setting audio format: %d %dch %dHz", sformat, channels, srate);
 
-	g_memmove (&oldfmt, &data->format, sizeof (ao_sample_format));
+	memmove (&oldfmt, &data->format, sizeof (ao_sample_format));
 	if (!xmms_ao_try_format (data->driver_id, data->options, sformat, channels,
 	                         srate, &data->format)) {
 		xmms_log_error ("Unsupported sample format!");
