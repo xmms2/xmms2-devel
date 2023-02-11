@@ -48,7 +48,7 @@
 
 #define PUT_STR(buf, str) do { \
 	size_t len = strlen (str); \
-	strncpy ((gchar *) buf, str, len); \
+	memcpy ((gchar *) buf, str, len); \
 	buf += len; \
 } while (0)
 
