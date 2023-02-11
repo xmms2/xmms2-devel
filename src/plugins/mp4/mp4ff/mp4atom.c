@@ -344,7 +344,6 @@ int32_t mp4ff_read_esds(mp4ff_t *f)
 
 int32_t mp4ff_read_mp4a(mp4ff_t *f)
 {
-    uint64_t size;
     int32_t i;
     uint8_t atom_type = 0;
     uint8_t header_size = 0;
@@ -368,7 +367,7 @@ int32_t mp4ff_read_mp4a(mp4ff_t *f)
 
     mp4ff_read_int16(f);
 
-    size = mp4ff_atom_read_header(f, &atom_type, &header_size);
+    mp4ff_atom_read_header(f, &atom_type, &header_size);
     if (atom_type == ATOM_ESDS)
     {
         mp4ff_read_esds(f);
