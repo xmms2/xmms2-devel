@@ -64,7 +64,7 @@ typedef enum {
 	val = GUINT32_TO_LE (val);
 
 #define GET_STR(buf, str, len) \
-	strncpy ((gchar *) str, (gchar *)buf, len); \
+	memcpy ((gchar *) str, (gchar *)buf, len); \
 	str[len] = '\0'; \
 	bytes_left -= len; \
 	buf += len;
