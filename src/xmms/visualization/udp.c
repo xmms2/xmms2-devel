@@ -224,9 +224,6 @@ write_udp (xmmsc_vis_udp_t *t, xmms_vis_client_t *c, int32_t id, struct timeval 
 		delete_client (id);
 		return FALSE;
 	}
-	if (t->socket == 0) {
-		return FALSE;
-	}
 
 	packet = packet_init_data (&packet_d);
 	t->grace--;
