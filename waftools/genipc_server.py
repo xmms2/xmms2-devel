@@ -13,7 +13,7 @@ except:
 c_type_map = {
 	'string': 'const char *',
 	'int': 'gint32',
-	'enum-value': lambda ename: 'xmms_%s_t' % ename,
+	'enum-value': lambda ename: 'gint32',
 	'collection':'xmmsv_t *',
 	'binary':'GString *',
 	'list':'xmmsv_t *',
