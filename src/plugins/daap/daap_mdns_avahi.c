@@ -226,7 +226,7 @@ daap_mdns_setup ()
 	GMainLoop *ml = NULL;
 	gint errval;
 	struct timeval tv;
-	browse_callback_userdata_t *browse_userdata;
+	browse_callback_userdata_t *browse_userdata = NULL;
 
 	if (gl_poll) {
 		goto fail;
