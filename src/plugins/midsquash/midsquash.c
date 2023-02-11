@@ -95,7 +95,7 @@ xmms_midsquash_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms2.org/");
+	xmms_plugin_info_add (plugin, "URL", "https://github.com/xmms2");
 	xmms_plugin_info_add (plugin, "Author", "Adam Nielsen <malvineous@shikadi.net>");
 	xmms_plugin_info_add (plugin, "License", "LGPL");
 	*/

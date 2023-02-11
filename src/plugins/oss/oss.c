@@ -136,7 +136,7 @@ xmms_oss_plugin_setup (xmms_output_plugin_t *plugin)
 	xmms_output_plugin_methods_set (plugin, &methods);
 
 	/*
-	  xmms_plugin_info_add (plugin, "URL", "http://xmms2.org/");
+	  xmms_plugin_info_add (plugin, "URL", "https://github.com/xmms2");
 	  xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	*/
 
