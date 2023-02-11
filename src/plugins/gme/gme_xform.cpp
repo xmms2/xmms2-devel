@@ -16,7 +16,7 @@
 
 /**
   * @file gme decoder.
-  * @url http://xmms2.org/wiki/Notes_from_developing_an_xform_plugin
+  * @url https://github.com/xmms2/wiki/wiki/Notes-from-developing-an-xform-plugin
   */
 
 #include <glib.h>

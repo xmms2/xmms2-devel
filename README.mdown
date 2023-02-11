@@ -42,7 +42,7 @@ HELPING
 -------
 
 Please send patches to the mailing list or bug tracker! A good starting point
-for further info might be: http://xmms2.org/wiki/Developer_Corner
+for further info might be: https://github.com/xmms2/wiki/wiki/Developer-Corner
 
 
 CONTACT

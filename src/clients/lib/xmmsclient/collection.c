@@ -281,7 +281,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_t *coll,
  * Finds all media in the collection and fetches it as specified in fetch.
  *
  * For a description of the different collection operators and the
- * fetch specification look at http://xmms2.org/wiki/Collections_2.0
+ * fetch specification look at https://github.com/xmms2/wiki/wiki/Collections-2.0
  *
  * @param conn  The connection to the server.
  * @param coll  The collection used to query.
