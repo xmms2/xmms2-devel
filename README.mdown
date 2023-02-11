@@ -48,12 +48,9 @@ for further info might be: https://github.com/xmms2/wiki/wiki/Developer-Corner
 CONTACT
 -------
 
-Feel free to post any questions/patches/whatever to the mailing list:
-xmms2-devel@lists.xmms2.org
-(http://lists.xmms2.org/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
-
 The IRC channel is usually fairly active as well, chat away at: #xmms2 on
 libera (irc.libera.chat).
 
-Report bugs to the bug tracker at: http://bugs.xmms2.org/ (account registration
-required - Linus, you can just post the reports to the mailing list)
+Please send your fixes to https://github.com/xmms2/xmms2-devel/pulls.
+
+We don't have a bug tracking section on github yet. TODO.
