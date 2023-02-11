@@ -122,7 +122,7 @@ xmms_faad_init (xmms_xform_t *xform)
 	xmms_error_t error;
 
 	NeAACDecConfigurationPtr config;
-	gint bytes_read;
+	gint bytes_read = 0;
 	gulong samplerate;
 	guchar channels;
 	const gchar *mime;
