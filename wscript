@@ -402,8 +402,11 @@ def configure(conf):
     flags.enable_c_warning('write-strings')
     flags.enable_c_warning('unused-but-set-variable')
 
+    # TODO: too many to be useful. Extract as a developer option.
     flags.disable_c_warning('format-extra-args')
     flags.disable_c_warning('format-zero-length')
+    flags.disable_c_warning('unused-result')
+    flags.disable_c_warning('deprecated-declarations')
 
     flags.enable_feature('diagnostics-show-option')
 
