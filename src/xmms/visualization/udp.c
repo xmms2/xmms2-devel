@@ -153,15 +153,15 @@ init_udp (xmms_visualization_t *vis, int32_t id, xmms_error_t *err)
 				if (rp->ai_family == AF_INET6 && errno == EADDRINUSE) {
 					int v6only = 1;
 					if (setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof (v6only)) == -1) {
-						close (socket);
+						close (sock);
 						continue;
 					}
 					if (bind (sock, rp->ai_addr, rp->ai_addrlen) == -1) {
-						close (socket);
+						close (sock);
 						continue;
 					}
 				} else {
-					close (socket);
+					close (sock);
 					continue;
 				}
 			}
