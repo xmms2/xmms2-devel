@@ -8,6 +8,8 @@ Configuration changes:
   `valgrind` is not capable of tracing binaries. This option disables
   use of `valgrind` without the need to uninstall it.
 
+* Updated waf bundle up to 20.0.25 version.
+
 Bug fixes:
 
 * The flac plugin was fixed to work with flac-1.4.0 decoder library.
