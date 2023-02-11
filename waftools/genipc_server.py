@@ -9,7 +9,7 @@ try:
 except:
 	basestring = str
 
-#dictionary mapping of types in the xml to C type aliases
+# dictionary mapping of types in the xml to C type aliases
 c_type_map = {
 	'string': 'const char *',
 	'int': 'gint32',
@@ -71,13 +71,13 @@ def get_nullable(typeinfo):
 	return c_nullable_type_map[typeinfo]
 
 c_xmmsv_type_t_map = {
-    'int': 'XMMSV_TYPE_INT64',
-    'string': 'XMMSV_TYPE_STRING',
+	'int': 'XMMSV_TYPE_INT64',
+	'string': 'XMMSV_TYPE_STRING',
 	'enum-value': 'XMMSV_TYPE_INT64',
-    'list': 'XMMSV_TYPE_LIST',
-    'dictionary': 'XMMSV_TYPE_DICT',
-    'collection': 'XMMSV_TYPE_COLL',
-    'binary': 'XMMSV_TYPE_BINDATA'
+	'list': 'XMMSV_TYPE_LIST',
+	'dictionary': 'XMMSV_TYPE_DICT',
+	'collection': 'XMMSV_TYPE_COLL',
+	'binary': 'XMMSV_TYPE_BINDATA'
 }
 def get_xmmsv_type(typeinfo):
 	if not isinstance(typeinfo, basestring):
@@ -148,10 +148,6 @@ def method_name_to_cname(n):
 
 def emit_method_define_code(object, method, c_type):
 	full_method_name = 'xmms_%s_client_%s' % (object.name, method.name)
-
-	# output a prototype
-	#static __XMMS_CMD_DO_RETTYPE_##_rettype() realfunc (argtype0 __XMMS_CMD_DO_ARGTYPE_##argtype1 __XMMS_CMD_DO_ARGTYPE_##argtype2 __XMMS_CMD_DO_ARGTYPE_##argtype3 __XMMS_CMD_DO_ARGTYPE_##argtype4 __XMMS_CMD_DO_ARGTYPE_##argtype5 __XMMS_CMD_DO_ARGTYPE_##argtype6, xmms_error_t *); \
-
 
 	Indenter.printline("static void")
 	Indenter.printline("%s (xmms_object_t *object, xmms_object_cmd_arg_t *arg)" % method_name_to_cname (method.name))
