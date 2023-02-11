@@ -20,10 +20,6 @@
 
 #include "guid.h"
 
-
-static const asf_guid_t asf_guid_null =
-{0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-
 /* top level object guids */
 
 static const asf_guid_t asf_guid_header =
