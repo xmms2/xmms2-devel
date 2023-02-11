@@ -102,7 +102,6 @@ static gboolean
 xmms_ofa_init (xmms_xform_t *xform)
 {
 	xmms_ofa_data_t *data;
-	xmms_medialib_entry_t entry;
 	char *fp;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -121,9 +120,9 @@ xmms_ofa_init (xmms_xform_t *xform)
 
 	data->bytes_to_read = 44100 * 135 * 4;
 	data->buf = g_malloc (data->bytes_to_read);
-	entry = xmms_xform_entry_get (xform);
 
 	/* TODO: #2482
+	entry = xmms_xform_entry_get (xform);
 	fp = xmms_medialib_entry_property_get_str (entry, "ofa_fingerprint");
 	*/
 	fp = NULL;
