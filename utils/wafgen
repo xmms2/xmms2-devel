@@ -43,7 +43,7 @@ validate_waf() {
 
   echo "Calculating checksum..."
   local _sha1=$(sha1sum "$1" | cut -d ' ' -f1) || error
-  [[ "$_sha1" == "$2" ]] || error "Checksum mismatch !"
+  [[ "$_sha1" == "$2" ]] || error "Checksum mismatch: want=$2 got=$_sha1"
 }
 gen_waf() {
   #args: url [checksum [build_args ...]]
