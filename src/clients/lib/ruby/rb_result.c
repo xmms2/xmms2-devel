@@ -549,6 +549,12 @@ c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 	return value;
 }
 
+static VALUE
+do_not_call_sm(VALUE v)
+{
+    rb_raise (rb_eNotImpError, "Unexpected call to 'do_not_call_sm'");
+}
+
 void
 Init_Result (VALUE mXmms)
 {
@@ -561,7 +567,7 @@ Init_Result (VALUE mXmms)
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
 	 */
-	rb_define_singleton_method (cResult, "new", NULL, 0);
+	rb_define_singleton_method (cResult, "new", do_not_call_sm, 0);
 	rb_undef_method (rb_singleton_class (cResult), "new");
 
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
