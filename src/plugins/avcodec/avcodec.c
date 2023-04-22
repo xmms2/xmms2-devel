@@ -137,7 +137,7 @@ static gboolean
 xmms_avcodec_init (xmms_xform_t *xform)
 {
 	xmms_avcodec_data_t *data;
-	AVCodec *codec;
+	const AVCodec *codec;
 	const gchar *mimetype;
 	const guchar *tmpbuf;
 	gsize tmpbuflen;
