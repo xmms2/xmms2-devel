@@ -1,6 +1,12 @@
 xmms2 news related to releases. History of user visible changes.
 
-Version 0.9.2 DrPong
+Version 0.9.3 DrPong (2023-??-??)
+
+Bug fixes:
+
+* Python client can build against cython-3.
+
+Version 0.9.2 DrPong (2023-02-11)
 
 Configuration changes:
 
