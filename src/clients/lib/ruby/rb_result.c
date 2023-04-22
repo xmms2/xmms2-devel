@@ -499,6 +499,11 @@ c_dict_each_value (VALUE self)
 	return self;
 }
 
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wcomment"
+/* Avoid warnings about nested comments in usage example below. */
+#endif
 /*
  * call-seq:
  *  rawdict.to_propdict( src_prefs ) -> propdict
@@ -510,6 +515,9 @@ c_dict_each_value (VALUE self)
  * of strings, which may contain wildcards.
  * Example: rawdict.to_propdict( ['server','plugin/*'] )
  */
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 static VALUE
 c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 {
