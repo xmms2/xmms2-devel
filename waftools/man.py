@@ -19,7 +19,7 @@ def gzip_func(task):
         mtime = os.environ.get('SOURCE_DATE_EPOCH')
         if mtime:
             mtime = int(mtime)
-        output = gzip.GzipFile(os.path.basename(infile), fileobj=outf, mtime=mtime)
+        output = gzip.GzipFile(os.path.basename(infile), fileobj=outf, mode='wb', mtime=mtime)
         output.write(input.read())
     finally:
         if input:
