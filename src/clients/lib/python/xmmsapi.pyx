@@ -84,7 +84,7 @@ cdef char *check_namespace(object ns, bint can_be_all) except NULL:
 		raise ValueError("Bad namespace")
 	return n
 
-cdef bint ResultNotifier(xmmsv_t *res, void *o):
+cdef bint ResultNotifier(xmmsv_t *res, void *o) noexcept:
 	cdef object xres
 	xres = <object> o
 	try:
@@ -95,7 +95,7 @@ cdef bint ResultNotifier(xmmsv_t *res, void *o):
 		traceback.print_exception(*exc)
 		return False
 
-cdef void ResultDestroyNotifier(void *o):
+cdef void ResultDestroyNotifier(void *o) noexcept:
 	cdef XmmsResult obj
 	obj = <XmmsResult>o
 	obj._cb = None
@@ -670,7 +670,7 @@ cdef xmmsc_sc_namespace_t *_namespace_get(xmmsc_connection_t *c, path, bint crea
 
 	return ns
 
-cdef xmmsv_t *service_method_proxy(xmmsv_t *pargs, xmmsv_t *nargs, void *udata):
+cdef xmmsv_t *service_method_proxy(xmmsv_t *pargs, xmmsv_t *nargs, void *udata) noexcept:
 	cdef object method
 	cdef XmmsValue args
 	cdef XmmsValue kargs
@@ -852,12 +852,12 @@ class XmmsServiceClient(_XmmsServiceClient):
 		cb(xvalue)
 
 
-cdef void python_need_out_fun(int i, void *obj):
+cdef void python_need_out_fun(int i, void *obj) noexcept:
 	cdef object o
 	o = <object> obj
 	o._needout_cb(i)
 
-cdef void python_disconnect_fun(void *obj):
+cdef void python_disconnect_fun(void *obj) noexcept:
 	cdef object o
 	o = <object> obj
 	o._disconnect_cb()
