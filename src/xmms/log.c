@@ -86,11 +86,21 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 			return;
 	}
 
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wformat-nonliteral"
+/* Format string comes from xmms2 config at runtime.
+ * strftime() should be safe to use without the fear
+ * to inject unexpected parameters. */
+#endif
 	if (!logts_format ||
 	    !xmms_localtime (&tv, &st) ||
 	    !strftime (logts_buf, sizeof(logts_buf), logts_format, &st)) {
 		logts_buf[0] = '\0';
 	}
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 
 	if (log_domain && log_domain[0]) {
 		printf ("%s%s in %s: %s\n", logts_buf, level, log_domain, message);
