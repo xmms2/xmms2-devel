@@ -139,7 +139,7 @@ struct xmms_output_St {
 	xmms_stream_type_t *format;
 
 	/**
-	 * Number of bytes totaly written to output driver,
+	 * Number of bytes totally written to output driver,
 	 * this is only for statistics...
 	 */
 	guint64 bytes_written;
@@ -971,7 +971,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist, xmms_m
 			xmms_log_error ("Could not initialize output plugin");
 		}
 	} else {
-		xmms_log_error ("initalized output without a plugin, please fix!");
+		xmms_log_error ("initialized output without a plugin, please fix!");
 	}
 
 

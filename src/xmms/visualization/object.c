@@ -128,7 +128,7 @@ xmms_visualization_new (xmms_output_t *output)
 }
 
 /**
- * Free all resoures used by visualization module.
+ * Free all resources used by visualization module.
  * TODO: Fill this in properly, unregister etc!
  */
 

@@ -209,7 +209,7 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 
 
 /**
- * do the actual converstion between two audio formats.
+ * do the actual conversion between two audio formats.
  */
 void
 xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len, xmms_sample_t **out, guint *outlen)

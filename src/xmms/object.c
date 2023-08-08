@@ -98,11 +98,11 @@ compare_signal_key (gconstpointer a, gconstpointer b)
   * You can connect many handlers to the same signal as long as
   * the handler address is unique.
   *
-  * @todo fix the need for a unique handler adress?
+  * @todo fix the need for a unique handler address?
   *
   * @param object the object that will emit the signal
   * @param signalid the signalid to connect to @sa signal_xmms.h
-  * @param handler the Callback function to be called when signal is emited.
+  * @param handler the Callback function to be called when signal is emitted.
   * @param userdata data to the callback function
   */
 
