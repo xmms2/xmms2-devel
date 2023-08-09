@@ -707,7 +707,7 @@ xmms_playlist_client_insert_url (xmms_playlist_t *playlist, const gchar *plname,
 /**
   * Convenient function for inserting a directory at a given position
   * in the playlist, It will dive down the URL you feed it and
-  * recursivly insert all files.
+  * recursively insert all files.
   *
   * @param playlist the playlist to add it URL to.
   * @param plname the name of the playlist to modify.
@@ -868,7 +868,7 @@ xmms_playlist_client_add_url (xmms_playlist_t *playlist, const gchar *plname,
 
 /**
   * Convenient function for adding a directory to the playlist,
-  * It will dive down the URL you feed it and recursivly add
+  * It will dive down the URL you feed it and recursively add
   * all files there.
   *
   * @param playlist the playlist to add it URL to.

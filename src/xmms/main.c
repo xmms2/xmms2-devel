@@ -84,7 +84,7 @@ static void spawn_script_setup (gpointer data);
 
 
 /**
- * Main object, when this is unreffed, XMMS2 is quiting.
+ * Main object, when this is unreffed, XMMS2 is quitting.
  */
 struct xmms_main_St {
 	xmms_object_t object;
@@ -635,7 +635,7 @@ main (int argc, char **argv)
 
 	if (!ipcpath) {
 		/*
-		 * if not ipcpath is specifed on the cmd line we
+		 * if not ipcpath is specified on the cmd line we
 		 * grab it from the config
 		 */
 		ipcpath = xmms_config_property_get_string (cv);

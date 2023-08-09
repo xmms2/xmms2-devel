@@ -97,7 +97,7 @@ void cleanup_shm (xmmsc_vis_unixshm_t *t)
 }
 
 /**
- * Decrements the server's semaphor (to write the next chunk)
+ * Decrements the server's semaphore (to write the next chunk)
  */
 static gboolean
 decrement_server (xmmsc_vis_unixshm_t *t)
@@ -120,7 +120,7 @@ decrement_server (xmmsc_vis_unixshm_t *t)
 }
 
 /**
- * Increments the client's semaphor (after a chunk was written)
+ * Increments the client's semaphore (after a chunk was written)
  */
 static void
 increment_client (xmmsc_vis_unixshm_t *t)

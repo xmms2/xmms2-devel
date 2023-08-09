@@ -249,7 +249,7 @@ xmms_coll_sync_sorry_to_revert_your_collections (const gchar *path)
 
 cleanup:
 	if (success == FALSE) {
-		xmms_log_error ("Could not ressurect collections, sorry...");
+		xmms_log_error ("Could not resurrect collections, sorry...");
 		if (error != NULL) {
 			XMMS_DBG ("%s", error->message);
 		}

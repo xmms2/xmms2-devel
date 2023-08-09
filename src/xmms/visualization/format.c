@@ -108,7 +108,7 @@ fft (short *samples, gfloat *spec)
 }
 
 /**
- * Calcualte the FFT on the decoded data buffer.
+ * Calculate the FFT on the decoded data buffer.
  */
 static short
 fill_buffer_fft (int16_t* dest, int size, short *src)
