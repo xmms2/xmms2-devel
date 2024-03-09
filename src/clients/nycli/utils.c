@@ -427,7 +427,7 @@ encode_url (gchar *url)
 gchar *
 format_url (const gchar *path, GFileTest test)
 {
-	gchar rpath[XMMS_PATH_MAX];
+	gchar rpath[PATH_MAX];
 	const gchar *p;
 	gchar *url;
 
