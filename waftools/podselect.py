@@ -31,7 +31,10 @@ def perldoc_file(self):
 		self.bld.install_files(os.path.join(base_path, os.path.dirname(path)), outnode)
 
 class perldoc(Task.Task):
-	run_str='podselect ${SRC} > ${TGT}'
+	run_str='${PODSELECT} ${SRC} > ${TGT}'
 	color='BLUE'
 	ext_in=['.xs']
 	ext_out=['.pod']
+
+def configure(ctx):
+	ctx.find_program('podselect', var='PODSELECT')
