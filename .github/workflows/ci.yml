@@ -37,13 +37,15 @@ jobs:
             cc: clang
             cxx: clang++
 
-          - name: macos-latest-clang
-            os: macos-latest
-            # local variables
-            build_mode: regular
-            os_name: osx
-            cc: clang
-            cxx: clang++
+          # TODO: `podselect` is broken and fails as:
+          #   Can't locate Pod/Select.pm in @INC
+          #- name: macos-latest-clang
+          #  os: macos-latest
+          #  # local variables
+          #  build_mode: regular
+          #  os_name: osx
+          #  cc: clang
+          #  cxx: clang++
 
     steps:
       - name: Checkout Code
