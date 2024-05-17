@@ -139,6 +139,7 @@ jobs:
               ;;
             macOS*)
               # TODO
+              brew install perl # podselect
               ;;
           esac
 
