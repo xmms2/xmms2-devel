@@ -24,7 +24,7 @@ class create_test_runner(Task.Task):
         code = code.replace("@@REGISTER_TEST_SUITES@@", register)
         self.outputs[0].write(code)
 
-scraper = re.compile("^(CASE|SETUP)\s*\(([^)]+)\)")
+scraper = re.compile(r'^(CASE|SETUP)\s*\(([^)]+)\)')
 
 def scrape_test_cases(node):
     suite = ""
