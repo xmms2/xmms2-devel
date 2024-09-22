@@ -27,6 +27,13 @@
 
 #include "avcodec_compat.h"
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(60,0,0) /* ffmpeg < 7 */
+#    define XMMS2_AVCODEC_CHANNEL_FIELD(codecctx) (codecctx)->channels
+#else
+#    define XMMS2_AVCODEC_CHANNEL_FIELD(codecctx) (codecctx)->ch_layout.nb_channels
+#endif
+
+
 #define AVCODEC_BUFFER_SIZE 16384
 
 typedef struct {
@@ -222,7 +229,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	data->codecctx = avcodec_alloc_context3 (codec);
 	data->codecctx->sample_rate = data->samplerate;
-	data->codecctx->ch_layout.nb_channels = data->channels;
+	XMMS2_AVCODEC_CHANNEL_FIELD(data->codecctx) = data->channels;
 	data->codecctx->bit_rate = data->bitrate;
 	data->codecctx->bits_per_coded_sample = data->samplebits;
 	data->codecctx->block_align = data->block_align;
@@ -250,7 +257,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 	}
 
 	data->samplerate = data->codecctx->sample_rate;
-	data->channels = data->codecctx->ch_layout.nb_channels;
+	data->channels = XMMS2_AVCODEC_CHANNEL_FIELD(data->codecctx);
 	data->sampleformat = xmms_avcodec_translate_sample_format (data->codecctx->sample_fmt);
 	if (data->sampleformat == XMMS_SAMPLE_FORMAT_UNKNOWN) {
 		avcodec_close (data->codecctx);
@@ -270,7 +277,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	XMMS_DBG ("Decoder %s at rate %d with %d channels of format %s initialized",
 	          codec->name, data->codecctx->sample_rate,
-	          data->codecctx->ch_layout.nb_channels,
+	          XMMS2_AVCODEC_CHANNEL_FIELD(data->codecctx),
 	          av_get_sample_fmt_name (data->codecctx->sample_fmt));
 
 	return TRUE;
@@ -504,7 +511,7 @@ xmms_avcodec_internal_append (xmms_avcodec_data_t *data)
 {
 	enum AVSampleFormat fmt = (enum AVSampleFormat) data->read_out_frame->format;
 	int samples = data->read_out_frame->nb_samples;
-	int channels = data->codecctx->ch_layout.nb_channels;
+	int channels = XMMS2_AVCODEC_CHANNEL_FIELD(data->codecctx);
 	int bps = av_get_bytes_per_sample (fmt);
 
 	if (av_sample_fmt_is_planar (fmt)) {
