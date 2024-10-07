@@ -4,7 +4,7 @@ Version 0.9.4 DrPong (TODO)
 
 Bug fixes:
 
-* avcodec plugin can build against ffmpeg-3.
+* avcodec plugin can build against ffmpeg-7.
 
 Version 0.9.3 DrPong (2023-05-12)
 
