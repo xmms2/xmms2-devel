@@ -21,7 +21,7 @@ How to cut a new release
 There are a few steps as well:
 
 1. Update `BASEVERSION=` in wscript to name new release.
-2. Update `NEWS` file to mention highlights.
+2. Update `NEWS` file to mention highlights and set today's release date.
 3. Run `utils/tag-xmms2.sh`: it will extract the tag from `BASEVERSION`
    and will propose `git `commands to run.
 4. Run proposed `git` commands to create the commit and a tag.
