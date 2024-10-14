@@ -90,7 +90,6 @@ jobs:
                 libfftw3-dev
                 libflac-dev
                 libfluidsynth-dev
-                libgamin-dev
                 libglib2.0-dev
                 libgme-dev
                 libjack-dev
