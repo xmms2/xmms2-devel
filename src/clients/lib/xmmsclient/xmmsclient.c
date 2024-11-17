@@ -222,7 +222,7 @@ xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c,
 char *
 xmmsc_get_last_error (xmmsc_connection_t *c)
 {
-	x_api_error_if (!c, "with a NULL connection", false);
+	x_api_error_if (!c, "with a NULL connection", NULL);
 	return c->error;
 }
 
