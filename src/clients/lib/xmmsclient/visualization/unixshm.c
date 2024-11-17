@@ -28,7 +28,7 @@ setup_shm_prepare (xmmsc_connection_t *c, int32_t vv)
 	t->shmid = shmget (IPC_PRIVATE, sizeof (xmmsc_vischunk_t) * XMMS_VISPACKET_SHMCOUNT, S_IRWXU + S_IRWXG + S_IRWXO);
 	if (t->shmid == -1) {
 		c->error = strdup ("Couldn't create the shared memory!");
-		return false;
+		return NULL;
 	}
 	/* attach early, so that the server doesn't think we aren't there */
 	buffer = shmat(t->shmid, NULL, SHM_RDONLY);
