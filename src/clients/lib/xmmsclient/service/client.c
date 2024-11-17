@@ -347,8 +347,8 @@ xmmsc_sc_namespace_new (xmmsc_sc_namespace_t *parent,
 {
 	xmmsc_sc_interface_entity_t *ifent;
 
-	x_api_error_if (!name, "with NULL name.", false);
-	x_api_error_if (!validate_entity_name (name), "with invalid name", false);
+	x_api_error_if (!name, "with NULL name.", NULL);
+	x_api_error_if (!validate_entity_name (name), "with invalid name", NULL);
 
 	x_return_null_if_fail (parent);
 
