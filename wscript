@@ -20,7 +20,7 @@ from waflib import Configure, Options, Utils, Errors, Logs
 from waftools.compiler_flags import compiler_flags
 from waftools import gittools
 
-BASEVERSION="0.9.5 DrPong"
+BASEVERSION="0.9.6 DrPong"
 APPNAME='xmms2'
 
 top = '.'

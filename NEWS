@@ -1,5 +1,13 @@
 xmms2 news related to releases. History of user visible changes.
 
+
+Version 0.9.6 DrPong (2025-08-18)
+
+Bug fixes:
+
+* The avcodec build is fixed against ffmpeg-8 by Ionen Wolkens: use of
+  `avcodec_close()` is removed in favour of `avcodec_free_context()`.
+
 Version 0.9.5 DrPong (2024-11-23)
 
 Bug fixes:
