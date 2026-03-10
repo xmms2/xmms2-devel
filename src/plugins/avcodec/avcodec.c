@@ -134,8 +134,8 @@ xmms_avcodec_destroy (xmms_xform_t *xform)
 	av_frame_free (&data->read_out_frame);
 
 	g_string_free (data->outbuf, TRUE);
+	/* extradata freed by avcodec_free_context() */
 	g_free (data->buffer);
-	g_free (data->extradata);
 	g_free (data);
 }
 
