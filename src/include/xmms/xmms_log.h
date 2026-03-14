@@ -34,7 +34,7 @@
 #define xmms_log_info(fmt, ...) g_message (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
 #define xmms_log_error(fmt, ...) g_warning (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
 #else
-#define XMMS_DBG(fmt, ...)
+#define XMMS_DBG(fmt, ...) do {} while (0)
 #define xmms_log_fatal g_error
 #define xmms_log_error g_warning
 #define xmms_log_info g_message
