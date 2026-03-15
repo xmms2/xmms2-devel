@@ -153,7 +153,7 @@ xmms_avcodec_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_avcodec_data_t, 1);
 	data->outbuf = g_string_new (NULL);
-	data->buffer = g_malloc (AVCODEC_BUFFER_SIZE);
+	data->buffer = g_malloc (AVCODEC_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
 	data->buffer_size = AVCODEC_BUFFER_SIZE;
 	data->codecctx = NULL;
 	data->packet.size = 0;
@@ -423,7 +423,7 @@ xmms_avcodec_internal_read_some (xmms_xform_t *xform,
 	/* If we have a demuxer plugin, make sure we read the whole packet */
 	while (read_total == data->buffer_size && !data->no_demuxer) {
 		/* multiply the buffer size and try to read again */
-		data->buffer = g_realloc (data->buffer, data->buffer_size * 2);
+		data->buffer = g_realloc (data->buffer, data->buffer_size * 2 + AV_INPUT_BUFFER_PADDING_SIZE);
 		bytes_read = xmms_xform_read (xform,
 		                              (gchar *) data->buffer +
 		                                data->buffer_size,
@@ -441,7 +441,7 @@ xmms_avcodec_internal_read_some (xmms_xform_t *xform,
 		if (read_total < data->buffer_size) {
 			/* finally double the buffer size for performance reasons, the
 			 * hotspot handling likes to fit two frames in the buffer */
-			data->buffer = g_realloc (data->buffer, data->buffer_size * 2);
+			data->buffer = g_realloc (data->buffer, data->buffer_size * 2 + AV_INPUT_BUFFER_PADDING_SIZE);
 			data->buffer_size *= 2;
 			XMMS_DBG ("Reallocated avcodec internal buffer to be %d bytes",
 			          data->buffer_size);
@@ -463,9 +463,6 @@ data->read_out_frame
 Returns: on error: negative
          on no new data produced: zero
          otherwise: positive
-
-FIXME: data->buffer should be at least data->buffer_length +
-FF_INPUT_BUFFER_PADDING_SIZE long.
 */
 static gint
 xmms_avcodec_internal_decode_some (xmms_avcodec_data_t *data)
