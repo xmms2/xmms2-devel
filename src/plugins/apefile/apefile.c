@@ -14,6 +14,13 @@
  *  Lesser General Public License for more details.
  */
 
+/* The frame splitter implements the logic almost identical to
+ * ffmpeg/libavformat/ape.c. This includes extra data headers placed
+ * for AVPacket and data alignment handling to math multiple of 4.
+ *
+ * TODO: make it match closer to ease forward syncing.
+ */
+
 #include <xmms/xmms_xformplugin.h>
 #include <xmms/xmms_sample.h>
 #include <xmms/xmms_log.h>
@@ -514,6 +521,7 @@ xmms_apefile_read (xmms_xform_t *xform, xmms_sample_t *buffer,
 		             data->seektable[0]) & 3;
 		framepos -= framealign;
 		framelength += framealign;
+		framelength = (framelength + 3) & ~3;
 
 		ret = xmms_xform_seek (xform,
 		                       framepos,
