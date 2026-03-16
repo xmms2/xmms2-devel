@@ -1,5 +1,17 @@
 xmms2 news related to releases. History of user visible changes.
 
+Version 0.9.7 DrPong (2026-03-16)
+
+Bug fixes:
+
+* The avcodec plugin should crash less on malformed inputs. Fixed by
+  Nicolas PARLANT who noticed double-free crashes when avcodec abruptly
+  stops on partially decoded ape files.
+
+* The avcodes plugin now provides padding required by ffmpeg.
+
+* The apefile plugin was fixed to decode unaligned frames as expected by
+  ffmpeg decoder.
 
 Version 0.9.6 DrPong (2025-08-18)
 
