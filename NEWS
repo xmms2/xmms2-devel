@@ -1,5 +1,12 @@
 xmms2 news related to releases. History of user visible changes.
 
+Version 0.9.8 DrPong (TODO)
+
+Notable changes:
+
+`mac` plugin was updated to use modern monkeys-audio library API. The
+support for older `mac` releases was dropped.
+
 Version 0.9.7 DrPong (2026-03-16)
 
 Bug fixes:
