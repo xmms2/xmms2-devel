@@ -1,29 +1,13 @@
-# Plugin never tested! FEEDBACK PLEASE
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
     if not conf.env.CXX:
         return
 
-    conf.check_cxx(header_name='mac/All.h')
-    conf.check_cc(lib="mac", uselib_store="mac")
-    conf.check_cxx(lib='mac', fragment = _pointer_test)
+    conf.check_cxx(header_name='MAC/All.h')
+    conf.check_cc(lib="MAC", uselib_store="mac")
+    conf.check_cxx(lib='MAC')
 
 configure, build = plugin('mac', configure=plugin_configure,
                           source=['mac.cpp', 'source_adapter.cpp'],
-                          libs=["mac"], tool="cxx")
-
-
-
-_pointer_test = """
-#include <mac/All.h>
-#include <mac/MACLib.h>
-
-typedef char __CHECK__[1-2*!(  sizeof(CreateIAPEDecompressEx2 (0, -1, -1, 0)->GetInfo (APE_INFO_TAG)) >= sizeof (void *)  )];
-
-int main (int, char **)
-{
-	return 0;
-}
-
-"""
+                          libs=["MAC"], tool="cxx")

@@ -40,7 +40,7 @@ CSourceAdapter::Read (void * pBuffer, unsigned int nBytesToRead,
 }
 
 int
-CSourceAdapter::Seek (int nDistance, unsigned int nMoveMode)
+CSourceAdapter::Seek (APE::int64 nDistance, APE::SeekMethod nMoveMode)
 {
 	xmms_xform_seek_mode_t whence;
 	xmms_error_t error;
@@ -50,13 +50,13 @@ CSourceAdapter::Seek (int nDistance, unsigned int nMoveMode)
 
 	switch (nMoveMode)
 	{
-	case FILE_BEGIN:
+	case APE::SeekFileBegin:
 		whence = XMMS_XFORM_SEEK_SET;
 		break;
-	case FILE_CURRENT:
+	case APE::SeekFileCurrent:
 		whence = XMMS_XFORM_SEEK_CUR;
 		break;
-	case FILE_END:
+	case APE::SeekFileEnd:
 		whence = XMMS_XFORM_SEEK_END;
 		break;
 	}
@@ -66,7 +66,7 @@ CSourceAdapter::Seek (int nDistance, unsigned int nMoveMode)
 	return (error.code == XMMS_ERROR_NONE) ? ERROR_SUCCESS : -1;
 }
 
-int
+APE::int64
 CSourceAdapter::GetPosition ()
 {
 	gint pos;
@@ -79,7 +79,7 @@ CSourceAdapter::GetPosition ()
 	return (error.code == XMMS_ERROR_NONE) ? pos : -1;
 }
 
-int
+APE::int64
 CSourceAdapter::GetSize ()
 {
 	const gchar *metakey;

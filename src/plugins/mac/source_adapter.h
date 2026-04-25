@@ -17,9 +17,9 @@
 #ifndef XMMS_MAC_SOURCE_ADAPTER_H
 #define XMMS_MAC_SOURCE_ADAPTER_H
 
-#include <mac/All.h>
-#include <mac/MACLib.h>
-#include <mac/IO.h>
+#include <MAC/All.h>
+#include <MAC/MACLib.h>
+#include <MAC/IAPEIO.h>
 
 #include <glib.h>
 
@@ -31,43 +31,42 @@ extern "C" {
 
 }
 
-class CSourceAdapter : public CIO
+class CSourceAdapter : public APE::IAPEIO
 {
 public:
 	CSourceAdapter (xmms_xform_t *xform);
 	~CSourceAdapter () {};
 
 	// open / close
-#if MAC_DLL_INTERFACE_VERSION_NUMBER >= 1000
-	int Open (const wchar_t * pName, BOOL bOpenReadOnly = FALSE)
-#else
-	int Open (const wchar_t * pName)
-#endif
+	int Open(const APE::str_utfn * pName, bool bOpenReadOnly = false) APE_OVERRIDE
 	{ return ERROR_SUCCESS; }
 
-	int Close () { return ERROR_SUCCESS; }
+	int Close () APE_OVERRIDE
+	{ return ERROR_SUCCESS; }
 
 	// read / write
-	int Read (void * pBuffer, unsigned int nBytesToRead,
-	          unsigned int * pBytesRead);
-	int Write (const void * pBuffer, unsigned int nBytesToWrite,
-	           unsigned int * pBytesWritten) { return ERROR_SUCCESS; };
+	int Read(void * pBuffer, unsigned int nBytesToRead, unsigned int * pBytesRead) APE_OVERRIDE;
+	int Write(const void * pBuffer, unsigned int nBytesToWrite, unsigned int * pBytesWritten = APE_NULL) APE_OVERRIDE
+	{ return ERROR_SUCCESS; }
 
 	// seek
-	int Seek (int nDistance, unsigned int nMoveMode);
-
-	// other functions
-	int SetEOF () { return ERROR_SUCCESS; };
+	int Seek(APE::int64 nPosition, APE::SeekMethod nMethod) APE_OVERRIDE;
 
 	// creation / destruction
-	int Create (const wchar_t * pName) { return ERROR_SUCCESS; }
-	int Delete () { return ERROR_SUCCESS; }
+	int Create (const APE::str_utfn * pName) APE_OVERRIDE
+	{ return ERROR_SUCCESS; }
+	int Delete () APE_OVERRIDE
+	{ return ERROR_SUCCESS; }
+
+	// other functions
+	int SetEOF () APE_OVERRIDE
+	{ return ERROR_SUCCESS; };
+	unsigned char * GetBuffer(int * pnBufferBytes) APE_OVERRIDE
+	{ return APE_NULL; }
 
 	// attributes
-	int GetPosition ();
-	int GetSize ();
-	int GetName (wchar_t * pBuffer) { return 0; }
-	int GetHandle () { return 0; }
+	APE::int64 GetPosition () APE_OVERRIDE;
+	APE::int64 GetSize () APE_OVERRIDE;
 
 private:
 	xmms_xform_t *xform;

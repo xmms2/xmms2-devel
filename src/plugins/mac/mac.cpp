@@ -14,11 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include <mac/All.h>
-#include <mac/MACLib.h>
-#include <mac/APETag.h>
-#include <mac/APEInfo.h>
-#include <mac/CharacterHelper.h>
+#include <MAC/All.h>
+#include <MAC/MACLib.h>
+#include <MAC/IAPETag.h>
+#include <MAC/CharacterHelper.h>
 
 #include "source_adapter.h"
 
@@ -36,7 +35,7 @@ extern "C" {
 typedef struct {
 	guint start_time;
 
-	IAPEDecompress *p_decompress;
+	APE::IAPEDecompress *p_decompress;
 
 	guint block_align;
 	guint sample_rate;
@@ -118,7 +117,7 @@ xmms_mac_init (xmms_xform_t *xform)
 	xmms_mac_data_t *data;
 	gint start_block = -1, end_block = -1;
 	gint err = 0;
-	CAPEInfo *ape_info = NULL;
+	APE::IAPEInfo *ape_info = NULL;
 
 	XMMS_DBG ("xmms_mac_init");
 
@@ -129,7 +128,7 @@ xmms_mac_init (xmms_xform_t *xform)
 	xmms_xform_private_data_set (xform, data);
 
 	CSourceAdapter *source_adapter = new CSourceAdapter (xform);
-	ape_info = new CAPEInfo (&err, source_adapter);
+	ape_info = CreateIAPEInfo (&err, source_adapter);
 
 	/*
 	 * Since we have to use a source adapter, so
@@ -137,10 +136,10 @@ xmms_mac_init (xmms_xform_t *xform)
 	 */
 	data->p_decompress = CreateIAPEDecompressEx2 (ape_info, start_block, end_block, &err);
 
-	data->block_align = data->p_decompress->GetInfo (APE_INFO_BLOCK_ALIGN);
-	data->sample_rate = data->p_decompress->GetInfo (APE_INFO_SAMPLE_RATE);
-	data->bits_per_sample = data->p_decompress->GetInfo (APE_INFO_BITS_PER_SAMPLE);
-	data->channels = data->p_decompress->GetInfo (APE_INFO_CHANNELS);
+	data->block_align = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_BLOCK_ALIGN);
+	data->sample_rate = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_SAMPLE_RATE);
+	data->bits_per_sample = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_BITS_PER_SAMPLE);
+	data->channels = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_CHANNELS);
 
 	xmms_mac_get_media_info (xform);
 
@@ -192,14 +191,14 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 	/* Meta information */
 
-	CAPETag *p_ape_tag = (CAPETag *)(data->p_decompress->GetInfo (APE_INFO_TAG));
+	APE::IAPETag *p_ape_tag = (APE::IAPETag *)(data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_TAG));
 
 	if (p_ape_tag) {
 		BOOL bHasID3Tag = p_ape_tag->GetHasID3Tag ();
 		BOOL bHasAPETag = p_ape_tag->GetHasAPETag ();
 
 		if (bHasID3Tag || bHasAPETag) {
-			CAPETagField * pTagField;
+			APE::IAPETagField * pTagField;
 			int index = 0;
 			while ((pTagField = p_ape_tag->GetTagField (index)) != NULL) {
 				index ++;
@@ -210,12 +209,7 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 				gchar *name;
 
 				field_name = pTagField->GetFieldName ();
-
-#if MAC_DLL_INTERFACE_VERSION_NUMBER >= 1000
-				name = (gchar *)CAPECharacterHelper::GetUTF8FromUTF16 (field_name);
-#else
-				name = (gchar *)GetUTF8FromUTF16 (field_name);
-#endif
+				name = (gchar *)GetUTF8FromUTFN (field_name);
 				memset (field_value, 0, 255);
 				int size = 255;
 				p_ape_tag->GetFieldString (field_name, (char *)field_value, &size, TRUE);
@@ -249,7 +243,7 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 	metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE;
 	if (xmms_xform_metadata_get_int (xform, metakey, &filesize)) {
-		gint duration = data->p_decompress->GetInfo (APE_DECOMPRESS_LENGTH_MS);
+		gint duration = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_DECOMPRESS_LENGTH_MS);
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION;
 		xmms_xform_metadata_set_int (xform, metakey, duration);
 	}
@@ -258,20 +252,20 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 	/* Compression Level */
 	name = "Compression Level";
-	switch (data->p_decompress->GetInfo (APE_INFO_COMPRESSION_LEVEL)) {
-	case COMPRESSION_LEVEL_FAST:
+	switch (data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_COMPRESSION_LEVEL)) {
+	case APE_COMPRESSION_LEVEL_FAST:
 		value = "Fast";
 		break;
-	case COMPRESSION_LEVEL_NORMAL:
+	case APE_COMPRESSION_LEVEL_NORMAL:
 		value = "Normal";
 		break;
-	case COMPRESSION_LEVEL_HIGH:
+	case APE_COMPRESSION_LEVEL_HIGH:
 		value = "High";
 		break;
-	case COMPRESSION_LEVEL_EXTRA_HIGH:
+	case APE_COMPRESSION_LEVEL_EXTRA_HIGH:
 		value = "Extra High";
 		break;
-	case COMPRESSION_LEVEL_INSANE:
+	case APE_COMPRESSION_LEVEL_INSANE:
 		value = "Insane";
 		break;
 	}
@@ -279,13 +273,13 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 	/* Format Flags */
 	name = "Flags";
-	xmms_xform_metadata_set_int (xform, name, data->p_decompress->GetInfo (APE_INFO_FORMAT_FLAGS));
+	xmms_xform_metadata_set_int (xform, name, data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_FORMAT_FLAGS));
 
 	/* Average Bitrate */
 	/* mac library returns bits per millisecond(!), thus '*1000' */
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                             data->p_decompress->GetInfo (APE_INFO_AVERAGE_BITRATE) * 1000);
+	                             data->p_decompress->GetInfo (APE::IAPEDecompress::APE_INFO_AVERAGE_BITRATE) * 1000);
 }
 
 static gint
@@ -293,14 +287,14 @@ xmms_mac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 {
 	xmms_mac_data_t *data;
 
-	int blocks_to_read = 0, actrual_read = 0;
+	APE::int64 blocks_to_read = 0, actrual_read = 0;
 	int nRetVal = 0;
 
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);
 
 	blocks_to_read = len / data->block_align;
 
-	nRetVal = data->p_decompress->GetData ((gchar *)buf, blocks_to_read, &actrual_read);
+	nRetVal = data->p_decompress->GetData ((unsigned char *)buf, blocks_to_read, &actrual_read);
 
 	return actrual_read * data->block_align;
 }
@@ -316,14 +310,14 @@ xmms_mac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);
 	switch (whence) {
 	case XMMS_XFORM_SEEK_CUR:
-		blocks = data->p_decompress->GetInfo (APE_DECOMPRESS_CURRENT_BLOCK);
+		blocks = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_DECOMPRESS_CURRENT_BLOCK);
 		blocks += samples;
 		break;
 	case XMMS_XFORM_SEEK_SET:
 		blocks = samples;
 		break;
 	case XMMS_XFORM_SEEK_END:
-		blocks = data->p_decompress->GetInfo (APE_DECOMPRESS_TOTAL_BLOCKS);
+		blocks = data->p_decompress->GetInfo (APE::IAPEDecompress::APE_DECOMPRESS_TOTAL_BLOCKS);
 		blocks += samples;
 		break;
 	}
