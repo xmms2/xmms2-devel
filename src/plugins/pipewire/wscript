@@ -1,0 +1,8 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    conf.check_cfg(package="libpipewire-0.3", uselib_store="pipewire",
+                   args="--cflags --libs")
+
+configure, build = plugin("pipewire", configure=plugin_configure,
+                          libs=["pipewire"], output_prio=50)
