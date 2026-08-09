@@ -39,6 +39,12 @@
  * through the param_changed callback and are then advertised to XMMS2, which
  * lets the converter resample and remix directly to the sink layout and
  * avoids a second conversion step inside PipeWire.
+ *
+ * The stream is connected inactive and only activated while XMMS2 is
+ * playing. An active stream keeps its node running, which keeps the sink
+ * (and the underlying device) from going idle and suspending, so pushing
+ * silence while paused or stopped would keep the audio hardware powered up
+ * for as long as the daemon runs.
  */
 
 /*
@@ -96,6 +102,8 @@ static gboolean xmms_pipewire_volume_get (xmms_output_t *output,
 
 static gboolean xmms_pipewire_connect (xmms_output_t *output);
 static void xmms_pipewire_apply_volume (xmms_pipewire_data_t *data);
+static void xmms_pipewire_set_running (xmms_pipewire_data_t *data,
+                                       gboolean running);
 
 static void xmms_pipewire_on_process (void *userdata);
 static void xmms_pipewire_on_param_changed (void *userdata, uint32_t id,
@@ -274,8 +282,12 @@ xmms_pipewire_connect (xmms_output_t *output)
 		&b, SPA_PARAM_EnumFormat,
 		&SPA_AUDIO_INFO_RAW_INIT (.format = SPA_AUDIO_FORMAT_F32));
 
+	/* Connect inactive: the format is still negotiated (the stream settles
+	 * in the paused state), but the node is not run until playback starts,
+	 * so an idle daemon lets the sink suspend. */
 	res = pw_stream_connect (data->stream, PW_DIRECTION_OUTPUT, PW_ID_ANY,
 	                         PW_STREAM_FLAG_AUTOCONNECT |
+	                         PW_STREAM_FLAG_INACTIVE |
 	                         PW_STREAM_FLAG_MAP_BUFFERS,
 	                         params, 1);
 	if (res < 0) {
@@ -343,6 +355,26 @@ xmms_pipewire_apply_volume (xmms_pipewire_data_t *data)
 	pw_thread_loop_unlock (data->loop);
 }
 
+/*
+ * Start or stop pulling samples. Deactivating the stream stops the process
+ * callback from being called at all, which lets PipeWire park the node and
+ * eventually suspend the sink instead of running it on silence. Must be
+ * called without the thread loop locked; it takes the lock itself.
+ */
+static void
+xmms_pipewire_set_running (xmms_pipewire_data_t *data, gboolean running)
+{
+	if (!data->stream) {
+		data->running = running;
+		return;
+	}
+
+	pw_thread_loop_lock (data->loop);
+	data->running = running;
+	pw_stream_set_active (data->stream, running);
+	pw_thread_loop_unlock (data->loop);
+}
+
 static gboolean
 xmms_pipewire_status (xmms_output_t *output, xmms_playback_status_t status)
 {
@@ -352,7 +384,8 @@ xmms_pipewire_status (xmms_output_t *output, xmms_playback_status_t status)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	data->running = (status == XMMS_PLAYBACK_STATUS_PLAY);
+	xmms_pipewire_set_running (data,
+	                           status == XMMS_PLAYBACK_STATUS_PLAY);
 
 	return TRUE;
 }
