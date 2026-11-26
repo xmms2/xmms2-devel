@@ -29,7 +29,7 @@ c_add_to_ecore_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms);
 
 	xmms->ecore_handle = xmmsc_mainloop_ecore_init (xmms->real);
 
@@ -41,7 +41,7 @@ c_remove_from_ecore_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms);
 
 	xmmsc_mainloop_ecore_shutdown (xmms->real, xmms->ecore_handle);
 

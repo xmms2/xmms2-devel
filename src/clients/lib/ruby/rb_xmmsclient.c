@@ -29,7 +29,7 @@
 	RbXmmsClient *xmms = NULL; \
 	xmmsc_result_t *res; \
 \
-	Data_Get_Struct (self, RbXmmsClient, xmms); \
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms); \
 	CHECK_DELETED (xmms);
 
 #define METHOD_HANDLER_FOOTER \
@@ -85,8 +85,9 @@ static ID id_lt, id_gt;
 void Init_Client (VALUE);
 
 static void
-c_mark (RbXmmsClient *xmms)
+c_mark (void *data)
 {
+	RbXmmsClient *xmms = data;
 	rb_gc_mark (xmms->result_callbacks);
 
 	if (!NIL_P (xmms->disconnect_cb))
@@ -97,21 +98,33 @@ c_mark (RbXmmsClient *xmms)
 }
 
 static void
-c_free (RbXmmsClient *xmms)
+c_free (void *data)
 {
+	RbXmmsClient *xmms = data;
 	if (xmms->real && !xmms->deleted)
 		xmmsc_unref (xmms->real);
 
 	free (xmms);
 }
 
+static const rb_data_type_t rb_xmms_client_data_type = {
+	.wrap_struct_name = "Xmms::Client",
+	.function = {
+		.dmark = c_mark,
+		.dfree = c_free,
+	},
+};
+
+const rb_data_type_t *ptr_rb_xmms_client_data_type =
+	&rb_xmms_client_data_type;
+
 static VALUE
 c_alloc (VALUE klass)
 {
 	RbXmmsClient *xmms;
 
-	return Data_Make_Struct (klass, RbXmmsClient,
-	                         c_mark, c_free, xmms);
+	return TypedData_Make_Struct (klass, RbXmmsClient,
+	                         &rb_xmms_client_data_type, xmms);
 }
 
 /*
@@ -125,7 +138,7 @@ c_init (VALUE self, VALUE name)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	if (!(xmms->real = xmmsc_init (StringValuePtr (name)))) {
 		rb_raise (rb_eNoMemError, "failed to allocate memory");
@@ -154,7 +167,7 @@ c_connect (int argc, VALUE *argv, VALUE self)
 	RbXmmsClient *xmms = NULL;
 	char *p = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -176,7 +189,7 @@ c_delete (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -192,7 +205,7 @@ on_disconnect (void *data)
 	VALUE self = (VALUE) data;
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	rb_funcall (xmms->disconnect_cb, rb_intern ("call"), 0);
 }
@@ -212,7 +225,7 @@ c_on_disconnect (VALUE self)
 	if (!rb_block_given_p ())
 		return Qnil;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -237,7 +250,7 @@ c_last_error_get (VALUE self)
 	RbXmmsClient *xmms = NULL;
 	const char *s;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -257,7 +270,7 @@ c_io_fd (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -276,7 +289,7 @@ c_io_want_out (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -289,7 +302,7 @@ on_io_need_out (int flag, void *data)
 	VALUE self = (VALUE) data;
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	rb_funcall (xmms->io_need_out_cb, rb_intern ("call"), 1, INT2NUM (flag));
 }
@@ -308,7 +321,7 @@ c_io_on_need_out (VALUE self)
 	if (!rb_block_given_p ())
 		return Qnil;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -332,7 +345,7 @@ c_io_in_handle (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -353,7 +366,7 @@ c_io_out_handle (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -374,7 +387,7 @@ c_io_disconnect (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -623,7 +636,7 @@ c_playback_volume_set (VALUE self, VALUE channel, VALUE volume)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -649,7 +662,7 @@ c_playback_volume_get (VALUE self)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -855,7 +868,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 	bool is_str = false;
 	int32_t id, ivalue;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -911,7 +924,7 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 	const char *ckey;
 	int32_t id;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, &rb_xmms_client_data_type, xmms);
 
 	CHECK_DELETED (xmms);
 

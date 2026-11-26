@@ -29,7 +29,7 @@ c_add_to_glib_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms);
 
 	xmms->gmain_handle = xmmsc_mainloop_gmain_init (xmms->real);
 
@@ -41,7 +41,7 @@ c_remove_from_glib_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	TypedData_Get_Struct (self, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms);
 
 	xmmsc_mainloop_gmain_shutdown (xmms->real, xmms->gmain_handle);
 

@@ -33,7 +33,7 @@
 #define COLL_METHOD_HANDLER_HEADER \
 	RbCollection *coll = NULL; \
 \
-	Data_Get_Struct (self, RbCollection, coll); \
+	TypedData_Get_Struct (self, RbCollection, &rb_xmms_coll_data_type, coll); \
 
 #define COLL_METHOD_ADD_HANDLER_RET(action) \
 	COLL_METHOD_HANDLER_HEADER \
@@ -50,19 +50,29 @@ static VALUE cColl, cAttributes, cOperands;
 static VALUE eCollectionError, eDisconnectedError, eClientError, ePatternError;
 
 static void
-c_free (RbCollection *coll)
+c_free (void *data)
 {
+	RbCollection *coll = data;
 	xmmsv_unref (coll->real);
 
 	free (coll);
 }
 
 static void
-c_mark (RbCollection *coll)
+c_mark (void *data)
 {
+	RbCollection *coll = data;
 	rb_gc_mark (coll->attributes);
 	rb_gc_mark (coll->operands);
 }
+
+static const rb_data_type_t rb_xmms_coll_data_type = {
+	.wrap_struct_name = "Xmms::Collection",
+	.function = {
+		.dmark = c_mark,
+		.dfree = c_free,
+	},
+};
 
 static VALUE
 c_alloc (VALUE klass)
@@ -70,7 +80,7 @@ c_alloc (VALUE klass)
 	VALUE obj;
 	RbCollection *coll = NULL;
 
-	obj = Data_Make_Struct (klass, RbCollection, c_mark, c_free, coll);
+	obj = TypedData_Make_Struct (klass, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	coll->attributes = Qnil;
 	coll->operands = Qnil;
@@ -84,7 +94,7 @@ TO_XMMS_CLIENT_COLLECTION (xmmsc_coll_t *coll)
 	VALUE self = rb_obj_alloc (cColl);
 	RbCollection *rbcoll = NULL;
 
-	Data_Get_Struct (self, RbCollection, rbcoll);
+	TypedData_Get_Struct (self, RbCollection, &rb_xmms_coll_data_type, rbcoll);
 
 	rbcoll->real = coll;
 
@@ -105,7 +115,7 @@ FROM_XMMS_CLIENT_COLLECTION (VALUE rbcoll)
 	RbCollection *coll = NULL;
 
 	CHECK_IS_COLL (rbcoll);
-	Data_Get_Struct (rbcoll, RbCollection, coll);
+	TypedData_Get_Struct (rbcoll, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	return coll->real;
 }
@@ -136,7 +146,7 @@ c_coll_universe (VALUE klass)
 	VALUE obj = rb_obj_alloc (klass);
 	RbCollection *coll = NULL;
 
-	Data_Get_Struct (obj, RbCollection, coll);
+	TypedData_Get_Struct (obj, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	coll->real = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 
@@ -155,7 +165,7 @@ c_coll_parse (VALUE klass, VALUE pattern)
 	VALUE obj = rb_obj_alloc (klass);
 	RbCollection *coll = NULL;
 
-	Data_Get_Struct (obj, RbCollection, coll);
+	TypedData_Get_Struct (obj, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	if (!xmmsv_coll_parse (StringValuePtr (pattern), &coll->real)) {
 		rb_raise (ePatternError, "invalid pattern");
@@ -189,7 +199,7 @@ c_coll_operands (VALUE self)
 {
 	RbCollection *coll = NULL;
 
-	Data_Get_Struct (self, RbCollection, coll);
+	TypedData_Get_Struct (self, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	if (NIL_P (coll->operands))
 		coll->operands = rb_class_new_instance (1, &self, cOperands);
@@ -266,7 +276,7 @@ c_coll_attributes (VALUE self)
 {
 	RbCollection *coll = NULL;
 
-	Data_Get_Struct (self, RbCollection, coll);
+	TypedData_Get_Struct (self, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	if (NIL_P (coll->attributes))
 		coll->attributes = rb_class_new_instance (1, &self, cAttributes);
@@ -333,7 +343,7 @@ c_attrs_aref (VALUE self, VALUE key)
 	StringValue (key);
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	s = xmmsv_coll_attribute_get_string (coll->real, StringValuePtr (key), &value);
 	if (!s)
@@ -352,7 +362,7 @@ c_attrs_aset (VALUE self, VALUE key, VALUE value)
 	StringValue (value);
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	xmmsv_coll_attribute_set_string (coll->real, StringValuePtr (key),
 	                                 StringValuePtr (value));
@@ -370,7 +380,7 @@ c_attrs_has_key (VALUE self, VALUE key)
 	StringValue (key);
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	s = xmmsv_coll_attribute_get_string (coll->real, StringValuePtr (key), NULL);
 
@@ -386,7 +396,7 @@ c_attrs_delete (VALUE self, VALUE key)
 	StringValue (key);
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	xmmsv_coll_attribute_remove (coll->real, StringValuePtr (key));
 
@@ -421,7 +431,7 @@ c_attrs_each (VALUE self)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	attributes = xmmsv_coll_attributes_get (coll->real);
 
@@ -439,7 +449,7 @@ c_attrs_each_key (VALUE self)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	attributes = xmmsv_coll_attributes_get (coll->real);
 
@@ -457,7 +467,7 @@ c_attrs_each_value (VALUE self)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	attributes = xmmsv_coll_attributes_get (coll->real);
 
@@ -482,9 +492,9 @@ c_operands_push (VALUE self, VALUE arg)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
-	Data_Get_Struct (arg, RbCollection, coll2);
+	TypedData_Get_Struct (arg, RbCollection, &rb_xmms_coll_data_type, coll2);
 
 	xmmsv_coll_add_operand (coll->real, coll2->real);
 
@@ -498,9 +508,9 @@ c_operands_delete (VALUE self, VALUE arg)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
-	Data_Get_Struct (arg, RbCollection, coll2);
+	TypedData_Get_Struct (arg, RbCollection, &rb_xmms_coll_data_type, coll2);
 
 	xmmsv_coll_remove_operand (coll->real, coll2->real);
 
@@ -521,7 +531,7 @@ c_operands_each (VALUE self)
 	VALUE tmp;
 
 	tmp = rb_iv_get (self, "collection");
-	Data_Get_Struct (tmp, RbCollection, coll);
+	TypedData_Get_Struct (tmp, RbCollection, &rb_xmms_coll_data_type, coll);
 
 	operands_list = xmmsv_coll_operands_get (coll->real);
 
