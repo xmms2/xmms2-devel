@@ -37,6 +37,8 @@ typedef struct {
 	void *gmain_handle;
 } RbXmmsClient;
 
+extern const rb_data_type_t *ptr_rb_xmms_client_data_type;
+
 VALUE check_int32 (VALUE arg);
 const char **parse_string_array (VALUE value);
 xmmsv_t *parse_string_array2 (VALUE value);

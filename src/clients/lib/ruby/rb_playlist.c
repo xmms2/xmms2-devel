@@ -30,8 +30,8 @@
 	RbXmmsClient *xmms = NULL; \
 	xmmsc_result_t *res; \
 \
-	Data_Get_Struct (self, RbPlaylist, pl); \
-	Data_Get_Struct (pl->xmms, RbXmmsClient, xmms); \
+	TypedData_Get_Struct (self, RbPlaylist, &rb_xmms_playlist_data_type, pl); \
+	TypedData_Get_Struct (pl->xmms, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms); \
 	CHECK_DELETED (xmms);
 
 #define PLAYLIST_METHOD_HANDLER_FOOTER \
@@ -87,18 +87,26 @@ typedef struct {
 static VALUE ePlaylistError, eDisconnectedError, eClientError;
 
 static void
-c_mark (RbPlaylist *pl)
+c_mark (void *data)
 {
+	RbPlaylist *pl = data;
 	rb_gc_mark (pl->xmms);
 	rb_gc_mark (pl->name_value);
 }
+
+static const rb_data_type_t rb_xmms_playlist_data_type = {
+	.wrap_struct_name = "Xmms::Playlist",
+	.function = {
+		.dmark = c_mark,
+	},
+};
 
 static VALUE
 c_alloc (VALUE klass)
 {
 	RbPlaylist *pl;
 
-	return Data_Make_Struct (klass, RbPlaylist, c_mark, NULL, pl);
+	return TypedData_Make_Struct (klass, RbPlaylist, &rb_xmms_playlist_data_type, pl);
 }
 
 /*
@@ -117,7 +125,7 @@ c_init (int argc, VALUE *argv, VALUE self)
 	RbPlaylist *pl = NULL;
 	VALUE name, xmms = Qnil;
 
-	Data_Get_Struct (self, RbPlaylist, pl);
+	TypedData_Get_Struct (self, RbPlaylist, &rb_xmms_playlist_data_type, pl);
 
 	rb_scan_args (argc, argv, "11", &xmms, &name);
 
@@ -147,7 +155,7 @@ c_name (VALUE self)
 {
 	RbPlaylist *pl = NULL;
 
-	Data_Get_Struct (self, RbPlaylist, pl);
+	TypedData_Get_Struct (self, RbPlaylist, &rb_xmms_playlist_data_type, pl);
 
 	return pl->name_value;
 }

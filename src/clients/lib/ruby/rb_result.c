@@ -42,18 +42,28 @@ static VALUE cResult, cDict, cRawDict,
              eResultError, eValueError;
 
 static void
-c_mark (RbResult *res)
+c_mark (void *data)
 {
+	RbResult *res = data;
 	rb_gc_mark (res->xmms);
 }
 
 static void
-c_free (RbResult *res)
+c_free (void *data)
 {
+	RbResult *res = data;
 	xmmsc_result_unref (res->real);
 
 	free (res);
 }
+
+static const rb_data_type_t rb_xmms_result_data_type = {
+	.wrap_struct_name = "Xmms::Result",
+	.function = {
+		.dmark = c_mark,
+		.dfree = c_free,
+	},
+};
 
 VALUE
 TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
@@ -76,7 +86,7 @@ TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 			break;
 	}
 
-	self = Data_Make_Struct (klass, RbResult, c_mark, c_free, rbres);
+	self = TypedData_Make_Struct (klass, RbResult, &rb_xmms_result_data_type, rbres);
 
 	rbres->real = res;
 	rbres->xmms = xmms;
@@ -87,14 +97,16 @@ TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 }
 
 static void
-c_dict_mark (RbDict *dict)
+c_dict_mark (void *data)
 {
+	RbDict *dict = data;
 	rb_gc_mark (dict->parent);
 }
 
 static void
-c_dict_free (RbDict *dict)
+c_dict_free (void *data)
 {
+	RbDict *dict = data;
 	xmmsv_unref (dict->real);
 
 	free (dict);
@@ -131,14 +143,14 @@ c_notifier_set (VALUE self)
 	RbResult *res = NULL;
 	RbXmmsClient *xmms = NULL;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	if (!rb_block_given_p ())
 		return Qnil;
 
 	callback = rb_block_proc ();
 
-	Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
+	TypedData_Get_Struct (res->xmms, RbXmmsClient, ptr_rb_xmms_client_data_type, xmms);
 	rb_ary_push (xmms->result_callbacks, callback);
 
 	xmmsc_result_notifier_set (res->real, on_signal, (void *) callback);
@@ -157,7 +169,7 @@ c_wait (VALUE self)
 {
 	RbResult *res = NULL;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	xmmsc_result_wait (res->real);
 
@@ -169,7 +181,7 @@ c_disconnect (VALUE self)
 {
 	RbResult *res = NULL;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	xmmsc_result_disconnect (res->real);
 
@@ -182,7 +194,7 @@ c_value_get (VALUE self)
 	RbResult *res = NULL;
 	xmmsv_t *val;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	val = xmmsc_result_get_value (res->real);
 
@@ -264,6 +276,14 @@ list_get (VALUE parent, xmmsv_t *val)
 	return args[0];
 }
 
+static const rb_data_type_t rb_xmms_dict_data_type = {
+	.wrap_struct_name = "Xmms::Dict",
+	.function = {
+		.dmark = c_dict_mark,
+		.dfree = c_dict_free,
+	},
+};
+
 static VALUE
 extract_value (VALUE parent, xmmsv_t *val)
 {
@@ -290,8 +310,8 @@ extract_value (VALUE parent, xmmsv_t *val)
 	VALUE value;
 	RbDict *dict = NULL;
 
-	value = Data_Make_Struct (cRawDict, RbDict,
-			c_dict_mark, c_dict_free,
+	value = TypedData_Make_Struct (cRawDict, RbDict,
+			&rb_xmms_dict_data_type,
 			dict);
 
 	dict->real = xmmsv_ref (val);
@@ -307,7 +327,7 @@ c_is_error (VALUE self)
 {
 	RbResult *res;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	return xmmsc_result_iserror (res->real) ? Qtrue : Qfalse;
 }
@@ -320,7 +340,7 @@ c_get_error (VALUE self)
 	const char *error;
 	int ret;
 
-	Data_Get_Struct (self, RbResult, res);
+	TypedData_Get_Struct (self, RbResult, &rb_xmms_result_data_type, res);
 
 	val = xmmsc_result_get_value (res->real);
 
@@ -375,7 +395,7 @@ c_dict_size (VALUE self)
 	RbDict *dict = NULL;
 	int size;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	size = xmmsv_dict_get_size (dict->real);
 
@@ -388,7 +408,7 @@ c_dict_empty (VALUE self)
 	RbDict *dict = NULL;
 	int size;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	size = xmmsv_dict_get_size (dict->real);
 
@@ -406,7 +426,7 @@ c_dict_aref (VALUE self, VALUE key)
 
 	Check_Type (key, T_SYMBOL);
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	ckey = rb_id2name (SYM2ID (key));
 
@@ -430,7 +450,7 @@ c_dict_has_key (VALUE self, VALUE key)
 
 	Check_Type (key, T_SYMBOL);
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	ckey = rb_id2name (SYM2ID (key));
 
@@ -468,7 +488,7 @@ c_dict_each (VALUE self)
 {
 	RbDict *dict = NULL;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	xmmsv_dict_foreach (dict->real, dict_each_pair, &self);
 
@@ -480,7 +500,7 @@ c_dict_each_key (VALUE self)
 {
 	RbDict *dict = NULL;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	xmmsv_dict_foreach (dict->real, dict_each_key, NULL);
 
@@ -492,7 +512,7 @@ c_dict_each_value (VALUE self)
 {
 	RbDict *dict = NULL;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	xmmsv_dict_foreach (dict->real, dict_each_value, &self);
 
@@ -526,7 +546,7 @@ c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 	xmmsv_t *inner_dict;
 	const char **csources = NULL;
 
-	Data_Get_Struct (self, RbDict, dict);
+	TypedData_Get_Struct (self, RbDict, &rb_xmms_dict_data_type, dict);
 
 	rb_scan_args (argc, argv, "01", &sources);
 
@@ -536,8 +556,8 @@ c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 	if (csources)
 		free (csources);
 
-	value = Data_Make_Struct (cDict, RbDict,
-	                          c_dict_mark, c_dict_free,
+	value = TypedData_Make_Struct (cDict, RbDict,
+	                          &rb_xmms_dict_data_type,
 	                          dict2);
 
 	// don't add a second reference here
